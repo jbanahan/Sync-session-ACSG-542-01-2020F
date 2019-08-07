@@ -119,6 +119,10 @@ jobs:
           name: Jasmine Unit Tests
           command: |-
             if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake jasmine:ci; fi
+      - run:
+          name: Brakeman Static Analysis
+          command: |-
+            if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec brakeman -c .brakeman/brakeman.yml; fi
       # Teardown
       #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
       # Save test results
@@ -127,3 +131,5 @@ jobs:
       # Save artifacts - these are viewable in the Artifacts tab of the CircleCI interface after a build is complete
       - store_artifacts:
           path: /tmp/circle-tests
+      - store_artifacts:
+          path: tmp/brakeman

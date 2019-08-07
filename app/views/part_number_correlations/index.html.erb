@@ -94,7 +94,7 @@
   </div>
 </div>
 
-<% current_user.part_number_correlations.all.order(created_at: :desc).to_a[0..19] do |pnc| %>
+<% current_user.part_number_correlations.all.order(created_at: :desc).to_a[0..19].each do |pnc| %>
   <div class="row">
     <div class="col-md-2 offset-md-2">
       <%= pnc.attachment.attached_file_name %>

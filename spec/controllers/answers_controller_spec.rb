@@ -51,7 +51,9 @@ describe AnswersController do
     end
     it "should not allow rating to change if user is not able to edit" do
       @answer.update_attributes(rating:'def')
-      @answer.survey_response.update_attributes(user_id:@u.id)
+      @answer.survey_response.user = @u
+      @answer.survey_response.save!
+      
       allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return false 
       put :update, id: @answer.id, answer:{rating:'abc'}, format: :json
       expect(response).to be_success

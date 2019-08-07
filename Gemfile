@@ -117,6 +117,7 @@ group :development,:test do
   # read them.  So we need to use a different solution for reading them in test cases.
   gem 'rubyXL', '3.3.29'
   gem 'jasmine'
+  gem 'brakeman'
 end
 
 group :development do
@@ -124,7 +125,6 @@ group :development do
   gem 'active_record_query_trace'
   gem 'annotate'
   gem 'web-console'
-  gem 'brakeman'
 end
 
 group :test do

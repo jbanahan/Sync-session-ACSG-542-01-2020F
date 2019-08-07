@@ -63,7 +63,7 @@ class Comment < ActiveRecord::Base
 
   def self.gather obj, since=nil, limit=nil
     gathered = Comment.where(commentable_id: obj).order(updated_at: :desc)
-    gathered = gathered.where("updated_at >= \"#{since.utc.to_s(:db)}\"") if since
+    gathered = gathered.where("updated_at >= ?", since.utc.to_s(:db)) if since
     gathered = gathered.limit(limit) if limit
     gathered.map{ |com| "#{com.updated_at.in_time_zone(Time.zone.name).strftime('%m-%d %H:%M')} #{com.subject}: #{com.body}" }.join("\n \n")
   end

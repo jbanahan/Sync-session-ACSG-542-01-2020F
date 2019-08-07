@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
     send_countries = send_classification_countries
     init_outbound_custom_definitions
     Product.select("distinct products.*").need_sync("Brazil").
-      joins("INNER JOIN classifications c ON c.product_id = products.id AND c.country_id IN (#{send_countries.join(",")})")
+      joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN classifications c ON c.product_id = products.id AND c.country_id IN (?)", send_countries]))
   end
 
   # Generate the file with data that needs to be sent back to MSL+

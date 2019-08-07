@@ -52,10 +52,10 @@ class AttachmentArchiveManifest < ActiveRecord::Base
         INNER JOIN attachment_archives_attachments ON attachment_archives.id = attachment_archives_attachments.attachment_archive_id 
         INNER JOIN attachments on attachment_archives_attachments.attachment_id = attachments.id 
         INNER JOIN entries on attachments.attachable_id = entries.id and attachments.attachable_type = "Entry"
-      WHERE attachment_archives.start_at >= '#{oldest_archive_start_date_to_include.strftime("%Y-%m-%d")}'
-      AND attachment_archives.company_id = #{self.company_id}
+      WHERE attachment_archives.start_at >= ?
+      AND attachment_archives.company_id = ?
     SQL
-    result = AttachmentArchiveManifest.connection.execute qry
+    result = AttachmentArchiveManifest.connection.execute(self.class.sanitize_sql_array([qry, oldest_archive_start_date_to_include.strftime("%Y-%m-%d"), self.company_id]))
     result.each do |vals|
       XlsMaker.add_body_row sheet, (cursor+=1), vals, column_widths, true
     end

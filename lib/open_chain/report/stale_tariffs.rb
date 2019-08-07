@@ -76,28 +76,28 @@ module OpenChain; module Report; class StaleTariffs
     sql = base_query hts_field
 
     if countries.try(:length).to_i > 0
-      sql += " AND ctr.iso_code IN (" + countries.map {|c| ActiveRecord::Base.sanitize c }.join(", ") + ")"
+      sql += ActiveRecord::Base.sanitize_sql_array([" AND ctr.iso_code IN (?)", countries])
     end
 
     if importer_ids.try(:length).to_i > 0
-      sql += " AND p.importer_id IN (" + importer_ids.map {|i| i.to_i}.join(", ") + ")"
+      sql += ActiveRecord::Base.sanitize_sql_array([" AND p.importer_id IN (?)", importer_ids])
     end
 
-    sql += " ORDER BY ctr.name, comp.name, tr.#{hts_field}, p.unique_identifier"
+    sql += " ORDER BY ctr.name, comp.name, tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)}, p.unique_identifier"
 
     TariffRecord.connection.execute(sql)
   end
 
   def base_query hts_field
     <<-SQL
-      SELECT comp.name, p.unique_identifier, ctr.name, tr.#{hts_field}
+      SELECT comp.name, p.unique_identifier, ctr.name, tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)}
       FROM tariff_records tr
         INNER JOIN classifications c ON tr.classification_id = c.id
         INNER JOIN countries ctr ON ctr.id = c.country_id
         INNER JOIN products p ON c.product_id = p.id
         LEFT OUTER JOIN companies comp ON comp.id = p.importer_id 
-        LEFT OUTER JOIN official_tariffs ot ON c.country_id = ot.country_id AND tr.#{hts_field} = ot.hts_code
-      WHERE ot.id IS NULL AND tr.#{hts_field} IS NOT NULL AND LENGTH(tr.#{hts_field}) > 0
+        LEFT OUTER JOIN official_tariffs ot ON c.country_id = ot.country_id AND tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)} = ot.hts_code
+      WHERE ot.id IS NULL AND tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)} IS NOT NULL AND LENGTH(tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)}) > 0
     SQL
   end
 

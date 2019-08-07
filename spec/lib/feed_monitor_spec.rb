@@ -15,7 +15,7 @@ describe OpenChain::FeedMonitor do
     it "should not error if alliance custom feature is not set" do
       MasterSetup.get.update_attributes(:custom_features=>'')
       Factory(:entry,:source_system=>'Alliance',:last_exported_from_source=>@est.parse("2012-10-01 4:00"))
-      OpenChain::FeedMonitor.monitor@est.parse("2012-10-01 12:00")
+      OpenChain::FeedMonitor.monitor @est.parse("2012-10-01 12:00")
       expect(ErrorLogEntry.count).to eq(0)
     end
     it "should not error if outside of time window" do

@@ -1,6 +1,6 @@
 module OpenChain; class TimedBusinessRuleRunner
   def self.run_schedulable opts = {}
-    run_list = BusinessValidationScheduledJob.where("run_date <= '#{Time.zone.now.to_s(:db)}'")
+    run_list = BusinessValidationScheduledJob.where("run_date <= ?", Time.zone.now)
     run_list.each do |job|
       obj = job.validatable
       Lock.db_lock(obj) do 

@@ -121,8 +121,11 @@ module OpenChain; class GPG
         end
 
         def self.build_safe_command_line(home_dir, *args)
+          gpg = GPG.gpg_binary
+          # Verify the gpg binary points to something valid.
+          raise "GPG binary path must point to a gpg executable." unless Pathname.new(gpg).basename.to_s =~ /\Agpg/i
           fragments = [
-            GPG.gpg_binary,
+            gpg,
             '--homedir', home_dir,
             '--no-default-keyring'
           ] + args

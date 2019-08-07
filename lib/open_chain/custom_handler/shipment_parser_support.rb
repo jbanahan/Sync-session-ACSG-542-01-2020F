@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
 
     def self.orders_with_mismatched_transport_mode order_nums, shipment
       Order.where(order_number: order_nums, importer_id: shipment.importer_id)
-           .where(%Q(mode <> "#{shipment.normalized_booking_mode}"))
+           .where("mode <> ? ", shipment.normalized_booking_mode)
            .pluck(:customer_order_number)
     end
 
@@ -75,27 +75,29 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
     end
 
     def self.multi_manifests_qry order_nums, reference
-      <<-SQL
+      sql = <<-SQL
         SELECT DISTINCT o.customer_order_number, s.reference
         FROM orders o
           INNER JOIN order_lines ol ON o.id = ol.order_id
           INNER JOIN piece_sets ps ON ps.order_line_id = ol.id
           INNER JOIN shipment_lines sl ON sl.id = ps.shipment_line_id
           INNER JOIN shipments s ON s.id = sl.shipment_id
-        WHERE o.order_number IN (#{order_nums.map{ |o| "\"#{o}\""}.join(",")}) AND s.reference <> "#{reference}"
+        WHERE o.order_number IN (?) AND s.reference <> ?
         ORDER BY o.customer_order_number, s.reference
       SQL
+      ActiveRecord::Base.sanitize_sql_array([sql, order_nums, reference])
     end
 
     def self.multi_bookings_qry order_nums, reference
-      <<-SQL
+      sql = <<-SQL
         SELECT DISTINCT o.customer_order_number, s.reference
         FROM orders o
           INNER JOIN booking_lines bl ON o.id = bl.order_id
           INNER JOIN shipments s ON s.id = bl.shipment_id
-        WHERE o.order_number IN (#{order_nums.map{ |o| "\"#{o}\""}.join(",")}) AND s.reference <> "#{reference}"
+        WHERE o.order_number IN (?) AND s.reference <> ?
         ORDER BY o.customer_order_number, s.reference
       SQL
+      ActiveRecord::Base.sanitize_sql_array([sql, order_nums, reference])
     end
 
     def self.compile_multi_matches results

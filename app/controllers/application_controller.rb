@@ -120,7 +120,7 @@ class ApplicationController < ActionController::Base
   def error_redirect(message=nil)
     add_flash :errors, message unless message.nil?
     target = request.referrer ? request.referrer : "/"
-    target = params[:redirect_to].blank? ? target : params[:redirect_to]
+    target = params[:redirect_to].blank? ? target : validate_redirect(params[:redirect_to])
     redirect_to target
   end
 

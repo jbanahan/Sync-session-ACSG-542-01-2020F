@@ -314,7 +314,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       special_tariffs = SpecialTariffCrossReference.where(special_hts_number: tariffs.map(&:hts_code).uniq)
                                                    .where(import_country_iso: "US")
                                                    .where("effective_date_start <= ?", entry.import_date)
-                                                   .where("effective_date_end >= '#{entry.import_date}' OR effective_date_end IS NULL")
+                                                   .where("effective_date_end >= ? OR effective_date_end IS NULL", entry.import_date)
                                                    .map{ |st| st.special_hts_number }
       
       tariffs.each{ |t| t.special_tariff = true if special_tariffs.include? t.hts_code }

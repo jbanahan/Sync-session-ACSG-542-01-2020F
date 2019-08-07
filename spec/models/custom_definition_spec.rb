@@ -63,7 +63,7 @@ describe CustomDefinition do
       }
 
       it "generates a query suitable to be used in searches" do 
-        expect(custom_definition.qualified_field_name).to eq "(SELECT string_value FROM custom_values WHERE customizable_id = products.id AND custom_definition_id = 7 AND customizable_type = 'Product')"
+        expect(custom_definition.qualified_field_name).to eq "(SELECT `string_value` FROM custom_values WHERE customizable_id = `products`.id AND custom_definition_id = 7 AND customizable_type = 'Product')"
       end
     end
 

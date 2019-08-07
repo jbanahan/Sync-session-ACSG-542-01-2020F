@@ -22,9 +22,10 @@ module OpenChain; module CustomHandler; module Pepsi
           INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
           INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
         WHERE (e.customer_number = "QSD" OR e.customer_number = "QSDI")
-          AND cil.po_number IN (#{po_nums.map{ |num| "\"#{num}\"" }.join(", ")})
-          AND e.id <> #{entry_id}
+          AND cil.po_number IN (?)
+          AND e.id <> ?
       SQL
+      qry = ActiveRecord::Base.sanitize_sql_array([qry, po_nums, entry_id])
       results = ActiveRecord::Base.connection.exec_query qry
       results unless results.count.zero?
     end

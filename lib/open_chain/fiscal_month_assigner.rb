@@ -52,7 +52,7 @@ module OpenChain; class FiscalMonthAssigner
     # If we just did a straight compare, the time component of the fiscal date (.ie release date) makes the any straight date comparison
     # fail if the date occurs on the end_date of the fiscal month.
     fiscal_date = fiscal_model_field.data_type == :date ? fiscal_ref_date : fiscal_ref_date.in_time_zone("America/New_York").to_date
-    fms = FiscalMonth.where("company_id = #{entry.importer_id} AND start_date <= '#{fiscal_date}' AND end_date >= '#{fiscal_date}'").all
+    fms = FiscalMonth.where("company_id = ? AND start_date <= ? AND end_date >= ?", entry.importer_id, fiscal_date, fiscal_date).all
 
     raise "More than one fiscal month found for Entry ##{entry.entry_number} with #{fiscal_model_field.label} #{fiscal_date}." if fms.length > 1
     raise "No fiscal month found for Entry ##{entry.entry_number} with #{fiscal_model_field.label} #{fiscal_date}." if fms.length.zero?
@@ -60,7 +60,7 @@ module OpenChain; class FiscalMonthAssigner
   end
 
   def self.get_invoice_fiscal_month brok_inv
-    fms = FiscalMonth.where("company_id = #{brok_inv.entry.importer_id} AND start_date <= '#{brok_inv.invoice_date}' AND end_date >= '#{brok_inv.invoice_date}'").all
+    fms = FiscalMonth.where("company_id = ? #{} AND start_date <= ? AND end_date >= ?", brok_inv.entry.importer_id, brok_inv.invoice_date, brok_inv.invoice_date).all
     raise "More than one fiscal month found for Broker Invoice ##{brok_inv.invoice_number} with Invoice Date #{brok_inv.invoice_date}." if fms.length > 1
     raise "No fiscal month found for Broker Invoice ##{brok_inv.invoice_number} with Invoice Date #{brok_inv.invoice_date}." if fms.length.zero?
     fms.first

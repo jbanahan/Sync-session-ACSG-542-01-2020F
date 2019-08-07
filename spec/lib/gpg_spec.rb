@@ -48,6 +48,17 @@ describe OpenChain::GPG do
         expect(IO.read(f.path)).to eq IO.read('spec/fixtures/files/passphraseless-cleartext.txt')
       end
     end
+
+    it "errors if gpg binary path is invalid" do
+      expect(described_class).to receive(:gpg_binary).and_return "not_gpg"
+
+      gpg = OpenChain::GPG.new 'spec/fixtures/files/vfitrack.gpg.key', 'spec/fixtures/files/vfitrack.gpg.private.key'
+
+      Tempfile.open(["test", ".txt"]) do |f|
+        # Yep, 'passphrase' is the passphrase - secure key, huh!
+        expect { gpg.decrypt_file('spec/fixtures/files/passphrase-encrypted.gpg', f.path, 'passphrase') }.to raise_error "GPG binary path must point to a gpg executable."
+      end
+    end
   end
 
   describe "encrypt_file" do

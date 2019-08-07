@@ -13,19 +13,18 @@
 #
 
 class InstanceInformation < ActiveRecord::Base
-  attr_accessible :host, :last_check_in, :name, :role, :version
+  attr_accessible :host
 
   has_many :upgrade_logs, :dependent => :destroy
 
   #check in with database, the hostname variable only needs to be passed in test cases
   def self.check_in hostname = nil
-    h = hostname.blank? ? Rails.application.config.hostname : hostname
+    h = hostname.blank? ? MasterSetup.rails_config_key(:hostname) : hostname
     ii = InstanceInformation.find_or_initialize_by host: h
-    ii.last_check_in = 0.seconds.ago
+    ii.last_check_in = Time.zone.now
     ii.version = MasterSetup.current_code_version
-    # Only needed for initial migration run since instance information is referenced in initailizers
-    ii.name = server_name if ii.respond_to?(:name=)
-    ii.role = server_role if ii.respond_to?(:role=)
+    ii.name = server_name
+    ii.role = server_role
     ii.save
     ii
   end

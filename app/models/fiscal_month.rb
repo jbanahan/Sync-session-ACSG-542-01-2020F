@@ -36,7 +36,7 @@ class FiscalMonth < ActiveRecord::Base
 
   def self.get company_or_id, date
     co_id = company_or_id.kind_of?(Integer) ? company_or_id : company_or_id.id
-    where("company_id = #{co_id} AND start_date <= '#{date}' AND end_date >= '#{date}'").first
+    where("company_id = ? AND start_date <= ? AND end_date >= ?", co_id, date, date).first
   end
 
   def self.generate_csv company_id
@@ -63,9 +63,9 @@ class FiscalMonth < ActiveRecord::Base
     qry = <<-SQL
             SELECT year, month_number, start_date, end_date
             FROM fiscal_months
-            WHERE company_id = #{company_id}
+            WHERE company_id = ?
             ORDER BY year, month_number
           SQL
-    ActiveRecord::Base.connection.execute qry
+    ActiveRecord::Base.connection.execute ActiveRecord::Base.sanitize_sql_array([qry, company_id])
   end
 end

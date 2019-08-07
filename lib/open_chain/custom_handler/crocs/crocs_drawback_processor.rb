@@ -22,10 +22,10 @@ module OpenChain; module CustomHandler; module Crocs
       imp_date_str = imp_date.strftime('%Y-%m-%d')
       ShipmentLine.select('shipment_lines.*').joins("
         INNER JOIN shipments on shipment_lines.shipment_id = shipments.id AND shipments.importer_id = (SELECT id FROM companies WHERE alliance_customer_number = 'CROCS')
-        INNER JOIN products p on shipment_lines.product_id = p.id AND p.unique_identifier = 'CROCS-#{ci_line.part_number.strip}'
-        INNER JOIN custom_values po on po.custom_definition_id = #{@defs[:shpln_po].id} AND po.customizable_id = shipment_lines.id AND po.string_value REGEXP '^0#{clean_po}'
-        INNER JOIN custom_values rec on rec.custom_definition_id = #{@defs[:shpln_received_date].id} and rec.customizable_id = shipment_lines.id AND rec.date_value >= '#{imp_date_str}' AND rec.date_value < ADDDATE('#{imp_date_str}',61)
-        INNER JOIN custom_values coo on coo.custom_definition_id = #{@defs[:shpln_coo].id} AND coo.customizable_id = shipment_lines.id AND coo.string_value = '#{ci_line.country_origin_code}'
+        INNER JOIN products p on shipment_lines.product_id = p.id AND p.unique_identifier = #{ActiveRecord::Base.connection.quote("CROCS-#{ci_line.part_number.strip}")}
+        INNER JOIN custom_values po on po.custom_definition_id = #{@defs[:shpln_po].id.to_i} AND po.customizable_id = shipment_lines.id AND po.string_value REGEXP '^0#{clean_po}'
+        INNER JOIN custom_values rec on rec.custom_definition_id = #{@defs[:shpln_received_date].id.to_i} and rec.customizable_id = shipment_lines.id AND rec.date_value >= #{ActiveRecord::Base.connection.quote(imp_date_str)} AND rec.date_value < ADDDATE(#{ActiveRecord::Base.connection.quote(imp_date_str)},61)
+        INNER JOIN custom_values coo on coo.custom_definition_id = #{@defs[:shpln_coo].id.to_i} AND coo.customizable_id = shipment_lines.id AND coo.string_value = #{ActiveRecord::Base.connection.quote(ci_line.country_origin_code)}
       ")
     end
 

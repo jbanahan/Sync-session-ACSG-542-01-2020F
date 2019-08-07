@@ -37,8 +37,7 @@ module CoreObjectSupport
       has_many :item_change_subscriptions, dependent: :destroy
     end
 
-    scope :need_sync, -> (trading_partner) { joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause()) }
-    scope :has_attachment, -> { joins("LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_type = '#{self.name}' AND linked_attachments.attachable_id = #{self.table_name}.id LEFT OUTER JOIN attachments ON attachments.attachable_type = '#{self.name}' AND attachments.attachable_id = #{self.table_name}.id").where('attachments.id is not null OR linked_attachments.id is not null').uniq }
+    scope :need_sync, -> (trading_partner) { joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause()) }    
   end
 
   def core_module
@@ -192,7 +191,7 @@ module CoreObjectSupport
 
   module ClassMethods
     def find_by_custom_value custom_definition, value
-      self.joins(:custom_values).where('custom_values.custom_definition_id = ?',custom_definition.id).where("custom_values.#{custom_definition.data_type}_value = ?",value).first
+      self.joins(:custom_values).where('custom_values.custom_definition_id = ?',custom_definition.id).where("custom_values.#{custom_definition.data_column} = ?",value).first
     end
 
     def has_never_been_synced_where_clause
@@ -207,7 +206,7 @@ module CoreObjectSupport
     end
 
     def join_clause_for_need_sync trading_partner, join_table: self.table_name
-      sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{join_table}.id and sync_records.trading_partner = ?"
+      sql = "LEFT OUTER JOIN sync_records ON sync_records.syncable_type = ? and sync_records.syncable_id = #{ActiveRecord::Base.connection.quote_table_name(join_table)}.id and sync_records.trading_partner = ?"
       sanitize_sql_array([sql, name, trading_partner])
     end
 
@@ -226,14 +225,15 @@ module CoreObjectSupport
             (sync_records.sent_at is NULL OR
              sync_records.confirmed_at is NULL OR
              sync_records.sent_at > sync_records.confirmed_at OR
-             #{join_table}.updated_at > sync_records.sent_at
+             #{ActiveRecord::Base.connection.quote_table_name(join_table)}.updated_at > sync_records.sent_at
             ) AND
             (sync_records.ignore_updates_before IS NULL OR
-             sync_records.ignore_updates_before < #{join_table}.updated_at)
+             sync_records.ignore_updates_before < #{ActiveRecord::Base.connection.quote_table_name(join_table)}.updated_at)
             "
       if sent_at_or_before.respond_to?(:acts_like_time?) || sent_at_or_before.respond_to?(:acts_like_date?)
         query += " AND
-            (sync_records.sent_at IS NULL OR sync_records.sent_at < '#{sent_at_or_before.to_s(:db)}' OR #{join_table}.updated_at > sync_records.sent_at)"
+            (sync_records.sent_at IS NULL OR sync_records.sent_at < ? OR #{ActiveRecord::Base.connection.quote_table_name(join_table)}.updated_at > sync_records.sent_at)"
+        query = ActiveRecord::Base.sanitize_sql_array([query, sent_at_or_before])
       end
 
       query + "

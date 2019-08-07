@@ -6,7 +6,7 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.permission? user
-    MasterSetup.get.system_code == 'www-vfitrack-net' &&
+    MasterSetup.get.custom_feature?("WWW") &&
     (user.company.master? || user.company.system_code=='JJILL') &&
     user.view_shipments?
   end
@@ -241,11 +241,11 @@ shipments
 INNER JOIN ports as destination_port ON destination_port.id = shipments.destination_port_id
 WHERE
 shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
-AND shipments.arrival_port_date > '#{start_date}'
+AND shipments.arrival_port_date > ?
 AND shipments.canceled_date IS NULL
 ORDER BY shipments.arrival_port_date desc
 QRY
-    q
+    ActiveRecord::Base.sanitize_sql_array([q, start_date])
   end
 
   def order_fulfillment_setup start_date
@@ -295,12 +295,13 @@ inner join orders o on ol.order_id= o.id
 inner join companies imp on s.importer_id = imp.id and imp.system_code = 'JJILL' and imp.importer = true
 left outer join companies vend on o.vendor_id = vend.id
 left outer join companies fact on o.factory_id = fact.id
-LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:ord_original_gac_date].id} and gac.customizable_id = o.id and gac.customizable_type = 'Order'
-where s.arrival_port_date > '#{start_date}'
+LEFT OUTER JOIN custom_values gac ON gac.custom_definition_id = #{@cdefs[:ord_original_gac_date].id.to_i} and gac.customizable_id = o.id and gac.customizable_type = 'Order'
+where s.arrival_port_date > ?
 and s.canceled_date IS NULL
 group by s.id, o.id
 order by s.arrival_port_date desc
 QRY
+    ActiveRecord::Base.sanitize_sql_array([q, start_date])
   end
 
   def find_order_quantity shipment_id, order_id
@@ -312,8 +313,9 @@ INNER JOIN (
   FROM piece_sets ps
   INNER JOIN order_lines inner_ol ON ps.order_line_id = inner_ol.id
   INNER JOIN shipment_lines sl on ps.shipment_line_id = sl.id
-  WHERE inner_ol.order_id = #{order_id} AND sl.shipment_id = #{shipment_id}) l ON l.order_line_id = ol.id
+  WHERE inner_ol.order_id = ? AND sl.shipment_id = ?) l ON l.order_line_id = ol.id
 QRY
+    qry = ActiveRecord::Base.sanitize_sql_array([qry, order_id, shipment_id])
     result = ActiveRecord::Base.connection.execute qry
 
     qty = result.first.first

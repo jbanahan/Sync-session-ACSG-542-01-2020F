@@ -183,7 +183,7 @@ class AttachmentsController < ApplicationController
 
   private
     def redirect_location attachable
-      params[:redirect_to].blank? ? attachable : params[:redirect_to]
+      params[:redirect_to].blank? ? attachable : validate_redirect(params[:redirect_to])
     end
 
     def get_attachable type, id

@@ -158,7 +158,7 @@ class QuickSearchController < ApplicationController
       end
 
       if previous_results && previous_results.length > 0
-        relation = relation.where("#{core_module.table_name}.id NOT IN (" + previous_results.collect {|r| r[:id]}.join(",") + ")")
+        relation = relation.where(ActiveRecord::Base.sanitize_sql_array(["#{ActiveRecord::Base.connection.quote_table_name(core_module.table_name)}.id NOT IN (?)", previous_results.map {|r| r[:id]}]))
       end
 
       sort_by = core_module.quicksearch_sort_by

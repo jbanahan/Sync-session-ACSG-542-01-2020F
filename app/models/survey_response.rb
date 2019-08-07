@@ -38,9 +38,7 @@
 #
 
 class SurveyResponse < ActiveRecord::Base
-  attr_protected :email_sent_date, :email_opened_date, :response_opened_date, 
-    :submitted_date, :accepted_date, :archived, :expiration_notification_sent_at, 
-    :checkout_by_user, :checkout_token, :checkout_expiration
+  attr_accessible :address, :email, :phone, :fax, :name, :rating, :user, :subtitle, :base_object, :group, :updated_at
     
   belongs_to :user
   belongs_to :survey

@@ -31,7 +31,7 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
   def query_base linked_with = nil
     r = (current_user.company.master? ? Company : current_user.company.linked_companies).where("length(trim(system_code)) > 0")
     if linked_with.to_i > 0
-      r = r.joins("INNER JOIN linked_companies linked ON linked.parent_id = #{linked_with} AND linked.child_id = companies.id")
+      r = r.joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN linked_companies linked ON linked.parent_id = ? AND linked.child_id = companies.id", linked_with]))
     end
     r
   end

@@ -352,7 +352,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def load_booking_lines(shipment, h)
     if h['booking_lines']
       # line deletes won't have order ids, so we can skip them
-      order_line_ids = h['booking_lines'].map {|bl| bl["_destroy"].to_s.to_boolean ? nil : bl['bkln_order_line_id']}.uniq.compact
+      order_line_ids = h['booking_lines'].map {|bl| bl["_destroy"].to_s.to_boolean ? nil : bl['bkln_order_line_id'].to_i}.uniq.compact
       raise StatusableError.new("Order has different importer from shipment", 400) unless match_importer?(shipment, order_line_ids)
 
       h['booking_lines'].each_with_index do |base_ln,i|
@@ -391,9 +391,9 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       FROM companies imp
         INNER JOIN orders o ON o.importer_id = imp.id 
         INNER JOIN order_lines ol ON ol.order_id = o.id
-      WHERE ol.id IN (#{order_line_ids.join(", ")})
+      WHERE ol.id IN (?)
     SQL
-    order_importer_ids = ActiveRecord::Base.connection.execute(qry).to_a.flatten
+    order_importer_ids = ActiveRecord::Base.connection.execute(ActiveRecord::Base.sanitize_sql_array([qry, order_line_ids])).to_a.flatten
     order_importer_ids == Array.wrap(shipment.importer_id)                                
   end
 
@@ -532,8 +532,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def check_for_unlinked_attachments atts, ids_to_process
+    ids = atts.map(&:id)
+    return if ids.blank?
+
     unlinked_at_names = Attachment.where(id: ids_to_process)
-                                   .where("id NOT IN (#{atts.map(&:id).join(',')})")
+                                   .where("id NOT IN (?)", ids)
                                    .map(&:attached_file_name)
     
     if unlinked_at_names.present?

@@ -45,7 +45,7 @@ Rails.application.config.middleware.use OmniAuth::Builder do
   if idp_metadata_settings
     provider :saml,
       idp_metadata_settings.merge({
-        :assertion_consumer_service_url     => "https://#{MasterSetup.get.system_code}.vfitrack.net#{OmniAuth.config.path_prefix}/pepsi-saml/callback",
+        :assertion_consumer_service_url     => "https://#{MasterSetup.get&.system_code}.vfitrack.net#{OmniAuth.config.path_prefix}/pepsi-saml/callback",
         :issuer                             => spid,
         :request_path                       => lambda {|env| return false },
         :callback_path                      => "#{OmniAuth.config.path_prefix}/pepsi-saml/callback"  

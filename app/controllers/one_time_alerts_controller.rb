@@ -202,11 +202,11 @@ class OneTimeAlertsController < ApplicationController
   end
 
   def all_expired  
-    base_query.where("expire_date < '#{today}'")
+    base_query.where("expire_date < ?", today)
   end
 
   def all_enabled
-    base_query.where("expire_date >= '#{today}' OR expire_date IS NULL")
+    base_query.where("expire_date >= ? OR expire_date IS NULL", today)
   end
 
   def secure_expired

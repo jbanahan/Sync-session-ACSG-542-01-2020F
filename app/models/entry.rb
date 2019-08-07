@@ -464,7 +464,7 @@ class Entry < ActiveRecord::Base
       c = Company.find company_id
     end
     
-    c.master? ? "1=1" : "(entries.importer_id = #{c.id} or entries.importer_id IN (select child_id from linked_companies where parent_id = #{c.id}))"
+    c.master? ? "1=1" : ActiveRecord::Base.sanitize_sql_array(["(entries.importer_id = ? or entries.importer_id IN (select child_id from linked_companies where parent_id = ?))", c.id, c.id])
   end
 
   #has liquidation fields

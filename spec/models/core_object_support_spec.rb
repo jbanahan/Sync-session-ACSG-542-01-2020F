@@ -202,7 +202,7 @@ describe CoreObjectSupport do
       it "should generate sql for joining to sync_records table" do
         sql = TestCoreObject.need_sync_join_clause "Trading's Partner"
         expect(sql).to include ".syncable_type = 'Class\\' Name'"
-        expect(sql).to include "sync_records.syncable_id = test_core_objects"
+        expect(sql).to include "sync_records.syncable_id = `test_core_objects`"
         expect(sql).to include "sync_records.trading_partner = 'Trading\\'s Partner'"
       end
     end
@@ -211,32 +211,32 @@ describe CoreObjectSupport do
       it "generates sql for joining to sync_records table" do
         sql = TestCoreObject.join_clause_for_need_sync "Trading's Partner"
         expect(sql).to include ".syncable_type = 'Class\\' Name'"
-        expect(sql).to include "sync_records.syncable_id = test_core_objects"
+        expect(sql).to include "sync_records.syncable_id = `test_core_objects`"
         expect(sql).to include "sync_records.trading_partner = 'Trading\\'s Partner'"
       end
 
       it "allows overriding join table name" do
         sql = TestCoreObject.join_clause_for_need_sync "Trading's Partner", join_table: "join_table"
-        expect(sql).to include "sync_records.syncable_id = join_table"
+        expect(sql).to include "sync_records.syncable_id = `join_table`"
       end
     end
 
     describe "need_sync_where_clause" do
       it "should generate sql for joining to sync_records table" do
         sql = TestCoreObject.need_sync_where_clause
-        expect(sql).to include "test_core_objects.updated_at"
+        expect(sql).to include "`test_core_objects`.updated_at"
       end
     end
 
     describe "where_clause_for_need_sync" do 
       it "generates sql for joinging to sync records table" do
         sql = TestCoreObject.where_clause_for_need_sync
-        expect(sql).to include "test_core_objects.updated_at"
+        expect(sql).to include "`test_core_objects`.updated_at"
       end
 
       it "allows overriding join table name" do
         sql = TestCoreObject.where_clause_for_need_sync join_table: "join_table"
-        expect(sql).to include "join_table.updated_at"
+        expect(sql).to include "`join_table`.updated_at"
       end
 
       it "adds sent_at checks if time given" do

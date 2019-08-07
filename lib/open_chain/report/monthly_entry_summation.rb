@@ -39,19 +39,19 @@ module OpenChain
       def entry_summation_query(start_date, end_date, customer_number, timezone)
         q = <<QRY
 SELECT
-  DATE_FORMAT(convert_tz(entries.release_date, 'UTC', '#{timezone}'),'%Y-%m') AS `Year / Month`,
-  (SELECT COUNT(DISTINCT container_number) FROM containers JOIN entries AS entry ON entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', '#{timezone}'),'%Y-%m') = `Year / Month` AND entry.customer_number = '#{customer_number}') AS `Total Containers`,
+  DATE_FORMAT(convert_tz(entries.release_date, 'UTC', ?),'%Y-%m') AS `Year / Month`,
+  (SELECT COUNT(DISTINCT container_number) FROM containers JOIN entries AS entry ON entry_id = entry.id WHERE DATE_FORMAT(convert_tz(entry.release_date, 'UTC', ?),'%Y-%m') = `Year / Month` AND entry.customer_number = ?) AS `Total Containers`,
   SUM(entries.total_invoiced_value) AS `Total Invoice Value`,
   SUM(entries.total_duty + entries.total_duty_direct) AS `Total Duty`,
   SUM(entries.total_fees) AS `Total Fees`,
   '' AS `Total Freight`,
   '' AS `Total Brokerage Fees`
 FROM entries
-WHERE entries.release_date >= '#{start_date}' AND entries.release_date < '#{end_date}'
-  AND entries.customer_number = #{ActiveRecord::Base.sanitize(customer_number)}
+WHERE entries.release_date >= ? AND entries.release_date < ?
+  AND entries.customer_number = ?
 GROUP BY `Year / Month`
 QRY
-        q
+        ActiveRecord::Base.sanitize_sql_array([q, timezone, timezone, customer_number, start_date, end_date, customer_number])
       end
 
       def monthly_charge_sum year_month, timezone, customer_number, charge_types, not_in = false
@@ -62,10 +62,11 @@ SELECT SUM(charge_amount)
 FROM broker_invoices 
 INNER JOIN broker_invoice_lines ON broker_invoice_id = broker_invoices.id 
 INNER JOIN entries ON broker_invoices.entry_id = entries.id 
-WHERE entries.release_date >= '#{first_of_month.in_time_zone("UTC")}' 
-AND entries.release_date < '#{end_of_month.in_time_zone("UTC")}' AND entries.customer_number = '#{customer_number}' AND broker_invoice_lines.charge_type #{not_in ? "NOT IN" : "IN"} (#{charge_types.join(", ")})
-AND broker_invoices.invoice_date >= '#{first_of_month.strftime("%Y-%m-%d")}' AND broker_invoices.invoice_date < '#{end_of_month.strftime("%Y-%m-%d")}' AND broker_invoices.customer_number = '#{customer_number}'
+WHERE entries.release_date >= ? AND entries.release_date < ? AND entries.customer_number = ?
+AND broker_invoice_lines.charge_type #{not_in ? "NOT IN" : "IN"} (?)
+AND broker_invoices.invoice_date >= ? AND broker_invoices.invoice_date < ? AND broker_invoices.customer_number = ?
 QRY
+        qry = ActiveRecord::Base.sanitize_sql_array([qry, first_of_month.in_time_zone("UTC"), end_of_month.in_time_zone("UTC"), customer_number, charge_types, first_of_month.strftime("%Y-%m-%d"), end_of_month.strftime("%Y-%m-%d"), customer_number])
         val = ActiveRecord::Base.connection.execute(qry).try(:first).try(:first)
         val.presence || BigDecimal("0")
       end

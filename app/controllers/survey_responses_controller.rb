@@ -42,19 +42,20 @@ class SurveyResponsesController < ApplicationController
       return
     end
 
-    Lock.with_lock_retry(sr) do
-      if sr.assigned_to_user?(current_user) && params[:do_submit]
-        if submit_survey_response sr, current_user
+    Lock.db_lock(sr) do
+      if params[:do_submit]
+        if sr.assigned_to_user?(current_user) && submit_survey_response(sr, current_user)
           sr.save
+          add_flash :notices, "Response saved successfully."
         end
       else
-        sr.update_attributes params[:survey_response]
+        sr.update_attributes survey_response_params(sr)
         sr.survey_response_logs.create!(:message=>"Response saved.",:user=>current_user)
         sr.log_update current_user
+        add_flash :notices, "Response saved successfully."
       end
     end
     
-    add_flash :notices, "Response saved successfully."
     respond_to do |format|
       format.html {redirect_to sr}
       format.json {render json: {ok:'ok'}}
@@ -131,5 +132,15 @@ class SurveyResponsesController < ApplicationController
       end
     end
   end
+
+  private 
+
+    def survey_response_params sr
+      if can_rate?(sr, current_user)
+        params.require(:survey_response).permit(:address, :email, :phone, :fax, :name, :rating)
+      else
+        params.require(:survey_response).permit(:address, :email, :phone, :fax, :name)
+      end
+    end
 
 end

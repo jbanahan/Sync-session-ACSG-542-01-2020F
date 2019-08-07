@@ -103,7 +103,7 @@ class CustomDefinition < ActiveRecord::Base
   end
 
   def data_column
-    "#{self.data_type}_value"
+    ActiveRecord::Base.connection.quote_column_name("#{self.data_type}_value")
   end
 
   def can_edit?(user)
@@ -126,7 +126,7 @@ class CustomDefinition < ActiveRecord::Base
     :decimal => "Decimal",
     :integer => "Integer",
     :datetime => "Date/Time"
-  }
+  }.freeze
 
   def set_cache
     @@already_set ||= {}
@@ -166,7 +166,7 @@ class CustomDefinition < ActiveRecord::Base
   # This method generates a query suitable to be used in a SQL FROM or WHERE clause.
   def qualified_field_name 
     if self.virtual_search_query.blank?
-      "(SELECT #{self.data_column} FROM custom_values WHERE customizable_id = #{core_module.table_name}.id AND custom_definition_id = #{self.id} AND customizable_type = '#{self.module_type}')"
+      generate_qualified_field_query
     else
       # NOTE: We COULD enforce the datatype by wrapping the virtual search query in a cast...
       "(#{self.virtual_search_query})"
@@ -194,6 +194,12 @@ class CustomDefinition < ActiveRecord::Base
   end
 
   private
+
+    def generate_qualified_field_query
+      column = data_column
+      table = ActiveRecord::Base.connection.quote_table_name core_module.table_name
+      "(SELECT #{column} FROM custom_values WHERE customizable_id = #{table}.id AND #{ActiveRecord::Base.sanitize_sql_array(["custom_definition_id = ? AND customizable_type = ?", self.id, self.module_type])})"
+    end
 
     def set_cdef_uid
       if self.cdef_uid.blank?

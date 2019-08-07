@@ -188,7 +188,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
 
     # Limits all entry lookups to LL Kewill entries released within the last 6 months only.
     def find_matching_lumber_entries base_lookup
-      base_lookup.where(customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM).where("release_date >= '#{(DateTime.now - 6.months).to_s(:db)}'")
+      base_lookup.where(customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM).where("release_date >= ?", (Time.zone.now - 6.months).to_s(:db))
     end
 
     def get_file_numbers entries

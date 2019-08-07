@@ -114,7 +114,7 @@ class AttachmentArchiveSetup < ActiveRecord::Base
 
   private
   def available_entry_files broker_reference_override: nil, countable_query: false
-    non_stitchable_attachments = Attachment.stitchable_attachment_extensions.collect {|ext| "attachments.attached_file_name NOT like '%#{ext}'"}.join (" AND ")
+    non_stitchable_attachments = Attachment.stitchable_attachment_extensions.collect {|ext| self.class.sanitize_sql_array(["attachments.attached_file_name NOT like ?", "%#{ext}"]) }.join (" AND ")
 
     select_values = countable_query ? "id" : "*"
 
@@ -124,7 +124,7 @@ class AttachmentArchiveSetup < ActiveRecord::Base
       # Rather than relying on a join against the archive setup table for a flag, which would mean for any customer that switched off the packet we'd instantly then 
       # have thousands of back images to fill in for archive, What we're doing here is preventing the use of any other documents in cases where the entry has 
       # one of our prepared / stitched Archive Packets already present
-      joins("LEFT OUTER JOIN attachments arc_packet ON attachments.attachable_id = arc_packet.attachable_id and arc_packet.attachment_type = '#{Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE}'").
+      joins(self.class.sanitize_sql_array(["LEFT OUTER JOIN attachments arc_packet ON attachments.attachable_id = arc_packet.attachable_id and arc_packet.attachment_type = ?", Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE])).
       where("arc_packet.id IS NULL OR arc_packet.id = attachments.id OR (#{non_stitchable_attachments})").
       where("attachment_archives_attachments.attachment_id is null").
       where("attachments.is_private IS NULL OR attachments.is_private = 0").

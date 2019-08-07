@@ -8,7 +8,7 @@ module OpenChain; class FiscalMonthReminder
 
   def self.fiscal_months_remaining company
     return nil if company.fiscal_reference.blank?
-    FiscalMonth.where(company_id: company).where("start_date >= '#{Time.now}'").count
+    FiscalMonth.where(company_id: company).where("start_date >= ?", Time.zone.now).count
   end
 
   def self.companies_needing_update

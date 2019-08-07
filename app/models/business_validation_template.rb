@@ -111,8 +111,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
     klass = cm.klass
     # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be
     # distinct is the core module's id.
-    srch = klass.select("DISTINCT #{cm.table_name}.id").where("#{cm.table_name}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
-    srch = srch.joins("LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = '#{self.module_type}' AND business_validation_results.validatable_id = #{cm.table_name}.id AND business_validation_results.business_validation_template_id = #{self.id}")
+    srch = klass.select("DISTINCT #{ActiveRecord::Base.connection.quote_table_name(cm.table_name)}.id").where("#{ActiveRecord::Base.connection.quote_table_name(cm.table_name)}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
+    srch = srch.joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = ? AND business_validation_results.validatable_id = #{ActiveRecord::Base.connection.quote_table_name(cm.table_name)}.id AND business_validation_results.business_validation_template_id = ?", self.module_type, self.id]))
     self.search_criterions.each {|sc| srch = sc.apply(srch)}
     srch.each do |id|
       obj = nil

@@ -124,9 +124,16 @@ class DutyCalcExportFile < ActiveRecord::Base
     def self.generate_output_file importer, extra_where, limit_size = nil
       DutyCalcExportFile.transaction do
         d = DutyCalcExportFile.create!(:importer_id=>importer.id)
-        sql = "UPDATE duty_calc_export_file_lines SET duty_calc_export_file_id = #{d.id} WHERE duty_calc_export_file_id is null and importer_id = #{importer.id} AND (#{extra_where ? extra_where : '1=1'})"
-        sql << " LIMIT #{limit_size}" if limit_size
-        DutyCalcExportFile.connection.execute sql
+        dcefl = DutyCalcExportFileLine.where(importer_id: d.importer_id, duty_calc_export_file_id: nil)
+        if !extra_where.blank?
+          dcefl = dcefl.where(extra_where)
+        end
+
+        if limit_size
+          dcefl = dcefl.limit(limit_size)
+        end
+
+        dcefl.update_all duty_calc_export_file_id: d.id
         d.reload
         d.duty_calc_export_file_lines.each do |line|
           yield line

@@ -108,10 +108,10 @@ module OpenChain; module CustomHandler; module Crocs
     private 
     def record_exists? shipment, po, sku, received_date, coo
       r = ShipmentLine.joins("
-        INNER JOIN custom_values p ON p.custom_definition_id = #{@defs[:shpln_po].id} AND p.customizable_id = shipment_lines.id AND p.string_value = '#{po}'
-        INNER JOIN custom_values k ON k.custom_definition_id = #{@defs[:shpln_sku].id} AND k.customizable_id = shipment_lines.id AND k.string_value = '#{sku}'
-        INNER JOIN custom_values r ON r.custom_definition_id = #{@defs[:shpln_received_date].id} AND r.customizable_id = shipment_lines.id AND r.date_value = '#{received_date.year}-#{received_date.month}-#{received_date.day}'
-        INNER JOIN custom_values c ON c.custom_definition_id = #{@defs[:shpln_coo].id} AND c.customizable_id = shipment_lines.id AND c.string_value = '#{coo}' 
+        INNER JOIN custom_values p ON p.custom_definition_id = #{@defs[:shpln_po].id.to_i} AND p.customizable_id = shipment_lines.id AND p.string_value = #{ActiveRecord::Base.connection.quote(po)}
+        INNER JOIN custom_values k ON k.custom_definition_id = #{@defs[:shpln_sku].id.to_i} AND k.customizable_id = shipment_lines.id AND k.string_value = #{ActiveRecord::Base.connection.quote(sku)}
+        INNER JOIN custom_values r ON r.custom_definition_id = #{@defs[:shpln_received_date].id.to_i} AND r.customizable_id = shipment_lines.id AND r.date_value = #{ActiveRecord::Base.connection.quote('#{received_date.year}-#{received_date.month}-#{received_date.day}')}
+        INNER JOIN custom_values c ON c.custom_definition_id = #{@defs[:shpln_coo].id.to_i} AND c.customizable_id = shipment_lines.id AND c.string_value = #{ActiveRecord::Base.connection.quote(coo)}
       ").where(shipment_id:shipment.id)
       !r.empty?
     end

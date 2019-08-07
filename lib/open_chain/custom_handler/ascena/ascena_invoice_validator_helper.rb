@@ -158,9 +158,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
             "FROM commercial_invoices AS ci " \
             "  INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id " \
             "  INNER JOIN commercial_invoice_tariffs AS cit ON cil.id = cit.commercial_invoice_line_id " \
-            "WHERE ci.entry_id IS NULL AND ci.importer_id = #{importer_id} AND ci.invoice_number IN (#{invoice_numbers})"
+            "WHERE ci.entry_id IS NULL AND ci.importer_id = ? AND ci.invoice_number IN (?)"
   
-    ActiveRecord::Base.connection.exec_query(query)
+    ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array([query, importer_id, invoice_numbers]))
   end
 
   def gather_entry entry
@@ -168,9 +168,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
             "FROM commercial_invoices AS ci " \
             "  INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id " \
             "  INNER JOIN commercial_invoice_tariffs AS cit ON cil.id = cit.commercial_invoice_line_id " \
-            "WHERE ci.entry_id = #{entry.id}"
+            "WHERE ci.entry_id = ?"
 
-    ActiveRecord::Base.connection.exec_query(query)
+    ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array([query, entry.id]))
   end
 
 end; end; end; end

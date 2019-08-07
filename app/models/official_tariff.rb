@@ -106,10 +106,12 @@ class OfficialTariff < ActiveRecord::Base
       countries.each do |c|
         hts_hash = {}
         (1..3).each do |i|
-          r = conn.execute "select hts_#{i} as \"HTS\", count(*) from tariff_records
+          query = "SELECT #{ActiveRecord::Base.connection.quote_column_name("hts_#{i}")} as \"HTS\", count(*) from tariff_records
   inner join classifications on classifications.id = tariff_records.classification_id
-  where length(hts_#{i}) > 0 and classifications.country_id = #{c.id}
-  group by hts_#{i}"
+  where length(#{ActiveRecord::Base.connection.quote_column_name("hts_#{i}")}) > 0 and classifications.country_id = ?
+  group by #{ActiveRecord::Base.connection.quote_column_name("hts_#{i}")}"
+
+          r = conn.execute ActiveRecord::Base.sanitize_sql_array([query, c.id])
           r.each do |row|
             hts_hash[row[0]] ||= 0
             hts_hash[row[0]] += row[1]
@@ -117,9 +119,10 @@ class OfficialTariff < ActiveRecord::Base
         end
         job_start = conn.execute("SELECT now()").first.first
         hts_hash.each do |k,v|
-           conn.execute "UPDATE official_tariffs SET use_count = #{v}, updated_at = now() WHERE country_id = #{c.id} AND hts_code = \"#{k}\"; "
+          # Add a second to avoid any rounding issues to cause the query below blanking the use counts to blank ones that shouldn't be
+          OfficialTariff.where(country_id: c.id, hts_code: k).update_all use_count: v, updated_at: (job_start + 1.second)
         end
-        OfficialTariff.where(country_id:c.id).where("use_count is null OR updated_at < ?",job_start).update_all(use_count:0)
+        OfficialTariff.where(country_id:c.id).where("use_count IS NULL OR updated_at < ?",job_start).update_all(use_count:0, updated_at: (job_start + 1.second))
       end
     end
   end
@@ -138,16 +141,16 @@ class OfficialTariff < ActiveRecord::Base
 
   def taric_url
     return nil if self.country.nil? || !self.country.european_union?
-    return "http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Taric=#{hts_code}&LangDescr=en"
+    return "http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Taric=#{URI.encode(hts_code)}&LangDescr=en"
   end
 
   #address for external link to certain countries' binding ruling databases
   def binding_ruling_url
     return nil if self.country.nil? || self.hts_code.nil?
     if self.country.iso_code == 'US'
-      return "http://rulings.cbp.gov/index.asp?qu=#{self.hts_code.hts_format.gsub(/\./,"%2E")}&vw=results"
+      return "https://rulings.cbp.gov/search?term=#{URI.encode(self.hts_code.hts_format)}&collection=ALL&sortBy=RELEVANCE&pageSize=30&page=1"
     elsif self.country.european_union?
-      return "http://ec.europa.eu/taxation_customs/dds2/ebti/ebti_consultation.jsp?Lang=en&nomenc=#{six_digit_hts}&orderby=0&Expand=true&offset=1&range=25"
+      return "https://ec.europa.eu/taxation_customs/dds2/ebti/ebti_consultation.jsp?Lang=en&nomenc=#{URI.encode(six_digit_hts)}&orderby=1&Expand=true"
     end
     nil
   end

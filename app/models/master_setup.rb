@@ -88,7 +88,7 @@ class MasterSetup < ActiveRecord::Base
 
   # Simple mockable means for accessing specific rails config keys
   def self.rails_config_key key
-    config.send(key.to_s)
+    rails_config.send(key.to_s)
   end
 
   # This method exists as a straight forward way to mock out 

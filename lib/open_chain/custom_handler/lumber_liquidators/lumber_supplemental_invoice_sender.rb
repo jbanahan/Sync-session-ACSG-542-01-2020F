@@ -16,10 +16,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSu
     # the costing report adds sync records for every invoice it sends out at the invoice level and entry level.
     invoices = BrokerInvoice.
       joins(BrokerInvoice.need_sync_join_clause(sync_code)).
-      joins("INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
-            " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoices.entry_id").
-      joins("LEFT OUTER JOIN sync_records inv_cost_sync ON inv_cost_sync.trading_partner = '#{OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code}'" + 
-            " AND inv_cost_sync.syncable_type = 'BrokerInvoice' AND inv_cost_sync.syncable_id = broker_invoices.id").
+      joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = ?" + 
+            " AND cost_sync.syncable_type = 'Entry' AND cost_sync.syncable_id = broker_invoices.entry_id", OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code])).
+      joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN sync_records inv_cost_sync ON inv_cost_sync.trading_partner = ?" + 
+            " AND inv_cost_sync.syncable_type = 'BrokerInvoice' AND inv_cost_sync.syncable_id = broker_invoices.id", OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code])).
       where(customer_number: "LUMBER", source_system: "Alliance").where("suffix IS NOT NULL AND LENGTH(TRIM(suffix)) > 0").
       where("sync_records.id IS NULL OR sync_records.sent_at IS NULL").
       where("inv_cost_sync.id IS NULL")

@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
   def find_entries
     # We only ever want to send the entry a single time, as such, the standard needs_sync() method is not sufficient for this use-case
-    Entry.joins("LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = '#{sync_code}'").
+    Entry.joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = ?", sync_code])).
       joins(:importer).
       where(companies: {fenix_customer_number: siemens_tax_ids}).
       where("entry_type <> 'F'").

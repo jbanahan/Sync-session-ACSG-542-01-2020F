@@ -213,12 +213,12 @@ describe SurveyResponsesController do
       end
       it "should not update submitted date if survey_response.user != current_user" do
         sign_in_as @survey_user
-        post :update, :id=>@sr.id, :do_submit=>"1"
+        post :update, {survey_response: {:id=>@sr.id}, id: @sr.id, do_submit: "1"}
         expect(SurveyResponse.find(@sr.id).submitted_date).to be_nil 
       end
       it "should update submitted date if flag set and survey_response.user == current_user" do
         sign_in_as @response_user
-        post :update, :id=>@sr.id, :do_submit=>"1"
+        post :update, {survey_response: {:id=>@sr.id}, id: @sr.id, do_submit: "1"}
         expect(SurveyResponse.find(@sr.id).submitted_date).to be > 10.seconds.ago
       end
        it "should update submitted date if flag set and user is in survey response user group" do
@@ -227,14 +227,51 @@ describe SurveyResponsesController do
         group_user.groups << group
         @sr.update_attributes! group: group
         sign_in_as group_user
-        post :update, :id=>@sr.id, :do_submit=>"1"
+        post :update, {survey_response: {:id=>@sr.id}, id: @sr.id, do_submit: "1"}
         expect(response).to redirect_to @sr
         expect(SurveyResponse.find(@sr.id).submitted_date).to be > 10.seconds.ago
       end
       it "should create update record" do
         sign_in_as @response_user
-        post :update, :id=>@sr.id, :do_submit=>"1"
+        post :update, {survey_response: {:id=>@sr.id}, id: @sr.id, do_submit: "1"}
         expect(SurveyResponse.find(@sr.id).survey_response_updates.first.user).to eq(@response_user)
+      end
+      it "allows user to update survey response header data" do
+        sign_in_as @survey_user
+        post :update, {survey_response: {address: "123", email: "me@there.com", phone: "708", fax: "987", name: "Test"}, id: @sr.id}
+        expect(response).to redirect_to @sr
+        @sr.reload
+        expect(@sr.address).to eq "123"
+        expect(@sr.email).to eq "me@there.com"
+        expect(@sr.phone).to eq "708"
+        expect(@sr.fax).to eq "987"
+        expect(@sr.name).to eq "Test"
+      end
+      it "allows survey user to update survey response header data" do
+        sign_in_as @survey_user
+        post :update, {survey_response: {address: "123", email: "me@there.com", phone: "708", fax: "987", name: "Test", rating: "10"}, id: @sr.id}
+        expect(response).to redirect_to @sr
+        @sr.reload
+        expect(@sr.address).to eq "123"
+        expect(@sr.email).to eq "me@there.com"
+        expect(@sr.phone).to eq "708"
+        expect(@sr.fax).to eq "987"
+        expect(@sr.name).to eq "Test"
+        expect(@sr.rating).to be_blank
+      end
+      it "allows response user to update rating" do
+        expect(subject).to receive(:can_rate?).and_return true
+        
+        sign_in_as @response_user
+        post :update, {survey_response: {address: "123", email: "me@there.com", phone: "708", fax: "987", name: "Test", rating: "10"}, id: @sr.id}
+        expect(response).to redirect_to @sr
+        @sr.reload
+        expect(@sr.address).to eq "123"
+        expect(@sr.email).to eq "me@there.com"
+        expect(@sr.phone).to eq "708"
+        expect(@sr.fax).to eq "987"
+        expect(@sr.name).to eq "Test"
+        expect(@sr.rating).to eq "10"
       end
     end
     describe 'invite' do

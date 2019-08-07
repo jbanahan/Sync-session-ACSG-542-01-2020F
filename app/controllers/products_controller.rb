@@ -226,7 +226,7 @@ class ProductsController < ApplicationController
       # redo the search if we're reloading the first search page after a search was run
       # so we're stripping the force_search param from the redirect uri
       if !params['back_to'].blank?
-        redirect_to strip_uri_params(params['back_to'],'force_search')
+        redirect_to validate_redirect(strip_uri_params(params['back_to'],'force_search'))
       else
         redirect_to products_path
       end

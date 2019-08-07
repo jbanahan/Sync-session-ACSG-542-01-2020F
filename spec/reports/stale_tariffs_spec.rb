@@ -1,5 +1,3 @@
-require 'open_chain/report'
-
 describe OpenChain::Report::StaleTariffs do
 
   before(:each) do

@@ -48,6 +48,11 @@ module SurveyResponsesControllerSupport
     end
   end
 
+  def can_rate? sr, user
+    return false if sr.archived? || sr.survey.archived?
+    rate_mode?(sr, user) && sr.checkout_by_user.nil?
+  end
+
   def respond_mode? sr, user
     if sr.assigned_to_user? user
       return sr.submitted_date.blank?

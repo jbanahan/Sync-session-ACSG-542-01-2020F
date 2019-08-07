@@ -56,6 +56,10 @@ class CustomValue < ActiveRecord::Base
   # since there's no foreseeable use case where these values should be nullable.
 
   # Writes given array of custom values directly to database
+  #
+  # It does this by first deleting the custom values and then re-inserting them via 2 sql queries (rather than
+  # a series of updates).  This is claimed to be faster, but I'm not convinced.  I'm considering this a 
+  # legacy method and it should be avoided if possible.
   def self.batch_write! values, touch_parent = false, opts = {}
     opts = {skip_insert_nil_values: false}.merge opts
 
@@ -72,34 +76,19 @@ class CustomValue < ActiveRecord::Base
         customizable_id = cv.customizable.id
         to_reload << cv.customizable
         v = cv.value
-        if v.nil?
-          v = "null"
-        elsif v.acts_like?(:time)
-          # Sanitize now doesn't trim any subsecond components from the value.  Then mysql ends up rounding the value up 
-          # if there's subsecond values over .5 seconds.  Using to_s(:db) strips subsecond values.
-          v = ActiveRecord::Base.sanitize(v.to_s(:db))
-        else
-          v = ActiveRecord::Base.sanitize(v)
-        end
         deletes[cust_def_id] ||= []
         deletes[cust_def_id] << {id: customizable_id, type: cv.customizable.class.name}
         # Sometimes we don't want to create the custom value if the field doesn't have any value in it (to lessen the length of the edit page for instance)
         if !opts[:skip_insert_nil_values] || !cv.value.nil?
-          vals = Array.new(10,"null")
-          vals[BATCH_INSERT_POSITIONS.index(cv.sql_field_name)] = v
-          vals[7] = ActiveRecord::Base.sanitize cv.customizable.class.name
-          vals[8] = customizable_id
-          vals[9] = cust_def_id
-          inserts << "(#{ vals.join(',') }, now(), now())"
+          inserts << cv
         end
         to_touch << cv.customizable if touch_parent && !to_touch.include?(cv.customizable)
       end
       deletes.each do |def_id,customizables|
-        ActiveRecord::Base.connection.execute "DELETE FROM custom_values WHERE custom_definition_id = #{def_id} and customizable_id IN (#{customizables.collect{|c| c[:id]}.join(", ")}) and customizable_type = '#{customizables.first[:type]}'"
+        ActiveRecord::Base.connection.execute "DELETE FROM custom_values WHERE #{ActiveRecord::Base.sanitize_sql_array(["custom_definition_id = ? and customizable_id IN (?) and customizable_type = ?", def_id, customizables.collect{|c| c[:id]}, customizables.first[:type]])}"
       end
       if !inserts.empty?
-        sql = "INSERT INTO custom_values (#{BATCH_INSERT_POSITIONS.join(', ')}, customizable_type, customizable_id, custom_definition_id, updated_at, created_at) VALUES #{inserts.join(",")};"
-        ActiveRecord::Base.connection.execute sql
+        CustomValue.import inserts
       end
       to_touch.each do |c|
         cm = CoreModule.find_by_object c

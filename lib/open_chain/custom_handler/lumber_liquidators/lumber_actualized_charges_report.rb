@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAc
   def find_entries user, start_date, end_date, time_zone = "America/New_York"
     start_date = ActiveSupport::TimeZone[time_zone].parse start_date.to_s
     end_date = ActiveSupport::TimeZone[time_zone].parse end_date.to_s
-    Entry.search_secure(user, Entry.where(customer_number: "LUMBER", source_system: Entry::KEWILL_SOURCE_SYSTEM).where("entries.release_date >= '#{start_date.to_s(:db)}' AND entries.release_date < '#{end_date.to_s(:db)}'").
+    Entry.search_secure(user, Entry.where(customer_number: "LUMBER", source_system: Entry::KEWILL_SOURCE_SYSTEM).where("entries.release_date >= ? AND entries.release_date < ?", start_date.to_s(:db), end_date.to_s(:db)).
       order("entries.release_date ASC"))
   end
 

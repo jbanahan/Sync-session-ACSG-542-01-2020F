@@ -70,11 +70,11 @@ module OpenChain; class ActivitySummary
     def get_entries(current_user, company)
       if current_user.view_entries? && company.can_view?(current_user)
         Entry.search_secure(current_user, Entry.select("companies.name AS company_name, duty_due_date, ports.name AS port_name, entries.id AS entry_id, entry_number, "\
-                                                       "entry_type, customer_references, #{release_date_mf.field_name}, total_duty, total_fees, (total_duty + total_fees) AS total_duty_and_fees")
+                                                       "entry_type, customer_references, #{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)}, total_duty, total_fees, (total_duty + total_fees) AS total_duty_and_fees")
                                                .joins(:us_entry_port)
                                                .joins(:importer)
                                                .where("importer_id = ? ", company.id)
-                                               .where("#{release_date_mf.field_name} IS NOT NULL")
+                                               .where("#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} IS NOT NULL")
                                                .where("duty_due_date >= ?", Time.zone.now.in_time_zone(current_user.time_zone).to_date)
                                                .where(monthly_statement_due_date: nil)
                                                .order("duty_due_date"))                                        
@@ -155,7 +155,7 @@ module OpenChain; class ActivitySummary
            .where(tracking_open_clause)
            .where(country_clause)
            .where(format_where more_where_clauses)
-           .order(%Q(IFNULL(entries.#{release_date_mf.field_name},"2999-01-01") DESC))
+           .order(%Q(IFNULL(entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)},"2999-01-01") DESC))
     end
 
     protected
@@ -280,30 +280,30 @@ module OpenChain; class ActivitySummary
 
     # generate a where clause for the previous 1 week 
     def week_clause base_date_utc
-      "(#{release_date_mf.field_name} > DATE_ADD('#{base_date_utc}',INTERVAL -1 WEEK) AND #{release_date_mf.field_name} < '#{end_of_day(base_date_utc)}')"
+      ActiveRecord::Base.sanitize_sql_array(["(#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} > DATE_ADD(?,INTERVAL -1 WEEK) AND #{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} < ?)", base_date_utc, end_of_day(base_date_utc)])
     end
     # generate a where clause for the previous 4 weeks
     def four_week_clause base_date_utc
-      "(#{release_date_mf.field_name} > DATE_ADD('#{base_date_utc}',INTERVAL -4 WEEK) AND #{release_date_mf.field_name} < '#{end_of_day(base_date_utc)}')"
+      ActiveRecord::Base.sanitize_sql_array(["(#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} > DATE_ADD(?,INTERVAL -4 WEEK) AND #{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} < ?)", base_date_utc, end_of_day(base_date_utc)])
     end
     # generate a where clause for open entries that are not released
     # "...AND entries.release_date IS NULL" is needed to prevent US entries released before we introduced first_release_received_date from being included.
     def not_released_clause base_date_utc
-      "((entries.#{release_date_mf.field_name} IS NULL AND entries.release_date IS NULL) OR entries.#{release_date_mf.field_name} > '#{base_date_utc}')"
+      ActiveRecord::Base.sanitize_sql_array(["((entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} IS NULL AND entries.release_date IS NULL) OR entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} > ?)", base_date_utc])
     end
     # genereate a where clause for Released Year to Date
     def ytd_clause base_date_utc
-      "(entries.#{release_date_mf.field_name} BETWEEN '#{base_date_utc.year}-01-01 00:00' AND '#{base_date_utc.year}-12-31 11:59:59.999')"
+      ActiveRecord::Base.sanitize_sql_array(["(entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} BETWEEN '?-01-01 00:00' AND '?-12-31 11:59:59.999')", base_date_utc.year.to_i, base_date_utc.year.to_i])
     end
     def end_of_day base_date_utc
       (base_date_utc + 1.day).midnight - 1.second
     end
 
     def tracking_open_clause
-      "(entries.tracking_status = #{Entry::TRACKING_STATUS_OPEN})"
+      ActiveRecord::Base.sanitize_sql_array(["(entries.tracking_status = ?)", Entry::TRACKING_STATUS_OPEN])
     end
     def country_clause
-      "(entries.import_country_id = #{country_id})"
+      ActiveRecord::Base.sanitize_sql_array(["(entries.import_country_id = ?)", country_id])
     end
     def on_hold_clause
       "entries.on_hold = true"
