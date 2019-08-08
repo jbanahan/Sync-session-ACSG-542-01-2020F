@@ -296,6 +296,15 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       expect(REXML::XPath.each(doc.root, "product/classification_country").map(&:text)).to eq ["US", "IT", "US"]
       expect(REXML::XPath.each(doc.root, "product/hts").map(&:text)).to eq ["1234.56.7890", "1234.56.7890", "9876.54.3210"]
     end
+
+    it "should not send products with AX Export Manual set to 'EXPORTED'" do
+      prod = Factory(:product)
+      prod.update_custom_value! @cdefs[:ax_export_status_manual], "EXPORTED"
+      prod.update_custom_value! @sap_brand_cd, true
+      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>prod))
+
+      expect(described_class.new.sync_xml).to be_nil
+    end
   end
 
   describe "ftp_credentials" do

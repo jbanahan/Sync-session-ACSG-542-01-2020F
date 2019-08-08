@@ -97,8 +97,10 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
           @barthco_cust = CustomDefinition.where(label: "Barthco Customer ID").first
           @test_style = CustomDefinition.where(label: "Test Style").first
           @set_type = CustomDefinition.where(label: "Set Type").first
+          @ax_export = CustomDefinition.where(cdef_uid: "prod_ax_export_status_manual").first
 
           @match_product.update_custom_value! @barthco_cust, '100'
+          @match_product.update_custom_value! @ax_export, 'NOT EXPORTED'
         end
         it 'should not return product without US classification' do
           dont_find = Factory(:classification).product
@@ -134,6 +136,11 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
         end
         it "should not return products that are non-RL sets and are missing hts numbers" do
           @tariff_record.update_attributes :hts_1 => ''
+          r = Product.connection.execute subject.query
+          expect(r.count).to eq 0
+        end
+        it "should not return products with AX Export Manual set to 'EXPORTED'" do
+          @match_product.update_custom_value! @ax_export, "EXPORTED"
           r = Product.connection.execute subject.query
           expect(r.count).to eq 0
         end

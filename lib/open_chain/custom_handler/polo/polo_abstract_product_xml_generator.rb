@@ -150,7 +150,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloAbstractProductXm
       :length_cm, :width_cm, :height_cm, :length_in, :width_in, :height_in, :strap_width, :secure_closure, :closure_type, :multiple_compartment, 
       :fourchettes_for_gloves, :lined_for_gloves, :seamed, :components, :cost_of_component, :weight_of_components, :coated_filled_plated, 
       :type_coated_filled_plated, :precious_semi_precious, :telescopic_shaft, :eu_sanitation_certificate, :japan_sanitation_certificate, 
-      :korea_sanitation_certificate])
+      :korea_sanitation_certificate, :ax_export_status_manual])
   end
 
   def boolean v
@@ -175,14 +175,18 @@ module OpenChain; module CustomHandler; module Polo; class PoloAbstractProductXm
 
   def query
     # First id is stripped off, but we want it sent to the xml method so add it twice to the query
-    q = "SELECT products.id, products.id FROM products products #{Product.need_sync_join_clause(sync_code)} "
+    q = <<-SQL
+          SELECT products.id, products.id 
+          FROM products products #{Product.need_sync_join_clause(sync_code)}
+          LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{cdefs[:ax_export_status_manual].id}
+        SQL
     if custom_where.blank?
-      q += "WHERE #{Product.need_sync_where_clause} "
+      q += " WHERE #{Product.need_sync_where_clause} AND !(ax_export_manual.string_value <=> 'EXPORTED') "
     else
-      q += "WHERE #{custom_where} "
+      q += " WHERE #{custom_where} "
     end
-    q += "ORDER BY products.updated_at "
-    q += "LIMIT #{max_products}"
+    q += " ORDER BY products.updated_at "
+    q += " LIMIT #{max_products}"
 
     q
   end

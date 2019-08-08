@@ -19,11 +19,14 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
   end
 
   # find the products that need to be sent to MSL+ (they have MSL+ Receive Dates and need sync)
+  # exclude any that have the AX generator's ax_export_manual field set
   def products_to_send
     send_countries = send_classification_countries
     init_outbound_custom_definitions
-    Product.select("distinct products.*").need_sync("Brazil").
-      joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN classifications c ON c.product_id = products.id AND c.country_id IN (?)", send_countries]))
+    Product.select("distinct products.*").need_sync("Brazil")
+           .joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN classifications c ON c.product_id = products.id AND c.country_id IN (?)", send_countries]))
+           .joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = ?", @out_cdefs[:ax_export_status_manual].id]))
+           .where("!(ax_export_manual.string_value <=> 'EXPORTED')")
   end
 
   # Generate the file with data that needs to be sent back to MSL+
@@ -112,7 +115,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
 
         cdefs.push :material_group, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1, :scientific_name_2, :scientific_name_3,
                     :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3,
-                    :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife, :bartho_customer_id, :msl_fiber_failure, :msl_us_class
+                    :origin_wildlife, :semi_precious, :semi_precious_type, :cites, :fish_wildlife, :bartho_customer_id, :msl_fiber_failure, :msl_us_class, :ax_export_status_manual
 
         @out_cdefs = self.class.prep_custom_definitions cdefs
       end

@@ -14,11 +14,13 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
   end
 
   let (:csm_def) { Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text) }
+  let (:ax_def) { Factory(:custom_definition,:module_type=>"Product",data_type: :string, cdef_uid: "prod_ax_export_status_manual") }
   let (:italy) { Factory(:country,:iso_code=>'IT') }
   let (:product) {
     tr = Factory(:tariff_record,:hts_1=>'1234567890', :hts_2=>'123455555', :hts_3=>'0987654321', :classification=>Factory(:classification,:country=>italy))
     prod = tr.classification.product
     prod.update_custom_value! csm_def, 'CSMVAL'
+    prod.update_custom_value! ax_def, "NOT EXPORTED"
     prod
   }
 
@@ -87,6 +89,11 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     end
     it "should not return anything other than tariff row 1" do
       product.classifications.first.tariff_records.first.update_attributes! line_number: 2
+      r = Product.connection.execute subject.query
+      expect(r.count).to eq(0)
+    end
+    it "should not find a product with AX Export Manual set to 'EXPORTED'" do
+      product.update_custom_value! ax_def, "EXPORTED"
       r = Product.connection.execute subject.query
       expect(r.count).to eq(0)
     end

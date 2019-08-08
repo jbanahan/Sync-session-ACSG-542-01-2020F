@@ -15,11 +15,13 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
   end
 
   let (:csm_def) { CustomDefinition.where(label: "CSM Number", module_type: "Product").first }
+  let (:ax_def) { CustomDefinition.where(cdef_uid: "prod_ax_export_status_manual").first }
   let (:italy) { Factory(:country,:iso_code=>'IT') }
   let (:product) {
     tr = Factory(:tariff_record,:hts_1=>'1234567890', :hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>Factory(:classification,:country=>italy))
     prod = tr.classification.product
     prod.update_custom_value! csm_def, 'CSMVAL'
+    prod.update_custom_value! ax_def, "NOT EXPORTED"
     prod
   }
 
@@ -134,7 +136,11 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       r = Product.connection.execute subject.query
       expect(r.count).to eq(0)
     end
-
+    it "should not find a product with AX Export Manual set to 'EXPORTED'" do
+      product.update_custom_value! ax_def, 'Exported'
+      r = Product.connection.execute subject.query
+      expect(r.count).to eq 0
+    end
     it "should utilize max results" do
       # Create a second product and confirm only a single result was returned.
       tr = Factory(:tariff_record, hts_1: '1234567890',classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))

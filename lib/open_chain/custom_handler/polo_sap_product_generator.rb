@@ -219,39 +219,42 @@ module OpenChain
       def query
         @cdefs ||= self.class.prep_custom_definitions self.class.cdefs
 
-        q = "SELECT products.id,
-products.unique_identifier,
-#{cd_s @cdefs[:fiber_content]},
-countries.iso_code as 'Classification - Country ISO Code',
-tariff_records.hts_1 as 'Tariff - HTS Code 1',
-#{custom_def_query_fields}
-FROM products
-#{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
-INNER JOIN classifications on classifications.product_id = products.id
-INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
-#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
-  )
-INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
-INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
-ORDER BY products.updated_at, products.unique_identifier, countries.iso_code, tariff_records.line_number"
-
-        q
+        <<-SQL 
+          SELECT products.id,
+            products.unique_identifier,
+            #{cd_s @cdefs[:fiber_content]},
+            countries.iso_code AS 'Classification - Country ISO Code',
+            tariff_records.hts_1 AS 'Tariff - HTS Code 1',
+            #{custom_def_query_fields}
+          FROM products
+            #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
+            INNER JOIN classifications ON classifications.product_id = products.id
+            INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
+            #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')}
+              )
+            INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id AND LENGTH(tariff_records.hts_1) > 0
+            INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
+          ORDER BY products.updated_at, products.unique_identifier, countries.iso_code, tariff_records.line_number
+        SQL
       end
 
       def inner_query
-        q = <<-QRY
-SELECT DISTINCT products.id
-FROM products
-#{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
-INNER JOIN classifications on classifications.product_id = products.id 
-INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
-#{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
-INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
-        QRY
+        q = <<-SQL
+              SELECT DISTINCT products.id
+              FROM products
+                #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
+                INNER JOIN classifications ON classifications.product_id = products.id 
+                INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
+                #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
+                INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id AND LENGTH(tariff_records.hts_1) > 0
+                LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{@cdefs[:ax_export_status_manual].id}
+            SQL
+        
         if @custom_where.blank?
-          q << "\n#{Product.need_sync_join_clause(sync_code)}\nWHERE #{Product.need_sync_where_clause()}"
+          q << " #{Product.need_sync_join_clause(sync_code)} "
+          q << " WHERE #{Product.need_sync_where_clause()} AND !(ax_export_manual.string_value <=> 'EXPORTED') "
         else
-          q << "\n#{@custom_where}"
+          q << " #{@custom_where} "
         end
 
         q << " ORDER BY products.updated_at ASC LIMIT #{max_products}"
@@ -262,9 +265,9 @@ INNER JOIN tariff_records on tariff_records.classification_id = classifications.
         [:fiber_content, :cites, :meets_down_requirments, :long_description, :fish_wildlife, :country_of_origin, :set_type,
          :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, :fish_wildlife_origin_4, :fish_wildlife_origin_5,
          :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :fish_wildlife_source_4, :fish_wildlife_source_5,
-         :common_name_1, :common_name_2, :common_name_3, :common_name_4, :common_name_5,
-         :scientific_name_1, :scientific_name_2, :scientific_name_3, :scientific_name_4, :scientific_name_5,
-         :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, :knit_woven, :clean_fiber_content, :prod_fda_indicator]
+         :common_name_1, :common_name_2, :common_name_3, :common_name_4, :common_name_5, :scientific_name_1, :scientific_name_2, 
+         :scientific_name_3, :scientific_name_4, :scientific_name_5, :stitch_count_vertical, :stitch_count_horizontal, :allocation_category, 
+         :knit_woven, :clean_fiber_content, :prod_fda_indicator, :ax_export_status_manual]
       end
 
       def custom_def_query_fields
