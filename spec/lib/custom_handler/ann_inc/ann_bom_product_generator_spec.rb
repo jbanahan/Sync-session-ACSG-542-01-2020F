@@ -12,7 +12,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
   end
   let(:classi_1_1) do 
     cl = Factory(:classification, product: product_1, country: us)
-    cl.update_custom_value! cdefs[:classification_type], "Multi"
+    cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
+    cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
+    cl.save!
     cl
   end
   let(:tariff_1_1_1) do
@@ -32,7 +34,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr
   end
   let(:classi_1_2) do 
-    Factory(:classification, product: product_1, country: ca)
+    cl = Factory(:classification, product: product_1, country: ca)
+    cl.update_custom_value! cdefs[:approved_date], cl.updated_at - 2.days
+    cl
   end
   let(:tariff_1_2_1) do
     tr = Factory(:tariff_record, classification: classi_1_2, hts_1: "135791011", line_number: 1)
@@ -49,7 +53,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
   end
   let(:classi_2_1) do 
     cl = Factory(:classification, product: product_2, country: us)
-    cl.update_custom_value! cdefs[:classification_type], "Decision"
+    cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
+    cl.find_and_set_custom_value cdefs[:classification_type], "Decision"
+    cl.save!
     cl
   end
   let(:tariff_2_1_1) do
@@ -195,6 +201,20 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       load_all
       now = product_1.updated_at + 1.day
       product_1.sync_records.create! sent_at: now , confirmed_at: now + 5.minutes, trading_partner: "ANN-BOM"
+      results = ActiveRecord::Base.connection.execute subject.query
+      expect(results.count).to eq 0
+    end
+
+    it "excludes results that are missing an approved date" do
+      load_all
+      classi_1_1.update_custom_value! cdefs[:approved_date], nil
+      results = ActiveRecord::Base.connection.execute subject.query
+      expect(results.count).to eq 0
+    end
+
+    it "excludes results approved today for initial sync" do
+      load_all
+      classi_1_1.update_custom_value! cdefs[:approved_date], Time.zone.now.in_time_zone("UTC")
       results = ActiveRecord::Base.connection.execute subject.query
       expect(results.count).to eq 0
     end

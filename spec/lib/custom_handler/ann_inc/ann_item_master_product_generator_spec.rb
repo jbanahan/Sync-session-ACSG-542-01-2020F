@@ -15,6 +15,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
     cl = Factory(:classification, product: product_1, country: us)
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
     cl.find_and_set_custom_value cdefs[:long_desc_override], "long\r\ndescr 1 1\r"
+    cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.save!
     t = Factory(:tariff_record, classification: cl, hts_1: "123456789", line_number: 1)
     t.update_custom_value! cdefs[:set_qty], 5
@@ -23,6 +24,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
   end
   let(:classi_1_2) do 
     cl = Factory(:classification, product: product_1, country: ca)
+    cl.update_custom_value! cdefs[:approved_date], cl.updated_at - 2.days
     Factory(:tariff_record, classification: cl, hts_1: "135791011", line_number: 1)
     cl
   end
@@ -33,6 +35,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
   end
   let(:classi_2_1) do 
     cl = Factory(:classification, product: product_2, country: us)
+    cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.find_and_set_custom_value cdefs[:classification_type], "Decision"
     cl.find_and_set_custom_value cdefs[:long_desc_override], "long descr 2 1"
     cl.save!
@@ -175,13 +178,27 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       expect(results.count).to eq 1
     end
 
-    it "excludes results with sync records" do
+    it "excludes results that have been synced since the last update" do
       load_all
-      now = product_1.updated_at + 1.day
-      product_1.sync_records.create! sent_at: now , confirmed_at: now + 5.minutes, trading_partner: "ANN-ITEM-MASTER"
+      sync_date = product_1.updated_at + 1.day
+      product_1.sync_records.create! sent_at: sync_date , confirmed_at: sync_date + 5.minutes, trading_partner: "ANN-ITEM-MASTER"
       results = ActiveRecord::Base.connection.execute subject.query
       expect(results.count).to eq 1
       expect(results.first).to eq [product_2.id, "uid 2", "long descr 2 1", "approved long 2", "24681012", "Decision", nil, 0]
+    end
+
+    it "excludes results that are missing an approved date" do
+      load_all
+      classi_1_1.update_custom_value! cdefs[:approved_date], nil
+      results = ActiveRecord::Base.connection.execute subject.query
+      expect(results.count).to eq 1
+    end
+
+    it "excludes results approved today for initial sync" do
+      load_all
+      classi_1_1.update_custom_value! cdefs[:approved_date], Time.zone.now.in_time_zone("UTC")
+      results = ActiveRecord::Base.connection.execute subject.query
+      expect(results.count).to eq 1
     end
 
     it "accepts 'custom where'" do

@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnBomProductGenera
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions [:classification_type, :key_description, :set_qty, :percent_of_value, :related_styles]
+    @cdefs ||= self.class.prep_custom_definitions [:classification_type, :key_description, :set_qty, :percent_of_value, :related_styles, :approved_date]
   end
 
   # Integration Point requires each file to be under 25MB. Each line is under 199 bytes, but must be multipled by the number of related styles.
@@ -82,33 +82,36 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnBomProductGenera
   end
   
   def query
-    <<-SQL
-      SELECT products.id,
-             products.unique_identifier,
-             SUBSTR(related_styles.text_value,1,50),
-             classification_type.string_value,
-             tr.hts_1,
-             tr.line_number,
-             IFNULL(set_qty.integer_value, 0),
-             IFNULL(percent_of_value.integer_value, 0),
-             SUBSTR(key_description.text_value,1,50)
-      FROM products
-        LEFT OUTER JOIN custom_values related_styles ON related_styles.customizable_id = products.id 
-          AND related_styles.customizable_type = "Product" AND related_styles.custom_definition_id = #{cdefs[:related_styles].id}
-        INNER JOIN classifications cl ON products.id = cl.product_id
-        LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id 
-          AND classification_type.customizable_type = "Classification" AND classification_type.custom_definition_id = #{cdefs[:classification_type].id}
-        INNER JOIN tariff_records AS tr ON cl.id = tr.classification_id
-        LEFT OUTER JOIN custom_values AS set_qty ON tr.id = set_qty.customizable_id
-          AND set_qty.customizable_type = "TariffRecord" AND set_qty.custom_definition_id = #{cdefs[:set_qty].id}
-        LEFT OUTER JOIN custom_values AS percent_of_value ON tr.id = percent_of_value.customizable_id
-          AND percent_of_value.customizable_type = "TariffRecord" AND percent_of_value.custom_definition_id = #{cdefs[:percent_of_value].id}
-        LEFT OUTER JOIN custom_values AS key_description ON tr.id = key_description.customizable_id
-          AND key_description.customizable_type = "TariffRecord" AND key_description.custom_definition_id = #{cdefs[:key_description].id}
-      #{where_clause}
-      ORDER BY products.id, tr.line_number
-      LIMIT #{max_results}
-    SQL
+    q = <<-SQL
+          SELECT products.id,
+                 products.unique_identifier,
+                 SUBSTR(related_styles.text_value,1,50),
+                 classification_type.string_value,
+                 tr.hts_1,
+                 tr.line_number,
+                 IFNULL(set_qty.integer_value, 0),
+                 IFNULL(percent_of_value.integer_value, 0),
+                 SUBSTR(key_description.text_value,1,50)
+          FROM products
+            LEFT OUTER JOIN custom_values related_styles ON related_styles.customizable_id = products.id 
+              AND related_styles.customizable_type = "Product" AND related_styles.custom_definition_id = ?
+            INNER JOIN classifications cl ON products.id = cl.product_id
+            LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id 
+              AND classification_type.customizable_type = "Classification" AND classification_type.custom_definition_id = ?
+            LEFT OUTER JOIN custom_values AS approved_date ON cl.id = approved_date.customizable_id
+              AND approved_date.customizable_type = "Classification" AND approved_date.custom_definition_id = ?
+            INNER JOIN tariff_records AS tr ON cl.id = tr.classification_id
+            LEFT OUTER JOIN custom_values AS set_qty ON tr.id = set_qty.customizable_id
+              AND set_qty.customizable_type = "TariffRecord" AND set_qty.custom_definition_id = ?
+            LEFT OUTER JOIN custom_values AS percent_of_value ON tr.id = percent_of_value.customizable_id
+              AND percent_of_value.customizable_type = "TariffRecord" AND percent_of_value.custom_definition_id = ?
+            LEFT OUTER JOIN custom_values AS key_description ON tr.id = key_description.customizable_id
+              AND key_description.customizable_type = "TariffRecord" AND key_description.custom_definition_id = ?
+          #{where_clause}
+          ORDER BY products.id, tr.line_number
+          LIMIT ?
+        SQL
+    ActiveRecord::Base.sanitize_sql_array([q, cdefs[:related_styles].id,cdefs[:classification_type].id,cdefs[:approved_date].id,cdefs[:set_qty].id,cdefs[:percent_of_value].id,cdefs[:key_description].id,max_results])
   end
 
   def where_clause
@@ -116,10 +119,13 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnBomProductGenera
     if @custom_where.blank?
       sql << Product.need_sync_join_clause(sync_code)
       sql << " WHERE #{Product.need_sync_where_clause()}"
-      sql << " AND cl.country_id = #{us.id} AND classification_type.string_value = 'Multi'"
+      sql << " AND cl.country_id = ? AND classification_type.string_value = 'Multi'"
+      sql << " AND approved_date.date_value IS NOT NULL "
+      sql << " AND IF(sync_records.sent_at IS NULL, approved_date.date_value < CURRENT_DATE(), 1) "
     else
       sql << @custom_where
     end
+    ActiveRecord::Base.sanitize_sql_array([sql, us.id])
   end
 
 end; end; end; end

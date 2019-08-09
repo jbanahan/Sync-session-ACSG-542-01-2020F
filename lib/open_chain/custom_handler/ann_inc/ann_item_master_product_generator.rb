@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions [:classification_type, :long_desc_override, :approved_long, :related_styles, :set_qty]
+    @cdefs ||= self.class.prep_custom_definitions [:classification_type, :long_desc_override, :approved_long, :related_styles, :set_qty, :approved_date]
   end
 
   # Integration Point requires each file to be under 25MB. Each line is under 199 bytes, but must be multipled by the number of related styles.
@@ -108,43 +108,49 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
   end
 
   def query
-    <<-SQL
-      SELECT products.id,
-             products.unique_identifier,
-             SUBSTR(long_desc_override.text_value,1, 50),
-             SUBSTR(approved_long.text_value,1,50),
-             tr.hts_1,
-             classification_type.string_value,
-             SUBSTR(related_styles.text_value,1,50),
-             IFNULL(set_qty.integer_value, 0)
-      FROM products
-        LEFT OUTER JOIN custom_values AS related_styles ON products.id = related_styles.customizable_id 
-          AND related_styles.customizable_type = "Product" AND related_styles.custom_definition_id = #{cdefs[:related_styles].id}
-        LEFT OUTER JOIN custom_values AS approved_long ON products.id = approved_long.customizable_id 
-          AND approved_long.customizable_type = "Product" AND approved_long.custom_definition_id = #{cdefs[:approved_long].id}
-        INNER JOIN classifications cl ON products.id = cl.product_id
-        LEFT OUTER JOIN custom_values AS long_desc_override ON cl.id = long_desc_override.customizable_id 
-          AND long_desc_override.customizable_type = "Classification" AND long_desc_override.custom_definition_id = #{cdefs[:long_desc_override].id}
-        LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id 
-          AND classification_type.customizable_type = "Classification" AND classification_type.custom_definition_id = #{cdefs[:classification_type].id}
-        INNER JOIN tariff_records AS tr ON cl.id = tr.classification_id
-        LEFT OUTER JOIN custom_values AS set_qty ON tr.id = set_qty.customizable_id
-          AND set_qty.customizable_type = "TariffRecord" AND set_qty.custom_definition_id = #{cdefs[:set_qty].id}
-      #{where_clause}
-      ORDER BY products.id, tr.line_number
-      LIMIT #{max_results}
-    SQL
+    q = <<-SQL
+          SELECT products.id,
+                 products.unique_identifier,
+                 SUBSTR(long_desc_override.text_value,1, 50),
+                 SUBSTR(approved_long.text_value,1,50),
+                 tr.hts_1,
+                 classification_type.string_value,
+                 SUBSTR(related_styles.text_value,1,50),
+                 IFNULL(set_qty.integer_value, 0)
+          FROM products
+            LEFT OUTER JOIN custom_values AS related_styles ON products.id = related_styles.customizable_id 
+              AND related_styles.customizable_type = "Product" AND related_styles.custom_definition_id = ?
+            LEFT OUTER JOIN custom_values AS approved_long ON products.id = approved_long.customizable_id 
+              AND approved_long.customizable_type = "Product" AND approved_long.custom_definition_id = ?
+            INNER JOIN classifications cl ON products.id = cl.product_id
+            LEFT OUTER JOIN custom_values AS long_desc_override ON cl.id = long_desc_override.customizable_id 
+              AND long_desc_override.customizable_type = "Classification" AND long_desc_override.custom_definition_id = ?
+            LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id 
+              AND classification_type.customizable_type = "Classification" AND classification_type.custom_definition_id = ?
+            LEFT OUTER JOIN custom_values AS approved_date ON cl.id = approved_date.customizable_id
+              AND approved_date.customizable_type = "Classification" AND approved_date.custom_definition_id = ?
+            INNER JOIN tariff_records AS tr ON cl.id = tr.classification_id
+            LEFT OUTER JOIN custom_values AS set_qty ON tr.id = set_qty.customizable_id
+              AND set_qty.customizable_type = "TariffRecord" AND set_qty.custom_definition_id = ?
+          #{where_clause}
+          ORDER BY products.id, tr.line_number
+          LIMIT ?
+        SQL
+    ActiveRecord::Base.sanitize_sql_array([q, cdefs[:related_styles],cdefs[:approved_long],cdefs[:long_desc_override],cdefs[:classification_type],cdefs[:approved_date],cdefs[:set_qty],max_results])
   end
 
   def where_clause
     sql = ""
     if @custom_where.blank?
       sql << Product.need_sync_join_clause(sync_code)
-      sql << " WHERE #{Product.need_sync_where_clause()}"
-      sql << " AND tr.line_number = 1 AND cl.country_id = #{us.id}"
+      sql << " WHERE #{Product.need_sync_where_clause} "
+      sql << " AND tr.line_number = 1 AND cl.country_id = ? "
+      sql << " AND approved_date.date_value IS NOT NULL "
+      sql << " AND IF(sync_records.sent_at IS NULL, approved_date.date_value < CURRENT_DATE(), 1) "
     else
       sql << @custom_where
     end
+    ActiveRecord::Base.sanitize_sql_array([sql, us.id])
   end
   
 end; end; end; end
