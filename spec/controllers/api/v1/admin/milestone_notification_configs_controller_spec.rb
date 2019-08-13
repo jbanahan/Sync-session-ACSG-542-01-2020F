@@ -36,6 +36,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
         enabled: true,
         output_style: "standard",
         testing: nil,
+        gtn_time_modifier: nil,
         module_type: "Entry",
         setup_json: {
           milestone_fields: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true, label: "Broker Reference", event_code: "brok_ref"}],
@@ -88,6 +89,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
         enabled: true,
         output_style: "standard",
         testing: nil,
+        gtn_time_modifier: nil,
         module_type: "Entry",
         setup_json: {
           milestone_fields: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true, label: "Broker Reference", event_code: "brok_ref"}],
@@ -116,6 +118,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
                 output_style: "standard",
                 enabled: true,
                 testing: false,
+                gtn_time_modifier: false,
                 module_type: "Entry",
                 setup_json: {
                   milestone_fields: [
@@ -137,6 +140,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(config.customer_number).to eq "CUST"
       expect(config.enabled).to be_truthy
       expect(config.testing).to be_falsey
+      expect(config.gtn_time_modifier).to be_falsey
       expect(config.output_style).to eq "standard"
       expect(config.milestone_fields).to eq (
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
@@ -211,6 +215,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
                  output_style: "mbol_container",
                  enabled: false,
                  testing: true,
+                 gtn_time_modifier: true,
                  module_type: "Entry",
                  setup_json: {
                    milestone_fields: [
@@ -235,6 +240,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(@config.enabled).to be_falsey
       expect(@config.output_style).to eq "mbol_container"
       expect(@config.testing).to be_truthy
+      expect(@config.gtn_time_modifier).to be_truthy
       expect(@config.milestone_fields).to eq (
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
       )
@@ -267,9 +273,9 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
   describe "index" do
     it "lists all configs" do
-      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", testing: false, module_type:"Entry", setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
+      config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", testing: false, gtn_time_modifier: false, module_type:"Entry", setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
       config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false
-      config2 = MilestoneNotificationConfig.create! customer_number: "ABC",output_style: "standard", testing: true, module_type: "Entry"
+      config2 = MilestoneNotificationConfig.create! customer_number: "ABC",output_style: "standard", testing: true, gtn_time_modifier: true, module_type: "Entry"
 
       get :index
 
@@ -287,7 +293,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
             module_type: "Entry",
             setup_json: {milestone_fields: [], fingerprint_fields: []},
             search_criterions: [],
-            testing: true
+            testing: true,
+            gtn_time_modifier: true
           }
         }.with_indifferent_access
       )
@@ -299,6 +306,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
             enabled: nil,
             output_style: 'standard',
             testing: false,
+            gtn_time_modifier: false,
             module_type:"Entry",
             setup_json: {
               milestone_fields: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true, label: "Broker Reference", event_code: "brok_ref"}],
@@ -344,7 +352,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
           fingerprint_fields: []
         },
         search_criterions: [],
-        testing: nil
+        testing: nil,
+        gtn_time_modifier: nil,
         }.with_indifferent_access
       )
 

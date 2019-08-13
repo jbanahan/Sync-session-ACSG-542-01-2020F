@@ -4,6 +4,7 @@
 #
 #  confirmation_file_name :string(255)
 #  confirmed_at           :datetime
+#  context                :text(65535)
 #  created_at             :datetime         not null
 #  failure_message        :string(255)
 #  fingerprint            :string(255)
@@ -26,7 +27,7 @@
 class SyncRecord < ActiveRecord::Base
   attr_accessible :confirmation_file_name, :confirmed_at, :failure_message, 
     :fingerprint, :ftp_session_id, :ignore_updates_before, :sent_at, 
-    :syncable_id, :syncable_type, :trading_partner, :syncable, :created_at
+    :syncable_id, :syncable_type, :trading_partner, :syncable, :created_at, :context
   
   belongs_to :syncable, polymorphic: true, inverse_of: :sync_records
   validates :trading_partner, :presence=>true
@@ -53,5 +54,15 @@ class SyncRecord < ActiveRecord::Base
     end
     sr.assign_attributes attrs
     nil
+  end
+
+  def context
+    self[:context] = {}.to_json unless self[:context]
+    JSON.parse self[:context]
+  end
+
+  def set_context key, val
+    updated = (context[key] = val)
+    self[:context] = {key => updated}.to_json
   end
 end

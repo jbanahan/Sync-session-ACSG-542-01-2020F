@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; class Isf315Generator
           fingerprint_values = fingerprint_field_data isf, user, setup
 
           setup.milestone_fields.each do |field|
-            milestones << process_field(field.with_indifferent_access, user, isf, setup.testing?, fingerprint_values)
+            milestones << process_field(field.with_indifferent_access, user, isf, setup.testing?, setup.gtn_time_modifier?, fingerprint_values)
           end
         end
       end

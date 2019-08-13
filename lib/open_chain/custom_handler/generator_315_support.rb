@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module Generator315Support
     nil
   end
 
-  def process_field field, user, entry, testing, additional_fingerprint_values = []
+  def process_field field, user, entry, testing, gtn_time_modifier, additional_fingerprint_values = []
     mf = ModelField.find_by_uid field[:model_field_uid]
     value = mf.process_export entry, user, true
 
@@ -105,6 +105,7 @@ module OpenChain; module CustomHandler; module Generator315Support
           # Confirmed at is sent once we've confirmed the record has actually been sent (ftp'ed)
           sync_record.sent_at = Time.zone.now
           sync_record.confirmed_at = nil
+          gtn_time_adjust mu, sync_record if gtn_time_modifier
 
           sync_record.save!
           mu.sync_record = sync_record
@@ -114,6 +115,58 @@ module OpenChain; module CustomHandler; module Generator315Support
       end
     end
     milestone
+  end
+
+  # Reassigns the hours/minutes component of a milestone update if its already been used
+  # for a particular day. Duplicates are identified with a log kept on the sync record.
+  def gtn_time_adjust mu, sync_record
+    tz = (mu.date.respond_to? :time_zone) ? mu.date.time_zone : default_timezone
+    date, hours, min = mu.date.strftime("%Y%m%d %H %M").split(" ")
+    total_minutes = hours.to_i * 60 + min.to_i
+    timestamps = milestone_uids sync_record, date
+    
+    # If the timestamp has already been used, oscillate above and below searching for the closest
+    # unused one. In the unlikely event they've all been used, stick with the original.
+    if timestamps.include?(total_minutes)
+      new_timestamp = find_unused_timestamp timestamps, total_minutes
+    else
+      new_timestamp = total_minutes
+    end
+      
+    # convert minutes back into hours/minutes
+    mu.date = tz.parse(date + (new_timestamp.divmod 60).map{ |x| x.to_s.rjust(2,'0') }.join)
+    timestamps << new_timestamp
+    set_milestone_uids sync_record, date, timestamps
+
+    nil
+  end
+
+  def find_unused_timestamp timestamps, minutes
+    return minutes if timestamps.count > 1439
+    offset = 0
+    loop do
+      offset += 1
+      incremented = minutes + offset
+      decremented = minutes - offset
+      if !timestamps.include?(incremented) && incremented <= 1439
+        return incremented
+      elsif !timestamps.include?(decremented) && decremented >= 0
+        return decremented
+      end
+      # Neither increment nor decrement could be made, so widen the interval and try again.
+    end
+  end
+
+  private :find_unused_timestamp
+
+  def milestone_uids sync_record, date_str
+    uids = sync_record.context["milestone_uids"]
+    uids && uids[date_str] ? uids[date_str] : []
+  end
+
+  def set_milestone_uids sync_record, date_str, time_str_arr
+    context = sync_record.context["milestone_uids"] || {}
+    sync_record.set_context "milestone_uids", context.merge({date_str => time_str_arr})
   end
 
   def adjust_date_time value, timezone, no_time

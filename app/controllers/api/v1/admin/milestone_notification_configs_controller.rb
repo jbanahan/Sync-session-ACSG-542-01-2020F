@@ -47,6 +47,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       c.output_style = config[:output_style]
       c.enabled = config[:enabled].to_s.to_boolean
       c.testing = config[:testing].to_s.to_boolean
+      c.gtn_time_modifier = config[:gtn_time_modifier].to_s.to_boolean
       c.module_type = config[:module_type]
       
       config[:search_criterions].each do |sc|
@@ -93,7 +94,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
     def config_json config, copy = false
       c = config.as_json(
-        only: [:id, :customer_number, :enabled, :output_style, :testing, :module_type]
+        only: [:id, :customer_number, :enabled, :output_style, :testing, :gtn_time_modifier, :module_type]
       ).with_indifferent_access
 
       # This is a little wonkier than it needs to be due to supporting some older json formats in the setup_json field

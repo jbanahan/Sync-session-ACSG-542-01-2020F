@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
           fingerprint_values = fingerprint_field_data entry, user, setup
 
           setup.milestone_fields.each do |field|
-            milestones << process_field(field.with_indifferent_access, user, entry, setup.testing?, fingerprint_values)
+            milestones << process_field(field.with_indifferent_access, user, entry, setup.testing?, setup.gtn_time_modifier?, fingerprint_values)
           end
         end
       end
