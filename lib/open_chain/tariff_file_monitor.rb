@@ -47,7 +47,7 @@ module OpenChain; class TariffFileMonitor
                     Tempfile.open(["tariff_upload", ".zip"]) do |def_file_copy|
                       IO.copy_stream(def_file, def_file_copy)
                       Attachment.add_original_filename_method def_file_copy, get_country_appropriate_file_name(f.name, tariff_def, instance)
-                      ftp_file def_file_copy, ecs_connect_vfitrack_net("#{instance.vfi_track_system_code}/tariff_file")
+                      ftp_file def_file_copy, chainroot_connect_vfitrack_net("#{instance.vfi_track_system_code}/tariff_file")
 
                       def_file.rewind
                     end

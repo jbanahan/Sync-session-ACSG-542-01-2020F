@@ -57,12 +57,12 @@ describe OpenChain::TariffFileMonitor do
               FtpSender::FtpFile.new("EU_SIMPLE_20170708.ZIP", 0, time_zone.local(2017,7,8), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("EU_SIMPLE_20170708.ZIP", /tariff_upload.+\.zip/)
 
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.ecs_connect_vfitrack_net("inst_1/tariff_file"))
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("CN_C9_SIMPLE_20170708.ZIP"), subject.ecs_connect_vfitrack_net("inst_1/tariff_file"))
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("IT_EU_SIMPLE_20170708.ZIP"), subject.ecs_connect_vfitrack_net("inst_1/tariff_file"))
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.ecs_connect_vfitrack_net("inst_2/tariff_file"))
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("CN_SIMPLE_20170707.ZIP"), subject.ecs_connect_vfitrack_net("inst_2/tariff_file"))
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("NL_EU_SIMPLE_20170708.ZIP"), subject.ecs_connect_vfitrack_net("inst_2/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("CN_C9_SIMPLE_20170708.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("IT_EU_SIMPLE_20170708.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_2/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("CN_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_2/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("NL_EU_SIMPLE_20170708.ZIP"), subject.chainroot_connect_vfitrack_net("inst_2/tariff_file"))
 
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/AU_SIMPLE_20170707.ZIP", tempfile_matching_name("AU_SIMPLE_20170707.ZIP"))
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/CN_C9_SIMPLE_20170708.ZIP", tempfile_matching_name("CN_C9_SIMPLE_20170708.ZIP"))
@@ -120,7 +120,7 @@ describe OpenChain::TariffFileMonitor do
               FtpSender::FtpFile.new("WA_SIMPLE_20170708.ZIP", 0, time_zone.local(2017,7,8), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("WA_SIMPLE_20170708.ZIP", /tariff_upload.+\.zip/)
 
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.ecs_connect_vfitrack_net("inst_1/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
 
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/AU_SIMPLE_20170707.ZIP", tempfile_matching_name("AU_SIMPLE_20170707.ZIP"))
 
@@ -165,7 +165,7 @@ describe OpenChain::TariffFileMonitor do
       expect(ftp_connection).to receive(:list_files).and_return [FtpSender::FtpFile.new("AU_SIMPLE_20170707.ZIP", 0, time_zone.local(2017,7,7), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("AU_SIMPLE_20170707.ZIP", /tariff_upload.+\.zip/)
 
-      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.ecs_connect_vfitrack_net("inst_1/tariff_file"))
+      expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
 
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/AU_SIMPLE_20170707.ZIP", tempfile_matching_name("AU_SIMPLE_20170707.ZIP"))
 
