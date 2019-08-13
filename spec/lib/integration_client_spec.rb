@@ -532,5 +532,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         do_parser_test("Advance 7501", OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser, '/advan_prep_7501/file.xml')
       end
     end
+
+    context "Generic GTN Feeds" do
+      it "handles Generic GTN Invoice files" do
+        do_parser_test("Generic GTN XML", OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser, '/gtn_invoice_xml/file.xml')
+      end
+    end
   end
 end

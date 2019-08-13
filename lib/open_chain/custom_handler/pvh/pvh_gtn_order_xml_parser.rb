@@ -1,6 +1,6 @@
-require 'open_chain/custom_handler/gt_nexus/generic_gtn_order_xml_parser'
+require 'open_chain/custom_handler/gt_nexus/abstract_gtn_order_xml_parser'
 
-module OpenChain; module CustomHandler; module Pvh; class PvhGtnOrderXmlParser < OpenChain::CustomHandler::GtNexus::GenericGtnOrderXmlParser
+module OpenChain; module CustomHandler; module Pvh; class PvhGtnOrderXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser
 
   def initialize
     super({})

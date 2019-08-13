@@ -27,7 +27,7 @@ require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
 # - set_additional_product_information
 #
 #
-module OpenChain; module CustomHandler; module GtNexus; class GenericGtnOrderXmlParser
+module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXmlParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::GtNexus::GenericGtnParserSupport

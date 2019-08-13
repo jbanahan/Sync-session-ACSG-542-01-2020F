@@ -1,6 +1,6 @@
-describe OpenChain::CustomHandler::GtNexus::GenericGtnAsnXmlParser do
+describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
 
-  class FakeGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::GenericGtnAsnXmlParser
+  class FakeGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser
 
     def initialize config = {}
       super(config)

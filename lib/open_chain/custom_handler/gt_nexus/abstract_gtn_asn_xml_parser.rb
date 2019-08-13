@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_asn_parser_support'
 
-module OpenChain; module CustomHandler; module GtNexus; class GenericGtnAsnXmlParser
+module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::GtNexus::GenericGtnParserSupport

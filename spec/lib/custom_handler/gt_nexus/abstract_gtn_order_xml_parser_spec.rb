@@ -1,6 +1,6 @@
-describe OpenChain::CustomHandler::GtNexus::GenericGtnOrderXmlParser do 
+describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do 
 
-  class MockGtnOrderXmlParser < OpenChain::CustomHandler::GtNexus::GenericGtnOrderXmlParser
+  class MockGtnOrderXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser
 
     def initialize
       super({})

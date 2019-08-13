@@ -39,8 +39,8 @@ describe ResultCache do
       ss = Factory(:search_setup,:module_type=>"Product")
       ss.sort_criterions.create!(:model_field_uid=>:prod_uid)
       ss.search_columns.create!(:model_field_uid=>:class_cntry_iso,:rank=>1)
-      p1 = Factory(:product)
-      p2 = Factory(:product)
+      p1 = Factory(:product, unique_identifier: "1")
+      p2 = Factory(:product, unique_identifier: "2")
       3.times do |i| 
         Factory(:classification,:product=>p1) 
       end

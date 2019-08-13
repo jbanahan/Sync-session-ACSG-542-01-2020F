@@ -1,6 +1,6 @@
-require 'open_chain/custom_handler/gt_nexus/generic_gtn_invoice_xml_parser'
+require 'open_chain/custom_handler/gt_nexus/abstract_gtn_invoice_xml_parser'
 
-module OpenChain; module CustomHandler; module Pvh; class PvhGtnInvoiceXmlParser < OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser
+module OpenChain; module CustomHandler; module Pvh; class PvhGtnInvoiceXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser
 
   def initialize
     super({})

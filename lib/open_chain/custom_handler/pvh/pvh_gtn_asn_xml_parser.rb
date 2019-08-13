@@ -1,7 +1,7 @@
-require 'open_chain/custom_handler/gt_nexus/generic_gtn_asn_xml_parser'
+require 'open_chain/custom_handler/gt_nexus/abstract_gtn_asn_xml_parser'
 require 'open_chain/custom_handler/vandegrift/kewill_entry_load_shipment_comparator'
 
-module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::GenericGtnAsnXmlParser
+module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser
 
   def initialize
     super({})
