@@ -165,7 +165,7 @@ class BusinessValidationRule < ActiveRecord::Base
   def copy_attributes include_external:false
     attrs = {}
     omit = [:id, :created_at, :updated_at, :delete_pending, :disabled, :business_validation_template_id].concat(include_external ? [] : [:group_id, :mailing_list_id])
-    attrs["business_validation_rule"] = JSON.parse(self.to_json except: omit)[self.class.name.underscore]
+    attrs["business_validation_rule"] = JSON.parse(self.to_json except: omit)[self.model_name.element]
     attrs["business_validation_rule"]["type"] = self.class.name
     attrs["business_validation_rule"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
     attrs

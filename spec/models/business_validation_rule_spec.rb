@@ -178,6 +178,12 @@ describe BusinessValidationRule do
       expect(rule.copy_attributes).to eq attributes
     end
 
+    it "handles rules with extended classnames" do
+      r = BusinessValidationRule.new type: "OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet"
+      
+      expect(r.copy_attributes["business_validation_rule"]["type"]).to eq "OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet"
+    end
+
     it "includes other external associations if specified" do
       attributes = rule.copy_attributes(include_external:true)["business_validation_rule"]
       expect(attributes["mailing_list_id"]).to eq mailing_list.id
