@@ -140,6 +140,11 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
 
     line.container = shipment.containers.find { |c| c.container_number == container_number }
     line.invoice_number = line_xml.text("InvoiceNumber")
+    line_number = line_xml.text("LineItemNumber").to_i
+    if line.invoice_number.blank?
+      inbound_file.add_reject_message "Container # #{container_number} line # #{line_number} is missing an invoice number."
+    end
+
     # The carton count on the XML is invalid...It's the piece count, not the actual # of cartons
     line.carton_qty = 0
     line.quantity = parse_decimal(line_xml.text("Quantity"))
@@ -150,7 +155,6 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     order = orders_cache[order_number]
     if order
       if advan_importer? shipment.importer
-        line_number = line_xml.text("LineItemNumber").to_i
         order_line = order.order_lines.find {|ol| ol.line_number == line_number }
         # This really should never happend at all since we're making orders / products in this parser
         inbound_file.reject_and_raise "Failed to find Order # '#{order_number}' / Line Number #{line_number}." unless order_line

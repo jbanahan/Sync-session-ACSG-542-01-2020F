@@ -271,6 +271,13 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
         expect(log).to have_reject_message "PO # 8373111-11 is missing part number 11402124."
       end
 
+      it "raises an error if invoice line number can't be found" do
+        xml_data.gsub! '<InvoiceNumber>LJ180090</InvoiceNumber>', ''
+        expect { subject.parse xml, user, xml_path }.to raise_error "Failed to fully process file due to error. Once the errors are fixed, the file can be reprocessed."
+        expect(log).to have_reject_message "Container # ZIMU1269903 line # 9 is missing an invoice number."
+        expect(log).to have_reject_message "Container # ZIMU1269903 line # 8 is missing an invoice number."
+      end
+
       it "does not blank country of origin on order if blank in 7501" do
         xml_data.gsub! '<OriginCountry Code="CN">China</OriginCountry>', ''
         xml_data.gsub! "<OriginCountry Code='CN'>China</OriginCountry>", ''
