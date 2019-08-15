@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr = Factory(:tariff_record, classification: classi_1_1, hts_1: "123456789", line_number: 1)
     tr.find_and_set_custom_value cdefs[:set_qty], 10
     tr.find_and_set_custom_value cdefs[:percent_of_value], 15
-    tr.find_and_set_custom_value cdefs[:key_description], "key descr\r\n\"1\" |1 1\r"
+    tr.find_and_set_custom_value cdefs[:key_description], "key descr\u00A0\r\n\"1\" |1 1\r"
     tr.save!
     tr
   end
@@ -134,13 +134,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       file.rewind     
       lines = file.read.split("\n")
       #main style
-      expect(lines[0]).to eq %Q(118340|20190315T023000|||uid 1|uid 1-00||123456789|Y|key descr "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
+      expect(lines[0]).to eq %Q(118340|20190315T023000|||uid 1|uid 1-00||123456789|Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
       expect(lines[1]).to eq "118340|20190315T023000|||uid 1|uid 1-01||912345678|Y|key descr 1 1 2||0|1|30||||0|0|0|Y|||LADIES|2"
       #first related style
-      expect(lines[2]).to eq %Q(118340|20190315T023000|||uid 3|uid 3-00||123456789|Y|key descr "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
+      expect(lines[2]).to eq %Q(118340|20190315T023000|||uid 3|uid 3-00||123456789|Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
       expect(lines[3]).to eq "118340|20190315T023000|||uid 3|uid 3-01||912345678|Y|key descr 1 1 2||0|1|30||||0|0|0|Y|||LADIES|2"
       #second related style
-      expect(lines[4]).to eq %Q(118340|20190315T023000|||uid 4|uid 4-00||123456789|Y|key descr "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
+      expect(lines[4]).to eq %Q(118340|20190315T023000|||uid 4|uid 4-00||123456789|Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
       expect(lines[5]).to eq "118340|20190315T023000|||uid 4|uid 4-01||912345678|Y|key descr 1 1 2||0|1|30||||0|0|0|Y|||LADIES|2"
 
       file.close
@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       file = Timecop.freeze(now) { subject.sync_csv }
       file.rewind     
       lines = file.read.split("\n")
-      expect(lines[0]).to eq %Q(118340|20190315T023000|||uid 1|uid 1-00|||Y|key descr "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
+      expect(lines[0]).to eq %Q(118340|20190315T023000|||uid 1|uid 1-00|||Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
     end
   end
 
@@ -186,7 +186,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       res = []
       results.each{ |r| res << r }
       row_1, row_2 = res
-      expect(row_1).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "123456789", 1, 10, 15, "key descr\r\n\"1\" |1 1\r" ]
+      expect(row_1).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "123456789", 1, 10, 15, "key descr\u00A0\r\n\"1\" |1 1\r" ]
       expect(row_2).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "912345678", 2, 0, 30, "key descr 1 1 2"]
     end
 

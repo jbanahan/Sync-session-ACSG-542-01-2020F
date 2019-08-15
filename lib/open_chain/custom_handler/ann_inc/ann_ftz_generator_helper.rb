@@ -80,10 +80,14 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
     Country.where(iso_code: "US").first
   end
 
-  # Second gsub covers edge case where \r\n gets truncated
+  # Second gsub covers edge case where \r\n gets split by truncation.
+  # Integration Point accepts UTF-8 *except* in product descriptions!!
   def clean_description descr
     return nil unless descr.present?
-    descr.gsub(/\r?\n/, " ").gsub(/\r/, "").gsub("|", "/")
+    descr.gsub(/\r?\n/, " ")
+         .gsub(/\r/, "")
+         .gsub("|", "/")
+         .encode("ASCII-8BIT", undef: :replace, invalid: :replace, replace: "?")
   end
 
 end; end; end; end

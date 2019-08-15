@@ -1,3 +1,5 @@
+require 'open_chain/report/builder_output_report_helper'
+
 module OpenChain; module Report; class HmDrawbackExportReport
   include OpenChain::Report::BuilderOutputReportHelper
 
