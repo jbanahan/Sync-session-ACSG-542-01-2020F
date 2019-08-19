@@ -54,8 +54,8 @@ module OpenChain; module Report; class TicketTrackingReport
 
   def run_queries project_keys, start_date, end_date
     jira_result = ActiveRecord::Base.connection.execute jira_query(project_keys, start_date, end_date)
-    broker_refs = extract_broker_refs(jira_result).presence || ""
-    vfi_result = ActiveRecord::Base.connection.execute vfi_query broker_refs
+    broker_refs = extract_broker_refs(jira_result).presence
+    vfi_result = broker_refs ? ActiveRecord::Base.connection.execute(vfi_query broker_refs) : []
     graft_results jira_result, vfi_result
   end
 
@@ -89,7 +89,8 @@ module OpenChain; module Report; class TicketTrackingReport
   
   def comments_lambda 
     lambda do |result_set_row, raw_column_value|
-      results = ActiveRecord::Base.connection.execute "SELECT actionbody FROM jiradb.jiraaction WHERE issueid = #{raw_column_value.to_i} AND actiontype = 'comment' ORDER BY created"
+      q = ActiveRecord::Base.sanitize_sql_array(["SELECT actionbody FROM jiradb.jiraaction WHERE issueid = ? AND actiontype = 'comment' ORDER BY created", raw_column_value.to_i ])
+      results = ActiveRecord::Base.connection.execute q
       results.map {|r| r[0] }.join "\n-----------------------\n"
     end
   end
@@ -119,59 +120,61 @@ module OpenChain; module Report; class TicketTrackingReport
   end
   
   def jira_query project_keys, start_date, end_date
-    <<-SQL
-      SELECT i.issuenum AS 'Issue Number', 
-             t.pname AS 'Issue Type', 
-             s.pname AS 'Status', 
-             i.SUMMARY AS 'Summary', 
-             ordnum.STRINGVALUE AS 'Order Number(s)',
-             part.STRINGVALUE AS 'Part Number(s)',
-             i.DESCRIPTION AS 'Description', 
-             i.id AS 'Comments', 
-             i.ASSIGNEE 'Assignee', 
-             i.REPORTER 'Reporter', 
-             eta.DATEVALUE AS 'Shipment ETA', 
-             i.CREATED AS 'Issue Created', 
-             i.RESOLUTIONDATE AS 'Issue Resolved',
-             ship.STRINGVALUE AS 'Broker Reference',
-             p.pkey
-      FROM jiradb.jiraissue i
-        INNER JOIN jiradb.issuetype t ON t.ID = i.issuetype
-        INNER JOIN jiradb.issuestatus s ON s.id = i.issuestatus
-        INNER JOIN jiradb.project p ON p.id = i.PROJECT
-        LEFT OUTER JOIN jiradb.jiraaction a on a.issueid = i.id AND a.actiontype = 'comment'
-        LEFT OUTER JOIN jiradb.customfieldvalue ship ON ship.customfield = 10003 AND ship.issue = i.id
-        LEFT OUTER JOIN jiradb.customfieldvalue eta ON eta.customfield = 10004 AND eta.issue = i.id
-        LEFT OUTER JOIN jiradb.customfieldvalue ordnum ON ordnum.customfield = 10200 AND ordnum.issue = i.id
-        LEFT OUTER JOIN jiradb.customfieldvalue part ON part.customfield = 10002 AND part.issue = i.id
-      WHERE p.pkey IN (#{project_keys.map{|c| ActiveRecord::Base.sanitize c}.join(', ')})
-        AND i.CREATED >= '#{start_date}' AND i.created < '#{end_date}'
-      GROUP BY i.id
-      ORDER BY ship.STRINGVALUE
-    SQL
+    q = <<-SQL
+          SELECT i.issuenum AS 'Issue Number', 
+                 t.pname AS 'Issue Type', 
+                 s.pname AS 'Status', 
+                 i.SUMMARY AS 'Summary', 
+                 ordnum.STRINGVALUE AS 'Order Number(s)',
+                 part.STRINGVALUE AS 'Part Number(s)',
+                 i.DESCRIPTION AS 'Description', 
+                 i.id AS 'Comments', 
+                 i.ASSIGNEE 'Assignee', 
+                 i.REPORTER 'Reporter', 
+                 eta.DATEVALUE AS 'Shipment ETA', 
+                 i.CREATED AS 'Issue Created', 
+                 i.RESOLUTIONDATE AS 'Issue Resolved',
+                 ship.STRINGVALUE AS 'Broker Reference',
+                 p.pkey
+          FROM jiradb.jiraissue i
+            INNER JOIN jiradb.issuetype t ON t.ID = i.issuetype
+            INNER JOIN jiradb.issuestatus s ON s.id = i.issuestatus
+            INNER JOIN jiradb.project p ON p.id = i.PROJECT
+            LEFT OUTER JOIN jiradb.jiraaction a on a.issueid = i.id AND a.actiontype = 'comment'
+            LEFT OUTER JOIN jiradb.customfieldvalue ship ON ship.customfield = 10003 AND ship.issue = i.id
+            LEFT OUTER JOIN jiradb.customfieldvalue eta ON eta.customfield = 10004 AND eta.issue = i.id
+            LEFT OUTER JOIN jiradb.customfieldvalue ordnum ON ordnum.customfield = 10200 AND ordnum.issue = i.id
+            LEFT OUTER JOIN jiradb.customfieldvalue part ON part.customfield = 10002 AND part.issue = i.id
+          WHERE p.pkey IN (?)
+            AND i.CREATED >= ? AND i.created < ?
+          GROUP BY i.id
+          ORDER BY ship.STRINGVALUE
+        SQL
+    ActiveRecord::Base.sanitize_sql_array([q, project_keys, start_date, end_date])
   end
 
   def vfi_query brok_ref_list
-    <<-SQL
-      SELECT e.broker_reference,
-             e.entry_number AS "Entry Number", 
-             e.po_numbers AS "PO Numbers", 
-             e.part_numbers AS "Part Numbers", 
-             e.product_lines AS "Product Lines", 
-             e.vendor_names AS "Vendors", 
-             e.mfids AS "MIDs", 
-             e.origin_country_codes AS "Countries of Origin", 
-             e.master_bills_of_lading AS "Master Bills", 
-             e.house_bills_of_lading AS "House Bills", 
-             e.container_numbers AS "Container Numbers", 
-             e.release_date AS "Release Date",
-             "URL" AS 'Link to Jira issue',
-             e.id AS "Link to VFI Track entry"
-      FROM entries e
-        INNER JOIN countries c ON c.id = e.import_country_id AND c.iso_code = "US"
-      WHERE e.broker_reference IN (#{brok_ref_list.map{|x| "'#{x}'"}.join(",")})
-      ORDER BY e.broker_reference
-    SQL
+    q = <<-SQL
+          SELECT e.broker_reference,
+                 e.entry_number AS "Entry Number", 
+                 e.po_numbers AS "PO Numbers", 
+                 e.part_numbers AS "Part Numbers", 
+                 e.product_lines AS "Product Lines", 
+                 e.vendor_names AS "Vendors", 
+                 e.mfids AS "MIDs", 
+                 e.origin_country_codes AS "Countries of Origin", 
+                 e.master_bills_of_lading AS "Master Bills", 
+                 e.house_bills_of_lading AS "House Bills", 
+                 e.container_numbers AS "Container Numbers", 
+                 e.release_date AS "Release Date",
+                 "URL" AS 'Link to Jira issue',
+                 e.id AS "Link to VFI Track entry"
+          FROM entries e
+            INNER JOIN countries c ON c.id = e.import_country_id AND c.iso_code = "US"
+          WHERE e.broker_reference IN (?)
+          ORDER BY e.broker_reference
+        SQL
+    ActiveRecord::Base.sanitize_sql_array([q, brok_ref_list])
   end
 
 end; end; end;
