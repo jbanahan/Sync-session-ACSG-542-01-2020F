@@ -48,7 +48,7 @@ describe AuthTokenSupport, type: :model do
 
       subject.set_auth_token_cookie
 
-      expect(cookies["AUTH-TOKEN"]).to eq({value: user.user_auth_token})
+      expect(cookies["AUTH-TOKEN"]).to eq({value: user.user_auth_token, httponly:true})
     end
 
     it "sets AUTH_TOKEN cookie and RUN-AS-AUTH-TOKEN" do
@@ -58,8 +58,8 @@ describe AuthTokenSupport, type: :model do
 
       subject.set_auth_token_cookie
 
-      expect(cookies["AUTH-TOKEN"]).to eq({value: user.user_auth_token})
-      expect(cookies["RUN-AS-AUTH-TOKEN"]).to eq({value: run_as.user_auth_token})
+      expect(cookies["AUTH-TOKEN"]).to eq({value: user.user_auth_token, httponly:true})
+      expect(cookies["RUN-AS-AUTH-TOKEN"]).to eq({value: run_as.user_auth_token, httponly:true})
     end
 
     it "deletes runas token if user is no longer running as someone else" do

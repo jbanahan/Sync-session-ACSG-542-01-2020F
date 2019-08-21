@@ -3,10 +3,10 @@ module AuthTokenSupport
   def set_auth_token_cookie
     u = current_user
     if u
-      cookies['AUTH-TOKEN'] = {value:u.user_auth_token}
+      cookies['AUTH-TOKEN'] = {value:u.user_auth_token, httponly:true}
 
       if run_as_user
-        cookies['RUN-AS-AUTH-TOKEN'] = {value: run_as_user.user_auth_token}
+        cookies['RUN-AS-AUTH-TOKEN'] = {value: run_as_user.user_auth_token, httponly:true}
       else
         cookies.delete "RUN-AS-AUTH-TOKEN"
       end

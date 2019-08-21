@@ -81,7 +81,7 @@ class UsersController < ApplicationController
         @user = User.new(params[:user])
         set_admin_params(@user,params)
         set_debug_expiration(@user)
-        set_password_reset(@user)
+        @user.password_reset = true
         @user.password = password
         @company = @user.company
 
@@ -89,7 +89,7 @@ class UsersController < ApplicationController
         valid = false
         begin
           User.transaction do
-            valid = @user.save && @user.update_user_password(password, password_confirmation, false)
+            valid = @user.save && @user.update_user_password(password, password_confirmation, false, false)
             if valid
               search_setups = params[:assigned_search_setup_ids]
               if search_setups && @user.id

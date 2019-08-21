@@ -3,10 +3,10 @@
 <%=form_for @user, :url => password_reset_path, :method => :put do |f| %>
   <table>
     <% if requires_old_password?(@user) %>
-      <%=field_row "Current Password", f.password_field(:current_password) %>
+      <%=field_row "Current Password", f.password_field(:current_password, autocomplete:"off") %>
     <% end %>
-    <%=field_row "Password", f.password_field(:password) %>
-    <%=field_row "Confirm Password", f.password_field(:password_confirmation) %>
+    <%=field_row "Password", f.password_field(:password, autocomplete:"off") %>
+    <%=field_row "Confirm Password", f.password_field(:password_confirmation, autocomplete:"off") %>
   </table>
   <%= f.submit "Update Password", :id=>"sbm_update_pass", :class=>'btn btn-primary' %>
 <% end %>

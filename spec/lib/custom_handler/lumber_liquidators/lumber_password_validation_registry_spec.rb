@@ -5,8 +5,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberPasswordValidationRe
   describe "child_registries" do
     it "uses expected child services" do
       expect(subject.child_services).to eq [ 
-          OpenChain::Validations::Password::PasswordLengthValidator, OpenChain::Validations::Password::UsernameNotPasswordValidator, 
-          OpenChain::Validations::Password::PasswordComplexityValidator, OpenChain::Validations::Password::PreviousPasswordValidator
+          OpenChain::CustomHandler::LumberLiquidators::LumberPasswordLengthValidator, OpenChain::Validations::Password::UsernameNotPasswordValidator,
+          OpenChain::Validations::Password::PasswordComplexityValidator, OpenChain::CustomHandler::LumberLiquidators::LumberPreviousPasswordValidator
         ]
     end
   end

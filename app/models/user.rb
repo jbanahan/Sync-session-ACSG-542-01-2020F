@@ -321,8 +321,12 @@ class User < ActiveRecord::Base
       if user
         # Because we only store hashed versions of passwords, if we're going to relay users their temporary
         # password in an email, the only way we can send them a cleartext password is if we generate and save one here.
-        cleartext = SecureRandom.urlsafe_base64(12, false)[0, 8]
-        user.update_user_password cleartext, cleartext
+        # Administrator passwords default to a longer value (16-char) than normal users (8-char).
+        cleartext = SecureRandom.urlsafe_base64(12, false)
+        if !user.admin?
+          cleartext = cleartext[0, 8]
+        end
+        user.update_user_password cleartext, cleartext, true, false
         user.update_column :password_reset, true
         # Use the ! deliver_now variant because we never want the message to be suppressed on any system
         OpenMailer.send_invite(user, cleartext).deliver_now!
@@ -408,7 +412,7 @@ class User < ActiveRecord::Base
     OpenChain::Registries::PasswordValidationRegistry.valid_password? user, password
   end
 
-  def update_user_password password, password_confirmation, snapshot=true
+  def update_user_password password, password_confirmation, snapshot=true, notify_password_change=true
     # Fail if the password is blank, under no circumstance do we want to accidently set someone's password
     # to a blank string.
     valid = false
@@ -435,6 +439,10 @@ class User < ActiveRecord::Base
       self.create_snapshot(User.integration, nil, 'Password changed') if snapshot
 
       self.user_password_histories.create!(hashed_password: self.encrypted_password, password_salt: self.password_salt)
+
+      if notify_password_change
+        send_password_change_email
+      end
     end
 
     valid
@@ -561,28 +569,38 @@ class User < ActiveRecord::Base
   private_class_method :add_all_permissions_to_hash
 
   private
-  def parse_hidden_messages
-    @parsed_hidden_messages ||= (self.hidden_message_json.blank? ? [] : JSON.parse(self.hidden_message_json))
-  end
-  def store_hidden_messages
-    self.hidden_message_json = @parsed_hidden_messages.to_json unless @parsed_hidden_messages.nil?
-  end
-  def master_setup
-    MasterSetup.get
-  end
-  def should_update_timestaps?
-    no_timestamp_reset_fields = ['confirmation_token','remember_token','last_request_at', 'last_login_at', 'current_login_at', 'failed_login_count', 'host_with_port']
-    self.record_timestamps = false if (self.changed - no_timestamp_reset_fields).empty?
-    true
-  end
-  def reset_timestamp_flag
-    self.record_timestamps = true
-    true
-  end
+    def parse_hidden_messages
+      @parsed_hidden_messages ||= (self.hidden_message_json.blank? ? [] : JSON.parse(self.hidden_message_json))
+    end
 
-  def valid_email
-    rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e }
-    error_message = rejected.count > 1 ? "invalid: #{rejected.join(', ')}" : "invalid"
-    errors.add(:email, error_message) unless rejected.empty?
-  end
+    def store_hidden_messages
+      self.hidden_message_json = @parsed_hidden_messages.to_json unless @parsed_hidden_messages.nil?
+    end
+
+    def master_setup
+      MasterSetup.get
+    end
+
+    def should_update_timestaps?
+      no_timestamp_reset_fields = ['confirmation_token','remember_token','last_request_at', 'last_login_at', 'current_login_at', 'failed_login_count', 'host_with_port']
+      self.record_timestamps = false if (self.changed - no_timestamp_reset_fields).empty?
+      true
+    end
+
+    def reset_timestamp_flag
+      self.record_timestamps = true
+      true
+    end
+
+    def valid_email
+      rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e }
+      error_message = rejected.count > 1 ? "invalid: #{rejected.join(', ')}" : "invalid"
+      errors.add(:email, error_message) unless rejected.empty?
+    end
+
+    def send_password_change_email
+      change_date = (self.time_zone.present? ? self.password_changed_at.in_time_zone(self.time_zone) : self.password_changed_at).strftime "%Y-%m-%d %H:%M"
+      body = "<p>This email was sent to notify you that the password for your VFI Track account ‘#{self.username}’ was changed on #{change_date}.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
+      OpenMailer.send_simple_html(self.email, "VFI Track Password Change", body).deliver_now
+    end
 end

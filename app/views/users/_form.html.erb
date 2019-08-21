@@ -113,12 +113,12 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 
         <div class="form-group">
           <label>Password</label>
-          <%= f.password_field :password, class: "form-control", placeholder: "Password", title: "Enter your new password into both password fields. If you don't need to change your password, you can leave this blank."%>
+          <%= f.password_field :password, class: "form-control", placeholder: "Password", autocomplete:"off", title: "Enter your new password into both password fields. If you don't need to change your password, you can leave this blank."%>
         </div>
 
         <div class="form-group">
           <label>Confirm password</label>
-          <%= f.password_field :password_confirmation, class: "form-control", placeholder: "Confirm password" %>
+          <%= f.password_field :password_confirmation, class: "form-control", placeholder: "Confirm password",  autocomplete:"off" %>
         </div>
 
         <div class="form-group">

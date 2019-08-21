@@ -762,11 +762,33 @@ describe User do
       expect(e).to receive(:deliver_now!)
       u = Factory(:user)
 
+      expect_any_instance_of(User).to receive(:update_user_password).with(instance_of(String), instance_of(String), true, false).and_call_original
+
       expect(OpenMailer).to receive(:send_invite) do |user, password|
         expect(user.id).to eq(u.id)
         # Make sure the password has been updated by checking the encrypted
         # versions
         expect(user.encrypted_password).not_to eq(u.encrypted_password)
+        expect(password.length).to eq 8
+        expect(user.password_reset).to be_truthy
+        e
+      end
+
+      User.send_invite_emails u.id
+    end
+
+    it "should send an invite email to an admin user" do
+      e = double("Email")
+      expect(e).to receive(:deliver_now!)
+      u = Factory(:user, admin:true)
+
+      expect(OpenMailer).to receive(:send_invite) do |user, password|
+        expect(user.id).to eq(u.id)
+        # Make sure the password has been updated by checking the encrypted
+        # versions
+        expect(user.encrypted_password).not_to eq(u.encrypted_password)
+        # Longer default password than standard user.
+        expect(password.length).to eq 16
         expect(user.password_reset).to be_truthy
         e
       end
@@ -841,11 +863,37 @@ describe User do
     end
 
     it 'creates user_password_histories record if password is valid' do
-      @user.update_user_password 'newpassword', 'newpassword'
-      expect(User.authenticate @user.username, 'newpassword').to eq @user
-      @user.reload
-      expect(@user.user_password_histories.first.hashed_password).to eq(@user.encrypted_password)
-      expect(@user.user_password_histories.first.password_salt).to eq(@user.password_salt)
+      @user.update_attributes! time_zone:"Central Time (US & Canada)"
+      Timecop.freeze(Time.zone.parse("2019-09-09 09:09:00 +0200")) do
+        @user.update_user_password 'newpassword', 'newpassword'
+        expect(User.authenticate @user.username, 'newpassword').to eq @user
+        @user.reload
+        expect(@user.user_password_histories.first.hashed_password).to eq(@user.encrypted_password)
+        expect(@user.user_password_histories.first.password_salt).to eq(@user.password_salt)
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq [@user.email]
+        expect(mail.subject).to eq "VFI Track Password Change"
+        # Change time should be in Central, not UTC+2 (Kaliningrad/European summer time).
+        expect(mail.body).to include "<p>This email was sent to notify you that the password for your VFI Track account ‘#{@user.username}’ was changed on 2019-09-09 02:09.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
+      end
+    end
+
+    it 'creates user_password_histories record if password is valid, user has no default time zone' do
+      @user.update_attributes! time_zone:nil
+      Timecop.freeze(Time.zone.parse("2019-09-09 09:09:00 +0200")) do
+        @user.update_user_password 'newpassword', 'newpassword'
+        expect(User.authenticate @user.username, 'newpassword').to eq @user
+        @user.reload
+        expect(@user.user_password_histories.first.hashed_password).to eq(@user.encrypted_password)
+        expect(@user.user_password_histories.first.password_salt).to eq(@user.password_salt)
+
+        mail = ActionMailer::Base.deliveries.pop
+        expect(mail.to).to eq [@user.email]
+        expect(mail.subject).to eq "VFI Track Password Change"
+        # Change time should be displayed in default UTC zone.
+        expect(mail.body).to include "<p>This email was sent to notify you that the password for your VFI Track account ‘#{@user.username}’ was changed on 2019-09-09 07:09.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
+      end
     end
 
     it "sets password_changed_at" do
@@ -861,6 +909,16 @@ describe User do
       # the password now matches the hash that our new password generates
       @user.update_user_password 'newpassword', 'newpassword'
       expect(User.authenticate @user.username, 'newpassword').to eq @user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.subject).to eq "VFI Track Password Change"
+    end
+
+    it "does not send password change email if told to not do so" do
+      @user.update_user_password 'newpassword', 'newpassword', true, false
+      expect(User.authenticate @user.username, 'newpassword').to eq @user
+
+      expect(ActionMailer::Base.deliveries.length).to eq 0
     end
 
     it "validates password confirmation matches password" do

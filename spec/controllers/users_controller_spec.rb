@@ -10,10 +10,14 @@ describe UsersController do
       u = {'username'=>"c'o@sample.com",'password'=>'pw12345','password_confirmation'=>'pw12345','email'=>"c'o@sample.com",
         'company_id'=>user.company_id.to_s
       }
+      expect_any_instance_of(User).to receive(:update_user_password).with(instance_of(String), instance_of(String), false, false).and_call_original
       expect {
         post :create, {'company_id'=>user.company_id,'user'=>u}
       }.to change(User,:count).by(1)
       expect(response).to be_redirect
+
+      new_user = User.last
+      expect(new_user.password_reset).to eq true
     end
 
     context "when copying an existing user" do
