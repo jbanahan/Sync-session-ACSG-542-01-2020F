@@ -416,7 +416,14 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
             (IF((entries.house_bills_of_lading IS NOT NULL AND entries.house_bills_of_lading <> ""), (CHAR_LENGTH(entries.house_bills_of_lading) - CHAR_LENGTH(REPLACE(entries.house_bills_of_lading, '\n', '')) + 1), 0))
           SQL
       }],
-      [246, :ent_k84_payment_due_date, :k84_payment_due_date, "K84 Payment Due Date", {:data_type=>:date}]
+      [246, :ent_k84_payment_due_date, :k84_payment_due_date, "K84 Payment Due Date", {:data_type=>:date}],
+      [247, :ent_broker_invoice_list, :broker_invoice_list, "Broker Invoice Number(s)", {
+          :data_type=>:string,
+          :read_only=>true,
+          :import_lambda=>lambda { |obj, data| "Broker Invoice numbers ignored. (read only)"},
+          :export_lambda=>lambda { |obj| obj.broker_invoices.map{|bi| bi.invoice_number}.uniq.join("\n") },
+          :qualified_field_name=> '(SELECT GROUP_CONCAT(DISTINCT invoice_number SEPARATOR "\n") from broker_invoices as bi where bi.entry_id = entries.id)'
+      }]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
