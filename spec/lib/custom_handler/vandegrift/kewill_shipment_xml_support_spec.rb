@@ -178,6 +178,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         l.charges = BigDecimal("20.25")
         l.related_parties = true
         l.ftz_quantity = BigDecimal("25.50")
+        l.ftz_zone_status = "P"
+        l.ftz_priv_status_date = "20190315"
         l.description = "Description"
         l.container_number = "ContainerNo"
         i.invoice_lines << l
@@ -283,6 +285,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(l.text "chargesAmt").to eq "20.25"
         expect(l.text "relatedParties").to eq "Y"
         expect(l.text "ftzQuantity").to eq "26"
+        expect(l.text "ftzZoneStatus").to eq "P"
+        expect(l.text "ftzPrivStatusDate").to eq "20190315"
         expect(l.text "descr").to eq "Description"
         expect(l.text "noContainer").to eq "ContainerNo"
 

@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     CiLoadBillsOfLading ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :pieces, :pieces_uom)
     CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type)
     CiLoadInvoice ||= Struct.new(:invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number)
-    CiLoadInvoiceLine ||= Struct.new(:tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, :ftz_quantity, :description, :container_number)
+    CiLoadInvoiceLine ||= Struct.new(:tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, :description, :container_number, :ftz_quantity, :ftz_zone_status, :ftz_priv_status_date)
     CiLoadInvoiceTariff ||= Struct.new(:hts, :gross_weight, :spi, :spi2, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2)
   end
 
@@ -346,8 +346,12 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "chargesAmt", g.number(line.charges, 11, decimal_places: 2, pad_string: false)) if nonzero?(line.charges)
     add_element(parent, "relatedParties", g.string((true?(line.related_parties) ? "Y" : "N"), 1, pad_string: false, exception_on_truncate: false)) unless line.related_parties.nil?
     add_element(parent, "ftzQuantity", g.number(line.ftz_quantity, 10, pad_string: false, decimal_places: 0)) if nonzero?(line.ftz_quantity)
+    add_element(parent, "ftzZoneStatus", g.string(line.ftz_zone_status, 1, pad_string: false, exception_on_truncate: true)) unless line.ftz_zone_status.blank?
+    add_element(parent, "ftzPrivStatusDate", g.date(line.ftz_priv_status_date)) unless line.ftz_priv_status_date.blank?   
+    
     add_element(parent, "descr", g.string(line.description, 40, pad_string: false)) unless line.description.blank?
     add_element(parent, "noContainer", g.string(line.container_number, 15, pad_string: false)) unless line.container_number.blank?
+
 
     tariff_lines = Array.wrap(line.tariff_lines)
 
