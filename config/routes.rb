@@ -671,6 +671,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/customer_invoice_handler/upload", to: "custom_features#customer_invoice_upload"
   get "/custom_features/customer_invoice_handler/:id/download", to: "custom_features#customer_invoice_download"
 
+  get "/custom_features/le_product", to: "custom_features#le_product_index"
+  post "/custom_features/le_product/upload", to: "custom_features#le_product_upload"
+  get "/custom_features/le_product/:id/download", to: "custom_features#le_product_download"
+
   #H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

@@ -1,0 +1,38 @@
+<% content_for :upload_form do %>
+<h2>Upload ONLY Products in Excel or CSV format.</h2>
+<h4>The following data columns should be present in your file in the <b>same order</b> as listed below. BLANK columns may contain anything.</h4>
+<table id="layout" class="table table-sm table-bordered my-3">
+  <thead class="text-center">
+    <tr>
+      <th>A</th>
+      <th>B</th>
+      <th>C</th>
+      <th>D</th>
+      <th>E</th>
+      <th>F</th>
+      <th>G</th>
+      <th>H</th>
+      <th>I</th>
+      <th>J</th>
+      <th>K</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Style_Nbr</td>
+      <td>Style_Desc</td>
+      <td>BLANK</td>
+      <td>BLANK</td>
+      <td>BLANK</td>
+      <td>BLANK</td>
+      <td>BLANK</td>
+      <td>BLANK</td>
+      <td>BLANK</td>
+      <td>BLANK</td>
+      <td>HTS_Cd</td>
+    </tr>
+  </tbody>
+</table>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Lands' End Product Upload", custom_feature: "le_product"} %>

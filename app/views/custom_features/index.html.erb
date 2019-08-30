@@ -157,6 +157,13 @@
         </div>
       </div>
   <%-end%>
+  <%-if OpenChain::CustomHandler::LandsEnd::LeProductParser.can_view?(current_user)-%>
+      <div class='row'>
+        <div class='col-md-6 offset-md-3'>
+          <%=link_to "Lands' End Products", '/custom_features/le_product', :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+        </div>
+      </div>
+  <%-end%>
 
   <%-if OpenChain::CustomHandler::Polo::PoloFiberContentParser.can_view?(current_user)-%>
   <div class='row'>

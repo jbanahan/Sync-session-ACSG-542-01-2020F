@@ -50,6 +50,7 @@ require 'open_chain/custom_handler/kirklands/kirklands_product_upload_parser'
 require 'open_chain/data_cross_reference_uploader'
 require 'open_chain/special_tariff_cross_reference_handler'
 require 'open_chain/business_rules_copier'
+require 'open_chain/custom_handler/lands_end/le_product_parser'
 
 class CustomFile < ActiveRecord::Base
   attr_accessible :attached_content_type, :attached_file_name, :attached,
