@@ -13,7 +13,7 @@
               imp_list = Company.active_importers
             else
               if current_user.company.linked_companies.count > 0
-                imp_list = Company.where("id = ? OR id IN (?)", current_user.company, current_user.company.linked_companies)
+                imp_list = Company.where("id = ? OR id IN (?)", current_user.company, current_user.company.linked_companies.select(:id))
               else
                 imp_list = Company.where("id = ?", current_user.company)
               end
