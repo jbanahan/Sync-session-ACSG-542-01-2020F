@@ -21,16 +21,16 @@ businessTemplateApp.controller 'BusinessTemplateController', ['$scope','business
     $window.location.replace("/business_validation_templates/" + $scope.businessTemplate.id + "/edit")
 
   $scope.editBusinessTemplate = (id) ->
-    businessTemplateService.editBusinessTemplate(id).success((data) ->
-        $scope.model_fields = data.model_fields
-        $scope.businessTemplate = data.business_template.business_validation_template
+    businessTemplateService.editBusinessTemplate(id).then((resp) ->
+        $scope.model_fields = resp.data.model_fields
+        $scope.businessTemplate = resp.data.business_template.business_validation_template
       )
 
   $scope.updateBusinessTemplate = () ->
-    businessTemplateService.updateBusinessTemplate($scope.businessTemplate).success((data) ->
+    businessTemplateService.updateBusinessTemplate($scope.businessTemplate).then((resp) ->
         $("#template-criteria-submit-failure").hide()
         $("#template-criteria-submit-success").show()
-      ).error(() ->
+      ,() ->
         $("#template-criteria-submit-failure").show()
         $("#template-criteria-submit-success").hide()
       )

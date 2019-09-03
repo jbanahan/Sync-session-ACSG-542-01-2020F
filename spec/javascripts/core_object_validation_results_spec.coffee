@@ -43,8 +43,8 @@ describe 'CoreObjectValidationResultsApp', () ->
         http.expectGET('/entries/1/validation_results.json').respond returnVal
         promise = svc.loadRuleResult('entries', 1)
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
@@ -59,8 +59,8 @@ describe 'CoreObjectValidationResultsApp', () ->
       it "calls validate POST route", () ->
         http.expectPOST('/api/v1/entries/1/validate.json').respond {}
         svc.rerunValidations 'entries', 1
-        expect(http.flush).not.toThrow() 
-        
+        expect(http.flush).not.toThrow()
+
   describe 'controller', () ->
     ctrl = svc = $scope = q = null
 
@@ -92,7 +92,7 @@ describe 'CoreObjectValidationResultsApp', () ->
         $scope.cancelOverride {}
         expect($scope.result).toBe null
         expect($scope.ruleResultToEdit).toBe null
-      
+
       it "calls the service's cancelOverride ", () ->
         deferredOverride = q.defer()
         deferredOverride.resolve {a:'a'}
@@ -102,14 +102,14 @@ describe 'CoreObjectValidationResultsApp', () ->
         loadResolution = {b:'b'}
         deferredLoad.resolve loadResolution
         spyOn($scope, 'loadObject').and.returnValue deferredLoad.promise
-        
+
         svc.pluralObject = {c: 'c'}
         svc.objectId = {d: 'd'}
         rr = {id:100}
         returnVal = null
         $scope.cancelOverride(rr).then (rv) ->
           returnVal = rv
-        
+
         $scope.$apply()
 
         expect(returnVal).toEqual loadResolution

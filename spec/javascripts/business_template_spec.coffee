@@ -17,14 +17,14 @@ describe "BusinessTemplateApp", () ->
       it "should make a get request to the correct URL", () ->
         http.expectGET('/business_validation_templates/234/edit_angular').respond("OK")
         svc.editBusinessTemplate("234")
-        expect(http.flush).not.toThrow() 
+        expect(http.flush).not.toThrow()
 
     describe "updateBusinessTemplate", () ->
       it "should make a put request to the correct URL", () ->
         http.expectPUT('/business_validation_templates/123').respond("OK")
         rule = {id: "123"}
         svc.updateBusinessTemplate(rule)
-        expect(http.flush).not.toThrow() 
+        expect(http.flush).not.toThrow()
 
   describe "BusinessTemplateController", () ->
     ctrl = scope = svc = win = null
@@ -45,15 +45,15 @@ describe "BusinessTemplateApp", () ->
     describe "editBusinessTemplate", () ->
       it "should make a call to service edit", () ->
         spyOn(svc, 'editBusinessTemplate').and.returnValue {
-          success: (c) -> null
+          then: (c) -> null
         }
         scope.editBusinessTemplate("5")
         expect(svc.editBusinessTemplate).toHaveBeenCalledWith("5")
 
       it "should set model_fields and businessTemplate on success", () ->
-        myData = {model_fields: [1, 2, 3], business_template: {business_validation_template: "business template"}}
+        myData = {data: {model_fields: [1, 2, 3], business_template: {business_validation_template: "business template"}}}
         spyOn(svc, 'editBusinessTemplate').and.returnValue {
-          success: (c) -> c(myData)
+          then: (c) -> c(myData)
         }
         scope.editBusinessTemplate("5")
         expect(scope.model_fields).toEqual [1,2,3]
@@ -62,7 +62,7 @@ describe "BusinessTemplateApp", () ->
     describe 'updateBusinessTemplate', () ->
       it "should make a call to service update", () ->
         spyOn(svc, 'updateBusinessTemplate').and.returnValue {
-          success: (c) -> null; @
+          then: (c) -> null; @
           error: (c) -> null
         }
         scope.businessTemplate = "t"

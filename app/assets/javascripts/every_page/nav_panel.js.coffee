@@ -68,7 +68,7 @@ root.ChainNavPanel = {
         makeMenuIf(cat,'nav-cat-isf','Security Filing',items)
 
       addEntryMenu = (cat, u) ->
-        items = []        
+        items = []
         makeItemIf(u.permissions.view_entries,items,'entry-search','Search','/entries?force_search=true')
         makeMenuIf(cat,'nav-cat-entry','Entry',items)
 
@@ -118,7 +118,7 @@ root.ChainNavPanel = {
       addTradeLaneMenu = (cat, u) ->
         items = []
         makeItemIf(u.permissions.view_trade_lanes,items,'trade-lane-view','View','/trade_lanes')
-        makeItemIf(u.permissions.edit_trade_lanes,items,'trade-lane-new','New','/trade_lanes#/new')
+        makeItemIf(u.permissions.edit_trade_lanes,items,'trade-lane-new','New','/trade_lanes#!/new')
         makeMenuIf(cat,'nav-cat-trade-lane','Trade Lane',items)
 
       addToolsMenu = (cat, u) ->

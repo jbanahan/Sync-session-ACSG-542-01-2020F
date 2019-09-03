@@ -14,19 +14,19 @@ describe 'StateToggleButtonApp', () ->
 
     describe 'loadButton', () ->
       it "loads", () ->
-        returnVal = 
+        returnVal =
           button: "button"
           criteria: ["criteria"]
-          sc_mfs: ["search model fields"] 
-          user_mfs: ["user model fields"] 
-          user_cdefs: ["user custom defs"] 
-          date_mfs: ["date model fields"] 
+          sc_mfs: ["search model fields"]
+          user_mfs: ["user model fields"]
+          user_cdefs: ["user custom defs"]
+          date_mfs: ["date model fields"]
           date_cdefs: ["date custom defs"]
         http.expectGET('/api/v1/admin/state_toggle_buttons/1/edit.json').respond returnVal
         promise = svc.loadButton(1)
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         http.flush()
         expect(resolvedPromise).toEqual returnVal
 
@@ -38,8 +38,8 @@ describe 'StateToggleButtonApp', () ->
         http.expectPUT('/api/v1/admin/state_toggle_buttons/1', JSON.stringify({criteria: criteria, stb: stb})).respond returnVal
         promise = svc.updateButton(1, {criteria: criteria, stb: stb})
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         http.flush()
         expect(resolvedPromise).toEqual returnVal
 
@@ -61,7 +61,7 @@ describe 'StateToggleButtonApp', () ->
 
     describe 'loadButton', () ->
       it "calls service's loadButton and assigns return values to scope", () ->
-        stb = 
+        stb =
           module_type: "Order"
           user_attribute: "ord_closed_by"
           user_custom_definition_id: null
@@ -71,9 +71,9 @@ describe 'StateToggleButtonApp', () ->
           activate_text: "Activated!"
           activate_confirmation_text: "Activated?"
           deactivate_text: "Inactive"
-          deactivate_confirmation_text: "Deactivated?"  
-        
-        data = 
+          deactivate_confirmation_text: "Deactivated?"
+
+        data =
           data:
             button:
               state_toggle_button: stb
@@ -83,7 +83,7 @@ describe 'StateToggleButtonApp', () ->
             user_cdefs: "user custom defs"
             date_mfs: "date model fields"
             date_cdefs: "date custom defs"
-              
+
         deferredLoad = q.defer()
         deferredLoad.resolve data
         spyOn(svc, 'loadButton').and.returnValue deferredLoad.promise
@@ -97,16 +97,16 @@ describe 'StateToggleButtonApp', () ->
         expect($scope.userMfs).toEqual 'user model fields'
         expect($scope.userCdefs).toEqual 'user custom defs'
         expect($scope.dateMfs).toEqual 'date model fields'
-        expect($scope.dateCdefs).toEqual 'date custom defs'        
+        expect($scope.dateCdefs).toEqual 'date custom defs'
 
     describe 'updateButton', () ->
-      it "calls service's updateButton", () ->        
+      it "calls service's updateButton", () ->
         deferredUpdate = q.defer()
         spyOn(svc, 'updateButton').and.returnValue deferredUpdate.promise
         $scope.updateButton(1, "criteria")
         $scope.$apply()
         expect(svc.updateButton).toHaveBeenCalledWith(1, "criteria")
-        
+
     describe 'saveButton', () ->
       it "calls updateButton", () ->
         spyOn($scope, 'updateButton')

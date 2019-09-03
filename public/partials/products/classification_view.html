@@ -1,6 +1,6 @@
 <div class='text-right'>
-  <button class='btn btn-sm' ng-show='!detailMode' ng-click='detailMode=true'><i class='fa fa-eye'></i></button>
-  <button class='btn btn-sm' ng-show='detailMode' ng-click='detailMode=false'><i class='fa fa-eye-slash'></i></button>
+  <button class='btn btn-secondary btn-sm' ng-show='!detailMode' ng-click='detailMode=true'><i class='fa fa-eye'></i></button>
+  <button class='btn btn-secondary btn-sm' ng-show='detailMode' ng-click='detailMode=false'><i class='fa fa-eye-slash'></i></button>
 </div>
 <table ng-if='detailMode' class='table table-condensed table-striped table-sm' ng-repeat='reg in outerScope.regions track by reg.id'>
   <thead>
@@ -64,7 +64,7 @@
         </div>
       </td>
     </tr>
-    
+
   </tbody>
 </table>
 
@@ -96,7 +96,7 @@
       </td>
       <td>
         <div class="row">
-          <div class="col-xs-12">
+          <div class="col-12">
             {{cls.class_cntry_name}}
           </div>
         </div>

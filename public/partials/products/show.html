@@ -6,14 +6,14 @@
 <div class="container">
   <div class="row">
     <div class="col-md-12">
-      <chain-panel panel-title='Errors' panel-message="eh.errorMessage" panel-type='panel-danger'></chain-panel>
+      <chain-panel panel-title='Errors' panel-message="eh.errorMessage" panel-type='alert-danger'></chain-panel>
     </div>
   </div>
 </div>
 <chain-loading-wrapper loading-flag='{{loadingFlag}}'>
   <div class="container">
     <div class="row">
-      <div class="col-xs-12 text-center">
+      <div class="col-md-12 text-center">
         <h1 style='margin: 0 0 1em 0;'>
           {{product.prod_uid}} - {{product.prod_name}}
         </h1>
@@ -23,8 +23,8 @@
       <div class="col-md-6">
         <core-object-validation-panel plural-object='products' object-id='product.id'></core-object-validation-panel>
         <chain-view-edit edit-if='product.permissions.can_edit' view-template='/partials/products/attr_view.html' edit-template='/partials/products/attr_edit.html'
-          panel-title='Attributes' panel-class='panel-primary' 
-          before-edit='prepProductEditObject(product)' 
+          panel-title='Attributes' panel-class='panel-primary'
+          before-edit='prepProductEditObject(product)'
           on-save='save(productEditObject)'></chain-view-edit>
         <chain-variant-panel product='product' dictionary='dictionary'></chain-variant-panel>
         <div chain-attachment-panel attachments='product.attachments' attachable='product' attachable-type='Product' attachable-id='{{product.id}}' can-attach='product.permissions.can_attach'></div>

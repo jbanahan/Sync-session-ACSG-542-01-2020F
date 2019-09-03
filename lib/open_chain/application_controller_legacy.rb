@@ -2,7 +2,7 @@
 module OpenChain; module ApplicationControllerLegacy
   # show user message and redirect for http(s)://*.chain.io/*
   def chainio_redirect
-    if request.original_url.match(/https?:\/\/[a-zA-Z]*\.chain\.io\//) 
+    if request.original_url.match(/https?:\/\/[a-zA-Z]*\.chain\.io\//)
       @original_url = request.url
       @new_url = @original_url.sub(/chain\.io/,'vfitrack.net')
       @new_domain = @new_url.match(/[a-zA-Z]*\.vfitrack\.net/).to_s
@@ -23,7 +23,7 @@ module OpenChain; module ApplicationControllerLegacy
       redirect_path = "shipments_path"
     when CoreModule::SALE_LINE
       redirect_path = "sales_orders_path"
-    when CoreModule::SALE 
+    when CoreModule::SALE
       redirect_path = "sales_orders_path"
     when CoreModule::DELIVERY_LINE
       redirect_path = "deliveries_path"
@@ -83,9 +83,9 @@ module OpenChain; module ApplicationControllerLegacy
     parent = search_run.parent
     case parent.class.to_s
     when 'SearchSetup'
-      return "/advanced_search#/#{parent.id}#{page_str}#{clear_selected_items ? "?clearSelection=true" : ""}"
+      return "/advanced_search#!/#{parent.id}#{page_str}#{clear_selected_items ? "?clearSelection=true" : ""}"
     when 'ImportedFile'
-      return "/imported_files/show_angular#/#{parent.id}#{page_str}"
+      return "/imported_files/show_angular#!/#{parent.id}#{page_str}"
     when 'CustomFile'
       return "/custom_files/#{parent.id}"
     else
@@ -110,18 +110,18 @@ module OpenChain; module ApplicationControllerLegacy
     cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
     OpenChain::CoreModuleProcessor.update_custom_fields customizable_parent, cpp, current_user
   end
-  
+
   def update_status(statusable)
     OpenChain::CoreModuleProcessor.update_status statusable
   end
-    
+
   #subclassed controller must implement method (by default, #secure) that returns searchable object.
   #and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
   def build_search(base_field_list,default_search,default_sort,default_sort_order='a',secure_meth=:secure)
     field_list = base_field_list
     begin
       field_list = self.root_class.new.respond_to?("custom_definitions") ? base_field_list.merge(custom_field_parameters(root_class.new)) : base_field_list
-    rescue NoMethodError 
+    rescue NoMethodError
       #this is ok, you just won't get your custom fields
     end
 
@@ -209,7 +209,7 @@ module OpenChain; module ApplicationControllerLegacy
   def add_sort_relation relation, field, order
     relation.order("#{field[:field]} #{order=="d" ? "DESC" : "ASC"}")
   end
-  
+
   def custom_field_parameters(customizable)
     r = {}
     customizable.custom_definitions.each do |d|
@@ -224,7 +224,7 @@ module OpenChain; module ApplicationControllerLegacy
     s = @core_module.make_default_search current_user if s.nil?
     s
   end
-  
+
   def search_run
     return nil unless self.respond_to?('root_class') || @core_module
     @core_module = CoreModule.find_by_class_name self.root_class.to_s unless @core_module

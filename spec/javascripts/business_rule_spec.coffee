@@ -51,29 +51,29 @@ describe "BusinessRuleApp", () ->
     describe "editBusinessRule", () ->
       it "should make a call to service edit", () ->
         spyOn(svc, 'editBusinessRule').and.returnValue {
-          success: (c) -> null
+          then: (c) -> null
         }
         scope.editBusinessRule("5")
         expect(svc.editBusinessRule).toHaveBeenCalledWith("5")
 
       it "should set model_fields, groups, businessRule on success", () ->
-        myData = {model_fields: [1, 2, 3], business_validation_rule: "business rule"}
-        groupData = {groups: [{id: 1, grp_name: "foo"}, {id: 2, grp_name:"bar"}]}
+        myData = {data: {model_fields: [1, 2, 3], business_validation_rule: "business rule"}}
+        groupData = {data: {groups: [{id: 1, grp_name: "foo"}, {id: 2, grp_name:"bar"}]}}
         spyOn(svc, 'editBusinessRule').and.returnValue {
-          success: (c) -> c(myData)
+          then: (c) -> c(myData)
         }
         spyOn(svc, 'groupIndex').and.returnValue {
-          success: (c) -> c(groupData)
+          then: (c) -> c(groupData)
         }
         scope.editBusinessRule("5")
         expect(scope.model_fields).toEqual [1,2,3]
-        expect(scope.groups).toEqual groupData.groups
+        expect(scope.groups).toEqual groupData.data.groups
         expect(scope.businessRule).toEqual "business rule"
 
     describe 'updateBusinessRule', () ->
       it "should make a call to service update", () ->
         spyOn(svc, 'updateBusinessRule').and.returnValue {
-          success: (c) -> null; @
+          then: (c) -> null; @
           error: (c) -> null
         }
         scope.businessRule = "br"

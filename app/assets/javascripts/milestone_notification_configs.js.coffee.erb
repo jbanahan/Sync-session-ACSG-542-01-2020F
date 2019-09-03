@@ -59,7 +59,7 @@ angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) -
   }
 ]
 
-MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneSvc', '$state', 'chainErrorHandler', ($scope, milestoneSvc, $state, chainErrorHandler) -> 
+MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneSvc', '$state', 'chainErrorHandler', ($scope, milestoneSvc, $state, chainErrorHandler) ->
 
   $scope.errorHandler = chainErrorHandler
   $scope.errorHandler.responseErrorHandler = (rejection) ->
@@ -67,10 +67,10 @@ MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneS
 
   $scope.loadingFlag = "loading"
 
-  milestoneSvc.getMilestoneUpdateConfigs().success((data) ->
-    $scope.milestoneConfigs = data.configs
-    $scope.outputStyles = data.output_styles
-    $scope.moduleTypes = data.module_types
+  milestoneSvc.getMilestoneUpdateConfigs().then((resp) ->
+    $scope.milestoneConfigs = resp.data.configs
+    $scope.outputStyles = resp.data.output_styles
+    $scope.moduleTypes = resp.data.module_types
     $scope.loadingFlag = null
   )
 

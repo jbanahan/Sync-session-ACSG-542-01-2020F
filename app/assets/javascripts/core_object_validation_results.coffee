@@ -21,17 +21,17 @@ app.factory 'coreObjectValidationResultsSvc', ['$http',($http) ->
 
     saveRuleResult: (result,ruleResult) ->
       p = $http.put('/business_validation_rule_results/'+ruleResult.id+'.json',{business_validation_rule_result:ruleResult})
-      p.success (data) ->
-        result.state = data.save_response.validatable_state
-        new_result = data.save_response.rule_result
+      p.then (resp, status) ->
+        result.state = resp.data.save_response.validatable_state
+        new_result = resp.data.save_response.rule_result
         for bvr in result.bv_results
           for rr, i in bvr.rule_results
             if rr.id == new_result.id
               bvr.rule_results[i] = new_result
-              bvr.state = data.save_response.result_state
+              bvr.state = resp.data.save_response.result_state
 
       p
-    
+
     cancelOverride: (rr) ->
       $http.put('/business_validation_rule_results/' + rr.id + '/cancel_override')
 
@@ -50,16 +50,17 @@ app.controller 'coreObjectValidationResultsCtrl', ['$scope','coreObjectValidatio
 
   $scope.saveRuleResult = (rr) ->
     p = coreObjectValidationResultsSvc.saveRuleResult $scope.result, rr
-    p.success (data) ->
-      $scope.editRuleResult data.save_response.rule_result
+    p.then (resp, status) ->
+      $scope.editRuleResult resp.data.save_response.rule_result
 
   $scope.loadObject = (pluralObject, objectId) ->
     coreObjectValidationResultsSvc.pluralObject = pluralObject
     coreObjectValidationResultsSvc.objectId = objectId
     p = coreObjectValidationResultsSvc.loadRuleResult pluralObject, objectId
-    p.success (data) ->
-      $scope.result = data['business_validation_result']
-  
+    p.then ((resp, status) ->
+      $scope.result = resp.data['business_validation_result']
+      )
+
   $scope.cancelOverride = (rr) ->
     pluObj = coreObjectValidationResultsSvc.pluralObject
     objId = coreObjectValidationResultsSvc.objectId
@@ -102,8 +103,8 @@ app.directive 'coreObjectValidationPanel', ['coreObjectValidationResultsSvc', (c
     link: (scope,el,attrs) ->
       loadObject = (path,id) ->
         scope.loading = 'loading'
-        coreObjectValidationResultsSvc.loadRuleResult(path,id).success (data) ->
-          scope.result = data['business_validation_result']
+        coreObjectValidationResultsSvc.loadRuleResult(path,id).then (resp, status) ->
+          scope.result = resp.data['business_validation_result']
           scope.loading = null
 
       scope.stateToBootstrap = (prefix, obj) ->
@@ -122,7 +123,7 @@ app.directive 'coreObjectValidationPanel', ['coreObjectValidationResultsSvc', (c
         scope.loading = 'loading'
         $('#business-rules-edit').modal('hide')
         p = coreObjectValidationResultsSvc.saveRuleResult scope.result, rr
-        p.success () ->
+        p.then (resp, status) ->
           loadObject(scope.pluralObject,scope.objectId)
 
       scope.$watch 'objectId', (nv,ov) ->
@@ -156,7 +157,7 @@ app.directive 'stateIcon', [ ->
             colorClass = 'text-danger'
           when 'Skipped'
             iconClass = 'fa-minus'
-        
+
         return "" + iconClass + " " + colorClass
 
   }

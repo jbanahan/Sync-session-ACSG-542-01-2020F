@@ -88,7 +88,7 @@
           <div class='form-group'>
             <label for="mid">MID</label>
             <input id="mid" class="form-control" name='mid' ng-model="poLine.mid">
-          </div>          
+          </div>
           <div class="form-group" ng-class="{'has-error':form.origin_country.$invalid}">
             <label for="" form="origin_country">Country of Origin</label>
             <input type="text" id="origin_country" class='form-control' name="origin_country" ng-model="poLine.origin_country" ng-pattern='/^[A-Z]{2}$/'>
@@ -162,7 +162,7 @@
             <label for="comment">Comment</label>
             <textarea ng-model='poLine.comment' class='form-control' id='comment'></textarea>
           </div>
-          
+
         </div>
       </div>
       <div class="row">
@@ -208,7 +208,7 @@
           </thead>
           <tbody>
             <tr ng-repeat='line in recentLines'>
-              <td><a class='btn btn-sm' ng-click='selectLine(line)'>{{line.po_number}}</a></td>
+              <td><a class='btn btn-outline-dark btn-sm' ng-click='selectLine(line)'>{{line.po_number}}</a></td>
               <td>{{line.coast}}</td>
               <td>{{line.hts_code}}</td>
               <td>{{line.cartons}}</td>
@@ -217,8 +217,8 @@
               <td>{{line.invoice_value}}</td>
               <td>{{line.adjusted_value}}</td>
               <td>{{line.currency}}</td>
-              <td>{{line.docs_rec_date}}</td>
-              <td>{{line.docs_ok_date}}</td>
+              <td>{{line.docs_rec_date | date:'yyyy-MM-dd'}}</td>
+              <td>{{line.docs_ok_date | date:'yyyy-MM-dd'}}</td>
             </tr>
           </tbody>
         </table>

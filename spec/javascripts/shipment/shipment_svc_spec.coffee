@@ -19,8 +19,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers').respond resp
         shp = null
-        svc.getShipment(1).then (data) ->
-          shp = data.data
+        svc.getShipment(1).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -28,8 +28,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers&shipment_lines=true').respond resp
         shp = null
-        svc.getShipment(1, true).then (data) ->
-          shp = data.data
+        svc.getShipment(1, true).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -37,8 +37,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers&booking_lines=true').respond resp
         shp = null
-        svc.getShipment(1, false, true).then (data) ->
-          shp = data.data
+        svc.getShipment(1, false, true).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -46,8 +46,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectGET('/api/v1/shipments/1.json?summary=true&include=order_lines,attachments,comments,containers&shipment_lines=true&booking_lines=true').respond resp
         shp = null
-        svc.getShipment(1, true, true).then (data) ->
-          shp = data.data
+        svc.getShipment(1, true, true).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -98,8 +98,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectPOST('/api/v1/shipments', {shipment: base}).respond resp
         shp = null
-        svc.saveShipment(base).then (data) ->
-          shp = data.data
+        svc.saveShipment(base).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -108,8 +108,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectPUT('/api/v1/shipments/1.json',{shipment: base}).respond resp
         shp = null
-        svc.saveShipment(base).then (data) ->
-          shp = data.data
+        svc.saveShipment(base).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -166,8 +166,8 @@ describe 'ShipmentService', ->
         resp = {'importers': [{id: 1}]}
         http.expectGET('/api/v1/companies?roles=importer').respond resp
         d = null
-        svc.getImporters().success (data) ->
-          d = data
+        svc.getImporters().then (resp) ->
+          d = resp.data
         http.flush()
         expect(d).toEqual resp
 
@@ -176,8 +176,8 @@ describe 'ShipmentService', ->
         resp = {'carriers': [{id: 1}]}
         http.expectGET('/api/v1/companies?roles=carrier&linked_with=1').respond resp
         d = null
-        svc.getCarriers(1).success (data) ->
-          d = data
+        svc.getCarriers(1).then (resp) ->
+          d = resp.data
         http.flush()
         expect(d).toEqual resp
 
@@ -187,8 +187,8 @@ describe 'ShipmentService', ->
         shp = {id: 10}
         http.expectGET('/api/v1/shipments/10/available_orders.json').respond resp
         d = null
-        svc.getAvailableOrders(shp).success (data) ->
-          d = data
+        svc.getAvailableOrders(shp).then (resp) ->
+          d = resp.data
         http.flush()
         expect(d).toEqual resp
 
@@ -197,8 +197,8 @@ describe 'ShipmentService', ->
         resp = {order: {id: 1, ord_ord_num: 'x'}}
         http.expectGET('/api/v1/orders/1').respond resp
         d = null
-        svc.getOrder(1).success (data) ->
-          d = data
+        svc.getOrder(1).then (resp) ->
+          d = resp.data
         http.flush()
         expect(d).toEqual resp
 
@@ -213,8 +213,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectPOST('/api/v1/shipments/1/process_tradecard_pack_manifest',{attachment_ids: [2], manufacturer_address_id:3, enable_warnings:true}).respond resp
         shp = null
-        svc.processTradecardPackManifest({id: 1},[2], 3, true).then (data) ->
-          shp = data.data
+        svc.processTradecardPackManifest({id: 1},[2], 3, true).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -223,8 +223,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectPOST('/api/v1/shipments/1/process_manifest_worksheet',{attachment_ids: [2], enable_warnings:true}).respond resp
         shp = null
-        svc.processManifestWorksheet({id: 1},[2], null, true).then (data) ->
-          shp = data.data
+        svc.processManifestWorksheet({id: 1},[2], null, true).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -233,8 +233,8 @@ describe 'ShipmentService', ->
         resp = {shipment: {id: 1}}
         http.expectPOST('/api/v1/shipments/1/process_booking_worksheet',{attachment_ids: [2], enable_warnings:true}).respond resp
         shp = null
-        svc.processBookingWorksheet({id: 1},[2], null, true).then (data) ->
-          shp = data.data
+        svc.processBookingWorksheet({id: 1},[2], null, true).then (resp) ->
+          shp = resp.data
         http.flush()
         expect(shp).toEqual resp
 
@@ -244,7 +244,7 @@ describe 'ShipmentService', ->
         searchArgs = {sid1:'shp_shipped_order_ids', sop1:'co', sv1:1}
         http.expectGET('/api/v1/shipments.json?sid1=shp_shipped_order_ids&sop1=co&sv1=1').respond resp
         d = null
-        svc.getOrderShipmentRefs(1).then (data) ->
-          d = data
+        svc.getOrderShipmentRefs(1).then (resp) ->
+          d = resp
         http.flush()
         expect(d).toEqual ['REF1', 'REF2', 'REF3']

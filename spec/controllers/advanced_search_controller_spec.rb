@@ -76,7 +76,7 @@ describe AdvancedSearchController do
     end
     it "returns error if email-address field is too long" do
       addr = "b@#{'z' * 250}.com"
-      put :update, :id=>@ss.id, :search_setup=>{:search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}], 
+      put :update, :id=>@ss.id, :search_setup=>{:search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}],
                                                 :search_schedules=>[{:email_addresses=>addr}]}
       expect(response).to be_error
       expect(JSON.parse(response.body)['error']).to eq "Email address field must be no more than 255 characters!"
@@ -198,7 +198,7 @@ describe AdvancedSearchController do
   describe "setup" do
     it 'should redirect for html' do
       get :setup, :id=>1
-      expect(response).to redirect_to '/advanced_search#/1'
+      expect(response).to redirect_to '/advanced_search#!/1'
     end
     it "should write response for json" do
       @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
@@ -272,7 +272,7 @@ describe AdvancedSearchController do
       expect(h['search_schedules']).to eq([
         {"mailing_list_id"=>nil,"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
           "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,"disabled"=>false,"report_failure_count"=>2,
-          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password", 
+          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password",
           "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123"}
       ])
     end
@@ -329,7 +329,7 @@ describe AdvancedSearchController do
   describe "show" do
     it 'should redirect for html' do
       get :show, :id=>1
-      expect(response).to redirect_to '/advanced_search#/1/1'
+      expect(response).to redirect_to '/advanced_search#!/1/1'
     end
     it "should write page and per page to search run" do
       @ss = Factory(:search_setup,:user=>@user)

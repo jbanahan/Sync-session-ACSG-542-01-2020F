@@ -52,7 +52,7 @@ class ImportedFilesController < ApplicationController
   def show
     respond_to do |format|
       format.html {
-        redirect_to "/imported_files/show_angular#/#{params[:id]}"
+        redirect_to "/imported_files/show_angular#!/#{params[:id]}"
       }
       format.json {
         f = ImportedFile.find params[:id]
@@ -75,7 +75,7 @@ class ImportedFilesController < ApplicationController
           :search_setup_name=>f.search_setup.try(:name),
           :model_fields => ModelField.sort_by_label(f.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}},
           :file_import_result => {}
-        } 
+        }
         r[:file_import_result][:id] = fir.id if fir
         r[:available_countries] = Country.import_locations.sort_classification_rank.collect {|c| {:id=>c.id,:iso_code=>c.iso_code,:name=>c.name}}
         render :json=>r

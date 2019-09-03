@@ -30,7 +30,7 @@ BusinessValidationScheduleApp.factory 'businessValidationScheduleSvc', ['$http',
   {
     loadSchedules: () ->
       $http.get('/api/v1/admin/business_validation_schedules')
-    
+
     newSchedule: () ->
       $http.get('/api/v1/admin/business_validation_schedules/new')
 
@@ -39,7 +39,7 @@ BusinessValidationScheduleApp.factory 'businessValidationScheduleSvc', ['$http',
 
     createSchedule: (params) ->
       $http.post('/api/v1/admin/business_validation_schedules/', JSON.stringify(params))
-    
+
     updateSchedule: (id, params) ->
       $http.put('/api/v1/admin/business_validation_schedules/' + id, JSON.stringify(params))
 
@@ -86,7 +86,7 @@ BusinessValidationScheduleApp.controller 'businessValidationScheduleNewCtrl', ['
     businessValidationScheduleSvc.createSchedule(params).then (data) ->
       $scope.loadingFlag = null
       $state.go 'edit', {scheduleId: data["data"]["id"]}
-    
+
   $scope.cancel = () ->
     $state.go 'index'
 
@@ -100,7 +100,7 @@ BusinessValidationScheduleApp.controller 'businessValidationScheduleEditCtrl', [
 
   $scope.errorHandler.responseErrorHandler = (rejection) ->
     $scope.loadingFlag = null
- 
+
   $scope.loadSchedule = (id) ->
     $scope.errorHandler.clear()
     p = businessValidationScheduleSvc.loadSchedule id
@@ -109,11 +109,11 @@ BusinessValidationScheduleApp.controller 'businessValidationScheduleEditCtrl', [
       $scope.schedule =
         id: basicSchedule["id"]
         module_type: basicSchedule["module_type"]
-        name: basicSchedule["name"]       
+        name: basicSchedule["name"]
         num_days: basicSchedule["num_days"]
         operator: basicSchedule["operator"]
         model_field_uid: basicSchedule["model_field_uid"]
-      
+
       $scope.search_criterions = data["data"]["criteria"]
       $scope.criterion_model_fields = data["data"]["criterion_model_fields"]
       $scope.schedule_model_fields = data["data"]["schedule_model_fields"]
@@ -122,7 +122,7 @@ BusinessValidationScheduleApp.controller 'businessValidationScheduleEditCtrl', [
   $scope.saveSchedule = () ->
     $scope.loadingFlag = "loading"
     params = {criteria: $scope.search_criterions, schedule: $scope.schedule}
-    businessValidationScheduleSvc.updateSchedule($state.params.scheduleId, params).success(() ->
+    businessValidationScheduleSvc.updateSchedule($state.params.scheduleId, params).then(() ->
       $state.go 'index')
 
   $scope.cancel = (id) ->
@@ -132,13 +132,13 @@ BusinessValidationScheduleApp.controller 'businessValidationScheduleEditCtrl', [
         $state.go 'index'
       else
         businessValidationScheduleSvc.deleteSchedule(id).then () ->
-          $state.go 'index'    
+          $state.go 'index'
 
   $scope.delete = (id) ->
     proceed = $window.confirm("Delete this schedule?")
     if proceed
       businessValidationScheduleSvc.deleteSchedule(id).then () ->
-        $state.go 'index'  
+        $state.go 'index'
 
   #from advanced_search.js.coffee.erb
   findByMfid = (ary,mfid) ->

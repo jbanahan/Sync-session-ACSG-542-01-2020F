@@ -6,6 +6,8 @@ describe 'BusinessValidationScheduleApp', () ->
     beforeEach inject((businessValidationScheduleSvc, $httpBackend) ->
       svc = businessValidationScheduleSvc
       http = $httpBackend
+      http.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_index.+html")).respond "returnVal"
+      expect(http.flush).not.toThrow()
     )
 
     afterEach () ->
@@ -17,18 +19,18 @@ describe 'BusinessValidationScheduleApp', () ->
         http.expectGET(new RegExp("/api/v1/admin/business_validation_schedules")).respond "returnVal"
         promise = svc.loadSchedules()
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual "returnVal"
-    
+
     describe 'newSchedule', () ->
       it "executes route", () ->
         http.expectGET(new RegExp('/api/v1/admin/business_validation_schedules/new')).respond "returnVal"
         promise = svc.newSchedule()
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual "returnVal"
 
@@ -37,8 +39,8 @@ describe 'BusinessValidationScheduleApp', () ->
         http.expectGET(new RegExp('/api/v1/admin/business_validation_schedules/1/edit')).respond "returnVal"
         promise = svc.loadSchedule(1)
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual "returnVal"
 
@@ -47,8 +49,8 @@ describe 'BusinessValidationScheduleApp', () ->
         http.expectPOST('/api/v1/admin/business_validation_schedules/', '"params"').respond "returnVal"
         promise = svc.createSchedule("params")
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual "returnVal"
 
@@ -57,8 +59,8 @@ describe 'BusinessValidationScheduleApp', () ->
         http.expectPUT('/api/v1/admin/business_validation_schedules/1', '"params"').respond "returnVal"
         promise = svc.updateSchedule(1,"params")
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual "returnVal"
 
@@ -67,8 +69,8 @@ describe 'BusinessValidationScheduleApp', () ->
         http.expectDELETE('/api/v1/admin/business_validation_schedules/1').respond "returnVal"
         promise = svc.deleteSchedule(1)
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual "returnVal"
 
@@ -86,7 +88,7 @@ describe 'BusinessValidationScheduleApp', () ->
         svc = _businessValidationScheduleSvc_
         $controller = _$controller_
         ctrl = $controller('businessValidationScheduleIndexCtrl',{$scope:$scope, $state:$state, chainErrorHandler:chainErrorHandler, businessValidationScheduleSvc:svc})
-        
+
         # default route automatically loads along with controller
         $httpBackend.expectGET(new RegExp('/assets/business_validation_schedule/business_validation_schedule_index.+html')).respond "returnVal"
       )
@@ -160,8 +162,8 @@ describe 'BusinessValidationScheduleApp', () ->
       describe 'loadSchedule', () ->
         it "assigns data to scope", () ->
           $httpBackend.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_index.+html")).respond "returnVal"
-          data = 
-            { 
+          data =
+            {
               "data":{
                 "schedule":{
                   "business_validation_schedule":{
@@ -171,7 +173,7 @@ describe 'BusinessValidationScheduleApp', () ->
                     "num_days": 30,
                     "operator": "After",
                     "model_field_uid": "ent_release_date"}
-                            } 
+                            }
                 "criteria": "search criterions",
                 "criterion_model_fields": "criterion MFs",
                 "schedule_model_fields": "schedule MFs"
@@ -202,15 +204,8 @@ describe 'BusinessValidationScheduleApp', () ->
           $httpBackend.expectGET(new RegExp("/assets/business_validation_schedule/business_validation_schedule_edit.+html")).respond "returnVal"
           $scope.schedule = "schedule_data"
           $scope.search_criterions = "criterion_data"
-          spyOn(svc, 'updateSchedule').and.returnValue {success: ()-> null}
+          spyOn(svc, 'updateSchedule').and.returnValue {then: ()-> null}
           $scope.saveSchedule()
-          $scope.$apply()
-          
+
           #first arg should be the schedule's id, but I can't figure out how to inject it into $state.params
           expect(svc.updateSchedule).toHaveBeenCalledWith(undefined, {"criteria": "criterion_data", "schedule": "schedule_data"})
-
-
-
-      
-
-

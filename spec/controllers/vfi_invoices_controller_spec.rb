@@ -17,7 +17,7 @@ describe VfiInvoicesController do
       allow(@u).to receive(:view_vfi_invoices?).and_return true
       get :index
       expect(response).to be_redirect
-      expect(response.location).to match(/\/advanced_search#\//)
+      expect(response.location).to match(/\/advanced_search#!\//)
     end
   end
 
@@ -35,7 +35,7 @@ describe VfiInvoicesController do
 
       get :show, id: @inv
       expect(response).to redirect_to request.referrer
-      expect(flash[:errors]).to include "You do not have permission to view this invoice."     
+      expect(flash[:errors]).to include "You do not have permission to view this invoice."
     end
 
     it "renders and totals invoices" do
@@ -44,7 +44,7 @@ describe VfiInvoicesController do
 
       @u.company = Factory(:master_company)
       allow(@u).to receive(:view_vfi_invoices?).and_return true
-      
+
       get :show, id: @inv
       expect(response).to be_success
       expect(assigns(:vfi_invoice)).to eq @inv

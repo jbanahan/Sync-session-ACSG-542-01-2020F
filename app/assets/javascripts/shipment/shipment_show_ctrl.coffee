@@ -1,14 +1,14 @@
 angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipmentSvc','$state','chainErrorHandler', '$window', 'chainDomainerSvc', ($scope,shipmentSvc,$state,chainErrorHandler, $window, chainDomainerSvc) ->
   loadCarriers = (importerId) ->
     $scope.carriers = undefined
-    shipmentSvc.getCarriers(importerId).success((data) ->
-      $scope.carriers = data.carriers
+    shipmentSvc.getCarriers(importerId).then((resp, status) ->
+      $scope.carriers = resp.data.carriers
     )
 
   loadImporters = ->
     $scope.importers = undefined
-    shipmentSvc.getImporters().success((data) ->
-      $scope.importers = data.importers
+    shipmentSvc.getImporters().then((resp, status) ->
+      $scope.importers = resp.data.importers
     )
 
   bookingAction = (shipment, redoCheckField, actionMethod, namePastTense) ->
@@ -21,11 +21,11 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
       actionMethod(shipment).then (resp) ->
         $scope.loadShipment(sId).then ->
           window.alert('Booking '+namePastTense+'.')
-  
+
   $scope.loadSearchModal = (field, number) ->
     $('#search-modal').modal('show')
     shipmentSvc.getQuickSearch(field, number).then (data) ->
-      $window.OCQuickSearch.writeModuleResponse data, null, null, true, true    
+      $window.OCQuickSearch.writeModuleResponse data, null, null, true, true
 
   $scope.eh = chainErrorHandler
   $scope.eh.responseErrorHandler = (rejection) ->
@@ -53,15 +53,15 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     for line in lines
       for order_line in line.order_lines
         item = {order_id: order_line.order_id, order_number: $scope.shipmentLineOrderNumber(order_line)}
-        
+
         # Ensure that there are only unique order lines
         found = false
         for ol in orders
           if ol.order_id == item.order_id
             found = true
-        
+
         unless found
-          orders.push item 
+          orders.push item
     orders
 
   addConditionalFields = (shp) ->

@@ -36,3 +36,25 @@ describe 'SetupDataSvc', ->
         http.flush()
 
         expect(sd).toEqual formattedResult
+
+      it 'should ignore contries in regions which are not in import_countries', ->
+        resp = {
+          import_countries:[{id:1,iso_code:'US',name:'USA'}]
+          regions:[{id:1,name:'NA',countries:['US','XY','YZ']}]
+        }
+        http.expectGET('/api/v1/setup_data').respond resp
+
+        # index countries by ISO for easier lookup
+        formattedResult = {import_countries:{},regions:{}}
+        formattedResult.import_countries.US = resp.import_countries[0]
+
+        # replace region countries with objects
+        formattedResult.regions = [{id:1,name:'NA',countries:[formattedResult.import_countries.US]}]
+
+        sd = null
+        svc.getSetupData().then (sdResp) ->
+          sd = sdResp
+
+        http.flush()
+
+        expect(sd).toEqual formattedResult

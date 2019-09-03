@@ -1,6 +1,6 @@
 describe ImportedFilesController do
-  
-  before :each do 
+
+  before :each do
     @u = Factory(:user)
 
     sign_in_as @u
@@ -8,7 +8,7 @@ describe ImportedFilesController do
   describe 'show' do
     it 'should pass for html' do
       get :show, :id=>1
-      expect(response).to redirect_to "/imported_files/show_angular#/1"
+      expect(response).to redirect_to "/imported_files/show_angular#!/1"
     end
     it "should 404 for json & imported file that user can't view" do
       allow_any_instance_of(FileImportResult).to receive(:can_view?).and_return false

@@ -17,7 +17,7 @@ describe SummaryStatementsController do
       allow(@u).to receive(:view_summary_statements?).and_return true
       get :index
       expect(response).to be_redirect
-      expect(response.location).to match(/\/advanced_search#\//)
+      expect(response.location).to match(/\/advanced_search#!\//)
     end
   end
 
@@ -37,10 +37,10 @@ describe SummaryStatementsController do
       bi_2 = Factory(:broker_invoice, entry: ca_entry)
       bi_3 = Factory(:broker_invoice, entry: ca_entry)
       @ss.broker_invoices << [bi_1, bi_2, bi_3]
-      
+
       get :show, id: @ss
       expect(response).to be_success
-      expect(assigns(:summary_statement)).to eq @ss  
+      expect(assigns(:summary_statement)).to eq @ss
       expect(assigns(:us_invoices)).to eq [bi_1]
       expect(assigns(:ca_invoices)).to eq [bi_2, bi_3]
     end
@@ -62,7 +62,7 @@ describe SummaryStatementsController do
       bi_2 = Factory(:broker_invoice, entry: ca_entry)
       bi_3 = Factory(:broker_invoice, entry: ca_entry)
       @ss.broker_invoices << [bi_1, bi_2, bi_3]
-      
+
       get :edit, id: @ss
       expect(response).to be_success
       expect(assigns(:summary_statement)).to eq @ss
@@ -74,7 +74,7 @@ describe SummaryStatementsController do
   describe "new" do
     it "allows use only by summary-statement editors" do
       get :new
-      
+
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to include "You do not have permission to create summary statements."
     end
@@ -105,7 +105,7 @@ describe SummaryStatementsController do
       allow(@u).to receive(:edit_summary_statements?).and_return true
       @co_1 = Factory(:company, importer: true)
       @co_2 = Factory(:company)
-      
+
     end
 
     it "allows use only by summary-statement editors" do
@@ -164,14 +164,14 @@ describe SummaryStatementsController do
 
       it "removes invoices from statement" do
         put :update, id: @ss, selected: {to_remove: [@bi_1, @bi_2]}
-        
+
         expect(@ss.broker_invoices.count).to eq 1
         expect(response).to redirect_to edit_summary_statement_path(@ss)
       end
 
       it "makes no change and displays error if an invoice marked for removal doesn't belong to the statement" do
         bi_other = Factory(:broker_invoice, invoice_number: "123456789").id.to_s
-        
+
         put :update, id: @ss, selected: {to_remove: [@bi_1, bi_other]}
         expect(@ss.broker_invoices.count).to eq 3
         expect(response).to redirect_to request.referrer
@@ -190,7 +190,7 @@ describe SummaryStatementsController do
         Factory(:broker_invoice, invoice_number: '123456789', entry: Factory(:entry, importer: @company))
         Factory(:broker_invoice, invoice_number: '987654321', entry: Factory(:entry, importer: @company))
         put :update, id: @ss, selected: {to_add: "123456789\n987654321"}
-        
+
         expect(@ss.broker_invoices.count).to eq 2
         expect(response).to redirect_to edit_summary_statement_path(@ss)
       end
@@ -198,7 +198,7 @@ describe SummaryStatementsController do
       it "makes no change and displays error if an invoice is ineligible to be added" do
         Factory(:broker_invoice, invoice_number: '123456789', entry: Factory(:entry, importer: Factory(:company))).id.to_s
         put :update, id: @ss, selected: {to_add: "123456789"}
-        
+
         expect(@ss.broker_invoices.count).to eq 0
         expect(response).to redirect_to request.referrer
         expect(flash[:errors]).to include "Invoice 123456789 does not belong to customer."

@@ -1,5 +1,5 @@
 angular.module('ChainComponents').factory 'setupDataSvc', ['$http','$q',($http,$q) ->
-  
+
   cachedSetupData = null
 
   return {
@@ -18,7 +18,7 @@ angular.module('ChainComponents').factory 'setupDataSvc', ['$http','$q',($http,$
           for r in resp.data.regions
             country_objects = []
             for iso in r.countries
-              country_objects.push(cachedSetupData.import_countries[iso])
+              if cachedSetupData.import_countries[iso] then country_objects.push(cachedSetupData.import_countries[iso])
             r.countries = country_objects
             cachedSetupData.regions.push(r)
 

@@ -13,7 +13,7 @@
         } else {
           var html = '';
           $.each(matches, function( index, ven ) {
-            html += "<tr><td><a href='/vendors/"+ven.id+"' class='btn btn-sm'>Use</a></td><td>"+ven.name+"</td><tr>";
+            html += "<tr><td><a href='/vendors/"+ven.id+"' class='btn btn-primary btn-sm'>Use</a></td><td>"+ven.name+"</td><tr>";
           });
           $('#table_matches').html(html);
           $('#choices_loading').hide();

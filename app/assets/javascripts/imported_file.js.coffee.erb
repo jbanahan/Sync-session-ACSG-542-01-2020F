@@ -45,8 +45,8 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$timeout', '$ro
   $scope.emailCurrentSettings = {to:'',subject:'[VFI Track] Current File Data',body:''}
 
   $scope.reloadWhenProcessed = () ->
-    $http.get('/imported_files/'+parseInt($routeParams.fileId)+'.json').success((data) ->
-      importedFile = data
+    $http.get('/imported_files/'+parseInt($routeParams.fileId)+'.json').then((resp) ->
+      importedFile = resp.data
       if importedFile.last_processed == ''
         $scope.importedFile = importedFile
         $timeout (-> $scope.reloadWhenProcessed()), 5000
@@ -66,30 +66,30 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$timeout', '$ro
       countryIds.push c.id if c.selected
     $scope.emailCurrentSettings.extra_countries = countryIds
     $scope.disableEmailCurrent()
-    $http.post('/imported_files/'+$scope.importedFile.id+"/email_file.json",$scope.emailCurrentSettings).success(() ->
+    $http.post('/imported_files/'+$scope.importedFile.id+"/email_file.json",$scope.emailCurrentSettings).then(() ->
       $scope.notices.push "Your file has been scheduled and will be emailed soon."
-    ).error(() ->
+    ,() ->
       $scope.errors.push "There was an error emailing this file. Please contact support."
     )
 
   $scope.updateSearchCriterions = () ->
     $scope.searchResult = {}
-    $http.put('/imported_files/'+$scope.importedFile.id+'/update_search_criterions.json',JSON.stringify({imported_file:$scope.importedFile})).success(() ->
+    $http.put('/imported_files/'+$scope.importedFile.id+'/update_search_criterions.json',JSON.stringify({imported_file:$scope.importedFile})).then(() ->
       $scope.searchResult = {
         id:$scope.importedFile.id
         saved:true
       } # Will trigger search reload, which in turn, will update this search result
-    ).error(() ->
+    ,(resp) ->
       $scope.errors.push "Error saving results.  Please reload this page."
     )
 
   $scope.process = () ->
     $scope.showPreviewBox = false
-    $http.post('/imported_files/'+$scope.importedFile.id+"/process_file.json").success(() ->
+    $http.post('/imported_files/'+$scope.importedFile.id+"/process_file.json").then(() ->
       $scope.showEmailCurrent=false
       $scope.notices.push "Your file is being processed. The screen will reload when it's finished."
       $scope.reloadWhenProcessed()
-    ).error(() ->
+    ,(resp) ->
       $scope.errors.push "There was an error processing the file. Please contact support."
     )
 
@@ -104,20 +104,20 @@ importedFileApp.controller 'ImportedFileController', ['$scope', '$timeout', '$ro
     $window.location.href = "/file_import_results/" + id
 
   if($routeParams.fileId>0)
-    $http.get('/imported_files/'+parseInt($routeParams.fileId)+'.json').success((data) ->
-      $scope.importedFile = data
+    $http.get('/imported_files/'+parseInt($routeParams.fileId)+'.json').then((resp) ->
+      $scope.importedFile = resp.data
       $scope.emailCurrentSettings.to = $scope.importedFile.current_user.email
       if $scope.importedFile.total_rows && $scope.importedFile.total_rows > 0
-        $scope.searchResult.id = data.id
+        $scope.searchResult.id = resp.data.id
       else
         $scope.showPreviewBox = true
-        $http.get('/imported_files/'+$scope.importedFile.id+'/preview.json').success((data) ->
-          if data.error
-            $scope.errors.push "There was an error loading the preview: "+data.error
+        $http.get('/imported_files/'+$scope.importedFile.id+'/preview.json').then((resp) ->
+          if resp.data.error
+            $scope.errors.push "There was an error loading the preview: " + resp.data.error
             $scope.showPreviewBox = false
           else
-            $scope.previewResults = data
-        ).error(() ->
+            $scope.previewResults = resp.data
+        ,(resp) ->
           $scope.errors.push "There was an error processing this file. Please contact support."
         )
     )

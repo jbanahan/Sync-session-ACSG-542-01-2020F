@@ -8,19 +8,19 @@ describe ApplicationController do
     it "should build default search if no search runs" do
       r = controller.advanced_search(CoreModule::PRODUCT)
       ss = @u.search_setups.where(:module_type=>'Product').first
-      expect(r).to eq("/advanced_search#/#{ss.id}")
+      expect(r).to eq("/advanced_search#!/#{ss.id}")
     end
     it "should redirect to advanced search with page" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
       sr = ss.search_runs.create!(:page=>3,:per_page=>100)
       r = controller.advanced_search(CoreModule::PRODUCT)
-      expect(r).to eq("/advanced_search#/#{ss.id}/3")
+      expect(r).to eq("/advanced_search#!/#{ss.id}/3")
     end
     it "should redirect to advanced search without page" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
       sr = ss.search_runs.create!
       r = controller.advanced_search(CoreModule::PRODUCT)
-      expect(r).to eq("/advanced_search#/#{ss.id}")
+      expect(r).to eq("/advanced_search#!/#{ss.id}")
     end
     it "should redirect to advanced search if force_search is set to true" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
@@ -34,8 +34,8 @@ describe ApplicationController do
 
       #make sure the search setup run is older
       SearchRun.connection.execute("UPDATE search_runs SET last_accessed = '2010-01-01 11:00' where id = #{sr.id}")
-      r = controller.advanced_search(CoreModule::PRODUCT,true) 
-      expect(r).to eq("/advanced_search#/#{ss.id}")
+      r = controller.advanced_search(CoreModule::PRODUCT,true)
+      expect(r).to eq("/advanced_search#!/#{ss.id}")
     end
     it "should redirect to most recent search run" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
@@ -44,32 +44,32 @@ describe ApplicationController do
       fsr = f.search_runs.create!
       #make sure the search setup run is older
       SearchRun.connection.execute("UPDATE search_runs SET last_accessed = '2010-01-01 11:00' where id = #{sr.id}")
-      r = controller.advanced_search(CoreModule::PRODUCT) 
-      expect(r).to eq("/imported_files/show_angular#/#{f.id}")
+      r = controller.advanced_search(CoreModule::PRODUCT)
+      expect(r).to eq("/imported_files/show_angular#!/#{f.id}")
     end
     it "should redirect to imported file with page" do
       f = Factory(:imported_file,:module_type=>'Product',:user=>@u)
       fsr = f.search_runs.create!(:page=>7)
-      r = controller.advanced_search(CoreModule::PRODUCT) 
-      expect(r).to eq("/imported_files/show_angular#/#{f.id}/7")
+      r = controller.advanced_search(CoreModule::PRODUCT)
+      expect(r).to eq("/imported_files/show_angular#!/#{f.id}/7")
     end
     it "should redirect to imported file without page" do
       f = Factory(:imported_file,:module_type=>'Product',:user=>@u)
       fsr = f.search_runs.create!
-      r = controller.advanced_search(CoreModule::PRODUCT) 
-      expect(r).to eq("/imported_files/show_angular#/#{f.id}")
+      r = controller.advanced_search(CoreModule::PRODUCT)
+      expect(r).to eq("/imported_files/show_angular#!/#{f.id}")
     end
     it "should redirect to custom file" do
       f = Factory(:custom_file,:uploaded_by=>@u,:module_type=>'Product')
       fsr = f.search_runs.create!
-      r = controller.advanced_search(CoreModule::PRODUCT) 
+      r = controller.advanced_search(CoreModule::PRODUCT)
       expect(r).to eq("/custom_files/#{f.id}")
     end
     it "inserts clearSelection parameter if instructed" do
       ss = Factory(:search_setup,:module_type=>'Product',:user=>@u)
       sr = ss.search_runs.create!(:page=>3,:per_page=>100)
       r = controller.advanced_search(CoreModule::PRODUCT, false, true)
-      expect(r).to eq("/advanced_search#/#{ss.id}/3?clearSelection=true")
+      expect(r).to eq("/advanced_search#!/#{ss.id}/3?clearSelection=true")
     end
   end
   describe "strip_uri_params" do
@@ -98,7 +98,7 @@ describe ApplicationController do
     end
   end
 
-  describe "force_reset" do 
+  describe "force_reset" do
 
     # Create an anonymous rspec controller, allows testing only the
     # filter mentioned in it
@@ -110,7 +110,7 @@ describe ApplicationController do
       end
     end
 
-    before :each do 
+    before :each do
       @u = Factory(:master_user)
 
       sign_in_as @u
@@ -168,7 +168,7 @@ describe ApplicationController do
       end
     end
 
-    before :each do 
+    before :each do
       @u = Factory(:master_user)
 
       sign_in_as @u
@@ -194,7 +194,7 @@ describe ApplicationController do
       end
     end
 
-    before :each do 
+    before :each do
       @u = Factory(:master_user)
       sign_in_as @u
       @routes.draw {
@@ -221,7 +221,7 @@ describe ApplicationController do
       end
     end
 
-    before :each do 
+    before :each do
       @u = Factory(:master_user)
       sign_in_as @u
       @routes.draw {
@@ -250,7 +250,7 @@ describe ApplicationController do
       end
     end
 
-    before :each do 
+    before :each do
       @u = Factory(:master_user)
       sign_in_as @u
       @routes.draw {
@@ -267,11 +267,11 @@ describe ApplicationController do
 
   describe "validate_redirect" do
 
-    let! (:master_setup) { 
+    let! (:master_setup) {
       stub_master_setup
     }
 
-    it "returns redirect if valid" do 
+    it "returns redirect if valid" do
       expect(controller.validate_redirect("http://localhost/path/to/page")).to eq "http://localhost/path/to/page"
     end
 
@@ -286,7 +286,7 @@ describe ApplicationController do
 
   describe "current_user" do
     controller do
-      def show 
+      def show
         render :text => current_user.username
       end
     end
@@ -319,7 +319,7 @@ describe ApplicationController do
 
   describe "portal_redirect" do
     controller do
-      def show 
+      def show
         render :text => current_user.username
       end
     end
@@ -331,7 +331,7 @@ describe ApplicationController do
     end
 
     it "should redirect to portal_redirect_path if not blank?" do
-    
+
       allow_any_instance_of(User).to receive(:portal_redirect_path).and_return '/abc'
       u = Factory(:user)
       sign_in_as u
@@ -363,13 +363,13 @@ describe ApplicationController do
       end
     end
 
-    let! (:user) { 
-      u = Factory(:user) 
+    let! (:user) {
+      u = Factory(:user)
       sign_in_as(u)
       u
     }
 
-    before :each do 
+    before :each do
       @routes.draw {
         resources :anonymous
       }
@@ -379,7 +379,7 @@ describe ApplicationController do
       now = Time.zone.parse("2018-07-20 12:30")
 
       Timecop.freeze(now) { get :show, id: 1 }
-      
+
       user.reload
       expect(user.last_request_at).to eq now
       expect(user.active_days).to eq 1

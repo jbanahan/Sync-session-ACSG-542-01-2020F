@@ -2,8 +2,6 @@
   margin-top: 0.5em;
   margin-bottom: 0.5em; }
 
-/*# sourceMappingURL=chain_cvm_nav.css.map */
-
 @charset "UTF-8";
 /*!
  *  Font Awesome 4.5.0 by @davegandy - http://fontawesome.io - @fontawesome
@@ -17,6 +15,7 @@
   src: url("/vendor_portal/fonts/fontawesome-webfont.eot?#iefix&v=4.5.0") format("embedded-opentype"), url("/vendor_portal/fonts/fontawesome-webfont.woff2?v=4.5.0") format("woff2"), url("/vendor_portal/fonts/fontawesome-webfont.woff?v=4.5.0") format("woff"), url("/vendor_portal/fonts/fontawesome-webfont.ttf?v=4.5.0") format("truetype"), url("/vendor_portal/fonts/fontawesome-webfont.svg?v=4.5.0#fontawesomeregular") format("svg");
   font-weight: normal;
   font-style: normal; }
+
 .fa {
   display: inline-block;
   font: normal normal normal 14px/1 FontAwesome;
@@ -76,6 +75,7 @@
 
 .fa.fa-pull-left {
   margin-right: .3em; }
+
 .fa.fa-pull-right {
   margin-left: .3em; }
 
@@ -88,6 +88,7 @@
 
 .fa.pull-left {
   margin-right: .3em; }
+
 .fa.pull-right {
   margin-left: .3em; }
 
@@ -106,6 +107,7 @@
   100% {
     -webkit-transform: rotate(359deg);
     transform: rotate(359deg); } }
+
 @keyframes fa-spin {
   0% {
     -webkit-transform: rotate(0deg);
@@ -113,6 +115,7 @@
   100% {
     -webkit-transform: rotate(359deg);
     transform: rotate(359deg); } }
+
 .fa-rotate-90 {
   filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
   -webkit-transform: rotate(90deg);
@@ -2078,5 +2081,3 @@
 
 .fa-percent:before {
   content: ""; }
-
-/*# sourceMappingURL=font-awesome.css.map */

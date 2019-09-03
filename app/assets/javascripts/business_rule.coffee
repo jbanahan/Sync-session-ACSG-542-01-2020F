@@ -22,25 +22,25 @@ businessRuleApp.controller 'BusinessRuleController', ['$scope','businessRuleServ
 
   $scope.backButton = () ->
     $window.location.replace("/business_validation_templates/" + $scope.businessRule.business_validation_template_id + "/edit")
-  
+
   $scope.editBusinessRule = (id) ->
-    businessRuleService.editBusinessRule(id).success((data) ->
-        $scope.model_fields = data.model_fields
-        $scope.businessRule = data.business_validation_rule
-        businessRuleService.groupIndex().success((data2) ->
-          $scope.groups = data2.groups
+    businessRuleService.editBusinessRule(id).then((resp) ->
+        $scope.model_fields = resp.data.model_fields
+        $scope.businessRule = resp.data.business_validation_rule
+        businessRuleService.groupIndex().then((resp2) ->
+          $scope.groups = resp2.data.groups
         )
       )
 
   $scope.updateBusinessRule = () ->
-    businessRuleService.updateBusinessRule($scope.businessRule).success((data) ->
+    businessRuleService.updateBusinessRule($scope.businessRule).then((resp) ->
         $("#rule-criteria-submit-failure").hide()
-        $("#notice").text(data.notice)
+        $("#notice").text(resp.data.notice)
         $("#rule-criteria-submit-success").show()
         window.scrollTo(0,0)
-      ).error((data) ->
+      ,(resp) ->
         $("#rule-criteria-submit-success").hide()
-        $("#error").text(data.error)
+        $("#error").text(resp.data.error)
         $("#rule-criteria-submit-failure").show()
         window.scrollTo(0,0)
       )

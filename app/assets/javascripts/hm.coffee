@@ -12,8 +12,8 @@ app.factory 'hmService', ['$http',($http) ->
         ci_invoice_value_foreign:line.invoice_value
         ci_total_quantity:line.cartons
         ci_total_quantity_uom:'CTNS'
-        ci_docs_received_date:line.docs_rec_date
-        ci_docs_ok_date:line.docs_ok_date
+        ci_docs_received_date:new Date(line.docs_rec_date)
+        ci_docs_ok_date:new Date(line.docs_ok_date)
         ci_issue_codes:line.issue_codes
         ci_rater_comments:line.comment
         ci_mfid:line.mid
@@ -52,8 +52,8 @@ app.factory 'hmService', ['$http',($http) ->
       id:ci.id
       cartons:Number(ci.ci_total_quantity)
       invoice_value:Number(ci.ci_invoice_value_foreign)
-      docs_rec_date:ci.ci_docs_received_date
-      docs_ok_date:ci.ci_docs_ok_date
+      docs_rec_date:new Date(ci.ci_docs_received_date)
+      docs_ok_date:new Date(ci.ci_docs_ok_date)
       issue_codes:ci.ci_issue_codes
       comment:ci.ci_rater_comments
       quantity:Number(ci_line.cil_units)
@@ -100,8 +100,8 @@ app.factory 'hmService', ['$http',($http) ->
         req['sv'+sCounter] = searchOpts.poNumber
         sCounter++
 
-    $http.get('/api/v1/commercial_invoices.json',{params:req}).success((d) ->
-      d.lines = (svc.api_to_line(r) for r in d.results)
+    $http.get('/api/v1/commercial_invoices.json',{params:req}).then((resp, status) ->
+      resp.data.lines = (svc.api_to_line(r) for r in resp.data.results)
     )
 
   saveLine : (line) ->
@@ -112,13 +112,15 @@ app.factory 'hmService', ['$http',($http) ->
       promise = $http.put('/api/v1/commercial_invoices/'+line.id+'.json',@.line_to_api(line))
     else
       promise = $http.post('/api/v1/commercial_invoices.json',@.line_to_api(line))
-    promise.success((d,s,h,c) ->
-      d.line = svc.api_to_line(d.commercial_invoice)
-    ).error((d,s,h,c) ->
+
+    promise.then(((resp,status) ->
+      resp.data.line = svc.api_to_line(resp.data.commercial_invoice)
+    ),(reason) ->
       line.saving = false
     )
+
     promise
-]   
+]
 
 app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$interval,hmService) ->
   $scope.svc = hmService
@@ -132,8 +134,8 @@ app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$
 
   $scope.saveLine = (line) ->
     return if line.saving #already saving, move on
-    hmService.saveLine(line).success((data,status,headers,config) ->
-      r = data.line
+    hmService.saveLine(line).then(((resp,status) ->
+      r = resp.data.line
       foundPosition = undefined
       for ln, i in $scope.recentLines
         foundPosition = i if  ln.id == r.id
@@ -147,8 +149,8 @@ app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$
           $scope.actionResponse = ""
         ),1000,1
       )
-    ).error((d,s,h,c) ->
-      $scope.errorMessage = d.errors[0]
+    ),(reason) ->
+      $scope.errorMessage = reason
     )
 
   $scope.getLineByPO = () ->
@@ -156,25 +158,25 @@ app.controller 'HMPOLineController', ['$scope','$interval','hmService',($scope,$
       searchOpts = {poNumber:$scope.searchPO}
       $scope.missingPO = null
       $scope.poLine = null
-      hmService.getLines(1,searchOpts).success((d,s,h,c) ->
-        lines = d.lines
-        if d.lines.length > 0
-          $scope.poLine = d.lines[0]
+      hmService.getLines(1,searchOpts).then(((resp, status) ->
+        if resp.length > 0
+          $scope.poLine = resp[0]
         else
           $scope.missingPO = searchOpts.poNumber
-      ).error((d,s,h,c) ->
-        $scope.errorMessage = d.errors[0]
+      ),(reason) ->
+        $scope.errorMessage = reason
       )
+
   $scope.getLines = () ->
     $scope.loadingLines = true
     searchOpts = {}
     if $scope.searchField && $scope.searchValue && $scope.searchValue.length > 0
       searchOpts[$scope.searchField] = $scope.searchValue
-    hmService.getLines($scope.page,searchOpts).success((d,s,h,c) ->
+    hmService.getLines($scope.page,searchOpts).then(((resp,status) ->
       $scope.loadingLines = false
-      $scope.recentLines = d.lines
-    ).error((d,s,h,c) ->
-      $scope.errorMessage = d.errors[0]
+      $scope.recentLines = resp
+    ),(reason) ->
+      $scope.errorMessage = reason
     )
 
   $scope.createPO = () ->

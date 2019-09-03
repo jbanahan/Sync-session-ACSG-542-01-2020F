@@ -18,8 +18,8 @@ describe 'CustomViewTemplateApp', () ->
         http.expectGET('/api/v1/admin/custom_view_templates/1/edit.json').respond returnVal
         promise = svc.loadTemplate(1)
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
@@ -31,8 +31,8 @@ describe 'CustomViewTemplateApp', () ->
         http.expectPUT('/api/v1/admin/custom_view_templates/1', JSON.stringify({criteria:criteria, cvt: cvt})).respond returnVal
         promise = svc.updateTemplate(1, {criteria: criteria, cvt: cvt})
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
@@ -54,8 +54,8 @@ describe 'CustomViewTemplateApp', () ->
 
     describe 'loadTemplate', () ->
       it "calls service's loadTemplate and assigns return values to scope", () ->
-        data = 
-            { 
+        data =
+            {
               "data":{
                 "template":{
                   "custom_view_template":{
@@ -82,13 +82,13 @@ describe 'CustomViewTemplateApp', () ->
         expect($scope.modelFields).toEqual 'model_fields'
 
     describe 'updateTemplate', () ->
-      it "calls service's updateTemplate", () ->        
+      it "calls service's updateTemplate", () ->
         deferredUpdate = q.defer()
         spyOn(svc, 'updateTemplate').and.returnValue deferredUpdate.promise
         $scope.updateTemplate(1, "criteria")
         $scope.$apply()
         expect(svc.updateTemplate).toHaveBeenCalledWith(1, "criteria")
-        
+
     describe 'saveTemplate', () ->
       it "calls updateTemplate", () ->
         spyOn($scope, 'updateTemplate')
@@ -96,7 +96,7 @@ describe 'CustomViewTemplateApp', () ->
         $scope.cvt = {}
         $scope.searchCriterions = "criteria"
         $scope.saveTemplate()
-        
+
         expect($scope.updateTemplate).toHaveBeenCalledWith(1, {criteria: "criteria", cvt: {}})
 
 

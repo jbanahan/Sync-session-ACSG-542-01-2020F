@@ -36,8 +36,8 @@ describe 'HMApp', () ->
         lines = null
         http.expectGET(expected_url).respond(response_obj)
         p = svc.getLines 99
-        p.success (d,s,h,c) ->
-          lines = d.lines
+        p.then (resp) ->
+          lines = resp
         expect(http.flush).not.toThrow()
         expect(lines.length).toEqual 2
         expect(lines[0].po_number).toEqual '123'
@@ -56,8 +56,8 @@ describe 'HMApp', () ->
           po_number:'101631'
           hts_code:'1234567890'
           cartons:4
-          docs_rec_date:'2014-02-25'
-          docs_ok_date:'2014-02-26'
+          docs_rec_date:new Date '2014-02-25'
+          docs_ok_date:new Date '2014-02-26'
           quantity:230
           currency:'USD'
           unit_cost:1.83
@@ -80,8 +80,8 @@ describe 'HMApp', () ->
             ci_invoice_value_foreign:420.90
             ci_total_quantity:4
             ci_total_quantity_uom:'CTNS'
-            ci_docs_received_date:'2014-02-25'
-            ci_docs_ok_date:'2014-02-26'
+            ci_docs_received_date:new Date '2014-02-25'
+            ci_docs_ok_date:new Date '2014-02-26'
             ci_issue_codes:'AB'
             ci_rater_comments:'COMM'
             ci_mfid:'MID1'
@@ -140,8 +140,8 @@ describe 'HMApp', () ->
         http.expectPOST('/api/v1/commercial_invoices.json',expected_obj).respond(returnObj)
         p = svc.saveLine ln
         myLine = null
-        p.success (d,s,h,c) ->
-          myLine = d.line
+        p.then (resp) ->
+          myLine = resp.data.line
         expect(http.flush).not.toThrow()
         expect(myLine.id).toEqual 1
         expect(myLine.po_number).toEqual ln.po_number
@@ -154,7 +154,7 @@ describe 'HMApp', () ->
 
   describe 'controller', () ->
     ctrl = $scope = svc = null
-    
+
     beforeEach inject(($rootScope,$controller,hmService) ->
       $scope = $rootScope.$new()
       svc = hmService
@@ -162,12 +162,12 @@ describe 'HMApp', () ->
     )
 
     describe 'saveLine', ->
-      promise = data = null
+      promise = resp = null
       beforeEach ->
-        data = {line:{id:10}}
+        resp = {data: {line:{id:10}}}
         promise = {
-          success: (fn) ->
-            fn(data,null,null,null)
+          then: (fn) ->
+            fn(resp,null,null,null)
             this
           error: (fn) ->
             this
@@ -185,15 +185,15 @@ describe 'HMApp', () ->
         $scope.saveLine(ln)
         expect(svc.saveLine).toHaveBeenCalledWith(ln)
         expect($scope.recentLines.length).toEqual 1
-        expect($scope.recentLines[0]).toEqual data.line
+        expect($scope.recentLines[0]).toEqual resp.data.line
 
       it 'should replace existing in recentLines', () ->
-        $scope.recentLines = [{id:data.line.id,r:'other'}]
+        $scope.recentLines = [{id:resp.data.line.id,r:'other'}]
         ln = {id:99}
         $scope.saveLine(ln)
         expect(svc.saveLine).toHaveBeenCalledWith(ln)
         expect($scope.recentLines.length).toEqual 1
-        expect($scope.recentLines[0]).toEqual data.line
+        expect($scope.recentLines[0]).toEqual resp.data.line
 
     describe 'createPO', ->
       it 'should create a new poLine', ->

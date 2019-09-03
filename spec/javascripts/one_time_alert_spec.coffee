@@ -18,8 +18,8 @@ describe 'OneTimeAlertApp', () ->
         http.expectGET('/api/v1/one_time_alerts/1/edit.json').respond returnVal
         promise = svc.loadAlert(1)
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
@@ -31,8 +31,8 @@ describe 'OneTimeAlertApp', () ->
         http.expectPUT('/api/v1/one_time_alerts/1', JSON.stringify({criteria:criteria, alert: alert})).respond returnVal
         promise = svc.updateAlert(1, {criteria: criteria, alert: alert})
         resolvedPromise = null
-        promise.success (data) ->
-          resolvedPromise = data
+        promise.then (resp) ->
+          resolvedPromise = resp.data
         expect(http.flush).not.toThrow()
         expect(resolvedPromise).toEqual returnVal
 
@@ -54,8 +54,8 @@ describe 'OneTimeAlertApp', () ->
 
     describe 'loadAlert', () ->
       it "calls service's loadAlert and assigns return values to scope", () ->
-        data = 
-            { 
+        data =
+            {
               "data":{
                 "alert":{
                   "one_time_alert":{
@@ -94,13 +94,13 @@ describe 'OneTimeAlertApp', () ->
         expect($scope.mailingLists).toEqual 'mailing_lists'
 
     describe 'updateAlert', () ->
-      it "calls service's updateAlert", () ->        
+      it "calls service's updateAlert", () ->
         deferredUpdate = q.defer()
         spyOn(svc, 'updateAlert').and.returnValue deferredUpdate.promise
         $scope.updateAlert(1, "criteria")
         $scope.$apply()
         expect(svc.updateAlert).toHaveBeenCalledWith(1, "criteria")
-        
+
     describe 'saveAlert', () ->
       it "calls updateAlert", () ->
         spyOn($scope, 'updateAlert')

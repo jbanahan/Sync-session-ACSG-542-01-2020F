@@ -14,7 +14,7 @@ class AdvancedSearchController < ApplicationController
   def index
     @no_action_bar = true #implements it's own via templates/search_results.html
   end
- 
+
   def update
     ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
@@ -27,7 +27,7 @@ class AdvancedSearchController < ApplicationController
       end
     end
 
-    if base_params[:search_schedules] && base_params[:search_schedules].map { |sc| sc[:email_addresses].length > 255 if sc[:email_addresses]}.any?  
+    if base_params[:search_schedules] && base_params[:search_schedules].map { |sc| sc[:email_addresses].length > 255 if sc[:email_addresses]}.any?
       render_json_error "Email address field must be no more than 255 characters!"
       return
     end
@@ -83,7 +83,7 @@ class AdvancedSearchController < ApplicationController
           end
         end
       end
-      
+
       ss.search_criterions.delete_all
       unless base_params[:search_criterions].blank?
         base_params[:search_criterions].each do |sc|
@@ -99,11 +99,11 @@ class AdvancedSearchController < ApplicationController
   def show
     respond_to do |format|
       format.html {
-        redirect_to "/advanced_search#/#{params[:id]}/1"
+        redirect_to "/advanced_search#!/#{params[:id]}/1"
       }
       format.json {
         page = number_from_param params[:page], 1
-        per_page = results_per_page        
+        per_page = results_per_page
 
         ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
         raise ActionController::RoutingError.new('Not Found') unless ss
@@ -206,7 +206,7 @@ class AdvancedSearchController < ApplicationController
 
   def setup
     respond_to do |format|
-      format.html {redirect_to "/advanced_search#/#{params[:id]}"}
+      format.html {redirect_to "/advanced_search#!/#{params[:id]}"}
       format.json {
         ss = current_user.search_setups.where(id: params[:id]).first
         raise ActionController::RoutingError.new('Not Found') unless ss
@@ -304,7 +304,7 @@ class AdvancedSearchController < ApplicationController
       # rows (plus, we want to encourage people to upgrade).
       per_page = (old_ie_version? ? 10 : 100)
 
-      # Some search implementations may specify a per page value via the params, allow it 
+      # Some search implementations may specify a per page value via the params, allow it
       # as long as the value isn't more than our predefined value.
       query_per_page = number_from_param params[:per_page], nil
 

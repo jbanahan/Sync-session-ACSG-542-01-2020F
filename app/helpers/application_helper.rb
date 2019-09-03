@@ -774,10 +774,10 @@ module ApplicationHelper
       else
         ""
       end
-      
+
       milestones << {label: label, value: value, mode: mode, text: v[:text].to_s, milestone_enabled: milestone_enabled}
     end
-    
+
     render(partial: "/shared/milestone_markers", locals: {milestones: milestones, title: title})
   end
 
@@ -791,7 +791,7 @@ module ApplicationHelper
       raise "Unexpected module type #{obj.class}."
     end
 
-    "/vendor_portal#/#{route}"
+    "/vendor_portal#!/#{route}"
   end
 
   # Makes sure that json doesn't have XSS vulnerability in it
