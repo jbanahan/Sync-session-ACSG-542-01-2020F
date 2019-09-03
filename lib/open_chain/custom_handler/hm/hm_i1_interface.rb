@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI1Interface
   include OpenChain::IntegrationClientParser
 
   def initialize
-     @cust = Company.where(alliance_customer_number: 'HENNE').first
+     @cust = Company.with_customs_management_number('HENNE').first
      @cdefs = (self.class.prep_custom_definitions [:prod_po_numbers, :prod_sku_number, :prod_earliest_ship_date, :prod_earliest_arrival_date,
       :prod_part_number, :prod_season, :prod_suggested_tariff, :prod_countries_of_origin, :prod_set, :prod_fabric_content, :prod_units_per_set])
   end

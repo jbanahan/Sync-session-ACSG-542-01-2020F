@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
     return if importer_code == "PRECOR"
 
     imp = importer(importer_code)
-    entry.customer = imp.alliance_customer_number
+    entry.customer = imp.customs_identifier
     entry.invoices = []
     invoice = CiLoadInvoice.new
     invoice.invoice_lines = []
@@ -108,7 +108,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
   def part_number importer, line
     pn = val(line[130..159])
     style = nil
-    if importer.alliance_customer_number == "WILSON"
+    if importer.customs_identifier == "WILSON"
       # For wilson, use everything up to the first slash or space
       if pn =~ /^([^\/ ]+)[\/ ]/
         style = $1
@@ -176,9 +176,9 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
   end
 
   def importer code
-    imp ||= Company.importers.where(alliance_customer_number: code).first
-    raise "Unable to find AmerSports importer account with code '#{code}'." unless imp
-    imp
+    @imp ||= Company.importers.with_customs_management_number(code).first
+    raise "Unable to find AmerSports importer account with code '#{code}'." unless @imp
+    @imp
   end
 
 end; end; end; end

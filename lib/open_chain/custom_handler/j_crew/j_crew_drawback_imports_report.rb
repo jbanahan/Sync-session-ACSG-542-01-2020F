@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImports
   include OpenChain::Report::ReportHelper
 
   def self.permission? user
-    crew = Company.where(alliance_customer_number: "JCREW").first
+    crew = Company.with_customs_management_number("JCREW").first
     user.view_entries? && crew.try(:can_view?, user) == true
   end
 

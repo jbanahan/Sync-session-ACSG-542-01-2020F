@@ -5,7 +5,7 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
   let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type] }                  
   
   def create_data
-    Factory(:company, alliance_customer_number: "ASCE", importer:true)
+    with_customs_management_id(Factory(:importer), "ASCE")
     
     @today = ActiveSupport::TimeZone["UTC"].now.beginning_of_day
     @yesterday = @today - 1.day
@@ -31,12 +31,8 @@ describe OpenChain::Report::DailyFirstSaleExceptionReport do
   end
 
   describe "permission?" do
-    before do
-      ms = stub_master_setup
-      allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
-    end
-    
-    let!(:linked) { Factory(:company, alliance_customer_number: "ASCE", importer: true) }
+    let! (:ms) { stub_master_setup_for_reports }
+    let!(:linked) { with_customs_management_id(Factory(:importer), "ASCE") }
     let!(:co) { Factory(:company, linked_companies: [linked]) }
 
     it "allows user at master company who can view entries" do

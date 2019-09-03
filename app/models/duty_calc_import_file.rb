@@ -26,7 +26,7 @@ class DutyCalcImportFile < ActiveRecord::Base
   def self.generate_for_importer importer, run_by, file_path=nil, duty_calc_format: :legacy
     ActiveRecord::Base.transaction do
       importer = Company.find(importer) if importer.is_a?(Numeric) || importer.is_a?(String)
-      fn = "duty_calc_import_#{importer.system_code.blank? ? importer.alliance_customer_number : importer.system_code}_#{Time.now.to_i}.zip"
+      fn = "duty_calc_import_#{importer.system_code.blank? ? importer.customs_identifier : importer.system_code}_#{Time.now.to_i}.zip"
       fp = "tmp/#{fn}"
       unless file_path.nil? 
         fn = File.basename(file_path)

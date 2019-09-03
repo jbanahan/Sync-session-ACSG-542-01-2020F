@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
   }
 
   let(:importer) { 
-    i = Factory(:importer, alliance_customer_number: "PVHWSHT") 
+    i = with_customs_management_id(Factory(:importer), "PVHWSHT") 
     i.addresses.create! name: "DEST1", line_1: "ADDR1", city: "CITY", state: "ST", postal_code: "12345", phone_number: "123-456-7890", fax_number: "098-765-4321"
     i
   }
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
   let (:unlading_port) { Factory(:port, name: "unlading_port")}
 
   let (:entry) {
-    e = Factory(:entry, customer_number: importer.alliance_customer_number, importer: importer, master_bills_of_lading: "ABC", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: DateTime.new(2016, 02, 16, 12, 00), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port, carrier_name: "CARRIER NAME")
+    e = Factory(:entry, customer_number: "PVHWSHT", importer: importer, master_bills_of_lading: "ABC", broker_reference: "REF", vessel: "VESS", voyage: "123", location_of_goods_description: "TERMINAL", carrier_code: "CODE", arrival_date: DateTime.new(2016, 02, 16, 12, 00), export_country_codes: "CN", lading_port: lading_port, unlading_port: unlading_port, carrier_name: "CARRIER NAME")
     e.containers.create! container_number: "12345", container_size: "20'", size_description: "DRY VAN", seal_number: "SEAL123", weight: 10, quantity: 20
     e.containers.create! container_number: "67890", container_size: "40", size_description: "HIGH Cube", seal_number: "SEAL345", weight: 10, quantity: 30
     e.commercial_invoices.create! invoice_number: "INV1"

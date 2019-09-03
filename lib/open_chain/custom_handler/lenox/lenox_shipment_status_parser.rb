@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxShipmentStatusP
   end
 
   def process_shipment rows
-    @lenox ||= Company.find_by_system_code 'LENOX'
+    @lenox ||= Company.find_by(system_code: 'LENOX')
     r = rows.first
     shp_ref = "LENOX-#{r[9]}"
     shp = Shipment.where(importer_id:@lenox.id,reference:shp_ref).first

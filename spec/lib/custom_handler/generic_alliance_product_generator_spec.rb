@@ -1,9 +1,6 @@
-# encoding: utf-8
-
 describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
-  before :each do
-    @c = Factory(:company,:alliance_customer_number=>'MYCUS', last_alliance_product_push_at: '2000-01-01')
-  end
+  let! (:importer) { with_customs_management_id(Factory(:company, last_alliance_product_push_at: '2000-01-01'), "MYCUS")}
+  
   describe "sync" do
     it "should call appropriate methods" do
       k = described_class
@@ -12,12 +9,12 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       expect(f).to receive(:close!)
       expect_any_instance_of(OpenChain::CustomHandler::GenericAllianceProductGenerator).to receive(:sync_fixed_position).and_return(f)
       expect_any_instance_of(OpenChain::CustomHandler::GenericAllianceProductGenerator).to receive(:ftp_file).with(f)
-      expect(k.sync(@c)).to be_nil
+      expect(k.sync(importer)).to be_nil
     end
   end
   describe "remote_file_name" do
     it "should base remote file name on alliance customer number" do
-      g = described_class.new(@c)
+      g = described_class.new(importer)
       expect(g.remote_file_name).to match /^[0-9]{10}-MYCUS.DAT$/
     end
   end
@@ -25,25 +22,25 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
   describe "fixed_position_map" do
     it "should output correct mapping" do
       expected = [{:len=>15}, {:len=>40}, {:len=>10}, {:len=>2}, {:len=>1}, {:len=>7}, {:len=>1}, {:len=>3}, {:len=>2}, {:len=>15}, {:len=>15}, {:len=>40}, {:len=>11}, {:len=>4}, {:len=>4}, {:len=>4}, {:len=>10}, {:len=>10}, {:len=>3}]
-      expect(described_class.new(@c).fixed_position_map).to eq(expected)
+      expect(described_class.new(importer).fixed_position_map).to eq(expected)
     end
   end
 
   describe "new" do
     it "should initialize with a company id" do
-      g = described_class.new(@c.id)
+      g = described_class.new(importer.id)
       # Just use remote filename as the check if the importer loaded correctly
-      expect(g.remote_file_name.end_with?("#{@c.alliance_customer_number}.DAT")).to be_truthy
+      expect(g.remote_file_name.end_with?("MYCUS.DAT")).to be_truthy
     end
 
     it "should initialize with a company record" do
-      g = described_class.new(@c)
-      expect(g.remote_file_name.end_with?("#{@c.alliance_customer_number}.DAT")).to be_truthy
+      g = described_class.new(importer)
+      expect(g.remote_file_name.end_with?("MYCUS.DAT")).to be_truthy
     end
 
     it "should error if importer has no alliance number" do
-      @c.update_attributes :alliance_customer_number => ""
-      expect{described_class.new(@c)}.to raise_error "Importer is required and must have an alliance customer number"
+      importer.system_identifiers.destroy_all
+      expect{described_class.new(importer)}.to raise_error "Importer is required and must have an alliance customer number"
     end
 
     it "should error if importer is not found" do
@@ -101,7 +98,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
 
     before :each do
       @us = Factory(:country,:iso_code=>"US")
-      @p = Factory(:product,:importer=>@c,:name=>"MYNAME")
+      @p = Factory(:product,:importer=>importer,:name=>"MYNAME")
       Factory(:tariff_record,:hts_1=>"12345678",:classification=>Factory(:classification,:country=>@us,:product=>@p))
     end
 
@@ -111,21 +108,21 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       end
       it "should generate output file with FDA info" do
         build_custom_fields (@standard_custom_fields + @fda_custom_fields), @p
-        @tmp = described_class.new(@c).sync_fixed_position
+        @tmp = described_class.new(importer).sync_fixed_position
         expect(IO.read(@tmp.path)).to eq("#{@cd[:prod_part_number][0..14]}MYNAME                                  12345678  #{@cd[:prod_country_of_origin][0..1]}Y#{@cd[:prod_fda_product_code][0..6]}#{@cd[:prod_fda_temperature][0]}#{@cd[:prod_fda_uom][0..2]}#{@cd[:prod_fda_country][0..1]}#{@cd[:prod_fda_mid][0..14]}#{@cd[:prod_fda_shipper_id][0..14]}#{@cd[:prod_fda_description][0..39]}#{@cd[:prod_fda_establishment_no][0..10]}#{@cd[:prod_fda_container_length][0..3]}#{@cd[:prod_fda_container_width][0..3]}#{@cd[:prod_fda_container_height][0..3]}#{@cd[:prod_fda_contact_name][0..9]}#{@cd[:prod_fda_contact_phone][0..9]}#{@cd[:prod_fda_affirmation_compliance][0..2]}\n")
-        expect(@c.last_alliance_product_push_at.to_date).to eq Time.zone.now.to_date
+        expect(importer.last_alliance_product_push_at.to_date).to eq Time.zone.now.to_date
       end
 
       it "does not include FDA info if the product does not have FDA fields" do
         build_custom_fields @standard_custom_fields, @p
-        @tmp = described_class.new(@c).sync_fixed_position
+        @tmp = described_class.new(importer).sync_fixed_position
         expect(IO.read(@tmp.path)).to eq("#{@cd[:prod_part_number][0..14]}MYNAME                                  12345678  #{@cd[:prod_country_of_origin][0..1]}N                                                                                                                                 \n")
       end
 
       it "does not include FDA info if the product's fda product flag is not set" do
         build_custom_fields (@standard_custom_fields + @fda_custom_fields), @p
         @p.update_custom_value! @custom_definitions[:prod_fda_product], false
-        @tmp = described_class.new(@c).sync_fixed_position
+        @tmp = described_class.new(importer).sync_fixed_position
         expect(IO.read(@tmp.path)).to eq("#{@cd[:prod_part_number][0..14]}MYNAME                                  12345678  #{@cd[:prod_country_of_origin][0..1]}N                                                                                                                                 \n")
       end
 
@@ -133,7 +130,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         build_custom_fields @standard_custom_fields, @p
         # Text taken from Rails transliterate rdoc example
         @p.update_custom_value! @custom_definitions[:prod_part_number], "Ærøskøbing"
-        @tmp = described_class.new(@c).sync_fixed_position
+        @tmp = described_class.new(importer).sync_fixed_position
         expect(IO.read(@tmp.path)).to start_with "AEroskobing    "
       end
       it "logs an error for non-translatable products and skips the record" do
@@ -141,24 +138,24 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
         @p.update_custom_value! @custom_definitions[:prod_part_number], "Pilcrow ¶"
 
         # Nothing will have been written so nil is returned.
-        expect(described_class.new(@c).sync_fixed_position).to be_nil
+        expect(described_class.new(importer).sync_fixed_position).to be_nil
         expect(ErrorLogEntry.last.error_message).to eq "Untranslatable Non-ASCII character for Part Number 'Pilcrow ¶' found at string index 8 in product query column 0: 'Pilcrow ¶'."
       end
       it "replaces carriage return w/ a space" do
         build_custom_fields @standard_custom_fields, @p
         @p.update_attributes! name: "Test\nTest"
-        @tmp = described_class.new(@c).sync_fixed_position
+        @tmp = described_class.new(importer).sync_fixed_position
         expect(IO.read(@tmp.path)).to start_with "#{@cd[:prod_part_number][0..14]}Test Test"
       end
       it "replaces carriage return / line feed w/ space" do
         build_custom_fields @standard_custom_fields, @p
         @p.update_attributes! name: "Test\r\nTest"
-        @tmp = described_class.new(@c).sync_fixed_position
+        @tmp = described_class.new(importer).sync_fixed_position
         expect(IO.read(@tmp.path)).to start_with "#{@cd[:prod_part_number][0..14]}Test Test"
       end
       it "strips leading zeros from part number for lumber" do
         build_custom_fields @standard_custom_fields, @p
-        lumber = Factory(:importer, alliance_customer_number: "LUMBER")
+        lumber = with_customs_management_id(Factory(:importer), "LUMBER")
         @p.update_attributes! importer_id: lumber.id
         @p.update_custom_value! @custom_definitions[:prod_part_number], "0000000000PARTNUMBER"
         @tmp = described_class.new(lumber).sync_fixed_position
@@ -172,7 +169,7 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       end
 
       it "should output correct data" do
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.count).to eq(1)
         vals = r.first
         expect(vals[0]).to eq(@p.id)
@@ -185,52 +182,52 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
       it "should limit to importer supplied" do
         #don't find this one
         Factory(:tariff_record,:hts_1=>"1234567890",:classification=>Factory(:classification,:country=>@us,:product=>Factory(:product,:importer=>Factory(:company))))
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.count).to eq(1)
         vals = r.first
         expect(vals[0]).to eq(@p.id)
       end
       it "should not output if part number is blank" do
         @p.update_custom_value! @custom_definitions[:prod_part_number], ""
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.count).to eq(0)
       end
       it "should not output country of origin if not 2 digits" do
         @p.update_custom_value! @custom_definitions[:prod_country_of_origin], "CHINA"
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.first[4]).to eq("")
       end
       it "should only output US classifications" do
         Factory(:tariff_record,:hts_1=>'1234567777',:classification=>Factory(:classification,:product=>@p))
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.count).to eq(1)
         expect(r.first[3]).to eq('12345678')
       end
       it "should not output product without US classification" do
         @p.classifications.destroy_all
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.count).to eq(0)
       end
       it "should not output product without HTS number" do
         @p.classifications.first.tariff_records.first.update_attributes(:hts_1=>"")
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.count).to eq(0)
       end
       it "should include N if FDA Product is not included" do
-        row = ActiveRecord::Base.connection.execute(described_class.new(@c).query).first
+        row = ActiveRecord::Base.connection.execute(described_class.new(importer).query).first
         expect(row[5]).to eq "N"
       end
       it "should include Y if FDA Product is included" do
         build_custom_fields [:prod_fda_product], @p
 
-        row = ActiveRecord::Base.connection.execute(described_class.new(@c).query).first
+        row = ActiveRecord::Base.connection.execute(described_class.new(importer).query).first
         expect(row[5]).to eq "Y"
       end
       it "does not include products already synced" do
         @p.sync_records.create! trading_partner: 'Alliance', sent_at: 2.days.ago, confirmed_at: 1.day.ago
         @p.update_column :updated_at, 3.days.ago
 
-        r = ActiveRecord::Base.connection.execute described_class.new(@c).query
+        r = ActiveRecord::Base.connection.execute described_class.new(importer).query
         expect(r.count).to eq(0)
       end
     end
@@ -239,11 +236,11 @@ describe OpenChain::CustomHandler::GenericAllianceProductGenerator do
   describe "run_schedulable" do
     it 'uses customer number from ops to run via scheduler' do
       expect(OpenChain::CustomHandler::GenericAllianceProductGenerator).to receive(:sync) do |c|
-        expect(c.id).to eq @c.id
+        expect(c.id).to eq importer.id
         nil
       end
 
-      OpenChain::CustomHandler::GenericAllianceProductGenerator.run_schedulable({'alliance_customer_number'=>@c.alliance_customer_number})
+      OpenChain::CustomHandler::GenericAllianceProductGenerator.run_schedulable({'alliance_customer_number'=>"MYCUS"})
     end
   end
 end

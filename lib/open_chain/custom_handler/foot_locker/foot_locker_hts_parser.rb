@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerHtsPa
 
   def process_file csv, file_name, log, opts={}
     user = User.integration
-    foot_locker_company = Company.where("alliance_customer_number = ? ", FOOT_LOCKER_CUSTOMER_NUMBER).first
+    foot_locker_company = Company.with_customs_management_number(FOOT_LOCKER_CUSTOMER_NUMBER).first
 
     log.reject_and_raise "Unable to process Foot Locker HTS file because no company record could be found with Alliance Customer number '#{FOOT_LOCKER_CUSTOMER_NUMBER}'." unless foot_locker_company
 

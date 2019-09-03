@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
 
   describe "generate_and_send_invoices" do
     let (:importer) {
-      Company.new importer: true, alliance_customer_number: "IMP"
+      with_customs_management_id(Factory(:importer), "IMP")
     }
     let (:invoice) {
       i = CommercialInvoice.new

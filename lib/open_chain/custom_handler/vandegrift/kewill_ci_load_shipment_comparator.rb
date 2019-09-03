@@ -10,11 +10,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadShi
     accept = super
     return false unless accept
 
-    alliance_customer_number = snapshot.try(:recordable).try(:importer).try(:alliance_customer_number)
-    return false if alliance_customer_number.blank?
+    kewill_customer_number = snapshot.try(:recordable).try(:importer).try(:kewill_customer_number)
+    return false if kewill_customer_number.blank?
 
     shipment_ci_load_customers = ci_load_data.keys
-    shipment_ci_load_customers.include? alliance_customer_number
+    shipment_ci_load_customers.include? kewill_customer_number
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadShi
         # By checking for a sent_at rather than just the existence of a record we can use the screen
         # to resend (since it blanks sent_at)
         if send_xml?(shipment, sr, cd, old_bucket, old_path, old_version, new_bucket, new_path, new_version)
-          invoice_generator(shipment.importer.alliance_customer_number).generate_and_send shipment
+          invoice_generator(shipment.importer.kewill_customer_number).generate_and_send shipment
           sr.sent_at = Time.zone.now
           sr.confirmed_at = (sr.sent_at + 1.minute)
           sr.save!
@@ -52,8 +52,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadShi
     sr.sent_at.nil? || any_root_value_changed?(old_bucket, old_path, old_version, new_bucket, new_path, new_version, [custom_definition.model_field_uid])
   end
 
-  def self.invoice_generator alliance_customer_number
-    generator_string = ci_load_data[alliance_customer_number]
+  def self.invoice_generator kewill_customer_number
+    generator_string = ci_load_data[kewill_customer_number]
     if generator_string.blank?
       return OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenerator.new
     else

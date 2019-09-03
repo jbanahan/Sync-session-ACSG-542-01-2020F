@@ -534,7 +534,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       cust_no = k[0]
       address_no = k[1]
 
-      h[k] = Address.joins(:company).where(companies: {alliance_customer_number: cust_no}).where(system_code: address_no).first
+      h[k] = Address.joins(:company).where(companies: {id: Company.with_customs_management_number(cust_no)}).where(system_code: address_no).first
     end
     
     address = @addresses[[cust_no, address_no]]
@@ -556,7 +556,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(party, "city", g.string(buyer.city, 93, pad_string: false, exception_on_truncate: true)) unless buyer.city.blank?
     add_element(party, "country", g.string(buyer.country.iso_code, 2, pad_string: false, exception_on_truncate: true)) unless buyer.country.try(:iso_code).blank?
     add_element(party, "countrySubentity", g.string(buyer.state, 9, pad_string: false, exception_on_truncate: true)) unless buyer.state.blank?
-    add_element(party, "custNo", g.string(buyer.company.alliance_customer_number, 10, pad_string: false, exception_on_truncate: true)) unless buyer.company.try(:alliance_customer_number).blank?
+    add_element(party, "custNo", g.string(buyer.company.kewill_customer_number, 10, pad_string: false, exception_on_truncate: true)) unless buyer.company.try(:kewill_customer_number).blank?
     add_element(party, "name", g.string(buyer.name, 104, pad_string: false, exception_on_truncate: true)) unless buyer.name.blank?
     add_element(party, "zip", g.string(buyer.postal_code, 9, pad_string: false, exception_on_truncate: true)) unless buyer.postal_code.blank?
     nil

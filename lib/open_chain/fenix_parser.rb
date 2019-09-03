@@ -686,12 +686,11 @@ module OpenChain; class FenixParser
     return "" unless @accumulated_strings && @accumulated_strings[string_code]
     @accumulated_strings[string_code].to_a.join("\n ")
   end
-  def importer tax_id, importer_name
-    if importer_name.blank?
-      importer_name = tax_id
-    end
 
-    c = Company.where(:fenix_customer_number=>tax_id).first_or_create!(:name=>importer_name, :importer=>true)
+  def importer tax_id, importer_name
+    importer_name = tax_id if importer_name.blank?
+    
+    c = Company.find_or_create_company!("Fenix", tax_id, {name: importer_name, importer: true, fenix_customer_number: tax_id})
 
     # Change the importer account's name to be the actual name if it's currently the tax id.
     # This code can be taken out at some point in the future when we've updated all/most of the existing importer

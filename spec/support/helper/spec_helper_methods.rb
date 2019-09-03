@@ -273,6 +273,12 @@ module Helpers
     stub_master_setup_request_host
   end
 
+  def stub_master_setup_for_reports
+    ms = stub_master_setup
+    allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
+    ms
+  end
+
   def json_date date
     ActiveSupport::JSON.encode(date).gsub(/"/, "")
   end
@@ -443,4 +449,21 @@ module Helpers
     sheet_name.blank? ? raw_data : raw_data[sheet_name]
   end
   
+  def add_system_identifier(company, system, code)
+    company.system_identifiers.create! system: system, code: code
+    company
+  end
+
+  def with_customs_management_id(company, code)
+    add_system_identifier(company, "Customs Management", code)
+  end
+
+  def with_fenix_id(company, code)
+    add_system_identifier(company, "Fenix", code)
+  end
+
+  def with_cargowise_id(company, code)
+    add_system_identifier(company, "Cargowise", code)
+  end
+
 end

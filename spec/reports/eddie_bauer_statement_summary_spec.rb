@@ -1,7 +1,7 @@
 describe OpenChain::Report::EddieBauerStatementSummary do
   before :each do
     @user = Factory(:user)
-    @imp = Factory(:company,:alliance_customer_number=>"EDDIE")
+    @imp = with_customs_management_id(Factory(:company), "EDDIE")
     @monthly_date = 0.seconds.ago
     @daily_date = 1.day.ago
     @ent = Factory(:entry,:importer=>@imp,
@@ -28,10 +28,17 @@ describe OpenChain::Report::EddieBauerStatementSummary do
   after :each do
     @tmp.unlink if @tmp
   end
-  it "should raise exception if user cannot view returned entries" do
-    allow_any_instance_of(Entry).to receive(:can_view?).and_return(false)
-    expect {described_class.run_report @user, customer_number: @imp.alliance_customer_number}.to raise_error "You do not have permission to view the entries related to this report." 
+
+  describe "permission?" do
+    let!(:ms) { stub_master_setup_for_reports }
+    subject { described_class }
+
+    it "should raise exception if user cannot view returned entries" do
+      allow_any_instance_of(Entry).to receive(:can_view?).and_return(false)
+      expect {subject.run_report @user, customer_number: "EDDIE"}.to raise_error "You do not have permission to view the entries related to this report." 
+    end  
   end
+  
 
   def get_summary_tab
     get_spreadsheet.worksheet 0
@@ -42,7 +49,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
   end
 
   def get_spreadsheet 
-    @tmp = described_class.run_report @user, customer_number: @imp.alliance_customer_number
+    @tmp = described_class.run_report @user, customer_number: "EDDIE"
     Spreadsheet.open @tmp
   end
   
@@ -88,7 +95,7 @@ describe OpenChain::Report::EddieBauerStatementSummary do
       find_even_though_paid = Factory(:entry,:importer=>@imp,:monthly_statement_paid_date=>Time.now,:release_date=>((Time.zone.now - 3.months) + 1.minute).in_time_zone("America/New_York"))
       @ent.update_attributes!(:release_date=>(Time.zone.now - 3.months).in_time_zone("America/New_York"))
       dont_find_even_though_unpaid_because_different_month = Factory(:entry,:importer=>@imp,:release_date=>1.hour.from_now.in_time_zone("America/New_York"))
-      options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>@imp.alliance_customer_number}
+      options = {:mode => 'previous_month', :month => find_even_though_paid.release_date.month, :year => find_even_though_paid.release_date.year, :customer_number=>"EDDIE"}
       ent = described_class.new(@user,options)
       expect(ent.find_entries(@imp).map(&:id)).to eq([@ent,find_even_though_paid].map(&:id))
     end

@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     "293010;20160303;20160215;1259873112113;216213;Large Black Sweatpants;10221227;CA"
   }
 
-  let!(:hm) { Factory(:company, alliance_customer_number: 'HENNE') }
+  let!(:hm) { with_customs_management_id(Factory(:company), 'HENNE') }
   let (:log) { InboundFile.new }
   
   describe "parse_file" do

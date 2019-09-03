@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
   end
 
   let (:importer) { 
-    Factory(:company, :importer=>true, :name=>"Importer", :name_2=>"Division of Importer, Inc.", :addresses=>[make_address], fenix_customer_number: "TAXID")
+    with_fenix_id(Factory(:importer, :name=>"Importer", :name_2=>"Division of Importer, Inc.", :addresses=>[make_address]), "TAXID")
   }
 
   let (:vendor) {

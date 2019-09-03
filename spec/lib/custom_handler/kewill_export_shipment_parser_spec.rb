@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
   context "ocean file" do
     describe "parse_file" do
       before :each do
-        @nexeo = Factory(:importer, name: "Nexeo", alliance_customer_number: "NEXEO")
+        @nexeo = with_customs_management_id(Factory(:importer, name: "Nexeo", system_code: "NEXEO"), "NEXEO")
       end
 
       it "parses an escape delimited file into a shipment" do

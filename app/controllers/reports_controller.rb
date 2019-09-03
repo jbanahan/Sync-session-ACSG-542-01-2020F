@@ -234,7 +234,7 @@ class ReportsController < ApplicationController
 
   def run_landed_cost
     if OpenChain::Report::LandedCostReport.permission? current_user
-      customer = Company.where(:alliance_customer_number => params[:customer_number]).first
+      customer = Company.with_customs_management_number(params[:customer_number]).first
       if customer && customer.can_view?(current_user)
         settings = {:start_date=>params[:start_date],:end_date=>params[:end_date], :customer_number => params[:customer_number]}
         run_report "Landed Cost Report", OpenChain::Report::LandedCostReport, settings, ["Release Date on or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
@@ -458,7 +458,7 @@ class ReportsController < ApplicationController
 
   def show_sg_duty_due_report
     if OpenChain::Report::SgDutyDueReport.permission?(current_user)
-      @choices = ['sgi', 'sgold', 'rugged'].map{ |cust_num| Company.where(alliance_customer_number: cust_num).first }
+      @choices = Company.with_customs_management_number(['sgi', 'sgold', 'rugged'])
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -892,8 +892,8 @@ class ReportsController < ApplicationController
 
   def show_customer_year_over_year_report
     if OpenChain::Report::CustomerYearOverYearReport.permission? current_user
-      @us_importers = current_user.available_importers.where('length(alliance_customer_number)>0').order("name ASC")
-      @ca_importers = current_user.available_importers.where('length(fenix_customer_number)>0').order("name ASC")
+      @us_importers = Company.options_for_companies_with_system_identifier(["Customs Management", "Cargowise"], in_relation: current_user.available_importers)
+      @ca_importers = Company.options_for_companies_with_system_identifier("Fenix", in_relation: current_user.available_importers)
       render
     else
       error_redirect "You do not have permission to view this report"
@@ -925,12 +925,9 @@ class ReportsController < ApplicationController
     if current_user.sys_admin?
       customer_codes = params[:importer_customer_numbers]
       if customer_codes
-        customer_codes.chomp.split(/[\r\n]+/).each do |cust_code|
-          # Ignore blank customer codes.
-          if cust_code.present?
-            c = Company.where("alliance_customer_number = ? OR fenix_customer_number = ?", cust_code.strip, cust_code.strip).first
-            importer_ids << c.id unless c.nil?
-          end
+        codes = Array.wrap(customer_codes.strip.split(/[\r\n]+/)).map {|m| m.strip }.reject {|v| v.blank? }
+        if codes.length > 0
+          importer_ids = Company.with_identifier(["Customs Management", "Fenix", "Cargowise"], codes).pluck(:id)
         end
       end
     else
@@ -986,8 +983,7 @@ class ReportsController < ApplicationController
   
   def show_us_billing_summary
     if OpenChain::Report::UsBillingSummary.permission? current_user
-      @us_importers = Company.where("alliance_customer_number <> '' AND alliance_customer_number IS NOT NULL")
-                             .order(:name)
+      @us_importers = Company.importers.joins(:system_identifiers).where(system_identifiers: {system: "Customs Management"})
     else
       error_redirect "You do not have permission to view this report"
     end

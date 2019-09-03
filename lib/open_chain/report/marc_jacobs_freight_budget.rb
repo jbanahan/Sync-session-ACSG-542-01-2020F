@@ -3,7 +3,7 @@ module OpenChain
     class MarcJacobsFreightBudget
 
       def self.permission? u
-        (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
+        MasterSetup.get.custom_feature?("WWW VFI Track Reports") && 
         ((u.company.master? && u.view_broker_invoices?) || u.company_id == marc_jacobs_importer_id)
       end
       def self.run_report run_by, settings={}
@@ -78,7 +78,7 @@ module OpenChain
       end
 
       def self.marc_jacobs_importer_id 
-        importer = Company.where(:alliance_customer_number => 'MARJAC').first
+        importer = Company.with_customs_management_number("MARJAC").first
         importer ? importer.id : -1
       end
       

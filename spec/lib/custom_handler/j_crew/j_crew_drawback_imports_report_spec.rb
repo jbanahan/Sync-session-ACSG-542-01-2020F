@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
   end
 
   describe "permission?" do
-    let (:jcrew) { Factory(:company, alliance_customer_number: "JCREW")}
+    let (:jcrew) { with_customs_management_id(Factory(:company), "JCREW")}
     let (:user) { Factory(:user, company: jcrew) }
 
     it "allows users with entry view and can view company to see reporting" do

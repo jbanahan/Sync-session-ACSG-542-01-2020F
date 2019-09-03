@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     stub_master_setup
   }
   let!(:hm) { Factory(:importer, system_code: "HENNE") }
-  let(:hm_fenix) {Factory(:importer, fenix_customer_number: "887634400RM0001")}
+  let(:hm_fenix) { with_fenix_id(Factory(:importer), "887634400RM0001")}
   let(:ca) { Factory(:country, iso_code: "CA")}
   let(:us) { Factory(:country, iso_code: "US")}
   let(:log) { InboundFile.new }

@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module Talbots; class TalbotsLandedCostC
   def self.accept? snapshot
     if super
       r = snapshot.recordable
-      !!r.last_billed_date && r.try(:importer).try(:alliance_customer_number) == "TALBO"
+      !!r.last_billed_date && r.try(:importer).try(:kewill_customer_number) == "TALBO"
     else
       false
     end

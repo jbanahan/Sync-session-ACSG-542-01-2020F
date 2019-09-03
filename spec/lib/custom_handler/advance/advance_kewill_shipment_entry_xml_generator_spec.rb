@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
 
   describe "generate_xml" do
     let (:importer) {
-      Factory(:importer, alliance_customer_number: "ADVAN")
+      with_customs_management_id(Factory(:importer), "ADVAN")
     }
 
     let (:us) {
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
 
     it "generates CQ data, using CQSOU for customer number" do
       # CQ piece counts should include set calculations
-      importer.update_attributes! alliance_customer_number: "CQ"
+      importer.system_identifiers.first.update! code: "CQ"
 
       data = subject.generate_kewill_shipment_data shipment
 

@@ -13,7 +13,7 @@ module OpenChain
     def initialize(settings)
       raise "Alliance Customer Number Required" unless settings['alliance_customer_number'].present?
       raise "FTP Folder Required" unless settings['ftp_folder'].present?
-      @company = Company.find_by_alliance_customer_number settings['alliance_customer_number']
+      @company = Company.with_customs_management_number(settings['alliance_customer_number']).first
       @settings = settings
     end
 
@@ -22,13 +22,13 @@ module OpenChain
       # on the previous month.
       mm_yyyy = (Time.zone.now - 1.month).strftime("%Y-%m")
       aas = @company.attachment_archive_setup
-      raise "No Attachment Archive Setup exists for #{@company.alliance_customer_number}." unless aas
+      raise "No Attachment Archive Setup exists for #{@company.kewill_customer_number}." unless aas
 
       counter = 0
       aas.broker_reference_override = @settings['broker_reference_override'] if @settings['broker_reference_override'].present?
 
       while aas.entry_attachments_available?
-        file_name = "#{@company.alliance_customer_number}-#{mm_yyyy}"
+        file_name = "#{@company.kewill_customer_number}-#{mm_yyyy}"
         file_name << " (#{counter + 1})" if counter > 0
         file_name << ".zip"
 

@@ -9,7 +9,7 @@ describe OpenChain::SftpMonthlyArchiver do
 
   describe "run" do
     let (:opts) { {'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'} }
-    let (:company) { Factory(:company, alliance_customer_number: "blah") }
+    let (:company) { with_customs_management_id(Factory(:company), "blah") }
     let (:entry) { 
       e = Factory(:entry, importer: company, broker_reference: "reference")
       e.broker_invoices.create! invoice_date: 1.year.ago
@@ -48,7 +48,7 @@ describe OpenChain::SftpMonthlyArchiver do
   end
 
   describe '#send_zip' do
-    let (:company) { Factory(:company, alliance_customer_number: "blah") }
+    let (:company) { with_customs_management_id(Factory(:company), "blah") }
     let (:archive) { AttachmentArchive.create!(name: 'archive', company_id: company.id) }
     let (:entry) { Factory(:entry, importer: company, broker_reference: "reference") }
     subject {

@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::JCrewPartsExtractParser do
 
   before :each do 
     # Create a J Crew company record (otherwise the process blows up).
-    @j_crew = Factory(:company, :alliance_customer_number => "JCREW")
+    @j_crew = with_customs_management_id(Factory(:company), "JCREW")
     @country = Factory(:country, iso_code: 'US')
     @cdefs ||= described_class.prep_custom_definitions([:prod_part_number, :prod_country_of_origin])
   end

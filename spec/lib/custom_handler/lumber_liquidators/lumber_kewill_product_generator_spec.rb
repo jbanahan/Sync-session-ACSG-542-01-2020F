@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
     subject { described_class }
 
     let (:us) { Factory(:country, iso_code: "US")}
-    let (:importer) { Factory(:importer, alliance_customer_number: "LUMBER")}
+    let (:importer) { with_customs_management_id(Factory(:importer), "LUMBER")}
     let (:cdefs) { described_class.prep_custom_definitions [:prod_country_of_origin] }
     let! (:product) {
       p = Factory(:product, importer: importer, unique_identifier: "0000000123", name: "Description")

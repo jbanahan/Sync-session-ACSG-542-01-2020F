@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module Crocs
 
     # don't call this, use the static methods
     def initialize
-      @company = Company.find_by_alliance_customer_number 'CROCS' 
+      @company = Company.with_customs_management_number('CROCS').first
       @vendor = Company.where(vendor:true,system_code:'CROCS-VENDOR').first_or_create!(name:'CROCS VENDOR')
       @defs = self.class.prep_custom_definitions [:shpln_po,:shpln_sku,:shpln_color,:shpln_size,:shpln_coo,:shpln_received_date,:shpln_desc]
       @part_cache = {}

@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
           updated_ex_factory: '2014-03-01'
         }
 
-        @importer = Factory(:company, fenix_customer_number: "806167003RM0001")
+        @importer = with_fenix_id(Factory(:company), "806167003RM0001")
 
         @xml_lambda = lambda do
           xml = "<Orders>
@@ -121,7 +121,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
       it "saves XML information as an Order" do
         subject.parse_file @xml_lambda.call, log, bucket: "bucket", key: "key"
 
-        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        order = Order.where(order_number: "806167003RM0001-#{@po_number}").first
         expect(order).not_to be_nil
 
         expect(order.last_file_bucket).to eq "bucket"
@@ -137,7 +137,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         line = @po_lines.first
         expect(l.line_number).to eq line[:line_number].to_i
         expect(l.quantity).to eq BigDecimal.new(line[:quantity])
-        expect(l.product.unique_identifier).to eq "#{@importer.fenix_customer_number}-#{line[:style]}"
+        expect(l.product.unique_identifier).to eq "806167003RM0001-#{line[:style]}"
         expect(l.product.unit_of_measure).to eq line[:uom]
         expect(l.product.name).to eq line[:style]
         expect(l.product.get_custom_value(@cdefs[:prod_part_number]).value).to eq line[:style]
@@ -154,13 +154,13 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
       it "updates orders, adding new lines, updating existing lines, and eliminating old lines" do
         # Make sure we also attach to existing Products
         first_product = @po_lines.first
-        product = Product.create! importer: @importer, unique_identifier: "#{@importer.fenix_customer_number}-#{first_product[:style]}"
+        product = Product.create! importer: @importer, unique_identifier: "806167003RM0001-#{first_product[:style]}"
 
         order = Order.new importer: @importer, customer_order_number: @po_number, order_number: "ABC"
         updated_line = order.order_lines.build line_number: first_product[:line_number], product: product
         order.save!
 
-        removed_product = Product.create! importer: @importer, unique_identifier: "#{@importer.fenix_customer_number}-RANDOMSTYLE"
+        removed_product = Product.create! importer: @importer, unique_identifier: "806167003RM0001-RANDOMSTYLE"
         removed_line = order.order_lines.build line_number: 1, product: product
 
         @po_lines <<  {
@@ -186,7 +186,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
         l = order.order_lines.second
         expect(l.line_number).to eq @po_lines.second[:line_number].to_i
-        expect(l.product.unique_identifier).to eq "#{@importer.fenix_customer_number}-#{@po_lines.second[:style]}"
+        expect(l.product.unique_identifier).to eq "806167003RM0001-#{@po_lines.second[:style]}"
 
         expect(order.order_lines.find {|l| l.id == removed_line.id}).to be_nil
       end
@@ -196,7 +196,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
         subject.parse_file @xml_lambda.call, log, bucket: "bucket", key: "key"
 
-        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        order = Order.where(order_number: "806167003RM0001-#{@po_number}").first
         expect(order).not_to be_nil
         l = order.order_lines.first
         expect(l.get_custom_value(@cdefs[:ord_line_ex_factory_date]).value).to eq Date.new(2014, 2, 1)
@@ -204,21 +204,21 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
       it "handles Club Monaco buyer" do
         @buyer_id = "0200011987"
-        @importer = Factory(:company, fenix_customer_number: "866806458RM0001")
+        @importer = with_fenix_id(Factory(:company), "866806458RM0001")
 
         subject.parse_file @xml_lambda.call, log
 
-        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        order = Order.where(order_number: "866806458RM0001-#{@po_number}").first
         expect(order).not_to be_nil
       end
 
       it "handles Polo Factory Stores buyer" do
         @buyer_id = "0200016789"
-        @importer = Factory(:company, fenix_customer_number: "806167003RM0002")
+        @importer = with_fenix_id(Factory(:company), "806167003RM0002")
 
         subject.parse_file @xml_lambda.call, log
 
-        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        order = Order.where(order_number: "806167003RM0002-#{@po_number}").first
         expect(order).not_to be_nil
       end
 
@@ -226,7 +226,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @ref_value = 'TCF'
         subject.parse_file @xml_lambda.call, log
 
-        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        order = Order.where(order_number: "806167003RM0001-#{@po_number}").first
         expect(order.get_custom_value(@cdefs[:ord_invoicing_system]).value).to eq "Tradecard"
       end
 
@@ -239,8 +239,8 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
       it "raises an error if Importer cannot be found" do
         @importer.destroy
 
-        expect{subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unable to find Fenix Importer for importer number #{@importer.fenix_customer_number}.  This account should not be missing."
-        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unable to find Fenix Importer for importer number #{@importer.fenix_customer_number}.  This account should not be missing."
+        expect{subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unable to find Fenix Importer for importer number 806167003RM0001.  This account should not be missing."
+        expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unable to find Fenix Importer for importer number 806167003RM0001.  This account should not be missing."
       end
     end
 
@@ -249,7 +249,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @po_number = "PO"
         @merchandise_division = "MERCH"
         @buyer_id = "0200011989"
-        @importer = Factory(:company, fenix_customer_number: "806167003RM0001")
+        @importer = with_fenix_id(Factory(:company), "806167003RM0001")
         @style = "Style"
         @merchandise_division_desc = "MERCH"
         @cdefs = described_class.prep_custom_definitions [:ord_division]
@@ -297,7 +297,7 @@ XML
         expect(r.key).to eq @po_number
         expect(r.value).to eq @merchandise_division
 
-        order = Order.where(order_number: "#{@importer.fenix_customer_number}-#{@po_number}").first
+        order = Order.where(order_number: "806167003RM0001-#{@po_number}").first
         expect(order).not_to be_nil
         expect(order.get_custom_value(@cdefs[:ord_division]).value).to eq @merchandise_division_desc
       end

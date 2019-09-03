@@ -77,31 +77,31 @@ describe DrawbackUploadFile do
       expect(d.process(@user)).to eq 'abc'
     end
     it "should route J Crew Canada Export file" do
-      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"JCREW")
+      imp = with_customs_management_id(Factory(:importer), "JCREW")
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_JCREW_CANADA_EXPORTS)
       expect(OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it 'should route J Crew Borderfree Export file' do
-      imp = Factory(:company, importer: true, alliance_customer_number: "JCREW")
+      imp = with_customs_management_id(Factory(:importer), "JCREW")
       d = DrawbackUploadFile.new(processor: DrawbackUploadFile::PROCESSOR_JCREW_BORDERFREE)
       expect(OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it "should route Lands End Export file" do
-      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"LANDS")
+      imp = with_customs_management_id(Factory(:importer), "LANDS")
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_EXPORTS)
       expect(OpenChain::LandsEndExportParser).to receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it "should route Crocs Export file" do
-      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"CROCS")
+      imp = with_customs_management_id(Factory(:importer), "CROCS")
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_CROCS_EXPORTS)
       expect(OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser).to receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it "should route Crocs Receiving file" do
-      imp = Factory(:company,:importer=>true,:alliance_customer_number=>"CROCS")
+      imp = with_customs_management_id(Factory(:importer), "CROCS")
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_CROCS_RECEIVING)
       s3_att = double("S3 Attachment")
       allow(s3_att).to receive(:path).and_return('xyz')

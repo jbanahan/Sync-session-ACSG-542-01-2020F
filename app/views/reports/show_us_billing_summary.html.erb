@@ -25,6 +25,6 @@ $(function() {
 <h2>US Billing Summary</h2>
 <%=form_tag reports_run_us_billing_summary_path, id:'frm_run', style: "padding-top: 20px;" do -%>
   Invoice Date between <%=text_field_tag :start_date, nil, :class=>'isdate'%> and <%=text_field_tag :end_date, nil, :class=>'isdate'%>.<br><br>
-  Invoice Customer: <%= select_tag :customer_number, options_from_collection_for_select(@us_importers, :alliance_customer_number, :name_with_customer_number), include_blank: true %>
+  Invoice Customer: <%= select_tag :customer_number, options_for_select(Company.options_for_companies_with_system_identifier("Customs Management", in_relation: @us_importers, value_attribute: :code)), include_blank: true %>
 <%end%>
 

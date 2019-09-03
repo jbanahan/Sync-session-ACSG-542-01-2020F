@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
 
   describe "process_ca_invoice_rows" do
     let (:country) { Factory(:country, iso_code: "CA")}
-    let! (:eddie) { Factory(:importer, fenix_customer_number: "855157855RM0001")}
+    let! (:eddie) { with_fenix_id(Factory(:importer), "855157855RM0001") }
     let! (:product) { 
       p = Factory(:product, unique_identifier: "EDDIE-009-5123")
       classification = Factory(:classification, product: p, country: country)

@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
   subject { described_class }
-  let! (:ascena) { Factory(:importer, alliance_customer_number: "ASCE", name: "Ascena", system_code: "ASCENA") }
-  let! (:ann) { Factory(:importer, alliance_customer_number: "ATAYLOR", name: "Ann") }
+  let! (:ascena) { with_customs_management_id(Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
+  let! (:ann) { with_customs_management_id(Factory(:importer, name: "Ann"), "ATAYLOR") }
 
   describe "permission?" do
     let!(:ms) do

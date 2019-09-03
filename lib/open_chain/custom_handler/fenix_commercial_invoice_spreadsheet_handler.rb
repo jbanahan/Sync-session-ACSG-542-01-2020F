@@ -147,7 +147,7 @@ module OpenChain; module CustomHandler
 
       def find_invoice fenix_importer, invoice_number
         # Verify the customer number is valid (should be the tax id)
-        importer = Company.importers.where(fenix_customer_number: fenix_importer).first unless fenix_importer.blank?
+        importer = Company.importers.with_fenix_number(fenix_importer).first unless fenix_importer.blank?
         raise "No Fenix Importer associated with the Tax ID '#{fenix_importer}'." unless importer
 
         invoice = nil

@@ -159,13 +159,13 @@ module OpenChain; module Report; class PumaDivisionQuarterBreakdown
     end
 
     def make_query year
-      <<-SQL
+      qry = <<-SQL
           SELECT 
             (
-              CASE 
-                WHEN system_code = 'CGOLF' THEN 1
-                WHEN system_code = 'PUMA' THEN 2
-                WHEN fenix_customer_number = '892892654RM0001' THEN 3
+              CASE sys_id.code
+                WHEN 'CGOLF' THEN 1
+                WHEN 'PUMA' THEN 2
+                WHEN '892892654RM0001' THEN 3
               END
             ) AS importer_sort_order, 
             QUARTER(ent.release_date) AS quarter,
@@ -179,24 +179,24 @@ module OpenChain; module Report; class PumaDivisionQuarterBreakdown
             COUNT(DISTINCT ent.id) AS entry_count
           FROM 
             entries ent 
-            INNER JOIN companies importer_company ON 
-              ent.importer_id = importer_company.id
+            INNER JOIN system_identifiers sys_id ON sys_id.company_id = ent.importer_id AND sys_id.system in ('Customs Management', 'Fenix') AND sys_id.code in ('PUMA','CGOLF', '892892654RM0001')
           WHERE
-            ent.importer_id IN (#{get_importer_ids.to_csv(row_sep:nil)}) AND 
-            ent.release_date >= '#{format_jan_1_date(year)}' AND 
-            ent.release_date < '#{format_jan_1_date(year + 1)}'
+            ent.importer_id IN (?) AND 
+            ent.release_date >= ? AND 
+            ent.release_date < ?
           GROUP BY 
-            importer_sort_order, 
-            importer_company.name, 
+            importer_sort_order,
             QUARTER(ent.release_date)
           ORDER BY 
             importer_sort_order, 
             quarter
       SQL
+
+      ActiveRecord::Base.sanitize_sql_array([qry, get_importer_ids, format_jan_1_date(year), format_jan_1_date(year + 1)])
     end
 
     def get_importer_ids
-      importer_ids = Company.where("system_code IN (?) OR fenix_customer_number = ?", ['PUMA','CGOLF'], '892892654RM0001').map { |c| c.id }
+      importer_ids = Company.with_identifier(['Customs Management', 'Fenix'], ['PUMA','CGOLF', '892892654RM0001']).pluck(:id)
       importer_ids.length > 0 ? importer_ids : [-1]
     end
 

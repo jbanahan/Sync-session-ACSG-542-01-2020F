@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauer7501Handler do
 
   describe "process" do
     before :each do
+      company = with_customs_management_id(Factory(:importer), "EDDIE")
       @u = Factory(:user, email: "nigel@tufnel.net")
-      allow(@u.company).to receive(:alliance_customer_number).and_return "EDDIE"
 
       @row_0 = ['ExitDocID', 'TxnCode', 'ProductNum', 'StatusCode', 'HtsNum', 'AdValoremRate', 'Value', 'ExitPrintDate']
       @row_1 = ['316-1548927-0', 'ANPC', '022-3724-800-0000', 'N', '8513104000', '0.035', '2.98', '2016-03-30 00:00:00']

@@ -117,7 +117,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       if statement.customer_number.blank?
         statement.importer = nil
       else
-        statement.importer = Company.importers.where(alliance_customer_number: statement.customer_number).first
+        statement.importer = Company.importers.with_customs_management_number(statement.customer_number).first
       end
 
       if json["status"] == "F"
@@ -167,7 +167,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       if statement.customer_number.blank?
         statement.importer = nil
       else
-        statement.importer = Company.importers.where(alliance_customer_number: statement.customer_number).first
+        statement.importer = Company.importers.with_customs_management_number(statement.customer_number).first
       end
 
       # Final statments don't ever receive monthly statement numbers (WTF?)

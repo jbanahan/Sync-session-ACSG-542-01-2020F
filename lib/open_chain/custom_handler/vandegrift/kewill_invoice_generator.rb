@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceGe
 
   def generate_entry_data invoice
     ci_entry = CiLoadEntry.new
-    ci_entry.customer = invoice.importer.try(:alliance_customer_number)
+    ci_entry.customer = invoice.importer.try(:kewill_customer_number)
     ci_entry.file_number = invoice.invoice_number
     ci_entry.invoices = []
     ci_entry

@@ -20,11 +20,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
   end
 
   def self.ascena
-    Company.importers.where(alliance_customer_number: ASCENA_CUST_NUM).first
+    Company.importers.with_customs_management_number(ASCENA_CUST_NUM).first
   end
 
   def self.ann
-    Company.importers.where(alliance_customer_number: ANN_CUST_NUM).first
+    Company.importers.with_customs_management_number(ANN_CUST_NUM).first
   end
 
   def self.fiscal_month settings

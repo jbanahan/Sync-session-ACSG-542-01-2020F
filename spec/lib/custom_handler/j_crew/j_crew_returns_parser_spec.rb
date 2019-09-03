@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
   let (:mid) { "MANUFACTURER" }
   let (:coo) { "VN" }
   let (:part_number) {"62974"}
-  let (:crew) { Factory(:importer, alliance_customer_number: "J0000") }
+  let (:crew) { with_customs_management_id(Factory(:importer), "J0000") }
   let (:previous_entry) {
     entry = Factory(:entry, importer: crew, import_country: Factory(:country, iso_code: "US"), release_date: Time.zone.now)
     inv = Factory(:commercial_invoice, entry: entry, mfid: mid)

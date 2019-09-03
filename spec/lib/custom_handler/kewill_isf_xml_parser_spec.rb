@@ -3,6 +3,11 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   let (:xml_path) { 'spec/support/bin/isf_sample.xml' }
   let (:xml_data) { IO.read xml_path }
   let (:est) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"] }
+  let! (:customer) { 
+    c = Factory(:company,:alliance_customer_number=>'EDDIE')
+    c.system_identifiers.create! system: "Customs Management", code: "EDDIE"
+    c
+  }
 
   let (:log) { InboundFile.new }
   
@@ -10,8 +15,6 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     subject { described_class }
 
     it 'should process from text' do
-      c = Factory(:company,:alliance_customer_number=>'EDDIE')
-
       expect_any_instance_of(SecurityFiling).to receive(:broadcast_event).with(:save)
       subject.parse_file xml_data, log, bucket: "bucket", key: "key"
       sf = SecurityFiling.first
@@ -27,7 +30,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(s.user).to eq User.integration
       expect(s.context).to eq "key"
 
-      expect(log.company).to eq c
+      expect(log.company).to eq customer
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].value).to eq "1870446"
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].module_type).to eq "SecurityFiling"
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].module_id).to eq sf.id
@@ -251,18 +254,21 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(lines[0].line_number).to eq 2
     end
     it "should set importer if it already exists by alliance customer number" do
-      c = Factory(:company,:alliance_customer_number=>'EDDIE')
       sf = subject.parse_dom dom, security_filing
-      expect(sf.importer).to eq(c)
+      expect(sf.importer).to eq(customer)
     end
     it "should create new importer" do
-      Factory(:company,:alliance_customer_number=>'NOTEDDIE')
+      customer.system_identifiers.first.update! code: "NOTEDDIE"
+      customer.update! alliance_customer_number: "NOTEDDIE"
+
       sf = subject.parse_dom dom, security_filing
       c = sf.importer
       expect(c.name).to eq('EDDIE')
       expect(c).to be_importer
       expect(c.alliance_customer_number).to eq('EDDIE')
+      expect(c).to have_system_identifier("Customs Management", "EDDIE")
     end
+
     it "should not fail if there is no matching entity found by MID" do 
       dom.root.get_elements("//IsfHeaderData/entities/MID").each do |el|
         el.text = "NONMATCHING"

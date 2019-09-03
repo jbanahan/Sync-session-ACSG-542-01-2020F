@@ -73,7 +73,7 @@ describe DrawbackImportLine do
     it "should generate array" do
       d = DrawbackImportLine.create!(
           :product=>Factory(:product,:unique_identifier=>"123456"),
-          :importer=>Factory(:company, :alliance_customer_number=>'555666'),
+          :importer=>with_customs_management_id(Factory(:company), '555666'),
           :entry_number=>'12345678901',
           :quantity=>BigDecimal("10.04"),
           :part_number=>"123456",

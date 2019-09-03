@@ -92,7 +92,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxPoParser
   end
   def get_vendor line_struct
     sys_code = "LENOX-#{line_struct.vendor_code}"
-    v = Company.find_by_system_code(sys_code)
+    v = Company.find_by(system_code: sys_code)
     if v.nil?
       v = Company.create!(system_code:sys_code,name:line_struct.vendor_name,vendor:true)
       @imp.linked_companies << v

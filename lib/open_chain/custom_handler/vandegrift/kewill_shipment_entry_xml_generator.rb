@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       # shipments to pull master/house bills from
       shipment = shipments.first
 
-      e.customer = shipment.importer.try(:alliance_customer_number)
+      e.customer = shipment.importer.try(:kewill_customer_number)
       e.vessel = shipment.vessel
       e.voyage = shipment.voyage
       e.carrier = shipment.vessel_carrier_scac

@@ -57,7 +57,7 @@ module OpenChain
       # Reads the IO object containing JCrew part information and writes the translated output
       # data to the output_io stream.
       def create_parts io, file_name
-        j_crew_company = Company.where("alliance_customer_number = ? ", J_CREW_CUSTOMER_NUMBER).first
+        j_crew_company = Company.with_customs_management_number(J_CREW_CUSTOMER_NUMBER).first
 
         unless j_crew_company
           raise "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number '#{J_CREW_CUSTOMER_NUMBER}'."

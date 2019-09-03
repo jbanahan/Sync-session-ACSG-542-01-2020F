@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   def initialize opts={}
     @inner_opts = {force_header_updates:false}
     @inner_opts = @inner_opts.merge opts
-    @jill = Company.find_by_system_code UID_PREFIX
+    @jill = Company.find_by(system_code: UID_PREFIX)
     @user = User.integration
     @cdefs = self.class.prep_custom_definitions [:prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
   end
@@ -48,7 +48,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, cust_ord
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
     Lock.acquire(ord_num) do
-      ord = Order.find_by_importer_id_and_order_number @jill.id, ord_num
+      ord = Order.find_by(importer_id: @jill.id, order_number:ord_num)
 
       update_lines = true
       update_header = true
@@ -178,10 +178,10 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     st.city = et n4, 'N401'
     st.state = et n4, 'N402'
     st.postal_code = et n4, 'N403'
-    st.country = (et(n4,'N404')=='USA' ? Country.find_by_iso_code('US') : nil)
+    st.country = (et(n4,'N404')=='USA' ? Country.find_by(iso_code: 'US') : nil)
 
     hash_key = Address.make_hash_key st
-    found_address = Address.find_by_address_hash_and_company_id hash_key, @jill.id
+    found_address = Address.find_by(address_hash: hash_key, company_id: @jill.id)
     if found_address
       ord.ship_to = found_address
     else
@@ -311,7 +311,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
 
   def find_or_create_vendor vendor_ref
     return nil if vendor_ref.nil?
-    v = Company.find_by_system_code "#{UID_PREFIX}-#{vendor_ref[0]}"
+    v = Company.find_by(system_code: "#{UID_PREFIX}-#{vendor_ref[0]}")
     if v.nil?
       v = Company.create!(system_code:"#{UID_PREFIX}-#{vendor_ref[0]}",name:vendor_ref[1],vendor:true)
       @jill.linked_companies << v
@@ -330,7 +330,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     mid = REXML::XPath.first(factory_el,'N1/N104').text
     return if mid.blank? #can't load factory with blank MID
     sys_code = "#{UID_PREFIX}-#{mid}"
-    f = Company.find_by_system_code sys_code
+    f = Company.find_by(system_code: sys_code)
     if f.nil?
       nm = REXML::XPath.first(factory_el,'N1/N102').text
       f = Company.create!(system_code:sys_code,name:nm,factory:true)

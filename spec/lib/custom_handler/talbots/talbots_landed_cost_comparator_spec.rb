@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
   subject { described_class }
   let(:ent) { Factory(:entry, entry_number: "ENTNUM", importer: co, last_billed_date: DateTime.now)}
-  let(:co) { Factory(:company, alliance_customer_number: "TALBO") }
+  let(:co) { with_customs_management_id(Factory(:company), "TALBO") }
   let(:es) { Factory(:entity_snapshot, recordable: ent) }
 
   describe "accept?" do
@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
     end
 
     it "rejects non-Talbots entries" do
-      co.update_attributes alliance_customer_number: "ACME"
+      co.system_identifiers.destroy_all
       expect(subject.accept? es).to eq false
     end
 

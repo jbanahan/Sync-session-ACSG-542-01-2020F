@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
 
       cf
     }
-    let (:importer) { Factory(:company, fenix_customer_number: "855157855RM0001", importer: true) }
+    let (:importer) { with_fenix_id(Factory(:importer), "855157855RM0001") }
     let (:tempfile) {
       tempfile = Tempfile.new ['temp', '.txt']
       tempfile.binmode 

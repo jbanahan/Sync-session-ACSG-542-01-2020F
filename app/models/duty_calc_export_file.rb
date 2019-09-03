@@ -30,7 +30,7 @@ class DutyCalcExportFile < ActiveRecord::Base
     begin
       while DutyCalcExportFileLine.where(importer_id:importer.id).where(extra_where ? extra_where : "1=1").where('duty_calc_export_file_id is null').count > 0
         ActiveRecord::Base.transaction do
-          fn = "duty_calc_export_#{importer.system_code.blank? ? importer.alliance_customer_number : importer.system_code}_#{Time.now.to_i}.zip"
+          fn = "duty_calc_export_#{importer.system_code.blank? ? importer.customs_identifier : importer.system_code}_#{Time.now.to_i}.zip"
           fp = "tmp/#{fn}"
           unless file_path.nil? 
             fn = File.basename(file_path)

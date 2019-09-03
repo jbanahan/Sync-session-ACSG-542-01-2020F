@@ -76,7 +76,7 @@ module OpenChain; module CustomHandler; module Ascena
     end
 
     def get_importer_id fenix_id
-      co = Company.where(fenix_customer_number: fenix_id).first
+      co = Company.with_fenix_number(fenix_id).first
       raise "Fenix ID #{fenix_id} not found!" unless co
       co.id
     end

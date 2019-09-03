@@ -355,7 +355,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
   def importer system, log
     if system == :fenix
-      @importer ||= Company.importers.where(fenix_customer_number: "887634400RM0001").first
+      @importer ||= Company.importers.with_fenix_number("887634400RM0001").first
       log.error_and_raise "No Fenix importer record found with Tax ID 887634400RM0001." if @importer.nil?
       @importer
     else

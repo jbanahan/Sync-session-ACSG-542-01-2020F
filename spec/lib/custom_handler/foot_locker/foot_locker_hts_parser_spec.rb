@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerHtsParser do
     let(:log) { InboundFile.new }
 
     before do
-      @company = Factory(:company, alliance_customer_number: 'FOOLO')
+      @company = with_customs_management_id(Factory(:company),'FOOLO')
       @cdefs = described_class.prep_custom_definitions [:prod_part_number, :prod_country_of_origin, :class_customs_description, :prod_season]
     end
 

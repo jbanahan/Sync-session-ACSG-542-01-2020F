@@ -24,7 +24,7 @@ class EntriesController < ApplicationController
   end
   def ca_activity_summary
     distribute_reads do 
-      importers = Company.where('length(fenix_customer_number)>0').order(:fenix_customer_number)
+      importers = Company.for_system("Fenix").order("system_identifiers.code")
       activity_summary_select importers, 'ca'
     end
   end
@@ -35,7 +35,7 @@ class EntriesController < ApplicationController
   end
   def us_activity_summary
     distribute_reads do 
-      importers = Company.where('length(alliance_customer_number)>0').order(:alliance_customer_number)
+      importers = Company.for_system(["Customs Management", "Cargowise"]).order("system_identifiers.code")
       activity_summary_select importers, 'us'
     end
   end

@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
     }
   }
 
-  let (:test_importer) { Factory(:importer, alliance_customer_number: "TEST") }
+  let (:test_importer) { with_customs_management_id(Factory(:importer), "TEST") }
   let (:user) { Factory(:user) }
   let (:port) { Factory(:port, schedule_d_code: "4103")}
   let (:log) { InboundFile.new }

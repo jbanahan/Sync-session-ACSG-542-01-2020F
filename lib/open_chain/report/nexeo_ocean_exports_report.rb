@@ -25,7 +25,7 @@ module OpenChain; module Report; class NexeoOceanExportsReport
   end
 
   def self.nexeo
-    Company.importers.where(alliance_customer_number: "NEXEO").first
+    Company.importers.with_customs_management_number("NEXEO").first
   end
 
   def self.run_report run_by, settings = {}

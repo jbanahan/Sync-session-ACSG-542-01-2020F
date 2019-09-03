@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
   describe "generate_kewill_shipment_data" do
     let (:importer) {
-      Factory(:importer, alliance_customer_number: "CUST")
+      with_customs_management_id(Factory(:importer), "CUST")
     }
 
     let (:us) {

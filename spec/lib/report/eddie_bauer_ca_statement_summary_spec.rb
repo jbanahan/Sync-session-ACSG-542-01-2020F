@@ -29,8 +29,8 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
         Tempfile.open(["file", ".csv"]) do |t|
           t.binmode
           t << "content"
+          t.rewind
           expect_any_instance_of(described_class).to receive(:run).with(User.integration, {start_date: "2017-03-08", end_date: "2017-03-15"}).and_return t
-          allow(File).to receive(:size).with(t.path).and_return 10
           described_class.run_schedulable({'email' => 'tufnel@stonehenge.biz', 'after_x_days_ago' => 7, 'before_x_days_ago' => 0})
           m = ActionMailer::Base.deliveries.first
           expect(m.to).to eq ["tufnel@stonehenge.biz"]

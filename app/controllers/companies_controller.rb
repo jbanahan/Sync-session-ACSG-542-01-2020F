@@ -26,15 +26,18 @@ class CompaniesController < ApplicationController
   
   def index
     sp = SEARCH_PARAMS
-    if MasterSetup.get.custom_feature? 'alliance'
+    set_includes
+    if @include_alliance
       sp = sp.clone
-      sp['a_cust'] = {:field=>'alliance_customer_number', :label=>"Alliance Customer Number"}
-      @include_alliance = true
+      sp['a_cust'] = {:field=>"(SELECT code FROM system_identifiers WHERE system = 'Customs Management' AND company_id = companies.id)", :label=>"Kewill Customer Number"}
     end
-    if MasterSetup.get.custom_feature? 'fenix'
+    if @include_fenix
       sp = sp.clone
-      sp['a_cust_f'] = {:field=>'fenix_customer_number', :label=>"Fenix Customer Number"}
-      @include_fenix = true
+      sp['a_cust_f'] = {:field=>"(SELECT code FROM system_identifiers WHERE system = 'Fenix' AND company_id = companies.id)", :label=>"Fenix Customer Number"}
+    end
+    if @include_cargowise
+      sp = sp.clone
+      sp['a_cust_c'] = {:field=>"(SELECT code FROM system_identifiers WHERE system = 'Cargowise' AND company_id = companies.id)", :label=>"Cargowise Customer Number"}
     end
     s = build_search(sp,'c_name','c_name')
     respond_to do |format|
@@ -51,6 +54,7 @@ class CompaniesController < ApplicationController
     @company = Company.find(params[:id])
     action_secure(@company.can_view?(current_user), @company, {:verb => "view", :lock_check => false, :module_name=>"company"}) {
       @countries = Country.all
+      set_includes
       respond_to do |format|
         format.html # show.html.erb
       end
@@ -63,6 +67,7 @@ class CompaniesController < ApplicationController
     @company = Company.new
     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release]
     action_secure(current_user.company.master, @company, {:verb => "create ", :module_name=>"company"}) {
+      set_includes
       respond_to do |format|
         format.html # new.html.erb
       end
@@ -74,6 +79,7 @@ class CompaniesController < ApplicationController
      @company = Company.find(params[:id])
      @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release]
      action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) {
+       set_includes
      }
   end
 
@@ -81,8 +87,9 @@ class CompaniesController < ApplicationController
   # POST /companies.xml
   def create
     action_secure(current_user.company.master, @company, {:verb => "create", :lock_check => false, :module_name=>"company"}) {
+      set_includes
       @company = Company.create(name:params[:company][:cmp_name])
-      if @company.errors.empty? && @company.update_model_field_attributes(params[:company])
+      if @company.errors.empty? && @company.update_model_field_attributes(params[:company]) && update_identifiers(@company, params[:company])
         @company.create_snapshot(current_user)
         add_flash :notices, "Company created successfully."
       else
@@ -98,15 +105,17 @@ class CompaniesController < ApplicationController
     @company = Company.find(params[:id])
     unlocking = !params[:company][:locked].nil? && params[:company][:locked]=="0"
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
-      old_fiscal_ref = @company.fiscal_reference
-      if @company.update_model_field_attributes(params[:company])
-        @company.create_snapshot(current_user)
-        add_flash :notices, "Company was updated successfully."
-        add_flash :notices, "FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!" if @company.fiscal_reference.presence != old_fiscal_ref.presence
-      else
-        errors_to_flash @company
+      Lock.db_lock(@company) do 
+        old_fiscal_ref = @company.fiscal_reference
+        if @company.update_model_field_attributes(params[:company]) && update_identifiers(@company, params[:company])
+          @company.create_snapshot(current_user)
+          add_flash :notices, "Company was updated successfully."
+          add_flash :notices, "FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!" if @company.fiscal_reference.presence != old_fiscal_ref.presence
+        else
+          errors_to_flash @company
+        end
+        redirect_to redirect_location(@company)
       end
-      redirect_to redirect_location(@company)
     }
   end
 
@@ -130,6 +139,8 @@ class CompaniesController < ApplicationController
       return
     end
     @company = Company.find params[:id]
+    @unlinked_company_options = Company.options_for_companies_with_system_identifier(['Customs Management', 'Fenix', 'Cargowise'], in_relation: @company.unlinked_companies(select: "distinct companies.id"), join_type: :outer)
+    @linked_company_options = Company.options_for_companies_with_system_identifier(['Customs Management', 'Fenix', 'Cargowise'], in_relation: @company.linked_companies, join_type: :outer)
   end
 
   def update_children
@@ -157,10 +168,10 @@ class CompaniesController < ApplicationController
 
     c = Company.find params[:id]
     admin_secure do
-      if c.alliance_customer_number.blank?
+      if c.kewill_customer_number.blank?
         add_flash :errors, "Cannot push file because company doesn't have an alliance customer number."
       else
-        OpenChain::CustomHandler::Vandegrift::KewillProductGenerator.delay.sync(c.alliance_customer_number)
+        OpenChain::CustomHandler::Vandegrift::KewillProductGenerator.delay.sync(c.kewill_customer_number)
         c.update_attributes! :last_alliance_product_push_at => Time.zone.now
         add_flash :notices, "Product file has been queued to be sent to Kewill."
       end
@@ -190,5 +201,18 @@ class CompaniesController < ApplicationController
         opts << [mf.label, uid]
       end
       opts
+    end
+
+    def set_includes
+      @include_alliance = MasterSetup.get.custom_feature?('alliance')
+      @include_fenix = MasterSetup.get.custom_feature?('fenix')
+      @include_cargowise = MasterSetup.get.custom_feature?("Maersk Cargowise Feeds")
+    end
+
+    def update_identifiers company, params
+      company.set_system_identifier("Customs Management", params[:kewill_customer_number]) if params[:kewill_customer_number]
+      company.set_system_identifier("Fenix", params[:fenix_customer_number]) if params[:fenix_customer_number]
+      company.set_system_identifier("Cargowise", params[:cargowise_customer_number]) if params[:cargowise_customer_number]
+      true
     end
 end

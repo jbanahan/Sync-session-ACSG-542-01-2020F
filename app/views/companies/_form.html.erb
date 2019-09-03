@@ -14,7 +14,7 @@ $(function() {
   <div class="container">
     <div class="row">
       <div class="col-md-12">
-        <%= show_model_fields f, [:cmp_name, :cmp_sys_code, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_forwarder, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_ticketing_system_code, :cmp_slack_channel, :cmp_alliance, :cmp_fenix, (@company.importer? ? :comp_show_buiness_rules : nil)] %>
+        <%= show_model_fields f, [:cmp_name, :cmp_sys_code, :cmp_agent, :cmp_broker, :cmp_carrier, :cmp_customer, :cmp_factory, :cmp_forwarder, :cmp_importer, :cmp_vendor, :cmp_created_at, :cmp_updated_at, :cmp_ticketing_system_code, :cmp_slack_channel, (@company.importer? ? :comp_show_buiness_rules : nil)] %>
         <%= show_model_fields f, [:cmp_enabled_booking_types] do |mf, field_name, value, attributes|
               attributes[:select_options] = options_for_select(Company.booking_types, @company.enabled_booking_types_array)
               attributes[:multiple] = true
@@ -25,7 +25,9 @@ $(function() {
           attributes[:select_options] = options_for_select(@fiscal_reference_opts, @company.fiscal_reference)
           model_select_field_tag field_name, mf, @fiscal_reference_opts, attributes
         end %>
-
+        <%= field_bootstrap(render_field_label("Kewill Customer Number"), text_field_tag("company[kewill_customer_number]", @company.kewill_customer_number,  class: "form-control")) if @include_alliance %>
+        <%= field_bootstrap(render_field_label("Fenix Customer Number"), text_field_tag("company[fenix_customer_number]", @company.fenix_customer_identifier,  class: "form-control")) if @include_fenix%>
+        <%= field_bootstrap(render_field_label("Cargowise Customer Number"), text_field_tag("company[cargowise_customer_number]", @company.cargowise_customer_number,  class: "form-control")) if @include_cargowise%>
         <%= show_custom_fields f %>
       </div>
     </div>

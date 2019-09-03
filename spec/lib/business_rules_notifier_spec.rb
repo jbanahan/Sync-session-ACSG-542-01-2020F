@@ -13,8 +13,8 @@ describe OpenChain::BusinessRulesNotifier do
   end
 
   it "logs all errors" do
-    imp1 = Factory(:importer, alliance_customer_number: '12345', slack_channel: 'company1')
-    imp2 = Factory(:company, alliance_customer_number: '23456', slack_channel: 'company2')
+    imp1 = with_customs_management_id(Factory(:importer, slack_channel: 'company1'),'12345' )
+    imp2 = with_customs_management_id(Factory(:company, slack_channel: 'company2'), '23456')
     Factory(:entry, customer_number:'12345', importer: imp1)
     Factory(:entry, customer_number:'23456', importer: imp2)
     
@@ -43,7 +43,7 @@ describe OpenChain::BusinessRulesNotifier do
 
   it "sends to the company's slack channel" do
     entry = Factory(:entry, customer_number:'12345')
-    company = Factory(:company, alliance_customer_number: '12345', slack_channel: 'company1', name: "My Company")
+    company = with_customs_management_id(Factory(:company, slack_channel: 'company1', name: "My Company"), '12345')
     bvt = generate_business_rule('12345')
 
     bvt.create_results! run_validation: true

@@ -17,9 +17,9 @@ describe OpenChain::Report::PumaDivisionQuarterBreakdown do
 
   describe "run_report" do
     let (:u) { Factory(:user) }
-    let(:importer_cgolf) { Factory(:company, name:'CGOLF', system_code:'CGOLF') }
-    let(:importer_puma_us) { Factory(:company, name:'Puma USA', system_code:'PUMA') }
-    let(:importer_puma_ca) { Factory(:company, name:'Puma Canada', fenix_customer_number:'892892654RM0001') }
+    let(:importer_cgolf) { with_customs_management_id(Factory(:company, name:'CGOLF'), "CGOLF") }
+    let(:importer_puma_us) { with_customs_management_id(Factory(:company, name:'Puma USA'), "PUMA") }
+    let(:importer_puma_ca) { with_fenix_id(Factory(:company, name:'Puma Canada'), "892892654RM0001") }
 
     after { @temp.close if @temp }
 

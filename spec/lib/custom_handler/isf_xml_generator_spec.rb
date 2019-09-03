@@ -3,7 +3,7 @@ require 'time'
 describe OpenChain::CustomHandler::ISFXMLGenerator do
   describe 'generate' do
     before :each do
-      importer = Factory(:importer, irs_number:'ashjdajdashdad', alliance_customer_number: 'asjhdajhdjasgd')
+      importer = with_customs_management_id(Factory(:importer, irs_number:'ashjdajdashdad'), 'asjhdajhdjasgd')
       consignee = Factory(:consignee, irs_number:'oijwofhiusfsdfhsdgf')
       @shipment = Factory(:shipment,
                           importer:importer,
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
       expect(r.text('EDI_TXN_IDENTIFIER')).to eq @shipment.id.to_s
       expect(Time.parse(r.text('DATE_CREATED'))).to be_within(5.second).of(Time.now)
       expect(r.text('ACTION_CD')).to eq 'A'
-      expect(r.text('IMPORTER_ACCT_CD')).to eq @shipment.importer.alliance_customer_number
+      expect(r.text('IMPORTER_ACCT_CD')).to eq "asjhdajhdjasgd"
       expect(Time.zone.parse(r.text('EST_LOAD_DATE')).to_date).to eq @shipment.est_load_date
       expect(r.text('BOOKING_NBR')).to eq @shipment.booking_number
       expect(r.text('EdiBillLading/HOUSE_BILL_NBR')).to eq ' is a house bill'
@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
       REXML::XPath.each(r,'EdiEntity') do |entity|
         case entity.text('ENTITY_TYPE_CD')
           when 'IM'
-            expect(entity.text('BROKERAGE_ACCT_CD')).to eq @shipment.importer.alliance_customer_number
+            expect(entity.text('BROKERAGE_ACCT_CD')).to eq "asjhdajhdjasgd"
           when 'CN'
             expect(entity.text('ENTITY_ID')).to eq @shipment.consignee.irs_number
             expect(entity.text('ENTITY_ID_TYPE_CD')).to eq 'EI'

@@ -10,7 +10,7 @@ describe OpenChain::JCrewDrawbackProcessor do
       @cd_size = cdefs[:shpln_size]
       @cd_color = cdefs[:shpln_color]
       @product = Factory(:product,unique_identifier:'JCREW-12345',name:'12345')
-      @importer = Factory(:company,:importer=>true,:alliance_customer_number=>"JCREW")
+      @importer = with_customs_management_id(Factory(:company,:importer=>true), "JCREW")
       @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>'12345',:po_number=>'12345',:country_origin_code=>'CN')
       @c_line.entry.update_attributes(
         :entry_number=>"12345678901",

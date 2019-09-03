@@ -8,11 +8,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceCi
     accept = super
     return false unless accept
 
-    alliance_customer_number = snapshot.try(:recordable).try(:importer).try(:alliance_customer_number)
-    return false if alliance_customer_number.blank?
+    kewill_customer_number = snapshot.try(:recordable).try(:importer).try(:kewill_customer_number)
+    return false if kewill_customer_number.blank?
 
     invoice_ci_load_customers = ci_load_data.keys
-    invoice_ci_load_customers.include? alliance_customer_number
+    invoice_ci_load_customers.include? kewill_customer_number
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceCi
     end
 
     if sync_record.sent_at.nil?
-      invoice_generator(invoice.importer.alliance_customer_number).generate_and_send_invoice(invoice, sync_record)
+      invoice_generator(invoice.importer.kewill_customer_number).generate_and_send_invoice(invoice, sync_record)
       sync_record.sent_at = Time.zone.now
       sync_record.confirmed_at = (Time.zone.now + 1.minute)
       sync_record.save!
@@ -41,8 +41,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceCi
     nil
   end
 
-  def invoice_generator alliance_customer_number
-    generator_string = self.class.ci_load_data[alliance_customer_number]
+  def invoice_generator kewill_customer_number
+    generator_string = self.class.ci_load_data[kewill_customer_number]
     if generator_string.blank?
       return OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator.new
     else

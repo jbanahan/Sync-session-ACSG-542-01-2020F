@@ -227,7 +227,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
   end
 
   def ca_importer
-    @ca_imp ||= Company.importers.where(fenix_customer_number: "855157855RM0001").first
+    @ca_imp ||= Company.importers.with_fenix_number("855157855RM0001").first
     @ca_imp
   end
 

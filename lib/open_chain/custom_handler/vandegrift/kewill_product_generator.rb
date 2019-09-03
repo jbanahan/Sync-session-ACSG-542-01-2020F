@@ -201,7 +201,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       @importer ||= Company.where(system_code: @importer_system_code).first
       raise ArgumentError, "No importer found with Importer System Code '#{@importer_system_code}'." unless @importer
     else
-      @importer ||= Company.where(alliance_customer_number: @alliance_customer_number).first
+      @importer ||= Company.with_customs_management_number(@alliance_customer_number).first
       raise ArgumentError, "No importer found with Kewill customer number '#{@alliance_customer_number}'." unless @importer
     end
 

@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   def all_new_billables
     BillableEvent.joins('LEFT OUTER JOIN invoiced_events ie ON billable_events.id = ie.billable_event_id AND ie.invoice_generator_name = "HmInvoiceGenerator"')
                  .joins('LEFT OUTER JOIN non_invoiced_events nie ON billable_events.id = nie.billable_event_id AND nie.invoice_generator_name = "HmInvoiceGenerator"')
-                 .joins('INNER JOIN classifications cla ON cla.id = billable_eventable_id INNER JOIN countries cou ON cou.id = cla.country_id AND cou.iso_code = "CA" INNER JOIN products p ON cla.product_id = p.id INNER JOIN companies com ON com.id = p.importer_id AND com.alliance_customer_number = "HENNE"')
+                 .joins("INNER JOIN classifications cla ON cla.id = billable_eventable_id INNER JOIN countries cou ON cou.id = cla.country_id AND cou.iso_code = 'CA' INNER JOIN products p ON cla.product_id = p.id INNER JOIN system_identifiers sys ON sys.company_id = p.importer_id AND sys.system = 'Customs Management' AND sys.code = 'HENNE'")
                  .where('ie.id IS NULL AND nie.id IS NULL')
                  .where('billable_eventable_type = "Classification"')
   end
@@ -72,7 +72,7 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   end
 
   def create_invoice
-    co = Company.where(alliance_customer_number: "HENNE").first
+    co = Company.with_customs_management_number("HENNE").first
     VfiInvoice.next_invoice_number { |n| VfiInvoice.create!(customer: co, invoice_date: Date.today, invoice_number: n, currency: "USD")}
   end
 

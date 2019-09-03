@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
   end
 
   def self.build_invoice_line sl, ln, ord_num, hd
-    ci = CommercialInvoice.find_by_importer_id_and_invoice_number sl.shipment.importer_id, ord_num
+    ci = CommercialInvoice.find_by(importer_id: sl.shipment.importer_id, invoice_number: ord_num)
     cl = nil
     if ci.nil?
       ci = CommercialInvoice.new(importer:sl.shipment.importer,
@@ -129,7 +129,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
   end
 
   def self.find_importer
-    importer = Company.find_by_system_code 'HENNE'
+    importer = Company.find_by(system_code: 'HENNE')
     raise "Importer with system code 'HENNE' not found." unless importer
     importer
   end

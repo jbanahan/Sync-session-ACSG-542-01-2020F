@@ -45,6 +45,24 @@ describe CompaniesController do
       put :update, {'id'=>company.id, 'company'=>{'cmp_name'=>'mycompany'}}
       expect(company.entity_snapshots.count).to eq 1
     end
+
+    it "updates identifers" do
+      put :update, {'id'=>company.id, 'company'=>{'cmp_name'=>'mycompany', "kewill_customer_number" => "KCUST", "fenix_customer_number" => "FCUST", "cargowise_customer_number" => "CCUST"}}
+      company.reload
+      expect(company).to have_system_identifier("Customs Management", "KCUST")
+      expect(company).to have_system_identifier("Fenix", "FCUST")
+      expect(company).to have_system_identifier("Cargowise", "CCUST")
+    end
+
+    it "removes identifiers if they are blank" do
+      with_fenix_id(with_cargowise_id(with_customs_management_id(company, "KCUST"), "CCUST"), "FCUST")
+      put :update, {'id'=>company.id, 'company'=>{'cmp_name'=>'mycompany', "kewill_customer_number" => " ", "fenix_customer_number" => " ", "cargowise_customer_number" => " "}}
+      company.reload
+      expect(company).not_to have_system_identifier("Customs Management", "KCUST")
+      expect(company).not_to have_system_identifier("Fenix", "FCUST")
+      expect(company).not_to have_system_identifier("Cargowise", "CCUST")
+    end
+
     it "warns user if fiscal_reference has changed" do
       # nil -> "" shouldn't trigger warning
       put :update, {'id'=>company.id, 'company'=>{'cmp_fiscal_reference'=>''}}
@@ -94,6 +112,8 @@ describe CompaniesController do
       get :show_children, :id => company.id
       expect(response).to be_success
       expect(assigns(:company)).to eq(company)
+      expect(assigns(:unlinked_company_options)).not_to be_nil
+      expect(assigns(:linked_company_options)).not_to be_nil
     end
   end
   describe 'update_children' do
@@ -135,7 +155,7 @@ describe CompaniesController do
     }
 
     before :each do 
-      company.update_attributes(:alliance_customer_number=>"ACNUM")
+      with_customs_management_id(company, "ACNUM")
       user.admin = true
       user.save!
     end
@@ -158,8 +178,8 @@ describe CompaniesController do
         expect(company.last_alliance_product_push_at).to be > 1.minute.ago
       end
 
-      it "should reject if company doesn't have alliance customer number" do
-        company.update_attributes(:alliance_customer_number=>nil)
+      it "should reject if company doesn't have a kewill number" do
+        company.system_identifiers.destroy_all
         expect(OpenChain::CustomHandler::Vandegrift::KewillProductGenerator).not_to receive(:delay)
         post :push_alliance_products, :id=>company.id
         expect(flash[:errors].first).to eq("Cannot push file because company doesn't have an alliance customer number.") 

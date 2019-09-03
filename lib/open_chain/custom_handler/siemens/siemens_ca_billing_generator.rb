@@ -27,8 +27,8 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
   def find_entries
     # We only ever want to send the entry a single time, as such, the standard needs_sync() method is not sufficient for this use-case
     Entry.joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = ?", sync_code])).
-      joins(:importer).
-      where(companies: {fenix_customer_number: siemens_tax_ids}).
+      joins(importer: :system_identifiers).
+      where(system_identifiers: {system: "Fenix", code: siemens_tax_ids}).
       where("entry_type <> 'F'").
       # Prior to 9/25/2015 this process was done through the old fenix system, so we need to ignore everything done through there.
       where("sync_records.id IS NULL").where("k84_receive_date IS NOT NULL AND k84_receive_date > '2015-09-24'").
@@ -397,7 +397,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001", 
         "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001", 
         "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
-        "807150586RM0002", "761672690RM0001", "768899288RM0001", "858557895RM0001"]
+        "761672690RM0001", "768899288RM0001", "858557895RM0001"]
     end
 
     def b3_line_key line

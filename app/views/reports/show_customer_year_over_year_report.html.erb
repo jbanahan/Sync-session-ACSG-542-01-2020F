@@ -44,10 +44,10 @@ $(function() {
       </div>
     <%else%>
       <div id="company-us">
-        <%=field_row "Importer(s)", select_tag(:importer_id_us, options_from_collection_for_select(@us_importers, 'id', :name_with_customer_number), multiple: true)%>
+        <%=field_row "Importer(s)", select_tag(:importer_id_us, options_for_select(@us_importers), multiple: true, size: 10)%>
       </div>
       <div id="company-ca" style="display: none;">
-        <%=field_row "Importer(s)", select_tag(:importer_id_ca, options_from_collection_for_select(@ca_importers, 'id', :name_with_customer_number), multiple: true)%>
+        <%=field_row "Importer(s)", select_tag(:importer_id_ca, options_for_select(@ca_importers), multiple: true)%>
       </div>
     <%end%>
     <div>

@@ -1,4 +1,3 @@
-require 'tempfile'
 describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
   describe "parse_csv_file" do
     before :each do

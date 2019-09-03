@@ -10,15 +10,18 @@
           <% 
             imp_list = []
             if current_user.company.master?
-              imp_list = Company.select('companies.id, companies.name, companies.fenix_customer_number').where('length(companies.fenix_customer_number) > 0 OR (select count(*) from linked_companies inner join companies c on c.id = linked_companies.child_id and length(c.fenix_customer_number) > 0 WHERE linked_companies.parent_id = companies.id) > 0').order('companies.name,companies.fenix_customer_number').active_importers.collect {|c| ["#{c.name} (#{c.fenix_customer_number})",c.id]}
+              imp_list = Company.active_importers
             else
-              comps = [current_user.company] + current_user.company.linked_companies.where('length(companies.fenix_customer_number) > 0').order('name').to_a
-              imp_list = comps.collect {|c| ["#{c.name} (#{c.fenix_customer_number})",c.id]}
+              if current_user.company.linked_companies.count > 0
+                imp_list = Company.where("id = ? OR id IN (?)", current_user.company, current_user.company.linked_companies)
+              else
+                imp_list = Company.where("id = ?", current_user.company)
+              end
             end
           %>
           <% if imp_list.size > 1 %>
             <select id='impselect' class='form-control'>
-              <%=options_for_select imp_list%>
+              <%=options_for_select(Company.options_for_companies_with_system_identifier(["Fenix"], in_relation: imp_list))%>
             </select>
           <% else %>
             <h4><%=@imp.name%></h4>
@@ -207,9 +210,9 @@
           </div>
           <div class='col-md-12 activity-pane'>
             <ul style='margin-top:10px;'>
-              <li><%=@imp.name%> (<%=@imp.fenix_customer_number%>)</li>
-              <% @imp.linked_companies.where('length(fenix_customer_number) > 0').each do |lc| %>
-                <li><%=lc.name%> (<%=lc.fenix_customer_number%>)</li>
+              <li><%=@imp.name%> (<%=@imp.customs_identifier%>)</li>
+              <% Company.joins(:system_identifiers).where(system_identifiers: {system: ["Fenix"]}).where(id: @imp.linked_companies).each do |lc| %>
+                <li><%=lc.name%> (<%=lc.customs_identifier%>)</li>
               <% end %>
             </ul>
           </div>

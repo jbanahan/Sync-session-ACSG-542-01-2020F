@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
   describe "process_entries_by_arrival_date" do
     
     it "should find entries by customer and date range" do
-      imp = Factory(:company,alliance_customer_number:'CROCS')
+      imp = with_customs_management_id(Factory(:company),'CROCS')
       e1 = Factory(:entry,importer_id:imp.id,arrival_date:1.year.ago)
       e2 = Factory(:entry,importer_id:imp.id,arrival_date:1.week.ago)
       e3 = Factory(:entry,importer_id:imp.id,arrival_date:1.week.from_now)
@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor do
 
   describe "find_shipment_lines" do
     before :each do
-      @imp = Factory(:company,alliance_customer_number:'CROCS')
+      @imp = with_customs_management_id(Factory(:company),'CROCS')
       @p = Factory(:product,unique_identifier:'CROCS-S12345')
       @defs = described_class.prep_custom_definitions [:shpln_po,:shpln_received_date,:shpln_coo]
       s = Factory(:shipment,importer:@imp)

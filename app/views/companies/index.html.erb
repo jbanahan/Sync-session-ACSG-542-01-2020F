@@ -24,6 +24,9 @@
     <% if @include_fenix%>
       <th><%=sortable_search_heading 'a_cust_f'%></th>
     <%end%>
+    <% if @include_cargowise%>
+      <th><%=sortable_search_heading 'a_cust_c'%></th>
+    <%end%>
     <th><%=sortable_search_heading 'car_bool'%></th>
     <th><%=sortable_search_heading 'cus_bool'%></th>
     <th><%=sortable_search_heading 'v_bool'%></th>
@@ -35,10 +38,13 @@
     <td><%= link_to company.name, company %><%=company.locked? ? raw(" - <span class='exception_value'>[LOCKED]</span>") : ''%></td>
     <td><%=company.system_code%></td>
     <% if @include_alliance %>
-      <td><%=company.alliance_customer_number%></td>
+      <td><%=company.kewill_customer_number%></td>
     <% end %>
     <% if @include_fenix%>
-      <td><%=company.fenix_customer_number%></td>
+      <td><%=company.fenix_customer_identifier%></td>
+    <% end %>
+    <% if @include_cargowise%>
+      <td><%=company.cargowise_customer_number%></td>
     <% end %>
     <td><%= bool_txt company.carrier? %></td>
     <td><%= bool_txt company.customer? %></td>

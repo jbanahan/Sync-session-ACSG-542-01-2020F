@@ -1,11 +1,9 @@
 describe OpenChain::Report::NexeoOceanExportsReport do
 
-  
-
   context "with db data" do
     before :each do
       port = Factory(:port, schedule_d_code: "1234", name: "PORT")
-      @nexeo = Factory(:importer, alliance_customer_number: "NEXEO")
+      @nexeo = with_customs_management_id(Factory(:importer), "NEXEO")
       @shipment = Factory(:shipment, importer: @nexeo, importer_reference: "REF", vessel: "VESS", voyage: "VOY", est_departure_date: Date.new(2015, 12,1), lcl: false, 
                           house_bill_of_lading: "HBOL", booking_carrier: "CAR", master_bill_of_lading: "MBOL", freight_total: BigDecimal("123"), 
                           invoice_total: BigDecimal("150"), gross_weight: BigDecimal("10"), lading_port: port, buyer_address: Factory(:address, name: "BUYER"))
@@ -135,7 +133,7 @@ describe OpenChain::Report::NexeoOceanExportsReport do
       ms = double("MasterSetup")
       allow(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:shipment_enabled).and_return true
-      @nexeo = Factory(:importer, alliance_customer_number: "NEXEO")
+      @nexeo = with_customs_management_id(Factory(:importer), "NEXEO")
     end
 
     it "allows users with view shipment permission and access to nexeo company to view" do

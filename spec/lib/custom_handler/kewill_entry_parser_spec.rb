@@ -820,6 +820,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.entity_snapshots.length).to eq 1
       snapshot = entry.entity_snapshots.first
       expect(snapshot.user).to eq User.integration
+
+      expect(importer).to have_system_identifier("Customs Management", "TEST")
     end
 
     it "processes liquidation information if liquidation date is not in the future" do
@@ -969,7 +971,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "uses cross process locking / per entry locking" do
       expect(Lock).to receive(:acquire).with(Lock::ALLIANCE_PARSER).and_yield
-      expect(Lock).to receive(:acquire).with("CreateAllianceCustomer").and_yield
+      expect(Lock).to receive(:acquire).with("Company-Customs Management-TEST").and_yield
       expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
 
       entry = subject.process_entry @e
@@ -1206,7 +1208,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "assigns fiscal month to entry and broker invoice" do
-      imp = Factory(:company, alliance_customer_number: "TEST", fiscal_reference: "ent_release_date")
+      imp = with_customs_management_id(Factory(:company, fiscal_reference: "ent_release_date"), "TEST")
       fm_1 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015,3,1), end_date: Date.new(2015,3,31))
       fm_2 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 2, start_date: Date.new(2015,4,1), end_date: Date.new(2015,4,30))
 

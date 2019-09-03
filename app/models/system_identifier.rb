@@ -27,4 +27,11 @@ class SystemIdentifier < ActiveRecord::Base
   belongs_to :company, inverse_of: :system_identifiers
 
   validates_presence_of :system, :code
+
+  def self.system_identifier_code company, system
+    # allow passing an integer value or the actual Company object
+    id = company.respond_to?(:id) ? company.id : company
+
+    SystemIdentifier.where(company_id: id, system: system).limit(1).pluck(:code).first
+  end
 end

@@ -10,9 +10,9 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerPoPar
   end
 
   def initialize
-    @eddie = Company.find_by_system_code 'EDDIE'
+    @eddie = Company.find_by(system_code: 'EDDIE')
     raise "Can't find company with system code EDDIE." unless @eddie
-    @ebcc = Company.find_by_system_code 'EBCC'
+    @ebcc = Company.find_by(system_code: 'EBCC')
     raise "Can't find company with system code EBCC." unless @ebcc
   end
 

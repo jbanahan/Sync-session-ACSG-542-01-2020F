@@ -47,7 +47,7 @@ module ISFSupport
   end
 
   def validate_importer_alliance_number
-    errors[:importer] << "must have an Alliance Customer Number" unless importer_id && importer.alliance_customer_number.present?
+    errors[:importer] << "must have an Alliance Customer Number" unless importer_id && importer.kewill_customer_number.present?
   end
 
   def validate_bill_numbers

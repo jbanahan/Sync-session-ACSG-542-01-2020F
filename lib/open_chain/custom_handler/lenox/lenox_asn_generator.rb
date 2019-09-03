@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxAsnGenerator
 
   def initialize opts = {}
     inner_opts = {'env'=>Rails.env}.merge opts
-    @lenox = Company.find_by_system_code 'LENOX'
+    @lenox = Company.find_by(system_code:'LENOX')
     @cdefs = self.class.prep_custom_definitions [:ord_factory_code, :ord_destination_code, :prod_country_of_origin, :ord_line_destination_code]
     @f = OpenChain::FixedPositionGenerator.new(exception_on_truncate:true,
       date_format:'%Y%m%d', numeric_pad_char: '0', numeric_strip_decimals: true

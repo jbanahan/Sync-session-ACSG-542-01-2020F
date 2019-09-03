@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser d
       c = Factory(:company,system_code:'0000100003',vendor:false,name:'something else')
       c.update_custom_value!(@cdefs[:cmp_po_blocked],true)
       expect{described_class.new.parse_dom(dom, log)}.to_not change(Company,:count)
-      c = Company.find_by_system_code('0000100003')
+      c = Company.find_by(system_code: '0000100003')
       expect(c.get_custom_value(@cdefs[:cmp_po_blocked]).value).to be_truthy
     end
 

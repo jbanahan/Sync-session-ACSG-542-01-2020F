@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
                "0.04", "CN", "9.45", "0", "0.9", "3924.90.0099", "0", "4", "53.36", "Plastic", " ", " ", " ", " ", " ", 
                " ", " ", " ", " ", "12.64", "0.19", "0.51"]
 
-      @co = Factory(:company, fenix_customer_number: "858053119RM0001")
+      @co = with_fenix_id(Factory(:importer), "858053119RM0001")
       @ci = Factory(:commercial_invoice, entry: nil, invoice_number: @row1[0], importer_id: @co.id) 
       @handler = described_class.new "some file"
     end
@@ -191,10 +191,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaCaInvoiceHandler do
     end
 
     describe "get_importer_id" do
-      before(:each) { @co = Factory(:company, fenix_customer_number: "123456789") }
+      let! (:importer) { with_fenix_id(Factory(:company),"123456789") }
 
       it "looks up importer_id using Fenix ID" do
-        expect(@handler.get_importer_id("123456789")).to eq @co.id
+        expect(@handler.get_importer_id("123456789")).to eq importer.id
       end
       
       it "throws exception if Fenix ID not found" do

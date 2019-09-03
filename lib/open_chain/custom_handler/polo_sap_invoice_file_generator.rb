@@ -1043,7 +1043,7 @@ module OpenChain
         end
 
         def production?
-          Rails.env.production?
+          MasterSetup.production?
         end
 
         def importer_id rl_company
@@ -1053,7 +1053,8 @@ module OpenChain
           if id.nil?
             importer_tax_id = RL_INVOICE_CONFIGS[rl_company][:tax_id]
             unless importer_tax_id.blank?
-              id = Company.where(fenix_customer_number: importer_tax_id).pluck(:id).first
+
+              id = Company.with_fenix_number(importer_tax_id).pluck(:id).first
               raise "No importer id found for Fenix Tax Id #{importer_tax_id}." if id.nil?
 
               @importer_ids[rl_company] = id

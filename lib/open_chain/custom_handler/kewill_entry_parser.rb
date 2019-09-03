@@ -199,7 +199,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       rescue => e
         # Re-raise a deadlock error, there's nothing wrong with the data, so the entry should
         # process next time through when the job queue reprocesses the file.
-        raise e if OpenChain::DatabaseUtils.deadlock_error?(e) || !production?
+        raise e if OpenChain::DatabaseUtils.deadlock_error?(e) || !MasterSetup.production?
 
         # Add the entity wrapper name back in so the data can easily just be passed back through
         # the parser for testing/problem solving
@@ -213,10 +213,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     entry
-  end
-
-  def production?
-    Rails.env.production?
   end
 
   class HoldReleaseSetter
@@ -1275,14 +1271,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def get_importer customer_number, customer_name
-      importer = nil
-      if customer_number
-        Lock.acquire("CreateAllianceCustomer") do 
-          importer = Company.where(alliance_customer_number: customer_number).first_or_create!(name: customer_name, importer: true)
-        end
-      end
-
-      importer
+      Company.find_or_create_company!("Customs Management", customer_number, {alliance_customer_number: customer_number, importer: true, name: customer_name})
     end
 
     def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP, no_offset: false

@@ -77,7 +77,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
 
   def self.process_entry entry_number, po_part_hash
     Entry.transaction do
-      crew = Company.find_by_alliance_customer_number('JCREW')
+      crew = Company.with_customs_management_number('JCREW').first
       ent = Entry.where('entries.customer_number IN (?)',['JCREW','J0000']).where(entry_number:entry_number).first
       if ent.blank?
         raise "Entry #{entry_number} not found."

@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module Polo
       end
 
       def parse_header xl
-        importer = Company.where(:fenix_customer_number => RL_CA_FACTORY_STORE_TAX_ID, :importer => true).first
+        importer = Company.importers.with_fenix_number(RL_CA_FACTORY_STORE_TAX_ID).first
         unless importer
           raise PoloParserError.new "No Importer company exists with Tax ID #{RL_CA_FACTORY_STORE_TAX_ID}.  This company must exist before RL CA invoices can be created against it."
         end
@@ -144,8 +144,8 @@ module OpenChain; module CustomHandler; module Polo
       def find_invoice invoice_number, importer
         # Need the select here to work around ActiveRecord markings records as readonly if you use a join clause
         # (Even though in this case we know that the commercial invoice data is all going to be loaded)
-        invoice = CommercialInvoice.select("commercial_invoices.*").where(:invoice_number => invoice_number).
-                  joins(:importer).where(:companies => {:fenix_customer_number => importer.fenix_customer_number}).first
+        invoice = CommercialInvoice.select("commercial_invoices.*").where(:invoice_number => invoice_number).joins(importer: :system_identifiers).
+                    where({system_identifiers: {system: "Fenix", code: importer.fenix_customer_identifier}}).first
 
         if invoice
           invoice.commercial_invoice_lines.destroy_all

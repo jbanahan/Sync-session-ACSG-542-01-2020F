@@ -3,7 +3,7 @@ describe OpenChain::Report::MarcJacobsFreightBudget do
     @u = Factory(:user)
     @good_entry = Factory(:entry,:release_date=>0.seconds.ago,:house_bills_of_lading=>'HBOL',
       :broker_invoice_total=>90,:total_duty=>80,:total_fees=>50,:master_bills_of_lading=>'MBOL',
-      :importer=>Factory(:company,:alliance_customer_number=>"MARJAC"))
+      :importer=>with_customs_management_id(Factory(:company), "MARJAC"))
     allow_any_instance_of(Entry).to receive(:can_view?).and_return(true)
   end
   after :each do
@@ -11,12 +11,7 @@ describe OpenChain::Report::MarcJacobsFreightBudget do
   end
 
   describe "permission?" do
-
-    before :each do
-      ms = double("MasterSetup")
-      allow(MasterSetup).to receive(:get).and_return ms
-      allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
-    end
+    let!(:ms) { stub_master_setup_for_reports }
 
     it "should reject if user cannot view an entry" do
       allow_any_instance_of(Entry).to receive(:can_view?).and_return(false)
@@ -79,7 +74,7 @@ describe OpenChain::Report::MarcJacobsFreightBudget do
     end
 
     it "should only include entries for customer MARJAC" do
-      @good_entry.importer.update_attributes(:alliance_customer_number=>'NOTGOOD')
+      @good_entry.importer.system_identifiers.destroy_all
       @tmp = described_class.run_report @u
       r = Spreadsheet.open(@tmp).worksheet(0).row(1)
       expect(r.size).to eq 0

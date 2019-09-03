@@ -205,7 +205,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       t
     }
 
-    let! (:ascena) { Factory(:importer, alliance_customer_number: "ASCE")}
+    let! (:ascena) { with_customs_management_id(Factory(:importer), "ASCE")}
 
     after (:each) { tempfile.close! }
 

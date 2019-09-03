@@ -156,9 +156,6 @@ describe OpenChain::FenixParser do
   end
 
   def do_shared_test entry_data
-    # Make sure the locking mechanism is utilized
-    expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
-
     OpenChain::FenixParser.parse entry_data, {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.last_file_bucket).to eq('bucket')
@@ -264,7 +261,6 @@ describe OpenChain::FenixParser do
 
   it "sets hold-date fields correctly" do
     @release_date = nil
-    expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
 
     OpenChain::FenixParser.parse @entry_lambda.call(true), {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by(broker_reference: @file_number)
@@ -276,9 +272,6 @@ describe OpenChain::FenixParser do
   end
 
   it "sets hold-release date fields correctly" do
-    # ent = do_shared_test @entry_lambda.call(false)
-    expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times:3).and_yield
-
     OpenChain::FenixParser.parse @entry_lambda.call(false), {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
     ent = Entry.find_by(broker_reference: @file_number)
 
@@ -743,6 +736,7 @@ describe OpenChain::FenixParser do
 
   it "assigns fiscal month to entry" do
     imp = Factory(:company, fenix_customer_number: "833764202RM0001", fiscal_reference: "ent_release_date")
+    imp.system_identifiers.create! system: "Fenix", code: "833764202RM0001"
     fm = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015,9,1), end_date: Date.new(2015,9,30))
     OpenChain::FenixParser.parse @entry_lambda.call
     e = Entry.find_by(broker_reference: @file_number)
@@ -789,10 +783,12 @@ describe OpenChain::FenixParser do
       expect(imp.name).to eq(@importer_name)
       expect(imp.fenix_customer_number).to eq(@importer_tax_id)
       expect(imp).to be_importer
+      expect(imp).to have_system_identifier("Fenix", @importer_tax_id)
     end
     it "should link to existing importer" do
       # Make sure we're not updating importer names that aren't tax ids
       imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>"Test")
+      imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by(broker_reference: @file_number)
       expect(ent.importer).to eq(imp)
@@ -800,6 +796,7 @@ describe OpenChain::FenixParser do
     end
     it "should update an existing importer's name if the name is the tax id" do
       imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>@importer_tax_id)
+      imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by(broker_reference: @file_number)
       expect(ent.importer.id).to eq(imp.id)
@@ -808,6 +805,7 @@ describe OpenChain::FenixParser do
     it "should change the entry's importer id on an update if the importer changed" do
       imp = Factory(:company, fenix_customer_number: "ABC", importer: true)
       updated_imp = Factory(:company, fenix_customer_number: @importer_tax_id,importer: true)
+      updated_imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       ent = Factory(:entry, broker_reference: @file_number, source_system: "Fenix", importer: imp)
 
       OpenChain::FenixParser.parse @entry_lambda.call

@@ -2,7 +2,7 @@ describe OpenChain::Report::SgDutyDueReport do
 
   describe "get_entries" do
     it "returns results of query" do
-      co = Factory(:company, alliance_customer_number: 'sgold')
+      co = with_customs_management_id(Factory(:company), 'sgold')
       duty_due = Date.today + 1
 
       port = Factory(:port, schedule_d_code: "1234", name: "Boston")
@@ -20,8 +20,7 @@ describe OpenChain::Report::SgDutyDueReport do
        u = Factory(:user, company: co)
        allow(u).to receive(:view_entries?).and_return true
        allow(co).to receive(:can_view?).with(u).and_return true
-       parser = described_class.new
-       results = parser.get_entries u, co
+       results = subject.get_entries u, co
        results = results.to_a
        expect(results.length).to eq 2
        expect(results[0][:arrival_date].to_date.to_s).to eq '2016-03-01'
@@ -115,8 +114,7 @@ describe OpenChain::Report::SgDutyDueReport do
                   :daily_statement_number => Set.new(['87654321CD']),
                   :est_debit_date => mar_7}]
 
-      parser = described_class.new
-      expect(parser.create_digest input).to eq digest
+      expect(subject.create_digest input).to eq digest
     end
   end
 

@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
     end
 
     context "with canada import" do
-      let! (:importer) { Factory(:importer, fenix_customer_number: "887634400RM0001")}
+      let! (:importer) { with_fenix_id(Factory(:importer), "887634400RM0001")}
       let! (:country) { ca }
       let! (:data_cross_reference) { DataCrossReference.create! cross_reference_type: "hm_pars", key: "PARS"}
       let! (:ca_email_lists) { 

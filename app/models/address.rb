@@ -151,7 +151,7 @@ qry
       row = row.map {|r| r.try(:strip) }
 
       # First, find the company the address is linked to (creating one if it doesn't exist)
-      company = Company.where(alliance_customer_number: row[0].to_s.strip).first_or_create! name: row[1], importer: true
+      company = Company.find_or_create_company!("Customs Management", row[0].to_s.strip, {name: row[1], importer: true})
 
       # All kewill addresses are named w/ leading 0's...strip those, we don't want them.
       address_number = row[2].to_s.gsub(/^0+/, "")

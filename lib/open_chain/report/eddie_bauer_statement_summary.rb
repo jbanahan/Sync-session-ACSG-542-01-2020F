@@ -12,7 +12,7 @@ module OpenChain
       end
       
       def self.permission? user
-        (Rails.env=='development' || MasterSetup.get.system_code=='www-vfitrack-net') && user.company.master?
+        MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.company.master?
       end
 
       def self.run_report run_by, parameters={}
@@ -20,7 +20,7 @@ module OpenChain
       end
 
       def run
-        importer = Company.find_by_alliance_customer_number(@customer_number)
+        importer = Company.with_customs_management_number(@customer_number).first
 
         raise "No company record found for customer number #{@customer_number}." unless importer
         wb = Spreadsheet::Workbook.new

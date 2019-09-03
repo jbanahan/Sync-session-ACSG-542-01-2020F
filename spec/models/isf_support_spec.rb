@@ -2,7 +2,7 @@ describe ISFSupport do
   describe "valid_isf?" do
     describe 'when the ISF is valid' do
       before :each do
-        importer = Factory(:importer, irs_number:'ashjdajdashdad', alliance_customer_number: 'asjhdajhdjasgd')
+        importer = with_customs_management_id(Factory(:importer, irs_number:'ashjdajdashdad'), 'asjhdajhdjasgd')
         consignee = Factory(:consignee, irs_number:'oijwofhiusfsdfhsdgf')
         @shipment = Factory(:shipment,
                             importer:importer,
@@ -35,7 +35,7 @@ describe ISFSupport do
   
   describe "validate_isf" do
     describe 'when the ISF is not valid' do
-      describe "when the importer doesn't have an alliance number" do
+      describe "when the importer doesn't have an kewill customs number" do
         before :each do
           importer = Factory(:importer, irs_number:'ashjdajdashdad')
           @shipment = Factory(:shipment, importer:importer)
@@ -49,7 +49,7 @@ describe ISFSupport do
 
       describe "when the importer doesn't have an IRS number" do
         before :each do
-          importer = Factory(:importer, alliance_customer_number:'ashjdajdashdad')
+          importer = Factory(:importer)
           @shipment = Factory(:shipment, importer:importer)
           @shipment.validate_isf
         end
@@ -61,7 +61,7 @@ describe ISFSupport do
 
       describe "when the consignee doesn't have an IRS number" do
         before :each do
-          consignee = Factory(:consignee, alliance_customer_number:'ashjdajdashdad')
+          consignee = Factory(:consignee)
           @shipment = Factory(:shipment, consignee:consignee)
           @shipment.validate_isf
         end
@@ -112,7 +112,7 @@ describe ISFSupport do
 
       describe "when parties are missing address fields" do
         before :each do
-          importer = Factory(:importer, irs_number:'ashjdajdashdad', alliance_customer_number: 'asjhdajhdjasgd')
+          importer = with_customs_management_id(Factory(:importer, irs_number:'ashjdajdashdad'), 'asjhdajhdjasgd')
           consignee = Factory(:consignee, irs_number:'oijwofhiusfsdfhsdgf')
           @shipment = Factory(:shipment,
                               importer:importer,
@@ -138,7 +138,7 @@ describe ISFSupport do
 
     describe "when parties are missing addresses" do
       before :each do
-        importer = Factory(:importer, irs_number:'ashjdajdashdad', alliance_customer_number: 'asjhdajhdjasgd')
+        importer = Factory(:importer, irs_number:'ashjdajdashdad')
         consignee = Factory(:consignee, irs_number:'oijwofhiusfsdfhsdgf')
         @shipment = Factory(:shipment,
                             importer:importer,

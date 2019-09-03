@@ -22,18 +22,22 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
       [9,:cmp_importer,:importer,"Is Importer",{data_type: :boolean,
         can_edit_lambda: admin_edit_lambda()
       }],
-      [10,:cmp_alliance,:alliance_customer_number,"Alliance Customer Number",{
+      [10,:cmp_alliance,:kewill_customer_number,"Alliance Customer Number",{
         data_type: :string,
         can_view_lambda: lambda {|u| u.company.broker?},
-        can_edit_lambda: admin_edit_lambda()
+        can_edit_lambda: admin_edit_lambda(),
+        qualified_field_name: "(SELECT cm_id.code FROM system_identifiers cm_id WHERE cm_id.system = 'Customs Management' and cm_id.company_id = companies.id)",
+        import_lambda: lambda {|obj, data| obj.set_system_identifier("Customs Management", data) }
       }],
       [11,:cmp_broker,:broker,"Is Broker",{data_type: :boolean,
         can_edit_lambda: admin_edit_lambda()
       }],
-      [12,:cmp_fenix,:fenix_customer_number,"Fenix Customer Number",{
+      [12,:cmp_fenix,:fenix_customer_identifier,"Fenix Customer Number",{
         data_type: :string,
         can_view_lambda: lambda {|u| u.company.broker?},
-        can_edit_lambda: admin_edit_lambda()
+        can_edit_lambda: admin_edit_lambda(),
+        qualified_field_name: "(SELECT f_id.code FROM system_identifiers f_id WHERE f_id.system = 'Fenix' and f_id.company_id = companies.id)",
+        import_lambda: lambda {|obj, data| obj.set_system_identifier("Fenix", data) }
       }],
       [13,:cmp_agent,:agent,"Is Agent",{data_type: :boolean,
         can_edit_lambda: admin_edit_lambda()
@@ -52,7 +56,14 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
       }],
       [21, :cmp_fiscal_reference, :fiscal_reference, "Fiscal Reference", {data_type: :string,
         can_edit_lambda: admin_edit_lambda()
-      }]
+      }],
+      [22,:cmp_cargowise,:cargowise_customer_number,"Cargowise Customer Number",{
+        data_type: :string,
+        can_view_lambda: lambda {|u| u.company.broker?},
+        can_edit_lambda: admin_edit_lambda(),
+        qualified_field_name: "(SELECT cw_id.code FROM system_identifiers cw_id WHERE cw_id.system = 'Cargowise' and cw_id.company_id = companies.id)",
+        import_lambda: lambda {|obj, data| obj.set_system_identifier("Cargowise", data) }
+      }],
     ]
     add_fields CoreModule::COMPANY, make_attachment_arrays(100,'cmp',CoreModule::COMPANY)
     add_fields CoreModule::COMPANY, make_business_rule_arrays(200,'cmp','companies','Company')

@@ -564,11 +564,15 @@ order by importer_id, monthly_statement_due_date desc"
 
     def self.find_company settings
       if settings['system_code']
-        Company.where(system_code: settings['system_code']).first
+        return Company.where(system_code: settings['system_code']).first
       elsif settings['iso_code'].upcase == "US"
-        Company.where(alliance_customer_number: settings['alliance_customer_number']).first
-      else 
-        Company.where(fenix_customer_number: settings['fenix_customer_number']).first
+        if settings["cargowise_customer_number"].blank?
+          return Company.find_by_system_code("Customs Management", settings["alliance_customer_number"])
+        else
+          return Company.find_by_system_code("Cargowise", settings["cargowise_customer_number"])
+        end
+      else
+        return Company.find_by_system_code("Fenix", settings["fenix_customer_number"])
       end
     end
 
@@ -681,7 +685,7 @@ order by importer_id, monthly_statement_due_date desc"
       board.insert_row 0, 0, ["Vandegrift VFI Track Insights"] + Array.new(us? ? 6 : 7, nil), Array.new(us? ? 7 : 8, :default_header), Array.new(us? ? 7 : 8, true)
       board.insert_row 1, 0, ["#{iso_code} Entry Activity"], [:bold]
       board.insert_row 2, 0, ["Date", now]
-      board.insert_row 3, 0, ["Customer Number", importer.system_code.presence || (us? ? importer.alliance_customer_number : importer.fenix_customer_number)]
+      board.insert_row 3, 0, ["Customer Number", importer.system_code.presence || (us? ? (importer.kewill_customer_number.presence? || importer.cargowise_customer_number) : importer.fenix_customer_number)]
       board.insert_row 4, 0, ["View Summary in Real Time", {type: :hyperlink, link_text: "Link", location: activity_summary_url}]
     end
 
@@ -787,9 +791,12 @@ order by importer_id, monthly_statement_due_date desc"
 
     def write_linked_companies board, row_num
       board.insert_row row_num, fst_col, ["Companies Included",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
-      cust_num_attrib = us? ? "alliance_customer_number" : "fenix_customer_number"
-      [importer].concat(importer.linked_companies.where("LENGTH(#{cust_num_attrib}) > 0")).each do |lc|
-        board.insert_row (self.row_num += 1), fst_col, ["#{lc.name} (#{lc.send(cust_num_attrib.to_sym)})"]
+
+      ([importer] + importer.linked_companies.to_a).each do |lc|
+        customs_id = lc.customs_identifier
+        next if lc != importer && customs_id.blank?
+
+        board.insert_row (self.row_num += 1), fst_col, ["#{lc.name} (#{customs_id})"]
       end
     end
   end

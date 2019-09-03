@@ -16,7 +16,7 @@ module OpenChain; module Report; class HmOkLog
   end
 
   def self.permission? user
-    (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && (user.view_entries? && (user.company.master? || user.company.alliance_customer_number=='HENNE'))
+    MasterSetup.get.custom_feature?("WWW VFI Track Reports") && (user.view_entries? && (user.company.master? || user.company == Company.with_customs_management_number("HENNE").first))
   end
 
   def self.run_report run_by, settings={}

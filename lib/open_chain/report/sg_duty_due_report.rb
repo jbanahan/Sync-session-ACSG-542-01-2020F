@@ -7,7 +7,7 @@ module OpenChain; module Report; class SgDutyDueReport
   include ActionView::Helpers::NumberHelper
 
   def self.permission? user
-    user.view_entries? && user.company.master? && MasterSetup.get.system_code=='www-vfitrack-net'
+    user.view_entries? && user.company.master? && MasterSetup.get.custom_feature?("WWW VFI Track Reports")
   end
 
   def self.run_report run_by, settings={}
@@ -23,7 +23,7 @@ module OpenChain; module Report; class SgDutyDueReport
   end
 
   def self.get_company cust_num
-    Company.where("alliance_customer_number = ?", cust_num).first
+    Company.with_customs_management_number(cust_num).first
   end
 
   def run(run_by, company)

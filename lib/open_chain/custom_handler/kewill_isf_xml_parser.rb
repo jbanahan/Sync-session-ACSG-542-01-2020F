@@ -123,12 +123,7 @@ module OpenChain
         @sf.manufacturer_names = process_manufacturer_names r
 
         if @sf.broker_customer_number
-          importer = Company.find_by_alliance_customer_number @sf.broker_customer_number
-          if importer.nil?
-            cn = @sf.broker_customer_number
-            importer = Company.create!(:name=>cn,:alliance_customer_number=>cn,:importer=>true)
-          end
-          @sf.importer = importer
+          @sf.importer = get_importer(@sf.broker_customer_number, @sf.broker_customer_number)
         end
 
         @sf
@@ -338,6 +333,10 @@ module OpenChain
 
       def parse_file? sf, last_event_time
         sf.last_event.nil? || sf.last_event <= last_event_time
+      end
+
+      def get_importer customer_number, customer_name
+        Company.find_or_create_company!("Customs Management", customer_number, {alliance_customer_number: customer_number, importer: true, name: customer_name})
       end
     end
   end

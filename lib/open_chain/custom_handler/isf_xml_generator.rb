@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
     add_element root, 'DATE_CREATED', Time.now.in_time_zone('US/Eastern').iso8601
     add_element root, 'EDI_TXN_IDENTIFIER', @shipment.id
     add_element root, 'ACTION_CD', @first_time ? 'A' : 'R'
-    add_element root, 'IMPORTER_ACCT_CD', @shipment.importer.alliance_customer_number
+    add_element root, 'IMPORTER_ACCT_CD', @shipment.importer.customs_identifier
     add_element root, 'OWNER_ACCT_CD', options[:isf_cust_acct]
     add_element root, 'EST_LOAD_DATE', @shipment.est_load_date ? @shipment.est_load_date.iso8601 : nil
     add_element root, 'BOOKING_NBR', @shipment.booking_number
@@ -81,7 +81,7 @@ module OpenChain; module CustomHandler; class ISFXMLGenerator
 
     importer_entity = add_element root, 'EdiEntity'
     add_element importer_entity, 'ENTITY_TYPE_CD', 'IM'
-    add_element importer_entity, 'BROKERAGE_ACCT_CD', @shipment.importer.alliance_customer_number
+    add_element importer_entity, 'BROKERAGE_ACCT_CD', @shipment.importer.customs_identifier
 
     consignee_entity = add_element root, 'EdiEntity'
     add_element consignee_entity, 'ENTITY_TYPE_CD', 'CN'

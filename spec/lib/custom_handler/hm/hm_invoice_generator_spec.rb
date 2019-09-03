@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
-  let(:hm) { Factory(:company, alliance_customer_number: "HENNE", name: "H&M") }
+  let(:hm) { with_customs_management_id(Factory(:company, name: "H&M"), "HENNE") }
   let(:country) { Factory(:country, iso_code: "CA") }
   let(:cdef) { described_class.prep_custom_definitions([:prod_po_numbers])[:prod_po_numbers] }
   let(:prod) do 
@@ -72,12 +72,12 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     end
 
     it "returns no results if event not associated with a classification" do
-      billable.update_attributes(billable_eventable: Factory(:entry))
+      billable.update!(billable_eventable: Factory(:entry))
       expect(subject.all_new_billables).to be_empty
     end
 
     it "returns no results if associated importer isn't H&M" do
-      prod.update_attributes(importer: Factory(:company))
+      prod.update!(importer: Factory(:company))
       expect(subject.all_new_billables).to be_empty
     end
 

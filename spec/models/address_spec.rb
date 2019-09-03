@@ -152,8 +152,9 @@ describe Address do
     it "receives an address array, generates a new company record and adds the address" do
       subject.update_kewill_addresses [address_row]
 
-      c = Company.where(alliance_customer_number: "CUSTNO", importer: true, name: "Customer Name").first
+      c = Company.where(importer: true, name: "Customer Name").first
       expect(c).not_to be_nil
+      expect(c).to have_system_identifier("Customs Management", "CUSTNO")
 
       address = c.addresses.first
       expect(address).not_to be_nil
@@ -168,7 +169,7 @@ describe Address do
     end
 
     it "updates an existing address" do
-      c = Company.create! alliance_customer_number: "CUSTNO", name: "Cust"
+      c = with_customs_management_id(Company.create!(name: "Cust"), "CUSTNO")
       address = c.addresses.create! system_code: "1"
 
       subject.update_kewill_addresses [address_row]

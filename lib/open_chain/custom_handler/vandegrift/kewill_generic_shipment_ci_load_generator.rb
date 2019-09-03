@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericSh
   end
 
   def add_shipment_to_entry entry, shipment
-    entry.customer = shipment.importer.alliance_customer_number
+    entry.customer = shipment.importer.kewill_customer_number
   end
 
   def add_shipment_to_invoice invoice, shipment
@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericSh
     filename = shipment.importer_reference if filename.blank?
     filename = shipment.reference if filename.blank?
 
-    "#{shipment.importer.alliance_customer_number} CI Load/#{filename}.xls"
+    "#{shipment.importer.kewill_customer_number} CI Load/#{filename}.xls"
   end
 
 end; end; end; end

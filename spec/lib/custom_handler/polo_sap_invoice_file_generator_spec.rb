@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
   }
 
   let (:importer) {
-    Factory(:importer, fenix_customer_number: "806167003RM0001")
+    with_fenix_id(Factory(:importer), "806167003RM0001")
   }
 
   let! (:rl_canada_list) { 
@@ -366,8 +366,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         @cil.update_attributes! po_number: "ABCD"
         make_sap_po
 
-        order_line = Factory(:order_line, line_number: "0020", product: Factory(:product, unique_identifier: "#{@importer.fenix_customer_number}-#{@cil.part_number}"),
-          order: Factory(:order, order_number: "#{@importer.fenix_customer_number}-#{@cil.po_number}")
+        order_line = Factory(:order_line, line_number: "0020", product: Factory(:product, unique_identifier: "#{@importer.fenix_customer_identifier}-#{@cil.part_number}"),
+          order: Factory(:order, order_number: "#{@importer.fenix_customer_identifier}-#{@cil.po_number}")
         )
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
@@ -385,8 +385,8 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
         @tradecard_line.update_attributes! unit_of_measure: "AS", quantity: "10"
 
-        order_line = Factory(:order_line, line_number: "0010", product: Factory(:product, unique_identifier: "#{@importer.fenix_customer_number}-#{@cil.part_number}"),
-          order: Factory(:order, order_number: "#{@importer.fenix_customer_number}-#{@cil.po_number}")
+        order_line = Factory(:order_line, line_number: "0010", product: Factory(:product, unique_identifier: "#{@importer.fenix_customer_identifier}-#{@cil.part_number}"),
+          order: Factory(:order, order_number: "#{@importer.fenix_customer_identifier}-#{@cil.po_number}")
         )
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice]
@@ -441,7 +441,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       end
 
       it "should generate and email an MM excel file for Club Monaco" do
-        club_monaco = Factory(:importer, fenix_customer_number: "866806458RM0001")
+        club_monaco = with_fenix_id(Factory(:importer), "866806458RM0001")
         @entry.update_attributes! importer: club_monaco
         time = Time.zone.now
         profit_center = DataCrossReference.create!(:cross_reference_type=>'profit_center', :key=>'ABC', :value=>'Profit', company_id: club_monaco.id)
@@ -829,7 +829,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
 
     it "should find broker invoices for Club Monaco after May 23, 2014 that have not been succssfully invoiced" do
       @broker_invoice.update_attributes! invoice_date: '2014-05-24'
-      club_monaco = Factory(:importer, fenix_customer_number: "866806458RM0001")
+      club_monaco = with_fenix_id(Factory(:importer), "866806458RM0001")
       @broker_invoice.entry.update_attributes! importer: club_monaco
 
       # the default invoice should be found
@@ -854,7 +854,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     end
 
     it "should not find Club Monaco invoices prior to May 23, 2014" do
-      club_monaco = Factory(:importer, fenix_customer_number: "866806458RM0001")
+      club_monaco = with_fenix_id(Factory(:importer), "866806458RM0001")
       @broker_invoice.entry.update_attributes! importer: club_monaco
 
       @broker_invoice.update_attributes(:invoice_date => Date.new(2014, 5, 22))

@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 # To install, insert a soft link in OpenChain/.git/hooks named "pre-commit" pointing at this file.
+# Command Line (from project root): ln -s ../../script/pre-commit .git/hooks/chain-pre-commit`
 
 def check_for_debug_statements
   diff_lines = `git diff --cached`

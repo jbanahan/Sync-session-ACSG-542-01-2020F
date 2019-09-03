@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
   end
 
   describe 'parse' do
-    let(:importer) { Factory(:company, importer: true, fenix_customer_number: "CUST1") }
+    let(:importer) { with_fenix_id(Factory(:importer), "CUST1") }
 
 
     it "should parse a file" do
@@ -51,10 +51,10 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
       file_contents = [
         ["Column", "Heading"],
-        [importer.fenix_customer_number, "INV1", date.strftime("%Y-%m-%d"), "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"],
-        [importer.fenix_customer_number, "INV1", date.strftime("%Y-%m-%d"), "UPA", "Part2", "HK", "9876543210", "Some Part 2", "20", "1.50", "PO#", "2"],
-        [importer.fenix_customer_number, "INV2", date.strftime("%Y-%m-%d"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"],
-        [importer.fenix_customer_number, "INV3", date.strftime("%Y-%m-%d"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
+        [importer.fenix_customer_identifier, "INV1", date.strftime("%Y-%m-%d"), "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"],
+        [importer.fenix_customer_identifier, "INV1", date.strftime("%Y-%m-%d"), "UPA", "Part2", "HK", "9876543210", "Some Part 2", "20", "1.50", "PO#", "2"],
+        [importer.fenix_customer_identifier, "INV2", date.strftime("%Y-%m-%d"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"],
+        [importer.fenix_customer_identifier, "INV3", date.strftime("%Y-%m-%d"), "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
       ]
 
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
@@ -120,10 +120,10 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     it "should create multiple invoices if blank rows are between each" do
       file_contents = [
         ["Column", "Heading"],
-        [importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"],
+        [importer.fenix_customer_identifier, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"],
         [],
         ['', '', ' '],
-        [importer.fenix_customer_number, "INV2", "2013-10-29", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
+        [importer.fenix_customer_identifier, "INV2", "2013-10-29", "UPA", "Part3", "TW", "1597534682", "Some Part 3", "30", "1.75", "PO #2", "1"]
       ]
 
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1]).and_yield(file_contents[2]).and_yield(file_contents[3]).and_yield(file_contents[4])
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     end
 
     it "should error if importer is blank" do
-      importer = Factory(:company, importer: true, fenix_customer_number: "  ")
+      importer = Factory(:importer)
       file_contents = [["Column", "Heading"],["  ", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     end
 
     it "should not send invoices if suppressed" do
-      file_contents = [["Column", "Heading"],[importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"],[importer.fenix_customer_identifier, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
 
@@ -175,7 +175,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       inv.update_attributes importer_id: importer.id
       id = inv.id
 
-      file_contents = [["Column", "Heading"],[importer.fenix_customer_number, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"],[importer.fenix_customer_identifier, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 
       errors = subject.parse "file.xlsx", true
@@ -193,7 +193,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       inv.update_attributes importer_id: importer.id, invoice_number: ""
       id = inv.id
 
-      file_contents = [["Column", "Heading"],[importer.fenix_customer_number, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"],[importer.fenix_customer_identifier, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 
       errors = subject.parse "file.xlsx", true
@@ -210,7 +210,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     it "should properly translate numeric values to text for text model attributes" do
       file_contents = [
         ["Column", "Heading"],
-        [importer.fenix_customer_number, 123.0, "2013-10-28", "UIL", BigDecimal.new("1234.0"), "CN", 12345, "Some Part", "10", "1.25", 1234.1, 1],
+        [importer.fenix_customer_identifier, 123.0, "2013-10-28", "UIL", BigDecimal.new("1234.0"), "CN", 12345, "Some Part", "10", "1.25", 1234.1, 1],
       ]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       errors = subject.parse "file.xlsx", true
@@ -242,7 +242,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       # also test the alternate date formats here too
       file_contents = [
         ["Column", "Heading"],
-        [importer.fenix_customer_number, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"]
+        [importer.fenix_customer_identifier, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1", "UNIQUEID"]
       ]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 

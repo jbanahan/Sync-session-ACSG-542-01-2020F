@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
   }
 
   describe "parse" do
-    let (:importer) { Factory(:importer, system_code: "WILSON", alliance_customer_number: "WILSON") }
+    let (:importer) { with_customs_management_id(Factory(:importer, system_code: "WILSON"), "WILSON") }
     let (:us) { Factory(:country, iso_code: "US") }
     let (:product_1) {
       p = Factory(:product, unique_identifier: "WILSON-WTDPCH00251", importer: importer)
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
       end
 
       it "parses part number differently for non-Wilson accounts and translates Atomic to Salomon account" do
-        Factory(:importer, system_code: "SALOMON", alliance_customer_number: "SALOMON")
+        with_customs_management_id(Factory(:importer, system_code: "SALOMON"), "SALOMON")
         # This also tests that ATOMIC is translated to Salomon
         described_class.parse data.gsub("WILSON    ", "ATOMIC    ")
         expect(entries.length).to eq 1
@@ -85,7 +85,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
       end
 
       it "translates ARMADA to Salomon account" do
-        Factory(:importer, system_code: "SALOMON", alliance_customer_number: "SALOMON")
+        with_customs_management_id(Factory(:importer, system_code: "SALOMON"), "SALOMON")
         described_class.parse data.gsub("WILSON    ", "ARMADA    ")
         expect(entries.length).to eq 1
 

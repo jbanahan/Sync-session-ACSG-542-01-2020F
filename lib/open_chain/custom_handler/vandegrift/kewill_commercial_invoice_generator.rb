@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
     entry = CiLoadEntry.new(file_number, nil, [])
     commercial_invoices = Array.wrap(commercial_invoices)
 
-    entry.customer = commercial_invoices.first.importer.alliance_customer_number
+    entry.customer = commercial_invoices.first.importer.kewill_customer_number
     commercial_invoices.each do |inv|
       invoice = CiLoadInvoice.new(inv.invoice_number, inv.invoice_date, [], nil, nil)
       entry.invoices << invoice

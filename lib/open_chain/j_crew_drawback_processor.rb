@@ -6,7 +6,7 @@ module OpenChain; class JCrewDrawbackProcessor < OpenChain::DrawbackProcessor
   
   def self.process_date_range arrival_date_start, arrival_date_end, user=nil
     ['J0000','JCREW'].each do |cnum|
-      imp = Company.where(alliance_customer_number: cnum).first
+      imp = Company.with_customs_management_number(cnum).first
       self.process_entries Entry.where(importer_id:imp.id).where('entries.arrival_date between ? and ?',arrival_date_start,arrival_date_end)
     end
     if user

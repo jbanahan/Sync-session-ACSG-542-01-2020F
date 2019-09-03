@@ -62,7 +62,7 @@ class Company < ActiveRecord::Base
   validates  :name,  :presence => true
   validate  :master_lock
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
-  validates_uniqueness_of :alliance_customer_number, :if => lambda {!self.alliance_customer_number.blank?}, :message=>"is already taken."
+  after_save :clear_customs_identifier
 
   has_many  :addresses, :dependent => :destroy
   has_many  :divisions, :dependent => :destroy
@@ -114,6 +114,11 @@ class Company < ActiveRecord::Base
   #find all companies that have attachment_archive_setups that include a start date
   scope :attachment_archive_enabled, -> { joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null") }
   scope :has_slack_channel, -> { where('slack_channel IS NOT NULL AND slack_channel <> ""') } 
+  scope :with_customs_management_number, ->(code) { joins(:system_identifiers).where(system_identifiers: {system: "Customs Management", code: code}) }
+  scope :with_cargowise_number, ->(code) { joins(:system_identifiers).where(system_identifiers: {system: "Cargowise", code: code}) }
+  scope :with_fenix_number, ->(code) { joins(:system_identifiers).where(system_identifiers: {system: "Fenix", code: code}) }
+  scope :with_identifier, ->(system, code) { joins(:system_identifiers).where(system_identifiers: {system: system, code: code}) }
+  scope :for_system, -> (system) { joins(:system_identifiers).where(system_identifiers: {system: system})  }
 
   def linked_company? c
     (self == c) || self.linked_companies.include?(c)
@@ -153,8 +158,10 @@ class Company < ActiveRecord::Base
   end
 
   # find all companies that aren't children of this one through the linked_companies relationship
-  def unlinked_companies
-    Company.select("distinct companies.*").joins("LEFT OUTER JOIN (select child_id as cid FROM linked_companies where parent_id = #{self.id}) as lk on companies.id = lk.cid").where("lk.cid IS NULL").where("NOT companies.id = ?",self.id)
+  def unlinked_companies select: "distinct companies.*"
+    c = Company.joins("LEFT OUTER JOIN (select child_id as cid FROM linked_companies where parent_id = #{self.id}) as lk on companies.id = lk.cid").where("lk.cid IS NULL").where("NOT companies.id = ?",self.id)
+    c = c.select(select) if select.present?
+    c
   end
 
   def can_edit?(user)
@@ -429,8 +436,8 @@ class Company < ActiveRecord::Base
 
   def name_with_customer_number
     n = self.name
-    n += " (#{self.fenix_customer_number})" unless self.fenix_customer_number.blank?
-    n += " (#{self.alliance_customer_number})" unless self.alliance_customer_number.blank?
+    identifier = self.customs_identifier
+    n += " (#{identifier})" unless identifier.blank?
     n
   end
 
@@ -451,6 +458,129 @@ class Company < ActiveRecord::Base
 
   def enabled_users
     users.enabled.all
+  end
+
+  def self.options_for_companies_with_system_identifier system, code_attribute: :code, value_attribute: [:companies, :id], order: :name, in_relation: nil, join_type: :inner
+    c = Company
+    if join_type == :outer
+      if Array.wrap(system).length > 1
+        c = c.joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN system_identifiers ON system_identifiers.company_id = companies.id AND system_identifiers.system IN (?)", system]))
+      else
+        c = c.joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN system_identifiers ON system_identifiers.company_id = companies.id AND system_identifiers.system = ?", system]))
+      end
+    else
+      c = c.joins(:system_identifiers).where(system_identifiers: {system: system})
+    end
+    c = c.order(order)
+
+    if in_relation
+      c = c.where(id: in_relation)
+    end
+
+    # the pluck method calls unique on the values passed to it, which means if we get something like (:name, :code, :code)
+    # the select statement executed only has name, code in it (.ie only 2 columns).  This is annoying AF, since we want all 3 columns.
+    # Construct a string instead to specify the full set of actual values we always want returned
+    pluck = ["name", code_attribute, value_attribute].map do |v| 
+      v = Array.wrap(v)
+      table_name = nil
+      column_name = nil
+      if v.length == 1
+        column_name = v[0]
+      else
+        table_name = v[0]
+        column_name = v[1]
+      end
+
+      if table_name.blank?
+        "#{ActiveRecord::Base.connection.quote_column_name(column_name)}"
+      else
+        "#{ActiveRecord::Base.connection.quote_table_name(table_name)}.#{ActiveRecord::Base.connection.quote_column_name(column_name)}"
+      end
+      
+    end.join(", ")
+
+    c.pluck(pluck).map do |r| 
+      label = r[0]
+      label += " (#{r[1]})" unless r[1].blank?
+      [label, r[2]]
+    end
+  end
+
+  def kewill_customer_number
+    @kewill_customer ||= SystemIdentifier.system_identifier_code(self, "Customs Management")
+  end
+
+  # This name would normally be fenix_customer_number, but since that's already an attribute
+  # on the Company, I don't want to shadow it. Once the attribute is removed, we can alias
+  # fenix_customer_number to this method so that this method aligns with the other 2 *_customer_number methods
+  def fenix_customer_identifier
+    @fenix_customer ||= SystemIdentifier.system_identifier_code(self, "Fenix")
+  end
+
+  def cargowise_customer_number
+    @cargowise_customer ||= SystemIdentifier.system_identifier_code(self, "Cargowise")
+  end
+
+  def customs_identifier
+    @var_customs_identifier ||= begin
+      ids = ['Customs Management', 'Fenix', 'Cargowise']
+      queries = []
+      ids.each do |id|
+        queries << ActiveRecord::Base.sanitize_sql_array(["SELECT code FROM system_identifiers WHERE company_id = ? AND system = ?", self.id, id])
+      end
+
+      ActiveRecord::Base.connection.execute(queries.join(" UNION DISTINCT ")).map {|r| r[0] }.first
+    end
+  end
+
+  def clear_customs_identifier
+    remove_instance_variable(:@var_customs_identifier) if instance_variable_defined?(:@var_customs_identifier)
+  end
+
+  def set_system_identifier system, code
+    id = self.system_identifiers.where(system: system).first
+    return nil if id.nil? && code.blank?
+
+    if code.blank?
+      id.destroy 
+      self.system_identifiers.reload
+      return nil
+    else
+      id = self.system_identifiers.build(system: system) if id.nil?
+      id.code = code
+      id.save!
+      return id
+    end
+  end
+
+  def self.find_by_system_code system, code
+    Company.joins(:system_identifiers).where(system_identifiers: {system: system, code: code}).first
+  end
+
+  def self.find_or_create_company! system, code, create_attributes, lock_name: nil
+    lock_name = "Company-#{system}-#{code}" if lock_name.blank?
+
+    base_query = SystemIdentifier.where(system: system, code: code)
+    id = base_query.first
+    if id.nil?
+      Lock.acquire(lock_name) do
+        id = base_query.first_or_create!
+      end
+    end
+
+    company = id.company
+    if company.nil?
+      Lock.db_lock(id) do
+        company = id.company
+        # In the time we waited for the lock, company may have been added to db
+        if company.nil?
+          company = id.create_company! create_attributes
+          id.save!
+        end
+      end
+    end
+
+    company
   end
 
   private

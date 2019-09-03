@@ -7,11 +7,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         @tax_ids = ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001", 
         "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001", 
         "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
-        "807150586RM0002", "761672690RM0001", "768899288RM0001", "858557895RM0001"]
+        "761672690RM0001", "768899288RM0001", "858557895RM0001"]
 
         @entries = []
         @tax_ids.each do |id|
-          @entries << Factory(:entry, importer: Factory(:importer, fenix_customer_number: id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
+          @entries << Factory(:entry, importer: with_fenix_id(Factory(:importer), id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
         end
       end
 
@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
     end
 
     it "only returns siemens entries" do
-      Factory(:entry, importer: Factory(:importer, fenix_customer_number: "another_id"), entry_number: "entry_number", k84_receive_date: Time.zone.now)
+      Factory(:entry, importer: with_fenix_id(Factory(:importer), "another_id"), entry_number: "entry_number", k84_receive_date: Time.zone.now)
       expect(subject.find_entries.size).to eq 0
     end
   end
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
     it "should find entries and generate and send them" do
       t = Factory(:commercial_invoice_tariff)
       e = t.commercial_invoice_line.entry
-      e.update_attributes! importer: Factory(:importer, fenix_customer_number: "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789", entry_type: "AB"
+      e.update_attributes! importer: with_fenix_id(Factory(:importer), "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789", entry_type: "AB"
 
       file_data = nil
 

@@ -245,12 +245,12 @@ describe Order do
       o = Order.new customer_order_number: "PO", importer: Company.new(:system_code => "SYS_CODE", :alliance_customer_number=> "ALL_CODE", :fenix_customer_number=>"FEN_CODE")
       expect(o.create_unique_po_number).to eq "SYS_CODE-PO"
     end
-    it "uses importer alliance code after sys code" do
-      o = Order.new customer_order_number: "PO", importer: Company.new(:alliance_customer_number=> "ALL_CODE", :fenix_customer_number=>"FEN_CODE")
+    it "uses importer kewill code after sys code" do
+      o = Order.new customer_order_number: "PO", importer: with_customs_management_id(Factory(:importer), "ALL_CODE")
       expect(o.create_unique_po_number).to eq "ALL_CODE-PO"
     end
-    it "uses fenix code after alliance code" do
-      o = Order.new customer_order_number: "PO", importer: Company.new(:fenix_customer_number=>"FEN_CODE")
+    it "uses fenix code after kewill code" do
+      o = Order.new customer_order_number: "PO", importer: with_fenix_id(Factory(:importer), "FEN_CODE")
       expect(o.create_unique_po_number).to eq "FEN_CODE-PO"
     end
     it "uses vendor sys code" do

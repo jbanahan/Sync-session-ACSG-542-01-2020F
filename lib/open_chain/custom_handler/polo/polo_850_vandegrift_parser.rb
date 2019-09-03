@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
     log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, po_number
 
     if (importer_number = RL_BUYER_MAP[buyer_id]) && !po_number.blank?
-      importer = Company.where(fenix_customer_number: importer_number).first
+      importer = Company.with_fenix_number(importer_number).first
       log.reject_and_raise "Unable to find Fenix Importer for importer number #{importer_number}.  This account should not be missing." if importer.nil?
 
       log.company = importer
@@ -172,7 +172,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
        
         # Because we're storing these products in our system (which holds other importer product data), we need to preface the 
         # table's unique identifier column with the importer identifier.
-        product = Product.where(importer_id: po.importer_id, unique_identifier: po.importer.fenix_customer_number + "-" + style).first_or_initialize
+        product = Product.where(importer_id: po.importer_id, unique_identifier: po.importer.fenix_customer_identifier + "-" + style).first_or_initialize
         
         # We only need to save product data the very first time we encounter it
         if product.new_record?

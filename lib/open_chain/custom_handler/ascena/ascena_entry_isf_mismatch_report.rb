@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
   end
 
   def self.ascena
-    Company.importers.where(alliance_customer_number: "ASCE").first
+    Company.importers.with_customs_management_number("ASCE").first
   end
 
   def run_report importer, start_date, end_date

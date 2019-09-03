@@ -293,8 +293,10 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
 
     # Because we're slightly shoe-horning export shipments into our clearly import biased shipment screen, I'm going
     # to track the customer as an importer for exports.
-    importer = Company.importers.where(alliance_customer_number: customer_code).first
+    importer = Company.importers.with_customs_management_number(customer_code).first
     log.reject_and_raise "No Importer record found with Alliance customer number of #{customer_code}." unless importer
+    log.reject_and_raise "No Importer record found with Alliance customer number of #{customer_code}." if importer.system_code.blank?
+    
     importer
   end
 
@@ -360,7 +362,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     return nil if importer.nil? || commodity.blank?
 
     # Create a product associated w/ the importer w/ the commodity type as the part number (since we don't get actual part numbers in the feed)
-    p = Product.where(importer_id: importer.id).where(unique_identifier: "#{importer.alliance_customer_number}-#{commodity}").first_or_initialize
+    p = Product.where(importer_id: importer.id).where(unique_identifier: "#{importer.system_code}-#{commodity}").first_or_initialize
     if p.new_record?
       p.find_and_set_custom_value @cdefs[:prod_part_number], commodity
 
@@ -373,7 +375,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
   def find_order_line importer, po_number, product, hts
     return nil if importer.nil? || po_number.nil?
 
-    order = Order.where(importer_id: importer.id).where(order_number: "#{importer.alliance_customer_number}-#{po_number}").first_or_create! customer_order_number: po_number
+    order = Order.where(importer_id: importer.id).where(order_number: "#{importer.system_code}-#{po_number}").first_or_create! customer_order_number: po_number
     
     # See if this product is on the order, if it's not, add it
     line = order.order_lines.find {|ol| ol.product == product }

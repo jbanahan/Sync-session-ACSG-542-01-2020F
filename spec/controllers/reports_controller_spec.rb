@@ -435,14 +435,17 @@ describe ReportsController do
       
       it "renders page for authorized users" do
         expect(OpenChain::Report::SgDutyDueReport).to receive(:permission?).with(@u).and_return true
-        sgi = Factory(:company, name: 'SGI APPAREL LTD', alliance_customer_number: 'SGI')
-        sgold = Factory(:company, name: 'S GOLDBERG & CO INC', alliance_customer_number: 'SGOLD')
-        rugged = Factory(:company, name: 'RUGGED SHARK LLC', alliance_customer_number: 'RUGGED')
+        sgi = with_customs_management_id(Factory(:company, name: 'SGI APPAREL LTD'), 'SGI')
+        sgold = with_customs_management_id(Factory(:company, name: 'S GOLDBERG & CO INC'), 'SGOLD')
+        rugged = with_customs_management_id(Factory(:company, name: 'RUGGED SHARK LLC'), 'RUGGED')
         Factory(:company)
 
         get :show_sg_duty_due_report
         expect(response).to be_success
-        expect(assigns(:choices)).to eq [sgi, sgold, rugged]
+        choices = assigns(:choices).to_a
+        expect(choices).to include sgi
+        expect(choices).to include sgold
+        expect(choices).to include rugged
       end
     end
 
@@ -774,10 +777,10 @@ describe ReportsController do
         user.company.master = true
         user.save!
 
-        us_company_1 = Factory(:company, name:'US-Z', alliance_customer_number:'12345', fenix_customer_number:'', importer:true)
-        us_company_2 = Factory(:company, name:'US-A', alliance_customer_number:'23456', importer:true)
-        ca_company_1 = Factory(:company, name:'CA-Z', alliance_customer_number:'', fenix_customer_number:'12345', importer:true)
-        ca_company_2 = Factory(:company, name:'CA-A', fenix_customer_number:'23456', importer:true)
+        us_company_1 = with_customs_management_id(Factory(:importer, name:'US-Z'), '12345')
+        us_company_2 = with_customs_management_id(Factory(:importer, name:'US-A'), '23456')
+        ca_company_1 = with_fenix_id(Factory(:importer, name:'CA-Z'), '12345')
+        ca_company_2 = with_fenix_id(Factory(:importer, name:'CA-A'), '23456')
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_customer_year_over_year_report
@@ -786,24 +789,24 @@ describe ReportsController do
         # Ensure importer instance variables, used for dropdowns, were loaded properly.
         us_importers = subject.instance_variable_get(:@us_importers)
         expect(us_importers.length).to eq 2
-        expect(us_importers[0].name).to eq('US-A')
-        expect(us_importers[1].name).to eq('US-Z')
+        expect(us_importers[0]).to eq(['US-A (23456)', us_company_2.id])
+        expect(us_importers[1]).to eq(['US-Z (12345)', us_company_1.id])
 
         ca_importers = subject.instance_variable_get(:@ca_importers)
         expect(ca_importers.length).to eq 2
-        expect(ca_importers[0].name).to eq('CA-A')
-        expect(ca_importers[1].name).to eq('CA-Z')
+        expect(ca_importers[0]).to eq(['CA-A (23456)', ca_company_2.id])
+        expect(ca_importers[1]).to eq(['CA-Z (12345)', ca_company_1.id])
       end
 
       it "renders for authorized users, typical user" do
-        us_company_1 = Factory(:company, name:'US-A', alliance_customer_number:'23456', fenix_customer_number:'', importer:true)
+        us_company_1 = with_customs_management_id(Factory(:importer, name:'US-A'), '23456')
 
         user.company.customer = true
         user.company.linked_companies << us_company_1
         user.save!
 
-        us_company_2 = Factory(:company, name:'US-Z', alliance_customer_number:'12345', fenix_customer_number:'', importer:true)
-        ca_company = Factory(:company, name:'CA-Z', alliance_customer_number:'', fenix_customer_number:'12345', importer:true)
+        us_company_2 = with_customs_management_id(Factory(:importer, name:'US-Z'), '12345')
+        ca_company = with_fenix_id(Factory(:importer, name:'CA-Z'), '12345')
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_customer_year_over_year_report
@@ -812,7 +815,7 @@ describe ReportsController do
         # Ensure importer instance variables, used for dropdowns, were loaded properly.
         us_importers = subject.instance_variable_get(:@us_importers)
         expect(us_importers.length).to eq 1
-        expect(us_importers[0].name).to eq('US-A')
+        expect(us_importers[0]).to eq(['US-A (23456)', us_company_1.id])
 
         expect(subject.instance_variable_get(:@ca_importers).length).to eq 0
       end
@@ -889,8 +892,8 @@ describe ReportsController do
       it "runs for admin users" do
         expect(user).to receive(:sys_admin?).and_return true
 
-        importer_1 = Factory(:company, alliance_customer_number:'SYS01')
-        importer_2 = Factory(:company, fenix_customer_number:'SYS02')
+        importer_1 = with_customs_management_id(Factory(:company), 'SYS01')
+        importer_2 = with_fenix_id(Factory(:company), 'SYS02')
         # No match should be made for this even though there is a blank line in the input.
         importer_3 = Factory(:company, alliance_customer_number:'')
 
@@ -1018,12 +1021,12 @@ describe ReportsController do
       end
 
       it "renders for authorized user" do
-        co_1 = Factory(:company, alliance_customer_number: "ACME US")
-        co_2 = Factory(:company, fenix_customer_number: "ACME CA")
+        co_1 = with_customs_management_id(Factory(:importer, name: "ACME US"), "ACME")
+        co_2 = with_fenix_id(Factory(:importer, name: "ACME CA"), "ACME CA")
         
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_us_billing_summary
-        expect(assigns(:us_importers)).to eq [co_1]
+        expect(assigns(:us_importers).to_a).to eq [co_1]
         expect(response).to be_success
       end
     end

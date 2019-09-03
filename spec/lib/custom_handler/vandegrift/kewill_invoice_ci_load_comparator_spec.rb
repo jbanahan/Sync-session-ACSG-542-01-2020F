@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
 
   let (:importer) {
-    Company.new alliance_customer_number: "CUST"
+    with_customs_management_id(Factory(:company), "CUST")
   }
 
   let (:invoice) {
@@ -31,8 +31,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
       expect(subject.accept? snapshot).to eq false
     end
 
-    it "does not accept snapshots for importers without alliance customer numbers" do
-      importer.alliance_customer_number = ""
+    it "does not accept snapshots for importers without kewill customer numbers" do
+      importer.system_identifiers.destroy_all
       expect(subject.accept? snapshot).to eq false
     end
 

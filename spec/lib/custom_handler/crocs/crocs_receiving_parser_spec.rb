@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
 
   describe "parse_shipment" do
     before :each do 
-      @importer = Factory(:company,importer:true,alliance_customer_number:'CROCS')
+      @importer = with_customs_management_id(Factory(:company,importer:true), 'CROCS')
     end
     it "should create a new shipment" do
       rows = [
@@ -126,19 +126,6 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
       described_class.new.parse_shipment rows
       expect(ShipmentLine.first.quantity).to eq(20)
     end
-=begin
-    it "should fail if shipment / po / sku / received date / coo already exists" do
-      rows = [
-        ['1','PO1','SKU1','STY1','COL1','SIZE1','DESC1','CN',10,Time.now.to_date]
-      ]
-      #this one should be ok
-      described_class.new.parse_shipment rows
-
-      lambda {
-        described_class.new.parse_shipment rows
-      }.should raise_error "Duplicate receipts CROCS-1, PO1, SKU1, #{Time.now.to_date.to_s}, CN"
-    end
-=end
   end
 
 end

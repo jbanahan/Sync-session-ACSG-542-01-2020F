@@ -140,7 +140,7 @@ class DrawbackImportLine < ActiveRecord::Base
         self.liquidation_date.nil? ? "" : self.liquidation_date.strftime("%m/%d/%Y"),
         "%0.2f" % float_or_zero(self.total_invoice_value),
         "%0.2f" % float_or_zero(self.total_mpf),
-        self.importer.nil? ? "" : self.importer.alliance_customer_number,
+        self.importer.nil? ? "" : self.importer.customs_identifier,
         self.ref_1,
         self.ref_2,
         "",

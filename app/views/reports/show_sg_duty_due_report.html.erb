@@ -6,6 +6,6 @@
 <p>Choose a company and click the Run Report button to continue.</p>
 <%=form_tag reports_run_sg_duty_due_report_path, :id=>'frm_run' do %>
   <div class="col-md-3">
-    <%= select_tag 'customer_number', options_from_collection_for_select(@choices, 'alliance_customer_number', 'name'), {class: "form-control", id: "company-select"} %>
+    <%= select_tag 'customer_number', options_from_collection_for_select(@choices, 'kewill_customer_number', 'name'), {class: "form-control", id: "company-select"} %>
   </div>
 <% end %>

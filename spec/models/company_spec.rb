@@ -102,12 +102,6 @@ describe Company do
     before :each do
       MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)
     end
-    it 'should not allow duplicate alliance_customer_number' do
-      c1 = Factory(:company,:alliance_customer_number=>'123')
-      c2 = Company.new(:name=>'abc',:alliance_customer_number => c1.alliance_customer_number)
-      expect(c2.save).to be_falsey
-      expect(c2.errors.full_messages.first).to eq("Alliance customer number is already taken.")
-    end
     context "trade lanes" do
       before :each do
         allow_any_instance_of(MasterSetup).to receive(:trade_lane_enabled?).and_return(true)
@@ -367,21 +361,25 @@ describe Company do
   end
 
   describe "name_with_customer_number" do
-    it "returns a string with the appropriate customer numbers appended to the name" do
-      c = Factory(:company, name: "My Name")
-      expect(c.name_with_customer_number).to eq("My Name")
+    let (:company) { Factory(:company, name: "My Name")}
 
-      c.fenix_customer_number = "12345"
-      expect(c.name_with_customer_number).to eq("My Name (12345)")
+    it "returns a string with just the customer number" do
+      expect(company.name_with_customer_number).to eq("My Name")
+    end
 
-      c.fenix_customer_number = nil
-      expect(c.name_with_customer_number).to eq("My Name")
+    it "adds Customs Management Number" do
+      with_customs_management_id(company, "KEWILL")
+      expect(company.name_with_customer_number).to eq("My Name (KEWILL)")
+    end
 
-      c.alliance_customer_number = "7890"
-      expect(c.name_with_customer_number).to eq("My Name (7890)")
+    it "adds Fenix number" do
+      with_fenix_id(company, "FENIX")
+      expect(company.name_with_customer_number).to eq("My Name (FENIX)")
+    end
 
-      c.fenix_customer_number = "ABCD"
-      expect(c.name_with_customer_number).to eq("My Name (ABCD) (7890)")
+    it "adds Cargowise Number" do
+      with_cargowise_id(company, "CW1")
+      expect(company.name_with_customer_number).to eq("My Name (CW1)")
     end
   end
 
@@ -483,6 +481,96 @@ describe Company do
     it "doesn't allow access to statements if they are disabled" do
       expect(master_setup).to receive(:customs_statements_enabled?).and_return false
       expect(Factory(:master_company).view_statements?).to eq false
+    end
+  end
+
+  describe "find_or_create_company!" do
+    subject { described_class }
+
+    it "creates a new company with a system identifier" do
+      expect(Lock).to receive(:acquire).with("Company-System-Code").and_yield
+      expect(Lock).to receive(:db_lock).with(instance_of(SystemIdentifier)).and_yield 
+      
+      c = subject.find_or_create_company!("System", "Code", {name: "Name"})
+      expect(c).to be_persisted
+      expect(c).to have_system_identifier("System", "Code")
+      expect(c.name).to eq "Name"
+    end
+
+    it "finds an exisiting company" do
+      c = Factory(:company)
+      c.system_identifiers.create! system: "System", code: "Code"
+
+      c1 = subject.find_or_create_company!("System", "Code", {name: "Name"})
+      expect(c1).to eq c
+    end
+
+    it "creates company if identifier doesn't have one yet" do
+      id = SystemIdentifier.create! system: "System", code: "Code"
+
+      c = subject.find_or_create_company!("System", "Code", {name: "Name"})
+      expect(c.system_identifiers.first).to eq id
+    end
+  end
+
+  describe "options_for_companies_with_system_identifier" do
+    let! (:kewill_company) { 
+      with_customs_management_id(Factory(:company, name: "Z Company", system_code: "SYSCODE"), "KEWILL")
+    }
+
+    let (:fenix_company) { 
+      with_fenix_id(Factory(:company, name: "A Company", system_code: "SYSCODE2"), "FENIX")
+    }
+
+    it "returns array of values suitable to be used in options_for_select methods" do
+      expect(Company.options_for_companies_with_system_identifier("Customs Management")).to eq [["Z Company (KEWILL)", kewill_company.id]]
+    end
+
+    it "allows using a different code attribute" do
+      expect(Company.options_for_companies_with_system_identifier("Customs Management", code_attribute: :system_code)).to eq [["Z Company (SYSCODE)", kewill_company.id]]
+    end
+
+    it "allows using a table + column for code attribute" do
+      expect(Company.options_for_companies_with_system_identifier("Customs Management", code_attribute: [:companies, :system_code])).to eq [["Z Company (SYSCODE)", kewill_company.id]]
+    end
+
+    it "allows using a different value attribute" do
+      expect(Company.options_for_companies_with_system_identifier("Customs Management", value_attribute: :system_code)).to eq [["Z Company (KEWILL)", "SYSCODE"]]
+    end
+
+    it "allows using a table + column for value attribute" do
+      expect(Company.options_for_companies_with_system_identifier("Customs Management", value_attribute: [:system_identifiers, :code])).to eq [["Z Company (KEWILL)", "KEWILL"]]
+    end
+
+    it "allows using an outer join to include companies without the codes specified" do
+      fenix_company
+      expect(Company.options_for_companies_with_system_identifier("Customs Management", join_type: :outer)).to eq [["A Company", fenix_company.id], ["Z Company (KEWILL)", kewill_company.id]]
+    end
+
+    it "allows changing the sort order" do
+      fenix_company
+      expect(Company.options_for_companies_with_system_identifier("Customs Management", order: [{name: :desc}], join_type: :outer)).to eq [["Z Company (KEWILL)", kewill_company.id], ["A Company", fenix_company.id]]
+    end
+
+    it "allows providing a relation to use to only return results belonging to that relation" do
+      another_kewill_company = with_customs_management_id(Factory(:company), "KEWILL2")
+
+      expect(Company.options_for_companies_with_system_identifier("Customs Management", in_relation: Company.where(id: kewill_company.id))).to eq [["Z Company (KEWILL)", kewill_company.id]]
+    end
+  end
+
+  describe "set_system_identifier" do
+    let(:company) { Factory(:company) }
+
+    it "sets a system identifier" do
+      company.set_system_identifier("TEST", "TESTING")
+      expect(company).to have_system_identifier("TEST", "TESTING")
+    end
+
+    it "clears an existing identifier" do
+      with_fenix_id(company, "F")
+      company.set_system_identifier("Fenix", "")
+      expect(company).not_to have_system_identifier("Fenix", "F")
     end
   end
 end

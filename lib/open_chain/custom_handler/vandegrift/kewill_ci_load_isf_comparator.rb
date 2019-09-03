@@ -13,14 +13,14 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadIsf
     # fully matched to the carrier's filing.
     return false unless isf.try(:host_system) == "Kewill" && isf.try(:matched?)
 
-    alliance_customer_number = isf.try(:broker_customer_number)
-    return false if alliance_customer_number.blank?
+    kewill_customer_number = isf.try(:broker_customer_number)
+    return false if kewill_customer_number.blank?
 
     # Validate there's actually lines on the filing too..
     return false unless isf.security_filing_lines.length > 0
 
     isf_ci_load_customers = ci_load_data.keys
-    isf_ci_load_customers.include? alliance_customer_number
+    isf_ci_load_customers.include? kewill_customer_number
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -43,8 +43,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadIsf
     end
   end
 
-  def self.invoice_generator alliance_customer_number
-    generator_string = ci_load_data[alliance_customer_number]
+  def self.invoice_generator kewill_customer_number
+    generator_string = ci_load_data[kewill_customer_number]
     if generator_string.blank?
       return OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator.new
     else

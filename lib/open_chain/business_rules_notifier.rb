@@ -20,7 +20,7 @@ module OpenChain
     private
 
     def self.get_rule_failures_count_for(company)
-      customer_number = company.alliance_customer_number || company.fenix_customer_number
+      customer_number = company.customs_identifier
 
       ss = SearchSetup.new(module_type:'Entry',user:User.integration)
       ss.search_criterions.build(model_field_uid:'ent_rule_state',operator:'eq',value:'Fail')

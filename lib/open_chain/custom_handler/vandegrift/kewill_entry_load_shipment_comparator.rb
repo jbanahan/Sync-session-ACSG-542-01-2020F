@@ -19,10 +19,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
   # This method primariy exists as an override point for extending classes that might be hardcoded 
   # to one or two importer accounts
   def self.has_entry_load_configured? shipment
-    alliance_customer_number = shipment.importer.try(:alliance_customer_number)
-    return false if alliance_customer_number.blank?
+    kewill_customer_number = shipment.importer.try(:kewill_customer_number)
+    return false if kewill_customer_number.blank?
 
-    ci_load_data.keys.include? alliance_customer_number
+    ci_load_data.keys.include? kewill_customer_number
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
   end
 
   def generate_and_send shipment, sync_record
-    xml = invoice_generator(shipment.importer.alliance_customer_number).generate_xml shipment
+    xml = invoice_generator(shipment.importer.kewill_customer_number).generate_xml shipment
     Tempfile.open(["ci_load_#{shipment.reference}_", ".xml"]) do |file|
       xml.write file
       file.flush
@@ -73,8 +73,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
     TRADING_PARTNER
   end
 
-  def invoice_generator alliance_customer_number
-    generator_string = self.class.ci_load_data[alliance_customer_number]
+  def invoice_generator kewill_customer_number
+    generator_string = self.class.ci_load_data[kewill_customer_number]
     if generator_string.blank?
       return OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator.new
     else

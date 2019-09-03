@@ -4,13 +4,13 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
   include OpenChain::Report::ReportHelper
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-  ALLIANCE_CUSTOMER_NUMBER ||= "ASCE"
+  CUSTOMER_NUMBER ||= "ASCE"
 
   def self.permission? user
-    ascena = Company.importers.where(alliance_customer_number: ALLIANCE_CUSTOMER_NUMBER).first
+    ascena = Company.importers.with_customs_management_number(CUSTOMER_NUMBER).first
     return false unless ascena
 
-    (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
+    MasterSetup.get.custom_feature?("WWW VFI Track Reports") && 
     (user.view_entries? && (user.company.master? || ascena.can_view?(user)))
   end
 
@@ -55,7 +55,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
   end
 
   def query mid_list, cdefs
-    <<-SQL
+    query = <<-SQL
       SELECT e.entry_number AS "Entry#", 
              e.release_date AS "Release Date", 
              e.entry_filed_date AS "Entry Filed Date",
@@ -98,14 +98,16 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
         LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
         LEFT OUTER JOIN custom_values ord_agent ON ord_agent.customizable_id = o.id AND ord_agent.customizable_type = "Order" AND ord_agent.custom_definition_id = #{cdefs[:ord_selling_agent].id}
         INNER JOIN companies vend ON vend.id = o.vendor_id
-      WHERE e.customer_number = "#{ALLIANCE_CUSTOMER_NUMBER}"
+      WHERE e.customer_number = ?
         AND e.first_entry_sent_date IS NOT NULL
         AND e.duty_due_date >= NOW()
         AND (cil.contract_amount = 0 OR cil.contract_amount IS NULL)
         AND (cit.entered_value = cil.value)
-        AND CONCAT(cil.mid,"-",vend.system_code) in (#{format_mids(mid_list)})
+        AND CONCAT(cil.mid,"-",vend.system_code) in (?)
       ORDER BY e.entry_filed_date
     SQL
+
+    ActiveRecord::Base.sanitize_sql_array([query, CUSTOMER_NUMBER, mid_list])
   end
 
   private

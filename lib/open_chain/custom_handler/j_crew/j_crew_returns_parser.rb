@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
   end
 
   def self.can_view? user
-    MasterSetup.get.custom_feature?("alliance") && user.company.master?
+    MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.company.master?
   end
 
   def can_view? user
@@ -263,7 +263,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
 
     def tariff_info style
       @tariff_cache ||= {}
-      @tariff_finder ||= OpenChain::TariffFinder.new("US", Company.importers.where(alliance_customer_number: ['J0000','JCREW']).all)
+      @tariff_finder ||= OpenChain::TariffFinder.new("US", Company.with_customs_management_number(['J0000','JCREW']).to_a)
       tyle = style[0..4]
       style = style.rjust(5, "0")
 

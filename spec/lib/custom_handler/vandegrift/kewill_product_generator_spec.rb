@@ -346,7 +346,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     subject { described_class }
     let (:product) { create_product "Style" }
     let (:us) { Factory(:country, iso_code: "US") }
-    let (:importer) { Factory(:importer, alliance_customer_number: "CUST") }
+    let (:importer) { with_customs_management_id(Factory(:importer), "CUST") }
 
     def create_product style, part_number: true
       p = Factory(:product, unique_identifier: "CUST-#{style}", importer: importer)

@@ -10,7 +10,7 @@ module OpenChain
       include VfitrackCustomDefinitionSupport
 
       def self.run_schedulable opts = {}
-        sync Company.where(alliance_customer_number: opts['alliance_customer_number']).first
+        sync Company.with_customs_management_number(opts['alliance_customer_number']).first
       end
 
       #this is the main method you should call
@@ -32,14 +32,14 @@ module OpenChain
           importer = Company.where(:id => importer).first
         end
 
-        raise ArgumentError, "Importer is required and must have an alliance customer number" unless importer && !importer.alliance_customer_number.blank?
+        raise ArgumentError, "Importer is required and must have an alliance customer number" unless importer && !importer.kewill_customer_number.blank?
         @importer = importer
 
         @cdefs = self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, 
                     :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, 
                     :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance]
         @custom_where = custom_where
-        @strip_leading_zeros = @importer.alliance_customer_number == "LUMBER"
+        @strip_leading_zeros = @importer.kewill_customer_number == "LUMBER"
       end
 
       def sync
@@ -52,7 +52,7 @@ module OpenChain
       end
       
       def remote_file_name
-        "#{Time.now.to_i}-#{@importer.alliance_customer_number}.DAT"
+        "#{Time.now.to_i}-#{@importer.kewill_customer_number}.DAT"
       end
 
       def preprocess_row row, opts = {}

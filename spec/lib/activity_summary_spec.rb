@@ -703,9 +703,9 @@ describe OpenChain::ActivitySummary do
                              'ports_ytd' => [{'name'=>'LA', 'count'=> 53}]}}
     end
 
-    let(:linked_1) { Factory(:company, alliance_customer_number: "POW", name: "Super Pow") }
-    let(:linked_2) { Factory(:company, fenix_customer_number: "WSP", name: "Walshop") }
-    let(:imp)  { Factory(:company, linked_companies: [linked_1, linked_2], system_code: "SYSCODE", name: "Konvenientz") }
+    let(:linked_1) { with_customs_management_id(Factory(:company, name: "Super Pow"), "POW") }
+    let(:linked_2) { Factory(:company, name: "Walshop") }
+    let(:imp)  { with_customs_management_id(Factory(:company, linked_companies: [linked_1, linked_2], system_code: "SYSCODE", name: "Konvenientz"), "KONV") }
     let(:user) { Factory(:user, company: imp, time_zone: "Central Time (US & Canada)") }
 
     describe "permission?" do
@@ -727,14 +727,19 @@ describe OpenChain::ActivitySummary do
         expect(described_class.find_company "iso_code" => "US", 'system_code' => "SYSCODE").to eq imp
       end
 
-      context "with missing system_code" do
+      context "without system_code" do
         it "returns company identified by alliance number for 'US' iso code" do
-          imp.update_attributes! system_code: nil, alliance_customer_number: "ALLIANCE"
+          with_customs_management_id(imp, "ALLIANCE")
           expect(described_class.find_company "iso_code" => "US", "alliance_customer_number" => "ALLIANCE").to eq imp
         end
 
+        it "returns company identified by cargowise number for 'US' iso code" do
+          with_cargowise_id(imp, "CW")
+          expect(described_class.find_company "iso_code" => "US", "cargowise_customer_number" => "CW").to eq imp
+        end
+
         it "returns company identified by fenix number for 'CA' iso code" do
-          imp.update_attributes! system_code: nil, fenix_customer_number: "FENIX"
+          with_fenix_id(imp, "FENIX")
           expect(described_class.find_company "iso_code" => "CA", "fenix_customer_number" => "FENIX").to eq imp
         end
       end
@@ -776,7 +781,7 @@ describe OpenChain::ActivitySummary do
         expect(sheet[26][0..3]).to eq ["Chapter", "1 Week", "4 Weeks", "Open"]
         expect(sheet[27][0..3]).to eq ["chpt", 49,50,51]
         expect(sheet[30][0..3]).to eq ["Companies Included", nil, nil, nil]
-        expect(sheet[31][0..3]).to eq ["Konvenientz ()"]
+        expect(sheet[31][0..3]).to eq ["Konvenientz (KONV)"]
         expect(sheet[32][0..3]).to eq ["Super Pow (POW)"]
         # column 2
         expect(sheet[15][5..6]).to eq ["Released Year To Date", nil]
@@ -835,8 +840,8 @@ describe OpenChain::ActivitySummary do
         expect(sheet[16][0..2]).to eq ["Name", "Due", "Amount"]
         expect(sheet[17][0..2]).to eq ["Walshop", 57,58,]
         expect(sheet[30][0..3]).to eq ["Companies Included", nil, nil, nil]
-        expect(sheet[31][0..3]).to eq ["Konvenientz ()", nil, nil, nil] # not sure why this has trailing nils
-        expect(sheet[32][0..3]).to eq ["Walshop (WSP)"] 
+        expect(sheet[31][0..3]).to eq ["Konvenientz (KONV)", nil, nil, nil] # not sure why this has trailing nils
+        expect(sheet[32][0..3]).to eq ["Super Pow (POW)"] 
         # column 2
         expect(sheet[16][6..7]).to eq ["Summary", nil]
         expect(sheet[17][6..7]).to eq ["Entries", 37]
@@ -858,7 +863,7 @@ describe OpenChain::ActivitySummary do
     end
 
     describe "ReportEmailer" do
-      let(:imp) { Factory(:company, name: "ACME", alliance_customer_number: "AC") }
+      let(:imp) { with_customs_management_id(Factory(:company, name: "ACME"), "AC") }
       let(:gen) { described_class.new(imp.id, "US") }
       let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "tufnel@stonehenge.biz", company: imp) }
       let(:mailing_list) { Factory(:mailing_list, user: user, company: imp, email_addresses: 'mailinglist@domain.com')}

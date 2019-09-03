@@ -403,7 +403,7 @@ class Order < ActiveRecord::Base
     # Use the importer/vendor identifier as the "uniqueness" factor on the order number.  This is only a factor for PO's utilized on a shared instance.
     uniqueness = nil
     if has_importer?
-      uniqueness = self.importer.system_code.blank? ? (self.importer.alliance_customer_number.blank? ? self.importer.fenix_customer_number : self.importer.alliance_customer_number) : self.importer.system_code
+      uniqueness = self.importer.system_code.presence || self.importer.customs_identifier
       raise "Failed to create unique Order Number from #{self.customer_order_number} for Importer #{self.importer.name}." if uniqueness.blank?
     else
       uniqueness = self.vendor.system_code

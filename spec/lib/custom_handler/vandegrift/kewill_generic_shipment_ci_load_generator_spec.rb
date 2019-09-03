@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
   }
 
   let (:shipment) {
-    shipment = Factory(:shipment, master_bill_of_lading: "MBOL", importer: Factory(:importer, alliance_customer_number: "CUSTNO"))
+    shipment = Factory(:shipment, master_bill_of_lading: "MBOL", importer: with_customs_management_id(Factory(:importer), "CUSTNO"))
     shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
     shipment_line.update_custom_value! cdefs[:shpln_invoice_number], "INVOICE"
 
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
   end
 
   describe "drive_path" do
-    let (:importer) { Company.new alliance_customer_number: "IMP" }
+    let (:importer) { with_customs_management_id(Factory(:company), "IMP") }
     let (:shipment) { Shipment.new master_bill_of_lading: "MBOL", importer_reference: "IMPREF", reference: "REF", importer: importer }
 
     it "uses master bill to name the file by default" do
