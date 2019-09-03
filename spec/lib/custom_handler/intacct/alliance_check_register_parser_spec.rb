@@ -69,6 +69,20 @@ FILE
       file = "\n\n\nAPMRGREG-D0-06/22/14\n\n\n"
       expect{check_info = subject.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
     end
+
+    it "handles blank files" do
+      file = <<-FILE
+            APMRGREG-D0-06/22/09
+      ---------- ---------- ------------  ---------- ---------- --- --------- ------------ ------------- ---------- ---- -------------  --
+           *****  Grand Total  *****                           Record Count:    0                  0.00
+
+      FILE
+
+      check_info = subject.extract_check_info StringIO.new(file)
+
+      expect(check_info[:total_check_count]).to eq 0
+      expect(check_info[:total_check_amount]).to eq BigDecimal.new("0")
+    end
   end
 
   describe "validate_check_info" do
@@ -137,6 +151,16 @@ FILE
 
 FILE
       check_info = subject.extract_check_info StringIO.new(file)
+      errors = subject.validate_check_info check_info
+      expect(errors.size).to eq 0
+    end
+
+    it "handles missing checks data when no checks were found" do
+      check_info = {
+        :total_check_count => 0,
+        :total_check_amount => BigDecimal.new("0.00")
+      }
+
       errors = subject.validate_check_info check_info
       expect(errors.size).to eq 0
     end
@@ -425,5 +449,9 @@ FILE
       expect(data[:check_count]).to eq 2
     end
     
+    it "handles missing check data on blank check files" do
+      errors = subject.validate_and_remove_duplicate_check_references({})
+      expect(errors).to be_blank
+    end
   end
 end

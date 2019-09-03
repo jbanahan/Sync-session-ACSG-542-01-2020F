@@ -201,7 +201,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
         all_errors.push *errors
       end
-    end
+    end if check_info[:checks]
 
     {errors: all_errors, exports: exports}
   end

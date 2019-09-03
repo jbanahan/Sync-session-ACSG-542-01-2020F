@@ -346,6 +346,10 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(output[:errors]).to eq ["Error 1", "Error 2", "Error 3", "Error 4"]
       expect(output[:exports]).to eq ["export", "export2"]
     end
+
+    it "handles situations where no checks were loaded" do
+      expect(described_class.new(nil, nil).create_checks({}, nil, nil)).to eq({errors: [], exports: []})
+    end
   end
 
   describe "create_invoices" do

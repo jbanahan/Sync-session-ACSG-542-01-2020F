@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
   end
 
   def extract_check_info fin
-    check_info = {}
+    check_info = {checks: {}, total_check_count: 0, total_check_amount: BigDecimal("0")}
     buffered_checks = []
     header_found = false
     valid_file_format = nil
@@ -131,7 +131,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
       errors << "Expected #{bank_check_info[:check_count]} #{"check".pluralize(bank_check_info[:check_count])} for Bank #{bank_no.to_s.rjust(2, "0")}.  Found #{local_check_count} #{"check".pluralize(local_check_count)}." unless local_check_count == bank_check_info[:check_count]
       errors << "Expected Check Total Amount of #{number_to_currency bank_check_info[:check_total]} for Bank #{bank_no.to_s.rjust(2, "0")}.  Found #{number_to_currency local_sum}." unless local_sum == bank_check_info[:check_total]
-    end
+    end if check_info[:checks]
 
     # Validate the grand totals too.
     errors << "Expected #{check_info[:total_check_count]} #{"check".pluralize(check_info[:total_check_count])} to be in the register file.  Found #{check_count} #{"check".pluralize(check_count)}." unless check_count == check_info[:total_check_count]
@@ -175,7 +175,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       bank_checks_data[:checks] = checks.values
       bank_checks_data[:check_total] = check_total
       bank_checks_data[:check_count] = check_count
-    end
+    end if check_info[:checks]
 
     errors.to_a
   end
