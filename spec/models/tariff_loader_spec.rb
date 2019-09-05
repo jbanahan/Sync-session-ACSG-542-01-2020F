@@ -6,35 +6,53 @@ describe TariffLoader do
     it 'processes a file' do
       country = Factory(:country, iso_code:"AU")
 
-      Tempfile.open(["au_simple_20170707", ".zip"]) do |f|
-        now = Date.new(2017,8,9)
+      now = Date.new(2017,8,9)
 
-        loader = double("loader")
-        expect(described_class).to receive(:new).with(country, f.path, "AU-2017-08-09").and_return loader
-        tariff_set = double("tariff_set")
-        expect(loader).to receive(:process).and_return(tariff_set)
-        expect(tariff_set).to receive(:activate)
+      loader = double("loader")
+      expect(described_class).to receive(:new).with(country, "some_folder/au_simple_20170707.zip", "AU-2017-08-09").and_return loader
+      tariff_set = double("tariff_set")
+      expect(loader).to receive(:process).and_return(tariff_set)
+      expect(tariff_set).to receive(:activate)
 
-        Timecop.freeze(now) do
-          described_class.parse_file f, log
-        end
+      Timecop.freeze(now) do
+        described_class.parse_file "some_folder/au_simple_20170707.zip", log
       end
-    end
-
-    it 'raises error on invalid file' do
-      bogus_file = double("bad file", path:"invalid_path")
-
-      expect { described_class.parse_file bogus_file, log }.to raise_error(LoggedParserFatalError, "invalid_path is not a file.")
-
-      expect(log.get_messages_by_status(InboundFile::PROCESS_STATUS_ERROR)[0].message).to eq "invalid_path is not a file."
     end
 
     it 'raises error on invalid country' do
-      Tempfile.open(["au_simple_20170707", ".zip"]) do |f|
-        expect { described_class.parse_file f, log }.to raise_error(LoggedParserFatalError, "Country not found with ISO AU for file #{f.path}")
+      expect { described_class.parse_file "some_folder/au_simple_20170707.zip", log }.to raise_error(LoggedParserFatalError, "Country not found with ISO AU for file au_simple_20170707.zip")
 
-        expect(log.get_messages_by_status(InboundFile::PROCESS_STATUS_ERROR)[0].message).to eq "Country not found with ISO AU for file #{f.path}"
-      end
+      expect(log.get_messages_by_status(InboundFile::PROCESS_STATUS_ERROR)[0].message).to eq "Country not found with ISO AU for file au_simple_20170707.zip"
+    end
+  end
+
+  describe 'process_from_s3' do
+    it "downloads and processes a file from S3" do
+      tempfile = instance_double(Tempfile)
+      allow(tempfile).to receive(:path).and_return "/path/to/the_key.zip"
+
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("the_bucket", "the_key.zip", {original_filename: "the_key.zip"}).and_yield tempfile
+      expect(described_class).to receive(:handle_processing).with("the_bucket", "the_key.zip", { some_option:"yup" }).and_yield { "/path/to/the_key.zip" }
+
+      described_class.process_from_s3 "the_bucket", "the_key.zip", { some_option:"yup" }
+    end
+  end
+
+  describe 'process_from_file' do
+    it "processes a file" do
+      f = instance_double(File)
+      allow(f).to receive(:is_a?).with(File).and_return true
+      allow(f).to receive(:path).and_return "/path/to/orig_file.zip"
+
+      expect(described_class).to receive(:handle_processing).with(nil, "/path/to/orig_file.zip", { some_option:"yup" }).and_yield { "/path/to/orig_file.zip" }
+
+      described_class.process_from_file f, { some_option:"yup" }
+    end
+
+    it "processes a file path" do
+      expect(described_class).to receive(:handle_processing).with(nil, "/path/to/orig_file.zip", { some_option:"yup" }).and_yield { "/path/to/orig_file.zip" }
+
+      described_class.process_from_file "/path/to/orig_file.zip", { some_option:"yup" }
     end
   end
 

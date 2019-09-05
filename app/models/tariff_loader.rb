@@ -112,7 +112,6 @@ class TariffLoader
             end
           end
           ot.save!
-          puts "Processed line #{i} for country: #{@country.name}" if i>50 && i%50==0
           i += 1
         end
       end
@@ -123,19 +122,37 @@ class TariffLoader
     ts
   end
 
-  # Files routed by TariffFileMonitor are processed using this method.
-  def self.parse_file file, log, opts = {}
-    log.error_and_raise "#{file.path} is not a file." unless File.file? file.path
-
-    iso_code = file.path.split('/').last[0,2].upcase
+  # Files routed by TariffFileMonitor are processed using this method (via handle_processing).
+  # It's assumed that it's getting a file path, not file content.
+  def self.parse_file file_path, log, opts = {}
+    file_name = file_path.split('/').last
+    iso_code = file_name[0,2].upcase
     tariff_set_label = "#{iso_code}-#{Time.zone.now.strftime("%Y-%m-%d")}"
 
     c = Country.where(iso_code:iso_code).first
-    log.error_and_raise "Country not found with ISO #{iso_code} for file #{file.path}" if c.nil?
+    log.error_and_raise "Country not found with ISO #{iso_code} for file #{file_name}" if c.nil?
 
-    ts = TariffLoader.new(c, file.path, tariff_set_label).process
+    ts = TariffLoader.new(c, file_path, tariff_set_label).process
     # Files loaded this way are always activated.  (Really, the ones loaded via the old screen are always activated too.)
     ts.activate
+  end
+
+  def self.process_from_s3 bucket, key, opts={}
+    OpenChain::S3.download_to_tempfile(bucket, key, original_filename: key) do |t|
+      # Handle processing is provided a file path, not the actual file content.  Still, it's not 0-bytes, so it
+      # bypasses that validation.
+      handle_processing(bucket, key, opts) { t.path }
+    end
+  end
+
+  def self.process_from_file file, opts={}
+    # This File behavior is a little silly, but (a) it beats rewriting the entire processing apparatus here and
+    # (b) typical usage for this method is to pass a path, making that silliness irrelevant.  This is just a
+    # developer helper method.
+    file_path = file.is_a?(File) ? file.path : file
+    # Handle processing is provided a file path, not the actual file content.  Still, it's not 0-bytes, so it
+    # bypasses that validation.
+    handle_processing(nil, file_path, opts) { file_path }
   end
 
   # Manual upload via screen (tariff_sets) goes this route.  See TariffSetsController.
