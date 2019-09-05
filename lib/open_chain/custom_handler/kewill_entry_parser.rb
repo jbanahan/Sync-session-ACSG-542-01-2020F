@@ -199,7 +199,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       rescue => e
         # Re-raise a deadlock error, there's nothing wrong with the data, so the entry should
         # process next time through when the job queue reprocesses the file.
-        raise e if OpenChain::DatabaseUtils.deadlock_error?(e) || !MasterSetup.production?
+        raise e if OpenChain::DatabaseUtils.deadlock_error?(e) || !MasterSetup.get.production?
 
         # Add the entity wrapper name back in so the data can easily just be passed back through
         # the parser for testing/problem solving
