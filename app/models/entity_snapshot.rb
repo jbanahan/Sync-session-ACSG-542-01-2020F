@@ -175,6 +175,14 @@ class EntitySnapshot < ActiveRecord::Base
     (self.context.to_s =~ /\A\d{4}-\d{2}\/\d{2}\//).present?
   end
 
+  def cleansed_context
+    if s3_integration_file_context?
+      File.basename(self.context.to_s)
+    else
+      self.context.to_s
+    end
+  end
+
   def s3_integration_file_context_download_link
     s3_integration_file_context? ? OpenChain::S3.url_for(OpenChain::S3.integration_bucket_name, self.context) : ""
   end

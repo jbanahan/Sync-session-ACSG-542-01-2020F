@@ -61,7 +61,7 @@
                 <% if current_user.sys_admin? && s.s3_integration_file_context? %>
                   <p><small><a href="<%=download_integration_file_entity_snapshot_path(s)%>" target="_blank"><%=s.context%></a></small></p>
                 <% else %>
-                  <p><small><%=s.context%></small></p>
+                  <p><small><%=s.cleansed_context%></small></p>
                 <% end %>
               <%end%>
             </div>

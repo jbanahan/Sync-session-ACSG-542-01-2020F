@@ -548,4 +548,16 @@ describe EntitySnapshot, :snapshot do
     end
   end
 
+  describe "cleansed_context" do
+    it "strips any file paths from context if it looks like an integration file context" do
+      subject.context = "2019-09/01/path/to/file.txt"
+      expect(subject.cleansed_context).to eq "file.txt"
+    end
+
+    it "returns full context if context is not integration file" do
+      subject.context = "This is a test"
+      expect(subject.cleansed_context).to eq "This is a test"
+    end
+  end
+
 end
