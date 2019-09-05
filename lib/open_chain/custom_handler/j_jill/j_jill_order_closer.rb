@@ -1,6 +1,6 @@
 module OpenChain; module CustomHandler; module JJill; class JJillOrderCloser
   def self.run_schedulable opts={}
-    jill = Company.find_by_system_code 'JJILL'
+    jill = Company.where(system_code: 'JJILL').first
     return unless jill
     self.new.process_orders jill.importer_orders.not_closed, User.integration
   end

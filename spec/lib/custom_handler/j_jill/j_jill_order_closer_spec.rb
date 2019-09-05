@@ -38,4 +38,17 @@ describe OpenChain::CustomHandler::JJill::JJillOrderCloser do
     end
   end
 
+  describe "run_schedulable" do
+    let! (:jjill) { Factory(:importer, system_code: "JJILL") }
+    let! (:order) { Factory(:order, importer: jjill, ship_window_end: 61.days.ago) }
+
+    subject { described_class }
+
+    it "runs schedulable" do
+      subject.run_schedulable
+      order.reload
+      expect(order.closed?).to eq true
+    end
+  end
+
 end
