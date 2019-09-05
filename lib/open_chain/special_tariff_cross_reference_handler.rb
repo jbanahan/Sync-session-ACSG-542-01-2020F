@@ -65,7 +65,9 @@ module OpenChain; class SpecialTariffCrossReferenceHandler
   private
 
   def process_row row, row_number
-    stcr = SpecialTariffCrossReference.where(hts_number: row[0]).first_or_initialize
+    stcr = SpecialTariffCrossReference.where(hts_number: row[0].to_s.gsub('.', ''), import_country_iso: row[3], special_tariff_type: row[7]).first_or_initialize
+    suppress_from_feeds = row[8].to_s[0].blank? ? "false" : row[8].to_s[0]
+
     stcr.special_hts_number = text_value row[1]
     stcr.country_origin_iso = text_value row[2]
     stcr.import_country_iso = text_value row[3]
@@ -73,7 +75,7 @@ module OpenChain; class SpecialTariffCrossReferenceHandler
     stcr.effective_date_end = date_value row[5]
     stcr.priority = integer_value row[6]
     stcr.special_tariff_type = text_value row[7]
-    stcr.suppress_from_feeds = boolean_value row[8].to_s[0]
+    stcr.suppress_from_feeds = boolean_value suppress_from_feeds
     stcr.save
   end
 

@@ -32,6 +32,23 @@ describe OpenChain::SpecialTariffCrossReferenceHandler do
         allow(cf).to receive(:id).and_return 1
       end
 
+      it 'does not allow suppress from fields to end up nil' do
+        nil_row = row_1
+        nil_row[8] = nil
+        allow(cf).to receive(:attached_file_name).and_return 'stcr_upload.xls'
+        expect(handler).to receive(:foreach).at_least(1).with(cf, {skip_blank_lines: true, skip_headers: true}).and_yield(nil_row, 1)
+        stcr = SpecialTariffCrossReference.create!(hts_number: '1234567890')
+
+        handler.process user, {}
+        stcr.reload
+        expect(stcr.suppress_from_feeds).to eql(false)
+
+        nil_row[8] = ""
+        handler.process user, {}
+        stcr.reload
+        expect(stcr.suppress_from_feeds).to eql(false)
+      end
+
       it 'sets a user error message if a row is missing an HTS' do
         allow(cf).to receive(:attached_file_name).and_return 'stcr_upload.xls'
         expect(handler).to receive(:foreach).with(cf, {skip_blank_lines: true, skip_headers: true}).and_yield(row_2, 1)
@@ -46,7 +63,7 @@ describe OpenChain::SpecialTariffCrossReferenceHandler do
       it 'updates existing records' do
         allow(cf).to receive(:attached_file_name).and_return 'stcr_upload.xls'
         expect(handler).to receive(:foreach).with(cf, {skip_blank_lines: true, skip_headers: true}).and_yield(row_1, 1)
-        stcr = SpecialTariffCrossReference.create!(hts_number: '1234567890')
+        stcr = SpecialTariffCrossReference.create!(hts_number: '1234567890', import_country_iso: 'US', special_tariff_type: '301')
         expect(stcr.special_hts_number).to be_nil
 
         handler.process user, {}
