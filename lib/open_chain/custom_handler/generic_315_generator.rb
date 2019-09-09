@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       milestones.compact!
 
       if milestones.size > 0
-        generate_and_send_315s setup.output_style, entry, milestones, setup.testing?
+        generate_and_send_315s setup, entry, milestones, setup.testing?
       end
     end
     
@@ -37,28 +37,11 @@ module OpenChain; module CustomHandler; class Generic315Generator
     entry
   end
 
-  def generate_and_send_315s output_style, entry, milestones, testing = false
-    split_entries = split_entry_data_identifiers output_style, entry
-    data_315s = []
-
-    split_entries.each do |data|
-      milestones.each do |milestone|
-        data_315s << create_315_data(entry, data, milestone)
-      end
-    end
-
-    generate_and_send_xml_document(entry.customer_number, data_315s, testing) do |data_315|
-      data_315.sync_record.confirmed_at = Time.zone.now
-      data_315.sync_record.save!
-    end
-   
-    nil
-  end
-
   protected
 
     def create_315_data entry, data, milestone
       d = Data315.new
+      d.customer_number = v(:ent_cust_num, entry)
       d.broker_reference = v(:ent_brok_ref, entry)
       d.entry_number = v(:ent_entry_num, entry)
       d.ship_mode = v(:ent_transport_mode_code, entry)
@@ -70,11 +53,17 @@ module OpenChain; module CustomHandler; class Generic315Generator
       if entry.canadian?
         d.port_of_entry = entry.ca_entry_port.try(:unlocode)
         raise "Missing UN Locode for Canadian Port Code #{entry.entry_port_code}." if entry.ca_entry_port && d.port_of_entry.blank?
+        d.port_of_entry_location = entry.ca_entry_port
       else
         d.port_of_entry = v(:ent_entry_port_code, entry)
+        d.port_of_entry_location = entry.us_entry_port
       end
       
       d.port_of_lading = v(:ent_lading_port_code, entry)
+      d.port_of_lading_location = entry.lading_port
+      d.port_of_unlading = v(:ent_unlading_port_code, entry)
+      d.port_of_unlading_location = entry.unlading_port
+      
       # Technically, we'd like to put the cargo control number in a collection element (see generate_315_support#write_315_xml)
       # like the master bills etc.
       # However, since this was added a long time after original development, there's a lot of production edi mappings
@@ -127,13 +116,15 @@ module OpenChain; module CustomHandler; class Generic315Generator
     end
   
     def setup_315 entry
-      @cache ||= Hash.new do |h, k|
+      @configs ||= begin
         # Since we can now potentially have multiple configs per customer (since you can have different statuses on the setups),
         # we need to collect all of them that are enabled.
-        h[k] = MilestoneNotificationConfig.where(module_type: "Entry", customer_number: k, enabled: true).order(:id).all
+        configs = []
+        configs.push(*MilestoneNotificationConfig.where(module_type: "Entry", customer_number: entry.customer_number, enabled: true).order(:id).all)
+        parent_system_code = entry.importer&.parent_system_code
+        configs.push(*MilestoneNotificationConfig.where(module_type: "Entry", parent_system_code: parent_system_code, enabled: true).order(:id).all) unless parent_system_code.blank?
+        configs
       end
-
-      @cache[entry.customer_number]
     end
 
 end; end; end;

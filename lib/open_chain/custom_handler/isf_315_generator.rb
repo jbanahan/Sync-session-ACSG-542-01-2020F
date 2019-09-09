@@ -28,35 +28,18 @@ module OpenChain; module CustomHandler; class Isf315Generator
       milestones.compact!
 
       if milestones.size > 0
-        generate_and_send_315s setup.output_style, isf, milestones, setup.testing?
+        generate_and_send_315s setup, isf, milestones, setup.testing?
       end
     end
     
     isf
   end
 
-  def generate_and_send_315s output_style, isf, milestones, testing = false
-    split_isfs = split_entry_data_identifiers output_style, isf
-    data_315s = []
-
-    split_isfs.each do |data|
-      milestones.each do |milestone|
-        data_315s << create_315_data(isf, data, milestone)
-      end
-    end
-
-    generate_and_send_xml_document(isf.importer_account_code, data_315s, testing) do |data_315|
-      data_315.sync_record.confirmed_at = Time.zone.now
-      data_315.sync_record.save!
-    end
-   
-    nil
-  end
-
   private
 
     def create_315_data isf, split_data, milestone
       d = Data315.new
+      d.customer_number = v(:sf_broker_customer_number, isf)
       d.broker_reference = v(:sf_host_system_file_number, isf)
       d.entry_number = v(:sf_transaction_number, isf)
       d.ship_mode = v(:sf_transport_mode_code, isf)
@@ -64,7 +47,11 @@ module OpenChain; module CustomHandler; class Isf315Generator
       d.vessel = v(:sf_vessel, isf)
       d.voyage_number = v(:sf_voyage, isf)
       d.port_of_entry = v(:sf_entry_port_code, isf)
+      d.port_of_entry_location = isf.entry_port
       d.port_of_lading = v(:sf_lading_port_code, isf)
+      d.port_of_lading_location = isf.lading_port
+      d.port_of_unlading = v(:sf_unlading_port_code, isf)
+      d.port_of_unlading_location = isf.unlading_port
       
       d.master_bills = split_data[:master_bills]
       d.container_numbers = split_data[:container_numbers]
@@ -105,13 +92,15 @@ module OpenChain; module CustomHandler; class Isf315Generator
     end
 
     def setup_315 isf
-      @cache ||= Hash.new do |h, k|
+      @configs ||= begin
         # Since we can now potentially have multiple configs per customer (since you can have different statuses on the setups),
         # we need to collect all of them that are enabled.
-        h[k] = MilestoneNotificationConfig.where(customer_number: k, enabled: true, module_type: "SecurityFiling").order(:id).all
+        configs = []
+        configs.push(*MilestoneNotificationConfig.where(module_type: "SecurityFiling", customer_number: isf.importer_account_code, enabled: true).order(:id).all)
+        parent_system_code = isf.importer&.parent_system_code
+        configs.push(*MilestoneNotificationConfig.where(module_type: "SecurityFiling", parent_system_code: parent_system_code, enabled: true).order(:id).all) unless parent_system_code.blank?
+        configs
       end
-
-      @cache[isf.importer_account_code]
     end
 
 end; end; end;

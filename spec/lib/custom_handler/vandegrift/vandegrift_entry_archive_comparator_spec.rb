@@ -11,6 +11,14 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
       expect(described_class.accept? snap).to eq true
     end
 
+    it "returns true for entries with importer parent setups with 'real time' flag enabled" do
+      parent = Factory(:company)
+      parent.linked_companies << e.importer
+      aas.update! company_id: parent.id
+
+      expect(described_class.accept? snap).to eq true
+    end
+
     it "returns false when 'real time' flag is disabled" do
       aas.update_attributes! send_in_real_time: nil
       expect(described_class.accept? snap).to eq false
@@ -71,15 +79,30 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
 
   describe "ftp_archive" do
     let(:att) { Factory(:attachment, attachable: e, attachment_type: "Archive Packet") }
+    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018,1,1), end_date: Date.new(2018,1,1), send_in_real_time: true) }
+
 
     it "FTPs attachment using entry's customer number for file name and destination path" do
-      archive_setup = instance_double AttachmentArchiveSetup
       ftp_opts = "ftp opts"
+      attachment_tempfile = instance_double(Tempfile)
       expect(att).to receive(:bucket).and_return "bucket"
       expect(att).to receive(:path).and_return "path"
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", {original_filename: "12345_Archive_Packet_201803152030.pdf"}).and_yield archive_setup
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", {original_filename: "12345_Archive_Packet_201803152030.pdf"}).and_yield attachment_tempfile
       expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/attachment_archive/CUSTNUM").and_return ftp_opts
-      expect(subject).to receive(:ftp_file).with(archive_setup, ftp_opts)
+      expect(subject).to receive(:ftp_file).with(attachment_tempfile, ftp_opts)
+
+      Timecop.freeze(DateTime.new(2018,3,15,20,30)) { subject.ftp_archive att }
+    end
+
+    it "uses CustomerNumber defined in the archive setup to send" do
+      aas.update! send_as_customer_number: "XXXXX"
+      ftp_opts = "ftp opts"
+      attachment_tempfile = instance_double(Tempfile)
+      expect(att).to receive(:bucket).and_return "bucket"
+      expect(att).to receive(:path).and_return "path"
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", {original_filename: "12345_Archive_Packet_201803152030.pdf"}).and_yield attachment_tempfile
+      expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/attachment_archive/XXXXX").and_return ftp_opts
+      expect(subject).to receive(:ftp_file).with(attachment_tempfile, ftp_opts)
 
       Timecop.freeze(DateTime.new(2018,3,15,20,30)) { subject.ftp_archive att }
     end

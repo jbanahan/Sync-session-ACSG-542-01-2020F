@@ -12,7 +12,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
     # If combine attachments is enabled, then we're going to combine them, regardless of the start/end date
     # The start end date is more for control of the documents available to the archiver desktop program 
     # or the monthly archiver / ftp export process.
-    snapshot.recordable&.importer&.attachment_archive_setup&.combine_attachments? == true
+    setup = attachment_archive_setup_for snapshot.recordable
+    setup.present? && setup.combine_attachments? == true
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -27,7 +28,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
     entry = find_entity_object(new_json)
     return if entry.nil?
 
-    archive_setup = entry.importer.attachment_archive_setup
+    archive_setup = attachment_archive_setup_for(entry)
     return if archive_setup.nil?
 
     attachment_type_set = []
@@ -105,6 +106,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
     else
       return false
     end
+  end
+
+  def attachment_archive_setup_for entry
+    return nil unless entry&.importer
+
+    AttachmentArchiveSetup.setups_for(entry.importer).first
+  end
+
+  def self.attachment_archive_setup_for entry
+    self.new.attachment_archive_setup_for(entry)
   end
 
   private 

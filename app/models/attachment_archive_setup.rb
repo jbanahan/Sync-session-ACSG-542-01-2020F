@@ -10,6 +10,7 @@
 #  end_date                        :date
 #  id                              :integer          not null, primary key
 #  include_only_listed_attachments :boolean
+#  send_as_customer_number         :string(255)
 #  send_in_real_time               :boolean
 #  start_date                      :date
 #  updated_at                      :datetime         not null
@@ -22,13 +23,35 @@
 class AttachmentArchiveSetup < ActiveRecord::Base
   attr_accessible :company_id, :start_date, :combine_attachments, 
     :combined_attachment_order, :include_only_listed_attachments, 
-    :send_in_real_time, :archive_scheme, :end_date
+    :send_in_real_time, :archive_scheme, :end_date, :send_as_customer_number
 
   belongs_to :company
 
   ARCHIVE_SCHEMES ||= [["Invoice Date Prior To 30 Days Ago", "MINUS_30"], ["Invoice Date Prior to This Month", "PREVIOUS_MONTH"]]
   # The override allows for manually making archives over specific file lists
   attr_accessor :broker_reference_override
+
+  # This method returns all valid archive setups for a particular company.  This includes the setup associated with the company
+  # or any parent company.
+  def self.setups_for company
+    setups = AttachmentArchiveSetup.where("company_id IN (SELECT distinct c.id FROM companies c LEFT OUTER JOIN linked_companies l on c.id = l.parent_id 
+WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
+
+    # Lets return the company's setup first (since the first setup is the one  callers to this will use most)
+    # and we should prioritize the company's own setup over the parent in cases where each have one.
+    company_setup = nil
+    setups.reject! do |s| 
+      if s.company_id == company.id 
+        company_setup = s
+        true
+      else
+        false
+      end
+    end
+
+    setups.unshift company_setup if company_setup
+    setups
+  end
 
   #creates an archive with files for this importer that are on entries up to the max_size_in_bytes size
   def create_entry_archive! name, max_size_in_bytes

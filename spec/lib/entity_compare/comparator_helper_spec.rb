@@ -136,6 +136,18 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     it "does not coerce if instructed" do
       expect(subject.mf({"entity" => {"core_module" => "Child", "model_fields"=> {"ent_duty_due_date" => "2017-01-11"}}}, "ent_duty_due_date", coerce: false)).to eq "2017-01-11"
     end
+
+    it "splits model field value on newlines if instructed" do
+      expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => "Child-A\n Child-B"}}, "test", split_values: true)).to eq ["Child-A", "Child-B"]
+    end
+
+    it "returns blank array for nil values if instructed to split" do
+      expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => nil}}, "test", split_values: true)).to eq []
+    end
+
+    it "returns blank array for blank values if instructed to split" do
+      expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => " "}}, "test", split_values: true)).to eq []
+    end
   end
 
   describe "find_entity_object" do

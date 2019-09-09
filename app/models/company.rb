@@ -102,6 +102,7 @@ class Company < ActiveRecord::Base
   has_one :attachment_archive_setup, :dependent => :destroy
 
   has_and_belongs_to_many :linked_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'parent_id', :association_foreign_key=>'child_id'
+  has_and_belongs_to_many :parent_companies, :class_name=>"Company", :join_table=>"linked_companies", :foreign_key=>'child_id', :association_foreign_key=>'parent_id'
 
   scope :carriers, -> { where(:carrier=>true) }
   scope :vendors, -> { where(:vendor=>true) }
@@ -221,6 +222,10 @@ class Company < ActiveRecord::Base
 
   def visible_companies_with_users
     visible_companies.where('companies.id IN (SELECT DISTINCT company_id FROM users)')
+  end
+
+  def parent_system_code 
+    @parent_system_code ||= self.parent_companies.where("system_code IS NOT NULL").order(id: :asc).first&.system_code
   end
 
   #permissions

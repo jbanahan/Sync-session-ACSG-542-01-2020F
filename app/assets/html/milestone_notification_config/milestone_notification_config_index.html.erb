@@ -16,7 +16,7 @@
       <thead>
         <tr>
           <th>&nbsp;</th>
-          <th>Customer</th>
+          <th>* Customer</th>
           <th>Enabled?</th>
           <th>Status</th>
           <th>Source</th>
@@ -24,10 +24,15 @@
           <th>Output Format</th>
         </tr>
       </thead>
+      <tfoot>
+        <tr>
+          <th colspan="7">* Indicates use of Parent System Code in place of Customer Number</th>
+        </tr>
+      </tfoot>
       <tbody>
         <tr ng-repeat="config in milestoneConfigs">
           <td><button type="button" class="btn btn-secondary" ng-click="showConfig(config.milestone_notification_config)">Edit</button></td>
-          <td>{{config.milestone_notification_config.customer_number}}</td>
+          <td>{{config.milestone_notification_config.parent_system_code ? ("*" + config.milestone_notification_config.parent_system_code) : config.milestone_notification_config.customer_number}}</td>
           <td>{{config.milestone_notification_config.enabled ? "Yes" : "No"}}</td>
           <td>{{config.milestone_notification_config.testing ? "Testing" : "Production"}}</td>
           <td>{{moduleTypes[config.milestone_notification_config.module_type]}}</td>

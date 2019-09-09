@@ -1,8 +1,9 @@
 describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
+  let (:user) { Factory(:admin_user) }
+
   before :each do 
-    @user = Factory(:admin_user)
-    allow_api_access @user
+    allow_api_access user
   end
 
   describe "show" do
@@ -33,6 +34,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c['config']['milestone_notification_config']).to eq({
         id: config.id,
         customer_number: "CUST",
+        parent_system_code: nil, 
         enabled: true,
         output_style: "standard",
         testing: nil,
@@ -49,14 +51,14 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       )
 
       mf_list = c['model_field_list']
-      expect(mf_list.size).to eq CoreModule::ENTRY.model_fields(@user).size
+      expect(mf_list.size).to eq CoreModule::ENTRY.model_fields(user).size
       expect(mf_list.first['field_name']).to be_a String
       expect(mf_list.first['mfid']).to be_a String
       expect(mf_list.first['label']).to be_a String
       expect(mf_list.first['datatype']).to be_a String
 
       event_list = c['event_list']
-      expect(event_list.size).to eq CoreModule::ENTRY.model_fields(@user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
+      expect(event_list.size).to eq CoreModule::ENTRY.model_fields(user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
       expect(event_list.first['field_name']).to be_a String
       expect(event_list.first['mfid']).to be_a String
       expect(event_list.first['label']).to be_a String
@@ -86,6 +88,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c['config']['milestone_notification_config']).to eq({
         id: config.id,
         customer_number: "CUST",
+        parent_system_code: nil, 
         enabled: true,
         output_style: "standard",
         testing: nil,
@@ -112,29 +115,31 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
   end
 
   describe "create" do
-    before :each do 
-      @c =  {milestone_notification_config: {
-                customer_number: "CUST",
-                output_style: "standard",
-                enabled: true,
-                testing: false,
-                gtn_time_modifier: false,
-                module_type: "Entry",
-                setup_json: {
-                  milestone_fields: [
-                    {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
-                    {model_field_uid: "", timezone: "timezone", no_time: true}
-                  ],
-                  fingerprint_fields: ["ent_brok_ref", "ent_release_date"]
-                },
-                search_criterions: [
-                  {mfid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false}
-                ]
-              }
-            }
-    end
+    let (:config) { 
+      {
+        milestone_notification_config: {
+          customer_number: "CUST",
+          output_style: "standard",
+          enabled: true,
+          testing: false,
+          gtn_time_modifier: false,
+          module_type: "Entry",
+          setup_json: {
+            milestone_fields: [
+              {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
+              {model_field_uid: "", timezone: "timezone", no_time: true}
+            ],
+            fingerprint_fields: ["ent_brok_ref", "ent_release_date"]
+          },
+          search_criterions: [
+            {mfid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false}
+          ]
+        }
+      }
+    }
+
     it "creates an entry milestone config" do
-      post :create, @c
+      post :create, config
 
       config = MilestoneNotificationConfig.first
       expect(config.customer_number).to eq "CUST"
@@ -153,9 +158,29 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(config.search_criterions.first.include_empty?).to be_falsey
     end
 
+    it "creates a milestone config with a parent system code" do
+      config[:milestone_notification_config][:parent_system_code] = "PARENT"
+      config[:milestone_notification_config][:customer_number] = ""
+
+      post :create, config
+      config = MilestoneNotificationConfig.first
+      expect(config.parent_system_code).to eq "PARENT"
+      expect(config.customer_number).to be_nil
+    end
+
+    it "prioritizes uses customer number over parent system code if both are given" do
+      config[:milestone_notification_config][:parent_system_code] = "PARENT"
+      config[:milestone_notification_config][:customer_number] = "CUST"
+
+      post :create, config
+      config = MilestoneNotificationConfig.first
+      expect(config.parent_system_code).to be_nil
+      expect(config.customer_number).to eq "CUST"
+    end
+
     it "creates an isf milestone config" do
-      @c[:milestone_notification_config][:module_type] = "SecurityFiling"
-      post :create, @c
+      config[:milestone_notification_config][:module_type] = "SecurityFiling"
+      post :create, config
 
       config = MilestoneNotificationConfig.first
       expect(config).not_to be_nil
@@ -164,14 +189,14 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     it "rejects non-admin users" do
       allow_api_access Factory(:user)
 
-      post :create, @c
+      post :create, config
       expect(response.status).to eq 403
       expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
     end
 
     it "errors on configs for non-entry, non-isf modules" do
-      @c[:milestone_notification_config][:module_type] = "NotAModule"
-      post :create, @c
+      config[:milestone_notification_config][:module_type] = "NotAModule"
+      post :create, config
       expect(response).to_not be_success
       expect(JSON.parse(response.body)).to eq("errors"=>["Validation failed: Module type is not valid."])
     end
@@ -207,64 +232,66 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
   end
 
   describe "update" do
-    before :each do
-      @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard", module_type:"Entry"
-
-      @c =  {milestone_notification_config: {
-                 customer_number: "CUST",
-                 output_style: "mbol_container",
-                 enabled: false,
-                 testing: true,
-                 gtn_time_modifier: true,
-                 module_type: "Entry",
-                 setup_json: {
-                   milestone_fields: [
-                     {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
-                     {model_field_uid: "", timezone: "timezone", no_time: true}
-                   ],
-                   fingerprint_fields: ["ent_brok_ref"]
-                 },
-                 search_criterions: [
-                   {mfid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false}
-                 ]
-               },
-               id: @config.id,
-            }
-    end
+    let (:original_config) {
+       MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard", module_type:"Entry"
+    }
+    let (:updated_config) {
+      {
+        milestone_notification_config: {
+           customer_number: "CUST",
+           output_style: "mbol_container",
+           enabled: false,
+           testing: true,
+           gtn_time_modifier: true,
+           module_type: "Entry",
+           setup_json: {
+             milestone_fields: [
+               {model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true},
+               {model_field_uid: "", timezone: "timezone", no_time: true}
+             ],
+             fingerprint_fields: ["ent_brok_ref"]
+           },
+           search_criterions: [
+             {mfid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false}
+           ]
+         },
+         id: original_config.id,
+      }
+    }
 
     it "updates milestone config" do
-      put :update, @c
+      put :update, updated_config
 
-      @config.reload
-      expect(@config.customer_number).to eq "CUST"
-      expect(@config.enabled).to be_falsey
-      expect(@config.output_style).to eq "mbol_container"
-      expect(@config.testing).to be_truthy
-      expect(@config.gtn_time_modifier).to be_truthy
-      expect(@config.milestone_fields).to eq (
+      original_config.reload
+      expect(original_config.customer_number).to eq "CUST"
+      expect(original_config.enabled).to be_falsey
+      expect(original_config.output_style).to eq "mbol_container"
+      expect(original_config.testing).to be_truthy
+      expect(original_config.gtn_time_modifier).to be_truthy
+      expect(original_config.milestone_fields).to eq (
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
       )
-      expect(@config.fingerprint_fields).to eq ["ent_brok_ref"]
-      expect(@config.search_criterions.first.model_field_uid).to eq "ent_brok_ref"
-      expect(@config.search_criterions.first.operator).to eq "eq"
-      expect(@config.search_criterions.first.value).to eq "val"
-      expect(@config.search_criterions.first.include_empty?).to be_falsey
+      expect(original_config.fingerprint_fields).to eq ["ent_brok_ref"]
+      expect(original_config.search_criterions.first.model_field_uid).to eq "ent_brok_ref"
+      expect(original_config.search_criterions.first.operator).to eq "eq"
+      expect(original_config.search_criterions.first.value).to eq "val"
+      expect(original_config.search_criterions.first.include_empty?).to be_falsey
     end
 
     it "rejects non-admin users" do
       allow_api_access Factory(:user)
 
-      put :update, @c
+      put :update, updated_config
       expect(response.status).to eq 403
       expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
     end
   end
 
   describe "destroy" do
-    it "removes a config" do
-      @config = MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard", module_type: "Entry"
+    let (:config) { MilestoneNotificationConfig.create! customer_number: "BLAH", output_style: "standard", module_type: "Entry" }
 
-      delete :destroy, id: @config.id
+    it "removes a config" do
+      delete :destroy, id: config.id
       expect(response).to be_success
       expect(response.body).to eq "{}"
       expect(MilestoneNotificationConfig.first).to be_nil
@@ -288,6 +315,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
           milestone_notification_config: {
             id: config2.id,
             customer_number: "ABC",
+            parent_system_code: nil, 
             enabled: nil,
             output_style: 'standard',
             module_type: "Entry",
@@ -303,6 +331,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
           milestone_notification_config: {
             id: config.id,
             customer_number: "CUST",
+            parent_system_code: nil, 
             enabled: nil,
             output_style: 'standard',
             testing: false,
@@ -344,6 +373,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c['config']['milestone_notification_config']).to eq({
         id: nil,
         customer_number: nil,
+        parent_system_code: nil, 
         enabled: nil,
         output_style: nil,
         module_type: nil,
@@ -379,14 +409,14 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       c = JSON.parse response.body
 
       mf_list = c['model_field_list']
-      expect(mf_list.size).to eq CoreModule::ENTRY.model_fields(@user).size
+      expect(mf_list.size).to eq CoreModule::ENTRY.model_fields(user).size
       expect(mf_list.first['field_name']).to be_a String
       expect(mf_list.first['mfid']).to be_a String
       expect(mf_list.first['label']).to be_a String
       expect(mf_list.first['datatype']).to be_a String
 
       event_list = c['event_list']
-      expect(event_list.size).to eq CoreModule::ENTRY.model_fields(@user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
+      expect(event_list.size).to eq CoreModule::ENTRY.model_fields(user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
       expect(event_list.first['field_name']).to be_a String
       expect(event_list.first['mfid']).to be_a String
       expect(event_list.first['label']).to be_a String
@@ -399,9 +429,9 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       c = JSON.parse response.body
 
       mf_list = c['model_field_list']
-      expect(mf_list.size).to eq CoreModule::SECURITY_FILING.model_fields(@user).size
+      expect(mf_list.size).to eq CoreModule::SECURITY_FILING.model_fields(user).size
       event_list = c['event_list']
-      expect(event_list.size).to eq CoreModule::SECURITY_FILING.model_fields(@user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
+      expect(event_list.size).to eq CoreModule::SECURITY_FILING.model_fields(user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}.size
     end
   end
 end

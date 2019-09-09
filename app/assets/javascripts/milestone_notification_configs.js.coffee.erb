@@ -90,11 +90,19 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
 
   $scope.loadingFlag = "loading"
   $scope.errorHandler = chainErrorHandler
+  $scope.customerNumberDisplayed = true
+
   $scope.errorHandler.responseErrorHandler = (rejection) ->
     $scope.loadingFlag = null
 
   responseHandler = (resp) ->
     $scope.config = resp.config.milestone_notification_config
+    # Set the customer number display flag to true if there's a non-blank customer number
+    if $scope.config.customer_number
+      $scope.customerNumberDisplayed = true
+    else
+      $scope.customerNumberDisplayed = false
+
     $scope.modelFieldList = resp.model_field_list
     $scope.eventList = resp.event_list
     $scope.outputStyles = resp.output_styles
@@ -109,6 +117,14 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
   
   $scope.saveConfig = () ->
     $scope.loadingFlag = "loading"
+    # Based on the value of the customer number / parent system code displayed flag, we'll want to strip
+    # out the value in the corresponding config value...as only one of customer number / parent system code
+    # should be allowed at a time.
+    if $scope.customerNumberDisplayed
+      $scope.config.parent_system_code = null
+    else
+      $scope.config.customer_number = null
+
     milestoneSvc.saveMilestoneUpdate($scope.config).then( (resp) ->
       $scope.errorHandler.clear()
       $scope.showIndex()
@@ -145,4 +161,11 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
   $scope.removeFingerprintField = (field) ->
     $scope.config.setup_json.fingerprint_fields = $scope.config.setup_json.fingerprint_fields.filter (s) ->
       s != field
+
+  $scope.toggleCustomerNumber = () ->
+    $scope.customerNumberDisplayed = false
+
+  $scope.toggleParentSystemCode = () ->
+    $scope.customerNumberDisplayed = true
+
 ]

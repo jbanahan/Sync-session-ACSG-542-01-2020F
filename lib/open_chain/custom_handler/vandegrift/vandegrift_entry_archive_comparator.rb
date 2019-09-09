@@ -10,10 +10,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
 
   def self.accept? snapshot
     accept = false
-    if super 
+    if super
       e = snapshot.recordable
-      archive_setup = AttachmentArchiveSetup.where(company_id: e.importer_id).first
-      if archive_setup.try(:send_in_real_time?)
+      archive_setup = attachment_archive_setup_for(e)
+      if archive_setup&.send_in_real_time?
         accept = e.broker_invoices.any?{ |bi| bi.invoice_date >= archive_setup.start_date && (archive_setup.end_date.nil? || bi.invoice_date <= archive_setup.end_date) }
       end
     end
@@ -41,10 +41,21 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
 
   def ftp_archive archive
     ent = archive.attachable
+    cust_no = customer_number(ent)
     filename = "#{ent.entry_number}_#{archive.attachment_type.gsub(" ", "_")}_#{Time.zone.now.strftime("%Y%m%d%H%M")}.pdf"
     S3.download_to_tempfile archive.bucket, archive.path, original_filename: filename  do |arc|
-      ftp_file arc, connect_vfitrack_net("to_ecs/attachment_archive/#{ent.customer_number}")
+      ftp_file arc, connect_vfitrack_net("to_ecs/attachment_archive/#{cust_no}")
     end
+  end
+
+  def customer_number entry
+    self.class.attachment_archive_setup_for(entry)&.send_as_customer_number.presence || entry.customer_number
+  end
+
+  def self.attachment_archive_setup_for entry
+    return nil unless entry&.importer
+
+    AttachmentArchiveSetup.setups_for(entry.importer).first
   end
 
 end; end; end; end

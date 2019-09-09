@@ -484,6 +484,36 @@ describe Company do
     end
   end
 
+  describe "parent_system_code" do
+    let (:company) { Factory(:company) }
+    let! (:parent_company) { 
+      f = Factory(:company)
+      f.linked_companies << company
+      f
+    }
+
+    it "returns nil if parent company doesn't have system code" do
+      expect(company.parent_system_code).to be_nil
+    end
+
+    context "with parental system code configured" do
+
+      before :each do 
+        parent_company.update! system_code: "SYSTEM"
+      end
+
+      it "returns parent system code" do
+        expect(company.parent_system_code).to eq "SYSTEM"
+      end
+
+      it "memoizes result" do
+        company.parent_system_code
+        parent_company.update! system_code: "NOTSYSTEM"
+        expect(company.parent_system_code).to eq "SYSTEM"
+      end
+    end
+  end
+  
   describe "find_or_create_company!" do
     subject { described_class }
 

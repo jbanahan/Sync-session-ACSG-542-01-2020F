@@ -8,8 +8,9 @@ module OpenChain; module CustomHandler; module Generator315Support
   include OpenChain::FtpFileSupport
 
   Data315 ||= Struct.new(:broker_reference, :entry_number, :ship_mode, :service_type, :carrier_code, :vessel, 
-                          :voyage_number, :port_of_entry, :port_of_lading, :cargo_control_number, :master_bills, :house_bills, :container_numbers,
-                          :po_numbers, :event_code, :event_date, :datasource, :sync_record)
+                          :voyage_number, :port_of_entry, :port_of_entry_location, :port_of_lading, :port_of_lading_location,
+                          :port_of_unlading, :port_of_unlading_location, :cargo_control_number, :master_bills, :house_bills, 
+                          :container_numbers, :po_numbers, :customer_number, :event_code, :event_date, :datasource, :sync_record)
                           
   MilestoneUpdate ||= Struct.new(:code, :date, :sync_record)
 
@@ -20,7 +21,7 @@ module OpenChain; module CustomHandler; module Generator315Support
     counter = 0
     data_315s = Array.wrap(data_315s)
     data_315s.each do |data|
-      write_315_xml root, customer_number, data
+      write_315_xml root, data
       counter += 1
     end
 
@@ -46,11 +47,31 @@ module OpenChain; module CustomHandler; module Generator315Support
     nil
   end
 
-  def write_315_xml parent_element, customer_number, data
+  def generate_and_send_315s setup, obj, milestones, testing = false
+    # split_entry_data_identifiers should be implemented by the including class
+    split_objects = split_entry_data_identifiers setup.output_style, obj
+    data_315s = []
+
+    split_objects.each do |data|
+      milestones.each do |milestone|
+        # create_315_data should be implemented by the including class
+        data_315s << create_315_data(obj, data, milestone)
+      end
+    end
+
+    generate_and_send_xml_document(setup_customer(setup), data_315s, testing) do |data_315|
+      data_315.sync_record.confirmed_at = Time.zone.now
+      data_315.sync_record.save!
+    end
+   
+    nil
+  end
+
+  def write_315_xml parent_element, data
     root = add_element parent_element, "VfiTrack315"
     add_element root, "BrokerReference", data.broker_reference
     add_element root, "EntryNumber", data.entry_number
-    add_element root, "CustomerNumber", customer_number
+    add_element root, "CustomerNumber", data.customer_number
     add_element root, "ShipMode", data.ship_mode
     add_element root, "ServiceType", data.service_type
     add_element root, "CarrierCode", data.carrier_code
@@ -58,7 +79,11 @@ module OpenChain; module CustomHandler; module Generator315Support
     # Voyage must be at least 2 chars to fit EDI document standards for the 315, so zero-pad the voyage to 2 chars
     add_element root, "VoyageNumber", data.voyage_number.to_s.rjust(2, "0")
     add_element root, "PortOfEntry", data.port_of_entry
+    write_location_xml(root, data.port_of_entry, "PortOfEntry", data.port_of_entry_location)
     add_element root, "PortOfLading", data.port_of_lading
+    write_location_xml(root, data.port_of_lading, "PortOfLading", data.port_of_lading_location)
+    add_element root, "PortOfUnlading", data.port_of_unlading
+    write_location_xml(root, data.port_of_unlading, "PortOfUnlading", data.port_of_unlading_location)
     add_element root, "CargoControlNumber", data.cargo_control_number
 
     add_collection_element root, "MasterBills", "MasterBill", data.master_bills
@@ -70,6 +95,24 @@ module OpenChain; module CustomHandler; module Generator315Support
     add_element event, "EventCode", data.event_code
     add_date_elements event, data.event_date, element_prefix: "Event"
 
+    nil
+  end
+
+  def write_location_xml xml, location_code, location_type, port
+    return unless port
+
+    location = add_element xml, "Location"
+    add_element location, "LocationType", location_type
+    add_element location, "LocationCode", location_code
+    add_element location, "LocationCodeType", determine_port_code_type(location_code, port)
+    add_element location, "Name", port.name
+    add_element location, "Address1", port.address&.line_1
+    add_element location, "Address2", port.address&.line_2
+    add_element location, "Address3", port.address&.line_3
+    add_element location, "City", port.address&.city
+    add_element location, "State", port.address&.state
+    add_element location, "PostalCode", port.address&.postal_code
+    add_element location, "Country", port.address&.country&.iso_code
     nil
   end
 
@@ -238,6 +281,29 @@ module OpenChain; module CustomHandler; module Generator315Support
       end
 
       v.respond_to?(:strip) ? v.strip : v
+    end
+  end
+
+  def setup_customer setup
+    setup.customer_number.presence || setup.parent_system_code
+  end
+
+  def determine_port_code_type code, port
+    return nil if code.blank?
+
+    case code.to_s.upcase
+    when port.schedule_d_code.to_s.upcase
+      "Schedule D"
+    when port.schedule_k_code.to_s.upcase
+      "Schedule K"
+    when port.unlocode.to_s.upcase
+      "UNLocode"
+    when port.iata_code.to_s.upcase
+      "IATA"
+    when port.cbsa_port.to_s.upcase
+      "CBSA"
+    else
+      nil
     end
   end
 

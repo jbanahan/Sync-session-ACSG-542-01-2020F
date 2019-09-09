@@ -423,7 +423,32 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           :import_lambda=>lambda { |obj, data| "Broker Invoice numbers ignored. (read only)"},
           :export_lambda=>lambda { |obj| obj.broker_invoices.map{|bi| bi.invoice_number}.uniq.join("\n") },
           :qualified_field_name=> '(SELECT GROUP_CONCAT(DISTINCT invoice_number SEPARATOR "\n") from broker_invoices as bi where bi.entry_id = entries.id)'
-      }]
+      }],
+      [248, :ent_invoice_missing_date, :invoice_missing_date, "Invoice Missing Date", {data_type: :date}],
+      [249, :ent_bol_discrepancy_date, :bol_discrepancy_date, "BOL Discrepancy Date", {data_type: :date}],
+      [250, :ent_detained_at_port_of_discharge_date, :detained_at_port_of_discharge_date, "Detained at Port of Discharge Date", {data_type: :date}],
+      [251, :ent_invoice_discrepancy_date, :invoice_discrepancy_date, "Invoice Discrepancy Date", {data_type: :date}],
+      [252, :ent_docs_missing_date, :docs_missing_date, "Docs Missing Date", {data_type: :date}],
+      [253, :ent_hts_missing_date, :hts_missing_date, "HTS Missing Date", {data_type: :date}],
+      [254, :ent_hts_expired_date, :hts_expired_date, "HTS Expired Date", {data_type: :date}],
+      [255, :ent_hts_misclassified_date, :hts_misclassified_date, "HTS Misclassified Date", {data_type: :date}],
+      [256, :ent_hts_need_additional_info_date, :hts_need_additional_info_date, "HTS Need Additional Info Date", {data_type: :date}],
+      [257, :ent_mid_discrepancy_date, :mid_discrepancy_date, "MID Discrepancy Date", {data_type: :date}],
+      [258, :ent_additional_duty_confirmation_date, :additional_duty_confirmation_date, "Additional Duty Confirmation Date", {data_type: :date}],
+      [259, :ent_pga_docs_missing_date, :pga_docs_missing_date, "PGA Docs Missing Date", {data_type: :date}],
+      [260, :ent_pga_docs_incomplete_date, :pga_docs_incomplete_date, "PGA Docs Incomplete Date", {data_type: :date}],
+      [261, :ent_exception, :exception, "Exception Flag", {
+        data_type: :boolean,
+        read_only: true,
+        import_lambda: lambda { |obj, data| "Exception Flag ignored. (read only)" },
+        export_lambda: lambda { |obj| Entry.milestone_exception_fields.map{ |f| obj.public_send f }.any? },
+        qualified_field_name: <<-SQL
+          (IF(#{Entry.milestone_exception_fields.map{ |f| "entries.#{f}" }.join(" OR ")}, true, false))
+        SQL
+      }],
+      [262,:ent_consignee_postal_code,:consignee_postal_code,"Ult Consignee Postal Code",{:data_type=>:string}],
+      [263,:ent_consignee_country_code,:consignee_country_code,"Ult Consignee Country",{:data_type=>:string}],
+      [264, :ent_miscellaneous_entry_exception_date, :miscellaneous_entry_exception_date, "Misc Entry Exception Date", {data_type: :date}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')

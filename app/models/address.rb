@@ -16,6 +16,7 @@
 #  line_3          :string(255)
 #  name            :string(255)
 #  phone_number    :string(255)
+#  port_id         :integer
 #  postal_code     :string(255)
 #  shipping        :boolean
 #  state           :string(255)
@@ -26,6 +27,7 @@
 #
 #  index_addresses_on_address_hash  (address_hash)
 #  index_addresses_on_company_id    (company_id)
+#  index_addresses_on_port_id       (port_id)
 #  index_addresses_on_system_code   (system_code)
 #
 
@@ -34,10 +36,12 @@ require 'digest/md5'
 class Address < ActiveRecord::Base
   attr_accessible :address_hash, :address_type, :city, :company_id, :company,
     :country_id, :country, :fax_number, :in_address_book, :line_1, :line_2, 
-    :line_3, :name, :phone_number, :postal_code, :shipping, :state, :system_code
+    :line_3, :name, :phone_number, :postal_code, :shipping, :state, :system_code,
+    :port_id
   
   belongs_to :company
 	belongs_to :country
+  belongs_to :port
   before_validation :set_hash_key
   before_destroy :check_in_use
   has_and_belongs_to_many :products, :join_table=>"product_factories", :foreign_key=>'address_id', :association_foreign_key=>'product_id'

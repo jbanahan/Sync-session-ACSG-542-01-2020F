@@ -1,6 +1,7 @@
 describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestComparator do
+  let (:importer) { Factory(:importer) }
+
   let! (:archive_setup) {
-    importer = Factory(:importer)
     AttachmentArchiveSetup.create! company_id: importer.id, combine_attachments: true, combined_attachment_order: "B\nA"
   }
 
@@ -32,7 +33,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     end
 
     it "does not accept snapshots for importers without archive setups" do
-      entry.update_attributes! importer_id: Factory(:importer)
+      entry.update_attributes! importer_id: Factory(:importer).id
       expect(subject.accept? snapshot).to eq false
     end
 
@@ -45,6 +46,13 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
       expect(master_setup).to receive(:custom_feature?).with("Document Stitching").and_return false
       expect(subject.accept? snapshot).to eq false
     end
+
+    it "accepts snapshots with importers that have parent attachment setups" do
+      parent = Factory(:company)
+      parent.linked_companies << importer
+      archive_setup.update! company_id: parent.id
+      expect(subject.accept? snapshot).to eq true
+    end
   end
 
   describe "compare" do
@@ -53,6 +61,19 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     end
 
     it "determines if any new attachments were added then generates and sends a stitch request" do
+      old_snapshot = snapshot_json(entry)
+      entry.attachments.create! attachment_type: "A", attached_file_name: "file.pdf"
+      new_snapshot = snapshot_json(entry)
+      expect(OpenChain::SQS).to receive(:send_json).with("queue", instance_of(Hash))
+
+      subject.compare old_snapshot, new_snapshot
+    end
+
+    it "uses parent's archive setup" do
+      parent = Factory(:company)
+      parent.linked_companies << importer
+      archive_setup.update! company_id: parent.id
+
       old_snapshot = snapshot_json(entry)
       entry.attachments.create! attachment_type: "A", attached_file_name: "file.pdf"
       new_snapshot = snapshot_json(entry)

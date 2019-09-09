@@ -44,6 +44,15 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
   private
     def save c, config
       c.customer_number = config[:customer_number]
+      # If the customer number is NOT blank, then we're going to nil out the parent system code, we only want
+      # one or the other active, not both.
+      if c.customer_number.blank?
+        c.parent_system_code = config[:parent_system_code]
+        c.customer_number = nil
+      else
+        c.parent_system_code = nil
+      end
+
       c.output_style = config[:output_style]
       c.enabled = config[:enabled].to_s.to_boolean
       c.testing = config[:testing].to_s.to_boolean
@@ -94,7 +103,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
     def config_json config, copy = false
       c = config.as_json(
-        only: [:id, :customer_number, :enabled, :output_style, :testing, :gtn_time_modifier, :module_type]
+        only: [:id, :customer_number, :enabled, :output_style, :testing, :module_type, :parent_system_code, :gtn_time_modifier]
       ).with_indifferent_access
 
       # This is a little wonkier than it needs to be due to supporting some older json formats in the setup_json field
@@ -111,6 +120,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
       if copy
         c[:milestone_notification_config][:customer_number] = ""
+        c[:milestone_notification_config][:parent_system_code] = ""
         c[:milestone_notification_config][:enabled] = false
         c[:milestone_notification_config][:id] = 0
       end

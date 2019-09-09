@@ -15,6 +15,14 @@
       $("#upd_iata").val($(this).attr('iata'));
       $("#upd_ao").prop('checked',$(this).attr('ao')==='true')
       $("#upd_ad").prop('checked',$(this).attr('ad')==='true')
+      $("#upd_address_id").val($(this).attr('address_id'));
+      $("#upd_address_line_1").val($(this).attr('line_1'));
+      $("#upd_address_line_2").val($(this).attr('line_2'));
+      $("#upd_address_line_3").val($(this).attr('line_3'));
+      $("#upd_address_city").val($(this).attr('city'));
+      $("#upd_address_state").val($(this).attr('state'));
+      $("#upd_address_postal_code").val($(this).attr('postal_code'));
+      $("#upd_address_country_iso_code").val($(this).attr('country_iso_code'));
       $("#mod_update_port").dialog('open');
     });
   });
@@ -58,7 +66,7 @@
         <%=p.active_destination? ? 'Y' : 'N' %>
       </td>
       <td>
-        <a href='#' class='upd_lnk' pid='<%=p.id%>' nm='<%=p.name%>' k='<%=p.schedule_k_code%>' d='<%= p.schedule_d_code %>' cp='<%=p.cbsa_port%>' cs='<%=p.cbsa_sublocation%>' u='<%=p.unlocode%>' iata='<%=p.iata_code%>' ao='<%=p.active_origin%>' ad='<%=p.active_destination%>'>Update</a> |
+        <a href='#' class='upd_lnk' pid='<%=p.id%>' nm='<%=p.name%>' k='<%=p.schedule_k_code%>' d='<%= p.schedule_d_code %>' cp='<%=p.cbsa_port%>' cs='<%=p.cbsa_sublocation%>' u='<%=p.unlocode%>' iata='<%=p.iata_code%>' ao='<%=p.active_origin%>' ad='<%=p.active_destination%>' address_id="<%=p.address&.id%>" line_1="<%=p.address&.line_1%>" line_2="<%=p.address&.line_2%>" line_3="<%=p.address&.line_3%>" city="<%=p.address&.city%>" state="<%=p.address&.state%>" postal_code="<%=p.address&.postal_code%>" country_iso_code="<%=p.address&.country&.iso_code%>">Update</a> |
         <%=link_to 'Delete', port_path(p), :data => {:confirm => 'Are you sure?'}, :method=>:delete%>
       </td>
     </tr>
@@ -79,6 +87,15 @@
       <%=field_row 'IATA Code', f.text_field(:unlocode)%>
       <%=field_row 'Origin Port', f.check_box(:active_origin)%>
       <%=field_row 'Destination Port', f.check_box(:active_destination)%>
+      <%= f.fields_for :address do |a| %>
+        <%=field_row 'Address 1', a.text_field(:line_1)%>
+        <%=field_row 'Address 2', a.text_field(:line_2)%>
+        <%=field_row 'Address 3', a.text_field(:line_3)%>
+        <%=field_row 'City', a.text_field(:city)%>
+        <%=field_row 'State', a.text_field(:state)%>
+        <%=field_row 'Postal Code', a.text_field(:postal_code)%>
+        <%=field_row 'Country ISO', a.text_field(:country_iso_code, :size=>3)%>
+      <% end %>
     </table>
   <%end-%>
 </div>
@@ -95,6 +112,17 @@
       <%=field_row 'IATA Code', f.text_field(:iata_code,:id=>'upd_iata')%>
       <%=field_row 'Origin Port', f.check_box(:active_origin,:id=>'upd_ao')%>
       <%=field_row 'Destination Port', f.check_box(:active_destination,:id=>'upd_ad')%>
+      <%= f.fields_for :address do |a| %>
+        <%=a.hidden_field(:id, id: "upd_address_id")%>
+        <%=field_row 'Address 1', a.text_field(:line_1,:id=>'upd_address_line_1')%>
+        <%=field_row 'Address 2', a.text_field(:line_2,:id=>'upd_address_line_2')%>
+        <%=field_row 'Address 3', a.text_field(:line_3,:id=>'upd_address_line_3')%>
+        <%=field_row 'City', a.text_field(:city,:id=>'upd_address_city')%>
+        <%=field_row 'State', a.text_field(:state,:id=>'upd_address_state')%>
+        <%=field_row 'Postal Code', a.text_field(:postal_code,:id=>'upd_address_postal_code')%>
+        <%=field_row 'Country ISO', a.text_field(:country_iso_code,:id=>'upd_address_country_iso_code', :size=>3)%>
+      <% end %>
+      
     </table>
   <%end-%>
 </div>

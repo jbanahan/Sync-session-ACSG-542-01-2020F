@@ -226,4 +226,53 @@ describe AttachmentArchiveSetup do
     end
     
   end
+
+  describe "setups_for" do
+    subject { described_class }
+
+    let (:company) { Factory(:company) }
+    let (:parent) { 
+      p = Factory(:company)
+      p.linked_companies << company
+      p
+    }
+
+    let (:parent_archive) { parent.create_attachment_archive_setup }
+    let (:child_archive) { company.create_attachment_archive_setup }
+
+    it "finds parent and child archives" do
+      parent_archive
+      child_archive
+
+      setups = subject.setups_for company
+      expect(setups.length).to eq 2
+      # The child archive should always be first
+      expect(setups.first).to eq child_archive
+      expect(setups.second).to eq parent_archive
+    end
+
+    it "finds child archive" do
+      child_archive
+      parent
+
+      setups = subject.setups_for company
+      expect(setups.length).to eq 1
+      expect(setups).to include child_archive
+    end
+
+    it "finds parent archive" do
+      parent_archive
+
+      setups = subject.setups_for company
+      expect(setups.length).to eq 1
+      expect(setups).to include parent_archive
+    end
+
+    it "returns blank array" do
+      parent
+
+      setups = subject.setups_for company
+      expect(setups.length).to eq 0
+    end
+  end
 end

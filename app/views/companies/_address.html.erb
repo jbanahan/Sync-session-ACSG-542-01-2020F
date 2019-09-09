@@ -16,22 +16,24 @@ $(document).ready( function() {
 <h2>Addresses</h2>
 <table class='detail_table'>
 	<thead>
-		<th>Name</th><th>City</th><th>Country</th><th>Shipment Address</th><th></th>
+		<th>Identifier</th><th>Name</th><th>City</th><th>Country</th><th>Shipment Address</th><th></th>
 	</thead>
 	<% @company.addresses.each do |ad| %>
-	<tr><td>
-          <%if @company.can_edit?(current_user)%>
-            <%= link_to ad.name, edit_company_address_path(@company, ad) %>
-          <%else%>
-            <%= link_to ad.name, company_address_path(@company,ad) %>
-          <%end%></td>
-        <td><%= ad.city %></td><td><%= ad.country.nil? ? " " : ad.country.name %></td>
-	<td><%= ad.shipping ? 'Yes' : 'No' %></td>
-        <% if current_user.admin? %>
-	<td>
-	<% unless @company.locked?%><%= link_to 'Delete', company_address_path(@company, ad) , :data => {:confirm => 'Are you sure?'}, :method => :delete %><%end%>
-	</td>
-        <% end %>
+	<tr>
+    <td><%=ad.system_code%></td>
+    <td>
+        <%if @company.can_edit?(current_user)%>
+          <%= link_to ad.name, edit_company_address_path(@company, ad) %>
+        <%else%>
+          <%= link_to ad.name, company_address_path(@company,ad) %>
+        <%end%></td>
+      <td><%= ad.city %></td><td><%= ad.country.nil? ? " " : ad.country.name %></td>
+  	<td><%= ad.shipping ? 'Yes' : 'No' %></td>
+          <% if current_user.admin? %>
+  	<td>
+  	<% unless @company.locked?%><%= link_to 'Delete', company_address_path(@company, ad) , :data => {:confirm => 'Are you sure?'}, :method => :delete %><%end%>
+  	</td>
+          <% end %>
 	</tr>
 	<% end %>
 </table>
@@ -43,6 +45,10 @@ $(document).ready( function() {
 <%= form_for(edit_add.nil? ? @company.addresses.build : edit_add) do |f| %>
 
   <%= f.hidden_field :company_id %>
+  <div class="field">
+    <%= f.label :system_code, "Identifier" %><br />
+    <%= f.text_field :system_code %>
+  </div>
   <div class="field">
     <%= f.label :name %><br />
     <%= f.text_field :name %>

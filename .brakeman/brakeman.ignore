@@ -3022,7 +3022,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/custom_features_controller.rb",
-      "line": 789,
+      "line": 807,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(CustomFile.find(params[:id]).secure_url)",
       "render_path": null,
@@ -4783,7 +4783,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/attachments_controller.rb",
-      "line": 127,
+      "line": 126,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(redirect_location(get_attachable(params[:attachable_type], params[:attachable_id])))",
       "render_path": null,
@@ -7676,6 +7676,25 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
+      "fingerprint": "e07cd21524c670592707faf373f56a42f8bd7be8e86a8920c179453548f80495",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/address.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":port_id",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "Address"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
       "fingerprint": "e0c77ece00cbaeec5b99c3621b4d4ddbe4a7cada13b38536652fcd82bf813113",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -7794,7 +7813,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/attachment_archive_setup.rb",
-      "line": 128,
+      "line": 151,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "Attachment.select(\"distinct attachments.#{(\"id\" or \"*\")}\").joins(\"INNER JOIN entries on entries.id = attachments.attachable_id AND attachments.attachable_type = \\\"Entry\\\"\").joins(\"LEFT OUTER JOIN attachment_archives_attachments on attachments.id = attachment_archives_attachments.attachment_id\").joins(self.class.sanitize_sql_array([\"LEFT OUTER JOIN attachments arc_packet ON attachments.attachable_id = arc_packet.attachable_id and arc_packet.attachment_type = ?\", \"Archive Packet\"])).where(\"arc_packet.id IS NULL OR arc_packet.id = attachments.id OR (#{Attachment.stitchable_attachment_extensions.collect do\n self.class.sanitize_sql_array([\"attachments.attached_file_name NOT like ?\", \"%#{ext}\"])\n end.join(\" AND \")})\")",
       "render_path": null,
@@ -8631,6 +8650,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2019-08-21 11:45:46 -0500",
+  "updated": "2019-09-06 15:56:12 -0500",
   "brakeman_version": "4.5.0"
 }

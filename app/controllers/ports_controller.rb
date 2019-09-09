@@ -22,9 +22,9 @@ class PortsController < ApplicationController
     admin_secure {
       p = Port.find params[:id]
       nullify_blank_code_attributes
-      p.update_attributes(params[:port])
+      save_port(params, p)
       errors_to_flash p
-      add_flash :notices, "Port created successfully." if flash[:errors].blank?
+      add_flash :notices, "Port successfully updated." if flash[:errors].blank?
       redirect_to request.referrer
     }
   end
@@ -32,8 +32,8 @@ class PortsController < ApplicationController
   def create
     admin_secure {
       nullify_blank_code_attributes
-      errors_to_flash Port.create(params[:port])
-      add_flash :notices, "Port created successfully." if flash[:errors].blank?
+      errors_to_flash(save_port(params, Port.new))
+      add_flash :notices, "Port successfully created." if flash[:errors].blank?
       redirect_to request.referrer
     }
   end
@@ -41,7 +41,7 @@ class PortsController < ApplicationController
   def destroy
     admin_secure {
       errors_to_flash Port.find(params[:id]).destroy
-      add_flash :notices, "Port deleted successfully." if flash[:errors].blank?
+      add_flash :notices, "Port successfully deleted." if flash[:errors].blank?
       redirect_to request.referrer
     }
   end
@@ -53,9 +53,41 @@ class PortsController < ApplicationController
   private 
     def nullify_blank_code_attributes
       # This is needed so the Port Code model field uses the correct field (without needing a massive case statement and length checking)
-      params["port"]["schedule_d_code"] = nil if params["port"]["schedule_d_code"].blank?
-      params["port"]["schedule_k_code"] = nil if params["port"]["schedule_k_code"].blank?
-      params["port"]["unlocode"] = nil if params["port"]["unlocode"].blank?
-      params["port"]["cbsa_port"] = nil if params["port"]["cbsa_port"].blank?
+      [:schedule_k_code, :schedule_d_code, :unlocode, :cbsa_port, :cbsa_sublocation, :iata_code].each do |k|
+        params[:port][k] = nil if params[:port][k].blank?
+      end
+    end
+
+    def save_port params, port
+      port_params = params[:port]
+      address_params = params[:port].delete(:address) if params[:port][:address]
+      Port.transaction do 
+        port.update port_params
+        handle_address port, address_params
+      end
+      port
+    end
+
+    def handle_address port, address_params
+      return if address_params.blank?
+
+      compacted = address_params.delete_if {|k, v| v.blank? || k == "id" }
+      # Delete the backing address record if id is the only thing that's not blank
+      if compacted.blank?
+        port.address.destroy if port.address
+      else
+        country_iso = address_params.delete :country_iso_code
+        country = Country.find_by(iso_code: country_iso) unless country_iso.blank?
+        if country_iso.present? && country.nil?
+          port.errors[:base] = "Invalid Country ISO '#{country_iso}'."
+          raise ActiveRecord::Rollback
+        else
+          address_params[:country_id] = country&.id if country
+          address = port.address
+          address = port.build_address if address.nil?
+          address.update address_params
+        end
+      end
+      nil
     end
 end

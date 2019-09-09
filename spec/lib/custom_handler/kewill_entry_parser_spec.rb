@@ -46,6 +46,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'uc_address_2' => "STE 123",
         'uc_state' => "PA",
         'uc_city' => "Fakesville",
+        'uc_zip' => "12345",
+        'uc_country' => "XX",
         'mot' => 10,
         'carrier' => "Carrier",
         'carrier_name' => "Carrier Name",
@@ -151,7 +153,23 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>99846, 'date'=>201701041500},          
           {'date_no'=>99844, 'date'=>201701041600},
           
-          {'date_no'=>92033, 'date'=>201712181400}
+          {'date_no'=>92033, 'date'=>201712181400},
+
+          # milestone exceptions
+          {'date_no'=>3000, 'date'=>201701050000},
+          {'date_no'=>3001, 'date'=>201701060000},
+          {'date_no'=>3002, 'date'=>201701070000},
+          {'date_no'=>3003, 'date'=>201701080000},
+          {'date_no'=>3004, 'date'=>201701090000},
+          {'date_no'=>3005, 'date'=>201701100000},
+          {'date_no'=>3006, 'date'=>201701110000},
+          {'date_no'=>3007, 'date'=>201701120000},
+          {'date_no'=>3008, 'date'=>201701130000},
+          {'date_no'=>3009, 'date'=>201701140000},
+          {'date_no'=>3010, 'date'=>201701150000},
+          {'date_no'=>3011, 'date'=>201701160000},
+          {'date_no'=>3012, 'date'=>201701170000},
+          {'date_no'=>3013, 'date'=>201701180000}
         ],
         'notes' => [
           {'note' => "Document Image created for F7501F   7501 Form.", 'modified_by'=>"User1", 'date_updated' => 201503191930, 'confidential' => "Y"},
@@ -441,6 +459,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.consignee_address_2).to eq "STE 123"
       expect(entry.consignee_city).to eq "Fakesville"
       expect(entry.consignee_state).to eq "PA"
+      expect(entry.consignee_postal_code).to eq "12345"
+      expect(entry.consignee_country_code).to eq "XX"
       expect(entry.transport_mode_code).to eq "10"
       expect(entry.carrier_code).to eq "Carrier"
       expect(entry.house_carrier_code).to eq "SCAC"
@@ -527,7 +547,23 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.hold_date).to eq tz.parse "201701031300"
       expect(entry.hold_release_date).to eq tz.parse "201701041500" 
       expect(entry.fish_and_wildlife_hold_date).to eq tz.parse "201701041400"
-      expect(entry.fish_and_wildlife_hold_release_date).to eq tz.parse "201701041500" 
+      expect(entry.fish_and_wildlife_hold_release_date).to eq tz.parse "201701041500"
+
+      # exception dates
+      expect(entry.miscellaneous_entry_exception_date).to eq tz.parse("201701050000").to_date
+      expect(entry.invoice_missing_date).to eq tz.parse("201701060000").to_date
+      expect(entry.bol_discrepancy_date).to eq tz.parse("201701070000").to_date
+      expect(entry.detained_at_port_of_discharge_date).to eq tz.parse("201701080000").to_date
+      expect(entry.invoice_discrepancy_date).to eq tz.parse("201701090000").to_date
+      expect(entry.docs_missing_date).to eq tz.parse("201701100000").to_date
+      expect(entry.hts_missing_date).to eq tz.parse("201701110000").to_date
+      expect(entry.hts_expired_date).to eq tz.parse("201701120000").to_date
+      expect(entry.hts_misclassified_date).to eq tz.parse("201701130000").to_date
+      expect(entry.hts_need_additional_info_date).to eq tz.parse("201701140000").to_date
+      expect(entry.mid_discrepancy_date).to eq tz.parse("201701150000").to_date
+      expect(entry.additional_duty_confirmation_date).to eq tz.parse("201701160000").to_date
+      expect(entry.pga_docs_missing_date).to eq tz.parse("201701170000").to_date
+      expect(entry.pga_docs_incomplete_date).to eq tz.parse("201701180000").to_date
       
       expect(entry.fish_and_wildlife_transmitted_date).to eq tz.parse "201701041600"
       expect(entry.fish_and_wildlife_secure_facility_date).to eq tz.parse "201701041400"

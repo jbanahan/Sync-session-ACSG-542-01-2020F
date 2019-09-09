@@ -85,9 +85,14 @@ var OpenChain = (function() {
       var frm_id = $(this).attr('form_id');
       var key = $(this).attr('key_map');
       if(frm_id) {
-        $(this).click(function() {$("#"+frm_id).submit();});
+        submitForm = function (e) {
+          // This prevents double form submissions in several cases
+          e.preventDefault();
+          $("#"+frm_id).submit();
+        }
+        $(this).click(submitForm);
         if(key) {
-          OpenChain.addKeyMap(key,$(this).html(),function() {$("#"+frm_id).submit();});
+          OpenChain.addKeyMap(key,$(this).html(), submitForm);
           OpenChain.activateHotKeys();
         }
       }

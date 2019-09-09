@@ -2,22 +2,24 @@
 #
 # Table name: milestone_notification_configs
 #
-#  customer_number   :string(255)
-#  enabled           :boolean
-#  gtn_time_modifier :boolean
-#  id                :integer          not null, primary key
-#  module_type       :string(255)
-#  output_style      :string(255)
-#  setup             :text(65535)
-#  testing           :boolean
+#  customer_number    :string(255)
+#  enabled            :boolean
+#  gtn_time_modifier  :boolean
+#  id                 :integer          not null, primary key
+#  module_type        :string(255)
+#  output_style       :string(255)
+#  parent_system_code :string(255)
+#  setup              :text(65535)
+#  testing            :boolean
 #
 # Indexes
 #
-#  index_milestone_configs_on_type_cust_no_testing  (module_type,customer_number,testing)
+#  idx_milestone_configs_on_type_parent_sys_code_testing  (module_type,parent_system_code,testing)
+#  index_milestone_configs_on_type_cust_no_testing        (module_type,customer_number,testing)
 #
 
 class MilestoneNotificationConfig < ActiveRecord::Base
-  attr_accessible :customer_number, :enabled, :module_type, :output_style, :setup, :testing, :gtn_time_modifier
+  attr_accessible :customer_number, :enabled, :module_type, :output_style, :setup, :testing, :gtn_time_modifier, :parent_system_code
 
   # In other words...a config for outputting a 315
   has_many :search_criterions, dependent: :destroy, autosave: true

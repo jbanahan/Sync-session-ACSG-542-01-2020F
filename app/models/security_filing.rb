@@ -85,6 +85,10 @@ class SecurityFiling < ActiveRecord::Base
     :transaction_number, :transport_mode_code, :unlading_port_code, 
     :us_customs_first_file_date, :vessel, :vessel_departure_date, :voyage
   
+  belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'
+  belongs_to :unlading_port, :class_name=>'Port', :foreign_key=>'unlading_port_code', :primary_key=>'schedule_d_code'
+  belongs_to :entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'schedule_d_code'
+  
   belongs_to :importer, :class_name=>'Company'
   has_many :security_filing_lines, -> { order(:line_number) }, dependent: :destroy, autosave: true
   has_many :piece_sets, :through=>:security_filing_lines

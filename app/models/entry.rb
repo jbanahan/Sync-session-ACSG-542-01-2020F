@@ -4,6 +4,7 @@
 #
 #  across_declaration_accepted            :datetime
 #  across_sent_date                       :datetime
+#  additional_duty_confirmation_date      :date
 #  ams_hold_date                          :datetime
 #  ams_hold_release_date                  :datetime
 #  aphis_hold_date                        :datetime
@@ -14,6 +15,7 @@
 #  atf_hold_release_date                  :datetime
 #  available_date                         :datetime
 #  b3_print_date                          :datetime
+#  bol_discrepancy_date                   :date
 #  bol_received_date                      :datetime
 #  bond_type                              :string(255)
 #  broker_invoice_total                   :decimal(12, 2)
@@ -37,6 +39,8 @@
 #  consignee_address_1                    :string(255)
 #  consignee_address_2                    :string(255)
 #  consignee_city                         :string(255)
+#  consignee_country_code                 :string(255)
+#  consignee_postal_code                  :string(255)
 #  consignee_state                        :string(255)
 #  container_numbers                      :text(65535)
 #  container_sizes                        :string(255)
@@ -53,8 +57,10 @@
 #  delivery_order_pickup_date             :datetime
 #  departments                            :text(65535)
 #  destination_state                      :string(255)
+#  detained_at_port_of_discharge_date     :date
 #  direct_shipment_date                   :date
 #  division_number                        :string(255)
+#  docs_missing_date                      :date
 #  docs_received_date                     :date
 #  documentation_request_date             :datetime
 #  duty_due_date                          :date
@@ -69,6 +75,7 @@
 #  eta_date                               :date
 #  exam_ordered_date                      :datetime
 #  exam_release_date                      :datetime
+#  exception                              :boolean
 #  expected_update_time                   :datetime
 #  export_country_codes                   :string(255)
 #  export_date                            :date
@@ -107,12 +114,18 @@
 #  hold_release_date                      :datetime
 #  house_bills_of_lading                  :text(65535)
 #  house_carrier_code                     :string(255)
+#  hts_expired_date                       :date
+#  hts_misclassified_date                 :date
+#  hts_missing_date                       :date
+#  hts_need_additional_info_date          :date
 #  id                                     :integer          not null, primary key
 #  import_country_id                      :integer
 #  import_date                            :date
 #  importer_id                            :integer
 #  importer_request_date                  :datetime
 #  importer_tax_id                        :string(255)
+#  invoice_discrepancy_date               :date
+#  invoice_missing_date                   :date
 #  invoice_paid_date                      :datetime
 #  isf_accepted_date                      :datetime
 #  isf_sent_date                          :datetime
@@ -147,6 +160,8 @@
 #  master_bills_of_lading                 :text(65535)
 #  merchandise_description                :string(255)
 #  mfids                                  :text(65535)
+#  mid_discrepancy_date                   :date
+#  miscellaneous_entry_exception_date     :date
 #  monthly_statement_due_date             :date
 #  monthly_statement_number               :string(255)
 #  monthly_statement_paid_date            :date
@@ -171,9 +186,15 @@
 #  part_number_request_date               :datetime
 #  part_numbers                           :text(65535)
 #  pay_type                               :integer
+#  pga_docs_incomplete_date               :date
+#  pga_docs_missing_date                  :date
 #  po_numbers                             :text(65535)
 #  po_request_date                        :datetime
 #  product_lines                          :string(255)
+#  protest_completion_date                :date
+#  protest_decision_1_date                :date
+#  protest_decision_2_date                :date
+#  protest_file_date                      :date
 #  recon_flags                            :string(255)
 #  release_cert_message                   :string(255)
 #  release_date                           :datetime
@@ -248,11 +269,11 @@ class Entry < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
 
-  attr_accessible :across_declaration_accepted, :across_sent_date, 
+  attr_accessible :across_declaration_accepted, :across_sent_date, :additional_duty_confirmation_date,
     :ams_hold_date, :ams_hold_release_date, :aphis_hold_date, 
     :aphis_hold_release_date, :arrival_date, :arrival_notice_receipt_date, 
     :atf_hold_date, :atf_hold_release_date, :available_date, :b3_print_date, 
-    :bol_received_date, :bond_type, :broker_invoice_total, :broker_reference, 
+    :bol_discrepancy_date, :bol_received_date, :bond_type, :broker_invoice_total, :broker_reference, 
     :cadex_accept_date, :cadex_sent_date, :cancelled_date, :cargo_control_number, 
     :cargo_manifest_hold_date, :cargo_manifest_hold_release_date, :carrier_code, 
     :carrier_name, :cbp_hold_date, :cbp_hold_release_date, 
@@ -263,8 +284,8 @@ class Entry < ActiveRecord::Base
     :customer_number, :customer_references, :daily_statement_approved_date, 
     :daily_statement_due_date, :daily_statement_number, :ddtc_hold_date, 
     :ddtc_hold_release_date, :delivery_order_pickup_date, :departments, 
-    :destination_state, :direct_shipment_date, :division_number, 
-    :docs_received_date, :documentation_request_date, :duty_due_date, 
+    :destination_state, :detained_at_port_of_discharge_date, :direct_shipment_date, :division_number, 
+    :docs_missing_date, :docs_received_date, :documentation_request_date, :duty_due_date, 
     :edi_received_date, :employee_name, :entered_value, :entry_filed_date, 
     :entry_number, :entry_port_code, :entry_type, :error_free_release, :eta_date, 
     :exam_ordered_date, :exam_release_date, :expected_update_time, 
@@ -279,10 +300,11 @@ class Entry < ActiveRecord::Base
     :fish_and_wildlife_secure_facility_date, :fish_and_wildlife_transmitted_date, 
     :free_date, :freight_pickup_date, :fsis_hold_date, :fsis_hold_release_date, 
     :gross_weight, :hmf, :hold_date, :hold_release_date, :house_bills_of_lading, 
-    :house_carrier_code, :import_country_id, :import_date, :importer_id, :importer, 
-    :importer_request_date, :importer_tax_id, :invoice_paid_date, :isf_accepted_date, 
-    :isf_sent_date, :it_numbers, :k84_due_date, :k84_month, :k84_receive_date, 
-    :lading_port_code, :lading_port, :last_7501_print, :last_billed_date, 
+    :house_carrier_code, :hts_expired_date, :hts_misclassified_date, :hts_missing_date, 
+    :hts_need_additional_info_date, :import_country_id, :import_date, :importer_id, :importer, 
+    :importer_request_date, :importer_tax_id, :invoice_discrepancy_date, :invoice_missing_date, 
+    :invoice_paid_date, :isf_accepted_date, :isf_sent_date, :it_numbers, :k84_due_date, :k84_month, 
+    :k84_receive_date, :lading_port_code, :lading_port, :last_7501_print, :last_billed_date, 
     :last_exported_from_source, :last_file_bucket, :last_file_path, 
     :liquidation_action_code, :liquidation_action_description, :liquidation_ada, 
     :liquidation_cvd, :liquidation_date, :liquidation_duty, 
@@ -291,14 +313,14 @@ class Entry < ActiveRecord::Base
     :liquidation_total, :liquidation_type, :liquidation_type_code, 
     :location_of_goods, :location_of_goods_description, 
     :manifest_info_received_date, :master_bills_of_lading, 
-    :merchandise_description, :mfids, :monthly_statement_due_date, 
+    :merchandise_description, :mfids, :mid_discrepancy_date, :miscellaneous_entry_exception_date, :monthly_statement_due_date, 
     :monthly_statement_number, :monthly_statement_paid_date, 
     :monthly_statement_received_date, :mpf, :nhtsa_hold_date, 
     :nhtsa_hold_release_date, :nmfs_hold_date, :nmfs_hold_release_date, 
     :ogd_request_date, :on_hold, :one_usg_date, :origin_country_codes, 
     :origin_state_codes, :other_agency_hold_date, :other_agency_hold_release_date, 
     :other_fees, :paperless_certification, :paperless_release, :pars_ack_date, 
-    :pars_reject_date, :part_number_request_date, :part_numbers, :pay_type, 
+    :pars_reject_date, :part_number_request_date, :part_numbers, :pay_type, :pga_docs_incomplete_date, :pga_docs_missing_date, 
     :po_numbers, :po_request_date, :product_lines, :recon_flags, 
     :release_cert_message, :release_date, :release_type, :ship_terms, 
     :source_system, :special_program_indicators, :special_tariff, 
@@ -592,6 +614,12 @@ class Entry < ActiveRecord::Base
         {label: "Liquidated", value: liquidation_date}
       ]
     end
+  end
+
+  def self.milestone_exception_fields
+    [:miscellaneous_entry_exception_date, :invoice_missing_date, :bol_discrepancy_date, :detained_at_port_of_discharge_date, 
+     :invoice_discrepancy_date, :docs_missing_date, :hts_missing_date, :hts_expired_date, :hts_misclassified_date, :hts_need_additional_info_date, 
+     :mid_discrepancy_date, :additional_duty_confirmation_date, :pga_docs_missing_date, :pga_docs_incomplete_date]
   end
   
   private

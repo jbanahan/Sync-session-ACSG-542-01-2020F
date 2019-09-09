@@ -66,7 +66,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
   # Simple helper to reach into the entity hash and extract model fields
   # If you are working w/ a CustomField, you may include the CustomDefinition for the field
   # as the field_name
-  def mf(entity_hash, field_name, coerce: true)
+  def mf(entity_hash, field_name, coerce: true, split_values: false)
     if field_name.respond_to?(:model_field_uid)
       field_name = field_name.model_field_uid
     else
@@ -85,7 +85,8 @@ module OpenChain; module EntityCompare; module ComparatorHelper
       value = coerce_model_field_value(field_name, value)
     end
 
-    value
+    # Entry is just used here as a concrete implemetation of the CoreObjectModule's split_newline_values method
+    split_values ? Entry.split_newline_values(value) : value
   end
 
   def unwrap_entity(entity)
