@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/vandegrift/kewill_entry_comparator'
 require 'open_chain/custom_handler/foot_locker/foot_locker_810_generator'
 
 module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry810Comparator
-  extend OpenChain::CustomHandler::Vandegrift::KewillEntryComparator
+  extend OpenChain::EntityCompare::EntryComparator
   include OpenChain::FtpFileSupport
   include OpenChain::XmlBuilder
 
@@ -11,21 +11,31 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
     accept = super
     if accept
       entry = snapshot.recordable
-      # I thought about using release date, but we really should be billing even files that weren't released as long as they have
-      # actually been filed with customs and have broker invoices
-      accept = ['FOOLO', 'FOOCA', 'TEAED'].include?(entry.customer_number) && has_all_entry_dates?(entry) && entry.last_billed_date >= Date.new(2018, 5, 7) && entry.broker_invoices.length > 0 
+      accept = ['FOOLO', 'FOOCA', 'TEAED', 'FOOTLOCKE'].include?(entry.customer_number) && has_all_entry_dates?(entry) && recent_entry?(entry) && entry.broker_invoices.length > 0
     end
 
     accept
   end
 
   def self.has_all_entry_dates? entry
-    [:entry_filed_date, :last_billed_date, :arrival_date, :release_date].each do |attribute|
+    # Arrival date for newer Canada entries received via Fenix ("FOOTLOCKE") is populated with the release date.
+    # It is blank, however, in older entries.  Since it's just a dupe of release date anyway, there's no point
+    # in checking for it.
+    required_date_fields = entry.customer_number == "FOOTLOCKE" ? [:entry_filed_date, :file_logged_date, :release_date] :
+                                [:entry_filed_date, :file_logged_date, :arrival_date, :release_date]
+
+    required_date_fields.each do |attribute|
       val = entry.public_send(attribute)
       return false if val.nil?
     end
 
     return true
+  end
+
+  # 810s are not generated for older entries.  There's an arbitrary cut-off point.  File logged date was chosen
+  # because it's set for Kewill and Fenix-sourced entries.
+  def self.recent_entry? entry
+    entry.file_logged_date >= Date.new(2019, 1, 1)
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -60,7 +70,8 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
           write_xml(xml, t)
           t.flush
           t.rewind
-          ftp_sync_file t, sr, connect_vfitrack_net("to_ecs/footlocker_810")
+          suffix = entry.customer_number == 'FOOTLOCKE' ? '_CA' : ''
+          ftp_sync_file t, sr, connect_vfitrack_net("to_ecs/footlocker_810#{suffix}")
         end
       end
 
