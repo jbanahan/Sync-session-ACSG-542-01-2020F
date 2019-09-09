@@ -72,6 +72,7 @@ RSpec.configure do |config|
     OpenChain::Registries::OrderAcceptanceRegistry.clear
     OpenChain::Registries::CustomizedApiResponseRegistry.clear
     OpenChain::Registries::ShipmentRegistry.clear
+    OpenChain::AntiVirus::TestingAntiVirus.scan_value = true
   end
 
   # Clears out the deliveries array before every test..which is only done automatically

@@ -29,6 +29,10 @@ require 'open_chain/google_drive'
 require 'open_chain/s3'
 
 class Attachment < ActiveRecord::Base
+  # There are a few corner cases where a virus scan is not required and would be detrimental to run due to large file sizes
+  # The AttachmentAntiVirusValidator looks for this attribute and will skip if it's set to true
+  attr_accessor :skip_virus_scan
+  
   attr_accessible :alliance_revision, :alliance_suffix, :attachable_id,
     :attachable, :attachable_type, :attached_content_type, :attached_file_name, 
     :attached_file_size, :attached_updated_at, :attachment_type, :checksum, 

@@ -71,7 +71,7 @@ describe AttachmentsController do
       end
 
       it "errors if attachment can't be saved" do
-        allow_any_instance_of(Attachment).to receive(:save!) do |att|
+        allow_any_instance_of(Attachment).to receive(:save) do |att|
           att.errors[:base] << "SOMETHING WRONG"
           false
         end
@@ -111,7 +111,7 @@ describe AttachmentsController do
       end
 
       it "errors if attachment can't be saved" do
-        allow_any_instance_of(Attachment).to receive(:save!) do |att|
+        allow_any_instance_of(Attachment).to receive(:save) do |att|
           att.errors[:base] << "SOMETHING WRONG"
           false
         end

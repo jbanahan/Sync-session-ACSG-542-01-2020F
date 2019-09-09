@@ -48,6 +48,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
           other_archive = entity.attachments.find { |a| a.attachment_type == Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE }
           if other_archive.nil? || other_archive.created_at <= created_at 
             attachment = entity.attachments.build
+            # Since we're composing a (potentially large) file from files that have already been virus scanned, we can skip the attachment
+            # virus scanning for the archive packets.
+            attachment.skip_virus_scan = true
             attachment.attachment_type = Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
             attachment.attached = f
             # Use the created_at timestamp to record the actual time the stitch request was 

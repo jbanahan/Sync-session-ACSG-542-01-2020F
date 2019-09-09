@@ -62,7 +62,9 @@ module OpenChain
             end
           end
 
-          ftp_file f, connect_vfitrack_net(@settings['ftp_folder'], archive.name)
+          # The zip file we're sending is going to be hundreds of MB large, we can't virus scan it without killing the machine
+          # This is fine though, because the documents themselves have already been scanned as they came into the system via imaging.
+          ftp_file f, connect_vfitrack_net(@settings['ftp_folder'], archive.name).merge({ skip_virus_scan: true })
 
           if @settings['notification_email'].present?
             OpenMailer.send_simple_html(@settings['notification_email'],

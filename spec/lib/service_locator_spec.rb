@@ -8,6 +8,13 @@ describe OpenChain::ServiceLocator do
   let (:service) {
     Class.new
   }
+  let (:parent_service) {
+    Class.new do
+      def self.child_services
+        @services ||= [Object.new]
+      end
+    end
+  }
 
   describe "register" do
     it "should silently allow duplicate registration without creating duplicates" do
@@ -27,11 +34,25 @@ describe OpenChain::ServiceLocator do
     end
 
     it "looks for child_services on service object" do
-      def service.child_services; ["1", "2"]; end
+      expect(subject).to receive(:add_to_internal_registry).with parent_service.child_services
 
-      expect(subject).to receive(:add_to_internal_registry).with ["1", "2"]
+      subject.register parent_service
+    end
+
+    it "calls callback method" do
+      def service.registered; ;end
+      expect(service).to receive(:registered)
 
       subject.register service
+    end
+
+    it "calls callback method for all child services" do
+      parent_service.child_services.each do |s|
+        def s.registered; ; end
+        expect(s).to receive(:registered)
+      end
+
+      subject.register parent_service
     end
   end
 

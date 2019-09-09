@@ -299,8 +299,16 @@
           scope.$apply()
         complete: (response) ->
           el.find('div.progress').hide()
-        error: ->
-          el.find('div.att-msg').addClass('error').html('There was an error uploading this file. Please reload the page.')
+        error: (response) ->
+          json = response.responseJSON
+          message = ""
+          if json && json.errors && json.errors.length > 0
+            message += error for error in json.errors
+          else
+            message = 'There was an error uploading this file.'
+
+          message += ' Please reload the page.'
+          el.find('div.att-msg').addClass('error').text(message)
       }
       el.find('form').ajaxForm(options)
   }

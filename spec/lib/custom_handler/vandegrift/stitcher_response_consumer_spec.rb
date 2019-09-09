@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
       expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "Archive Packet") do |val|
         expect(val.id).to eq entry.id
       end
-      
+      expect_any_instance_of(Attachment).to receive(:skip_virus_scan=).with(true)
       Timecop.freeze(now) do 
         expect(subject.process_stitch_response stitch_response).to eq true
       end

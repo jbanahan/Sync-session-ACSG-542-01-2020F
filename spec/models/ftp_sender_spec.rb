@@ -301,9 +301,23 @@ describe FtpSender do
         allow(@ftp).to receive(:last_response).and_return "200"
         attachment = double("Attachment")
         expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
+        expect(attachment).not_to receive(:skip_virus_scan=)
         expect(attachment).to receive(:attached=)
         session = FtpSender.send_file @server, @username, @password, @file
         expect(session.file_name).to eq("original.txt")
+      end
+
+      it "should log message if error is not raised" do
+        # This just makes sure all the expected ftp proxy object calls are done
+        expect(@ftp).to receive(:after_login).with(kind_of(Hash))
+        expect(@ftp).to receive(:send_file).with @file.path, File.basename(@file), kind_of(Hash)
+        allow(@ftp).to receive(:last_response).and_return "200"
+
+        attachment = double("Attachment")
+        expect_any_instance_of(FtpSession).to receive(:build_attachment).and_return attachment
+        expect(attachment).to receive(:skip_virus_scan=).with(true)
+        expect(attachment).to receive(:attached=)
+        FtpSender.send_file @server, @username, @password, @file, skip_virus_scan: true
       end
     end
 

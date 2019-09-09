@@ -21,7 +21,7 @@ class AttachmentsController < ApplicationController
       if attachable.can_attach?(current_user)
         Lock.db_lock(attachable) do
           att.uploaded_by = current_user
-          if att.save!
+          if att.save
             saved = true
             attachable.log_update(current_user) if attachable.respond_to?(:log_update)
             attachable.attachment_added(att) if attachable.respond_to?(:attachment_added)

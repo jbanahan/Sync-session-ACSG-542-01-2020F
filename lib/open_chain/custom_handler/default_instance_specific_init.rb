@@ -2,6 +2,7 @@ require 'open_chain/registries/password_validation_registry'
 require 'open_chain/registries/order_booking_registry'
 require 'open_chain/registries/order_acceptance_registry'
 require 'open_chain/registries/shipment_registry'
+require 'open_chain/anti_virus/anti_virus_registry'
 
 module OpenChain; module CustomHandler; class DefaultInstanceSpecificInit
   def self.init
@@ -23,6 +24,18 @@ module OpenChain; module CustomHandler; class DefaultInstanceSpecificInit
     if OpenChain::Registries::ShipmentRegistry.registered.length == 0
       require 'open_chain/registries/default_shipment_registry'
       OpenChain::Registries::ShipmentRegistry.register OpenChain::Registries::DefaultShipmentRegistry
+    end
+
+    if OpenChain::AntiVirus::AntiVirusRegistry.registered.length == 0
+      # We should only use the actual ClamAV based anti-virus in production
+      if MasterSetup.test_env? || MasterSetup.development_env?
+        require 'open_chain/anti_virus/testing_anti_virus'
+        OpenChain::AntiVirus::AntiVirusRegistry.register OpenChain::AntiVirus::TestingAntiVirus
+      else
+        require 'open_chain/anti_virus/clamby_anti_virus'
+        OpenChain::AntiVirus::AntiVirusRegistry.register OpenChain::AntiVirus::ClambyAntiVirus
+      end
+      
     end
 
     if MasterSetup.get.custom_feature?("Document Stitching")

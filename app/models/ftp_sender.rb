@@ -13,6 +13,9 @@ class FtpSender
   #  :force_empty (default = false) - send zero length files
   #  :protocol - if set to "sftp" sftp will be used, anything else will use plain ftp
   #  :attachment_id - if set to an int value, the file associated with the id will be sent (in this value is set, the file argument can be nil)
+  #  :skip_virus_scan - skip_virus_scan, if set to true (and true only), will bypass the virus scan done on all attachments.  This should only EVER
+  #   be used in situations where the file may be huge and scanning it cause issues AND when you know the file is ok (.ie composed of attachments that
+  #   have already been scanned).
   def self.send_file server, username, password, arg_file, opts = {}
     # This needs to be outside the get_file_to_ftp otherwise we end up with a potentially wrong default remote file name
     # when the options come from a JSON option string (.ie retries)
@@ -143,6 +146,7 @@ class FtpSender
         # Make sure we're storing the attachment off under the name we sent it as
         Attachment.add_original_filename_method file, remote_name
         att = session.build_attachment
+        att.skip_virus_scan = true if opts[:skip_virus_scan] == true
         att.attached = file
       end
     end
