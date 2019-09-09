@@ -59,27 +59,30 @@ module OpenChain; module Report; class DutySavingsReport
   end
 
   def query(start_date, end_date, customer_numbers)
-    <<-SQL
-      SELECT 
-        ent.broker_reference AS 'Broker Ref#',
-        ent.arrival_date AS 'Arrival Date',
-        ent.release_date AS 'Release Date',
-        cil.vendor_name AS 'Vendor Name',
-        cil.po_number AS 'PO Number',
-        cil.value AS 'Invoice Line Value',
-        SUM(cit.entered_value) AS 'Entered Value',
-        cil.value - SUM(cit.entered_value) AS 'Cost Savings',
-        IF((SUM(cit.entered_value) = 0) OR ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)< 1,0,ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)) AS 'Duty Savings'
-      FROM entries ent
-        INNER JOIN commercial_invoices ci ON ci.entry_id = ent.id
-        INNER JOIN commercial_invoice_lines cil ON cil.commercial_invoice_id = ci.id
-        INNER JOIN commercial_invoice_tariffs cit ON cit.commercial_invoice_line_id = cil.id
-      WHERE ent.customer_number IN (#{customer_numbers.map{|c| ActiveRecord::Base.sanitize c}.join(', ')})
-        AND ent.release_date >= '#{start_date}' AND ent.release_date < '#{end_date}'
-        AND (cil.contract_amount IS NULL OR cil.contract_amount = 0)
-      GROUP BY cil.id
-      ORDER BY ent.release_date
-    SQL
+    qry = 
+       <<-SQL
+         SELECT 
+           ent.broker_reference AS 'Broker Ref#',
+           ent.arrival_date AS 'Arrival Date',
+           ent.release_date AS 'Release Date',
+           ent.customer_number AS 'Customer Number',
+           cil.vendor_name AS 'Vendor Name',
+           cil.po_number AS 'PO Number',
+           cil.value AS 'Invoice Line Value',
+           SUM(cit.entered_value) AS 'Entered Value',
+           cil.value - SUM(cit.entered_value) AS 'Cost Savings',
+           IF((SUM(cit.entered_value) = 0) OR ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)< 1,0,ROUND((SUM(cit.duty_amount)/SUM(cit.entered_value))*(cil.value - SUM(cit.entered_value)),2)) AS 'Duty Savings'
+         FROM entries ent
+           INNER JOIN commercial_invoices ci ON ci.entry_id = ent.id
+           INNER JOIN commercial_invoice_lines cil ON cil.commercial_invoice_id = ci.id
+           INNER JOIN commercial_invoice_tariffs cit ON cit.commercial_invoice_line_id = cil.id
+         WHERE ent.customer_number IN (?)
+           AND ent.release_date >= ? AND ent.release_date < ?
+           AND (cil.contract_amount IS NULL OR cil.contract_amount = 0)
+         GROUP BY cil.id
+         ORDER BY ent.release_date, ent.broker_reference
+       SQL
+    ActiveRecord::Base.sanitize_sql_array [qry, customer_numbers, start_date, end_date]
   end
 
 end; end; end
