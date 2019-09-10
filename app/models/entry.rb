@@ -75,7 +75,6 @@
 #  eta_date                               :date
 #  exam_ordered_date                      :datetime
 #  exam_release_date                      :datetime
-#  exception                              :boolean
 #  expected_update_time                   :datetime
 #  export_country_codes                   :string(255)
 #  export_date                            :date
@@ -191,10 +190,6 @@
 #  po_numbers                             :text(65535)
 #  po_request_date                        :datetime
 #  product_lines                          :string(255)
-#  protest_completion_date                :date
-#  protest_decision_1_date                :date
-#  protest_decision_2_date                :date
-#  protest_file_date                      :date
 #  recon_flags                            :string(255)
 #  release_cert_message                   :string(255)
 #  release_date                           :datetime
@@ -365,6 +360,7 @@ class Entry < ActiveRecord::Base
 
   KEWILL_SOURCE_SYSTEM ||= "Alliance"
   FENIX_SOURCE_SYSTEM ||= "Fenix"
+  CARGOWISE_SOURCE_SYSTEM ||= "Cargowise"
 
   def locked?
     false
@@ -622,84 +618,93 @@ class Entry < ActiveRecord::Base
      :mid_discrepancy_date, :additional_duty_confirmation_date, :pga_docs_missing_date, :pga_docs_incomplete_date]
   end
   
+  # Destroys all the commercial invoices under this entry.  The process involves preloading invoice child table
+  # content, which results in much faster destruction with larger entries.
+  def destroy_commercial_invoices
+    invoices = commercial_invoices.includes(commercial_invoice_lines:
+        [:custom_values, :piece_sets, commercial_invoice_tariffs: [:custom_values, :commercial_invoice_lacey_components]])
+    invoices.destroy_all
+  end
+
   private
 
-  def populated_us_holds
-    all_us_holds.select{ |pair| pair[:hold][:value].present? }
-  end
+    def populated_us_holds
+      all_us_holds.select{ |pair| pair[:hold][:value].present? }
+    end
 
-  def active_us_holds
-    populated_us_holds.reject{ |pair| pair[:release][:value].present? }
-  end
+    def active_us_holds
+      populated_us_holds.reject{ |pair| pair[:release][:value].present? }
+    end
 
-  def all_us_holds
-    [{hold: {mfid: :ent_ams_hold_date, attribute: :ams_hold_date, value: ams_hold_date}, release: {mfid: :ent_ams_hold_release_date, attribute: :ams_hold_release_date, value: ams_hold_release_date}}, 
-     {hold: {mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: aphis_hold_date}, release: {mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: aphis_hold_release_date}}, 
-     {hold: {mfid: :ent_atf_hold_date, attribute: :atf_hold_date, value: atf_hold_date}, release: {mfid: :ent_atf_hold_release_date, attribute: :atf_hold_release_date, value: atf_hold_release_date}}, 
-     {hold: {mfid: :ent_cargo_manifest_hold_date, attribute: :cargo_manifest_hold_date, value: cargo_manifest_hold_date}, release: {mfid: :ent_cargo_manifest_hold_release_date, attribute: :cargo_manifest_hold_release_date, value: cargo_manifest_hold_release_date}},
-     {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: cbp_hold_date}, release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: cbp_hold_release_date}},
-     {hold: {mfid: :ent_cbp_intensive_hold_date, attribute: :cbp_intensive_hold_date, value: cbp_intensive_hold_date}, release: {mfid: :ent_cbp_intensive_hold_release_date, attribute: :cbp_intensive_hold_release_date, value: cbp_intensive_hold_release_date}},
-     {hold: {mfid: :ent_ddtc_hold_date, attribute: :ddtc_hold_date, value: ddtc_hold_date}, release: {mfid: :ent_ddtc_hold_release_date, attribute: :ddtc_hold_release_date, value: ddtc_hold_release_date}},
-     {hold: {mfid: :ent_fda_hold_date, attribute: :fda_hold_date, value: fda_hold_date}, release: {mfid: :ent_fda_hold_release_date, attribute: :fda_hold_release_date, value: fda_hold_release_date}},
-     {hold: {mfid: :ent_fsis_hold_date, attribute: :fsis_hold_date, value: fsis_hold_date}, release: {mfid: :ent_fsis_hold_release_date, attribute: :fsis_hold_release_date, value: fsis_hold_release_date}},
-     {hold: {mfid: :ent_nhtsa_hold_date, attribute: :nhtsa_hold_date, value: nhtsa_hold_date}, release: {mfid: :ent_nhtsa_hold_release_date, attribute: :nhtsa_hold_release_date, value: nhtsa_hold_release_date}},
-     {hold: {mfid: :ent_nmfs_hold_date, attribute: :nmfs_hold_date, value: nmfs_hold_date}, release: {mfid: :ent_nmfs_hold_release_date, attribute: :nmfs_hold_release_date, value: nmfs_hold_release_date}},
-     {hold: {mfid: :ent_usda_hold_date, attribute: :usda_hold_date, value: usda_hold_date}, release: {mfid: :ent_usda_hold_release_date, attribute: :usda_hold_release_date, value: usda_hold_release_date}},
-     {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date}, release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}},
-     {hold: {mfid: :ent_fish_and_wildlife_hold_date, attribute: :fish_and_wildlife_hold_date, value: fish_and_wildlife_hold_date}, release: {mfid: :ent_fish_and_wildlife_hold_release_date, attribute: :fish_and_wildlife_hold_release_date, value: fish_and_wildlife_hold_release_date}, additional_fields: [:ent_fish_and_wildlife_secure_facility_date]}]
-  end     
+    def all_us_holds
+      [{hold: {mfid: :ent_ams_hold_date, attribute: :ams_hold_date, value: ams_hold_date}, release: {mfid: :ent_ams_hold_release_date, attribute: :ams_hold_release_date, value: ams_hold_release_date}},
+       {hold: {mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: aphis_hold_date}, release: {mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: aphis_hold_release_date}},
+       {hold: {mfid: :ent_atf_hold_date, attribute: :atf_hold_date, value: atf_hold_date}, release: {mfid: :ent_atf_hold_release_date, attribute: :atf_hold_release_date, value: atf_hold_release_date}},
+       {hold: {mfid: :ent_cargo_manifest_hold_date, attribute: :cargo_manifest_hold_date, value: cargo_manifest_hold_date}, release: {mfid: :ent_cargo_manifest_hold_release_date, attribute: :cargo_manifest_hold_release_date, value: cargo_manifest_hold_release_date}},
+       {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: cbp_hold_date}, release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: cbp_hold_release_date}},
+       {hold: {mfid: :ent_cbp_intensive_hold_date, attribute: :cbp_intensive_hold_date, value: cbp_intensive_hold_date}, release: {mfid: :ent_cbp_intensive_hold_release_date, attribute: :cbp_intensive_hold_release_date, value: cbp_intensive_hold_release_date}},
+       {hold: {mfid: :ent_ddtc_hold_date, attribute: :ddtc_hold_date, value: ddtc_hold_date}, release: {mfid: :ent_ddtc_hold_release_date, attribute: :ddtc_hold_release_date, value: ddtc_hold_release_date}},
+       {hold: {mfid: :ent_fda_hold_date, attribute: :fda_hold_date, value: fda_hold_date}, release: {mfid: :ent_fda_hold_release_date, attribute: :fda_hold_release_date, value: fda_hold_release_date}},
+       {hold: {mfid: :ent_fsis_hold_date, attribute: :fsis_hold_date, value: fsis_hold_date}, release: {mfid: :ent_fsis_hold_release_date, attribute: :fsis_hold_release_date, value: fsis_hold_release_date}},
+       {hold: {mfid: :ent_nhtsa_hold_date, attribute: :nhtsa_hold_date, value: nhtsa_hold_date}, release: {mfid: :ent_nhtsa_hold_release_date, attribute: :nhtsa_hold_release_date, value: nhtsa_hold_release_date}},
+       {hold: {mfid: :ent_nmfs_hold_date, attribute: :nmfs_hold_date, value: nmfs_hold_date}, release: {mfid: :ent_nmfs_hold_release_date, attribute: :nmfs_hold_release_date, value: nmfs_hold_release_date}},
+       {hold: {mfid: :ent_usda_hold_date, attribute: :usda_hold_date, value: usda_hold_date}, release: {mfid: :ent_usda_hold_release_date, attribute: :usda_hold_release_date, value: usda_hold_release_date}},
+       {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date}, release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}},
+       {hold: {mfid: :ent_fish_and_wildlife_hold_date, attribute: :fish_and_wildlife_hold_date, value: fish_and_wildlife_hold_date}, release: {mfid: :ent_fish_and_wildlife_hold_release_date, attribute: :fish_and_wildlife_hold_release_date, value: fish_and_wildlife_hold_release_date}, additional_fields: [:ent_fish_and_wildlife_secure_facility_date]}]
+    end
 
-  def company_permission? user
-    Entry.can_view_importer? self.importer, user
-  end
+    def company_permission? user
+      Entry.can_view_importer? self.importer, user
+    end
 
-  def update_tracking_status
-    #never automatically override closed
-    return true if self.tracking_status == Entry::TRACKING_STATUS_CLOSED
+    def update_tracking_status
+      #never automatically override closed
+      return true if self.tracking_status == Entry::TRACKING_STATUS_CLOSED
 
-    case self.source_system
-    when 'Fenix'
-      if self.across_sent_date # Open if sent to customs electronically
-        self.tracking_status = Entry::TRACKING_STATUS_OPEN
-      elsif self.entry_type && self.entry_type.capitalize == 'V'
-        self.tracking_status = Entry::TRACKING_STATUS_OPEN
+      case self.source_system
+      when 'Fenix'
+        if self.across_sent_date # Open if sent to customs electronically
+          self.tracking_status = Entry::TRACKING_STATUS_OPEN
+        elsif self.entry_type && self.entry_type.capitalize == 'V'
+          self.tracking_status = Entry::TRACKING_STATUS_OPEN
+        else
+          self.tracking_status = Entry::TRACKING_STATUS_CREATED
+        end
+      when 'Alliance'
+        if self.entry_filed_date # Open if sent to customs
+          self.tracking_status = Entry::TRACKING_STATUS_OPEN
+        else
+          self.tracking_status = Entry::TRACKING_STATUS_CREATED
+        end
       else
-        self.tracking_status = Entry::TRACKING_STATUS_CREATED
-      end
-    when 'Alliance'
-      if self.entry_filed_date # Open if sent to customs
         self.tracking_status = Entry::TRACKING_STATUS_OPEN
-      else
-        self.tracking_status = Entry::TRACKING_STATUS_CREATED
       end
-    else
-      self.tracking_status = Entry::TRACKING_STATUS_OPEN
-    end
-    true
-  end
-  
-  def update_k84
-    k84_basis = nil
-
-    if entry_number.to_s.starts_with?("119810") && (["V", "H", "C"].include? entry_type.to_s.upcase)
-      k84_basis = k84_receive_date
-    else
-      k84_basis = cadex_accept_date
+      true
     end
 
-    unless k84_basis.blank?
-      month = k84_basis.month
-      # Anything after the 24th is the next month
-      month += 1 if  k84_basis.day > 24
-      # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber),
-      # so loop back to 1
-      month = (month % 12) if month > 12
-      year = month==1 && k84_basis.month == 12 ? k84_basis.year + 1 : k84_basis.year
-      self.k84_month = month
-      self.k84_due_date = Date.new(year,month,25)
+    def update_k84
+      k84_basis = nil
 
-      k84_payment_due_date = Calendar.find_all_events_in_calendar_month(self.k84_due_date.year.to_s, self.k84_month, 'K84Due').first
-      self.k84_payment_due_date = k84_payment_due_date.nil? ? nil : k84_payment_due_date.event_date
+      if entry_number.to_s.starts_with?("119810") && (["V", "H", "C"].include? entry_type.to_s.upcase)
+        k84_basis = k84_receive_date
+      else
+        k84_basis = cadex_accept_date
+      end
+
+      unless k84_basis.blank?
+        month = k84_basis.month
+        # Anything after the 24th is the next month
+        month += 1 if  k84_basis.day > 24
+        # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber),
+        # so loop back to 1
+        month = (month % 12) if month > 12
+        year = month==1 && k84_basis.month == 12 ? k84_basis.year + 1 : k84_basis.year
+        self.k84_month = month
+        self.k84_due_date = Date.new(year,month,25)
+
+        k84_payment_due_date = Calendar.find_all_events_in_calendar_month(self.k84_due_date.year.to_s, self.k84_month, 'K84Due').first
+        self.k84_payment_due_date = k84_payment_due_date.nil? ? nil : k84_payment_due_date.event_date
+      end
     end
-  end
+
 end

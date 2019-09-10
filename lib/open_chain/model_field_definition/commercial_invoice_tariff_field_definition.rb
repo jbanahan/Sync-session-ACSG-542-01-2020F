@@ -48,7 +48,9 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceTariffFie
       [36,:cit_specific_rate, :specific_rate, "Specific Duty Rate", {data_type: :decimal}],
       [37,:cit_specific_rate_uom, :specific_rate_uom, "Specific Duty Rate UOM", {data_type: :string}],
       [38,:cit_additional_rate, :additional_rate, "Additional Duty Rate", {data_type: :decimal}],
-      [39,:cit_additional_rate_uom, :additional_rate_uom, "Additional Duty Rate UOM", {data_type: :decimal}]
+      [39,:cit_additional_rate_uom, :additional_rate_uom, "Additional Duty Rate UOM", {data_type: :decimal}],
+      [40,:cit_sima_code, :sima_code, "SIMA Code", {data_type: :string}],
+      [41,:cit_value_for_duty_code, :value_for_duty_code, "Value For Duty Code", {data_type: :string}]
     ]
   end
 end; end; end

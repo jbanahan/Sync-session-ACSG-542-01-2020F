@@ -78,6 +78,8 @@ class DataCrossReference < ActiveRecord::Base
   HM_I2_DRAWBACK_RETURNS_INVOICE_NUMBER = "hm_i2_drawback_returns_invoice_number"
   LL_CARB_STATEMENTS ||= "ll_carb_statement"
   LL_PATENT_STATEMENTS ||= "ll_patent_statement"
+  CARGOWISE_TRANSPORT_MODE_US ||= "cargowise_transport_mode_us"
+  CARGOWISE_TRANSPORT_MODE_CA ||= "cargowise_transport_mode_ca"
 
   VFI_CALENDAR ||= "vfi_calendar"
 

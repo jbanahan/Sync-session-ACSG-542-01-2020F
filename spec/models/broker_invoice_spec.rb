@@ -133,4 +133,17 @@ describe BrokerInvoice do
       expect(broker_invoice.total_billed_duty_amount).to eq 40
     end
   end
+
+  describe "has_charge_code?" do
+    it "returns true if charge code contained in lines" do
+      inv = BrokerInvoice.new
+      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0001")
+      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0002")
+
+      expect(inv.has_charge_code? "0001").to be true
+      expect(inv.has_charge_code? "0002").to be true
+      expect(inv.has_charge_code? "0003").to be false
+      expect(inv.has_charge_code? nil).to be false
+    end
+  end
 end

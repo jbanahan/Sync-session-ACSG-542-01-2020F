@@ -92,4 +92,8 @@ class BrokerInvoice < ActiveRecord::Base
 
     self.broker_invoice_lines.map {|l| (!l.marked_for_destruction? && l.charge_amount && l.charge_code.to_s == "0001") ? l.charge_amount : 0 }.sum
   end
+
+  def has_charge_code? charge_code
+    self.broker_invoice_lines.find { |line| line.charge_code == charge_code }.present?
+  end
 end

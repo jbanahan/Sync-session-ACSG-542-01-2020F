@@ -1,0 +1,91 @@
+<UniversalEvent xmlns="http://www.cargowise.com/Schemas/Universal/2011/11" version="1.1">
+  <Event>
+    <DataContext>
+      <DataSourceCollection>
+        <DataSource>
+          <Type>CustomsDeclaration</Type>
+          <Key>BQMJ00219066158</Key>
+        </DataSource>
+      </DataSourceCollection>
+
+      <ActionPurpose>
+        <Code>APP</Code>
+        <Description>As Per Payload</Description>
+      </ActionPurpose>
+      <Company>
+        <Code>QMJ</Code>
+        <Country>
+          <Code>US</Code>
+          <Name>United States</Name>
+        </Country>
+        <Name>Damco Customs Services Inc.</Name>
+      </Company>
+      <DataProvider>DAMQMJQMJ</DataProvider>
+      <EnterpriseID>DAM</EnterpriseID>
+      <EventBranch>
+        <Code>011</Code>
+        <Name>011 Damco Customs Services Inc.</Name>
+      </EventBranch>
+      <EventDepartment>
+        <Code>BRN</Code>
+        <Name>Branch</Name>
+      </EventDepartment>
+      <EventType>
+        <Code>CCC</Code>
+        <Description>Filed</Description>
+      </EventType>
+      <EventUser>
+        <Code>SV9</Code>
+        <Name>Sudhakar Vanga</Name>
+      </EventUser>
+      <ServerID>QMJ</ServerID>
+      <TriggerCount>1</TriggerCount>
+      <TriggerDate>2019-05-07T15:10:52.977</TriggerDate>
+      <TriggerDescription>TEST</TriggerDescription>
+      <TriggerType>Manual</TriggerType>
+
+      <RecipientRoleCollection>
+        <RecipientRole>
+          <Code>CNE</Code>
+          <Description>Consignee</Description>
+        </RecipientRole>
+      </RecipientRoleCollection>
+    </DataContext>
+
+    <EventTime>2019-05-07T15:10:52.977</EventTime>
+    <EventType>CCC</EventType>
+    <IsEstimate>false</IsEstimate>
+    <EventReference>SOMEVAL</EventReference>
+
+    <ContextCollection>
+      <Context>
+        <Type>CarrierCode</Type>
+        <Value>HDMU</Value>
+      </Context>
+      <Context>
+        <Type>MBOLNumber</Type>
+        <Value>QSWB7999269</Value>
+      </Context>
+      <Context>
+        <Type>MBOLOriginUNLOCO</Type>
+        <Value>MOMFM</Value>
+      </Context>
+      <Context>
+        <Type>MBOLDestinationUNLOCO</Type>
+        <Value>USTIW</Value>
+      </Context>
+      <Context>
+        <Type>HBOLNumber</Type>
+        <Value>SGH3201068</Value>
+      </Context>
+      <Context>
+        <Type>HBOLOriginUNLOCO</Type>
+        <Value>MOMFM</Value>
+      </Context>
+      <Context>
+        <Type>HBOLDestinationUNLOCO</Type>
+        <Value>USTIW</Value>
+      </Context>
+    </ContextCollection>
+  </Event>
+</UniversalEvent>

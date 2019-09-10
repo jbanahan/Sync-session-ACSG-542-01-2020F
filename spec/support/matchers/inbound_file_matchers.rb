@@ -50,6 +50,8 @@ RSpec::Matchers.define :have_error_message do |message|
 end
 
 RSpec::Matchers.define :have_identifier do |identifier_type, identifier_value, *args|
+  # This allows the identifier_type to be provided as either InboundFileIdentifier::SOME_TYPE or :some_type.
+  identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
   match do |log|
     ids = Array.wrap(log.get_identifiers(identifier_type, value: identifier_value))
     arg_len = args.try(:length)

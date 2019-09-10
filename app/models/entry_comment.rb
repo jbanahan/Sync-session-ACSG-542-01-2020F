@@ -38,7 +38,9 @@ class EntryComment < ActiveRecord::Base
     "KC Email" => 'SYSTEM',
     "KC_KI" => 'SYSTEM',
     "SYSTEM" => 'SYSTEM', 
-    "PayDueRsnd" => 'SYSTEM'
+    "PayDueRsnd" => 'SYSTEM',
+    "UniversalEvent" => 'ABI',
+    "Private Broker" => 'SYSTEM'
   }
  
   def can_view? user

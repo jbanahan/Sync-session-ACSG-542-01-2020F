@@ -1,5 +1,6 @@
-require 'rexml/document'
-module OpenChain; module CustomHandler; module XmlHelper
+require 'nokogiri'
+
+module OpenChain; module CustomHandler; module NokogiriXmlHelper
   def est_time_str t
     ActiveSupport::TimeZone["Eastern Time (US & Canada)"].at(t.to_i).strftime("%Y-%m-%d %H:%M %Z")
   end
@@ -8,7 +9,12 @@ module OpenChain; module CustomHandler; module XmlHelper
   # if force_blank_string then send "" instead of null
   def et parent, element_name, force_blank_string=false
     r  = nil
-    r = parent.text(element_name) if parent
+    # Nokogiri's 'at' method is unreliable.  If the name of the element you're looking for is repeated within the
+    # doc structure, it can grab the wrong one and return its value.  For example...
+    # <a><c><b>This text could be returned</b></c><b>Even though you're looking for this text</b></a>
+    # ...if you were trying to get the value of the 'b' element from 'a'.
+    # Thankfully, 'xpath' seems to behave intuitively.
+    r = parent.xpath(element_name).first&.text if parent
     r = '' if r.nil? && force_blank_string
     r
   end
@@ -16,7 +22,7 @@ module OpenChain; module CustomHandler; module XmlHelper
   # Gets the text from the first element matching the provided xpath.  Returns nil unless force_blank_string
   # is true, in which case an empty string is returned.
   def first_text xml, xpath, force_blank_string=false
-    txt = REXML::XPath.first(xml, xpath).try(:text)
+    txt = xml.xpath(xpath).first&.text
     (txt.nil? && force_blank_string) ? "" : txt
   end
 
@@ -27,14 +33,14 @@ module OpenChain; module CustomHandler; module XmlHelper
   # minor convenience.
   def unique_values xml, xpath, skip_blank_values:true, as_csv:false, csv_separator:","
     s = Set.new
-    REXML::XPath.each(xml, xpath) { |el| s << el.text if el.text.present? || !skip_blank_values }
+    xml.xpath(xpath).each { |el| s << el.text if el.text.present? || !skip_blank_values }
     arr = s.to_a
     as_csv ? arr.join(csv_separator).strip : arr
   end
 
   def total_value xml, xpath, total_type: :to_d
     total = BigDecimal.new(0)
-    REXML::XPath.each(xml, xpath) do |el|
+    xml.xpath(xpath).each do |el|
       # to_s in here ensures we don't have a nil value, which doesn't work with to_d.
       total += el.text.to_s.try(total_type)
     end

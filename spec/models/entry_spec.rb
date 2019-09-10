@@ -626,4 +626,23 @@ describe Entry do
       expect(Entry.new.truck_mode?).to eq false
     end
   end
+
+  describe "destroy_commercial_invoices" do
+    it "destroys all commercial invoices under the entry" do
+      entry = Factory(:entry)
+      invoice_1 = entry.commercial_invoices.build
+      line_1a = invoice_1.commercial_invoice_lines.build
+      invoice_1.commercial_invoice_lines.build
+      line_1a.commercial_invoice_tariffs.build
+      line_1a.commercial_invoice_tariffs.build
+      entry.commercial_invoices.build
+      entry.save!
+
+      expect(entry.commercial_invoices.length).to eq 2
+      entry.destroy_commercial_invoices
+      # There's no good way to verify the preloading happened, so we're reall just verifying that destroy_all is called.
+      entry.reload
+      expect(entry.commercial_invoices.length).to eq 0
+    end
+  end
 end

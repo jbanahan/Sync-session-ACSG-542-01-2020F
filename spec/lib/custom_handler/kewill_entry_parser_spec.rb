@@ -426,6 +426,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "creates an entry using json data" do
+      expect(subject).to receive(:process_special_tariffs)
+
       entry = subject.process_entry @e
       entry.reload
 
@@ -947,6 +949,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       Factory(:container, entry: e, container_number: "CONT1")
       e.entry_comments.create! body: "Testing"
 
+      expect(subject).to receive(:process_special_tariffs)
 
       entry = subject.process_entry @e
 
@@ -1378,45 +1381,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       error = ActiveRecord::TransactionIsolationConflict.new "Deadlock, Shmedlock"
       expect(subject).to receive(:preprocess).and_raise error
       expect { subject.process_entry @e }.to raise_error error
-    end
-
-    context "with special tariffs" do
-      it "assigns header and tariff-level flags" do
-        SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "1234567890", effective_date_start: Date.new(2017,10,15), effective_date_end: Date.new(2017,10,20)
-        entry = subject.process_entry @e
-        expect(entry.special_tariff).to eq true
-        expect(entry.commercial_invoice_tariffs.first.special_tariff).to eq true
-      end
-
-      context "without matching cross reference" do
-        it "doesn't assign header-level flag if range too late" do
-          SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "1234567890", effective_date_start: Date.new(2017,10,20), effective_date_end: Date.new(2017,10,20)
-          entry = subject.process_entry @e
-          expect(entry.special_tariff).to be_nil
-          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
-        end
-
-        it "doesn't assign header-level flag if range is too early" do
-          SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "1234567890", effective_date_start: Date.new(2017,10,18), effective_date_end: Date.new(2017,10,18)
-          entry = subject.process_entry @e
-          expect(entry.special_tariff).to be_nil
-          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
-        end
-
-        it "doesn't assign header-level flag if hts doesn't match" do
-          SpecialTariffCrossReference.create! import_country_iso: "US", special_hts_number: "0123456789", effective_date_start: Date.new(2017,10,18), effective_date_end: Date.new(2017,10,18)
-          entry = subject.process_entry @e
-          expect(entry.special_tariff).to be_nil
-          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
-        end
-
-        it "doesn't assign header-level flag if import country isn't 'US'" do
-          SpecialTariffCrossReference.create! import_country_iso: "CA", special_hts_number: "0123456789", effective_date_start: Date.new(2017,10,18), effective_date_end: Date.new(2017,10,18)
-          entry = subject.process_entry @e
-          expect(entry.special_tariff).to be_nil
-          expect(entry.commercial_invoice_tariffs.first.special_tariff).to be_nil
-        end        
-      end
     end
 
     context "with statement updates" do

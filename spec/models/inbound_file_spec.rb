@@ -251,6 +251,31 @@ describe InboundFile do
       subject.add_identifier :po_number, "123", object: p
       expect(subject).to have_identifier(:po_number, "123", Product, 100)
     end
+
+    it "adds multiple identifiers of same type from an array functionality" do
+      inf = InboundFile.new
+      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["ABC123","555222","ABC123"], module_type:"Order", module_id:123
+
+      expect(inf.identifiers.length).to eq 2
+      expect(inf.identifiers[0].identifier_type).to eq(InboundFileIdentifier::TYPE_PO_NUMBER)
+      expect(inf.identifiers[0].value).to eq("ABC123")
+      expect(inf.identifiers[0].module_type).to eq("Order")
+      expect(inf.identifiers[0].module_id).to eq(123)
+
+      expect(inf.identifiers[1].identifier_type).to eq(InboundFileIdentifier::TYPE_PO_NUMBER)
+      expect(inf.identifiers[1].value).to eq("555222")
+      expect(inf.identifiers[1].module_type).to eq("Order")
+      expect(inf.identifiers[1].module_id).to eq(123)
+    end
+
+    it "does not add blank/nil identifiers" do
+      inf = InboundFile.new
+      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["   ","ABC123"," ",nil], module_type:"Order", module_id:123
+
+      # Only the non-blank identifier should have been added.
+      expect(inf.identifiers.length).to eq 1
+      expect(inf.identifiers[0].value).to eq("ABC123")
+    end
   end
 
   describe "set_identifier_module_info" do

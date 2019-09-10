@@ -2,9 +2,11 @@ require 'open_chain/s3'
 require 'open_chain/integration_client_parser'
 require 'open_chain/alliance_imaging_client'
 require 'open_chain/fiscal_month_assigner'
+require 'open_chain/custom_handler/entry_parser_support'
 
 module OpenChain; module CustomHandler; class KewillEntryParser
   include OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::EntryParserSupport
 
   # If no hash value is present, the symbol value component represents the name of the 
   # date attribute that will be set, the datatype is assumed to be a datetime.
@@ -315,21 +317,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
   end
 
   private 
-
-    def process_special_tariffs entry
-      return unless entry.import_date
-      
-      # relation Entry#commercial_invoice_tariffs empty until entry is saved
-      tariffs = entry.commercial_invoices.map{ |ci| ci.commercial_invoice_lines.map{ |cil| cil.commercial_invoice_tariffs}}.flatten
-      special_tariffs = SpecialTariffCrossReference.where(special_hts_number: tariffs.map(&:hts_code).uniq)
-                                                   .where(import_country_iso: "US")
-                                                   .where("effective_date_start <= ?", entry.import_date)
-                                                   .where("effective_date_end >= ? OR effective_date_end IS NULL", entry.import_date)
-                                                   .map{ |st| st.special_hts_number }
-      
-      tariffs.each{ |t| t.special_tariff = true if special_tariffs.include? t.hts_code }
-      entry.special_tariff = true if tariffs.find{ |t| t.special_tariff }
-    end 
 
     def self.json_to_tempfile json
        Tempfile.open([Time.zone.now.iso8601, ".json"]) do |f|
@@ -705,7 +692,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           # Remove any ref that's also listed as a PO
           pos = accumulations[:po_numbers].to_a.select {|v| !v.blank? }
           refs = accumulations[:customer_references].to_a.select {|v| !v.blank? }
-          entry.customer_references = (refs - pos).join("\n ")
+          entry.customer_references = (refs - pos).join(multi_value_separator)
         when :commercial_invoice_numbers
           entry.commercial_invoice_numbers = vals
         when :mids
@@ -774,7 +761,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def accumulated hash, key
-      hash[key].keep_if {|v| !v.blank? }.to_a.join "\n "
+      hash[key].keep_if {|v| !v.blank? }.to_a.join multi_value_separator
     end
 
     def process_notes e, entry
@@ -890,10 +877,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         house_scacs << id[:scac_house].to_s.strip unless id[:scac_house].to_s.blank?
       end
       blank = lambda {|d| d.blank?}
-      entry.it_numbers = it_numbers.reject(&blank).sort.join("\n ")
-      entry.master_bills_of_lading = master_bills.reject(&blank).sort.join("\n ")
-      entry.house_bills_of_lading = house_bills.reject(&blank).sort.join("\n ")
-      entry.sub_house_bills_of_lading = subhouse_bills.reject(&blank).sort.join("\n ")
+      entry.it_numbers = it_numbers.reject(&blank).sort.join(multi_value_separator)
+      entry.master_bills_of_lading = master_bills.reject(&blank).sort.join(multi_value_separator)
+      entry.house_bills_of_lading = house_bills.reject(&blank).sort.join(multi_value_separator)
+      entry.sub_house_bills_of_lading = subhouse_bills.reject(&blank).sort.join(multi_value_separator)
       # Technically, based on the DB structure in Kewill, there can be more than 1 house carrier code
       # In practice, according to Mark, that won't happen.  So we're only pulling the first non-blank value encountered.
       entry.house_carrier_code = house_scacs.first
@@ -901,12 +888,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_commercial_invoices e, entry
-      # Preload everything before destroying...WAY faster for large entries
-      invoices = entry.commercial_invoices.includes(commercial_invoice_lines: 
-        [:custom_values, :piece_sets, commercial_invoice_tariffs: 
-          [:custom_values, :commercial_invoice_lacey_components]])
-
-      invoices.destroy_all
+      entry.destroy_commercial_invoices
 
       entry_effective_date = tariff_effective_date(entry)
 
@@ -927,7 +909,15 @@ module OpenChain; module CustomHandler; class KewillEntryParser
             end
           end
 
-          calculate_duty_rates(line, entry_effective_date)
+          # When there are multiple tariff lines, only the first tariff line carries the entered value...therefore, we cannot calculate the
+          # duty rate for each line solely off its entered value, since for tariff lines 2+ it will always be zero and therefore show a rate of zero,
+          # even if there is duty listed.
+          # We must sum the entered value from the tariff line and then calculate the duty rate for each line based off that sum'ed value.
+          # Note that this also means that we have to delay this process until after all the line's tariffs are loaded.
+          total_entered_value = line.total_entered_value
+          line.commercial_invoice_tariffs.each do |t|
+            calculate_duty_rates(t, line, entry_effective_date, total_entered_value)
+          end
         end
       end
 
@@ -956,8 +946,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       mid = Array.wrap(i[:lines]).find {|l| !l[:mid].blank?}.try(:[], :mid)
       inv.mfid = mid
 
-      inv.master_bills_of_lading = i[:master_bills].join("\n ") unless i[:master_bills].blank?
-      inv.house_bills_of_lading = i[:house_bills].join("\n ") unless i[:house_bills].blank?
+      inv.master_bills_of_lading = i[:master_bills].join(multi_value_separator) unless i[:master_bills].blank?
+      inv.house_bills_of_lading = i[:house_bills].join(multi_value_separator) unless i[:house_bills].blank?
     end
 
     def set_invoice_line_data l, line, entry
@@ -1101,29 +1091,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       tariff.tariff_description = t[:tariff_desc_additional] unless t[:tariff_desc_additional].blank?
     end
 
-    def calculate_duty_rates invoice_line, effective_date
-      # When there are multiple tariff lines, only the first tariff line carries the entered value...therefore, we cannot calculate the 
-      # duty rate for each line solely off its entered value, since for tariff lines 2+ it will always be zero and therefore show a rate of zero,
-      # even if there is duty listed.  
-      # We must sum the entered value from the tariff line and then calculate the duty rate for each line based off that sum'ed value.
-      total_entered_value = invoice_line.total_entered_value
-
-      invoice_line.commercial_invoice_tariffs.each do |t|
-        t.duty_rate = total_entered_value > 0 ? ((t.duty_amount.presence || 0) / total_entered_value).round(3) : 0
-
-        classification = find_tariff_classification(effective_date, t.hts_code)
-        next unless classification
-        rate_data = classification.extract_tariff_rate_data(invoice_line.country_origin_code, t.spi_primary)
-        t.advalorem_rate = rate_data[:advalorem_rate]
-        t.specific_rate = rate_data[:specific_rate]
-        t.specific_rate_uom = rate_data[:specific_rate_uom]
-        t.additional_rate = rate_data[:additional_rate]
-        t.additional_rate_uom = rate_data[:additional_rate_uom]
-      end
-
-      nil
-    end
-
     def process_post_summary_corrections e, entry
       Array.wrap(e[:post_summary_corrections]).each do |psc|
         Array.wrap(psc[:lines]).each do |psc_l|
@@ -1147,7 +1114,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       lacey.harvested_from_country = l[:country_harvested]
       # Store these as fractional amounts, NOT whole value percentages -> .10 and not 10 for 10%.
       lacey.percent_recycled_material = parse_decimal l[:percent_recycled_material], decimal_offset: 6
-      lacey.container_numbers = l[:containers].join("\n ") unless l[:containers].blank?
+      lacey.container_numbers = l[:containers].join(multi_value_separator) unless l[:containers].blank?
     end
 
     def process_containers e, entry
@@ -1163,7 +1130,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def set_container_data c, container
       container.container_number = c[:number]
-      container.goods_description = [c[:desc_content_1], c[:desc_content_2]].delete_if {|d| d.blank?}.join "\n "
+      container.goods_description = [c[:desc_content_1], c[:desc_content_2]].delete_if {|d| d.blank?}.join multi_value_separator
       container.container_size = c[:size]
       container.weight = c[:weight]
       container.quantity = c[:quantity]
@@ -1516,27 +1483,4 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       count
     end
 
-    def tariff_effective_date entry
-      d = entry.first_it_date
-      if d.nil?
-        d = entry.import_date
-      end
-
-      d
-    end
-
-    def us
-      @us ||= Country.where(iso_code: "US").first
-      @us
-    end
-
-    def find_tariff_classification effective_date, tariff_no
-      return nil if effective_date.nil? || tariff_no.blank?
-
-      @tariffs ||= Hash.new do |h, k|
-        h[k] = TariffClassification.find_effective_tariff us, k[0], k[1]
-      end
-
-      @tariffs[[effective_date, tariff_no]]
-    end
 end; end; end;

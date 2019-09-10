@@ -148,18 +148,24 @@ class InboundFile < ActiveRecord::Base
     messages.select { |msg| msg.message_status == message_status }
   end
 
-  # Throws an exception if module_type is not nil and the value is not one of the CoreModules.
+  # Throws an exception if module_type is not nil and the value is not one of the CoreModules.  If value is an array,
+  # this method will add an identifier of the given type and module info for all of the items in the array.
+  # Does not add blank identifiers.
   def add_identifier identifier_type, value, module_type:nil, module_id:nil, object: nil
     identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
 
     validate_identifier_module_type module_type
-    # Prevents a dupe from being added.
-    if get_identifiers(identifier_type, value:value).length == 0
-      if object
-        module_id = object.id
-        module_type = CoreModule.find_by_object(object).class_name
+    Array.wrap(value).each do |v|
+      next if v.blank?
+
+      # Prevents a dupe from being added.
+      if get_identifiers(identifier_type, value:v).length == 0
+        if object
+          module_id = object.id
+          module_type = CoreModule.find_by_object(object).class_name
+        end
+        identifiers.build(identifier_type:identifier_type, value:v, module_type:(module_type.nil? ? nil : module_type.to_s), module_id:module_id)
       end
-      identifiers.build(identifier_type:identifier_type, value:value, module_type:(module_type.nil? ? nil : module_type.to_s), module_id:module_id)
     end
     nil
   end
