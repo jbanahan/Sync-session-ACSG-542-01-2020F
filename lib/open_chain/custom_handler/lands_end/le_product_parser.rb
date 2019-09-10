@@ -26,6 +26,10 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
     self.class.can_view? user
   end
 
+  def csv_reader_options
+    {encoding: "Windows-1252"}
+  end
+
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:prod_part_number, :prod_short_description]
   end
@@ -56,7 +60,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
     cache = []
     current_style_nbr = nil
     foreach(custom_file, skip_headers: true) do |r|
-      row = r.map(&:presence)
+      row = r.map{ |cell| cell.presence&.encode("UTF-8", :invalid => :replace, :undef => :replace, replace: "?") }
       if row[0] != current_style_nbr && current_style_nbr.present?
         process_part cache, user
         cache = [row]
