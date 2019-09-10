@@ -1,0 +1,6 @@
+.git
+.gitignore
+.circleci
+.ruby-version
+.ruby-gemset
+tmp

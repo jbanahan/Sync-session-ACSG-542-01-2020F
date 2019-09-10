@@ -14,7 +14,7 @@ module OpenChain; module Api; class ApiClient
     "bdemo" => 'https://bdemo.vfitrack.net',
     "das" => 'https://das.vfitrack.net',
     "ll"=> "https://ll.vfitrack.net",
-    "dev" => "http://localhost:3000",
+    "dev" => "http://0.0.0.0:3000",
     "test" => "http://www.notadomain.com"
   }
 
@@ -27,7 +27,7 @@ module OpenChain; module Api; class ApiClient
       @username, @authtoken = *self.class.default_username_authoken(endpoint_alias)
     else
       @username = username
-      @authtoken = authtoken  
+      @authtoken = authtoken
     end
   end
 

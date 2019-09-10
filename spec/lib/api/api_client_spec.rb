@@ -34,7 +34,7 @@ describe OpenChain::Api::ApiClient do
     it "subsitutes dev endpoint on development systems" do
       expect(MasterSetup).to receive(:development_env?).and_return true
       c = OpenChain::Api::ApiClient.new 'test', 'test', 'test'
-      expect(c.endpoint).to eq "http://localhost:3000"
+      expect(c.endpoint).to eq "http://0.0.0.0:3000"
     end
 
     it "does not substitute endpoint if custom feature is enabled" do

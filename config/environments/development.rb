@@ -46,6 +46,10 @@ Rails.application.configure do
   # This forces all *_url links generated in mailers to be http (we don't run w/ https in dev)
   config.action_mailer.default_url_options = { protocol: "http" }
 
+  # Docker's local network is different from the host machine's and is not a set ip range
+  # Lets prevent the console from being clogged up with unhelpful warnings about this
+  config.web_console.whiny_requests = false
+
   # Settings specified here will take precedence over those in config/environment.rb
   # Each file will be at most 10MB, storing at most 5 of them
   config.logger = Logger.new(Rails.root.join("log", Rails.env + ".log"), 5, 10485760)

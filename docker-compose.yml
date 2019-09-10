@@ -1,0 +1,80 @@
+version: '3.7'
+services:
+  app: &app
+    build:
+      context: .
+      dockerfile: ./.dockerdev/Dockerfile
+      args:
+        RUBY_VERSION: '2.5.1'
+        BUNDLER_VERSION: '1.16.2'
+    image: vfitrack-dev:1.0.0
+    tmpfs:
+      - /tmp
+
+  backend: &backend
+    <<: *app
+    # The same as running a docker container with -it options
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app:cached
+      - bundle:/bundle
+      # This is just to make it faster
+      - rails_cache:/app/tmp/cache
+    environment:
+      - RAILS_ENV=${RAILS_ENV:-development}
+      - REDIS_URL=redis://redis:6379/
+      - HISTFILE=/app/log/.bash_history
+      - MYSQL_HISTFILE=/app/log/.mysql_history
+      - EDITOR=nano
+      # Help keep Rails memory usage in check
+      - MALLOC_ARENA_MAX=2
+      - WEB_CONCURRENCY=1
+    depends_on:
+      - mysql
+      - redis
+      - memcached
+
+  # use for running tests or the rails console
+  # $ docker-compose run runner exec rails c
+  runner:
+    <<: *backend
+    command: /bin/bash
+    ports:
+      - '3000:3000'
+
+  rails:
+    <<: *backend
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails server -b '0.0.0.0'"
+    ports:
+      - '3000:3000'
+
+  mysql:
+    image: mysql:5.7
+    command: mysqld
+    volumes:
+      - ./.dockerdev/my.cnf:/etc/mysql/my.cnf # Settings
+      - mysql:/var/lib/mysql # Datadirectory
+      - ./log:/root/log:cached
+    environment:
+      MYSQL_ROOT_PASSWORD: 'password'
+      MYSQL_HISTFILE: /root/log/.mysql_history
+    ports:
+      - '3306:3306'
+
+  memcached:
+    image: 'bitnami/memcached:1.5.16'
+    command: ["memcached"]
+
+  redis:
+    image: 'redis:5.0.5'
+    volumes:
+      - redis:/data
+    ports:
+      - 6379
+
+volumes:
+  mysql:
+  redis:
+  bundle:
+  rails_cache:
