@@ -77,29 +77,26 @@ module OpenChain
       end
 
       def query
-        q = <<-SQL
-                SELECT products.id, 
-                  #{cd_s 101},
-                  #{cd_s CustomDefinition.find_by_label('CSM Number').id},
-                  #{cd_s 2},
-                  'IT' AS 'Classification - Country ISO Code',
-                  #{cd_s 3},
-                  #{cd_s 4},
-                  products.unique_identifier AS 'Style',
-                  #{cd_s 6},
-                  products.name AS 'Name',
-                  #{cd_s 8},
-                  tariff_records.hts_1 AS 'Tariff - HTS Code 1',
-                  (SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_1 AND official_quotas.country_id = classifications.country_id LIMIT 1) AS 'Tariff - 1 - Quota Category',
-                  (SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_1 AND official_tariffs.country_id = classifications.country_id) AS 'Tariff - 1 - General Rate',
-                  tariff_records.hts_2 AS 'Tariff - HTS Code 2',
-                  (SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_2 AND official_quotas.country_id = classifications.country_id LIMIT 1) AS 'Tariff - 2 - Quota Category',
-                  (SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_2 AND official_tariffs.country_id = classifications.country_id) AS 'Tariff - 2 - General Rate',
-                  tariff_records.hts_3 AS 'Tariff - HTS Code 3',
-                  (SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_3 AND official_quotas.country_id = classifications.country_id LIMIT 1) AS 'Tariff - 3 - Quota Category',
-                  (SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_3 AND official_tariffs.country_id = classifications.country_id) AS 'Tariff - 3 - General Rate', 
-            SQL
-        
+        q = "SELECT products.id, 
+#{cd_s 101},
+#{cd_s CustomDefinition.find_by_label('CSM Number').id},
+#{cd_s 2},
+'IT' as 'Classification - Country ISO Code',
+#{cd_s 3},
+#{cd_s 4},
+products.unique_identifier as 'Style',
+#{cd_s 6},
+products.name as 'Name',
+#{cd_s 8},
+tariff_records.hts_1 as 'Tariff - HTS Code 1',
+(select category from official_quotas where official_quotas.hts_code = tariff_records.hts_1 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 1 - Quota Category',
+(select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_1 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 1 - General Rate',
+tariff_records.hts_2 as 'Tariff - HTS Code 2',
+(select category from official_quotas where official_quotas.hts_code = tariff_records.hts_2 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 2 - Quota Category',
+(select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_2 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 2 - General Rate',
+tariff_records.hts_3 as 'Tariff - HTS Code 3',
+(select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
+(select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
         (9..84).each do |i|
           q << cd_s(i)+","
         end
@@ -108,26 +105,16 @@ module OpenChain
           q << cd_s(i)+","
         end
         q << cd_s(95) 
-        
-        q << <<-SQL
-              FROM products
-                LEFT OUTER JOIN classifications ON classifications.product_id = products.id
-                LEFT OUTER JOIN tariff_records ON tariff_records.classification_id = classifications.id 
-                LEFT OUTER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id 
-                                                                                     FROM custom_definitions 
-                                                                                     WHERE label = 'CSM Number') AND csm_v.customizable_id = products.id
-                LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.custom_definition_id = (SELECT id 
-                                                                                                           FROM custom_definitions 
-                                                                                                           WHERE cdef_uid = 'prod_ax_export_status_manual') AND ax_export_manual.customizable_id = products.id
-             SQL
+        q << "
+FROM products
+LEFT OUTER JOIN classifications ON classifications.product_id = products.id
+LEFT OUTER JOIN tariff_records ON tariff_records.classification_id = classifications.id 
+LEFT OUTER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id from custom_definitions where label = 'CSM Number') and customizable_id = products.id"
         q << " #{Product.need_sync_join_clause(sync_code)} " if @custom_where.blank?
-         
-        w = <<-SQL 
-              WHERE classifications.country_id = (SELECT id FROM countries WHERE iso_code = 'IT')
-                AND length(tariff_records.hts_1) > 0 AND length(csm_v.text_value) > 0 AND tariff_records.line_number = 1
-                AND !(ax_export_manual.string_value <=> 'EXPORTED')
-                AND #{Product.need_sync_where_clause()}
-            SQL
+
+        w = "WHERE classifications.country_id = (SELECT id FROM countries WHERE iso_code = 'IT')
+AND length(tariff_records.hts_1) > 0 and length(csm_v.text_value) > 0 and tariff_records.line_number = 1
+AND #{Product.need_sync_where_clause()}"
         q << (@custom_where ? @custom_where : w)
 
         if @max_results
@@ -135,7 +122,6 @@ module OpenChain
         end
         q
       end
-
     end
   end
 end

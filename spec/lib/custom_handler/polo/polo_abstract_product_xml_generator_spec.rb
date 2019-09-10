@@ -35,12 +35,6 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
 
       expect(subject.sync_xml).to be_nil
     end
-
-    it "does not find a products with AX Export Manual set to 'EXPORTED'" do
-      expect(subject).not_to receive(:write_row_to_xml)
-      product.update_custom_value! subject.cdefs[:ax_export_status_manual], "EXPORTED"
-      expect(subject.sync_xml).to be_nil
-    end
   end
 
   describe "write_row_to_xml" do

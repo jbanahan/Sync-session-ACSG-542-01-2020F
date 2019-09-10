@@ -103,48 +103,42 @@ module OpenChain; module CustomHandler; class PoloEfocusProductGenerator < Produ
       end
     end
 
-    <<-SQL
-      SELECT #{fields.join(", ")}
-      FROM products
-        INNER JOIN classifications ON classifications.product_id = products.id
-        INNER JOIN countries countries ON countries.iso_code = 'US' AND classifications.country_id = countries.id
-        LEFT OUTER JOIN tariff_records tariff_records ON tariff_records.classification_id = classifications.id
-        INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cust_id.customizable_type = 'Product' AND cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} AND LENGTH(IFNULL(RTRIM(cust_id.string_value), '')) > 0
-        LEFT OUTER JOIN custom_values test_style ON products.id = test_style.customizable_id AND test_style.customizable_type = 'Product' AND test_style.custom_definition_id = #{@cdefs[:test_style].id}
-        LEFT OUTER JOIN custom_values set_type ON classifications.id = set_type.customizable_id AND set_type.customizable_type = 'Classification' AND set_type.custom_definition_id = #{@cdefs[:set_type].id}
-        INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
-      ORDER BY products.id, tariff_records.line_number
-    SQL
-
+    r = "SELECT #{fields.join(", ")}
+FROM products
+INNER JOIN classifications  on classifications.product_id = products.id
+INNER JOIN countries countries on countries.iso_code = 'US' and classifications.country_id = countries.id
+LEFT OUTER JOIN tariff_records tariff_records on tariff_records.classification_id = classifications.id
+INNER JOIN custom_values cust_id ON products.id = cust_id.customizable_id AND cust_id.customizable_type = 'Product' and cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(cust_id.string_value), '')) > 0
+LEFT OUTER JOIN custom_values test_style ON products.id = test_style.customizable_id AND test_style.customizable_type = 'Product' and test_style.custom_definition_id = #{@cdefs[:test_style].id}
+LEFT OUTER JOIN custom_values set_type ON classifications.id = set_type.customizable_id AND set_type.customizable_type = 'Classification' and set_type.custom_definition_id = #{@cdefs[:set_type].id}
+INNER JOIN (#{inner_query}) inner_query ON inner_query.id = products.id
+ORDER BY products.id, tariff_records.line_number
+"
   end
 
   def inner_query
     # This query is here soley to allow us to do limits...it needs to be done as subquery like this because there can potentially be more than one row per product.
     # If we didn't do this, then there's the possibility that we chop off a tariff record from a query if we just added a limit to a single query.
-    r = <<-SQL 
-          SELECT distinct inner_products.id
-          FROM products inner_products
-            INNER JOIN classifications inner_classifications ON inner_classifications.product_id = inner_products.id
-            INNER JOIN countries inner_countries ON inner_countries.iso_code = 'US' AND inner_classifications.country_id = inner_countries.id
-            LEFT OUTER JOIN tariff_records inner_tariff_records ON inner_tariff_records.classification_id = inner_classifications.id
-        SQL
+    r = "SELECT distinct inner_products.id
+FROM products inner_products
+INNER JOIN classifications inner_classifications on inner_classifications.product_id = inner_products.id
+INNER JOIN countries inner_countries on inner_countries.iso_code = 'US' and inner_classifications.country_id = inner_countries.id
+LEFT OUTER JOIN tariff_records inner_tariff_records on inner_tariff_records.classification_id = inner_classifications.id
+"
 
 # The JOINS + WHERE clause below generates files that need to be synced
 # && Have an HTS 1, 2, or 3 value OR are 'RL' Sets
 # && have Barthco Customer IDs
 # && DO NOT have a 'Test Style' value,
     if self.custom_where.blank?
-      r += <<-SQL 
-                #{Product.need_sync_join_clause(sync_code, 'inner_products')}
-                INNER JOIN custom_values inner_cust_id ON inner_products.id = inner_cust_id.customizable_id AND inner_cust_id.customizable_type = 'Product' AND inner_cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} AND length(ifnull(rtrim(inner_cust_id.string_value), '')) > 0
-                LEFT OUTER JOIN custom_values inner_test_style ON inner_products.id = inner_test_style.customizable_id AND inner_test_style.customizable_type = 'Product' AND inner_test_style.custom_definition_id = #{@cdefs[:test_style].id}
-                LEFT OUTER JOIN custom_values inner_set_type ON inner_classifications.id = inner_set_type.customizable_id AND inner_set_type.customizable_type = 'Classification' AND inner_set_type.custom_definition_id = #{@cdefs[:set_type].id}
-                LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = inner_products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{@cdefs[:ax_export_status_manual].id}
-            WHERE #{Product.need_sync_where_clause('inner_products', Time.zone.now - 3.hours)}
-              AND (length(inner_tariff_records.hts_1) > 0 OR length(inner_tariff_records.hts_2) > 0 OR length(inner_tariff_records.hts_3) > 0 OR (inner_set_type.string_value = 'RL'))
-              AND (inner_test_style.string_value IS NULL OR length(rtrim(inner_test_style.string_value)) = 0)
-              AND !(ax_export_manual.string_value <=> 'EXPORTED')
-           SQL
+      r += "#{Product.need_sync_join_clause(sync_code, 'inner_products')}
+INNER JOIN custom_values inner_cust_id ON inner_products.id = inner_cust_id.customizable_id AND inner_cust_id.customizable_type = 'Product' and inner_cust_id.custom_definition_id = #{@cdefs[:bartho_customer_id].id} and length(ifnull(rtrim(inner_cust_id.string_value), '')) > 0
+LEFT OUTER JOIN custom_values inner_test_style ON inner_products.id = inner_test_style.customizable_id AND inner_test_style.customizable_type = 'Product' and inner_test_style.custom_definition_id = #{@cdefs[:test_style].id}
+LEFT OUTER JOIN custom_values inner_set_type ON inner_classifications.id = inner_set_type.customizable_id AND inner_set_type.customizable_type = 'Classification' and inner_set_type.custom_definition_id = #{@cdefs[:set_type].id}
+WHERE #{Product.need_sync_where_clause('inner_products', Time.zone.now - 3.hours)}
+AND (length(inner_tariff_records.hts_1) > 0 OR length(inner_tariff_records.hts_2) > 0 OR length(inner_tariff_records.hts_3) > 0 OR (inner_set_type.string_value = 'RL'))
+AND (inner_test_style.string_value IS NULL OR length(rtrim(inner_test_style.string_value)) = 0)
+"
     else
       r += self.custom_where
     end
@@ -158,7 +152,7 @@ module OpenChain; module CustomHandler; class PoloEfocusProductGenerator < Produ
   end
 
   def self.cdefs
-    [:bartho_customer_id, :test_style, :season, :product_area, :msl_board_number, :fiber_content, :clean_fiber_content, :knit_woven, :semi_precious, :semi_precious_type, :telescopic_shaft, :unit_price, :ax_export_status_manual] + cdefs_range_1 + cdefs_range_2
+    [:bartho_customer_id, :test_style, :season, :product_area, :msl_board_number, :fiber_content, :clean_fiber_content, :knit_woven, :semi_precious, :semi_precious_type, :telescopic_shaft, :unit_price] + cdefs_range_1 + cdefs_range_2
   end
 
   def self.cdefs_range_1

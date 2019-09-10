@@ -41,11 +41,6 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       @p.classifications.first.tariff_records.destroy_all
       expect(described_class.new.products_to_send).to include @p
     end
-
-    it "should not find a product with AX Export Manual set to 'EXPORTED'" do
-      @p.update_custom_value! @custom_defs[:ax_export_status_manual], "EXPORTED"
-      expect(described_class.new.products_to_send.to_a).to be_empty
-    end
   end
   describe "outbound_file" do
     before :all do

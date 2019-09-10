@@ -90,47 +90,42 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   end
 
   def query
-    q = <<-SQL
-          SELECT products.id,
-            #{cd_s @cdefs[:lin_number]},
-            #{cd_s @cdefs[:csm_numbers]},
-            #{cd_s @cdefs[:season]},
-            'IT' AS 'Classification - Country ISO Code',
-            #{cd_s @cdefs[:product_area]},
-            #{cd_s @cdefs[:msl_board_number]},
-            products.unique_identifier AS 'Style',
-            #{cd_s @cdefs[:fiber_content]},
-            #{cd_s @cdefs[:clean_fiber_content]},
-            products.name AS 'Name',
-            #{cd_s @cdefs[:knit_woven], query_alias: "Knit / Woven?"},
-            tariff_records.hts_1 AS 'Tariff - HTS Code 1',
-            (SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_1 AND official_quotas.country_id = classifications.country_id LIMIT 1) AS 'Tariff - 1 - Quota Category',
-            (SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_1 AND official_tariffs.country_id = classifications.country_id) AS 'Tariff - 1 - General Rate',
-            tariff_records.hts_2 AS 'Tariff - HTS Code 2',
-            (SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_2 AND official_quotas.country_id = classifications.country_id LIMIT 1) AS 'Tariff - 2 - Quota Category',
-            (SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_2 AND official_tariffs.country_id = classifications.country_id) AS 'Tariff - 2 - General Rate',
-            tariff_records.hts_3 AS 'Tariff - HTS Code 3',
-            (SELECT category FROM official_quotas WHERE official_quotas.hts_code = tariff_records.hts_3 AND official_quotas.country_id = classifications.country_id LIMIT 1) AS 'Tariff - 3 - Quota Category',
-            (SELECT general_rate FROM official_tariffs WHERE official_tariffs.hts_code = tariff_records.hts_3 AND official_tariffs.country_id = classifications.country_id) AS 'Tariff - 3 - General Rate',
-        SQL
-
+    q = "SELECT products.id,
+#{cd_s @cdefs[:lin_number]},
+#{cd_s @cdefs[:csm_numbers]},
+#{cd_s @cdefs[:season]},
+'IT' as 'Classification - Country ISO Code',
+#{cd_s @cdefs[:product_area]},
+#{cd_s @cdefs[:msl_board_number]},
+products.unique_identifier as 'Style',
+#{cd_s @cdefs[:fiber_content]},
+#{cd_s @cdefs[:clean_fiber_content]},
+products.name as 'Name',
+#{cd_s @cdefs[:knit_woven], query_alias: "Knit / Woven?"},
+tariff_records.hts_1 as 'Tariff - HTS Code 1',
+(select category from official_quotas where official_quotas.hts_code = tariff_records.hts_1 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 1 - Quota Category',
+(select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_1 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 1 - General Rate',
+tariff_records.hts_2 as 'Tariff - HTS Code 2',
+(select category from official_quotas where official_quotas.hts_code = tariff_records.hts_2 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 2 - Quota Category',
+(select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_2 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 2 - General Rate',
+tariff_records.hts_3 as 'Tariff - HTS Code 3',
+(select category from official_quotas where official_quotas.hts_code = tariff_records.hts_3 and official_quotas.country_id = classifications.country_id LIMIT 1) as 'Tariff - 3 - Quota Category',
+(select general_rate from official_tariffs where official_tariffs.hts_code = tariff_records.hts_3 and official_tariffs.country_id = classifications.country_id) as 'Tariff - 3 - General Rate',"
     self.class.cdef_range.each do |cdef|
       q << cd_s(@cdefs[cdef])+","
     end
-    q << <<-SQL
-             tariff_records.line_number AS 'Tariff - HTS Row'    
-           FROM products
-             INNER JOIN classifications ON classifications.product_id = products.id
-             INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code = 'IT'
-             INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id AND LENGTH(tariff_records.hts_1) > 0
-             LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{@cdefs[:ax_export_status_manual].id}
-         SQL
+    q << "tariff_records.line_number as 'Tariff - HTS Row'"
+    q << "
+FROM products
+INNER JOIN classifications ON classifications.product_id = products.id
+INNER JOIN countries on classifications.country_id = countries.id AND countries.iso_code = 'IT'
+INNER JOIN tariff_records ON tariff_records.classification_id = classifications.id AND length(tariff_records.hts_1) > 0"
     # If we have a custom where, then don't add the need_sync join clauses.
     if @custom_where.blank?
-      q << " #{Product.need_sync_join_clause(sync_code)} "
-      q << " WHERE #{Product.need_sync_where_clause()} AND !(ax_export_manual.string_value <=> 'EXPORTED') "
+      q << "\n#{Product.need_sync_join_clause(sync_code)} "
+      q << "\nWHERE #{Product.need_sync_where_clause()}"
     else
-      q << " #{@custom_where} "
+      q << "\n#{@custom_where}"
     end
 
     if @max_results
@@ -140,7 +135,7 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   end
 
   def self.cdefs
-    [:lin_number, :csm_numbers, :season, :product_area, :msl_board_number, :fiber_content, :clean_fiber_content, :knit_woven, :ax_export_status_manual] + cdef_range
+    [:lin_number, :csm_numbers, :season, :product_area, :msl_board_number, :fiber_content, :clean_fiber_content, :knit_woven] + cdef_range
   end
 
   def self.cdef_range
