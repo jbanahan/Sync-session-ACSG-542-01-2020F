@@ -77,7 +77,7 @@ module OpenChain
       core_module.bulk_actions(user).each do |k,v|
         h = {"label"=>k.to_s}
         if v.is_a? String
-          h["path"] = eval(v)
+          h["path"] = public_send(v.to_sym)
         else
           h["path"] = v[:path]
           h["callback"] = v[:ajax_callback]

@@ -43,7 +43,6 @@ describe OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser do
       r = Array.new(total_rows,[])
       #always set cell B2 to 'Packing Manifest'
       r[1] = ['','Packing Manifest']
-      r
       row_values_hash.each do |k,v|
         r[k] = v
       end

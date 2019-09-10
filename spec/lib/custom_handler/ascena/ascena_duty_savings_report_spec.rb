@@ -326,7 +326,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
 
     context "with SPI" do
       let! (:us) { Factory(:country, iso_code: "US") }
-      let! (:offical_tariff) { Factory :official_tariff, country: entry.import_country, hts_code: "1234567890", common_rate: "20%", common_rate_decimal: 0.2}
+      let! (:official_tariff) { Factory :official_tariff, country: entry.import_country, hts_code: "1234567890", common_rate: "20%", common_rate_decimal: 0.2}
 
       it "records Jordan FTA duty savings" do
         entry.commercial_invoice_lines.each do |line| 

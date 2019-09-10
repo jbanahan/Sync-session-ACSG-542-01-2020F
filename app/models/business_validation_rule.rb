@@ -110,7 +110,7 @@ class BusinessValidationRule < ActiveRecord::Base
                   enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                 },
                 ValidationRuleEntryInvoiceLineMatchesPo: {label:"Entry Invoice Line Matches PO"},
-                "OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule".to_sym => {label: "US Customs Statement Validations", enabled_lamda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules"} },
+                "OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule".to_sym => {label: "US Customs Statement Validations", enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules"} },
                 ValidationRuleEntryDoesNotSharePos: {label:"Entry PO Numbers Not Shared"},
                 ValidationRuleEntryReleased: {label: "Entry Not On Hold"},
                 'OpenChain::CustomHandler::AnnInc::AnnMpTypeAllDocsValidationRule'.to_sym =>

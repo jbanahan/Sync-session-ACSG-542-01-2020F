@@ -31,7 +31,7 @@ class TariffRecord < ActiveRecord::Base
   attr_accessor :hts_1_matches, :hts_2_matches, :hts_3_matches, :view_sequence #used to identified records generated from the screen so we can apply custom fields to the right record
   
   attr_accessible :country_id, :country, :product_id, :product,
-    :created_at, :updated_at, :instant_classificaiton_id, :hts_1, 
+    :created_at, :updated_at, :instant_classification_id, :hts_1, 
     :hts_2, :hts_3, :line_number
 
   belongs_to :classification, :touch=>true, :inverse_of=>:tariff_records

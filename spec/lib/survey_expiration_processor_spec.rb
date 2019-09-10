@@ -3,11 +3,11 @@ describe OpenChain::SurveyExpirationProcessor, type: :mailer do
   let!(:master_setup) { stub_master_setup }
 
 	before :each do
-		/ Set up the 'ecosystem' for the test:
-			Set up six users who will be our subscribers.
-			Create two surveys, and subscribe three users to each. 
-			Create some survey responses and set back the email_sent_date on them 
-			such that they are seen as expired. /
+		# Set up the 'ecosystem' for the test:
+		# Set up six users who will be our subscribers.
+		#	Create two surveys, and subscribe three users to each. 
+		#	Create some survey responses and set back the email_sent_date on them 
+		#	such that they are seen as expired.
 		@survey_1_sub1 = Factory(:user, email: "survey_1_sub1@example.com")
 		@survey_1_sub2 = Factory(:user, email: "survey_1_sub2@example.com")
 		@survey_1_sub3 = Factory(:user, email: "survey_1_sub3@example.com")

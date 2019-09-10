@@ -524,8 +524,8 @@ module OpenChain; class FenixParser
   end
 
   def process_activity_line entry, line, accumulated_dates
-    data = date_map_data line[2].strip
-    if !line[2].nil? && !line[3].nil? && data
+    data = date_map_data line[2].to_s.strip
+    if !line[3].blank? && data
       if line[4].blank? || data[:datatype] == :date
         time = time_zone.parse(line[3]).to_date rescue nil
       else
@@ -540,7 +540,7 @@ module OpenChain; class FenixParser
 
     # We're not capturing the date from Event 5, but we need to pull the employee code from it
     if !line[5].blank?
-      case line[2].strip
+      case line[2].to_s.strip
       when "5", "SHPCR"
         # Capture the employee name that opened the file (Event 5 is File Opened)
         entry.employee_name = line[5]

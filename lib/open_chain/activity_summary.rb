@@ -425,7 +425,7 @@ order by importer_id, k84_due_date desc"
     def single_company_unpaid_duty importer, base_date_utc
       Entry.select("customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, "\
                    "Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees")
-                  .where("entries.importer_id = #{importer.id}")
+                  .where("entries.importer_id = ?", importer.id)
                   .where("#{release_date_mf.field_name} IS NOT NULL")
                   .where("duty_due_date >= ?", base_date_utc.to_date)
                   .where(monthly_statement_due_date: nil)

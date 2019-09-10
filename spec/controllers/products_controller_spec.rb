@@ -100,7 +100,7 @@ describe ProductsController do
         expect(user.id).to eq @user.id
         expect(opts[:no_user_message]).to be_truthy
 
-        expect(params[:product][:uniqe_identifier]).to be_nil
+        expect(params[:product][:unique_identifier]).to be_nil
         expect(params[:product][:id]).to be_nil
         expect(params[:product][:field2]).to be_nil
         expect(params[:utf8]).to be_nil

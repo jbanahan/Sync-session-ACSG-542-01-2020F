@@ -267,7 +267,6 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       subject.generate_file(invoice.id) do |file|
         contents = file.read.split("\r\n")
       end
-      contents
       # just check that there's contents.
       expect(contents.length).to eq 3
     end

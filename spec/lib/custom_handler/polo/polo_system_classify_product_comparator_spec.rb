@@ -142,7 +142,7 @@ describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator do
     end
   end
 
-  describe 'calculate_classifcation' do
+  describe 'calculate_classification' do
     it 'handles nil' do
       expect(subject.new.calculate_classification([])).to eql(nil)
     end

@@ -2,10 +2,10 @@ describe OpenChain::ProjectDeliverableProcessor do
   let! (:master_setup) { stub_master_setup }
 
   before :each do
-    / Set up the 'ecosystem':
-      User 1 is assigned PD1 (high), PD2 (low), and PD3 (high)
-      User 2 is assigned PD3 (high)
-      User 3 is assigned PD4 (medium) /
+    # Set up the 'ecosystem':
+    #  User 1 is assigned PD1 (high), PD2 (low), and PD3 (high)
+    #  User 2 is assigned PD3 (high)
+    #  User 3 is assigned PD4 (medium)
 
     @u1 = Factory(:user, id: 1000, email: "user1@email.com")
     @u2 = Factory(:user, id: 2000, email: "user2@email.com")

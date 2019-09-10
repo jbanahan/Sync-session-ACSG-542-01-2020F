@@ -24,7 +24,7 @@ module OpenChain
       def initialize(opts={})
         @custom_where = opts[:where]
         if opts[:custom_definitions]
-          @defintions = opts[:custom_definitions]
+          @definitions = opts[:custom_definitions]
         end
       end
       

@@ -303,8 +303,9 @@ class ImportedFile < ActiveRecord::Base
       no_copy = [:id,:created_at,:updated_at,:search_setup_id,:imported_file_id]
       self.search_setup.search_columns.each do |col|
         my_col = self.search_columns.build
-        col.attributes.each { |attr, value| 
-          eval("my_col.#{attr}= col.#{attr}") unless no_copy.include?(attr.to_sym)} 
+        col.attributes.each do |attr, value| 
+          my_col.public_send("#{attr}=".to_sym, col.public_send("#{attr}".to_sym)) unless no_copy.include?(attr.to_sym)
+        end
         my_col.save
       end
     end

@@ -367,7 +367,7 @@ XML
     end
 
     def production?
-      Rails.env.production?
+      MasterSetup.get.production?
     end
 
     def extract_errors_information el

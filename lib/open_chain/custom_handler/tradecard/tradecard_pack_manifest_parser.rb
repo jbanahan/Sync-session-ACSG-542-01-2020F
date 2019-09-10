@@ -261,10 +261,14 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
         cbms = cs.total_volume_cbms(4)
         total = BigDecimal("0")
         lines.each do |line|
-          line.cbms = (line.cbms / BigDecimal(1000000)).round(4, BigDecimal::ROUND_DOWN) unless line.cbms.nil?
-          total += line.cbms
+          if !line.cbms.nil?
+            line.cbms = (line.cbms / BigDecimal(1000000)).round(4, BigDecimal::ROUND_DOWN)
+            total += line.cbms
+          end
         end
+
         if total < cbms
+          lines.first.cbms ||= BigDecimal("0")
           lines.first.cbms += (cbms - total)
         end
         

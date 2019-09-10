@@ -122,7 +122,7 @@ jobs:
       - run:
           name: Brakeman Static Analysis
           command: |-
-            if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec brakeman -c .brakeman/brakeman.yml; fi
+            if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake brakeman:scan; fi
       # Teardown
       #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
       # Save test results

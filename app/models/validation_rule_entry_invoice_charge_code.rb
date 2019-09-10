@@ -44,21 +44,22 @@ class ValidationRuleEntryInvoiceChargeCode < BusinessValidationRule
     else
       clause = ''
     end
-    ActiveRecord::Base.connection.exec_query(sql entry_id, clause)
+    ActiveRecord::Base.connection.exec_query(sql(entry_id, clause))
   end
 
   private
   
   def sql entry_id, clause
-    <<-SQL
+    sql = <<-SQL
       SELECT bil.charge_code, SUM(bil.charge_amount) amount
       FROM entries e 
         INNER JOIN broker_invoices bi ON e.id = bi.entry_id
         INNER JOIN broker_invoice_lines bil ON bi.id = bil.broker_invoice_id
-      WHERE e.id = #{entry_id}
+      WHERE e.id = ? 
       #{clause}
       GROUP BY bil.charge_code
       ORDER BY bil.charge_code
     SQL
+    ActiveRecord::Base.sanitize_sql_array([sql, entry_id])
   end
 end

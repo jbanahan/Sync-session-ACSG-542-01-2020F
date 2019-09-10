@@ -273,7 +273,7 @@ class SearchCriterion < ActiveRecord::Base
     if boolean_field? && ['null','notnull'].include?(self.operator)
       return self.operator=='notnull'
     elsif boolean_field?
-      return ["t","true","yes","y"].include? self_val.downcase
+      return ["t","true","yes","y"].include? self_val.to_s.downcase
     end
 
     case self.operator
@@ -580,9 +580,11 @@ class SearchCriterion < ActiveRecord::Base
         return value_to_test.nil? || value_to_test.downcase.rstrip != self.value.downcase.rstrip
       elsif self.operator == "in"
         # The rstrip here is to match how the IN LIST operator works in MySQL.
+        return false if value_to_test.blank?
         return break_rows(self.value.downcase).include?(value_to_test.downcase.rstrip)
       elsif self.operator == "notin"
         # The rstrip here is to match how the IN LIST operator works in MySQL.
+        return false if value_to_test.blank?
         return !break_rows(self.value.downcase).include?(value_to_test.downcase.rstrip)
       end
     elsif [:date, :datetime].include? d

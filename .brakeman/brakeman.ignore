@@ -3822,6 +3822,26 @@
       "note": ""
     },
     {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "6f502422d634db375cbbcd68dc6bfe86237ae7ba3c7ad70f3e9a617dd0ec0624",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "lib/open_chain/activity_summary.rb",
+      "line": 429,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "Entry.select(\"customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees\").where(\"entries.importer_id = ?\", importer.id).where(\"#{release_date_mf.field_name} IS NOT NULL\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::OpenChain::ActivitySummary::USEntrySummaryGenerator",
+        "method": "single_company_unpaid_duty"
+      },
+      "user_input": "release_date_mf.field_name",
+      "confidence": "Medium",
+      "note": "ModelFields will not produce injectionable values."
+    },
+    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "701e29ce234fed4afa754e227b8811b8078f98274e6158700ad6dcbca01e18bc",
@@ -4223,25 +4243,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "7a3074b8aa8e1229a707463529b960fefd3f7fd242da300bbe88161f0a4af9e9",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/tariff_record.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":instant_classificaiton_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "TariffRecord"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "7a62b160ce54c57a7f8dbcba285699b17e16287a2bb3127755664ee125909a1d",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4564,26 +4565,6 @@
       "user_input": "build_safe_command_line(home_dir, *args)",
       "confidence": "Medium",
       "note": "Command escaped by Shellwords, binary validated for correct naming."
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "83e9da93898f83208b80068f0c3b9d9e7e414405fe8e859d430d498aa2be834c",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 429,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "Entry.select(\"customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees\").where(\"entries.importer_id = #{importer.id}\").where(\"#{release_date_mf.field_name} IS NOT NULL\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::USEntrySummaryGenerator",
-        "method": "single_company_unpaid_duty"
-      },
-      "user_input": "release_date_mf.field_name",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
     },
     {
       "warning_type": "Mass Assignment",
@@ -8441,6 +8422,25 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
+      "fingerprint": "fb58be00bda0b89bb4a3589cd546d0fdaa97c5c5680501c1e0fcc4e274281b80",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/tariff_record.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":instant_classification_id",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "TariffRecord"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
       "fingerprint": "fb62d2bfb878e451732a3410b44287e726beb518e138987b042dc2309cfbeb3e",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -8650,6 +8650,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2019-09-06 15:56:12 -0500",
+  "updated": "2019-09-10 10:36:53 -0500",
   "brakeman_version": "4.5.0"
 }

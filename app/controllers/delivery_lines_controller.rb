@@ -9,7 +9,7 @@ class DeliveryLinesController < LinesController
         ok = false
         add_flash :errors, "You do not have permission to assign values from Sale \"#{soline.sales_order.order_number}\""
       else
-        line.linked_sales_order_line_id = soline.id
+        line.linked_sales_order_line_id = soline&.id
       end
     end
     ok

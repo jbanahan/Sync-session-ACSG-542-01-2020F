@@ -130,7 +130,7 @@ describe Attachment do
     end
   end
 
-  describe "get_santized_filename" do
+  describe "get_sanitized_filename" do
     it "should change non-latin1 chars to _" do
       f = Attachment.get_sanitized_filename "照片 014.jpg"
       expect(f).to eq("__ 014.jpg")

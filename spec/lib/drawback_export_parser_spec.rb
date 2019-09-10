@@ -71,7 +71,6 @@ describe OpenChain::DrawbackExportParser do
       s3_obj = double("OpenChain::S3::UploadResult")
       allow(s3_obj).to receive(:key).and_return "key"
       allow(s3_obj).to receive(:bucket).and_return "bucket"
-      s3_obj
 
       expect(described_class).to receive(:parse_xlsx_file).with("bucket", "key", "importer")
       File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|

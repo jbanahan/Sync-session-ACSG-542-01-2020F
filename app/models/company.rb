@@ -547,7 +547,7 @@ class Company < ActiveRecord::Base
     return nil if id.nil? && code.blank?
 
     if code.blank?
-      id.destroy 
+      id.destroy unless id.nil?
       self.system_identifiers.reload
       return nil
     else

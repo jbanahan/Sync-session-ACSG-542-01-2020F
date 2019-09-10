@@ -215,7 +215,7 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
-  describe "weblink_translation_lamda" do
+  describe "weblink_translation_lambda" do
     it "creates a lambda capable of transating an Id value to a URL" do
       ms = double("MasterSetup")
       allow(ms).to receive(:request_host).and_return "localhost"

@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
   let(:log) { InboundFile.new }
 
-  describe '#parse_file' do
+  describe 'parse_file' do
     it 'should delegate to #parse_dom' do
       data = double('data')
       dom = double('dom')
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Generic::LaceySimplifiedOrderXmlParser do
     end
   end
 
-  describe '#parse_dom' do
+  describe 'parse_dom' do
     let :base_xml do
       IO.read('spec/fixtures/files/lacey_simplified_order.xml')
     end

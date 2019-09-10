@@ -409,10 +409,5 @@ class EntitySnapshot < ActiveRecord::Base
       ary.each {|a| return false unless a.blank?}
       return true
     end
-
-    def recordable
-      return nil unless self.record_id
-      eval "#{self.core_module}.where(:id=>#{self.record_id}).first"
-    end
   end
 end

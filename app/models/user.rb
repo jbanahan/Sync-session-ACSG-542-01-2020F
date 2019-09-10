@@ -284,7 +284,7 @@ class User < ActiveRecord::Base
 
   def self.generate_authtoken user
     # Removing the Base64 padding (ie. equals) from digest due to rails 3 authorization header token parsing bug
-    Digest::SHA1.base64digest("#{Time.zone.now}#{MasterSetup.get.uuid}#{user.username}").gsub("=", "")
+    Digest::SHA256.base64digest("#{Time.zone.now}#{MasterSetup.get.uuid}#{user.username}").gsub("=", "")
   end
 
   def self.access_allowed? user

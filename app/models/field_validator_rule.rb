@@ -231,10 +231,10 @@ class FieldValidatorRule < ActiveRecord::Base
     generic_validate model_field, nested, val, self.greater_than_date, "#{model_field.label} must be after #{self.greater_than_date}.", lambda {val>self.greater_than_date}
   end
   def validate_more_than_ago val, model_field, nested
-    generic_validate model_field, nested, val, self.more_than_ago, "#{model_field.label} must be before #{self.more_than_ago} #{self.more_than_ago_uom} ago.", lambda {val.to_date<(eval "#{self.more_than_ago}.#{self.more_than_ago_uom}.ago.to_date")}
+    generic_validate model_field, nested, val, self.more_than_ago, "#{model_field.label} must be before #{self.more_than_ago} #{self.more_than_ago_uom} ago.", lambda { val.to_date < self.more_than_ago.to_i.public_send(self.more_than_ago_uom.to_sym).ago.to_date }
   end
   def validate_less_than_from_now val, model_field, nested
-    generic_validate model_field, nested, val, self.less_than_from_now, "#{model_field.label} must be before #{self.less_than_from_now} #{self.less_than_from_now_uom} from now.", lambda {val.to_date<(eval "#{self.less_than_from_now}.#{self.less_than_from_now_uom}.from_now.to_date")}
+    generic_validate model_field, nested, val, self.less_than_from_now, "#{model_field.label} must be before #{self.less_than_from_now} #{self.less_than_from_now_uom} from now.", lambda { val.to_date < self.less_than_from_now.to_i.public_send(self.less_than_from_now_uom.to_sym).from_now.to_date }
   end
   def validate_starts_with val, model_field, nested
     generic_validate model_field, nested, val, self.starts_with, "#{model_field.label} must start with #{self.starts_with}.", lambda {val.downcase.starts_with? self.starts_with.downcase}

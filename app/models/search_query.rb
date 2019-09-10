@@ -271,7 +271,7 @@ class SearchQuery
   def build_pagination per_page, target_page
     paginate = ""
     paginate += " LIMIT #{per_page}" if per_page
-    paginate += " OFFSET #{per_page*(target_page-1)} " if target_page
+    paginate += " OFFSET #{per_page*(target_page-1)} " if target_page && per_page
     paginate
   end
   

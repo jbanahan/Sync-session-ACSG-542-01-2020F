@@ -58,9 +58,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceKewillShipm
       # build out the full tariff line from that information.  If we put teh tariff number in there, it expects we'll
       # send quantity information and such.
       inv_line.hts = nil
+
+      inv_line.pieces_uom = "NO"
+      inv_line.unit_price_uom = "PCS"
     end
-    inv_line.pieces_uom = "NO"
-    inv_line.unit_price_uom = "PCS"
     
     inv_line
   end

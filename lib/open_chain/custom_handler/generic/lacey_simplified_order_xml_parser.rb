@@ -250,7 +250,7 @@ module OpenChain; module CustomHandler; module Generic; class LaceySimplifiedOrd
 
     # this shouldn't happen since we're prepping the products in advance, but leaving the test
     # just in case
-    log.reject_and_raise "Product #{p.unique_identifier} not found." unless p
+    log.reject_and_raise "Product #{uid} not found." unless p
     Lock.acquire("ProductVendorAssignment-#{p.id}-#{vendor.id}") do
       pva_qry = ProductVendorAssignment.where(product_id:p,vendor_id:vendor.id)
       if pva_qry.empty?

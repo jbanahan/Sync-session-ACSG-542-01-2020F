@@ -6,7 +6,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnFirstSaleValidationRule do
   let(:cust_inv) { Invoice.create!(importer: imp, invoice_number: "INV123") }
   let!(:cust_il) { InvoiceLine.create!(invoice: cust_inv, po_number: "PO123", part_number: "PART123", line_number: 1, middleman_charge: nil, air_sea_discount: nil, trade_discount: nil, early_pay_discount: nil) } 
 
-  describe "run_validaton" do
+  describe "run_validation" do
     it "returns error for commercial invoices without matching customer invoice" do
       cust_inv.update_attributes! invoice_number: "FOO"
       expect(rule).to_not receive(:run_tests)

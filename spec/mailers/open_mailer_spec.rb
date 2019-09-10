@@ -967,7 +967,7 @@ describe OpenMailer do
       Postmark::ApiInputError.new
     }
 
-    describe "intiialize" do 
+    describe "intialize" do 
       it "extracts settings values" do
         p = OpenMailer::LoggingMailerProxy.new settings
         expect(settings[:original_delivery_method]).to be_nil

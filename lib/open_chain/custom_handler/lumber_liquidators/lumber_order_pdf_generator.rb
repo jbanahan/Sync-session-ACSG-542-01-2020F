@@ -238,6 +238,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     opts = {precision: 5}.merge opts
     if v && v.is_a?(Numeric)
       v = number_with_delimiter(number_with_precision(v, opts))
+    else
+      v = v.to_s
     end
 
     # Strip trailing zeros, but only down to 2 decimal places

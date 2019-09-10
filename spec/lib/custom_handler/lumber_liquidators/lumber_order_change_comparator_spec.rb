@@ -208,7 +208,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
     let (:order) { 
       order = Factory(:order)
       order.update_custom_value!(cdefs[:ord_planned_handover_date],Date.new(2016,10,1))
-      order
       expect(order).not_to receive(:create_snapshot)
       order
     }

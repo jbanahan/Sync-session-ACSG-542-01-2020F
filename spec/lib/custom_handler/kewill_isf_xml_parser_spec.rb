@@ -170,9 +170,9 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(sf.first_accepted_date.to_i).to eq(Time.utc(2012,11,27,14,14,2).to_i)
       expect(sf.last_sent_date.to_i).to eq(Time.utc(2012,11,27,15,13,36).to_i)
       expect(sf.last_accepted_date.to_i).to eq(Time.utc(2012,11,27,15,14,2).to_i)
-      sf.estimated_vessel_load_date.strftime("%Y%m%d") == est.local(2012,11,30).strftime("%Y%m%d")
-      sf.estimated_vessel_sailing_date.strftime("%Y%m%d") == est.local(2014,6,26).strftime("%Y%m%d")
-      sf.estimated_vessel_arrival_date.strftime("%Y%m%d") == est.local(2014,8,4).strftime("%Y%m%d")
+      expect(sf.estimated_vessel_load_date).to eq Time.iso8601("2012-11-30T00:00:00-05:00").to_date
+      expect(sf.estimated_vessel_sailing_date).to eq Time.iso8601("2014-06-26T00:00:00-04:00").to_date
+      expect(sf.estimated_vessel_arrival_date).to eq Time.iso8601("2014-08-04T00:00:00-04:00").to_date
       expect(sf.po_numbers).to eq("0425694\n0425697")
       expect(sf.cbp_updated_at.to_date).to eq(Date.new(2012, 11, 27))
       expect(sf.status_description).to eq("Accepted No Bill Match")
