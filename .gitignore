@@ -44,3 +44,4 @@ config/recaptcha.yml
 dump.rdb
 .byebug_history
 .rake_tasks~
+.coverity
