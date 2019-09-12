@@ -14,8 +14,10 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
     Factory(:importer, system_code: "PVH")
   }
 
+  let (:us) { Factory(:country, iso_code: "US") }
+
   let (:entry) {
-    e = Factory(:entry, entry_number: "ENTRYNUM", broker_reference: "12345", importer_id: pvh.id, transport_mode_code: "10", customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890")
+    e = Factory(:entry, entry_number: "ENTRYNUM", broker_reference: "12345", importer_id: pvh.id, transport_mode_code: "10", customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", import_country: us)
     i = e.commercial_invoices.create! invoice_number: "INV"
     i.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", quantity: 1, unit_price: 1
 
@@ -23,13 +25,13 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
   }
 
   let (:broker_invoice_1) {
-    i = Factory(:broker_invoice, entry: entry, invoice_total: BigDecimal("200"), invoice_date: Date.new(2018, 11, 7))
+    i = Factory(:broker_invoice, entry: entry, customer_number: "PVH", invoice_total: BigDecimal("200"), invoice_date: Date.new(2018, 11, 7), bill_to_name: "PVH CORP")
     l = Factory(:broker_invoice_line, broker_invoice: i, charge_amount: BigDecimal("200"), charge_code: "0100", charge_description: "CHARGE")
     i
   }
 
   let (:broker_invoice_2) {
-    Factory(:broker_invoice, entry: entry)
+    Factory(:broker_invoice, entry: entry, customer_number: "PVH", bill_to_name: "PVH CORP")
   }
 
   let (:entry_snapshot) {
@@ -126,6 +128,29 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       entry.commercial_invoices.destroy_all
       expect(subject).not_to receive(:generate_and_send_invoice_files)
       
+      subject.generate_and_send(entry_snapshot)
+    end
+
+    it "skips US invoices that are not billed to PVH Corp" do
+      broker_invoice_2.update! bill_to_name: "PVH Non-Corp"
+      expect(subject).to receive(:generate_and_send_invoice_files).with(entry_snapshot, instance_of(Hash), broker_invoice_1)
+      subject.generate_and_send(entry_snapshot)
+    end
+
+    it "skips US invoices that are not billed to PVH customer number" do
+      broker_invoice_2.update! customer_number: "PVHNE"
+      expect(subject).to receive(:generate_and_send_invoice_files).with(entry_snapshot, instance_of(Hash), broker_invoice_1)
+      subject.generate_and_send(entry_snapshot)
+    end
+
+    it "accepts all Canadian invoices" do
+      ca = Factory(:country, iso_code: "CA")
+      entry.update! import_country: ca
+      broker_invoice_2.update! bill_to_name: "PVH Non-Corp"
+
+      expect(subject).to receive(:generate_and_send_invoice_files).with(entry_snapshot, instance_of(Hash), broker_invoice_1)
+      expect(subject).to receive(:generate_and_send_invoice_files).with(entry_snapshot, instance_of(Hash), broker_invoice_2)
+
       subject.generate_and_send(entry_snapshot)
     end
   end

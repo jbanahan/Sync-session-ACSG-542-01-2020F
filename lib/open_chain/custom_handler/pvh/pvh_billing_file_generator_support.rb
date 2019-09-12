@@ -263,6 +263,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   def unsent_invoices entry, broker_invoice_snapshots
     invoices = []
     broker_invoice_snapshots.each do |bi|
+      next unless send_to_gt_nexus?(entry, bi)
+
       invoice_number = mf(bi, "bi_invoice_number")
       broker_invoice = entry.broker_invoices.find {|inv| inv.invoice_number == invoice_number}
 
@@ -273,6 +275,28 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     end
 
     invoices
+  end
+
+  def send_to_gt_nexus? entry, invoice_snapshot
+    if entry.canadian?
+      # There's no special billing paths for Canada, so just send everything that's billed on those files
+      return true
+    else
+      customer_number = mf(invoice_snapshot, "bi_customer_number").to_s.upcase
+      bill_to_name = mf(invoice_snapshot, "bi_to_name").to_s.upcase
+      # We do some form of special billing for PVH, in that we bill any Pierpass charges to a separate PVH entity.
+      # PVH does not want those charges sent to GTN.  Operations is supposed to only be billing Pierpass to that account, 
+      # everything else is sent to 'PVH Corp'.  So, we should be able to accept anything billed to that account name.
+      # Unfortunately, the bill to customer used for both cases is just "PVH".
+
+      # We also bill PVH under a separate accounts of PVHCA and PVHNE. 
+      # PVHCA is "special projects" for a team at PVH which they do not want sent to GTN.  
+      # PVHNE is neckwear and none of that data is in GTN either.
+      # Therefore, suppress anything for these two accounts.
+      return customer_number == "PVH" && bill_to_name == "PVH CORP"
+    end
+
+    return false
   end
 
   def generate_and_send_reversal(entry_snapshot, invoice_snapshot, invoice, invoice_type)

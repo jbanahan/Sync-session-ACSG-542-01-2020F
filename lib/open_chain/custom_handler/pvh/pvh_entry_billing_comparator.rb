@@ -13,21 +13,19 @@ module OpenChain; module CustomHandler; module Pvh; class PvhEntryBillingCompara
     customer_number = snapshot&.recordable&.customer_number
     # This fist if is here SOLELY for the production acceptance testing phase...it can be removed once we go 100% live
     # This provides a way to go live without having to do a code update
-    if MasterSetup.get.custom_feature?("PVH Billing Testing") && has_test_indicator?(snapshot&.recordable)
-      return false unless ["PVHCANADA", "PVH", "PVHNE", "PVHCA"].include?(customer_number)
-    else
-      file_logged_date = snapshot&.recordable&.file_logged_date
-      # Go-Live on this project is 4-24-2019.  We will not send billing data for anything prior to this date (except test files)
-      return false if file_logged_date.nil? || file_logged_date < Date.new(2019, 4, 24)
+    file_logged_date = snapshot&.recordable&.file_logged_date
+    # Go-Live on this project is 4-24-2019.  We will not send billing data for anything prior to this date (except test files)
+    return false if file_logged_date.nil? || file_logged_date < Date.new(2019, 4, 24)
 
-      # Once both US and CA have gone live, the custom feature checks can be unified back into a single custom feature
-      if "PVHCANADA" == customer_number
-        return false unless MasterSetup.get.custom_feature?("PVH Canada GTN Billing")
-      elsif ["PVH", "PVHNE", "PVHCA"].include?(customer_number)
-        return false unless MasterSetup.get.custom_feature?("PVH US GTN Billing")
-      else
-        return false
-      end  
+    if "PVHCANADA" == customer_number
+      return false unless MasterSetup.get.custom_feature?("PVH Canada GTN Billing")
+    elsif "PVH" == customer_number
+      # PVH has two other account codes, PVHCA and PVHNE.  
+      # PVHCA is used for some sort of special freight that is not in GTN, so no invoices from that account should be sent to PVH.
+      # PVHNE is neckwear, which is also apparently not in GTN, so this billing data should not be sent for these either.
+      return false unless MasterSetup.get.custom_feature?("PVH US GTN Billing")
+    else
+      return false
     end
 
     has_broker_invoice?(snapshot&.recordable)
@@ -45,11 +43,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhEntryBillingCompara
         pvh_ca_generator.generate_and_send(snapshot)
       end
     end
-  end
-
-  def self.has_test_indicator? entry
-    # Fenix can't key house bills for non-Air shipments, so let them key BILLINGTEST as a container
-    entry.house_bills_of_lading.to_s.upcase.include?("BILLINGTEST") || entry.container_numbers.to_s.upcase.include?("BILLINGTEST")
   end
 
   def self.pvh_us_generator
