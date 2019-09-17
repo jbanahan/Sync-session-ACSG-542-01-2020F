@@ -8,6 +8,9 @@ require 'open_chain/git'
 
 class CacheWrapper
 
+  @@last_error_logged = nil
+  @@error_mutex = Mutex.new
+
   def initialize(cache)
     @cache = cache
   end
@@ -97,28 +100,47 @@ class CacheWrapper
       client.get 't'
     rescue Dalli::RingError => e
       settings = memcache_settings
-      raise "Memcache does not appear to be running.  Please ensure it is installed and running at #{settings["server"]}:#{settings["port"]}."
+      raise "Memcache does not appear to be running.  Please ensure it is installed and running at #{settings[0]}."
     end
     self.new(client)
   end
 
   private
-  def error_wrap &block
-    retried = false
-    begin
-      return yield
-    rescue Dalli::RingError
-      if retried
-        $!.log_me ["Second ring error, swallowing.  The process continued without cache result."]
-      else
-        reset
-        retried = true
-        retry
+    def error_wrap &block
+      retry_count = 0
+      begin
+        return yield
+      rescue => e
+        if (retry_count += 1) < 3
+          log_error(e, ["Swallowed by open_chain/cache_wrapper. The process continued without a cache result."])
+        else
+          # This actually closes the connection will re-open it on the next attempt to access the cache.  This 
+          # is what we want in virtually all cases where an exception is raised, since the error is almost always
+          # related to network accessibility, so we need to discard the connection and re-open.
+          reset
+          retry
+        end
       end
-    rescue
-      $!.log_me ["Swallowed by open_chain/cache_wrapper. The process continued without cache result."]
+      return nil
     end
-    return nil
-  end
 
+    def log_error error, messages
+      # Only log cache errors once every minute per process, this is to prevent there being a cache failure and
+      # flooding the system with hundreds of emails, which appears to be causing massive CPU spikes / RAM utilization
+      now = Time.zone.now
+      do_email = false
+      @@error_mutex.synchronize {
+        if @@last_error_logged.nil? || (now - 1.minute) > @@last_error_logged
+          @@last_error_logged = now
+          do_email = true
+        end
+      }
+
+      if do_email
+        error.log_me messages
+        return true
+      else
+        return false
+      end
+    end
 end
