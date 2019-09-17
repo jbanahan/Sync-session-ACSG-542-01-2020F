@@ -11,17 +11,18 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
     accept = super
     if accept
       entry = snapshot.recordable
-      accept = ['FOOLO', 'FOOCA', 'TEAED', 'FOOTLOCKE'].include?(entry.customer_number) && has_all_entry_dates?(entry) && recent_entry?(entry) && entry.broker_invoices.length > 0
+      customer_enabled = ['FOOLO', 'FOOCA', 'TEAED'].include?(entry.customer_number) || is_foot_locker_canada?(entry.customer_number)
+      accept = (customer_enabled) && has_all_entry_dates?(entry) && recent_entry?(entry) && entry.broker_invoices.length > 0
     end
 
     accept
   end
 
   def self.has_all_entry_dates? entry
-    # Arrival date for newer Canada entries received via Fenix ("FOOTLOCKE") is populated with the release date.
+    # Arrival date for newer Canada entries received via Fenix is populated with the release date.
     # It is blank, however, in older entries.  Since it's just a dupe of release date anyway, there's no point
     # in checking for it.
-    required_date_fields = entry.customer_number == "FOOTLOCKE" ? [:entry_filed_date, :file_logged_date, :release_date] :
+    required_date_fields = is_foot_locker_canada?(entry.customer_number) ? [:entry_filed_date, :file_logged_date, :release_date] :
                                 [:entry_filed_date, :file_logged_date, :arrival_date, :release_date]
 
     required_date_fields.each do |attribute|
@@ -70,7 +71,7 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
           write_xml(xml, t)
           t.flush
           t.rewind
-          suffix = entry.customer_number == 'FOOTLOCKE' ? '_CA' : ''
+          suffix = self.class.is_foot_locker_canada?(entry.customer_number) ? '_CA' : ''
           ftp_sync_file t, sr, connect_vfitrack_net("to_ecs/footlocker_810#{suffix}")
         end
       end
@@ -85,5 +86,9 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
   def xml_generator
     OpenChain::CustomHandler::FootLocker::FootLocker810Generator.new
   end
-  
+
+  def self.is_foot_locker_canada? customer_number
+    ['FOOTLOCKE', 'FOOT LOCKER CANADA C'].include?(customer_number)
+  end
+
 end; end; end; end

@@ -37,6 +37,14 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
         # These also come from a different system.
         entry.source_system = Entry::FENIX_SOURCE_SYSTEM
       end
+
+      it "accepts FOOT LOCKER CANADA C entries that have been logged and have invoices" do
+        entry.customer_number = 'FOOT LOCKER CANADA C'
+        # This field isn't checked for this customer number.
+        entry.arrival_date = nil
+        # These also come from a different system.
+        entry.source_system = Entry::FENIX_SOURCE_SYSTEM
+      end
     end
     
     context "with unaccepted data" do
@@ -131,30 +139,39 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
       expect(sr.confirmed_at).to be_within(2.minutes).of(Time.zone.now)
     end
 
-    it "generates Canada xml for each invoice and sends it" do
-      entry.customer_number = 'FOOTLOCKE'
-
-      broker_invoice = entry.broker_invoices.first
-
-      expect(subject).to receive(:xml_generator).and_return xml_generator
-      expect(xml_generator).to receive(:generate_xml).with(broker_invoice).and_return REXML::Document.new("<test/>")
-      expect(subject).to receive(:ftp_sync_file) do |file, sync_record, props|
-        expect(file).to be_a(Tempfile)
-        expect(file.read).to eq "<test/>"
-        expect(sync_record).to be_a(SyncRecord)
-        # Different folder.
-        expect(props[:folder]).to eq "to_ecs/footlocker_810_CA"
+    describe "Canada" do
+      it "generates Canada xml for each invoice and sends it (FOOTLOCKE)" do
+        entry.customer_number = 'FOOTLOCKE'
       end
 
-      subject.generate_and_send entry
+      it "generates Canada xml for each invoice and sends it (FOOT LOCKER CANADA C)" do
+        entry.customer_number = 'FOOT LOCKER CANADA C'
+      end
 
-      broker_invoice.reload
+      after :each do
+        broker_invoice = entry.broker_invoices.first
 
-      sr = broker_invoice.sync_records.first
-      expect(sr).not_to be_nil
-      expect(sr.trading_partner).to eq "FOOLO 810"
-      expect(sr.sent_at).to be_within(1.minute).of(Time.zone.now)
-      expect(sr.confirmed_at).to be_within(2.minutes).of(Time.zone.now)
+        expect(subject).to receive(:xml_generator).and_return xml_generator
+        expect(xml_generator).to receive(:generate_xml).with(broker_invoice).and_return REXML::Document.new("<test/>")
+        expect(subject).to receive(:ftp_sync_file) do |file, sync_record, props|
+          expect(file).to be_a(Tempfile)
+          expect(file.read).to eq "<test/>"
+          expect(sync_record).to be_a(SyncRecord)
+          # Different folder.
+          expect(props[:folder]).to eq "to_ecs/footlocker_810_CA"
+        end
+
+        subject.generate_and_send entry
+
+        broker_invoice.reload
+
+        sr = broker_invoice.sync_records.first
+        expect(sr).not_to be_nil
+        expect(sr.trading_partner).to eq "FOOLO 810"
+        expect(sr.sent_at).to be_within(1.minute).of(Time.zone.now)
+        expect(sr.confirmed_at).to be_within(2.minutes).of(Time.zone.now)
+      end
     end
+
   end
 end
