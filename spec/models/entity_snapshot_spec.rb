@@ -560,4 +560,52 @@ describe EntitySnapshot, :snapshot do
     end
   end
 
+
+  describe "ESDiff" do
+    let (:product) { Factory(:product) }
+
+    subject { EntitySnapshot::ESDiff.new }
+
+    before :each do 
+      subject.record_id = product.id
+      subject.core_module = CoreModule::PRODUCT.class_name
+    end
+
+    describe "core_module_instance" do
+      it "returns core module for ESDiff" do
+        expect(subject.core_module_instance).to eq CoreModule::PRODUCT
+      end
+
+      it "returns nil if bad core module set" do
+        subject.core_module = "NotACoreModule"
+        expect(subject.core_module_instance).to be_nil
+      end
+
+      it "returns nil if no core module set" do
+        subject.core_module = nil
+        expect(subject.core_module_instance).to be_nil
+      end
+    end
+
+    describe "record" do
+      it "finds the object that was diffed" do
+        expect(subject.record).to eq product
+      end
+
+      it "returns nil if core module is blank" do
+        subject.core_module = nil
+        expect(subject.record).to be_nil
+      end
+
+      it "returns nil if invalid core module is used" do
+        subject.core_module = "NotAProduct"
+        expect(subject.record).to be_nil
+      end
+
+      it "returns nil if non-existent record_id is present" do
+        subject.record_id = -1
+        expect(subject.record).to be_nil
+      end
+    end
+  end
 end

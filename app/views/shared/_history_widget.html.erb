@@ -28,30 +28,30 @@
 <div class='history_children' >
   <%if !diff.nested_blank?(diff.children_added)%>
     <% diff.children_added.each do |ca|%>
-      <%cm = CoreModule.find_by_class_name ca.core_module-%>
-      <%r = ca.recordable%>
+      <% cm = ca.core_module_instance -%>
       <% if !ca.blank? %>
-        <h3>Added <%=cm.label%>: <%=cm.unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
+        <% record = ca.record %>
+        <h3>Added <%=cm.label%>: <%= cm.unique_id_field.process_export(record, current_user) unless record.nil? %></h3>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>
   <%if !diff.nested_blank?(diff.children_deleted)%>
     <% diff.children_deleted.each do |ca|%>
-      <%cm = CoreModule.find_by_class_name ca.core_module-%>
-      <%r = ca.recordable%>
+      <% cm = ca.core_module_instance -%>
       <% if !ca.blank? %>
-        <h3>Deleted <%=cm.label%>: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
+        <% record = ca.record %>
+        <h3>Deleted <%=cm.label%>: <%= cm.unique_id_field.process_export(record, current_user) unless record.nil? %></h3>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>
   <%end%>
   <%if !diff.nested_blank?(diff.children_in_both)%>
     <% diff.children_in_both.each do |ca|%>
-      <%cm = CoreModule.find_by_class_name ca.core_module-%>
-      <%r = ca.recordable%>
+      <% cm = ca.core_module_instance -%>
       <% if !ca.blank? %>
-        <h3>Changed <%=cm.label%>: <%=CoreModule.find_by_class_name(ca.core_module).unique_id_field.process_export(r,current_user) unless r.nil?%></h3>
+        <% record = ca.record %>
+        <h3>Changed <%=cm.label%>: <%= cm.unique_id_field.process_export(record, current_user) unless record.nil? %></h3>
         <%=render :partial=>'shared/history_widget', :locals=>{:diff=>ca} %>
       <% end %>
     <% end %>

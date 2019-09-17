@@ -409,5 +409,17 @@ class EntitySnapshot < ActiveRecord::Base
       ary.each {|a| return false unless a.blank?}
       return true
     end
+
+    def core_module_instance
+      CoreModule.find_by_class_name self.core_module
+    end
+
+    def record
+      return nil if self.record_id.nil?
+      cm = self.core_module_instance
+      return nil if cm.nil?
+
+      cm.klass.where(id: self.record_id).first
+    end
   end
 end
