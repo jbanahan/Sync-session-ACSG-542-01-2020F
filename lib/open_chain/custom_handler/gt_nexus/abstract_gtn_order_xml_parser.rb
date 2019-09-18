@@ -1,4 +1,5 @@
 require 'open_chain/integration_client_parser'
+require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
 
@@ -31,6 +32,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::GtNexus::GenericGtnParserSupport
+  extend OpenChain::CustomHandler::XmlHelper
 
   # Sets any additional customer specific information into the order.
   # in the generic case, this method is a no-op
@@ -120,7 +122,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
   end
 
   def self.parse_file data, log, opts = {}
-    xml = REXML::Document.new(data)
+    xml = xml_document data
 
     user = User.integration
 

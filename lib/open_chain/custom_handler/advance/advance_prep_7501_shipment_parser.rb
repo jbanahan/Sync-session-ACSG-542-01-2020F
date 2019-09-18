@@ -1,4 +1,5 @@
 require 'open_chain/integration_client_parser'
+require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_asn_parser_support'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
@@ -6,9 +7,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::GtNexus::GenericGtnAsnParserSupport
+  extend OpenChain::CustomHandler::XmlHelper
 
   def self.parse_file io, log, opts = {}
-    self.new.parse(REXML::Document.new(io), User.integration, opts[:key])
+    self.new.parse(xml_document(io), User.integration, opts[:key])
     nil
   end
 
