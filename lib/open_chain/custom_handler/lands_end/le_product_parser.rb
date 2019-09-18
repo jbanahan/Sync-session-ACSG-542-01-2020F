@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
     cache = []
     current_style_nbr = nil
     foreach(custom_file, skip_headers: true) do |r|
-      row = r.map{ |cell| cell.presence&.encode("UTF-8", :invalid => :replace, :undef => :replace, replace: "?") }
+      row = r.map{ |cell| cell.to_s.encode("UTF-8", :invalid => :replace, :undef => :replace, replace: "?") }
       if row[0] != current_style_nbr && current_style_nbr.present?
         process_part cache, user
         cache = [row]
@@ -74,7 +74,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
 
   def process_part cache, user
     @updater.reset
-    multi_tariff = cache.transpose[10].uniq.count > 1
+    multi_tariff = cache.map{ |row| row[10] }.uniq.count > 1
     first_row = cache.first
     part_no = first_row[0].to_i.to_s
     uid = "LANDS1-#{part_no}"
