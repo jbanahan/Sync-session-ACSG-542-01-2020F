@@ -66,12 +66,12 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
       WHERE
           e.customer_number IN (#{parsed_companies})
           AND e.release_date >= '#{start_date.to_s(:db)}'
-          AND e.release_date < '#{end_date.to_s(:db)}'
+          AND e.release_date <= '#{end_date.to_s(:db)}'
       ORDER BY c.iso_code , e.customer_number , e.release_date
     SQL
 
     conversions = {"Release Date" => lambda{|row, value| value.nil? ? "" : value.in_time_zone(Time.zone).to_date},
-                   "Invoice Tariff - Duty" => lambda{|row, value| grand_total_hash[:invoice_tariff_duty] += BigDecimal(value); value},
+                   "Invoice Tariff - Duty" => lambda{|row, value| grand_total_hash[:invoice_tariff_duty] += parse_decimal(value); value},
                    "SPI (Primary)" => lambda do |row, value|
                      row[16] = row[13] if value.blank?
                      value
@@ -81,11 +81,11 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
                        row[18] = 'HI'
                        row[16] = value = row[13]
                      end
-                     grand_total_hash[:duty_without_spi] += BigDecimal(value)
+                     grand_total_hash[:duty_without_spi] += parse_decimal(value)
                      value
                    end,
                    "Savings" => lambda do |row, value|
-                     value = row[16] - row[13]
+                     value = parse_decimal(row[16]) - parse_decimal(row[13])
                      value
                    end
     }
@@ -107,18 +107,23 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
 
   private
 
-  def grand_total_hash
-    @grand_total_hash ||= Hash.new(BigDecimal(0))
-  end
-
-  def parse_date_parameters(start_date, end_date)
-    [Time.zone.parse(start_date), Time.zone.parse(end_date)]
-  end
-
-  def split_companies(companies)
-    if companies.is_a?(Array)
-      companies = companies.join("\n")
+    def grand_total_hash
+      @grand_total_hash ||= Hash.new(BigDecimal(0))
     end
-    companies.split("\n").map { |str| ActiveRecord::Base.connection.quote(str.strip) }.join(',')
-  end
+
+    def parse_date_parameters(start_date, end_date)
+      [Time.zone.parse(start_date), Time.zone.parse(end_date)]
+    end
+
+    def split_companies(companies)
+      if companies.is_a?(Array)
+        companies = companies.join("\n")
+      end
+      companies.split("\n").map { |str| ActiveRecord::Base.connection.quote(str.strip) }.join(',')
+    end
+
+    def parse_decimal val
+      BigDecimal.new(val.present? ? val : 0)
+    end
+
 end; end; end

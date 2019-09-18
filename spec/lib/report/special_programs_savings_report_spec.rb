@@ -142,6 +142,23 @@ describe OpenChain::Report::SpecialProgramsSavingsReport do
                                   @invoice_tariffs[0].spi_primary, @ot.common_rate_decimal.to_f, duty_without_spi.round(2).to_f, savings.round(2).to_f])
     end
 
+    it 'should work around null values for all tariff-level numeric fields' do
+      @invoice_tariffs[0].entered_value_7501 = nil
+      @invoice_tariffs[0].entered_value = nil
+      @invoice_tariffs[0].duty_amount = nil
+      @invoice_tariffs[0].duty_rate = nil
+      @invoice_tariffs[0].save!
+
+      tmp = OpenChain::Report::SpecialProgramsSavingsReport.new.run 'SPECIAL', 1.year.ago.to_s, 1.day.from_now.to_s
+      wb = Spreadsheet.open tmp
+      sheet = wb.worksheet 0
+      expect(sheet.row(0)).to eq(report_headers)
+      expect(sheet.row(1)).to eq([@entry.customer_number, @entry.broker_reference, @entry.entry_number, excel_date(@entry.release_date.to_date), @country.iso_code,
+                                  @invoices[0].invoice_number, @invoice_lines[0].po_number, @invoice_lines[0].country_origin_code,
+                                  @invoice_lines[0].part_number, @invoice_tariffs[0].hts_code, @invoice_tariffs[0].tariff_description,
+                                  nil, nil, nil, @invoice_tariffs[0].spi_primary, @ot.common_rate_decimal.to_f, nil, 0])
+    end
+
     it 'should include the notification' do
      msg = 'Common Rate and Duty without SPI is estimated based on the country’s current tariff schedule and may not reflect the historical Common Rate from the date the entry was cleared. For Common Rates with a compound calculation (such as 4% plus $0.05 per KG), only the percentage is used for the estimated Duty without SPI and Savings calculations.'
      tmp = OpenChain::Report::SpecialProgramsSavingsReport.new.run 'SPECIAL', 1.year.ago.to_s, 1.day.from_now.to_s
