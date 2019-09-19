@@ -110,6 +110,101 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
     end
   end
 
+  describe '.max_mpf_amount' do
+    before do
+      @entry = Factory(:entry)
+      @klass = described_class.new(['123456'])
+    end
+
+    it "returns the highest maximum MPF amount if the entry has no entry date" do
+      expect(@klass.max_mpf_amount(@entry)).to eql(BigDecimal.new("519.76"))
+    end
+
+    it "returns 519.76 if the entry's entry date is on or after 01/10/2019" do
+      @entry.release_date = DateTime.parse("01/10/2019 00:00:00")
+      @entry.save!
+
+      expect(@klass.max_mpf_amount(@entry)).to eql(BigDecimal.new("519.76"))
+    end
+
+    it "returns 508.70 if the entry's date is before 01/10/2019" do
+      @entry.release_date = DateTime.parse("01/09/2019 00:00:00")
+      @entry.save!
+
+      expect(@klass.max_mpf_amount(@entry)).to eql(BigDecimal.new("508.70"))
+    end
+
+    it "returns 497.99 if the entry's date is before 01/10/2018" do
+      @entry.release_date = DateTime.parse("01/09/2018 00:00:00")
+      @entry.save!
+
+      expect(@klass.max_mpf_amount(@entry)).to eql(BigDecimal.new("497.99"))
+    end
+  end
+
+  describe '.min_mpf_amount' do
+    before do
+      @entry = Factory(:entry)
+      @klass = described_class.new(['123456'])
+    end
+
+    it "returns the highest minimum MPF amount if the entry has no entry date" do
+      expect(@klass.min_mpf_amount(@entry)).to eql(BigDecimal.new("26.79"))
+    end
+
+    it "returns 26.79 if the entry's entry date is on or after 01/10/2019" do
+      @entry.release_date = DateTime.parse("01/10/2019 00:00:00")
+      @entry.save!
+
+      expect(@klass.min_mpf_amount(@entry)).to eql(BigDecimal.new("26.79"))
+    end
+
+    it "returns 26.22 if the entry's date is before 01/10/2019" do
+      @entry.release_date = DateTime.parse("01/09/2019 00:00:00")
+      @entry.save!
+
+      expect(@klass.min_mpf_amount(@entry)).to eql(BigDecimal.new("26.22"))
+    end
+
+    it "returns 25.67 if the entry's date is before 01/10/2018" do
+      @entry.release_date = DateTime.parse("01/09/2018 00:00:00")
+      @entry.save!
+
+      expect(@klass.min_mpf_amount(@entry)).to eql(BigDecimal.new("25.67"))
+    end
+  end
+
+  describe '.mpf_calculation_date' do
+    before do
+      @entry = Factory(:entry)
+      @klass = described_class.new(['123456'])
+    end
+
+    it 'prioritizes first_it_date' do
+      Timecop.freeze(Date.parse("2019/09/17 07:00:00")) do
+        first_it_date = 1.day.ago
+        release_date = 2.days.ago
+        @entry.first_it_date = first_it_date
+        @entry.release_date = release_date
+        @entry.save!
+        expect(@klass.mpf_calculation_date(@entry)).to eql(first_it_date.to_date)
+      end
+    end
+
+    it 'returns release_date if no first_it_date' do
+      Timecop.freeze(Date.parse("2019/09/17 07:00:00")) do
+        release_date = 2.days.ago
+        @entry.release_date = release_date
+        @entry.save!
+        expect(@klass.mpf_calculation_date(@entry)).to eql(release_date)
+      end
+    end
+
+    it 'returns nil if neither first_it_date or release_date is present' do
+      expect(@klass.mpf_calculation_date(@entry)).to eql(nil)
+    end
+  end
+
   describe '#generate_initial_hash' do
     before do
       @entry = Factory(:entry)

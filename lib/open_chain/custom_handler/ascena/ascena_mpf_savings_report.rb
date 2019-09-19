@@ -58,6 +58,33 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
     end
   end
 
+  def mpf_calculation_date(entry)
+    entry.first_it_date || entry.release_date
+  end
+
+  def max_mpf_amount(entry)
+    entry_date = mpf_calculation_date(entry)
+
+    if entry_date.present? && entry_date < Date.parse("01/10/2018")
+      BigDecimal.new("497.99")
+    elsif entry_date.present? && entry_date < Date.parse("01-10-2019")
+      BigDecimal("508.70")
+    else
+      BigDecimal.new("519.76")
+    end
+  end
+
+  def min_mpf_amount(entry)
+    entry_date = mpf_calculation_date(entry)
+    if entry_date.present? && entry_date < Date.parse("01-10-2018")
+      BigDecimal.new("25.67")
+    elsif entry_date.present? && entry_date < Date.parse("01-10-2019")
+      BigDecimal.new("26.22")
+    else
+      BigDecimal.new("26.79")
+    end
+  end
+
   def initialize cust_numbers
     @cust_numbers = Array.wrap(cust_numbers).sort
   end
@@ -162,12 +189,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
   end
 
   def gather_invoice_data(entry, savings_hash, raw_data_array)
-    entry_date = entry.release_date
-    max_original_per_bl = if entry_date.present? && entry_date <= Date.parse("01-10-2018")
-                            BigDecimal.new("497.99")
-                          else
-                            BigDecimal.new("508.70")
-                          end
+    max_original_per_bl = max_mpf_amount(entry)
+
     entry.commercial_invoices.each do |ci|
       invoice_lines = ci.commercial_invoice_lines.all
       dump_raw_data(entry, ci, invoice_lines, raw_data_array)
@@ -224,12 +247,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
   end
 
   def minimum_mpf_calculation(totals, entry)
-    entry_date = entry.first_it_date || entry.release_date
-    sum_mpf = if entry_date.present? && entry_date <= Date.parse("01-10-2018")
-                BigDecimal.new("25.67")
-              else
-                BigDecimal.new("26.22")
-              end
+    sum_mpf = min_mpf_amount(entry)
     totals[:sum_payable] = if totals[:sum_payable] > 0 && totals[:sum_payable] <= sum_mpf
                              sum_mpf
                            else
