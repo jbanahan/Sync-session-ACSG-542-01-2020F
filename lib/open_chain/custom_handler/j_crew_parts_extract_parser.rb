@@ -5,9 +5,9 @@ module OpenChain
   module CustomHandler
     class JCrewPartsExtractParser
       include VfitrackCustomDefinitionSupport
-      
+
       J_CREW_CUSTOMER_NUMBER ||= "JCREW"
-      
+
       def self.process_file path, file_name
         # The file coming to us is in utf-16le (weird), we'll transcode it below to UTF-8 so as to better work with it
         # internally.
@@ -57,7 +57,11 @@ module OpenChain
       # Reads the IO object containing JCrew part information and writes the translated output
       # data to the output_io stream.
       def create_parts io, file_name
-        j_crew_company = Company.with_customs_management_number(J_CREW_CUSTOMER_NUMBER).first
+        if MasterSetup.get.custom_feature?('WWW')
+          j_crew_company = Company.with_customs_management_number(J_CREW_CUSTOMER_NUMBER).first
+        else
+          j_crew_company = Company.where(system_code: "JCREW").first
+        end
 
         unless j_crew_company
           raise "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number '#{J_CREW_CUSTOMER_NUMBER}'."
@@ -98,7 +102,13 @@ module OpenChain
       private
 
         def save_product product, importer, user, file_name
-          uid = "JCREW-#{product[:article]}"
+
+          if MasterSetup.get.custom_feature?('WWW')
+            uid = "JCREW-#{product[:article]}"
+          else
+            uid = product[:article]
+          end
+
           p = nil
           Lock.acquire("Product-#{uid}") do
             p = Product.where(importer_id: importer.id, unique_identifier: uid).first_or_create!

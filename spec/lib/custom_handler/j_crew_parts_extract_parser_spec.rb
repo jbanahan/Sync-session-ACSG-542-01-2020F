@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::JCrewPartsExtractParser do
 
-  before :each do 
+  before :each do
     # Create a J Crew company record (otherwise the process blows up).
     @j_crew = with_customs_management_id(Factory(:company), "JCREW")
     @country = Factory(:country, iso_code: 'US')
     @cdefs ||= described_class.prep_custom_definitions([:prod_part_number, :prod_country_of_origin])
   end
-  
-  context "process_file" do
+
+  describe "process_file" do
     it "should open a file and call generate and send" do
       path = "/path/to/file.txt"
       io = double("IO")
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::JCrewPartsExtractParser do
     end
   end
 
-  context "process_s3" do
+  describe "process_s3" do
     it "should use s3 to process a file" do
       path = "/path/to/file.txt"
       file = double("file")
@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::JCrewPartsExtractParser do
     end
   end
 
-  context "process" do
+  describe "process" do
     it "should implement process by utilizing the s3 process" do
       custom_file = double("custom_file")
       attachment = double("attachment")
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::JCrewPartsExtractParser do
     end
   end
 
-  context "create_parts" do
+  describe "create_parts" do
     before :each do
       file = <<FILE
       1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
@@ -99,85 +99,181 @@ FILE
       @custom_file.delete if @custom_file
     end
 
-    it "should read product data and translate it into the output format" do
-    	us = @country
-    	HtsTranslation.create :company_id => @j_crew.id, :country_id => us.id, :hts_number => "6204312010", :translated_hts_number => "1234567890"
+    context "in the main WWW instance" do
+      let! (:master_setup) {
+        ms = stub_master_setup
+        allow(ms).to receive(:custom_feature?).with("WWW").and_return true
+      }
 
-    	# This data was copied from an actual J Crew file
-    	# The data looks like it's a screen-print from a legacy type system
-    	# Hence all the header data that is repeated every "page"
-      file = <<FILE
-      J.Crew Group                                                                                                                                      Print Date: 03/10/2014
-      Report:  /JCREW/CUSTOMS_BROKER_REPORT                                                                                                             Print Time: 09:35:37
-      User:     DJIANG                                                                                                                                  Page:                1
-      Transaction Code: ZM18
+      it "should read product data and translate it into the output format" do
+      	us = @country
+      	HtsTranslation.create :company_id => @j_crew.id, :country_id => us.id, :hts_number => "6204312010", :translated_hts_number => "1234567890"
+
+      	# This data was copied from an actual J Crew file
+      	# The data looks like it's a screen-print from a legacy type system
+      	# Hence all the header data that is repeated every "page"
+        file = <<FILE
+        J.Crew Group                                                                                                                                      Print Date: 03/10/2014
+        Report:  /JCREW/CUSTOMS_BROKER_REPORT                                                                                                             Print Time: 09:35:37
+        User:     DJIANG                                                                                                                                  Page:                1
+        Transaction Code: ZM18
 
 
 
-      PO #              Season        Article        HS #                     Quota            Duty %               COO        FOB          PO Cost             Binding Ruling
-                                      Description
+        PO #              Season        Article        HS #                     Quota            Duty %               COO        FOB          PO Cost             Binding Ruling
+                                        Description
 
 
 
-      1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
-                                      women's knit swim neon cali halter 82% polyester 18% elastane
+        1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                        women's knit swim neon cali halter 82% polyester 18% elastane
 
-      1632448           HOL1          23346          6204312010               435              17.50                CN         HK           41.40
-                                      womens knit swim cali hipster 82% polyester 18% elastane
+        1632448           HOL1          23346          6204312010               435              17.50                CN         HK           41.40
+                                        womens knit swim cali hipster 82% polyester 18% elastane
 
 FILE
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), 'file.txt')
-      product = Product.find_by(unique_identifier: "JCREW-23346")
-      # HTS #
-      expect(product.hts_for_country(us)).to include("6204312010")
-      # expect(line1[60, 10]).to eq("6204624020")
-      # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
-      expect(product.name).to eq("womens knit swim cali hipster 82% polyester 18% elastane")
-      expect(product.custom_value(@cdefs[:prod_part_number])).to eq('23346')
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), 'file.txt')
+        product = Product.find_by(unique_identifier: "JCREW-23346")
+        # HTS #
+        expect(product.hts_for_country(us)).to include("6204312010")
+        # expect(line1[60, 10]).to eq("6204624020")
+        # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
+        expect(product.name).to eq("womens knit swim cali hipster 82% polyester 18% elastane")
+        expect(product.custom_value(@cdefs[:prod_part_number])).to eq('23346')
 
-      product = Product.find_by(unique_identifier: "JCREW-23953")
-      # HTS #
-      expect(product.hts_for_country(us)).to include("6204624020")
-      # expect(line1[60, 10]).to eq("6204624020")
-      # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
-      expect(product.name).to eq("women's knit swim neon cali halter 82% polyester 18% elastane")
-      # Country of Origin
-    end
+        product = Product.find_by(unique_identifier: "JCREW-23953")
+        # HTS #
+        expect(product.hts_for_country(us)).to include("6204624020")
+        # expect(line1[60, 10]).to eq("6204624020")
+        # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
+        expect(product.name).to eq("women's knit swim neon cali halter 82% polyester 18% elastane")
+        # Country of Origin
+      end
 
-    it "does not call save or snapshot on an unchanged record" do
-      file = <<FILE
-      1620194            SU1           23953          6204624020               348              16.60                CN         HK           0.10
-                                      women‘s knit swim neon cali halter 82% polyester 18% elastane
+      it "does not call save or snapshot on an unchanged record" do
+        file = <<FILE
+        1620194            SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                        women‘s knit swim neon cali halter 82% polyester 18% elastane
 FILE
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
 
-      # We are now pulling an old instance so we do not expect save or create_snapshot to be called.
-      expect_any_instance_of(Product).to_not receive(:save)
-      expect_any_instance_of(Product).to_not receive(:create_snapshot)
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
-    end
+        # We are now pulling an old instance so we do not expect save or create_snapshot to be called.
+        expect_any_instance_of(Product).to_not receive(:save)
+        expect_any_instance_of(Product).to_not receive(:create_snapshot)
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
+      end
 
-    it "transliterates UTF-8 chars" do
-      # NOTE: the description has one of those non-ascii angled apostrophes for this test (JCREW does send us these)
-      file = <<FILE
-      1620194            SU1           23953          6204624020               348              16.60                CN         HK           0.10
-                                      women‘s knit swim neon cali halter 82% polyester 18% elastane
+      it "transliterates UTF-8 chars" do
+        # NOTE: the description has one of those non-ascii angled apostrophes for this test (JCREW does send us these)
+        file = <<FILE
+        1620194            SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                        women‘s knit swim neon cali halter 82% polyester 18% elastane
 FILE
-      OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
-      product = Product.find_by(unique_identifier: "JCREW-23953")
-      expect(product.name).to eq("women‘s knit swim neon cali halter 82% polyester 18% elastane")
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
+        product = Product.find_by(unique_identifier: "JCREW-23953")
+        expect(product.name).to eq("women‘s knit swim neon cali halter 82% polyester 18% elastane")
+      end
+
+      it "should raise an error if J Crew company doesn't exist" do
+        @j_crew.destroy
+
+        expect {
+          OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts nil, nil
+        }.to raise_error "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number 'JCREW'."
+      end
     end
 
-    it "should raise an error if J Crew company doesn't exist" do
-      @j_crew.destroy
+    context "NOT in the main WWW instance" do
+      before :each do
+        @new_j_crew = Factory(:company, system_code: "JCREW")
+      end
 
-      expect {
-        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts nil, nil
-      }.to raise_error "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number 'JCREW'."
+      let! (:master_setup) {
+        ms = stub_master_setup
+        allow(ms).to receive(:custom_feature?).with("WWW").and_return false
+      }
+
+      it "should read product data and translate it into the output format" do
+        us = @country
+        HtsTranslation.create :company_id => @new_j_crew.id, :country_id => us.id, :hts_number => "6204312010", :translated_hts_number => "1234567890"
+
+        # This data was copied from an actual J Crew file
+        # The data looks like it's a screen-print from a legacy type system
+        # Hence all the header data that is repeated every "page"
+        file = <<FILE
+        J.Crew Group                                                                                                                                      Print Date: 03/10/2014
+        Report:  /JCREW/CUSTOMS_BROKER_REPORT                                                                                                             Print Time: 09:35:37
+        User:     DJIANG                                                                                                                                  Page:                1
+        Transaction Code: ZM18
+
+
+
+        PO #              Season        Article        HS #                     Quota            Duty %               COO        FOB          PO Cost             Binding Ruling
+                                        Description
+
+
+
+        1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                        women's knit swim neon cali halter 82% polyester 18% elastane
+
+        1632448           HOL1          23346          6204312010               435              17.50                CN         HK           41.40
+                                        womens knit swim cali hipster 82% polyester 18% elastane
+
+FILE
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), 'file.txt')
+        product = Product.find_by(unique_identifier: "23346")
+        # HTS #
+        expect(product.hts_for_country(us)).to include("6204312010")
+        # expect(line1[60, 10]).to eq("6204624020")
+        # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
+        expect(product.name).to eq("womens knit swim cali hipster 82% polyester 18% elastane")
+        expect(product.custom_value(@cdefs[:prod_part_number])).to eq('23346')
+
+        # Note the lack of "JCREW-"
+        product = Product.find_by(unique_identifier: "23953")
+        # HTS #
+        expect(product.hts_for_country(us)).to include("6204624020")
+        # expect(line1[60, 10]).to eq("6204624020")
+        # Description (Trim'ed at 40 chars) (There's a hardcoded space between HTS and description)
+        expect(product.name).to eq("women's knit swim neon cali halter 82% polyester 18% elastane")
+        # Country of Origin
+      end
+
+      it "does not call save or snapshot on an unchanged record" do
+        file = <<FILE
+        1620194            SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                        women‘s knit swim neon cali halter 82% polyester 18% elastane
+FILE
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
+
+        # We are now pulling an old instance so we do not expect save or create_snapshot to be called.
+        expect_any_instance_of(Product).to_not receive(:save)
+        expect_any_instance_of(Product).to_not receive(:create_snapshot)
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
+      end
+
+      it "transliterates UTF-8 chars" do
+        # NOTE: the description has one of those non-ascii angled apostrophes for this test (JCREW does send us these)
+        file = <<FILE
+        1620194            SU1           23953          6204624020               348              16.60                CN         HK           0.10
+                                        women‘s knit swim neon cali halter 82% polyester 18% elastane
+FILE
+        OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts(StringIO.new(file.gsub("\n", "\r\n")), "file.txt")
+        product = Product.find_by(unique_identifier: "23953")
+        expect(product.name).to eq("women‘s knit swim neon cali halter 82% polyester 18% elastane")
+      end
+
+      it "should raise an error if J Crew company doesn't exist" do
+        @new_j_crew.destroy
+
+        expect {
+          OpenChain::CustomHandler::JCrewPartsExtractParser.new.create_parts nil, nil
+        }.to raise_error "Unable to process J Crew Parts Extract file because no company record could be found with Alliance Customer number 'JCREW'."
+      end
     end
   end
 
-  context "integration_test" do
+  describe "integration_test" do
     before :each do
       file = <<FILE
       1620194           SU1           23953          6204624020               348              16.60                CN         HK           0.10
@@ -203,7 +299,7 @@ FILE
     end
   end
 
-  context "can_view?" do
+  describe "can_view?" do
     it "should allow master users to view" do
       user = Factory(:master_user)
       expect(OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(user)).to be_truthy
