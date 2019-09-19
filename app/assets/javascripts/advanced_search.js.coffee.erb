@@ -731,16 +731,16 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
 
   #send background job to build excel
   $scope.backgroundDownload = () ->
-    
+
     successCallback = (resp) ->
       $scope.notices.push "Report is running in the background. You will receive a system message when it's done."
-    
+
     errorCallback = (resp) ->
-      if resp.errors
-        $scope.errors.push error for error in resp.errors
+      if resp.data.errors
+        $scope.errors.push error for error in resp.data.errors
       else
         $scope.errors.push "Report download failed.  Please contact support"
-    
+
     $http.get('/advanced_search/'+$scope.searchSetup.id+"/download.json").then(successCallback,errorCallback)
 
   $scope.foregroundDownload = () ->
