@@ -231,7 +231,7 @@ module OpenChain; module ApplicationControllerLegacy
     sr = SearchRun.find_last_run current_user, @core_module
     if sr.nil?
       ss = get_search_to_run
-      sr = ss.search_run
+      sr = ss.search_runs.first
       sr = ss.create_search_run if sr.nil?
     end
     sr
