@@ -330,6 +330,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def find_and_process_entry(e)
       entry = nil 
       file_no, updated_at, extract_time, cancelled_date = self.class.entry_info e
+      # For some reason there's some rare cases where an entry comes over with no file number...ignore them.
+      return nil if file_no.blank? || file_no == "0"
 
       Lock.acquire(Lock::ALLIANCE_PARSER) do
         # Make sure the entry has not been purged. We want to allow for re-using file numbers, so we'll assume that any data exported from the source system AFTER the purge record was created
@@ -1254,6 +1256,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def get_importer customer_number, customer_name
+      return nil if customer_number.blank? || customer_name.blank?
+
       Company.find_or_create_company!("Customs Management", customer_number, {alliance_customer_number: customer_number, importer: true, name: customer_name})
     end
 

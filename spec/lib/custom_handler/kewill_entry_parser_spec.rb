@@ -1383,6 +1383,28 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect { subject.process_entry @e }.to raise_error error
     end
 
+    it "does not attempt to create importers accounts with missing customer numbers" do
+      @e['cust_no'] = ""
+      entry = subject.process_entry @e
+      expect(entry.importer).to be_nil
+    end
+
+    it "does not attempt to create importers accounts with missing customer names" do
+      @e['cust_name'] = ""
+      entry = subject.process_entry @e
+      expect(entry.importer).to be_nil
+    end
+
+    it "skips files without a file number" do
+      @e["file_no"] = nil
+      expect(subject.process_entry(@e)).to be_nil
+    end
+
+    it "skips files with a 0 file number" do
+      @e["file_no"] = "0"
+      expect(subject.process_entry(@e)).to be_nil
+    end
+
     context "with statement updates" do
       let (:statement) { DailyStatement.create! statement_number: "bstatement" }
       let! (:statement_entry) { DailyStatementEntry.create! daily_statement_id: statement.id, broker_reference: "12345" }
