@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     if fenix?(shipment_data)
       shipments = split_shipment(shipment_data, max_fenix_invoice_length)
     else
-      shipments = [shipment_data]
+      shipments = split_us_returns_shipment(shipment_data)
     end
 
     if !primary_ca_import_parser? && !primary_us_import_parser?
@@ -259,7 +259,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
         sr = invoice.sync_records.build trading_partner: "US i978"
       end
 
-      OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator.new.generate_and_send_invoice invoice, sr
+      us_generator.generate_and_send_invoice invoice, sr
       addendum_builder = generate_invoice_addendum(invoice)
       exception_builder = generate_missing_parts_spreadsheet(invoice)
       pdf_data = make_pdf_info(invoice)
@@ -290,6 +290,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       sr.confirmed_at = (Time.zone.now + 1.minute)
       sr.save!
       nil
+    end
+
+    def us_generator
+      OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator.new
     end
 
     def create_tempfile_report builder, filename, write_lambda: nil
@@ -396,9 +400,20 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       line.carrier_name = shipment["SHIPMENT"]["CarrierName"]
       line.value_foreign = line.quantity * line.unit_price if line.quantity && line.unit_price
       line.customer_reference_number_2 = item["SSCCNumber"]
-      line.secondary_po_number = item["HybrisOrderNumber"]
-      line.secondary_po_line_number = item["HybrisOrderItemNumber"]
 
+      # H&M are implementing a feature at some point in the near future where the CustomerOrderNumber/CustomerOrderItemNumber
+      # will represent the their HybrisOrderNumber for both movements to and from Canada.
+      # The HybrisOrderNumber contains distinct order movement ids for each into/out of Canada movement.  Thus, the 
+      # CustomerOrderNumber is consistent between the two and should be a unique means for tying a good into and out of the country
+      # for drawback purposes.
+      if item["CustomerOrderNumber"]
+        line.secondary_po_number = item["CustomerOrderNumber"]
+        line.secondary_po_line_number = item["CustomerOrderItemNumber"]
+      else
+        line.secondary_po_number = item["HybrisOrderNumber"]
+        line.secondary_po_line_number = item["HybrisOrderItemNumber"]
+      end
+      
       # We don't need MID's for Canada imports only US Returns - Canada doesn't do MIDs
       if kewill?(shipment)
         invoice_line = find_commercial_invoice_line(line.customer_reference_number, line.country_origin&.iso_code, line.part_number)
@@ -444,7 +459,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
     def find_or_create_invoice shipment_data
       shipment = shipment_data["SHIPMENT"]
-      invoice_number = shipment.try(:[], "ExternalID")
+      invoice_number = invoice_number(shipment_data)
       inbound_file.reject_and_raise("Expected to find Invoice Number in the BILLING_SHIPMENT/ExternalID element, but it was blank or missing.") if invoice_number.blank?
 
       invoice = nil
@@ -493,6 +508,15 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
     def kewill? shipment_data
       customs_system(shipment_data) == :kewill
+    end
+
+    def invoice_number shipment_data
+      if fenix?(shipment_data)
+        shipment_data["SHIPMENT"].try(:[], "ExternalID")
+      elsif kewill?(shipment_data)
+        shipment_data["DELIVERY_ITEMS"]&.first.try(:[], "DeliveryNumber")
+      end
+
     end
 
     def customs_system shipment_data
@@ -580,6 +604,30 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       all_files
     end
 
+    def split_us_returns_shipment data
+      # US Returns need to be split at the Gaylord level (https://en.wikipedia.org/wiki/Bulk_box).
+      # The Gaylord number is actually the SSCCNumber (basically a carton identifier), so we'll generate
+      # one invoice per gaylord number (with the invoice number being the DeliveryNumber).
+      #
+      # This is to prevent there from being over 999 lines on a US entry..each Gaylord is going to likely
+      # have several hundred lines.  They were supposing that 2 Gaylords could be squeezed on the 7501 and fit
+      # below the 999 line limit, but that doesn't appear to be the case.  So they're going to issue Bills of Lading
+      # on their end at the Gaylord level and the i978 will get sent with every single line for the whole
+      # truck shipment, and we're going to split that up.
+      gaylords = Hash.new do |h, k|
+        h[k] = []
+      end
+
+      data["DELIVERY_ITEMS"].each do |item|
+        gaylords[item["SSCCNumber"]] << item
+      end
+
+      gaylords.map do |k, lines|
+        {"SHIPMENT" => data["SHIPMENT"].deep_dup, "DELIVERY_ITEMS" => lines }
+      end
+
+    end
+
     def max_fenix_invoice_length
       999
     end
@@ -604,15 +652,15 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
         data.weight = BigDecimal("1")
       end
 
-      # For every unique PO number, count it as a single carton...for the time being, since cartons,
-      # are not on the I2...we just have to guestimate the carton count.
-      po_numbers = Set.new
+      # A unique set of Carrier Tracking Numbers (invoice_line.master_bill_of_lading), which for US -> CA should be the carton UCC code, should tell us the
+      # count of cartons in the invoice
+      carton_numbers = Set.new
 
       invoice.invoice_lines.each do |line|
-        po_numbers << line.po_number unless line.po_number.blank?
+        carton_numbers << line.master_bill_of_lading unless line.master_bill_of_lading.blank?
       end
 
-      data.cartons = po_numbers.size
+      data.cartons = carton_numbers.size
 
       data
     end

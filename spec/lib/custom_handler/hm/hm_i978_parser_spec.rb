@@ -104,8 +104,8 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         expect(l.carrier_name).to eq "HMTESTDATA"
         expect(l.value_foreign).to eq BigDecimal("875.52")
         expect(l.customer_reference_number_2).to eq "8454548"
-        expect(l.secondary_po_number).to eq "217711434336"
-        expect(l.secondary_po_line_number).to eq "000010"
+        expect(l.secondary_po_number).to eq "217711434XXX"
+        expect(l.secondary_po_line_number).to eq "000020"
         expect(l.hts_number).to eq "6115950000"
 
         expect(i.sync_records.length).to eq 1
@@ -125,6 +125,29 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
 
         data_cross_reference.reload
         expect(data_cross_reference.value).not_to be_nil
+      end
+
+      it "falls back to tracking HybrisOrderNumber if CustomerOrderNumber is missing" do
+        xml_data.gsub!("<CustomerOrderNumber>217711434XXX</CustomerOrderNumber>", "").gsub!("<CustomerOrderItemNumber>000020</CustomerOrderItemNumber>", "")
+
+        expect(subject).to receive(:generate_and_send_pars_pdf)
+        expect(subject).to receive(:check_unused_pars_count)
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::FenixNdInvoice810Generator).to receive(:generate_and_send_810) do |instance, invoice, sync_record|
+          expect(invoice.invoice_number).to eq "1234567891011"
+          expect(sync_record.trading_partner).to eq "CA i978"
+          expect(sync_record.syncable).to eq invoice
+        end
+
+        invoices = subject.process_shipment_xml xml, user, "bucket", "filename"
+        expect(invoices.length).to eq 1
+
+        i = invoices[0]
+        i.reload
+        expect(i.invoice_lines.length).to eq 3
+
+        l = i.invoice_lines.first
+        expect(l.secondary_po_number).to eq "217711434336"
+        expect(l.secondary_po_line_number).to eq "000010"
       end
 
       it "splits shipments if too many lines are found, handling case where last item is a new shipment" do
@@ -247,20 +270,23 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
       end
 
       it "creates us invoice" do
-        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator).to receive(:generate_and_send_invoice) do |instance, invoice, sync_record|
-          expect(invoice.invoice_number).to eq "1234567891011"
-          expect(sync_record.trading_partner).to eq "US i978"
-          expect(sync_record.syncable).to eq invoice
+        captured_data = []
+        generator = instance_double(OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator)
+        allow(subject).to receive(:us_generator).and_return generator
+        expect(generator).to receive(:generate_and_send_invoice).exactly(2).times do |invoice, sync_record|
+          captured_data << {invoice: invoice, sync_record: sync_record}
         end
 
         invoices = subject.process_shipment_xml xml, user, "bucket", "filename"
-        expect(invoices.length).to eq 1
+        expect(invoices.length).to eq 2
+        expect(captured_data[0][:invoice].invoice_number).to eq("F000001850")
+        expect(captured_data[1][:invoice].invoice_number).to eq("F000002240")
 
         i = invoices[0]
         i.reload
 
         expect(i.importer).to eq importer
-        expect(i.invoice_number).to eq "1234567891011"
+        expect(i.invoice_number).to eq "F000001850"
         expect(i.customer_reference_number_2).to be_blank
         expect(i.last_file_path).to eq "filename"
         expect(i.last_file_bucket).to eq "bucket"
@@ -271,12 +297,12 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         expect(i.customer_reference_number).to eq "A019000144"
         expect(i.currency).to eq "NOK"
         expect(i.country_import).to eq us
-        expect(i.gross_weight).to eq BigDecimal("0.9")
+        expect(i.gross_weight).to eq BigDecimal("0.3")
         expect(i.gross_weight_uom).to eq "KG"
-        expect(i.net_weight).to eq BigDecimal("0.75")
-        expect(i.invoice_total_foreign).to eq BigDecimal("1795.04")
+        expect(i.net_weight).to eq BigDecimal("0.25")
+        expect(i.invoice_total_foreign).to eq BigDecimal("875.52")
 
-        expect(i.invoice_lines.length).to eq 3
+        expect(i.invoice_lines.length).to eq 1
 
         l = i.invoice_lines.first
         expect(l.po_number).to eq "E000003487"
@@ -297,8 +323,8 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         expect(l.carrier_name).to eq "HMTESTDATA"
         expect(l.value_foreign).to eq BigDecimal("875.52")
         expect(l.customer_reference_number_2).to eq "8454548"
-        expect(l.secondary_po_number).to eq "217711434336"
-        expect(l.secondary_po_line_number).to eq "000010"
+        expect(l.secondary_po_number).to eq "217711434XXX"
+        expect(l.secondary_po_line_number).to eq "000020"
         expect(l.hts_number).to eq "6115950000"
         expect(l.mid).to eq "MID1"
 
@@ -307,71 +333,117 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         expect(sr.trading_partner).to eq "US i978"
         expect(sr.sent_at).not_to be_nil
 
-        expect(ActionMailer::Base.deliveries.length).to eq 1
-        m = ActionMailer::Base.deliveries.first
-        expect(m.to).to eq ["usfiles@company.com"]
-        expect(m.subject).to eq "[VFI Track] H&M Returns Shipment # 1234567891011"
-        expect(m.attachments.length).to eq 2
-        expect(m.attachments["Invoice Addendum 1234567891011.xlsx"]).not_to be_nil
-        expect(m.attachments["Invoice 1234567891011.pdf"]).not_to be_nil
+        i = invoices[1]
+        expect(i.invoice_number).to eq "F000002240"
+        expect(i.gross_weight).to eq BigDecimal("0.6")
+        expect(i.gross_weight_uom).to eq "KG"
+        expect(i.net_weight).to eq BigDecimal("0.50")
+        expect(i.invoice_total_foreign).to eq BigDecimal("919.52")
 
-        expect(inbound_file).to have_identifier(:invoice_number, "1234567891011", i)
-      end
+        expect(i.invoice_lines.length).to eq 2
 
-      it "sends exception report if mid is missing" do
-        entry.commercial_invoices.first.commercial_invoice_lines.first.destroy
-        subject.process_shipment_xml xml, user, "bucket", "filename"
+        # There's nothing that we need to really deal with on this second invoice that isn't already checked by the
+        # expectations above for the first invoice lines
 
         expect(ActionMailer::Base.deliveries.length).to eq 2
         m = ActionMailer::Base.deliveries.first
         expect(m.to).to eq ["usfiles@company.com"]
+        expect(m.subject).to eq "[VFI Track] H&M Returns Shipment # F000001850"
+        expect(m.attachments.length).to eq 2
+        expect(m.attachments["Invoice Addendum F000001850.xlsx"]).not_to be_nil
+        expect(m.attachments["Invoice F000001850.pdf"]).not_to be_nil
 
         m = ActionMailer::Base.deliveries.second
-        expect(m.to).to eq ["exception@company.com"]
-        expect(m.subject).to eq "[VFI Track] H&M Commercial Invoice 1234567891011 Exceptions"
-        expect(m.attachments.length).to eq 1
-        expect(m.attachments["1234567891011 Exceptions.xlsx"]).not_to be_nil
+        expect(m.subject).to eq "[VFI Track] H&M Returns Shipment # F000002240"
+
+        expect(inbound_file).to have_identifier(:invoice_number, "F000001850", invoices[0])
+        expect(inbound_file).to have_identifier(:invoice_number, "F000002240", invoices[1])
       end
 
-      it "sends exception report if hts is missing" do
-        product.classifications.destroy_all
-        subject.process_shipment_xml xml, user, "bucket", "filename"
+      it "falls back to tracking HybrisOrderNumber if CustomerOrderNumber is missing" do
+        xml_data.gsub!("<CustomerOrderNumber>217711434XXX</CustomerOrderNumber>", "").gsub!("<CustomerOrderItemNumber>000020</CustomerOrderItemNumber>", "")
 
-        m = ActionMailer::Base.deliveries.second
-        expect(m.attachments["1234567891011 Exceptions.xlsx"]).not_to be_nil
-      end
+        captured_data = []
+        generator = instance_double(OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator)
+        allow(subject).to receive(:us_generator).and_return generator
+        expect(generator).to receive(:generate_and_send_invoice).exactly(2).times do |invoice, sync_record|
+          captured_data << {invoice: invoice, sync_record: sync_record}
+        end
 
-      it "sends exception if product is missing" do
-        product.destroy
-        subject.process_shipment_xml xml, user, "bucket", "filename"
-
-        m = ActionMailer::Base.deliveries.second
-        expect(m.attachments["1234567891011 Exceptions.xlsx"]).not_to be_nil
-      end
-
-      it "converts Myanmaar country code to Burma for US entries" do
-        burma = Factory(:country, iso_code: "BU")
-
-        xml_data.gsub!("<COO>CN</COO>", "<COO>MM</COO>")
         invoices = subject.process_shipment_xml xml, user, "bucket", "filename"
+        expect(invoices.length).to eq 2
+        expect(captured_data[0][:invoice].invoice_number).to eq("F000001850")
+
         i = invoices[0]
-
-        expect(i.invoice_lines.first.country_origin).to eq burma
+        i.reload
+        expect(i.invoice_lines.length).to eq 1
+        l = i.invoice_lines.first
+        expect(l.secondary_po_number).to eq "217711434336"
+        expect(l.secondary_po_line_number).to eq "000010"
       end
 
-      it "does not generate files or send out emails if it is not the primary parser" do
-        allow(ms).to receive(:custom_feature?).with("H&M i978 US Import Live").and_return false
-        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator).not_to receive(:generate_and_send_invoice)
-        # Make sure the exception report is also not generated by setting up a product that will be an exception
-        product_2.classifications.destroy_all
+      context "with single invoice" do
 
-        invoices = subject.process_shipment_xml xml, user, "bucket", "filename"
-        expect(inbound_file).to have_info_message("i978 process is not fully enabled.  No files will be emitted from this parser.")
-        expect(invoices.length).to eq 1
-        i = invoices.first
-        expect(i.sync_records.length).to eq 0
-        expect(ActionMailer::Base.deliveries.length).to eq 0
+        before :each do 
+          xml_data.gsub!("<DeliveryNumber>F000001850</DeliveryNumber>", "<DeliveryNumber>F000002240</DeliveryNumber>").gsub!("<SSCCNumber>8454548</SSCCNumber>", "<SSCCNumber>84547448</SSCCNumber>")
+        end
+
+        it "sends exception report if mid is missing" do
+          entry.commercial_invoices.first.commercial_invoice_lines.first.destroy
+          subject.process_shipment_xml xml, user, "bucket", "filename"
+
+          expect(ActionMailer::Base.deliveries.length).to eq 2
+          m = ActionMailer::Base.deliveries.first
+          expect(m.to).to eq ["usfiles@company.com"]
+
+          m = ActionMailer::Base.deliveries.second
+          expect(m.to).to eq ["exception@company.com"]
+          expect(m.subject).to eq "[VFI Track] H&M Commercial Invoice F000002240 Exceptions"
+          expect(m.attachments.length).to eq 1
+          expect(m.attachments["F000002240 Exceptions.xlsx"]).not_to be_nil
+        end
+
+        it "sends exception report if hts is missing" do
+          product.classifications.destroy_all
+          subject.process_shipment_xml xml, user, "bucket", "filename"
+
+          m = ActionMailer::Base.deliveries.second
+          expect(m.attachments["F000002240 Exceptions.xlsx"]).not_to be_nil
+        end
+
+        it "sends exception if product is missing" do
+          product.destroy
+          subject.process_shipment_xml xml, user, "bucket", "filename"
+
+          m = ActionMailer::Base.deliveries.second
+          expect(m.attachments["F000002240 Exceptions.xlsx"]).not_to be_nil
+        end
+
+        it "converts Myanmaar country code to Burma for US entries" do
+          burma = Factory(:country, iso_code: "BU")
+
+          xml_data.gsub!("<COO>CN</COO>", "<COO>MM</COO>")
+          invoices = subject.process_shipment_xml xml, user, "bucket", "filename"
+          i = invoices[0]
+
+          expect(i.invoice_lines.first.country_origin).to eq burma
+        end
+
+        it "does not generate files or send out emails if it is not the primary parser" do
+          allow(ms).to receive(:custom_feature?).with("H&M i978 US Import Live").and_return false
+          expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator).not_to receive(:generate_and_send_invoice)
+          # Make sure the exception report is also not generated by setting up a product that will be an exception
+          product_2.classifications.destroy_all
+
+          invoices = subject.process_shipment_xml xml, user, "bucket", "filename"
+          expect(inbound_file).to have_info_message("i978 process is not fully enabled.  No files will be emitted from this parser.")
+          expect(invoices.length).to eq 1
+          i = invoices.first
+          expect(i.sync_records.length).to eq 0
+          expect(ActionMailer::Base.deliveries.length).to eq 0
+        end
       end
+      
     end
 
     context "it errors" do 
