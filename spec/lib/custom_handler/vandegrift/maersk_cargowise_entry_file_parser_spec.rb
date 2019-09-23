@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.recon_flags).to eq "NA"
         expect(entry.bond_type).to eq "8"
 
-        expect(entry.total_fees).to eq BigDecimal.new("627.35")
+        expect(entry.total_fees).to eq BigDecimal.new("1627.35")
         expect(entry.total_duty).to eq BigDecimal.new("6598.80")
         expect(entry.total_taxes).to eq BigDecimal.new("111.10")
         expect(entry.total_duty_direct).to be_nil
@@ -433,7 +433,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
         expect(entry).to_not be_nil
-        expect(entry.total_duty_direct).to eq BigDecimal.new("7337.25")
+        expect(entry.total_duty_direct).to eq BigDecimal.new("8337.25")
 
         expect(log).to have_info_message "Entry successfully processed."
       end

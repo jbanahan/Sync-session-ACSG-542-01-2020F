@@ -974,7 +974,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_us_total_fees entry
       total = BigDecimal.new(0)
       # Entry has not yet been saved when this method is called, so we can't access lines directly from it.
-      entry.commercial_invoices.each { |ci| ci.commercial_invoice_lines.each { |i| total += [i.cotton_fee, i.other_fees, i.mpf, i.hmf].compact.sum }}
+      entry.commercial_invoices.each { |ci| ci.commercial_invoice_lines.each { |i| total += [i.cotton_fee, i.other_fees, i.prorated_mpf, i.hmf].compact.sum }}
       total
     end
 
