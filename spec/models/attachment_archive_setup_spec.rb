@@ -107,6 +107,42 @@ describe AttachmentArchiveSetup do
       att = archive_setup.create_entry_archive!("my name", 5.megabytes).attachments.to_a
       expect(att.length).to eq 2
     end
+
+    context "by release date" do
+      before :each do 
+        archive_setup.update! archive_scheme: "RELEASE_PREVIOUS_MONTH"
+        entry.update! release_date: (Time.zone.now.at_beginning_of_month - 1.second)
+        entry.broker_invoices.destroy_all
+      end
+
+      it "returns entries release prior to this month" do
+        archive = archive_setup.create_entry_archive! "my name", 5.megabytes
+        expect(archive).to be_persisted
+        expect(archive.attachments.length).to eq(2)
+      end
+
+      it "skips entries released this month" do
+        entry.update! release_date: Time.zone.now
+        archive = archive_setup.create_entry_archive! "my name", 5.megabytes
+        expect(archive.attachments.length).to eq(0)
+      end
+
+      it "skips entries released prior to archive start" do
+        archive_setup.start_date = Date.new(2019, 9, 1)
+        entry.update! release_date: Date.new(2019, 8, 1)
+
+        archive = archive_setup.create_entry_archive! "my name", 5.megabytes
+        expect(archive.attachments.length).to eq(0)
+      end
+
+      it "skips entries released after archive end date" do
+        archive_setup.end_date = Date.new(2019, 8, 1)
+        entry.update! release_date: Date.new(2019, 8, 15)
+
+        archive = archive_setup.create_entry_archive! "my name", 5.megabytes
+        expect(archive.attachments.length).to eq(0)
+      end
+    end
   end
 
   describe "entry_attachments_available?" do

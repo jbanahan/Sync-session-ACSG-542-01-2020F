@@ -27,7 +27,7 @@ class AttachmentArchiveSetup < ActiveRecord::Base
 
   belongs_to :company
 
-  ARCHIVE_SCHEMES ||= [["Invoice Date Prior To 30 Days Ago", "MINUS_30"], ["Invoice Date Prior to This Month", "PREVIOUS_MONTH"]]
+  ARCHIVE_SCHEMES ||= [["Invoice Date Prior To 30 Days Ago", "MINUS_30"], ["Invoice Date Prior to This Month", "PREVIOUS_MONTH"], ["Release Date Prior to This Month", "RELEASE_PREVIOUS_MONTH"]]
   # The override allows for manually making archives over specific file lists
   attr_accessor :broker_reference_override
 
@@ -159,26 +159,60 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
     if broker_reference_override && broker_reference_override.length > 0
       a = a.where("entries.broker_reference IN (?)", broker_reference_override)
     else
-      days_ago = nil
-      case self.archive_scheme
+      case (self.archive_scheme.presence || "MINUS_30").to_s.upcase
       when "PREVIOUS_MONTH"
-        days_ago = (Time.current.midnight.at_beginning_of_month - 1.day).to_date
+        a = invoice_date_prior_to_this_month(a, self.start_date, self.end_date)
+      when "MINUS_30"
+        a = invoice_date_prior_to_30_days_ago(a, self.start_date, self.end_date)
+      when "RELEASE_PREVIOUS_MONTH"
+        a = release_date_prior_to_this_month(a, self.start_date, self.end_date)
       else
-        days_ago = (Time.current.midnight - 30.days).to_date
+        raise "Invalid document archive scheme encountered: #{self.archive_scheme}"
       end
-
-      # If the end date is prior to the days ago value (.ie the cutoff) use the end date instead
-      if self.end_date && days_ago && self.end_date < days_ago
-        days_ago = self.end_date
-      end
-
-      a = a.joins("INNER JOIN broker_invoices ON entries.id = broker_invoices.entry_id").
-            where("broker_invoices.invoice_date <= ?", days_ago).
-            where("broker_invoices.invoice_date >= ?",self.start_date)
     end
 
     a
   end
+
+  def release_date_prior_to_this_month base_query, archive_start_date, archive_end_date
+    days_ago = (ActiveSupport::TimeZone["America/New_York"].now.at_beginning_of_month - 1.second)
+
+    release_date_based_query(base_query, archive_start_date, archive_end_date, days_ago)
+  end
+
+  def release_date_based_query base_query, archive_start_date, archive_end_date, days_ago
+    base_query = add_end_date_logic(base_query, "entries", "release_date", archive_end_date, days_ago)
+    add_start_date_logic(base_query, "entries", "release_date", archive_start_date)
+  end
+
+  def invoice_date_prior_to_this_month base_query, archive_start_date, archive_end_date
+    days_ago = (ActiveSupport::TimeZone["America/New_York"].now.at_beginning_of_month - 1.day).to_date
+    invoice_date_based_query(base_query, archive_start_date, archive_end_date, days_ago)
+  end
+
+  def invoice_date_prior_to_30_days_ago base_query, archive_start_date, archive_end_date
+    days_ago = (ActiveSupport::TimeZone["America/New_York"].now.midnight - 30.days).to_date
+    invoice_date_based_query(base_query, archive_start_date, archive_end_date, days_ago)
+  end
+
+  def invoice_date_based_query base_query, archive_start_date, archive_end_date, days_ago
+    base_query = base_query.joins("INNER JOIN broker_invoices ON entries.id = broker_invoices.entry_id")
+    base_query = add_end_date_logic(base_query, "broker_invoices", "invoice_date", archive_end_date, days_ago)
+    add_start_date_logic(base_query, "broker_invoices" , "invoice_date", archive_start_date)
+  end
+
+  def add_end_date_logic base_query, table_name, end_column, end_date, days_ago
+    if end_date && days_ago && end_date < days_ago
+      days_ago = end_date
+    end
+
+    base_query.where("#{ActiveRecord::Base.connection.quote_table_name(table_name)}.#{ActiveRecord::Base.connection.quote_column_name(end_column)} <= ?", days_ago)
+  end
+
+  def add_start_date_logic base_query, table_name, start_column, start_date
+    base_query.where("#{ActiveRecord::Base.connection.quote_table_name(table_name)}.#{ActiveRecord::Base.connection.quote_column_name(start_column)} >= ?", start_date)
+  end
+
 
   def self.add_entry_docs_to_archive setup, archive, current_archive_size, max_archive_size, entry
     archivable_attachments = archivable_attachments_for_entry(setup, entry)
