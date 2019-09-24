@@ -184,7 +184,8 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
   end
 
   def rollup_ca_key part_number, description, hts, price, coo
-    "#{style(part_number)}~~#{description}~~#{hts}~~#{price}~~#{coo}"
+    # The Casing for any of these values shouldn't matter for whether we roll the lines together or not
+    "#{style(part_number).to_s.upcase}~~#{description.to_s.upcase}~~#{hts}~~#{price}~~#{coo.to_s.upcase}"
   end
 
   def create_ca_invoice_detail header, detail_hash

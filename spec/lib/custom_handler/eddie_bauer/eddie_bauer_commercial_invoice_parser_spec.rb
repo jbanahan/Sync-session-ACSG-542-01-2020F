@@ -109,6 +109,16 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
       line = inv.commercial_invoice_lines.first
       expect(line.part_number).to eq "009-5123A"
     end
+
+    it "rolls up lines with the same descriptions, but different casing" do
+      row_arrays[1][6]= "womens mmf knit pant"
+      inv = subject.process_ca_invoice_rows row_arrays
+      expect(inv.commercial_invoice_lines.length).to eq 2
+
+      line = inv.commercial_invoice_lines.first
+      tariff = line.commercial_invoice_tariffs.first
+      expect(tariff.tariff_description).to eq "womens mmf knit pant 42% CTN; 26% MODAL; 28% NYLON; 4% OTHER"
+    end
   end
 
   describe "process_us_invoice_rows" do
