@@ -31,21 +31,6 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
     SYNC_CODE
   end
   
-  def generate file_stem
-    r_count = nil
-    file_count = 0
-    now = timestamp.delete("T")
-    begin
-      file = sync_csv
-      file_count += 1
-      # At least one file should be sent, even if it's blank
-      if (r_count = self.row_count) > 0 || (file_count == 1)
-        encrypt_file(file) { |enc_file| ftp_file enc_file, remote_file_name: "#{file_stem}#{now}#{suffix(file_count)}.txt.gpg" }
-        file.close
-      end
-    end while r_count > 0
-  end
-
   def ftp_credentials
     folder = MasterSetup.get.production? ? "ITEM_MASTER" : "ITEM_MASTER_TEST"
     connect_vfitrack_net("to_ecs/Ann/#{folder}")
