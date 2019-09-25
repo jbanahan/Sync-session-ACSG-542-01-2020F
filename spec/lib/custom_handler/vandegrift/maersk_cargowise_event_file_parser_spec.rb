@@ -243,51 +243,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(comm.body).to eq "2019-05-07 15:10:52 - MSC - SO -PGA - FDA    07"
     end
 
-    it "updates an entry, MSC event, SO - REL desc" do
-      test_data.gsub!(/CCC/,'MSC')
-      test_data.gsub!(/SOMEVAL/, "SO - REL")
-
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
-
-      entry.reload
-      expect(entry.first_7501_print).to eq parse_datetime("2019-05-07T15:10:52")
-
-      expect(log).to have_identifier :event_type, "MSC | SO - REL"
-
-      expect(log).to have_info_message "Event successfully processed."
-
-      expect(entry.entry_comments.length).to eq 1
-      comm = entry.entry_comments[0]
-      expect(comm.body).to eq "2019-05-07 15:10:52 - MSC - SO - REL"
-    end
-
-    it "updates an entry, MSC event, SO - REL desc, existing_date" do
-      test_data.gsub!(/CCC/,'MSC')
-      test_data.gsub!(/SOMEVAL/, "SO - REL")
-
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      first_7501_print:Date.new(2019,1,1))
-      existing_date = entry.first_7501_print
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
-
-      entry.reload
-      expect(entry.first_7501_print).to eq existing_date
-
-      expect(log).to have_identifier :event_type, "MSC | SO - REL"
-
-      expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
-
-      expect(entry.entry_comments.length).to eq 0
-    end
-
     it "updates an entry, MSC event, SO - PGA NHT 02 desc" do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - PGA - NHT  02")
@@ -614,6 +569,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(entry.first_release_received_date).to eq parse_datetime("2019-05-07T15:10:52")
       expect(entry.pars_ack_date).to eq parse_datetime("2019-05-07T15:10:52")
       expect(entry.across_declaration_accepted).to eq parse_datetime("2019-05-07T15:10:52")
+      expect(entry.first_7501_print).to eq parse_datetime("2019-05-07T15:10:52")
 
       expect(log).to have_identifier :event_type, "CLR"
 
@@ -624,12 +580,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(comm.body).to eq "2019-05-07 15:10:52 - CLR - SOMEVAL"
     end
 
-    it "updates an entry, CLR event, existing dates" do
+    it "updates an entry, CLR event, existing dates (older)" do
       test_data.gsub!(/CCC/,'CLR')
 
+      # These dates occur prior to the date in the XML.  The XML date should be ignored.
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       first_release_received_date:Date.new(2019,1,1), pars_ack_date:Date.new(2019,1,1),
-                      across_declaration_accepted:Date.new(2019,1,1))
+                      across_declaration_accepted:Date.new(2019,1,1), first_7501_print:Date.new(2019,1,1))
       existing_date = entry.first_release_received_date
 
       expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
@@ -640,6 +597,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(entry.first_release_received_date).to eq existing_date
       expect(entry.pars_ack_date).to eq existing_date
       expect(entry.across_declaration_accepted).to eq existing_date
+      expect(entry.first_7501_print).to eq existing_date
 
       expect(log).to have_identifier :event_type, "CLR"
 
@@ -647,6 +605,33 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
+    end
+
+    it "updates an entry, CLR event, existing dates (newer)" do
+      test_data.gsub!(/CCC/,'CLR')
+
+      # These dates occur more recently than the date in the XML.  It should replace them.
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+                      first_release_received_date:Date.new(2020,1,1), pars_ack_date:Date.new(2020,1,1),
+                      across_declaration_accepted:Date.new(2020,1,1), first_7501_print:Date.new(2020,1,1))
+
+      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
+      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
+      subject.parse make_document(test_data), { :key=>"this_key"}
+
+      entry.reload
+      expect(entry.first_release_received_date).to eq parse_datetime("2019-05-07T15:10:52")
+      expect(entry.pars_ack_date).to eq parse_datetime("2019-05-07T15:10:52")
+      expect(entry.across_declaration_accepted).to eq parse_datetime("2019-05-07T15:10:52")
+      expect(entry.first_7501_print).to eq parse_datetime("2019-05-07T15:10:52")
+
+      expect(log).to have_identifier :event_type, "CLR"
+
+      expect(log).to have_info_message "Event successfully processed."
+
+      expect(entry.entry_comments.length).to eq 1
+      comm = entry.entry_comments[0]
+      expect(comm.body).to eq "2019-05-07 15:10:52 - CLR - SOMEVAL"
     end
 
     it "updates an entry, DIM event" do

@@ -124,8 +124,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
               date_set = set_first_occurrence_date entry, :other_agency_hold_release_date, event_date
             end
           end
-        elsif event_reference == "SO - REL"
-          date_set = set_first_occurrence_date entry, :first_7501_print, event_date
         elsif event_reference&.include?("AX")
           entry.first_entry_sent_date = event_date
           date_set = true
@@ -137,7 +135,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         date_1_set = set_first_occurrence_date entry, :first_release_received_date, event_date
         date_2_set = set_first_occurrence_date entry, :pars_ack_date, event_date
         date_3_set = set_first_occurrence_date entry, :across_declaration_accepted, event_date
-        date_set = date_1_set || date_2_set || date_3_set
+        date_4_set = set_first_occurrence_date entry, :first_7501_print, event_date
+        date_set = date_1_set || date_2_set || date_3_set || date_4_set
       elsif event_type == 'DIM'
         entry.edi_received_date = event_date&.to_date
       elsif event_type == 'JOP'
@@ -174,11 +173,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       date_set
     end
 
-    # Setting date field value only if it doesn't already have a value.  Returns true only under these conditions
-    # as well.
+    # Setting date field value only if it doesn't already have a value, or if it contains a later date than the
+    # new date value.  Returns true only under these conditions as well.
     def set_first_occurrence_date entry, date_field, event_date
       date_set = false
-      if entry.try(date_field).nil?
+      if entry.try(date_field).nil? || (event_date && entry.try(date_field) > event_date)
         entry.send((date_field.to_s + "=").to_sym, event_date)
         date_set = true
       end

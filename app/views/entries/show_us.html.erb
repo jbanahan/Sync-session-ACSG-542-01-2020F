@@ -58,6 +58,9 @@ $(function() {
   .ci_line td {
     border-top: 1px solid #333;
   }
+  .entry_comment_body {
+    white-space: pre;
+  }
 </style>
 <% end %>
   <div id="top"></div>
@@ -210,7 +213,7 @@ $(function() {
   <table class='table table-condensed table-sm'>
     <%entry_comments.each do |c|
       if c.can_view? current_user -%>
-        <tr class='hover' data-comment-type='<%=c.comment_type%>'><td><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
+        <tr class='hover' data-comment-type='<%=c.comment_type%>'><td class='entry_comment_body'><%=c.body%></td><td><%=c.generated_at%></td><td><%=c.username%></td></tr>
       <%end-%>
     <%end-%>
   </table>
