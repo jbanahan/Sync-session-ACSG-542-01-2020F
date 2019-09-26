@@ -201,7 +201,7 @@ QRY
   WHERE
   shipments.importer_id = (SELECT id FROM companies WHERE system_code = 'JJILL')
   AND
-  (shipments.delivered_date IS NULL OR shipments.delivered_date > DATE_ADD(now(), INTERVAL -2 DAY))
+  (shipments.delivered_date IS NULL OR shipments.delivered_date > DATE_ADD(now(), INTERVAL -30 DAY))
   AND
   (shipments.cargo_on_hand_date IS NOT NULL)
   AND
