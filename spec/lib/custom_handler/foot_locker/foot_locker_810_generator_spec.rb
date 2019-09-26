@@ -52,6 +52,9 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
     }
 
     it "generates and sends xml for entry's invoices" do
+      # This charge would be skipped for Canada, but since this is not a Canadian 810, it should be included.
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "2", charge_description: "GST ON IMPORTS", charge_amount: "15.00")
+
       commercial_invoice
       xml = subject.generate_xml broker_invoice
 
@@ -95,7 +98,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       expect(xp xml, "Details/Detail/Sku", 1).to eq "part3"
       expect(xp xml, "Details/Detail/InvoiceNumber", 1).to eq "COMINV"
 
-      expect(REXML::XPath.match(xml.root, "Lines/Line").size).to eq 7
+      expect(REXML::XPath.match(xml.root, "Lines/Line").size).to eq 8
 
       validate_charge_line xml, 0, "D", "HMF", "HMF FEE", "123.45"
       validate_charge_line xml, 1, "D", "MPF", "MPF FEE", "234.56"
@@ -104,6 +107,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       validate_charge_line xml, 4, "1", "Code", "Desc", "50.00"
       validate_charge_line xml, 5, "2", "Code2", "Desc2", "25.00"
       validate_charge_line xml, 6, "D", "0099", "Duty Paid Direct", "10.00"
+      validate_charge_line xml, 7, "1", "2", "GST ON IMPORTS", "15.00"
     end
 
     it "sends additional invoices, but doesn't include duty charges" do
@@ -132,6 +136,38 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
 
       commercial_invoice
       expect(subject.generate_xml broker_invoice).to be_nil
+    end
+
+    it "skips Canada tax charges" do
+      entry.update_attributes! customer_number: "FOOT LOCKER CANADA C"
+
+      # All of these lines should be excluded apart from the final one.
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "2", charge_description: "GST ON IMPORTS", charge_amount: "15.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "250", charge_description: "GST (A)", charge_amount: "14.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "251", charge_description: "GST (B)", charge_amount: "13.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "252", charge_description: "GST (C)", charge_amount: "12.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "253", charge_description: "GST (D)", charge_amount: "11.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "254", charge_description: "GST (E)", charge_amount: "10.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "255", charge_description: "GST (F)", charge_amount: "9.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "256", charge_description: "GST (G)", charge_amount: "8.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "257", charge_description: "GST (H)", charge_amount: "7.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "258", charge_description: "GST (I)", charge_amount: "6.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "259", charge_description: "GST (J)", charge_amount: "5.00")
+      broker_invoice.broker_invoice_lines << Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_type: "1", charge_code: "3", charge_description: "NOT TAX", charge_amount: "4.00")
+
+      commercial_invoice
+      xml = subject.generate_xml broker_invoice
+
+      expect(REXML::XPath.match(xml.root, "Lines/Line").size).to eq 8
+
+      validate_charge_line xml, 0, "D", "HMF", "HMF FEE", "123.45"
+      validate_charge_line xml, 1, "D", "MPF", "MPF FEE", "234.56"
+      validate_charge_line xml, 2, "D", "CTN", "COTTON FEE", "345.67"
+      validate_charge_line xml, 3, "D", "0001", "DUTY", "456.78"
+      validate_charge_line xml, 4, "1", "Code", "Desc", "50.00"
+      validate_charge_line xml, 5, "2", "Code2", "Desc2", "25.00"
+      validate_charge_line xml, 6, "D", "0099", "Duty Paid Direct", "10.00"
+      validate_charge_line xml, 7, "1", "3", "NOT TAX", "4.00"
     end
 
     it "adds Details element even if there are no details" do

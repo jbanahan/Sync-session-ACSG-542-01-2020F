@@ -103,9 +103,7 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
     end
 
     broker_invoice.broker_invoice_lines.each do |line|
-      # Skip duty types, we've accounted for them above
-      # EXCEPT, FOOLO wants to see the Duty Paid Direct (0099) lines
-      next if line.charge_type == "D" && line.charge_code != '0099'
+      next if exclude_line?(entry, line)
 
       lines ||= add_element root, "Lines"
       inv_l = add_element lines, "Line"
@@ -141,5 +139,21 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
       add_element inv_l, "Amount", to_number(amount)
     end
 
+    def exclude_line? entry, line
+      # Skip duty types.  We've accounted for them previously in the document.
+      # EXCEPTION: FOOLO wants to see the Duty Paid Direct (0099) lines.
+      (line.charge_type == "D" && line.charge_code != '0099') ||
+      # Tax charges are not included in the Canadian 810.
+      (is_canada?(entry) && is_canada_tax_charge_code?(line.charge_code))
+    end
+
+    def is_canada? entry
+      FootLockerEntry810Comparator.is_foot_locker_canada? entry.customer_number
+    end
+
+    def is_canada_tax_charge_code? charge_code
+      cc_num = charge_code.to_i
+      cc_num == 2 || (cc_num >= 250 && cc_num < 260)
+    end
 
 end; end; end; end
