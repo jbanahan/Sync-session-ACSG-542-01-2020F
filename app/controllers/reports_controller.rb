@@ -911,7 +911,8 @@ class ReportsController < ApplicationController
                     include_other_fees: params[:other_fees] == 'true', mode_of_transport: params[:mode_of_transport], 
                     entry_types: get_customer_year_over_year_report_entry_types, include_isf_fees: params[:isf_fees] == 'true', 
                     include_port_breakdown: params[:port_breakdown] == 'true', 
-                    group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true', include_line_graphs: params[:line_graphs] == 'true' }, []
+                    group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true', include_line_graphs: params[:line_graphs] == 'true',
+                    sum_units_by_mode_of_transport: params[:sum_units_by_mode_of_transport] == 'true' }, []
       else
         error_redirect "At least one importer must be selected."
       end

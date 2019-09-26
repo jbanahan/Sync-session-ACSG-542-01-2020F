@@ -11,7 +11,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
                                        :file_logged_date,:fiscal_date,:eta_date,:total_units,:total_gst, :total_duty_gst,
                                        :export_country_codes,:transport_mode_code,:broker_invoice_total,
                                        :entry_type_count_hash,:entry_count,:isf_fees,:mode_of_transportation_count_hash,
-                                       :entry_port_code) do
+                                       :entry_port_code, :mode_of_transportation_total_units_hash) do
     def initialize
       self.entry_count ||= 0
       self.entry_line_count ||= 0
@@ -30,6 +30,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       self.isf_fees ||= 0.00
       self.entry_type_count_hash ||= {}
       self.mode_of_transportation_count_hash ||= {}
+      self.mode_of_transportation_total_units_hash ||= {}
     end
 
     def total_duty_and_fees
@@ -69,7 +70,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     range_field = get_range_field settings
     workbook = nil
     distribute_reads do
-      workbook = generate_report importer_ids, year_1, year_2, range_field, mode_of_transport_codes, settings['opt_fields'], settings['include_port_breakdown'], settings['group_by_mode_of_transport'], settings['entry_types'], settings['include_line_graphs']
+      workbook = generate_report importer_ids, year_1, year_2, range_field, mode_of_transport_codes, settings['opt_fields'], settings['include_port_breakdown'], settings['group_by_mode_of_transport'], settings['entry_types'], settings['include_line_graphs'], settings['sum_units_by_mode_of_transport']
     end
 
     system_code = importer_ids.length == 1 ? Company.find(importer_ids[0]).try(:system_code).to_s : 'MULTI'
@@ -122,7 +123,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       ['arrival_date','eta_date','file_logged_date','fiscal_date','release_date'].include?(range_field) ? range_field : "arrival_date"
     end
 
-    def generate_report importer_ids, year_1, year_2, range_field, mode_of_transport_codes, opt_fields, include_port_breakdown, group_by_mode_of_transport, entry_types, include_line_graphs
+    def generate_report importer_ids, year_1, year_2, range_field, mode_of_transport_codes, opt_fields, include_port_breakdown, group_by_mode_of_transport, entry_types, include_line_graphs, sum_units_by_mode_of_transport
       wb = XlsxBuilder.new
       assign_styles wb
 
@@ -166,7 +167,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         raw_data << d
       end
 
-      generate_summary_sheet wb, importer_ids, year_1, year_2, raw_data, group_by_mode_of_transport, opt_fields, include_line_graphs
+      generate_summary_sheet wb, importer_ids, year_1, year_2, raw_data, group_by_mode_of_transport, opt_fields, include_line_graphs, sum_units_by_mode_of_transport
       generate_data_sheet wb, raw_data, opt_fields
 
       if include_port_breakdown
@@ -183,7 +184,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     # This sheet contains data summarized by month and year.
-    def generate_summary_sheet wb, importer_ids, year_1, year_2, data_arr, group_by_mode_of_transport, opt_fields, include_line_graphs
+    def generate_summary_sheet wb, importer_ids, year_1, year_2, data_arr, group_by_mode_of_transport, opt_fields, include_line_graphs, sum_units_by_mode_of_transport
       company_name = importer_ids.length == 1 ? Company.find(importer_ids[0]).try(:name) : "MULTI COMPANY"
       # Handling long company names: some versions of Excel allow only 30 characters for tab names, so, because of the
       # 9-char suffix tacked on, company names are truncated at 21 characters.
@@ -198,12 +199,12 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       wb.add_image sheet, "app/assets/images/vfi_track_logo.png", 198, 59, 0, 0
 
       counter = 6 # 4 blank rows at top plus 2 blanks in between the year blocks and the comparison block.
-      counter += add_row_block wb, sheet, year_1, nil, 1, year_hash, group_by_mode_of_transport, opt_fields
+      counter += add_row_block wb, sheet, year_1, nil, 1, year_hash, group_by_mode_of_transport, opt_fields, sum_units_by_mode_of_transport
       wb.add_body_row sheet, [] # blank row
-      counter += add_row_block wb, sheet, year_2, nil, 2, year_hash, group_by_mode_of_transport, opt_fields
+      counter += add_row_block wb, sheet, year_2, nil, 2, year_hash, group_by_mode_of_transport, opt_fields, sum_units_by_mode_of_transport
       wb.add_body_row sheet, [] # blank row
       # Compare the two years.
-      counter += add_row_block wb, sheet, year_1, year_2, 3, year_hash, group_by_mode_of_transport, opt_fields
+      counter += add_row_block wb, sheet, year_1, year_2, 3, year_hash, group_by_mode_of_transport, opt_fields, sum_units_by_mode_of_transport
 
       wb.set_column_widths sheet, *([20] + Array.new(12, 14) + [15])
 
@@ -214,7 +215,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       sheet
     end
 
-    def add_row_block wb, sheet, year, comp_year, block_pos, year_hash, group_by_mode_of_transport, opt_fields
+    def add_row_block wb, sheet, year, comp_year, block_pos, year_hash, group_by_mode_of_transport, opt_fields, sum_units_by_mode_of_transport
       counter = 7
       wb.add_body_row sheet, make_summary_headers(comp_year ? "Variance #{year} / #{comp_year}" : year), styles: Array.new(14, :default_header)
       wb.add_body_row sheet, get_category_row_for_year_month("Number of Entries", year_hash, year, comp_year, block_pos, :entry_count, decimal:false), styles: [:bold] + Array.new(13, :number)
@@ -227,6 +228,12 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       if group_by_mode_of_transport
         get_all_mode_of_transportation_values(year_hash).each do |mot|
           wb.add_body_row sheet, get_category_row_for_year_month("Ship Mode #{mot}", year_hash, year, comp_year, block_pos, :mode_of_transportation_count_hash, decimal:false, hash_key:mot), styles: [:bold] + Array.new(13, :number)
+          counter += 1
+        end
+      end
+      if sum_units_by_mode_of_transport
+        get_all_mode_of_transportation_values(year_hash).each do |mot|
+          wb.add_body_row sheet, get_category_row_for_year_month("Ship Mode #{mot} (Units)", year_hash, year, comp_year, block_pos, :mode_of_transportation_total_units_hash, decimal:false, hash_key:mot), styles: [:bold] + Array.new(13, :number)
           counter += 1
         end
       end
@@ -385,8 +392,10 @@ module OpenChain; module Report; class CustomerYearOverYearReport
         mode_of_transportation_code = translate_mode_of_transportation_code row.transport_mode_code
         if month_data.mode_of_transportation_count_hash[mode_of_transportation_code].nil?
           month_data.mode_of_transportation_count_hash[mode_of_transportation_code] = 0
+          month_data.mode_of_transportation_total_units_hash[mode_of_transportation_code] = 0
         end
         month_data.mode_of_transportation_count_hash[mode_of_transportation_code] += 1
+        month_data.mode_of_transportation_total_units_hash[mode_of_transportation_code] += row.total_units
 
         month_data.entry_line_count += row.entry_line_count
         month_data.entered_value += row.entered_value
