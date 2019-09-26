@@ -124,9 +124,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
               date_set = set_first_occurrence_date entry, :other_agency_hold_release_date, event_date
             end
           end
-        elsif event_reference&.include?("AX")
-          entry.first_entry_sent_date = event_date
-          date_set = true
         else
           date_set = false
         end

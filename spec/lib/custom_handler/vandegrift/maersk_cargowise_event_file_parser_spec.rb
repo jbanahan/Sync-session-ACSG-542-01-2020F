@@ -513,29 +513,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(entry.entry_comments.length).to eq 0
     end
 
-    it "updates an entry, MSC event, AX desc" do
-      test_data.gsub!(/CCC/,'MSC')
-      test_data.gsub!(/SOMEVAL/, "ABAXAB")
-
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      first_entry_sent_date:Date.new(2019,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
-
-      entry.reload
-      expect(entry.first_entry_sent_date).to eq parse_datetime("2019-05-07T15:10:52")
-
-      expect(log).to have_identifier :event_type, "MSC | ABAXAB"
-
-      expect(log).to have_info_message "Event successfully processed."
-
-      expect(entry.entry_comments.length).to eq 1
-      comm = entry.entry_comments[0]
-      expect(comm.body).to eq "2019-05-07 15:10:52 - MSC - ABAXAB"
-    end
-
     it "updates an entry, MSC event, unexpected desc" do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - RAVEN")
