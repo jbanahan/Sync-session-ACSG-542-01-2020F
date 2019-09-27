@@ -23,9 +23,9 @@ module OpenChain; class SpecialTariffCrossReferenceHandler
                                     tariff.special_tariff_type, tariff.suppress_from_feeds?]
     end
 
-    report = xlsx_workbook_to_tempfile(workbook, "Special Tariffs", file_name: "Special Tariffs for #{Time.zone.now.strftime("%m/%d/%Y")}")
-    body = "Attached is the list of special tariffs for #{Time.zone.now.strftime("%m/%d/%Y")}"
-    OpenMailer.send_simple_html([user.email], "Special Tariffs Current as of #{Time.zone.now.strftime("%m/%d/%Y")}", body, report).deliver_now
+    report = xlsx_workbook_to_tempfile(workbook, "Special Tariffs", file_name: "Special Tariffs as of #{Time.zone.now.strftime("%Y-%m-%d")}.xlsx")
+    body = "Attached is the list of special tariffs for #{Time.zone.now.strftime("%Y-%m-%d")}"
+    OpenMailer.send_simple_html([user.email], "Special Tariffs Current as of #{Time.zone.now.strftime("%Y-%m-%d")}", body, report).deliver_now
   end
 
 
@@ -66,7 +66,9 @@ module OpenChain; class SpecialTariffCrossReferenceHandler
 
   def process_row row, row_number
     stcr = SpecialTariffCrossReference.where(hts_number: row[0].to_s.gsub('.', ''), import_country_iso: row[3], special_tariff_type: row[7]).first_or_initialize
-    suppress_from_feeds = row[8].to_s[0].blank? ? "false" : row[8].to_s[0]
+    # If the value from the file is blank, return false...boolean_value method used below returns nil for no values
+    # which is generally what we want from files we're parsing, but not here.
+    suppress_from_feeds = row[8].to_s.blank? ? "false" : row[8].to_s
 
     stcr.special_hts_number = text_value row[1]
     stcr.country_origin_iso = text_value row[2]

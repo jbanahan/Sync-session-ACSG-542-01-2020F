@@ -2,17 +2,15 @@ describe OpenChain::SpecialTariffCrossReferenceHandler do
   describe 'download handling' do
     let(:user) { Factory(:user, admin: true) }
 
-    subject { described_class.new }
-
     it 'sends the csv file' do
       Timecop.freeze(Time.zone.now) do
         subject.send_tariffs user.id
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq [user.email]
-        expect(mail.subject).to eq "Special Tariffs Current as of #{Time.zone.now.strftime("%m/%d/%Y")}"
-        expect(mail.body).to include "Attached is the list of special tariffs for #{Time.zone.now.strftime("%m/%d/%Y")}"
-        expect(mail.attachments).to_not be_empty
+        expect(mail.subject).to eq "Special Tariffs Current as of #{Time.zone.now.strftime("%Y-%m-%d")}"
+        expect(mail.body).to include "Attached is the list of special tariffs for #{Time.zone.now.strftime("%Y-%m-%d")}"
+        expect(mail.attachments["Special Tariffs as of #{Time.zone.now.strftime("%Y-%m-%d")}.xlsx"]).not_to be_nil
       end
     end
   end
@@ -20,12 +18,12 @@ describe OpenChain::SpecialTariffCrossReferenceHandler do
   describe 'upload handling' do
     describe 'import' do
       let(:user) { Factory(:user, admin: true)}
-      let(:cf) { double "CustomFile" }
+      let(:cf) { instance_double(CustomFile) }
       let(:row_0) { [ 'HTS Number', 'Special HTS Number', 'Origin Country ISO', 'Import Country ISO',
                         'Effective Date Start', 'Effective Date End', 'Priority', 'Special Tariff Type',
                         'Suppress From Feeds'] }
-      let(:row_1) { [ '1234567890', '0987654321', 'CA', 'US', '2018-12-11', '2019-12-11', '1', '301', 't' ]}
-      let(:row_2) { [ '', '0987654321', 'CA', 'US', '2018-12-11', '2019-12-11', '1', '301', 't' ]}
+      let(:row_1) { [ '1234567890', '0987654321', 'CA', 'US', '2018-12-11', '2019-12-11', '1', '301', true ]}
+      let(:row_2) { [ '', '0987654321', 'CA', 'US', '2018-12-11', '2019-12-11', '1', '301', '1' ]}
       let(:handler) { described_class.new(cf) }
 
       before do
