@@ -445,8 +445,11 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       xref = xref_value fiber
       return xref unless xref.blank?
 
+      # Strip any trailing w/ (this actually happens in cases where there's a description like: 100% cotton w/ 100% Lace Trim)
+      fiber = fiber.gsub(/\s+w\/?$/i, "")
+
       # Strip anything that comes after w/, with, and, /, ' - ', more than 3 spaces
-      fiber = fiber.gsub /(?:\bw\/|\bwith|\bw\b|\band|\bon|&|\/|\+|\s+-+\s+|\s{3,}).*$/i, ""
+      fiber = fiber.gsub /(?:\bw\/|\bwith|\bw\b|\band|\bon|&|\/|\+|\s+-+|\s{2,})\s+.*$/i, ""
       xref = xref_value fiber
       return xref unless xref.blank?
 

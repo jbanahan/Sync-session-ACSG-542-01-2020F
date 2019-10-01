@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       before :each do
         # We're going to allow every fabric utilized in this context to be valid, this 
         # saves us having to create datacrossreference objects for every test
-        @validated_fabrics = Set.new ['Cotton', 'Spandex']
+        @validated_fabrics = Set.new ['Cotton', 'Spandex', 'Gold', 'Onyx']
         # Stub the include? method so that any value passed to it is considered valid
         allow(@validated_fabrics).to receive(:include?).and_return true
         allow(@p).to receive(:all_validated_fabrics).and_return @validated_fabrics
@@ -168,6 +168,10 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
       it "normalizes multiple consecutive whitespace characters into to a sinlge space" do
         expect(@p.parse_fiber_content "100% MULBERRY\t\t\tSILK   SLIP 100% SILK").to eq proxy_result({fiber_1: "MULBERRY SILK SLIP", type_1: "Outer", percent_1: "100", algorithm: "single_non_footwear"})
+      end
+
+      it "handles descriptions with 'on' in them" do
+        expect(@p.parse_fiber_content "95% Gold 5% Onyx").to eq proxy_result({fiber_1: "Gold", type_1: "Outer", percent_1: "95", fiber_2: "Onyx", type_2: "Outer", percent_2: "5", algorithm: "single_non_footwear"})
       end
 
       it "uses an xref on fiber content with initial description" do
