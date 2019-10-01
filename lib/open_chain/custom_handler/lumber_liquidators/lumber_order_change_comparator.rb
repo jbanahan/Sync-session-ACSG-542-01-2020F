@@ -333,6 +333,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     COUNTRY_ORIGIN_UID ||= []
     ORDER_TYPE_UID ||= []
     BOOKING_CONFIRMED_DATE_UID ||= []
+    BOOKING_REQUESTED_DATE_UID ||= []
     PC_APPROVED_DATE_UID ||= []
     PC_APPROVED_DATE_EXEC_UID ||= []
     include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
@@ -341,17 +342,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     attr_accessor :ship_from_address, :planned_handover_date, :variant_map,
       :ship_window_start, :ship_window_end, :price_map, :sap_extract_date,
       :approval_status, :business_rule_state, :country_of_origin, :order_type, 
-      :booking_confirmed_date, :has_pc_approved_date_map
+      :booking_confirmed_date, :booking_requested_date, :has_pc_approved_date_map
 
     def initialize fp_hash, snapshot
       @fingerprint_hash = fp_hash
       @fingerprint = fp_hash.to_json
       @snapshot = snapshot
-      @cdefs = self.class.prep_custom_definitions([:ord_country_of_origin])
     end
 
     def self.build_from_hash entity_hash
-      @cdefs = prep_custom_definitions([:ordln_custom_article_description, :ordln_vendor_inland_freight_amount, :ordln_deleted_flag, :ord_shipment_booking_confirmed_date])
+      cdefs = prep_custom_definitions([:ordln_custom_article_description, :ordln_vendor_inland_freight_amount, :ordln_deleted_flag])
       fingerprint_hash = {'lines'=>{}}
       order_hash = entity_hash['entity']['model_fields']
       [:ord_ord_num, :ord_window_start, :ord_window_end, :ord_currency, :ord_payment_terms, :ord_terms, :ord_fob_point].each do |uid|
@@ -367,8 +367,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
           line_fp_hash = {}
           # Make sure new fields added to the child fingerprints account for older data not having values.  If nil is
           # not handled here, every detail could be accidentally forced into vendor review.
-          [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, @cdefs[:ordln_custom_article_description].model_field_uid, @cdefs[:ordln_vendor_inland_freight_amount].model_field_uid, @cdefs[:ordln_deleted_flag].model_field_uid].each do |uid|
-            if uid == @cdefs[:ordln_deleted_flag].model_field_uid
+          [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu, cdefs[:ordln_custom_article_description].model_field_uid, cdefs[:ordln_vendor_inland_freight_amount].model_field_uid, cdefs[:ordln_deleted_flag].model_field_uid].each do |uid|
+            if uid == cdefs[:ordln_deleted_flag].model_field_uid
               val = child_hash[uid.to_s].to_s.to_boolean
               line_fp_hash[uid] = val.nil? ? false : val
             else
@@ -399,6 +399,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       od.variant_map = variant_map
       od.price_map = price_map
       od.booking_confirmed_date = order_hash[booking_confirmed_date_uid]
+      od.booking_requested_date = order_hash[booking_requested_date_uid]
       od.has_pc_approved_date_map = has_pc_approved_date_map
 
       return od
@@ -429,6 +430,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       BOOKING_CONFIRMED_DATE_UID.first
     end
 
+    def self.booking_requested_date_uid
+      prep_class_cust_defs
+      BOOKING_REQUESTED_DATE_UID.first
+    end
+
     def self.pc_approved_date_uid
       prep_class_cust_defs
       PC_APPROVED_DATE_UID.first
@@ -441,12 +447,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     def self.prep_class_cust_defs
       if PLANNED_HANDOVER_DATE_UID.empty?
-        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type, :ord_shipment_booking_confirmed_date, :ordln_pc_approved_date, :ordln_pc_approved_date_executive])
+        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type, :ord_shipment_booking_confirmed_date, :ord_shipment_booking_requested_date, :ordln_pc_approved_date, :ordln_pc_approved_date_executive])
         PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
         SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
         COUNTRY_ORIGIN_UID << cdefs[:ord_country_of_origin].model_field_uid
         ORDER_TYPE_UID << cdefs[:ord_type].model_field_uid
         BOOKING_CONFIRMED_DATE_UID << cdefs[:ord_shipment_booking_confirmed_date].model_field_uid
+        BOOKING_REQUESTED_DATE_UID << cdefs[:ord_shipment_booking_requested_date].model_field_uid
         PC_APPROVED_DATE_UID << cdefs[:ordln_pc_approved_date].model_field_uid
         PC_APPROVED_DATE_EXEC_UID << cdefs[:ordln_pc_approved_date_executive].model_field_uid
       end
@@ -544,6 +551,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return true if snapshot_or_entity_value_changed?(order, :ord_approval_status, old_data.approval_status, new_data.approval_status)
       return true if snapshot_or_entity_value_changed?(order, :ord_rule_state, old_data.business_rule_state, new_data.business_rule_state)
       return true if snapshot_or_entity_value_changed?(order, booking_confirmed_date_uid, old_data.booking_confirmed_date, new_data.booking_confirmed_date)
+      return true if snapshot_or_entity_value_changed?(order, booking_requested_date_uid, old_data.booking_requested_date, new_data.booking_requested_date)
 
       return false
     end

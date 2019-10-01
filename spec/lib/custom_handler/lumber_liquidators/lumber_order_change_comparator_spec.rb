@@ -883,24 +883,27 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         allow(r).to receive(:business_rule_state).and_return 'Pass'
         allow(r).to receive(:planned_handover_date).and_return "2017-01-02"
         allow(r).to receive(:booking_confirmed_date).and_return "2018-01-02"
+        allow(r).to receive(:booking_requested_date).and_return "2018-01-01"
         r
       end
       let (:order) {
         order = Factory(:order, approval_status: "")
         order.update_custom_value! cdefs[:ord_planned_handover_date], Date.new(2017,1,2)
+        order.update_custom_value! cdefs[:ord_shipment_booking_requested_date], Date.new(2018,1,1)
         order.update_custom_value! cdefs[:ord_shipment_booking_confirmed_date], Date.new(2018,1,2)
         allow(order).to receive(:business_rules_state).and_return "Pass"
         order
       }
 
       let (:cdefs) {
-        described_class::OrderData.prep_custom_definitions([:ord_planned_handover_date, :ord_shipment_booking_confirmed_date])
+        described_class::OrderData.prep_custom_definitions([:ord_planned_handover_date, :ord_shipment_booking_confirmed_date, :ord_shipment_booking_requested_date])
       }
 
       before :each do
         # This is a workaround for the class level caching done in order data
         allow(described_class::OrderData).to receive(:planned_handover_date_uid).and_return cdefs[:ord_planned_handover_date].model_field_uid
         allow(described_class::OrderData).to receive(:booking_confirmed_date_uid).and_return cdefs[:ord_shipment_booking_confirmed_date].model_field_uid
+        allow(described_class::OrderData).to receive(:booking_requested_date_uid).and_return cdefs[:ord_shipment_booking_requested_date].model_field_uid
       end
 
       it 'should return false if no changes' do
@@ -965,6 +968,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderChangeComparato
         expect(od).to receive(:booking_confirmed_date).and_return "2017-01-03"
         expect(nd).to receive(:booking_confirmed_date).and_return "2017-01-03"
         order.find_and_set_custom_value cdefs[:ord_shipment_booking_confirmed_date], Date.new(2017, 1, 4)
+        expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
+      end
+
+      it "returns true if booking requested date changes" do
+        nd = make_data('new-data')
+        od = make_data('old-data')
+        expect(od).to receive(:booking_requested_date).and_return "2017-01-03"
+        expect(nd).to receive(:booking_requested_date).and_return "2017-01-03"
+        order.find_and_set_custom_value cdefs[:ord_shipment_booking_requested_date], Date.new(2017, 1, 4)
         expect(order_data_klass.send_sap_update?(order, od,nd)).to eq true
       end
       
