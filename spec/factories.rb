@@ -247,7 +247,7 @@ Factory.define :search_template do |f|
   #     include_links:ss.include_links,
   #     no_time:ss.no_time
   #   }
-  f.search_json '{"name":"search_name","module_type":"Order","include_links":true,"no_time":true}'
+  f.search_json '{"name":"search_name","module_type":"Order","include_links":true,"include_rule_links":true,no_time":true}'
 end
 Factory.define :custom_definition do |c|
   c.sequence(:label)

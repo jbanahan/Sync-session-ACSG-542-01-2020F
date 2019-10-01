@@ -25,6 +25,7 @@ criterion_fields = current_search.criterion_fields_available(current_user) if cu
       Download Format: <%=f.select :download_format, ["xls","csv"] %><br />
       <%end-%>
       Include Links In Download: <%=f.check_box :include_links %><br />
+      Include Links To Business Rules: <%=f.check_box :include_rule_links %><br />
       Hide Time For All Date Fields: <%=f.check_box :no_time %><br />
       <%if current_search.respond_to? :module_type-%>
         <%=f.hidden_field :module_type %>

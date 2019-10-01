@@ -133,7 +133,7 @@ class XlsxBuilder
   #
   # xls.add_body_row sheet, ["Column A", xls.create_link_cell("http://www.google.com", link_text: "Click Here"), "Column C"]
   def create_link_cell url, link_text: "Web View"
-    {location: url, link_text: link_text, type: :hyperlink}
+    {location: url, link_text: url.present? ? link_text : "", type: :hyperlink}
   end
 
   # Introduces a frozen pane ABOVE the given row index (zero indexed)

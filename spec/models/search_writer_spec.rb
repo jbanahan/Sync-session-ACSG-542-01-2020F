@@ -44,9 +44,10 @@ describe SearchWriter do
 
     it "includes weblinks if instructed to" do
       search_setup.include_links = true
+      search_setup.include_rule_links = true
       output = CSV.parse(standard_run.read)
-      expect(output[0]).to eq ["Name", "Unique Identifier", "Links"]
-      expect(output[1]).to eq ["A", "1", "2018-07-16", "2018-07-16 12:30", "http://localhost:3000/products/100"]
+      expect(output[0]).to eq ["Name", "Unique Identifier", "Links", "Business Rule Links"]
+      expect(output[1]).to eq ["A", "1", "2018-07-16", "2018-07-16 12:30", "http://localhost:3000/products/100", "http://localhost:3000/products/100/validation_results"]
     end
 
     it "transforms datetimes to dates if instructed" do 

@@ -1,7 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportEntryBilling < CustomReport
-  attr_accessible :include_links, :name, :no_time, :type, :user_id
+  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
   
   #display name for report
   def self.template_name
@@ -93,9 +93,17 @@ class CustomReportEntryBilling < CustomReport
           write_hyperlink row_cursor, column, entry.view_url, "Web View"
           column += 1
         end
+
+        if self.include_rule_links?
+          write_hyperlink row_cursor, column, validation_results_url(obj: entry), "Web View"
+          column += 1
+        end
         
       else
-        row = [nil] + row if self.include_links?
+        row = []
+        row << nil if self.include_links?
+        row << nil if self.include_rule_links?
+        row.concat row
       end
 
       write_columns row_cursor, column, row

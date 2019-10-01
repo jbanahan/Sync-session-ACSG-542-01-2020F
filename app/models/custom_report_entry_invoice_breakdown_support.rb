@@ -1,4 +1,8 @@
+require 'open_chain/url_support'
+
 module CustomReportEntryInvoiceBreakdownSupport
+  extend OpenChain::UrlSupport
+
   def process run_by, row_limit, hide_repeating_headers
     raise "User #{run_by.email} does not have permission to view invoices and cannot run the #{CustomReportEntryInvoiceBreakdown.template_name} report." unless run_by.view_broker_invoices?
     search_cols = self.search_columns.order("rank ASC")
@@ -41,6 +45,12 @@ module CustomReportEntryInvoiceBreakdownSupport
       if self.include_links?
         if bi.entry.present?
           write_hyperlink row_cursor, col_cursor, bi.entry.view_url,"Web View"
+        end
+        col_cursor += 1
+      end
+      if self.include_rule_links?
+        if bi.entry.present?
+          write_hyperlink row_cursor, col_cursor, validation_results_url(obj: bi.entry),"Web View"
         end
         col_cursor += 1
       end

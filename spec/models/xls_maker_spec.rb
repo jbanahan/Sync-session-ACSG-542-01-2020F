@@ -66,12 +66,17 @@ describe XlsMaker do
       expect(wb.worksheet(0).row(1).format(3)).to eq(XlsMaker::DATE_FORMAT)
     end
     it "should add web links" do
+      e1 = Factory(:entry)
+      e2 = Factory(:entry)
+      stub_master_setup
       allow_any_instance_of(Entry).to receive(:excel_url).and_return("abc")
-      expect(Entry).to receive(:find).with(1).and_return(Entry.new(:id=>1))
-      expect(Entry).to receive(:find).with(2).and_return(Entry.new(:id=>2))
-      wb, * = XlsMaker.new(:include_links=>true).make_from_search_query @sq
+      # It isn't important that the entries don't match the id; we just care that they're persisted.
+      expect(Entry).to receive(:find).with(1).and_return(e1)
+      expect(Entry).to receive(:find).with(2).and_return(e2)
+      wb, * = XlsMaker.new(:include_links=>true, :include_rule_links=>true).make_from_search_query @sq
       s = wb.worksheet(0)
       expect(s.row(1)[4]).to be_a Spreadsheet::Link
+      expect(s.row(1)[5]).to be_a Spreadsheet::Link
     end
     it "raises an error if the search is not downloadable" do
       expect(@sq.search_setup).to receive(:downloadable?).with(instance_of(Array), true) {|e| e << "Error!"; false}

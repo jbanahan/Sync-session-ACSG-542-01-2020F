@@ -1,8 +1,10 @@
 require 'open_chain/random_audit_generator'
+require 'open_chain/url_support'
 
 # This class takes a search setup, runs the search and then outputs it 
 # in the desired format (by default, the format specified in the search_setup itself).
 class SearchWriter
+  include OpenChain::UrlSupport
 
   attr_reader :output_format, :search_setup, :user
 
@@ -96,6 +98,10 @@ class SearchWriter
         row << builder.create_link_cell(result_class.excel_url(search_query_hash[:row_key]))
       end
 
+      if search_setup.include_rule_links?
+        row << builder.create_link_cell(validation_results_url(klass: result_class, id: search_query_hash[:row_key]))
+      end
+
       builder.add_body_row sheet, row, styles: column_styles
       nil
     end
@@ -124,6 +130,8 @@ class SearchWriter
       end
 
       headers << "Links" if search_setup.include_links?
+
+      headers << "Business Rule Links" if search_setup.include_rule_links?
 
       headers
     end

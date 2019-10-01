@@ -72,11 +72,12 @@ describe CustomReportAnnSapChanges do
     end
     it "should include web links" do
       @rc.include_links = true
-      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return('http://xxxx')
+      @rc.include_rule_links = true
       p = make_eligible_product
       arrays = @rc.to_arrays @u
-      expect(arrays[1][0]).to eq("http://xxxx/products/#{p.id}")
-      expect(arrays[1][1]).to eq(p.unique_identifier)
+      expect(arrays[1][0]).to eq("http://localhost:3000/products/#{p.id}")
+      expect(arrays[1][1]).to eq "http://localhost:3000/products/#{p.id}/validation_results"
+      expect(arrays[1][2]).to eq(p.unique_identifier)
     end
     it "should not include classification with approval after sap revised date even if another classification is before" do
       p = make_eligible_product

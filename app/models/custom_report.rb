@@ -2,14 +2,15 @@
 #
 # Table name: custom_reports
 #
-#  created_at    :datetime         not null
-#  id            :integer          not null, primary key
-#  include_links :boolean
-#  name          :string(255)
-#  no_time       :boolean
-#  type          :string(255)
-#  updated_at    :datetime         not null
-#  user_id       :integer
+#  created_at         :datetime         not null
+#  id                 :integer          not null, primary key
+#  include_links      :boolean
+#  include_rule_links :boolean
+#  name               :string(255)
+#  no_time            :boolean
+#  type               :string(255)
+#  updated_at         :datetime         not null
+#  user_id            :integer
 #
 # Indexes
 #
@@ -19,12 +20,14 @@
 
 require 'open_chain/search_base'
 require 'dry/core/descendants_tracker'
+require 'open_chain/url_support'
 
 class CustomReport < ActiveRecord::Base
   extend Dry::Core::DescendantsTracker
   include OpenChain::SearchBase
+  include OpenChain::UrlSupport
 
-  attr_accessible :include_links, :name, :no_time, :type, :user_id, :user,
+  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id, :user,
   :search_criterions_attributes, :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes
 
   
@@ -161,6 +164,7 @@ class CustomReport < ActiveRecord::Base
       heading_row row
       values = []
       values << "Web Links" if self.include_links?
+      values << "Business Rule Links" if self.include_rule_links?
 
       # Look for either search columns or strings in the headers array
       # Allows you to easily append custom headers if needed ie. -> self.search_columns + ['Custom1', 'Custom2']
@@ -177,8 +181,16 @@ class CustomReport < ActiveRecord::Base
     end
 
     def write_row row, row_object, values, run_by
-      links = self.include_links?
-      write_hyperlink(row, 0, row_object.excel_url, "Web View") if links
+      link_offset = 0
+      if self.include_links?
+        write_hyperlink(row, link_offset, row_object.excel_url, "Web View")
+        link_offset += 1
+      end
+      
+      if self.include_rule_links?
+        write_hyperlink(row, link_offset, validation_results_url(obj: row_object), "Web View")
+        link_offset += 1
+      end
 
       content = []
       values.each do |v|
@@ -186,7 +198,7 @@ class CustomReport < ActiveRecord::Base
         content << (mf ? mf.process_export(row_object, run_by) : v)
       end
 
-      write_columns row, (links ? 1 : 0), content
+      write_columns row, link_offset, content
     end
 
     def write_no_data row, message = "No data was returned for this report."
@@ -263,7 +275,7 @@ class CustomReport < ActiveRecord::Base
       def insert_link_cell_value column, url, alt_text
         cell = get_cell_by_column(column)
 
-        content = alt_text.blank? ? url : alt_text
+        content = url.blank? ? "" : (alt_text.blank? ? url : alt_text)
         content = content.to_s.to_f if content.is_a?(BigDecimal)
 
         cell.url = url

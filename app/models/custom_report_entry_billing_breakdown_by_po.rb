@@ -1,7 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportEntryBillingBreakdownByPo < CustomReport
-  attr_accessible :include_links, :name, :no_time, :type, :user_id
+  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
 
 	def self.template_name
     "Entry Billing Breakdown By PO"
@@ -87,6 +87,11 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
 
         if self.include_links?
           write_hyperlink row, col, inv.entry.view_url, "Web View"
+          col += 1
+        end
+
+        if self.include_rule_links?
+          write_hyperlink row, col, validation_results_url(obj: inv.entry), "Web View"
           col += 1
         end
 

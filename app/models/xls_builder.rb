@@ -134,7 +134,7 @@ class XlsBuilder
   #
   # xls.add_body_row sheet, ["Column A", xls.create_link_cell("http://www.google.com", "Click Here"), "Column C"]
   def create_link_cell url, link_text: "Web View"
-    Spreadsheet::Link.new(url,link_text)
+    Spreadsheet::Link.new(url, url.present? ? link_text : "")
   end
 
   # Introduces a frozen pane ABOVE the given row index (zero indexed)

@@ -35,6 +35,7 @@ class SearchTemplate < ActiveRecord::Base
       name:h['name'],
       module_type:h['module_type'],
       include_links:h['include_links'],
+      include_rule_links:h['include_rule_links'],
       no_time:h['no_time']
     )
     if h['search_columns']
@@ -72,6 +73,7 @@ class SearchTemplate < ActiveRecord::Base
     h = {name:ss.name,
       module_type:ss.module_type,
       include_links:ss.include_links,
+      include_rule_links:ss.include_rule_links,
       no_time:ss.no_time
     }
     h[:search_columns] = ss.search_columns.collect {|sc| {model_field_uid:sc.model_field_uid,rank:sc.rank}}

@@ -1,7 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportBillingAllocationByValue < CustomReport
-  attr_accessible :include_links, :name, :no_time, :type, :user_id
+  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
 
   def self.template_name
     "Invoice Allocation By Invoice Value"
@@ -27,6 +27,10 @@ class CustomReportBillingAllocationByValue < CustomReport
     header = []
     if self.include_links?
       header << "Web Links"
+    end
+
+    if self.include_rule_links?
+      header << "Business Rule Links"
     end
 
     self.search_columns.each do |sc|
@@ -80,6 +84,9 @@ class CustomReportBillingAllocationByValue < CustomReport
         line_value = line.commercial_invoice_tariffs.first.nil? ? 0 : line.commercial_invoice_tariffs.first.entered_value if use_hts_value
         if self.include_links?
           write_hyperlink row_cursor, (col_cursor += 1), entry.view_url,"Web View"
+        end
+        if self.include_rule_links?
+          write_hyperlink row_cursor, (col_cursor += 1), validation_results_url(obj: entry),"Web View"
         end
         self.search_columns.each do |sc|
           mf = sc.model_field

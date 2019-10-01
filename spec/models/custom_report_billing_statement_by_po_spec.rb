@@ -97,12 +97,13 @@ describe CustomReportBillingStatementByPo do
     it "should include hyperlinks when enabled" do
       MasterSetup.get.update_attributes(:request_host=>"http://host.xxx")
       @report.include_links = true
+      @report.include_rule_links = true
       
       r = @report.to_arrays @user
       expect(r.length).to eq(4)
-      expect(r[0]).to eq(["Web Links", "Invoice Number", "Invoice Date", "Invoice Total", "PO Number"])
+      expect(r[0]).to eq(["Web Links", "Business Rule Links", "Invoice Number", "Invoice Date", "Invoice Total", "PO Number"])
 
-      expect(r[1]).to eq([@entry.view_url, "ZZZ", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "1"])
+      expect(r[1]).to eq([@entry.view_url, "http://localhost:3000/entries/#{@entry.id}/validation_results", "ZZZ", Date.parse("2013-01-01"), BigDecimal.new("33.33"), "1"])
     end
 
     it "should show invoices with no po numbers as 1 line" do

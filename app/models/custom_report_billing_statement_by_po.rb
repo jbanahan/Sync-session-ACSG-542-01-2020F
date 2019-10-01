@@ -60,6 +60,11 @@ class CustomReportBillingStatementByPo < CustomReport
           col += 1
         end
 
+        if self.include_rule_links?
+          write_hyperlink row, col, validation_results_url(obj: entry), "Web View"
+          col += 1
+        end
+
         po_value = BigDecimal.new("0")
         if i < (po_numbers.length - 1) 
           po_value = even_split_amount
@@ -86,6 +91,11 @@ class CustomReportBillingStatementByPo < CustomReport
     heading_row 0
     if self.include_links?
       write 0, col, "Web Links"
+      col += 1
+    end
+
+    if self.include_rule_links?
+      write 0, col, "Business Rule Links"
       col += 1
     end
 

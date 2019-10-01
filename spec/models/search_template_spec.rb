@@ -1,6 +1,6 @@
 describe SearchTemplate do
   before :each do
-    @ss = SearchSetup.new(name:'MyName',module_type:'Order',include_links:true,no_time:true)
+    @ss = SearchSetup.new(name:'MyName',module_type:'Order',include_links:true,include_rule_links:true,no_time:true)
     @ss.search_columns.build(model_field_uid:'ord_ord_num',rank:1)
     @ss.search_columns.build(model_field_uid:'ord_ord_date',rank:2)
     @ss.search_criterions.build(model_field_uid:'ord_ord_num',operator:'sw',value:'X')
@@ -14,7 +14,7 @@ describe SearchTemplate do
       expect(st.id).to_not be_blank
 
       expected_hash = {
-        'name'=>'MyName','module_type'=>'Order','include_links'=>true,'no_time'=>true,
+        'name'=>'MyName','module_type'=>'Order','include_links'=>true,'include_rule_links'=>true,'no_time'=>true,
         'search_columns'=>[
           {'model_field_uid'=>'ord_ord_num','rank'=>1},
           {'model_field_uid'=>'ord_ord_date','rank'=>2}
@@ -40,6 +40,7 @@ describe SearchTemplate do
       expect(setup.name).to eq @ss.name
       expect(setup.module_type).to eq @ss.module_type
       expect(setup.include_links?).to eq @ss.include_links?
+      expect(setup.include_rule_links?).to eq @ss.include_rule_links?
       expect(setup.no_time?).to eq @ss.no_time?
 
       expect(setup.search_columns.size).to eq 2

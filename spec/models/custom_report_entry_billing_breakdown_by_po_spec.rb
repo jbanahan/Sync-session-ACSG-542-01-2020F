@@ -116,15 +116,16 @@ describe CustomReportEntryBillingBreakdownByPo do
     it "should add web links" do
       MasterSetup.get.update_attributes(:request_host=>"http://host.xxx")
       @report.include_links = true
+      @report.include_rule_links = true
       r = @report.to_arrays @user
 
       #4 rows..1 header, 3 PO lines
       expect(r.length).to eq(4)
       row = r[0]
-      expect(row).to eq(["Web Links", "Broker Reference", "Invoice Number", "PO Number", "PO Total", "CD1", "CD2", ModelField.find_by_uid(:bi_carrier_code).label])
+      expect(row).to eq(["Web Links", "Business Rule Links", "Broker Reference", "Invoice Number", "PO Number", "PO Total", "CD1", "CD2", ModelField.find_by_uid(:bi_carrier_code).label])
 
       row = r[1]
-      expect(row).to eq([@entry.view_url, @entry.broker_reference, @invoice.invoice_number.to_s, "1", 66.66, BigDecimal.new("33.33"), BigDecimal.new("33.33"), "SCAC"]) 
+      expect(row).to eq([@entry.view_url, "http://localhost:3000/entries/#{@entry.id}/validation_results", @entry.broker_reference, @invoice.invoice_number.to_s, "1", 66.66, BigDecimal.new("33.33"), BigDecimal.new("33.33"), "SCAC"]) 
     end
 
     it "should show a message if no results are returned" do

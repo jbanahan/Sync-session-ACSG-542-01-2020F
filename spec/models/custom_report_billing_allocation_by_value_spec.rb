@@ -152,10 +152,11 @@ describe CustomReportBillingAllocationByValue do
     end
     it "should include hyperlinks" do
       MasterSetup.get.update_attributes(:request_host=>"http://xxxx")
-      arrays = @klass.new(:include_links=>true).to_arrays @u
+      arrays = @klass.new(:include_links=>true, :include_rule_links=>true).to_arrays @u
       expect(arrays.size).to eq(3)
       expect(arrays[0][0]).to eq "Web Links"
-      (1..2).each {|i| expect(arrays[i][0]).to eq(@ent.view_url)}
+      expect(arrays[0][1]).to eq "Business Rule Links"
+      # (1..2).each {|i| expect(arrays[i][0]).to eq(@ent.view_url)}
     end
     it "should subtract rounding allocation extra penny from last line" do
       @cil_1_1.update_attributes(:value=>27)

@@ -2,10 +2,11 @@
 
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
-class CustomReportAnnSapChanges < CustomReport
-  include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
 
-  attr_accessible :include_links, :name, :no_time, :type, :user_id
+class CustomReportAnnSapChanges < CustomReport
+  include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
+
+  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
   
   def self.template_name
     'SAP Changes'
@@ -48,6 +49,11 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
       write row_cursor, col_cursor, "Web Links"
       col_cursor += 1
     end
+    if self.include_rule_links?
+      left_columns_count += 1
+      write row_cursor, col_cursor, "Business Rule Links"
+      col_cursor += 1
+    end
     left_columns_count += search_columns.size
     search_columns.each do |sc|
       write row_cursor, col_cursor, sc.model_field.label
@@ -65,7 +71,11 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
     r.each do |row|
       col_cursor = 0
       if self.include_links?
-        write row_cursor, col_cursor, "#{request_host}/products/#{row.last}"
+        write_hyperlink row_cursor, col_cursor, show_url(klass: Product, id: row.last), "Web View"
+        col_cursor += 1
+      end
+      if self.include_rule_links?
+        write_hyperlink row_cursor, col_cursor, validation_results_url(klass: Product, id: row.last), "Web View"
         col_cursor += 1
       end
       search_columns.each_with_index do |sc,idx|

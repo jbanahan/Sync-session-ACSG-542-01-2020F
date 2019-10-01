@@ -86,11 +86,13 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     end
     it "should include web links as first column" do
       MasterSetup.get.update_attributes(:request_host=>"http://xxxx")
-      rpt = Cr.create!(:include_links=>true)
+      rpt = Cr.create!(:include_links=>true, :include_rule_links=>true)
       rows = rpt.to_arrays(@master_user)
       expect(rows[0][0]).to eq "Web Links"
-      expect(rows[0][1]).to eq "CD1"
+      expect(rows[0][1]).to eq "Business Rule Links"
+      expect(rows[0][2]).to eq "CD1"
       expect(rows[1][0]).to eq(@invoice_line_1.broker_invoice.entry.view_url)
+      expect(rows[1][1]).to eq "http://localhost:3000/entries/#{@invoice_line_1.broker_invoice.entry.id }/validation_results"
     end
     it "should trim by search criteria" do
       bi2_line = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>222)

@@ -31,10 +31,11 @@ describe CsvMaker do
     end
 
     it "should add web links" do
-      csv = CSV.parse CsvMaker.new(include_links: true).make_from_search_query(@query).first
+      maker = CsvMaker.new(include_links: true, include_rule_links: true)
+      csv = CSV.parse maker.make_from_search_query(@query).first
       expect(csv.length).to eq 2
-      expect(csv[0]).to eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label, "Links"]
-      expect(csv[1]).to eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M"), @entry.view_url]
+      expect(csv[0]).to eq [ModelField.find_by_uid(:ent_first_it_date).label, ModelField.find_by_uid(:ent_file_logged_date).label, "Links", "Business Rule Links"]
+      expect(csv[1]).to eq [@entry.first_it_date.strftime("%Y-%m-%d"), @entry.file_logged_date.in_time_zone("Hawaii").strftime("%Y-%m-%d %H:%M"), @entry.view_url, "http://localhost:3000/entries/#{@entry.id}/validation_results"]
     end
 
     it "should not include time" do

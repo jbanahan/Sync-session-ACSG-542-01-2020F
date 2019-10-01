@@ -2,16 +2,17 @@
 #
 # Table name: search_setups
 #
-#  created_at      :datetime         not null
-#  download_format :string(255)
-#  id              :integer          not null, primary key
-#  include_links   :boolean
-#  module_type     :string(255)
-#  name            :string(255)
-#  no_time         :boolean
-#  simple          :boolean
-#  updated_at      :datetime         not null
-#  user_id         :integer
+#  created_at         :datetime         not null
+#  download_format    :string(255)
+#  id                 :integer          not null, primary key
+#  include_links      :boolean
+#  include_rule_links :boolean
+#  module_type        :string(255)
+#  name               :string(255)
+#  no_time            :boolean
+#  simple             :boolean
+#  updated_at         :datetime         not null
+#  user_id            :integer
 #
 # Indexes
 #
@@ -22,7 +23,7 @@ require 'open_chain/search_base'
 class SearchSetup < ActiveRecord::Base
   include OpenChain::SearchBase
 
-  attr_accessible :download_format, :include_links, :module_type, :name, 
+  attr_accessible :download_format, :include_links, :include_rule_links, :module_type, :name, 
     :no_time, :simple, :user_id, :user, :search_criterions_attributes,
     :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes
 

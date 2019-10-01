@@ -1,16 +1,20 @@
+require 'open_chain/url_support'
+
 class XlsMaker
   require 'spreadsheet'
+  include OpenChain::UrlSupport
   
   HEADER_FORMAT = Spreadsheet::Format.new weight: :bold, color: :black,  pattern_fg_color: :xls_color_41, pattern: 1, horizontal_align: :center
   DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
   DATE_TIME_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD HH:MM'
 
-  attr_accessor :include_links
+  attr_accessor :include_links, :include_rule_links
   attr_accessor :no_time #hide timestamps on output
 
   def initialize opts={}
-    inner_opts = {:include_links=>false,:no_time=>false}.merge(opts)
+    inner_opts = {:include_links=>false,:include_rule_links=>false,:no_time=>false}.merge(opts)
     @include_links = inner_opts[:include_links]
+    @include_rule_links = inner_opts[:include_rule_links]
     @no_time = inner_opts[:no_time]
   end
   
@@ -30,7 +34,7 @@ class XlsMaker
     search_query.execute(search_query_opts) do |row_hash|
       #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
       key = row_hash[:row_key]
-      base_objects[key] ||= (@include_links ? ss.core_module.find(key) : nil)
+      base_objects[key] ||= ((@include_links || @include_rule_links) ? ss.core_module.find(key) : nil)
       process_row sheet, row_number, row_hash[:result], base_objects[key]
       row_number += 1
     end
@@ -80,12 +84,7 @@ class XlsMaker
     end
     
     raise "Cannot generate view_url because MasterSetup.request_host not set." unless request_host
-    # We need to do the redirect because of how Excel/Windows use an IE component to view the URL and hand off the 
-    # URL's resulting response to the user's default browser.  The IE component used doesn't have access to any session
-    # cookies so, effectively, every link will force the user to re-login - annoying.  
-    # The redirect gets around this by providing the IE discovery component the correct URL to hand off to the default browser.
-
-    # The relative url is encoded so any page parameters are not fed to the redirect page.
+    
     if Rails.env.production?
       "https://#{request_host + relative_url}"
     else
@@ -219,7 +218,7 @@ class XlsMaker
   end
 
   def self.create_link_cell url, link_text = "Web View"
-    Spreadsheet::Link.new(url,link_text)
+    Spreadsheet::Link.new(url, url.present? ? link_text : "")
   end
 
   def self.create_format format_name, opts = {}
@@ -234,6 +233,7 @@ class XlsMaker
   end
   
   private
+
   def prep_workbook cols, user
     wb = XlsMaker.create_workbook "Results"
     sheet = wb.worksheet "Results"
@@ -245,12 +245,14 @@ class XlsMaker
 
     XlsMaker.add_header_row sheet, 0, headers, @column_widths
     sheet.row(0).push("Links") if self.include_links
+    sheet.row(0).push("Business Rule Links") if self.include_rule_links
     wb
   end
 
   def process_row sheet, row_number, row_data, base_object
     XlsMaker.add_body_row sheet, row_number, row_data, @column_widths, @no_time
     sheet.row(row_number).push(self.class.create_link_cell(base_object.excel_url)) if self.include_links 
+    sheet.row(row_number).push(self.class.create_link_cell(validation_results_url obj: base_object)) if self.include_rule_links 
   end
 
 end

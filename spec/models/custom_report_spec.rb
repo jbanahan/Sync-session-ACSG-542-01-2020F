@@ -6,7 +6,7 @@ describe CustomReport do
     before :each do
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
       @u2 = Factory(:user)
-      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true)
+      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true, :include_rule_links=>true)
     end
     it "should copy to another user" do
       @s.give_to @u2
@@ -28,7 +28,7 @@ describe CustomReport do
   describe "deep_copy" do
     before :each do 
       @u = Factory(:user)
-      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true)
+      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true, :include_rule_links=>true)
     end
     it "should copy basic search setup" do
       d = @s.deep_copy "new"
@@ -37,6 +37,7 @@ describe CustomReport do
       expect(d.name).to eq("new")
       expect(d.user).to eq(@u)
       expect(d.include_links).to be_truthy
+      expect(d.include_rule_links).to be_truthy
       expect(d.class).to eq(CustomReportEntryInvoiceBreakdown)
     end
     it "should copy parameters" do
@@ -205,10 +206,11 @@ describe CustomReport do
       expect(r[0]).to eq ["Header1", ModelField.find_by_uid(:prod_uid).label, ModelField.find_by_uid(:prod_uid).label]
     end
 
-    it "adds web links as first column when include_links is true" do
+    it "adds web links as first columns when include_links/include_rule_links is true" do
       @rpt.include_links = true
+      @rpt.include_rule_links = true
       r = @rpt.to_arrays Factory(:user)
-      expect(r[0]).to eq ["Web Links", "Header1", ModelField.find_by_uid(:prod_uid).label, ModelField.find_by_uid(:prod_uid).label]
+      expect(r[0]).to eq ["Web Links", "Business Rule Links", "Header1", ModelField.find_by_uid(:prod_uid).label, ModelField.find_by_uid(:prod_uid).label]
     end
 
     it "prints disabled for fields the user can't view" do
@@ -238,10 +240,11 @@ describe CustomReport do
     end
 
     it "adds web links as first column when include_links is true" do
-      allow_any_instance_of(MasterSetup).to receive(:request_host).and_return "localhost"
+      stub_master_setup
       @rpt.include_links = true
+      @rpt.include_rule_links = true
       r = @rpt.to_arrays @u
-      expect(r[0]).to eq [@p.excel_url, "Value", @p.unique_identifier]
+      expect(r[0]).to eq [@p.excel_url, "#{@p.excel_url}/validation_results", "Value", @p.unique_identifier]
     end
   end
 

@@ -35,6 +35,7 @@ class AdvancedSearchController < ApplicationController
     SearchSetup.transaction do
       ss.name = base_params[:name] unless base_params[:name].blank?
       ss.include_links = base_params[:include_links]
+      ss.include_rule_links = base_params[:include_rule_links]
       ss.no_time = base_params[:no_time]
       ss.download_format = (base_params[:download_format].presence || "xlsx")
       ss.search_columns.delete_all
@@ -216,6 +217,7 @@ class AdvancedSearchController < ApplicationController
           :title=>page_title(ss.core_module.try(:label)),
           :name=>ss.name,
           :include_links=>ss.include_links?,
+          :include_rule_links=>ss.include_rule_links?,
           :mailing_lists=>MailingList.mailing_lists_for_user(current_user).collect { |ml| {id: ml.id, label: ml.name} },
           :no_time=>ss.no_time?,
           :allow_ftp=>ss.can_ftp?,

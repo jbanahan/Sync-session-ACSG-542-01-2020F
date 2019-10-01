@@ -53,7 +53,7 @@ describe AdvancedSearchController do
   end
   describe "update" do
     before :each do
-      @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:no_time=>false,
+      @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:include_rule_links=>true,:no_time=>false,
         :module_type=>"Product")
     end
     it "should 404 for wrong user" do
@@ -84,11 +84,12 @@ describe AdvancedSearchController do
       expect(@ss.search_schedules).to be_empty
     end
     it "should update name" do
-      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:no_time=>true}
+      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:include_rule_links=>false,:no_time=>true}
       expect(response).to be_success
       @ss.reload
       expect(@ss.name).to eq("Y")
       expect(@ss.include_links?).to be_falsey
+      expect(@ss.include_rule_links?).to be_falsey
       expect(@ss.no_time?).to be_truthy
     end
     it "should recreate columns" do
@@ -202,7 +203,7 @@ describe AdvancedSearchController do
     end
     it "should write response for json" do
       @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
-        :include_links=>true,:no_time=>true,:module_type=>"Product")
+        :include_links=>true,:include_rule_links=>true,:no_time=>true,:module_type=>"Product")
       @ss.search_columns.create!(:rank=>1,:model_field_uid=>:prod_uid)
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
       @ss.search_columns.create!(:rank=>3,:model_field_uid=>:_const, constant_field_name: "Broker", constant_field_value: "Vandegrift")
@@ -216,6 +217,7 @@ describe AdvancedSearchController do
       expect(h['id']).to eq(@ss.id)
       expect(h['name']).to eq(@ss.name)
       expect(h['include_links']).to be_truthy
+      expect(h['include_rule_links']).to be_truthy
       expect(h['no_time']).to be_truthy
       expect(h['allow_ftp']).to be_falsey
       expect(h['user']['email']).to eq(@user.email)
@@ -256,7 +258,7 @@ describe AdvancedSearchController do
     end
     it "should write response for json and include ftp information for admins" do
       @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
-        :include_links=>true,:no_time=>true,:module_type=>"Product")
+        :include_links=>true,:include_rule_links=>true,:no_time=>true,:module_type=>"Product")
       @ss.search_columns.create!(:rank=>1,:model_field_uid=>:prod_uid)
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
       @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
@@ -505,7 +507,7 @@ describe AdvancedSearchController do
 
   describe "send_email" do
     before(:each) do
-      @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:no_time=>false,
+      @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:include_rule_links=>true,:no_time=>false,
         :module_type=>"Product")
       allow_any_instance_of(SearchSetup).to receive(:downloadable?).and_return true
     end

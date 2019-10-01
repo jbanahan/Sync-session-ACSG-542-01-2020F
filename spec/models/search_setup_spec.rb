@@ -88,7 +88,7 @@ describe SearchSetup do
   describe "deep_copy" do
     before :each do
       @u = Factory(:user)
-      @s = SearchSetup.create!(:name=>"ABC",:module_type=>"Order",:user=>@u,:simple=>false,:download_format=>'csv',:include_links=>true)
+      @s = SearchSetup.create!(:name=>"ABC",:module_type=>"Order",:user=>@u,:simple=>false,:download_format=>'csv',:include_links=>true, :include_rule_links=>true)
     end
     it "should copy basic search setup" do
       d = @s.deep_copy "new"
@@ -100,6 +100,7 @@ describe SearchSetup do
       expect(d.simple).to be_falsey
       expect(d.download_format).to eq('csv')
       expect(d.include_links).to be_truthy
+      expect(d.include_rule_links).to be_truthy
     end
     it "should copy parameters" do
       @s.search_criterions.create!(:model_field_uid=>'a',:value=>'x',:operator=>'y',:status_rule_id=>1,:custom_definition_id=>2)
