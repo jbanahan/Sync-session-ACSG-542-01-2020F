@@ -6,6 +6,7 @@ require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
 require 'open_chain/custom_handler/ann_inc/ann_zym_ack_file_handler'
 require 'open_chain/custom_handler/ann_inc/ann_order_850_parser'
 require 'open_chain/custom_handler/ann_inc/ann_commercial_invoice_xml_parser'
+require 'open_chain/custom_handler/ann_inc/ann_ohl_product_generator'
 require 'open_chain/custom_handler/ascena/apll_856_parser'
 require 'open_chain/custom_handler/baillie/baillie_order_xml_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
@@ -229,6 +230,8 @@ module OpenChain
         OpenChain::CustomHandler::AnnInc::AnnOrder850Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ann_invoice") && custom_features.include?("Ann Brokerage Feeds")
         OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "ann_efocus_products_ack") && custom_features.include?("Ann Inc")
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator::SYNC_CODE, mailing_list_code: "efocus_products_ack"
       elsif (parser_identifier == "footlocker_hts") && custom_features.include?("Foot Locker Parts")
         OpenChain::CustomHandler::FootLocker::FootLockerHtsParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "polo_850")

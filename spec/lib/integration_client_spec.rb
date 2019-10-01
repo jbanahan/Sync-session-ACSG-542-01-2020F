@@ -291,6 +291,12 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "handles ann invoice xml files" do
         do_parser_test('Ann Brokerage Feeds', OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser, '/_ann_invoice/file.xml')
       end
+
+      it "handles e-Focus PDM product ack files" do
+        do_parser_test('Ann Inc', OpenChain::CustomHandler::AckFileHandler, '/ann_efocus_products_ack/efocus_ack.csv') do |parser|
+          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'ANN-PDM', mailing_list_code: "efocus_products_ack"}
+        end
+      end
     end
 
     context "eddie_bauer" do
