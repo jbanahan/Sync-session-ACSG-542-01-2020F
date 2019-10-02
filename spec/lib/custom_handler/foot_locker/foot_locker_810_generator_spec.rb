@@ -158,6 +158,9 @@ describe OpenChain::CustomHandler::FootLocker::FootLocker810Generator do
       commercial_invoice
       xml = subject.generate_xml broker_invoice
 
+      # This is the $85 from the original lines, none of which are excluded, plus the $4 non-excluded line we added above.
+      expect(xp xml, "TotalMonetaryAmount").to eq "89.00"
+
       expect(REXML::XPath.match(xml.root, "Lines/Line").size).to eq 8
 
       validate_charge_line xml, 0, "D", "HMF", "HMF FEE", "123.45"

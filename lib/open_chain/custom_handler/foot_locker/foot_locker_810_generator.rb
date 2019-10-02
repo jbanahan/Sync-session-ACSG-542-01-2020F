@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
     add_element root, "PortOfDischarge", entry.unlading_port_code
     add_element root, "PortOfEntry", entry.entry_port_code
     add_element root, "PortOfLoading", entry.lading_port_code
-    add_element root, "TotalMonetaryAmount", to_number(broker_invoice.invoice_total)
+    add_element root, "TotalMonetaryAmount", get_total_monetary_amount(entry, broker_invoice)
     add_element root, "TotalCommercialInvoiceAmount", to_number(entry.total_invoiced_value)
 
     inv_lines = Set.new
@@ -154,6 +154,23 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLocker810Ge
     def is_canada_tax_charge_code? charge_code
       cc_num = charge_code.to_i
       cc_num == 2 || (cc_num >= 250 && cc_num < 260)
+    end
+
+    def get_total_monetary_amount entry, broker_invoice
+      v = BigDecimal.new(0)
+      if is_canada? entry
+        # The Canadian broker invoice "invoice total" amount is the sum of all the charge amounts for its lines.
+        # (See FenixInvoiceParser.)  Because we're leaving out GST-related lines from the 810, the total must be
+        # recalculated.  It can't be used as is, like it can be for the US.
+        broker_invoice.broker_invoice_lines.each do |line|
+          next if exclude_line?(entry, line)
+          v += line.charge_amount
+        end
+        v = to_number(v)
+      else
+        v = to_number(broker_invoice.invoice_total)
+      end
+      v
     end
 
 end; end; end; end
