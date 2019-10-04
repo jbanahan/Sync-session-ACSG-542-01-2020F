@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
   end
 
   def self.can_view? user
-    MasterSetup.get.custom_feature?("alliance") && user.company.master?
+    MasterSetup.get.custom_feature?("Kewill CI Upload") && user.company.master?
   end
 
   def self.valid_file? file_name

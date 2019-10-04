@@ -4,7 +4,7 @@ module OpenChain; module Report; class EntriesWithHoldsReport
   include OpenChain::Report::ReportHelper
 
   def self.permission? user
-    MasterSetup.get.custom_feature?("Alliance") && user.view_entries?
+    MasterSetup.get.custom_feature?("Kewill Entries") && user.view_entries?
   end
 
   def self.run_report user, settings = {}

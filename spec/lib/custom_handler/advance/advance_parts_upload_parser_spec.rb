@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
     it "allows user" do
       ms = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return ms
-      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
+      allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return true
 
       user = Factory(:master_user)
       expect(user).to receive(:edit_products?).and_return true
@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
     it "disallows users that can't edit products" do
       ms = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return ms
-      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
+      allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return true
 
       user = Factory(:master_user)
       expect(user).to receive(:edit_products?).and_return false
@@ -136,15 +136,15 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
     it "disallows users that aren't master users" do
       ms = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return ms
-      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
+      allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return true
 
       expect(described_class.can_view? user).to be_falsey
     end
 
-    it "disallows when alliance is not enabled" do
+    it "disallows when Advance 7501 is not enabled" do
       ms = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return ms
-      allow(ms).to receive(:custom_feature?).with("alliance").and_return false
+      allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return false
 
       user = Factory(:master_user)
       allow(user).to receive(:edit_products?).and_return true

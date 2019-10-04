@@ -176,10 +176,10 @@ describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do
   end
 
   describe "can_view?" do
-    it "allows company master to view when alliance custom feature is enabled" do
+    it "allows company master to view when WWW custom feature is enabled" do
       ms = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return ms
-      expect(ms).to receive(:custom_feature?).with('alliance').and_return true
+      expect(ms).to receive(:custom_feature?).with('WWW').and_return true
 
       u = Factory(:master_user)
       expect(described_class.new(nil).can_view? u).to be_truthy
@@ -190,10 +190,10 @@ describe OpenChain::CustomHandler::LandsEnd::LeChapter98Parser do
       expect(described_class.new(nil).can_view? u).to be_falsey
     end
 
-    it "prevents non-alliance user" do
+    it "prevents non-WWW user" do
       ms = double("MasterSetup")
       expect(MasterSetup).to receive(:get).and_return ms
-      expect(ms).to receive(:custom_feature?).with('alliance').and_return false
+      expect(ms).to receive(:custom_feature?).with('WWW').and_return false
 
       u = Factory(:master_user)
       expect(described_class.new(nil).can_view? u).to be_falsey

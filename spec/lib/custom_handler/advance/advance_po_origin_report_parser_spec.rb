@@ -224,10 +224,10 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
     let (:ms) { double("MasterSetup") }
     let (:user) { Factory(:master_user) }
 
-    context "with alliance enabled master_setup" do
+    context "with Advance 7501 enabled master_setup" do
       before :each do
         allow(MasterSetup).to receive(:get).and_return ms
-        allow(ms).to receive(:custom_feature?).with("alliance").and_return true
+        allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return true
       end
 
       it "allows user" do
@@ -247,9 +247,9 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
       end
     end
 
-    it "disallows when alliance is not enabled" do
+    it "disallows when Advance 7501 is not enabled" do
       expect(MasterSetup).to receive(:get).and_return ms
-      allow(ms).to receive(:custom_feature?).with("alliance").and_return false
+      allow(ms).to receive(:custom_feature?).with("Advance 7501").and_return false
 
       allow(user).to receive(:edit_orders?).and_return true
       expect(described_class.can_view? user).to be_falsey

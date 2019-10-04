@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
   end
 
   def self.can_view? user
-    MasterSetup.get.custom_feature?("alliance") && user.company.master? && user.edit_orders?
+    MasterSetup.get.custom_feature?("Advance 7501") && user.company.master? && user.edit_orders?
   end
 
   def can_view? user

@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
   end
 
   def self.can_view? user
-    MasterSetup.get.custom_feature?("alliance") && user.company.master? && user.edit_products?
+    MasterSetup.get.custom_feature?("Advance 7501") && user.company.master? && user.edit_products?
   end
 
   def can_view? user

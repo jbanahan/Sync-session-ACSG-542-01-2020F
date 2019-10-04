@@ -377,10 +377,10 @@ describe OpenChain::CustomHandler::CiLoadHandler do
   describe "can_view?" do
     subject { described_class.new nil }
 
-    context "alliance custom feature enabled" do
+    context "Kewill CI Upload custom feature enabled" do
 
       before :each do
-        ms = MasterSetup.new custom_features: "alliance"
+        ms = MasterSetup.new custom_features: "Kewill CI Upload"
         allow(MasterSetup).to receive(:get).and_return ms
       end
 
@@ -393,7 +393,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
     end
 
-    it "disallows access when alliance feature is not enabled" do
+    it "disallows access when Kewill CI Upload feature is not enabled" do
        ms = MasterSetup.new
        allow(MasterSetup).to receive(:get).and_return ms
        expect(subject.can_view? Factory(:master_user)).to be_falsey
