@@ -106,7 +106,7 @@ describe OpenChain::ActivitySummary do
 
         Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 40,arrival_date: "2013-12-24 05:00:00 UTC",first_release_received_date:'2013-12-25 05:00:00 UTC',total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
         Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-14 05:00:00 UTC",first_release_received_date:'2013-12-15 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
-        Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-17 05:00:00 UTC",entry_filed_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-17 05:00:00 UTC",file_logged_date: "2013-12-17 05:00:00 UTC", entry_filed_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
         Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2012-12-24 05:00:00 UTC",first_release_received_date:'2012-12-25 05:00:00 UTC',total_duty:200,total_fees:75,entered_value:1500,total_invoiced_value:1600,total_units:40)
         #don't find for wrong country
         Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,first_release_received_date:2.day.ago,total_duty:100,total_fees:50,entered_value:1000,total_invoiced_value:1100,total_units:70)
@@ -145,6 +145,13 @@ describe OpenChain::ActivitySummary do
         expect(h['summary']['ytd']['entered']).to eq(2500)
         expect(h['summary']['ytd']['invoiced']).to eq(2700)
         expect(h['summary']['ytd']['units']).to eq(110)
+      end
+
+      it "does not include holds for files logged over a year ago" do
+        importer = Factory(:company)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,transport_mode_code: 10,arrival_date: "2013-12-17 05:00:00 UTC",file_logged_date: "2013-12-17 05:00:00 UTC", entry_filed_date:'2013-12-18 05:00:00 UTC', on_hold: true, total_duty:50,total_fees:40,entered_value:60,total_invoiced_value:66,total_units:3)
+        h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2014-12-17 05:00:01 UTC')
+        expect(h['summary']['holds']['count']).to eq(0)
       end
 
       it "should create statements section" do
@@ -266,12 +273,12 @@ describe OpenChain::ActivitySummary do
         importer = Factory(:company)
         Port.create!(:name=>'P1',schedule_d_code:'0001')
         Port.create!(:name=>'P2',schedule_d_code:'0002')
-        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,first_release_received_date:'2013-12-25 16:00:00 UTC')
-        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,first_release_received_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,first_release_received_date:'2013-12-18 16:00:00 UTC')
-        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:100,file_logged_date: "2013-12-20 16:00:00 UTC", first_release_received_date:'2013-12-25 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:50,file_logged_date: "2013-12-20 16:00:00 UTC", first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0002',total_units:75,file_logged_date: "2013-12-20 16:00:00 UTC", first_release_received_date:'2013-12-18 16:00:00 UTC')
+        Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_port_code:'0001',total_units:60,file_logged_date: "2013-12-20 16:00:00 UTC", entry_filed_date:'2013-12-25 16:00:00 UTC',first_release_received_date:nil)
         #don't find for wrong country
-        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:60,entry_filed_date:'2013-12-24 16:00:00 UTC',first_release_received_date:nil)
+        Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_port_code:'0001',total_units:60,file_logged_date: "2013-12-20 16:00:00 UTC", entry_filed_date:'2013-12-24 16:00:00 UTC',first_release_received_date:nil)
         h = OpenChain::ActivitySummary::USEntrySummaryGenerator.new.generate_hash importer.id, Time.parse('2013-12-27 16:00:00 UTC')
         bp = h['by_port']
         expect(bp.size).to eq(3)
@@ -299,7 +306,7 @@ describe OpenChain::ActivitySummary do
             #everything for 1 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:us.id,importer_id:importer.id,first_release_received_date:'2013-12-25 16:00:00 UTC')
+                Factory(:entry,import_country_id:us.id,importer_id:importer.id,file_logged_date: "2013-12-20 16:00:00 UTC", first_release_received_date:'2013-12-25 16:00:00 UTC')
               )
             )
           )
@@ -307,7 +314,7 @@ describe OpenChain::ActivitySummary do
             #every other for 4 week
             commercial_invoice_line: Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:us.id,importer_id:importer.id,first_release_received_date:'2013-12-18 16:00:00 UTC')
+                Factory(:entry,import_country_id:us.id,importer_id:importer.id,file_logged_date: "2013-12-20 16:00:00 UTC", first_release_received_date:'2013-12-18 16:00:00 UTC')
               )
             )
           ) if i%2 == 0
@@ -315,7 +322,7 @@ describe OpenChain::ActivitySummary do
             #first for open
             commercial_invoice_line:Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:us.id,importer_id:importer.id,entry_filed_date:'2013-12-26 16:00:00 UTC')
+                Factory(:entry,import_country_id:us.id,importer_id:importer.id,file_logged_date: "2013-12-20 16:00:00 UTC", entry_filed_date:'2013-12-26 16:00:00 UTC')
               )
             )
           ) if i == 0
@@ -323,7 +330,7 @@ describe OpenChain::ActivitySummary do
             #wrong country
             commercial_invoice_line:Factory(:commercial_invoice_line,
               commercial_invoice:Factory(:commercial_invoice,entry:
-                Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,entry_filed_date:'2013-12-26 16:00:00 UTC')
+                Factory(:entry,import_country_id:Factory(:country).id,importer_id:importer.id,file_logged_date: "2013-12-20 16:00:00 UTC", entry_filed_date:'2013-12-26 16:00:00 UTC')
               )
             )
           ) if i == 0
@@ -428,8 +435,8 @@ describe OpenChain::ActivitySummary do
 
     before :each do
       @importer = Factory(:company, importer: true)
-      @e1 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-01 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: us.id, source_system: 'Alliance')
-      @e2 = Factory(:entry, importer: @importer, first_release_received_date: '2014-01-07 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: us.id, source_system: 'Alliance')
+      @e1 = Factory(:entry, importer: @importer, file_logged_date: "2013-12-20 16:00:00 UTC", first_release_received_date: '2014-01-01 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: us.id, source_system: 'Alliance')
+      @e2 = Factory(:entry, importer: @importer, file_logged_date: "2013-12-20 16:00:00 UTC", first_release_received_date: '2014-01-07 15:00:00 UTC', entry_filed_date: '2013-12-25', import_country_id: us.id, source_system: 'Alliance')
     end
 
     it "returns a query finding all entries released within 1w" do
@@ -462,9 +469,15 @@ describe OpenChain::ActivitySummary do
     end
 
     it "returns a query finding all entries that are on hold" do
-      @e1.update_attributes on_hold: true
+      @e1.update_attributes on_hold: true, file_logged_date: "2013-12-17 05:00:00 UTC"
       qry = us_generator.create_by_release_range_query @importer.id, 'holds', Time.parse('2014-01-08 12:00:00 UTC')
       expect(qry.all).to eq [@e1]
+    end
+
+    it "returns a query that skips entries over a year old on hold" do
+      @e1.update_attributes on_hold: true, file_logged_date: "2013-12-17 05:00:00 UTC"
+      qry = us_generator.create_by_release_range_query @importer.id, 'holds', Time.parse('2014-12-17 05:00:01 UTC')
+      expect(qry.all.to_a).to eq []
     end
 
     it "returns a query finding all open entries ytd" do
@@ -483,6 +496,12 @@ describe OpenChain::ActivitySummary do
       qry = us_generator.create_by_release_range_query @importer.id, 'op', Time.parse('2014-01-07 12:00:00 UTC')
       results = qry.all
       expect(results.size).to eq(2)
+    end
+
+    it "does not return unreleased entries over a year old" do
+      @e1.update_attributes file_logged_date: "2013-12-17 05:00:00 UTC", first_release_received_date: nil
+      qry = us_generator.create_by_release_range_query @importer.id, 'op', Time.parse('2014-12-17 05:00:01 UTC')
+      expect(qry.all.to_a).to eq []
     end
 
     it "excludes non-open entries" do

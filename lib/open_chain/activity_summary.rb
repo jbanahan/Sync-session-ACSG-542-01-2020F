@@ -120,7 +120,7 @@ module OpenChain; class ActivitySummary
       h['summary'] = {'1w'=>nil,'4w'=>nil,'open'=>nil}
       h['summary']['1w'] = generate_week_summary company_id, b_utc
       h['summary']['4w'] = generate_4week_summary company_id, b_utc
-      h['summary']['holds'] = generate_hold_summary company_id
+      h['summary']['holds'] = generate_hold_summary company_id, b_utc
       h['summary']['open'] = generate_open_summary company_id, b_utc
       h['summary']['ytd'] = generate_ytd_summary company_id, b_utc
       h['by_port'] = generate_port_breakouts company_id, b_utc
@@ -140,8 +140,7 @@ module OpenChain; class ActivitySummary
       when '4w'
         date_clause = four_week_clause base_date
       when 'holds'
-        date_clause = "1=1"
-        more_where_clauses = on_hold_clause
+        date_clause = on_hold_clause base_date
       when 'op'
         date_clause = not_released_clause base_date
       when 'ytd'
@@ -154,7 +153,6 @@ module OpenChain; class ActivitySummary
            .where(Entry.search_where_by_company_id(importer_id))
            .where(tracking_open_clause)
            .where(country_clause)
-           .where(format_where more_where_clauses)
            .order(%Q(IFNULL(entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)},"2999-01-01") DESC))
     end
 
@@ -178,8 +176,8 @@ module OpenChain; class ActivitySummary
       generate_summary_line importer_id, four_week_clause(base_date_utc)
     end
 
-    def generate_hold_summary importer_id
-      generate_summary_line importer_id, "1=1", on_hold_clause
+    def generate_hold_summary importer_id, base_date_utc
+      generate_summary_line importer_id, "1=1", on_hold_clause(base_date_utc)
     end
 
     def generate_open_summary importer_id, base_date_utc
@@ -289,7 +287,7 @@ module OpenChain; class ActivitySummary
     # generate a where clause for open entries that are not released
     # "...AND entries.release_date IS NULL" is needed to prevent US entries released before we introduced first_release_received_date from being included.
     def not_released_clause base_date_utc
-      ActiveRecord::Base.sanitize_sql_array(["((entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} IS NULL AND entries.release_date IS NULL) OR entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} > ?)", base_date_utc])
+      ActiveRecord::Base.sanitize_sql_array(["((entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} IS NULL AND entries.release_date IS NULL) OR entries.#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} > ?) AND entries.file_logged_date > ?", base_date_utc, (base_date_utc - 1.year)])
     end
     # genereate a where clause for Released Year to Date
     def ytd_clause base_date_utc
@@ -305,8 +303,9 @@ module OpenChain; class ActivitySummary
     def country_clause
       ActiveRecord::Base.sanitize_sql_array(["(entries.import_country_id = ?)", country_id])
     end
-    def on_hold_clause
-      "entries.on_hold = true"
+    def on_hold_clause base_date_utc
+      # Anything over a year we can drop off the report
+      ActiveRecord::Base.sanitize_sql_array(["entries.on_hold = true AND entries.file_logged_date > ?", (base_date_utc - 1.year)])
     end
   end
   # summary builder for Canadian entries
