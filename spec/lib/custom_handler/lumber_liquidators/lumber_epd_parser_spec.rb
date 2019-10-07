@@ -65,7 +65,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberEpdParser do
       error_messages_1 = ['msg1']
       error_messages_2 = ['msg2']
 
-      expect(xlc).to receive(:all_row_values).with(0,1).and_return row_vals
+      expect(xlc).to receive(:all_row_values).with(starting_row_number: 1).and_return row_vals
 
       expect(described_class).to receive(:parse_row_arrays).with(row_vals).and_return [row_structs,error_messages_1]
       expect(described_class).to receive(:process_rows).with(row_structs,u).and_return(error_messages_2)

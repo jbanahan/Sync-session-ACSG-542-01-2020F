@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module DutyCalc
           @xlc = xlc
         end
         def parse
-          @xlc.all_row_values(0) do |r|
+          @xlc.all_row_values do |r|
             yield r
           end
         end

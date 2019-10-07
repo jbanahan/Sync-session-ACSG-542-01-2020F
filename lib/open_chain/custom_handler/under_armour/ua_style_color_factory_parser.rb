@@ -29,7 +29,7 @@ include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSuppor
   end
 
   def collect_rows
-    OpenChain::XLClient.new_from_attachable(@custom_file).all_row_values(0,0,500) {|row| yield row}
+    OpenChain::XLClient.new_from_attachable(@custom_file).all_row_values(chunk_size: 500) {|row| yield row}
   end
 
   def process_data_hash h, user

@@ -74,7 +74,7 @@ describe OpenChain::XLClient do
       expect(subject).to receive(:get_rows).with(row:1, sheet: 0, number_of_rows: 1).and_return([['b']])
       expect(subject).to receive(:get_rows).with(row:2, sheet: 0, number_of_rows: 1).and_return([['c']])
       v = []
-      subject.all_row_values(0, 0, 1) do |r|
+      subject.all_row_values(sheet_number: 0, starting_row_number: 0, chunk_size: 1) do |r|
         v << r
       end
       expect(v).to eq [['a'], ['b'], ['c']]
@@ -85,7 +85,7 @@ describe OpenChain::XLClient do
       expect(subject).to receive(:get_rows).with(row:0, sheet: 0, number_of_rows: 1).and_return([['a']])
       expect(subject).to receive(:get_rows).with(row:1, sheet: 0, number_of_rows: 1).and_return([['b']])
       expect(subject).to receive(:get_rows).with(row:2, sheet: 0, number_of_rows: 1).and_return([['c']])
-      v = subject.all_row_values(0, 0, 1)
+      v = subject.all_row_values(sheet_number: 0, starting_row_number: 0, chunk_size: 1)
       expect(v).to eq [['a'], ['b'], ['c']]
     end
 
@@ -96,8 +96,17 @@ describe OpenChain::XLClient do
       expect(subject).to receive(:get_rows).with(row:3, sheet: 0, number_of_rows: 3).and_return([['b']])
       expect(subject).to receive(:get_rows).with(row:6, sheet: 0, number_of_rows: 3).and_return([['c']])
       expect(subject).to receive(:get_rows).with(row:9, sheet: 0, number_of_rows: 2).and_return([['d']])
-      v = subject.all_row_values(0, 0, 3)
+      v = subject.all_row_values(sheet_number: 0, starting_row_number: 0, chunk_size: 3)
       expect(v).to eq [['a'], ['b'], ['c'], ['d']]
+    end
+
+    it "stops polling for more rows if stop_polling is thrown from block" do
+      expect(subject).to receive(:last_row_number).with(0).and_return(10)
+      expect(subject).to receive(:get_rows).with(row:0, sheet: 0, number_of_rows: 3).and_return([['a']])
+      subject.all_row_values(sheet_number: 0, starting_row_number: 0, chunk_size: 3) do |row|
+        expect(row).to eq ["a"]
+        throw :stop_polling
+      end
     end
   end
   it 'should send a new command' do

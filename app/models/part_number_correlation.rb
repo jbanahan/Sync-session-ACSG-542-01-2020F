@@ -42,7 +42,7 @@ class PartNumberCorrelation < ActiveRecord::Base
       current_row = 1
 
       xlc = add_additional_column_headings(xlc, rows_used_originally)
-      xlc.all_row_values(0) do |row|
+      xlc.all_row_values do |row|
         if current_row < self.starting_row
           current_row += 1
         else

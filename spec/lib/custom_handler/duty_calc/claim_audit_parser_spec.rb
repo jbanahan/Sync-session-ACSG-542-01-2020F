@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::DutyCalc::ClaimAuditParser do
     it "should receive rows" do
       drawback_claim = double('dc')
       rows = [[1,2,3,4,5],[1,2,3,4,5,6,7,8,9,0,1],[1,2,3,4,5,6,7,8,9,0,1]]
-      allow(@xlc).to receive(:all_row_values).with(0).and_yield(rows[0]).and_yield(rows[1]).and_yield(rows[2])
+      allow(@xlc).to receive(:all_row_values).and_yield(rows[0]).and_yield(rows[1]).and_yield(rows[2])
       p = described_class.new
       expect(p).to receive(:process_rows).with([rows[1],rows[2]],drawback_claim)
       p.parse_excel(@xlc,drawback_claim)

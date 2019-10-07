@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourSto
       importer = Company.find_by_master(true)
       file_name = s3_path.split('/').last
       row = 4
-      xlc.all_row_values(0,3) do |r|
+      xlc.all_row_values(starting_row_number: 3) do |r|
         process_row r, export_date, ref_num, export_country_iso, importer, file_name, row
         row += 1
       end

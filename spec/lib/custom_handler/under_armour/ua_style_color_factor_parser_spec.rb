@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       r = []
       xlc = double('xl_client')
       expect(OpenChain::XLClient).to receive(:new_from_attachable).with(@cf).and_return xlc
-      expect(xlc).to receive(:all_row_values).with(0,0,500).and_yield('a').and_yield('b')
+      expect(xlc).to receive(:all_row_values).with(chunk_size: 500).and_yield('a').and_yield('b')
       new_parser.collect_rows {|row| r << row}
       expect(r).to eq ['a','b']
     end

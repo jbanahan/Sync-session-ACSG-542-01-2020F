@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
         urls = instance_double "Hash"
         expect(cf).to receive :path
         expect(cf).to receive(:attached_file_name).twice.and_return "foo.xlsx"
-        expect_any_instance_of(OpenChain::XLClient).to receive(:all_row_values).with(0,7).and_yield([nil,nil,"123A"]).and_yield([nil,nil,"hi there"])
+        expect_any_instance_of(OpenChain::XLClient).to receive(:all_row_values).with(starting_row_number: 7).and_yield([nil,nil,"123A"]).and_yield([nil,nil,"hi there"])
         expect(handler).to receive(:get_urls).with(["123A"]).and_return urls
         expect(handler).to receive(:write_xl).with(instance_of(OpenChain::XLClient), urls)
         expect_any_instance_of(OpenChain::XLClient).to receive(:save).with "test-uuid/intacct_invoice_report/foo.xlsx", {bucket: "chainio-temp"}
@@ -124,7 +124,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
         r2 = [nil,nil,"inv_num_2"]
         r3 = [nil,nil,"inv_num_3"] # this one doesn't get written since it's missing from the hash
         expect(xl_client).to receive(:set_cell).with 0, 6, 16, "VFI Track Entry Link"
-        expect(xl_client).to receive(:all_row_values).with(0, 7).and_yield(r).and_yield(r2).and_yield(r3)
+        expect(xl_client).to receive(:all_row_values).with(starting_row_number: 7).and_yield(r).and_yield(r2).and_yield(r3)
         expect(xl_client).to receive(:set_cell).with 0, 7, 16, "Web Link", "http://entry_link"
         expect(xl_client).to receive(:set_cell).with 0, 8, 16, "Web Link", "http://entry_link_2"
         handler.write_xl xl_client, {"inv_num" => "http://entry_link", "inv_num_2" => "http://entry_link_2"}

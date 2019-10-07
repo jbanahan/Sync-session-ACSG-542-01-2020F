@@ -35,7 +35,7 @@ module OpenChain
     def self.parse_xlsx_file s3_bucket, s3_path, importer
       count = 0
       f = xl_client(s3_bucket, s3_path)
-      f.all_row_values(0) do |line|
+      f.all_row_values do |line|
         unless count == 0
           line.map! {|element| element.to_s}
           d = parse_csv_line line, count, importer

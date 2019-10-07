@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module Crocs
       latest_date = nil 
       cursor = 0
       parser = self.new
-      OpenChain::XLClient.new(s3_path).all_row_values(0) do |r|
+      OpenChain::XLClient.new(s3_path).all_row_values do |r|
         cursor += 1
         next if cursor == 1
         received_date = r[9].to_date

@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::DutyCalc::ExportHistoryParser do
     it "should receive rows" do
       xlc = double(:xl_client)
       rows = [[1,2,3,4,5],[1,2,3,4,5,6,7,8,9,0,1],[1,2,3,4,5,6,7,8,9,0,1]]
-      allow(xlc).to receive(:all_row_values).with(0).and_yield(rows[0]).and_yield(rows[1]).and_yield(rows[2])
+      allow(xlc).to receive(:all_row_values).and_yield(rows[0]).and_yield(rows[1]).and_yield(rows[2])
 
       dc = double('drawback_claim')
 

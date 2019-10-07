@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
   # uses primitives instead of objects to help DelayedJob serialization
   def self.parse_xlsx file_path, user_id
     user = User.find(user_id)
-    rows = OpenChain::XLClient.new(file_path).all_row_values(0,1)
+    rows = OpenChain::XLClient.new(file_path).all_row_values(starting_row_number: 1)
     row_structs, parse_errors = parse_row_arrays(rows)
     process_errors = process_rows(row_structs, user)
     write_results_message(user,(parse_errors+process_errors).flatten.compact.uniq)

@@ -74,7 +74,7 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
       # Make sure bucket always comes from the custom file, not based on the xl client default
       opts = {bucket: @custom_file.bucket}.merge @reader_options
       @xl_client = get_xl_client(@custom_file.path, opts)
-      @xl_client.all_row_values(sheet_number) do |row|
+      @xl_client.all_row_values(sheet_number: sheet_number) do |row|
         yield row
       end
       nil

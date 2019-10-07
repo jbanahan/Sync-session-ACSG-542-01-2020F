@@ -43,7 +43,7 @@ class FileImportProcessor
   end
 
   def preview_file
-    get_rows do |row|
+    get_rows(preview: true) do |row|
       do_row @import_file.starting_row, row, false, @import_file.starting_column - 1, @import_file.user
       return @listeners.first.messages
     end
@@ -269,13 +269,14 @@ class FileImportProcessor
     def row_count
       @data.lines.count - (@import_file.starting_row - 1)
     end
-    def get_rows &block
+
+    def get_rows preview: false, &block
       start_row = @import_file.starting_row - 1
       begin        
-        utf_8_parse @data, start_row, block
+        utf_8_parse @data, start_row, preview, block
       rescue ArgumentError => e
         if e.message =~ /invalid byte sequence in UTF-8/
-          windows_1252_parse @data, start_row, block
+          windows_1252_parse @data, start_row, preview, block
         else
           raise e
         end
@@ -284,20 +285,22 @@ class FileImportProcessor
 
     private
 
-    def utf_8_parse data, start_row, block
+    def utf_8_parse data, start_row, preview, block
       row_num = 0
       CSV.parse(@data, skip_blanks: true) do |row|
-        skip_comma_blanks row, row_num, start_row, block
+        had_content = skip_comma_blanks row, row_num, start_row, block
         row_num += 1
+        break if had_content && preview
       end
     end
 
-    def windows_1252_parse data, start_row, block
+    def windows_1252_parse data, start_row, preview, block
       row_num = 0
       CSV.parse(data.force_encoding("Windows-1252"), skip_blanks: true) do |row|
         converted_row = row.map {|r| r.encode("UTF-8", undef: :replace, invalid: :replace, replace: "?") if r }
-        skip_comma_blanks converted_row, row_num, start_row, block
+        had_content = skip_comma_blanks converted_row, row_num, start_row, block
         row_num += 1
+        break if had_content && preview
       end      
     end
 
@@ -306,7 +309,12 @@ class FileImportProcessor
       # it doesn't skip lines that solely consist of commas.
       # If find returns any non-blank value then we can process the line.
       has_values = row.find {|c| !c.blank?}
-      block.call row if row_num >= start_row && has_values
+      if row_num >= start_row && has_values
+        block.call(row)
+        true
+      else
+        false
+      end
     end
   end
 
@@ -316,8 +324,13 @@ class FileImportProcessor
       s = @data.last_row_number(0) - (@import_file.starting_row - 2) #-2 instead of -1 now since the counting methods index at 0 and 1
     end
 
-    def get_rows &block
-      @data.all_row_values(0, @import_file.starting_row - 1).each do |row|
+    def get_rows preview: false
+      params = {starting_row_number: @import_file.starting_row - 1}
+
+      # Only return a single row at a time if we're previewing
+      params[:chunk_size] = 1 if preview
+
+      @data.all_row_values(**params) do |row|
         process = false
         row.each do |v|
           if !v.blank?
@@ -325,7 +338,11 @@ class FileImportProcessor
             break
           end
         end
-        yield row if process
+        if process
+          yield row
+          # If we're in preview mode, just yield a single row...and tell the xl client to stop polling
+          throw :stop_polling if preview
+        end
       end
     end
 

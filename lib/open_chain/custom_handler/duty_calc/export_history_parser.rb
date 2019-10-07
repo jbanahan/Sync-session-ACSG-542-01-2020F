@@ -53,7 +53,7 @@ module OpenChain; module CustomHandler; module DutyCalc;
           @inner_opts = opts
         end
         def parse
-          @xlc.all_row_values(0) do |r|
+          @xlc.all_row_values do |r|
             yield r
             ts = @inner_opts[:throttle_speed] if @inner_opts[:throttle_speed]
             sleep ts if ts && ts > 0

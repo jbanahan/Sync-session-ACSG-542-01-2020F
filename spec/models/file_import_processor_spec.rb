@@ -21,7 +21,7 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
         SearchColumn.new(:model_field_uid=>"class_cntry_iso",:rank=>3)
       ])
-      allow(pro).to receive(:get_rows).and_yield ['abc-123','pn',country.iso_code]
+      allow(pro).to receive(:get_rows).with(preview: true).and_yield ['abc-123','pn',country.iso_code]
       r = pro.preview_file
       expect(r.size).to eq(3)
       expect(Product.count).to eq(0)
@@ -333,36 +333,115 @@ describe FileImportProcessor do
           expect(@listener.messages).to include("ERROR: Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields.")
         end
       end
-
     end
   end
 
-  describe "process_file" do
-    context "CSVImportProcessor" do
+  describe "CSVImportProcessor" do
+    let (:search_setup) { instance_double(SearchSetup) }
+    let (:imported_file) { 
+      f = instance_double(ImportedFile) 
+      allow(f).to receive(:search_setup).and_return search_setup
+      allow(f).to receive(:module_type).and_return "Product"
+      expect(f).to receive(:starting_row).and_return 1
+      f
+    }
+    let (:data) { "\n,,,,\na,b\n,,,\nc,d\n, , , ,,\n,,,,,\n\n" }
+    subject { FileImportProcessor::CSVImportProcessor.new imported_file, data }
+
+    describe "get_rows" do
       it "skips blank lines in CSV files" do
-        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.csv")
-        p = FileImportProcessor::CSVImportProcessor.new f, "a,b\n,,,\nc,d\n, , , ,,\n,,,,,\n\n", []
         rows = []
-        p.get_rows {|r| rows << r}
+        subject.get_rows {|r| rows << r}
         expect(rows).to eq [["a", "b"], ["c", "d"]]
       end
 
       it "converts from Windows-1252 if 'invalid byte sequence' is found" do
-        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.csv")
-        data = "a,\x80\nc,d\n"
-        p = FileImportProcessor::CSVImportProcessor.new f, data, []
+        data.clear
+        data << "a,\x80\nc,d\n"
         rows = []
-        p.get_rows {|r| rows << r}
+        subject.get_rows {|r| rows << r}
         expect(rows).to eq [["a", "€"], ["c", "d"]]
       end
 
       it "doesn't rescue non-encoding exceptions" do
-        f = ImportedFile.new(:module_type=>"Product",:starting_row=>0, attached_file_name: "file.csv")
-        p = FileImportProcessor::CSVImportProcessor.new f, "data", []
-        expect(p).to receive(:utf_8_parse).and_raise("some other kind of problem")
-        expect(p).not_to receive(:windows_1252_parse)      
-        expect{ p.get_rows{|r| rows << r} }.to raise_error("some other kind of problem")
+        expect(subject).to receive(:utf_8_parse).and_raise("some other kind of problem")
+        expect(subject).not_to receive(:windows_1252_parse)      
+        expect{ subject.get_rows{|r| rows << r} }.to raise_error("some other kind of problem")
+      end
+
+      it "only parses the first line for previews" do
+        rows = []
+        subject.get_rows(preview: true) {|r| rows << r}
+        expect(rows).to eq [["a", "b"]]
+      end
+
+      it "only parses the first line for previews with windows encodings" do
+        data.clear
+        data << "a,\x80\nc,d\n"
+        rows = []
+        subject.get_rows(preview: true) {|r| rows << r}
+        expect(rows).to eq [["a", "€"]]
       end
     end
   end
+
+  describe "SpreadsheetImportProcessor" do
+    let (:search_setup) { instance_double(SearchSetup) }
+    let (:imported_file) { 
+      f = instance_double(ImportedFile) 
+      allow(f).to receive(:search_setup).and_return search_setup
+      allow(f).to receive(:module_type).and_return "Product"
+      f
+    }
+    let (:xl_client) { instance_double(OpenChain::XLClient) }
+
+    subject { FileImportProcessor::SpreadsheetImportProcessor.new imported_file, xl_client }
+
+    describe "get_rows" do
+      it "iterates over and yields all rows from xl_client" do
+        rows = []
+        expect(imported_file).to receive(:starting_row).and_return 2
+        expect(xl_client).to receive(:all_row_values).with(starting_row_number: 1).and_yield(["A"]).and_yield(["B"])
+
+
+        subject.get_rows do |row|
+          rows << row
+        end
+
+        expect(rows).to eq [["A"], ["B"]]
+      end
+    end
+
+    it "skips blank lines" do
+      rows = []
+      expect(imported_file).to receive(:starting_row).and_return 2
+      expect(xl_client).to receive(:all_row_values).with(starting_row_number: 1).and_yield(["A"]).and_yield([]).and_yield(["", ""]).and_yield(["B"])
+
+
+      subject.get_rows do |row|
+        rows << row
+      end
+
+      expect(rows).to eq [["A"], ["B"]]
+    end
+
+    it "throws stop_polling after processing a single row on preview runs" do
+      rows = []
+
+      expect(imported_file).to receive(:starting_row).and_return 2
+      # Include a blank line so that we ensure we're skipping blank lines in the preview
+      expect(xl_client).to receive(:all_row_values).with(starting_row_number: 1, chunk_size: 1).and_yield([]).and_yield(["A"]).and_yield(["B"])
+
+      catch (:stop_polling) do
+        subject.get_rows(preview: true) do |row|
+          rows << row
+        end
+        fail("Should have thrown stop_polling.")
+      end
+
+      expect(rows).to eq [["A"]]
+    end
+  end
+
+
 end

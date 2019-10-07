@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
       it "yields all row values from a sheet" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader.new(custom_file, {})
         expect(r).to receive(:get_xl_client).with("path", {bucket: "bucket"}).and_return xl_client
-        expect(xl_client).to receive(:all_row_values).with(0).and_yield([1,2]).and_yield([3,4])
+        expect(xl_client).to receive(:all_row_values).with(sheet_number: 0).and_yield([1,2]).and_yield([3,4])
 
         rows = []
         r.foreach {|row| rows << row}
@@ -131,7 +131,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
       it "utilizes reader options" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader.new(custom_file, {sheet_number: 1, bucket: "different_bucket", opt: "opt"})
         expect(r).to receive(:get_xl_client).with("path", {bucket: "different_bucket", opt: "opt"}).and_return xl_client
-        expect(xl_client).to receive(:all_row_values).with(1).and_yield([1,2]).and_yield([3,4])
+        expect(xl_client).to receive(:all_row_values).with(sheet_number: 1).and_yield([1,2]).and_yield([3,4])
 
         rows = []
         r.foreach {|row| rows << row}

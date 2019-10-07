@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
   describe "parse_s3" do
     it "should call parse_shipment with arrays of rows" do
       expect(described_class).to receive(:validate_s3).with(@s3_path).and_return []
-      expect(@xl_client).to receive(:all_row_values).with(0).
+      expect(@xl_client).to receive(:all_row_values).
         and_yield(['HEADING']).
         and_yield(['1','','','','','','','','',Date.new(2013,1,1)]).
         and_yield(['1','','','','','','','','',Date.new(2011,1,1)]).
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::Crocs::CrocsReceivingParser do
     end
     it "should return earliest and latest received dates" do
       expect(described_class).to receive(:validate_s3).with(@s3_path).and_return []
-      expect(@xl_client).to receive(:all_row_values).with(0).
+      expect(@xl_client).to receive(:all_row_values).
         and_yield(['HEADING']).
         and_yield(['1','','','','','','','','',Date.new(2013,1,1)]).
         and_yield(['1','','','','','','','','',Date.new(2011,1,1)]).

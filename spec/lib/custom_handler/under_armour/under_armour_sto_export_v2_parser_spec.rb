@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser do
         allow(xlc).to receive(:get_cell).with(0,0,0).and_return @a1_value
         allow(xlc).to receive(:get_cell).with(0,1,0).and_return @a2_value
         allow(xlc).to receive(:get_cell).with(0,2,0).and_return @a3_value
-        body_yield = allow(xlc).to receive(:all_row_values).with(0,3)
+        body_yield = allow(xlc).to receive(:all_row_values).with(starting_row_number: 3)
         @body_rows.each {|br| body_yield = body_yield.and_yield(br)}
       }
       @base_path = 'a/abc'

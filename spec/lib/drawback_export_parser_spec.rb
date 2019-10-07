@@ -85,7 +85,7 @@ describe OpenChain::DrawbackExportParser do
     it "uses xlclient to retrieve xl data and passes data to csv lines", :without_partial_double_verification do
       data = [["header"], ["row"]]
       xl_client = double("OpenChain::XLClient")
-      expect(xl_client).to receive(:all_row_values).with(0).and_yield(data[0]).and_yield(data[1])
+      expect(xl_client).to receive(:all_row_values).and_yield(data[0]).and_yield(data[1])
       expect(described_class).to receive(:xl_client).with("bucket", "path").and_return xl_client
       line = DutyCalcExportFileLine.new
       expect(described_class).to receive(:parse_csv_line).with(data[1], 1, "importer").and_return line

@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
     invoice_nums = []
     xl_client = OpenChain::XLClient.new custom_file.path
     begin
-      xl_client.all_row_values(0, 7) { |row| invoice_nums << format(row[2]) }
+      xl_client.all_row_values(starting_row_number: 7) { |row| invoice_nums << format(row[2]) }
       urls = get_urls(invoice_nums.compact)
       write_xl xl_client, urls
       xl_client.save s3_file_path, bucket: s3_destination_bucket
@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
   def write_xl xl_client, urls
     xl_client.set_cell(0, 6, 16, "VFI Track Entry Link")
     count = 7
-    xl_client.all_row_values(0, 7) do |row|
+    xl_client.all_row_values(starting_row_number: 7) do |row|
       url = urls[format row[2]]
       xl_client.set_cell(0, count, 16, "Web Link", url) if url.present?
       count += 1

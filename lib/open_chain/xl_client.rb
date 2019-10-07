@@ -17,7 +17,7 @@ module OpenChain
       @options = {scheme: "s3", bucket: Rails.configuration.paperclip_defaults[:bucket]}.merge options
 
       @path = assemble_file_path path, @options
-      @session_id = Digest::SHA1.hexdigest "#{MasterSetup.get.uuid}-#{Time.now.to_f}-#{@path}" #should be unqiue enough
+      @session_id = Digest::SHA256.hexdigest "#{MasterSetup.get.uuid}-#{Time.now.to_f}-#{@path}" #should be unqiue enough
     end
 
     # Send the given command Hash to the server and return a Hash with the response
@@ -112,26 +112,31 @@ module OpenChain
     end
 
     # call get_row_values for all rows in sheet and yield each row's resulting array
-    def all_row_values sheet_number=0, starting_row_number = 0, chunk_size = 50
+    def all_row_values sheet_number: 0, starting_row_number: 0, chunk_size: 50
       r = block_given? ? nil : []
       lrn = last_row_number(sheet_number)
       # Last row number is actually the zero indexed row to retrieve, so make sure we're including that as part of the
       # row counts we need to grab
       rows_to_retrieve = (lrn + 1) - starting_row_number
       rows_retrieved = 0
-      begin
-        to_retrieve = [chunk_size, (rows_to_retrieve - rows_retrieved)].min
+      # When using a block, the caller can `throw :stop_polling` at any point to tell this method to quit
+      # getting more rows from the xlserver.  This is effective in cases where some data conditions 
+      # prevent you from needing to complete the file, but you don't actually want to raise an error
+      catch (:stop_polling) do 
+        begin
+          to_retrieve = [chunk_size, (rows_to_retrieve - rows_retrieved)].min
 
-        rows = get_rows(row: starting_row_number, sheet: sheet_number, number_of_rows: to_retrieve)
-        rows_retrieved += to_retrieve
-        starting_row_number += to_retrieve
-
-        if block_given?
-          rows.each {|row| yield row }
-        else
-          rows.each {|row| r << row }
-        end
-      end while rows_retrieved < rows_to_retrieve
+          rows = get_rows(row: starting_row_number, sheet: sheet_number, number_of_rows: to_retrieve)
+          rows_retrieved += to_retrieve
+          starting_row_number += to_retrieve
+          
+          if block_given?
+            rows.each {|row| yield row }
+          else
+            rows.each {|row| r << row }
+          end
+        end while rows_retrieved < rows_to_retrieve
+      end
 
       r
     end

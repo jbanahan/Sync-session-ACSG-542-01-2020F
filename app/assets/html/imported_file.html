@@ -11,8 +11,8 @@
       </div>
     </dd>
   </dl>
-  <a class='btn btn-secondary' ng-click='sendEmailCurrent()'>Send</a> 
-  <a class='btn btn-secondary' ng-click='disableEmailCurrent()'>Cancel</a>
+  <button class='btn btn-secondary' ng-click='sendEmailCurrent()'>Send</button> 
+  <button class='btn btn-secondary' ng-click='disableEmailCurrent()'>Cancel</button>
 </div>
 <div chain-action-bar-item id='imported-file-action-buttons'>
 </div>
@@ -47,9 +47,9 @@
         </div>
         Add New: <select ng-model='criterionToAdd' ng-options='f.mfid as f.label for f in importedFile.model_fields'>
         </select>
-        <a ng-show='criterionToAdd' class='btn btn-secondary' ng-click='addCriterion(criterionToAdd)'>Add</a>
+        <button ng-show='criterionToAdd' class='btn btn-secondary' ng-click='addCriterion(criterionToAdd)'>Add</button>
         <br />
-        <a class='btn btn-secondary' ng-click='updateSearchCriterions()'>Save</a>
+        <button class='btn btn-secondary' ng-click='updateSearchCriterions()'>Save</button>
       </div>
     </div>
   </div>
