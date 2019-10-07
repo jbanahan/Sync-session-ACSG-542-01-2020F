@@ -231,7 +231,7 @@ module OpenChain
       elsif (parser_identifier == "ann_invoice") && custom_features.include?("Ann Brokerage Feeds")
         OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ann_efocus_products_ack") && custom_features.include?("Ann Inc")
-        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator::SYNC_CODE, mailing_list_code: "efocus_products_ack"
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, sync_code: OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator::SYNC_CODE, mailing_list_code: "efocus_products_ack", email_warnings: false
       elsif (parser_identifier == "footlocker_hts") && custom_features.include?("Foot Locker Parts")
         OpenChain::CustomHandler::FootLocker::FootLockerHtsParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "polo_850")

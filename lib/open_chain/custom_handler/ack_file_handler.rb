@@ -10,6 +10,7 @@ module OpenChain
         raise ArgumentError, "Opts must have a :sync_code hash key." unless opts[:sync_code]
         raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
         
+        opts[:email_warnings] = true if opts[:email_warnings].blank?
 
         self.new.process_ack_file file_contents, opts[:sync_code], opts[:username], opts
       end
@@ -49,7 +50,7 @@ module OpenChain
           end
           sync = prod.sync_records.find_by_trading_partner sync_code 
           if sync.nil?
-            errors << "#{cm.label} #{row[0]} confirmed, but it was never sent."
+            errors << "#{cm.label} #{row[0]} confirmed, but it was never sent." if opts[:email_warnings] == true
             next
           end
           error_description = row[3].try(:strip)

@@ -294,7 +294,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
       it "handles e-Focus PDM product ack files" do
         do_parser_test('Ann Inc', OpenChain::CustomHandler::AckFileHandler, '/ann_efocus_products_ack/efocus_ack.csv') do |parser|
-          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'ANN-PDM', mailing_list_code: "efocus_products_ack"}
+          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {:sync_code => 'ANN-PDM', mailing_list_code: "efocus_products_ack", email_warnings: false}
         end
       end
     end

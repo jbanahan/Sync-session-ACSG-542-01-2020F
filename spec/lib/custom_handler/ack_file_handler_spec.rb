@@ -114,9 +114,16 @@ describe OpenChain::CustomHandler::AckFileHandler do
         expect(sr.trading_partner).to eq('XYZ')
         expect(sr.confirmed_at).to be_nil
       end
-      it "should call errors callback if there is an error" do
+      
+      it "notifies if product that was not sent was ack'ed" do
         msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
         expect(subject).to receive(:handle_errors).with([msg], "testuser", nil, 'file.csv', "h,h,h\n#{product.unique_identifier},201306191706,OK", "OTHER")
+        subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser", {email_warnings: true}
+      end
+
+      it "does not notify if product that was not sent was ack'ed if option is not specified" do
+        msg = "Product #{product.unique_identifier} confirmed, but it was never sent."
+        expect(subject).not_to receive(:handle_errors)
         subject.process_ack_file "h,h,h\n#{product.unique_identifier},201306191706,OK", 'OTHER', "testuser"
       end
     end
