@@ -1,0 +1,223 @@
+#######################################################################################
+#
+# Brillo Config -- Brillo is a data obfuscation library that works at the database level.
+#
+# There are two rake commands that need to be run to obfuscate data and push to a different database:
+# The first (scrub) pulls data from the source database, obfuscates it, and pushes the obfuscated data to an s3 bucket
+# The second (load) pulls the obfuscated data from the bucket and pushes it to a database.
+#
+######################################################################################
+#
+# To execute a scrub:
+#
+# 1) Spin up a new ec2 instance from the latest AMI of a production VFI Track server.  The scrubbing process uses a TON of RAM so you
+#    will need to run this on an instance that has over 65 GB of RAM (currently we've had to use an r5.4xlarge instance to complete the scrub)
+#
+# 2) Once the instance is online and you will need to adjust the config/database.yml file to the source database you
+#    wish to utilize.  If you are pulling from a production system, you should really bring a new RDS instance of the
+#    database online and run the scrub against that.  Modify the connection string in the database.yml file to point to
+#    the new database intance.
+#
+# 3) Verify the secrets.yml file has a `brillo_bucket` key pointing to the bucket to use for pushing the scrubbed data to for storage.
+#
+# 4) Execute `rake db:scrub`.  This will take hours to run.
+#    - You can monitor the process by tailing the log/production.log file or by watching the size of the dmp file grow in the tmp dir
+#
+#######################################################################################
+#
+# To execute a load:
+#
+# 1) Shut down all ec2 servers that run against the target database (the database is dropped and reloaded, so they will raise errors if left running).
+# 2) Modify the database.yml file's test database to the destination database's settings
+#    - Brillo won't execute the load with the environment set to production, which is a fair default since that would be catastrophic if done accidently.
+# 3) Execute `RAILS_ENV=test rake db:load`
+#    - This should take somewhere around an hour to load
+# 4) Start ec2 servers.
+#
+#######################################################################################
+
+# The name key 'namespaces' the dump files, so you can switch the name to switch databases.
+# To change where the dump file is saved (s3 bucket), change the `brillo_bucket` key in secrets (top-level key)
+name: wwwvfitracknet
+
+# Tactic is how the data is loaded. These are defined in `config/brillo.rb` and there are plenty of examples.
+explore:
+  master_setup:
+    tactic: all
+  country:
+    tactic: all
+  port:
+    tactic: all
+  custom_definition:
+    tactic: all
+  company:
+    tactic: all
+    associations:
+      - system_identifiers
+  division:
+    tactic: all
+  user:
+    tactic: all
+  group:
+    tactic: all
+  invoice:
+    tactic: customer_invoice_module
+    associations:
+      - ship_to
+      - invoice_lines
+  order:
+    tactic: order_module
+    associations:
+      - ship_to
+      - ship_from
+      - order_from_address
+      - order_lines:
+          - ship_to
+          - piece_sets
+          - custom_values
+          - product:
+            - variants:
+              - custom_values
+            - classifications:
+              - custom_values
+              - tariff_records:
+                - custom_values
+            - custom_values
+  product:
+    tactic: product_module
+    associations:
+      - status_rule
+      - entity_type
+      - variants:
+          - custom_values
+      - classifications:
+          - custom_values
+          - tariff_records:
+              - custom_values
+      - custom_values
+  security_filing:
+    tactic: isf_module
+    associations:
+      - security_filing_lines
+  shipment:
+    tactic: shipment_module
+    associations:
+      - ship_from
+      - ship_to
+      - shipment_lines:
+          - manufacturer_address
+          - custom_values
+          - piece_sets:
+              - order_line:
+                - ship_to
+                - custom_values
+                - order:
+                  - ship_to
+                  - ship_from
+                  - order_from_address
+                  - custom_values
+                - product:
+                  - variants:
+                    - custom_values
+                  - classifications:
+                    - custom_values
+                    - tariff_records:
+                      - custom_values
+                  - custom_values
+      - booking_lines:
+          - order_line:
+            - ship_to
+            - custom_values
+            - order:
+              - ship_to
+              - ship_from
+              - order_from_address
+              - custom_values
+          - product:
+            - variants:
+              - custom_values
+              - classifications:
+                - custom_values
+                - tariff_records:
+                  - custom_values
+              - order:
+                - ship_to
+                - ship_from
+                - order_from_address
+                - custom_values
+                - order_lines:
+                  - ship_to
+                  - custom_values
+                  - product:
+                    - custom_values
+                    - variants:
+                      - custom_values
+                    - classifications:
+                      - custom_values
+                      - tariff_records:
+                        - custom_values
+      - containers
+      - carton_sets
+      - custom_values
+  entry:
+    tactic: entry_module
+    associations:
+      - broker_invoices:
+        - broker_invoice_lines
+      - commercial_invoices:
+        - commercial_invoice_lines
+      - entry_comments
+      - containers
+      - daily_statement_entry
+
+# Obfuscations obfuscate data (Surprise!) These are added in the `config/brillo.rb` file, and like tactics there are plenty
+# of examples.
+obfuscations:
+  addresses.name: customer_name
+  addresses.line_1: customer_address
+  addresses.line_2: empty_out
+  addresses.city: customer_city
+  addresses.state: customer_state
+  addresses.postal_code: customer_zip
+  attachments.attached_file_name: attachment_name
+  broker_invoices.customer_number: cipher
+  broker_invoices.bill_to_name: customer_name
+  broker_invoices.bill_to_address_1: customer_address
+  broker_invoices.bill_to_address_2: empty_out
+  broker_invoices.bill_to_city: customer_city
+  broker_invoices.bill_to_state: customer_state
+  broker_invoices.bill_to_zip: customer_zip
+  companies.alliance_customer_number: cipher
+  companies.name: company_name
+  companies.name_2: empty_out
+  companies.system_code: cipher
+  divisions.name: division_name
+  entries.customer_name: entry_customer_name
+  entries.customer_number: cipher
+  entries.vendor_names: manufacturer_names
+  entries.ult_consignee_code: cipher
+  entries.ult_consignee_name: customer_name
+  entries.house_bills_of_lading: house_bills
+  entries.master_bills_of_lading: master_bills
+  entries.po_numbers: po_number_cipher
+  entries.customer_references: po_number_cipher
+  entries.broker_reference: hyphen_cipher
+  orders.order_number: hyphen_cipher
+  master_setups.uuid: master_uuid
+  master_setups.system_code: master_system_code
+  master_setups.friendly_name: master_friendly_system_name
+  master_setups.suppress_email: master_suppression
+  master_setups.suppress_ftp: master_suppression
+  master_setups.request_host: master_host
+  master_setups.custom_features: master_custom_features
+  master_setups.stats_api_key: empty_out
+  products.unique_identifier: hyphen_cipher
+  products.name: product_name
+  security_filings.broker_customer_number: cipher
+  security_filings.importer_account_code: cipher
+  security_filings.manufacturer_names: manufacturer_names
+  security_filings.manufacturer_name: customer_name
+  shipments.reference: hyphen_cipher
+  shipments.trucker_name: trucker_name
+  shipments.master_bill_of_lading: master_bills
+  shipments.house_bill_of_lading: house_bills

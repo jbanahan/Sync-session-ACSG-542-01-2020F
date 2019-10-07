@@ -110,6 +110,10 @@ gem "recaptcha", '~> 4.13.1'
 
 gem 'dry-core', '0.4.7'
 
+gem 'brillo'
+
+gem 'faker'
+
 gem 'clamby'
 
 group :development,:test do
