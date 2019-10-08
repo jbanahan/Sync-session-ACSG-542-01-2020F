@@ -221,3 +221,4 @@ obfuscations:
   shipments.trucker_name: trucker_name
   shipments.master_bill_of_lading: master_bills
   shipments.house_bill_of_lading: house_bills
+  system_identifiers.code: cipher
