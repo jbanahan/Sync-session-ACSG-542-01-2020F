@@ -9,8 +9,10 @@ module OpenChain
       def self.parse file_contents, opts = {}
         raise ArgumentError, "Opts must have a :sync_code hash key." unless opts[:sync_code]
         raise ArgumentError, "Opts must have an s3 :key hash key." unless opts[:key]
-        
-        opts[:email_warnings] = true if opts[:email_warnings].blank?
+
+        # If no email_warnings value is set, then set it to true
+        # The to_s.blank? is here because if the value is a boolean false (.ie FalseClass)..then .blank? evaluates to true (WTF)
+        opts[:email_warnings] = true if opts[:email_warnings].to_s.blank?
 
         self.new.process_ack_file file_contents, opts[:sync_code], opts[:username], opts
       end
@@ -45,7 +47,7 @@ module OpenChain
           end
           prod = find_object row, opts
           if prod.nil?
-            errors << "#{cm.label} #{row[0]} confirmed, but it does not exist."
+            errors << "#{cm.label} #{row[0]} confirmed, but it does not exist." if opts[:email_warnings] == true
             next
           end
           sync = prod.sync_records.find_by_trading_partner sync_code 

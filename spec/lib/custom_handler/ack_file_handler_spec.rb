@@ -193,6 +193,24 @@ describe OpenChain::CustomHandler::AckFileHandler do
       expect(OpenMailer.deliveries.last.subject).to eq("[VFI Track] Ack File Processing Error")
     end
 
+    it "suppresses missing part email warnings if instructed" do
+      user = Factory(:user, email: "me@there.com")
+      list = Factory(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
+      
+      subject.parse("h,h,h\nPART,201306191706,OK",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username, mailing_list_code: "list", email_warnings: false})
+
+      expect(OpenMailer.deliveries.length).to eq(0)
+    end
+
+    it "suppresses missing sync record email warnings if instructed" do
+      user = Factory(:user, email: "me@there.com")
+      list = Factory(:mailing_list, system_code: "list", email_addresses: "you@there.com", user: user, company: user.company)
+      
+      subject.parse("h,h,h\n#{product.unique_identifier},201306191706,OK",{key:"fake-bucket/fake-file.txt", sync_code: "XYZ", username: user.username, mailing_list_code: "list", email_warnings: false})
+
+      expect(OpenMailer.deliveries.length).to eq(0)
+    end
+
     it "should error if key is missing" do
       expect{subject.parse "h,h,h\n#{product.unique_identifier},201306191706,OK", {:sync_code=>"XYZ", email_address: "example@example.com"}}.to raise_error ArgumentError, "Opts must have an s3 :key hash key."
     end
