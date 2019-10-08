@@ -167,6 +167,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(r.persisted?).to be_truthy
       expect(r.intacct_errors).to eq "Error Message"
     end
+
+    it "sends missing dimension" do
+      r = IntacctReceivable.new company: "c"
+      cid = "controlid"
+      xml = "<recv>receivable</recv>"
+      expect(xml_gen).to receive(:generate_receivable_xml).with(r).exactly(2).times.and_return [cid, xml]
+      expect(subject).to receive(:post_xml).with("c", true, true, xml, cid).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new("Error", "Broker File", "12345")
+      expect(subject).to receive(:post_xml).with("c", true, true, xml, cid).and_return create_result_key_response(cid, "R-Key")
+      expect(subject).to receive(:send_dimension).with("Broker File", "12345", "12345")
+
+      subject.send_receivable r
+
+      expect(r.persisted?).to be_truthy
+      expect(r.intacct_key).to eq "R-Key"
+      expect(r.intacct_errors).to be_nil
+    end
   end
 
   describe "send_payable" do
@@ -226,6 +242,33 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       expect(c).not_to be_persisted
     end
+
+    it "sends missing dimension" do
+      p = IntacctPayable.new intacct_errors: "Error", company: "c", vendor_number: "v"
+      c = IntacctCheck.new intacct_errors: "Error", company: "c", vendor_number: "v"
+      checks = [c]
+      cid = "controlid"
+      xml = "<pay>payable</pay>"
+      check_cid = "checkid"
+      check_xml = "<check>check</check>"
+
+      expect(subject).to receive(:get_object_fields).with("c", "vendor", "v", "termname").and_return({"termname" => "TERMS"})
+      expect(xml_gen).to receive(:generate_payable_xml).with(p, "TERMS").twice.and_return [cid, xml]
+      expect(xml_gen).to receive(:generate_ap_adjustment).with(c, p).twice.and_return [check_cid, check_xml]
+      expect(subject).to receive(:post_xml).with("c", true, true, xml + check_xml, [cid, check_cid]).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new("Error", "Broker File", "12345")
+      expect(subject).to receive(:post_xml).with("c", true, true, xml + check_xml, [cid, check_cid]).and_return create_multi_result_key_response({cid => "P-Key", check_cid => "C-Key"})
+      expect(subject).to receive(:send_dimension).with("Broker File", "12345", "12345")
+
+      subject.send_payable p, checks
+
+      expect(p.persisted?).to be_truthy
+      expect(p.intacct_key).to eq "P-Key"
+      expect(p.intacct_upload_date.to_date).to eq Time.zone.now.to_date
+      expect(p.intacct_errors).to be_nil
+
+      expect(c).to be_persisted
+      expect(c.intacct_adjustment_key).to eq "C-Key"
+    end
   end
 
   describe "send_check" do
@@ -280,6 +323,30 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       expect(check.persisted?).to be_truthy
       expect(check.intacct_errors).to eq "Creation error."
+    end
+
+    it "sends missing dimension" do
+      check = IntacctCheck.new company: "c"
+
+      cid = "controlid"
+      xml = "<check>check</check>"
+      adj_id = "adj_id"
+      adj_xml = "<adjustment>adj</adjustment>"
+
+      expect(xml_gen).to receive(:generate_check_gl_entry_xml).with(check).twice.and_return [cid, xml]
+      expect(xml_gen).to receive(:generate_ap_adjustment).with(check, nil).twice.and_return [adj_id, adj_xml]
+      expect(subject).to receive(:post_xml).with("c", true, true, (xml+adj_xml), [cid, adj_id]).and_raise OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new("Error", "Broker File", "12345")
+      expect(subject).to receive(:post_xml).with("c", true, true, (xml+adj_xml), [cid, adj_id]).and_return create_multi_result_key_response({cid => "GL-Account-Key", adj_id => "Adj-Key"})
+      expect(subject).to receive(:send_dimension).with("Broker File", "12345", "12345")
+
+      create_result_key_response(cid, "GL-Account-Key")
+
+      subject.send_check check, true
+
+      expect(check.persisted?).to be_truthy
+      expect(check.intacct_key).to eq "GL-Account-Key"
+      expect(check.intacct_adjustment_key).to eq "Adj-Key"
+      expect(check.intacct_upload_date.to_date).to eq Time.zone.now.to_date
     end
   end
 
@@ -446,6 +513,18 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Other Error\nCorrection: \nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
 
         expect{subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+      end
+
+      it "raises dimension error for errors with descriptions indicating missing dimensions" do
+        error = "<errormessage>
+        <error><errorno>BL01001973</errorno><description></description><description2>Invalid Brokerage File '2399341' specified.</description2><correction></correction></error>
+        <error><errorno>XL03000009</errorno><description></description><description2>Could not create sodocument record!</description2><correction></correction></error>
+        </errormessage>"
+        error_response = REXML::Document.new error
+        expect(subject).to receive(:http_request).and_return error_response
+        error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Invalid Brokerage File '2399341' specified.\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Could not create sodocument record!\nCorrection: "
+
+        expect{subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new(error_message, "Broker File", "2399341")
       end
 
       context "with overriden unique flag" do

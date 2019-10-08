@@ -17,6 +17,20 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   class IntacctRetryError < IntacctClientError
   end
 
+  class IntacctInvalidDimensionError < IntacctClientError
+    attr_reader :dimension_type, :value
+
+    def initialize message, dimension_type, value
+      super(message)
+      @dimension_type = dimension_type
+      @value = value
+    end
+
+    def == obj
+      (self.class == obj.class) && self.message == obj.message && self.dimension_type == obj.dimension_type && self.value == obj.value
+    end
+  end
+
   def initialize xml_generator = IntacctXmlGenerator.new
     @generator = xml_generator
   end
@@ -74,6 +88,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       receivable.intacct_key = extract_result_key response, function_control_id
       receivable.intacct_upload_date = Time.zone.now
       receivable.intacct_errors = nil
+    rescue IntacctInvalidDimensionError => e
+      send_dimension(e.dimension_type, e.value, e.value)
+      retry
     rescue => e
       if e.is_a?(IntacctRetryError) && (retry_count += 1) < 3
         sleep retry_count
@@ -86,12 +103,15 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   end
 
   def send_payable payable, linked_checks
+    vendor_terms = nil
     begin
-      # We need to find the vendor terms, there's no straight forward way to accomplish this without first doing
-      # a get request against the API.
-      fields = get_object_fields payable.company, "vendor", payable.vendor_number, "termname"
-      vendor_terms = fields['termname']
-      raise "Failed to retrieve Terms for Vendor #{payable.vendor_number}.  Terms must be set up for all vendors." if vendor_terms.blank?
+      if vendor_terms.nil?
+        # We need to find the vendor terms, there's no straight forward way to accomplish this without first doing
+        # a get request against the API.
+        fields = get_object_fields payable.company, "vendor", payable.vendor_number, "termname"
+        vendor_terms = fields['termname']
+        raise "Failed to retrieve Terms for Vendor #{payable.vendor_number}.  Terms must be set up for all vendors." if vendor_terms.blank?
+      end
 
       payable_control_id, payable_xml = @generator.generate_payable_xml payable, vendor_terms
 
@@ -119,6 +139,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       payable.intacct_key = extract_result_key response, payable_control_id
       payable.intacct_upload_date = Time.zone.now
       payable.intacct_errors = nil
+    rescue IntacctInvalidDimensionError => e
+      send_dimension(e.dimension_type, e.value, e.value)
+      retry
     rescue => e
       payable.intacct_errors = e.message
     end
@@ -137,9 +160,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       if send_adjustment
         adjustment_control_id, adjustment_xml = @generator.generate_ap_adjustment check, nil
         control_ids << adjustment_control_id
-        xml << adjustment_xml
+        xml += adjustment_xml
       end
 
+      # Because this is in a transaction, all or nothing semantics apply, so either everything 
+      # posts together or nothing does, which is good because it means we can resend the full 
+      # request if needed.
       response = post_xml(check.company, true, true, xml, control_ids)
 
       check.intacct_key = extract_result_key response, function_control_id
@@ -148,6 +174,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       end
       check.intacct_upload_date = Time.zone.now
       check.intacct_errors = nil
+    rescue IntacctInvalidDimensionError => e
+      send_dimension(e.dimension_type, e.value, e.value)
+      retry
     rescue => e
       check.intacct_errors = e.message
     end
@@ -286,19 +315,17 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       error_elements = REXML::XPath.each(xml, "//errormessage/error")
 
       if error_elements.size > 0
-        # There seems to be a random error when posting data that pops up every so often that is not data related, just 
-        # random failures on the Intacct side.  Throw a retry error so that we can just retry the call again after some manner of delay.
-        can_retry = retry_error? error_elements
-
         errors = error_elements.collect {|el| extract_errors_information(el)}
-
         message = "Intacct API call failed with errors:\n#{errors.join("\n")}"
 
-        if can_retry
-          raise IntacctRetryError, message
-        else
-          raise IntacctClientError, message
-        end
+        # There seems to be a random error when posting data that pops up every so often that is not data related, just 
+        # random failures on the Intacct side.  Throw a retry error so that we can just retry the call again after some manner of delay.
+        retry_error? error_elements, message
+        # If the response indicates a dimension was missing, then raise that error so the client can potentially 
+        # directly handle that and send the dimension
+        dimension_error?(error_elements, message)
+
+        raise IntacctClientError, message
       else
         # We want to find the status associated with the function call we made
         status = xml.text("//result[controlid = '#{function_control_id}']/status")
@@ -374,18 +401,35 @@ XML
       "Error No: #{el.text("errorno")}\nDescription: #{el.text("description")}\nDescription 2: #{el.text("description2")}\nCorrection: #{el.text("correction")}"
     end
 
-    def retry_error? error_elements
+    def retry_error? error_elements, error_message
       # We only really want to retry at this point if the error text has a Correction message like: 
       # "Check the transaction for errors or inconsistencies, then try again."
-      should_retry = false
       error_elements.each do |el|
         if el.text("correction") =~ /Check the transaction for errors or inconsistencies/i
-          should_retry = true
-          break
+          raise IntacctRetryError, error_message
         end
       end
 
-      return should_retry
+      false
+    end
+
+    def dimension_error? error_elements, error_message
+      error_elements.each do |el|
+        if el.text("description2") =~ /Invalid (.*) '(.*)' specified./
+          dimension_type = nil
+          if $1 == "Brokerage File"
+            dimension_type = "Broker File"
+          elsif $1 == "Freight File"
+            dimension_type = "Freight File"
+          end
+
+          if dimension_type
+            raise IntacctInvalidDimensionError.new(error_message, dimension_type, $2)
+          end
+        end
+      end
+
+      false
     end
 
     def self.intacct_config
