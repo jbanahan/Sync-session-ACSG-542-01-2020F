@@ -1,5 +1,7 @@
 module Helpers
 
+  require 'rubyXL/convenience_methods'
+
   # Use this method when you need to evaluate a full excel row as an array
   # There's some underlying comparison that fails when comparing arrays
   # and using an excel date 

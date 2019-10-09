@@ -23,8 +23,8 @@ gem 'will_paginate', '3.1.6'
 gem 'paperclip', '6.1.0'
 gem 'uuidtools', '2.1.4'
 gem 'spreadsheet', '1.2.0'
-gem 'axlsx', '3.0.0.pre' # TODO: Unpin when a non-pre version without the ruby-zip vuln is released
-gem 'axlsx_rails', '0.5.2'
+gem 'caxlsx', '3.0.1'
+gem 'axlsx_rails', '0.6'
 gem 'exception_notification', '4.3.0'
 gem 'rufus-scheduler', '3.5.0'
 # The fugit gem is what rufus now uses behind the scenes for all the date/time/cron parsing stuff
@@ -37,7 +37,7 @@ gem 'daemons', '1.3.1'
 gem 'dalli', '2.7.9'
 gem 'dalli-elasticache', '~> 0.2'
 gem 'postmark-rails', '0.19.0'
-gem 'rubyzip', '1.2.2'
+gem 'rubyzip', '2.0'
 
 gem 'newrelic_rpm', '~> 6.0.0'
 
@@ -121,7 +121,7 @@ group :development,:test do
   # This is here exclusively so we can validate the xlsx files we produce.  
   # axlsx, while being a FAR more complete and better gem for writing xlsx files, cannot
   # read them.  So we need to use a different solution for reading them in test cases.
-  gem 'rubyXL', '3.3.29'
+  gem 'rubyXL', '3.4.6'
   gem 'jasmine'
   gem 'brakeman'
 end
