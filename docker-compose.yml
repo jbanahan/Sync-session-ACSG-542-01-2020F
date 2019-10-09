@@ -6,7 +6,7 @@ services:
       dockerfile: ./.dockerdev/Dockerfile
       args:
         RUBY_VERSION: '2.5.1'
-        BUNDLER_VERSION: '1.16.2'
+        BUNDLER_VERSION: '1.17.3'
     image: vfitrack-dev:1.0.0
     tmpfs:
       - /tmp
