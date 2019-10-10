@@ -12375,9 +12375,56 @@ a.text-dark:hover, a.text-dark:focus {
 }
 
 /*! ChainCommon */
-/*! Build Time: Wed Aug 14 2019 08:47:39 GMT-0500 (Central Daylight Time) */
-/*! Git SHA: eea12372ce64ded5d539e0cf8a0eac0d8031d4ee */
-/*! Git Branch: 1737.2-Pen-Test-Remediation-Angular-Upgrade */
+/*! Build Time: Wed Oct 09 2019 16:44:31 GMT-0500 (Central Daylight Time) */
+/*! Git SHA: 9c7896e2a792f5663a119fea3b2eee35e602ba04 */
+/*! Git Branch: fix_back_navigation_to_main_screen */
+
+.angucomplete-holder {
+  position: relative; }
+
+.angucomplete-dropdown {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 2px;
+  padding: 6px;
+  cursor: pointer;
+  z-index: 9999;
+  position: absolute;
+  margin-top: -6px;
+  background-color: #ffffff; }
+
+.angucomplete-row {
+  padding: 5px;
+  color: #000000;
+  margin-bottom: 4px;
+  clear: both; }
+
+.angucomplete-title {
+  font-weight: bold; }
+
+.angucomplete-selected-row {
+  background-color: #62bcf3;
+  color: #ffffff; }
+
+.angucomplete-image-holder {
+  padding-top: 2px;
+  float: left;
+  margin-right: 10px;
+  margin-left: 5px; }
+
+.angucomplete-image {
+  height: 34px;
+  width: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.125); }
+
+.angucomplete-image-default {
+  /* Add your own default image here
+     background-image: url('/assets/default.png');
+    */
+  background-position: center;
+  background-size: contain;
+  height: 34px;
+  width: 34px; }
 
 .nav, .pagination, .carousel, .card-header a {
   cursor: pointer; }
