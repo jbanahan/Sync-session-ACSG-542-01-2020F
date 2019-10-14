@@ -111,6 +111,7 @@ jobs:
       # TEST_FILES is broken out into it's own variable because of random bash parsing issues which case "bundler: failed to load command: rspec"
       - run: 
           name: Rspec Unit Tests
+          no_output_timeout: "20m"
           command: |-
             bundle exec rspec --require spec_helper --format RspecJunitFormatter --out /tmp/circle-tests/rspec/rspec.xml --format progress $(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
       # This is based on your 1.0 configuration file or project settings
