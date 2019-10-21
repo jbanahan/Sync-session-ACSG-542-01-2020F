@@ -517,7 +517,10 @@ class ReportsController < ApplicationController
   end
 
   def show_ascena_entry_audit_report
-    if OpenChain::Report::AscenaEntryAuditReport.permission? current_user
+    klass = OpenChain::Report::AscenaEntryAuditReport
+    @cust_info = klass.permissions current_user
+    if !@cust_info.empty?
+      @cust_info.map!{ |ci| [ci[:name], ci[:cust_num]] } 
       render
     else
       error_redirect "You do not have permission to view this report"
@@ -526,10 +529,18 @@ class ReportsController < ApplicationController
 
   def run_ascena_entry_audit_report
     klass = OpenChain::Report::AscenaEntryAuditReport
-    if klass.permission? current_user
-      run_report "Ascena Entry Audit Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
-                                                      end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
-                                                      end_fiscal_year_month: params[:end_fiscal_year_month], run_as_company: params[:run_as_company]}, []
+    cust_info = klass.permissions current_user
+    if !cust_info.empty?
+      # Filter out customer numbers user doesn't have permissions for.
+      cust_number = ([params[:cust_number]] & cust_info.map{ |ci| ci[:cust_num] }).first
+      run_report "Ascena / Ann Inc. / Maurices Entry Audit Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
+                                                end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
+                                                end_fiscal_year_month: params[:end_fiscal_year_month], cust_number: cust_number},
+                                                ["Start release date: #{params[:start_release_date]}", 
+                                                 "End release date: #{params[:end_release_date]}", 
+                                                 "Start Fiscal Year/Month: #{params[:start_fiscal_year_month]}", 
+                                                 "End Fiscal Year/Month: #{params[:end_fiscal_year_month]}", 
+                                                 "Customer Number: #{params[:cust_number]}"]
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -545,10 +556,17 @@ class ReportsController < ApplicationController
 
   def run_ascena_vendor_scorecard_report
     klass = OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport
-    if klass.permission? current_user
-      run_report "Ascena Vendor Scorecard Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
-                                                      end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
-                                                      end_fiscal_year_month: params[:end_fiscal_year_month]}, []
+    cust_info = klass.permissions current_user
+    if !cust_info.empty?
+      cust_nums = cust_info.map{ |ci| ci[:cust_num] }
+      run_report "Ascena / Maurices Vendor Scorecard Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
+                                                                      end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
+                                                                      end_fiscal_year_month: params[:end_fiscal_year_month], cust_numbers: cust_nums}, 
+                                                                      ["Start release date: #{params[:start_release_date]}", 
+                                                                       "End release date: #{params[:end_release_date]}", 
+                                                                       "Start Fiscal Year/Month: #{params[:start_fiscal_year_month]}", 
+                                                                       "End Fiscal Year/Month: #{params[:end_fiscal_year_month]}", 
+                                                                       "Customer Numbers: #{cust_nums.join(", ")}"]
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -792,13 +810,17 @@ class ReportsController < ApplicationController
 
   def show_ascena_mpf_savings_report
     klass = OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport
-    if klass.permission? current_user
+    @cust_info = klass.permissions current_user
+    if !@cust_info.empty?
+      @cust_info.map!{ |ci| [ci[:name], ci[:cust_num]] } 
+      @cust_info << (["Combine companies"] << @cust_info.map(&:last).join(',')) if (@cust_info.count > 1)
+    
+      # create a dropdown of all the fiscal months available
       @fiscal_months = []
-      FiscalMonth.where(company_id: OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport.ascena.id).where("end_date > ?", Date.parse("01-01-2018")).order("start_date ASC").each do |fm|
+      FiscalMonth.where(company_id: klass.ascena.id).where("end_date > ?", Date.parse("01-01-2018")).order("start_date ASC").each do |fm|
         @fiscal_months << fm.fiscal_descriptor
       end
-
-      @cust_numbers = {ascena: klass::ASCENA_CUST_NUM, ann: klass::ANN_CUST_NUM}
+      
       render
     else
       error_redirect "You do not have permission to view this report"
@@ -807,13 +829,16 @@ class ReportsController < ApplicationController
 
   def run_ascena_mpf_savings_report
     klass = OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport
-    if klass.permission? current_user
+    cust_info = klass.permissions current_user
+    if !cust_info.empty?
+      # Filter out customer numbers user doesn't have permissions for.
+      cust_numbers = params[:cust_numbers].split(",") & cust_info.map{ |ci| ci[:cust_num] }
       fm = klass.fiscal_month params
       if fm.nil?
         add_flash :errors, "You must select a valid fiscal month."
-        redirect_to reports_show_ascena_duty_savings_report_path
+        redirect_to reports_show_ascena_mpf_savings_report_path
       else
-        run_report "MPF Savings Report", klass, {'fiscal_month' => params[:fiscal_month], 'cust_numbers' => params[:cust_numbers].split(",")}, ["Fiscal Month #{params[:fiscal_month]}", params[:cust_numbers]]
+        run_report "Ascena / Ann Inc. / Maurices MPF Savings Report", klass, {'fiscal_month' => params[:fiscal_month], 'cust_numbers' => cust_numbers }, ["Fiscal Month #{params[:fiscal_month]}", "Customer Numbers: #{cust_numbers.join(', ')}"]
       end
     else
       error_redirect "You do not have permission to view this report"
@@ -822,14 +847,17 @@ class ReportsController < ApplicationController
 
   def show_ascena_duty_savings_report
     klass = OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport
-    if klass.permission? current_user
+    @cust_info = klass.permissions current_user
+    if !@cust_info.empty?
+      @cust_info.map!{ |ci| [ci[:name], ci[:cust_num]] } 
+      @cust_info << (["Combine companies"] << @cust_info.map(&:last).join(',')) if (@cust_info.count > 1)
+    
       # create a dropdown of all the fiscal months available
       @fiscal_months = []
-      FiscalMonth.where(company_id: OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport.ascena.id).order("start_date ASC").each do |fm|
+      FiscalMonth.where(company_id: klass.ascena.id).order("start_date ASC").each do |fm|
         @fiscal_months << fm.fiscal_descriptor
       end
       
-      @cust_numbers = {ascena: klass::ASCENA_CUST_NUM, ann: klass::ANN_CUST_NUM}
       render
     else
       error_redirect "You do not have permission to view this report"
@@ -838,13 +866,16 @@ class ReportsController < ApplicationController
 
   def run_ascena_duty_savings_report
     klass = OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport
-    if klass.permission? current_user
+    cust_info = klass.permissions current_user
+    if !cust_info.empty?
+      # Filter out customer numbers user doesn't have permissions for.
+      cust_numbers = params[:cust_numbers].split(",") & cust_info.map{ |ci| ci[:cust_num] }
       fm = klass.fiscal_month params
       if fm.nil?
         add_flash :errors, "You must select a valid fiscal month."
         redirect_to reports_show_ascena_duty_savings_report_path
       else
-        run_report "Duty Savings Report", klass, {'fiscal_month' => params[:fiscal_month], 'cust_numbers' => params[:cust_numbers].split(",")}, ["Fiscal Month #{params[:fiscal_month]}", params[:cust_numbers]]
+        run_report "Ascena / Ann Inc. / Maurices Duty Savings Report", klass, {'fiscal_month' => params[:fiscal_month], 'cust_numbers' => cust_numbers }, ["Fiscal Month #{params[:fiscal_month]}", "Customer Numbers: #{cust_numbers.join(', ')}"]
       end
     else
       error_redirect "You do not have permission to view this report"

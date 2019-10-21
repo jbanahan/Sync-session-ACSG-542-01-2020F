@@ -1,7 +1,7 @@
 describe OpenChain::Report::AscenaEntryAuditReport do
 
   let(:report) { described_class.new }
-  let(:co) { Factory(:company, system_code: "ASCENA")}
+  let(:co) { with_customs_management_id Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE" }
   let(:date_1) { DateTime.new(2016,03,15) }
   let(:date_2) { DateTime.new(2016,03,16) }
   let(:date_3) { DateTime.new(2016,03,17) }
@@ -42,43 +42,61 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     ordln.update_custom_value!(cdefs[:ord_line_wholesale_unit_price], 2)
   end
 
-  describe "permission?" do
-    before do
-      ms = stub_master_setup
-      allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
+  describe "permissions" do
+    subject { described_class }
+
+    let(:helper) { OpenChain::CustomHandler::Ascena::AscenaReportHelper }
+    let! (:ascena) { with_customs_management_id(Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
+    let! (:ann) { with_customs_management_id(Factory(:importer, name: "Ann"), "ATAYLOR") }
+    let! (:maurices) { with_customs_management_id(Factory(:importer, name: "Maurices"), "MAUR") }
+    let! (:ascena_master) { with_customs_management_id(Factory(:importer, name: "Ascena Master"), "ASCENAMASTER") }
+    let! (:user) { Factory(:master_user) }
+    let!(:ms) do
+      m = stub_master_setup
+      allow(m).to receive(:custom_feature?).with("Ascena Reports").and_return true
+      allow(user).to receive(:view_entries?).and_return true
+      m
     end
 
-    it "allows access for master users who can view entries" do
-      u = Factory(:master_user)
-      expect(u).to receive(:view_entries?).and_return true
-      expect(described_class.permission? u).to eq true
+    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}, 
+                               {cust_num: "MAUR", sys_code: "MAUR", name: "MAURICES", short_name: "Maurices"}]}
+
+    it "returns empty if 'Ascena Reports' custom feature absent" do
+      allow(ms).to receive(:custom_feature?).with("Ascena Reports").and_return false
+      expect(subject.permissions user).to be_empty
     end
 
-    it "allows access for Ascena users who can view entries" do
-      co = Factory(:company, system_code: "ASCENA")
-      u = Factory(:user, company: co)
-      expect(u).to receive(:view_entries?).and_return true
-      expect(described_class.permission? u).to eq true
+    it "returns empty if user can't view entries" do
+      allow(user).to receive(:view_entries?).and_return false
+      expect(subject.permissions user).to be_empty
     end
 
-    it "allows access for users of Ascena's parent companies" do
-      ascena = Factory(:company, system_code: "ASCENA")
-      parent = Factory(:company, linked_companies: [ascena])
-      u = Factory(:user, company: parent)
-      expect(u).to receive(:view_entries?).and_return true
-      expect(described_class.permission? u).to eq true
+    it "returns info for Ascena, Ann, Maurices if master user" do
+      expect(subject.permissions user).to eq(cust_descriptions)
     end
 
-    it "prevents access by other companies" do
-      u = Factory(:user)
-      expect(u).to receive(:view_entries?).and_return true
-      expect(described_class.permission? u).to eq false
+    it "returns info for Ascena, Ann, Maurices if user belongs to ASCENAMASTER" do
+      user.company = ascena_master; user.company.save!
+      expect(subject.permissions user).to eq(cust_descriptions)
     end
 
-    it "prevents access by users who can't view entries" do
-      u = Factory(:master_user)
-      expect(u).to receive(:view_entries?).and_return false
-      expect(described_class.permission? u).to eq false
+    it "returns info for Ascena, Ann, Maurices if user belongs to ASCE_TRADE_ASSOC group" do
+      user.company.update master: false
+      g = Factory(:group, system_code: "ASCE_TRADE_ASSOC")
+      user.groups << g
+      expect(subject.permissions user).to eq(cust_descriptions)
+    end
+
+    it "returns only info for user's company if user doesn't belong to privileged category" do
+      user.company = ascena; user.company.save!
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}])
+    end
+
+    it "omits info for missing company" do
+      maurices.destroy
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+                                              {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}])
     end
   end
 
@@ -89,7 +107,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
     it "generates spreadsheet based on release_date, adjusts for user time zone" do
       create_data
       stub_master_setup
-      @temp = described_class.run_report(u, {'start_release_date' => '2016-03-14', 'end_release_date' => '2016-03-20', 'range_field' => 'first_release_date', 'run_as_company' => 'ASCENA'})
+      @temp = described_class.run_report(u, {'start_release_date' => '2016-03-14', 'end_release_date' => '2016-03-20', 'range_field' => 'first_release_date', 'cust_number' => 'ASCE'})
       wb = Spreadsheet.open @temp.path
       sheet = wb.worksheets[0]
       
@@ -108,7 +126,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       Factory(:fiscal_month, company: co, year: 2016, month_number: 11, start_date: '2016-11-05', end_date: '2016-12-10')
       Factory(:fiscal_month, company: co, year: 2017, month_number: 2, start_date: '2017-02-07', end_date: '2017-03-06')
       stub_master_setup
-      @temp = described_class.run_report(u, {'start_fiscal_year_month' => '2016-11', 'end_fiscal_year_month' => '2017-02', 'range_field' => 'fiscal_date', 'run_as_company' => 'ASCENA'})
+      @temp = described_class.run_report(u, {'start_fiscal_year_month' => '2016-11', 'end_fiscal_year_month' => '2017-02', 'range_field' => 'fiscal_date', 'cust_number' => 'ASCE'})
       wb = Spreadsheet.open @temp.path
       sheet = wb.worksheets[0]
       expect(sheet.rows.count).to eq 3
@@ -185,6 +203,24 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       result = ActiveRecord::Base.connection.exec_query(report.query '2016-03-14', '2016-03-20', 'release_date', 'ATAYLOR', cdefs)
       expect(result.columns).to eq header
       expect(result.count).to eq 2
+      # check order join
+      expect(result.first["Vendor Name"]).to eq "vend name"
+    end
+
+    it "produces expected results for Maurices" do
+      @ent.update_attributes(customer_number: 'MAUR')
+      @ord.update_attributes(order_number: 'ASCENA-MAU-po num')
+      @prod.update_attributes(unique_identifier: 'ASCENA-part num')
+
+      result = ActiveRecord::Base.connection.exec_query(report.query '2016-03-14', '2016-03-20', 'release_date', 'MAUR', cdefs)
+      expect(result.columns).to eq header
+      expect(result.count).to eq 2
+      
+      # helper fields with MAUR-specific behavior
+      expect(result.first['Unit Price - Brand']).to eq 2
+      expect(result.first['Unit Price - PO']).to eq 1
+      expect(result.first['Invoice Value - Brand']).to eq 2
+
       # check order join
       expect(result.first["Vendor Name"]).to eq "vend name"
     end

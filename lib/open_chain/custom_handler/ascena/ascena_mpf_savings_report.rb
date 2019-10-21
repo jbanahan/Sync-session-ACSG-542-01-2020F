@@ -1,40 +1,15 @@
 require 'open_chain/report/report_helper'
 require 'open_chain/fiscal_calendar_scheduling_support'
+require 'open_chain/custom_handler/ascena/ascena_report_helper'
+
 module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsReport
-  include OpenChain::Report::ReportHelper
+  include OpenChain::CustomHandler::Ascena::AscenaReportHelper
   extend OpenChain::FiscalCalendarSchedulingSupport
 
   attr_accessor :cust_numbers
 
-  ANN_CUST_NUM = "ATAYLOR"
-  ASCENA_CUST_NUM = "ASCE"
-
-  def self.permission? user
-    imp_ascena = ascena
-    imp_ann = ann
-    return false unless ascena && ann
-    ms = MasterSetup.get
-    ms.custom_feature?("Ascena Reports") &&
-        user.view_entries? &&
-        (user.company.master? || imp_ascena.can_view?(user) || imp_ann.can_view?(user))
-  end
-
-  def self.ascena
-    Company.importers.with_customs_management_number(ASCENA_CUST_NUM).first
-  end
-
-  def self.ann
-    Company.importers.with_customs_management_number(ANN_CUST_NUM).first
-  end
-
-  def self.fiscal_month settings
-    if settings['fiscal_month'].to_s =~ /(\d{4})-(\d{2})/
-      year = $1
-      month = $2
-      FiscalMonth.where(company_id: ascena.id, year: year.to_i, month_number: month.to_i).first
-    else
-      nil
-    end
+  def self.cust_info
+    CUST_INFO
   end
 
   def self.run_report run_by, settings = {}
@@ -46,14 +21,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
   end
 
   def self.run_schedulable config = {}
-    email_to = Array.wrap(config['email'])
-    raise "At least one email must be present." unless email_to.length > 0
-
+    config['email'] = Array.wrap(config['email'])
+    config['cust_numbers'] = Array.wrap(config['cust_numbers'])
+    raise "Scheduled instances of the Ascena / Ann / Maurices MPF Savings Report must include an email setting with at least one email address." unless config['email'].length > 0
+    raise "Scheduled instances of the Ascena / Ann / Maurices MPF Savings Report must include a cust_numbers setting with at least one customer number." unless config['cust_numbers'].length > 0
+    # Sets the fiscal calendar
+    config['company'] = 'ASCENA'
     run_if_configured(config) do |fiscal_month, fiscal_date|
       fm = fiscal_month.back(1)
-      self.new(config['custom_numbers']).run(fm) do |report|
-        body = "Attached is the MPF Savings Report for #{fm.fiscal_descriptor}."
-        OpenMailer.send_simple_html(email_to, "MPF Savings Report #{fm.fiscal_descriptor}", body, report).deliver_now
+      self.new(config['cust_numbers']).run(fm) do |report|
+        cust_names = cust_nums_to_short_names config['cust_numbers']
+        body = "Attached is the #{cust_names} MPF Savings Report for #{fm.fiscal_descriptor}."
+        OpenMailer.send_simple_html(config['email'], "#{cust_names} MPF Savings Report #{fm.fiscal_descriptor}", body, report).deliver_now
       end
     end
   end
@@ -109,13 +88,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaMpfSavingsRep
     end
     write_raw_data(raw_data_array, data_sheet, wb)
     write_grand_totals_row(savings_master_total_hash, total_sheet, wb)
-
+    cust_names = self.class.cust_nums_to_short_names @cust_numbers
     if block_given?
-      xlsx_workbook_to_tempfile(wb, "MPFSavings", file_name: "MPF Savings Report #{fiscal_month.fiscal_descriptor}.xlsx") do |f|
+      xlsx_workbook_to_tempfile(wb, "MPFSavings", file_name: "#{cust_names} MPF Savings Report #{fiscal_month.fiscal_descriptor}.xlsx") do |f|
         yield f
       end
     else
-      xlsx_workbook_to_tempfile(wb, "MPFSavings", file_name: "MPF Savings Report #{fiscal_month.fiscal_descriptor}.xlsx")
+      xlsx_workbook_to_tempfile(wb, "MPFSavings", file_name: "#{cust_names} MPF Savings Report #{fiscal_month.fiscal_descriptor}.xlsx")
     end
   end
 

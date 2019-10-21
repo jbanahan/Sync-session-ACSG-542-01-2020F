@@ -547,39 +547,51 @@ describe ReportsController do
   end
 
   describe "Ascena Entry Audit Report" do
+    
     let(:report_class) { OpenChain::Report::AscenaEntryAuditReport }
-    let(:user) { Factory(:user) }
+    let!(:user) { Factory(:user) }
+    let!(:ascena) do 
+      co = Factory(:importer)
+      co.set_system_identifier "Customs Management", "ASCE"
+      co
+    end
+    
     before { sign_in_as user }
 
     context "show" do
       it "doesn't render page for unauthorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(report_class).to receive(:permissions).with(user).and_return []
         get :show_ascena_entry_audit_report
         expect(response).not_to be_success
       end
 
       it "renders for authorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(report_class).to receive(:permissions).with(user).and_return([{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}])
         get :show_ascena_entry_audit_report
         expect(response).to be_success
+        expect(assigns(:cust_info)).to eq [["ASCENA TRADE SERVICES LLC", "ASCE"]]
       end
     end
 
     context "run" do
       let(:args) { {range_field: "release_date", start_release_date: "start release", end_release_date: "end release", start_fiscal_year_month: "start fy/m", 
-                    end_fiscal_year_month: "end fy/m", run_as_company: "company" }}
+                    end_fiscal_year_month: "end fy/m", cust_number: "ASCE" }}
       
       it "doesn't run for unauthorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(report_class).to receive(:permissions).with(user).and_return []
         expect(ReportResult).not_to receive(:run_report!)
         post :run_ascena_entry_audit_report, args
         expect(flash[:errors].first).to eq("You do not have permission to view this report")
       end
 
       it "runs for authorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return true
-        expect(ReportResult).to receive(:run_report!).with("Ascena Entry Audit Report", user, OpenChain::Report::AscenaEntryAuditReport, 
-                                                           :settings=>args, :friendly_settings=>[])
+        expect(report_class).to receive(:permissions).with(user).and_return [{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}]
+        expect(ReportResult).to receive(:run_report!).with("Ascena / Ann Inc. / Maurices Entry Audit Report", user, report_class, 
+                                                           :settings=>args, :friendly_settings=>["Start release date: start release", 
+                                                                                                 "End release date: end release", 
+                                                                                                 "Start Fiscal Year/Month: start fy/m", 
+                                                                                                 "End Fiscal Year/Month: end fy/m", 
+                                                                                                 "Customer Number: ASCE"])
         post :run_ascena_entry_audit_report, args
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
@@ -589,18 +601,23 @@ describe ReportsController do
 
   describe "Ascena Vendor Scorecard Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport }
-    let(:user) { Factory(:user) }
+    let!(:user) { Factory(:user) }
+    let!(:ascena) do 
+      co = Factory(:importer)
+      co.set_system_identifier "Customs Management", "ASCE"
+      co
+    end
     before { sign_in_as user }
 
     context "show" do
       it "doesn't render page for unauthorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(report_class).to receive(:permissions).with(user).and_return []
         get :show_ascena_vendor_scorecard_report
         expect(response).not_to be_success
       end
 
       it "renders for authorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(report_class).to receive(:permissions).with(user).and_return([{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}])
         get :show_ascena_vendor_scorecard_report
         expect(response).to be_success
       end
@@ -609,19 +626,133 @@ describe ReportsController do
     context "run" do
       let(:args) { {range_field: "first_release_date", start_release_date: "start release", end_release_date: "end release", start_fiscal_year_month: "start fy/m",
                     end_fiscal_year_month: "end fy/m"}}
-
+      
       it "doesn't run for unauthorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(report_class).to receive(:permissions).with(user).and_return []
         expect(ReportResult).not_to receive(:run_report!)
         post :run_ascena_vendor_scorecard_report, args
         expect(flash[:errors].first).to eq("You do not have permission to view this report")
       end
 
-      it "runs for authorized users" do
-        expect(report_class).to receive(:permission?).with(user).and_return true
-        expect(ReportResult).to receive(:run_report!).with("Ascena Vendor Scorecard Report", user, OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport,
-                                                           :settings=>args, :friendly_settings=>[])
+      it "runs for authorized users, including only importers for which they have permission" do
+        expect(report_class).to receive(:permissions).with(user).and_return [{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}, {cust_num: "ANN", name: "ANN INC"}]
+        expect(ReportResult).to receive(:run_report!).with("Ascena / Maurices Vendor Scorecard Report", user, report_class, :settings=>args.merge(cust_numbers: ["ASCE", "ANN"]), 
+                                                                                                                            :friendly_settings=>["Start release date: start release", 
+                                                                                                                                                 "End release date: end release", 
+                                                                                                                                                 "Start Fiscal Year/Month: start fy/m", 
+                                                                                                                                                 "End Fiscal Year/Month: end fy/m", 
+                                                                                                                                                 "Customer Numbers: ASCE, ANN"])
         post :run_ascena_vendor_scorecard_report, args
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
+  describe "Ascena Duty Savings Report" do
+    let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport }
+    let!(:user) { Factory(:user) }
+    let!(:ascena) do 
+      co = Factory(:importer)
+      co.set_system_identifier "Customs Management", "ASCE"
+      co
+    end
+    let!(:fm) { Factory(:fiscal_month, company: ascena, year: 2019, month_number: 9) }
+    
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permissions).with(user).and_return []
+        get :show_ascena_duty_savings_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permissions).with(user).and_return([{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}])
+        get :show_ascena_duty_savings_report
+        expect(response).to be_success
+        expect(assigns(:cust_info)).to eq [["ASCENA TRADE SERVICES LLC", "ASCE"]]
+        expect(assigns(:fiscal_months)).to eq ["2019-09"]
+      end
+
+      it "renders 'Combine companies' option for multiple importers" do
+        expect(report_class).to receive(:permissions).with(user).and_return([{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}, {cust_num: "ATAYLOR", name: "ANN TAYLOR INC"}])
+        get :show_ascena_duty_savings_report
+        expect(response).to be_success
+        expect(assigns(:cust_info)).to eq [["ASCENA TRADE SERVICES LLC", "ASCE"], ["ANN TAYLOR INC", "ATAYLOR"], ["Combine companies", "ASCE,ATAYLOR"]]
+      end
+    end
+
+    context "run" do
+      let(:args) { {'fiscal_month' => "2019-09", 'cust_numbers' => "ASCE,ATAYLOR"} }
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permissions).with(user).and_return []
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_ascena_duty_savings_report, args
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+      end
+
+      it "runs for authorized users, including only importers for which they have permission" do
+        expect(report_class).to receive(:permissions).with(user).and_return [{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}]
+        expect(ReportResult).to receive(:run_report!).with("Ascena / Ann Inc. / Maurices Duty Savings Report", user, OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport,
+                                                           :settings=>{'fiscal_month' => "2019-09", 'cust_numbers' => ["ASCE"]}, :friendly_settings=>["Fiscal Month 2019-09", "Customer Numbers: ASCE"])
+        post :run_ascena_duty_savings_report, args
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
+  describe "Ascena MPF Savings Report" do
+    let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport }
+    let!(:user) { Factory(:user) }
+    let!(:ascena) do 
+      co = Factory(:importer)
+      co.set_system_identifier "Customs Management", "ASCE"
+      co
+    end
+    let!(:fm) { Factory(:fiscal_month, company: ascena, year: 2019, month_number: 9, end_date: Date.new(2019,10,31)) }
+    
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permissions).with(user).and_return []
+        get :show_ascena_mpf_savings_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permissions).with(user).and_return([{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}])
+        get :show_ascena_mpf_savings_report
+        expect(response).to be_success
+        expect(assigns(:cust_info)).to eq [["ASCENA TRADE SERVICES LLC", "ASCE"]]
+        expect(assigns(:fiscal_months)).to eq ["2019-09"]
+      end
+
+      it "renders 'Combine companies' option for multiple importers" do
+        expect(report_class).to receive(:permissions).with(user).and_return([{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}, {cust_num: "ATAYLOR", name: "ANN TAYLOR INC"}])
+        get :show_ascena_mpf_savings_report
+        expect(response).to be_success
+        expect(assigns(:cust_info)).to eq [["ASCENA TRADE SERVICES LLC", "ASCE"], ["ANN TAYLOR INC", "ATAYLOR"], ["Combine companies", "ASCE,ATAYLOR"]]
+      end
+    end
+
+    context "run" do
+      let(:args) { {'fiscal_month' => "2019-09", 'cust_numbers' => "ASCE,ATAYLOR"} }
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permissions).with(user).and_return []
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_ascena_mpf_savings_report, args
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+      end
+
+      it "runs for authorized users, including only importers for which they have permission" do
+        expect(report_class).to receive(:permissions).with(user).and_return [{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}]
+        expect(ReportResult).to receive(:run_report!).with("Ascena / Ann Inc. / Maurices MPF Savings Report", user, OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport,
+                                                           :settings=>{'fiscal_month' => "2019-09", 'cust_numbers' => ["ASCE"]}, :friendly_settings=>["Fiscal Month 2019-09", "Customer Numbers: ASCE"])
+        post :run_ascena_mpf_savings_report, args
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
       end

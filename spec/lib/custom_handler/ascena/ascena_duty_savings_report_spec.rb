@@ -1,80 +1,61 @@
 describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
 
   subject { described_class }
+  let(:helper) { OpenChain::CustomHandler::Ascena::AscenaReportHelper }
   let! (:ascena) { with_customs_management_id(Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
   let! (:ann) { with_customs_management_id(Factory(:importer, name: "Ann"), "ATAYLOR") }
+  let! (:maurices) { with_customs_management_id(Factory(:importer, name: "Maurices"), "MAUR") }
+  let! (:ascena_master) { with_customs_management_id(Factory(:importer, name: "Ascena Master"), "ASCENAMASTER") }
+  let! (:user) { Factory(:master_user) }
   let (:cdefs) { described_class::Query.new.cdefs }
 
-  describe "permission?" do
+  describe "permissions" do
     let!(:ms) do
       m = stub_master_setup
       allow(m).to receive(:custom_feature?).with("Ascena Reports").and_return true
+      allow(user).to receive(:view_entries?).and_return true
       m
     end
-    
-    it "allows access for master users who can view entries" do
-      u = Factory(:master_user)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
 
-    it "allows access for Ascena users who can view entries" do
-      u = Factory(:user, company: ascena)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
+    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}, 
+                               {cust_num: "MAUR", sys_code: "MAUR", name: "MAURICES", short_name: "Maurices"}]}
 
-    it "allows access for users of Ascena's parent companies" do
-      parent = Factory(:company, linked_companies: [ascena])
-      u = Factory(:user, company: parent)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
-
-    it "allows access for Ann users who can view entries" do
-      u = Factory(:user, company: ann)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
-
-    it "allows access for users of Ann's parent companies" do
-      parent = Factory(:company, linked_companies: [ann])
-      u = Factory(:user, company: parent)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
-
-    it "prevents access by other companies" do
-      u = Factory(:user)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access by users who can't view entries" do
-      u = Factory(:master_user)
-      allow(u).to receive(:view_entries?).and_return false
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access if Ascena record not found" do
-      ascena.destroy
-      u = Factory(:user, company: ann)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access if Ann record not found" do
-      ann.destroy
-      u = Factory(:user, company: ascena)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access on instance without 'Ascena Reports' custom feature" do
-      u = Factory(:master_user)
-      allow(u).to receive(:view_entries?).and_return true
+    it "returns empty if 'Ascena Reports' custom feature absent" do
       allow(ms).to receive(:custom_feature?).with("Ascena Reports").and_return false
-      expect(subject.permission? u).to eq false
+      expect(subject.permissions user).to be_empty
+    end
+
+    it "returns empty if user can't view entries" do
+      allow(user).to receive(:view_entries?).and_return false
+      expect(subject.permissions user).to be_empty
+    end
+
+    it "returns info for Ascena, Ann, Maurices if master user" do
+      expect(subject.permissions user).to eq(cust_descriptions)
+    end
+
+    it "returns info for Ascena, Ann, Maurices if user belongs to ASCENAMASTER" do
+      user.company = ascena_master; user.company.save!
+      expect(subject.permissions user).to eq(cust_descriptions)
+    end
+
+    it "returns info for Ascena, Ann, Maurices if user belongs to ASCE_TRADE_ASSOC group" do
+      user.company.update master: false
+      g = Factory(:group, system_code: "ASCE_TRADE_ASSOC")
+      user.groups << g
+      expect(subject.permissions user).to eq(cust_descriptions)
+    end
+
+    it "returns only info for user's company if user doesn't belong to privileged category" do
+      user.company = ascena; user.company.save!
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}])
+    end
+
+    it "omits info for missing company" do
+      maurices.destroy
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+                                              {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}])
     end
   end
 
@@ -111,8 +92,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk']
-        expect(mail.subject).to eq "Duty Savings Report 2018-01"
-        expect(mail.body).to match /Attached is the Duty Savings Report for 2018-01\./
+        expect(mail.subject).to eq "Ascena-Ann Duty Savings Report 2018-01"
+        expect(mail.body).to match /Attached is the Ascena-Ann Duty Savings Report for 2018-01\./
         # not sure why following expectation fails. Leaving it commented for now.
         # expect(mail.attachments.first).to eq t
       end
@@ -154,7 +135,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
     let! (:fiscal_month) { Factory(:fiscal_month, company: ascena, year: 2017, month_number: 3, start_date: Date.new(2017, 3, 1), end_date: Date.new(2017, 4, 1)) }
 
     it "skips anything that does not have duty savings" do
-      tf = subject.run_report nil, {"fiscal_month" => "2017-03", "cust_numbers" => ["ASCE", "ATAYLOR"]}
+      tf = subject.run_report nil, {"fiscal_month" => "2017-03", "cust_numbers" => ["ASCE", "ATAYLOR", "MAUR"]}
       expect(tf).not_to be_nil
 
       wb = XlsMaker.open_workbook(tf)
@@ -168,16 +149,16 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
 
       expect(sheet = wb.worksheet("First Sale")).not_to be_nil
       expect(sheet.rows.count).to eq 10
-      expect(sheet.row(0)).to eq [nil, "Justice", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn", nil, "Ann Inc."]
-      expect(sheet.row(1)).to eq ["AGS Vendor Invoice", 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(2)).to eq ["AGS Entered Value", 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(3)).to eq ["AGS Duty Savings", 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", 20, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(0)).to eq [nil, "Justice", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn", nil, "Ann Inc.", nil, "Maurices-Maur"]
+      expect(sheet.row(1)).to eq ["AGS Vendor Invoice", 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(2)).to eq ["AGS Entered Value", 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(3)).to eq ["AGS Duty Savings", 0, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", 20, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
 
-      expect(sheet.row(6)).to eq ["NONAGS Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(7)).to eq ["NONAGS Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(8)).to eq ["NONAGS Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-      expect(sheet.row(9)).to eq ["NONAGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(6)).to eq ["NONAGS Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(7)).to eq ["NONAGS Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(8)).to eq ["NONAGS Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+      expect(sheet.row(9)).to eq ["NONAGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
 
 
       expect(sheet = (wb.worksheet "Data")).not_to be_nil
@@ -399,7 +380,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", nil, nil, nil, nil, 40, nil, nil, nil, nil]
       end
 
-      it "records Maurices first sale data" do
+      it "records Maurices brand ('Maurices') first sale data" do
         entry.commercial_invoice_lines.each {|line| line.update_attributes! contract_amount: 20, product_line: "MAU" }
         tf = subject.run_report nil, {"fiscal_month" => "2017-03", "cust_numbers" => ["ASCE"]}
         wb = XlsMaker.open_workbook(tf)
@@ -437,7 +418,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         expect(sheet.row(9)).to eq ["NONAGS Total Brand FOB Receipts", 40]
       end
 
-      it "records both Ascena and Ann first sale" do
+      it "records Maurices importer ('Maurices-Maur') first sale" do
+        entry.update_attributes! customer_number: "MAUR"
+        entry.commercial_invoice_lines.each {|line| line.update_attributes! contract_amount: 20, product_line: "MAU" }
+        tf = subject.run_report nil, {"fiscal_month" => "2017-03", "cust_numbers" => ["MAUR"]}
+        wb = XlsMaker.open_workbook(tf)
+
+        sheet = wb.worksheet("First Sale")
+        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", 40]
+        expect(sheet.row(2)).to eq ["AGS Entered Value", 20]
+        expect(sheet.row(3)).to eq ["AGS Duty Savings", 2]
+        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", 40]
+      end
+
+      it "records Ascena, Ann, and Maurices (importer) first sale" do
         entry.commercial_invoice_lines.each {|line| line.update_attributes! contract_amount: 20, product_line: "JST" }
 
         e = Factory(:entry, importer: ascena, customer_number: "ATAYLOR", source_system: "Alliance", fiscal_date: Date.new(2017, 3, 1), broker_reference: "REF", transport_mode_code: "10", fiscal_year: 2017, fiscal_month: 3, release_date: DateTime.new(2017, 3, 1, 5, 0))
@@ -447,21 +441,28 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
         line = inv.commercial_invoice_lines.create! po_number: "PO", part_number: "PART2", non_dutiable_amount: 0, value: BigDecimal("10"), contract_amount: 20
         tariff = line.commercial_invoice_tariffs.create! hts_code: "1234567890", tariff_description: "DESC", entered_value: BigDecimal("10"), spi_primary: "", duty_rate: BigDecimal("0.1"), duty_amount: BigDecimal("1")
 
-        tf = subject.run_report nil, {"fiscal_month" => "2017-03", "cust_numbers" => ["ASCE", "ATAYLOR"]}
+        e2 = Factory(:entry, importer: ascena, customer_number: "MAUR", source_system: "Alliance", fiscal_date: Date.new(2017, 3, 1), broker_reference: "REF", transport_mode_code: "10", fiscal_year: 2017, fiscal_month: 3, release_date: DateTime.new(2017, 3, 1, 5, 0))
+        inv2 = e2.commercial_invoices.create! invoice_number: "INV"
+        line2 = inv2.commercial_invoice_lines.create! po_number: "PO", part_number: "PART", non_dutiable_amount: 0, value: BigDecimal("10"), contract_amount: 20
+        tariff2 = line2.commercial_invoice_tariffs.create! hts_code: "1234567890", tariff_description: "DESC", entered_value: BigDecimal("10"), spi_primary: "", duty_rate: BigDecimal("0.1"), duty_amount: BigDecimal("1")
+        line2 = inv2.commercial_invoice_lines.create! po_number: "PO", part_number: "PART2", non_dutiable_amount: 0, value: BigDecimal("10"), contract_amount: 20
+        tariff2 = line2.commercial_invoice_tariffs.create! hts_code: "1234567890", tariff_description: "DESC", entered_value: BigDecimal("10"), spi_primary: "", duty_rate: BigDecimal("0.1"), duty_amount: BigDecimal("1")
+
+        tf = subject.run_report nil, {"fiscal_month" => "2017-03", "cust_numbers" => ["ASCE", "ATAYLOR", "MAUR"]}
         wb = XlsMaker.open_workbook(tf)
 
         sheet = wb.worksheet("First Sale")
-        expect(sheet.row(0)).to eq [nil, "Justice", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn", nil, "Ann Inc."]
+        expect(sheet.row(0)).to eq [nil, "Justice", nil, "Lane Bryant", nil, "Catherines", nil, "Maurices", nil, "Dressbarn", nil, "Ann Inc.", nil, "Maurices-Maur"]
         
-        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", 40, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(2)).to eq ["AGS Entered Value", 20, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(3)).to eq ["AGS Duty Savings", 2, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
-        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", 40, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+        expect(sheet.row(1)).to eq ["AGS Vendor Invoice", 40, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 40]
+        expect(sheet.row(2)).to eq ["AGS Entered Value", 20, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 20]
+        expect(sheet.row(3)).to eq ["AGS Duty Savings", 2, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 2]
+        expect(sheet.row(4)).to eq ["AGS Total Brand FOB Receipts", 40, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 40]
         
-        expect(sheet.row(6)).to eq ["NONAGS Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 40]
-        expect(sheet.row(7)).to eq ["NONAGS Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 20]
-        expect(sheet.row(8)).to eq ["NONAGS Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 2]
-        expect(sheet.row(9)).to eq ["NONAGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 40]
+        expect(sheet.row(6)).to eq ["NONAGS Vendor Invoice", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 40, nil, nil]
+        expect(sheet.row(7)).to eq ["NONAGS Entered Value", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 20, nil, nil]
+        expect(sheet.row(8)).to eq ["NONAGS Duty Savings", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 2, nil, nil]
+        expect(sheet.row(9)).to eq ["NONAGS Total Brand FOB Receipts", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, 40, nil, nil]
       end
 
       it "includes non-dutiable amount in Total Brand FOB Receipts for Ascena" do
@@ -1503,6 +1504,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport do
       
       r = result[1]
       test_ann_results r
+    end
+
+    it "produces expected results for Maurices" do
+      # purpose of this is to check the order join
+
+      e_asce.update! importer: maurices, customer_number: "MAUR"
+      cil_asce.update! product_line: nil
+      ord_asce.update! order_number: "ASCENA-MAU-po asce"
+
+      result = nil
+      Timecop.freeze(DateTime.new 2018, 3, 16) { result = subject.run(["MAUR"], "2018-03-15", "2018-03-17") }
+      r = result.first
+      expect(r[:vendor]).to eq "asce vend"
+      
     end
   end
 

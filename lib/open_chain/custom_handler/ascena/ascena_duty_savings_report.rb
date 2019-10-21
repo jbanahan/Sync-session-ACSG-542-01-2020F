@@ -1,47 +1,28 @@
-require 'open_chain/report/report_helper'
 require 'open_chain/fiscal_calendar_scheduling_support'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-require 'open_chain/report/report_helper'
+require 'open_chain/custom_handler/ascena/ascena_report_helper'
 
 module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsReport
   extend OpenChain::FiscalCalendarSchedulingSupport
-  include OpenChain::Report::ReportHelper
+  include OpenChain::CustomHandler::Ascena::AscenaReportHelper
 
   attr_accessor :cust_numbers
   
-  ANN_CUST_NUM = "ATAYLOR"
-  ASCENA_CUST_NUM = "ASCE"
-  
+  # Maurices began as a brand of Ascena and was later split out into a separate importer, but the old brand entries
+  # still have to be handled along with the newer importer ones. Handling of Maurices (importer) is the same as 
+  # Ascena except for two differences: (1) Ascena entries join the order using product_line, while Maurices uses a hard-coded "-MAU-"
+  # infix (this is confusing because the order number format is indistinguishable from one joined to a Maurices-branded Ascena entry). 
+  # (2) In the First-Sale tab all Maurices importer data appears under the 'Maurices-Maur' column, ignoring the product_line field 
+  # (which is also how Ann is handled)
+
   #sets both the brands that are included and the order in which they appear in the first-sale tab
   ASCENA_BRAND_MAP = {"JST" => "Justice", "LB" => "Lane Bryant", "CA" => "Catherines", "MAU" => "Maurices", "DB" => "Dressbarn"}
-  SUMMARY_NAME_MAP = { ANN_CUST_NUM => "Ann Inc. Summary", ASCENA_CUST_NUM => "ATS Summary"}
+  SUMMARY_NAME_MAP = { ANN_CUST_NUM => "Ann Inc. Summary", ASCENA_CUST_NUM => "ATS Summary", MAURICES_CUST_NUM => "Maurices Summary"}
+  HELPER_PREFIX = OpenChain::CustomHandler::Ascena::AscenaReportHelper
+  
 
-  def self.permission? user
-    imp_ascena = ascena
-    imp_ann = ann
-    return false unless ascena && ann
-    ms = MasterSetup.get
-    ms.custom_feature?("Ascena Reports") && 
-    user.view_entries? && 
-    (user.company.master? || imp_ascena.can_view?(user) || imp_ann.can_view?(user))
-  end
-
-  def self.ascena
-    Company.importers.with_customs_management_number(ASCENA_CUST_NUM).first
-  end
-
-  def self.ann
-    Company.importers.with_customs_management_number(ANN_CUST_NUM).first
-  end
-
-  def self.fiscal_month settings
-    if settings['fiscal_month'].to_s =~ /(\d{4})-(\d{2})/
-      year = $1
-      month = $2
-      FiscalMonth.where(company_id: ascena.id, year: year.to_i, month_number: month.to_i).first
-    else
-      nil
-    end
+  def self.cust_info
+    CUST_INFO
   end
 
   def self.run_report run_by, settings = {}
@@ -53,14 +34,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def self.run_schedulable config = {}
-    email_to = Array.wrap(config['email'])
-    raise "At least one email must be present." unless email_to.length > 0
-
+    config['email'] = Array.wrap(config['email'])
+    config['cust_numbers'] = Array.wrap(config['cust_numbers'])
+    raise "Scheduled instances of the Ascena / Ann /Maurices Duty Savings Report must include an email setting with at least one email address." unless config['email'].length > 0
+    raise "Scheduled instances of the Ascena / Ann /Maurices Duty Savings Report must include a cust_numbers setting with at least one customer number." unless config['cust_numbers'].length > 0
+    # Sets the fiscal calendar
+    config['company'] = 'ASCENA'
     run_if_configured(config) do |fiscal_month, fiscal_date|
       fm = fiscal_month.back(1)
       self.new(config['cust_numbers']).run(fm) do |report|
-        body = "Attached is the Duty Savings Report for #{fm.fiscal_descriptor}."
-        OpenMailer.send_simple_html(email_to, "Duty Savings Report #{fm.fiscal_descriptor}", body, report).deliver_now
+        cust_names = cust_nums_to_short_names(config['cust_numbers'])
+        body = "Attached is the #{cust_names} Duty Savings Report for #{fm.fiscal_descriptor}."
+        OpenMailer.send_simple_html(config['email'], "#{cust_names} Duty Savings Report #{fm.fiscal_descriptor}", body, report).deliver_now
       end
     end
   end
@@ -74,10 +59,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   end
 
   def brand_map
-    return ASCENA_BRAND_MAP if cust_numbers == [ASCENA_CUST_NUM]
-    return {ANN_CUST_NUM => "Ann Inc."} if cust_numbers == [ANN_CUST_NUM]
-    # only remaining possiblity is that cust_numbers is both Ascena and Ann
-    ASCENA_BRAND_MAP.merge(ANN_CUST_NUM => "Ann Inc.")
+    map = {}
+    cust_numbers.each do |cn|
+      map.merge!(ASCENA_BRAND_MAP) if cn == ASCENA_CUST_NUM
+      map.merge!(ANN_CUST_NUM => "Ann Inc.") if cn == ANN_CUST_NUM
+      map.merge!(MAURICES_CUST_NUM => "Maurices-Maur") if cn == MAURICES_CUST_NUM
+    end
+    map
   end
 
   def run fiscal_month
@@ -90,13 +78,14 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     first_sale_data = generate_first_sale_data raw_result_set
     generate_summary_tabs summaries, summary_data
     generate_first_sale_tab first_sale, first_sale_data
+    cust_names = self.class.cust_nums_to_short_names(@cust_numbers)
 
     if block_given?
-      workbook_to_tempfile(wb, "DutySavings", file_name: "Duty Savings Report #{fiscal_month.fiscal_descriptor}.xls") do |f|
+      workbook_to_tempfile(wb, "DutySavings", file_name: "#{cust_names} Duty Savings Report #{fiscal_month.fiscal_descriptor}.xls") do |f|
         yield f
       end
     else
-      workbook_to_tempfile(wb, "DutySavings", file_name: "Duty Savings Report #{fiscal_month.fiscal_descriptor}.xls")
+      workbook_to_tempfile(wb, "DutySavings", file_name: "#{cust_names} Duty Savings Report #{fiscal_month.fiscal_descriptor}.xls")
     end
   end
 
@@ -134,8 +123,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   def generate_first_sale_data result_set
     first_sale_brand_summary = {"AGS" => {}, "NONAGS" => {}}
     result_set.each do |row|      
-      # Only Ascena has distinct brands, so tag every Ann row the same
-      brand = row.ann? ? ANN_CUST_NUM : row[:product_line]
+      # Only Ascena has distinct brands, so tag every Ann and Maurices row the same
+      brand = row.ann? ? ANN_CUST_NUM : (row.maurices? ? MAURICES_CUST_NUM : row[:product_line])
       if brand_map.keys.member?(brand)
         order_type = row[:order_type].to_s.strip.upcase == "NONAGS" ? "NONAGS" : "AGS"
 
@@ -301,11 +290,15 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
 
     def ascena?
-      self[:customer_number] == ASCENA_CUST_NUM
+      self[:customer_number] == HELPER_PREFIX::ASCENA_CUST_NUM
     end
 
+    def maurices?
+      self[:customer_number] == HELPER_PREFIX::MAURICES_CUST_NUM
+    end
+    
     def ann?
-      self[:customer_number] == ANN_CUST_NUM
+      self[:customer_number] == HELPER_PREFIX::ANN_CUST_NUM
     end
 
     def first_sale?
@@ -871,6 +864,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
     include OpenChain::Report::ReportHelper
 
+    ASCENA_CUST_NUM = HELPER_PREFIX::ASCENA_CUST_NUM
+    ANN_CUST_NUM = HELPER_PREFIX::ANN_CUST_NUM
+    MAURICES_CUST_NUM = HELPER_PREFIX::MAURICES_CUST_NUM
+
     def run cust_numbers, start_date, end_date
       # performance issues require one query per importer
       results = cust_numbers.flat_map{ |cnum| unpack_mysql2(run_query cnum, start_date, end_date) }
@@ -890,95 +887,100 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def query cust_number, start_date, end_date
       # blank fields are all calculated separately, except where noted
-      <<-SQL
-        SELECT e.broker_reference,
-               e.customer_name,
-               "" AS "First Sale",
-               IF(e.customer_number = "#{ANN_CUST_NUM}" AND o.id IS NULL, inv_vendors.name, ord_vendors.name),
-               IF(e.customer_number = "#{ANN_CUST_NUM}" AND o.id IS NULL, inv_factories.name, ord_factories.name),
-               IF(cil.related_parties, "Y", "N"),
-               e.transport_mode_code,
-               e.fiscal_month,
-               e.release_date,
-               "" AS "Filer",
-               e.entry_number,
-               cil.customs_line_number,
-               ci.invoice_number,
-               cil.part_number,
-               cil.po_number,
-               cil.product_line,
-               IF(e.customer_number = "#{ANN_CUST_NUM}", "NONAGS", ord_type.string_value) AS "Order Type",
-               cil.country_origin_code,
-               cil.country_export_code,
-               e.arrival_date,
-               e.import_date,
-               "" AS "Arrival Port",
-               "" AS "Entry Port",
-               cit.hts_code,
-               IFNULL(cit.duty_rate, 0),
-               IF(e.customer_number = "#{ANN_CUST_NUM}", il.part_description, cit.tariff_description) AS "Goods Description",
-               cil.unit_price,
-               IFNULL(cil.quantity, 0),
-               cil.unit_of_measure,
-               "" AS "Original FOB Unit Value",
-               IF(cil.contract_amount > 0, cil.contract_amount, 0) AS "Original FOB Entered Value",
-               "" AS "Duty",
-               "" AS "First Sale Difference",
-               "" AS "First Sale Duty Savings",
-               "" AS "First Sale Margin %",
-               "" AS "Price Before Discounts",
-               IFNULL(cit.entered_value, 0),
-               "" AS "Air/Sea Discount",
-               "" AS "Air/Sea Per Unit Savings",
-               "" AS "Air/Sea Duty Savings",
-               IFNULL(IF(e.customer_number = "#{ANN_CUST_NUM}", il.early_pay_discount, 0), 0) AS "Early Payment Discount",
-               ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", il.early_pay_discount / cil.quantity, 0), 2) AS "EPD Per Unit Savings",
-               ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", IFNULL(il.early_pay_discount * cit.duty_rate, 0), 0), 2) AS "EPD Duty Savings",
-               IFNULL(IF(e.customer_number = "#{ANN_CUST_NUM}", il.trade_discount, 0),0) AS "Trade Discount",
-               ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", il.trade_discount / cil.quantity, 0), 2) AS "Trade Discount per Unit Savings",
-               ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", IFNULL(il.trade_discount * cit.duty_rate, 0), 0), 2) AS "Trade Discount Duty Savings",
-               cit.spi_primary,
-               "" AS "Original Duty Rate",
-               "" AS "SPI Duty Savings",
-               IF(e.fish_and_wildlife_transmitted_date IS NOT NULL, "Y", "N") AS "Fish and Wildlife",
-               0 AS "Hanger Duty Savings", # currently not used
-               "" AS "MP vs Air/Sea",
-               "" AS "MP vs EPD",
-               "" AS "MP vs Trade Discount",
-               "" AS "MP vs Air/Sea/EPD Trade",
-               "" AS "First Sale Savings",
-               "" AS "Air/Sea Savings",
-               "" AS "EPD Savings",
-               "" AS "Trade Discount Savings",
-               "" AS "Applied Discount",
-               # following are for calculations, not display
-               e.customer_number,
-               IFNULL(cil.contract_amount, 0),
-               IFNULL(cil.non_dutiable_amount, 0),
-               IFNULL(cil.value, 0),
-               IFNULL(cit.duty_amount, 0),
-               IFNULL(cil.miscellaneous_discount, 0),
-               IFNULL(cil.other_amount, 0),
-               IFNULL(il.air_sea_discount, 0) AS "air/sea discount attrib",
-               IFNULL(il.middleman_charge, 0),
-               e.import_country_id,
-               e.id,
-               cil.id
-        FROM entries e
-        INNER JOIN commercial_invoices ci on e.id = ci.entry_id
-        INNER JOIN commercial_invoice_lines cil on ci.id = cil.commercial_invoice_id
-        INNER JOIN commercial_invoice_tariffs cit on cit.commercial_invoice_line_id = cil.id
-        LEFT OUTER JOIN invoices i ON i.invoice_number = ci.invoice_number AND i.importer_id = e.importer_id
-        LEFT OUTER JOIN invoice_lines il ON i.id = il.invoice_id AND il.part_number = cil.part_number AND il.po_number = cil.po_number
-        LEFT OUTER JOIN companies inv_vendors ON inv_vendors.id = i.vendor_id
-        LEFT OUTER JOIN companies inv_factories ON inv_factories.id = i.factory_id
-        LEFT OUTER JOIN orders o ON o.order_number =  IF('#{sanitize cust_number}' = '#{ASCENA_CUST_NUM}', CONCAT('ASCENA-', cil.product_line, '-', cil.po_number), CONCAT('ATAYLOR-', cil.po_number))
-        LEFT OUTER JOIN companies ord_vendors ON ord_vendors.id = o.vendor_id
-        LEFT OUTER JOIN companies ord_factories ON ord_factories.id = o.factory_id
-        LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = #{cdefs[:ord_type].id}
-        WHERE e.customer_number = '#{sanitize cust_number}' AND e.source_system = 'Alliance' AND e.fiscal_date >= '#{start_date}' and e.fiscal_date < '#{end_date}'
-        ORDER BY e.customer_number, e.broker_reference
-      SQL
+      qry = <<-SQL
+              SELECT e.broker_reference,
+                     e.customer_name,
+                     "" AS "First Sale",
+                     IF(e.customer_number = "#{ANN_CUST_NUM}" AND o.id IS NULL, inv_vendors.name, ord_vendors.name),
+                     IF(e.customer_number = "#{ANN_CUST_NUM}" AND o.id IS NULL, inv_factories.name, ord_factories.name),
+                     IF(cil.related_parties, "Y", "N"),
+                     e.transport_mode_code,
+                     e.fiscal_month,
+                     e.release_date,
+                     "" AS "Filer",
+                     e.entry_number,
+                     cil.customs_line_number,
+                     ci.invoice_number,
+                     cil.part_number,
+                     cil.po_number,
+                     cil.product_line,
+                     IF(e.customer_number = "#{ANN_CUST_NUM}", "NONAGS", ord_type.string_value) AS "Order Type",
+                     cil.country_origin_code,
+                     cil.country_export_code,
+                     e.arrival_date,
+                     e.import_date,
+                     "" AS "Arrival Port",
+                     "" AS "Entry Port",
+                     cit.hts_code,
+                     IFNULL(cit.duty_rate, 0),
+                     IF(e.customer_number = "#{ANN_CUST_NUM}", il.part_description, cit.tariff_description) AS "Goods Description",
+                     cil.unit_price,
+                     IFNULL(cil.quantity, 0),
+                     cil.unit_of_measure,
+                     "" AS "Original FOB Unit Value",
+                     IF(cil.contract_amount > 0, cil.contract_amount, 0) AS "Original FOB Entered Value",
+                     "" AS "Duty",
+                     "" AS "First Sale Difference",
+                     "" AS "First Sale Duty Savings",
+                     "" AS "First Sale Margin %",
+                     "" AS "Price Before Discounts",
+                     IFNULL(cit.entered_value, 0),
+                     "" AS "Air/Sea Discount",
+                     "" AS "Air/Sea Per Unit Savings",
+                     "" AS "Air/Sea Duty Savings",
+                     IFNULL(IF(e.customer_number = "#{ANN_CUST_NUM}", il.early_pay_discount, 0), 0) AS "Early Payment Discount",
+                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", il.early_pay_discount / cil.quantity, 0), 2) AS "EPD Per Unit Savings",
+                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", IFNULL(il.early_pay_discount * cit.duty_rate, 0), 0), 2) AS "EPD Duty Savings",
+                     IFNULL(IF(e.customer_number = "#{ANN_CUST_NUM}", il.trade_discount, 0),0) AS "Trade Discount",
+                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", il.trade_discount / cil.quantity, 0), 2) AS "Trade Discount per Unit Savings",
+                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", IFNULL(il.trade_discount * cit.duty_rate, 0), 0), 2) AS "Trade Discount Duty Savings",
+                     cit.spi_primary,
+                     "" AS "Original Duty Rate",
+                     "" AS "SPI Duty Savings",
+                     IF(e.fish_and_wildlife_transmitted_date IS NOT NULL, "Y", "N") AS "Fish and Wildlife",
+                     0 AS "Hanger Duty Savings", # currently not used
+                     "" AS "MP vs Air/Sea",
+                     "" AS "MP vs EPD",
+                     "" AS "MP vs Trade Discount",
+                     "" AS "MP vs Air/Sea/EPD Trade",
+                     "" AS "First Sale Savings",
+                     "" AS "Air/Sea Savings",
+                     "" AS "EPD Savings",
+                     "" AS "Trade Discount Savings",
+                     "" AS "Applied Discount",
+                     # following are for calculations, not display
+                     e.customer_number,
+                     IFNULL(cil.contract_amount, 0),
+                     IFNULL(cil.non_dutiable_amount, 0),
+                     IFNULL(cil.value, 0),
+                     IFNULL(cit.duty_amount, 0),
+                     IFNULL(cil.miscellaneous_discount, 0),
+                     IFNULL(cil.other_amount, 0),
+                     IFNULL(il.air_sea_discount, 0) AS "air/sea discount attrib",
+                     IFNULL(il.middleman_charge, 0),
+                     e.import_country_id,
+                     e.id,
+                     cil.id
+              FROM entries e
+              INNER JOIN commercial_invoices ci on e.id = ci.entry_id
+              INNER JOIN commercial_invoice_lines cil on ci.id = cil.commercial_invoice_id
+              INNER JOIN commercial_invoice_tariffs cit on cit.commercial_invoice_line_id = cil.id
+              LEFT OUTER JOIN invoices i ON i.invoice_number = ci.invoice_number AND i.importer_id = e.importer_id
+              LEFT OUTER JOIN invoice_lines il ON i.id = il.invoice_id AND il.part_number = cil.part_number AND il.po_number = cil.po_number
+              LEFT OUTER JOIN companies inv_vendors ON inv_vendors.id = i.vendor_id
+              LEFT OUTER JOIN companies inv_factories ON inv_factories.id = i.factory_id
+              LEFT OUTER JOIN orders o ON o.order_number = CASE ?
+                                                             WHEN "#{ASCENA_CUST_NUM}" THEN CONCAT('ASCENA-', cil.product_line, '-', cil.po_number)
+                                                             WHEN "#{MAURICES_CUST_NUM}" THEN CONCAT('ASCENA-MAU-', cil.po_number)
+                                                             WHEN "#{ANN_CUST_NUM}" THEN CONCAT('ATAYLOR-', cil.po_number)
+                                                           END
+              LEFT OUTER JOIN companies ord_vendors ON ord_vendors.id = o.vendor_id
+              LEFT OUTER JOIN companies ord_factories ON ord_factories.id = o.factory_id
+              LEFT OUTER JOIN custom_values ord_type ON ord_type.customizable_id = o.id AND ord_type.customizable_type = "Order" AND ord_type.custom_definition_id = ?
+              WHERE e.customer_number = ? AND e.source_system = 'Alliance' AND e.fiscal_date >= ? and e.fiscal_date < ?
+              ORDER BY e.customer_number, e.broker_reference
+            SQL
+      ActiveRecord::Base.sanitize_sql_array([qry, cust_number, cdefs[:ord_type].id, cust_number, start_date, end_date])
     end
 
     def cdefs 

@@ -3,77 +3,58 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
   subject { described_class }
   let! (:ascena) { with_customs_management_id(Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE") }
   let! (:ann) { with_customs_management_id(Factory(:importer, name: "Ann"), "ATAYLOR") }
+  let! (:maurices) { with_customs_management_id(Factory(:importer, name: "Maurices"), "MAUR") }
+  let! (:ascena_master) { with_customs_management_id(Factory(:importer, name: "Ascena Master"), "ASCENAMASTER") }
 
-  describe "permission?" do
+  describe "permissions" do
+
+    let! (:user) { Factory(:master_user) }
     let!(:ms) do
       m = stub_master_setup
       allow(m).to receive(:custom_feature?).with("Ascena Reports").and_return true
+      allow(user).to receive(:view_entries?).and_return true
       m
     end
 
-    it "allows access for master users who can view entries" do
-      u = Factory(:master_user)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
+    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}, 
+                               {cust_num: "MAUR", sys_code: "MAUR", name: "MAURICES", short_name: "Maurices"}]}
 
-    it "allows access for Ascena users who can view entries" do
-      u = Factory(:user, company: ascena)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
-
-    it "allows access for users of Ascena's parent companies" do
-      parent = Factory(:company, linked_companies: [ascena])
-      u = Factory(:user, company: parent)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
-
-    it "allows access for Ann users who can view entries" do
-      u = Factory(:user, company: ann)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
-
-    it "allows access for users of Ann's parent companies" do
-      parent = Factory(:company, linked_companies: [ann])
-      u = Factory(:user, company: parent)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq true
-    end
-
-    it "prevents access by other companies" do
-      u = Factory(:user)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access by users who can't view entries" do
-      u = Factory(:master_user)
-      allow(u).to receive(:view_entries?).and_return false
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access if Ascena record not found" do
-      ascena.destroy
-      u = Factory(:user, company: ann)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access if Ann record not found" do
-      ann.destroy
-      u = Factory(:user, company: ascena)
-      allow(u).to receive(:view_entries?).and_return true
-      expect(subject.permission? u).to eq false
-    end
-
-    it "prevents access on instance without 'Ascena Reports' custom feature" do
-      u = Factory(:master_user)
-      allow(u).to receive(:view_entries?).and_return true
+    it "returns empty if 'Ascena Reports' custom feature absent" do
       allow(ms).to receive(:custom_feature?).with("Ascena Reports").and_return false
-      expect(subject.permission? u).to eq false
+      expect(subject.permissions user).to be_empty
+    end
+
+    it "returns empty if user can't view entries" do
+      allow(user).to receive(:view_entries?).and_return false
+      expect(subject.permissions user).to be_empty
+    end
+
+    it "returns info for Ascena, Ann, Maurices if master user" do
+      expect(subject.permissions user).to eq(cust_descriptions)
+    end
+
+    it "returns info for Ascena, Ann, Maurices if user belongs to ASCENAMASTER" do
+      user.company = ascena_master; user.company.save!
+      expect(subject.permissions user).to eq(cust_descriptions)
+    end
+
+    it "returns info for Ascena, Ann, Maurices if user belongs to ASCE_TRADE_ASSOC group" do
+      user.company.update master: false
+      g = Factory(:group, system_code: "ASCE_TRADE_ASSOC")
+      user.groups << g
+      expect(subject.permissions user).to eq(cust_descriptions)
+    end
+
+    it "returns only info for user's company if user doesn't belong to privileged category" do
+      user.company = ascena; user.company.save!
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}])
+    end
+
+    it "omits info for missing company" do
+      maurices.destroy
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+                                              {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}])
     end
   end
 
@@ -93,8 +74,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk']
-        expect(mail.subject).to eq "MPF Savings Report 2018-01"
-        expect(mail.body).to match /Attached is the MPF Savings Report for 2018-01\./
+        expect(mail.subject).to eq "Ascena-Ann MPF Savings Report 2018-01"
+        expect(mail.body).to match /Attached is the Ascena-Ann MPF Savings Report for 2018-01\./
       end
     end
 

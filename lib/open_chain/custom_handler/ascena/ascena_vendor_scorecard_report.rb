@@ -15,9 +15,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
   MONEY_FORMAT ||= XlsMaker.create_format "Money", :number_format => '$#,##0.00'
   CENTER_FORMAT ||= XlsMaker.create_format "Centered", :horizontal_align => :center
 
-  def self.permission? user
-    (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) &&
-        (user.view_entries? && (user.company.master? || user.company.system_code == SYSTEM_CODE || linked_to_ascena?(user.company)))
+  def self.cust_info
+    CUST_INFO.select{ |ci| [ASCENA_CUST_NUM, MAURICES_CUST_NUM].include? ci[:cust_num] }
   end
 
   def self.run_report run_by, settings
@@ -25,7 +24,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
   end
 
   def self.run_schedulable settings
-    raise "Scheduled instances of the Vendor Scorecard Report must include an email_to setting with an array of email addresses." unless settings['email_to'] && settings['email_to'].respond_to?(:each)
+    settings['email_to'] = Array.wrap(settings['email_to'])
+    settings['cust_numbers'] = Array.wrap(settings['cust_numbers'])
+    raise "Scheduled instances of the Vendor Scorecard Report must include an email_to setting with an array of email addresses." unless settings['email_to'].length > 0
+    raise "Scheduled instances of the Vendor Scorecard Report must include a cust_numbers setting with at least one customer number." unless settings['cust_numbers'].length > 0
+    # sets the fiscal calendar
     settings['company'] = 'ASCENA'
     run_if_configured(settings) do |current_fiscal_quarter_start_month, fiscal_date|
       # Get the previous quarter.  We're running the report over that, not the current quarter, which is what gets
@@ -39,10 +42,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
           settings['start_release_date'] = prev_fiscal_quarter_start_month.start_date
           settings['end_release_date'] = prev_fiscal_quarter_end_month.end_date
           quarter_descriptor = "Q#{(((prev_fiscal_quarter_start_month.month_number - 1) / 3) + 1)} #{prev_fiscal_quarter_start_month.year}"
-          report_descriptor = "Ascena Vendor Scorecard [#{quarter_descriptor}]"
+          cust_names = cust_nums_to_short_names settings["cust_numbers"]
+          report_descriptor = "#{cust_names} Vendor Scorecard [#{quarter_descriptor}]"
           settings['file_name'] = report_descriptor
           temp = self.new.run_scorecard_report settings
-          OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] #{report_descriptor}", "Attached is the Ascena Vendor Scorecard Report for #{quarter_descriptor}, #{prev_fiscal_quarter_start_month.start_date.strftime("%m/%d/%Y")} - #{prev_fiscal_quarter_end_month.end_date.strftime("%m/%d/%Y")}.", [temp]).deliver_now
+          OpenMailer.send_simple_html(settings['email_to'], "[VFI Track] #{report_descriptor}", "Attached is the #{cust_names} Vendor Scorecard Report for #{quarter_descriptor}, #{prev_fiscal_quarter_start_month.start_date.strftime("%m/%d/%Y")} - #{prev_fiscal_quarter_end_month.end_date.strftime("%m/%d/%Y")}.", [temp]).deliver_now
         ensure
           temp.close! if temp && !temp.closed?
         end
@@ -52,8 +56,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
 
   def run_scorecard_report settings
     start_date, end_date = get_dates settings
-    workbook = generate_report start_date, end_date, settings['range_field']
-    file_name = settings['file_name'].presence || get_on_demand_file_name(start_date, end_date)
+    workbook = generate_report start_date, end_date, settings['range_field'], settings['cust_numbers']
+    file_name = settings['file_name'].presence || get_on_demand_file_name(start_date, end_date, settings['cust_numbers'])
     workbook_to_tempfile(workbook, "VendorScorecard", file_name: "#{file_name}.xls")
   end
 
@@ -72,15 +76,15 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
     [start_date, end_date]
   end
 
-  def get_on_demand_file_name start_date, end_date
-    "Ascena Vendor Scorecard [#{Date.parse(start_date.to_s).strftime("%m-%d-%Y")} - #{Date.parse(end_date.to_s).strftime("%m-%d-%Y")}]"
+  def get_on_demand_file_name start_date, end_date, cust_nums
+    "#{self.class.cust_nums_to_short_names cust_nums} Vendor Scorecard [#{Date.parse(start_date.to_s).strftime("%m-%d-%Y")} - #{Date.parse(end_date.to_s).strftime("%m-%d-%Y")}]"
   end
 
-  def generate_report start_date, end_date, range_field
+  def generate_report start_date, end_date, range_field, cust_nums
     wb = XlsMaker.new_workbook
 
     data_arr = []
-    result_set = ActiveRecord::Base.connection.exec_query make_query(start_date, end_date, range_field)
+    result_set = ActiveRecord::Base.connection.exec_query make_query(start_date, end_date, range_field, cust_nums)
     result_set.each do |result_set_row|
       row = AscenaVendorScorecardRow.new
       row.vendor_name = result_set_row['vendor_name']
@@ -289,52 +293,53 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
     sheet
   end
 
-  def make_query date_start, date_end, range_field
-    <<-SQL
-    SELECT 
-      vendor.name AS 'vendor_name', 
-      ord.vendor_id, 
-      factory.name AS 'factory_name', 
-      ord.factory_id, 
-      ent.entry_number, 
-      first_sale_xref.value AS 'first_sale_eligible_date', 
-      ent.first_release_date, 
-      ci.invoice_number,
-      cil.value AS 'invoice_line_value', 
-      cil.product_line, 
-      cil.po_number, 
-      cil.part_number, 
-      cil.contract_amount, 
-      #{invoice_value_contract('cil')} AS 'invoice_value_contract',
-      #{duty_savings_first_sale('cil')} AS 'duty_savings_first_sale' 
-    FROM
-      commercial_invoices AS ci
-      INNER JOIN commercial_invoice_lines cil ON 
-        ci.id = cil.commercial_invoice_id
-      INNER JOIN entries AS ent ON 
-        ci.entry_id = ent.id 
-      INNER JOIN orders AS ord ON 
-        CONCAT('ASCENA-', cil.product_line, '-', cil.po_number) = ord.order_number 
-      INNER JOIN companies AS vendor ON 
-        ord.vendor_id = vendor.id
-      INNER JOIN companies AS factory ON 
-        ord.factory_id = factory.id
-      LEFT OUTER JOIN data_cross_references AS first_sale_xref ON 
-        cil.mid = SUBSTRING_INDEX(first_sale_xref.key, '-', 1) AND 
-        vendor.system_code = SUBSTRING_INDEX(first_sale_xref.key, '-', -1) AND 
-        first_sale_xref.cross_reference_type = 'asce_mid'
-    WHERE
-      ent.customer_number = 'ASCE' AND
-      ent.#{range_field} IS NOT NULL AND 
-      ent.#{range_field} >= '#{date_start}' AND 
-      ent.#{range_field} < '#{date_end}'
-    ORDER BY 
-      vendor.name, 
-      factory.name, 
-      ent.entry_number, 
-      ci.invoice_number, 
-      cil.product_line
-    SQL
+  def make_query date_start, date_end, range_field, cust_nums
+    qry = <<-SQL
+              SELECT 
+                vendor.name AS 'vendor_name', 
+                ord.vendor_id, 
+                factory.name AS 'factory_name', 
+                ord.factory_id, 
+                ent.entry_number, 
+                first_sale_xref.value AS 'first_sale_eligible_date', 
+                ent.first_release_date, 
+                ci.invoice_number,
+                cil.value AS 'invoice_line_value', 
+                cil.product_line, 
+                cil.po_number, 
+                cil.part_number, 
+                cil.contract_amount, 
+                #{invoice_value_contract('cil')} AS 'invoice_value_contract',
+                #{duty_savings_first_sale('cil')} AS 'duty_savings_first_sale' 
+              FROM
+                commercial_invoices AS ci
+                INNER JOIN commercial_invoice_lines cil ON 
+                  ci.id = cil.commercial_invoice_id
+                INNER JOIN entries AS ent ON 
+                  ci.entry_id = ent.id 
+                INNER JOIN orders AS ord ON 
+                  ord.order_number = IF(ent.customer_number = 'ASCE', CONCAT('ASCENA-', cil.product_line, '-', cil.po_number), CONCAT('ASCENA-MAU-', cil.po_number))
+                INNER JOIN companies AS vendor ON 
+                  ord.vendor_id = vendor.id
+                INNER JOIN companies AS factory ON 
+                  ord.factory_id = factory.id
+                LEFT OUTER JOIN data_cross_references AS first_sale_xref ON 
+                  cil.mid = SUBSTRING_INDEX(first_sale_xref.key, '-', 1) AND 
+                  vendor.system_code = SUBSTRING_INDEX(first_sale_xref.key, '-', -1) AND 
+                  first_sale_xref.cross_reference_type = 'asce_mid'
+              WHERE
+                ent.customer_number IN (?) AND
+                ent.#{range_field} IS NOT NULL AND 
+                ent.#{range_field} >= ? AND 
+                ent.#{range_field} < ?
+              ORDER BY 
+                vendor.name, 
+                factory.name, 
+                ent.entry_number, 
+                ci.invoice_number, 
+                cil.product_line
+          SQL
+    ActiveRecord::Base.sanitize_sql_array([qry, cust_nums, date_start, date_end])
   end
 
 end; end; end; end

@@ -2,7 +2,7 @@
   <button class="form_to" form_id="frm_run">Run Report</button>
   <button class="btn_link" link_to="<%=reports_path%>">Back</button>
 <%end%>
-<h2>Ascena / Ann Inc. Duty Savings Report</h2><br>
+<h2>Ascena / Ann Inc. / Maurices Duty Savings Report</h2><br>
 <%=form_tag reports_run_ascena_duty_savings_report_path, :id=>'frm_run' do -%>
 <div class="container">
   <div class="row" style="line-height: 2.5">
@@ -12,7 +12,7 @@
   <br>
   <div class="row" style="line-height: 2.5">
     <div class="col-md-2"><label class="control-label" for="start_date">Company:</label></div>
-    <div class="col-md-3"><%=select_tag :cust_numbers, options_for_select([["ASCENA TRADE SERVICES LLC", @cust_numbers[:ascena]], ["ANN TAYLOR INC", @cust_numbers[:ann]], ["Combine both companies", "#{@cust_numbers[:ascena]},#{@cust_numbers[:ann]}"]]), :class=>'form-control'%></div>
+    <div class="col-md-3"><%=select_tag :cust_numbers, options_for_select(@cust_info), :class=>'form-control'%></div>
   </div>
 </div>
 <%end%>

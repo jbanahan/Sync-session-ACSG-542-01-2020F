@@ -30,7 +30,7 @@ $(function() {
     setFieldAccess();
   })
 
-  $('#run_as_company').change(function () {
+  $('#cust_num').change(function () {
     if (this.value == 'ATAYLOR') {
       enableReleaseDate();
       $('input[type=radio]').filter('[value=first_release_date]').prop('checked', true);
@@ -64,7 +64,7 @@ $(function() {
       }
     }
 
-    if ($('#run_as_company').val() == '') {
+    if ($('#cust_num').val() == '') {
       window.alert("A Company must be selected.");
       return false;
     }
@@ -75,7 +75,7 @@ $(function() {
   <button class="form_to" form_id="frm_run">Run Report</button>
   <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
 <%end%>
-<h2>Ascena Entry Audit Report</h2><br>
+<h2>Ascena / Ann Inc. / Maurices Entry Audit Report</h2><br>
 <%=form_tag reports_run_ascena_entry_audit_report_path, :id=>'frm_run' do -%>
 <div class="container">
   <div class="release-date">
@@ -106,10 +106,10 @@ $(function() {
   <div class="run-as-company">
     <div class="row" style="line-height: 2.5">
       <div class="col-md-3 offset-md-1"><label class="control-label">Company:</label></div>
-      <div class="col-md-2"><%=select_tag(:run_as_company, "<option value='' selected='selected'>Select One</option><option value='ASCENA'>ASCENA TRADE SERVICES LLC</option><option value='ATAYLOR'>ANNTAYLOR INC.</option>".html_safe)%></div>
+      <div class="col-md-3"><%=select_tag :cust_number, options_for_select(@cust_info), :class=>'form-control'%></div>
     </div>
     <div class="row" style="line-height: 2.5">
-      <div class="col-md-3 offset-md-1" style="width:100%">If Report is run for ANNTAYLOR INC., only First Release Date parameters are available.</div>
+      <div class="col-md-3 offset-md-1" style="width:100%">If Report is run for ANN TAYLOR INC, only First Release Date parameters are available.</div>
     </div>
   </div>
 </div>
