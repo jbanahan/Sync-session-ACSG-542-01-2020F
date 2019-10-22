@@ -89,50 +89,8 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
         expect(subject.sync_csv).to be_nil
       end
 
-      it "does not sync a product without an classification" do
-        exported_product.classifications.destroy_all
-
-        expect(subject.sync_csv).to be_nil
-      end
-
-      it "does not sync a product without a tariff 1" do
-        exported_product.classifications.first.tariff_records.first.update_attributes! hts_1: ""
-
-        expect(subject.sync_csv).to be_nil
-      end
-
-      it "does not sync a product without a Fabric 1 value" do
-        exported_product.update_custom_value! cdefs[:fabric_1], ""
-
-        expect(subject.sync_csv).to be_nil
-      end
-
-      it "does not sync a product without a Fabric Type 1 value" do
-        exported_product.update_custom_value! cdefs[:fabric_type_1], ""
-
-        expect(subject.sync_csv).to be_nil
-      end
-
-      it "does not sync a product without a Fabric % 1 value" do
-        exported_product.update_custom_value! cdefs[:fabric_percent_1], 0
-
-        expect(subject.sync_csv).to be_nil
-      end
-
-      it "does not sync a product without a Fiber Content value" do
-        exported_product.update_custom_value! cdefs[:fiber_content], ""
-
-        expect(subject.sync_csv).to be_nil
-      end
-
       it "does not sync a product without a GCC Description value" do
         exported_product.update_custom_value! cdefs[:msl_gcc_desc], ""
-
-        expect(subject.sync_csv).to be_nil
-      end
-
-      it "does not sync a product without a Non-Textile Flag value" do
-        exported_product.update_custom_value! cdefs[:non_textile], ""
 
         expect(subject.sync_csv).to be_nil
       end

@@ -255,17 +255,12 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
     q = <<-SQL 
           SELECT DISTINCT products.id
           FROM products
-            INNER JOIN classifications c on c.product_id = products.id 
-            INNER JOIN tariff_records t on t.classification_id = c.id AND t.hts_1 <> ''
+            LEFT OUTER JOIN classifications c on c.product_id = products.id 
+            LEFT OUTER JOIN tariff_records t on t.classification_id = c.id AND t.hts_1 <> ''
+            INNER JOIN custom_values msl_gcc_desc on msl_gcc_desc.customizable_id = products.id AND msl_gcc_desc.customizable_type = 'Product' AND msl_gcc_desc.custom_definition_id = #{cdefs[:msl_gcc_desc].id} AND msl_gcc_desc.string_value <> ''
             LEFT OUTER JOIN custom_values ax_export ON ax_export.customizable_id = products.id AND ax_export.customizable_type = 'Product' AND ax_export.custom_definition_id = #{cdefs[:ax_export_status].id}
             LEFT OUTER JOIN custom_values ax_export_manual ON ax_export_manual.customizable_id = products.id AND ax_export_manual.customizable_type = 'Product' AND ax_export_manual.custom_definition_id = #{cdefs[:ax_export_status_manual].id}
             LEFT OUTER JOIN custom_values ax_updated_without_change ON ax_updated_without_change.customizable_id = products.id AND ax_updated_without_change.customizable_type = 'Product' AND ax_updated_without_change.custom_definition_id = #{cdefs[:ax_updated_without_change].id}
-            INNER JOIN custom_values fabric_1 on fabric_1.customizable_id = products.id AND fabric_1.customizable_type = 'Product' AND fabric_1.custom_definition_id = #{cdefs[:fabric_1].id} AND fabric_1.string_value <> ''
-            INNER JOIN custom_values fabric_type_1 on fabric_type_1.customizable_id = products.id AND fabric_type_1.customizable_type = 'Product' AND fabric_type_1.custom_definition_id = #{cdefs[:fabric_type_1].id} AND fabric_type_1.string_value <> ''
-            INNER JOIN custom_values fabric_percent_1 on fabric_percent_1.customizable_id = products.id AND fabric_percent_1.customizable_type = 'Product' AND fabric_percent_1.custom_definition_id = #{cdefs[:fabric_percent_1].id} AND fabric_percent_1.decimal_value > 0
-            INNER JOIN custom_values fiber_content on fiber_content.customizable_id = products.id AND fiber_content.customizable_type = 'Product' AND fiber_content.custom_definition_id = #{cdefs[:fiber_content].id} AND fiber_content.string_value <> ''
-            INNER JOIN custom_values msl_gcc_desc on msl_gcc_desc.customizable_id = products.id AND msl_gcc_desc.customizable_type = 'Product' AND msl_gcc_desc.custom_definition_id = #{cdefs[:msl_gcc_desc].id} AND msl_gcc_desc.string_value <> ''
-            INNER JOIN custom_values non_textile on non_textile.customizable_id = products.id AND non_textile.customizable_type = 'Product' AND non_textile.custom_definition_id = #{cdefs[:non_textile].id} AND non_textile.string_value <> ''
         SQL
     if self.custom_where.blank?
       q << " #{Product.join_clause_for_need_sync(sync_code)}
