@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
 
   describe "run_validation" do
     let (:entry) {
-      e = Factory(:entry, customer_number: "ASCE", entry_filed_date: Date.new(2017,4,21))
+      e = Factory(:entry, entry_filed_date: Date.new(2017,4,21))
       i = e.commercial_invoices.create! invoice_number: "INV"
       l = i.commercial_invoice_lines.create! line_number: 1, value_appraisal_method: "F", mid: "MID", contract_amount: 10, po_number: '12345', product_line: 'JST'
       l.commercial_invoice_tariffs.create! entered_value: 5
@@ -21,45 +21,14 @@ describe OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale do
       DataCrossReference.add_xref! DataCrossReference::ASCE_MID, 'MID2-KONVENIENTZ', '2017-04-20'
     }
 
-    it "throws exception for any entries with customer numbers other than 'ASCE', 'MAUR'" do
-      entry.update! customer_number: "ACME"
-      expect{ subject.run_validation entry }.to raise_error "Validation can only be run with customers 'ASCE' and 'MAUR'. Found: ACME"
+    it "validates presence of first sale information on invoice lines that are first sale MIDs" do
+      expect(subject.run_validation entry).to be_nil
     end
 
-    # These two context blocks are meant to show with two representative tests that the suite can be run
-    # for either Ascena or Maurices (though the rest uses Ascena exclusively)
-    
-    context "Ascena" do
-      it "validates presence of first sale information on invoice lines that are first sale MIDs" do
-        expect(subject.run_validation entry).to be_nil
-      end
-
-      it "errors if value appraisal method is wrong or contract amount is missing" do
-        entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C"
-        entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil
-        expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have Value Appraisal Method and Contract Amount set.\nInvoice # INV / Line # 2 must have Value Appraisal Method and Contract Amount set."
-      end
-    end
-
-    context "Maurices" do
-      before do
-        Order.all.each do |o| 
-          old = o.order_number.split("-").last
-          o.update! order_number: "ASCENA-MAU-#{old}"
-        end
-
-        entry.update! customer_number: "MAUR"
-      end
-
-      it "validates presence of first sale information on invoice lines that are first sale MIDs" do
-        expect(subject.run_validation entry).to be_nil
-      end
-
-      it "errors if value appraisal method is wrong or contract amount is missing" do
-        entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C"
-        entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil
-        expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have Value Appraisal Method and Contract Amount set.\nInvoice # INV / Line # 2 must have Value Appraisal Method and Contract Amount set."
-      end
+    it "errors if value appraisal method is wrong or contract amount is missing" do
+      entry.commercial_invoices.first.commercial_invoice_lines.first.update_attributes! value_appraisal_method: "C"
+      entry.commercial_invoices.first.commercial_invoice_lines.second.update_attributes! contract_amount: nil
+      expect(subject.run_validation entry).to eq "Invoice # INV / Line # 1 must have Value Appraisal Method and Contract Amount set.\nInvoice # INV / Line # 2 must have Value Appraisal Method and Contract Amount set."
     end
 
     it "does not error if entry-filed date is before the FS Start Date as long as Vendor-MID isn't in xref" do
