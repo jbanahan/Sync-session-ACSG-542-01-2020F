@@ -57,7 +57,7 @@ class MonthlyStatement < ActiveRecord::Base
   belongs_to :port, class_name: "Port", foreign_key: "port_code", primary_key: 'schedule_d_code'
 
   def self.search_secure user, base_object
-    base_object.where(DailyStatement.search_where(user))
+    base_object.where(MonthlyStatement.search_where(user))
   end
 
   def self.search_where user
