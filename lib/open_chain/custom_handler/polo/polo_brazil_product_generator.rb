@@ -76,7 +76,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
   end
 
   def send_file local_file, destination_file_name
-    FtpSender.send_file("connect.vfitrack.net",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_RL_Brazil' : '/_to_RL_Brazil'),:remote_file_name=>destination_file_name})
+    FtpSender.send_file("connect.vfitrack.net",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_RL_Brazil' : '/_to_RL_Brazil'), :protocol=>"sftp", :remote_file_name=>destination_file_name})
   end
 
   private

@@ -308,14 +308,14 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     it 'should send file' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_to_RL_Brazil',:remote_file_name=>fn})
+      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_to_RL_Brazil', :protocol=>"sftp", :remote_file_name=>fn})
       OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator.new.send_file(@tmp, fn)
     end
   
     it 'should send file in qa_mode' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_test_to_RL_Brazil',:remote_file_name=>fn})
+      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_test_to_RL_Brazil', :protocol=>"sftp", :remote_file_name=>fn})
       OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator.new(:env=>:qa).send_file(@tmp, fn)
     end
   end
