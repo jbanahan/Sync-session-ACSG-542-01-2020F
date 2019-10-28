@@ -381,11 +381,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
     if order_line.nil?
       order_line = order.order_lines.build line_number: line_number
     else
-      # If we're updating a line that's booked or shipping, we cannot change the product on it..any other information is ok to change.
-      existing_part_number = order_line.product.custom_value(cdefs[:prod_part_number])
-      if order_line.booked? || order_line.shipping?
-        inbound_file.reject_and_raise("Order Line # #{order_line.line_number} with Part Number #{existing_part_number} is already associated with a shipment.  The part number cannot be changed to #{part_number}.") if part_number != existing_part_number
-      end
+      existing_order_line_booked_or_shipping?(order_line, part_number, unique_identifier)
     end
 
     order_line.product = product_cache[unique_identifier]
@@ -577,6 +573,15 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
   # configuration option is set to true (default == true)
   def prefix_identifier_value company, value
     prefix_identifiers_with_system_codes? ? "#{company.system_code}-#{value}" : value
+  end
+
+  def existing_order_line_booked_or_shipping? order_line, part_number, unique_identifier
+    # If we're updating a line that's booked or shipping, we cannot change the product on it..any other information is ok to change.
+    existing_part_number = (prefix_identifiers_with_system_codes? ? order_line.product.custom_value(cdefs[:prod_part_number]) : order_line.product.unique_identifier)
+
+    if order_line.booked? || order_line.shipping?
+      inbound_file.reject_and_raise("Order Line # #{order_line.line_number} with Part Number #{existing_part_number} is already associated with a shipment.  The part number cannot be changed to #{part_number}.") if order_line.product.unique_identifier != unique_identifier
+    end
   end
 
 end; end; end; end

@@ -23,13 +23,13 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
   let (:importer) { Factory(:importer, system_code: "SYS") }
   let (:user) { Factory(:user) }
   let (:order) { Factory(:order, order_number: "SYS-RTTC216384", customer_order_number: "RTTC216384", importer: importer)}
-  let (:product) { Factory(:product, unique_identifier: "SYS-7696164") }
+  let (:product) { Factory(:product, importer: importer, unique_identifier: "SYS-7696164") }
   let (:order_line_1) { Factory(:order_line, order: order, line_number: 1, product: product) }
   let (:order_line_2) { Factory(:order_line, order: order, line_number: 2, product: product) }
   let (:lading_port) { Factory(:port, name: "Chennai", iata_code: "MAA")}
   let (:unlading_port) { Factory(:port, name: "Montréal", iata_code: "YUL")}
   let (:final_dest_port) { Factory(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
-  let (:inbound_file) { InboundFile.new }
+  let (:inbound_file) { InboundFile.new s3_path: "/path/to/file.xml"}
   subject { FakeGtnAsnXmlParser.new }
 
   describe "process_asn_update" do  
@@ -192,12 +192,92 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
         expect(s.vendor).not_to be_nil
         expect(s.vendor).to have_system_identifier("GTN Vendor", "23894")
       end
+    end
 
-      it "errors if instructed to create missing purchase orders" do
-        # This is mostly just a marker test to make sure the parser raises this error until the 
-        # feature is implemented.
-        expect_any_instance_of(FakeGtnAsnXmlParser).to receive(:inbound_file).and_return inbound_file
-        expect { FakeGtnAsnXmlParser.new(create_missing_purchase_orders: true) }.to raise_error StandardError
+    context "it creates shell orders if instructed" do
+      
+      let(:cdefs) { subject.cdefs }
+
+      context "with prefixed system codes" do
+        subject { FakeGtnAsnXmlParser.new(create_missing_purchase_orders: true) }
+
+        it "creates shipment and generates PO and Product data" do
+          Order.destroy_all
+          Product.destroy_all
+
+          s = subject.process_asn_update asn_xml, user, "bucket", "key"
+
+          order = Order.all.first
+          product = Product.all.first
+
+          l = s.shipment_lines.first
+          expect(l.invoice_number).to eq "EEGC/7469/1819"
+          expect(l.carton_qty).to eq 27
+          expect(l.quantity).to eq BigDecimal("324")
+          expect(l.gross_kgs).to eq BigDecimal("44.388")
+          expect(l.cbms).to eq BigDecimal("0.319")
+          expect(l.product).to eq product
+          expect(l.order_lines.first).to eq order.order_lines.first
+
+          ol = order.order_lines.first
+          expect(ol.product).to eq product
+          expect(ol.line_number).to eq 1
+
+          l = s.shipment_lines.second
+          expect(l.invoice_number).to eq "EEGC/7469/1819"
+          expect(l.carton_qty).to eq 23
+          expect(l.quantity).to eq BigDecimal("276")
+          expect(l.gross_kgs).to eq BigDecimal("37.812")
+          expect(l.cbms).to eq BigDecimal("0.271")
+          expect(l.product).to eq product
+          expect(l.order_lines.first).to eq order.order_lines.second
+
+          ol = order.order_lines.second
+          expect(ol.product).to eq product
+          expect(ol.line_number).to eq 2
+
+          expect(order.entity_snapshots.length).to eq 1
+          s = order.entity_snapshots.first
+          expect(s.user).to eq user
+          expect(s.context).to eq inbound_file.s3_path
+
+          expect(product.unique_identifier).to eq "SYS-7696164"
+          expect(product.custom_value(cdefs[:prod_part_number])).to eq "7696164"
+          expect(product.importer).to eq importer
+          expect(product.entity_snapshots.length).to eq 1
+          s = product.entity_snapshots.first
+          expect(s.user).to eq user
+          expect(s.context).to eq inbound_file.s3_path
+        end
+
+        it "adds lines to an existing order if the line is missing" do
+          # Just change the line number on the existing order line record so then the asn process will construct a new record
+          order_line_1.update! line_number: 10
+
+          s = subject.process_asn_update asn_xml, user, "bucket", "key"
+
+          order.reload
+          expect(order.order_lines.length).to eq 3
+        end
+
+      end
+      
+      context "without system identifiers" do
+        subject { FakeGtnAsnXmlParser.new(create_missing_purchase_orders: true, prefix_identifiers_with_system_codes: false) }
+
+        it "does not prefix system codes on orders and products if not specified" do
+          Order.destroy_all
+          Product.destroy_all
+
+          s = subject.process_asn_update asn_xml, user, "bucket", "key"
+
+          order = Order.all.first
+          product = Product.all.first
+          
+          expect(order.order_number).to eq "RTTC216384"
+          expect(product.unique_identifier).to eq "7696164"
+          expect(product.custom_value(cdefs[:prod_part_number])).to be_nil
+        end 
       end
     end
   end

@@ -7,8 +7,12 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
   let (:ca) { Factory(:country, iso_code: "CA") }
   let (:pvh) { Factory(:importer, system_code: "PVH") }
   let (:user) { Factory(:user) }
-  let (:order) { Factory(:order, order_number: "PVH-RTTC216384", importer: pvh)}
-  let (:product) { Factory(:product, unique_identifier: "PVH-7696164") }
+  let (:order) { Factory(:order, order_number: "PVH-RTTC216384", customer_order_number: "RTTC216384", importer: pvh)}
+  let (:product) { 
+    p = Factory(:product, importer_id: pvh.id, unique_identifier: "PVH-7696164") 
+    p.update_custom_value! cdefs[:prod_part_number], "7696164"
+    p
+  }
   let (:order_line_1) { Factory(:order_line, order: order, line_number: 1, product: product) }
   let (:order_line_2) { Factory(:order_line, order: order, line_number: 2, product: product) }
   let (:lading_port) { Factory(:port, name: "Chennai", iata_code: "MAA")}
@@ -29,8 +33,6 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       india
       ca
       pvh
-      order_line_1
-      order_line_2
       invoice
       lading_port
       unlading_port
@@ -40,6 +42,12 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
 
     it "creates an ocean shipment" do
       s = subject.process_asn_update asn_xml, user, "bucket", "key"
+
+      # The parser creates Orders and Products (this is all tested in the abstract parser unit tests)
+      order = Order.first
+      order_line_1 = order.order_lines.first
+      order_line_2 = order.order_lines.second
+      product = Product.first
 
       expect(s).not_to be_nil
       expect(s.importer).to eq pvh
@@ -126,43 +134,46 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       expect(l.mid).to eq "MYKULRUB669TAI"
     end
 
-    it "clears any existing Kewill Entry sync record's sent_at date" do
-      sr = existing_shipment.sync_records.create! trading_partner: "Kewill Entry", sent_at: Time.zone.now
+    context "with existing data" do 
 
-      subject.process_asn_update asn_xml, user, "bucket", "key"
+      it "clears any existing Kewill Entry sync record's sent_at date" do
+        sr = existing_shipment.sync_records.create! trading_partner: "Kewill Entry", sent_at: Time.zone.now
 
-      sr.reload
-      expect(sr.sent_at).to be_nil
-    end
+        subject.process_asn_update asn_xml, user, "bucket", "key"
 
-    it "clears any existing containers not in the xml" do
-      c = existing_shipment.containers.create! container_number: "CONTAINER"
-      l = Factory(:shipment_line, shipment: existing_shipment, container: c, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
-    
-      subject.process_asn_update asn_xml, user, "bucket", "key"
+        sr.reload
+        expect(sr.sent_at).to be_nil
+      end
 
-      expect(c).not_to exist_in_db
-      expect(l).not_to exist_in_db
-    end
+      it "clears any existing containers not in the xml" do
+        c = existing_shipment.containers.create! container_number: "CONTAINER"
+        l = Factory(:shipment_line, shipment: existing_shipment, container: c, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+      
+        subject.process_asn_update asn_xml, user, "bucket", "key"
 
-    it "clears shipment lines that were not originally in a container, but were moved to a container on a resend" do
-      l = Factory(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+        expect(c).not_to exist_in_db
+        expect(l).not_to exist_in_db
+      end
 
-      subject.process_asn_update asn_xml, user, "bucket", "key"
-      expect(l).not_to exist_in_db
-    end
+      it "clears shipment lines that were not originally in a container, but were moved to a container on a resend" do
+        l = Factory(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
 
-    it "retains shipment lines that continue to not be in a container" do
-      xml_data.gsub!("<ContainerNumber>SGIND25321</ContainerNumber>", "")
+        subject.process_asn_update asn_xml, user, "bucket", "key"
+        expect(l).not_to exist_in_db
+      end
 
-      l = Factory(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
+      it "retains shipment lines that continue to not be in a container" do
+        xml_data.gsub!("<ContainerNumber>SGIND25321</ContainerNumber>", "")
 
-      subject.process_asn_update asn_xml, user, "bucket", "key"
+        l = Factory(:shipment_line, shipment: existing_shipment, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
 
-      existing_shipment.reload
-      expect(existing_shipment.containers.length).to eq 0
-      expect(existing_shipment.shipment_lines.length).to eq 2
-      expect(l).not_to exist_in_db
+        subject.process_asn_update asn_xml, user, "bucket", "key"
+
+        existing_shipment.reload
+        expect(existing_shipment.containers.length).to eq 0
+        expect(existing_shipment.shipment_lines.length).to eq 2
+        expect(l).not_to exist_in_db
+      end
     end
   end
 

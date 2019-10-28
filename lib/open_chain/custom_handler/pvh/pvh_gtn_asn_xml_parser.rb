@@ -4,7 +4,7 @@ require 'open_chain/custom_handler/vandegrift/kewill_entry_load_shipment_compara
 module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser
 
   def initialize
-    super({})
+    super({create_missing_purchase_orders: true})
     @sent_containers = Set.new
   end
 

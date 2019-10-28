@@ -66,13 +66,6 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     @prefix_identifiers_with_system_codes = configuration[:prefix_identifiers_with_system_codes].nil? ? true : configuration[:prefix_identifiers_with_system_codes]
 
     @create_missing_purchase_orders = configuration[:create_missing_purchase_orders].nil? ? false : configuration[:create_missing_purchase_orders]
-
-    # This feature isn't implemented yet (our sole implementation for this parser sends
-    # PO files, so it's not needed at this time).  However, there is enough information in the ASN that 
-    # we could actually create PO's from them - but that's a future project.
-    if create_missing_purchase_orders?
-      inbound_file.error_and_raise("Because no customer yet needs to create missing purchase orders, this code does not exist yet. Please update the create_order_cache method with this ability.")
-    end
   end
 
   def prefix_identifiers_with_system_codes?
@@ -361,14 +354,19 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   def create_order_cache xml, user, key
     orders = nil
     cache = {}
-    if !create_missing_purchase_orders?
-      orders = find_orders(extract_order_numbers(xml))
-    else
-      inbound_file.error_and_raise("Not implemented.")
-    end
-    
+    order_numbers = extract_order_numbers(xml)
+    orders = find_orders(order_numbers)
     Array.wrap(orders).each {|o| cache[o.order_number] = o }
 
+    if create_missing_purchase_orders?
+      order_numbers.each do |customer_order_number|
+        order_number = prefix_identifier_value(importer, customer_order_number)
+        # If the order is already found, it's possible there's lines missing, so check those and add them
+        # otherwise, if it's not found create it.
+        cache[order_number] = create_or_update_order(importer, user, xml, customer_order_number, cache[order_number])
+      end
+    end
+    
     return cache
   end
 
@@ -381,12 +379,13 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     Order.where(order_number: order_numbers, importer_id: importer.id).includes(:order_lines).all
   end
 
-  def find_order_line order, item_xml
+  def find_order_line order, item_xml, reject_if_not_found: true
+    # Use the raw line item number value (w/ extra leading zeros) in the message
     xml_line = item_xml.text("LineItemNumber")
-    line_number = xml_line.to_i
+    line_number = order_line_item_number(item_xml)
 
     line = order.order_lines.find {|l| l.line_number == line_number }
-    inbound_file.reject_and_raise("Failed to find PO Line Number '#{xml_line}' on PO Number '#{order.customer_order_number}'.") if line.nil?
+    inbound_file.reject_and_raise("Failed to find PO Line Number '#{xml_line}' on PO Number '#{order.customer_order_number}'.") if line.nil? && reject_if_not_found
 
     line
   end
@@ -501,6 +500,104 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     # By default, Ocean is going to be the only mode we append the carrier code to the master bill for.
     # This method is very easily overridden for customer specific use cases/weirdness
     (ship_mode(xml).to_s =~ /Ocean/i) ? true : false
+  end
+
+  def create_or_update_order importer, user, xml, order_number, order
+    # Find all LineItems in the XML that have the specified order number, then pass them to the 'actual'
+    # create order method along with the lines.
+    line_items = REXML::XPath.each(xml, "Container/LineItems[PONumber = '#{order_number}']").to_a
+    create_or_update_order_from_line_items(importer, user, line_items, order)
+  end
+
+  def create_or_update_order_from_line_items(importer, user, line_items, order)
+    product_cache = find_or_create_products_from_line_items(importer, user, line_items)
+        
+    if order.nil?
+      new_order, order = find_or_create_order_from_line_item(importer, user, line_items.first)
+    else
+      new_order = false
+    end
+
+    new_lines = false
+    line_items.each do |line_item|
+      # If the line was already created, dont bother with it
+      order_line = find_order_line(order, line_item, reject_if_not_found: false)
+      if order_line.nil?
+        find_or_create_order_line_from_line_item(importer, product_cache, order, line_item)
+        new_lines = true
+      end
+    end
+
+    if new_order || new_lines
+      order.save!
+      order.create_snapshot user, nil, inbound_file.s3_path
+    end
+
+    order
+  end
+
+  def find_or_create_order_from_line_item(importer, user, line_item)
+    order_number = prefix_identifier_value(importer, line_item.text("PONumber"))
+    find_or_create_order(importer, order_number)
+  end
+
+  def find_or_create_order_line_from_line_item(importer, product_cache, order, line_item)
+    order_line = order.order_lines.build
+
+    order_line.line_number = order_line_item_number(line_item)
+    order_line.product = product_cache[prefix_identifier_value(importer, line_item.text("ProductCode"))]
+
+    order_line
+  end
+
+  def find_or_create_order importer, order_number
+    order = nil
+    new_order = false
+    Lock.acquire("Order-#{order_number}") do
+      order = Order.where(order_number: order_number, importer_id: importer.id).first_or_initialize
+      if !order.persisted?
+        new_order = true
+        order.save!
+      end
+    end
+    [new_order, order]
+  end
+
+  def find_or_create_products_from_line_items importer, user, line_items
+    parts_cache = {}
+    line_items.each do |line_item|
+      part_number = line_item.text("ProductCode").to_s
+      unique_identifier = prefix_identifier_value(importer, part_number)
+      next unless parts_cache[unique_identifier].nil? 
+
+      parts_cache[unique_identifier] = find_or_create_product(importer, user, unique_identifier, part_number)
+    end
+
+    parts_cache
+  end
+
+  def find_or_create_product importer, user, unique_identifier, part_number
+    product = nil
+    Lock.acquire("Product-#{unique_identifier}") do 
+      product = Product.where(importer_id: importer.id, unique_identifier: unique_identifier).first_or_initialize
+      if !product.persisted?
+        # If we're prefixing identifiers, it means that we're tracking the part number separately w/ a custom value too, so make sure to set it.
+        product.find_and_set_custom_value(cdefs[:prod_part_number], part_number) if prefix_identifiers_with_system_codes?
+
+        product.save!
+        product.create_snapshot user, nil, inbound_file.s3_path
+      end
+    end
+
+    product
+  end
+
+  def order_line_item_number xml
+    xml.text("LineItemNumber").to_i
+  end
+
+  def generic_cdef_uids
+    [:prod_part_number]
   end
 
 end; end; end; end
