@@ -1456,7 +1456,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = Entry.new(broker_reference: "TESTING")
       expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {}).and_return entry
 
-      expect(OpenChain::AllianceImagingClient).to receive(:request_images).with "TESTING", delay_seconds: 300
+      expect(OpenChain::AllianceImagingClient).to receive(:request_images).with "TESTING", delay_seconds: 600
       expect(entry).to receive(:broadcast_event).with(:save)
 
       described_class.parse json.to_json

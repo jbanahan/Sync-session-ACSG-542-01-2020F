@@ -690,4 +690,45 @@ describe OpenChain::AllianceImagingClient do
     end
 
   end
+
+  describe "request_images" do
+    subject { described_class }
+    let (:secrets) { 
+      {
+        "kewill_imaging" => {
+          "sqs_send_queue" => "send_queue",
+          "s3_bucket" => "bucket",
+          "sqs_receive_queue" => "queue"
+        }
+      }
+    }
+
+    let! (:ms) { 
+      ms = stub_master_setup 
+      allow(MasterSetup).to receive(:secrets).and_return secrets
+      ms
+    }
+
+    context "without custom feature enabled" do
+      before :each do 
+        expect(ms).to receive(:custom_feature?).with("Kewill Imaging Request Queue").and_return false
+      end
+
+      it "calls legacy request if custom feature is not enabled" do
+        expect(OpenChain::SQS).to receive(:send_json).with("send_queue", {"file_number"=> "12345", "sqs_queue" => "queue", "s3_bucket" => "bucket"}, {opts: 1})
+        described_class.request_images("12345", {opts: 1})
+      end
+    end
+    
+    context "with custom feature enabled" do
+      before :each do 
+        expect(ms).to receive(:custom_feature?).with("Kewill Imaging Request Queue").and_return true
+      end
+
+      it "calls DocumentRequestQueueItem if custom feature is enabled" do
+        expect(DocumentRequestQueueItem).to receive(:enqueue_kewill_document_request).with("12345", request_delay_minutes: nil)
+        described_class.request_images("12345", {opts: 1})
+      end
+    end
+  end
 end

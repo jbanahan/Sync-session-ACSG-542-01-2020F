@@ -33,12 +33,26 @@ class OpenChain::AllianceImagingClient
   # One of primary_keys or the s3 params must be present
   def self.bulk_request_images primary_keys: nil, s3_bucket: nil, s3_key: nil
     OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::ENTRY, primary_keys: primary_keys, primary_key_file_bucket: s3_bucket, primary_key_file_path: s3_key) do |good_count, entry|
-      request_images(entry.broker_reference) if entry.source_system=='Alliance'
+      request_images(entry.broker_reference) if Entry::KEWILL_SOURCE_SYSTEM == entry.source_system
     end
   end
-  
-  #not unit tested since it'll all be mocks
+
   def self.request_images file_number, message_options = {}
+    # Once we've fully established this is the new code path this custom_feature? can be 
+    # removed and the enqueue just called directly
+    if MasterSetup.get.custom_feature?("Kewill Imaging Request Queue")
+      request_delay_minutes = nil
+      if message_options[:delay_seconds] && message_options[:delay_seconds].to_i > 0
+        request_delay_minutes = message_options[:delay_seconds] / 60
+      end
+
+      DocumentRequestQueueItem.enqueue_kewill_document_request file_number, request_delay_minutes: request_delay_minutes
+    else
+      legacy_request_images file_number, message_options
+    end
+  end
+
+  def self.legacy_request_images file_number, message_options = {}
     conf = imaging_config
     OpenChain::SQS.send_json conf["sqs_send_queue"], {"file_number"=>file_number, "sqs_queue"=>conf['sqs_receive_queue'], "s3_bucket" => conf['s3_bucket']}, message_options
   end

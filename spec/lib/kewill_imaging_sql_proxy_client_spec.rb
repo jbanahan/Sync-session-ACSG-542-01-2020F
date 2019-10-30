@@ -33,4 +33,13 @@ describe OpenChain::KewillImagingSqlProxyClient do
       subject.request_images_added_between start_time, end_time, nil, "bucket", "queue"
     end
   end
+
+  describe "request_images_for_file" do
+    it "sends request" do
+      request_body = {"job_params" => {file_no: 12345}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
+      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/async_kewill_documents_for_file", request_body, {}, proxy_config['auth_token'])
+     
+      subject.request_images_for_file "12345", "bucket", "queue"
+    end
+  end
 end

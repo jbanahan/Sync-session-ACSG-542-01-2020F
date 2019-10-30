@@ -161,16 +161,14 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     entry = self.new.process_entry json, opts
 
     if entry
-      # We're setting up a message delay of 5 minutes here because it seems this feed comes across sometimes faster than
-      # Kewill Imaging can store off the files locally.  The imaging request gets over to our imaging clients prior to the 
-      # image existing in Kewill Imaging and thus we don't get any files back.  So, use :delay_seconds in order to hold back
-      # for 5 minutes.
       if MasterSetup.get.custom_feature?("Kewill Imaging")
-        # This can actually be removed at some point in the near future once we're sure the Kewill imaging push process is working fine
-        # Once it's workign fine, there's no reason at that point to be doing pull requests when the documents should be pushing over just
-        # fine...we're just double requesting every file and taxing the system more.  The "Request Images" button will still remain on the
-        # entry screen too.
-        OpenChain::AllianceImagingClient.request_images(entry.broker_reference, delay_seconds: 300) unless opts[:imaging] == false
+        # We're setting up a message delay of 10 minutes here because it seems this feed comes across sometimes faster than
+        # Kewill Imaging can store off the files locally.  The imaging request gets over to our imaging clients prior to the 
+        # image existing in Kewill Imaging and thus we don't get any files back.  So, use :delay_seconds in order to hold back
+        # for 10 minutes.
+        # There's also a point in time early on in data entry where the entry data is coming over fairly often, so we don't 
+        # want to constantly be requesting images on every single update.
+        OpenChain::AllianceImagingClient.request_images(entry.broker_reference, delay_seconds: 600) unless opts[:imaging] == false
       end
       entry.broadcast_event(:save)
     end

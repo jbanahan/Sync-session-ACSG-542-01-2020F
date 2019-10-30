@@ -18,4 +18,9 @@ module OpenChain; class KewillImagingSqlProxyClient < SqlProxyClient
     request 'kewill_updated_documents', params, {s3_bucket: s3_bucket, sqs_queue: sqs_queue}, {swallow_error: false}
   end
 
+  def request_images_for_file file_number, s3_bucket, sqs_queue
+    params = {file_no: file_number.to_i}
+    request 'async_kewill_documents_for_file', params, {s3_bucket: s3_bucket, sqs_queue: sqs_queue}, {swallow_error: false}
+  end
+
 end; end
