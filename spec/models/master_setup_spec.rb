@@ -422,4 +422,26 @@ describe MasterSetup do
       expect(subject.instance_directory).to eq Rails.root
     end
   end
+
+  describe "running_from_console?" do
+    subject { described_class }
+
+    it "returns true if Console constant define in Rails namespace" do
+      expect(Rails).to receive(:const_defined?).with("Console").and_return true
+      expect(MasterSetup.running_from_console?).to eq true
+    end
+
+    it "returns true if system was invoked from rake" do
+      expect(File).to receive(:basename).with($PROGRAM_NAME).and_return "rake"
+
+      expect(MasterSetup.running_from_console?).to eq true
+    end
+
+    it "returns false if Console not defined and rake not utilized" do
+      expect(File).to receive(:basename).with($PROGRAM_NAME).and_return "rails"
+      expect(Rails).to receive(:const_defined?).with("Console").and_return false
+
+      expect(MasterSetup.running_from_console?).to eq false
+    end
+  end
 end

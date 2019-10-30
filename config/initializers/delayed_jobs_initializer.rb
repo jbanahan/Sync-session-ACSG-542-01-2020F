@@ -84,7 +84,7 @@ class ChainDelayedJobPlugin < Delayed::Plugin
         # We only want to stop the worker if we know an update has already been started, otherwise, it's possible
         # if there's enough jobs in the queue ahead of the delayed job upgrade job that we'll kill off all the workers
         # prior to the actual upgrade job being run.
-        Lock.acquire(Lock::UPGRADE_LOCK) do
+        Lock.acquire(Lock::UPGRADE_LOCK, yield_in_transaction: false) do
           # Don't stop if we're the very last queue
           if ChainDelayedJobPlugin.number_of_running_queues > 1 && ChainDelayedJobPlugin.upgrade_started?
             worker.stop
@@ -135,6 +135,9 @@ class ChainDelayedJobPlugin < Delayed::Plugin
   end
 end
 
+# Add our plugin to the worker's plugin list.
+Delayed::Worker.plugins << ChainDelayedJobPlugin
+
 # The following sorta monkey patches support for telling delayed jobs to NOT reschedule a failed job if the error class is UnreportedError.
 # There doesn't seem to be a way to hook the lifecyle to get at the actual errors raised by a job when the Object.delay.method approach
 # is used.  Even the callbacks for the custom jobs approach seem to only allow for reporting the error and not for killing off the job.
@@ -151,6 +154,8 @@ module OpenChain; module UnreportedErrorFailedJobHandler
 end; end
 
 module Delayed; class Worker
+  # prepend used here because we effectively want to override the 'handle_failed_job' method in the base
+  # Woker class with our re-implementation from UnreportedErrorFailedJobHandler
   prepend OpenChain::UnreportedErrorFailedJobHandler
   
 end; end;
@@ -168,4 +173,14 @@ end; end;
 # So for the actual delayed jobs process that might need to be run to process jobs in an alternate queue
 # you need to set the alternate queue value in a `config/dj_queue.txt` file (see scripts/start_dj.sh).
 Delayed::Worker.default_queue_name = MasterSetup.config_value(:delayed_job_queue_name, default: 'default')
-Delayed::Worker.plugins << ChainDelayedJobPlugin
+
+# The following setting tells the delayed worker process to raise a signal error and exit immediately when a TERM signal 
+# is received by the worker process.  What this does is kill the job (regardless of its state) and remove the db lock
+# indicators immediately when a TERM signal is received.
+#
+# The standard job stop process (executed by the daemons gem which delayed_job utilizes under the covers) is to issue
+# an INT signal to the process first.  The worker will then attempt to complete any job it is currently running.  If
+# the worker process does not exit after several seconds, then the daemon process issues a TERM signal to the process.
+# This should result in the job stopping immediately, logging a signal error, cleaning up the locks and then exiting.
+# This is a clean exiting process as the job can now be picked up by another worker process.
+Delayed::Worker.raise_signal_exceptions = :term

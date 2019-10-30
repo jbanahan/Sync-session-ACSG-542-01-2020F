@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-cloudwatch'
 require 'open_chain/aws_config_support'
 
 module OpenChain; class CloudWatch

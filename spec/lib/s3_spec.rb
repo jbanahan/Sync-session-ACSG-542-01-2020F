@@ -1,5 +1,3 @@
-require 'open_chain/s3'
-
 describe OpenChain::S3, s3: true do
 
   let! (:bucket) { test_bucket }

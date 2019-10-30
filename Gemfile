@@ -12,13 +12,18 @@ gem 'coffee-rails', "4.2.2"
 gem 'jquery-rails', '4.3.3'
 # END RAILS DEFAULT GEMS
 
+# AWS gems - only utilize gems required for specific services referenced by the project
+gem 'aws-sdk-ec2', '1.70.0'
+gem 'aws-sdk-ssm', '1.36.0'
+gem 'aws-sdk-rds', '1.43.0'
+gem 'aws-sdk-sqs', '1.10.0'
+gem 'aws-sdk-s3', '1.30.1'
+gem 'aws-sdk-cloudwatch', '1.13.0'
+
 # This can be removed once we get everything ported to strong_parameters
 gem 'protected_attributes', '1.1.4'
 gem 'jquery-ui-rails', '6.0.1'
 gem 'mysql2', '0.5.2'
-gem 'aws-sdk', '3.0.1'
-# Handles AWS SNS posts
-gem 'heroic-sns', '~> 1.1'
 gem 'will_paginate', '3.1.6'
 gem 'paperclip', '6.1.0'
 gem 'uuidtools', '2.1.4'

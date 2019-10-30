@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-ec2'
 require 'open_chain/aws_config_support'
 require 'open_chain/aws_util_support'
 

@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-s3'
 require 'open_chain/aws_config_support'
 
 module OpenChain; class S3

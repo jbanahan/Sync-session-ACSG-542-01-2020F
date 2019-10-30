@@ -228,13 +228,6 @@ OpenChain::Application.routes.draw do
         resources :state_toggle_buttons, only: [:edit, :update, :destroy]
 
         resources :business_validation_schedules, except: [:show]
-
-        resources :kewill_entry_documents, only: [] do
-          collection do
-            post :send_s3_file_to_kewill
-          end
-        end
-
       end
       
       resources :one_time_alerts, only: [:edit, :update, :destroy] do 

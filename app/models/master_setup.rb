@@ -61,6 +61,14 @@ class MasterSetup < ActiveRecord::Base
   after_update :update_cache
   after_find :update_cache
 
+  # Returns true if run from `rails c[onsole]` or a `rake` task
+  def self.running_from_console?
+    # At the moment, any time rake is invoked it means we're running from the command line
+    # We're not starting a server via rake
+    # This may need to change if we upgrade to newer versions of rails that unify rails/rake commands
+    (Rails.const_defined?("Console") || File.basename($PROGRAM_NAME) == "rake")
+  end
+
   # Returns true if Rails.env indicates production
   def self.production_env?
     rails_env.production?

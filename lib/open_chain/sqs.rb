@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-sqs'
 require 'open_chain/aws_config_support'
 
 module OpenChain; class SQS
