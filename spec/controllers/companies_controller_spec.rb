@@ -31,7 +31,7 @@ describe CompaniesController do
       get :edit, id: company
       expect(response).to be_success
       expect(assigns(:company)).to eq company
-      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], [ModelField.find_by_uid(:ent_arrival_date).label, :ent_arrival_date], [ModelField.find_by_uid(:ent_first_release).label, :ent_first_release]])
+      expect(assigns(:fiscal_reference_opts)).to eq([[nil, ""], [ModelField.find_by_uid(:ent_arrival_date).label, :ent_arrival_date], [ModelField.find_by_uid(:ent_first_release).label, :ent_first_release], [ModelField.find_by_uid(:ent_release_date).label, :ent_release_date]])
     end
 
     it "denies access to unauthorized user" do

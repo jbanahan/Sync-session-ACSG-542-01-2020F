@@ -77,7 +77,7 @@ class CompaniesController < ApplicationController
   # GET /companies/1/edit
   def edit
      @company = Company.find(params[:id])
-     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release]
+     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release, :ent_release_date]
      action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) {
        set_includes
      }
