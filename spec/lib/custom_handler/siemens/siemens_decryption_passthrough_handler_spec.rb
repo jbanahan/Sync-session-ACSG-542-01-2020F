@@ -44,7 +44,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler 
       let (:log) { InboundFile.new file_name: "VENDOR.txt" }
 
       it "uses correct credentials for vendor files" do
-        expect(subject).to receive(:fenixapp_vfitrack_net).with("Incoming/Vendors/SIEMENS/Incoming")
+        expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/siemens/vendors")
         subject.ftp_credentials
       end
     end
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler 
       let (:log) { InboundFile.new file_name: "CAXPR.txt" }
 
       it "uses correct credentials for product files" do
-        expect(subject).to receive(:fenixapp_vfitrack_net).with("Incoming/Parts/SIEMENS/Incoming")
+        expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/siemens/parts")
         subject.ftp_credentials
       end
     end

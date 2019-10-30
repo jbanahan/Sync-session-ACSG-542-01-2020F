@@ -23,9 +23,9 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionP
     filetype = self.class.get_filetype(log.file_name)
     case filetype
     when :product
-      fenixapp_vfitrack_net("Incoming/Parts/SIEMENS/Incoming")
+      connect_vfitrack_net("to_ecs/siemens/parts")
     when :vendor
-      fenixapp_vfitrack_net("Incoming/Vendors/SIEMENS/Incoming")
+      connect_vfitrack_net("to_ecs/siemens/vendors")
     else
       log.error_and_raise "Unexpected Siemens filetype of '#{filetype}' found."
     end
