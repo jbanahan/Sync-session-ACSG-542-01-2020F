@@ -62,13 +62,13 @@ module OpenChain; module CustomHandler; module Kirklands; class KirklandsProduct
   end
 
   def search_column_uids
-    @cdefs ||= self.class.prep_custom_definitions [ :prod_part_number, :prod_long_description, :prod_material, :prod_country_of_origin, :prod_additional_doc,
+    @cdefs ||= self.class.prep_custom_definitions [ :prod_part_number, :prod_material, :prod_country_of_origin, :prod_additional_doc,
       :prod_fob_price, :prod_fda_product, :prod_fda_code, :prod_tsca, :prod_lacey, :prod_add, :prod_add_case, :prod_cvd, :prod_cvd_case ]
 
     [ :prod_imp_syscode,
       :prod_uid,
       @cdefs[:prod_part_number].model_field_uid,
-      @cdefs[:prod_long_description].model_field_uid,
+      :prod_name,
       @cdefs[:prod_material].model_field_uid,
       @cdefs[:prod_country_of_origin].model_field_uid,
       @cdefs[:prod_additional_doc].model_field_uid,
