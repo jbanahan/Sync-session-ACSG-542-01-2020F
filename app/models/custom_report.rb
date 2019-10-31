@@ -243,7 +243,7 @@ class CustomReport < ActiveRecord::Base
 
     def blank_file?
       return true if @sheets[0].rows.blank? || @sheets[0].rows.length == 1
-      @sheets[0].rows[1].cells[0].content.include?("No data was returned")
+      @sheets[0].rows[1].cells[0].content.to_s.include?("No data was returned")
     end
 
     class Cell
