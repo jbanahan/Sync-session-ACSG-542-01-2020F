@@ -127,16 +127,27 @@ class ApplicationController < ActionController::Base
   def action_secure(permission_check, obj, options={})
     err_msg = nil
     opts = {
-      :lock_check => true,
-      :verb => "edit",
-      :lock_lambda => lambda {|o| o.respond_to?(:locked?) && o.locked?},
-      :module_name => "object"}.merge(options)
+      lock_check: true,
+      verb: "edit",
+      lock_lambda: lambda {|o| o.respond_to?(:locked?) && o.locked?},
+      module_name: "object",
+      # Basically, by default, we won't lock objects on a get request
+      yield_in_db_lock: !request.get?
+    }.merge(options)
+
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
     err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj)
-    unless err_msg.nil?
+    if err_msg.present?
       opts[:json] ? (render_json_error err_msg) : (error_redirect err_msg)
     else
-      yield
+      # We can only db_lock active record objects and only those that are actually persisted
+      if opts[:yield_in_db_lock] && (obj.is_a?(ActiveRecord::Base) && obj.persisted?)
+        Lock.db_lock(obj) do 
+          yield
+        end
+      else
+        yield
+      end
     end
   end
 

@@ -6,17 +6,15 @@ class LinesController < ApplicationController
     action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>module_name}) {
       line = nil
       begin
-        Lock.with_lock_retry(o) do 
-          params[:lines].each do |p|
-            line = child_objects(o).build
-            valid = line.assign_model_field_attributes p[1]
-            raise OpenChain::ValidationLogicError unless valid
-            line.save if before_save(line, p[1])
-            OpenChain::FieldLogicValidator.validate! line
+        params[:lines].each do |p|
+          line = child_objects(o).build
+          valid = line.assign_model_field_attributes p[1]
+          raise OpenChain::ValidationLogicError unless valid
+          line.save if before_save(line, p[1])
+          OpenChain::FieldLogicValidator.validate! line
 
-            line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>p[1][:milestone_plan_id]) if p[1][:milestone_plan_id]
-            line.piece_sets.each {|p| p.create_forecasts}
-          end
+          line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>p[1][:milestone_plan_id]) if p[1][:milestone_plan_id]
+          line.piece_sets.each {|p| p.create_forecasts}
         end
 
         o.create_async_snapshot if o.respond_to?('create_snapshot')
@@ -34,13 +32,11 @@ class LinesController < ApplicationController
         line = child_objects(o).build
         valid = line.assign_model_field_attributes params[update_symbol], exclude_blank_values: true
         raise OpenChain::ValidationLogicError unless valid
-        Lock.with_lock_retry(o) do 
-          if before_save(line, params[update_symbol])
-            line.save!
-            OpenChain::FieldLogicValidator.validate! line
-            line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>params[:milestone_plan_id]) if params[:milestone_plan_id]
-            line.piece_sets.each {|p| p.create_forecasts}
-          end
+        if before_save(line, params[update_symbol])
+          line.save!
+          OpenChain::FieldLogicValidator.validate! line
+          line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>params[:milestone_plan_id]) if params[:milestone_plan_id]
+          line.piece_sets.each {|p| p.create_forecasts}
         end
 
         o.update_attributes(:last_updated_by_id=>current_user.id) if o.respond_to?(:last_updated_by_id)
@@ -81,18 +77,16 @@ class LinesController < ApplicationController
       good = false
       line = find_line
       begin
-        Lock.with_lock_retry(line) do
-          valid = line.assign_model_field_attributes params[update_symbol]
-          raise OpenChain::ValidationLogicError unless valid
-          if before_save(line, params[update_symbol]) 
-            line.save!
-            after_update line
-            OpenChain::FieldLogicValidator.validate! line
-            line.piece_sets.each {|p| p.create_forecasts}
-            
-            add_flash :notices, "Line updated sucessfully."
-            good = true
-          end
+        valid = line.assign_model_field_attributes params[update_symbol]
+        raise OpenChain::ValidationLogicError unless valid
+        if before_save(line, params[update_symbol]) 
+          line.save!
+          after_update line
+          OpenChain::FieldLogicValidator.validate! line
+          line.piece_sets.each {|p| p.create_forecasts}
+          
+          add_flash :notices, "Line updated sucessfully."
+          good = true
         end
         o.create_async_snapshot if o.respond_to?('create_snapshot')
       rescue OpenChain::ValidationLogicError 

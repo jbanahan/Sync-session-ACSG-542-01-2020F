@@ -417,4 +417,98 @@ describe ApplicationController do
       expect(user.active_days).to eq 1
     end
   end
+
+  describe "action_secure" do
+    
+    it "checks permission and fails if permission check returns false" do
+      expect(subject).to receive(:error_redirect).with("You do not have permission to edit this object.")
+      subject.action_secure(false, nil)
+    end
+
+    it "yields if permission check is true" do
+      expect(subject).not_to receive(:error_redirect)
+      yielded = false
+      subject.action_secure(true, nil) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "yields in db_lock if request is a mutable request type" do
+      allow(request).to receive(:get?).and_return false
+      object = Factory(:product)
+
+      expect(Lock).to receive(:db_lock).with(object).and_yield
+      yielded = false
+      subject.action_secure(true, object) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "does not yield in db_lock if request is a nonmutable request type" do
+      expect(request).to receive(:get?).and_return true
+      object = Factory(:product)
+
+      expect(Lock).not_to receive(:db_lock)
+      yielded = false
+      subject.action_secure(true, object) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "yields in db_lock if request is a nonmutable request type if forced" do
+      expect(request).to receive(:get?).and_return true
+      object = Factory(:product)
+
+      expect(Lock).to receive(:db_lock).with(object).and_yield
+      yielded = false
+      subject.action_secure(true, object, yield_in_db_lock: true) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "does not yield in db_lock if object is not an ActiveRecord object" do
+      expect(Lock).not_to receive(:db_lock)
+      yielded = false
+      subject.action_secure(true, "", yield_in_db_lock: true) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "does not yield in db_lock if object is not persisted" do
+      expect(Lock).not_to receive(:db_lock)
+      yielded = false
+      subject.action_secure(true, Product.new, yield_in_db_lock: true) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "checks for locked objects" do
+      p = Product.new
+      expect(p).to receive(:locked?).and_return true
+      expect(subject).to receive(:error_redirect).with "You cannot edit an object with a locked company."
+      yielded = false
+      subject.action_secure(true, p) { yielded = true }
+      expect(yielded).to eq false
+    end
+
+    it "allows replacing default lock lambda" do
+      p = Product.new
+      expect(p).not_to receive(:locked?)
+      expect(subject).not_to receive(:error_redirect)
+      yielded = false
+      subject.action_secure(true, p, {lock_lambda: lambda {|o| false} }) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "allows bypassing lock check" do
+      lock_check = false
+      lock_lambda = lambda { |o| lock_check = true }
+      yielded = false
+      subject.action_secure(true, p, lock_check: false) { yielded = true }
+      expect(yielded).to eq true
+    end
+
+    it "allows passing new module name" do
+      p = Product.new
+      expect(p).to receive(:locked?).and_return true
+      expect(subject).to receive(:error_redirect).with "You cannot edit a My Product with a locked company."
+      yielded = false
+      subject.action_secure(true, p, module_name: "My Product") { yielded = true }
+      expect(yielded).to eq false
+    end
+  end
 end

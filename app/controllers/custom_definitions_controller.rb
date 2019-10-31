@@ -78,7 +78,7 @@ class CustomDefinitionsController < ApplicationController
   # PUT /custom_definitions/1.xml
   def update
     c = CustomDefinition.find(params[:id])
-    action_secure(c.can_edit?(current_user),c,{:verb=>"edit", :module_name=>"custom_field"}) {
+    action_secure(c.can_edit?(current_user), c, {verb: "edit", module_name: "custom_field", yield_in_db_lock: true}) {
       @custom_definition = c
       # Module and data type cannot be updated
       params.delete :module_type
@@ -102,7 +102,7 @@ class CustomDefinitionsController < ApplicationController
   # DELETE /custom_definitions/1.xml
   def destroy
     c = CustomDefinition.find(params[:id])
-    action_secure(c.can_edit?(current_user),c,{:verb=>"delete", :module_name=>"custom field"}) {
+    action_secure(c.can_edit?(current_user), c, {verb: "delete", module_name: "custom_field", yield_in_db_lock: true}) {
       c.destroy
       add_flash :notices, "Custom field was deleted."
       respond_to do |format|
