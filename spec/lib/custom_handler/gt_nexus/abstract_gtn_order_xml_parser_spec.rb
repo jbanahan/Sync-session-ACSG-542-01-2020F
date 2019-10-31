@@ -338,5 +338,10 @@ XML
       expect(subject).to receive(:process_order).exactly(2).times
       subject.parse_file xml, InboundFile.new, {bucket: "bucket", key: "key"}
     end
+
+    it "raises an error if invalid root element is used" do
+      allow(subject).to receive(:inbound_file).and_return inbound_file
+      expect { subject.parse_file "<root></root>", inbound_file}.to raise_error LoggedParserRejectionError, "Unexpected root element. Expected Order but found 'root'."
+    end
   end
 end

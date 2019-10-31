@@ -32,6 +32,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
 
     entry.invoices = generate_commercial_invoices(shipments)
 
+    post_process_entry(entry)
+
     entry
   end
 
@@ -325,6 +327,61 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       end
 
       inv_line
+    end
+
+    def post_process_entry entry
+      # If we have 2 container records with the same number combine them together (summing the weights, etc)
+      # If they have differing sizes, we're just going to use the value that the first container has
+      containers = Hash.new {|h, k| h[k] = [] }
+
+      Array.wrap(entry.containers).each {|c| containers[c.container_number] << c }
+
+      entry_containers = []
+
+      containers.each_pair do |container_number, containers|
+        next if containers.length == 0
+
+        if containers.length == 1
+          entry_containers << containers.first
+        else
+          entry_containers << combine_containers(containers)
+        end
+      end
+      entry.containers = entry_containers
+      nil
+    end
+
+    def combine_containers containers
+      base_container = containers.first
+
+      containers[1..-1].each do |container|
+        # Iterate over the enum's keys and if any value is blank in the base and not in another, then set it
+        container.each_pair do |field, value|
+          case field
+          when :pieces
+            sum_struct_field_value(base_container, field, value)
+          when :weight_kg
+            sum_struct_field_value(base_container, field, value)
+          else
+            if value.respond_to?(:blank) && !value.blank?
+              base_container[field] = value unless !base_container[field].blank?
+            end
+          end
+          
+        end
+      end
+      
+      base_container
+    end
+
+    def sum_struct_field_value struct, field, value
+      return if value.nil? || value.blank?
+
+      if struct[field].nil?
+        struct[field] = value
+      else
+        struct[field] = (struct[field] + value)
+      end
     end
 
 end; end; end; end

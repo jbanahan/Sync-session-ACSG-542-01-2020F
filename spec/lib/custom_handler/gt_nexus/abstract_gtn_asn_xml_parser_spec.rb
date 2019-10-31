@@ -371,6 +371,11 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
 
       subject.parse_file xml_data, nil, key: "key", bucket: "bucket"
     end
+
+    it "raises an error if invalid root element is used" do
+      allow(subject).to receive(:inbound_file).and_return inbound_file
+      expect { subject.parse_file "<root></root>", inbound_file}.to raise_error LoggedParserRejectionError, "Unexpected root element. Expected ASNMessage but found 'root'."
+    end
   end
 
   describe "parse_asn" do

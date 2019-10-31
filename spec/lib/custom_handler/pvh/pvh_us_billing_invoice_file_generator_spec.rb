@@ -455,5 +455,26 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("Value", "200.0")
       expect(l).to have_xpath_value("Purpose", "Decrement")
     end
+
+    it "handles an entry with an extra 0 weight container" do
+      entry.containers.create! container_number: "EMPTYCONTAINER", weight: 0
+      entry.container_numbers = "ABCD1234567890\n EMPTYCONTAINER"
+      entry.save!
+
+      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+      # The following call would raise an error if we didn't eliminate 0 weight containers from the entry
+      expect { subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges }.not_to raise_error
+
+      expect(captured_xml.length).to eq 1
+
+      x = REXML::Document.new(captured_xml.first).root
+      validate_invoice_header(x, "12345-CONTAINER")
+
+      inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
+      expect(inv).to have_xpath_value("InvoiceSummary/NumberOfInvoiceLineItems", "2")
+
+      l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']")
+      expect(l).to have_xpath_value("ContainerNumber", "ABCD1234567890")
+    end
   end
 end

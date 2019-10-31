@@ -253,6 +253,11 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
 
       subject.parse(xml_data, {bucket: "bucket", key: "key"})
     end
+
+    it "raises an error if invalid root element is used" do
+      allow(subject).to receive(:inbound_file).and_return inbound_file
+      expect { subject.parse "<root></root>"}.to raise_error LoggedParserRejectionError, "Unexpected root element. Expected Invoice but found 'root'."
+    end
   end
 
   describe "translate_ship_mode" do

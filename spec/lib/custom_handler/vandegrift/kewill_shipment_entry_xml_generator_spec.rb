@@ -273,6 +273,31 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       line = d.invoices.first.invoice_lines.first
       expect(line.hts).to eq "9999999999"
     end
+
+    it "combines duplicate container numbers together" do
+      shipment_2 = Factory(:shipment)
+      container_2 = shipment_2.containers.create! container_number: "CONTAINER", weight: BigDecimal("100"), quantity: BigDecimal("1000"), seal_number: "SEAL2", container_size: "40HC"
+      shipment_line_1 = shipment_2.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container_2.id, mid: "MID1"
+      shipment_line_1.linked_order_line_id = order.order_lines.first.id
+      shipment_line_1.product_id = order.order_lines.first.product.id
+      shipment_line_1.save!
+
+
+      d = subject.generate_kewill_shipment_data [shipment, shipment_2]
+      expect(d.containers.length).to eq 1
+      c = d.containers.first
+      # The following 3 expectations show that top level container values are not overwritten
+      expect(c.container_number).to eq "CONTAINER"
+      expect(c.seal_number).to eq "SEAL"
+      expect(c.size).to eq "20"
+      # The following expectation shows that the combination of the 2 containers together allows secondary container data to pull up to top level
+      # if the top level's value is blank
+      expect(c.container_type).to eq "HQ"
+
+      # The following 2 expectations show that carton counts and weight are summed
+      expect(c.pieces).to eq 90
+      expect(c.weight_kg).to eq 60
+    end
   end
 
   # This is kinda cheating...testing a protected method, but I'd rather not run

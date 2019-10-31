@@ -187,6 +187,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         line_counter = 1
         containers.each do |container_key|
           line_prorations = prorations[container_key]
+          next if line_prorations.nil? || line_prorations.blank?
 
           line_prorations.each_pair do |charge_code, charge_amount|
             bill_of_lading = nil
@@ -664,14 +665,32 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       container_weights[container_weights.keys.first] = total_container_weight
       
     else
+      # The deal with the invalid containers is there's some times where ops leaves blank containers on the entry - generally its when moving a container from
+      # one shipment to another.  There's no reason we need to fail the billing in this case...just skip the container if there's no actual weight on it.
+      invalid_containers = []
       container_weights.each_pair do |container_number, weight|
         if weight.nil? || weight.zero?
-          raise "Failed to find any valid container weight data on a PVH ASN for Container # '#{container_number}' on Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'." 
+          if valid_container?(entry_snapshot, container_number)
+            raise "Failed to find any valid container weight data on a PVH ASN for Container # '#{container_number}' on Entry file # '#{mf(entry_snapshot, :ent_brok_ref)}'." 
+          else
+            invalid_containers << container_number
+          end
         end
       end
+      invalid_containers.each {|c| container_weights.delete c }
     end
 
     prorate_values(container_weights, total_container_weight, charge_code, charge_amount, existing_prorations)
+  end
+
+  def valid_container? entry_snapshot, container_number
+    json_child_entities(entry_snapshot, "Container") do |container|
+      next unless mf(container, "cil_con_container_number") == container_number
+
+      return mf(container, "con_weight").to_i > 0
+    end
+
+    false
   end
 
   def prorate_values proration_sums, total_proration_value, charge_code, charge_amount, existing_prorations

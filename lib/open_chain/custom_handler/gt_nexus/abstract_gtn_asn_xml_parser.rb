@@ -81,6 +81,8 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
     user = User.integration
 
+    inbound_file.reject_and_raise("Unexpected root element. Expected ASNMessage but found '#{xml.root.name}'.") unless xml.root.name == "ASNMessage"
+
     # I don't believe GTN actually exports multiple ASN's per XML document, they use the
     # same schema for uploading to them and downloading from them, so the functionality is 
     # there to send them mulitple ASN's, but as to getting them exported to us on event triggers,
