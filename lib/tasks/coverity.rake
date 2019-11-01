@@ -50,11 +50,33 @@
 #
 # This is really annoying but the only way around the network limitation that I could find. 
 ##############################################
+require_relative 'rake_support'
 
-namespace :coverity do
-  desc "Configures coverity code scanner."
+class CoverityTasks
+  include OpenChain::RakeSupport
+  include Rake::DSL
 
-  task setup: :environment do
+  def initialize
+    namespace :coverity do
+      desc "Configures coverity code scanner."
+
+      task :setup do
+        setup()
+      end
+
+      desc "Runs coverity build and analyzer."
+      task :analyze do
+        analyze()
+      end
+
+      desc "Submits coverity scan data to Coverity web application."
+      task :commit do
+        commit()
+      end
+    end
+  end
+
+  def setup
     coverity_test = lambda do |dir|
       if Dir.exist?(dir) && File.exist?(Pathname.new(dir).join("bin").join("cov-configure").to_s)
         nil
@@ -84,8 +106,7 @@ namespace :coverity do
     end
   end
 
-  desc "Runs coverity build and analyzer."
-  task analyze: :environment do
+  def analyze
     config = coverity_setup
     
     sh(coverity_command(config, "cov-build"), "--dir", coverity_build_path, "--config", coverity_config_path, "--fs-capture-search", ".", "--no-command")
@@ -99,8 +120,7 @@ namespace :coverity do
     end
   end
 
-  desc "Submits coverity scan data to Coverity web application."
-  task commit: :environment do
+  def commit
     config = coverity_setup
 
     command_line = [
@@ -127,121 +147,99 @@ namespace :coverity do
 
     sh *command_line
   end
-end
 
-def coverity_bin config
-  "#{coverity_base(config)}/bin"
-end
+  private
 
-def coverity_command config, command
-  "#{coverity_bin(config)}/#{command}"
-end
-
-def coverity_config
-  config = coverity_config_file
-  raise "No coverity configuration yml found.  Please run 'rake coverity:setup' to generate it." if config.blank?
-  config
-end
-
-def coverity_setup
-  config = coverity_config
-  raise "Coverity must be installed to the #{coverity_base(config)} directory." unless File.exists?("#{coverity_bin(config)}/cov-analyze")
-  raise "Expected to find a coverity license file in #{coverity_license_path(config)}.  Download it from the Coverity web application." unless File.exists?(coverity_license_path(config))
-  config
-end
-
-def coverity_config_path
-  "#{coverity_project_path}/config/open_chain.xml"
-end
-
-def coverity_project_path
-  "#{project_directory}/.coverity"
-end
-
-def coverity_config_exists?
-  File.exists? coverity_config_path
-end
-
-def coverity_build_path
-  "#{coverity_project_path}/build"
-end
-
-def coverity_license_path config
-  config["license_file_path"]
-end
-
-def coverity_url
-  "http://coverity-connect.cdpipeline.apmoller.net:8080"
-end
-
-def coverity_stream
-  "openchain"
-end
-
-def coverity_base config
-  config["coverity_install_directory"]
-end
-
-def coverity_config_file
-  config_file = config_file_path
-  if File.exists?(config_file)
-    YAML::load_file(config_file)
-  else
-    {}
+  def coverity_bin config
+    "#{coverity_base(config)}/bin"
   end
-end
 
-def write_coverity_config_file config_json
-  config_file = Pathname.new(config_file_path)
-  FileUtils.mkdir_p(config_file.parent.to_s)
-  File.open(config_file.to_s, "w") { |f| f << config_json.to_yaml }
-end
+  def coverity_command config, command
+    "#{coverity_bin(config)}/#{command}"
+  end
 
-def config_file_path
-  Pathname.new(coverity_project_path).join("config").join("coverity-config.yml").to_s
-end
+  def coverity_config
+    config = coverity_config_file
+    raise "No coverity configuration yml found.  Please run 'rake coverity:setup' to generate it." if config.blank?
+    config
+  end
 
-def project_directory
-  Rails.root.expand_path.to_s
-end
+  def coverity_setup
+    config = coverity_config
+    raise "Coverity must be installed to the #{coverity_base(config)} directory." unless File.exists?("#{coverity_bin(config)}/cov-analyze")
+    raise "Expected to find a coverity license file in #{coverity_license_path(config)}.  Download it from the Coverity web application." unless File.exists?(coverity_license_path(config))
+    config
+  end
 
-def get_user_response message, default_value: nil, input_test: nil
-  message += "[Default = #{default_value}]" unless default_value.nil?
-  message += ": "
+  def coverity_config_path
+    "#{coverity_project_path}/config/open_chain.xml"
+  end
 
-  valid = false
-  value = nil
-  while(!valid) do 
-    STDOUT.print message
-    STDOUT.flush
-    value = STDIN.gets.strip
-    if !default_value.nil? && value.blank?
-      value = default_value
-    end
-    value
+  def coverity_project_path
+    "#{project_directory}/.coverity"
+  end
 
-    if input_test
-      error = input_test.call(value)
-      valid = error.blank?
-      puts error unless valid
+  def coverity_config_exists?
+    File.exists? coverity_config_path
+  end
+
+  def coverity_build_path
+    "#{coverity_project_path}/build"
+  end
+
+  def coverity_license_path config
+    config["license_file_path"]
+  end
+
+  def coverity_url
+    "http://coverity-connect.cdpipeline.apmoller.net:8080"
+  end
+
+  def coverity_stream
+    "openchain"
+  end
+
+  def coverity_base config
+    config["coverity_install_directory"]
+  end
+
+  def coverity_config_file
+    config_file = config_file_path
+    if File.exists?(config_file)
+      YAML::load_file(config_file)
     else
-      valid = true
+      {}
     end
   end
 
-  value
-end
+  def write_coverity_config_file config_json
+    config_file = Pathname.new(config_file_path)
+    FileUtils.mkdir_p(config_file.parent.to_s)
+    File.open(config_file.to_s, "w") { |f| f << config_json.to_yaml }
+  end
 
-def file_exists_test allow_blank: false
-  lambda do |file_path| 
-    if allow_blank && file_path.blank?
-      nil
-    else
-      File.exist?(file_path) ? nil : "Path #{file_path} does not exist."
+  def config_file_path
+    Pathname.new(coverity_project_path).join("config").join("coverity-config.yml").to_s
+  end
+
+  def project_directory
+    Rails.root.expand_path.to_s
+  end
+
+  def file_exists_test allow_blank: false
+    lambda do |file_path| 
+      if allow_blank && file_path.blank?
+        nil
+      else
+        File.exist?(file_path) ? nil : "Path #{file_path} does not exist."
+      end
     end
+  end
+
+  def non_blank_test value_name
+    lambda {|value| value.blank? ? "#{value_name} cannot be blank." : nil }
   end
 end
 
-def non_blank_test value_name
-  lambda {|value| value.blank? ? "#{value_name} cannot be blank." : nil }
-end
+# Initialize the class so the rake DSL is executed
+CoverityTasks.new
