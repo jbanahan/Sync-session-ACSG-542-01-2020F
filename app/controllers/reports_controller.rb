@@ -1054,6 +1054,27 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_pvh_duty_discount_report
+    if OpenChain::Report::PvhDutyDiscountReport.permission? current_user
+      @fiscal_months = []
+      FiscalMonth.where(company_id: Company.where(system_code:"PVH").first&.id).order("start_date ASC").each do |fm|
+        @fiscal_months << fm.fiscal_descriptor
+      end
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_pvh_duty_discount_report
+    klass = OpenChain::Report::PvhDutyDiscountReport
+    if klass.permission? current_user
+      run_report "PVH Duty Discount Report", klass, {fiscal_month: params[:fiscal_month], mode_of_transport: params[:mode_of_transport]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
     def run_report name, klass, settings, friendly_settings
       begin

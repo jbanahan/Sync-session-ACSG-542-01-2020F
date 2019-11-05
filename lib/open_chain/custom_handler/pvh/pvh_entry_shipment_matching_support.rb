@@ -1,9 +1,9 @@
 module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatchingSupport
 
-  def find_shipments transport_mode_code, master_bills_of_lading, house_bills_of_lading
-    # Find all PVH shipments with the bill of lading numbers present on the shipment...since we'll need them all 
+  def find_shipments transport_mode_code, master_bills_of_lading, house_bills_of_lading, force_lookup:false
+    # Find all PVH shipments with the bill of lading numbers present on the shipment...since we'll need them all
     # anyway to bill the entry.
-    if @shipments.nil?
+    if @shipments.nil? || force_lookup
 
       # We're going to return shipments where master bills match or house bills match
       shipments_query = Shipment.where(importer_id: pvh_importer.id)
@@ -125,8 +125,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     # IF the the order line has an HTS of 9999999999, we will allow it to be utilized multiple times.
     shipment_lines.select do |line|
       line.order_line&.hts.to_s.strip == "9999999999" &&
-        line.product&.unique_identifier == part_number && 
-        line.order_line&.order&.customer_order_number == order_number
+          line.product&.unique_identifier == part_number &&
+          line.order_line&.order&.customer_order_number == order_number
     end
   end
 
@@ -144,7 +144,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     @shipments.nil? ? [] : @shipments
   end
 
-  def found_shipment_lines 
+  def found_shipment_lines
     @found_lines ||= Set.new
   end
 

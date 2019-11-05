@@ -1,0 +1,20 @@
+<% content_for :action_bar do %>
+    <button class="form_to" form_id="frm_run">Run Report</button>
+    <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>PVH Duty Discount Report</h2><br>
+
+<%=form_tag reports_run_pvh_duty_discount_report_path, :id=>'frm_run' do -%>
+    <div class="container">
+      <div>
+      <span>
+        <%=field_row "Fiscal Period", select_tag(:fiscal_month, options_for_select(@fiscal_months), :class=>'form-control isdate')%>
+      </span>
+      </div>
+      <div>
+      <span>
+        <%=field_row "Mode of Transport", select_tag(:mode_of_transport, options_for_select(["Sea","Air"]))%>
+      </span>
+      </div>
+    </div>
+<%end%>

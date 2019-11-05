@@ -1,7 +1,7 @@
-describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do 
+describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
 
-  subject { 
-    Class.new do 
+  subject {
+    Class.new do
       include OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport
     end.new
   }
@@ -11,10 +11,14 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
   let! (:air_shipment) { Factory(:shipment, mode: "Air", master_bill_of_lading: "AIRMBOL", house_bill_of_lading: "HBOL", importer: importer)}
 
   describe "find_shipments" do
-    
+
     it "finds US ocean shipments by master bill" do
       expect(subject.find_shipments "10", "MBOL", "HBOL").to eq [ocean_shipment]
       expect(subject.found_shipments).to eq [ocean_shipment]
+      # Look-up is not repeated.  We should return the originally found shipment.
+      expect(subject.find_shipments "101", "MIBOL", "HIBOL").to eq [ocean_shipment]
+      # Nothing should be found when a second actual look-up is forced.
+      expect(subject.find_shipments "101", "MIBOL", "HIBOL", force_lookup:true).to eq []
     end
 
     it "finds CA ocean shipments by master bill" do
@@ -49,7 +53,7 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
   end
 
   describe "find_shipment_container" do
-    let! (:ocean_container) { 
+    let! (:ocean_container) {
       ocean_shipment.containers.create! container_number: "CONTAINER"
     }
 
@@ -64,7 +68,7 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
 
 
   describe "find_shipment_line" do
-    let! (:ocean_container) { 
+    let! (:ocean_container) {
       ocean_shipment.containers.create! container_number: "CONTAINER"
     }
 
@@ -92,7 +96,7 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
       expect(subject.found_shipment_lines.to_a).to eq ocean_shipment_lines
     end
 
-    it "finds shipment line with quantity that doesn't match exactly" do 
+    it "finds shipment line with quantity that doesn't match exactly" do
       expect(subject.find_shipment_line([air_shipment, ocean_shipment], "CONTAINER", "ORDER_1", "12345", 75)).to eq ocean_shipment_lines.first
     end
 
