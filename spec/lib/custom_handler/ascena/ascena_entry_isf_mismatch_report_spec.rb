@@ -178,12 +178,44 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
       expect(sheet.count).to eq 1
     end
 
+    it "insures that a special HTS starting with 9903 comes before a special HTS starting with 9902" do
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      line.commercial_invoice_tariffs.first.update_attributes! hts_code: "9902123456", special_tariff: true
+      line.commercial_invoice_tariffs.create! hts_code: "9903123456", special_tariff: true
+      line.commercial_invoice_tariffs.create! hts_code: "9876543210"
+
+      file = subject.run_report importer, tz.parse("2017-04-01 07:00"), tz.parse("2017-05-01 12:30")
+      reader = XlsxTestReader.new(file.path).raw_workbook_data
+      sheet = reader["Entry ISF Match"]
+      expect(sheet).not_to be_nil
+      expect(sheet.count).to eq 2
+
+      expect(sheet[1][11..17]).to eq ["9876.54.3210", nil, nil, nil, nil, "9903.12.3456", "9902.12.3456"]
+      expect(sheet[1].last).to eq "The ISF line with PO # 'PO' and Part 'PART' did not match to HTS #s '9902.12.3456', '9903.12.3456', '9876.54.3210'."
+    end
+
+    it "insures that the standard HTS is in the first HTS column" do
+      line = entry.commercial_invoices.first.commercial_invoice_lines.first
+      line.commercial_invoice_tariffs.first.update_attributes! hts_code: "1111111111", special_tariff: true
+      line.commercial_invoice_tariffs.create! hts_code: "5678901234", special_tariff: true
+      line.commercial_invoice_tariffs.create! hts_code: "9876543210"
+
+      file = subject.run_report importer, tz.parse("2017-04-01 07:00"), tz.parse("2017-05-01 12:30")
+      reader = XlsxTestReader.new(file.path).raw_workbook_data
+      sheet = reader["Entry ISF Match"]
+      expect(sheet).not_to be_nil
+      expect(sheet.count).to eq 2
+
+      expect(sheet[1][11..17]).to eq ["9876.54.3210", nil, nil, nil, nil, "5678.90.1234", "1111.11.1111"]
+      expect(sheet[1].last).to eq "The ISF line with PO # 'PO' and Part 'PART' did not match to HTS #s '1111.11.1111', '5678.90.1234', '9876.54.3210'."
+    end
+
     it "reports all unmatched tariffs" do
-      # Make the none of the tariffs match
+      # Make sure none of the tariffs match
       line = entry.commercial_invoices.first.commercial_invoice_lines.first
       line.commercial_invoice_tariffs.first.update_attributes! hts_code: "9876543210"
-      line.commercial_invoice_tariffs.create! hts_code: "5678901234"
-      line.commercial_invoice_tariffs.create! hts_code: "1111111111"
+      line.commercial_invoice_tariffs.create! hts_code: "5678901234", special_tariff: true
+      line.commercial_invoice_tariffs.create! hts_code: "1111111111", special_tariff: true
 
       file = subject.run_report importer, tz.parse("2017-04-01 07:00"), tz.parse("2017-05-01 12:30")
       reader = XlsxTestReader.new(file.path).raw_workbook_data

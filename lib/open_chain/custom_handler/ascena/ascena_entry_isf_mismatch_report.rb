@@ -69,8 +69,24 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code 1 (Entry)", "", "HTS Code (ascena Verified)", "", "ascena Match?", "HTS Code 2 (Entry)", "HTS Code 3 (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description", "ascena Comment", "Date"]
   end
 
+  def order_hts_numbers(tariff_lines)
+    hts_numbers = {}
+    hts_numbers['primary'] = nil
+    hts_numbers['special'] = []
+
+    return hts_numbers if tariff_lines.blank?
+
+    tariff_lines.each do |line|
+      (line.special_tariff && line.hts_code.present?) ? hts_numbers['special'] << line.hts_code : hts_numbers['primary'] = line.hts_code
+    end
+
+    hts_numbers['special'] = hts_numbers['special'].sort { |a, b| b <=> a }
+    hts_numbers
+  end
+
   def add_exception_row wb, sheet, entry, invoice_line, tariff_lines, isf, isf_match
     blank = nil
+    hts_numbers = order_hts_numbers(tariff_lines)
     row = []
     row << field(isf.try(:transaction_number), "")
     row << field(isf.try(:master_bill_of_lading), entry.split_master_bills_of_lading.join(", "))
@@ -83,13 +99,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     row << isf_match.try(:style)
     row << invoice_line.try(:country_origin_code)
     row << isf_match.try(:coo)
-    row << tariff_lines.try(:[], 0).try(:hts_code).to_s.hts_format
+    row << hts_numbers['primary'].to_s.hts_format #tariff_lines.try(:[], 0).try(:hts_code).to_s.hts_format
     row << blank
     row << blank
     row << blank
     row << blank
-    row << tariff_lines.try(:[], 1).try(:hts_code).to_s.hts_format
-    row << tariff_lines.try(:[], 2).try(:hts_code).to_s.hts_format
+    row << hts_numbers['special'].try(:[], 0).to_s.hts_format
+    row << hts_numbers['special'].try(:[], 1).to_s.hts_format
     row << isf_match.try(:hts).to_s.hts_format
     row << (isf.present? ? "Y" : "N")
     row << (isf_match.try(:po_match) ? "Y" : "N")
