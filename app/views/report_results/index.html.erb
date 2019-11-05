@@ -222,6 +222,10 @@
     <tr class='hover'><td><%=link_to "Puma Division Quarter Breakdown", reports_show_puma_division_quarter_breakdown_path%></td>
     <td>Breaks down entry totals for several Puma divisions by quarter.</td></tr>
   <%end-%>
+  <%if OpenChain::Report::PvhFirstCostSavingsReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "PVH First Cost Savings Report", reports_show_pvh_first_cost_savings_report_path%></td>
+    <td>Shows first cost savings for a fiscal month.</td></tr>
+  <%end-%>
   <%if OpenChain::Report::PvhDutyDiscountReport.permission? current_user-%>
     <tr class='hover'><td><%=link_to "PVH Duty Discount Report", reports_show_pvh_duty_discount_report_path%></td>
     <td>Shows customs duty discounts for a fiscal month and mode of transportation.</td></tr>

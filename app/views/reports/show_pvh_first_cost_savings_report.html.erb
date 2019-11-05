@@ -1,0 +1,14 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
+<%end%>
+<h2>PVH First Cost Savings Report</h2><br>
+<%=form_tag reports_run_pvh_first_cost_savings_report_path, :id=>'frm_run' do -%>
+  <div class="container">
+    <div>
+      <span>
+        <%=field_row "Fiscal Month", select_tag(:fiscal_month, options_for_select(@fiscal_months), :class=>'form-control isdate')%>
+      </span>
+    </div>
+  </div>
+<%end%>

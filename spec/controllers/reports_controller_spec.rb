@@ -1294,4 +1294,60 @@ describe ReportsController do
     end
   end
 
+  describe "PVH First Cost Savings Report" do
+    let(:report_class) { OpenChain::Report::PvhFirstCostSavingsReport }
+    let(:user) { Factory(:user) }
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        get :show_pvh_first_cost_savings_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        pvh = Factory(:company, name:'PVH', system_code:'PVH')
+        another_importer = Factory(:company, name:'Another Importer', system_code:'imp')
+
+        FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019,4,1))
+        FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019,2,20))
+        # This one belongs to a different importer and should not be included.
+        FiscalMonth.create!(company_id:another_importer.id, year:2019, month_number:4, start_date:Date.new(2019,7,1))
+
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        get :show_pvh_first_cost_savings_report
+        expect(response).to be_success
+
+        # Ensure fiscal month instance variables, used for dropdowns, were loaded properly.
+        # They should be sorted by start date.
+        fiscal_months = subject.instance_variable_get(:@fiscal_months)
+        expect(fiscal_months.length).to eq 2
+        expect(fiscal_months[0]).to eq '2019-02'
+        expect(fiscal_months[1]).to eq '2019-03'
+      end
+    end
+
+    context "run" do
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return false
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_pvh_first_cost_savings_report, {}
+        expect(response).to be_redirect
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+        expect(flash[:notices]).to be_nil
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return true
+        expect(ReportResult).to receive(:run_report!).with("PVH First Cost Savings Report", user,
+                                                           OpenChain::Report::PvhFirstCostSavingsReport,
+                                                           :settings=>{fiscal_month:'2019-04'}, :friendly_settings=>[])
+        post :run_pvh_first_cost_savings_report, {fiscal_month:'2019-04'}
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
 end
