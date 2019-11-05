@@ -186,6 +186,8 @@ module OpenChain
         OpenChain::CustomHandler::Vandegrift::KewillStatementParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "kewill_tariffs") && custom_features.include?("Kewill Entries")
         OpenChain::CustomHandler::Vandegrift::KewillTariffClassificationsParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "kewill_customers") && custom_features.include?("Kewill Entries")
+        OpenChain::CustomHandler::Vandegrift::KewillCustomerParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ascena_po") && custom_features.include?('Ascena PO')
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ascena_apll_asn") && custom_features.include?('Ascena APLL ASN')

@@ -77,34 +77,4 @@ describe Api::V1::AllianceDataController do
       expect(response.body).to eq ({"errors" => ["Access denied."]}.to_json)
     end
   end
-
-  describe "receive_address_updates" do
-    it "handles address update arrays" do
-      results = [['addr'], ['addr2']]
-      expect(Address).to receive(:delay).and_return Address
-      expect(Address).to receive(:update_kewill_addresses).with results
-
-      post "receive_address_updates", results: results
-    end
-
-    it "splits results into groups of 100" do
-      results = []
-      101.times {|x| results << x.to_s}
-
-      expect(Address).to receive(:delay).exactly(2).times.and_return Address
-      expect(Address).to receive(:update_kewill_addresses).with results[0..-2]
-      expect(Address).to receive(:update_kewill_addresses).with [results[-1]]
-
-      post "receive_address_updates", results: results
-    end
-
-    it "errors if user is not an admin" do
-      user.admin = false
-      user.save!
-
-      post "receive_address_updates", results: []
-      expect(response.status).to eq 403
-      expect(response.body).to eq ({"errors" => ["Access denied."]}.to_json)
-    end
-  end
 end

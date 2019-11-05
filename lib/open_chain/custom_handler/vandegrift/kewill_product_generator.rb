@@ -1,4 +1,5 @@
 require 'open_chain/custom_handler/alliance_product_support'
+require 'open_chain/custom_handler/product_generator'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/vandegrift/kewill_web_services_support'
 

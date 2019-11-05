@@ -1,0 +1,26 @@
+[
+    {
+        "addresses": [
+            {
+                "address_1": "1510 NANYUAN ST, RM 1, YUHANG",
+                "address_2": "STE 123",
+                "address_no_alpha": "00001",
+                "city": "HANGZHOU",
+                "country": "CN",
+                "fax_no_alpha": "",
+                "name": "CHEER YOU E-BUSINESS CO., LTD.",
+                "phone_no_alpha": "15164556664",
+                "state_province": "FN",
+                "zip": ""
+            }
+        ],
+        "customer_name": "CHEER YOU E-BUSINESS CO., LTD.",
+        "customer_number": "CHYOU",
+        "notes": [
+            {
+                "note_cust": "MAS-U3APF6WDEFH7C_IOR-U3APF6WDEFH7C_MUN",
+                "seq_no": 10
+            }
+        ]
+    }
+]

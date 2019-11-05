@@ -142,49 +142,6 @@ describe Address do
 
   end
 
-  describe "update_kewill_addresses" do
-    subject { described_class }
-    let! (:country) { Country.where(iso_code: "US").first_or_create! }
-    let (:address_row) {
-      ["CUSTNO", "Customer Name", "00001", "Address Name", "Address 1", "Address 2", "City", "State", "Postal", "US"]
-    }
-
-    it "receives an address array, generates a new company record and adds the address" do
-      subject.update_kewill_addresses [address_row]
-
-      c = Company.where(importer: true, name: "Customer Name").first
-      expect(c).not_to be_nil
-      expect(c).to have_system_identifier("Customs Management", "CUSTNO")
-
-      address = c.addresses.first
-      expect(address).not_to be_nil
-      expect(address.system_code).to eq "1"
-      expect(address.name).to eq "Address Name"
-      expect(address.line_1).to eq "Address 1"
-      expect(address.line_2).to eq "Address 2"
-      expect(address.city).to eq "City"
-      expect(address.state).to eq "State"
-      expect(address.postal_code).to eq "Postal"
-      expect(address.country).to eq country
-    end
-
-    it "updates an existing address" do
-      c = with_customs_management_id(Company.create!(name: "Cust"), "CUSTNO")
-      address = c.addresses.create! system_code: "1"
-
-      subject.update_kewill_addresses [address_row]
-
-      address.reload
-      expect(address.name).to eq "Address Name"
-      expect(address.line_1).to eq "Address 1"
-      expect(address.line_2).to eq "Address 2"
-      expect(address.city).to eq "City"
-      expect(address.state).to eq "State"
-      expect(address.postal_code).to eq "Postal"
-      expect(address.country).to eq country
-    end
-  end
-
   describe "make_hash_key" do
     let (:a) {
       Address.new system_code: "Code", name: "Address", line_1: "Line 1", line_2: "Line 2", line_3: "Line 3", city: "City", state: "State", postal_code: "Postal", country_id: 1, address_type: "Type"

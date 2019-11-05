@@ -64,7 +64,7 @@ class Company < ActiveRecord::Base
   validates_uniqueness_of :system_code, :if => lambda { !self.system_code.blank? }
   after_save :clear_customs_identifier
 
-  has_many  :addresses, :dependent => :destroy
+  has_many  :addresses, dependent: :destroy, autosave: true
   has_many  :divisions, :dependent => :destroy
   has_many  :importer_products, :class_name => 'Product', :foreign_key=>'importer_id'
   has_many  :importer_orders, :class_name => 'Order', :foreign_key => 'importer_id', :dependent => :destroy

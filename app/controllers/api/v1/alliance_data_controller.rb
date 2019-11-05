@@ -39,21 +39,6 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbacksControlle
     end
   end
 
-  def receive_address_updates 
-    extract_results(params) do |results, context|
-      # results should be an array
-      run_in_thread do
-        # Only do 100 of these at a time...there shouldn't be more than that many, but we don't want to overflow the delayed job
-        # handler field with the values.
-        results.in_groups_of(100, false) do |addresses|
-          Address.delay.update_kewill_addresses addresses
-        end
-      end
-
-      render_ok
-    end
-  end
-
   private 
 
     def run_in_thread

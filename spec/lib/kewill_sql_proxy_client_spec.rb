@@ -154,13 +154,6 @@ describe OpenChain::KewillSqlProxyClient do
     end
   end
 
-  describe "request_address_updates" do
-    it "sends a request for address updates" do
-      expect(subject).to receive(:request).with("address_updates", {updated_date: 20161010}, {results_as_array: true}, {swallow_error: false})
-      subject.request_address_updates(Date.new(2016, 10, 10))
-    end
-  end
-
   describe "request_updated_statements" do
     it 'sends a request for updated statements' do 
       my_params = nil
@@ -291,6 +284,14 @@ describe OpenChain::KewillSqlProxyClient do
       expect(subject).to receive(:request).with "updated_tariffs_to_s3", {start_date: 201901301225, end_date: 201901301330}, {s3_bucket: "bucket", s3_path: "path", sqs_queue: "queue"}, {swallow_error: false}
 
       subject.request_updated_tariff_classifications(Time.new(2019, 1, 30, 12, 25), Time.new(2019, 1, 30, 13, 30), "bucket", "path", "queue")
+    end
+  end
+
+  describe "request_updated_customers" do
+    it "sends request for customer data to sql proxy system" do
+      expect(subject).to receive(:request).with "updated_customers_to_s3", {start_date: "201901301225", end_date: "201901301330"}, {s3_bucket: "bucket", s3_path: "path", sqs_queue: "queue"}, {swallow_error: false}
+
+      subject.request_updated_customers(Time.new(2019, 1, 30, 12, 25), Time.new(2019, 1, 30, 13, 30), "bucket", "path", "queue")
     end
   end
 

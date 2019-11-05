@@ -104,13 +104,6 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     request "mid_updates", params, context, {swallow_error: false}
   end
 
-  def request_address_updates updated_after_date
-    params = {updated_date: updated_after_date.strftime("%Y%m%d").to_i}
-    context = {results_as_array: true}
-
-    request "address_updates", params, context, {swallow_error: false}
-  end
-
   def request_updated_statements updated_after_date, updated_before_date, s3_bucket, s3_path, sqs_queue, customer_numbers: nil
     updated_since = updated_after_date.in_time_zone("America/New_York").strftime "%Y%m%d%H%M"
     updated_before = updated_before_date.in_time_zone("America/New_York").strftime "%Y%m%d%H%M"
@@ -164,6 +157,12 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
   def request_updated_tariff_classifications start_date, end_date, s3_bucket, s3_path, sqs_queue
     params = {start_date: start_date.strftime("%Y%m%d%H%M").to_i, end_date: end_date.strftime("%Y%m%d%H%M").to_i}
     request "updated_tariffs_to_s3", params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
+  end
+
+  def request_updated_customers updated_after_date, updated_before_date, s3_bucket, s3_path, sqs_queue, customer_numbers: nil
+    params = {start_date: updated_after_date.strftime("%Y%m%d%H%M"), end_date: updated_before_date.strftime("%Y%m%d%H%M")}
+    params[:customer_numbers] = csv_customer_list(customer_numbers) unless customer_numbers.blank?
+    request 'updated_customers_to_s3', params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 
 end; end;

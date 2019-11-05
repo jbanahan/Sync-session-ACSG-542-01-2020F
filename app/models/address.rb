@@ -144,26 +144,6 @@ qry
     return ActiveRecord::Base.connection.execute(query).count == 1
   end
 
-  def self.update_kewill_addresses addresses
-    countries = Hash.new do |h, k|
-      country = Country.where(iso_code: k).first
-      # In case country is missing from the address
-      h[k] = country.try(:id)
-    end
-
-    Array.wrap(addresses).each do |row|
-      row = row.map {|r| r.try(:strip) }
-
-      # First, find the company the address is linked to (creating one if it doesn't exist)
-      company = Company.find_or_create_company!("Customs Management", row[0].to_s.strip, {name: row[1], importer: true})
-
-      # All kewill addresses are named w/ leading 0's...strip those, we don't want them.
-      address_number = row[2].to_s.gsub(/^0+/, "")
-      address = company.addresses.where(system_code: address_number).first_or_initialize
-      address.update_attributes! name: row[3], line_1: row[4], line_2: row[5], city: row[6], state: row[7], postal_code: row[8], country_id: countries[row[9]]
-    end
-  end
-
   private
     def set_hash_key
       self.address_hash = self.class.make_hash_key(self)

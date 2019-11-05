@@ -190,12 +190,9 @@ ing/:heading', to: 'hts#heading'
 
       post "/intacct_data/receive_alliance_invoice_details", to: "intacct_data#receive_alliance_invoice_details"
       post "/intacct_data/receive_check_result", to: "intacct_data#receive_check_result"
-      post "/alliance_data/receive_alliance_entry_details", to: "alliance_data#receive_alliance_entry_details"
       post "/alliance_data/receive_alliance_entry_tracking_details", to: "alliance_data#receive_alliance_entry_tracking_details"
       post "/alliance_data/receive_updated_entry_numbers", to: "alliance_data#receive_updated_entry_numbers"
-      post "/alliance_data/receive_entry_data", to: "alliance_data#receive_entry_data"
       post "/alliance_data/receive_mid_updates", to: "alliance_data#receive_mid_updates"
-      post "/alliance_data/receive_address_updates", to: "alliance_data#receive_address_updates"
       post "/alliance_reports/receive_alliance_report_data", to: "alliance_reports#receive_alliance_report_data"
       post "/sql_proxy_postbacks/receive_sql_proxy_report_data", to: "sql_proxy_postbacks#receive_sql_proxy_report_data"
 

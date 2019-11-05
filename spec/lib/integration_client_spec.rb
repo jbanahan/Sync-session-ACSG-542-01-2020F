@@ -455,6 +455,10 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "handles Maersk Cargowise event files" do
         do_parser_test("Maersk Cargowise Feeds", OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser, '/maersk_cw_universal_event/file.xml')
       end
+
+      it "handles Kewill Customer files" do
+        do_parser_test("Kewill Entries", OpenChain::CustomHandler::Vandegrift::KewillCustomerParser, "/kewill_customers/file.json")
+      end
     end
 
     context "foot_locker" do
