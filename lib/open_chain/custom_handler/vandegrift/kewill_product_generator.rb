@@ -54,7 +54,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   def custom_defs
     @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, 
                 :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, 
-                :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance, :prod_fda_affirmation_compliance_value, :prod_brand]
+                :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance, :prod_fda_affirmation_compliance_value, :prod_brand,
+                :prod_301_exclusion_tariff]
     @cdefs
   end
 
@@ -232,7 +233,8 @@ IF(length(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})
 #{cd_s custom_defs[:prod_fda_contact_phone].id},
 #{cd_s custom_defs[:prod_fda_affirmation_compliance].id},
 #{cd_s custom_defs[:prod_fda_affirmation_compliance_value].id},
-#{cd_s custom_defs[:prod_fda_temperature].id} 
+#{cd_s custom_defs[:prod_fda_temperature].id},
+#{cd_s custom_defs[:prod_301_exclusion_tariff]}
 FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
 QRY
@@ -269,10 +271,16 @@ WHERE
     # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
     # here into individual classification fields.
     product_tariffs = row[2].to_s.split(tariff_separator)
-    hts_values = []
-    additional_tarrifs = []
+    
+    exclusion_301_tariff = row[21].to_s.strip.gsub(".", "")
+
+    exclude_301_tariffs = exclusion_301_tariff.present?
+
+    # Find any special tariffs we should add into the tariff list
+    additional_tariffs = []
     product_tariffs.each do |t|
-      additional_tarrifs.push *special_tariff_numbers(row[3], t)
+      # row[3] = Country of origin
+      additional_tariffs.push *special_tariff_numbers(row[3], t, exclude_301_tariffs)
     end
 
     # Now we need to see if any of the tariffs on the product record are "special" ones already.
@@ -281,6 +289,8 @@ WHERE
     keyed_special_tariffs = []
     standard_tariffs = []
     product_tariffs.each do |t|
+      # Determine the priority that should be applied to any special tariffs that were keyed by the user.  Typically this is going to 
+      # be MTB tariffs (as opposed to 301 tariffs), as we don't automatically add MTB tariffs.
       priority = keyed_special_tariff_priority(row[3], t)
       if priority.nil?
         standard_tariffs << t
@@ -295,19 +305,25 @@ WHERE
     # For now, the higher the priority, the closer to the front of the special list
     sorted_keyed_special_tariffs = keyed_special_tariffs.sort_by {|t| t[:priority] }.map {|t| t[:tariff] }.reverse
 
-    hts_values.push *additional_tarrifs
+    hts_values = []
+    # The exclusion should always come first
+    hts_values << exclusion_301_tariff unless exclusion_301_tariff.blank?
+    hts_values.push *additional_tariffs
     hts_values.push *sorted_keyed_special_tariffs
     hts_values.push *standard_tariffs
 
     hts_values.uniq
   end
 
-  def special_tariff_numbers product_country_origin, hts_number
+  def special_tariff_numbers product_country_origin, hts_number, exclude_301_tariffs
     return [] if hts_number.blank? || @disable_special_tariff_lookup
 
     country_origin = (product_country_origin.presence || @default_special_tariff_country_origin).to_s
 
-    special_tariff_hash.tariffs_for(country_origin, hts_number).map(&:special_hts_number)
+    tariffs = special_tariff_hash.tariffs_for(country_origin, hts_number)
+    tariffs.delete_if {|t| t.special_tariff_type.to_s.strip == "301" } if exclude_301_tariffs
+
+    tariffs.map &:special_hts_number
   end
 
   def special_tariff_hash
@@ -329,7 +345,5 @@ WHERE
     # We also want to key the hash by the special number, not the standard number.
     @special_tariff_numbers_hash ||= SpecialTariffCrossReference.find_special_tariff_hash("US", false, reference_date: Time.zone.now.to_date, use_special_number_as_key: true)
   end
-
-  
 
 end; end; end; end

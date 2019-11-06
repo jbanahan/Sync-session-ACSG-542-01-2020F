@@ -319,6 +319,25 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(t.text "seqNo").to eq "3"
         expect(t.text "tariffNo").to eq "1234567890"
       end
+
+      it "adds exlusion 301 tariff and ignores standard 301 tariff" do
+        row[21] = "99038812"
+        special_tariff.update! special_tariff_type: "301"
+
+        subject.write_row_to_xml parent, 1, row
+
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 2
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "99038812"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "1234567890"
+      end
     end
 
     it "allows style truncation if instructed" do
