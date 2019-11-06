@@ -10,17 +10,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
   end
 
   def self.parse_file data, log, opts={}
-    doc = Nokogiri::XML(data)
-    # Eliminate namespaces from the document.  If this is not done, the xpath xpressions need to be namespaced.
-    # # Since there's only a single namespace in these CW documents, there's no harm in tossing it.
-    doc.remove_namespaces!
-    self.new.parse(doc, opts)
+    self.new.parse(xml_document(data), opts)
   end
 
   def parse doc, opts={}
     # Root varies depending on how the XML is exported.  Dump UniversalInterchange/Body from the structure if it's included.
     if doc.root.name == 'UniversalInterchange'
-      doc = doc.xpath "UniversalInterchange/Body"
+      doc = xpath(doc, "UniversalInterchange/Body").first
     end
 
     broker_reference = first_text doc, "UniversalTransaction/TransactionInfo/Job[Type='Job']/Key"
@@ -41,7 +37,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
       # This element can't be nil because we've already verified broker_reference is not nil.  That comes from
       # within the TransactionInfo.
-      elem_broker_inv = doc.xpath("UniversalTransaction/TransactionInfo").first
+      elem_broker_inv = xpath(doc, "UniversalTransaction/TransactionInfo").first
 
       invoice_number = et elem_broker_inv, "JobInvoiceNumber"
       if invoice_number.blank?
@@ -57,7 +53,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       populate_broker_invoice broker_inv, elem_broker_inv
 
       broker_inv.broker_invoice_lines.destroy_all
-      elem_broker_inv.xpath("PostingJournalCollection/PostingJournal").each do |elem_inv_line|
+      xpath(elem_broker_inv, "PostingJournalCollection/PostingJournal") do |elem_inv_line|
         inv_line = broker_inv.broker_invoice_lines.build
         populate_broker_invoice_line inv_line, elem_inv_line
       end
@@ -88,7 +84,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       inv.invoice_date = parse_date(et elem, "CreateTime")
       inv.invoice_total = parse_decimal(et elem, "LocalTotal")
 
-      elem_bill_to = elem.xpath("ShipmentCollection/Shipment/OrganizationAddressCollection/OrganizationAddress[AddressType='SendersLocalClient']").first
+      elem_bill_to = xpath(elem, "ShipmentCollection/Shipment/OrganizationAddressCollection/OrganizationAddress[AddressType='SendersLocalClient']").first
       if elem_bill_to
         inv.customer_number = et elem_bill_to, "OrganizationCode"
         inv.bill_to_name = et elem_bill_to, "CompanyName"

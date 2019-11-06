@@ -80,8 +80,11 @@ class DataCrossReference < ActiveRecord::Base
   LL_PATENT_STATEMENTS ||= "ll_patent_statement"
   CARGOWISE_TRANSPORT_MODE_US ||= "cargowise_transport_mode_us"
   CARGOWISE_TRANSPORT_MODE_CA ||= "cargowise_transport_mode_ca"
-
+  # This list determines which documents should only retain a single version of the document
+  CARGOWISE_SINGLE_DOCUMENT_CODE ||= "cargowise_single_document_code"
   VFI_CALENDAR ||= "vfi_calendar"
+
+  scope :for_type, -> (xref_type) { where(cross_reference_type: xref_type) }
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
@@ -179,6 +182,10 @@ class DataCrossReference < ActiveRecord::Base
       r[d.key] = d.value
     end
     r
+  end
+
+  def self.keys cross_reference_type
+    Set.new(self.where(cross_reference_type: cross_reference_type).pluck(:key))
   end
 
   def self.find_ascena_brand department

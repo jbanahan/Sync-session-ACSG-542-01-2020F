@@ -31,6 +31,7 @@ class InboundFileIdentifier < ActiveRecord::Base
   TYPE_IMPORT_COUNTRY = "Import Country"
   TYPE_EVENT_TYPE = "Event Type"
   TYPE_PARS_NUMBER = "PARS Number"
+  TYPE_ATTACHMENT_NAME = "Attachment Name"
 
   def self.translate_identifier id
     if id.is_a?(Symbol)

@@ -1,41 +1,37 @@
 describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
-  describe "parse" do
-    let (:log) { InboundFile.new }
-    let (:test_data) { IO.read('spec/fixtures/files/maersk_event.xml') }
+  let (:log) { InboundFile.new }
+  let (:test_data) { IO.read('spec/fixtures/files/maersk_event.xml') }
+  let (:xml_document) {
+    doc = Nokogiri::XML test_data
+    doc.remove_namespaces!
+    doc
+  }
 
-    before :each do
-      allow(subject).to receive(:inbound_file).and_return log
-    end
+  before :each do
+    allow(subject).to receive(:inbound_file).and_return log
+  end
 
-    def parse_datetime date_str
-      @zone ||= ActiveSupport::TimeZone["America/New_York"]
-      @zone.parse(date_str)
-    end
-    
-    def make_document xml_str
-      doc = Nokogiri::XML xml_str
-      doc.remove_namespaces!
-      doc
-    end
+  def parse_datetime date_str
+    @zone ||= ActiveSupport::TimeZone["America/New_York"]
+    @zone.parse(date_str)
+  end
+
+  describe "process_event" do
 
     it "updates an entry, CCC event" do
       # CCC is the default value in the test XML.
-
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
       entry.entry_comments.build(username:"UniversalEvent", body:"2019-05-07 15:10:52 - DDD - DIFFERENTVAL")
       entry.save!
 
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.entry_filed_date).to eq parse_datetime("2019-05-07T15:10:52")
       expect(entry.first_entry_sent_date).to eq parse_datetime("2019-05-07T15:10:52")
       expect(entry.across_sent_date).to eq parse_datetime("2019-05-07T15:10:52")
 
-      expect(log).to have_identifier :broker_reference, "BQMJ00219066158", Entry, entry.id
       expect(log).to have_identifier :event_type, "CCC"
 
       expect(log).to have_info_message "Event successfully processed."
@@ -53,7 +49,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
     it "updates an entry, CCC event, existing dates" do
       # CCC is the default value in the test XML.
-
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       entry_filed_date:Date.new(2019,1,1), first_entry_sent_date:Date.new(2019,1,1),
                       across_sent_date:Date.new(2019,1,1))
@@ -62,9 +57,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry.entry_comments.build(username:"UniversalEvent", body:"2019-05-07 15:10:52 - CCC - SOMEVAL")
       entry.save!
 
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       # Filed date and ACROSS sent date should have been updated, but the first sent date should have stayed the same.
@@ -88,9 +81,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.fda_transmit_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -112,9 +103,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
                       fda_transmit_date:Date.new(2019,1,1))
       existing_date = entry.fda_transmit_date
 
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.fda_transmit_date).to eq existing_date
@@ -122,7 +111,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC |  SO - PGA FDA"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -133,9 +121,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.fda_review_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -157,9 +143,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
                       fda_transmit_date:Date.new(2019,1,1), fda_review_date:Date.new(2019,1,1))
       existing_date = entry.fda_review_date
 
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.fda_review_date).to eq existing_date
@@ -168,7 +152,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO- PGA  FDA 01"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -178,10 +161,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO- PGA -FDA 02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.fda_hold_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -203,9 +183,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
                       fda_transmit_date:Date.new(2019,1,1), fda_hold_date:Date.new(2019,1,1))
       existing_date = entry.fda_hold_date
 
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.fda_hold_date).to eq existing_date
@@ -214,7 +192,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO- PGA FDA  02"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -226,9 +203,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       fda_release_date:Date.new(2019,1,1), fda_hold_release_date:Date.new(2019,1,1))
 
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.fda_release_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -248,10 +223,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO - PGA - NHT  02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.nhtsa_hold_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -272,10 +244,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nhtsa_hold_date:Date.new(2019,1,1))
       existing_date = entry.nhtsa_hold_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.nhtsa_hold_date).to eq existing_date
@@ -283,7 +252,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO-PGA NHT 02"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -293,10 +261,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO -  PGA NHT 07")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.nhtsa_hold_release_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -317,10 +282,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nhtsa_hold_release_date:Date.new(2019,1,1))
       existing_date = entry.nhtsa_hold_release_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.nhtsa_hold_release_date).to eq existing_date
@@ -328,7 +290,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO- PGA NHT 07"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -338,10 +299,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO -  PGA -NMF  02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.nmfs_hold_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -362,10 +320,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nmfs_hold_date:Date.new(2019,1,1))
       existing_date = entry.nmfs_hold_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.nmfs_hold_date).to eq existing_date
@@ -373,7 +328,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO - PGA   - NMF 02"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -383,10 +337,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO-PGA - NMF 07")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.nmfs_hold_release_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -407,10 +358,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       nmfs_hold_release_date:Date.new(2019,1,1))
       existing_date = entry.nmfs_hold_release_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.nmfs_hold_release_date).to eq existing_date
@@ -418,7 +366,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO - PGA NMF 07"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -428,10 +375,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO -  PGA - OGA  02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.other_agency_hold_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -452,10 +396,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       other_agency_hold_date:Date.new(2019,1,1))
       existing_date = entry.other_agency_hold_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.other_agency_hold_date).to eq existing_date
@@ -463,7 +404,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO - PGA OGA 02"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -473,10 +413,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO -  PGA - OGA  07")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.other_agency_hold_release_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -497,10 +434,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       other_agency_hold_release_date:Date.new(2019,1,1))
       existing_date = entry.other_agency_hold_release_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.other_agency_hold_release_date).to eq existing_date
@@ -508,7 +442,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "MSC | SO - PGA - OGA 07"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -518,17 +451,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO - RAVEN")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
 
       expect(log).to have_identifier :event_type, "MSC | SO - RAVEN"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -537,10 +466,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'CLR')
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.first_release_received_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -565,10 +491,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
                       first_release_received_date:Date.new(2019,1,1), pars_ack_date:Date.new(2019,1,1),
                       across_declaration_accepted:Date.new(2019,1,1), first_7501_print:Date.new(2019,1,1))
       existing_date = entry.first_release_received_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.first_release_received_date).to eq existing_date
@@ -579,7 +502,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "CLR"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -591,10 +513,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       first_release_received_date:Date.new(2020,1,1), pars_ack_date:Date.new(2020,1,1),
                       across_declaration_accepted:Date.new(2020,1,1), first_7501_print:Date.new(2020,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.first_release_received_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -616,10 +535,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       edi_received_date:Date.new(2019,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.edi_received_date).to eq parse_datetime("2019-05-07T15:10:52").to_date
@@ -638,10 +554,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       file_logged_date:Date.new(2019,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.file_logged_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -660,10 +573,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       last_7501_print:Date.new(2019,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.last_7501_print).to eq parse_datetime("2019-05-07T15:10:52")
@@ -684,10 +594,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       last_7501_print:Date.new(2019,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.last_7501_print).to eq parse_datetime("2019-05-07T15:10:52")
@@ -708,10 +615,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       cadex_accept_date:Date.new(2019,1,1), k84_receive_date:Date.new(2019,1,1),
                       b3_print_date:Date.new(2019,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.cadex_accept_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -732,10 +636,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "DeusEXMachina")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.exam_ordered_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -756,10 +657,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       exam_ordered_date:Date.new(2019,1,1))
       existing_date = entry.exam_ordered_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.exam_ordered_date).to eq existing_date
@@ -767,7 +665,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "CES | DeusEXMachina"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -777,10 +674,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "WTA")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.pars_ack_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -802,10 +696,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       pars_ack_date:Date.new(2019,1,1), across_declaration_accepted:Date.new(2019,1,1))
       existing_date = entry.pars_ack_date
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
       expect(entry.pars_ack_date).to eq existing_date
@@ -814,7 +705,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(log).to have_identifier :event_type, "CES | WTA"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -824,15 +714,11 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "AAAAAA")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       expect(log).to have_identifier :event_type, "CES | AAAAAA"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
     end
@@ -843,10 +729,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       pars_reject_date:Date.new(2019,1,1))
-
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.pars_reject_date).to eq parse_datetime("2019-05-07T15:10:52")
@@ -865,39 +748,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "AAAAAA")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
+      expect(subject.process_event entry, xml_document).to eq false
 
       expect(log).to have_identifier :event_type, "MRJ | AAAAAA"
 
       expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_info_message "No changes made."
 
       expect(entry.entry_comments.length).to eq 0
-    end
-
-    it "creates new entry when entry not found" do
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document(test_data), { :key=>"this_key"}
-
-      expect(Entry.where(broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM).first).to_not be_nil
-
-      expect(log).to have_info_message "Cargowise-sourced entry matching Broker Reference 'BQMJ00219066158' was not found, so a new entry was created."
-      expect(log).to have_info_message "Event successfully processed."
-    end
-
-    it "rejects when broker reference is missing" do
-      test_data.gsub!(/CustomsDeclaration/,'CustomDucklaration')
-
-      expect_any_instance_of(Entry).to_not receive(:create_snapshot)
-      expect_any_instance_of(Entry).to_not receive(:broadcast_event)
-      subject.parse make_document(test_data)
-
-      expect(log).to_not have_info_message "Event successfully processed."
-      expect(log).to have_reject_message "Broker Reference (Job Number) is required."
     end
 
     it "rejects when event type is missing" do
@@ -905,7 +762,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
-      subject.parse make_document(test_data)
+      expect(subject.process_event entry, xml_document).to eq false
 
       expect(log).to_not have_info_message "Event successfully processed."
       expect(log).to have_reject_message "Event Type is required."
@@ -916,7 +773,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
-      subject.parse make_document(test_data)
+      expect(subject.process_event entry, xml_document).to eq false
 
       expect(log).to_not have_info_message "Event successfully processed."
       expect(log).to have_warning_message "Event Type is not mapped and was ignored: BLEH."
@@ -930,7 +787,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
                       entry_filed_date:Date.new(2019,1,1))
 
-      subject.parse make_document(test_data)
+      expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
       expect(entry.entry_filed_date).to be_nil
@@ -943,18 +800,197 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(comm.generated_at).to eq nil
     end
 
-    it "handles UniversalInterchange as root element" do
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+    it "skips any DDA event types" do
+      # DDA events are sent for Documents (.ie attachments / images)
+      test_data.gsub!(/CCC/, 'DDA')
 
-      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
-      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
-      subject.parse make_document("<UniversalInterchange><Body>#{test_data}</Body></UniversalInterchange>"), { :key=>"this_key"}
+      # Because nothing from the entry should be accessed for DDA events, we can just send nil rather than an actual entry
+      expect(subject.process_event nil, xml_document).to eq false
 
-      entry.reload
-      expect(entry.entry_filed_date).to eq parse_datetime("2019-05-07T15:10:52")
-
-      expect(log).to have_info_message "Event successfully processed."
+      # The log should still show a DDA event
+      expect(log).to have_identifier :event_type, "DDA"
     end
   end
 
+  describe "parse" do
+
+    it "parses xml, creates entry, processes event and processes documents and snapshots" do
+      expect(subject).to receive(:process_event).with(instance_of(Entry), instance_of(xml_document.class)).and_return true
+      expect(subject).to receive(:process_documents).with(instance_of(Entry), instance_of(xml_document.class)).and_return true
+
+      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "file.xml")
+      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
+
+      subject.parse xml_document, key: "file.xml"
+      entry = Entry.where(broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM).first
+      expect(entry).not_to be_nil
+
+      expect(log).to have_info_message("Cargowise-sourced entry matching Broker Reference 'BQMJ00219066158' was not found, so a new entry was created.")
+    end
+
+    it "rejects when broker reference is missing" do
+      test_data.gsub!(/CustomsDeclaration/,'CustomDucklaration')
+      subject.parse xml_document
+      expect(log).to have_reject_message "Broker Reference (Job Number) is required."
+      expect(Entry.count).to eq 0
+    end
+
+    it "handles UniversalInterchange as root element" do
+      test_data.prepend "<UniversalInterchange><Body>"
+      test_data << "</Body></UniversalInterchange>"
+      
+      expect(subject).to receive(:process_event).with(instance_of(Entry), instance_of(Nokogiri::XML::Element)).and_return true
+      expect(subject).to receive(:process_documents).with(instance_of(Entry), instance_of(Nokogiri::XML::Element)).and_return true
+
+      expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "file.xml")
+      expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
+
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      subject.parse xml_document, key: "file.xml"
+    end
+  end
+
+  describe "process_documents" do
+
+    let (:test_data) { IO.read ('spec/fixtures/files/maersk_event_document.xml') }
+    let! (:entry) { Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM) }
+    
+    it "extracts document data from event xml" do
+      subject.process_documents entry, xml_document
+
+      entry.reload
+
+      expect(entry.attachments.length).to eq 1
+      attachment = entry.attachments.first
+      # Note the added hyphens and colons changed to - (this ensures the filename is sanitized)
+      expect(attachment.attached_file_name).to eq "BQMJ00415005747-16-01-2016 11-10-43 AM.pdf"
+      expect(attachment.attached_content_type).to eq "application/pdf"
+      expect(attachment.checksum).to eq "7e24c0c2332de06c49e233791c09ac4a80f3f11045ada96c0ed56d1b3a60fb88"
+      expect(attachment.is_private).to eq false
+      expect(attachment.source_system_timestamp).to eq ActiveSupport::TimeZone["UTC"].parse("2016-01-16T16:12")
+      expect(attachment.attachment_type).to eq "7501"
+
+      expect(log).to have_identifier :attachment_name, "BQMJ00415005747-16-01-2016 11-10-43 AM.pdf"
+      expect(log).to have_info_message "Attached document BQMJ00415005747-16-01-2016 11-10-43 AM.pdf."
+    end
+
+    it "does not add document if entry already contains existing document with same checksum, name, and type" do
+      entry.attachments.create! checksum: "7e24c0c2332de06c49e233791c09ac4a80f3f11045ada96c0ed56d1b3a60fb88", attached_file_name: "BQMJ00415005747-16-01-2016 11-10-43 AM.pdf", attachment_type: "7501"
+  
+      subject.process_documents entry, xml_document
+
+      entry.reload
+      # Just ensure something like is_private is null, since that value will not be set if the document is already attached
+      expect(entry.attachments.first.is_private).to be_nil
+
+      expect(log).to have_identifier :attachment_name, "BQMJ00415005747-16-01-2016 11-10-43 AM.pdf"
+      expect(log).to have_info_message "Document 'BQMJ00415005747-16-01-2016 11-10-43 AM.pdf' is already attached to this entry."
+    end
+
+    it "handles origin documents" do
+      # Origin Documents are special cases of documents that are loaded directly into Cargowise by the user.
+      # They're essentially all the shipment docs that the user has zipped together into a single file.
+      # The data for them comes over a little different than system generated documents in Cargowise (like 7501s, etc)
+      test_data.gsub! "DFD-7501-BQMJ00415005747-16/01/2016 11:10:43 AM.pdf", "some-file.pdf"
+      test_data.gsub! "<Code>EPR</Code>", "<Code>ORG</Code>"
+
+      subject.process_documents entry, xml_document
+      expect(entry.attachments.length).to eq 1
+      attachment = entry.attachments.first
+      expect(attachment.attached_file_name).to eq "some-file.pdf"
+      expect(attachment.attachment_type).to eq "Origin Document Pack"
+    end
+
+    context "with replacement document types" do
+      let! (:cross_reference) { DataCrossReference.create! cross_reference_type: DataCrossReference::CARGOWISE_SINGLE_DOCUMENT_CODE, key: "7501"}
+
+      it "replaces exising document types for types in the cross reference" do
+        entry.attachments.create! checksum: "another document", attached_file_name: "another_file.pdf", attachment_type: "7501"
+
+        subject.process_documents entry, xml_document
+        entry.reload
+        expect(entry.attachments.length).to eq 1
+        attachment = entry.attachments.first
+        expect(attachment.attached_file_name).to eq "BQMJ00415005747-16-01-2016 11-10-43 AM.pdf"
+      end
+    end
+
+    context "without replacement document type" do
+      it "adds a second document with the same document type" do
+        entry.attachments.create! checksum: "another document", attached_file_name: "another_file.pdf", attachment_type: "INV"
+
+        subject.process_documents entry, xml_document
+        entry.reload
+        expect(entry.attachments.length).to eq 2
+        attachment = entry.attachments.first
+        expect(attachment.attached_file_name).to eq "another_file.pdf"
+
+        attachment = entry.attachments.second
+        expect(attachment.attached_file_name).to eq "BQMJ00415005747-16-01-2016 11-10-43 AM.pdf"
+      end
+    end
+  end
+
+  describe "document_data" do
+    # This is a little weird...the reason I'm testing a private method is because I don't really have any way
+    # to verify from the actual entry / attachment data if the data being extracted is actually be transformed
+    # from Base64 encoded data correctly...that's why I'm specifically testing the document_data method
+    let (:attached_document_element) { xml_document.xpath("/UniversalEvent/Event/AttachedDocumentCollection/AttachedDocument").first }
+    let (:test_data) { IO.read ('spec/fixtures/files/maersk_event_document.xml') }
+
+    it "decodes the document data" do
+      # The first bit of a PDF file (which is what's embedded in the file) should include the PDF version
+      # So just look for that string...if found, it means the Base64 data was decoded properly
+      expect(subject.send(:document_data, attached_document_element)).to include "PDF-1.7"
+    end
+
+    it "returns nil if image data isn't found" do 
+      test_data.gsub!("<ImageData>", "<NotImageData>")
+      test_data.gsub!("</ImageData>", "</NotImageData>")
+
+      expect(subject.send(:document_data, attached_document_element)).to be_nil
+    end
+  end
+
+  describe "parse_file" do
+    subject { described_class }
+
+    it "processes events and documents" do
+      expect_any_instance_of(subject).to receive(:process_event).with(instance_of(Entry), instance_of(Nokogiri::XML::Document)).and_return true
+      expect_any_instance_of(subject).to receive(:process_documents).with(instance_of(Entry), instance_of(Nokogiri::XML::Document)).and_return true
+
+      subject.parse_file test_data, log, {key: "s3_path"}
+
+      e = Entry.where(broker_reference: "BQMJ00219066158", source_system: "Cargowise").first
+      expect(e).not_to be_nil
+      expect(e.entity_snapshots.length).to eq 1
+      s = e.entity_snapshots.last
+      expect(s.user).to eq User.integration
+      expect(s.context).to eq "s3_path"
+
+      expect(log).to have_identifier(:broker_reference, "BQMJ00219066158", e)
+    end
+
+    it "finds broker reference from document filename if not found from DataSource" do
+      test_data.clear
+      test_data << IO.read('spec/fixtures/files/maersk_event_document.xml')
+      # Switch the event type to come from Accounting Invoice, this will force the JobNumber to have to be
+      # retrieved from the document's file name
+      test_data.gsub!("<Type>CustomsDeclaration</Type>", "<Type>AccountingInvoice</Type>")
+
+      expect_any_instance_of(subject).to receive(:process_event).with(instance_of(Entry), instance_of(Nokogiri::XML::Document)).and_return true
+      expect_any_instance_of(subject).to receive(:process_documents).with(instance_of(Entry), instance_of(Nokogiri::XML::Document)).and_return true
+
+      subject.parse_file test_data, log, {key: "s3_path"}
+
+      e = Entry.where(broker_reference: "BQMJ00415005747", source_system: "Cargowise").first
+      expect(e).not_to be_nil
+      expect(e.entity_snapshots.length).to eq 1
+      s = e.entity_snapshots.last
+      expect(s.user).to eq User.integration
+      expect(s.context).to eq "s3_path"
+
+      expect(log).to have_identifier(:broker_reference, "BQMJ00415005747", e)
+    end
+  end
 end

@@ -708,4 +708,20 @@ describe DataCrossReference do
       expect(DataCrossReference.find_mid("key2", company)).to eq nil
     end
   end
+
+  describe "keys" do
+    it "returns all key values for a particular type" do
+      DataCrossReference.create! cross_reference_type: "test", key: "K1"
+      DataCrossReference.create! cross_reference_type: "test", key: "K2"
+      # Make sure pluck is being used to pull the key value back, since we don't need all the values
+      # from the xref record just to return keys in a set
+      expect_any_instance_of(ActiveRecord::Relation).to receive(:pluck).with(:key).and_call_original
+
+      set = DataCrossReference.keys "test"
+      expect(set).to be_a Set
+      expect(set.size).to eq 2
+      expect(set).to include "K1"
+      expect(set).to include "K2"
+    end
+  end
 end

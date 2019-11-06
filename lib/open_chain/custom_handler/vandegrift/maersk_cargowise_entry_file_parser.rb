@@ -12,17 +12,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
   end
 
   def self.parse_file data, log, opts={}
-    doc = Nokogiri::XML(data)
-    # Eliminate namespaces from the document.  If this is not done, the xpath xpressions need to be namespaced.
-    # # Since there's only a single namespace in these CW documents, there's no harm in tossing it.
-    doc.remove_namespaces!
-    self.new.parse(doc, opts)
+    self.new.parse(xml_document(data), opts)
   end
 
   def parse doc, opts={}
     # Root varies depending on how the XML is exported.  Dump UniversalInterchange/Body from the structure if it's included.
     if doc.root.name == 'UniversalInterchange'
-      doc = doc.xpath doc, "UniversalInterchange/Body"
+      doc = xpath(doc, "UniversalInterchange/Body").first
     end
 
     broker_reference = first_text doc, "UniversalShipment/Shipment/DataContext/DataSourceCollection/DataSource[Type='CustomsDeclaration']/Key"
@@ -51,13 +47,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       entry.containers.destroy_all
 
       entry_effective_date = import_country.iso_code == 'US' ? tariff_effective_date(entry) : nil
-      doc.xpath("UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice").each do |elem_inv|
+      xpath(doc, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice") do |elem_inv|
         inv = entry.commercial_invoices.build
         populate_commercial_invoice inv, elem_inv, doc, import_country.iso_code
         # Cargowise cannot be counted upon to generate this XML with the invoice line elements sorted in
         # line number order.  We have to sort them ourselves.  The dupe line removal logic below relies upon
         # them being ordered sequentially.
-        line_elems = elem_inv.xpath "CommercialInvoiceLineCollection/CommercialInvoiceLine"
+        line_elems = xpath elem_inv, "CommercialInvoiceLineCollection/CommercialInvoiceLine"
         line_elems = line_elems.sort { |a,b| parse_integer(et(a, "LineNo")) <=> parse_integer(et(b, "LineNo")) }
         line_elems.each do |elem_line|
           parent_line_number = et elem_line, "ParentLineNo"
@@ -92,12 +88,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       end
       entry.total_duty_direct = is_deferred_duty?(entry) ? entry.total_duty_taxes_fees_amount : nil
 
-      doc.xpath("UniversalShipment/Shipment/ContainerCollection/Container").each do |elem_cont|
+      xpath(doc, "UniversalShipment/Shipment/ContainerCollection/Container") do |elem_cont|
         cont = entry.containers.build
         populate_container cont, elem_cont
       end
 
-      doc.xpath("UniversalShipment/Shipment/NoteCollection/Note").each do |elem_note|
+      xpath(doc, "UniversalShipment/Shipment/NoteCollection/Note") do |elem_note|
         note_text = et elem_note, "NoteText"
         if note_text.present?
           public_note = first_text(elem_note, "Visibility/Code") == "PUB" &&
@@ -298,7 +294,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
     def get_bills_of_lading xml, bol_base_xpath, bill_field_name, scac_key
       bol_arr = []
-      xml.xpath(bol_base_xpath).each do |elem_bol|
+      xpath(xml, bol_base_xpath) do |elem_bol|
         bol = et(elem_bol, bill_field_name).to_s.strip
         next if bol.blank?
         
@@ -639,7 +635,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       if import_country_iso == 'US'
         val = unique_values(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryLineCollection/EntryLine/LineNumber").max_by { |x| x.to_i }.to_i
       elsif import_country_iso == 'CA'
-        val = xml.xpath("UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/EntryLineCollection/EntryLine").count
+        val = xpath(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/EntryLineCollection/EntryLine").length
       end
       val
     end
@@ -678,7 +674,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     end
 
     def is_xvv_line? elem_line
-      elem_line.xpath("AddInfoCollection/AddInfo[Key='SetInd']").count > 0
+      xpath(elem_line, "AddInfoCollection/AddInfo[Key='SetInd']").length > 0
     end
 
     def populate_commercial_invoice_line inv_line, elem, import_country, elem_invoice, elem_root
@@ -826,7 +822,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
     # Finds the entry line connected to an invoice tariff within the XML structure.
     def find_matching_entry_line doc, entry_line_number, hts_code
-      doc.xpath("UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryLineCollection/EntryLine[LineNumber='#{entry_line_number}' and HarmonisedCode='#{hts_code}']").first
+      xpath(doc, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryLineCollection/EntryLine[LineNumber='#{entry_line_number}' and HarmonisedCode='#{hts_code}']").first
     end
 
     def populate_commercial_invoice_tariff tar, elem_invoice_line, import_country_iso, elem_entry_line, primary_tariff, condensed_line
@@ -904,8 +900,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       # "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value!='ADD' and AddInfo/Value!='CVD']/AddInfo[Key='Amount']/Value"
       # It does not exclude ADD and CVD as it should.  So, to work around that, we're no longer trying to handle this
       # with one xpath.
-      cdt_info_groups = elem_invoice_line.xpath "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']"
-      cdt_info_groups.each do |elem_cdt|
+      xpath(elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']") do |elem_cdt|
         tax_type = first_text elem_cdt, "AddInfoCollection/AddInfo[Key='TaxType']/Value"
         if !['ADD', 'CVD'].include?(tax_type.to_s.upcase)
           amount = first_text elem_cdt, "AddInfoCollection/AddInfo[Key='Amount']/Value"
