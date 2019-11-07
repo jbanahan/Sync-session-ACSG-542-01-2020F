@@ -206,6 +206,8 @@ QRY
   (shipments.cargo_on_hand_date IS NOT NULL)
   AND
   (shipments.canceled_date IS NULL)
+  AND 
+  (shipments.departure_date IS NOT NULL) 
   GROUP BY shipments.id, orders.id, order_lines.price_per_unit
 QRY
     q
