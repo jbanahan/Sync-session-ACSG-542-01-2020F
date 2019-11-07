@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRul
     line = inv.commercial_invoice_lines.create! line_number: 1, cvd_duty_amount: BigDecimal("40"), add_duty_amount: BigDecimal("50"), cotton_fee: BigDecimal("3"), hmf: BigDecimal("7"), prorated_mpf: BigDecimal("10")
     tariff = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("10")
 
-    bi = e.broker_invoices.create! invoice_number: "BROKER INVOICE"
+    bi = e.broker_invoices.create! invoice_number: "BROKER INVOICE", source_system: "Alliance"
     bi.broker_invoice_lines.create! charge_code: "0001", charge_description: "DUTY", charge_amount: BigDecimal("150")
 
     e

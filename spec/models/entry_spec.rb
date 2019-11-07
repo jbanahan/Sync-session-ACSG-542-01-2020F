@@ -490,27 +490,6 @@ describe Entry do
     end
   end
 
-  describe "total_billed_duty_amount" do
-
-    let (:entry) {
-      # Create multiple broker invoices with multiple lines, each having a single duty line
-      broker_invoice_line = Factory(:broker_invoice_line, charge_code: "0001", charge_amount: 10)
-      broker_invoice_line_2 = Factory(:broker_invoice_line, broker_invoice: broker_invoice_line.broker_invoice, charge_code: "0002", charge_amount: 20)
-      broker_invoice_2_line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: broker_invoice_line.broker_invoice.entry), charge_code: "0001", charge_amount: 30)
-      broker_invoice_2_line_2 = Factory(:broker_invoice_line, broker_invoice: broker_invoice_line.broker_invoice, charge_code: "0003", charge_amount: 40)
-
-      broker_invoice_line.broker_invoice.entry
-    }
-
-    it "sums total duty from broker invoices" do
-      expect(entry.total_billed_duty_amount).to eq BigDecimal("40")
-    end
-
-    it "returns zero if not invoiced" do
-      expect(subject.total_billed_duty_amount).to eq BigDecimal("0")
-    end
-  end
-
   describe "total_duty_taxes_fees_amount" do
 
     let (:entry) { Entry.new total_duty: BigDecimal("1"), total_taxes: BigDecimal("2"), total_fees: BigDecimal("3"), total_add: BigDecimal("4"), total_cvd: BigDecimal("5") }
@@ -644,5 +623,105 @@ describe Entry do
       entry.reload
       expect(entry.commercial_invoices.length).to eq 0
     end
+  end
+
+  describe "total_billed_duty_amount" do
+    let (:entry) { Entry.new}
+    let (:invoice_1) { 
+      invoice = BrokerInvoice.new
+      entry.broker_invoices << invoice
+      invoice
+    }
+
+    let (:invoice_2) {
+      invoice = BrokerInvoice.new
+      entry.broker_invoices << invoice
+      invoice 
+    }
+
+    it "sums duty for each invoice" do
+      expect(invoice_1).to receive(:total_billed_duty_amount).and_return BigDecimal("100")
+      expect(invoice_2).to receive(:total_billed_duty_amount).and_return BigDecimal("200")
+
+      expect(entry.total_billed_duty_amount).to eq BigDecimal("300")
+    end
+
+    it "returns zero if no invoices exist" do
+      expect(entry.total_billed_duty_amount).to eq BigDecimal("0")
+    end
+  end
+
+  describe "total_duty_billed_subquery" do
+
+    let (:entry) {
+      Factory(:entry, broker_reference: "1234")
+    }
+
+    context "with Customs Management entries" do
+      let! (:invoice) {
+        broker_invoice = Factory(:broker_invoice, entry: entry, source_system: "Alliance")
+        broker_invoice.broker_invoice_lines.create! charge_code: "0001", charge_amount: "100", charge_description: "DUTY"
+        broker_invoice.broker_invoice_lines.create! charge_code: "0002", charge_amount: "200", charge_description: "NOT DUTY"
+        broker_invoice
+      }
+
+      it "returns a subquery to calculate duty amount billed for an entry" do
+        result = ActiveRecord::Base.connection.execute "SELECT #{Entry.total_duty_billed_subquery} FROM entries WHERE entries.id = #{entry.id}"
+        expect(result.first[0]).to eq 100
+      end
+
+      it "returns 0 if no duty is billed" do
+        invoice.broker_invoice_lines.first.destroy
+
+        result = ActiveRecord::Base.connection.execute "SELECT #{Entry.total_duty_billed_subquery} FROM entries WHERE entries.id = #{entry.id}"
+        expect(result.first[0]).to eq 0
+      end
+    end
+
+    context "with Fenix entries" do
+      let! (:invoice) {
+        broker_invoice = Factory(:broker_invoice, entry: entry, source_system: "Fenix")
+        broker_invoice.broker_invoice_lines.create! charge_code: "1", charge_amount: "100", charge_description: "DUTY"
+        broker_invoice.broker_invoice_lines.create! charge_code: "2", charge_amount: "200", charge_description: "NOT DUTY"
+        broker_invoice
+      }
+
+      it "returns a subquery to calculate duty amount billed for an entry" do
+        result = ActiveRecord::Base.connection.execute "SELECT #{Entry.total_duty_billed_subquery} FROM entries WHERE entries.id = #{entry.id}"
+        expect(result.first[0]).to eq 100
+      end
+
+      it "returns 0 if no duty is billed" do
+        invoice.broker_invoice_lines.first.destroy
+
+        result = ActiveRecord::Base.connection.execute "SELECT #{Entry.total_duty_billed_subquery} FROM entries WHERE entries.id = #{entry.id}"
+        expect(result.first[0]).to eq 0
+      end
+    end
+
+    context "with Cargowise entries" do
+      let! (:invoice) {
+        broker_invoice = Factory(:broker_invoice, entry: entry, source_system: "Cargowise")
+        broker_invoice.broker_invoice_lines.create! charge_code: "200", charge_amount: "100", charge_description: "DUTY"
+        broker_invoice.broker_invoice_lines.create! charge_code: "221", charge_amount: "200", charge_description: "MPF"
+        broker_invoice.broker_invoice_lines.create! charge_code: "222", charge_amount: "300", charge_description: "HMF"
+        broker_invoice.broker_invoice_lines.create! charge_code: "2", charge_amount: "200", charge_description: "NOT DUTY"
+        broker_invoice
+      }
+
+      it "returns a subquery to calculate duty amount billed for an entry" do
+        result = ActiveRecord::Base.connection.execute "SELECT #{Entry.total_duty_billed_subquery} FROM entries WHERE entries.id = #{entry.id}"
+        expect(result.first[0]).to eq 600
+      end
+
+      it "returns 0 if no duty is billed" do
+        invoice.broker_invoice_lines.each &:destroy
+        invoice.broker_invoice_lines.create! charge_code: "2", charge_amount: "200", charge_description: "NOT DUTY"
+
+        result = ActiveRecord::Base.connection.execute "SELECT #{Entry.total_duty_billed_subquery} FROM entries WHERE entries.id = #{entry.id}"
+        expect(result.first[0]).to eq 0
+      end
+    end
+    
   end
 end

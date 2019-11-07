@@ -108,30 +108,89 @@ describe BrokerInvoice do
   end
 
   describe "total_billed_duty_amount" do
-    let (:broker_invoice) {
-      inv = BrokerInvoice.new
-      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0001")
-      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "0001")
-      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0002")
-      inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "0001")
+    context "with Customs Management source system" do
+      let (:broker_invoice) {
+        inv = BrokerInvoice.new source_system: Entry::KEWILL_SOURCE_SYSTEM
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0001")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "0001")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0002")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "0001")
 
-      inv
-    }
+        inv
+      }
 
-    it "sums charge amounts for duty lines" do
-      expect(broker_invoice.total_billed_duty_amount).to eq 50
+      it "sums charge amounts for duty lines" do
+        expect(broker_invoice.total_billed_duty_amount).to eq 50
+      end
+
+      it "returns zero if invoice is marked for destruction" do
+        broker_invoice.mark_for_destruction
+
+        expect(broker_invoice.total_billed_duty_amount).to eq 0
+      end
+
+      it "skips lines marked for destruction" do
+        broker_invoice.broker_invoice_lines[0].mark_for_destruction
+        expect(broker_invoice.total_billed_duty_amount).to eq 40
+      end
     end
 
-    it "returns zero if invoice is marked for destruction" do
-      broker_invoice.mark_for_destruction
+    context "with Fenix source system" do
+      let (:broker_invoice) {
+        inv = BrokerInvoice.new source_system: Entry::FENIX_SOURCE_SYSTEM
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "1")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "1")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "2")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "1")
 
-      expect(broker_invoice.total_billed_duty_amount).to eq 0
+        inv
+      }
+
+      it "sums charge amounts for duty lines" do
+        expect(broker_invoice.total_billed_duty_amount).to eq 50
+      end
+
+      it "returns zero if invoice is marked for destruction" do
+        broker_invoice.mark_for_destruction
+
+        expect(broker_invoice.total_billed_duty_amount).to eq 0
+      end
+
+      it "skips lines marked for destruction" do
+        broker_invoice.broker_invoice_lines[0].mark_for_destruction
+        expect(broker_invoice.total_billed_duty_amount).to eq 40
+      end
     end
 
-    it "skips lines marked for destruction" do
-      broker_invoice.broker_invoice_lines[0].mark_for_destruction
-      expect(broker_invoice.total_billed_duty_amount).to eq 40
+    context "with Cargowise source system" do
+      let (:broker_invoice) {
+        inv = BrokerInvoice.new source_system: Entry::CARGOWISE_SOURCE_SYSTEM
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "200")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "200")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "200")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "222")
+        inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "221")
+
+        inv
+      }
+
+      it "sums charge amounts for duty lines" do
+        expect(broker_invoice.total_billed_duty_amount).to eq 70
+      end
+
+      it "returns zero if invoice is marked for destruction" do
+        broker_invoice.mark_for_destruction
+
+        expect(broker_invoice.total_billed_duty_amount).to eq 0
+      end
+
+      it "skips lines marked for destruction" do
+        broker_invoice.broker_invoice_lines[0].mark_for_destruction
+        expect(broker_invoice.total_billed_duty_amount).to eq 60
+      end
     end
+
+    
   end
 
   describe "has_charge_code?" do

@@ -90,7 +90,31 @@ class BrokerInvoice < ActiveRecord::Base
   def total_billed_duty_amount
     return BigDecimal("0") if self.marked_for_destruction?
 
-    self.broker_invoice_lines.map {|l| (!l.marked_for_destruction? && l.charge_amount && l.charge_code.to_s == "0001") ? l.charge_amount : 0 }.sum
+    duty_charge_codes = Array.wrap(
+      case self.source_system.to_s.strip
+      when Entry::KEWILL_SOURCE_SYSTEM
+        "0001"
+      when Entry::FENIX_SOURCE_SYSTEM
+        "1"
+      when Entry::CARGOWISE_SOURCE_SYSTEM
+        # Cargowise splits out all the duty amounts into the individual components that make up Duty
+        # We'll need to combine them all back togther.
+
+        # 200 = Duty
+        # 221 = MPF
+        # 222 = HMF
+        ["200", "221", "222"]
+      else
+        "_____"
+      end
+    )
+
+    sum = BigDecimal("0")
+    self.broker_invoice_lines.each do |line|
+      sum += line.charge_amount if !line.marked_for_destruction? && line.charge_amount && duty_charge_codes.include?(line.charge_code)
+    end
+
+    sum
   end
 
   def has_charge_code? charge_code

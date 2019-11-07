@@ -626,6 +626,20 @@ class Entry < ActiveRecord::Base
     invoices.destroy_all
   end
 
+  def self.total_duty_billed_subquery
+    "(SELECT 
+        IFNULL(
+          SUM(" +
+            "CASE " +
+            "WHEN broker_invoices.source_system = 'Alliance' AND broker_invoice_lines.charge_code IN ('0001') THEN broker_invoice_lines.charge_amount " +
+            "WHEN broker_invoices.source_system = 'Fenix' and broker_invoice_lines.charge_code in ('1') THEN broker_invoice_lines.charge_amount " +
+            "WHEN broker_invoices.source_system = 'Cargowise' and broker_invoice_lines.charge_code in ('200', '221', '222') THEN broker_invoice_lines.charge_amount " +
+            "ELSE 0 END) " +
+        ", 0) " +
+      "FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = entries.id" +
+    ")"
+  end
+
   private
 
     def populated_us_holds

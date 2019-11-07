@@ -815,7 +815,7 @@ describe ModelField do
     end
     context "duty billed" do
       before :each do
-        @line1 = Factory(:broker_invoice_line,:charge_amount=>10,:charge_code=>'0001')
+        @line1 = Factory(:broker_invoice_line,:charge_amount=>10,:charge_code=>'0001', broker_invoice: Factory(:broker_invoice, source_system: "Alliance"))
         @line2 = Factory(:broker_invoice_line,:charge_amount=>5,:charge_code=>'0001',:broker_invoice=>@line1.broker_invoice)
         @mf = ModelField.find_by_uid :ent_duty_billed
       end
@@ -832,7 +832,7 @@ describe ModelField do
       end
       it "should total across multiple broker invoices for same entry" do
         ent = @line1.broker_invoice.entry
-        line3 = Factory(:broker_invoice_line,:charge_amount=>20,:charge_code=>'0001',:broker_invoice=>Factory(:broker_invoice,:entry=>ent,:suffix=>'B'))
+        line3 = Factory(:broker_invoice_line,:charge_amount=>20,:charge_code=>'0001',:broker_invoice=>Factory(:broker_invoice,:entry=>ent,:suffix=>'B', :source_system=>"Alliance"))
         expect(@mf.process_export(@line1.broker_invoice.entry,nil,true)).to eq 35
         sc = SearchCriterion.new(:model_field_uid=>'ent_duty_billed',:operator=>'eq',:value=>'35')
         expect(sc.apply(Entry.where('1=1')).first).to eq @line1.broker_invoice.entry

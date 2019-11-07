@@ -183,8 +183,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [125,:ent_last_7501_print,:last_7501_print,"7501 Print Date - Last",{:data_type=>:datetime,:can_view_lambda=>lambda {|u| u.company.broker?}}],
       [126,:ent_duty_billed,:duty_billed,"Total Duty Billed",{
         :import_lambda=>lambda {|obj,data| "Total Duty Billed ignored. (read only)"},
-        :export_lambda=>lambda {|obj| obj.broker_invoice_lines.where(:charge_code=>'0001').sum(:charge_amount)},
-        :qualified_field_name=>"(select sum(charge_amount) from broker_invoice_lines inner join broker_invoices on broker_invoices.id = broker_invoice_lines.broker_invoice_id where broker_invoices.entry_id = entries.id and charge_code = '0001')",
+        :export_lambda=>lambda {|obj| obj.total_billed_duty_amount },
+        :qualified_field_name=>Entry.total_duty_billed_subquery, 
         :data_type=>:decimal,
         :can_view_lambda=>lambda {|u| u.view_broker_invoices? && u.company.broker?}
       }],
@@ -337,7 +337,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [219, :ent_first_release_received_date, :first_release_received_date, "First Release Received Date", {data_type: :datetime}],
       [220, :ent_total_billed_duty_amount, :total_billed_duty_amount, "Total Billed Duty Amount", {:data_type=>:decimal,:currency=>:usd, read_only: true,
         :export_lambda=>lambda {|obj| obj.total_billed_duty_amount },
-        :qualified_field_name=>"(SELECT IFNULL(SUM(charge_amount), 0) FROM broker_invoices tbd_i INNER JOIN broker_invoice_lines tbd_il ON tbd_i.id = tbd_il.broker_invoice_id WHERE tbd_i.entry_id = entries.id AND tbd_il.charge_code = '0001')"
+        :qualified_field_name=>Entry.total_duty_billed_subquery
       }],
       [221, :ent_total_taxes, :total_taxes, "Total Taxes", {data_type: :decimal, currency: :usd}],
       [222, :ent_total_duty_taxes_fees_penalties, :total_duty_taxes_fees_penalties, "Total Duty, Taxes, Fees & Penalties", {:data_type=>:decimal,:currency=>:usd, read_only: true,
