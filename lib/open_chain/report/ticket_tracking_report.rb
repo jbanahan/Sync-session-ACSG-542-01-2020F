@@ -1,12 +1,9 @@
+require 'open_chain/report/builder_output_report_helper'
+
 module OpenChain; module Report; class TicketTrackingReport
-  include OpenChain::Report::ReportHelper
+  include OpenChain::Report::BuilderOutputReportHelper
 
-  COLUMN_NAMES ||= ['Issue Number', 'Issue Type', 'Status', 'Summary', 'Order Number(s)', 'Part Number(s)', 'Description', 'Comments', 'Assignee', 'Reporter', 'Shipment ETA', 
-                    'Issue Created', 'Issue Resolved', 'Broker Reference', 'Entry Number', 'PO Numbers', 'Part Numbers', 'Product Lines', 
-                    'Vendors', 'MIDs', 'Countries of Origin', 'Master Bills', 'House Bills', 'Container Numbers', 'Release Date', 
-                    'Link to Jira issue', 'Link to VFI Track entry']
-
-  VANDEGRIFT_PROJECT_KEYS ||= ["DEMO", "IT", "TP"]         
+  VANDEGRIFT_PROJECT_KEYS ||= ["DEMO", "IT", "TP"]
 
 
   def self.permission? user
@@ -35,7 +32,7 @@ module OpenChain; module Report; class TicketTrackingReport
     project_keys = settings['project_keys']
     validate_ticketing_sys_codes(run_by, project_keys)
     wb = create_workbook start_date, end_date, project_keys, run_by.time_zone
-    workbook_to_tempfile wb, 'TicketTracking-', file_name: "Ticket Tracking Report.xls"
+    write_builder_to_tempfile wb, "TicketTrackingReport"
   end
 
   def validate_ticketing_sys_codes user, codes
@@ -45,10 +42,21 @@ module OpenChain; module Report; class TicketTrackingReport
     raise "User isn't authorized to view project key(s) #{bad_codes.join(', ')}" unless bad_codes.empty?
   end
 
+  def column_names
+    ['Issue Number', 'Issue Type', 'Status', 'Summary', 'Order Number(s)',
+     'Part Number(s)', 'Description', 'Comments', 'Assignee', 'Reporter',
+     'Shipment ETA', 'Issue Created', 'Issue Resolved', 'Broker Reference',
+     'Entry Number', 'PO Numbers', 'Part Numbers', 'Product Lines',
+     'Vendors', 'MIDs', 'Countries of Origin', 'Master Bills', 'House Bills',
+     'Container Numbers', 'Release Date', 'Link to Jira issue',
+     'Link to VFI Track entry']
+  end
+
   def create_workbook start_date, end_date, project_keys, time_zone
-    wb, sheet = XlsMaker.create_workbook_and_sheet "Ticket Tracking Report"
+    wb = XlsxBuilder.new
+    sheet = wb.create_sheet "Ticket Tracking Report"
     r = run_queries project_keys, start_date, end_date
-    table_from_query_result sheet, r, conversions(time_zone), {column_names: COLUMN_NAMES}
+    write_result_set_to_builder wb, sheet, r, data_conversions: conversions(time_zone, wb)
     wb
   end
 
@@ -86,21 +94,26 @@ module OpenChain; module Report; class TicketTrackingReport
   def extract_broker_refs jira_result
     jira_result.map { |jr| jr[13] }.compact.uniq
   end
-  
-  def comments_lambda 
+
+  def comments_lambda
     lambda do |result_set_row, raw_column_value|
       q = ActiveRecord::Base.sanitize_sql_array(["SELECT actionbody FROM jiradb.jiraaction WHERE issueid = ? AND actiontype = 'comment' ORDER BY created", raw_column_value.to_i ])
       results = ActiveRecord::Base.connection.execute q
-      results.map {|r| r[0] }.join "\n-----------------------\n"
+      comments = results.map {|r| r[0] }.join "\n-----------------------\n"
+      # Trim results to 10,000 chars.  Some ticket comments values exceed the maximum
+      # number of chars allowed by Excel (32,767 chars), causing Excel to error.
+      # 10K is not 32K, but is still very generous for a report field.  32K was deemed
+      # excessive.  Bigger field value and can lead to performance problems.
+      comments[0...10000]
     end
   end
 
-  def jira_url_lambda
+  def jira_url_lambda wb
     lambda do |result_set_row, raw_column_value|
       issue_num = result_set_row[0]
       ticketing_system_code = raw_column_value
       url = "http://ct.vfitrack.net/browse/#{ticketing_system_code}-#{issue_num}"
-      XlsMaker.create_link_cell url
+      wb.create_link_cell url
     end
   end
 
@@ -108,15 +121,16 @@ module OpenChain; module Report; class TicketTrackingReport
     lambda { |result_set_row, raw_column_value| raw_column_value.to_s.squish.split(/\s/).join(", ") }
   end
 
-  def conversions(time_zone)
+  def conversions(time_zone, wb)
     {"Issue Created" => datetime_translation_lambda(time_zone), 
      "Issue Resolved" => datetime_translation_lambda(time_zone), 
      "Release Date" => datetime_translation_lambda(time_zone),
      "Comments" => comments_lambda,
      "Order Number(s)" =>list_format_lambda,
      "Part Number(s)" =>list_format_lambda,
-     "Link to VFI Track entry" => weblink_translation_lambda(CoreModule::ENTRY),
-     "Link to Jira issue" => jira_url_lambda}
+     "Link to VFI Track entry" => weblink_translation_lambda(wb, CoreModule::ENTRY.klass),
+     "Link to Jira issue" => jira_url_lambda(wb)
+     }
   end
   
   def jira_query project_keys, start_date, end_date
@@ -127,7 +141,7 @@ module OpenChain; module Report; class TicketTrackingReport
                  i.SUMMARY AS 'Summary', 
                  ordnum.STRINGVALUE AS 'Order Number(s)',
                  part.STRINGVALUE AS 'Part Number(s)',
-                 i.DESCRIPTION AS 'Description', 
+                 LEFT(i.DESCRIPTION, 10000) AS 'Description', 
                  i.id AS 'Comments', 
                  i.ASSIGNEE 'Assignee', 
                  i.REPORTER 'Reporter', 

@@ -68,18 +68,19 @@ describe OpenChain::Report::TicketTrackingReport do
       expect_any_instance_of(described_class).to receive(:run_queries).with(["CODE"], adjusted_start, adjusted_end).and_return combined_result
       expect_any_instance_of(described_class).to receive(:comments_lambda).and_return(lambda { |a,b| "comments" })
       @temp = described_class.run_report(u, {'start_date' => '2016-01-01', 'end_date' => '2016-02-01', 'project_keys' => ['CODE']})
-      wb = Spreadsheet.open @temp.path
-      sheet = wb.worksheets[0]
-      
-      expect(sheet.name).to eq "Ticket Tracking Report"
-      expect(sheet.rows.count).to eq 4
-      expect(sheet.row(0)).to eq combined_header
-      expect(sheet.row(1)[24].to_s).to eq(now.in_time_zone(u.time_zone).to_s)
-      expect(sheet.row(1)[11].to_s).to eq(now.in_time_zone(u.time_zone).to_s)
-      expect(sheet.row(1)[12].to_s).to eq(now.in_time_zone(u.time_zone).to_s)
-      expect(sheet.row(1)[7]).to eq "comments"
-      expect(sheet.row(1)[25]).to eq "Web View"
-      expect(sheet.row(1)[26]).to eq "Web View"
+      wb = XlsxTestReader.new(@temp.path).raw_workbook_data
+      expect(wb.length).to eq 1
+
+      sheet = wb["Ticket Tracking Report"]
+      expect(sheet).to_not be_nil
+      expect(sheet.length).to eq 4
+      expect(sheet[0]).to eq combined_header
+      expect(sheet[1][24].to_s).to eq(now.in_time_zone(u.time_zone).to_s)
+      expect(sheet[1][11].to_s).to eq(now.in_time_zone(u.time_zone).to_s)
+      expect(sheet[1][12].to_s).to eq(now.in_time_zone(u.time_zone).to_s)
+      expect(sheet[1][7]).to eq "comments"
+      expect(sheet[1][25]).to eq "Web View"
+      expect(sheet[1][26]).to eq "Web View"
     end
   end
 
