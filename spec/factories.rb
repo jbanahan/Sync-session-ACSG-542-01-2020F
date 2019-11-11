@@ -606,4 +606,9 @@ end
 Factory.define :tariff_classification_rate do |f|
   f.association :tariff_classification
 end
+Factory.define :daily_statement do |f|
+end
+Factory.define :daily_statement_entry do |f|
+  f.association :daily_statement
+end
 

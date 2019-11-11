@@ -24,11 +24,17 @@ class Message < ActiveRecord::Base
     :user_id, :viewed, :created_at
   
   belongs_to  :user
+
+  has_many :attachments, as: :attachable, dependent: :destroy
   
   validates   :user, :presence => true
 
   after_create :email_to_user
   
+  def can_view? u
+    u.sys_admin? || u==self.run_by
+  end
+
   #purge messages older than the give date (defaults to 30 days ago)
   def self.purge_messages older_than=30.days.ago
     Message.where("created_at < ?",older_than).destroy_all

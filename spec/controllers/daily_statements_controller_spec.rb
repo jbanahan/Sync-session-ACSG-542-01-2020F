@@ -72,4 +72,91 @@ describe DailyStatementsController do
       expect(flash[:notices]).to be_nil
     end
   end
+
+  context "attachments" do
+    let(:statement) { Factory(:daily_statement, statement_number: "123456789") }
+    let(:line_1) { Factory(:daily_statement_entry, daily_statement: statement, entry: Factory(:entry, entry_number: "ent_num_1", attachments: [Factory(:attachment, attached_file_name: "test_sheet_1.xls", attached_file_size: 1000, attachment_type: "ENTRY SUMMARY PACK")])) }
+    let(:line_2) { Factory(:daily_statement_entry, daily_statement: statement, entry: Factory(:entry, entry_number: "ent_num_2", attachments: [Factory(:attachment, attached_file_name: "test_sheet_2.xlsx", attached_file_size: 1500, attachment_type: "ENTRY SUMMARY PACK")])) }
+    let(:line_3) { Factory(:daily_statement_entry, daily_statement: statement, entry: Factory(:entry, entry_number: "ent_num_3", attachments: [Factory(:attachment, attached_file_name: "test_sheet_3.csv", attached_file_size: 2000, attachment_type: "ENTRY PACKET")])) }
+    let(:att_1) { line_1.entry.attachments.first }
+    let(:att_2) { line_2.entry.attachments.first }
+    let(:att_3) { line_3.entry.attachments.first }
+
+    let(:statement_2) { Factory(:daily_statement, statement_number: "987654321") }
+    let(:line_2_1) { Factory(:daily_statement_entry, daily_statement: statement_2, entry: Factory(:entry, entry_number: "ent_num_4", attachments: [Factory(:attachment, attached_file_name: "test_sheet_1.xls", attached_file_size: 1000, attachment_type: "HAHA")])) }
+    let(:att_2_1) { line_2_1.entry.attachments.first }
+
+    before do 
+      allow(user).to receive(:view_statements?).and_return true
+      stub_master_setup
+      att_1; att_2; att_3; att_2_1
+    end
+    
+    describe "show_attachments" do
+      
+      it "renders for authorized user" do
+        get :show_attachments, id: statement.id
+        expect(response).to be_ok
+        expect(assigns(:statement)).to eq statement
+        expect(assigns(:types)).to eq({"ENTRY PACKET" => {size: 2000, underscore: "entry_packet", checked: true}, 
+                                       "ENTRY SUMMARY PACK" => {size: 2500, underscore: "entry_summary_pack", checked: false}})
+      end
+
+      it "redirects if user not authorized" do
+        allow(user).to receive(:view_statements?).and_return false
+
+        get :show_attachments, id: statement.id
+        
+        expect(assigns(:statement)).to be_nil
+        expect(assigns(:types)).to be_nil
+        expect(response.status).to eq 302
+        expect(flash[:errors]).to include "You do not have permission to view Statements."
+      end
+    end
+
+    describe "message_attachments" do
+      it "executes AttachmentZipper for authorized user" do
+        delayed_zipper = class_double OpenChain::DailyStatementAttachmentZipper
+        expect(OpenChain::DailyStatementAttachmentZipper).to receive(:delay).and_return delayed_zipper
+        expect(delayed_zipper).to receive(:zip_and_send_message).with(user.id, statement.id, ["ENTRY PACKET", "ENTRY SUMMARY PACK"])
+        post :message_attachments, id: statement.id, attachments: {types: ["ENTRY PACKET", "ENTRY SUMMARY PACK"], 
+                                                                   email_opts: {email: "tufnel@stonehenge.biz", subject: "sub", body: "bod"}}
+        
+        expect(flash[:notices]).to include "You will receive a message when your attachments are ready."
+      end
+
+      it "rejects unauthorized user" do
+        allow(user).to receive(:view_statements?).and_return false
+        expect(OpenChain::DailyStatementAttachmentZipper).to_not receive(:delay)
+        post :message_attachments, id: statement.id, attachments: {types: ["ENTRY PACKET", "ENTRY SUMMARY PACK"], 
+                                                                   email_opts: {email: "tufnel@stonehenge.biz", subject: "sub", body: "bod"}}
+
+        expect(response).to be_redirect
+        expect(flash[:errors]).to eq ["You do not have permission to view Statements."]
+      end
+    end
+
+    describe "email_attachments" do
+      it "executes AttachmentZipper for authorized user" do
+        delayed_zipper = class_double OpenChain::DailyStatementAttachmentZipper
+        expect(OpenChain::DailyStatementAttachmentZipper).to receive(:delay).and_return delayed_zipper
+        expect(delayed_zipper).to receive(:zip_and_email).with(user.id, statement.id, ["ENTRY PACKET", "ENTRY SUMMARY PACK"], {email: "tufnel@stonehenge.biz", subject: "sub", body: "bod"})
+        post :email_attachments, id: statement.id, attachments: {types: ["ENTRY PACKET", "ENTRY SUMMARY PACK"], 
+                                                                 email_opts: {email: "tufnel@stonehenge.biz", subject: "sub", body: "bod"}}
+        
+        expect(flash[:notices]).to eq ["An email with your attachments will be sent shortly."]
+      end
+
+      it "rejects unauthorized user" do
+        allow(user).to receive(:view_statements?).and_return false
+        expect(OpenChain::DailyStatementAttachmentZipper).to_not receive(:delay)
+        post :email_attachments, id: statement.id, attachments: {types: ["ENTRY PACKET", "ENTRY SUMMARY PACK"], 
+                                                                   email_opts: {email: "tufnel@stonehenge.biz", subject: "sub", body: "bod"}}
+
+        expect(response).to be_redirect
+        expect(flash[:errors]).to eq ["You do not have permission to view Statements."]
+      end
+    end
+
+  end
 end

@@ -1209,6 +1209,9 @@ ing/:heading', to: 'hts#heading'
   resources :daily_statements, only: [:index, :show] do 
     member do 
       post 'reload'
+      get 'show_attachments'
+      post 'message_attachments'
+      post 'email_attachments'
     end
   end
 

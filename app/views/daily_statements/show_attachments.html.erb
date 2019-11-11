@@ -1,0 +1,171 @@
+<% content_for :javascript do -%>
+  
+  $(document).ready(function() {
+    restoreBoxes();
+    setSize(getSize());
+    
+    $("input[type='checkbox']").on('click', function() {
+      setSize(getSize());
+    })
+
+    $("#btn-select-all").on('click', function() {
+      $("input[type='checkbox']").each(function() { $(this).prop("checked", true); });
+      setSize(getSize());
+    });
+
+    $("#btn-select-none").on('click', function() {
+      $("input[type='checkbox']").each(function() { $(this).prop("checked", false); });
+      setSize(getSize());
+    });
+
+    $("#btn-download").on('click', function(evt) {
+      evt.preventDefault();
+      submit('data-send-message');
+    });
+    
+    $("#btn-email").on('click', function(evt) {
+      evt.preventDefault();
+      submit('data-send-email');
+    });
+  
+  });
+  
+  function submit(actionType) {
+    saveBoxes();
+    var form = $('#attachments-frm');
+    var path = form.attr(actionType);
+    form.attr('action', path);
+    form.submit();
+  }
+
+  function saveBoxes() {
+    $('input[type="checkbox"]').each(function() {
+      var thisBox = $(this);
+      var name = "ds_attachments - " + thisBox.attr('value');
+      Chain.setStorageItem(name, thisBox.prop('checked'));
+    });
+  }
+
+  function restoreBoxes() {
+    $('input[type="checkbox"]').each(function() {
+      var thisBox = $(this);
+      var name = "ds_attachments - " + thisBox.attr('value');
+      var storedValue = Chain.getStorageItem(name);
+      if (storedValue !== null)
+        thisBox.prop('checked', storedValue);
+    }); 
+  }
+
+  function getSize() {
+    var totalSelectedSize = 0;
+    $('input:checked').each(function() { totalSelectedSize += parseInt($(this).attr("data-size")); });
+    return totalSelectedSize;
+  }
+
+  function setSize(size) {
+    $('#size').text(displaySize(size));
+    if (size > 10485760) {
+      enableWarning();
+      enableDownload();
+      disableEmail();
+    }
+    else if (size === 0) {
+      disableWarning();
+      disableDownload();
+      disableEmail();
+    }
+    else {
+      disableWarning();
+      enableEmail();
+      enableDownload();
+    }
+  }
+
+  function enableWarning() {
+    $('#warning').css('color', 'red');
+  }
+
+  function disableWarning() {
+    $('#warning').css('color', 'initial');
+  }
+
+  function disableEmail() {
+    $('#btn-email').addClass('disabled');
+  }
+
+  function disableDownload() {
+    $('#btn-download').addClass('disabled');
+  }
+
+  function enableEmail() {
+    $('#btn-email').removeClass('disabled');
+  }
+
+  function enableDownload() {
+    $('#btn-download').removeClass('disabled');
+  }
+  
+  function displaySize(int) {
+    if (int > 1023) {
+      int = int / 1024;
+      if (int > 1023)
+        int = (int / 1024).toFixed(1) + " MB";
+      else
+        int = int.toFixed(1) + " KB";
+    }
+    else
+      int += " Bytes";
+    return int;      
+  }
+
+<% end -%>
+
+<%content_for :action_bar do -%>
+  <%= link_to raw("Back"), daily_statement_path(@statement), class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', title: 'Back to Statement' %>
+  <%= link_to raw("<i class='fa fa-download'></i>"), message_attachments_daily_statement_path(@statement), id: 'btn-download', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', title: 'Download Attachments' %>
+  <%= link_to raw("<i class='fa fa-envelope'></i>"), email_attachments_daily_statement_path(@statement), id: 'btn-email', class: 'btn navbar-btn btn-default', form_class: 'inline-button-to inline-navbar-button', style:'margin-right: -1px;', title: 'Email Attachments' %>
+<% end-%>
+
+<form id="attachments-frm" action="", method="post" data-send-message="<%= message_attachments_daily_statement_path(@statement) %>" data-send-email="<%= email_attachments_daily_statement_path(@statement) %>">
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col-md-3">
+          <h2>Send Attachments via Email</h2>
+          <div class="form-group" style="padding-top: 20px">
+            <%= label_tag :attachments_email_opts_email, "Send to:" %>
+            <%= text_area "attachments[email_opts]", :email, rows: 5, placeholder: "Enter comma-separated emails (or leave blank to have it sent to you).", class: "form-control" %>
+          </div>
+          <div class="form-group">
+            <%= label_tag :attachments_email_opts_subject, "Subject:" %>
+            <%= text_field "attachments[email_opts]", :subject, placeholder: "Enter subject (optional).", value: "Attachments for Statement #{@statement.statement_number}", class: "form-control" %>
+          </div>
+          <div class="form-group">
+            <%= label_tag :attachments_email_opts_body, "Body:" %>
+            <%= text_area "attachments[email_opts]", :body, rows: 5, placeholder: "Enter body (optional).", class: "form-control" %>
+          </div>
+        </div>
+        <div class="col-md-5 ml-5">
+          <h2>Choose Attachment Types to Download or Email</h2>
+          <ul style="list-style-type:none; padding-left: 0px; padding-top: 20px">
+            <div style="padding-bottom: 10px;">
+              <span>
+                <button type="button" class="btn btn-success" id="btn-select-all">Select All</button>
+                <button type="button" class="btn btn-danger" id="btn-select-none">Select None</button>
+              </span>
+            </div>
+            <% @types.each do |name, info| %>
+              <li>
+                <span>
+                  <%= check_box_tag "attachments[types][]", name, info[:checked], {id: "attachments_types_#{info[:underscore]}", "data-size" => info[:size]} %>
+                  <%= label_tag "attachments_types_#{info[:underscore]}".to_sym, name %>
+                </span>
+              </li>
+            <% end %>
+          </ul>
+          <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+          <h7><span>Total Size of Selected Attachments (<span id="warning">limit 10 MB for emails</span>): <span id="size"></span></span></h7>
+          
+        </div>
+    </div>
+  </div>
+</form>
