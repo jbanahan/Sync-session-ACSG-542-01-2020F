@@ -19,10 +19,11 @@ describe TariffSet do
       r.create!(:country_id => @c1.id, :hts_code => "9999999999")
 
       expect(OfficialQuota).to receive(:relink_country).with(@c1)
-      expect(OpenChain::OfficialTariffProcessor::TariffProcessor).to receive(:process_country).with(@c1)
+      log = double("LOG LOG LOG")
+      expect(OpenChain::OfficialTariffProcessor::TariffProcessor).to receive(:process_country).with(@c1, log)
       expect(Lock).to receive(:acquire).with("OfficialTariff-#{@c1.iso_code}").and_yield
 
-      ts.activate
+      ts.activate(nil, log)
 
       found = OfficialTariff.where(:country_id => @c1.id)
 

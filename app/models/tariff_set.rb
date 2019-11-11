@@ -19,7 +19,7 @@ class TariffSet < ActiveRecord::Base
 
   # Replaces the OfficialTariffs for this country with the values from this set
   # If a user is provided, the user will receive a system message when the process is complete
-  def activate user=nil
+  def activate user=nil, log=nil
     Lock.acquire("OfficialTariff-#{self.country.iso_code}") do 
       OfficialTariff.where(:country_id=>self.country_id).destroy_all
       self.tariff_set_records.each do |tsr|
@@ -27,7 +27,7 @@ class TariffSet < ActiveRecord::Base
         ot.save!
       end
       OfficialQuota.relink_country(self.country)
-      OpenChain::OfficialTariffProcessor::TariffProcessor.process_country(self.country)
+      OpenChain::OfficialTariffProcessor::TariffProcessor.process_country(self.country, log)
       TariffSet.where(:country_id=>self.country_id).where("tariff_sets.id = #{self.id} OR tariff_sets.active = ?",true).each do |ts|
         ts.update_attributes(:active=>ts.id==self.id)
       end

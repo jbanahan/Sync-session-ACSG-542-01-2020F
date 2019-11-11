@@ -134,7 +134,7 @@ class TariffLoader
 
     ts = TariffLoader.new(c, file_path, tariff_set_label).process
     # Files loaded this way are always activated.  (Really, the ones loaded via the old screen are always activated too.)
-    ts.activate
+    ts.activate(nil, log)
   end
 
   def self.process_from_s3 bucket, key, opts={}

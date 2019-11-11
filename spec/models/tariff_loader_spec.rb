@@ -12,7 +12,7 @@ describe TariffLoader do
       expect(described_class).to receive(:new).with(country, "some_folder/au_simple_20170707.zip", "AU-2017-08-09").and_return loader
       tariff_set = double("tariff_set")
       expect(loader).to receive(:process).and_return(tariff_set)
-      expect(tariff_set).to receive(:activate)
+      expect(tariff_set).to receive(:activate).with(nil, log)
 
       Timecop.freeze(now) do
         described_class.parse_file "some_folder/au_simple_20170707.zip", log

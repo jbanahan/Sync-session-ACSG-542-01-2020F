@@ -34,6 +34,24 @@ describe OpenChain::OfficialTariffProcessor::GenericProcessor do
 
       expect(described_class.process tar).to be_nil
     end
+
+    it "handles SPI exception when log provided" do
+      log = InboundFile.new
+
+      expect(described_class).to receive(:parse_spi).and_raise("Unexpected SPI: invalid code")
+
+      tar = OfficialTariff.create!(country:country, special_rate_key:"abc", special_rates:"10% (A,B)", hts_code:"X")
+      expect(described_class.process(tar, log)).to eq nil
+
+      expect(log).to have_warning_message "Unexpected SPI: invalid code"
+    end
+
+    it "re-raises SPI exception when no log provided" do
+      expect(described_class).to receive(:parse_spi).and_raise("Unexpected SPI: invalid code")
+
+      tar = OfficialTariff.create!(country:country, special_rate_key:"abc", special_rates:"10% (A,B)", hts_code:"X")
+      expect { described_class.process(tar) }.to raise_error("Unexpected SPI: invalid code")
+    end
   end
 
   describe "parse_spi" do
@@ -59,13 +77,15 @@ describe OpenChain::OfficialTariffProcessor::GenericProcessor do
 
       # None of these should raise exceptions.
       it "handles assorted penalties" do
-        expect(described_class.parse_spi parse_data, "CHINA PENALTY: +25 Free (A)").to eq [{:program_code=>"A", :amount=>0, :text=>"Free"}]
-        expect(described_class.parse_spi parse_data, "CHINA PENALTY: +25").to be_nil
+        expect(described_class.parse_spi parse_data, "CHINA PENALTY: +25 (EX) Free (A)").to eq [{:program_code=>"A", :amount=>0, :text=>"Free"}]
+        expect(described_class.parse_spi parse_data, "CHINA PENALTY: +25 (EX)").to be_nil
         expect(described_class.parse_spi parse_data, "CHINA PENALTY:  +100 ").to be_nil
         expect(described_class.parse_spi parse_data, "Steel PENALTY: +25 Free (A)").to eq [{:program_code=>"A", :amount=>0, :text=>"Free"}]
         expect(described_class.parse_spi parse_data, "Steel PENALTY: +25").to be_nil
         expect(described_class.parse_spi parse_data, "Alum PENALTY: +10 10% (A)").to eq [{:program_code=>"A", :amount=>BigDecimal.new(".1"), :text=>"10%"}]
         expect(described_class.parse_spi parse_data, "Alum PENALTY: +10").to be_nil
+        expect(described_class.parse_spi parse_data, "Civil Aircraft Pen: +25 ").to be_nil
+        expect(described_class.parse_spi parse_data, "Civil Aircraft Pen:  +50 Free (A)").to eq [{:program_code=>"A", :amount=>0, :text=>"Free"}]
       end
     end
   end

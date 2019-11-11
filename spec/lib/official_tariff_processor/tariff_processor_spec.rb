@@ -30,10 +30,11 @@ describe OpenChain::OfficialTariffProcessor::TariffProcessor do
       # ignore for another country
       Factory(:official_tariff,special_rates:'Free: (CO)')
 
-      expect(ep).to receive(:process).once.with(new_spi1).ordered
-      expect(ep).to receive(:process).once.with(new_spi2).ordered
+      log = double("LOG LOG LOG")
+      expect(ep).to receive(:process).once.with(new_spi1, log).ordered
+      expect(ep).to receive(:process).once.with(new_spi2, log).ordered
 
-      described_class.process_country c
+      described_class.process_country c, log
     end
   end
 end

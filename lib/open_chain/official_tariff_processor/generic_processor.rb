@@ -1,13 +1,22 @@
 module OpenChain; module OfficialTariffProcessor; class GenericProcessor
 
-  def self.process official_tariff
+  def self.process official_tariff, log=nil
     country = official_tariff.country
     cid = country.id
     srk = official_tariff.special_rate_key
     # do nothing if the rates are already built for this key
     return unless SpiRate.where(special_rate_key:srk,country_id:cid).empty?
 
-    rates = parse_spi(parse_data_for(country),official_tariff.special_rates)
+    rates = nil
+    begin
+      rates = parse_spi(parse_data_for(country),official_tariff.special_rates)
+    rescue Exception => e
+      if log
+        log.add_warning_message e
+      else
+        raise
+      end
+    end
     return if rates.nil?
     rates.each do |rate_data|
       SpiRate.create!(special_rate_key:srk,
@@ -80,7 +89,7 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
     iso_code = country.european_union? ? 'EU' : country.iso_code
     case iso_code.upcase
       when "US"
-        return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/,/^$/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e',/\w+\s+PENALTY:\s*\+\d+\s*/=>''}}
+        return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/,/^$/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e',/(\w+\s+)+(Pen|PEN)(ALTY)?:\s*\+\d+\s*(\(EX\)\s*)?/=>''}}
       when "CA"
         # Remove all spaces from the spi program codes, CA doesn't have any programs that should have spaces.
         return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], spi_cleanup: [[/\s/, ""], [/.*/, :upcase]], skip_spi: [/^\s*General\s*$/i]}
