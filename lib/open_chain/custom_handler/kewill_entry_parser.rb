@@ -471,27 +471,27 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # but the old feed did this too, so I'm keeping it in place
       pms_year = e[:pms_year]
       pms_month = e[:pms_month]
-      pms_day = nil
+      pms_date = nil
       if pms_year.try(:nonzero?) && pms_month.try(:nonzero?)
-        dates = KeyJsonItem.usc_periodic_dates(pms_year).first
-        if dates
-          #JSON keys are always strings
-          pms_day = dates.data[pms_month.to_s]
-        end
+        pms_calendar_event = Calendar.find_all_events_in_calendar_month(pms_year, pms_month, "PMS").first
+        pms_date = pms_calendar_event&.event_date
 
-        # We're only currently tracking pms days since 2007, if we don't have a date after that time..then error
+        # We're only currently tracking pms days since 2012, if we don't have a date after that time..then error
         # so that we can set up the schedule
 
         # The entry filed date check is here because the ISF system creates shell entry records with Arrival Dates sometimes months 
         # in advance - which is valid.  However, the presence of the arrival date also then triggers an attempt to determine a statement
         # date - which at this point in time is pointless as nothing has actually been filed for the entry yet and PMS statement dates may not 
         # have even been published yet US CBP.  So wait till there's an entry filed date to bother reporting on the missing PMS values
-        if pms_day.nil? && pms_year > 2006 && !entry.entry_filed_date.nil?
-          StandardError.new("File ##{entry.broker_reference} / Division ##{entry.division_number}: No Periodic Monthly Statement Dates found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
+
+        # FYI...the formula for creating PMS Date events is the PMS Due Date is the 15th business day of the month.  In other words, count
+        # forward from 1st of the month every weekday that's not also a federal holiday.
+        if pms_date.nil? && pms_year > 2012 && !entry.entry_filed_date.nil?
+          StandardError.new("File ##{entry.broker_reference} / Division ##{entry.division_number}: No Periodic Monthly Statement Dates Calendar found for #{pms_year} and #{pms_month}.  This data must be set up immediately.").log_me
         end
       end
 
-      pms_day ? Date.new(pms_year, pms_month, pms_day) : nil
+      pms_date
     end
 
     def process_entry_header e, entry

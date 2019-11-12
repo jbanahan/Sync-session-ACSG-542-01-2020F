@@ -13,13 +13,14 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       c
     }
 
+    let! (:pms_calendar) {
+      c = Calendar.create! year: 2015, calendar_type: "PMS"
+      c.calendar_events.create! event_date: Date.new(2015, 3, 15)
+      c
+    }
+
     before :each do
-      pms_dates = {
-        3 => 15
-      }
-
-      KeyJsonItem.usc_periodic_dates(2015).create! json_data: pms_dates.to_json
-
+      
       @e = {
         'cust_no' => 'TEST',
         'irs_no' => "12-23456789",
