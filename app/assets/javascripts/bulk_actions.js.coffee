@@ -58,6 +58,8 @@ makeBulkActions = ->
       RailsHelper.prepRailsForm sba, '/comments/bulk', 'POST'
       sba.unbind("ajax:success",BulkActions.handleBulkComment)
       sba.submit()
+      mod.find('input[name="subject"]').val("")
+      mod.find('textarea[name="body"]').val("")
       mod.modal('hide')
       window.alert('Your comments have been submitted in the background. They may take a few minutes to post.')
 
