@@ -91,6 +91,57 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r.size).to eq(1)
       expect(r[0][0]).to eq(p.unique_identifier)
     end
+
+    it "should send record if it has not yet been confirmed" do
+      p = Factory(:product)
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p2 = Factory(:product)
+      d_cls = p2.classifications.create!(:country_id=>@us.id)
+      d_cls.tariff_records.create!(:hts_1=>"1234567890")
+      d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p2.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.day.ago,:confirmed_at=>nil)
+      ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
+      r = run_to_array
+      expect(r.size).to eq(2)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[1][0]).to eq(p2.unique_identifier)
+    end
+
+    it "should send record for unconfirmed product if it was sent 8 hours ago" do
+      p = Factory(:product)
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p2 = Factory(:product)
+      d_cls = p2.classifications.create!(:country_id=>@us.id)
+      d_cls.tariff_records.create!(:hts_1=>"1234567890")
+      d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p2.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>8.hours.ago,:confirmed_at=>nil)
+      ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
+      r = run_to_array
+      expect(r.size).to eq(2)
+      expect(r[0][0]).to eq(p.unique_identifier)
+      expect(r[1][0]).to eq(p2.unique_identifier)
+    end
+
+    it "should not send record for unconfirmed product if it was sent less than 8 hours ago" do
+      p = Factory(:product)
+      cls = p.classifications.create!(:country_id=>@us.id)
+      cls.tariff_records.create!(:hts_1=>"1234567890")
+      cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p2 = Factory(:product)
+      d_cls = p2.classifications.create!(:country_id=>@us.id)
+      d_cls.tariff_records.create!(:hts_1=>"1234567890")
+      d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
+      p2.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>7.hours.ago,:confirmed_at=>nil)
+      ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
+      r = run_to_array
+      expect(r.size).to eq(1)
+      expect(r[0][0]).to eq(p.unique_identifier)
+    end
+
     it "should use long description override from classification if it exists" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:approved_long], "Don't use me"
@@ -173,9 +224,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnOhlProductGenerator do
       expect(r[0][0]).to eq(p.unique_identifier)
       expect(r[1][0]).to eq(p2.unique_identifier)
 
-      # verify that each product also has a sync record
+      # Verify that each product also has a sync record. The sync records should not have a confirmed at date set.
       expect(p.sync_records.length).to eq 1
+      expect(p.sync_records[0].confirmed_at).to eq nil
       expect(p2.sync_records.length).to eq 1
+      expect(p2.sync_records[0].confirmed_at).to eq nil
     end
   end
   describe "ftp_credentials" do

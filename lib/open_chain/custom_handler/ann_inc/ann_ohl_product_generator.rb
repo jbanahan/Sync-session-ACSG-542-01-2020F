@@ -42,6 +42,10 @@ module OpenChain
           super(include_headers: false)
         end
 
+        def auto_confirm?
+          false
+        end
+
         def preprocess_row outer_row, opts = {}
           # What we're doing here is buffering the outer_row values
           # until we see a new product id (or we're processing the last line).  
@@ -124,7 +128,7 @@ INNER JOIN tariff_records on tariff_records.classification_id = classifications.
 #{Product.need_sync_join_clause(sync_code)}
 INNER JOIN custom_values AS a_date ON a_date.custom_definition_id = #{@cdefs[:approved_date].id} AND a_date.customizable_id = classifications.id and a_date.date_value is not null
 "
-          w = "WHERE #{Product.need_sync_where_clause()}"
+          w = "WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 8.hours)}"
           r << (@custom_where ? @custom_where : w)
           #US must be in file before Canada per OHL spec
           r << " ORDER BY products.id, classifications.iso_code DESC, tariff_records.line_number"
