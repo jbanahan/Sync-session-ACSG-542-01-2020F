@@ -16,24 +16,24 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5
       expect(mail.attachments.length).to eq(1)
 
       attachment = mail.attachments[0]
-      expect(attachment.filename).to eq("ARPRFSUB_2018-03-21.xls")
-      workbook = Spreadsheet.open(StringIO.new(attachment.read))
-      sheet = workbook.worksheet('Data')
+      expect(attachment.filename).to eq("ARPRFSUB_2018-03-21.xlsx")
+      workbook = XlsxTestReader.new(StringIO.new(attachment.read))
+      sheet = workbook.raw_data('Data')
       expect(sheet).to_not be_nil
-      expect(sheet.rows.length).to eq 29
-      expect(sheet.row(0)).to eq ['File Number', 'Master Bill', 'Div', 'Inv Date', 'Open A/R', 'Open A/P', 'Total A/R-', 'Total A/P=', 'Profit', 'Bill To']
-      expect(sheet.row(28)).to eq ['Grand Totals', nil, nil, nil, 3011.0, 22199.81, 3011.0, 5058.0, -2047.0]
+      expect(sheet.length).to eq 29
+      expect(sheet[0]).to eq ['File Number', 'Master Bill', 'Div', 'Inv Date', 'Open A/R', 'Open A/P', 'Total A/R-', 'Total A/P=', 'Profit', 'Bill To']
+      expect(sheet[28]).to eq ['Grand Totals', "", "", "", 3011.0, 22199.81, 3011.0, 5058.0, -2047.0]
 
-      sheet_2 = workbook.worksheet('Parameters')
+      sheet_2 = workbook.raw_data('Parameters')
       expect(sheet_2).to_not be_nil
-      expect(sheet_2.rows.length).to eq 7
-      expect(sheet_2.row(0)).to eq ['VANDEGRIFT FORWARDING CO., INC.                       luca 2018                                    ARPRFSUM-D0-07/31/07    Page  35']
-      expect(sheet_2.row(1)).to eq ['Date: 03/15/2018     Time: 12:14   Company All    From Division First to Last        Report No 5001']
-      expect(sheet_2.row(2)).to eq ['From Acct of Cust FIRST to LAST                   From File No First to Last         Do NOT Consolidate Masters']
-      expect(sheet_2.row(3)).to eq ['From AWB/BL # First to Last                       Sorted By Customer                 Currency USD']
-      expect(sheet_2.row(4)).to eq ['From Dest Country First to Last      Invoice Date 03/01/2018 to 03/15/2018           All Accounts']
-      expect(sheet_2.row(5)).to eq ['From Exprt Country First to Last     From Acct of Terr First to Last                 NOT Negative Profit Only']
-      expect(sheet_2.row(6)).to eq ['Include DD,Over/Under Pay            Non-divisionalized                              Exclude Blank Customers']
+      expect(sheet_2.length).to eq 7
+      expect(sheet_2[0]).to eq ['VANDEGRIFT FORWARDING CO., INC.                       luca 2018                                    ARPRFSUM-D0-07/31/07    Page  35']
+      expect(sheet_2[1]).to eq ['Date: 03/15/2018     Time: 12:14   Company All    From Division First to Last        Report No 5001']
+      expect(sheet_2[2]).to eq ['From Acct of Cust FIRST to LAST                   From File No First to Last         Do NOT Consolidate Masters']
+      expect(sheet_2[3]).to eq ['From AWB/BL # First to Last                       Sorted By Customer                 Currency USD']
+      expect(sheet_2[4]).to eq ['From Dest Country First to Last      Invoice Date 03/01/2018 to 03/15/2018           All Accounts']
+      expect(sheet_2[5]).to eq ['From Exprt Country First to Last     From Acct of Terr First to Last                 NOT Negative Profit Only']
+      expect(sheet_2[6]).to eq ['Include DD,Over/Under Pay            Non-divisionalized                              Exclude Blank Customers']
     end
 
     it "doesn't blow up on bogus file" do
@@ -42,15 +42,14 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.attachments.length).to eq(1)
       attachment = mail.attachments[0]
-      workbook = Spreadsheet.open(StringIO.new(attachment.read))
-      sheet = workbook.worksheet('Data')
+      workbook = XlsxTestReader.new(StringIO.new(attachment.read))
+      sheet = workbook.raw_data('Data')
       expect(sheet).not_to be_nil
-      expect(sheet.rows.length).to eq 2
-      expect(sheet.row(0)).to eq ['File Number', 'Master Bill', 'Div', 'Inv Date', 'Open A/R', 'Open A/P', 'Total A/R-', 'Total A/P=', 'Profit', 'Bill To']
-      expect(sheet.row(1)).to eq ['Grand Totals', nil, nil, nil, 0, 0, 0, 0, 0]
+      expect(sheet.length).to eq 2
+      expect(sheet[0]).to eq ['File Number', 'Master Bill', 'Div', 'Inv Date', 'Open A/R', 'Open A/P', 'Total A/R-', 'Total A/P=', 'Profit', 'Bill To']
+      expect(sheet[1]).to eq ['Grand Totals', "", "", "", 0, 0, 0, 0, 0]
 
-      sheet_2 = workbook.worksheet('Parameters')
-      expect(sheet_2).to be_nil
+      expect(workbook.sheet('Parameters')).to be_nil
     end
   end
 end
