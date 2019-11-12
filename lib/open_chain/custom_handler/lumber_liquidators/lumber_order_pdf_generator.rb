@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     box_margins = 6.0
 
     d.font_size = 8
-    d.table([[{image: "app/assets/images/ll_logo.png", fit: [85, 40], position: :center}, "LUMBER LIQUIDATORS\n3000 John Deere Road\nToano, VA 23168 US", "Phone:   757-259-4280\nWebsite: <link href=\"http://www.lumberliquidators.com\">http://www.lumberliquidators.com</link>"]], width: page_width, cell_style: {inline_format: true}) do |t|
+    d.table([[{image: "app/assets/images/ll_logo.png", fit: [85, 40], position: :center}, "LUMBER LIQUIDATORS\n4901 Bakers Mill Lane\nRichmond, VA 23230-2431 US", "Phone:   804-463-2000\nWebsite: <link href=\"http://www.lumberliquidators.com\">http://www.lumberliquidators.com</link>"]], width: page_width, cell_style: {inline_format: true}) do |t|
       t.cells.borders = []
       t.column(1).borders = [:left, :top, :bottom]
       t.column(2).borders = [:right, :top, :bottom]
@@ -185,7 +185,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def lumber_billing_address
-    "<b>Lumber Liquidators Services, LLC</b>\nATTN: Accounts Payable\n3000 John Deere Rd\nToano, VA 23168 US"
+    "<b>Lumber Liquidators Services, LLC</b>\nATTN: Accounts Payable\n4901 Bakers Mill Lane\nRichmond, VA 23230-2431 US"
   end
 
   def terms_and_conditions

@@ -187,20 +187,20 @@
       <Type>Customer</Type>
       <Code>None</Code>
       <Name>Lumber Liquidators</Name>
-      <AddressLine1>3000 John Deere Road</AddressLine1>
-      <PostalCode>23168</PostalCode>
+      <AddressLine1>4901 Bakers Mill Lane</AddressLine1>
+      <PostalCode>23230-2431</PostalCode>
       <City>
-        <CityName>Toano</CityName>
+        <CityName>Richmond</CityName>
         <State>VA</State>
         <CountryCode>US</CountryCode>
         <CountryName>US</CountryName>
       </City>
-      <Phone>757-259-4280</Phone>
+      <Phone>804-463-2000</Phone>
       <CountryCode>US</CountryCode>
       <CountryName>US</CountryName>
       <DisplayAddress>
-        <AddressLine1>3000 John Deere Road</AddressLine1>
-        <AddressLine2>Toano, VA, US, 23168</AddressLine2>
+        <AddressLine1>4901 Bakers Mill Lane</AddressLine1>
+        <AddressLine2>Richmond, VA, US, 23230-2431</AddressLine2>
         <AddressLine3>United States</AddressLine3>
       </DisplayAddress>
     </PartyInfo>

@@ -29,10 +29,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
     usa.iso_code = 'US'
     ll_corp = Address.new(
       name:'Lumber Liquidators',
-      line_1:'3000 John Deere Rd',
-      city: 'Toano',
+      line_1:'4901 Bakers Mill Lane',
+      city: 'Richmond',
       state: 'VA',
-      postal_code:'23168',
+      postal_code:'23230-2431',
       country:usa
     )
     add_address(root,ll_corp,'buyer')

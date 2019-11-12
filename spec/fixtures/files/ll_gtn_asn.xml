@@ -39,15 +39,15 @@
       <Type>Consignee</Type>
       <Name>Lumber Liquidators Services, LLC</Name>
       <Address>
-        <AddressLine>3000 John Deere Road</AddressLine>
+        <AddressLine>4901 Bakers Mill Lane</AddressLine>
       </Address>
       <City>
-        <CityName>Toano</CityName>
+        <CityName>Richmond</CityName>
         <State>VA</State>
         <CountryCode>US</CountryCode>
         <CountryName>United States</CountryName>
       </City>
-      <PostalCode>23168</PostalCode>
+      <PostalCode>23230-2431</PostalCode>
     </PartyInfo>
     <PartyInfo>
       <Type>Notify</Type>
@@ -69,14 +69,14 @@
       <Type>Customer</Type>
       <Name>Lumber Liquidators Services</Name>
       <Address>
-        <AddressLine>3000 John Deere Road</AddressLine>
-        <AddressLine>Toano</AddressLine>
+        <AddressLine>4901 Bakers Mill Lane</AddressLine>
+        <AddressLine>Richmond</AddressLine>
       </Address>
       <City>
         <State>VA</State>
         <CountryCode>US</CountryCode>
       </City>
-      <PostalCode>23168</PostalCode>
+      <PostalCode>23230-2431</PostalCode>
     </PartyInfo>
     <PartyInfo>
       <Type>Sender</Type>

@@ -150,10 +150,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       match_address(root.elements['address[@type="manufacturer"][1]'],ship_from)
       ll_corp = Address.new(
         name:'Lumber Liquidators',
-        line_1:'3000 John Deere Rd',
-        city: 'Toano',
+        line_1:'4901 Bakers Mill Lane',
+        city: 'Richmond',
         state: 'VA',
-        postal_code:'23168',
+        postal_code:'23230-2431',
         country:usa
       )
       match_address(root.elements['address[@type="buyer"][1]'],ll_corp)
