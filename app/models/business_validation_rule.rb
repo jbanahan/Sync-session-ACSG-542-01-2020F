@@ -112,6 +112,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryInvoiceLineMatchesPo: {label:"Entry Invoice Line Matches PO"},
                 "OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule".to_sym => {label: "US Customs Statement Validations", enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules"} },
                 ValidationRuleEntryDoesNotSharePos: {label:"Entry PO Numbers Not Shared"},
+                ValidationRuleInvoiceLineMidFirstSale: {label: "Invoice Lines with MIDs Must be First Sale"},
                 ValidationRuleEntryReleased: {label: "Entry Not On Hold"},
                 'OpenChain::CustomHandler::AnnInc::AnnMpTypeAllDocsValidationRule'.to_sym =>
                   {
