@@ -3,14 +3,16 @@ require 'open_chain/report/eddie_bauer_ca_statement_summary'
 describe OpenChain::Report::EddieBauerCaStatementSummary do
 
   describe "permission?" do
+    let!(:user) { Factory(:user) }
+    
     it "allows master users only" do
       expect_any_instance_of(Company).to receive(:master?).and_return true
-      expect(described_class.permission? Factory(:user)).to be_truthy
+      expect(described_class.permission? user).to be_truthy
     end
 
     it "rejects non-master companies" do
       expect_any_instance_of(Company).to receive(:master?).and_return false
-      expect(described_class.permission? Factory(:user)).to be_falsey
+      expect(described_class.permission? user).to be_falsey
     end
   end
 
@@ -71,7 +73,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
       expect(sheet.row(1)).to eq [nil, nil, @entry.entry_number, "ABC", "123", @commercial_invoice.invoice_number, 
         50.0, 15.0, 6.0, 5.0, nil, nil, nil, "#{@entry.entry_number}/#{50.0}/#{@commercial_invoice.invoice_number}", "CN", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
       expect(sheet.row(2)).to eq [nil, nil, @entry.entry_number, "DEF", "456", @commercial_invoice.invoice_number, 
-        25.0, 45.0, 15.0, nil, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", "CA", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
+        25.0, 45.0, 15.0, 0, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", "CA", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
     end
 
     it "prevents users who do not have access to the entry from seeing them" do
@@ -89,15 +91,25 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
       
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.row(1)[9]).to eq 5.0
-      expect(sheet.row(2)[9]).to be_nil
+      expect(sheet.row(2)[9]).to eq 0
     end
 
-    it "excludes entries with invoices that zero each other out" do
+    it "excludes entries with invoices that zero each other out when there's no duty" do
+      @broker_invoice_line2.update! charge_type: nil, charge_amount: 0
       other_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-03-01'), charge_amount: -5).broker_invoice
 
-      @t = described_class.new.run Factory(:user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.rows.length).to eq 1
+    end
+
+    it "includes entries with invoices that zero each other out when there is duty" do
+      @broker_invoice_line2.update! charge_type: "D", charge_amount: 0
+      other_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_date: '2014-03-01'), charge_amount: -5).broker_invoice
+
+      @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
+      sheet = Spreadsheet.open(@t.path).worksheet 0
+      expect(sheet.rows.length).to eq 3
     end
   end
 end

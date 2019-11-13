@@ -41,9 +41,10 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
     entries = Entry.search_secure run_by, entries
 
     entries.each do |ent|
-      # Only include entries where the brokerage fees don't total out to zero
-      fees = brokerage_fees(ent, run_by, start_date, end_date)
-      next unless fees.nonzero?
+      # Only include entries where the brokerage fees don't total out to zero and there's no duty
+      broker_enum = broker_invoice_lines(ent, run_by, start_date, end_date)
+      fees = brokerage_fees broker_enum
+      next unless fees.nonzero? || has_duty?(broker_enum)
 
       first_line = ent.commercial_invoice_lines.first
       ent.commercial_invoices.each do |ci|
@@ -60,7 +61,7 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
           row << duty_rate
           row << cil.total_duty
           row << cil.total_fees
-          row << ((first_line.id == cil.id) ? fees : "")
+          row << ((first_line.id == cil.id) ? fees : 0)
           row << ""
           row << ""
           row << ent.release_date
@@ -80,13 +81,21 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
 
   private
 
-    def brokerage_fees entry, run_by, start_date, end_date
+    def broker_invoice_lines entry, run_by, start_date, end_date
       # Only include invoices that fall between the start and end dates.
       BrokerInvoice.where(entry_id: entry.id).
         where("broker_invoices.invoice_date >= ? ", start_date).
         where("broker_invoices.invoice_date < ?", end_date).
         includes(:broker_invoice_lines).each.
-          map {|inv| inv.broker_invoice_lines.to_a}.flatten.collect {|bil| bil.duty_charge_type? ? BigDecimal.new("0") : bil.charge_amount}.sum
+          map {|inv| inv.broker_invoice_lines.to_a}.flatten.to_enum
+    end
+
+    def brokerage_fees enum
+      enum.collect { |bil| bil.duty_charge_type? ? BigDecimal.new("0") : bil.charge_amount }.sum       
+    end
+
+    def has_duty? enum
+      enum.any? { |bil| bil.duty_charge_type? }
     end
 
     def self.calculate_dates after_x_days_ago, before_x_days_ago
