@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
   }
 
   let (:order) {
-    order = Factory(:order, order_number: "ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
+    order = Factory(:order, order_number: "PVH-ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
     # Create two order lines with different quantities / unit prices and make sure the best one is used on the invoic
     order_line = order.order_lines.create! product_id: product.id, quantity: 10, line_number: 1, price_per_unit: 10
     order_line = order.order_lines.create! product_id: product.id, quantity: 20, line_number: 8, price_per_unit: 5

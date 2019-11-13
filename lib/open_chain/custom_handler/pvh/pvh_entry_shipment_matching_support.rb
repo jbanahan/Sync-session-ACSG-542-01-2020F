@@ -72,13 +72,14 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     end
 
     translated_part_number = "PVH-#{part_number}"
+    translated_order_number = "PVH-#{order_number}"
 
     # Find all the shipment lines that might match this part / order number...there's potentially more than one
     matched_lines = shipment_lines.select do |line|
       # Skip any shipment lines we've already returned
       next if found_shipment_lines.include?(line)
 
-      line.product&.unique_identifier == translated_part_number && line.order_line&.order&.customer_order_number == order_number
+      line.product&.unique_identifier == translated_part_number && line.order_line&.order&.order_number == translated_order_number
     end
 
     if matched_lines.length == 0
@@ -117,6 +118,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
   end
 
   def find_potential_split_tariff_line shipment_lines, order_number, part_number
+    translated_order_number = "PVH-#{order_number}"
     # For some cases where a commercial invoice line has to be split into two lines due to 
     # carrying two tariffs per 1 PO line, we're going to need to toss aside our rule of only using
     # a shipment line a single time.
@@ -126,7 +128,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     shipment_lines.select do |line|
       line.order_line&.hts.to_s.strip == "9999999999" &&
           line.product&.unique_identifier == part_number &&
-          line.order_line&.order&.customer_order_number == order_number
+          line.order_line&.order&.order_number == translated_order_number
     end
   end
 

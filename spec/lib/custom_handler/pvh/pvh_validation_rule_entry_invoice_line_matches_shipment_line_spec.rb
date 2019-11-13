@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
   }
 
   let (:order) {
-    order = Factory(:order, order_number: "ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
+    order = Factory(:order, order_number: "PVH-ORDER", customer_order_number: "ORDER", importer_id: pvh.id)
     order_line = order.order_lines.create! product_id: product.id, quantity: 10, line_number: 1, price_per_unit: 10
     order_line = order.order_lines.create! product_id: product.id, quantity: 20, line_number: 8, price_per_unit: 5
     order
@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
       end
 
       it "errors if order numbers don't match" do
-        order.update_attributes! customer_order_number: "ORDER2"
+        order.update_attributes! order_number: "PVH-ORDER2"
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
 
@@ -107,7 +107,7 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
       end
 
       it "errors if order numbers don't match" do
-        order.update_attributes! customer_order_number: "ORDER2"
+        order.update_attributes! order_number: "PVH-ORDER2"
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
 
@@ -136,7 +136,7 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
       end
 
       it "errors if order numbers don't match" do
-        order.update_attributes! customer_order_number: "ORDER2"
+        order.update_attributes! order_number: "PVH-ORDER2"
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
 

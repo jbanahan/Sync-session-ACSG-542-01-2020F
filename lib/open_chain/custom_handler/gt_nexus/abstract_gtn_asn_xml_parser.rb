@@ -539,8 +539,9 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   end
 
   def find_or_create_order_from_line_item(importer, user, line_item)
-    order_number = prefix_identifier_value(importer, line_item.text("PONumber"))
-    find_or_create_order(importer, order_number)
+    raw_order_number = line_item.text("PONumber")
+    order_number = prefix_identifier_value(importer, raw_order_number)
+    find_or_create_order(importer, order_number, raw_order_number)
   end
 
   def find_or_create_order_line_from_line_item(importer, product_cache, order, line_item)
@@ -552,12 +553,16 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     order_line
   end
 
-  def find_or_create_order importer, order_number
+  def find_or_create_order importer, order_number, raw_order_number
     order = nil
     new_order = false
     Lock.acquire("Order-#{order_number}") do
       order = Order.where(order_number: order_number, importer_id: importer.id).first_or_initialize
       if !order.persisted?
+        # If we're prefixing then we should copy the "raw" order number into the customer order number field
+        if prefix_identifiers_with_system_codes?
+          order.customer_order_number = raw_order_number
+        end
         new_order = true
         order.save!
       end

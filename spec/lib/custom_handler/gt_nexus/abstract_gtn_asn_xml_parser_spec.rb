@@ -236,6 +236,8 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
           expect(ol.product).to eq product
           expect(ol.line_number).to eq 2
 
+          expect(order.order_number).to eq "SYS-RTTC216384"
+          expect(order.customer_order_number).to eq "RTTC216384"
           expect(order.entity_snapshots.length).to eq 1
           s = order.entity_snapshots.first
           expect(s.user).to eq user
@@ -275,6 +277,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
           product = Product.all.first
           
           expect(order.order_number).to eq "RTTC216384"
+          expect(order.customer_order_number).to be_nil
           expect(product.unique_identifier).to eq "7696164"
           expect(product.custom_value(cdefs[:prod_part_number])).to be_nil
         end 
