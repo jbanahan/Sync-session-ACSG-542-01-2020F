@@ -1,0 +1,10 @@
+<%content_for :javascript do%>
+  $('document').ready(function() {
+    $('div[ng-controller]').scope().loadObject('companies', <%=@validation_object.id%>);
+  });
+<%end%>
+<%content_for :action_bar do%>
+  <button class='btn_link' link_to="<%=request.referrer%>" key_map='b'>Back</button>
+<%end%>
+
+<%= render 'shared/validation_results' %>
