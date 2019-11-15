@@ -40,6 +40,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
       expect(inv.bill_to_country_id).to eq country.id
       expect(inv.last_file_path).to eq "the_key"
       expect(inv.last_file_bucket).to eq "the_bucket"
+      expect(inv.currency).to eq "CAD"
 
       expect(inv.broker_invoice_lines.length).to eq 4
 
@@ -118,6 +119,26 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
       expect(BrokerInvoice.where(invoice_number:"BQMJ01119290555").first).to_not be_nil
 
       expect(log).to have_info_message "Cargowise-sourced entry matching Broker Reference 'BQMJ01119290922' was not found, so a new entry was created."
+      expect(log).to have_info_message "Broker invoice successfully processed."
+    end
+
+    it "adds HST13 line" do
+      test_data.gsub!(/HST12/,'HST13')
+
+      entry = Factory(:entry, broker_reference:"BQMJ01119290922", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, total_duty: 5.55, total_taxes:22.22)
+      country = Factory(:country, iso_code:'US')
+
+      subject.parse make_document(test_data), { key:"the_key", bucket:"the_bucket" }
+
+      entry.reload
+      inv = entry.broker_invoices.first
+      expect(inv.broker_invoice_lines.length).to eq 5
+
+      inv_line_hst13 = inv.broker_invoice_lines[4]
+      expect(inv_line_hst13.charge_code).to eq "HST13"
+      expect(inv_line_hst13.charge_amount).to eq BigDecimal.new("4.32")
+      expect(inv_line_hst13.charge_description).to eq "VAT do you want?"
+
       expect(log).to have_info_message "Broker invoice successfully processed."
     end
 

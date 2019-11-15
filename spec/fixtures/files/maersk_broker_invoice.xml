@@ -212,8 +212,8 @@
           <Description>CUSTOMS DEFERRED</Description>
         </ChargeCode>
         <ChargeCurrency>
-          <Code>USD</Code>
-          <Description>United States Dollar</Description>
+          <Code>CAD</Code>
+          <Description>Canadian Dollar, Eh?</Description>
         </ChargeCurrency>
         <ChargeExchangeRate>1.000000000</ChargeExchangeRate>
         <ChargeTotalAmount>0.0000</ChargeTotalAmount>
@@ -240,7 +240,7 @@ PM 5</Description>
           <Code>USD</Code>
           <Description>United States Dollar</Description>
         </LocalCurrency>
-        <LocalGSTVATAmount>0.0000</LocalGSTVATAmount>
+        <LocalGSTVATAmount>4.3210</LocalGSTVATAmount>
         <LocalTotalAmount>0.0000</LocalTotalAmount>
         <Organization>
           <Type>Organization</Type>
@@ -257,6 +257,10 @@ PM 5</Description>
         <Sequence>1</Sequence>
         <TransactionCategory>FIN</TransactionCategory>
         <TransactionType>REV</TransactionType>
+        <VATTaxID>
+          <TaxCode>HST12</TaxCode>
+          <Description>VAT do you want?</Description>
+        </VATTaxID>
 
         <PostingJournalDetailCollection>
           <PostingJournalDetail>

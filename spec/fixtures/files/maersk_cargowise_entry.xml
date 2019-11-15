@@ -76,6 +76,7 @@
           <InvoiceNumber>5813687318</InvoiceNumber>
           <AdditionalTerms></AdditionalTerms>
           <AgreedExchangeRate>1.500000000</AgreedExchangeRate>
+          <BillNumber>XYZA55855</BillNumber>
           <ExchangeRateType>
             <Code></Code>
           </ExchangeRateType>
@@ -1489,6 +1490,10 @@
                   <Key>99TariffCode</Key>
                   <Value>99tc</Value>
                 </AddInfo>
+                <AddInfo>
+                  <Key>TreatmentCode</Key>
+                  <Value>FL</Value>
+                </AddInfo>
               </AddInfoCollection>
 
               <AddInfoGroupCollection>
@@ -1818,7 +1823,7 @@
                 <AddInfoGroup>
                   <Type>
                     <Code>CDT</Code>
-                    <Description>CDT should be ignored</Description>
+                    <Description>CDT desc</Description>
                   </Type>
                   <AddInfoCollection>
                     <AddInfo>
@@ -1837,12 +1842,16 @@
                       <Key>Rate</Key>
                       <Value>11.1</Value>
                     </AddInfo>
+                    <AddInfo>
+                      <Key>ValueForCalculation</Key>
+                      <Value>77.77</Value>
+                    </AddInfo>
                   </AddInfoCollection>
                 </AddInfoGroup>
                 <AddInfoGroup>
                   <Type>
                     <Code>CDT</Code>
-                    <Description>CDT should be ignored</Description>
+                    <Description>CDT desc</Description>
                   </Type>
                   <AddInfoCollection>
                     <AddInfo>
@@ -1862,7 +1871,7 @@
                 <AddInfoGroup>
                   <Type>
                     <Code>CDT</Code>
-                    <Description>CDT good match</Description>
+                    <Description>CDT desc</Description>
                   </Type>
                   <AddInfoCollection>
                     <AddInfo>
@@ -1876,6 +1885,30 @@
                     <AddInfo>
                       <Key>Amount</Key>
                       <Value>133.54</Value>
+                    </AddInfo>
+                  </AddInfoCollection>
+                </AddInfoGroup>
+                <AddInfoGroup>
+                  <Type>
+                    <Code>CDT</Code>
+                    <Description>CDT desc</Description>
+                  </Type>
+                  <AddInfoCollection>
+                    <AddInfo>
+                      <Key>RateType</Key>
+                      <Value>V</Value>
+                    </AddInfo>
+                    <AddInfo>
+                      <Key>TaxType</Key>
+                      <Value>CVD</Value>
+                    </AddInfo>
+                    <AddInfo>
+                      <Key>Amount</Key>
+                      <Value>152</Value>
+                    </AddInfo>
+                    <AddInfo>
+                      <Key>ValueForCalculation</Key>
+                      <Value>73.37</Value>
                     </AddInfo>
                   </AddInfoCollection>
                 </AddInfoGroup>
@@ -6486,7 +6519,7 @@
     </ConsolidatedCargoStatus>
     <ContainerCount>1</ContainerCount>
     <CustomsBroker>
-      <Code>CA</Code>
+      <Code>Chesery</Code>
       <Name>Chesery Artis</Name>
     </CustomsBroker>
     <CustomsContainerMode>
@@ -6793,7 +6826,8 @@
       <Description>Clear Entry Summary Add</Description>
     </MessageStatus>
     <MessageSubType>
-      <Code></Code>
+      <Code>V</Code>
+      <Description>(Paper only) Voluntary-used by an importer/owner to voluntarily declare goods th</Description>
     </MessageSubType>
     <MessageType>
       <Code>IMP</Code>
@@ -12620,7 +12654,7 @@
         </Country>
         <Email></Email>
         <Fax></Fax>
-        <GovRegNum>58-185331900</GovRegNum>
+        <GovRegNum>58-185331900-CA</GovRegNum>
         <GovRegNumType>
           <Code>EIN</Code>
           <Description>Employer Identification Number</Description>

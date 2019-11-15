@@ -55,7 +55,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       broker_inv.broker_invoice_lines.destroy_all
       xpath(elem_broker_inv, "PostingJournalCollection/PostingJournal") do |elem_inv_line|
         inv_line = broker_inv.broker_invoice_lines.build
-        populate_broker_invoice_line inv_line, elem_inv_line
+        populate_broker_invoice_line_from_element inv_line, elem_inv_line
+      end
+
+      # Add another line if there's a 'HST13' posting journal.  This line represents the sum of all HST on the invoice.
+      elem_hst13_posting_journal = elem_broker_inv.xpath("PostingJournalCollection/PostingJournal[VATTaxID/TaxCode='HST13']").first
+      if elem_hst13_posting_journal
+        charge_amount = parse_decimal(et elem_hst13_posting_journal, "LocalGSTVATAmount")
+        charge_description = first_text elem_hst13_posting_journal, "VATTaxID/Description"
+        inv_line = broker_inv.broker_invoice_lines.build
+        populate_broker_invoice_line inv_line, 'HST13', charge_amount, charge_description
       end
 
       if opts[:key] && opts[:bucket]
@@ -83,6 +92,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def populate_broker_invoice inv, elem
       inv.invoice_date = parse_date(et elem, "CreateTime")
       inv.invoice_total = parse_decimal(et elem, "LocalTotal")
+      inv.currency = first_text elem, "PostingJournalCollection/PostingJournal/ChargeCurrency/Code"
 
       elem_bill_to = xpath(elem, "ShipmentCollection/Shipment/OrganizationAddressCollection/OrganizationAddress[AddressType='SendersLocalClient']").first
       if elem_bill_to
@@ -115,10 +125,18 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       iso.present? ? Country.where(iso_code:iso).first.try(:id) : nil
     end
 
-    def populate_broker_invoice_line inv_line, elem
-      inv_line.charge_code = first_text elem, "ChargeCode/Code"
-      inv_line.charge_amount = parse_decimal(et elem, "LocalAmount")
-      inv_line.charge_description = first_text elem, "ChargeCode/Description"
+    def populate_broker_invoice_line_from_element inv_line, elem
+      charge_code = first_text(elem, "ChargeCode/Code")
+      charge_amount = parse_decimal(et elem, "LocalAmount")
+      charge_description = first_text(elem, "ChargeCode/Description")
+      populate_broker_invoice_line inv_line, charge_code, charge_amount, charge_description
     end
+
+  def populate_broker_invoice_line inv_line, charge_code, charge_amount, charge_description
+    inv_line.charge_code = charge_code
+    inv_line.charge_amount = charge_amount
+    inv_line.charge_description = charge_description
+  end
+
 
 end; end; end; end

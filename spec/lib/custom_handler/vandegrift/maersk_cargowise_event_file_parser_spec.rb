@@ -619,7 +619,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
       entry.reload
       expect(entry.cadex_accept_date).to eq parse_datetime("2019-05-07T15:10:52")
-      expect(entry.k84_receive_date).to eq parse_datetime("2019-05-08T15:10:52").to_date
+      expect(entry.k84_receive_date).to eq parse_datetime("2019-05-07T15:10:52").to_date
       expect(entry.b3_print_date).to eq parse_datetime("2019-05-08T15:10:52").to_date
 
       expect(log).to have_identifier :event_type, "CRP"

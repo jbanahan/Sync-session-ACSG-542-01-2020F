@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.customer_name).to eq "HOME DEPOT USA INC"
         expect(entry.importer_id).to eq importer_company.id
         expect(entry.vendor_names).to eq "GORETECH INDUSTRIES CO LTD\n GORTECH INDUSTRIES CO LTD"
-        expect(entry.po_numbers).to eq "5813687318\n 5813687319"
+        expect(entry.po_numbers).to eq "5813687318"
         expect(entry.merchandise_description).to eq "HOME IMPROVEMENT ITEMS"
 
         expect(entry.export_date).to eq parse_datetime("2019-01-02").to_date
@@ -160,6 +160,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.ship_terms).to be_nil
         expect(entry.us_exit_port_code).to be_nil
         expect(entry.release_type).to be_nil
+        expect(entry.employee_name).to be_nil
 
         expect(entry.last_file_path).to eq "this_key"
         expect(entry.last_file_bucket).to eq "that_bucket"
@@ -350,6 +351,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         test_data.gsub!(/Value>03/,'Value>OhTree')
         test_data.gsub!(/PaperlessRelease/,'PaperlessRelouse')
         test_data.gsub!(/EntryAuthorisation/,'EntryAuthoritarian')
+        test_data.gsub!(/CNRU000030320655/, '')
 
         subject.parse make_document(test_data)
 
@@ -366,6 +368,9 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.cbp_intensive_hold_release_date).to be_nil
         expect(entry.paperless_release).to eq true
         expect(entry.vessel).to eq "CNRU"
+
+        ci_1 = entry.commercial_invoices[0]
+        expect(ci_1.master_bills_of_lading).to eq "XYZA55855"
 
         expect(log).to have_info_message "Entry successfully processed."
       end
@@ -517,7 +522,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(tar_1.duty_amount).to eq BigDecimal.new("1522.8")
         expect(tar_1.duty_rate).to eq BigDecimal.new(".03")
         expect(tar_1.duty_specific).to eq BigDecimal.new("507.6")
-#        expect(tar_1.duty_additional).to eq BigDecimal.new("7.00")
+        expect(tar_1.duty_additional).to eq BigDecimal.new("7.00")
         expect(tar_1.entered_value).to eq BigDecimal.new("50760.14")
         expect(tar_1.entered_value_7501).to eq 50760
         expect(tar_1.classification_qty_1).to eq BigDecimal.new(368)
@@ -653,13 +658,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry).to_not be_nil
 
         ci_1 = entry.commercial_invoices[0]
-        expect(ci_1.invoice_value).to eq BigDecimal.new("77280")
-        expect(ci_1.invoice_value_foreign).to eq BigDecimal.new("51520")
+        expect(ci_1.invoice_value).to eq BigDecimal.new("51520")
+        expect(ci_1.invoice_value_foreign).to eq BigDecimal.new("77280")
         expect(ci_1.currency).to eq "CAD"
 
         cil_1 = ci_1.commercial_invoice_lines[0]
-        expect(cil_1.value).to eq BigDecimal.new("77280")
-        expect(cil_1.value_foreign).to eq BigDecimal.new("51520")
+        expect(cil_1.value).to eq BigDecimal.new("51520")
+        expect(cil_1.value_foreign).to eq BigDecimal.new("77280")
         expect(cil_1.currency).to eq "CAD"
 
         expect(log).to have_info_message "Entry successfully processed."
@@ -777,7 +782,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.customer_number).to eq "US48733060b"
         expect(entry.customer_name).to eq "HOME DEPOT CANADA, EH?"
         expect(entry.vendor_names).to eq "GORETECH INDUSTRIES CO LTD\n GORTECH INDUSTRIES CO LTD"
-        expect(entry.po_numbers).to eq "5813687318\n 5813687319"
+        expect(entry.po_numbers).to eq "5813687318"
         expect(entry.merchandise_description).to eq "HOME IMPROVEMENT ITEMS"
 
         expect(entry.export_date).to eq parse_datetime("2019-01-02").to_date
@@ -812,11 +817,11 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.other_agency_hold_release_date).to be_nil
         expect(entry.one_usg_date).to eq parse_datetime("2019-02-01 15:22:00.000")
 
-        expect(entry.entry_port_code).to eq "USCHI"
+        expect(entry.entry_port_code).to eq "BLAH"
         expect(entry.lading_port_code).to eq "CNYTN"
         expect(entry.unlading_port_code).to eq "USINL"
         expect(entry.destination_state).to be_nil
-        expect(entry.entry_type).to eq "01"
+        expect(entry.entry_type).to eq "V"
         expect(entry.mfids).to be_nil
         expect(entry.export_country_codes).to eq "ET\n NL"
         expect(entry.origin_country_codes).to eq "ET\n NL"
@@ -835,7 +840,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.container_sizes).to eq "45HC\n 50HC"
         expect(entry.fcl_lcl).to eq "FCL\n LCL"
         expect(entry.ult_consignee_code).to eq "US48733060b"
-        expect(entry.importer_tax_id).to be_nil
+        expect(entry.importer_tax_id).to eq "58-185331900-CA"
         expect(entry.division_number).to eq "011"
         expect(entry.recon_flags).to eq "NA"
         expect(entry.bond_type).to eq "8"
@@ -875,6 +880,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.ship_terms).to eq "FOB"
         expect(entry.us_exit_port_code).to eq "55533"
         expect(entry.release_type).to eq "srv_opt_9797"
+        expect(entry.employee_name).to eq "Chesery"
 
         expect(entry.commercial_invoices.length).to eq 2
 
@@ -934,12 +940,12 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(cil_1.other_fees).to eq BigDecimal.new("51.95")
         expect(cil_1.add_case_number).to eq "683838"
         expect(cil_1.add_bond).to eq false
-        expect(cil_1.add_case_value).to eq BigDecimal.new("14.92")
-        expect(cil_1.add_duty_amount).to eq BigDecimal.new("77.88")
+        expect(cil_1.add_case_value).to eq BigDecimal.new("77.77")
+        expect(cil_1.add_duty_amount).to eq BigDecimal.new("13")
         expect(cil_1.cvd_case_number).to eq "683841"
         expect(cil_1.cvd_bond).to eq true
-        expect(cil_1.cvd_case_value).to eq BigDecimal.new("44.33")
-        expect(cil_1.cvd_duty_amount).to eq BigDecimal.new("88.77")
+        expect(cil_1.cvd_case_value).to eq BigDecimal.new("73.37")
+        expect(cil_1.cvd_duty_amount).to eq BigDecimal.new("152")
         expect(cil_1.state_export_code).to eq "PA"
         expect(cil_1.state_origin_code).to eq "DE"
         expect(cil_1.customer_reference).to eq "5813687318"
@@ -955,7 +961,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(tar_1.duty_additional).to eq BigDecimal.new("7.00")
         expect(tar_1.entered_value).to eq BigDecimal.new("50760.14")
         expect(tar_1.entered_value_7501).to eq 50760
-        expect(tar_1.spi_primary).to eq "A"
+        expect(tar_1.spi_primary).to eq "FL"
         expect(tar_1.spi_secondary).to be_nil
         expect(tar_1.classification_qty_1).to eq BigDecimal.new(368)
         expect(tar_1.classification_uom_1).to eq "NO"
@@ -973,6 +979,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(tar_1.sima_code).to eq "11.1"
         expect(tar_1.gross_weight).to eq 7397
         expect(tar_1.tariff_description).to eq "RYB 15 AMP 10\" SLIDE MITER SAW"
+        expect(tar_1.duty_rate).to eq BigDecimal.new("0.02")
 
         tar_2 = cil_1.commercial_invoice_tariffs[1]
         expect(tar_2.hts_code).to eq "99038803"
@@ -1000,6 +1007,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(tar_2.sima_code).to be_nil
         expect(tar_2.gross_weight).to be_nil
         expect(tar_2.tariff_description).to eq "RYB 15 AMP 10\" SLIDE MITER SAW"
+        expect(tar_2.duty_rate).to be_nil
 
         cil_2 = ci_1.commercial_invoice_lines[1]
         expect(cil_2.line_number).to eq 2
@@ -1042,6 +1050,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         test_data.gsub!(/PortOfDischarge/,'ProfOfDarkArts')
         test_data.gsub!(/EntryAuthorisation/,'EntryAuthoritarian')
         test_data.gsub!(/ADD/,'CVD')
+        test_data.gsub!(/CNRU000030320655/, '')
 
         subject.parse make_document(test_data)
 
@@ -1053,6 +1062,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.first_release_date).to eq parse_datetime("2019-04-30 11:12:00")
 
         ci_1 = entry.commercial_invoices[0]
+        expect(ci_1.master_bills_of_lading).to eq "XYZA55855"
         cil_1 = ci_1.commercial_invoice_lines[0]
         tar_1 = cil_1.commercial_invoice_tariffs[0]
         expect(tar_1.sima_amount).to eq BigDecimal.new("13.00")
@@ -1088,14 +1098,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry).to_not be_nil
 
         ci_1 = entry.commercial_invoices[0]
-        expect(ci_1.invoice_value).to eq BigDecimal.new("77280")
-        expect(ci_1.invoice_value_foreign).to eq BigDecimal.new("51520")
+        expect(ci_1.invoice_value).to eq BigDecimal.new("51520")
+        expect(ci_1.invoice_value_foreign).to eq BigDecimal.new("77280")
         expect(ci_1.currency).to eq "USD"
 
         cil_1 = ci_1.commercial_invoice_lines[0]
         expect(cil_1.line_number).to eq 1
-        expect(cil_1.value).to eq BigDecimal.new("77280")
-        expect(cil_1.value_foreign).to eq BigDecimal.new("51520")
+        expect(cil_1.value).to eq BigDecimal.new("51520")
+        expect(cil_1.value_foreign).to eq BigDecimal.new("77280")
         expect(cil_1.currency).to eq "USD"
 
         expect(log).to have_info_message "Entry successfully processed."

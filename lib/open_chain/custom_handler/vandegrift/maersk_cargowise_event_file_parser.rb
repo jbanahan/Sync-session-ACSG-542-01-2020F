@@ -170,7 +170,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       elsif event_type == 'CRP'
         entry.cadex_accept_date = event_date
         event_date_plus_one = event_date ? event_date.to_date + 1.day : nil
-        entry.k84_receive_date = event_date_plus_one
+        entry.k84_receive_date = event_date
         entry.b3_print_date = event_date_plus_one
       elsif event_type == 'CES'
         date_1_set, date_2_set, date_3_set = [false]*3
