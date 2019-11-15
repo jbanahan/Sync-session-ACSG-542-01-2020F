@@ -1254,9 +1254,22 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def get_importer customer_number, customer_name
-      return nil if customer_number.blank? || customer_name.blank?
+      # Customer Number can be blank sometimes really early on in the shipment / entry process, just let that happen.  It just means until the entry is associated
+      # with a customer that only internal users can view the entry.
+      return nil if customer_number.blank?
 
-      Company.find_or_create_company!("Customs Management", customer_number, {alliance_customer_number: customer_number, importer: true, name: customer_name})
+      begin
+        # There appears to be some situations where the customer_name can be blank even on long-established customers.  I think this is due to operations modifying something
+        # on the entry incorrectly.  Regardless, as long as there's a customer_number for these and the importer account exists, then we should just use that account.
+        # The ONLY time the customer name matters is when we're having to create the account.
+        return Company.find_or_create_company!("Customs Management", customer_number, {alliance_customer_number: customer_number, importer: true, name: customer_name})
+      rescue ActiveRecord::RecordInvalid => e
+        # This is a case where we're trying to create the account, but the name came across blank...don't fail the entry on this, just create it without the importer
+        return nil if customer_name.blank?
+
+        # If we're failing for some other reason, then just re-raise the error.
+        raise e
+      end
     end
 
     def parse_decimal str, decimal_places: 2, decimal_offset: 2, rounding_mode: BigDecimal::ROUND_HALF_UP, no_offset: false

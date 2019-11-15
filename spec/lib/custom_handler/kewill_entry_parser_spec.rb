@@ -1396,6 +1396,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.importer).to be_nil
     end
 
+    it "allows blank customer name if importer account already exists" do
+      importer = with_customs_management_id(Factory(:importer), "TEST")
+      @e['cust_name'] = ""
+      entry = subject.process_entry @e
+      expect(entry.importer).to eq importer
+    end
+
     it "skips files without a file number" do
       @e["file_no"] = nil
       expect(subject.process_entry(@e)).to be_nil
