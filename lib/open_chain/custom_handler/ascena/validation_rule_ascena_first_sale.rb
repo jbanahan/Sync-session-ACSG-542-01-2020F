@@ -1,6 +1,13 @@
+# For Ascena and Maurices entries. No JSON args.
+
 module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscenaFirstSale < BusinessValidationRule
+  ASCENA_CUST_NUM ||= "ASCE"
+  MAURICES_CUST_NUM ||= "MAUR"
 
   def run_validation entry
+    unless [ASCENA_CUST_NUM, MAURICES_CUST_NUM].include? entry.customer_number
+      raise "Validation can only be run with customers '#{ASCENA_CUST_NUM}' and '#{MAURICES_CUST_NUM}'. Found: #{entry.customer_number}"
+    end
     return nil unless entry.entry_filed_date
 
     # What we need to do here is ensure that every single invoice line on the entry that has an MID-VendorID that 
@@ -8,7 +15,7 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
     # the corresponding xref has first sale data.
 
     xref = upcase_hash_keys DataCrossReference.hash_for_type(DataCrossReference::ASCE_MID)
-    inv_line_data = results_by_inv_ln(ActiveRecord::Base.connection.exec_query query(entry.id))
+    inv_line_data = results_by_inv_ln(ActiveRecord::Base.connection.exec_query query(entry.id, entry.customer_number))
     
     errors = []
     air = entry.transport_mode_code.to_s == "40"
@@ -60,18 +67,19 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
     line.value_appraisal_method.try(:upcase) != "F" || line.contract_amount.to_f == 0
   end
 
-  def query entry_id
-    <<-SQL
-      SELECT cil.id, UPPER(cil.mid) AS "inv_mid", UPPER(vend.system_code) AS "vendor", UPPER(fact.mid) AS "ord_mid"
-      FROM entries e
-        INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
-        INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
-        INNER JOIN orders o ON o.order_number = CONCAT("ASCENA-", cil.product_line, "-", cil.po_number)
-        LEFT OUTER JOIN companies vend ON vend.id = o.vendor_id
-        LEFT OUTER JOIN companies fact ON fact.id = o.factory_id
-      WHERE e.id = #{entry_id}
-      ORDER BY cil.id
-    SQL
+  def query entry_id, cust_number
+    qry = <<-SQL
+            SELECT cil.id, UPPER(cil.mid) AS "inv_mid", UPPER(vend.system_code) AS "vendor", UPPER(fact.mid) AS "ord_mid"
+            FROM entries e
+              INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
+              INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
+              INNER JOIN orders o ON o.order_number = IF(? = '#{MAURICES_CUST_NUM}', CONCAT('ASCENA-MAU-', cil.po_number), CONCAT("ASCENA-", cil.product_line, "-", cil.po_number))
+              LEFT OUTER JOIN companies vend ON vend.id = o.vendor_id
+              LEFT OUTER JOIN companies fact ON fact.id = o.factory_id
+            WHERE e.id = ?
+            ORDER BY cil.id
+          SQL
+    ActiveRecord::Base.sanitize_sql_array([qry, cust_number, entry_id])
   end
 
   def results_by_inv_ln qry_results
