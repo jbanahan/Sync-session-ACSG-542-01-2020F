@@ -2,6 +2,7 @@ require 'open_chain/custom_handler/intacct/intacct_data_pusher'
 
 class IntacctErrorsController < ApplicationController
   VFI_ACCOUNTING_USERS ||= 'intacct-accounting'
+  VFI_CANADA_ACCOUNTING ||= 'canada-accounting'
 
   def index
     action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "page") do
@@ -66,7 +67,7 @@ class IntacctErrorsController < ApplicationController
   end
 
   def self.allowed_user? user
-    (Rails.env.development? || MasterSetup.get.system_code=='www-vfitrack-net') && user.in_group?(Group.use_system_group(VFI_ACCOUNTING_USERS, create: false))
+    MasterSetup.get.custom_feature?("WWW") && user.in_any_group?([VFI_ACCOUNTING_USERS, VFI_CANADA_ACCOUNTING])
   end
 
 end

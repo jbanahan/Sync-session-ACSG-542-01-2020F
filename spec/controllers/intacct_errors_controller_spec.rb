@@ -1,11 +1,16 @@
 describe IntacctErrorsController do
+  let (:user) { Factory(:user) }
+
   before :each do
-    allow_any_instance_of(MasterSetup).to receive(:system_code).and_return "www-vfitrack-net"
-    g = Factory(:group, system_code: 'intacct-accounting')
-    @user = Factory(:user, username: "jhulford")
-    @user.groups << g
-    sign_in_as @user
+    sign_in_as user
+    allow(user).to receive(:in_any_group?).with(['intacct-accounting', 'canada-accounting']).and_return true
   end
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:custom_feature?).with("WWW").and_return true
+    ms
+  }
 
   describe "index" do
     it "finds all errored intacct objects" do

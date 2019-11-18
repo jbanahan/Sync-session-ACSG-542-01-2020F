@@ -231,23 +231,11 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
   end
 
   describe "can_view?" do
-    it "allows only people in accounting group to view" do
-      ms = MasterSetup.new system_code: 'www-vfitrack-net'
-      allow(MasterSetup).to receive(:get).and_return ms
-      g = Factory(:group, system_code: 'intacct-accounting')
-      user = Factory(:user)
-      user.groups << g
-      expect(described_class.can_view?(user)).to be_truthy
-      expect(described_class.can_view?(Factory(:user, username: "yada-yada"))).to be_falsey
-    end
+    let (:user) { User.new }
 
-    it "disallows access from other systems" do
-      ms = MasterSetup.new system_code: 'other'
-      allow(MasterSetup).to receive(:get).and_return ms
-      g = Factory(:group, system_code: 'intacct-accounting')
-      user = Factory(:user)
-      user.groups << g
-      expect(described_class.can_view?(user)).to be_falsey
+    it "uses intaccter errors controller to determine if user can view" do
+      expect(IntacctErrorsController).to receive(:allowed_user?).with(user).and_return true
+      expect(described_class.can_view?(user)).to eq true
     end
   end
 
