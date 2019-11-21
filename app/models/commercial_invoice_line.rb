@@ -32,6 +32,7 @@
 #  cvd_duty_amount            :decimal(12, 2)
 #  department                 :string(255)
 #  drawback_qty               :decimal(11, 2)
+#  entered_value_7501         :integer
 #  fda_hold_date              :datetime
 #  fda_release_date           :datetime
 #  fda_review_date            :datetime
@@ -85,7 +86,7 @@ class CommercialInvoiceLine < ActiveRecord::Base
     :container, :contract_amount, :cotton_fee, :country_export_code, :country_origin_code, 
     :currency, :customer_reference, :customs_line_number, :cvd_bond, 
     :cvd_case_number, :cvd_case_percent, :cvd_case_value, :cvd_duty_amount, 
-    :department, :drawback_qty, :fda_hold_date, :fda_release_date, 
+    :department, :drawback_qty, :entered_value_7501, :fda_hold_date, :fda_release_date, 
     :fda_review_date, :first_sale, :freight_amount, :hmf, :line_number, :mid, 
     :miscellaneous_discount, :mpf, :non_dutiable_amount, :other_amount, 
     :other_fees, :part_number, :po_number, :product_line, :prorated_mpf, 

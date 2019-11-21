@@ -233,6 +233,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(cil_1.state_origin_code).to be_nil
         expect(cil_1.customer_reference).to be_nil
         expect(cil_1.adjustments_amount).to be_nil
+        expect(cil_1.entered_value_7501).to eq 50760
 
         expect(cil_1.commercial_invoice_tariffs.length).to eq 2
 
