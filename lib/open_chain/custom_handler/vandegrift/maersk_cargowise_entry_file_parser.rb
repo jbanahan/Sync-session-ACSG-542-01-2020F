@@ -856,7 +856,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       hts_code = et elem_line, "HarmonisedCode"
       if hts_code.present?
         tar = inv_line.commercial_invoice_tariffs.build(hts_code:hts_code)
-        populate_commercial_invoice_tariff tar, inv_line, elem_line, import_country_iso, find_matching_entry_line(doc, entry_line_number, hts_code), true, condensed_line
+        populate_commercial_invoice_tariff tar, elem_line, import_country_iso, find_matching_entry_line(doc, entry_line_number, hts_code), true, condensed_line
 
         # The full gamut of duty rates are set for the US only, and only for the primary tariff number.
         # Base duty rate can still be calculated for US non-primary tariffs.
@@ -873,7 +873,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       prov_hts_codes = unique_values elem_line, "AddInfoCollection/AddInfo[Key='SupTariff']/Value"
       prov_hts_codes.each do |prov_hts_code|
         tar = inv_line.commercial_invoice_tariffs.build(hts_code:prov_hts_code)
-        populate_commercial_invoice_tariff tar, inv_line, elem_line, import_country_iso, find_matching_entry_line(doc, entry_line_number, prov_hts_code), false, condensed_line
+        populate_commercial_invoice_tariff tar, elem_line, import_country_iso, find_matching_entry_line(doc, entry_line_number, prov_hts_code), false, condensed_line
         if import_country_iso == 'US'
           customs_value = tar.entered_value_7501
           if customs_value.nil? || customs_value.zero?
@@ -889,7 +889,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       xpath(doc, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryLineCollection/EntryLine[LineNumber='#{entry_line_number}' and HarmonisedCode='#{hts_code}']").first
     end
 
-    def populate_commercial_invoice_tariff tar, inv_line, elem_invoice_line, import_country_iso, elem_entry_line, primary_tariff, condensed_line
+    def populate_commercial_invoice_tariff tar, elem_invoice_line, import_country_iso, elem_entry_line, primary_tariff, condensed_line
       tar.duty_advalorem = get_advalorem_duty elem_invoice_line, import_country_iso, elem_entry_line
       tar.duty_amount = get_duty elem_invoice_line, import_country_iso, primary_tariff
       # Some of these fields are not set for the supplemental tariffs.  It's possible more fields currently being
@@ -907,7 +907,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         tar.entered_value = BigDecimal("0")
         tar.entered_value_7501 = 0
       end
-      inv_line.entered_value_7501 = inv_line.entered_value_7501.to_i + tar.entered_value_7501
       if primary_tariff && !condensed_line
         tar.spi_primary = get_spi_primary elem_invoice_line, import_country_iso
         tar.spi_secondary = first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='SetInd']/Value"

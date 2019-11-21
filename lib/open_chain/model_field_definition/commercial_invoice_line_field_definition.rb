@@ -139,8 +139,7 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
           WHERE commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id 
             AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
         SQL
-        }],
-      [72, :cil_entered_value_7501, :entered_value_7501, "7501 Entered Value", {data_type: :integer}]
+        }]
     ]
   end
 end; end; end
