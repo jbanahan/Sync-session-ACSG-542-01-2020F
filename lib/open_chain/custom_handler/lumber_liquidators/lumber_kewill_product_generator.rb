@@ -16,17 +16,36 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberKe
   end
 
   def custom_defs
-    @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin]
+    @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin, :prod_301_exclusion_tariff]
     @cdefs
   end
 
   def query
+    # All the nulls are here to match the column outputs from the standard Kewill query
     qry = <<-QRY
 SELECT products.id,
 products.unique_identifier,
 products.name,
 tariff_records.hts_1, 
-#{cd_s custom_defs[:prod_country_of_origin].id} 
+#{cd_s custom_defs[:prod_country_of_origin].id},
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+null,
+#{cd_s custom_defs[:prod_301_exclusion_tariff]}
 FROM products
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
 INNER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id
@@ -39,4 +58,5 @@ WHERE
       qry += "WHERE #{@custom_where} "
     end
   end
+
 end; end; end; end

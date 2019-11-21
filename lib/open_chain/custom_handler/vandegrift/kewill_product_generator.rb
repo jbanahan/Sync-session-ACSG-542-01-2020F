@@ -272,7 +272,7 @@ WHERE
     # here into individual classification fields.
     product_tariffs = row[2].to_s.split(tariff_separator)
     
-    exclusion_301_tariff = row[21].to_s.strip.gsub(".", "")
+    exclusion_301_tariff = exclusion_301_tariff(row).to_s.strip.gsub(".", "")
 
     exclude_301_tariffs = exclusion_301_tariff.present?
 
@@ -344,6 +344,10 @@ WHERE
     # Because these are tariffs that aren't automatically included, into the feed we pass false below to get ALL the special tariff numbers.
     # We also want to key the hash by the special number, not the standard number.
     @special_tariff_numbers_hash ||= SpecialTariffCrossReference.find_special_tariff_hash("US", false, reference_date: Time.zone.now.to_date, use_special_number_as_key: true)
+  end
+
+  def exclusion_301_tariff row
+    row[21]
   end
 
 end; end; end; end
