@@ -748,7 +748,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.psc_reason_code).to eq "L04"
       expect(line.psc_date).to eq tz.parse "201803151200"
       expect(line.agriculture_license_number).to eq "LICENSE NO"
-
+      expect(line.entered_value_7501).to eq 300
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
       expect(tariff.duty_advalorem).to eq 1.1

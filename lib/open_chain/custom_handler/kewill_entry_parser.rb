@@ -901,7 +901,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
           Array.wrap(l[:tariffs]).each do |t|
             tariff = line.commercial_invoice_tariffs.build
-            set_invoice_tariff_data t, tariff, invoice
+            set_invoice_tariff_data t, tariff, line, invoice
 
             Array.wrap(t[:lacey]).each do |l|
               lacey = tariff.commercial_invoice_lacey_components.build
@@ -1059,7 +1059,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       nil
     end
 
-    def set_invoice_tariff_data t, tariff, invoice_header
+    def set_invoice_tariff_data t, tariff, invoice_line, invoice_header
       tariff.hts_code = t[:tariff_no]
       # Duty Advalorem is any portion of the duty that's based on a percentage of the entered value.  Duty Rate looks like: 7%
       tariff.duty_advalorem = parse_decimal(t[:duty_advalorem])
@@ -1077,6 +1077,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       tariff.entered_value_7501 = tariff.entered_value.round
       # Add the computed rounded entered value to the invoice-level field.
       invoice_header.entered_value_7501 = invoice_header.entered_value_7501.to_i + tariff.entered_value_7501
+      invoice_line.entered_value_7501 = invoice_line.entered_value_7501.to_i + tariff.entered_value_7501
       tariff.spi_primary = t[:spi_primary]
       tariff.spi_secondary = t[:spi_secondary]
       tariff.classification_qty_1 = parse_decimal t[:qty_1]
