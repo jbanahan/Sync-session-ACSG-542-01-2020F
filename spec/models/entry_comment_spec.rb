@@ -1,6 +1,6 @@
 describe EntryComment do
-  before :each do 
-    @entry = Factory(:entry)
+  before :each do
+    @entry = Factory(:entry, :importer=>Factory(:importer))
   end
 
   it 'should set public_comment field in before_save callback' do
@@ -76,7 +76,7 @@ describe EntryComment do
     it "should allow anyone to view public comments" do
       @entry.entry_comments.build(:body => 'Random Comment')
       @entry.save!
-      
+
       expect(@entry.entry_comments.first.can_view?(@user)).to be_truthy
     end
 
@@ -85,7 +85,7 @@ describe EntryComment do
 
       @entry.entry_comments.build(:body => 'Random Comment')
       @entry.save!
-      
+
       expect(@entry.entry_comments.first.can_view?(@user)).to be_falsey
     end
 
@@ -93,14 +93,14 @@ describe EntryComment do
       @user.company.broker = true
       @entry.entry_comments.build(:body => 'DOCUMENT IMAGE CREATED FOR')
       @entry.save!
-      
+
       expect(@entry.entry_comments.first.can_view?(@user)).to be_truthy
     end
 
     it "should not allow non-brokers to view private comments" do
       @entry.entry_comments.build(:body => 'DOCUMENT IMAGE CREATED FOR')
       @entry.save!
-      
+
       expect(@entry.entry_comments.first.can_view?(@user)).to be_falsey
     end
   end

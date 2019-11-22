@@ -133,7 +133,7 @@ describe FakeJsonController, :type => :controller do
       BusinessValidationTemplate.destroy_all
       bvt = BusinessValidationTemplate.create!(module_type:'Entry')
       bvt.search_criterions.create! model_field_uid: "ent_entry_num", operator: "nq", value: "XXXXXXXXXX"
-      ent = Factory(:entry)
+      ent = Factory(:entry, :importer=>Factory(:importer))
       post :show, id: ent.id, format: "json"
 
       expect(bvt.business_validation_results.first.validatable).to eq ent
@@ -141,7 +141,7 @@ describe FakeJsonController, :type => :controller do
 
     it "returns results hash" do
       @u.company.update_attributes(show_business_rules:true)
-      obj = Factory(:entry)
+      obj = Factory(:entry, :importer=>Factory(:importer))
       allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
       post :show, id: obj.id, :format => 'json'
       expect(JSON.parse(response.body)["business_validation_result"]["single_object"]).to eq "Entry"

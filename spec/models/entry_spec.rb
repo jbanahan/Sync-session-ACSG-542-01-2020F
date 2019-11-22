@@ -48,7 +48,7 @@ describe Entry do
     before :each do
       @ent = Factory(:entry,:broker_reference=>'5555',:source_system=>'ABC')
     end
-    it 'should match' do 
+    it 'should match' do
       bi = BrokerInvoice.create!(:broker_reference=>'5555',:invoice_number=>'notbrokref',:source_system=>'ABC')
       @ent.link_broker_invoices
       expect(@ent.broker_invoices.first).to eq(bi)
@@ -116,6 +116,10 @@ describe Entry do
         @importer.linked_companies << c
         expect(Entry.can_view_importer?(c, @importer_user)).to be_truthy
       end
+      it "should not allow nil importer" do
+        @importer = nil
+        expect(Entry.can_view_importer?(@importer, @importer_user)).to be_falsey
+      end
     end
     context 'search secure' do
       before :each do
@@ -172,23 +176,23 @@ describe Entry do
       u = Factory(:user,:entry_comment=>true)
       u.company.update_attributes(:master=>true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry).can_comment?(u)).to be_truthy
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to be_truthy
     end
     it 'should not allow user w/o permission to comment' do
       u = Factory(:user,:entry_comment=>false)
       u.company.update_attributes(:master=>true)
-      expect(Factory(:entry).can_comment?(u)).to be_falsey
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to be_falsey
     end
     it 'should allow user to attach' do
       u = Factory(:user,:entry_attach=>true)
       u.company.update_attributes(:master=>true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry).can_attach?(u)).to be_truthy
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to be_truthy
     end
     it 'should not allow user w/o permisstion to attach' do
       u = Factory(:user,:entry_attach=>false)
       u.company.update_attributes(:master=>true)
-      expect(Factory(:entry).can_attach?(u)).to be_falsey
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to be_falsey
     end
   end
 

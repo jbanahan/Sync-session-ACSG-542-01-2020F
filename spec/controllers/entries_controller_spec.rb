@@ -21,7 +21,7 @@ describe EntriesController do
 
   describe 'validation_results' do
     before :each do
-      @ent = Factory(:entry, broker_reference:'123456')
+      @ent = Factory(:entry, broker_reference:'123456', :importer=>Factory(:importer))
       @rule_result = Factory(:business_validation_rule_result)
       @bvr = @rule_result.business_validation_result
       @bvr.state = 'Fail'
@@ -112,7 +112,7 @@ describe EntriesController do
   end
 
   describe 'request data methods' do
-    let(:entry) { Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456') }
+    let(:entry) { Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456',:importer=>Factory(:importer)) }
     describe 'as a sysadmin' do
       before :each do
         @sys_admin_user = Factory(:sys_admin_user,entry_view:true)
@@ -214,7 +214,7 @@ describe EntriesController do
     end
 
     it "should show a US entry" do
-      entry = Factory(:entry)
+      entry = Factory(:entry, :importer=>Factory(:importer))
       get :show, :id => entry.id
 
       expect(response.status).to eq(200)
@@ -224,7 +224,7 @@ describe EntriesController do
 
     it "should show a US simple entry" do
       @u.update_attributes! :simple_entry_mode => true
-      entry = Factory(:entry)
+      entry = Factory(:entry, :importer=>Factory(:importer))
       get :show, :id => entry.id
 
       expect(response.status).to eq(200)
@@ -234,7 +234,7 @@ describe EntriesController do
 
     it "should show a CA entry" do
       country = Factory(:country, :iso_code => 'CA')
-      entry = Factory(:entry, :import_country => country)
+      entry = Factory(:entry, :import_country => country, :importer=>Factory(:importer))
 
       get :show, :id => entry.id
 
@@ -255,10 +255,12 @@ describe EntriesController do
 
     it "sends an xls version of the entry" do
       allow_any_instance_of(User).to receive(:view_broker_invoices?).and_return true
-      line = Factory(:commercial_invoice_tariff).commercial_invoice_line
+
+      e = Factory(:entry, importer: Factory(:importer))
+      line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: e))
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: line)
       line.commercial_invoice_tariffs << Factory(:commercial_invoice_tariff, commercial_invoice_line: line)
       line.save!
-      e = line.entry
       line2 = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: e))
 
       broker_invoice = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: e)).broker_invoice
@@ -293,9 +295,9 @@ describe EntriesController do
       expect(bi.row(3)[0]).to eq broker_invoice_2.invoice_number.to_s
     end
 
-    it "uses canadian fields in xls file for candian entries" do
+    it "uses canadian fields in xls file for canadian entries" do
       expect_any_instance_of(Entry).to receive(:canadian?).exactly(2).times.and_return true
-      e = Factory(:entry)
+      e = Factory(:entry, :importer=>Factory(:importer))
 
       get :show, :id => e.id, :format=> :xls
       wb = Spreadsheet.open StringIO.new(response.body)
@@ -309,7 +311,7 @@ describe EntriesController do
 
     it "does not show broker invoices to users not capable of seeing them" do
       allow_any_instance_of(User).to receive(:view_broker_invoices?).and_return false
-      e = Factory(:entry)
+      e = Factory(:entry, :importer=>Factory(:importer))
 
       get :show, :id => e.id, :format=> :xls
       wb = Spreadsheet.open StringIO.new(response.body)
@@ -324,7 +326,7 @@ describe EntriesController do
       #   @ca_1 = with_fenix_id(Factory(:company), "1")
       #   @ca_2 = with_fenix_id(Factory(:company), "2")
       #   @ca_3 = with_fenix_id(Factory(:company), "3")
-      
+
       #   @iso = 'ca'
       #   @ca_companies = [@ca_1, @ca_2, @ca_3]
       # end
@@ -544,7 +546,7 @@ describe EntriesController do
 
     it "returns XLS file" do
       get :by_release_range_download, importer_id: @u.company.id, iso_code: "US", release_range: "1w"
-      
+
       expect(response).to be_success
       Tempfile.open("temp") do |t|
         t.binmode

@@ -368,6 +368,7 @@ class Entry < ActiveRecord::Base
 
   # can the given user view entries for the given importer
   def self.can_view_importer? importer, user
+    return false if importer.nil?
     user.view_entries? && (user.company.master? || importer.id==user.company_id || user.company.linked_companies.include?(importer))
   end
 
@@ -391,7 +392,7 @@ class Entry < ActiveRecord::Base
     ['40', '41'].include? self.transport_mode_code
   end
 
-  def ocean_mode? 
+  def ocean_mode?
     code = self.transport_mode_code.to_i
     return false unless code > 0
 
