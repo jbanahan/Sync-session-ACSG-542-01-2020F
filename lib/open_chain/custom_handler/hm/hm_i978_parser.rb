@@ -31,7 +31,9 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
   def process_shipment_xml(xml, user, bucket, filename)
     shipment_data = extract_shipment_data(xml)
+    starting_pars_count = nil
     if fenix?(shipment_data)
+      starting_pars_count = DataCrossReference.unused_pars_count
       shipments = split_shipment(shipment_data, max_fenix_invoice_length)
     else
       shipments = split_us_returns_shipment(shipment_data)
@@ -49,7 +51,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
     if invoices.length > 0 && fenix?(invoices.first) && primary_ca_import_parser?
       generate_and_send_pars_pdf(invoices)
-      check_unused_pars_count()
+      check_unused_pars_count(starting_pars_count)
     end
 
     invoices
@@ -211,10 +213,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     end
   end
 
-  def check_unused_pars_count
-    pars_count = DataCrossReference.unused_pars_count
-    if pars_count < pars_threshold
-      OpenMailer.send_simple_html(email_unused_pars_to, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
+  def check_unused_pars_count starting_pars_count
+    ending_pars_count = DataCrossReference.unused_pars_count
+    if pars_threshold_crossed?(starting_pars_count, ending_pars_count)
+      OpenMailer.send_simple_html(email_unused_pars_to, "More PARS Numbers Required", "#{ending_pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
     end
   end
 
@@ -632,8 +634,21 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       999
     end
 
-    def pars_threshold
-      150
+    def pars_thresholds
+      # These define the points at which we want to send out warning emails about PARS numbers needed
+      [300, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+    end
+
+    def pars_threshold_crossed? starting_count, ending_count
+      return true if starting_count == 0 || ending_count == 0
+
+      Array.wrap(pars_thresholds).each do |threshold|
+        if starting_count > threshold && ending_count <= threshold
+          return true
+        end
+      end
+
+      return false
     end
 
     def generate_file_totals invoice

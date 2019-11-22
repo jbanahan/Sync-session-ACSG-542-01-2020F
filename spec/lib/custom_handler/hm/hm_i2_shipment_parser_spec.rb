@@ -61,7 +61,8 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
       before :each do
         # Turn off pars notifications for now
-        allow_any_instance_of(described_class).to receive(:pars_threshold).and_return 0
+        allow_any_instance_of(described_class).to receive(:pars_thresholds).and_return []
+        allow(DataCrossReference).to receive(:unused_pars_count).and_return 1000
       end
 
       it "creates an invoice" do
@@ -239,11 +240,11 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.attachments["INV#-02 Exceptions.xls"]).not_to be_nil
       end
 
-      it "sends email to PARSNumbersNeeded list regarding PARS numbers being needed" do
+      it "sends email to PARSNumbersNeeded list regarding PARS numbers being needed if no PARS numbers are left" do
+        expect(DataCrossReference).to receive(:unused_pars_count).and_return(0).and_return(0)
         MailingList.create! system_code: "PARSNumbersNeeded", user: Factory(:user), company: hm, name: "Pars Needed", email_addresses: "me@there.com"
         p = described_class.new
 
-        allow(p).to receive(:pars_threshold).and_return 30
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
         p.parse ca_file, log
 
@@ -256,10 +257,28 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(mail.body).to include "0 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
       end
 
-      it "sends email to bug list if pars list is missing" do
+      it "sends email to PARSNumbersNeeded list regarding PARS numbers being needed when a threshold is crossed" do
+        expect(DataCrossReference).to receive(:unused_pars_count).and_return(301)
+        expect(DataCrossReference).to receive(:unused_pars_count).and_return(299)
+        expect_any_instance_of(described_class).to receive(:pars_thresholds).and_return [300]
+        MailingList.create! system_code: "PARSNumbersNeeded", user: Factory(:user), company: hm, name: "Pars Needed", email_addresses: "me@there.com"
         p = described_class.new
 
-        allow(p).to receive(:pars_threshold).and_return 30
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
+        p.parse ca_file, log
+
+        expect(ActionMailer::Base.deliveries.length).to eq 3
+        mail = ActionMailer::Base.deliveries.last
+
+        expect(mail.to).to eq ["me@there.com"]
+        expect(mail.reply_to).to eq ["hm_support@vandegriftinc.com"]
+        expect(mail.subject).to eq "More PARS Numbers Required"
+        expect(mail.body).to include "299 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
+      end
+
+      it "sends email to bug list if pars list is missing" do
+        p = described_class.new
+        expect(DataCrossReference).to receive(:unused_pars_count).and_return(0).and_return(0)
         expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
         p.parse ca_file, log
 

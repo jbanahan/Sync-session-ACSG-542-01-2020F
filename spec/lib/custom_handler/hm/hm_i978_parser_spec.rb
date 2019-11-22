@@ -617,4 +617,47 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
       expect(d.employee).to eq "Shahzad Dad"
     end
   end
+
+  describe "check_unused_pars_count" do
+    let! (:mailing_list) { MailingList.create! user_id: User.integration.id, company_id: product_importer.id, system_code: "PARSNumbersNeeded", name: "PARS Needed", email_addresses: "morepars@company.com" }
+
+    it "sends a notification to pars email group if no pars numbers are left" do
+      expect(DataCrossReference).to receive(:unused_pars_count).and_return 0
+      subject.check_unused_pars_count(1)
+
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      mail = ActionMailer::Base.deliveries.last
+
+      expect(mail.to).to eq ["morepars@company.com"]
+      expect(mail.reply_to).to eq ["hm_support@vandegriftinc.com"]
+      expect(mail.subject).to eq "More PARS Numbers Required"
+      expect(mail.body).to include "0 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
+    end
+
+    it "sends a notification to pars email group if threshold is crossed " do
+      expect(DataCrossReference).to receive(:unused_pars_count).and_return 299
+      subject.check_unused_pars_count(301)
+
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      mail = ActionMailer::Base.deliveries.last
+
+      expect(mail.to).to eq ["morepars@company.com"]
+      expect(mail.reply_to).to eq ["hm_support@vandegriftinc.com"]
+      expect(mail.subject).to eq "More PARS Numbers Required"
+      expect(mail.body).to include "299 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
+    end
+
+    it "sends a notification to pars email group if secondary threshold is crossed " do
+      expect(DataCrossReference).to receive(:unused_pars_count).and_return 99
+      subject.check_unused_pars_count(101)
+
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      mail = ActionMailer::Base.deliveries.last
+
+      expect(mail.to).to eq ["morepars@company.com"]
+      expect(mail.reply_to).to eq ["hm_support@vandegriftinc.com"]
+      expect(mail.subject).to eq "More PARS Numbers Required"
+      expect(mail.body).to include "99 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
+    end
+  end
 end 

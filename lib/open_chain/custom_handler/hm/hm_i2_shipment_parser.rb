@@ -63,6 +63,9 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       return
     end
 
+    # Check PARS totals...
+    starting_pars_count = DataCrossReference.unused_pars_count
+
     # Canadian customs requires that electronically filed PARS entries must be under 999 lines (WTF, eh?).
     # So, we need to chunk the file into groups of 999 lines for CA and then process each chunk of lines like
     # a completely separate file.
@@ -76,9 +79,9 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       generate_and_send_pars_pdf(totals)
 
       # Check PARS totals...
-      pars_count = DataCrossReference.unused_pars_count
-      if pars_count < pars_threshold
-        OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
+      ending_pars_count = DataCrossReference.unused_pars_count
+      if pars_threshold_crossed?(starting_pars_count, ending_pars_count)
+        OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{ending_pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
       end
     end
   end
@@ -97,8 +100,21 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     list
   end
 
-  def pars_threshold
-    150
+  def pars_thresholds
+    # These define the points at which we want to send out warning emails about PARS numbers needed
+    [300, 200, 150, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+  end
+
+  def pars_threshold_crossed? starting_count, ending_count
+    return true if starting_count == 0 || ending_count == 0
+
+    Array.wrap(pars_thresholds).each do |threshold|
+      if starting_count > threshold && ending_count <= threshold
+        return true
+      end
+    end
+
+    return false
   end
 
   def cdefs
