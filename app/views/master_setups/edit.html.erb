@@ -29,6 +29,9 @@ $(function() {
   $('#settings_head').click(function(evt) {
     $('#frm_ms').toggle();
   });
+  $('#admin_actions').click(function(evt) {
+    $('#actions_table').toggle();
+  });
 
   $('.btn-bulk-destroy').click(function(e){
     var id = e.target.getAttribute("data-id");
@@ -130,6 +133,28 @@ $(function() {
           </tr>
         <% end %>
       </table>
+      <h2 id="admin_actions" style="cursor: pointer;">Administrative Actions</h2>
+      <table id="actions_table" class="table table-condensed table-sm initially-hidden">
+      <% if @ms.migration_host.present? %>
+        <tr>
+          <td><%= link_to("Release Migration Lock", release_migration_lock_master_setups_path, method: :post, data: {confirm: "Are you sure you want to release the migration lock?"}) %> - Force Release the rake migration lock (only use is a process failed while executing migrations and didn't unlock).</td>
+        </tr>
+      <% end %>
+      <% if upgrade_failed %>
+        <tr>
+          <td><%= link_to("Clear Upgrade Errors", clear_upgrade_errors_master_setups_path, method: :post) %> - Removes any error files preventing an automatic upgrade retry. Click this after fixing upgrade errors to let the system retry an upgrade.</td>
+        </tr>
+      <% end %>
+        <tr>
+          <td><%= link_to("Restart #{MasterSetup.get.system_code} Web Applications", restart_web_servers_master_setups_path, method: :post, data: {confirm: "Are you sure you want to restart all web servers?"}) %> - Restart All Web Application Services</td>
+        </tr>
+        <tr>
+          <td><%= link_to("Restart #{MasterSetup.get.system_code} Job Queue", restart_job_queue_master_setups_path, method: :post, data: {confirm: "Are you sure you want to restart the job queue? All currently running jobs will be killed and restarted."}) %> - Restart Backend Job Services</td>
+        </tr>
+        <tr>
+          <td><%= link_to("Restart Job Queue Service", restart_job_queue_service_master_setups_path, method: :post, data: {confirm: "Are you sure you want to restart the job queue monitor service?"}) %> - Restart Job Queue Monitor Service. This service runs in the background on the job server to restart any job queues that have stopped (like after upgrades).</td>
+        </tr>
+      </table>
       <h2 id='dj_head' style='cursor:pointer;'>Delayed Job</h2>
       <%
         # Show all errored jobs at the top of the list, then running jobs, then show jobs in the order the queue will be processing them
@@ -143,6 +168,7 @@ $(function() {
         total_queued = Delayed::Job.count - errored.length - running.length
       %>
       <p><%= "#{errored.length} errored #{"job".pluralize(errored.length)} / #{running.length} running #{"job".pluralize(running.length)} / #{total_queued} queued #{"job".pluralize(total_queued)}" %></p>
+      <p></p>
       <table id='dj_tbl' class='table table-condensed table-sm'>
         <thead>
           <tr><th>Action</th><th>Action</th><th>ID</th><th>Priority</th><th>Attempts</th><th>Last Error</th><th>Run At</th><th>Locked At</th><th>Failed At</th><th>Locked By</th><th>Handler</th></tr>
@@ -231,10 +257,4 @@ $(function() {
   <button id='btn_save'>Save</button>
   <button id='btn_upgrade'>Upgrade</button>
   <button id='btn_cancel'>Cancel</button>
-  <% if @ms.migration_host.present? %>
-    <%=button_to "Release Migration Lock", release_migration_lock_master_setups_path, method: :post, class:'btn navbar-btn', form_class:'inline-button-to', confirm:'Are you sure you want to release the migration lock?'-%>
-  <% end %>
-  <% if upgrade_failed %>
-    <%=button_to "Clear Upgrade Errors", clear_upgrade_errors_master_setups_path, method: :post, class:'btn navbar-btn', form_class:'inline-button-to' -%>
-  <% end %>
 <%end%>

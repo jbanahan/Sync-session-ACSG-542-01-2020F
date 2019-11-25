@@ -372,4 +372,8 @@ class MasterSetup < ActiveRecord::Base
       return true
     end
   end
+
+  def self.server_user_account
+    "ubuntu"
+  end
 end

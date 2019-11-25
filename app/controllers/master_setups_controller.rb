@@ -96,4 +96,28 @@ class MasterSetupsController < ApplicationController
     }
   end
 
+  def restart_web_servers
+    sys_admin_secure("Only system administrators can restart web servers.") {
+      OpenChain::Ssm.send_restart_web_server_command
+      add_flash :notices, "Executing AWS Run Command job to restart web servers."
+      redirect_to edit_master_setup_path MasterSetup.get 
+    }
+  end
+
+  def restart_job_queue
+    sys_admin_secure("Only system administrators can restart job queues.") {
+      OpenChain::Ssm.send_restart_job_queue_command
+      add_flash :notices, "Executing AWS Run Command job to restart job queues."
+      redirect_to edit_master_setup_path MasterSetup.get 
+    }
+  end
+
+  def restart_job_queue_service
+    sys_admin_secure("Only system administrators can restart the job queue service.") {
+      OpenChain::Ssm.send_restart_job_queue_service_command
+      add_flash :notices, "Executing AWS Run Command job to restart job queue service."
+      redirect_to edit_master_setup_path MasterSetup.get 
+    }
+  end
+
 end

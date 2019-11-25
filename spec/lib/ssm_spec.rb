@@ -8,18 +8,27 @@ describe OpenChain::Ssm do
     ssm
   end
 
+  let! (:master_setup) do
+    ms = stub_master_setup
+    allow(MasterSetup).to receive(:instance_directory).and_return Pathname.new("/path/to/instance")
+    allow(MasterSetup).to receive(:production_env?).and_return true
+    ms
+  end
+
+  let! (:instance_information) do
+    allow(InstanceInformation).to receive(:deployment_group).and_return "Customer"
+  end
+
   describe "send_clear_upgrade_errors_command" do 
 
     it "sends comand to run clear_upgrade_errors script" do
-      allow(InstanceInformation).to receive(:deployment_group).and_return "Customer"
-      expect(MasterSetup).to receive(:instance_directory).and_return Pathname.new("/path/to/instance")
       expect(ssm_client).to receive(:send_command).with(
         {
           document_name: "AWS-RunShellScript",
           targets: [
             {key: "tag:Application", values: ["VFI Track"]},
-            {key: "tag:Role", values: ["Web", "Job Queue"]},
-            {key: "tag:Group", values: ["Customer"]}
+            {key: "tag:Group", values: ["Customer"]},
+            {key: "tag:Role", values: ["Web", "Job Queue"]}
           ],
           timeout_seconds: 600,
           parameters: {
@@ -32,26 +41,88 @@ describe OpenChain::Ssm do
       expect(subject.send_clear_upgrade_errors_command).to eq true
     end
 
-    it "sends command to run script using given parameters" do
-      expect(MasterSetup).not_to receive(:instance_directory)
+    it "no-ops on non-production environment" do
+      expect(ssm_client).not_to receive(:send_command)
+      expect(MasterSetup).to receive(:production_env?).and_return false
+      expect(subject.send_clear_upgrade_errors_command).to eq true
+    end
+  end
 
+  describe "send_restart_web_server_command" do
+    it "sends command to run restart passenger" do
       expect(ssm_client).to receive(:send_command).with(
         {
           document_name: "AWS-RunShellScript",
           targets: [
-            {key: "tag:TagName", values: ["TagValue"]},
-            {key: "tag:TagName2", values: ["Value1", "Value2"]}
+            {key: "tag:Application", values: ["VFI Track"]},
+            {key: "tag:Group", values: ["Customer"]},
+            {key: "tag:Role", values: ["Web"]}
           ],
           timeout_seconds: 600,
           parameters: {
-            commands: ["script/clear_upgrade_errors.sh"],
+            commands: ["script/restart_application_server.sh"],
             executionTimeout: ["3600"],
-            workingDirectory: ["/some/alternate/path"]
+            workingDirectory: ["/path/to/instance"]
           }
         }
       )
+      expect(subject.send_restart_web_server_command).to eq true
+    end
 
-      expect(subject.send_clear_upgrade_errors_command working_directory: "/some/alternate/path", instance_targets: {"TagName"=>"TagValue", "TagName2" => ["Value1", "Value2"]}).to eq true
+    it "no-ops on non-production environment" do
+      expect(ssm_client).not_to receive(:send_command)
+      expect(MasterSetup).to receive(:production_env?).and_return false
+      expect(subject.send_clear_upgrade_errors_command).to eq true
+    end
+  end
+
+  describe "send_restart_job_queue_service_command" do
+    it "sends command to run restart passenger" do
+      expect(ssm_client).to receive(:send_command).with(
+        {
+          document_name: "AWS-RunShellScript",
+          targets: [
+            {key: "tag:Application", values: ["VFI Track"]},
+            {key: "tag:Group", values: ["Customer"]},
+            {key: "tag:Role", values: ["Job Queue"]}
+          ],
+          timeout_seconds: 600,
+          parameters: {
+            commands: ["script/restart_job_queue_service.sh"],
+            executionTimeout: ["3600"],
+            workingDirectory: ["/path/to/instance"]
+          }
+        }
+      )
+      expect(subject.send_restart_job_queue_service_command).to eq true
+    end
+  end
+
+  describe "send_restart_job_queue_command" do
+    it "sends command to run restart passenger" do
+      expect(ssm_client).to receive(:send_command).with(
+        {
+          document_name: "AWS-RunShellScript",
+          targets: [
+            {key: "tag:Application", values: ["VFI Track"]},
+            {key: "tag:Group", values: ["Customer"]},
+            {key: "tag:Role", values: ["Job Queue"]}
+          ],
+          timeout_seconds: 600,
+          parameters: {
+            commands: ['sudo -n -H -i -u ubuntu /bin/bash -l -c "cd /path/to/instance && script/restart_job_queue.sh"'],
+            executionTimeout: ["3600"],
+            workingDirectory: ["/path/to/instance"]
+          }
+        }
+      )
+      expect(subject.send_restart_job_queue_command).to eq true
+    end
+
+    it "no-ops on non-production environment" do
+      expect(ssm_client).not_to receive(:send_command)
+      expect(MasterSetup).to receive(:production_env?).and_return false
+      expect(subject.send_clear_upgrade_errors_command).to eq true
     end
   end
 end
