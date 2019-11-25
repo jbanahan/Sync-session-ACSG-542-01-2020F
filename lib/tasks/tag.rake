@@ -31,6 +31,8 @@ class TagTasks
     end
 
     def auto_tag
+      check_for_outdated_branch()
+
       completed, git_describe, stderr = run_command("git describe --tags")
       if !completed
         puts stderr
@@ -65,8 +67,30 @@ class TagTasks
     end
 
     def manual_tag
+      check_for_outdated_branch()
+
       tag_to_use = get_user_response("Enter tag name", input_test: lambda {|v| v.blank? ? "You must enter a tag." : nil })
       do_tag(tag_to_use)
+    end
+
+    def check_for_outdated_branch
+      success, stdout, stderr = run_command(["git", "remote", "update"], print_output: false)
+      exit(1) unless success
+
+      success, stdout, stderr = run_command(["git", "status"], print_output: false)
+      exit(1) unless success
+
+      if stdout =~ /Your branch is behind '(.+)' by (\d+) commits/i
+        response = get_user_response("Your branch appears to be behind the origin branch '#{$1}' by #{$2} commits. Shall I update this branch? ", default_value: "Y")
+        if response == "Y"
+          success, stdout, stderr = run_command(["git", "pull"], print_output: false)
+          exit(1) unless success
+        else
+          puts "You must update this branch manually before proceeding to tag it."
+          exit(1)
+        end
+      end
+      
     end
 end
 
