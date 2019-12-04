@@ -164,9 +164,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       entry.customer_number = customer_number
       entry.customer_name = get_customer_name import_country.iso_code, xml
       entry.importer_id = get_importer_id entry.customer_number, entry.customer_name
-      # Vendor names can contain commas, which results in quotes in the unique_values output.  Since this is just
-      # going into a string field, those quotes should be removed.
-      entry.vendor_names = unique_values(xml, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/CommercialInvoiceLineCollection/CommercialInvoiceLine/OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']/CompanyName", as_csv:true, csv_separator:multi_value_separator).gsub("\"", "")
+      entry.vendor_names = get_vendor_names_entry import_country.iso_code, xml
       entry.merchandise_description = first_text xml, "UniversalShipment/Shipment/GoodsDescription"
 
       entry.export_date = parse_date(first_text xml, "UniversalShipment/Shipment/DateCollection/Date[Type='LoadingDate']/Value")
@@ -361,6 +359,28 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         end
       end
       company&.id
+    end
+
+    def get_vendor_names_entry import_country_iso, xml
+      v = nil
+      if import_country_iso == 'US'
+        v = unique_values xml, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/CommercialInvoiceLineCollection/CommercialInvoiceLine/OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']/CompanyName", as_csv:true, csv_separator:multi_value_separator
+      elsif import_country_iso == 'CA'
+        v = unique_values xml, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/Supplier[AddressType='Supplier']/CompanyName", as_csv:true, csv_separator:multi_value_separator
+      end
+      # Vendor names can contain commas, which results in quotes in the unique_values output.  Since this is just
+      # going into a string field, those quotes should be removed.
+      v&.gsub("\"", "")
+    end
+
+    def get_vendor_name_invoice import_country_iso, xml
+      v = nil
+      if import_country_iso == 'US'
+        v = first_text xml, "CommercialInvoiceLineCollection/CommercialInvoiceLine/OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']/CompanyName"
+      elsif import_country_iso == 'CA'
+        v = first_text xml, "Supplier[AddressType='Supplier']/CompanyName"
+      end
+      v
     end
 
     def parse_date date_str
@@ -678,7 +698,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       inv.non_dutiable_amount = total_value elem, "CommercialChargeCollection/CommercialCharge[IsDutiable='false' and IsNotIncludedInInvoice='false']/Amount"
       inv.master_bills_of_lading = get_invoice_master_bills_of_lading elem
       inv.entered_value_7501 = total_value_integer elem, "CommercialInvoiceLineCollection/CommercialInvoiceLine[ParentLineNo='0']/CustomsValue"
-      inv.vendor_name = first_text elem, "CommercialInvoiceLineCollection/CommercialInvoiceLine/OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']/CompanyName"
+      inv.vendor_name = get_vendor_name_invoice import_country_iso, elem
     end
 
     def foreign_currency? currency_code, import_country_iso

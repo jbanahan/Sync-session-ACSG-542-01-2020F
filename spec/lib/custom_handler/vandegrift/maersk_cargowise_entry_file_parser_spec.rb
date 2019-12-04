@@ -782,7 +782,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.error_free_release).to eq true
         expect(entry.customer_number).to eq "US48733060b"
         expect(entry.customer_name).to eq "HOME DEPOT CANADA, EH?"
-        expect(entry.vendor_names).to eq "GORETECH INDUSTRIES CO LTD\n GORTECH INDUSTRIES CO LTD"
+        expect(entry.vendor_names).to eq "ONE WORLD TECHNOLOGIES, INC.\n THREE WORLD TECHNOLOGIES, INC."
         expect(entry.po_numbers).to eq "5813687318"
         expect(entry.merchandise_description).to eq "HOME IMPROVEMENT ITEMS"
 
@@ -901,7 +901,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(ci_1.non_dutiable_amount).to eq BigDecimal.new("2021.84")
         expect(ci_1.master_bills_of_lading).to eq "CNRU000030320655"
         expect(ci_1.entered_value_7501).to eq 50760
-        expect(ci_1.vendor_name).to eq "GORETECH INDUSTRIES CO LTD"
+        expect(ci_1.vendor_name).to eq "ONE WORLD TECHNOLOGIES, INC."
         expect(ci_1.commercial_invoice_lines.length).to eq 2
 
         cil_1 = ci_1.commercial_invoice_lines[0]
