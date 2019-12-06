@@ -497,10 +497,14 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
       end
 
       context "with ocean entry" do
-        [:master_bills_of_lading, :fcl_lcl, :lading_port_code, :customer_references].each do |field|
+        [:master_bills_of_lading, :fcl_lcl, :lading_port_code].each do |field|
           it "skips entries without #{field} data" do
             entry.update! field => nil
           end
+        end
+
+        it "skips entries without Amazon Bill of Lading" do 
+          entry.update! customer_references: "REF"
         end
       end
 

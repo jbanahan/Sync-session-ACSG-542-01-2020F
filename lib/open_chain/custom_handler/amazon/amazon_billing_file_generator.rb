@@ -105,7 +105,8 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
       meta_data = billing_meta_data(entry_snapshot, :duty)
       required_fields = [:ent_entry_port_code, :ent_release_date, :ent_mfids, :ent_ult_con_name, :ent_carrier_code, :ent_transport_mode_code]
       if meta_data.ocean?
-        required_fields.push *[:ent_mbols, :ent_fcl_lcl, :ent_lading_port_code, :ent_customer_references]
+        required_fields.push *[:ent_mbols, :ent_fcl_lcl, :ent_lading_port_code]
+        required_fields << amazon_bill_of_lading(entry_snapshot)
       else
         required_fields << :ent_hbols
       end
@@ -118,7 +119,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
       end
 
       # All the required_fields need to have data
-      required_fields.map { |f| mf(entry_snapshot, f).present? }.uniq.all?
+      required_fields.map { |f| (f.is_a?(Symbol) ? mf(entry_snapshot, f) : f).present? }.uniq.all?
     end
 
     def unsent_invoices entry, broker_invoice_snapshots
@@ -460,7 +461,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
     end
 
     def amazon_bill_of_lading entry_snapshot
-      mf(entry_snapshot, :ent_customer_references, split_values: true).find { |ref| ref.to_s.starts_with? "AMZD" }
+      mf(entry_snapshot, :ent_customer_references, split_values: true).find { |ref| ref.to_s.starts_with? "AMZD" }.to_s
     end
 
     # My understanding of this control number thing is that it's supposed to be a unique sequential
