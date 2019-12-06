@@ -93,106 +93,141 @@ describe Entry do
     end
   end
   context 'security' do
-    before :each do
-      MasterSetup.get.update_attributes(:entry_enabled=>true)
-      @importer = Factory(:company,:importer=>true)
-      @entry = Factory(:entry,:importer_id=>@importer.id)
-      @importer_user = Factory(:user,:company_id=>@importer.id)
-      allow(@importer_user).to receive(:view_entries?).and_return true
-    end
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:entry_enabled?).and_return true
+      allow(ms).to receive(:entry_enabled).and_return true
+      ms
+    }
+    let (:importer) { Factory(:importer) }
+    let (:linked_importer) { 
+      child_importer = Factory(:importer)
+      importer.linked_companies << child_importer
+      child_importer
+    }
+    let (:entry) { Factory(:entry, importer: importer) }
+    let (:importer_user) {
+      user = Factory(:user, company: importer)
+      allow(user).to receive(:view_entries?).and_return true
+      user
+    }
+
     describe "can_view_importer?" do
+      
       it "should allow same company" do
-        expect(Entry.can_view_importer?(@importer, @importer_user)).to be_truthy
+        expect(Entry.can_view_importer?(importer, importer_user)).to eq true
       end
+
       it "should not allow different company" do
-        expect(Entry.can_view_importer?(Factory(:company), @importer_user)).to be_falsey
+        expect(Entry.can_view_importer?(Factory(:company), importer_user)).to eq false
       end
+      
       it "should allow master" do
-        allow_any_instance_of(User).to receive(:view_entries?).and_return(true)
-        expect(Entry.can_view_importer?(@importer, Factory(:master_user))).to be_truthy
+        master_user = Factory(:master_user)
+        expect(master_user).to receive(:view_entries?).and_return(true)
+        expect(Entry.can_view_importer?(importer, master_user)).to eq true
       end
+      
       it "should allow linked" do
-        c = Factory(:company)
-        @importer.linked_companies << c
-        expect(Entry.can_view_importer?(c, @importer_user)).to be_truthy
+        expect(Entry.can_view_importer?(linked_importer, importer_user)).to eq true
       end
+      
       it "should not allow nil importer" do
-        @importer = nil
-        expect(Entry.can_view_importer?(@importer, @importer_user)).to be_falsey
+        expect(Entry.can_view_importer?(nil, importer_user)).to eq false
+      end
+
+      it "should not allow master user access to nil importer by default" do
+        master_user = Factory(:master_user)
+        expect(master_user).to receive(:view_entries?).and_return(true)
+        expect(Entry.can_view_importer?(nil, master_user)).to eq false
+      end
+
+      it "should allow master user access to nil importer if requested" do
+        master_user = Factory(:master_user)
+        expect(master_user).to receive(:view_entries?).and_return(true)
+        expect(Entry.can_view_importer?(nil, master_user, allow_nil_importer: true)).to eq true
       end
     end
+
     context 'search secure' do
-      before :each do
-        @entry_2 = Factory(:entry,:importer_id=>Factory(:company,:importer=>true).id)
+      let! (:entry_2) { Factory(:entry, importer: Factory(:company,:importer=>true)) }
+      before :each do 
+        entry
       end
+
       it 'should restrict non master' do
-        found = Entry.search_secure(@importer_user,Entry).all
+        found = Entry.search_secure(importer_user,Entry).all
         expect(found.entries.size).to eq(1)
-        expect(found.first).to eq(@entry)
+        expect(found.first).to eq(entry)
       end
+
       it "should allow linked company for non master" do
         importer2 = Factory(:company,:importer=>true)
-        @importer.linked_companies << importer2
-        e2 = Factory(:entry,:importer_id=>@importer.id)
-        expect(Entry.search_secure(@importer_user,Entry).all).to eq([@entry,e2])
+        importer.linked_companies << importer2
+        e2 = Factory(:entry,:importer_id=>importer.id)
+        entries = Entry.search_secure(importer_user,Entry).all.to_a
+        expect(entries).to include entry
+        expect(entries).to include e2
       end
+
       it 'should allow all for master' do
         u = Factory(:user,:entry_view=>true)
-        u.company.update_attributes(:master=>true)
+        u.company.update!(:master=>true)
         found = Entry.search_secure(u,Entry).all
         expect(found.entries.size).to eq(2)
       end
     end
+
     it 'should allow importer user with permission to view/edit/comment/attach' do
-      @importer_user.update_attributes(:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
-      expect(@entry.can_view?(@importer_user)).to be_truthy
-      expect(@entry.can_edit?(@importer_user)).to be_falsey #hard coded to false
-      expect(@entry.can_attach?(@importer_user)).to be_truthy
-      expect(@entry.can_comment?(@importer_user)).to be_truthy
+      importer_user.update!(:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
+      expect(entry.can_view?(importer_user)).to eq true
+      expect(entry.can_edit?(importer_user)).to eq false #hard coded to false
+      expect(entry.can_attach?(importer_user)).to eq true
+      expect(entry.can_comment?(importer_user)).to eq true
     end
     it 'should allow importer from parent company to view/edit/comment/attach' do
-      @parent_company = Factory(:company,:importer=>true)
-      @parent_user = Factory(:user,:company=>@parent_company,:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
-      @parent_company.linked_companies << @importer
-      expect(@entry.can_view?(@parent_user)).to be_truthy
-      expect(@entry.can_edit?(@parent_user)).to be_falsey #hard coded to false
-      expect(@entry.can_attach?(@parent_user)).to be_truthy
-      expect(@entry.can_comment?(@parent_user)).to be_truthy
+      parent_company = Factory(:company,:importer=>true)
+      parent_user = Factory(:user,:company=>parent_company,:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
+      parent_company.linked_companies << importer
+      expect(entry.can_view?(parent_user)).to eq true
+      expect(entry.can_edit?(parent_user)).to eq false #hard coded to false
+      expect(entry.can_attach?(parent_user)).to eq true
+      expect(entry.can_comment?(parent_user)).to eq true
     end
     it 'should not allow a user from a different company with overall permission to view/edit/comment/attach' do
       u = Factory(:user,:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
       u.company.update_attributes(:importer=>true)
-      expect(@entry.can_view?(u)).to be_falsey
-      expect(@entry.can_edit?(u)).to be_falsey
-      expect(@entry.can_attach?(u)).to be_falsey
-      expect(@entry.can_comment?(u)).to be_falsey
+      expect(entry.can_view?(u)).to eq false
+      expect(entry.can_edit?(u)).to eq false
+      expect(entry.can_attach?(u)).to eq false
+      expect(entry.can_comment?(u)).to eq false
     end
     it 'should allow master user to view' do
       u = Factory(:user,:entry_view=>true)
       u.company.update_attributes(:master=>true)
-      expect(@entry.can_view?(u)).to be_truthy
+      expect(entry.can_view?(u)).to eq true
     end
     it 'should allow user to comment' do
       u = Factory(:user,:entry_comment=>true)
       u.company.update_attributes(:master=>true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to be_truthy
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to eq true
     end
     it 'should not allow user w/o permission to comment' do
       u = Factory(:user,:entry_comment=>false)
       u.company.update_attributes(:master=>true)
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to be_falsey
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to eq false
     end
     it 'should allow user to attach' do
       u = Factory(:user,:entry_attach=>true)
       u.company.update_attributes(:master=>true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to be_truthy
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to eq true
     end
     it 'should not allow user w/o permisstion to attach' do
       u = Factory(:user,:entry_attach=>false)
       u.company.update_attributes(:master=>true)
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to be_falsey
+      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to eq false
     end
   end
 

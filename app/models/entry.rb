@@ -367,11 +367,18 @@ class Entry < ActiveRecord::Base
   end
 
   # can the given user view entries for the given importer
-  def self.can_view_importer? importer, user
-    return false if importer.nil?
-    user.view_entries? && (user.company.master? || importer.id==user.company_id || user.company.linked_companies.include?(importer))
-  end
+  def self.can_view_importer? importer, user, allow_nil_importer: false
+    return false unless user.view_entries?
 
+    # Master company is the only one that can view nil importers (and then only if the caller explicitly
+    # is expecting to allow it)
+    if importer.nil?
+      # If there's no importer associated with the entry (yet), then nobody but master account should be able to access it
+      return allow_nil_importer && user.company.master?
+    else
+      return user.company.master? || importer.id==user.company_id || user.company.linked_companies.include?(importer)  
+    end
+  end
 
   #find any broker invoices by source system and broker reference and link them to this entry
   #will replace any existing entry link in the invoices
@@ -448,7 +455,7 @@ class Entry < ActiveRecord::Base
   end
 
   def can_view? user
-    user.view_entries? && company_permission?(user)
+    user.view_entries? && company_permission?(user, allow_nil_importer: true)
   end
 
   def entry_port
@@ -456,11 +463,11 @@ class Entry < ActiveRecord::Base
   end
 
   def can_comment? user
-    user.comment_entries? && company_permission?(user)
+    user.comment_entries? && company_permission?(user, allow_nil_importer: true)
   end
 
   def can_attach? user
-    user.attach_entries? && company_permission?(user)
+    user.attach_entries? && company_permission?(user, allow_nil_importer: true)
   end
 
   def can_edit? user
@@ -668,7 +675,7 @@ class Entry < ActiveRecord::Base
        {hold: {mfid: :ent_fish_and_wildlife_hold_date, attribute: :fish_and_wildlife_hold_date, value: fish_and_wildlife_hold_date}, release: {mfid: :ent_fish_and_wildlife_hold_release_date, attribute: :fish_and_wildlife_hold_release_date, value: fish_and_wildlife_hold_release_date}, additional_fields: [:ent_fish_and_wildlife_secure_facility_date]}]
     end
 
-    def company_permission? user
+    def company_permission? user, allow_nil_importer: false
       Entry.can_view_importer? self.importer, user
     end
 
