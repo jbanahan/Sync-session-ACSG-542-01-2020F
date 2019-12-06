@@ -1,6 +1,6 @@
 # == Schema Information
 #
-# Table name: document_request_queues
+# Table name: document_request_queue_items
 #
 #  created_at :datetime
 #  id         :integer          not null, primary key
@@ -13,8 +13,8 @@
 #
 # Indexes
 #
-#  index_document_request_queues_on_system_and_identifier  (system,identifier) UNIQUE
-#  index_document_request_queues_on_updated_at             (updated_at)
+#  index_document_request_queue_items_on_system_and_identifier  (system,identifier) UNIQUE
+#  index_document_request_queue_items_on_updated_at             (updated_at)
 #
 
 class DocumentRequestQueueItem < ActiveRecord::Base

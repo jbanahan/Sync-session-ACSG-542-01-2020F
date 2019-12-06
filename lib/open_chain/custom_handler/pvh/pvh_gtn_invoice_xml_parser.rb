@@ -29,8 +29,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnInvoiceXmlParser
       id = reference_value(party_xml, "ConsigneeCode")
     end
 
-    inbound_file.reject_and_raise("Failed to find identifying information for #{party_type} on invoice # #{invoice_number(party_xml.parent)}.") if id.blank?
-
     id
   end
 

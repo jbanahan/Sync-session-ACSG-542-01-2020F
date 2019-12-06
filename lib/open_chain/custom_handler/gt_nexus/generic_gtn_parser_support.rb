@@ -48,9 +48,11 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
       next if party_xml.nil?
 
       if [:ship_to, :ship_from].include? party_type
-        parties[party_type] = find_or_create_company_address(party_xml, user, filename, party_type, importer)
+        address = find_or_create_company_address(party_xml, user, filename, party_type, importer)
+        parties[party_type] = address unless address.nil?
       else
-        parties[party_type] = find_or_create_company(party_xml, user, filename, party_type)
+        company = find_or_create_company(party_xml, user, filename, party_type)
+        parties[party_type] = company unless company.nil?
       end
       
     end
@@ -61,6 +63,8 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
   # Looks up / creates a given party.
   def find_or_create_company party_xml, user, filename, party_type
     system_code = party_system_code(party_xml, party_type)
+    return nil if system_code.blank?
+
     party_type_id = party_type.to_s.titleize
     company = nil
     name = party_company_name(party_xml, party_type)
@@ -117,6 +121,8 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
 
   def find_or_create_company_address party_xml, user, filename, party_type, company
     system_code = party_system_code(party_xml, party_type)
+    return nil if system_code.blank?
+
     party_type_id = party_type.to_s.titleize
 
     if prefix_identifiers_with_system_codes?

@@ -51,6 +51,7 @@
               <TimeZone>EST</TimeZone>
             </ChargeDate>
             <Value>100.0</Value>
+            <Purpose>Increment</Purpose>
             <Currency>0.0</Currency>
           </ChargeField>
         </InvoiceLineItem>
@@ -68,6 +69,7 @@
               <TimeZone>EST</TimeZone>
             </ChargeDate>
             <Value>200.0</Value>
+            <Purpose>Decrement</Purpose>
             <Currency>0.0</Currency>
           </ChargeField>
         </InvoiceLineItem>

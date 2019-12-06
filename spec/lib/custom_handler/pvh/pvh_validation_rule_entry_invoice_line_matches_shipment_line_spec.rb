@@ -19,8 +19,8 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
     s = Factory(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "OCEAN", importer: pvh)
     c = s.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
 
-    l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200)
-    l2 = Factory(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100)
+    l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200, invoice_number: "1")
+    l2 = Factory(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100, invoice_number: "1")
 
     l.shipment.reload
   }
@@ -65,20 +65,9 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
         expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
       end
 
-      context "with Ocean LCL shipment" do
-        before :each do 
-          entry.update! fcl_lcl: "LCL"
-          shipment.shipment_lines.last.update! invoice_number: "1"
-        end
-
-        it "uses invoice number as an extra match point" do
-          expect(subject.run_validation entry).to be_blank
-        end
-
-        it "errors if invoice does not match" do
-          shipment.shipment_lines.last.update! invoice_number: "NOTAMATCH"
-          expect(subject.run_validation entry).to include "PO # ORDER / Part # PART - Failed to find matching PVH Shipment Line."
-        end
+      it "falls back to non-invoice matching if invoice does not match" do
+        shipment.shipment_lines.update_all invoice_number: "NOTAMATCH"
+        expect(subject.run_validation entry).to be_blank
       end
     end
 

@@ -133,5 +133,30 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryShipmentMatchingSupport do
       expect(subject.find_shipment_line([air_shipment, ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100)).to eq ocean_shipment_lines.first
       expect(subject.find_shipment_line([air_shipment, ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100)).to eq ocean_shipment_lines.first
     end
+
+    it "allows matching based on invoice number" do
+      ocean_shipment.shipment_lines.first.update! invoice_number: "INVOICE 1"
+      ocean_shipment.shipment_lines.second.update! invoice_number: "INVOICE 2"
+      ocean_shipment.reload
+
+      # Normally, since the quantity given in 100, without the invoice number given, you'd get the first shipment line back (since it has a quantity of 100)
+      # but since we're giving another invoice, we shoudl get the second line.
+      expect(subject.find_shipment_line([ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100, invoice_number: "INVOICE 2")).to eq ocean_shipment_lines.second
+
+      # We should get the first shipment line back now because of the fall back to not using the invoice matching if there are no matches based on it
+      expect(subject.find_shipment_line([ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100, invoice_number: "INVOICE 2")).to eq ocean_shipment_lines.first
+
+      # Since there's no more lines to match, then we should get nil
+      expect(subject.find_shipment_line([ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100, invoice_number: "INVOICE 2")).to be_nil
+    end
+
+    it "clean up invoice number before doing matching" do
+      ocean_shipment.shipment_lines.first.update! invoice_number: "INVOICE 1"
+      ocean_shipment.shipment_lines.second.update! invoice_number: "...---- INVOICE      2////"
+      ocean_shipment.reload
+
+      # The matching should only be being done based on alphanumeric characters..not punctuation.
+      expect(subject.find_shipment_line([ocean_shipment], "CONTAINER", "ORDER_1", "12345", 100, invoice_number: "////****INVOICE----2")).to eq ocean_shipment_lines.second
+    end
   end
 end

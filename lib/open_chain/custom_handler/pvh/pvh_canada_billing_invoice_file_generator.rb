@@ -10,30 +10,27 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     credit_invoice = invoice_amount && invoice_amount < 0
 
     generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY", invoice_number(entry_snapshot, invoice_snapshot, "DUTY")) do |details|
-      # Duty needs to come from the the actual commercial invoice line / tariff data since PVH wants it broken out to the line level..
-      invoice_lines = json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine")
-
       # What's happening here is that we're assembing the actual invoice keys and charges that need to be used because there's not necessarily
       # a 1-1 mapping between the Commercial Invoice lines and the billing file.  We're summing the charge amounts for each key
       # and then will send them in a single InvoiceLineItem element
-      invoice_line_item_charges = Hash.new do |h, k|
-        h[k] = {}
-      end
+      invoice_line_item_charges = Hash.new { |h, k| h[k] = {} }
 
-      invoice_lines.each do |line_snapshot|
-        charges = duty_charges_for_line(line_snapshot)
-        next unless charges.size > 0
+      # Duty needs to come from the the actual commercial invoice line / tariff data since PVH wants it broken out to the line level..
+      json_child_entities(entry_snapshot, "CommercialInvoice") do |invoice_snapshot|
+        json_child_entities(invoice_snapshot, "CommercialInvoiceLine") do |line_snapshot|
+          charges = duty_charges_for_line(line_snapshot)
+          next unless charges.size > 0
 
-        key = find_invoice_line_key(entry_snapshot, line_snapshot)
-        total_line_charges = invoice_line_item_charges[key]
+          key = find_invoice_line_data(entry_snapshot, invoice_snapshot, line_snapshot)
+          total_line_charges = invoice_line_item_charges[key]
 
+          charges.each_pair do |uid, amount|
+            # If we're generating a credit invoice, we need to multiply the actual duty amounts by negative 1 to get the credit values.
+            amount = (amount * -1) if credit_invoice
 
-        charges.each_pair do |uid, amount|
-          # If we're generating a credit invoice, we need to multiply the actual duty amounts by negative 1 to get the credit values.
-          amount = (amount * -1) if credit_invoice
-
-          total_line_charges[uid] ||= BigDecimal("0")
-          total_line_charges[uid] += amount
+            total_line_charges[uid] ||= BigDecimal("0")
+            total_line_charges[uid] += amount
+          end
         end
       end
 

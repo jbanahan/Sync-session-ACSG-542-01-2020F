@@ -20,16 +20,16 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
     s = Factory(:shipment, master_bill_of_lading: "MBOL1234567890", house_bill_of_lading: "HBOL987654321", mode: "Ocean", importer: pvh, last_file_path: "www-vfitrack-net/pvh_gtn_asn_xml/GTNEXUSPVH.xml")
     c = s.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
 
-    l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200)
-    l2 = Factory(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100)
+    l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 100, invoice_number: "INVOICE")
+    l2 = Factory(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 200, invoice_number: "INVOICE")
 
     l.shipment.reload
   }
 
   let (:entry) {
     e = Factory(:entry, entry_number: "1198001123", broker_reference: "12345", importer_id: pvh.id, customer_number: "PVH", container_numbers: "ABCD1234567890", master_bills_of_lading: "MBOL9999\n MBOL1234567890", transport_mode_code: 9)
-    invoice = e.commercial_invoices.create! invoice_number: "1"
-    line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100")
+    invoice = e.commercial_invoices.create! invoice_number: "INVOICE"
+    line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("10"), unit_price: BigDecimal("5"), value: BigDecimal("100")
     tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("50"), gst_amount: BigDecimal("5")
     tariff_2 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("25"), gst_amount: BigDecimal("2.50")
 
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("@Level", "Manifest Line Item")
       expect(l).to have_xpath_value("OrderNumber", "ORDER")
       expect(l).to have_xpath_value("ProductCode", "PART")
-      expect(l).to have_xpath_value("ItemNumber", "008")
+      expect(l).to have_xpath_value("ItemNumber", "001")
       expect(l).to have_xpath_value("BLNumber", "MBOL1234567890")
       expect(l).to have_xpath_value("ContainerNumber", "ABCD1234567890")
 
@@ -127,6 +127,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(c).to have_xpath_value("ChargeDate/Time", "12:00:00")
       expect(c).to have_xpath_value("ChargeDate/TimeZone", "UTC")
       expect(c).to have_xpath_value("Value", "75.0")
+      expect(c).to have_xpath_value("Purpose", "Increment")
       expect(c).to have_xpath_value("Currency", "CAD")
 
       c = REXML::XPath.first(l, "ChargeField[Type/Code = '0023']")
@@ -150,16 +151,6 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
 
       l = REXML::XPath.first(x.root, "GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = '0023']")
       expect(l).to be_nil
-    end
-
-    it "matches on shipment quantity if unit cost is the same on all order lines" do
-      order.order_lines.update_all price_per_unit: 5
-
-      inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
-      subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
-
-      expect(captured_xml.length).to eq 1
-      expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C530']/ItemNumber", "008")
     end
 
     it "utilizes the first shipment line found if unit cost / quantity is same for all lines" do
@@ -252,6 +243,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("ChargeField/ChargeDate/TimeZone", "UTC")
       expect(l).to have_xpath_value("ChargeField/Value", "200.0")
       expect(l).to have_xpath_value("ChargeField/Currency", "CAD")
+      expect(l).to have_xpath_value("ChargeField/Purpose", "Increment")
 
       l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = '0545']")
       expect(l).not_to be_nil
@@ -263,7 +255,8 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
 
       # Add a second container to the entry and the shipment
       entry.update_attributes! container_numbers: (entry.container_numbers + "\n CONT1234567890")
-
+      line_2 = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100")
+    
       c = shipment.containers.create! container_number: "CONT1234567890"
       shipment.shipment_lines.first.update_attributes! container_id: c.id
 

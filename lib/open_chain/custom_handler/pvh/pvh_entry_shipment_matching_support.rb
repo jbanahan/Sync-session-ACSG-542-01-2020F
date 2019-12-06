@@ -90,7 +90,18 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     if !invoice_number.blank? && matched_lines.length > 0
       # There's certain situations where the commercial invoice number is important to the matching process.  When the value is given
       # we should use it and ensure the shipment line matches on invoice number.
-      matched_lines = matched_lines.find_all {|l| invoice_number == l.invoice_number.to_s.strip}
+
+      # Invoice Numbers can have some weird punctuation that's not consistent between invoices and asns or paper docs
+      #...we're going to strip out anything that's not alpha chars and then match that way
+      invoice_number = invoice_number.gsub(/[^[[:alnum:]]]/, "")
+      invoice_matching_lines = matched_lines.find_all {|l| invoice_number == l.invoice_number.to_s.gsub(/[^[[:alnum:]]]/, "")}
+
+      # There's some cases where the Shipment has incorrect invoice numbers on them.  Getting the vendor to correct those numbers is 
+      # a huge ordeal with PVH.  Also, for several months we haven't been using the invoice number as a match criteria, 
+      # so if we match on invoice number and then that eliminates everything, then skip the invoice matching.  We're already matched
+      # on PO / Style to the shipment, so don't worry about about getting "wrong" lines.  The invoice number is just a better 
+      # distinguisher if available.
+      matched_lines = invoice_matching_lines if invoice_matching_lines.length > 0
     end
 
     # If there's only one line on the shipment that matches, then just return it
