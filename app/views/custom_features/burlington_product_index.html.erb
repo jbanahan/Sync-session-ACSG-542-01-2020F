@@ -1,0 +1,6 @@
+<% content_for :upload_form do %>
+  <h2>Upload ONLY Products in Excel or CSV format.</h2>
+  <h4>Upload product files where the products start on the 4th row, and the second row contains a header containing classification information in column AC-AJ</h4>
+<% end %>
+
+<%= render :partial=> "custom_file_upload", :locals => {title: "Burlington Product Upload", custom_feature: "burlington_product"} %>

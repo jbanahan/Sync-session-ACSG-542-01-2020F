@@ -42,6 +42,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_product_group: {label: "Product Group", data_type: :string, module_type: "Product", cdef_uid: "prod_product_group"},
     prod_season: {label: "Season", data_type: :string, module_type: "Product", cdef_uid: "prod_season"},
     prod_short_description: {label: "Short Description", data_type: :string, module_type: "Product", cdef_uid: "prod_short_description"},
+    prod_long_description: {label: "Long Description", data_type: :text, module_type: "Product", cdef_uid: "prod_long_description"},
     prod_sku_number: {label: "SKU Number", data_type: :string, module_type: "Product", cdef_uid: "prod_sku_number"},
     prod_suggested_tariff: {label: "Suggested Tariff", data_type: :string, module_type: "Product", cdef_uid: "prod_suggested_tariff"},
     prod_system_classified: {label: "System Classified", data_type: :boolean, module_type: "Product", cdef_uid: "prod_system_classified"},

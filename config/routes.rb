@@ -669,6 +669,10 @@ ing/:heading', to: 'hts#heading'
   post "/custom_features/customer_invoice_handler/upload", to: "custom_features#customer_invoice_upload"
   get "/custom_features/customer_invoice_handler/:id/download", to: "custom_features#customer_invoice_download"
 
+  get "/custom_features/burlington_product", to: "custom_features#burlington_product_index"
+  post "/custom_features/burlington_product/upload", to: "custom_features#burlington_product_upload"
+  get "/custom_features/burlington_product/:id/download", to: "custom_features#burlington_product_download"
+
   get "/custom_features/le_product", to: "custom_features#le_product_index"
   post "/custom_features/le_product/upload", to: "custom_features#le_product_upload"
   get "/custom_features/le_product/:id/download", to: "custom_features#le_product_download"
