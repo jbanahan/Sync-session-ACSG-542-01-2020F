@@ -169,5 +169,72 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
     add_fields CoreModule::PRODUCT, make_comment_arrays(600,'prod','Product')
     add_model_fields CoreModule::PRODUCT, make_country_hts_fields(CoreModule::PRODUCT, read_only: false, model_field_suffix: "", hts_numbers: 1..3, label_prefix: "", product_lambda: -> (obj) { obj } )
     add_model_fields CoreModule::PRODUCT, make_region_fields
+    # When a new system is initiallly deployed (and in test cases) a MasterSetup may not be defined..
+    # so don't build these fields in that case.
+    if MasterSetup.get&.custom_feature?("Product MID")
+      add_fields(CoreModule::PRODUCT, make_manufacturer_fields())
+    end
+  end
+
+  def base_manufacturer_query select_field
+    q = "(SELECT #{select_field} FROM product_factories pf INNER JOIN addresses mid ON mid.id = pf.address_id"
+    if block_given?
+      q += yield
+    end
+    q += " WHERE pf.product_id = products.id ORDER BY mid.created_at LIMIT 1)"
+    q
+  end
+
+  def make_manufacturer_fields
+    [
+      [1, :prod_manufacturer_mid, :mid, "Manufacturer ID", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.system_code },
+        qualified_field_name: base_manufacturer_query("mid.system_code")
+      }],
+      [2, :prod_manufacturer_name, :name, "Manufacturer Name", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.name },
+        qualified_field_name: base_manufacturer_query("mid.name")
+      }],
+      [3, :prod_manufacturer_address_1, :line_1, "Manufacturer Address 1", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.line_1 },
+        qualified_field_name: base_manufacturer_query("mid.line_1")
+      }],
+      [4, :prod_manufacturer_address_2, :line_2, "Manufacturer Address 2", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.line_2 },
+        qualified_field_name: base_manufacturer_query("mid.line_2")
+      }],
+      [5, :prod_manufacturer_city, :city, "Manufacturer City", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.city },
+        qualified_field_name: base_manufacturer_query("mid.city")
+      }],
+      [6, :prod_manufacturer_state, :state, "Manufacturer State", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.state },
+        qualified_field_name: base_manufacturer_query("mid.state")
+      }],
+      [7, :prod_manufacturer_postal_code, :postal_code, "Manufacturer Postal Code", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.postal_code },
+        qualified_field_name: base_manufacturer_query("mid.postal_code")
+      }],
+      [8, :prod_manufacturer_country, :postal_code, "Manufacturer Country ISO", {
+        data_type: :string,
+        read_only: true,
+        export_lambda: -> (o) { o.manufacturer&.country&.iso_code },
+        qualified_field_name: base_manufacturer_query("mid_country.iso_code") { " INNER JOIN countries mid_country ON mid_country.id = mid.country_id" }
+      }]
+    ]
   end
 end; end; end

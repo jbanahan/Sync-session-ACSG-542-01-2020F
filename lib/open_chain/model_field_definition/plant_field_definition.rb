@@ -5,7 +5,6 @@ module OpenChain; module ModelFieldDefinition; module PlantFieldDefinition
       [2,:plant_product_group_names,:product_group_names,"Product Group Names",{
         data_type: :text,
         read_only: true,
-        import_lambda: lambda {|obj,val| "Product Group Names is read only."},
         export_lambda: lambda {|obj| obj.product_groups.collect {|pg| pg.name}.compact.uniq.sort.join("\n")},
         qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT pg.name ORDER BY pg.name SEPARATOR '\n ') 
           FROM plant_product_group_assignments ppga

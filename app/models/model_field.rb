@@ -98,6 +98,13 @@ class ModelField
     @search_value_preprocess_lambda = o[:search_value_preprocess_lambda]
     @xml_tag_name = o[:xml_tag_name]
     @cdef_uid = o[:cdef_uid] if self.custom?
+    # This avoids us having to define a whole bunch of lambdas directly in the model field generators for read only fields
+    if @read_only && @import_lamba.nil?
+      @default_read_only_lambda = true
+      @import_lambda = lambda { |obj, data, user| "#{label()} is read only." }
+    else
+      @default_read_only_lambda = false
+    end
     self.base_label #load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
@@ -377,7 +384,10 @@ class ModelField
       v = "Value ignored. #{self.label} is read only."
     else
       if opts[:bypass_user_check] || can_edit?(user)
-        if @import_lambda.nil?
+        # There's a couple of situations - like state toggle buttons or some automated field changers
+        # where the fields themselves are marked read only without an import lambda set (thus they get default lambda's)
+        # but we still need to allow the system to actually set the value even if it's readonly
+        if (opts[:bypass_read_only] && @default_read_only_lambda) || @import_lambda.nil?
           d = [:date,:datetime].include?(self.data_type.to_sym) ? parse_date(data) : data
           if obj.is_a?(CustomValue)
             obj.value = d

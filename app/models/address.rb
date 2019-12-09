@@ -44,7 +44,9 @@ class Address < ActiveRecord::Base
   belongs_to :port
   before_validation :set_hash_key
   before_destroy :check_in_use
-  has_and_belongs_to_many :products, :join_table=>"product_factories", :foreign_key=>'address_id', :association_foreign_key=>'product_id'
+  has_many :product_factories, dependent: :destroy
+  has_many :products, through: :product_factories
+  #has_and_belongs_to_many :products, :join_table=>"product_factories", :foreign_key=>'address_id', :association_foreign_key=>'product_id'
 
   def can_view? user
     return user.company.master? ||
@@ -126,7 +128,6 @@ LEFT OUTER JOIN orders order_to ON order_to.ship_to_id = addresses.id
 LEFT OUTER JOIN orders order_ship_from ON order_ship_from.ship_from_id = addresses.id
 LEFT OUTER JOIN order_lines order_line_ship_to ON order_line_ship_to.ship_to_id = addresses.id
 LEFT OUTER JOIN sales_orders sale_to ON sale_to.ship_to_id = addresses.id
-LEFT OUTER JOIN product_factories ON product_factories.address_id = addresses.id
 WHERE addresses.id = #{self.id}
 AND (
   custom_values.id is not null
@@ -138,7 +139,6 @@ AND (
   OR order_ship_from.id is not null
   OR order_line_ship_to.id is not null
   OR sale_to.id is not null
-  OR product_factories.product_id is not null
 ) LIMIT 1
 qry
     return ActiveRecord::Base.connection.execute(query).count == 1

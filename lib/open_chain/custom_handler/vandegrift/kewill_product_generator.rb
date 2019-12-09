@@ -37,6 +37,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     opts = opts.with_indifferent_access
     @alliance_customer_number = alliance_customer_number
     @importer_system_code = opts[:importer_system_code]
+    @include_linked_importer_products = opts[:include_linked_importer_products].to_s.to_boolean
     @custom_where = opts[:custom_where]
     @strip_leading_zeros = opts[:strip_leading_zeros].to_s.to_boolean
     @use_unique_identifier = opts[:use_unique_identifier].to_s.to_boolean
@@ -93,8 +94,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     write_data(p, "styleNo", row[0], 40, error_on_trim: !@allow_style_truncation)
     write_data(p, "descr", row[1].to_s.upcase, 40)
     write_data(p, "countryOrigin", row[3], 2)
-    # This is blanked unless FDA Flag is true, so we're ok to always send it (see preprocess_row)
-    write_data(p, "manufacturerId", row[9], 15)
+    write_data(p, "manufacturerId", validate_mid(row), 15)
     write_data(p, "productLine", row[4], 30)
     append_defaults(p, "CatCiLine")
     
@@ -160,7 +160,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def add_kewill_keys parent, row, include_style: true
-    write_data(parent, "custNo", @alliance_customer_number, 10, error_on_trim: true)
+    # The query should be pulling the Customs Management cust_no from the system identifiers table now, it's possible on some customer 
+    # systems that this won't be present, so just fall back to using the customer number set up from the constructor.
+    customer_number = row[23].presence || @alliance_customer_number
+    write_data(parent, "custNo", customer_number, 10, error_on_trim: true)
     write_data(parent, "partNo", row[0], 40, error_on_trim: !@allow_style_truncation)
     write_data(parent, "styleNo", row[0], 40, error_on_trim: !@allow_style_truncation) if include_style
     write_data(parent, "dateEffective", date_format(effective_date), 8, error_on_trim: true)
@@ -234,8 +237,12 @@ IF(length(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})
 #{cd_s custom_defs[:prod_fda_affirmation_compliance].id},
 #{cd_s custom_defs[:prod_fda_affirmation_compliance_value].id},
 #{cd_s custom_defs[:prod_fda_temperature].id},
-#{cd_s custom_defs[:prod_301_exclusion_tariff]}
+#{cd_s custom_defs[:prod_301_exclusion_tariff]},
+(SELECT mid.system_code FROM addresses mid INNER JOIN product_factories pf ON pf.address_id = mid.id WHERE pf.product_id = products.id ORDER BY mid.created_at LIMIT 1),
+sys_id.code
 FROM products
+LEFT OUTER JOIN companies ON companies.id = products.importer_id
+LEFT OUTER JOIN system_identifiers sys_id ON sys_id.company_id = companies.id AND sys_id.system = 'Customs Management'
 INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
 QRY
 
@@ -247,8 +254,9 @@ WHERE
       qry += "WHERE #{@custom_where} "
     end
     
+    qry += " AND (products.inactive IS NULL OR products.inactive = 0)"
     qry += " AND length(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0" unless @use_unique_identifier
-    qry += " AND products.importer_id = #{importer.id}" unless @disable_importer_check
+    qry += importer_id_query_clause
 
 
     unless @allow_blank_tariffs
@@ -258,6 +266,26 @@ WHERE
     if @custom_where.blank?
       # Now that we're using XML, documents get really big, really quickly...so limit to X at a time per file
       qry += " LIMIT #{max_products_per_file}"
+    end
+
+    qry
+  end
+
+  def importer_id_query_clause
+    return "" if @disable_importer_check
+
+    qry = " AND products.importer_id "
+    if @include_linked_importer_products
+      @child_importer_ids ||= importer.linked_companies.find_all {|c| c.importer? }.map &:id
+      if @child_importer_ids.length > 0
+        qry += " IN (?)"
+        qry = ActiveRecord::Base.sanitize_sql_array([qry, @child_importer_ids])
+      else
+        # There were no child importers found, so don't add a clause that will return nothing.
+        qry = " AND 1 = -1"
+      end
+    else
+      qry += " = #{importer.id}"
     end
 
     qry
@@ -345,9 +373,37 @@ WHERE
     # We also want to key the hash by the special number, not the standard number.
     @special_tariff_numbers_hash ||= SpecialTariffCrossReference.find_special_tariff_hash("US", false, reference_date: Time.zone.now.to_date, use_special_number_as_key: true)
   end
-
+    
   def exclusion_301_tariff row
     row[21]
+  end
+
+  def validate_mid row
+    # Validate the MID by making sure it's present in our MID table.  If it's not a valid MID, then don't send anything.
+
+    # row 5 is the FDA MID.  I'm not entirely sure how that might be different from the standard MID, but we've been sending it
+    # as the part's top level MID for years now if it's present, so continue to do this and then fall back to the standard MID
+    # if it's not valid or missing
+
+    # NOTE: the preprocess_row method blanks the FDA MID value unless the product is marked as being an FDA part.
+    mid = nil
+    if row[9].present?
+      mid = manufacturer_id(row[9].strip)
+    end
+
+    if mid.blank? && row[22].present?
+      mid = manufacturer_id(row[22].strip)
+    end
+
+    mid.presence || ""
+  end
+
+  def manufacturer_id mid
+    @mids ||= Hash.new do |h, k|
+      h[k] = ManufacturerId.where(mid: k).limit(1).pluck(:mid).first.to_s
+    end
+
+    @mids[mid]
   end
 
 end; end; end; end

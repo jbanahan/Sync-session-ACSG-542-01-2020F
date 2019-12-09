@@ -134,12 +134,6 @@ describe Address do
       Factory(:sales_order,ship_to_id:@a.id)
       expect(@a).to be_in_use
     end
-    it "should return true for linked product factories" do
-      p = Factory(:product)
-      p.factories << @a
-      expect(@a).to be_in_use
-    end
-
   end
 
   describe "make_hash_key" do

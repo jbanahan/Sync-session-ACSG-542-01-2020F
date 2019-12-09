@@ -63,7 +63,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [41,:shp_total_cartons,:total_cartons,"Total Cartons",{
         data_type: :integer,
         read_only: true,
-        import_lambda: lambda {|a,b| return "Total cartons is read only."},
         export_lambda: lambda {|obj| obj.carton_sets.inject(0) { |tot, cs| tot + (cs.carton_qty.nil? ? 0 : cs.carton_qty) }},
         qualified_field_name: "(SELECT SUM(carton_qty) FROM carton_sets WHERE carton_sets.shipment_id = shipments.id)"
       }],
@@ -75,7 +74,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [47,:shp_booked_orders,:booked_orders,"Booked Orders",{
             data_type: :text,
             read_only: true,
-            import_lambda: lambda {|obj,val| "Booked Orders is read only."},
             export_lambda: lambda {|obj| obj.booking_lines.flat_map(&:customer_order_number).compact.uniq.sort.join("\n ")},
             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR '\n ')
           FROM booking_lines
@@ -85,7 +83,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [48,:shp_shipped_orders,:shipped_orders,"Shipped Orders",{
              data_type: :text,
              read_only: true,
-             import_lambda: lambda {|obj,val| "Shipped Orders is read only."},
              export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:order).map(&:customer_order_number).compact.uniq.sort.join("\n ")},
              qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.customer_order_number ORDER BY orders.customer_order_number SEPARATOR '\n ')
           FROM shipment_lines
@@ -97,7 +94,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [49,:shp_shipped_products,:shipped_products,"Shipped Products",{
              data_type: :text,
              read_only: true,
-             import_lambda: lambda {|obj,val| "Shipped Products is read only."},
              export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:product).map(&:unique_identifier).compact.uniq.sort.join("\n ")},
              qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT products.unique_identifier ORDER BY products.unique_identifier SEPARATOR '\n ')
           FROM shipment_lines
@@ -107,7 +103,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [50,:shp_booked_products,:booked_products,"Booked Products",{
              data_type: :text,
              read_only: true,
-             import_lambda: lambda {|obj,val| "Booked Products is read only."},
              export_lambda: lambda {|obj| obj.booking_lines.map(&:product_identifier).compact.uniq.sort.join("\n ")},
              qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT products.unique_identifier ORDER BY products.unique_identifier SEPARATOR '\n ')
           FROM booking_lines
@@ -156,7 +151,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [73, :shp_booked_order_ids,:booked_orders,"Booked Order DB IDs",{
             data_type: :text,
             read_only: true,
-            import_lambda: lambda {|obj,val| "Booked Orders is read only."},
             export_lambda: lambda {|obj| obj.booking_lines.flat_map{ |b| b.order.try(:id) }.compact.sort.uniq.join("\n ")},
             qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.id ORDER BY orders.id SEPARATOR '\n ')
           FROM booking_lines
@@ -166,7 +160,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [74, :shp_shipped_order_ids,:shipped_orders,"Shipped Order DB IDs",{
              data_type: :text,
              read_only: true,
-             import_lambda: lambda {|obj,val| "Shipped Orders is read only."},
              export_lambda: lambda {|obj| obj.shipment_lines.flat_map(&:order_lines).map(&:order).map(&:id).compact.uniq.sort.join("\n ")},
              qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT orders.id ORDER BY orders.id SEPARATOR '\n ')
           FROM shipment_lines
@@ -209,7 +202,6 @@ module OpenChain; module ModelFieldDefinition; module ShipmentFieldDefinition
       [85, :shp_container_numbers, :container_numbers, "Container(s)", {
         :data_type=>:text,
         :read_only=>true,
-        :import_lambda => lambda {|obj,val| "Container(s) is read only."},
         :export_lambda => lambda {|obj| obj.containers.map(&:container_number).sort.join("\n ") },
         :qualified_field_name => "(SELECT GROUP_CONCAT(c.container_number ORDER BY c.container_number SEPARATOR '\n ') FROM containers AS c INNER JOIN shipments s ON s.id = c.shipment_id WHERE shipments.id = c.shipment_id )"
       }],

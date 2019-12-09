@@ -17,7 +17,9 @@ class CompaniesController < ApplicationController
     'car_bool' => {:field => 'carrier', :label => 'Is A Carrier', :datatype => :boolean},
     'cus_bool' => {:field => 'customer', :label => 'Is A Customer', :datatype => :boolean},
     'imp_bool' => {:field => 'importer', :label => 'Is An Importer', :datatype => :boolean},
-    'l_bool' => {:field => 'locked', :label => 'Is Locked', :datatype => :boolean}
+    'l_bool' => {:field => 'locked', :label => 'Is Locked', :datatype => :boolean},
+    'c_identifier' => {field: "(SELECT code FROM system_identifiers WHERE company_id = companies.id ORDER BY created_at LIMIT 1)", label: "Company Identifier"},
+    'c_identifier_type' => {field: "(SELECT system FROM system_identifiers WHERE company_id = companies.id ORDER BY created_at LIMIT 1)", label: "Company Identifier Type"}
   }
   
   def root_class

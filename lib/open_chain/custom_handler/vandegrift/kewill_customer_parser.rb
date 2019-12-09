@@ -8,8 +8,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCustomerP
   end
 
   def parse data, user, file_path
-    data.each do |customer|
-      parse_customer(customer, user, file_path)
+    data.each do |customer_data|
+      begin
+        parse_customer(customer_data, user, file_path)
+      rescue => e
+        e.log_me
+        inbound_file.add_error_message "Failed to update account data for customer '#{customer_data['customer_number']}'."
+      end
     end
   end
 
@@ -21,6 +26,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCustomerP
     company = Company.find_or_create_company!("Customs Management", data["customer_number"], {name: "***#{data["customer_name"]}***", importer: true})
     Lock.db_lock(company) do
       company.name = data["customer_name"]
+      # System code is still utilized as part of the importer identifier for products management, so make sure we populate
+      # it if it's not already populated.  Don't overwrite anything that's already there though, since it's possible
+      # that another code was utilized prior to this feed being established.
+      company.system_code = data["customer_number"] if company.system_code.blank?
 
       address_changed = false
       Array.wrap(data["addresses"]).each do |address_data|

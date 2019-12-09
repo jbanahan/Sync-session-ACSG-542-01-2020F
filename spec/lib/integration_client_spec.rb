@@ -560,5 +560,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         do_parser_test("Generic GTN XML", OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser, '/gtn_invoice_xml/file.xml')
       end
     end
+
+    context "Amazon Parts" do
+      it "handles Amazon Parts files" do
+        do_parser_test("Amazon Parts", OpenChain::CustomHandler::Amazon::AmazonProductParserBroker, '/amazon_parts/file.csv')
+      end
+    end
   end
 end

@@ -5,24 +5,35 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
   describe "write_row_to_xml" do
 
     let (:row) {
-      # This is what a file row without FDA information will look like (description should upcase)
-      ["STYLE", "description", "1234567890", "CO", "BRAND"]
+      r = base_row
+      r[22] = "MID"
+      r[23] = "CUST_NO"
+      r
     }
     
     let (:fda_row) {
-      row + ["Y", "FDACODE", "UOM", "CP", "MID", "SID", "FDADESC", "ESTNO", "Dom1", "Dom2", "Dom3", "Name", "Phone", "COD", "AFFCOMP", "F"]
+      base_row + ["Y", "FDACODE", "UOM", "CP", "MID", "SID", "FDADESC", "ESTNO", "Dom1", "Dom2", "Dom3", "Name", "Phone", "COD", "AFFCOMP", "F"]
+    }
+
+    let (:base_row) {
+      # This is what a file row without FDA information will look like (description should upcase)
+      ["STYLE", "description", "1234567890", "CO", "BRAND"]
     }
 
     let (:parent) { REXML::Document.new("<root></root>").root }
 
+    let! (:mid) { ManufacturerId.create! mid: "MID" }
+
     it "writes XML data to given element" do
       subject.write_row_to_xml parent, 1, row
       expect(parent.text "part/id/partNo").to eq "STYLE"
-      expect(parent.text "part/id/custNo").to eq "CUST"
+      # This should be CUST_NO because the value from the query (.ie the row array) should take precedence
+      expect(parent.text "part/id/custNo").to eq "CUST_NO"
       expect(parent.text "part/id/dateEffective").to eq "20140101"
       expect(parent.text "part/dateExpiration").to eq "20991231"
       expect(parent.text "part/styleNo").to eq "STYLE"
       expect(parent.text "part/countryOrigin").to eq "CO"
+      expect(parent.text "part/manufacturerId").to eq "MID"
       expect(parent.text "part/descr").to eq "DESCRIPTION"
       expect(parent.text "part/productLine").to eq "BRAND"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/seqNo").to eq "1"
@@ -31,7 +42,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       # Make sure no FDA information was written - even though blank tags would techincally be fine
       # I want to make sure the size of these files is as small as possible to allow for more data in them before
       # crashing the Kewill processor due to memory size needed to handle a large XML file
-      expect(REXML::XPath.first parent, "part/manufacturerId").to be_nil
       expect(REXML::XPath.first parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList").to be_nil
     end
 
@@ -83,6 +93,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         row << v
       end
 
+      mid.update! mid: row[9]
+
       subject.write_row_to_xml parent, 1, row
 
       expect(parent.text "part/id/partNo").to eq "STYLE"
@@ -112,6 +124,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       aff = REXML::XPath.first fda, "CatFdaEsComplianceList/CatFdaEsCompliance"
       expect(aff).not_to be_nil
       expect(aff.text "complianceQualifier").to eq "AFFCOMP------------------"
+    end
+
+    it "falls back to customer_number set up in constructor if not present in query" do
+      row[23] = nil
+      subject.write_row_to_xml parent, 1, row
+      expect(parent.text "part/id/custNo").to eq "CUST"
     end
 
     it "raises an error if part number is too long" do
@@ -173,6 +191,38 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(parent.text "part/CatTariffClassList/CatTariffClass/ultimateConsignee").to eq "CONS"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/abiPriorNotice").to eq "Y"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/CatFdaEsComplianceList/CatFdaEsCompliance/assembler").to eq "ASS"
+    end
+
+    it "skips invalid top level FDA MIDS" do
+      fda_row[9] = "INVALIDMID"
+      subject.write_row_to_xml parent, 1, fda_row
+
+      expect(parent.text "part/manufacturerId").to eq ""
+      fda = REXML::XPath.first parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs"
+      # It should still put the invalid MID at the FDA level
+      expect(fda.text "manufacturerId").to eq "INVALIDMID"
+    end
+
+    it "skips invalid top level MIDS" do
+      row[22] = "INVALIDMID"
+      subject.write_row_to_xml parent, 1, row
+      expect(parent.text "part/manufacturerId").to eq ""
+    end
+
+    it "prioritizes FDA MID over Standard at top level" do
+      ManufacturerId.create! mid: "STANDARD"
+      fda_row[22] = "STANDARD"
+
+      subject.write_row_to_xml parent, 1, fda_row
+      expect(parent.text "part/manufacturerId").to eq "MID"
+    end
+
+    it "falls back to standard MID if FDA MID is invalid" do
+      fda_row[22] = "MID"
+      fda_row[9] = "INVALID"
+
+      subject.write_row_to_xml parent, 1, fda_row
+      expect(parent.text "part/manufacturerId").to eq "MID"
     end
 
     context "with special tariffs" do
@@ -366,13 +416,16 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     let (:product) { create_product "Style" }
     let (:us) { Factory(:country, iso_code: "US") }
     let (:importer) { with_customs_management_id(Factory(:importer), "CUST") }
+    let! (:mid) { ManufacturerId.create! mid: "MID" }
 
-    def create_product style, part_number: true
-      p = Factory(:product, unique_identifier: "CUST-#{style}", importer: importer)
+    def create_product style, part_number: true, mid: true, importer_id: importer.id
+      p = Factory(:product, unique_identifier: "CUST-#{style}", importer_id: importer_id)
       c = Factory(:classification, product: p, country: us)
       c.tariff_records.create! hts_1: "1234567890"
 
       p.update_custom_value!(described_class.new(nil).custom_defs[:prod_part_number], style) if part_number
+      p.factories.create!(system_code: "MID") if mid
+
       p
     end
 
@@ -518,6 +571,61 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       doc = REXML::Document.new(data)
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "1234567890"
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "9876543210"
+    end
+
+    it "sends MID" do
+      product
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable "alliance_customer_number" => "CUST"
+      doc = REXML::Document.new(data)
+      expect(doc.text "/requests/request/kcData/parts/part/manufacturerId").to eq "MID"
+    end
+
+    it "skips inactive parts" do
+      product.update! inactive: true
+      expect_any_instance_of(subject).not_to receive(:ftp_file)
+      subject.run_schedulable "alliance_customer_number" => "CUST"
+    end
+
+    context "with linked importer sending" do
+
+      let! (:linked_importer_1) {
+        i = with_customs_management_id(Factory(:importer), "CHILD1")
+        importer.linked_companies << i
+        i
+      }
+
+      let! (:linked_importer_2) {
+        i = with_customs_management_id(Factory(:importer), "CHILD2")
+        importer.linked_companies << i
+        i 
+      }
+
+      it "sends products for linked importers" do
+        product = create_product("PART_NO", importer_id: linked_importer_1.id)
+        product2 = create_product("PART_NO_2", importer_id: linked_importer_2.id)
+        data = nil
+        expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+          data = file.read
+        end
+
+        subject.run_schedulable("alliance_customer_number" => "CUST", "include_linked_importer_products" => true)
+        doc = REXML::Document.new(data)
+        expect(doc).to have_xpath_value("count(/requests/request/kcData/parts/part)", 2)
+
+        parts = REXML::XPath.each(doc, "/requests/request/kcData/parts/part").to_a
+        part = parts.first
+        expect(part).to have_xpath_value("id/partNo", "PART_NO")
+        expect(part).to have_xpath_value("id/custNo", "CHILD1")
+
+        part = parts.second
+        expect(part).to have_xpath_value("id/partNo", "PART_NO_2")
+        expect(part).to have_xpath_value("id/custNo", "CHILD2")
+      end
     end
   end
 end

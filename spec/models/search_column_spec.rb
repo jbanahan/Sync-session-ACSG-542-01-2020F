@@ -20,7 +20,7 @@ describe SearchColumn do
       expect(mf.label).to eq "Whose fault?"
       expect(mf.qualified_field_name).to eq "(SELECT 'Vandegrift\\'s')"
       expect(mf.export_lambda.call "foo").to eq "Vandegrift's"
-      expect(mf.import_lambda.call "foo", "bar").to eq "Constant Field ignored. (read only)"
+      expect(mf.import_lambda.call "foo", "bar", "baz").to eq "Whose fault? is read only."
       expect(mf.blank?).to eq false
     end
 

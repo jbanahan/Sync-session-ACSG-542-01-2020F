@@ -71,6 +71,7 @@ require 'open_chain/custom_handler/pvh/pvh_gtn_order_xml_parser'
 require 'open_chain/custom_handler/pvh/pvh_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/pvh/pvh_gtn_asn_xml_parser'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_invoice_xml_parser'
+require 'open_chain/custom_handler/amazon/amazon_product_parser_broker'
 
 module OpenChain
   class IntegrationClient
@@ -333,6 +334,8 @@ module OpenChain
         OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "gtn_invoice_xml") && custom_features.include?("Generic GTN XML")
         OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "amazon_parts") && custom_features.include?("Amazon Parts")
+        OpenChain::CustomHandler::Amazon::AmazonProductParserBroker.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

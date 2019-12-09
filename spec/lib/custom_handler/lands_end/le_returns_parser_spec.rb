@@ -212,27 +212,25 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
   end
 
   describe "can_view?" do
-    it "allows company master to view in www-vfitrack-net" do
-      ms = double("MasterSetup")
-      expect(MasterSetup).to receive(:get).and_return ms
-      expect(ms).to receive(:system_code).and_return "www-vfitrack-net"
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:system_code).and_return "www-vfitrack-net"
+      ms
+    }
 
-      u = Factory(:master_user)
-      expect(described_class.new(nil).can_view? u).to be_truthy
+    subject { described_class.new nil }
+
+    it "allows company master to view in www-vfitrack-net" do
+      expect(subject.can_view?(Factory(:master_user))).to eq true
     end
 
     it "prevents non-master user" do
-      u = Factory(:user)
-      expect(described_class.new(nil).can_view? u).to be_falsey
+      expect(subject.can_view? Factory(:user)).to eq false
     end
 
     it "prevents non-vfitrack user" do
-      ms = double("MasterSetup")
-      expect(MasterSetup).to receive(:get).and_return ms
-      expect(ms).to receive(:system_code).and_return "test"
-
-      u = Factory(:master_user)
-      expect(described_class.new(nil).can_view? u).to be_falsey
+      expect(master_setup).to receive(:system_code).and_return "test"
+      expect(subject.can_view? Factory(:master_user)).to eq false
     end
   end
 

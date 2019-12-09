@@ -56,7 +56,11 @@ class Product < ActiveRecord::Base
   has_many   :bill_of_materials_parents, -> { includes(:parent_product) }, dependent: :destroy, class_name: "BillOfMaterialsLink", foreign_key: :child_product_id
   has_many   :child_products, :through=>:bill_of_materials_children
   has_many   :parent_products, :through=>:bill_of_materials_parents
-  has_and_belongs_to_many :factories, :class_name=>"Address", :join_table=>"product_factories", :foreign_key=>'product_id', :association_foreign_key=>'address_id'
+  # Delete the product_factory links if the product is destroyed
+  # delete_all should be fine here as opposed to destroy_all, because there should never be callbacks on the linker model.
+  has_many :product_factories, dependent: :delete_all, inverse_of: :product
+  has_many :factories, -> { order(:created_at) }, through: :product_factories, source: :address
+
   has_many :product_vendor_assignments, dependent: :destroy
   has_many :vendors, through: :product_vendor_assignments
   has_many :product_trade_preference_programs, dependent: :destroy
@@ -69,9 +73,17 @@ class Product < ActiveRecord::Base
 
   dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier']
 
+  after_commit :clear_manufacturer
 
   def locked?
     false
+  end
+
+  def manufacturer
+    # This is primarily a read-only cache (to use in conjunction with model fields for the Manufacturer)\
+    # Don't use it unless you're a model field as it can cause issues in cases when you remove the manufacturer address, 
+    # it does not properly clear the cached variable out.  Like if you destroy the manufacturer.
+    @mid ||= factories.first
   end
 
   # figure out the correct product importer of an entry
@@ -338,5 +350,9 @@ class Product < ActiveRecord::Base
       r
     end
     r.to_a
+  end
+
+  def clear_manufacturer
+    remove_instance_variable(:@mid) if instance_variable_defined?(:@mid)
   end
 end

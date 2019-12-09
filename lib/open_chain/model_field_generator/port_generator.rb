@@ -22,7 +22,6 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
     end
     r << [r_count,"#{uid_prefix}_id".to_sym, "#{join_field}_id".to_sym, "#{name_prefix}",id_hash]
     r << [r_count+1,"#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name",{
-        import_lambda: lambda {|o,d| "#{name_prefix} is read only."},
         export_lambda: lambda {|obj|
           val = obj.public_send(join_field)
           val.nil? ? '' : val.name.to_s
@@ -32,7 +31,6 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
         read_only: true
       }]
     r << [r_count+1, "#{uid_prefix}_code".to_sym, :code, "#{name_prefix} Code",{
-        import_lambda: lambda {|o,d| "#{name_prefix} is read only."},
         export_lambda: lambda {|obj|
           port = obj.public_send(join_field)
 

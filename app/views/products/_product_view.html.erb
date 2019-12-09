@@ -10,4 +10,7 @@
 <% end -%>
 <%= show_model_fields product, [:prod_uom, :prod_div_name] %>
 <%=show_custom_fields product %>
+<% if MasterSetup.get.custom_feature?("Product MID") %>
+<%= show_model_fields product, [:prod_manufacturer_mid, :prod_manufacturer_name, :prod_manufacturer_address_1, :prod_manufacturer_address_2, :prod_manufacturer_city, :prod_manufacturer_state, :prod_manufacturer_postal_code, :prod_manufacturer_country] %>
+<% end %>
 <%= show_model_fields product, [:prod_changed_at, :prod_last_changed_by] %>
