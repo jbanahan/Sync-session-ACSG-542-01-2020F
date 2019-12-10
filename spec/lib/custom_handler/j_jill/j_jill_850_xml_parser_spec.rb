@@ -5,12 +5,16 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       allow_any_instance_of(Order).to receive(:can_edit?).and_return true
       Factory(:master_user,username:'integration')
       @path = 'spec/support/bin/jjill850sample.xml'
+      @pathfw = 'spec/support/bin/jjill850samplefw.xml'
       @c = Factory(:company,importer:true,system_code:'JJILL')
       @us = Factory(:country,iso_code:'US')
     end
     let(:log) { InboundFile.new }
     def run_file opts = {}
       described_class.parse_file(IO.read(@path), log, opts)
+    end
+    def run_file_fw opts = {}
+      described_class.parse_file(IO.read(@pathfw), log, opts)
     end
     it "should close cancelled order" do
       dom = REXML::Document.new(IO.read(@path))
@@ -24,6 +28,44 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect_any_instance_of(Order).to receive(:reopen!).with(instance_of(User))
       expect_any_instance_of(Order).to receive(:post_update_logic!).with(instance_of(User))
       run_file
+    end
+    it "should set fish/wildlife true if present" do
+      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife]
+      expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
+
+      expect {run_file_fw}.to change(Order,:count).from(0).to(1)
+
+      o = Order.first
+      ol1 = o.order_lines.first
+      p1 = ol1.product
+      expect(p1.custom_value(cdefs[:prod_fish_wildlife])).to eq true
+    end
+    it "should not set fish/wildlife true if P0125 does not equal FISH/WILDLIFE" do
+      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife]
+      expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
+
+      expect {run_file}.to change(Order,:count).from(0).to(1)
+      o = Order.first
+      ol1 = o.order_lines.first
+      p1 = ol1.product
+      expect(p1.custom_value(cdefs[:prod_fish_wildlife])).to be_falsey
+    end
+    it "should update fish/wildlife to true if P0125 is set on a subsequent run" do
+      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife]
+      expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
+
+      expect {run_file}.to change(Order,:count).from(0).to(1)
+      o = Order.first
+      ol1 = o.order_lines.first
+      p1 = ol1.product
+      expect(p1.custom_value(cdefs[:prod_fish_wildlife])).to be_falsey
+
+      run_file_fw
+
+      o = Order.first
+      ol1 = o.order_lines.first
+      p1 = ol1.product
+      expect(p1.custom_value(cdefs[:prod_fish_wildlife])).to eq true
     end
     it "should save order" do
       cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]

@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     @inner_opts = @inner_opts.merge opts
     @jill = Company.find_by(system_code: UID_PREFIX)
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
+    @cdefs = self.class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
   end
 
   def parse_dom dom, log
@@ -288,6 +288,13 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     existing_importer_style = p.custom_value(@cdefs[:prod_importer_style])
     if existing_importer_style != importer_style
       p.update_custom_value!(@cdefs[:prod_importer_style], importer_style)
+    end
+
+    fish_wildlife = et(po1_el, 'PO125')
+    fish_wildlife = (fish_wildlife.present? && fish_wildlife == "FISH/WILDLIFE") ? true : false
+    existing_fish_wildlife = p.custom_value(@cdefs[:prod_fish_wildlife])
+    if existing_fish_wildlife != fish_wildlife
+      p.update_custom_value!(@cdefs[:prod_fish_wildlife], fish_wildlife)
     end
 
     p
