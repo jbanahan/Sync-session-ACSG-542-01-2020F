@@ -954,7 +954,7 @@ class ReportsController < ApplicationController
 
   def get_customer_year_over_year_report_importer_ids
     importer_ids = []
-    if current_user.sys_admin?
+    if current_user.admin?
       customer_codes = params[:importer_customer_numbers]
       if customer_codes
         codes = Array.wrap(customer_codes.strip.split(/[\r\n]+/)).map {|m| m.strip }.reject {|v| v.blank? }

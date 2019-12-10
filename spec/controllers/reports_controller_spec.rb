@@ -963,7 +963,7 @@ describe ReportsController do
       end
 
       it "runs for authorized users, US importer" do
-        expect(user).to receive(:sys_admin?).and_return false
+        expect(user).to receive(:admin?).and_return false
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
@@ -982,7 +982,7 @@ describe ReportsController do
       end
 
       it "runs for authorized users, CA importer" do
-        expect(user).to receive(:sys_admin?).and_return false
+        expect(user).to receive(:admin?).and_return false
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
@@ -1001,7 +1001,7 @@ describe ReportsController do
       end
 
       it "fails if importer is not selected (US)" do
-        expect(user).to receive(:sys_admin?).and_return false
+        expect(user).to receive(:admin?).and_return false
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).not_to receive(:run_report!)
@@ -1013,7 +1013,7 @@ describe ReportsController do
       end
 
       it "fails if importer is not selected (CA)" do
-        expect(user).to receive(:sys_admin?).and_return false
+        expect(user).to receive(:admin?).and_return false
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).not_to receive(:run_report!)
@@ -1025,7 +1025,7 @@ describe ReportsController do
       end
 
       it "runs for admin users" do
-        expect(user).to receive(:sys_admin?).and_return true
+        expect(user).to receive(:admin?).and_return true
 
         importer_1 = with_customs_management_id(Factory(:company), 'SYS01')
         importer_2 = with_fenix_id(Factory(:company), 'SYS02')
@@ -1049,7 +1049,7 @@ describe ReportsController do
       end
 
       it "fails for admin users when no importer customer codes are provided" do
-        expect(user).to receive(:sys_admin?).and_return true
+        expect(user).to receive(:admin?).and_return true
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).not_to receive(:run_report!)
