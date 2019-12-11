@@ -207,6 +207,16 @@ describe Entry do
       u.company.update_attributes(:master=>true)
       expect(entry.can_view?(u)).to eq true
     end
+    it "does not allow non-master user to view importerless entry" do
+      entry.update! importer_id: nil
+      expect(entry.can_view?(importer_user)).to eq false
+    end
+    it "allows master user to view importerless entry" do
+      entry.update! importer_id: nil
+      u = Factory(:master_user, entry_view: true)
+
+      expect(entry.can_view?(u)).to eq true
+    end
     it 'should allow user to comment' do
       u = Factory(:user,:entry_comment=>true)
       u.company.update_attributes(:master=>true)

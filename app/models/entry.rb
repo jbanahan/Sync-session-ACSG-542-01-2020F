@@ -676,7 +676,7 @@ class Entry < ActiveRecord::Base
     end
 
     def company_permission? user, allow_nil_importer: false
-      Entry.can_view_importer? self.importer, user
+      Entry.can_view_importer? self.importer, user, allow_nil_importer: allow_nil_importer
     end
 
     def update_tracking_status
