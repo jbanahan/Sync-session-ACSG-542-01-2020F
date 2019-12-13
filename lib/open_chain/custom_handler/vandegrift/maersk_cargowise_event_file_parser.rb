@@ -1,8 +1,10 @@
 require 'open_chain/integration_client_parser'
+require 'open_chain/custom_handler/entry_parser_support'
 require 'open_chain/custom_handler/nokogiri_xml_helper'
 
 module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowiseEventFileParser
   include OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::EntryParserSupport
   include OpenChain::CustomHandler::NokogiriXmlHelper
 
   def self.integration_folder
@@ -115,6 +117,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         set_first_occurrence_date entry, :first_entry_sent_date, event_date
         entry.across_sent_date = event_date
       elsif event_type == 'MSC'
+        hold_release_setter = HoldReleaseSetter.new entry
         if /SO\s*-\s*PGA\s+(-\s*)?(?<agency_code>\S+)\s+(?<disposition_code>\d+)/ =~ event_reference
           if agency_code == "FDA"
             date_1_set = set_first_occurrence_date entry, :fda_transmit_date, event_date
@@ -122,30 +125,46 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
             if disposition_code == "01"
               date_2_set = set_first_occurrence_date entry, :fda_review_date, event_date
             elsif disposition_code == "02"
-              date_3_set = set_first_occurrence_date entry, :fda_hold_date, event_date
+              date_3_set = set_first_occurrence_date entry, :fda_hold_date, event_date, hold_release_setter, true
             elsif disposition_code == "07"
               entry.fda_release_date = event_date
-              entry.fda_hold_release_date = event_date
+              if entry.american?
+                hold_release_setter.set_any_hold_release_date event_date, :fda_hold_release_date
+              else
+                entry.fda_hold_release_date = event_date
+              end
               date_4_set = true
             end
             date_set = date_1_set || date_2_set || date_3_set || date_4_set
           elsif agency_code == "NHT"
             if disposition_code == "02"
-              date_set = set_first_occurrence_date entry, :nhtsa_hold_date, event_date
+              date_set = set_first_occurrence_date entry, :nhtsa_hold_date, event_date, hold_release_setter, true
             elsif disposition_code == "07"
-              date_set = set_first_occurrence_date entry, :nhtsa_hold_release_date, event_date
+              date_set = set_first_occurrence_date entry, :nhtsa_hold_release_date, event_date, hold_release_setter, false
             end
           elsif agency_code == "NMF"
             if disposition_code == "02"
-              date_set = set_first_occurrence_date entry, :nmfs_hold_date, event_date
+              date_set = set_first_occurrence_date entry, :nmfs_hold_date, event_date, hold_release_setter, true
             elsif disposition_code == "07"
-              date_set = set_first_occurrence_date entry, :nmfs_hold_release_date, event_date
+              date_set = set_first_occurrence_date entry, :nmfs_hold_release_date, event_date, hold_release_setter, false
             end
           else
             if disposition_code == "02"
-              date_set = set_first_occurrence_date entry, :other_agency_hold_date, event_date
+              date_set = set_first_occurrence_date entry, :other_agency_hold_date, event_date, hold_release_setter, true
             elsif disposition_code == "07"
-              date_set = set_first_occurrence_date entry, :other_agency_hold_release_date, event_date
+              date_set = set_first_occurrence_date entry, :other_agency_hold_release_date, event_date, hold_release_setter, false
+            end
+          end
+          if entry.american?
+            prev_on_hold = entry.on_hold?
+            hold_release_setter.set_summary_hold_date
+            hold_release_setter.set_summary_hold_release_date
+            # Allows for the entry to be saved with entry-level hold flag/dates even if none of the hold/release
+            # dates above actually changed.  This is really just a workaround for file reprocessing after
+            # this 'on hold' business joins the production version of this parser.  It's not bad practice in
+            # general, however, in the event hold status somehow winds up out of sync with the rest of the data.
+            if prev_on_hold != entry.on_hold?
+              date_set = true
             end
           end
         else
@@ -196,10 +215,18 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
     # Setting date field value only if it doesn't already have a value, or if it contains a later date than the
     # new date value.  Returns true only under these conditions as well.
-    def set_first_occurrence_date entry, date_field, event_date
+    def set_first_occurrence_date entry, date_field, event_date, hold_release_setter=nil, is_hold=false
       date_set = false
       if entry.try(date_field).nil? || (event_date && entry.try(date_field) > event_date)
-        entry.send((date_field.to_s + "=").to_sym, event_date)
+        if hold_release_setter && entry.american?
+          if is_hold
+            hold_release_setter.set_any_hold_date event_date, date_field
+          else
+            hold_release_setter.set_any_hold_release_date event_date, date_field
+          end
+        else
+          entry.public_send((date_field.to_s + "=").to_sym, event_date)
+        end
         date_set = true
       end
       date_set

@@ -181,23 +181,30 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       entry.duty_due_date = parse_date(first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentDueDate']/Value")
       entry.available_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/ContainerCollection/Container/FCLAvailable")
       entry.import_date = parse_date(first_text xml, "UniversalShipment/Shipment/DateCollection/Date[Type='DischargeDate' or Type='Arrival']/Value")
-      entry.ams_hold_date = get_first_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='51']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      entry.ams_hold_release_date = get_last_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='54']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      entry.aphis_hold_date = get_first_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='52']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      entry.aphis_hold_release_date = get_last_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='55']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      entry.cbp_hold_date = get_first_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='53']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      entry.cbp_hold_release_date = get_last_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='56']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      entry.cbp_intensive_hold_date = get_first_occurrence_date xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='03']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
+
+      hold_release_setter = HoldReleaseSetter.new entry
+      set_hold_date entry, :ams_hold_date, get_first_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='51']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_release_date entry, :ams_hold_release_date, get_last_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='54']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_hold_date entry, :aphis_hold_date, get_first_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='52']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_release_date entry, :aphis_hold_release_date, get_last_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='55']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_hold_date entry, :cbp_hold_date, get_first_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='53']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_release_date entry, :cbp_hold_release_date, get_last_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='56']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_hold_date entry, :cbp_intensive_hold_date, get_first_occurrence_date(xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='03']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
       # Behaves different from other hold release dates.  In this case, we've been instructed to set the value
       # only when the hold date has a value, implying that Cargowise can send a release without the hold.
       if entry.cbp_intensive_hold_date.present?
-        entry.cbp_intensive_hold_release_date = get_last_occurrence_date xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='98']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
+        set_release_date entry, :cbp_intensive_hold_release_date, get_last_occurrence_date(xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='98']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
       end
-      # Note that this is the same value as APHIS hold date.  This might wind up being wrong, but it was done intentionally.
-      entry.usda_hold_date = get_first_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='52']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      # Note that this is the same value as APHIS release date.  This might wind up being wrong, but it was done intentionally.
-      entry.usda_hold_release_date = get_last_occurrence_date xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='55']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"
-      entry.one_usg_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='01']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value")
+      # Note that these USDA hold/release dates are the same value as APHIS hold/release date.  This might wind up being wrong, but it was done intentionally.
+      set_hold_date entry, :usda_hold_date, get_first_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='52']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_release_date entry, :usda_hold_release_date, get_last_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='55']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_release_date entry, :one_usg_date, parse_datetime(first_text xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='01']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+
+      if import_country.iso_code == 'US'
+        hold_release_setter.set_summary_hold_date
+        hold_release_setter.set_summary_hold_release_date
+      end
+
       entry.last_exported_from_source = Time.zone.now
 
       entry.entry_port_code = get_entry_port_code import_country.iso_code, xml
@@ -444,6 +451,26 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     # document (and that there can be multiple matches).
     def get_last_occurrence_date xml, xpath
       get_multiple_occurrence_date(xml, xpath) { |cur_d, d| cur_d > d }
+    end
+
+    def set_hold_date entry, date_field, hold_date, hold_release_setter, import_country_iso
+      set_hold_or_release_date entry, date_field, hold_date, hold_release_setter, import_country_iso do |hold_release_setter, event_date, date_field|
+        hold_release_setter.set_any_hold_date event_date, date_field
+      end
+    end
+
+    def set_release_date entry, date_field, release_date, hold_release_setter, import_country_iso
+      set_hold_or_release_date entry, date_field, release_date, hold_release_setter, import_country_iso do |hold_release_setter, event_date, date_field|
+        hold_release_setter.set_any_hold_release_date event_date, date_field
+      end
+    end
+
+    def set_hold_or_release_date entry, date_field, event_date, hold_release_setter, import_country_iso
+      if import_country_iso == 'US'
+        yield hold_release_setter, event_date, date_field
+      else
+        entry.public_send((date_field.to_s + "=").to_sym, event_date)
+      end
     end
 
     # "Map from the last occurrence" has been interpreted to mean the earliest date of this type in the

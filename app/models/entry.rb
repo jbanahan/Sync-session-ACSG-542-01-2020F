@@ -450,6 +450,10 @@ class Entry < ActiveRecord::Base
     values.length == 0 ? nil : values.sum
   end
 
+  def american?
+    import_country && import_country.iso_code == "US"
+  end
+
   def canadian?
     import_country && import_country.iso_code == "CA"
   end

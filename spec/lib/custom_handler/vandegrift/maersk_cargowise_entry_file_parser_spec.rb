@@ -34,6 +34,20 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(subject).to receive(:calculate_duty_rates).with(kind_of(CommercialInvoiceTariff), kind_of(CommercialInvoiceLine), effective_date, BigDecimal.new(50760)).twice
         expect(subject).to receive(:calculate_duty_rates).with(kind_of(CommercialInvoiceTariff), kind_of(CommercialInvoiceLine), effective_date, BigDecimal.new(760)).once
 
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-01-28 16:40:00.000"), :ams_hold_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-01-30 17:40:00.000"), :ams_hold_release_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-01-30 18:40:00.000"), :aphis_hold_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-02-01 19:40:00.000"), :aphis_hold_release_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-02-01 20:40:00.000"), :cbp_hold_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-02-03 21:40:00.000"), :cbp_hold_release_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-03-29 16:45:00.000"), :cbp_intensive_hold_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-05-03 01:33:00.000"), :cbp_intensive_hold_release_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-01-30 18:40:00.000"), :usda_hold_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-02-01 19:40:00.000"), :usda_hold_release_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-02-01 15:22:00.000"), :one_usg_date).and_call_original
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+
         now = Time.zone.parse("2019-04-12 05:06:07")
         Timecop.freeze(now) do
           subject.parse make_document(test_data), { :key=>"this_key", :bucket=>"that_bucket" }
@@ -87,7 +101,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.cbp_hold_date).to eq parse_datetime("2019-02-01 20:40:00.000")
         expect(entry.cbp_hold_release_date).to eq parse_datetime("2019-02-03 21:40:00.000")
         expect(entry.cbp_intensive_hold_date).to eq parse_datetime("2019-03-29 16:45:00.000")
-        expect(entry.cbp_intensive_hold_release_date).to eq parse_datetime("2019-05-03 01:33:00.000000000")
+        expect(entry.cbp_intensive_hold_release_date).to eq parse_datetime("2019-05-03 01:33:00.000")
         expect(entry.fda_hold_date).to be_nil
         expect(entry.fda_hold_release_date).to be_nil
         expect(entry.usda_hold_date).to eq parse_datetime("2019-01-30 18:40:00.000")
@@ -765,6 +779,11 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         # These are called only for the US.
         expect(subject).to_not receive(:tariff_effective_date)
         expect(subject).to_not receive(:calculate_duty_rates)
+
+        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
 
         subject.parse make_document(test_data)
 

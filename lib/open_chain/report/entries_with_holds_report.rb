@@ -1,7 +1,7 @@
-require 'open_chain/report/report_helper'
+require 'open_chain/report/builder_output_report_helper'
 
 module OpenChain; module Report; class EntriesWithHoldsReport
-  include OpenChain::Report::ReportHelper
+  include OpenChain::Report::BuilderOutputReportHelper
 
   def self.permission? user
     MasterSetup.get.custom_feature?("Kewill Entries") && user.view_entries?
@@ -21,11 +21,9 @@ module OpenChain; module Report; class EntriesWithHoldsReport
     end_date_query = ActiveSupport::TimeZone[user.time_zone].parse end_date.to_s
 
     filename = "Entries With Holds #{start_date.to_s} - #{end_date}"
-    wb = XlsMaker.create_workbook filename
     dt_lambda = datetime_translation_lambda(user.time_zone, true)
-    table_from_query wb.worksheet(0), query(user, customer_numbers, start_date_query, end_date_query), {"Release Date" => dt_lambda, "Arrival Date" => dt_lambda}
-
-    workbook_to_tempfile wb, 'EntriesWithHoldsReport-', file_name: "#{filename}.xls"
+    conversions = {"Release Date" => dt_lambda, "Arrival Date" => dt_lambda}
+    generate_results_to_tempfile query(user, customer_numbers, start_date_query, end_date_query), "xlsx", "Entries With Holds", filename, data_conversions: conversions
   end
 
 
@@ -38,8 +36,7 @@ module OpenChain; module Report; class EntriesWithHoldsReport
     query = <<-SQL
       SELECT DISTINCT entries.broker_reference 'Broker Reference', entries.entry_number 'Entry Number', entries.container_numbers 'Container Numbers', entries.master_bills_of_lading 'Master Bills', entries.house_bills_of_lading 'House Bills', entries.customer_references 'Customer References', entries.po_numbers 'PO Numbers', entries.release_date 'Release Date', entries.arrival_date 'Arrival Date'
       FROM entries
-      INNER JOIN entry_comments c ON entries.id = c.entry_id
-      WHERE c.username = 'CUSTOMS' AND (c.body LIKE BINARY '%EXAM%' OR c.body LIKE BINARY '%HOLD%')
+      WHERE entries.on_hold IS NOT NULL and entries.on_hold = true 
       AND #{Entry.search_where(user)} 
       AND entries.customer_number IN (#{cust_nos}) AND entries.arrival_date >= '#{start_date}' AND entries.arrival_date < '#{end_date}'
     SQL

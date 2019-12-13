@@ -352,6 +352,21 @@ describe Entry do
     end
   end
 
+  describe "american?" do
+    it 'identifies as American if import country is US' do
+      e = Entry.new
+      c = Country.new
+      c.iso_code = "US"
+      e.import_country = c
+      expect(e.american?).to be_truthy
+
+      e.import_country.iso_code = "CA"
+      expect(e.american?).to be_falsey
+      e.import_country = nil
+      expect(e.american?).to be_falsey
+    end
+  end
+
   describe "canadian?" do
     it 'identifies as canadian if import country is CA' do
       e = Entry.new

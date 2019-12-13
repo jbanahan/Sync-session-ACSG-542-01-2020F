@@ -19,11 +19,16 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
 
   describe "process_event" do
 
+    let (:country_us) { Factory(:country, iso_code:"US") }
+
     it "updates an entry, CCC event" do
       # CCC is the default value in the test XML.
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
       entry.entry_comments.build(username:"UniversalEvent", body:"2019-05-07 15:10:52 - DDD - DIFFERENTVAL")
       entry.save!
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
 
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -79,7 +84,12 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO-PGA FDA 33")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
 
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -100,8 +110,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, " SO - PGA FDA")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      fda_transmit_date:Date.new(2019,1,1))
+                      fda_transmit_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.fda_transmit_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
 
       expect(subject.process_event entry, xml_document).to eq false
 
@@ -119,7 +134,12 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA FDA  01")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
 
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -140,8 +160,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO- PGA  FDA 01")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      fda_transmit_date:Date.new(2019,1,1), fda_review_date:Date.new(2019,1,1))
+                      fda_transmit_date:Date.new(2019,1,1), fda_review_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.fda_review_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
 
       expect(subject.process_event entry, xml_document).to eq false
 
@@ -160,7 +185,40 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO- PGA -FDA 02")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-05-07T15:10:52.977"), :fda_hold_date).and_call_original
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
+      expect(subject.process_event entry, xml_document).to eq true
+
+      entry.reload
+      expect(entry.fda_hold_date).to eq parse_datetime("2019-05-07T15:10:52")
+
+      expect(log).to have_identifier :event_type, "MSC | SO- PGA -FDA 02"
+
+      expect(log).to have_info_message "Event successfully processed."
+
+      expect(entry.entry_comments.length).to eq 1
+      comm = entry.entry_comments[0]
+      expect(comm.body).to eq "2019-05-07 15:10:52 - MSC - SO- PGA -FDA 02"
+    end
+
+    # Date should be set, but hold release setter should not be called.  That functionality is for the US only.
+    it "updates an entry, MSC event, SO - PGA FDA 02 desc, Canada" do
+      test_data.gsub!(/CCC/,'MSC')
+      test_data.gsub!(/SOMEVAL/, "SO- PGA -FDA 02")
+
+      country_ca = Factory(:country, iso_code:"CA")
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_ca)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -180,8 +238,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO- PGA FDA  02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      fda_transmit_date:Date.new(2019,1,1), fda_hold_date:Date.new(2019,1,1))
+                      fda_transmit_date:Date.new(2019,1,1), fda_hold_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.fda_hold_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
 
       expect(subject.process_event entry, xml_document).to eq false
 
@@ -196,12 +259,77 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       expect(entry.entry_comments.length).to eq 0
     end
 
+    it "updates an entry, MSC event, SO - PGA FDA 02 desc, existing dates, out-of-sync hold flag" do
+      test_data.gsub!(/CCC/,'MSC')
+      test_data.gsub!(/SOMEVAL/, "SO- PGA FDA  02")
+
+      # On hold flag should be true because FDA hold date is set and FDA hold release date is not.
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+                      fda_transmit_date:Date.new(2019,1,1), fda_hold_date:Date.new(2019,1,1), import_country:country_us,
+                      on_hold:false, fda_hold_release_date:nil)
+      existing_date = entry.fda_hold_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date).and_call_original
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date).and_call_original
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
+      expect(subject.process_event entry, xml_document).to eq true
+
+      entry.reload
+      expect(entry.fda_hold_date).to eq existing_date
+      expect(entry.fda_transmit_date).to eq existing_date
+      expect(entry.on_hold?).to eq true
+
+      expect(log).to have_identifier :event_type, "MSC | SO- PGA FDA  02"
+
+      expect(log).to have_info_message "Event successfully processed."
+
+      expect(entry.entry_comments.length).to eq 1
+      comm = entry.entry_comments[0]
+      expect(comm.body).to eq "2019-05-07 15:10:52 - MSC - SO- PGA FDA  02"
+    end
+
     it "updates an entry, MSC event, SO - PGA FDA 07 desc" do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -PGA - FDA    07")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      fda_release_date:Date.new(2019,1,1), fda_hold_release_date:Date.new(2019,1,1))
+                      fda_release_date:Date.new(2019,1,1), fda_hold_release_date:Date.new(2019,1,1), fda_hold_date:Date.new(2017,7,7), import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-05-07T15:10:52.977"), :fda_hold_release_date).and_call_original
+
+      expect(subject.process_event entry, xml_document).to eq true
+
+      entry.reload
+      expect(entry.fda_release_date).to eq parse_datetime("2019-05-07T15:10:52")
+      expect(entry.fda_hold_release_date).to eq parse_datetime("2019-05-07T15:10:52")
+
+      expect(log).to have_identifier :event_type, "MSC | SO -PGA - FDA    07"
+
+      expect(log).to have_info_message "Event successfully processed."
+
+      expect(entry.entry_comments.length).to eq 1
+      comm = entry.entry_comments[0]
+      expect(comm.body).to eq "2019-05-07 15:10:52 - MSC - SO -PGA - FDA    07"
+    end
+
+    # Date should be set, but hold release setter should not be called.
+    it "updates an entry, MSC event, SO - PGA FDA 07 desc, Canada" do
+      test_data.gsub!(/CCC/,'MSC')
+      test_data.gsub!(/SOMEVAL/, "SO -PGA - FDA    07")
+
+      country_ca = Factory(:country, iso_code:"CA")
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
+                      fda_release_date:Date.new(2019,1,1), fda_hold_release_date:Date.new(2019,1,1), fda_hold_date:Date.new(2017,7,7), import_country:country_ca)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
 
       expect(subject.process_event entry, xml_document).to eq true
 
@@ -222,7 +350,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - PGA - NHT  02")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-05-07T15:10:52.977"), :nhtsa_hold_date).and_call_original
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -242,8 +376,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO-PGA NHT 02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      nhtsa_hold_date:Date.new(2019,1,1))
+                      nhtsa_hold_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.nhtsa_hold_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
@@ -260,7 +400,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA NHT 07")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, nhtsa_hold_date:Date.new(2017,7,7), import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-05-07T15:10:52.977"), :nhtsa_hold_release_date).and_call_original
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -280,8 +426,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO- PGA NHT 07")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      nhtsa_hold_release_date:Date.new(2019,1,1))
+                      nhtsa_hold_release_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.nhtsa_hold_release_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
@@ -298,7 +450,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA -NMF  02")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-05-07T15:10:52.977"), :nmfs_hold_date).and_call_original
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -318,8 +476,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO - PGA   - NMF 02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      nmfs_hold_date:Date.new(2019,1,1))
+                      nmfs_hold_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.nmfs_hold_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
@@ -336,7 +500,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO-PGA - NMF 07")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, nmfs_hold_date:Date.new(2017,7,7), import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-05-07T15:10:52.977"), :nmfs_hold_release_date).and_call_original
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -356,8 +526,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO - PGA NMF 07")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      nmfs_hold_release_date:Date.new(2019,1,1))
+                      nmfs_hold_release_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.nmfs_hold_release_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
@@ -374,7 +550,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA - OGA  02")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_date).with(parse_datetime("2019-05-07T15:10:52.977"), :other_agency_hold_date).and_call_original
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -394,8 +576,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO - PGA OGA 02")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      other_agency_hold_date:Date.new(2019,1,1))
+                      other_agency_hold_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.other_agency_hold_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
@@ -412,7 +600,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO -  PGA - OGA  07")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, other_agency_hold_date:Date.new(2017,7,7), import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_any_hold_release_date).with(parse_datetime("2019-05-07T15:10:52.977"), :other_agency_hold_release_date).and_call_original
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload
@@ -432,8 +626,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/SOMEVAL/, "SO - PGA - OGA 07")
 
       entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM,
-                      other_agency_hold_release_date:Date.new(2019,1,1))
+                      other_agency_hold_release_date:Date.new(2019,1,1), import_country:country_us)
       existing_date = entry.other_agency_hold_release_date
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
@@ -450,7 +650,13 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
       test_data.gsub!(/CCC/,'MSC')
       test_data.gsub!(/SOMEVAL/, "SO - RAVEN")
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq false
 
       entry.reload
@@ -465,7 +671,11 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser do
     it "updates an entry, CLR event" do
       test_data.gsub!(/CCC/,'CLR')
 
-      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+      entry = Factory(:entry, broker_reference:"BQMJ00219066158", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, import_country:country_us)
+
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
+      expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
+
       expect(subject.process_event entry, xml_document).to eq true
 
       entry.reload

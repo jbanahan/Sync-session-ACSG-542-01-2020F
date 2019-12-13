@@ -178,4 +178,203 @@ describe OpenChain::CustomHandler::EntryParserSupport do
       expect(subject.multi_value_separator).to eq "\n "
     end
   end
+
+  describe "HoldReleaseSetter" do
+    describe "set_any_hold_date" do
+      it "sets a hold date and clears corresponding release date" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,7), fda_hold_release_date:Date.new(2019,12,8))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.updated_before_one_usg[:fda_hold_release_date] = Date.new(2019,12,12)
+        setter.updated_before_one_usg[:cbp_hold_release_date] = Date.new(2019,12,12)
+        setter.updated_after_one_usg[:fda_hold_release_date] = Date.new(2019,12,12)
+        setter.updated_after_one_usg[:cbp_hold_release_date] = Date.new(2019,12,12)
+        setter.set_any_hold_date Date.new(2019,12,9), :fda_hold_date
+        expect(entry.fda_hold_date).to eq Date.new(2019,12,9)
+        expect(entry.fda_hold_release_date).to be_nil
+        expect(setter.updated_before_one_usg.length).to eq 1
+        expect(setter.updated_after_one_usg.length).to eq 1
+      end
+
+      it "clears a hold date and doesn't mess with release dates" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,7), fda_hold_release_date:Date.new(2019,12,8))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.updated_before_one_usg[:fda_hold_release_date] = Date.new(2019,12,12)
+        setter.updated_before_one_usg[:cbp_hold_release_date] = Date.new(2019,12,12)
+        setter.updated_after_one_usg[:fda_hold_release_date] = Date.new(2019,12,12)
+        setter.updated_after_one_usg[:cbp_hold_release_date] = Date.new(2019,12,12)
+        setter.set_any_hold_date nil, :fda_hold_date
+        expect(entry.fda_hold_date).to be_nil
+        # These are not cleared.
+        expect(entry.fda_hold_release_date).to eq(Date.new(2019,12,8))
+        expect(setter.updated_before_one_usg.length).to eq 2
+        expect(setter.updated_after_one_usg.length).to eq 2
+      end
+
+      it "sets a hold date and updates corresponding release date to one USG date if one USG date is later" do
+        entry = Factory(:entry, one_usg_date:Date.new(2019,12,10))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_date Date.new(2019,12,9), :fda_hold_date
+        expect(entry.fda_hold_date).to eq Date.new(2019,12,9)
+        expect(entry.fda_hold_release_date).to eq Date.new(2019,12,10)
+      end
+
+      it "sets a hold date and leaves corresponding release date blank if one USG date is earlier" do
+        entry = Factory(:entry, one_usg_date:Date.new(2019,12,8))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_date Date.new(2019,12,9), :fda_hold_date
+        expect(entry.fda_hold_date).to eq Date.new(2019,12,9)
+        expect(entry.fda_hold_release_date).to be_nil
+      end
+    end
+
+    describe "set_any_hold_release_date" do
+      it "sets one USG date and release dates for all active holds when date has a value" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,8), usda_hold_date:Date.new(2019,12,7))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_release_date Date.new(2019,12,9), :one_usg_date
+        expect(entry.one_usg_date).to eq Date.new(2019,12,9)
+        expect(entry.fda_hold_release_date).to eq Date.new(2019,12,9)
+        expect(entry.usda_hold_release_date).to eq Date.new(2019,12,9)
+      end
+
+      it "clears one USG date and doesn't mess with other release dates when date does not have a value" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,8), usda_hold_date:Date.new(2019,12,7), usda_hold_release_date:Date.new(2019,12,9))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_release_date nil, :one_usg_date
+        expect(entry.one_usg_date).to be_nil
+        expect(entry.fda_hold_release_date).to be_nil
+        expect(entry.usda_hold_release_date).to eq Date.new(2019,12,9)
+      end
+
+      it "sets release date when there is a matching hold, after one USG date" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,7), one_usg_date:Date.new(2019,12,8))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_release_date Date.new(2019,12,9), :fda_hold_release_date
+        expect(entry.fda_hold_release_date).to eq Date.new(2019,12,9)
+        expect(setter.updated_before_one_usg.length).to eq 0
+        expect(setter.updated_after_one_usg.length).to eq 1
+        expect(setter.updated_after_one_usg[:fda_hold_release_date]).to eq Date.new(2019,12,9)
+      end
+
+      it "sets release date when there is a matching hold, before one USG date" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,7), one_usg_date:Date.new(2019,12,12))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_release_date Date.new(2019,12,9), :fda_hold_release_date
+        expect(entry.fda_hold_release_date).to eq Date.new(2019,12,9)
+        expect(setter.updated_before_one_usg.length).to eq 1
+        expect(setter.updated_before_one_usg[:fda_hold_release_date]).to eq Date.new(2019,12,9)
+        expect(setter.updated_after_one_usg.length).to eq 0
+      end
+
+      it "does not set release date when there is no matching hold" do
+        entry = Factory(:entry, one_usg_date:Date.new(2019,12,8))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_release_date Date.new(2019,12,9), :fda_hold_release_date
+        expect(entry.fda_hold_release_date).to be_nil
+        expect(setter.updated_before_one_usg.length).to eq 0
+        expect(setter.updated_after_one_usg.length).to eq 0
+      end
+
+      it "clears release date with a nil value" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,7), fda_hold_release_date:Date.new(2019,12,8), one_usg_date:Date.new(2019,12,8))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_any_hold_release_date nil, :fda_hold_release_date
+        expect(entry.fda_hold_release_date).to be_nil
+        expect(setter.updated_before_one_usg.length).to eq 0
+        expect(setter.updated_after_one_usg.length).to eq 0
+      end
+    end
+
+    describe "set_on_hold" do
+      it "sets on hold flag to true if holds are present" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,9))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_on_hold
+        expect(entry.on_hold?).to eq true
+      end
+
+      it "sets on hold flag to false if no holds are present" do
+        entry = Factory(:entry)
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_on_hold
+        expect(entry.on_hold?).to eq false
+      end
+    end
+
+    describe "set_summary_hold_date" do
+      it "sets the summary hold date to the earliest active hold date" do
+        # USDA hold is still chosen even though there's a release date.  This method doesn't care about that.
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,9), ams_hold_date:Date.new(2019,12,10),
+                        usda_hold_date:Date.new(2019,12,8), usda_hold_release_date:Date.new(2019,12,9))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_summary_hold_date
+        expect(entry.hold_date).to eq Date.new(2019,12,8)
+      end
+
+      it "clears the summary hold date when there are no holds" do
+        entry = Factory(:entry, usda_hold_release_date:Date.new(2019,12,9))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_summary_hold_date
+        expect(entry.hold_date).to be_nil
+      end
+    end
+
+    describe "set_summary_hold_release_date" do
+      it "clears the summary hold release date when the entry is on hold" do
+        entry = Factory(:entry, usda_hold_date:Date.new(2019,12,9), hold_release_date:Date.new(2019,12,10))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_summary_hold_release_date
+        expect(entry.hold_release_date).to be_nil
+      end
+
+      it "sets the summary hold release date to one USG date when the entry has a one USG release date and there are no later release dates" do
+        entry = Factory(:entry, usda_hold_date:Date.new(2019,12,9), usda_hold_release_date:Date.new(2019,12,10), one_usg_date:Date.new(2019,12,11))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_summary_hold_release_date
+        expect(entry.hold_release_date).to eq Date.new(2019,12,11)
+      end
+
+      it "sets the summary hold release date to one USG date when the entry has a one USG release date and there is a later release date" do
+        entry = Factory(:entry, usda_hold_date:Date.new(2019,12,9), usda_hold_release_date:Date.new(2019,12,12), one_usg_date:Date.new(2019,12,11))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_summary_hold_release_date
+        # This result seems a little iffy.  It is pulling the one USG date because the hashes this method uses are not loaded by the method.
+        expect(entry.hold_release_date).to eq Date.new(2019,12,11)
+      end
+
+      it "overrides one USG release date when there is a later release date in the 'updated after' hash" do
+        entry = Factory(:entry, fda_hold_date:Date.new(2019,12,9), fda_hold_release_date:Date.new(2019,12,12), one_usg_date:Date.new(2019,12,11))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.updated_after_one_usg[:usda_hold_release_date] = Date.new(2019,12,13)
+        setter.updated_after_one_usg[:cbp_hold_release_date] = Date.new(2019,12,12)
+        setter.set_summary_hold_release_date
+        expect(entry.hold_release_date).to eq Date.new(2019,12,13)
+      end
+
+      it "clears the summary hold release date when the 'updated before' hash is empty and there is no one USG date" do
+        entry = Factory(:entry, usda_hold_date:Date.new(2019,12,9), usda_hold_release_date:Date.new(2019,12,10), hold_release_date:Date.new(2019,12,10), one_usg_date:nil)
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_summary_hold_release_date
+        # This result seems a little iffy.  It is clearing the field rather than using the USDA hold release date because the hashes this method uses are not loaded by the method.
+        expect(entry.hold_release_date).to be_nil
+      end
+
+      it "sets the summary hold release date to the latest date in the 'updated before' hash when there is no one USG date" do
+        entry = Factory(:entry, usda_hold_date:Date.new(2019,12,9), usda_hold_release_date:Date.new(2019,12,10), hold_release_date:Date.new(2019,12,10), one_usg_date:nil)
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.updated_before_one_usg[:fda_hold_release_date] = Date.new(2019,12,13)
+        setter.updated_before_one_usg[:cbp_hold_release_date] = Date.new(2019,12,12)
+        setter.set_summary_hold_release_date
+        expect(entry.hold_release_date).to eq Date.new(2019,12,13)
+      end
+
+      it "clears the summary hold release date when there are no hold/release pairings" do
+        entry = Factory(:entry, hold_release_date:Date.new(2019,12,10), one_usg_date:Date.new(2019,12,11))
+        setter = described_class::HoldReleaseSetter.new entry
+        setter.set_summary_hold_release_date
+        expect(entry.hold_release_date).to be_nil
+      end
+    end
+  end
+
 end
