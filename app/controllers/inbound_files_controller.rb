@@ -13,6 +13,8 @@ class InboundFilesController < ApplicationController
     'd_identifier' => {:field => 'inbound_file_identifiers.value', :label => "Identifier"},
     'd_isanumber' => {:field => 'inbound_files.isa_number', :label => "ISA Number"},
     'd_message' => {:field => 'inbound_file_messages.message', :label => "Message"},
+    'd_moduleid' => {:field => 'inbound_file_identifiers.module_id', :label => "Module ID"},
+    'd_moduletype' => {:field => 'inbound_file_identifiers.module_type', :label => "Module Type"},
     'd_origprocessstartdate' => {:field => 'inbound_files.original_process_start_date', :label => "Original Process Start Date"},
     'd_parsername' => {:field => 'inbound_files.parser_name', :label=> 'Parser Name'},
     'd_processenddate' => {:field => 'inbound_files.process_end_date', :label => "Process End Date"},
@@ -27,7 +29,7 @@ class InboundFilesController < ApplicationController
       s = build_search(sp, 'd_filename', 'd_processstartdate', 'd')
       s = s.joins("LEFT OUTER JOIN companies ON companies.id = inbound_files.company_id")
 
-      if search_params_contains? 'd_identifier'
+      if search_params_contains?('d_identifier') || search_params_contains?('d_moduleid') || search_params_contains?('d_moduletype')
         s = s.joins("INNER JOIN inbound_file_identifiers ON inbound_files.id = inbound_file_identifiers.inbound_file_id")
         s = s.uniq
       end
