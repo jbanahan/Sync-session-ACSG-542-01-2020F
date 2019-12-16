@@ -43,7 +43,6 @@ class DataCrossReference < ActiveRecord::Base
   INTACCT_BANK_CASH_GL_ACCOUNT ||= 'in_cash_gl'
   ALLIANCE_FREIGHT_CHARGE_CODE ||= 'al_freight_code'
   FENIX_ALS_CUSTOMER_NUMBER ||= 'fx_als_cust'
-  LANDS_END_MID ||= 'le_mid'
   RL_FABRIC_XREF ||= 'rl_fabric'
   RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'
   UA_DUTY_RATE ||= 'ua_duty_rate'
@@ -104,7 +103,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
       xref_attributes(ASCE_BRAND, "Ascena Brands", "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", key_label: "Brand Name", value_label: "Brand Abbrev", upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false),
       xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
-      xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true)
+      xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
+      xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label:"MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B.")
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -158,10 +158,8 @@ class DataCrossReference < ActiveRecord::Base
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       MasterSetup.get.custom_feature? "Polo"
-    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS, ASCE_BRAND
-      MasterSetup.get.custom_feature?("WWW") && user.sys_admin?
-    when CA_HTS_TO_DESCR
-      MasterSetup.get.custom_feature?("WWW") && user.in_group?('xref-maintenance')
+    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS, ASCE_BRAND, MID_XREF, CA_HTS_TO_DESCR
+      MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?('xref-maintenance'))
     when UA_SITE_TO_COUNTRY
       MasterSetup.get.custom_feature?("UnderArmour")
     when HM_PARS_NUMBER
@@ -281,14 +279,6 @@ class DataCrossReference < ActiveRecord::Base
     raise "Unkown vendor number data source #{data_source}" unless ["Alliance", "Fenix"].include? data_source 
 
     find_unique where(cross_reference_type: INTACCT_VENDOR_XREF, key: make_compound_key(data_source, vendor_number))
-  end
-
-  def self.find_lands_end_mid factory_code, hts
-    find_unique where(cross_reference_type: LANDS_END_MID, key: make_compound_key(factory_code, hts))
-  end
-
-  def self.create_lands_end_mid! factory_code, hts, mid
-    add_xref! LANDS_END_MID, make_compound_key(factory_code, hts), mid
   end
 
   def self.find_rl_fabric fabric

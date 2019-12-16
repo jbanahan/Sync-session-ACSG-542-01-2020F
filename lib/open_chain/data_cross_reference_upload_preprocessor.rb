@@ -5,7 +5,7 @@ module OpenChain; class DataCrossReferenceUploadPreprocessor
   
   def self.preprocessors
     {
-      "none" => lambda { |key, value| {key: key, value: value} },
+      "none" => lambda { |key, value| {key: text_value(key), value: text_value(value) } },
       "asce_mid" => lambda { |key, value| {key: key, value: date_value(value).try(:strftime, "%Y-%m-%d")} }
     }
   end

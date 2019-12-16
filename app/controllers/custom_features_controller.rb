@@ -377,23 +377,11 @@ class CustomFeaturesController < ApplicationController
   end
 
   def le_ci_load_upload
-    # Can't use generic since we're running this in a non-standard way
-    if params[:file_number].blank?
-      add_flash :errors, "You must enter a File Number."
-      redirect_to '/custom_features/le_ci_load'
-    else
-      f = CustomFile.new(:file_type=>LE_CI_UPLOAD,:uploaded_by=>current_user,:attached=>params[:attached])
-      action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>"Lands' End Commerical Invoice Upload",:lock_check=>false}) {
-        if params[:attached].nil?
-          add_flash :errors, "You must select a file to upload."
-        elsif f.save
-          OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator.new(f).delay.generate_and_email current_user, params[:file_number]
-          add_flash :notices, "Your file is being processed.  You'll receive an email with the CI Load file when it's done."
-        else
-          errors_to_flash f
-        end
-        redirect_to '/custom_features/le_ci_load'
-      }
+    additional_params = {file_number: params[:file_number]}
+    generic_upload(LE_CI_UPLOAD, "Lands' End Commerical Invoice Upload", "le_ci_load", additional_process_params: additional_params,  flash_notice: "Your file is being processed.  You'll receive an email with the CI Load file when it's done.") do |f|
+      if additional_params[:file_number].blank?
+        add_flash :errors, "You must enter a File Number."  
+      end
     end
   end
 

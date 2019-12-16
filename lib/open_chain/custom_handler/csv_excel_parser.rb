@@ -53,19 +53,26 @@ module OpenChain; module CustomHandler; module CsvExcelParser
     return true
   end
 
-  def date_value value
+  def date_value value, date_format: nil
     date = nil
     if value.is_a? String
-      #Convert any / to a hypehn
-      value = value.gsub('/', '-').strip
-      # Try yyyy-mm-dd then mm-dd-yyyy then mm-dd-yy
-      date = parse_and_validate_date(value, "%Y-%m-%d")
-      unless date
-        if value.split("-")[2].try(:length) == 4
-          date = parse_and_validate_date(value, "%m-%d-%Y")
-        else
-          date = parse_and_validate_date(value, "%m-%d-%y")
+
+      if date_format.nil?
+        #Convert any / to a hypehn
+        value = value.gsub('/', '-').strip
+        # Try yyyy-mm-dd then mm-dd-yyyy then mm-dd-yy
+        date = parse_and_validate_date(value, "%Y-%m-%d")
+        unless date
+          if value.split("-")[2].try(:length) == 4
+            date = parse_and_validate_date(value, "%m-%d-%Y")
+          else
+            date = parse_and_validate_date(value, "%m-%d-%y")
+          end
         end
+      else
+        # If we're providing an exact format, then there's no need to actually validate the date by
+        # checking for "recent" dates
+        date = Date.strptime(value, date_format) rescue nil
       end
     elsif value.acts_like?(:date) || value.acts_like?(:time)
       date = value.to_date

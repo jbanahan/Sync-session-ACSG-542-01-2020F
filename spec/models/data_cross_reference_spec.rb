@@ -343,20 +343,6 @@ describe DataCrossReference do
     end
   end
 
-  describe "create_lands_end_mid!" do
-    it "creates a lands end mid xref" do
-      DataCrossReference.create_lands_end_mid! 'factory', 'hts', 'MID'
-      expect(DataCrossReference.where(key: DataCrossReference.make_compound_key('factory', 'hts'), cross_reference_type: DataCrossReference::LANDS_END_MID).first.value).to eq "MID"
-    end
-  end
-
-  describe "find_lands_end_mid" do
-    it "finds a created lands end mid" do
-      DataCrossReference.create_lands_end_mid! 'factory', 'hts', 'MID'
-      expect(DataCrossReference.find_lands_end_mid 'factory', 'hts').to eq 'MID'
-    end
-  end
-
   context "one-time alert reference fields" do
     before do
       DataCrossReference.create!(cross_reference_type: "ota_reference_fields", key: "Entry~ent_entry_num")
@@ -416,7 +402,7 @@ describe DataCrossReference do
       it "returns information about xref screens sys-admin user has access to" do
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
         
-        expect(xrefs.size).to eq 9
+        expect(xrefs.size).to eq 11
         expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['shp_ci_load_goods'])).to eq title: "Shipment Entry Load Goods Descriptions", description: "Enter the customer number and corresponding default Goods Description.", identifier: "shp_ci_load_goods", key_label: "Customer Number", value_label: "Goods Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
@@ -426,6 +412,9 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['entry_mids'])).to eq title: "Manufacturer ID", description: "Manufacturer IDs used to validate entries", identifier: "entry_mids", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: true, upload_instructions: 'Spreadsheet should contain a header row, with MID Code in column A', allow_blank_value: false
         expect(strip_preproc(xrefs['inv_ci_load_cust'])).to eq title: "Invoice CI Load Customers", description: "Enter the customer number to enable sending Invoice CI Load data to Kewill.", identifier: "inv_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
         expect(strip_preproc(xrefs['asce_brand_xref'])).to eq title: "Ascena Brands", description: "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", identifier: "asce_brand_xref", key_label: "Brand Name", value_label: "Brand Abbrev", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false
+        expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
+        expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."
+        
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do
@@ -433,7 +422,17 @@ describe DataCrossReference do
         u = Factory(:user, groups: [g])
 
         xrefs = DataCrossReference.xref_edit_hash(u)
-        expect(xrefs.size).to eq 1
+        expect(xrefs.size).to eq 10
+        expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
+        expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
+        expect(strip_preproc(xrefs['shp_ci_load_goods'])).to eq title: "Shipment Entry Load Goods Descriptions", description: "Enter the customer number and corresponding default Goods Description.", identifier: "shp_ci_load_goods", key_label: "Customer Number", value_label: "Goods Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
+        expect(strip_preproc(xrefs['shp_entry_load_cust'])).to eq title: "Shipment Entry Load Customers", description: "Enter the customer number to enable sending Shipment data to Kewill.", identifier: "shp_entry_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
+        expect(strip_preproc(xrefs['shp_ci_load_cust'])).to eq title: "Shipment CI Load Customers", description: "Enter the customer number to enable sending Shipment CI Load data to Kewill.", identifier: "shp_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
+        expect(strip_preproc(xrefs['entry_mids'])).to eq title: "Manufacturer ID", description: "Manufacturer IDs used to validate entries", identifier: "entry_mids", key_label: "MID", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: true, upload_instructions: 'Spreadsheet should contain a header row, with MID Code in column A', allow_blank_value: false
+        expect(strip_preproc(xrefs['inv_ci_load_cust'])).to eq title: "Invoice CI Load Customers", description: "Enter the customer number to enable sending Invoice CI Load data to Kewill.", identifier: "inv_ci_load_cust", key_label: "Customer Number", value_label: "Value", allow_duplicate_keys: false, show_value_column: false, require_company: false
+        expect(strip_preproc(xrefs['asce_brand_xref'])).to eq title: "Ascena Brands", description: "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", identifier: "asce_brand_xref", key_label: "Brand Name", value_label: "Brand Abbrev", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false
+        expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
+        expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."
         expect(strip_preproc(xrefs['ca_hts_to_descr'])).to eq title: "Canada Customs Description Cross References", description: "Products automatically assigned a CA HTS are given the corresponding customs description.", identifier: 'ca_hts_to_descr', key_label: "Canada HTS", value_label: "Customs Description", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
       end
     end

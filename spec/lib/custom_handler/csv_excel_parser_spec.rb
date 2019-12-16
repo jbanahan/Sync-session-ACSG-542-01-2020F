@@ -103,10 +103,14 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       expect(subject.date_value "2016-2-1").to eq Date.new(2016, 2, 1)
     end
 
+    it "utilizes given date format" do
+      expect(subject.date_value '16-10-2019', date_format: "%d-%m-%Y").to eq Date.new(2019, 10, 16)
+    end
+
     context "with date validation enabled" do
       before :each do 
         # This logic is only live for non-test envs, to avoid having to update dates in the test files after they get too old
-        expect(MasterSetup).to receive(:test_env?).at_least(1).times.and_return false
+        allow(MasterSetup).to receive(:test_env?).and_return false
       end
 
       context "with really old max age date" do 
@@ -125,6 +129,10 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       
       it "returns nil if date is over max age" do
         expect(subject.date_value (Time.zone.now - 3.years).strftime("%Y-%m-%d")).to eq nil
+      end
+
+      it "skips date age validation if format given" do
+        expect(subject.date_value '16-10-2002', date_format: "%d-%m-%Y").to eq Date.new(2002, 10, 16)
       end
     end
   end

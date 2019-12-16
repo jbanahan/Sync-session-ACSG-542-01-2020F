@@ -5,6 +5,11 @@ describe OpenChain::DataCrossReferenceUploadPreprocessor do
         preproc = described_class.preprocessors["none"]
         expect(preproc.call("x", "y")).to eq({key: "x", value: "y"})
       end
+
+      it "forces values to text by default" do
+        preproc = described_class.preprocessors["none"]
+        expect(preproc.call(1.0, 3.2)).to eq({key: "1", value: "3.2"})
+      end
     end
 
     context "asce_mid" do
