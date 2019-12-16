@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
 
     def find_purchase_order importer, po_number, source_system_export_date
       purchase_order = nil
-      Lock.acquire(Lock::RL_PO_PARSER_LOCK, times: 3) do 
+      Lock.acquire("Order-#{po_number}") do 
         po = Order.where(importer_id: importer.id, customer_order_number: po_number).includes(:order_lines).first_or_create! do |order|
           order.order_number = order.create_unique_po_number
         end

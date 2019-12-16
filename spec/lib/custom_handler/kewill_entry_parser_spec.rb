@@ -1010,7 +1010,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "uses cross process locking / per entry locking" do
-      expect(Lock).to receive(:acquire).with(Lock::ALLIANCE_PARSER).and_yield
+      expect(Lock).to receive(:acquire).with("Entry-Alliance-12345").and_yield
       expect(Lock).to receive(:acquire).with("Company-Customs Management-TEST").and_yield
       expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
 

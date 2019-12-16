@@ -254,7 +254,7 @@ module OpenChain; class FenixParser
 
   def update_lvs_dates parent_entry, child_transaction, import_country = nil
     child_entry = nil
-    Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do
+    Lock.acquire("Entry-#{SOURCE_CODE}-#{child_transaction}") do
       # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
       # LV is the fenix entry type for Low-Value entries.
       child_entry = Entry.where(:entry_number => child_transaction, :source_system => SOURCE_CODE).first_or_create! :import_country => import_country, entry_type: "LV"
@@ -708,7 +708,7 @@ module OpenChain; class FenixParser
     entry = nil
     importer = nil
     shell_entry = nil
-    Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
+    Lock.acquire("Entry-#{SOURCE_CODE}-#{file_number}") do 
       break if Entry.purged? SOURCE_CODE, file_number, source_system_export_date
 
       entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
@@ -833,7 +833,7 @@ module OpenChain; class FenixParser
 
     accumulated_entry_dates.each do |entry_number, dates|
       entry = nil
-      Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
+      Lock.acquire("Entry-#{SOURCE_CODE}-#{entry_number}") do 
         # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
         entry = Entry.where(:entry_number => entry_number, :source_system => SOURCE_CODE).first_or_create! :import_country => canada
       end

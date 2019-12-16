@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
 
     def find_purchase_order importer, po_number, source_system_export_date, log
       purchase_order = nil
-      Lock.acquire(Lock::RL_PO_PARSER_LOCK, times: 3) do 
+      Lock.acquire("Order-#{po_number}") do 
         po = Order.where(importer_id: importer.id, order_number: po_number, customer_order_number: po_number).includes(:order_lines).first_or_create!
         log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, po_number, module_type:Order.to_s, module_id:po.id
         

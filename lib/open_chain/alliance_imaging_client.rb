@@ -155,7 +155,7 @@ class OpenChain::AllianceImagingClient
       entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first
       if entry.nil?
         # Use the same lock name as the Fenix parser so we ensure we're not double creating a file
-        Lock.acquire(Lock::FENIX_PARSER_LOCK) do 
+        Lock.acquire("Entry-#{source_system}-#{hsh["file_number"]}") do 
           entry = Entry.where(:entry_number=>hsh['file_number'], :source_system=>source_system).first_or_create!(:file_logged_date => Time.zone.now)
         end
       end
@@ -179,7 +179,7 @@ class OpenChain::AllianceImagingClient
     else
       entry = Entry.where(source_system: source_system, broker_reference: hsh["file_number"]).first
       if entry.nil?
-        Lock.acquire(Lock::ALLIANCE_PARSER) do 
+        Lock.acquire("Entry-#{source_system}-#{hsh["file_number"]}") do 
           # I'm purposefully leaving out the file logged date setting here for Kewill entries...this value comes from an actual field in Kewill, so don't
           # set it.
           entry = Entry.where(source_system: source_system, broker_reference: hsh["file_number"]).first_or_create!
@@ -259,7 +259,7 @@ class OpenChain::AllianceImagingClient
     Attachment.add_original_filename_method t, filename
 
     entry = nil
-    Lock.acquire(Lock::FENIX_PARSER_LOCK, times: 3) do 
+    Lock.acquire("Entry-#{OpenChain::FenixParser::SOURCE_CODE}-#{file_data['file_number']}") do 
       entry = Entry.where(:entry_number=>file_data['file_number'], :source_system=>OpenChain::FenixParser::SOURCE_CODE).first_or_create!(:file_logged_date => Time.zone.now)
     end
 

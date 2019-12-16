@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(sf.last_file_path).to eq('isf_2435412_20210914_20131118145402586.1384804944.xml')
     end
     it "should lock entry for update" do
-      expect(Lock).to receive(:acquire).with(Lock::ISF_PARSER_LOCK, times:3).and_yield()
+      expect(Lock).to receive(:acquire).with("SecurityFiling-Kewill-1870446").and_yield()
       expect(Lock).to receive(:with_lock_retry).with(kind_of(SecurityFiling)).and_yield()
 
       subject.parse_file xml_data, log

@@ -121,6 +121,7 @@ describe OpenChain::AllianceImagingClient do
     it 'should generate shell entry records when an entry is missing and the source system is Fenix' do
       # These are the only hash values we should currently expect from the Fenix imaging monitoring process
       @hash = {"source_system" => "Fenix", "file_number" => "123456", "doc_date" => Time.now, "file_name"=>"file.pdf", "doc_desc" => "Source Testing"}
+      expect(Lock).to receive(:acquire).with("Entry-Fenix-123456").and_yield
       r = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash, user
       entry = r[:entry]
       attachment = r[:attachment]
@@ -138,6 +139,7 @@ describe OpenChain::AllianceImagingClient do
 
     it 'should generate shell entry records when an entry is missing and the source system is Alliance' do
       @e1.destroy
+      expect(Lock).to receive(:acquire).with("Entry-Alliance-123456").and_yield
       r = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash, user
 
       entry = r[:entry]
@@ -533,7 +535,7 @@ describe OpenChain::AllianceImagingClient do
 
     it "saves attachment data to entry" do
       now = Time.zone.parse("2018-08-01 12:00")
-      expect(Lock).to receive(:acquire).with(Lock::FENIX_PARSER_LOCK, times: 3).and_yield
+      expect(Lock).to receive(:acquire).with("Entry-Fenix-11981001795105").and_yield
       expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
       r = nil
       Timecop.freeze(now) do 

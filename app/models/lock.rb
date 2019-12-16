@@ -5,12 +5,7 @@ require 'concurrent'
 
 class Lock
 
-  FENIX_PARSER_LOCK ||= 'FenixParser'
   UPGRADE_LOCK ||= 'Upgrade'
-  ISF_PARSER_LOCK ||= 'IsfParser'
-  RL_PO_PARSER_LOCK ||= 'RLPoParser'
-  ALLIANCE_PARSER ||= 'AllianceParser'
-  FENIX_INVOICE_PARSER_LOCK ||= 'FenixInvoiceParser'
   INTACCT_DETAILS_PARSER ||= 'IntacctParser'
   TRADE_CARD_PARSER ||= 'TradecardParser'
   ALLIANCE_DAY_END_PROCESS ||= 'AllianceDayEnd'

@@ -246,7 +246,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # For some reason there's some rare cases where an entry comes over with no file number...ignore them.
       return nil if file_no.blank? || file_no == "0"
 
-      Lock.acquire(Lock::ALLIANCE_PARSER) do
+      Lock.acquire("Entry-#{Entry::KEWILL_SOURCE_SYSTEM}-#{file_no}") do
         # Make sure the entry has not been purged. We want to allow for re-using file numbers, so we'll assume that any data exported from the source system AFTER the purge record was created
         # means that the data is for a totally new entry and not for the one that was purged
         break if Entry.purged? Entry::KEWILL_SOURCE_SYSTEM, file_no, extract_time
