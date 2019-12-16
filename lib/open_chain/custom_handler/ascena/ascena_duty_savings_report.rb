@@ -71,11 +71,12 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   def run fiscal_month
     wb, summaries = create_workbook
     first_sale = XlsMaker.create_sheet wb, "First Sale", brand_headers
-    data = XlsMaker.create_sheet wb, "Data", data_headers
+    data_sheet = XlsMaker.create_sheet wb, "Data", data_headers
     
-    raw_result_set = generate_data_tab data, fiscal_month.start_date, fiscal_month.end_date
+    raw_result_set = Query.new.run(cust_numbers, fiscal_month.start_date, fiscal_month.end_date)
     summary_data = generate_summary_data raw_result_set
     first_sale_data = generate_first_sale_data raw_result_set
+    generate_data_tab raw_result_set, data_sheet 
     generate_summary_tabs summaries, summary_data
     generate_first_sale_tab first_sale, first_sale_data
     cust_names = self.class.cust_nums_to_short_names(@cust_numbers)
@@ -97,19 +98,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     [wb, sheets]
   end
 
-  def generate_data_tab sheet, start_date, end_date
-    result_set = Query.new.run(cust_numbers, start_date, end_date)
+  def generate_data_tab result_set, sheet
     column_widths = []
     row_number = 0
     formats = data_tab_formats
     result_set.each { |row| XlsMaker.add_body_row sheet, (row_number += 1), row.to_a[0..59], column_widths, true, formats: formats }
-    result_set
+    nil
   end
 
   def data_tab_formats
     columns = Array.new(60, nil)
     currency_columns = [:original_fob_unit_value, :original_fob_entered_value, :duty, :first_sale_difference, :first_sale_duty_savings,
-                        :price_before_discounts, :entered_value, :air_sea_discount, :air_sea_per_unit_savings, :air_sea_duty_savings, :early_payment_discount, 
+                        :price_before_discounts, :line_entered_value, :air_sea_discount, :air_sea_per_unit_savings, :air_sea_duty_savings, :early_payment_discount, 
                         :epd_per_unit_savings, :epd_duty_savings, :trade_discount, :trade_discount_per_unit_savings, :trade_discount_duty_savings, :spi_duty_savings, 
                         :hanger_duty_savings, :mp_vs_air_sea, :mp_vs_epd, :mp_vs_trade_discount, :mp_vs_air_sea_epd_trade, :first_sale_savings, :air_sea_savings, :epd_savings, 
                         :trade_discount_savings]
@@ -128,28 +128,30 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       if brand_map.keys.member?(brand)
         order_type = row[:order_type].to_s.strip.upcase == "NONAGS" ? "NONAGS" : "AGS"
 
-        first_sale_brand_summary[order_type][brand] ||= {vendor_invoice: BigDecimal("0"), entered_value: BigDecimal("0"), total_entered_value: BigDecimal("0"), duty_savings: BigDecimal("0")}
+        first_sale_brand_summary[order_type][brand] ||= {vendor_invoice: BigDecimal("0"), entered_value_7501: BigDecimal("0"), total_entered_value_7501: BigDecimal("0"), duty_savings: BigDecimal("0")}
         bs = first_sale_brand_summary[order_type][brand]
         savings_set = row.duty_savings
         savings_set.each do |savings|
           calculations = savings[:calculations]
           if savings[:savings_type] == :first_sale
-            bs[:vendor_invoice] += row[:contract_amount]
-            bs[:entered_value] += row[:entered_value]
+            if !row.special_tariff?
+              bs[:vendor_invoice] += row[:contract_amount]
+              bs[:entered_value_7501] += row[:cil_entered_value_7501]
+              # For the total entered value, consider the first sale as the entered value on first sale lines
+              # Also: For some reason Ascena expects to see the non-dutiable amount as part of the "Total Brand FOB Receipts"
+              bs[:total_entered_value_7501] += calculations[:calculated_invoice_value] + (row.ann? ? BigDecimal("0") : row[:non_dutiable_amount])
+            end
             bs[:duty_savings] += calculations[:savings]
-            # For the total entered value, consider the first sale as the entered value on first sale lines
-            # Also: For some reason Ascena expects to see the non-dutiable amount as part of the "Total Brand FOB Receipts"
-            bs[:total_entered_value] += calculations[:calculated_invoice_value] + (row.ascena? ? row[:non_dutiable_amount] : 0)
-          elsif savings[:savings_type] != :line
-             bs[:total_entered_value] += row[:entered_value] + (row.ascena? ? row[:non_dutiable_amount] : 0)
+          elsif savings[:savings_type] != :line && !row.special_tariff?
+            bs[:total_entered_value_7501] += row[:cil_entered_value_7501] + (row.ann? ? BigDecimal("0") : row[:non_dutiable_amount])
           end
         end
-        bs[:total_entered_value] += row[:entered_value] if savings_set.empty?
+        bs[:total_entered_value_7501] += row[:cil_entered_value_7501] if savings_set.empty? && !row.special_tariff?
       end
     end
     # See note in #initialize
     ann_brand_summary = first_sale_brand_summary["NONAGS"][ANN_CUST_NUM]
-    ann_brand_summary[:total_entered_value] = @ann_entry_total_calculated_invoice_value if ann_brand_summary
+    ann_brand_summary[:total_entered_value_7501] = @ann_entry_total_calculated_invoice_value if ann_brand_summary
       
     first_sale_brand_summary
   end
@@ -170,16 +172,16 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         # Now record any savings
         title = savings[:savings_title]
         if !title.blank?
-          summary[title] ||= {usage_count: 0, entered_value: BigDecimal("0"), duty_paid: BigDecimal("0"), calculated_invoice_value: BigDecimal("0"), calculated_duty: BigDecimal("0"), duty_savings: BigDecimal("0")}
+          summary[title] ||= {usage_count: 0, entered_value_7501: BigDecimal("0"), duty_paid: BigDecimal("0"), calculated_invoice_value: BigDecimal("0"), calculated_duty: BigDecimal("0"), duty_savings: BigDecimal("0")}
           
           s = summary[title]
           broker_reference = row[:broker_reference]
           
           calculations = savings[:calculations]
           s[:usage_count] += 1 unless entries[title].include?(broker_reference)
-          s[:entered_value] += row[:entered_value]
+          s[:entered_value_7501] += row[:cil_entered_value_7501] unless row.special_tariff?
           s[:duty_paid] += row[:duty_amount]
-          s[:calculated_invoice_value] += calculations[:calculated_invoice_value]
+          s[:calculated_invoice_value] += calculations[:calculated_invoice_value] unless row.special_tariff?
           s[:calculated_duty] += calculations[:calculated_duty]
           s[:duty_savings] += calculations[:savings]
           entries[title] << broker_reference
@@ -215,7 +217,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         savings_percentage = (BigDecimal("1") - raw_percentage)
       end
 
-      row = [title, summary_data[:usage_count], summary_data[:entered_value], summary_data[:duty_paid], summary_data[:calculated_invoice_value], summary_data[:calculated_duty], summary_data[:duty_savings], savings_percentage]
+      row = [title, summary_data[:usage_count], summary_data[:entered_value_7501], summary_data[:duty_paid], summary_data[:calculated_invoice_value], summary_data[:calculated_duty], summary_data[:duty_savings], savings_percentage]
 
       XlsMaker.add_body_row sheet, (row_number += 1), row, column_widths, false, formats: [nil, nil] + Array.new(5, CURRENCY_FORMAT) + [PERCENTAGE_FORMAT]
     end
@@ -234,13 +236,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   def generate_first_sale_tab sheet, brand_summary
     row = 0
     column_widths = []
-    formats =  Array.new(6, nil).zip(Array.new(6, CURRENCY_FORMAT)).flatten
+    formats =  Array.new(7, nil).zip(Array.new(7, CURRENCY_FORMAT)).flatten
     [["AGS", brand_summary["AGS"]], ["NONAGS", brand_summary["NONAGS"]]].each do |summary_type, summary|
      
       XlsMaker.add_body_row sheet, (row += 1), first_sale_brand_summary_row(summary, summary_type, "Vendor Invoice", :vendor_invoice), column_widths, false, formats: formats
-      XlsMaker.add_body_row sheet, (row += 1), first_sale_brand_summary_row(summary, summary_type, "Entered Value", :entered_value), column_widths, false, formats: formats
+      XlsMaker.add_body_row sheet, (row += 1), first_sale_brand_summary_row(summary, summary_type, "Entered Value", :entered_value_7501), column_widths, false, formats: formats
       XlsMaker.add_body_row sheet, (row += 1), first_sale_brand_summary_row(summary, summary_type, "Duty Savings", :duty_savings), column_widths, false, formats: formats
-      XlsMaker.add_body_row sheet, (row += 1), first_sale_brand_summary_row(summary, summary_type, "Total Brand FOB Receipts", :total_entered_value), column_widths, false, formats: formats
+      XlsMaker.add_body_row sheet, (row += 1), first_sale_brand_summary_row(summary, summary_type, "Total Brand FOB Receipts", :total_entered_value_7501), column_widths, false, formats: formats
       row+=1
     end
   end
@@ -275,15 +277,19 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
   class Wrapper < RowWrapper
     attr_accessor :official_tariff
 
-    FIELD_MAP = {broker_reference: 0, customer_name: 1, first_sale: 2, vendor: 3, factory: 4, related_parties: 5, transport_mode_code: 6, fiscal_month: 7, release_date: 8, filer: 9, 
-                 entry_number: 10, custom_line_number: 11, invoice_number: 12, part_number: 13, po_number: 14, product_line: 15, order_type: 16, country_origin_code: 17, 
-                 country_export_code: 18, arrival_date: 19, import_date: 20, arrival_port: 21, entry_port: 22, hts_code: 23, duty_rate: 24, goods_description: 25, unit_price: 26, 
-                 quantity: 27, unit_of_measure: 28, original_fob_unit_value: 29, original_fob_entered_value: 30, duty: 31, first_sale_difference: 32,first_sale_duty_savings: 33, 
-                 first_sale_margin_percent: 34, price_before_discounts: 35, entered_value: 36, air_sea_discount: 37, air_sea_per_unit_savings: 38, air_sea_duty_savings: 39, early_payment_discount: 40, 
-                 epd_per_unit_savings: 41, epd_duty_savings: 42, trade_discount: 43, trade_discount_per_unit_savings: 44, trade_discount_duty_savings: 45, spi: 46, 
-                 original_duty_rate: 47,spi_duty_savings: 48, fish_and_wildlife: 49, hanger_duty_savings: 50, mp_vs_air_sea: 51, mp_vs_epd: 52, mp_vs_trade_discount: 53, 
-                 mp_vs_air_sea_epd_trade: 54, first_sale_savings: 55, air_sea_savings: 56, epd_savings: 57, trade_discount_savings: 58, applied_discount: 59, customer_number: 60, contract_amount: 61, 
-                 non_dutiable_amount: 62, value: 63, duty_amount: 64, miscellaneous_discount: 65, other_amount: 66, air_sea_discount_attrib: 67, middleman_charge: 68, import_country_id: 69, e_id: 70, cil_id: 71}
+    FIELD_MAP = {broker_reference: 0, customer_name: 1, first_sale: 2, vendor: 3, factory: 4, related_parties: 5, transport_mode_code: 6, 
+                 fiscal_month: 7, release_date: 8, filer: 9, entry_number: 10, custom_line_number: 11, invoice_number: 12, part_number: 13, 
+                 po_number: 14, product_line: 15, order_type: 16, country_origin_code: 17, country_export_code: 18, arrival_date: 19, 
+                 import_date: 20, arrival_port: 21, entry_port: 22, hts_code: 23, duty_rate: 24, goods_description: 25, unit_price: 26, 
+                 quantity: 27, unit_of_measure: 28, original_fob_unit_value: 29, original_fob_entered_value: 30, duty: 31, first_sale_difference: 32,
+                 first_sale_duty_savings: 33, first_sale_margin_percent: 34, price_before_discounts: 35, line_entered_value: 36, air_sea_discount: 37, 
+                 air_sea_per_unit_savings: 38, air_sea_duty_savings: 39, early_payment_discount: 40, epd_per_unit_savings: 41, epd_duty_savings: 42, 
+                 trade_discount: 43, trade_discount_per_unit_savings: 44, trade_discount_duty_savings: 45, spi: 46, original_duty_rate: 47,
+                 spi_duty_savings: 48, fish_and_wildlife: 49, hanger_duty_savings: 50, mp_vs_air_sea: 51, mp_vs_epd: 52, mp_vs_trade_discount: 53, 
+                 mp_vs_air_sea_epd_trade: 54, first_sale_savings: 55, air_sea_savings: 56, epd_savings: 57, trade_discount_savings: 58, 
+                 applied_discount: 59, e_id: 60, import_country_id: 61, customer_number: 62, cil_id: 63, contract_amount: 64, non_dutiable_amount: 65, 
+                 value: 66, quantity_attrib: 67, unit_of_measure_attrib: 68, cil_entered_value_7501: 69, miscellaneous_discount: 70, other_amount: 71,
+                 duty_amount: 72, special_tariff: 73, air_sea_discount_attrib: 74, middleman_charge: 75, early_payment_discount_attrib: 76, trade_discount_attrib: 77}
 
     def initialize row
       super row, FIELD_MAP
@@ -303,6 +309,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def first_sale?
       self[:contract_amount] > 0
+    end
+
+    def special_tariff?
+      !!self[:special_tariff]
     end
 
     # For Ann, cil.other_amount is stored as a negative value
@@ -329,7 +339,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       if types.empty?
         # No duty savings, so just put values from the actual entry back into the calculations so the data has something in the display
         # columns for those.
-        calculations = {calculated_invoice_value: row[:entered_value], calculated_duty: row[:duty_amount], savings: 0}
+        calculated_invoice_value = !row.special_tariff? ? row[:cil_entered_value_7501] : BigDecimal("0")
+        calculations = {calculated_invoice_value: calculated_invoice_value , calculated_duty: row[:duty_amount], savings: 0}
         savings_set << {savings_type: nil, savings_title: nil, calculations: calculations}
       else
         types.each do |t|
@@ -355,18 +366,20 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
 
     def calculate_first_sale
-      calculated_invoice_value = row[:contract_amount]
-      calculated_duty = row.ascena? ? (calculated_invoice_value * row[:duty_rate]).round(2) : row[:duty] + row[:first_sale_savings]
+      initial_invoice_value = row[:contract_amount]
+      calculated_invoice_value = !row.special_tariff? ? initial_invoice_value : BigDecimal("0")
+      calculated_duty = row.ann? ? (row[:duty] + row[:first_sale_savings]) : (initial_invoice_value * row[:duty_rate]).round(2)
       savings = row[:first_sale_duty_savings].round(2)
       {calculated_invoice_value: calculated_invoice_value, calculated_duty: calculated_duty, savings: savings}
     end
     
     def calculate_spi
       non_spi_duty_rate = row.official_tariff.try(:common_rate_decimal)
-      calculated_invoice_value = row[:entered_value]
+      initial_invoice_value = row[:cil_entered_value_7501]
+      calculated_invoice_value = !row.special_tariff? ? initial_invoice_value : BigDecimal("0")
       # If there's an actual duty rate for this hts, then we can calculate savings
       if non_spi_duty_rate.to_f > 0
-        calculated_duty = (calculated_invoice_value * non_spi_duty_rate).round(2)
+        calculated_duty = (initial_invoice_value * non_spi_duty_rate).round(2)
         savings =  spi_suspended? ? row[:duty_amount] : calculated_duty - row[:duty_amount]
 
         {calculated_invoice_value: calculated_invoice_value, calculated_duty: calculated_duty, savings: savings}
@@ -384,22 +397,23 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     # ActualEntryTotalCalculator#combine_ann_savings will also need to change
 
     def calculate_air_sea_differential
-      if row.ascena?
-        calculated_invoice_value = row[:non_dutiable_amount] + row[:entered_value]
-        calculated_duty = (calculated_invoice_value * row[:duty_rate]).round(2)
-        savings = calculated_duty - row[:duty_amount]
-        {calculated_invoice_value: calculated_invoice_value, calculated_duty: calculated_duty, savings: savings}
-      else
-        calculated_invoice_value = row[:price_before_discounts]
+      if row.ann?
+        calculated_invoice_value = !row.special_tariff? ? row[:price_before_discounts] : BigDecimal("0")
         calculated_duty = row[:duty] + row[:air_sea_duty_savings]
         savings = row[:air_sea_duty_savings]
+        {calculated_invoice_value: calculated_invoice_value, calculated_duty: calculated_duty, savings: savings}
+      else
+        initial_invoice_value = row[:non_dutiable_amount] + row[:cil_entered_value_7501]
+        calculated_invoice_value = !row.special_tariff? ? initial_invoice_value : BigDecimal("0")
+        calculated_duty = (initial_invoice_value * row[:duty_rate]).round(2)
+        savings = calculated_duty - row[:duty_amount]
         {calculated_invoice_value: calculated_invoice_value, calculated_duty: calculated_duty, savings: savings}
       end
     end
 
     # Ann only
     def calculate_epd
-      calculated_invoice_value = row[:price_before_discounts]
+      calculated_invoice_value = !row.special_tariff? ? row[:price_before_discounts] : BigDecimal("0")
       calculated_duty = row[:duty] + row[:epd_duty_savings]
       savings = row[:epd_duty_savings]
       {calculated_invoice_value: calculated_invoice_value, calculated_duty: calculated_duty, savings: savings}
@@ -407,7 +421,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     # Ann only
     def calculate_trade_discount
-      calculated_invoice_value = row[:price_before_discounts]
+      calculated_invoice_value = !row.special_tariff? ? row[:price_before_discounts] : BigDecimal("0")
       calculated_duty = row[:duty] + row[:trade_discount_duty_savings]
       savings = row[:trade_discount_duty_savings]
       {calculated_invoice_value: calculated_invoice_value, calculated_duty: calculated_duty, savings: savings}
@@ -444,10 +458,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
     
     def air_sea_differential?
-      if row.ascena?
-        row[:transport_mode_code].to_s == "40" && row[:non_dutiable_amount] > 0
-      else
+      if row.ann?
         row[:air_sea_discount] > 0
+      else
+        row[:transport_mode_code].to_s == "40" && row[:non_dutiable_amount] > 0
       end
     end
 
@@ -460,7 +474,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
 
     def other?
-      row.ascena? && row[:transport_mode_code].to_s != "40" && row[:non_dutiable_amount].to_f > 0
+      !row.ann? && row[:transport_mode_code].to_s != "40" && row[:non_dutiable_amount].to_f > 0
     end
   end
 
@@ -474,10 +488,10 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def fill_totals
       actual_entry_totals = savings_set.find{ |s| s[:savings_type] == :line}
-      if row.ascena?
-        fill(actual_entry_totals, ascena_discounts(row))
-      else
+      if row.ann?
         fill(actual_entry_totals, ann_discounts(row), [:air_sea, :trade, :epd])
+      else
+        fill(actual_entry_totals, ascena_discounts(row))
       end
       nil
     end
@@ -554,41 +568,45 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def fill_missing_fields
       load_helpers
-      invoice_lines = Set.new
       results.each do |row|
         row.official_tariff = official_tariff row
         
         e_id = row[:e_id]
         cil_id =row[:cil_id]
-        # Ordering of these assignments can be important!
+        # Ordering of these assignments important where noted
         row[:first_sale] = inv_field_helper.fields[cil_id][:cil_first_sale] ? "Y" : "N"
         row[:filer] = ent_field_helper.fields[e_id][:ent_entry_filer]
         row[:arrival_port] = ent_field_helper.fields[e_id][:ent_unlading_port_name]
         row[:entry_port] = ent_field_helper.fields[e_id][:ent_entry_port_name]
-        row[:original_fob_unit_value] = inv_field_helper.fields[cil_id][:cil_contract_amount_unit_price]
-        row[:duty] = inv_field_helper.fields[cil_id][:cil_total_duty].try(:round, 2)
+        row[:quantity] = quantity row
+        row[:unit_of_measure] = unit_of_measure row
+        row[:original_fob_unit_value] = original_fob_unit_value row, cil_id
+        row[:original_fob_entered_value] = original_fob_entered_value row
         row[:first_sale_difference] = first_sale_difference row, cil_id
+        row[:line_entered_value] = line_entered_value row
         row[:price_before_discounts] = price_before_discounts row
-        row[:first_sale_duty_savings] = first_sale_duty_savings row, cil_id
+        row[:first_sale_duty_savings] = first_sale_duty_savings row
         row[:first_sale_margin_percent] = first_sale_margin_percent row, cil_id
         row[:air_sea_discount] = air_sea_discount row
-        row[:air_sea_per_unit_savings] = air_sea_per_unit_savings row
-        row[:air_sea_duty_savings] = air_sea_duty_savings row
+        row[:air_sea_per_unit_savings] = air_sea_per_unit_savings row # uses air_sea_discount
+        row[:air_sea_duty_savings] = air_sea_duty_savings row # uses air_sea_discount
+        row[:early_payment_discount] = early_payment_discount row
+        row[:epd_per_unit_savings] = epd_per_unit_savings row # uses early_payment_discount
+        row[:epd_duty_savings] = epd_duty_savings row # uses early_payment_discount
+        row[:trade_discount] = trade_discount row
+        row[:trade_discount_per_unit_savings] = trade_discount_per_unit_savings row #uses trade_discount
+        row[:trade_discount_duty_savings] = trade_discount_duty_savings row # uses trade_discount
         row[:original_duty_rate] = original_duty_rate row
         row[:spi_duty_savings] = spi_duty_savings row, cil_id
-        row[:mp_vs_air_sea] = row[:first_sale_duty_savings] - row[:air_sea_duty_savings]
-        row[:mp_vs_epd] = mp_vs_epd row
-        row[:mp_vs_trade_discount] = mp_vs_trade_discount row
-        row[:mp_vs_air_sea_epd_trade] = row[:first_sale_duty_savings] - (row[:air_sea_duty_savings] + row[:epd_duty_savings] + row[:trade_discount_duty_savings])
+        row[:mp_vs_air_sea] = mp_vs_air_sea row # uses first_sale_duty_savings, air_sea_duty_savings
+        row[:mp_vs_epd] = mp_vs_epd row # uses first_sale_duty_savings, epd_duty_savings
+        row[:mp_vs_trade_discount] = mp_vs_trade_discount row # uses first_sale_duty_savings, trade_discount_duty_savings
+        row[:mp_vs_air_sea_epd_trade] = mp_vs_air_sea_epd_trade row # uses first_sale_duty_savings, air_sea_duty_savings, epd_duty_savings, trade_discount_duty_savings
         row[:first_sale_savings] = row[:first_sale_duty_savings]
-        row[:air_sea_savings] = air_sea_savings row
-        row[:epd_savings] = epd_savings row
-        row[:trade_discount_savings] = trade_discount_savings row
+        row[:air_sea_savings] = air_sea_savings row #uses mp_vs_air_sea
+        row[:epd_savings] = epd_savings row # uses mp_vs_epd
+        row[:trade_discount_savings] = trade_discount_savings row # uses mp_vs_trade_discount
         row[:applied_discount] = applied_discount row
-
-        # apply to all but the first appearance of the invoice line
-        zero_fields(row) if invoice_lines.member? row[:cil_id]
-        invoice_lines << row[:cil_id]
       end
 
       nil
@@ -604,65 +622,116 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       field.nil? ? BigDecimal("0") : field
     end
 
-    def first_sale_duty_savings row, cil_id
-      if row.ascena?
-        inv_field_helper.fields[cil_id][:cil_first_sale_savings]
-      else
-        row.first_sale? ? ((row[:contract_amount] - row[:entered_value]) * row[:duty_rate]).round(2) : BigDecimal("0")
-      end
+    def quantity row
+      !row.special_tariff? ? row[:quantity_attrib] : BigDecimal("0")
+    end
+
+    def unit_of_measure row
+      !row.special_tariff? ? row[:unit_of_measure_attrib] : nil
+    end
+
+    def original_fob_unit_value row, cil_id
+      !row.special_tariff? ? inv_field_helper.fields[cil_id][:cil_contract_amount_unit_price] : BigDecimal("0")
+    end
+
+    def original_fob_entered_value row
+      !row.special_tariff? && row[:contract_amount] > 0 ? row[:contract_amount] : BigDecimal("0")
+    end
+
+    def first_sale_duty_savings row
+      row.first_sale? ? ((row[:contract_amount] - row[:cil_entered_value_7501]) * row[:duty_rate]).round(2) : BigDecimal("0")
     end
 
     def first_sale_difference row, cil_id
-      if row.ascena?
-        inv_field_helper.fields[cil_id][:cil_first_sale_difference]
+      return BigDecimal("0") unless row.first_sale?
+      
+      if row.ann?
+        !row.special_tariff? ? row[:middleman_charge] : BigDecimal("0")
       else
-        row.first_sale? ? row[:middleman_charge] : BigDecimal("0")
+        !row.special_tariff? ? (row[:contract_amount] - row[:cil_entered_value_7501]) : BigDecimal("0")
       end
     end
 
+    def line_entered_value row
+      !row.special_tariff? ? row[:cil_entered_value_7501] : BigDecimal("0")
+    end
+
     def price_before_discounts row
-      if row.ascena?
-        row[:value] + row[:first_sale_difference]
+      if row.ann?
+        !row.special_tariff? ? row[:value] : BigDecimal("0")
       else
-        row[:value]
+        !row.special_tariff? ? (row[:value] + row[:first_sale_difference]) : BigDecimal("0")
       end
     end
 
     def first_sale_margin_percent row, cil_id
-      if row.ascena?
-        row.first_sale? ? (trap_null(inv_field_helper.fields[cil_id][:cil_first_sale_difference]) / row[:contract_amount]).round(2) : BigDecimal("0")
+      return BigDecimal("0") unless row.first_sale?
+      
+      if row.ann?
+        (!row.special_tariff? && row.first_sale?) ? (row[:middleman_charge] / row[:contract_amount]).round(2) : BigDecimal("0")
       else
-        row.first_sale? ? (row[:middleman_charge] / row[:contract_amount]).round(2) : BigDecimal("0")
+        fs_difference = trap_null(inv_field_helper.fields[cil_id][:cil_first_sale_difference])
+        (!row.special_tariff? && fs_difference > 0) ? (fs_difference / row[:contract_amount]).round(2) : BigDecimal("0")
       end
     end
 
     def air_sea_discount row
+      return BigDecimal("0") if row.special_tariff?
+      
       if row.ann?
         row[:air_sea_discount_attrib]
       else
-        non_dutiable_amount = row[:non_dutiable_amount]
-        (row[:transport_mode_code] == "40" && non_dutiable_amount > 0) ? non_dutiable_amount : BigDecimal("0")
+        (row[:transport_mode_code] == "40" && row[:non_dutiable_amount] > 0) ? row[:non_dutiable_amount] : BigDecimal("0")
       end
     end
 
     def air_sea_per_unit_savings row
       quantity = row[:quantity]
-      if row.ann? && quantity != 0
-        (row[:air_sea_discount_attrib] / quantity).round(2)
-      else
+      if row.ann? 
+        (!row.special_tariff? && quantity != 0) ? (row[:air_sea_discount] / quantity).round(2) : BigDecimal("0")
+      else 
         non_dutiable_amount = row[:non_dutiable_amount]
-        (row[:transport_mode_code] == "40" && non_dutiable_amount > 0 && quantity != 0) ? (non_dutiable_amount / quantity).round(2) : BigDecimal("0")
+        if !row.special_tariff? && row[:transport_mode_code] == "40" && non_dutiable_amount > 0 && quantity != 0
+          (non_dutiable_amount / quantity).round(2)
+        else
+          BigDecimal("0")
+        end
       end
     end
 
     def air_sea_duty_savings row
       duty_rate = row[:duty_rate]
       if row.ann?
-        (row[:air_sea_discount_attrib] * duty_rate).round(2)
+        (row[:air_sea_discount] * duty_rate).round(2)
       else
         non_dutiable_amount = row[:non_dutiable_amount]
         (row[:transport_mode_code] == "40" && non_dutiable_amount > 0) ? (non_dutiable_amount * duty_rate).round(2) : BigDecimal("0")
       end
+    end
+
+    def early_payment_discount row
+      row.ann? && !row.special_tariff? ? row[:early_payment_discount_attrib] : BigDecimal("0")
+    end
+
+    def epd_per_unit_savings row
+      row.ann? && !row.special_tariff? ? (row[:early_payment_discount] / row[:quantity]).round(2) : BigDecimal("0")
+    end
+
+    def epd_duty_savings row
+      row.ann? && !row.special_tariff? ? (row[:early_payment_discount] * row[:duty_rate]).round(2) : BigDecimal("0")
+    end
+
+    def trade_discount row
+      row.ann? && !row.special_tariff? ? row[:trade_discount_attrib] : BigDecimal("0")
+    end
+
+    def trade_discount_per_unit_savings row
+      return 0 if row[:quantity].zero?
+      row.ann? && !row.special_tariff? ? (row[:trade_discount] / row[:quantity]).round(2) : BigDecimal("0")
+    end
+
+    def trade_discount_duty_savings row
+      row.ann? && !row.special_tariff? ? (row[:trade_discount] * row[:duty_rate]).round(2) : BigDecimal("0")
     end
 
     def original_duty_rate row
@@ -672,13 +741,17 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def spi_duty_savings row, cil_id
       ot = row.official_tariff
-      if row[:spi].present? && ot
+      if row[:spi].present? && ot && !row.special_tariff?
         common_rate = guess_common_rate_decimal(ot)
         if common_rate > 0
           return (row[:price_before_discounts] * trap_null(common_rate) - trap_null(inv_field_helper.fields[cil_id][:cil_total_duty])).round(2)
         end
       end
       BigDecimal("0")
+    end
+
+    def mp_vs_air_sea row
+      !row.special_tariff? ? row[:first_sale_duty_savings] - row[:air_sea_duty_savings] : BigDecimal("0")
     end
 
     #  OfficialTariff#set_common_rate fails to set common_rate_decimal for any common_rate that includes more than a percentage
@@ -690,11 +763,19 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
 
     def mp_vs_epd row
-      row.ann? ? (row[:first_sale_duty_savings] - row[:epd_duty_savings]) : BigDecimal("0")
+      (row.ann? && !row.special_tariff?) ? (row[:first_sale_duty_savings] - row[:epd_duty_savings]) : BigDecimal("0")
     end
 
     def mp_vs_trade_discount row
-      row.ann? ? row[:first_sale_duty_savings] - row[:trade_discount_duty_savings] : BigDecimal("0")
+      (row.ann? && !row.special_tariff?) ? row[:first_sale_duty_savings] - row[:trade_discount_duty_savings] : BigDecimal("0")
+    end
+
+    def mp_vs_air_sea_epd_trade row
+      if !row.special_tariff? 
+        row[:first_sale_duty_savings] - (row[:air_sea_duty_savings] + row[:epd_duty_savings] + row[:trade_discount_duty_savings])
+      else
+        BigDecimal("0")
+      end
     end
 
     def air_sea_savings row
@@ -730,59 +811,19 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       hts = row[:hts_code]
       tariff_field_helper.tariffs[[imp_ctry_id, hts]]
     end
-
-    def zero_fields row
-      row[:unit_price] = 0
-      row[:quantity] = 0
-      row[:original_fob_unit_value] = 0
-      row[:original_fob_entered_value] = 0
-      row[:duty] = 0
-      row[:first_sale_difference] = 0
-      row[:first_sale_duty_savings] = 0
-      row[:first_sale_margin_percent] = 0
-      row[:price_before_discounts] = 0
-      row[:entered_value] = 0
-      row[:air_sea_discount] = 0
-      row[:air_sea_per_unit_savings] = 0
-      row[:air_sea_duty_savings] = 0
-      row[:early_payment_discount] = 0
-      row[:epd_per_unit_savings] = 0
-      row[:epd_duty_savings] = 0
-      row[:trade_discount] = 0
-      row[:trade_discount_per_unit_savings] = 0
-      row[:trade_discount_duty_savings] = 0
-      row[:spi_duty_savings] = 0
-      row[:hanger_duty_savings] = 0
-      row[:mp_vs_air_sea] = 0
-      row[:mp_vs_epd] = 0
-      row[:mp_vs_trade_discount] = 0
-      row[:mp_vs_air_sea_epd_trade] = 0
-      row[:first_sale_savings] = 0
-      row[:air_sea_savings] = 0
-      row[:epd_savings] = 0
-      row[:trade_discount_savings] = 0
-
-      #not shown on data tab
-      row[:contract_amount] = 0
-      row[:non_dutiable_amount] = 0
-      row[:value] = 0
-      row[:duty_amount] = 0
-      row[:miscellaneous_discount] = 0
-      row[:other_amount] = 0
-      row[:air_sea_discount_attrib] = 0
-      row[:middleman_charge] = 0
-
-      nil
-    end
     
     class EntFieldHelper
       attr_reader :fields
 
-      def self.create results
+      def self.create results       
         instance = self.new
         e_ids = results.map{ |r| r[:e_id] }.compact.uniq
         instance.load_fields e_ids
         instance
+      end
+
+      def initialize flds=nil
+        @fields = flds
       end
 
       def load_fields e_ids
@@ -793,7 +834,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
       end
 
       def mfs
-        @mfs ||= { ent_entry_filer: ModelField.find_by_uid(:ent_entry_filer), ent_unlading_port_name: ModelField.find_by_uid(:ent_unlading_port_name), 
+        @mfs ||= { ent_entry_filer: ModelField.find_by_uid(:ent_entry_filer), 
+                   ent_unlading_port_name: ModelField.find_by_uid(:ent_unlading_port_name), 
                    ent_entry_port_name: ModelField.find_by_uid(:ent_entry_port_name) }
       end
     end
@@ -808,19 +850,21 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
         instance
       end
 
+      def initialize flds=nil
+        @fields = flds
+      end
+
       def load_fields cil_ids
         @fields = CommercialInvoiceLine.where(id: cil_ids)
                                        .map{ |cil| [cil.id, { cil_first_sale: mfs[:cil_first_sale].process_export(cil, nil),
                                                               cil_contract_amount_unit_price: trap_nil(mfs[:cil_contract_amount_unit_price].process_export(cil, nil)),
                                                               cil_total_duty: trap_nil(mfs[:cil_total_duty].process_export(cil, nil)),
-                                                              cil_first_sale_difference: trap_nil(mfs[:cil_first_sale_difference].process_export(cil, nil)),
-                                                              cil_first_sale_savings: trap_nil(mfs[:cil_first_sale_savings].process_export(cil, nil))}] }.to_h
+                                                              cil_first_sale_difference: trap_nil(mfs[:cil_first_sale_difference].process_export(cil, nil)) }] }.to_h
       end
 
       def mfs
         @mfs ||= { cil_first_sale: ModelField.find_by_uid(:cil_first_sale), cil_contract_amount_unit_price: ModelField.find_by_uid(:cil_contract_amount_unit_price), 
-                   cil_total_duty: ModelField.find_by_uid(:cil_total_duty), cil_first_sale_difference: ModelField.find_by_uid(:cil_first_sale_difference ), 
-                   cil_first_sale_savings: ModelField.find_by_uid(:cil_first_sale_savings) }
+                   cil_total_duty: ModelField.find_by_uid(:cil_total_duty), cil_first_sale_difference: ModelField.find_by_uid(:cil_first_sale_difference ) }
       end
 
       def trap_nil field
@@ -833,9 +877,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
       def self.create results
         instance = self.new
-        hts_codes, imp_ctry_ids = ids(results)
+        hts_codes, imp_ctry_ids = ids(results)       
         instance.load hts_codes, imp_ctry_ids
         instance
+      end
+
+      def initialize trffs=nil
+        @tariffs = trffs
       end
 
       def self.ids results
@@ -915,25 +963,25 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
                      IFNULL(cit.duty_rate, 0),
                      IF(e.customer_number = "#{ANN_CUST_NUM}", il.part_description, cit.tariff_description) AS "Goods Description",
                      cil.unit_price,
-                     IFNULL(cil.quantity, 0),
-                     cil.unit_of_measure,
+                     "" AS "Invoice Quantity",
+                     "" AS "Invoice UOM",
                      "" AS "Original FOB Unit Value",
-                     IF(cil.contract_amount > 0, cil.contract_amount, 0) AS "Original FOB Entered Value",
-                     "" AS "Duty",
+                     "" AS "Original FOB Entered Value",
+                     cit.duty_amount AS "Duty",
                      "" AS "First Sale Difference",
                      "" AS "First Sale Duty Savings",
                      "" AS "First Sale Margin %",
                      "" AS "Price Before Discounts",
-                     IFNULL(cit.entered_value, 0),
+                     "" AS "Line Entered Value",
                      "" AS "Air/Sea Discount",
                      "" AS "Air/Sea Per Unit Savings",
                      "" AS "Air/Sea Duty Savings",
-                     IFNULL(IF(e.customer_number = "#{ANN_CUST_NUM}", il.early_pay_discount, 0), 0) AS "Early Payment Discount",
-                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", il.early_pay_discount / cil.quantity, 0), 2) AS "EPD Per Unit Savings",
-                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", IFNULL(il.early_pay_discount * cit.duty_rate, 0), 0), 2) AS "EPD Duty Savings",
-                     IFNULL(IF(e.customer_number = "#{ANN_CUST_NUM}", il.trade_discount, 0),0) AS "Trade Discount",
-                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", il.trade_discount / cil.quantity, 0), 2) AS "Trade Discount per Unit Savings",
-                     ROUND(IF(e.customer_number = "#{ANN_CUST_NUM}", IFNULL(il.trade_discount * cit.duty_rate, 0), 0), 2) AS "Trade Discount Duty Savings",
+                     "" AS "Early Payment Discount",
+                     "" AS "EPD Per Unit Savings",
+                     "" AS "EPD Duty Savings",
+                     "" AS "Trade Discount",
+                     "" AS "Trade Discount per Unit Savings",
+                     "" AS "Trade Discount Duty Savings",
                      cit.spi_primary,
                      "" AS "Original Duty Rate",
                      "" AS "SPI Duty Savings",
@@ -949,18 +997,24 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
                      "" AS "Trade Discount Savings",
                      "" AS "Applied Discount",
                      # following are for calculations, not display
+                     e.id,
+                     e.import_country_id,
                      e.customer_number,
+                     cil.id,
                      IFNULL(cil.contract_amount, 0),
                      IFNULL(cil.non_dutiable_amount, 0),
                      IFNULL(cil.value, 0),
-                     IFNULL(cit.duty_amount, 0),
+                     IFNULL(cil.quantity, 0) AS "quantity_attrib",
+                     cil.unit_of_measure AS "unit_of_measure_attrib",
+                     IFNULL(cil.entered_value_7501, 0),
                      IFNULL(cil.miscellaneous_discount, 0),
                      IFNULL(cil.other_amount, 0),
-                     IFNULL(il.air_sea_discount, 0) AS "air/sea discount attrib",
+                     IFNULL(cit.duty_amount, 0),
+                     cit.special_tariff,
+                     IFNULL(il.air_sea_discount, 0) AS "air_sea_discount_attrib",
                      IFNULL(il.middleman_charge, 0),
-                     e.import_country_id,
-                     e.id,
-                     cil.id
+                     IFNULL(il.early_pay_discount, 0) AS "early_payment_discount_attrib",
+                     IFNULL(il.trade_discount, 0) AS "trade_discount_attrib,"
               FROM entries e
               INNER JOIN commercial_invoices ci on e.id = ci.entry_id
               INNER JOIN commercial_invoice_lines cil on ci.id = cil.commercial_invoice_id
@@ -988,4 +1042,4 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
     end
   end
 
-end; end; end; end;
+end; end; end; end
