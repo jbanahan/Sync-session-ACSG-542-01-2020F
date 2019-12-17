@@ -118,10 +118,15 @@ end
 
 describe OpenChain::IntegrationClientCommandProcessor do
 
-  def do_parser_test custom_feature, parser_class, original_path, original_filename: nil
+  def do_parser_test custom_feature, parser_class, original_path, original_filename: nil, delay_params: nil
     expect(master_setup).to receive(:custom_features_list).and_return Array.wrap(custom_feature)
     p = class_double(parser_class.to_s)
-    expect(parser_class).to receive(:delay).and_return p
+    if delay_params
+      expect(parser_class).to receive(:delay).with(delay_params).and_return p
+    else
+      expect(parser_class).to receive(:delay).and_return p
+    end
+    
     if block_given?
       yield p
     else
@@ -409,11 +414,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
 
       it 'should send data to Alliance Day End Invoice parser if custom feature enabled and path contains _alliance_day_end_invoices' do
-        do_parser_test("alliance", OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser, '/_alliance_day_end_invoices/x.y', original_filename: "x.y")
+        do_parser_test("alliance", OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser, '/_alliance_day_end_invoices/x.y', original_filename: "x.y", delay_params: {priority: -1})
       end
 
       it 'should send data to Alliance Day End Check parser if custom feature enabled and path contains _alliance_day_end_invoices' do
-        do_parser_test("alliance", OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser, '/_alliance_day_end_checks/x.y', original_filename: "x.y")
+        do_parser_test("alliance", OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser, '/_alliance_day_end_checks/x.y', original_filename: "x.y", delay_params: {priority: -1})
       end
 
       it 'handles kewill export files' do

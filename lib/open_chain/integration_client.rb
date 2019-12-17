@@ -178,9 +178,9 @@ module OpenChain
       custom_features = Set.new MasterSetup.get.custom_features_list
 
       if (parser_identifier == "alliance_day_end_invoices") && custom_features.include?('alliance')
-        OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+        OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay(priority: -1).process_from_s3 bucket, s3_path, original_filename: original_filename
       elsif (parser_identifier == "alliance_day_end_checks") && custom_features.include?('alliance')
-        OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
+        OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay(priority: -1).process_from_s3 bucket, s3_path, original_filename: original_filename
       elsif (parser_identifier == "kewill_entry") && custom_features.include?("Kewill Entries")
         OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "kewill_statements") && custom_features.include?("Kewill Statements")

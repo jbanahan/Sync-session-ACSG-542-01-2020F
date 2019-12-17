@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
 
         check_register = CustomFile.where(file_type: OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.name, uploaded_by_id: integration, start_at: nil).where('created_at >= ?', Time.zone.now.to_date).first
         if check_register
-          OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.delay.process_delayed check_register.id, day_end_file.id, nil
+          OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.delay(priority: -1).process_delayed check_register.id, day_end_file.id, nil
         end
       end
     end

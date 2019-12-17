@@ -245,7 +245,7 @@ FILE
 
       check_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser", uploaded_by: User.integration
 
-      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:delay).with(priority: -1).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
       expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:process_delayed) do |check_id, invoice_id, user_id|
         expect(check_id).to eq check_file.id
         expect(CustomFile.find(invoice_id).file_type).to eq "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser"
