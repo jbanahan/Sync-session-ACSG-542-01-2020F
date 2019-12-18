@@ -33,6 +33,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
   has_many :business_validation_results, dependent: :destroy, inverse_of: :business_validation_template
   has_many :search_criterions, dependent: :destroy
 
+  scope :active_templates, -> { where(disabled: [nil, 0]).where(delete_pending: [nil, 0])}
+
   def copy_attributes include_external:false
     attrs = JSON.parse self.to_json(except: [:id, :system_code, :created_at, :updated_at, :delete_pending, :disabled])
     attrs["business_validation_template"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
@@ -58,7 +60,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
   # call create_results! for all templates
   def self.create_all! run_validation: false
     OpenChain::StatClient.wall_time 'bvt_create_all' do
-      self.all.each do |b|
+      self.active_templates.each do |b|
         b.create_results!(run_validation: run_validation)
       end
     end
@@ -101,10 +103,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
   #run create
   def create_results! run_validation: false, snapshot_entity: true, user: nil
-    # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
-    # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
-    # never be false associated with the template
-    return if self.search_criterions.length == 0
+    # Bailout if the template isn't active, there's absolutely no point in runnign the massive query below if the template is inactive
+    return unless active?
 
     user = User.integration if user.nil?
     cm = CoreModule.find_by_class_name(self.module_type)

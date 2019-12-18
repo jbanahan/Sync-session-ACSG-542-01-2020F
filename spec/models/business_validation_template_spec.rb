@@ -8,6 +8,16 @@ describe BusinessValidationTemplate do
       expect_any_instance_of(BusinessValidationTemplate).to receive(:create_results!).with(run_validation: true)
       BusinessValidationTemplate.create_all! run_validation: true
     end
+    it "skips disabled templates" do
+      Factory(:business_validation_template, disabled: true)
+      expect_any_instance_of(BusinessValidationTemplate).not_to receive(:create_results!)
+      BusinessValidationTemplate.create_all!
+    end
+    it "skips delete_pending templates" do
+      Factory(:business_validation_template, delete_pending: true)
+      expect_any_instance_of(BusinessValidationTemplate).not_to receive(:create_results!)
+      BusinessValidationTemplate.create_all!
+    end
   end
   describe "create_results!" do
     before :each do
@@ -78,14 +88,23 @@ describe BusinessValidationTemplate do
       template.create_results!
     end
     it "does not evaulate anything if there are no criterions associated with the template" do
+      expect(Entry).not_to receive(:select)
       @bvt.search_criterions.destroy_all
       Factory(:entry,customer_number:'12345')
       @bvt.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 0
     end
     it "does not evaluate anything if template is disabled" do
+      expect(Entry).not_to receive(:select)
       Factory(:entry,customer_number:'12345')
-      @bvt.update_attributes! disabled: true
+      @bvt.update! disabled: true
+      @bvt.create_results! run_validation: true
+      expect(BusinessValidationResult.count).to eq 0
+    end
+    it "does not evaluate anything if template is delete_pending" do
+      expect(Entry).not_to receive(:select)
+      Factory(:entry,customer_number:'12345')
+      @bvt.update! delete_pending: true
       @bvt.create_results! run_validation: true
       expect(BusinessValidationResult.count).to eq 0
     end
@@ -295,7 +314,7 @@ describe BusinessValidationTemplate do
       described_class.create_results_for_object!(ord)
 
       # Update rule2 so that it passes, which should result in a rule status change, but the overall rule state staying the same
-      rule2.update_attributes! rule_attributes_json: {model_field_uid:'ord_ord_num',regex:'ABCD'}.to_json
+      rule2.update! rule_attributes_json: {model_field_uid:'ord_ord_num',regex:'ABCD'}.to_json
 
       described_class.create_results_for_object!(ord)
       ord.reload 
@@ -351,12 +370,12 @@ describe BusinessValidationTemplate do
     subject { Factory(:business_validation_template, disabled: false, delete_pending: false, search_criterions: [Factory(:search_criterion)]) }
 
     it "returns false if disabled" do
-      subject.update_attributes! disabled: true
+      subject.update! disabled: true
       expect(subject.active?).to eq false
     end
 
     it "returns false if delete_pending" do
-      subject.update_attributes! delete_pending: true
+      subject.update! delete_pending: true
       expect(subject.active?).to eq false
     end
 
