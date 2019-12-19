@@ -1449,6 +1449,57 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         expect(statement.entity_snapshots.length).to eq 1
       end
     end
+
+    context "summary_rejected?" do
+      it "flags entry as summary rejected when there's a rejection notice" do
+        @e['notes'] = [
+            {'note' => "Summary has been added", 'modified_by'=>"CUSTOMS", 'date_updated' => 201601191229},
+            {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"Customs", 'date_updated'=>201601191230},
+            {'note' => "Summary has been replaced", 'modified_by'=>"Ignore Me - not Customs", 'date_updated' => 201601191231}
+        ]
+
+        entry = subject.process_entry @e
+        entry.reload
+
+        expect(entry.summary_rejected?).to eq true
+      end
+
+      it "does not flag entry as summary rejected when a rejection notice has been resolved by summary addition" do
+        @e['notes'] = [
+            {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"Customs", 'date_updated'=>201601191230},
+            {'note' => "Summary has been added", 'modified_by'=>"Customs", 'date_updated' => 201601191231}
+        ]
+
+        entry = subject.process_entry @e
+        entry.reload
+
+        expect(entry.summary_rejected?).to eq false
+      end
+
+      it "does not flag entry as summary rejected when a rejection notice has been resolved by summary replacement" do
+        @e['notes'] = [
+            {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"Customs", 'date_updated'=>201601191230},
+            {'note' => "Summary has been replaced", 'modified_by'=>"Customs", 'date_updated' => 201601191231}
+        ]
+
+        entry = subject.process_entry @e
+        entry.reload
+
+        expect(entry.summary_rejected?).to eq false
+      end
+
+      it "does not flag entry as summary rejected when a rejection notice has been resolved by ACH payment" do
+        @e['notes'] = [
+            {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"Customs", 'date_updated'=>201601191230},
+            {'note' => "ACH Payment accepted", 'modified_by'=>"Customs", 'date_updated' => 201601191231}
+        ]
+
+        entry = subject.process_entry @e
+        entry.reload
+
+        expect(entry.summary_rejected?).to eq false
+      end
+    end
   end
 
   describe "parse" do

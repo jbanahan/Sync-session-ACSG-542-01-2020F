@@ -371,7 +371,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         body = note.body.to_s.upcase
         if body.include? "TRANSACTION DATA REJECTED"
           rejected = true
-        elsif body.include?("SUMMARY HAS BEEN ADDED") || body.include?("SUMMARY HAS BEEN REPLACED")
+        elsif body.include?("SUMMARY HAS BEEN ADDED") || body.include?("SUMMARY HAS BEEN REPLACED") || body.include?("ACH PAYMENT ACCEPTED")
           rejected = false
         end
       end
