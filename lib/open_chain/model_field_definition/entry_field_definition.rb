@@ -448,7 +448,43 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       }],
       [262,:ent_consignee_postal_code,:consignee_postal_code,"Ult Consignee Postal Code",{:data_type=>:string}],
       [263,:ent_consignee_country_code,:consignee_country_code,"Ult Consignee Country",{:data_type=>:string}],
-      [264, :ent_miscellaneous_entry_exception_date, :miscellaneous_entry_exception_date, "Misc Entry Exception Date", {data_type: :date}]
+      [264, :ent_miscellaneous_entry_exception_date, :miscellaneous_entry_exception_date, "Misc Entry Exception Date", {data_type: :date}],
+      [265, :ent_daily_statement_duty_amount_paid, :daily_statement_duty_amount_paid, "Statement Duty Amt Paid", {
+        data_type: :decimal,
+        read_only: true,
+        export_lambda: lambda { |obj| obj.daily_statement_entry.present? ? obj.daily_statement_entry.duty_amount : 0},
+        qualified_field_name: "(SELECT duty_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
+      }],
+      [266, :ent_daily_statement_tax_amount_paid, :daily_statement_tax_amount_paid, "Statement Tax Amount Paid", {
+          data_type: :decimal,
+          read_only: true,
+          export_lambda: lambda { |obj| obj.daily_statement_entry.present? ? obj.daily_statement_entry.tax_amount : 0},
+          qualified_field_name: "(SELECT tax_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
+      }],
+      [267, :ent_daily_statement_add_amount_paid, :daily_statement_add_amount_paid, "Statement ADD Amount Paid", {
+          data_type: :decimal,
+          read_only: true,
+          export_lambda: lambda { |obj| obj.daily_statement_entry.present? ? obj.daily_statement_entry.add_amount : 0},
+          qualified_field_name: "(SELECT add_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
+      }],
+      [268, :ent_daily_statement_cvd_amount_paid, :daily_statement_cvd_amount_paid, "Statement CVD Amount Paid", {
+          data_type: :decimal,
+          read_only: true,
+          export_lambda: lambda { |obj| obj.daily_statement_entry.present? ? obj.daily_statement_entry.cvd_amount : 0},
+          qualified_field_name: "(SELECT cvd_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
+      }],
+      [269, :ent_daily_statement_fee_amount_paid, :daily_statement_fee_amount_paid, "Statement Fee Amount Paid", {
+          data_type: :decimal,
+          read_only: true,
+          export_lambda: lambda { |obj| obj.daily_statement_entry.present? ? obj.daily_statement_entry.fee_amount : 0},
+          qualified_field_name: "(SELECT fee_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
+      }],
+      [270, :ent_daily_statement_total_amount_paid, :daily_statement_total_amount_paid, "Statement Total Amount Paid", {
+          data_type: :decimal,
+          read_only: true,
+          export_lambda: lambda { |obj| obj.daily_statement_entry.present? ? obj.daily_statement_entry.total_amount : 0},
+          qualified_field_name: "(SELECT total_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
+      }],
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600,'ent','entries','Entry')
