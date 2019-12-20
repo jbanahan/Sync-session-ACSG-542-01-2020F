@@ -1,22 +1,22 @@
 describe OpenChain::Report::BouncedEmailReport do
-  subject { described_class.new }
-
+  
   describe "run_schedulable" do
     it 'sends the report' do
-      Timecop.freeze(Time.zone.now) do
-        yesterday = Time.zone.now.yesterday.to_date
-        yesterday_string = yesterday.strftime("%Y-%m-%d")
+      Timecop.freeze(Time.zone.parse("2019-12-20 01:00")) do
         described_class.run_schedulable 'email_to' => 'test@test.com'
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq ['test@test.com']
-        expect(mail.subject).to eq "Bounced Email Report for #{yesterday_string}"
-        expect(mail.body).to include "Attached is the bounced email report for #{yesterday_string}"
+        # It should be 12/18 because we're taking the current time in current timezone (UTC) and translating it to
+        # US Eastern time (which rolls the date back to 12/19).  Then the report it self is over the previous
+        # day (12/18).
+        expect(mail.subject).to eq "Bounced Email Report for 2019-12-18"
+        expect(mail.body).to include "Attached is the bounced email report for 2019-12-18"
       end
     end
   end
 
-  describe ".get_yesterday_in_timezone" do
+  describe "get_yesterday_in_timezone" do
     it 'returns the expected dates' do
       Timecop.freeze(Time.zone.parse("03/10/2018 09:00 -0400")) do
         Time.use_zone("America/New_York") do
@@ -31,7 +31,7 @@ describe OpenChain::Report::BouncedEmailReport do
     end
   end
 
-  describe ".get_bounced_emails_for_dates" do
+  describe "get_bounced_emails_for_dates" do
     describe 'beginning date' do
       it 'retrieves emails after the beginning date' do
         Timecop.freeze(Time.zone.now) do
