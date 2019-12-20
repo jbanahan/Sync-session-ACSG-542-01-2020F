@@ -808,9 +808,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       # This used to parse as 99.99 because it assumed missing decimal points meant there was an implied decimal point,
       # which was wrong and has since been fixed.
+      #
+      # First sale can be true if the contract amount is greater than 0 regardless of the appraisal method.
+      # Change made per SOW: 1831
       expect(line.contract_amount).to eq BigDecimal.new("9999.00")
       expect(line.value_appraisal_method).to eq "A"
-      expect(line.first_sale).to be_falsey
+      expect(line.first_sale).to be_truthy
 
       # If we didn't get a matching container record, then we want to make sure the line level linkage
       # is nil

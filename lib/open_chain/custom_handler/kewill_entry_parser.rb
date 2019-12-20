@@ -900,7 +900,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.computed_adjustments = parse_decimal(l[:non_dutiable_amt]) + parse_decimal(l[:add_to_make_amt]) + parse_decimal(l[:other_amt]) +
                                      parse_decimal(l[:misc_discount]) + parse_decimal(l[:cash_discount]) + parse_decimal(l[:freight_amt])
       line.computed_net_value = parse_decimal(l[:value_tot]) - line.computed_adjustments
-      line.first_sale = l[:value_appraisal_method].to_s.upcase == "F"
+      line.first_sale = (l[:value_appraisal_method].to_s.upcase == "F" || parse_decimal(l[:contract]) > 0)
       line.value_appraisal_method = l[:value_appraisal_method]
       line.non_dutiable_amount = parse_decimal(l[:non_dutiable_amt])
       line.miscellaneous_discount = parse_decimal(l[:misc_discount])
