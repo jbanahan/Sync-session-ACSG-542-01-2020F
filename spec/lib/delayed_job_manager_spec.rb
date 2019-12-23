@@ -70,6 +70,11 @@ describe DelayedJobManager do
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
 
+    it "retries 3 times to acquire lock" do
+      e = Timeout::Error.new "Error"
+      expect(Lock).to receive(:acquire).with("Monitor Queue Backlog", yield_in_transaction: false).exactly(3).times.and_raise e
+      expect { subject.monitor_backlog max_messages: 1 }.to raise_error e
+    end
   end
 
   describe "report_delayed_job_error" do
@@ -134,6 +139,12 @@ describe DelayedJobManager do
       email = ActionMailer::Base.deliveries.last
       expect(email.body.raw_source).to include "Job Error: Error!"
       expect(email.body.raw_source).not_to include "Job Error: Job 2 Error"
+    end
+
+    it "retries 3 times to acquire lock" do
+      e = Timeout::Error.new "Error"
+      expect(Lock).to receive(:acquire).with("Report Delayed Job Error", yield_in_transaction: false).exactly(3).times.and_raise e
+      expect { subject.report_delayed_job_error }.to raise_error e
     end
   end
 
