@@ -1221,6 +1221,26 @@
       "note": ""
     },
     {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "247e7689f48fc30b27c230115d4a91f6215a431d9739d056805ae341ec5c54a6",
+      "check_name": "FileAccess",
+      "message": "Model attribute used in file name",
+      "file": "lib/open_chain/upgrade.rb",
+      "line": 184,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "IO.read(MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::Upgrade",
+        "method": "finish_upgrade_log"
+      },
+      "user_input": "MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\")",
+      "confidence": "Medium",
+      "note": ""
+    },
+    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "24b98050a2b4b919847920dac3f386720e76c51da21cc1c93af0547f61d3495d",
@@ -1532,7 +1552,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 449,
+      "line": 448,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"\\n      select monthly_statement_due_date, monthly_statement_paid_date, sum(ifnull(total_duty, 0)) + sum(ifnull(total_fees, 0)) as 'Duty & Fees',\\n      importer_id, companies.name\\nfrom entries \\ninner join companies on companies.id = entries.importer_id\\nwhere monthly_statement_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH)) \\nand monthly_statement_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH)) \\nand (#{Entry.search_where_by_company_id(importer_id)}) \\n      AND #{tracking_open_clause} AND #{country_clause}\\ngroup by importer_id, monthly_statement_due_date, monthly_statement_paid_date\\norder by importer_id, monthly_statement_due_date desc\")",
       "render_path": null,
@@ -2983,7 +3003,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 473,
+      "line": 472,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"                 SELECT COUNT(*), SUM(total_duty), SUM(total_fees), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units)  \\n                 FROM entries \\n                 WHERE (#{date_clause}) AND (#{Entry.search_where_by_company_id(importer_id)}) AND #{tracking_open_clause} AND #{country_clause}\\n                   AND #{format_where(more_where_clauses)}\\n\")",
       "render_path": null,
@@ -3022,7 +3042,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/custom_features_controller.rb",
-      "line": 807,
+      "line": 813,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(CustomFile.find(params[:id]).secure_url)",
       "render_path": null,
@@ -3061,7 +3081,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 355,
+      "line": 354,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"                 SELECT COUNT(*), SUM(total_duty), SUM(total_gst), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units), SUM(total_duty_gst)\\n                 FROM entries \\n                 WHERE (#{date_clause}) AND (#{Entry.search_where_by_company_id(importer_id)}) AND #{tracking_open_clause} AND #{country_clause} \\n                   AND #{format_where(more_where_clauses)}\\n\")",
       "render_path": null,
@@ -3482,7 +3502,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 213,
+      "line": 211,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"SELECT ports.name, ports.#{port_code_field}, count(*) \\n      FROM entries\\n      INNER JOIN ports on ports.#{port_code_field} = entries.entry_port_code\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) AND (#{date_clause})\\n      AND #{tracking_open_clause} AND #{country_clause}\\n      GROUP BY ports.name, ports.#{port_code_field}\")",
       "render_path": null,
@@ -3674,7 +3694,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 378,
+      "line": 377,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"\\n      select k84_due_date, sum(ifnull(total_duty_gst, 0)), importer_id, companies.name\\nfrom entries \\ninner join companies on companies.id = entries.importer_id\\nwhere k84_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) )\\nand k84_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) )\\nand (#{Entry.search_where_by_company_id(importer_id)}) \\n      AND #{tracking_open_clause} AND #{country_clause}\\ngroup by importer_id, k84_due_date\\norder by importer_id, k84_due_date desc\")",
       "render_path": null,
@@ -3828,7 +3848,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 429,
+      "line": 428,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "Entry.select(\"customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees\").where(\"entries.importer_id = ?\", importer.id).where(\"#{release_date_mf.field_name} IS NOT NULL\")",
       "render_path": null,
@@ -5412,7 +5432,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/custom_report_ann_sap_changes.rb",
-      "line": 42,
+      "line": 43,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"\\n#{make_select(self.class.prep_custom_definitions([:origin, :import, :related_styles, :cost, :approved_date, :sap_revised_date]))}\\nFROM products\\nINNER JOIN classifications on products.id = classifications.product_id\\nINNER JOIN custom_values appr on appr.customizable_id = classifications.id and appr.custom_definition_id = #{self.class.prep_custom_definitions([:origin, :import, :related_styles, :cost, :approved_date, :sap_revised_date])[:approved_date].id}\\nINNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom_definition_id = #{self.class.prep_custom_definitions([:origin, :import, :related_styles, :cost, :approved_date, :sap_revised_date])[:sap_revised_date].id}\\n#{make_where} #{row_limit.blank? ? (\"\") : (\" LIMIT #{row_limit}\")}\")",
       "render_path": null,
@@ -6116,7 +6136,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 257,
+      "line": 255,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"SELECT left(commercial_invoice_tariffs.hts_code,2), count(*) \\n      FROM entries\\n      INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id\\n      INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id\\n      INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) AND (#{date_clause})\\n      AND #{tracking_open_clause} AND #{country_clause}\\n      GROUP BY left(commercial_invoice_tariffs.hts_code,2)\")",
       "render_path": null,
@@ -7012,7 +7032,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 275,
+      "line": 273,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "ActiveRecord::Base.connection.execute(\"SELECT #{vendor_field}, sum(commercial_invoice_tariffs.entered_value) \\n      FROM entries\\n      INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id\\n      INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id\\n      INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) \\n      AND (#{ytd_clause(base_date_utc)}) \\n      AND (#{tracking_open_clause}) AND #{country_clause}\\n      GROUP BY #{vendor_field} \\n      ORDER BY sum(commercial_invoice_tariffs.entered_value) DESC\\n      LIMIT 5\")",
       "render_path": null,
@@ -7828,6 +7848,26 @@
       "note": "Not unprotected.  Redirecting to model."
     },
     {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "e7107facf3be255b118f643ec761db64cef036d5c478d3a0859c8e29a672b4f3",
+      "check_name": "FileAccess",
+      "message": "Model attribute used in file name",
+      "file": "lib/open_chain/upgrade.rb",
+      "line": 116,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "IO.read(MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::Upgrade",
+        "method": "do_upgrade"
+      },
+      "user_input": "MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\")",
+      "confidence": "Medium",
+      "note": ""
+    },
+    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "e80c4cd0e3aa7893bd78be808b86b5852ff73248b53c900fc6ed6e23b2a65b53",
@@ -7940,6 +7980,26 @@
       },
       "user_input": null,
       "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "eb00e8572819dff1e3af9076bab448d3139ba67eae24be0f36701a3c709db8fb",
+      "check_name": "FileAccess",
+      "message": "Model attribute used in file name",
+      "file": "lib/open_chain/upgrade.rb",
+      "line": 287,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "FileUtils.cp_r(MasterSetup.instance_directory.join(\"..\", \"vfitrack-configurations\").join(MasterSetup.instance_directory.basename.to_s).to_s, MasterSetup.instance_directory.join(\"..\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::Upgrade",
+        "method": "update_configurations"
+      },
+      "user_input": "MasterSetup.instance_directory.join(\"..\", \"vfitrack-configurations\").join(MasterSetup.instance_directory.basename.to_s).to_s",
+      "confidence": "Medium",
       "note": ""
     },
     {
@@ -8382,6 +8442,26 @@
       "note": ""
     },
     {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "fb08035ec28074d9ded0c974f2eb51174adeb7491179945943b000d75047ed04",
+      "check_name": "FileAccess",
+      "message": "Model attribute used in file name",
+      "file": "lib/open_chain/upgrade.rb",
+      "line": 318,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "IO.read(MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::Upgrade",
+        "method": "log_me"
+      },
+      "user_input": "MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\")",
+      "confidence": "Medium",
+      "note": ""
+    },
+    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "fb1b90371a7868bf732997a4418b54a34dc84454c4a42d8a77dff93583f375a4",
@@ -8636,7 +8716,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/file_import_processor.rb",
-      "line": 437,
+      "line": 454,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "(my_core_module.klass.all or @module_chain.parent(my_core_module).child_objects(my_core_module, object_map[@module_chain.parent(my_core_module)])).where(\"#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?\", key_model_field_value)",
       "render_path": null,
@@ -8650,6 +8730,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2019-09-10 10:36:53 -0500",
+  "updated": "2019-12-20 13:13:31 -0600",
   "brakeman_version": "4.5.0"
 }

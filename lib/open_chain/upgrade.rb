@@ -77,7 +77,7 @@ module OpenChain
     #do not initialize this method directly, use the static #upgrade method instead
     def initialize target
       @target = target
-      @log_path = "#{Rails.root.to_s}/log/upgrade_#{Time.now.to_s.gsub(/[ :]/,"_")}_#{target}.log"
+      @log_path = MasterSetup.instance_directory.join("log").join("#{Time.zone.now.strftime("%Y_%m_%d_%H_%M")}_#{target}.log")
     end
 
     #do not call this directly, use the static #upgrade method instead
@@ -98,7 +98,7 @@ module OpenChain
 
       return false unless @log
 
-      Lock.acquire("Upgrade-#{Rails.application.config.hostname}-#{@target}", yield_in_transaction: false) do 
+      Lock.acquire("Upgrade-#{MasterSetup.hostname}-#{@target}") do 
         # There's some (albeit really small) possibility that the upgrade could already have been done in another process 
         # while waiting on this lock, just check the already_upgraded? and return if it has already been
         return false if self.already_upgraded?
@@ -108,7 +108,7 @@ module OpenChain
     end
 
     def do_upgrade delayed_job_upgrade, callbacks
-      callbacks.merge!(freshservice_callbacks) if Rails.env.production?
+      callbacks.merge!(freshservice_callbacks) if MasterSetup.production_env?
 
       execute_callback(callbacks, :running)
       upgrade_completed = false
@@ -135,7 +135,7 @@ module OpenChain
         # not be running (since it's updating too, and if it fails will likely be due to the same thing that failed this instance).  
         # Send via slack.
         ms = MasterSetup.get
-        send_slack_failure(ms, e) if Rails.env.production?
+        send_slack_failure(ms, e) if MasterSetup.production_env?
         execute_callback(callbacks, :fs_error, error_message(ms, e))
         raise e
       ensure
@@ -150,7 +150,7 @@ module OpenChain
       fs_client = freshservice_client
       fs_running = lambda do |instance, new_version|
         err_logger { 
-          fs_client.create_change! instance, new_version, Rails.application.config.hostname
+          fs_client.create_change! instance, new_version, MasterSetup.hostname
         }
       end
 
@@ -181,7 +181,7 @@ module OpenChain
 
     # private
     def finish_upgrade_log
-      @upgrade_log.update_attributes(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exist?(@log_path)
+      @upgrade_log.update(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exist?(@log_path)
     end
     
     def get_source
@@ -198,8 +198,8 @@ module OpenChain
       log_me "Running bundle install"
       # Use the frozen command to absolutely prevent updates to Gemfile.lock in production (.ie should a Gemfile
       # update get checked in sans Gemfile.lock update)
-      if Rails.env.production?
-        capture_and_log "bundle install --frozen --without=development test"
+      if MasterSetup.production_env?
+        capture_and_log "bundle check || bundle install --frozen --without=development test"
       else
         capture_and_log "bundle install"
       end
@@ -256,8 +256,8 @@ module OpenChain
     def precompile
       log_me "Precompiling assets"
       command = "rake assets:precompile"
-      if !Rails.env.production?
-        command = "RAILS_ENV=#{Rails.env} #{command}"
+      if !MasterSetup.production_env?
+        command = "RAILS_ENV=#{MasterSetup.rails_env} #{command}"
       end
       capture_and_log command
       log_me "Precompile complete"
@@ -269,9 +269,10 @@ module OpenChain
     end
 
     def update_configurations
-      instance_name = Rails.root.basename.to_s
+      root = MasterSetup.instance_directory
+      instance_name = root.basename.to_s
       log_me "Updating configuration files for #{instance_name}"
-      config_path = Rails.root.join("..", "vfitrack-configurations")
+      config_path = root.join("..", "vfitrack-configurations")
       configs_updated = false
 
       if config_path.exist?
@@ -283,11 +284,11 @@ module OpenChain
         instance_config = config_path.join(instance_name)
         if instance_config.exist?
           log_me "Copying all configuration files for #{instance_name}"
-          FileUtils.cp_r instance_config.to_s, Rails.root.join("..")
+          FileUtils.cp_r instance_config.to_s, root.join("..")
           configs_updated = true
         end
       else
-        log_me "No configuration repository found for #{instance_name}.  Skipping config updates."
+        log_me "No configuration repository found for #{instance_name}. Skipping config updates."
       end
 
       configs_updated
@@ -304,7 +305,7 @@ module OpenChain
     end
 
     def error_message master_setup, error=nil
-      msg = "<!group>: Upgrade failed for server: #{Rails.application.config.hostname}, instance: #{master_setup.system_code}"
+      msg = "<!group>: Upgrade failed for server: #{MasterSetup.hostname}, instance: #{master_setup.system_code}"
       msg << ", error: #{error.message}" if error
     end
 
@@ -331,7 +332,5 @@ module OpenChain
 
   end
   
-  class UpgradeFailure < StandardError
-
-  end
+  class UpgradeFailure < StandardError; end
 end
