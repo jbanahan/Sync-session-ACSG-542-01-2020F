@@ -28,9 +28,11 @@ module OpenChain; module RakeSupport
     value
   end
 
-  def run_command command, print_output: false
+  def run_command command, print_output: false, exit_on_failure: false
     stdout, stderr, status = Open3.capture3({}, *command)
     success = status.success?
+    exit(1) if exit_on_failure && !success
+
     stderr = stderr.to_s.strip
     stdout = stdout.to_s.strip
     stderr = nil if stderr.length == 0
@@ -39,6 +41,11 @@ module OpenChain; module RakeSupport
     puts stdout if print_output && !stdout.nil?
     puts stderr if !success && !stderr.nil?
     [status, stdout, stderr]
+  end
+
+  def run command
+    status, stdout, stderr = run_command(command, exit_on_failure: true)
+    stdout
   end
   
 end; end
