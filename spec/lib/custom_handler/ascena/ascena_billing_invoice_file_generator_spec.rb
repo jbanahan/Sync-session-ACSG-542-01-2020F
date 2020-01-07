@@ -324,6 +324,54 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
         expect(sr.sent_at).not_to be_nil
       end
     end
+
+    context "with duty correction billed" do
+      let! (:broker_invoice_line_duty_correction) {
+        broker_invoice_line_duty.update! charge_code: "0255", charge_description: "PO 1"
+        broker_invoice_line_duty
+      }
+
+      let! (:broker_invoice_line_2_duty_correction) {
+        broker_invoice_line_duty_direct.update! charge_code: "0255", charge_description: "PO 2"
+        broker_invoice_line_duty_direct
+      }
+
+      it "sends billing file for duty corrections" do
+        data = nil
+        expect(subject).to receive(:ftp_file) do |file, opts|
+          expect(File.basename(file).split("_").first).to eq "ASC"
+          data = file.read
+        end
+
+        subject.generate_and_send broker_invoice_with_duty_snapshot
+        
+        lines = CSV.parse data, col_sep: "|"
+
+        expect(lines.length).to eq 3
+        expect(lines[0]).to eq ["H", "INVOICENUMBER", "STANDARD", "01/13/2017", "77519", "200.0", "USD", "For Customs Entry # ENTRYNO"]
+        expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "100.0", "Duty", "PO 1", "7218"]
+        expect(lines[2]).to eq ["L", "INVOICENUMBER", "2", "77519", "100.0", "Duty", "PO 2", "221"]
+      end
+
+      it "uses fuzzy matching to determine correct PO number to use" do
+        broker_invoice_line_duty_correction.update! charge_description: "1"
+        broker_invoice_line_2_duty_correction.update! charge_description: "2"
+        data = nil
+        expect(subject).to receive(:ftp_file) do |file, opts|
+          expect(File.basename(file).split("_").first).to eq "ASC"
+          data = file.read
+        end
+
+        subject.generate_and_send broker_invoice_with_duty_snapshot
+        
+        lines = CSV.parse data, col_sep: "|"
+
+        expect(lines.length).to eq 3
+        expect(lines[0]).to eq ["H", "INVOICENUMBER", "STANDARD", "01/13/2017", "77519", "200.0", "USD", "For Customs Entry # ENTRYNO"]
+        expect(lines[1]).to eq ["L", "INVOICENUMBER", "1", "77519", "100.0", "Duty", "PO 1", "7218"]
+        expect(lines[2]).to eq ["L", "INVOICENUMBER", "2", "77519", "100.0", "Duty", "PO 2", "221"]
+      end
+    end
   end
 
   describe "po_organization_xref" do

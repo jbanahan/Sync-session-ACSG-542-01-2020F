@@ -1,5 +1,6 @@
 require 'open_chain/ftp_file_support'
 require 'open_chain/entity_compare/comparator_helper'
+require 'fuzzy_match'
 
 module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoiceFileGenerator
   include OpenChain::EntityCompare::ComparatorHelper
@@ -7,6 +8,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
 
   DUTY_SYNC ||= "ASCE_DUTY_BILLING"
   BROKERAGE_SYNC ||= "ASCE_BROKERAGE_BILLING"
+  DUTY_CORRECTION_SYNC ||= "ASCE_DUTY_CORRECTION_BILLING"
   LEGACY_SYNC ||= "ASCE_BILLING"
 
   def generate_and_send entry_snapshot_json
@@ -50,23 +52,18 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
     def generate_and_send_invoice entry_snapshot, invoice_data, entry
       broker_invoice_snapshot = invoice_data[:snapshot]
       invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
-      duty_file, brokerage_file = generate_data(entry_snapshot, broker_invoice_snapshot, invoice_data[:sync_types])
-
       broker_invoice = entry.broker_invoices.find {|i| i.invoice_number == invoice_number }
       return unless broker_invoice
 
-      invoice_data[:sync_types].each do |sync_type|
-        # Skip any types where the corresponding files are blank
-        next if (sync_type == DUTY_SYNC && duty_file.blank?) || (sync_type == BROKERAGE_SYNC && brokerage_file.blank?)
+      po_brand_org_codes = po_organization_ids entry_snapshot
+      invoice_data[:invoice_lines].each_pair do |sync_type, invoice_lines|
+        # Skip any types where the corresponding files will be blank
+        next if invoice_lines.blank?
 
+        file_data = generate_invoice_file_data(entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, sync_type, invoice_lines)
         sr = broker_invoice.sync_records.where(trading_partner: sync_type).first_or_initialize
         prefix = entry_snapshot["entity"]["model_fields"]["ent_cust_num"] == "MAUR" ? "MAUR" : "ASC"
-        if sync_type == DUTY_SYNC
-          send_file(duty_file, invoice_number, sr, prefix, duty_file: true)
-        elsif sync_type == BROKERAGE_SYNC
-          send_file(brokerage_file, invoice_number, sr, prefix)
-        end
-
+        send_file(file_data, invoice_number, sr, prefix, duty_file: (sync_type == DUTY_CORRECTION_SYNC || sync_type == DUTY_SYNC))
         sr.sent_at = Time.zone.now
         sr.confirmed_at = sr.sent_at + 1.minute
         sr.save!
@@ -85,45 +82,71 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       end
     end
 
-    def generate_data entry_snapshot, broker_invoice_snapshot, sync_types
-      duty_lines, non_duty_lines = split_duty_non_duty_lines(broker_invoice_snapshot)
-
-      po_brand_org_codes = po_organization_ids entry_snapshot
-
-      duty_file = []
-      if sync_types.include?(DUTY_SYNC) && duty_lines.length > 0
-        # We have to handle credit invoices with duty on them in a special way, so check if this is a credit invoices first
-        invoice_total = duty_lines.map {|l| mf(l, "bi_line_charge_amount")}.compact.sum
-        if invoice_total < 0
-          duty_file = generate_duty_credit_invoice(broker_invoice_snapshot)
-        end
-
-        # At the very beginning of the change to process credit invoices in the above manner, we won't have any of the invoices
-        # so we'll just continue to do them old (wrong) way if the file is blank
-        if duty_file.blank?
-          # Really there should only ever be a single duty line per file...but doesn't hurt to handle this like there could be more
-          duty_file << invoice_header_fields(broker_invoice_snapshot, duty_lines, duty_invoice: true)
-          line_number = 1
-          duty_lines.each do |line|
-            charge_lines = invoice_line_duty_fields(entry_snapshot, broker_invoice_snapshot, line_number, po_brand_org_codes)
-            duty_file.push *charge_lines
-            line_number += charge_lines.length
-          end
-        end
+    def generate_invoice_file_data entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, sync_type, invoice_lines
+      file_data = []
+      if sync_type == DUTY_SYNC
+        file_data = generate_duty_invoice_file(entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, invoice_lines)
+      elsif sync_type == BROKERAGE_SYNC
+        file_data = generate_broker_invoice_file(entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, invoice_lines)
+      elsif sync_type = DUTY_CORRECTION_SYNC
+        file_data = generate_duty_correction_file(entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, invoice_lines)
       end
 
-      non_duty_file = []
-      if sync_types.include?(BROKERAGE_SYNC) && non_duty_lines.length > 0
-        non_duty_file << invoice_header_fields(broker_invoice_snapshot, non_duty_lines, duty_invoice: false)
+      file_data
+    end
+
+    def generate_duty_invoice_file entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, invoice_lines
+      file_data = []
+      # We have to handle credit invoices with duty on them in a special way, so check if this is a credit invoices first
+      invoice_total = invoice_lines.map {|l| mf(l, "bi_line_charge_amount")}.compact.sum
+      if invoice_total < 0
+        file_data = generate_duty_credit_invoice(broker_invoice_snapshot)
+      end
+
+      # At the very beginning of the change to process credit invoices in the above manner, we won't have any of the invoices
+      # so we'll just continue to do them old (wrong) way if the file is blank
+      if file_data.blank?
+        # Really there should only ever be a single duty line per file...but doesn't hurt to handle this like there could be more
+        file_data << invoice_header_fields(broker_invoice_snapshot, invoice_lines, duty_invoice: true)
         line_number = 1
-        non_duty_lines.each do |line|
-          charge_lines = invoice_line_brokerage_fields(broker_invoice_snapshot, line, line_number, po_brand_org_codes)
-          non_duty_file.push *charge_lines
+        invoice_lines.each do |line|
+          charge_lines = invoice_line_duty_fields(entry_snapshot, broker_invoice_snapshot, line_number, po_brand_org_codes)
+          file_data.push *charge_lines
           line_number += charge_lines.length
         end
       end
 
-      [duty_file, non_duty_file]
+      file_data
+    end
+
+    def generate_broker_invoice_file(entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, invoice_lines)
+      file_data = []
+
+      file_data << invoice_header_fields(broker_invoice_snapshot, invoice_lines, duty_invoice: false)
+      line_number = 1
+      invoice_lines.each do |line|
+        charge_lines = invoice_line_brokerage_fields(broker_invoice_snapshot, line, line_number, po_brand_org_codes)
+        file_data.push *charge_lines
+        line_number += charge_lines.length
+      end
+
+      file_data
+    end
+
+    def generate_duty_correction_file(entry_snapshot, broker_invoice_snapshot, po_brand_org_codes, invoice_lines)
+      file_data = []
+
+      # We outlay the duty for Ascena in this scenario so we should be listed as the vendor, not US Customs
+      file_data << invoice_header_fields(broker_invoice_snapshot, invoice_lines, duty_invoice: false)
+      line_number = 1
+
+      invoice_lines.each do |line|
+        lines = invoice_line_duty_correction_fields(broker_invoice_snapshot, line, line_number, po_brand_org_codes)
+        file_data.push *lines
+        line_number += lines.length
+      end
+
+      file_data
     end
 
     def invoice_header_fields broker_invoice_snapshot, brokerage_lines, duty_invoice: false
@@ -141,6 +164,29 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       fields[7] = "For Customs Entry # #{mf(broker_invoice_snapshot, "bi_entry_num")}"
 
       fields
+    end
+
+    def invoice_line_duty_correction_fields broker_invoice_snapshot, broker_invoice_line, next_line_number, po_org_codes
+      amount = mf(broker_invoice_line, "bi_line_charge_amount")
+      # Whoever is billing this is supposed to be keying the PO Number that the corrected duty amount belongs to on the charge description
+      # This is really the only way we can actually determine the PO that is having it's duty amounts adjusted.
+      # Also, do some fuzzy matching because the likelihood that the PO number is miskeyed at some point is high and we 
+      # just want to get an actual PO number on here
+      po = best_match_po_number(mf(broker_invoice_line, "bi_line_charge_description"), po_org_codes)
+
+      invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
+
+      line = []
+      line[0] = "L"
+      line[1] = invoice_number
+      line[2] = next_line_number
+      line[3] = "77519" # Ascena's Vandegrift Vendor Code
+      line[4] = amount
+      line[5] = "Duty"
+      line[6] = po
+      line[7] = po_org_codes[po]
+
+      [line]
     end
 
     def invoice_line_brokerage_fields broker_invoice_snapshot, broker_invoice_line, next_line_number, po_org_codes
@@ -218,7 +264,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
     # Broken out solely so the method can be override / mocked for test casing
     def valid_charge_amount? prorations, charge_amount
       # This is bad...it means our proration calculation algorithm is straight up wrong and we over/under billed.
-        # This shouldn't happen, but if it does we want to catch it before it goes out to the customer.
+      # This shouldn't happen, but if it does we want to catch it before it goes out to the customer.
       prorations.values.sum == charge_amount
     end
 
@@ -246,19 +292,45 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       lines
     end
 
-    def split_duty_non_duty_lines broker_invoice_snapshot
-      invoice_lines = json_child_entities(broker_invoice_snapshot, "BrokerInvoiceLine")
+    def split_broker_invoice_lines broker_invoice_snapshot
+      # split the lines into the distinct type of file to generate
+      duty_lines = []
+      non_duty_lines = []
+      post_summary_duty_adjustment_lines = []
 
-      # split into duty vs. non-duty lines...we need to send duty lines in a separate file with a different 
-      # vendor id for them
-      duty_lines, non_duty_lines = invoice_lines.partition {|l| ["0001", "0099"].include?(mf(l, "bi_line_charge_code")) }
+      json_child_entities(broker_invoice_snapshot, "BrokerInvoiceLine") do |invoice_line|
+        charge_code = mf(invoice_line, "bi_line_charge_code")
+        case charge_code
+        when duty_codes
+          duty_lines << invoice_line
+        when skip_codes
+          #skip these lines
+        when post_summary_duty_codes
+          # This is a special charge code to indicate a duty adjustment owed on a file that's had a post summary correction issued.
+          # We have to handle this specially because what's billed is not the full duty amount owed, rather the difference
+          # owed between what was paid and what is now owed after the correction
+          post_summary_duty_adjustment_lines << invoice_line
+        else
+          non_duty_lines << invoice_line
+        end
+      end
 
-      # reject any lines marked as duty paid direct (code 0099) - they don't need to be billed (since they're not an actual charge
+      {DUTY_SYNC => duty_lines, BROKERAGE_SYNC => non_duty_lines, DUTY_CORRECTION_SYNC => post_summary_duty_adjustment_lines}
+    end
+
+    def duty_codes
+      @duty_charge_codes ||= Set.new ["0001"]
+    end
+
+    def skip_codes
+      # skip any lines marked as duty paid direct (code 0099) - they don't need to be billed (since they're not an actual charge
       # rather a reflection on the invoice that the customer is repsonsible for duty payments).  Every time a 99 charge comes
       # across there should also be a Duty (0001) charge on the invoice as well.
-      duty_lines = duty_lines.reject {|l| mf(l, "bi_line_charge_code").to_s.upcase == "0099"}
+      @skip_charge_codes ||= Set.new ["0099"]
+    end
 
-      [duty_lines, non_duty_lines]
+    def post_summary_duty_codes
+      @post_summary_duty_charge_codes ||= Set.new ["0255"]
     end
 
     # This is a funky situation...we need to credit the exact duty amounts back to ascena HOWEVER since
@@ -269,7 +341,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
     # In this situation, what we're going to do is retrieve the original file from the ftp session linked to the
     # sync record on the initial duty billing invoice.  Then we'll just flip the sign on all the duty lines.
     def generate_duty_credit_invoice broker_invoice_snapshot
-      duty_lines, * = split_duty_non_duty_lines(broker_invoice_snapshot)
+      duty_lines = split_broker_invoice_lines(broker_invoice_snapshot)[DUTY_SYNC]
       duty_amount = mf(duty_lines.first, "bi_line_charge_amount") * -1
 
       # Find the original broker invoice that had the billed duty amount we're looking for.
@@ -316,14 +388,22 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         # It's possible the invoice won't be found because it may have been updated in the intervening time from Kewill
         next if broker_invoice.nil? || broker_invoice.sync_records.find {|s| s.trading_partner == LEGACY_SYNC }.present?
 
-        invoice_data = {snapshot: bi, sync_types: []}
+        invoice_data = {snapshot: bi, invoice_lines: {DUTY_SYNC => [], BROKERAGE_SYNC => [], DUTY_CORRECTION_SYNC => []}}
 
-        [DUTY_SYNC, BROKERAGE_SYNC].each do |sync|
-          sr = broker_invoice.sync_records.find {|s| s.trading_partner == sync }
-          invoice_data[:sync_types] << sync if sr.nil? || sr.sent_at.nil?
+        split_lines = split_broker_invoice_lines(bi)
+
+        data_present = false
+        [DUTY_SYNC, BROKERAGE_SYNC, DUTY_CORRECTION_SYNC].each do |sync|
+          if split_lines[sync].length > 0
+            sr = broker_invoice.sync_records.find {|s| s.trading_partner == sync }
+            if sr.nil? || sr.sent_at.nil?
+              invoice_data[:invoice_lines][sync] = split_lines[sync] 
+              data_present = true
+            end
+          end
         end
 
-        invoices[broker_invoice.invoice_number] = invoice_data if invoice_data[:sync_types].length > 0
+        invoices[broker_invoice.invoice_number] = invoice_data if data_present
       end
 
       invoices
@@ -357,6 +437,17 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       end
 
       po_numbers
+    end
+
+    def best_match_po_number po_number, po_org_codes
+      code = po_org_codes[po_number]
+      return po_number unless code.nil?
+
+      # This will help if ops typos a PO number...it gets us close enough to an actual PO number on the entry
+      fz = FuzzyMatch.new(po_org_codes.keys.to_a)
+      actual_po_number = fz.find(po_number)
+
+      actual_po_number.blank? ? nil : actual_po_number
     end
 
 end; end; end; end

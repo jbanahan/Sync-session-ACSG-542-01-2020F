@@ -168,6 +168,7 @@ GEM
     fugit (1.1.8)
       et-orbi (~> 1.1, >= 1.1.7)
       raabro (~> 1.1)
+    fuzzy_match (2.1.0)
     gli (2.18.0)
     globalid (0.4.2)
       activesupport (>= 4.2.0)
@@ -489,6 +490,7 @@ DEPENDENCIES
   faker
   fix_microsoft_links (= 0.1.6)
   fugit (= 1.1.8)
+  fuzzy_match
   google-api-client (= 0.28.4)
   jasmine
   jquery-rails (= 4.3.3)

@@ -121,6 +121,8 @@ gem 'faker'
 
 gem 'clamby'
 
+gem 'fuzzy_match'
+
 group :development,:test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.  
