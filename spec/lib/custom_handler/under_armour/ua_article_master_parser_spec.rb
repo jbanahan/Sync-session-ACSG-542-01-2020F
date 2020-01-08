@@ -9,13 +9,15 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     CustomDefinition.destroy_all
   end
 
-  let(:doc) { REXML::Document.new(File.open "spec/fixtures/files/ua_article_master_parser.xml") }
+  let(:xml) { IO.read 'spec/fixtures/files/ua_article_master_parser.xml'}
+  let(:doc) { Nokogiri::XML(xml) }
   let(:cdefs) { subject.cdefs }
   let!(:ca) { Factory(:country, name: "Canada", iso_code: "CA") }
   let!(:imp) { Factory(:importer, name: "Under Armour", system_code: "UAPARTS")}
+  let!(:ms) { stub_master_setup }
 
   def include_variants doc, ids
-    (["1","2","3"] - ids).each { |id| doc.elements.delete("//UPC[@id='#{id}']") }
+    (["1","2","3"] - ids).each { |id| doc.root.xpath("//UPC[@id='#{id}']").each(&:remove) }
     doc.to_s
   end
 
@@ -25,130 +27,73 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     end
   end
 
-  describe "system_code" do
-    it "uses UAPARTS if it's a custom feature" do
-      ms = stub_master_setup
-      expect(ms).to receive(:custom_feature?).with("UAPARTS Staging").and_return true
-      expect(subject.system_code).to eq "UAPARTS"
-    end
-
-    it "uses UNDAR by default" do
-      ms = stub_master_setup
-      expect(ms).to receive(:custom_feature?).with("UAPARTS Staging").and_return false
-      expect(subject.system_code).to eq "UNDAR"
-    end
-  end
-
   describe "parse" do
-    let! (:ms) {
-      ms = stub_master_setup
-      allow(ms).to receive(:uuid).and_return "12345"
-      allow(ms).to receive(:custom_feature?).with("UAPARTS Staging").and_return true
-      ms
-    }
-
     let(:user) { User.integration }
 
-    context "with foreground processing" do
-      before :each do
-        allow(ms).to receive(:custom_feature?).with("UA Background Article Processing").and_return false
-      end
+    it "creates products, variants, tariff records from XML" do
+      doc_string = include_variants(doc, ["1", "2"])
 
-      it "creates products, variants, tariff records from XML" do
-        doc_string = include_variants(doc, ["1", "2"])
+      expect_any_instance_of(Product).to receive(:create_snapshot).with(user,nil,"path")
+      expect{ described_class.parse doc_string, key: "path" }.to change(Product, :count).from(0).to(1)
+      expect(Classification.count).to eq 1
+      expect(TariffRecord.count).to eq 1
+      expect(Variant.count).to eq 2
 
-        expect_any_instance_of(Product).to receive(:create_snapshot).with(user,nil,"path")
-        expect{ described_class.parse doc_string, key: "path" }.to change(Product, :count).from(0).to(1)
-        expect(Classification.count).to eq 1
-        expect(TariffRecord.count).to eq 1
-        expect(Variant.count).to eq 2
+      p = Product.first
+      expect(p.get_custom_value(cdefs[:prod_prepack]).value).to be_falsey
 
-        p = Product.first
-        expect(p.get_custom_value(cdefs[:prod_prepack]).value).to be_falsey
+      cl = p.classifications.first
+      var_1 = p.variants[0]
+      var_2 = p.variants[1]
 
-        cl = p.classifications.first
-        var_1 = p.variants[0]
-        var_2 = p.variants[1]
+      expect(p.unique_identifier).to eq "UAPARTS-art num"
+      expect(p.custom_value cdefs[:prod_part_number]).to eq "art num"
+      expect(p.name).to eq "art descr"
+      expect(p.importer).to eq imp
 
-        expect(p.unique_identifier).to eq "UAPARTS-art num"
-        expect(p.custom_value cdefs[:prod_part_number]).to eq "art num"
-        expect(p.name).to eq "art descr"
-        expect(p.importer).to eq imp
+      expect(cl.country).to eq ca
+      expect(cl.tariff_records.first.hts_1).to eq "1111111111"
+      expect(cl.custom_value(cdefs[:class_customs_description])).to eq "customs descr"
+      expect(var_1.variant_identifier).to eq "sku 1"
+      expect(var_1.custom_value(cdefs[:var_upc])).to eq "upc num 1"
+      expect(var_1.custom_value(cdefs[:var_article_number])).to eq "var art 1"
+      expect(var_1.custom_value(cdefs[:var_description])).to eq "var descr 1"
+      expect(var_1.custom_value(cdefs[:var_hts_code])).to eq "1111111111"
 
-        expect(cl.country).to eq ca
-        expect(cl.tariff_records.first.hts_1).to eq "1111111111"
-        expect(cl.custom_value(cdefs[:class_customs_description])).to eq "customs descr"
-        expect(var_1.variant_identifier).to eq "sku 1"
-        expect(var_1.custom_value(cdefs[:var_upc])).to eq "upc num 1"
-        expect(var_1.custom_value(cdefs[:var_article_number])).to eq "var art 1"
-        expect(var_1.custom_value(cdefs[:var_description])).to eq "var descr 1"
-        expect(var_1.custom_value(cdefs[:var_hts_code])).to eq "1111111111"
-
-        expect(var_2.variant_identifier).to eq "sku 2"
-        expect(var_2.custom_value(cdefs[:var_upc])).to eq "upc num 2"
-        expect(var_2.custom_value(cdefs[:var_article_number])).to eq "var art 2"
-        expect(var_2.custom_value(cdefs[:var_description])).to eq "var descr 2"
-        expect(var_2.custom_value(cdefs[:var_hts_code])).to eq "1111111111"
-      end
-
-      it "makes no updates if data unchanged" do
-        doc_string = include_variants(doc, ["1"])
-        expect_any_instance_of(Product).not_to receive(:create_snapshot) #purpose of the test
-
-        p = Factory(:product, importer: imp, unique_identifier: "UAPARTS-art num", name: "art descr")
-        cl = Factory(:classification, product: p, country: ca)
-        cl.update_custom_value!(cdefs[:class_customs_description], "customs descr")
-        Factory(:tariff_record, classification: cl, hts_1: "1111111111")
-        var = Factory(:variant, product: p, variant_identifier: "sku 1")
-        var.find_and_set_custom_value(cdefs[:var_upc], "upc num 1")
-        var.find_and_set_custom_value(cdefs[:var_article_number], "var art 1")
-        var.find_and_set_custom_value(cdefs[:var_description], "var descr 1")
-        var.find_and_set_custom_value(cdefs[:var_hts_code], "1111111111")
-        var.save!
-
-        described_class.parse doc_string, key: "path"
-      end
-
-      it "fails if importer can't be found" do
-        imp.destroy
-
-        expect{described_class.parse include_variants(doc, ["1"]), key: "path"}.to raise_error "Failed to find Under Armour Importer account with system code: UAPARTS"
-      end
+      expect(var_2.variant_identifier).to eq "sku 2"
+      expect(var_2.custom_value(cdefs[:var_upc])).to eq "upc num 2"
+      expect(var_2.custom_value(cdefs[:var_article_number])).to eq "var art 2"
+      expect(var_2.custom_value(cdefs[:var_description])).to eq "var descr 2"
+      expect(var_2.custom_value(cdefs[:var_hts_code])).to eq "1111111111"
     end
 
-    context "with background processing" do
+    it "makes no updates if data unchanged" do
+      doc_string = include_variants(doc, ["1"])
+      expect_any_instance_of(Product).not_to receive(:create_snapshot) #purpose of the test
 
-      before :each do
-        allow(ms).to receive(:custom_feature?).with("UA Background Article Processing").and_return true
-      end
+      p = Factory(:product, importer: imp, unique_identifier: "UAPARTS-art num", name: "art descr")
+      cl = Factory(:classification, product: p, country: ca)
+      cl.update_custom_value!(cdefs[:class_customs_description], "customs descr")
+      Factory(:tariff_record, classification: cl, hts_1: "1111111111")
+      var = Factory(:variant, product: p, variant_identifier: "sku 1")
+      var.find_and_set_custom_value(cdefs[:var_upc], "upc num 1")
+      var.find_and_set_custom_value(cdefs[:var_article_number], "var art 1")
+      var.find_and_set_custom_value(cdefs[:var_description], "var descr 1")
+      var.find_and_set_custom_value(cdefs[:var_hts_code], "1111111111")
+      var.save!
 
-      it "delays processing of the styles if instructed" do
-        allow(ms).to receive(:custom_feature?).with("UA Background Article Processing").and_return true
-        expect(described_class).to receive(:delay).with(queue: "ua").and_return described_class
-        xml = nil
-        expect(described_class).to receive(:process_article) do |xml_string, filename|
-          xml = xml_string
-          expect(filename).to eq "path"
-        end
-
-        described_class.parse include_variants(doc, ["1", "2"]), key: "path"
-
-        expect(xml).not_to be_nil
-        # Make sure there's no newlines in the xml (.ie it's a compact output)
-        expect(xml).not_to include "\n"
-        doc = REXML::Document.new xml
-        expect(doc.root.name).to eq "Style"
-        expect(REXML::XPath.first(doc, "/Style/Article/ArticleNumber").try(:text)).to eq "art num"
-      end
+      described_class.parse doc_string, key: "path"
     end
-    
+
+    it "fails if importer can't be found" do
+      imp.destroy
+
+      expect{described_class.parse include_variants(doc, ["1"]), key: "path"}.to raise_error "Failed to find Under Armour Importer account with system code: UAPARTS"
+    end
   end
 
   context "instance methods" do
     before do
-      ms = stub_master_setup
-      allow(ms).to receive(:uuid).and_return "12345"
-      allow(ms).to receive(:custom_feature?).with("UAPARTS Staging").and_return true
       ca
     end
 
@@ -160,28 +105,26 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     let(:change_flag) { MutableBoolean.new(false) }
 
     describe "create_or_update_product!" do
-      let(:art_elem) { double "art_elem" }
+      let(:art_elem) do
+        Nokogiri::XML(include_variants(doc, ["1"])).root.xpath("//Article").first
+      end
 
       context "when article number isn't nil" do
-        before do
-          expect(art_elem).to receive(:text).with("ArticleNumber").and_return "uid"
-          expect(art_elem).to receive(:text).with("ArticleDescription").and_return "name"
-        end
 
         it "updates product if it exists and has been changed" do
-          prod = Factory(:product, unique_identifier: "UAPARTS-uid", name: nil, importer: imp)
+          prod = Factory(:product, unique_identifier: "UAPARTS-art num", name: nil, importer: imp)
           subject.create_or_update_product! art_elem, change_flag
           prod.reload
-          expect(prod.name).to eq "name"
+          expect(prod.name).to eq "art descr"
           expect(Product.count).to eq 1
           expect(change_flag.value).to eq true
         end
 
         it "doesn't update product if unchanged" do
-          prod = Factory(:product, unique_identifier: "UAPARTS-uid", name: "name", importer: imp)
+          prod = Factory(:product, unique_identifier: "UAPARTS-art num", name: "art descr", importer: imp)
           subject.create_or_update_product! art_elem, change_flag
           prod.reload
-          expect(prod.name).to eq "name"
+          expect(prod.name).to eq "art descr"
           expect(Product.count).to eq 1
           expect(change_flag.value).to eq false
         end
@@ -189,15 +132,15 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
         it "creates product if necessary" do
           expect{subject.create_or_update_product! art_elem, change_flag}.to change(Product, :count).from(0).to(1)
           p = Product.first
-          expect(p.name).to eq "name"
-          expect(p.unique_identifier).to eq "UAPARTS-uid"
+          expect(p.name).to eq "art descr"
+          expect(p.unique_identifier).to eq "UAPARTS-art num"
           expect(p.importer).to eq imp
           expect(change_flag.value).to eq true
         end
       end
 
       it "skips Style/Article if ArticleNumber element is blank or missing" do
-        expect(art_elem).to receive(:text).with("ArticleNumber").and_return nil
+        art_elem.xpath("ArticleNumber").first.content = ""
         subject.create_or_update_product! art_elem, change_flag
         expect(Product.count).to eq 0
       end
@@ -205,9 +148,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
     describe "create_or_update_variants!" do
       let(:art_elem) do
-        doc_string = include_variants(doc, ["1"])
-        short_doc = REXML::Document.new(doc_string)
-        REXML::XPath.match(short_doc, "//Article").first
+        Nokogiri::XML(include_variants(doc, ["1"])).root.xpath("//Article").first
       end
 
       it "updates variant if it exists and has been changed" do
@@ -246,7 +187,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       end
 
       it "skips variant if SKU is missing" do
-        art_elem.elements.delete("//SKU")
+        art_elem.xpath("//SKU").each &:remove
+
         subject.create_or_update_variants!(prod, art_elem, change_flag, described_class::PrepackErrorLog.new)
         expect(Variant.count).to eq 0
         expect(change_flag.value).to eq false
@@ -272,11 +214,10 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
           var.update_custom_value!(cdefs[:var_units_per_inner_pack], 3678)
           var
         end
+
         let(:art_elem_with_prepack) do
-          doc_string = include_variants(doc, ["2"])
-          short_doc = REXML::Document.new(doc_string)
-          prepack_elem = REXML::XPath.match(short_doc, "//Article").first
-          prepack_elem.get_elements("ArticleAttr[Code[@Type='ArticleType']]/Code")[0].text = "ZPPK"
+          prepack_elem = Nokogiri::XML(include_variants(doc, ["2"])).root.xpath("//Article").first
+          prepack_elem.xpath("ArticleAttr[Code[@Type='ArticleType']]/Code").first.content = "ZPPK"
           prepack_elem
         end
 
@@ -385,11 +326,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
         it "logs error if specified product code malformed" do
           error_log = described_class::PrepackErrorLog.new
 
-          component_sku_elem_arr = REXML::XPath.match(doc, "//Article/UPC/BOMComponent/ComponentSKU")
-          component_sku_elem_arr.each do |component_sku_elem|
-            # Does not contain a hyphen: that qualifies it as "malformed".
-            component_sku_elem.text = '1234567_123456_SML'
-          end
+          doc.root.xpath("//Article/UPC/BOMComponent/ComponentSKU").each {|el| el.content = "1234567_123456_SML" }
 
           subject.create_or_update_variants!(prod, art_elem_with_prepack, change_flag, error_log)
           expect(prod.get_custom_value(cdefs[:prod_prepack]).value).to eq true

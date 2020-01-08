@@ -1,4 +1,4 @@
-require 'rexml/document'
+require 'open_chain/custom_handler/nokogiri_xml_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/integration_client_parser'
 require 'open_chain/mutable_boolean'
@@ -6,14 +6,14 @@ require 'open_chain/mutable_boolean'
 module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMasterParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::CustomHandler::NokogiriXmlHelper
 
   def self.integration_folder
     ["www-vfitrack-net/_ua_article_master", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ua_article_master"]
   end
 
   def self.parse data, opts={}
-    doc = REXML::Document.new data
-    process_articles! doc, opts[:key]
+    self.new.process_articles! xml_document(data), opts[:key]
   end
 
   def send_error_email error_log, file_key
@@ -45,72 +45,37 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
     OpenMailer.send_simple_html(Group.use_system_group("UA Article Master Errors", name: "UA Article Master Errors"), 'UA Article Master Processing Errors', error_body.html_safe).deliver_now
   end
 
-  def self.process_articles! doc, file_key
-    doc.elements.each("//Style") do |style|
-      if MasterSetup.get.custom_feature?("UA Background Article Processing")
-        self.delay(queue: "ua").process_article(serialize_xml(style), file_key)
-      else
-        process_article(style, file_key)
-      end
+  def process_articles! doc, file_key
+    xpath(doc.root, "Style") do |style|
+      process_article(style, file_key)
     end
   end
 
-  def self.process_article style, file_key
-    parser = self.new
-
-    style = deserialze_xml(style)
-
+  def process_article style, file_key
     error_log = PrepackErrorLog.new
-    style.elements.each("Article") do |art|
+    xpath(style, "Article") do |art|
       changed = MutableBoolean.new(false)
-      customs_description = REXML::XPath.first(art, "ArticleAttr[Code[@Type='CommImpCode']]/Description").try :text
-      p = parser.create_or_update_product! art, changed
+      customs_description = first_text(art, "ArticleAttr[Code[@Type='CommImpCode']]/Description")
+      p = create_or_update_product! art, changed
       next if p.blank?
       
       Lock.with_lock_retry(p) do
-        parser.create_or_update_variants! p, art, changed, error_log
-        var_hts_codes = parser.pluck_unique_hts_values(p)
-        parser.create_or_update_classi! p, customs_description, var_hts_codes, changed
-        p.create_snapshot parser.user, nil, file_key if changed.value
+        create_or_update_variants! p, art, changed, error_log
+        var_hts_codes = pluck_unique_hts_values(p)
+        create_or_update_classi! p, customs_description, var_hts_codes, changed
+        p.create_snapshot user, nil, file_key if changed.value
       end
     end
 
-    parser.send_error_email(error_log, file_key) if error_log.has_errors?
-  end
-
-  def self.deserialze_xml xml
-    if xml.is_a?(String)
-      REXML::Document.new(xml).root
-    else
-      xml
-    end
-  end
-
-  def self.serialize_xml xml
-    # I think there is a bug in REXML where the default formatter appears to preserve
-    # the whitespace text nodes that were present in the original XML (it shouldn't)
-    # ...the only way to eliminate all that whitespace is to use a pretty formatter and chop
-    # it all out (which still leaves the newlines between elements).  So we'll gsub
-    # those out too.  We want the XML to be as tight as possible since this is going
-    # into a database table for processing.
-
-    output = StringIO.new 
-    f = REXML::Formatters::Pretty.new 0
-    f.compact = true
-    # don't ever wrap text to newlines inside elements
-    f.width = 1_000_000
-
-    f.write xml, output
-    output.rewind
-    output.read.gsub!(">\n<", "><")
+    send_error_email(error_log, file_key) if error_log.has_errors?
   end
 
   def create_or_update_product! art_elem, changed
     p = nil
-    puid = art_elem.text("ArticleNumber")
+    puid = et(art_elem, "ArticleNumber")
     return nil if puid.blank?
 
-    pname = art_elem.text("ArticleDescription")
+    pname = et(art_elem, "ArticleDescription")
     product_uid = "#{system_code}-#{puid}"
     Lock.acquire("Product-#{puid}") do
       p = Product.where(unique_identifier: product_uid, importer_id: importer).first_or_initialize(unique_identifier: product_uid, importer: importer)
@@ -130,8 +95,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
     if is_prepack? art_elem
       create_or_update_prepacks! prod, art_elem, changed, error_log
     else
-      art_elem.elements.each("UPC") do |upc_elem|
-        var_sku = upc_elem.text("SKU")
+      xpath(art_elem, "UPC") do |upc_elem|
+        var_sku = et(upc_elem, "SKU")
         if var_sku.presence
           fields = extract_var_opt_fields upc_elem
           create_or_update_one_variant! var_sku, prod, fields, changed, nil
@@ -148,15 +113,15 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
   end
 
   def is_prepack? art_elem
-    article_type = REXML::XPath.first(art_elem, "ArticleAttr[Code[@Type='ArticleType']]/Code").try :text
+    article_type = first_text(art_elem, "ArticleAttr[Code[@Type='ArticleType']]/Code")
     article_type == 'ZPPK'
   end
 
   # Returns hash of BOMComponent elements keyed to their prepack product number, which is a substring of the ComponentSKU (a BOMComponent child).
   def create_bom_component_sku_hash art_elem, error_log
     bom_sku_hash = {}
-    REXML::XPath.match(art_elem, "UPC/BOMComponent").each do |bom_component_elem|
-      component_sku = bom_component_elem.text("ComponentSKU")
+    xpath(art_elem, "UPC/BOMComponent") do |bom_component_elem|
+      component_sku = et(bom_component_elem, "ComponentSKU", true)
       # What we're looking for here is essentially any string of non-hyphen characters, followed by a hyphen
       # followed by 3 more characters.
       prepack_product_number = component_sku.match('(^\w+-)\w{3}').try :[], 0
@@ -186,8 +151,8 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
       prepack_product = Product.where(unique_identifier: "#{prod.importer.system_code}-#{prepack_product_number}", importer_id: prod.importer).first
       if prepack_product
         bomcomponent_arr.each do |bomcomponent_elem|
-          component_sku = bomcomponent_elem.text("ComponentSKU")
-          component_qty_text = bomcomponent_elem.text("ComponentQty")
+          component_sku = et(bomcomponent_elem, "ComponentSKU")
+          component_qty_text = et(bomcomponent_elem, "ComponentQty")
           component_qty = component_qty_text ? BigDecimal(component_qty_text) : 0
           matching_variant = prepack_product.variants.find { |i| i.variant_identifier == component_sku }
           if matching_variant
@@ -251,10 +216,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
   end
 
   def extract_var_opt_fields upc_elem
-    var_hts_code = upc_elem.text("UPCAttr/Code[@Type='HTSCode']").try(:delete, ".")
-    var_upc = upc_elem.text("UPCNumber")
-    var_article_number = upc_elem.text("VariantArticle")
-    var_description = upc_elem.text("VariantDescription")
+    var_hts_code = et(upc_elem, "UPCAttr/Code[@Type='HTSCode']").try(:delete, ".")
+    var_upc = et(upc_elem, "UPCNumber")
+    var_article_number = et(upc_elem, "VariantArticle")
+    var_description = et(upc_elem, "VariantDescription")
     {var_upc: var_upc, var_article_number: var_article_number, var_description: var_description, var_hts_code: var_hts_code}
   end
 
@@ -302,7 +267,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
   end
 
   def system_code
-    @system_code ||= MasterSetup.get.custom_feature?("UAPARTS Staging") ? "UAPARTS" : "UNDAR"
+    "UAPARTS"
   end
 
   def ca
