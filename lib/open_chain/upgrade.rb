@@ -98,7 +98,7 @@ module OpenChain
 
       return false unless @log
 
-      Lock.acquire("Upgrade-#{MasterSetup.hostname}-#{@target}") do 
+      Lock.acquire("Upgrade-#{MasterSetup.hostname}-#{@target}", yield_in_transaction: false) do 
         # There's some (albeit really small) possibility that the upgrade could already have been done in another process 
         # while waiting on this lock, just check the already_upgraded? and return if it has already been
         return false if self.already_upgraded?

@@ -250,15 +250,17 @@ describe SurveyResponse do
 
   describe "most_recent_user_log" do
     it "returns the newest log with a user_id associated with it" do
-      @survey = Factory(:question).survey
-      @u = Factory(:user)
-      @response = @survey.generate_response! @u
+      Timecop.freeze(Time.zone.now) do 
+        @survey = Factory(:question).survey
+        @u = Factory(:user)
+        @response = @survey.generate_response! @u
 
-      @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now
-      l2 = @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now - 1.day, user: @u
-      @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now - 2.days, user: @u
+        @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now
+        l2 = @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now - 1.day, user: @u
+        @response.survey_response_logs.create! message: "Message", updated_at: Time.zone.now - 2.days, user: @u
 
-      expect(@response.most_recent_user_log).to eq l2
+        expect(@response.most_recent_user_log).to eq l2
+      end
     end
   end
 
