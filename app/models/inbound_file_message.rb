@@ -7,6 +7,10 @@
 #  message         :text(65535)
 #  message_status  :string(255)
 #
+# Indexes
+#
+#  index_inbound_file_messages_on_inbound_file_id  (inbound_file_id)
+#
 
 class InboundFileMessage < ActiveRecord::Base
   attr_accessible :inbound_file_id, :message, :message_status

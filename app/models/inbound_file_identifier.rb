@@ -9,6 +9,10 @@
 #  module_type     :string(255)
 #  value           :string(255)
 #
+# Indexes
+#
+#  index_inbound_file_identifiers_on_inbound_file_id  (inbound_file_id)
+#
 
 class InboundFileIdentifier < ActiveRecord::Base
   attr_accessible :identifier_type, :inbound_file_id, :module_id, :module_type, :value
