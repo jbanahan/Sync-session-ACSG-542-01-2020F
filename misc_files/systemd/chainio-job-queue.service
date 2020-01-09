@@ -13,3 +13,4 @@ WorkingDirectory=~
 ExecStart=/home/ubuntu/chainio/primary_instance/misc_files/systemd/chainio-job-queue.sh
 Restart=on-failure
 RestartSec=15
+KillMode=process
