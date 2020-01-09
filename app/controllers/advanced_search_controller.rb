@@ -19,7 +19,7 @@ class AdvancedSearchController < ApplicationController
     ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
     base_params = params[:search_setup]
-
+    
     if base_params[:search_criterions].blank?
       if base_params[:sort_criterions].presence || base_params[:search_schedules].presence
         render_json_error "Must have a search criterion to include sorts or schedules!"
@@ -38,6 +38,7 @@ class AdvancedSearchController < ApplicationController
       ss.include_rule_links = base_params[:include_rule_links]
       ss.no_time = base_params[:no_time]
       ss.download_format = (base_params[:download_format].presence || "xlsx")
+      ss.locked = base_params[:locked]
       ss.search_columns.delete_all
       user = current_user
       unless base_params[:search_columns].blank?
@@ -222,7 +223,8 @@ class AdvancedSearchController < ApplicationController
           :no_time=>ss.no_time?,
           :allow_ftp=>ss.can_ftp?,
           :allow_template=>current_user.admin?,
-          :user=>{:email=>ss.user.email},
+          :user=>{:email=>ss.user.email, :integration=> ss.user == User.integration},
+          :locked=>ss.locked?,
           :uploadable_error_messages=>ss.uploadable_error_messages,
           :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name,:id=>s.id,:module=>s.core_module.label}},
           :download_format=>(ss.download_format.presence || "xlsx"),
@@ -257,6 +259,7 @@ class AdvancedSearchController < ApplicationController
     raise ActionController::RoutingError.new('Not Found') unless cm.view?(current_user)
     ss = cm.make_default_search current_user
     ss.name = "New Search"
+    ss.locked = true if ss.user == User.integration
     ss.save
     render :json=>{:id=>ss.id}
   end

@@ -78,14 +78,29 @@ describe SearchSetupsController do
       request.accept = "application/json"
     end
 
-    it "should make a copy of the search for the user" do
+    it "should make a copy of the search for the user, skipping 'locked' flag" do
+      @ss.update locked: true
       post :copy, id: @ss.id
 
       expect(response).to be_success
       r = JSON.parse(response.body)
       expect(r["ok"]).not_to be_nil
-      expect(SearchSetup.where(id: r["id"]).first).not_to be_nil
+      copy = SearchSetup.where(id: r["id"]).first
+      expect(copy).not_to be_nil
       expect(r["name"]).to eq("Copy of #{@ss.name}") 
+      expect(copy.locked?).to be_falsey
+    end
+
+    it "automatically locks any report copied by Integration User" do
+      u = User.integration
+      sign_in_as u
+      @ss.update locked: true, user: u
+      post :copy, id: @ss.id
+
+      expect(response).to be_success
+      r = JSON.parse(response.body)
+      copy = SearchSetup.where(id: r["id"]).first
+      expect(copy.locked?).to eq true
     end
 
     it "should accept copy name from requst" do

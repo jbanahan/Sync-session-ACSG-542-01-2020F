@@ -402,7 +402,10 @@
           <div id='search-setup-actions' class='row'>
             <div class="col-md-12 text-center">
               <div ng-hide='deletePrompt==true || givePrompt==true || copyPrompt==true || scheduleToEdit'>
-                <button id="btn_save_search" class='btn btn-lg btn-success' ng-click='saveSetup()'>Save</button>
+                <span ng-hide='searchSetup.user.integration'>
+                  <button id="btn_save_search" class='btn btn-lg btn-success' ng-click='saveSetup(false)'>Save</button>
+                </span>
+                <button id="btn_save_lock_search" class='btn btn-lg btn-success' title='Use to save and prevent unintentional changes' ng-click='saveSetup(true)'>Save/Lock</button>
                 <button id="btn_new_search" class='btn btn-outline-secondary btn-lg m-1' ng-click='newSetup()'>New</button>
                 <button id="btn_copy_search" class='btn btn-outline-secondary btn-lg m-1' ng-click='copyPrompt=true'>Copy</button>
                 <button id="btn_give_search" class='btn btn-outline-secondary btn-lg m-1' ng-click='givePrompt=true'>Give</button>
@@ -466,7 +469,10 @@
     </div>
   </div>
   <div chain-search-result='searchWrapper.searchResult' page='page' errors='errors' src='/advanced_search/' canceller='searchWrapper.canceller', loading='searchWrapper.loading'>
-    <button id="btn_search_setup" class='btn navbar-btn btn-secondary' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+    <span ng-show="searchSetup">
+      <button id="btn_search_setup" class='btn navbar-btn btn-secondary' ng-click='toggleSetup()' ng-hide='searchSetup.locked' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+    </span>
+    <button id="btn_search_setup_unlock" class='btn navbar-btn btn-secondary' ng-show='searchSetup.locked' ng-click='unlockSearch()' title='Unlock Setup'><i class='fa fa-unlock'></i></button>
     <a id="btn_email_modal" class='btn navbar-btn btn-secondary' ng-click="showEmailModal()" title='Email'><i class='fa fa-envelope'></i></a>
     <btn-download>
       <button class='btn btn-secondary navbar-btn' ng-show='searchWrapper.searchResult.total_pages>1' ng-click='backgroundDownload()' title='Download'><i class='fa fa-download'></i></button>
@@ -486,7 +492,10 @@
   <nav ng-show="searchWrapper.loading" ng-show="!noChrome" class='action_bar navbar fixed-bottom' style="max-height: 3.5em">
     <ul class='navbar-nav'>
       <li>
-        <button class='btn btn-secondary navbar-btn' ng-click='toggleSetup()' ng-show='searchSetup' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+        <span ng-show="searchSetup">
+          <button id="btn_search_setup" class='btn navbar-btn btn-secondary' ng-click='toggleSetup()' ng-hide='searchSetup.locked' title='Show/Hide Setup'><i class='fa fa-cogs'></i></button>
+        </span>
+        <button id="btn_search_setup_unlock" class='btn navbar-btn btn-secondary' ng-show='searchSetup.locked' ng-click='unlockSearch()' title='Unlock Setup'><i class='fa fa-unlock'></i></button>
       </li>
     </ul>
   </nav>

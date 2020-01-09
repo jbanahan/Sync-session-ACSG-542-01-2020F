@@ -14,7 +14,7 @@ module OpenChain
     #
     # If a true parameter is provided, everything in the tree will be saved to the database.
     def deep_copy(new_name, copy_schedules = false) 
-      atts = lambda {|obj| obj.attributes.delete_if {|k,v| ["id","created_at","updated_at"].include? k}}
+      atts = lambda {|obj| obj.attributes.delete_if {|k,v| ["id","created_at","updated_at","locked"].include? k}}
       ss = self.class.new(atts.call(self))
       ss.name = new_name
       self.search_criterions.each do |sc|

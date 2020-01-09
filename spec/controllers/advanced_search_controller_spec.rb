@@ -40,6 +40,15 @@ describe AdvancedSearchController do
       expect(ss.user).to eq(@user)
       expect(ss.module_type).to eq('Product')
       expect(ss.name).to eq("New Search")
+      expect(ss.locked).to be_falsey
+    end
+    it "automatically locks search for Integration User" do
+      sign_in_as User.integration
+      post :create, :module_type=>"Product"
+      expect(response).to be_success
+      h = JSON.parse response.body
+      ss = SearchSetup.find h['id']
+      expect(ss.locked).to eq true
     end
     it "should fail if user cannot view module" do
       allow(CoreModule::PRODUCT).to receive(:view?).and_return(false)
@@ -84,13 +93,14 @@ describe AdvancedSearchController do
       expect(@ss.search_schedules).to be_empty
     end
     it "should update name" do
-      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:include_rule_links=>false,:no_time=>true}
+      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:include_rule_links=>false,:no_time=>true,:locked=>true}
       expect(response).to be_success
       @ss.reload
       expect(@ss.name).to eq("Y")
       expect(@ss.include_links?).to be_falsey
       expect(@ss.include_rule_links?).to be_falsey
       expect(@ss.no_time?).to be_truthy
+      expect(@ss.locked?).to be_truthy
     end
     it "should recreate columns" do
       @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
@@ -203,7 +213,7 @@ describe AdvancedSearchController do
     end
     it "should write response for json" do
       @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
-        :include_links=>true,:include_rule_links=>true,:no_time=>true,:module_type=>"Product")
+        :include_links=>true,:include_rule_links=>true,:no_time=>true,:module_type=>"Product",locked:true)
       @ss.search_columns.create!(:rank=>1,:model_field_uid=>:prod_uid)
       @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
       @ss.search_columns.create!(:rank=>3,:model_field_uid=>:_const, constant_field_name: "Broker", constant_field_value: "Vandegrift")
@@ -221,7 +231,9 @@ describe AdvancedSearchController do
       expect(h['no_time']).to be_truthy
       expect(h['allow_ftp']).to be_falsey
       expect(h['user']['email']).to eq(@user.email)
+      expect(h['user']['integration']).to be false
       expect(h['module_type']).to eq(@ss.module_type)
+      expect(h['locked']).to be true
       expect(h['title']).to eq "Product"
       expect(h['allow_template']).to be_falsey
       search_list = h['search_list']
@@ -286,6 +298,15 @@ describe AdvancedSearchController do
       expect(response).to be_success
       h = JSON.parse response.body
       expect(h['search_criterions'][0]['include_empty']).to be_truthy
+    end
+    it "indicates if the search belongs to Integration User" do
+      integration = User.integration
+      sign_in_as integration
+      @ss = Factory(:search_setup, user: integration, module_type: "Product", name: "MYNAME")
+      get :setup, :id=>@ss.id, :format=>'json'
+      expect(response).to be_success
+      h = JSON.parse response.body
+      expect(h['user']['integration']).to be true
     end
     it "should 404 if not for correct user" do
       ss = Factory(:search_setup)

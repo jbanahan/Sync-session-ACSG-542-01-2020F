@@ -551,12 +551,16 @@ advSearchApp.controller 'AdvancedSearchCtrl',  ['$scope','$routeParams','$locati
       callback()
     null
 
+  $scope.unlockSearch = () ->
+    $scope.searchSetup.locked = false
+
   #save the search setup and reload the results on after save
-  $scope.saveSetup = () ->
+  $scope.saveSetup = (locked) ->
     $scope.handleSearchOverride($scope, () ->
       $scope.toggleSetup()
       $scope.searchWrapper.searchResult = {}
       ss = $scope.searchSetup
+      ss.locked = locked
       $scope.searchSetup = {}
       
       if ss.search_criterions.length == 0

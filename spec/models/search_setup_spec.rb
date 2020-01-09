@@ -54,12 +54,15 @@ describe SearchSetup do
       @s = SearchSetup.create!(:name=>"X",:module_type=>"Product",:user_id=>@u.id)
     end
     it "should copy to another user" do
+      @s.update! locked: true
       @s.give_to @u2
       d = SearchSetup.find_by(user: @u2)
       expect(d.name).to eq("X (From #{@u.full_name})")
       expect(d.id).not_to be_nil
+      expect(d.locked?).to be false # locked attribute shouldn't be copied
       @s.reload
       expect(@s.name).to eq("X") #we shouldn't modify the original object
+      expect(@s.locked?).to be true
     end
     it "should copy to another user including schedules" do
       @s.search_schedules.build

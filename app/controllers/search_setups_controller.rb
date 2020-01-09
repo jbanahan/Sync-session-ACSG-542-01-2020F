@@ -54,7 +54,8 @@ class SearchSetupsController < ApplicationController
         end
       else
         copy = base.deep_copy(new_name)
-        copy.touch
+        copy.locked = true if base.user == User.integration
+        copy.save!
         respond_to do |format|
           format.html {
             add_flash :notices, "A copy of this report has been created as '" + copy.name + "'."

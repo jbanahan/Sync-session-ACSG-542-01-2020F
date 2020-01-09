@@ -7,6 +7,7 @@
 #  id                 :integer          not null, primary key
 #  include_links      :boolean
 #  include_rule_links :boolean
+#  locked             :boolean
 #  module_type        :string(255)
 #  name               :string(255)
 #  no_time            :boolean
@@ -25,7 +26,8 @@ class SearchSetup < ActiveRecord::Base
 
   attr_accessible :download_format, :include_links, :include_rule_links, :module_type, :name, 
     :no_time, :simple, :user_id, :user, :search_criterions_attributes,
-    :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes
+    :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes,
+    :locked
 
   validates   :name, :presence => true
   validates   :user, :presence => true
