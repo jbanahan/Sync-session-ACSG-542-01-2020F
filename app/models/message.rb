@@ -10,7 +10,7 @@
 #  link_path  :string(255)
 #  subject    :string(255)
 #  updated_at :datetime         not null
-#  user_id    :string(255)
+#  user_id    :integer
 #  viewed     :boolean          default(FALSE)
 #
 # Indexes
@@ -32,7 +32,7 @@ class Message < ActiveRecord::Base
   after_create :email_to_user
   
   def can_view? u
-    u.sys_admin? || u==self.run_by
+    u.sys_admin? || u.id == self.user_id
   end
 
   #purge messages older than the give date (defaults to 30 days ago)

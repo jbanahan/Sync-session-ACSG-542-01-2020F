@@ -1,13 +1,31 @@
 describe Message do
-  describe 'unread_message_count' do
-    before :each do
-      @u = Factory(:user)
+  let(:user) { Factory(:user) }
+  
+  describe 'can_view?' do
+    let(:msg) { Factory(:message) }
+    
+    it "returns true for sys_admin" do
+      user.sys_admin = true; user.save!
+      expect(msg.can_view? user).to eq true
     end
+
+    it "returns true for message owner" do
+      msg.user = user; msg.save!
+      expect(msg.can_view? user).to eq true
+    end
+
+    it "returns false for anyone else" do
+      expect(msg.can_view? user).to eq false
+    end 
+  end
+
+  describe 'unread_message_count' do
+    
     it 'should return number if unread messages exist' do
-      Factory(:message,:user=>@u,:viewed=>false) #not viewed should be counted
-      Factory(:message,:user=>@u) #no viewed value should be counted
-      Factory(:message,:user=>@u,:viewed=>true) #viewed should not be counted
-      expect(Message.unread_message_count(@u.id)).to eq(2)
+      Factory(:message,:user=>user,:viewed=>false) #not viewed should be counted
+      Factory(:message,:user=>user) #no viewed value should be counted
+      Factory(:message,:user=>user,:viewed=>true) #viewed should not be counted
+      expect(Message.unread_message_count(user.id)).to eq(2)
     end
   end
 
@@ -19,7 +37,7 @@ describe Message do
   end
 
   describe "email_to_user" do
-    let(:user) { Factory(:user, email_new_messages: true) }
+    before { user.update! email_new_messages: true }
     let(:mail) { instance_double(ActionMailer::MessageDelivery) }
 
     it "sends emails to user who gets a system message" do
