@@ -129,10 +129,10 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         mail = ActionMailer::Base.deliveries.second
         expect(mail.to).to eq ["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com"]
         expect(mail.cc).to eq ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"]
-        expect(mail.subject).to eq "PARS Coversheet - 2016-02-03.pdf"
+        expect(mail.subject).to eq "PARS Coversheet - INV# - 2016-02-03.pdf"
         expect(mail.reply_to).to eq ["hm_ca@vandegriftinc.com"]
         expect(mail.body).to include "See attached PDF file for the list of PARS numbers to utilize."
-        expect(mail.attachments["PARS Coversheet - 2016-02-03.pdf"]).not_to be_nil
+        expect(mail.attachments["PARS Coversheet - INV# - 2016-02-03.pdf"]).not_to be_nil
 
         expect(invoice_data.length).to eq 1
         expect(invoice_data.first.invoice_number).to eq "INV#-01"

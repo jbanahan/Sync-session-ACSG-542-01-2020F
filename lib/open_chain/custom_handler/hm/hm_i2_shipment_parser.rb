@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         # number.  A value (current date) will be present only if a file for this invoice number has already been
         # processed.
         if lock_cr.value.nil?
-          parse_with_locked_invoice rows, system, forward_to_entry_system, log
+          parse_with_locked_invoice rows, system, forward_to_entry_system, log, invoice_number
 
           lock_cr.value = Time.zone.now
           lock_cr.save!
@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     nil
   end
 
-  def parse_with_locked_invoice rows, system, forward_to_entry_system, log
+  def parse_with_locked_invoice rows, system, forward_to_entry_system, log, invoice_number
     # If this parser is no longer the parser of record for the i2 file, then we can just stop at this point
     # since no data is actually saved to the system for these files.
     if skip_file?(system)
@@ -76,7 +76,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     if system == :fenix
-      generate_and_send_pars_pdf(totals)
+      generate_and_send_pars_pdf(totals, invoice_number)
 
       # Check PARS totals...
       ending_pars_count = DataCrossReference.unused_pars_count
@@ -656,14 +656,14 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     wb
   end
 
-  def generate_and_send_pars_pdf file_data
+  def generate_and_send_pars_pdf file_data, invoice_number
     Tempfile.open(["ParsCoversheet", ".pdf"]) do |tempfile|
       tempfile.binmode
       OpenChain::CustomHandler::Hm::HmParsPdfGenerator.generate_pars_pdf(file_data, tempfile)
       # Use the first invoice date from the data 
       data = file_data.find {|d| !d.invoice_date.nil? }
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
-      filename = "PARS Coversheet - #{date}.pdf"
+      filename = "PARS Coversheet - #{invoice_number} - #{date}.pdf"
       Attachment.add_original_filename_method(tempfile, filename)
       OpenMailer.send_simple_html(["HM_Supervisors@Geodis.com", "HM_FieldIT.cl.us@Geodis.com", "ManhattanSupport.cl.us@geodis.com", "OnlineDCPlainfield@hm.com", "Ronald.Colbert@purolator.com", "Terri.Bandy@purolator.com"], filename, "See attached PDF file for the list of PARS numbers to utilize.", [tempfile], cc: ["hm_ca@vandegriftinc.com", "afterhours@vandegriftinc.com"], reply_to: "hm_ca@vandegriftinc.com").deliver_now
     end
