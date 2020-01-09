@@ -43,6 +43,10 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
     end
   end
 
+  def first_xpath element, xpath_expression, namespace_bindings: nil, variable_bindings: nil
+    xpath(element, xpath_expression, namespace_bindings: namespace_bindings, variable_bindings: variable_bindings).first
+  end
+
   # Grabs all unique values from the XML based on a provided xpath.  Blank values are not included in the returned
   # array unless the method is specifically instructed to include them ('skip_blank_values' value of false).
   # Uniqueness check here is case sensitive: "A" and "a" would be viewed as different values.  Although the method

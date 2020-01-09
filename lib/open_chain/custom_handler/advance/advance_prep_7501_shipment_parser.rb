@@ -1,5 +1,5 @@
 require 'open_chain/integration_client_parser'
-require 'open_chain/custom_handler/xml_helper'
+require 'open_chain/custom_handler/nokogiri_xml_helper'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_asn_parser_support'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::GtNexus::GenericGtnAsnParserSupport
-  extend OpenChain::CustomHandler::XmlHelper
+  include OpenChain::CustomHandler::NokogiriXmlHelper
 
   def self.parse_file io, log, opts = {}
     self.new.parse(xml_document(io), User.integration, opts[:key])
@@ -36,31 +36,31 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       shipment.ship_to = parties[:ship_to]
       # For whatever reason, we get whitespace (non-breaking spaces, other non-printing chars) at the end of the BOL from time to time, strip it
       # otherwise there is problems sending the data to Kewill
-      shipment.house_bill_of_lading = xml.text("/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']").to_s.gsub(/[[:space:]]/, "")
+      shipment.house_bill_of_lading = first_text(xml, "/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']", true).gsub(/[[:space:]]/, "")
       inbound_file.add_identifier :house_bill, shipment.house_bill_of_lading
 
-      asn = REXML::XPath.first xml, "/Prep7501Message/Prep7501/ASN"
+      asn = first_xpath(xml, "/Prep7501Message/Prep7501/ASN")
       if !asn.nil?
-        shipment.mode = asn.text "Mode"
-        shipment.voyage = asn.text "Voyage"
-        shipment.vessel = asn.text "Vessel"
-        shipment.country_origin = find_port_country(REXML::XPath.first asn, "OriginCity")
+        shipment.mode = et(asn, "Mode")
+        shipment.voyage = et(asn, "Voyage")
+        shipment.vessel = et(asn, "Vessel")
+        shipment.country_origin = find_port_country(first_xpath(asn, "OriginCity"))
         # If there's no OriginCity, fall back to the PortOfLoading
-        shipment.country_origin = find_port_country(REXML::XPath.first asn, "PortOfLoading") if shipment.country_origin.nil?
-        shipment.country_export = find_port_country(REXML::XPath.first asn, "PortOfLoading")
-        shipment.country_import = find_port_country(REXML::XPath.first asn, "BLDestination")
+        shipment.country_origin = find_port_country(first_xpath(asn, "PortOfLoading")) if shipment.country_origin.nil?
+        shipment.country_export = find_port_country(first_xpath(asn, "PortOfLoading"))
+        shipment.country_import = find_port_country(first_xpath(asn, "BLDestination"))
         # If there's no BLDestination, fall back to the PortOfDischarge
-        shipment.country_import = find_port_country(REXML::XPath.first asn, "PortOfDischarge") if shipment.country_import.nil?
+        shipment.country_import = find_port_country(first_xpath(asn, "PortOfDischarge")) if shipment.country_import.nil?
 
 
         inbound_file.reject_and_raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents." if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
 
-        shipment.lading_port = find_port(REXML::XPath.first asn, "PortOfLoading")
-        shipment.unlading_port = find_port(REXML::XPath.first asn, "PortOfDischarge")
-        shipment.final_dest_port = find_port(REXML::XPath.first(asn, "BLDestination"), lookup_type_order: [:unlocode, :schedule_k_code, :schedule_d_code])
+        shipment.lading_port = find_port(first_xpath(asn, "PortOfLoading"))
+        shipment.unlading_port = find_port(first_xpath(asn, "PortOfDischarge"))
+        shipment.final_dest_port = find_port(first_xpath(asn, "BLDestination"), lookup_type_order: [:unlocode, :schedule_k_code, :schedule_d_code])
 
-        shipment.est_departure_date = parse_date asn.text("EstDepartDate")
-        shipment.est_arrival_port_date = parse_date asn.text("EstDischargePortDate")
+        shipment.est_departure_date = parse_date et(asn, "EstDepartDate")
+        shipment.est_arrival_port_date = parse_date et(asn, "EstDischargePortDate")
         shipment.departure_date = parse_reference_date asn, "Departed", datatype: :date
       end
 
@@ -69,7 +69,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       # ASN elements.  For that reason, just build the containers and then process all the line items 
       # after doing that.  This also allows sorting the line items across the whole shipment rather than
       # just a single ASN.
-      REXML::XPath.match(xml, "/Prep7501Message/Prep7501/ASN/Container").each do |container_xml|
+      xpath(xml, "/Prep7501Message/Prep7501/ASN/Container") do |container_xml|
         container = parse_container(shipment, container_xml)
         container_xmls << container_xml
       end
@@ -108,15 +108,15 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   def sorted_line_items container_xmls
     items = []
     container_xmls.each do |container_xml|
-      line_items = REXML::XPath.match(container_xml, "LineItems").to_a
+      line_items = xpath(container_xml, "LineItems")
       items.push *line_items if line_items.length > 0
     end
     
     items.sort do |a, b|
-      v = a.text("PONumber").to_s <=> b.text("PONumber").to_s
+      v = et(a, "PONumber", true) <=>  et(b, "PONumber", true)
 
       if v == 0
-        v = a.text("LineItemNumber").to_i <=> b.text("LineItemNumber").to_i
+        v = et(a, "LineItemNumber", true).to_i <=> et(b, "LineItemNumber", true).to_i
       end
 
       v
@@ -124,36 +124,36 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   end
 
   def parse_container shipment, xml
-    container_number = xml.text "ContainerNumber"
+    container_number = et(xml, "ContainerNumber")
     container = shipment.containers.find { |c| container_number == c.container_number }
     if container.blank?
       container = shipment.containers.build container_number: container_number
     end
-    container.container_size = xml.text "ContainerType"
-    container.fcl_lcl = xml.text "ContainerLoad"
-    container.seal_number = xml.text "SealNumber"
+    container.container_size = et(xml, "ContainerType")
+    container.fcl_lcl = et(xml, "ContainerLoad")
+    container.seal_number = et(xml, "SealNumber")
 
     container
   end
 
   def parse_shipment_line shipment, line_xml, orders_cache, products_cache
     line = shipment.shipment_lines.build
-    container_number = line_xml.parent.text("ContainerNumber")
+    container_number = et(line_xml.parent, "ContainerNumber")
 
     line.container = shipment.containers.find { |c| c.container_number == container_number }
-    line.invoice_number = line_xml.text("InvoiceNumber")
-    line_number = line_xml.text("LineItemNumber").to_i
+    line.invoice_number = et(line_xml, "InvoiceNumber")
+    line_number = et(line_xml, "LineItemNumber").to_i
     if line.invoice_number.blank?
       inbound_file.add_reject_message "Container # #{container_number} line # #{line_number} is missing an invoice number."
     end
 
     # The carton count on the XML is invalid...It's the piece count, not the actual # of cartons
     line.carton_qty = 0
-    line.quantity = parse_decimal(line_xml.text("Quantity"))
-    line.gross_kgs = parse_weight(line_xml.get_elements("Weight").first)
-    line.cbms = parse_volume(line_xml.get_elements("Volume").first)
+    line.quantity = parse_decimal(et(line_xml, "Quantity"))
+    line.gross_kgs = parse_weight(first_xpath(line_xml, "Weight"))
+    line.cbms = parse_volume(first_xpath(line_xml, "Volume"))
     
-    order_number = line_xml.text "PONumber"
+    order_number = et(line_xml, "PONumber")
     order = orders_cache[order_number]
     if order
       if advan_importer? shipment.importer
@@ -161,7 +161,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         # This really should never happend at all since we're making orders / products in this parser
         inbound_file.reject_and_raise "Failed to find Order # '#{order_number}' / Line Number #{line_number}." unless order_line
       else
-        product_code = line_xml.text("ProductCode")
+        product_code = et(line_xml, "ProductCode")
         order_line = find_cq_order_line_by_part_number(order, product_code)
 
         # This really should never happen at all since we're rejecting the file when it's looking up orders if it can't find the order line
@@ -181,10 +181,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
 
   def find_or_create_shipment importer, xml
     # We don't actually get a master bill for these, so we'll use the house bill as the reference
-    house_bill = xml.text "/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']"
+    house_bill = et(xml, "/Prep7501Message/Prep7501/AggregationLevel[@Type='BL']")
     inbound_file.reject_and_raise "No Bill of Lading present." if house_bill.blank?
 
-    last_exported_from_source = parse_datetime(xml.text "/Prep7501Message/TransactionInfo/Created")
+    last_exported_from_source = parse_datetime(et(xml, "/Prep7501Message/TransactionInfo/Created"))
 
     reference = "#{importer.system_code}-#{house_bill}"
     inbound_file.add_identifier :shipment_number, reference
@@ -234,7 +234,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   end
 
   def find_or_create_order importer, line_xml, xml, orders_cache, products_cache
-    customer_order_number = line_xml.text "PONumber"
+    customer_order_number = et(line_xml, "PONumber")
     return nil if customer_order_number.blank?
 
     snapshot_order = false
@@ -260,10 +260,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       end
     end
 
-    product_code = line_xml.text("ProductCode")
+    product_code = et(line_xml, "ProductCode", true)
     product = products_cache[product_code]
     Lock.db_lock(order) do
-      line_number = line_xml.text("LineItemNumber").to_i
+      line_number = et(line_xml, "LineItemNumber", true).to_i
     
       if advan_importer? importer
         # Line number is supposed to be a unique line number, not 100% sure it's unique to the order for ADVAN.  
@@ -289,32 +289,32 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       end
 
       # This data is pulled from the Invoice portion of the XML..
-      invoice_line = REXML::XPath.first xml, "/Prep7501Message/Prep7501/CommercialInvoice/Item[PurchaseOrderNumber='#{customer_order_number}' and ItemNumber='#{product_code}' and UserRefNumber='#{line_number}']"
+      invoice_line = first_xpath(xml, "/Prep7501Message/Prep7501/CommercialInvoice/Item[PurchaseOrderNumber='#{customer_order_number}' and ItemNumber='#{product_code}' and UserRefNumber='#{line_number}']")
       if invoice_line.nil?
         inbound_file.add_reject_message "Unable to find Commerical Invoice Line for Order Number #{customer_order_number} / Item Number #{product_code} / Line #{line_number}"
         return nil
       end
       
-      line.quantity = parse_decimal(invoice_line.text "Quantity")
-      line.unit_of_measure = invoice_line.text "QuantityUOM"
+      line.quantity = parse_decimal(et(invoice_line, "Quantity"))
+      line.unit_of_measure = et(invoice_line, "QuantityUOM")
 
       if advan_importer? importer
         # For whatever reason, CQ invoices don't have pricing included on them.  The unit cost needs to come from 
         # the CQ PO Origin Report (AdvancePoOriginReportParser).
-        total_cost = invoice_line.get_elements("ItemTotalPrice").first
+        total_cost = first_xpath(invoice_line, "ItemTotalPrice")
         if total_cost
-          val = parse_decimal(total_cost.text)
+          val = parse_decimal(et(total_cost, ".", true))
           if line.quantity && val
             line.price_per_unit = val / line.quantity
           end
 
-          line.currency = total_cost.attributes["Currency"]
+          line.currency = first_text(total_cost, "@Currency")
         end
       end
 
-      coo = invoice_line.get_elements("OriginCountry").first.try(:attributes).try(:[], "Code")
+      coo = first_text(invoice_line, "OriginCountry/@Code")
       # Pull the country of origin from the invoice line Factory PartyInfo if it's not found in an OriginCountry element
-      coo = REXML::XPath.first(invoice_line, "PartyInfo[Type = 'Factory']/CountryCode").try(:text) if coo.blank?
+      coo = et(invoice_line, "PartyInfo[Type = 'Factory']/CountryCode") if coo.blank?
 
       # Don't overwrite an existing country of origin if the prep 7501's might be blank
       line.country_of_origin = coo unless coo.blank?
@@ -339,14 +339,14 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   end
 
   def asn_line_items xml
-    REXML::XPath.match(xml, "Prep7501Message/Prep7501/ASN/Container/LineItems").each do |line_item|
+    xpath(xml, "Prep7501Message/Prep7501/ASN/Container/LineItems") do |line_item|
       yield line_item
     end
   end
 
   def find_or_create_product importer, xml, cache, user, file
     product = nil
-    part_number = xml.text "ProductCode"
+    part_number = et(xml, "ProductCode")
     return nil if part_number.blank?
 
     # For CQ, we're not actually going to create parts (they should already exist due to the Origin Report upload).  If they don't
@@ -361,7 +361,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         product = Product.where(unique_identifier: unique_identifier, importer_id: importer.id).first_or_initialize
 
         if !product.persisted?
-          product.name = xml.text "ProductName"
+          product.name = et(xml, "ProductName")
           product.find_and_set_custom_value cdefs[:prod_part_number], part_number
 
           product.save!
@@ -378,13 +378,13 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   def parse_parties importer, xml
     parties = {}
     # Need Supplier (We'll use Ship From Address), Final Dest (We'll use Ship To, linked to Importer)
-    consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']"
+    consignee = xpath(xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']").first
     parties[:consignee] = find_or_create_company_address(importer, consignee, {consignee: true}) if consignee
 
-    ship_from = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Supplier']"
+    ship_from = xpath(xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Supplier']").first
     parties[:ship_from] = find_or_create_address(importer, ship_from) if ship_from
 
-    ship_to = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'ShipmentFinalDest']"
+    ship_to = xpath(xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'ShipmentFinalDest']").first
     parties[:ship_to] = find_or_create_address(importer, ship_to) if ship_to
 
     parties
@@ -412,17 +412,17 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     # to try and tie address in the xml w/ existing addresses.
     a = Address.new
     a.company = importer
-    a.address_type = address_xml.text "Type"
-    a.name = address_xml.text "Name"
-    lines = REXML::XPath.match(address_xml, "Address/AddressLine").map &:text
+    a.address_type = et(address_xml, "Type")
+    a.name = et(address_xml, "Name")
+    lines = xpath(address_xml, "Address/AddressLine").map &:text
     a.line_1 = lines[0]
     a.line_2 = lines[1]
     a.line_3 = lines[2]
-    a.city = address_xml.text "City/CityName"
-    a.state = address_xml.text "City/State"
-    country_code = address_xml.text "City/CountryCode"
+    a.city = et(address_xml, "City/CityName")
+    a.state = et(address_xml, "City/State")
+    country_code = et(address_xml, "City/CountryCode")
     a.country = Country.where(iso_code: country_code).first if !country_code.nil?
-    a.postal_code = address_xml.text "PostalCode"
+    a.postal_code = et(address_xml, "PostalCode")
 
     a
   end
@@ -455,10 +455,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     # If the importer is Carquest, the existing ECS system the routes it to Canada or US based on the CountryCode associated with the BLDestination.
     # We're storing the port code associated with that account as the final destination.  Our comparator that will trigger the CI Load / Fenix 810 will
     # use the UN/Locodes country portion to determine if a Canada or US document should be generated.
-    consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']"
+    consignee = xpath(xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']").first
     inbound_file.reject_and_raise "Invalid XML.  No Consignee could be found." unless consignee
 
-    name = consignee.text "Name"
+    name = et(consignee, "Name")
     if (name =~ /Carquest/i) || (name =~ /CQ/i)
       importer = Company.where(system_code: "CQ").first
     elsif name =~ /Advance/i

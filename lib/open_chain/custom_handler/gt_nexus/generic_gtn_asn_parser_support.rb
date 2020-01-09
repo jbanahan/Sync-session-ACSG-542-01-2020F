@@ -1,4 +1,23 @@
 module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnParserSupport
+  extend ActiveSupport::Concern
+
+  # This is a simple method that allows using this module with both Nokogiri and REXML based
+  # XML parser classes
+  def _element_text(xml, xpath_expression)
+    if self.respond_to?(:first_text)
+      return first_text(xml, xpath_expression)
+    else
+      xml.text xpath_expression
+    end
+  end
+
+  def _element_attribute(xml, xpath_expression)
+    if self.respond_to?(:first_text)
+      return first_text(xml, xpath_expression)
+    else
+      REXML::XPath.first(xml, xpath_expression).try(:value)
+    end
+  end
 
   def find_port port_xml, lookup_type_order: [:schedule_d_code, :schedule_k_code, :unlocode, :iata_code]
     return nil if port_xml.nil?
@@ -8,13 +27,13 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
     Array.wrap(lookup_type_order).each do |lookup_type|
       case(lookup_type)
       when :schedule_d_code
-        code = port_xml.text "CityCode[@Qualifier='D']"
+        code = _element_text(port_xml, "CityCode[@Qualifier='D']")
       when :schedule_k_code
-        code = port_xml.text "CityCode[@Qualifier='K']"
+        code = _element_text(port_xml, "CityCode[@Qualifier='K']")
       when :unlocode
-        code = port_xml.text "CityCode[@Qualifier='UN']"
+        code = _element_text(port_xml, "CityCode[@Qualifier='UN']")
       when :iata_code
-        code = port_xml.text "CityCode[@Qualifier='IA']"
+        code = _element_text(port_xml, "CityCode[@Qualifier='IA']")
       end
 
       if !code.blank?
@@ -27,7 +46,8 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
   end
 
   def find_port_country port_xml
-    iso_code = port_xml&.text("CountryCode")
+    iso_code = _element_text(port_xml, "CountryCode") if port_xml
+
     return nil if iso_code.blank?
     
     @port ||= Hash.new do |h, k|
@@ -56,10 +76,12 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
   end
 
   def parse_weight xml
-    val = parse_decimal(xml.try(:text))
+    return nil if xml.nil?
+    
+    val = parse_decimal(_element_text(xml, "."))
     return nil unless val
     
-    code = xml.attributes["ANSICode"]
+    code = _element_attribute(xml, "@ANSICode")
     # I'm assuming LB and KG are the only values that are going to get sent here.
     if code == "KG"
       return val
@@ -69,10 +91,12 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
   end
 
   def parse_volume xml
-    val = parse_decimal(xml.try(:text))
+    return nil if xml.nil?
+
+    val = parse_decimal(_element_text(xml, "."))
     return nil unless val
 
-    code = xml.attributes["ANSICode"]
+    code = _element_attribute(xml, "@ANSICode")
     # I'm assuming CR (cubic Meters) and Cubic Feet are the only values that are going to get sent here.
     if code == "CR"
       return val
@@ -82,7 +106,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
   end
 
   def parse_reference_date xml, reference_date_type, datatype: :datetime
-    date = xml.text "ReferenceDates[ReferenceDateType = '#{reference_date_type}']/ReferenceDate"
+    date =  _element_text(xml, "ReferenceDates[ReferenceDateType = '#{reference_date_type}']/ReferenceDate")
     if datatype && datatype == :date
       return parse_date(date)
     else

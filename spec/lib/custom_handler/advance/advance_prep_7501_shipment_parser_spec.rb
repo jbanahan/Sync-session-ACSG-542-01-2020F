@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
   let (:xml_path) { "spec/fixtures/files/advan_prep_7501.xml"}
   let (:xml_data) { IO.read(xml_path) }
-  let (:xml) { REXML::Document.new xml_data }
+  let (:xml) { Nokogiri::XML(xml_data) }
   let (:user) { Factory(:user) }
   let (:advance_importer) { Factory(:importer, system_code: "ADVAN") }
   let (:carquest_importer) { Factory(:importer, system_code: "CQ") }
@@ -300,8 +300,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
     end
 
     it "raises an error if importer cannot be located" do
-      consignee = REXML::XPath.first xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']/Name"
-      consignee.text = "Spaceballs: The Importer"
+      xml.xpath(xml, "Prep7501Message/Prep7501/ASN/PartyInfo[Type = 'Consignee']/Name").first.content = "Spaceballs: The Importer"
 
       expect { subject.parse xml, user, xml_path }.to raise_error "Failed to find Importer account for Consignee name 'Spaceballs: The Importer'."
       expect(log).to have_reject_message "Failed to find Importer account for Consignee name 'Spaceballs: The Importer'."
@@ -312,7 +311,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
     subject { described_class }
 
     it "initializes a new instance and calls parse on it" do
-      expect_any_instance_of(described_class).to receive(:parse).with(instance_of(REXML::Document), User.integration, "s3_path")
+      expect_any_instance_of(described_class).to receive(:parse).with(instance_of(xml.class), User.integration, "s3_path")
       subject.parse_file(IO.read(xml_path), log, {key: "s3_path"})
     end
   end
