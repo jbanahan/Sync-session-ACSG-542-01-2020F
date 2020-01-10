@@ -27,6 +27,11 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnInvoiceXmlParser
       id = party_xml.text "name"
     elsif party_type == :consignee
       id = reference_value(party_xml, "ConsigneeCode")
+      # There are a few PVH vendors that don't actually send the Consignee Code in the XML, so just fall back to the name 
+      # in that case as the identifier
+      if id.blank?
+        id = party_xml.text "name"
+      end
     end
 
     id

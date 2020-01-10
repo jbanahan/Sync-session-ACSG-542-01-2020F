@@ -148,5 +148,16 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser do
       expect(l.order).to be_nil
       expect(l.product).to be_nil
     end
+
+    it "falls back to Consignee party's name as the identifier if ConsigeeCode is missing" do
+      xml_data.gsub!("<type>ConsigneeCode</type>", "")
+
+      i = subject.process_invoice invoice_xml, user, "bucket", "key"
+      expect(i).not_to be_nil
+      co = i.consignee
+      expect(co).not_to be_nil
+      expect(co).to have_system_identifier("PVH-GTN Consignee", "PVH CANADA, INC.")
+      expect(co.name).to eq "PVH CANADA, INC."
+    end
   end
 end
