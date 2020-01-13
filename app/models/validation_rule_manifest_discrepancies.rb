@@ -20,10 +20,13 @@ class ValidationRuleManifestDiscrepancies < BusinessValidationRule
   private
 
   def extract_bill_of_lading(comment)
-    comment.body.match(/^.\s+(.+)\s+Qty:/).captures.first.gsub(" ", "")
+    comment.body.match(/^.\s+(.+)\s+Qty:/).captures.first.to_s.gsub(" ", "")
   end
 
   def extract_quantities(comment)
-    comment.body.match(/Qty: (\d+) .+ MnQty: (\d+)/).captures
+    # If we reach this point, there is still a possibility that the regex may not match (IE missing quantities)
+    # If this is the case we just return two 0s, and consider it a passing test.
+    matches = comment.body.match(/Qty: (\d+) .*MnQty: (\d+)/)
+    matches.present? ? matches.captures : [0, 0]
   end
 end

@@ -9,6 +9,18 @@ describe ValidationRuleManifestDiscrepancies do
       expect(rule.run_validation(entry)).to be_nil
     end
 
+    it 'gracefully handles just numbers without a designation in regex checks' do
+      EntryComment.create(entry: entry, body: "H OERT 205702I04779 Qty: 29 MnQty: 29")
+
+      expect(rule.run_validation(entry)).to be_nil
+    end
+
+    it 'gracefully handles nils in regex checks' do
+      EntryComment.create(entry: entry, body: "H OERT 205702I04779 Qty: MnQty: ")
+
+      expect(rule.run_validation(entry)).to be_nil
+    end
+
     it 'fails if Qty and MnQty do not match' do
       EntryComment.create(entry: entry, body: "H OERT 201702I07378 Qty: 1932 CTN MnQty: 1931")
 
