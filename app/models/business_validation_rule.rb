@@ -135,6 +135,8 @@ class BusinessValidationRule < ActiveRecord::Base
                  ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"},
                  'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"},
                  ValidationRuleEntryFishWildlifeTransmittedDateFilled: {label: "Entry F&W Transmission Date Filled"},
+                 ValidationRuleHomeDepotMultipleDailyBis: {label: 'Home Depot Multiple Daily Broker Invoice Rule'},
+                 ValidationRuleInvoiceNumberMatchesInvoiceLinePO: {label: 'Invoice Line PO # first 8 digits match first 8 digits of Invoice'},
                  ValidationRuleOrderLineHtsValid: {label: "Order Line HTS Valid"},
                  ValidationRuleEntryDutyTaxesMatchSummary: {label: "Entry Invoice Line Duties, Taxes, & Fees Match 7501 Amounts"},
                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet'.to_sym =>
