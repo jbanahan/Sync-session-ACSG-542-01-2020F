@@ -248,11 +248,23 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
   end
 
   describe "run_schedulable" do
-    it "calls run report method" do
+    it "calls run report method if configured day of fiscal month" do
+      settings = {'email' => 'a@b.com'}
+      current_fiscal_month = double("current fiscal month")
+      expect(described_class).to receive(:run_if_configured).with(settings).and_yield(current_fiscal_month, double("fiscal date"))
       expect(described_class).to receive(:new).and_return subject
-      expect(subject).to receive(:run_first_cost_savings_report).and_return "success"
+      expect(subject).to receive(:run_first_cost_savings_report).with(settings, current_fiscal_month:current_fiscal_month).and_return "success"
 
-      expect(described_class.run_schedulable({'email' => 'a@b.com'})).to eq("success")
+      expect(described_class.run_schedulable(settings)).to eq("success")
+    end
+
+    it "does not call run report method if wrong day of fiscal month" do
+      settings = {'email' => 'a@b.com'}
+      # Does not yield.
+      expect(described_class).to receive(:run_if_configured).with(settings)
+      expect(subject).to_not receive(:run_first_cost_savings_report)
+
+      expect(described_class.run_schedulable(settings)).to be_nil
     end
 
     it "raises an exception if blank email param is provided" do

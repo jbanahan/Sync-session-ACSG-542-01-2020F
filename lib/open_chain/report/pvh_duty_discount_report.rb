@@ -47,11 +47,13 @@ module OpenChain; module Report; class PvhDutyDiscountReport
 
   def self.run_schedulable settings={}
     raise "Email address is required." if settings['email'].blank?
-    self.new.run_duty_discount_report settings
+    run_if_configured(settings) do |fiscal_month, fiscal_date|
+      self.new.run_duty_discount_report settings, current_fiscal_month:fiscal_month
+    end
   end
 
-  def run_duty_discount_report settings
-    fiscal_date_start, fiscal_date_end, fiscal_month = get_fiscal_month_dates settings['fiscal_month']
+  def run_duty_discount_report settings, current_fiscal_month:nil
+    fiscal_date_start, fiscal_date_end, fiscal_month = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month
     mode_of_transport_text = settings['mode_of_transport']
     modes_of_transport = Entry.get_transport_mode_codes_us_ca(mode_of_transport_text)
     raise "Mode of Transportation is required." unless modes_of_transport.length > 0
@@ -74,12 +76,12 @@ module OpenChain; module Report; class PvhDutyDiscountReport
   private
     # Pull month start/end values from the settings, or default to the start/end dates of the fiscal month
     # immediately preceding  the current fiscal month if none are provided.
-    def get_fiscal_month_dates fiscal_month_choice
+    def get_fiscal_month_dates fiscal_month_choice, current_fiscal_month
       pvh = Company.where(system_code:"PVH").first
       # Extremely unlikely exception.
       raise "PVH company account could not be found." unless pvh
       if fiscal_month_choice.blank?
-        fm = FiscalMonth.get pvh, ActiveSupport::TimeZone[get_time_zone].now
+        fm = current_fiscal_month ? current_fiscal_month : FiscalMonth.get(pvh, ActiveSupport::TimeZone[get_time_zone].now)
         fm = fm&.back 1
         # This should not be possible unless the FiscalMonth table has not been kept up to date or is misconfigured.
         raise "Fiscal month to use could not be determined." unless fm
