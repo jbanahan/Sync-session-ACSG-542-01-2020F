@@ -205,7 +205,7 @@ class EntriesController < ApplicationController
   end
 
   def purge
-    sys_admin_secure do
+    group_secure("Entry Purge") do
       Entry.find(params[:id]).purge!
       add_flash :notices, "Entry purged"
       redirect_to entries_path

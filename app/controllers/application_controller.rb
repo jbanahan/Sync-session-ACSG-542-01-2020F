@@ -168,6 +168,15 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # Secure the given block to members of a system group.  Assumes the group has already been created.
+  def group_secure(group_code, alt_error_message:nil)
+    if current_user.in_group?(group_code)
+      yield
+    else
+      error_redirect(alt_error_message.present? ? alt_error_message : "Only members of the '#{group_code}' group can do this.")
+    end
+  end
+
   # Strips top level parameter keys from the URI query string.  Note, this method
   # does not support nested parameter names (ala "model[attribute]").
   def strip_uri_params uri_string, *keys

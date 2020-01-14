@@ -72,6 +72,7 @@ describe ApplicationController do
       expect(r).to eq("/advanced_search#!/#{ss.id}/3?clearSelection=true")
     end
   end
+
   describe "strip_uri_params" do
     it "should remove specified parameters from a URI string" do
       uri = "http://www.test.com/file.html?id=1&k=2&val[nested]=2#hash"
@@ -509,6 +510,56 @@ describe ApplicationController do
       yielded = false
       subject.action_secure(true, p, module_name: "My Product") { yielded = true }
       expect(yielded).to eq false
+    end
+  end
+
+  describe "group_secure" do
+    before :each do
+      @u = Factory(:user)
+      sign_in_as(@u)
+      @u
+    end
+
+    it "yields if the user not is in the provided group" do
+      group = Group.use_system_group("Some Group")
+      @u.groups << group
+      @u.save!
+
+      result = false
+      subject.group_secure("Some Group") { result = true }
+      expect(result).to eq true
+    end
+
+    it "errors if the user is in the provided group" do
+      group = Group.use_system_group("Some Group")
+
+      expect(subject).to receive(:error_redirect).with "Only members of the 'Some Group' group can do this."
+
+      result = false
+      subject.group_secure("Some Group") { result = true }
+      expect(result).to eq false
+    end
+
+    it "errors if the user is in the provided group, using provided custom error" do
+      group = Group.use_system_group("Some Group")
+
+      expect(subject).to receive(:error_redirect).with "Game over, man"
+
+      result = false
+      subject.group_secure("Some Group", alt_error_message:"Game over, man") { result = true }
+      expect(result).to eq false
+    end
+
+    it "errors if we're dealing with a group that has not yet been set up" do
+      expect(subject).to receive(:error_redirect).with "Only members of the 'Some Group' group can do this."
+
+      result = false
+      subject.group_secure("Some Group") { result = true }
+      expect(result).to eq false
+
+      # Should not create the group.
+      group = Group.where(system_code:"Some Group").first
+      expect(group).to be_nil
     end
   end
 end

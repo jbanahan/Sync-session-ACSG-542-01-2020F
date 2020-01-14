@@ -458,10 +458,11 @@ describe EntriesController do
                                 source_system: "SomeSystem")
     end
 
-    context "as a sysadmin" do
+    context "as a purge group member" do
       before :each do
-        sys_admin_user = Factory(:sys_admin_user,entry_view:true)
-        sign_in_as sys_admin_user
+        group = Group.use_system_group("Entry Purge")
+        @u.groups << group
+        @u.save!
       end
 
       it 'should copy fields from current entry to entry_purge table along with the iso' do
@@ -485,7 +486,7 @@ describe EntriesController do
       end
     end
 
-    context "as a non-sysadmin" do
+    context "as a non-purge group member" do
       it 'should do nothing' do
         get :purge, id: @entry
         expect(EntryPurge.count).to eq 0
@@ -495,7 +496,7 @@ describe EntriesController do
 
       it 'should display an error message and reload the page' do
         get :purge, id: @entry
-        expect(flash[:errors]).to be_present
+        expect(flash[:errors]).to eq ["Only members of the 'Entry Purge' group can do this."]
       end
     end
 
