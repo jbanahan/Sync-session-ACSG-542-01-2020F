@@ -1,30 +1,33 @@
 describe CustomReportsController do
-  before :each do
-    @u = Factory(:master_user)
-    allow(CustomReportEntryInvoiceBreakdown).to receive(:can_view?).and_return(true)
+  let! (:user) { 
+    u = Factory(:master_user)
+    sign_in_as u
+    u
+  }
 
-    sign_in_as @u
+  before :each do
+    allow(CustomReportEntryInvoiceBreakdown).to receive(:can_view?).and_return(true)
   end
 
   describe "run" do
-    before :each do
-      @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id,:name=>"ABCD")
-    end
+    let! (:report) { CustomReportEntryInvoiceBreakdown.create!(:user_id=>user.id,:name=>"ABCD") }
+
     it "should not run if report user does not match current_user" do
       expect(ReportResult).not_to receive(:run_report!)
-      @rpt.update_attributes(:user_id=>Factory(:user).id)
-      get :run, :id=>@rpt.id
+      report.update!(:user_id=>Factory(:user).id)
+      get :run, :id=>report.id
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
     end
     it "should create report result" do
-      allow_any_instance_of(CustomReportsController).to receive(:current_user).and_return(@u) #need actual object for should_receive call below
-      expect(ReportResult).to receive(:run_report!).with(@rpt.name,@u,CustomReportEntryInvoiceBreakdown,{:friendly_settings=>["Report Template: #{CustomReportEntryInvoiceBreakdown.template_name}"],:custom_report_id=>@rpt.id})
-      get :run, :id=>@rpt.id
+      allow_any_instance_of(CustomReportsController).to receive(:current_user).and_return(user) #need actual object for should_receive call below
+      expect(ReportResult).to receive(:run_report!).with(report.name,user,CustomReportEntryInvoiceBreakdown,{:friendly_settings=>["Report Template: #{CustomReportEntryInvoiceBreakdown.template_name}"],:custom_report_id=>report.id})
+      get :run, :id=>report.id
       expect(response).to be_redirect
       expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
     end
   end
+
   describe "new" do
     it "should require a type parameter" do
       get :new
@@ -39,7 +42,7 @@ describe CustomReportsController do
     end
     it "should error if the type is not a subclass of CustomReport" do
       expect_any_instance_of(StandardError).to receive(:log_me) do |error|
-        expect(error.message).to eq "#{@u.username} attempted to access an invalid custom report of type 'String'."
+        expect(error.message).to eq "#{user.username} attempted to access an invalid custom report of type 'String'."
       end
       
       get :new, :type=>'String'
@@ -62,7 +65,7 @@ describe CustomReportsController do
       expect(flash[:errors].size).to eq(1)
     end
     it "should set the report_obj variable" do
-      rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id)
+      rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>user.id)
       get :show, :id=>rpt.id
       expect(response).to be_success
       expect(assigns(:report_obj)).to eq(rpt)
@@ -70,84 +73,82 @@ describe CustomReportsController do
   end
 
   describe "destroy" do
-    before :each do
-      @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id)
-    end
+    let! (:report) { CustomReportEntryInvoiceBreakdown.create!(:user_id=>user.id) }
+
     it "should not destroy if user_id doesn't match current user" do
-      @rpt.update_attributes(:user_id=>Factory(:user).id)
-      delete :destroy, :id=>@rpt.id
+      report.update!(:user_id=>Factory(:user).id)
+      delete :destroy, :id=>report.id
       expect(response).to be_redirect
-      expect(CustomReport.find_by_id(@rpt.id)).not_to be_nil
+      expect(CustomReport.find_by_id(report.id)).not_to be_nil
     end
     it "should destroy report" do
-      delete :destroy, :id=>@rpt.id
+      delete :destroy, :id=>report.id
       expect(response).to be_redirect
-      expect(CustomReport.find_by_id(@rpt.id)).to be_nil
+      expect(CustomReport.find_by_id(report.id)).to be_nil
     end
   end
 
   describe "update" do
-    before :each do
-      @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id)
-    end
+    let! (:report) { CustomReportEntryInvoiceBreakdown.create!(:user_id=>user.id) }
+
     it "should update report" do
-      put :update, {:id=>@rpt.id,:custom_report=>
+      put :update, {:id=>report.id,:custom_report=>
         {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
       }
-      @rpt.reload
-      expect(@rpt.is_a?(CustomReportEntryInvoiceBreakdown)).to be_truthy
-      expect(@rpt.search_columns.size).to eq(2)
-      expect(@rpt.search_criterions.size).to eq(1)
-      expect(@rpt.search_columns.collect {|sc| sc.model_field_uid}).to eq(['bi_brok_ref','bi_entry_num'])
-      sp = @rpt.search_criterions.first
+      report.reload
+      expect(report.is_a?(CustomReportEntryInvoiceBreakdown)).to be_truthy
+      expect(report.search_columns.size).to eq(2)
+      expect(report.search_criterions.size).to eq(1)
+      expect(report.search_columns.collect {|sc| sc.model_field_uid}).to eq(['bi_brok_ref','bi_entry_num'])
+      sp = report.search_criterions.first
       expect(sp.model_field_uid).to eq('bi_brok_ref')
       expect(sp.operator).to eq('eq')
       expect(sp.value).to eq('123')
-      expect(response).to redirect_to custom_report_path(@rpt)
+      expect(response).to redirect_to custom_report_path(report)
     end
     it "should not duplicate columns" do
-      @rpt.search_columns.create!(:model_field_uid=>'bi_brok_ref')
-      put :update, {:id=>@rpt.id,:custom_report=>
+      report.search_columns.create!(:model_field_uid=>'bi_brok_ref')
+      put :update, {:id=>report.id,:custom_report=>
         {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
       }
-      @rpt.reload
-      expect(@rpt.is_a?(CustomReportEntryInvoiceBreakdown)).to be_truthy
-      expect(@rpt.search_columns.size).to eq(2)
+      report.reload
+      expect(report.is_a?(CustomReportEntryInvoiceBreakdown)).to be_truthy
+      expect(report.search_columns.size).to eq(2)
     end
     it "should error if user_id does not match current user" do
-      @rpt.update_attributes(:user_id=>Factory(:user).id)
-      put :update, {:id=>@rpt.id,:custom_report=>
+      report.update!(:user_id=>Factory(:user).id)
+      put :update, {:id=>report.id,:custom_report=>
         {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
       }
-      @rpt.reload
-      expect(@rpt.search_columns).to be_empty
+      report.reload
+      expect(report.search_columns).to be_empty
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
     end
     it "should strip fields user cannot view" do
       allow(ModelField.find_by_uid(:bi_brok_ref)).to receive(:can_view?).and_return(false)
-      put :update, {:id=>@rpt.id,:custom_report=>
+      put :update, {:id=>report.id,:custom_report=>
         {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
       }
-      @rpt.reload
-      expect(@rpt.search_columns.size).to eq(1)
-      expect(@rpt.search_columns.first.model_field_uid).to eq('bi_entry_num')
+      report.reload
+      expect(report.search_columns.size).to eq(1)
+      expect(report.search_columns.first.model_field_uid).to eq('bi_entry_num')
     end
     it "should strip parameters user cannot view" do
       allow(ModelField.find_by_uid(:bi_brok_ref)).to receive(:can_view?).and_return(false)
-      put :update, {:id=>@rpt.id,:custom_report=>
+      put :update, {:id=>report.id,:custom_report=>
         {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
           :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
@@ -155,19 +156,30 @@ describe CustomReportsController do
       }
       expect(CustomReport.first.search_criterions).to be_empty
     end
+
+    it "errors if report is scheduled without parameters" do
+      put :update, {:id=>report.id,:custom_report=>
+        {:name=>'ABC',:type=>'CustomReportEntryInvoiceBreakdown',
+          :search_columns_attributes=>{'0'=>{:rank=>'0',:model_field_uid=>'bi_brok_ref'},'1'=>{:rank=>'1',:model_field_uid=>'bi_entry_num'}},
+          :search_schedules_attributes => {'0' => {email_addresses: "me@there.com", run_hour: 0, run_monday: true}}
+        }
+      }
+
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "All reports with schedules must have at least one parameter."
+    end
   end
 
   describe "preview" do
-    before :each do
-      @rpt = CustomReportEntryInvoiceBreakdown.create!(:user_id=>@u.id)
-    end
+    let! (:report) { CustomReportEntryInvoiceBreakdown.create!(:user_id=>user.id) }
+    
     it "should write error message text if user does not equal current user" do
-      @rpt.update_attributes(:user_id=>Factory(:user).id)
-      get :preview, :id=>@rpt.id
+      report.update!(:user_id=>Factory(:user).id)
+      get :preview, :id=>report.id
       expect(response.body).to eq("You cannot preview another user&#39;s report.")
     end
     it "should render result if user matches current user" do
-      get :preview, :id=>@rpt.id
+      get :preview, :id=>report.id
       expect(response).to be_success
     end
   end
@@ -198,7 +210,7 @@ describe CustomReportsController do
     end
     it "should error if type is not a subclass of CustomReport" do
       expect_any_instance_of(StandardError).to receive(:log_me) do |error|
-        expect(error.message).to eq "#{@u.username} attempted to access an invalid custom report of type 'String'."
+        expect(error.message).to eq "#{user.username} attempted to access an invalid custom report of type 'String'."
       end
       post :create, {:custom_report_type=>'String',:custom_report=>{:name=>'ABC'}}
       expect(response).to be_redirect
@@ -239,7 +251,7 @@ describe CustomReportsController do
           :search_criterions_attributes=>{'0'=>{:model_field_uid=>'bi_brok_ref',:operator=>'eq',:value=>'123'}}
         }
       }
-      expect(CustomReport.first.user).to eq(@u)
+      expect(CustomReport.first.user).to eq(user)
     end
 
     it "handles validation errors" do

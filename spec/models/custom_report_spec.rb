@@ -102,7 +102,7 @@ describe CustomReport do
     end
     it 'should output to given xls file' do
       Tempfile.open('custom_report_spec') do |f|
-        t, * = @rpt.xls_file Factory(:user), f
+        t, * = @rpt.xls_file Factory(:user), file: f
         expect(t.path).to eq(f.path)
         sheet = Spreadsheet.open(f.path).worksheet(0)
         expect(sheet.row(0)[0]).to eq("MY HEADING")
@@ -152,7 +152,7 @@ describe CustomReport do
 
       it "truncates time from datetime in xls-based output" do
         @tmp = Tempfile.new('custom_report_spec')
-        t, * = @rpt.xls_file Factory(:user), @tmp
+        t, * = @rpt.xls_file Factory(:user), file: @tmp
         expect(t.path).to eq(@tmp.path)
         sheet = Spreadsheet.open(@tmp.path).worksheet(0)
         expect(sheet.row(1).format(3).number_format).to eq "YYYY-MM-DD"
@@ -269,48 +269,180 @@ describe CustomReport do
   end
 
   describe "setup_report_query" do
-    before :each do
-      @rpt = CustomReport.new
-      @u = Factory(:user, :product_view => true)
-      @rpt.search_criterions.build model_field_uid: "prod_uid", operator: "eq", value: "Test"
-    end
+    let (:user) { Factory(:user, :product_view => true) }
+
+    subject { 
+      r = CustomReport.new
+      r.search_criterions.build model_field_uid: "prod_uid", operator: "eq", value: "Test"
+      r
+    }
 
     it "generates a report query base" do
-      query = @rpt.send(:setup_report_query, Product, @u, nil).to_sql
+      query = subject.send(:setup_report_query, Product, user, nil).to_sql
       expect(query).to include("SELECT DISTINCT `products`.*")
       expect(query).to include("unique_identifier = 'Test'")
-      expect(query).to include(Product.search_where(@u))
+      expect(query).to include(Product.search_where(user))
     end
 
     it "generates a report query base with a limit" do
-      query = @rpt.send(:setup_report_query, Product, @u, 10).to_sql
+      query = subject.send(:setup_report_query, Product, user, 10).to_sql
       expect(query).to include("LIMIT 10")
     end
 
     it "gneerates a report query base without distinct clause" do
-      query = @rpt.send(:setup_report_query, Product, @u, nil, distinct: false).to_sql
+      query = subject.send(:setup_report_query, Product, user, nil, distinct: false).to_sql
       expect(query).to_not include("SELECT DISTINCT")
     end
   end
 
   describe "add_tab" do
-    before :each do
-      @rpt = CustomReport.new
-      def @rpt.run run_by, row_limit=nil
-        add_tab "First"
-        write_row 0, nil, ["Data1"], nil
-        add_tab "Second"
-        write_row 0, nil, ["Data2"], nil
-      end
-    end
+    subject { 
+      Class.new(CustomReport) do 
+        def run run_by, row_limit=nil
+          add_tab "First"
+          write_row 0, nil, ["Data1"], nil
+          add_tab "Second"
+          write_row 0, nil, ["Data2"], nil
+        end
+      end.new
+    }
 
     it "adds a new tab when told to" do
       Tempfile.open('custom_report_spec') do |f|
-        t = @rpt.xls_file Factory(:user), f
+        t = subject.xls_file Factory(:user), file: f
         sheet = Spreadsheet.open(f.path).worksheet("First")
         expect(sheet.row(0)[0]).to eq("Data1")
         sheet = Spreadsheet.open(f.path).worksheet("Second")
         expect(sheet.row(0)[0]).to eq("Data2")
+      end
+    end
+  end
+
+
+  describe "xlsx_file" do
+    let (:workbook) {
+      instance_double(XlsxBuilder)
+    }
+
+    let (:file) {
+      instance_double(Tempfile)
+    }
+
+    let (:user) { User.new }
+
+    subject {
+      Class.new(CustomReport) {
+        def run user, row_limit
+          nil
+        end
+      }.new 
+    }
+
+    it "runs xlsx custom report" do
+      expect_any_instance_of(CustomReport::XlsxListener).to receive(:build_xlsx).and_return workbook
+      expect(workbook).to receive(:write).with file
+      expect_any_instance_of(CustomReport::XlsxListener).to receive(:blank_file?).and_return false
+      expect(subject).to receive(:run).with(user, 25_000)
+
+      expect(subject.xlsx_file user, file: file).to eq [file, false]
+    end
+  end
+
+  describe "xls_file" do
+    let (:workbook) {
+      instance_double(Spreadsheet::Workbook)
+    }
+
+    let (:file) {
+      tf = instance_double(Tempfile)
+      allow(tf).to receive(:path).and_return "/path/to/file.xls"
+      tf
+    }
+
+    let (:user) { User.new }
+
+    subject {
+      Class.new(CustomReport) {
+        def run user, row_limit
+          nil
+        end
+      }.new 
+    }
+
+    it "runs xls custom report" do
+      expect_any_instance_of(CustomReport::XlsListener).to receive(:workbook).and_return workbook
+      expect(workbook).to receive(:write).with "/path/to/file.xls"
+      expect_any_instance_of(CustomReport::XlsListener).to receive(:blank_file?).and_return false
+      expect(subject).to receive(:run).with(user, 25_000)
+
+      expect(subject.xls_file user, file: file).to eq [file, false]
+    end
+  end
+
+  describe "csv_file" do
+
+    let (:file) {
+      instance_double(Tempfile)
+    }
+
+    let (:user) { User.new }
+
+    subject {
+      Class.new(CustomReport) {
+        def run user, row_limit
+          nil
+        end
+      }.new 
+    }
+
+    it "runs csv custom report" do
+      expect_any_instance_of(CustomReport::ArraysListener).to receive(:arrays).and_return [["1", "2"]]
+      expect(file).to receive(:write).with ("1,2\n")
+      expect(file).to receive(:flush)
+      expect_any_instance_of(CustomReport::ArraysListener).to receive(:blank_file?).and_return false
+      expect(subject).to receive(:run).with(user, 25_000)
+
+      expect(subject.csv_file user, file: file).to eq [file, false]
+    end
+  end
+
+  describe "to_arrays" do
+    let (:user) { User.new }
+
+    subject {
+      Class.new(CustomReport) {
+        def run user, row_limit
+          nil
+        end
+      }.new 
+    }
+
+    it "runs report and returns results as arrays" do
+      expect_any_instance_of(CustomReport::ArraysListener).to receive(:arrays).and_return [["1", "2"]]
+      expect(subject).to receive(:run).with(user, 25_000)
+
+      expect(subject.to_arrays user).to eq [["1", "2"]]
+    end
+  end
+
+  context "validations" do
+
+    subject { CustomReportEntryBillingBreakdownByPo.new }
+
+    describe "scheduled_reports_have_parameters" do
+
+      it "allows saving custom reports with schedules if there's a search criterion present" do
+        subject.search_schedules.build email_addresses: "me@there.com", run_hour: 0, run_monday: true
+        subject.search_criterions.build model_field_uid: 'bi_brok_ref', operator: 'eq', value: '123'
+
+        subject.save
+        expect(subject.errors).not_to include "All reports with schedules must have at least one parameter."
+      end
+
+      it "should error when attempting to save a report that has schedules but no search criterions" do
+        subject.search_schedules.build email_addresses: "me@there.com", run_hour: 0, run_monday: true
+        subject.save
+        expect(subject.errors[:base]).to include "All reports with schedules must have at least one parameter."
       end
     end
   end

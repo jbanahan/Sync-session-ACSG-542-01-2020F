@@ -55,7 +55,7 @@ describe CustomReportIsfStatus do
     it "returns specified data" do
       workbook = nil
       Tempfile.open("test") do |f|
-        t = @rpt.xls_file @u, f
+        t = @rpt.xls_file @u, file: f
         workbook = Spreadsheet.open(f.path)
       end
 
@@ -74,7 +74,7 @@ describe CustomReportIsfStatus do
       @sf.update_attributes! status_code: "MATCH"
       workbook = nil
       Tempfile.open("test") do |f|
-        t = @rpt.xls_file @u, f
+        t = @rpt.xls_file @u, file: f
         workbook = Spreadsheet.open(f.path)
       end
       sheet = workbook.worksheet(1)
@@ -85,7 +85,7 @@ describe CustomReportIsfStatus do
       @sf.update_attributes! file_logged_date: (Time.zone.now - 91.days)
       workbook = nil
       Tempfile.open("test") do |f|
-        t = @rpt.xls_file @u, f
+        t = @rpt.xls_file @u, file: f
         workbook = Spreadsheet.open(f.path)
       end
       sheet = workbook.worksheet(1)
@@ -96,7 +96,7 @@ describe CustomReportIsfStatus do
       u2 = Factory(:importer_user)
       workbook = nil
       Tempfile.open("test") do |f|
-        t = @rpt.xls_file u2, f
+        t = @rpt.xls_file u2, file: f
         workbook = Spreadsheet.open(f.path)
       end
       sheet = workbook.worksheet(0)
@@ -115,7 +115,7 @@ describe CustomReportIsfStatus do
       sf2 = Factory(:security_filing, :transaction_number => "456789", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
       @rpt.search_criterions.create! model_field_uid: "sf_transaction_number", operator: "eq", value: @sf.transaction_number
 
-      a = @rpt.to_arrays @u, 10, true
+      a = @rpt.to_arrays @u, row_limit: 10, preview_run: true
       expect(a.length).to eq 2
       expect(a[1][0]).to eq @sf.transaction_number
     end

@@ -43,7 +43,7 @@ class CustomReportIsfStatus < CustomReport
 
       isfs = SecurityFiling.search_secure run_by, SecurityFiling.select("DISTINCT security_filings.*").where("file_logged_date > ?", days_ago).not_matched
       isfs = cust_no.apply isfs
-      isfs.limit(row_limit) if row_limit
+      isfs = isfs.limit(row_limit) if row_limit
 
       add_tab "Unmatched #{days_ago.strftime("%m-%d-%y")} thru #{Time.zone.now.strftime("%m-%d-%y")}"
       write_headers 0, search_columns, run_by

@@ -36,6 +36,8 @@ class CustomReport < ActiveRecord::Base
   has_many :search_schedules, :dependent=>:destroy
   has_many :report_results
   belongs_to :user, :inverse_of=>:custom_reports
+
+  validate :scheduled_reports_have_parameters
   
   accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
     :reject_if => lambda { |a| 
@@ -74,17 +76,17 @@ class CustomReport < ActiveRecord::Base
     fields.select {|mf| mf.can_view?(user) && mf.user_accessible?}
   end
 
-  def xlsx_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xlsx"] )
+  def xlsx_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xlsx"] )
     @listener = XlsxListener.new self.no_time?
-    run run_by
+    run run_by, max_results(run_by, row_limit)
     workbook = @listener.build_xlsx
     workbook.write(file)
     [file, @listener.blank_file?]
   end
 
-  def xls_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xls"] )
+  def xls_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xls"] )
     @listener = XlsListener.new self.no_time?
-    run run_by
+    run run_by, max_results(run_by, row_limit)
     @listener.workbook.write file.path
     [file, @listener.blank_file?]
   end
@@ -94,9 +96,9 @@ class CustomReport < ActiveRecord::Base
     xlsx_file run_by
   end
 
-  def csv_file run_by, file=Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".csv"])
+  def csv_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".csv"])
     @listener = ArraysListener.new self.no_time?
-    run run_by
+    run run_by, max_results(run_by, row_limit)
     a = @listener.arrays
     a.each do |line|
       file.write line.to_csv
@@ -109,10 +111,10 @@ class CustomReport < ActiveRecord::Base
     str.gsub(/[\/~#&\*\%{\}\\:<>\?\+\|"']/, '_')
   end
 
-  def to_arrays run_by, row_limit=nil, preview_run=false
+  def to_arrays run_by, row_limit: nil, preview_run: false
     @listener = ArraysListener.new self.no_time?, false
     @preview_run = preview_run
-    run run_by, row_limit
+    run run_by, max_results(run_by, row_limit)
     @listener.arrays  
   ensure
     @preview_run = nil
@@ -205,10 +207,27 @@ class CustomReport < ActiveRecord::Base
       write row, 0, message
     end
 
+    def max_results run_by, limit
+      system_max = SearchSetup.max_results(run_by)
+      # Return the lesser of the system max or the "user provided" max
+      limit.nil? ? system_max : [limit, system_max].min
+    end
+
   private 
   def model_field v
     return v if v.is_a?(ModelField)
     return v.model_field if v.respond_to?(:model_field)
+    nil
+  end
+
+  def scheduled_reports_have_parameters
+    # If there are no search criterions (or there will be zero after the save completes), then we should 
+    return unless self.search_criterions.find { |sc| !sc.marked_for_destruction? && !sc.destroyed? }.nil?
+
+    if self.search_schedules.find { |ss| !ss.marked_for_destruction? && !ss.destroyed? }.present?
+      self.errors.add(:base, "All reports with schedules must have at least one parameter.")
+    end
+
     nil
   end
 

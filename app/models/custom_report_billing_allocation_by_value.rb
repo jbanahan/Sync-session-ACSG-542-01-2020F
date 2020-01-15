@@ -55,6 +55,7 @@ class CustomReportBillingAllocationByValue < CustomReport
                 .where("1=1")
     search_criterions.each {|sc| invoices = sc.apply(invoices)}
     invoices = BrokerInvoice.search_secure run_by, invoices
+    invoices = invoices.limit(row_limit) if row_limit
 
     invoices.each do |bi|
       charge_totals = {}

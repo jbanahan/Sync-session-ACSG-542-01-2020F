@@ -102,7 +102,7 @@ describe CustomReportEntryTariffBreakdown do
       Factory(:commercial_invoice_tariff, commercial_invoice_line:line_2, hts_code:"1234567890", entered_value:30, duty_amount:57.68)
 
       subject.search_columns.build(:rank=>0,:model_field_uid=>:ent_brok_ref)
-      rows = subject.to_arrays user, 1
+      rows = subject.to_arrays user, row_limit: 1
       expect(rows.size).to eq(2)
       expect(rows[0]).to eq ["Broker Reference", "Underlying Classification", "Underlying Classification Rate",
                              "Underlying Classification Duty",

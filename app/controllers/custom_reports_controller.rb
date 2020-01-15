@@ -65,8 +65,7 @@ class CustomReportsController < ApplicationController
         scp = params[:custom_report][:search_criterions_attributes]
         strip_fields scp unless scp.blank?
 
-        rpt.update_attributes(params[:custom_report])
-
+        rpt.update(params[:custom_report])
         if rpt.errors.any?
           errors_to_flash rpt
           flash.keep
@@ -142,6 +141,8 @@ class CustomReportsController < ApplicationController
   end
 
   def find_custom_report_class report_class
+    return nil if report_class.nil?
+
     # We're completely avoiding instantiating the class in any way that comes in from the params because that opens us
     # up to the potential for remote code executions (see http://gavinmiller.io/2016/the-safesty-way-to-constantize/)
     # Instead, what we're doing is providing a whitelist of known classes that CAN be used as a custom report and returning
