@@ -840,7 +840,7 @@ angular.module("vendor_portal/partials/standard_shipment_template.html", []).run
           return chainApiSvc.Order.get(id).then(function(order) {
             $scope.order = order;
             return chainApiSvc.Address.search({
-              per_page: 50,
+              per_page: 1000,
               page: 1,
               criteria: [
                 {

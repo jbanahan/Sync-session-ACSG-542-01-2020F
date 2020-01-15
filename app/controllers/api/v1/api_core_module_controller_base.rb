@@ -6,6 +6,8 @@ require 'open_chain/api/v1/api_model_field_support'
 # - core_module
 # - json_generator (or directly implement/override obj_to_json_hash)
 # - save_object
+# And may implement
+# - max_per_page
 module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiController
   include Api::V1::StateToggleSupport
   include OpenChain::Api::V1::ApiModelFieldSupport
@@ -186,10 +188,15 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
   end
 
+  # override if different limit required
+  def max_per_page
+    50
+  end
+
   def render_search_json query
     page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
-    per_page = 50 if per_page > 50
+    per_page = max_per_page if per_page > max_per_page
     q = query.paginate(per_page:per_page,page:page)
     r = q.to_a.collect {|obj| obj_to_json_hash(obj)}
     render json:{results:r,page:page,per_page:per_page}

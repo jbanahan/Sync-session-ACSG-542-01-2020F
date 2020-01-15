@@ -17377,7 +17377,7 @@ return Popper;
 //# sourceMappingURL=bootstrap.js.map
 
 /**
- * @license AngularJS v1.7.8
+ * @license AngularJS v1.7.9
  * (c) 2010-2018 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -17477,7 +17477,7 @@ function isValidObjectMaxDepth(maxDepth) {
 function minErr(module, ErrorConstructor) {
   ErrorConstructor = ErrorConstructor || Error;
 
-  var url = 'https://errors.angularjs.org/1.7.8/';
+  var url = 'https://errors.angularjs.org/1.7.9/';
   var regex = url.replace('.', '\\.') + '[\\s\\S]*';
   var errRegExp = new RegExp(regex, 'g');
 
@@ -17859,8 +17859,10 @@ function baseExtend(dst, objs, deep) {
         } else if (isElement(src)) {
           dst[key] = src.clone();
         } else {
-          if (!isObject(dst[key])) dst[key] = isArray(src) ? [] : {};
-          baseExtend(dst[key], [src], true);
+          if (key !== '__proto__') {
+            if (!isObject(dst[key])) dst[key] = isArray(src) ? [] : {};
+            baseExtend(dst[key], [src], true);
+          }
         }
       } else {
         dst[key] = src;
@@ -20183,11 +20185,11 @@ function toDebugString(obj, maxDepth) {
 var version = {
   // These placeholder strings will be replaced by grunt's `build` task.
   // They need to be double- or single-quoted.
-  full: '1.7.8',
+  full: '1.7.9',
   major: 1,
   minor: 7,
-  dot: 8,
-  codeName: 'enthusiastic-oblation'
+  dot: 9,
+  codeName: 'pollution-eradication'
 };
 
 
@@ -20337,7 +20339,7 @@ function publishExternalAPI(angular) {
       });
     }
   ])
-  .info({ angularVersion: '1.7.8' });
+  .info({ angularVersion: '1.7.9' });
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -24838,7 +24840,7 @@ function $TemplateCacheProvider() {
  *
  * This example show how you might use `$doCheck` to trigger changes in your component's inputs even if the
  * actual identity of the component doesn't change. (Be aware that cloning and deep equality checks on large
- * arrays or objects can have a negative impact on your application performance)
+ * arrays or objects can have a negative impact on your application performance.)
  *
  * <example name="doCheckArrayExample" module="do-check-module">
  *   <file name="index.html">
@@ -25161,7 +25163,7 @@ function $TemplateCacheProvider() {
  * would result in the whole app "stalling" until all templates are loaded asynchronously - even in the
  * case when only one deeply nested directive has `templateUrl`.
  *
- * Template loading is asynchronous even if the template has been preloaded into the {@link $templateCache}
+ * Template loading is asynchronous even if the template has been preloaded into the {@link $templateCache}.
  *
  * You can specify `templateUrl` as a string representing the URL or as a function which takes two
  * arguments `tElement` and `tAttrs` (described in the `compile` function api below) and returns
@@ -25222,7 +25224,7 @@ function $TemplateCacheProvider() {
  * own templates or compile functions. Compiling these directives results in an infinite loop and
  * stack overflow errors.
  *
- * This can be avoided by manually using $compile in the postLink function to imperatively compile
+ * This can be avoided by manually using `$compile` in the postLink function to imperatively compile
  * a directive's template instead of relying on automatic template compilation via `template` or
  * `templateUrl` declaration or manual compilation inside the compile function.
  * </div>
@@ -25326,17 +25328,17 @@ function $TemplateCacheProvider() {
  *
  * * `true` - transclude the content (i.e. the child nodes) of the directive's element.
  * * `'element'` - transclude the whole of the directive's element including any directives on this
- *   element that defined at a lower priority than this directive. When used, the `template`
+ *   element that are defined at a lower priority than this directive. When used, the `template`
  *   property is ignored.
  * * **`{...}` (an object hash):** - map elements of the content onto transclusion "slots" in the template.
  *
- * **Mult-slot transclusion** is declared by providing an object for the `transclude` property.
+ * **Multi-slot transclusion** is declared by providing an object for the `transclude` property.
  *
  * This object is a map where the keys are the name of the slot to fill and the value is an element selector
  * used to match the HTML to the slot. The element selector should be in normalized form (e.g. `myElement`)
  * and will match the standard element variants (e.g. `my-element`, `my:element`, `data-my-element`, etc).
  *
- * For further information check out the guide on {@link guide/directive#matching-directives Matching Directives}
+ * For further information check out the guide on {@link guide/directive#matching-directives Matching Directives}.
  *
  * If the element selector is prefixed with a `?` then that slot is optional.
  *
@@ -25361,7 +25363,7 @@ function $TemplateCacheProvider() {
  * </div>
  *
  * If you want to manually control the insertion and removal of the transcluded content in your directive
- * then you must use this transclude function. When you call a transclude function it returns a a jqLite/JQuery
+ * then you must use this transclude function. When you call a transclude function it returns a jqLite/JQuery
  * object that contains the compiled DOM, which is linked to the correct transclusion scope.
  *
  * When you call a transclusion function you can pass in a **clone attach function**. This function accepts
@@ -25446,8 +25448,8 @@ function $TemplateCacheProvider() {
  * The {@link ng.$compile.directive.Attributes Attributes} object - passed as a parameter in the
  * `link()` or `compile()` functions. It has a variety of uses.
  *
- * * *Accessing normalized attribute names:* Directives like 'ngBind' can be expressed in many ways:
- *   'ng:bind', `data-ng-bind`, or 'x-ng-bind'. The attributes object allows for normalized access
+ * * *Accessing normalized attribute names:* Directives like `ngBind` can be expressed in many ways:
+ *   `ng:bind`, `data-ng-bind`, or `x-ng-bind`. The attributes object allows for normalized access
  *   to the attributes.
  *
  * * *Directive inter-communication:* All directives share the same instance of the attributes
@@ -25488,25 +25490,24 @@ function $TemplateCacheProvider() {
    <file name="index.html">
     <script>
       angular.module('compileExample', [], function($compileProvider) {
-        // configure new 'compile' directive by passing a directive
-        // factory function. The factory function injects the '$compile'
+        // Configure new 'compile' directive by passing a directive
+        // factory function. The factory function injects '$compile'.
         $compileProvider.directive('compile', function($compile) {
-          // directive factory creates a link function
+          // The directive factory creates a link function.
           return function(scope, element, attrs) {
             scope.$watch(
               function(scope) {
-                 // watch the 'compile' expression for changes
+                // Watch the 'compile' expression for changes.
                 return scope.$eval(attrs.compile);
               },
               function(value) {
-                // when the 'compile' expression changes
-                // assign it into the current DOM
+                // When the 'compile' expression changes
+                // assign it into the current DOM.
                 element.html(value);
 
-                // compile the new DOM and link it to the current
-                // scope.
-                // NOTE: we only compile .childNodes so that
-                // we don't get into infinite loop compiling ourselves
+                // Compile the new DOM and link it to the current scope.
+                // NOTE: we only compile '.childNodes' so that we
+                // don't get into an infinite loop compiling ourselves.
                 $compile(element.contents())(scope);
               }
             );
@@ -25579,13 +25580,13 @@ function $TemplateCacheProvider() {
  *        }
  *        ```
  *      * `futureParentElement` - defines the parent to which the `cloneAttachFn` will add
- *        the cloned elements; only needed for transcludes that are allowed to contain non html
- *        elements (e.g. SVG elements). See also the directive.controller property.
+ *        the cloned elements; only needed for transcludes that are allowed to contain non HTML
+ *        elements (e.g. SVG elements). See also the `directive.controller` property.
  *
  * Calling the linking function returns the element of the template. It is either the original
  * element passed in, or the clone of the element if the `cloneAttachFn` is provided.
  *
- * After linking the view is not updated until after a call to $digest which typically is done by
+ * After linking the view is not updated until after a call to `$digest`, which typically is done by
  * AngularJS automatically.
  *
  * If you need access to the bound view, there are two ways to do it:
@@ -25593,21 +25594,23 @@ function $TemplateCacheProvider() {
  * - If you are not asking the linking function to clone the template, create the DOM element(s)
  *   before you send them to the compiler and keep this reference around.
  *   ```js
- *     var element = $compile('<p>{{total}}</p>')(scope);
+ *     var element = angular.element('<p>{{total}}</p>');
+ *     $compile(element)(scope);
  *   ```
  *
  * - if on the other hand, you need the element to be cloned, the view reference from the original
  *   example would not point to the clone, but rather to the original template that was cloned. In
- *   this case, you can access the clone via the cloneAttachFn:
+ *   this case, you can access the clone either via the `cloneAttachFn` or the value returned by the
+ *   linking function:
  *   ```js
- *     var templateElement = angular.element('<p>{{total}}</p>'),
- *         scope = ....;
- *
+ *     var templateElement = angular.element('<p>{{total}}</p>');
  *     var clonedElement = $compile(templateElement)(scope, function(clonedElement, scope) {
- *       //attach the clone to DOM document at the right place
+ *       // Attach the clone to DOM document at the right place.
  *     });
  *
- *     //now we have reference to the cloned DOM via `clonedElement`
+ *     // Now we have reference to the cloned DOM via `clonedElement`.
+ *     // NOTE: The `clonedElement` returned by the linking function is the same as the
+ *     //       `clonedElement` passed to `cloneAttachFn`.
  *   ```
  *
  *
@@ -26133,9 +26136,9 @@ function $CompileProvider($provide, $$sanitizeUriProvider) {
    * @description
    * Register a new directive with the compiler.
    *
-   * @param {string|Object} name Name of the directive in camel-case (i.e. <code>ngBind</code> which
-   *    will match as <code>ng-bind</code>), or an object map of directives where the keys are the
-   *    names and the values are the factories.
+   * @param {string|Object} name Name of the directive in camel-case (i.e. `ngBind` which will match
+   *    as `ng-bind`), or an object map of directives where the keys are the names and the values
+   *    are the factories.
    * @param {Function|Array} directiveFactory An injectable directive factory function. See the
    *    {@link guide/directive directive guide} and the {@link $compile compile API} for more info.
    * @returns {ng.$compileProvider} Self for chaining.
@@ -51802,14 +51805,7 @@ var ngHideDirective = ['$animate', function($animate) {
 var ngStyleDirective = ngDirective(function(scope, element, attr) {
   scope.$watchCollection(attr.ngStyle, function ngStyleWatchAction(newStyles, oldStyles) {
     if (oldStyles && (newStyles !== oldStyles)) {
-      if (!newStyles) {
-        newStyles = {};
-      }
-      forEach(oldStyles, function(val, style) {
-        if (newStyles[style] == null) {
-          newStyles[style] = '';
-        }
-      });
+      forEach(oldStyles, function(val, style) { element.css(style, ''); });
     }
     if (newStyles) element.css(newStyles);
   });
@@ -59756,7 +59752,7 @@ angular.module('ui.router.state')
 
     var defaultLocaleWeek = {
         dow : 0, // Sunday is the first day of the week.
-        doy : 6  // The week that contains Jan 1st is the first week of the year.
+        doy : 6  // The week that contains Jan 6th is the first week of the year.
     };
 
     function localeFirstDayOfWeek () {
@@ -60632,13 +60628,13 @@ angular.module('ui.router.state')
                     weekdayOverflow = true;
                 }
             } else if (w.e != null) {
-                // local weekday -- counting starts from begining of week
+                // local weekday -- counting starts from beginning of week
                 weekday = w.e + dow;
                 if (w.e < 0 || w.e > 6) {
                     weekdayOverflow = true;
                 }
             } else {
-                // default to begining of week
+                // default to beginning of week
                 weekday = dow;
             }
         }
@@ -61232,7 +61228,7 @@ angular.module('ui.router.state')
             years = normalizedInput.year || 0,
             quarters = normalizedInput.quarter || 0,
             months = normalizedInput.month || 0,
-            weeks = normalizedInput.week || 0,
+            weeks = normalizedInput.week || normalizedInput.isoWeek || 0,
             days = normalizedInput.day || 0,
             hours = normalizedInput.hour || 0,
             minutes = normalizedInput.minute || 0,
@@ -61536,7 +61532,7 @@ angular.module('ui.router.state')
                 ms : toInt(absRound(match[MILLISECOND] * 1000)) * sign // the millisecond decimal point is included in the match
             };
         } else if (!!(match = isoRegex.exec(input))) {
-            sign = (match[1] === '-') ? -1 : (match[1] === '+') ? 1 : 1;
+            sign = (match[1] === '-') ? -1 : 1;
             duration = {
                 y : parseIso(match[2], sign),
                 M : parseIso(match[3], sign),
@@ -61687,7 +61683,7 @@ angular.module('ui.router.state')
         if (!(this.isValid() && localInput.isValid())) {
             return false;
         }
-        units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
+        units = normalizeUnits(units) || 'millisecond';
         if (units === 'millisecond') {
             return this.valueOf() > localInput.valueOf();
         } else {
@@ -61700,7 +61696,7 @@ angular.module('ui.router.state')
         if (!(this.isValid() && localInput.isValid())) {
             return false;
         }
-        units = normalizeUnits(!isUndefined(units) ? units : 'millisecond');
+        units = normalizeUnits(units) || 'millisecond';
         if (units === 'millisecond') {
             return this.valueOf() < localInput.valueOf();
         } else {
@@ -61709,9 +61705,14 @@ angular.module('ui.router.state')
     }
 
     function isBetween (from, to, units, inclusivity) {
+        var localFrom = isMoment(from) ? from : createLocal(from),
+            localTo = isMoment(to) ? to : createLocal(to);
+        if (!(this.isValid() && localFrom.isValid() && localTo.isValid())) {
+            return false;
+        }
         inclusivity = inclusivity || '()';
-        return (inclusivity[0] === '(' ? this.isAfter(from, units) : !this.isBefore(from, units)) &&
-            (inclusivity[1] === ')' ? this.isBefore(to, units) : !this.isAfter(to, units));
+        return (inclusivity[0] === '(' ? this.isAfter(localFrom, units) : !this.isBefore(localFrom, units)) &&
+            (inclusivity[1] === ')' ? this.isBefore(localTo, units) : !this.isAfter(localTo, units));
     }
 
     function isSame (input, units) {
@@ -61720,7 +61721,7 @@ angular.module('ui.router.state')
         if (!(this.isValid() && localInput.isValid())) {
             return false;
         }
-        units = normalizeUnits(units || 'millisecond');
+        units = normalizeUnits(units) || 'millisecond';
         if (units === 'millisecond') {
             return this.valueOf() === localInput.valueOf();
         } else {
@@ -61730,11 +61731,11 @@ angular.module('ui.router.state')
     }
 
     function isSameOrAfter (input, units) {
-        return this.isSame(input, units) || this.isAfter(input,units);
+        return this.isSame(input, units) || this.isAfter(input, units);
     }
 
     function isSameOrBefore (input, units) {
-        return this.isSame(input, units) || this.isBefore(input,units);
+        return this.isSame(input, units) || this.isBefore(input, units);
     }
 
     function diff (input, units, asFloat) {
@@ -62953,7 +62954,7 @@ angular.module('ui.router.state')
     // Side effect imports
 
 
-    hooks.version = '2.22.2';
+    hooks.version = '2.23.0';
 
     setHookCallback(createLocal);
 
@@ -62994,7 +62995,7 @@ angular.module('ui.router.state')
         TIME: 'HH:mm',                                  // <input type="time" />
         TIME_SECONDS: 'HH:mm:ss',                       // <input type="time" step="1" />
         TIME_MS: 'HH:mm:ss.SSS',                        // <input type="time" step="0.001" />
-        WEEK: 'YYYY-[W]WW',                             // <input type="week" />
+        WEEK: 'GGGG-[W]WW',                             // <input type="week" />
         MONTH: 'YYYY-MM'                                // <input type="month" />
     };
 
@@ -64815,8 +64816,8 @@ angular
         params.timeout = httpCanceller.promise;
         httpCallInProgress = true;
         $http.get(url, params)
-          .then(httpSuccessCallbackGen(str))
-          .catch(httpErrorCallback)
+          .success(httpSuccessCallbackGen(str))
+          .error(httpErrorCallback)
           .finally(function(){httpCallInProgress=false;});
       }
 
@@ -65180,7 +65181,7 @@ angular
  * ui-bootstrap4
  * http://morgul.github.io/ui-bootstrap4/
 
- * Version: 3.0.5 - 2018-10-03
+ * Version: 3.0.6 - 2018-11-17
  * License: MIT
  */angular.module("ui.bootstrap", ["ui.bootstrap.tpls", "ui.bootstrap.collapse","ui.bootstrap.tabindex","ui.bootstrap.accordion","ui.bootstrap.alert","ui.bootstrap.buttons","ui.bootstrap.carousel","ui.bootstrap.common","ui.bootstrap.dateparser","ui.bootstrap.isClass","ui.bootstrap.datepicker","ui.bootstrap.position","ui.bootstrap.datepickerPopup","ui.bootstrap.debounce","ui.bootstrap.multiMap","ui.bootstrap.dropdown","ui.bootstrap.stackedMap","ui.bootstrap.modal","ui.bootstrap.paging","ui.bootstrap.pager","ui.bootstrap.pagination","ui.bootstrap.tooltip","ui.bootstrap.popover","ui.bootstrap.progressbar","ui.bootstrap.rating","ui.bootstrap.tabs","ui.bootstrap.timepicker","ui.bootstrap.typeahead"]);
 angular.module("ui.bootstrap.tpls", ["uib/template/accordion/accordion-group.html","uib/template/accordion/accordion.html","uib/template/alert/alert.html","uib/template/carousel/carousel.html","uib/template/carousel/slide.html","uib/template/datepicker/datepicker.html","uib/template/datepicker/day.html","uib/template/datepicker/month.html","uib/template/datepicker/year.html","uib/template/datepickerPopup/popup.html","uib/template/modal/window.html","uib/template/pager/pager.html","uib/template/pagination/pagination.html","uib/template/tooltip/tooltip-html-popup.html","uib/template/tooltip/tooltip-popup.html","uib/template/tooltip/tooltip-template-popup.html","uib/template/popover/popover-html.html","uib/template/popover/popover-template.html","uib/template/popover/popover.html","uib/template/progressbar/bar.html","uib/template/progressbar/progress.html","uib/template/progressbar/progressbar.html","uib/template/rating/rating.html","uib/template/tabs/tab.html","uib/template/tabs/tabset.html","uib/template/timepicker/timepicker.html","uib/template/typeahead/typeahead-match.html","uib/template/typeahead/typeahead-popup.html"]);
@@ -69060,8 +69061,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
 /**
  * A helper directive for the $modal service. It creates a backdrop element.
  */
-  .directive('uibModalBackdrop', ['$animate', '$injector', '$uibModalStack',
-  function($animate, $injector, $modalStack) {
+  .directive('uibModalBackdrop', ['$uibModalStack', '$q', '$animate',
+  function($modalStack, $q, $animate) {
     return {
       restrict: 'A',
       compile: function(tElement, tAttrs) {
@@ -69071,9 +69072,21 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
     };
 
     function linkFn(scope, element, attrs) {
-      if (attrs.modalInClass) {
-        $animate.addClass(element, attrs.modalInClass);
 
+      // Deferred object that will be resolved when this modal is rendered.
+      var modalRenderDeferObj = $q.defer();
+      // Resolve render promise post-digest
+      scope.$$postDigest(function() {
+        modalRenderDeferObj.resolve();
+      });
+
+      modalRenderDeferObj.promise.then(function() {
+        if (attrs.modalInClass) {
+          $animate.addClass(element, attrs.modalInClass);
+        }
+      });
+
+      if (attrs.modalInClass) {
         scope.$on($modalStack.NOW_CLOSING_EVENT, function(e, setIsAsync) {
           var done = setIsAsync();
           if (scope.modalOptions.animation) {
@@ -69083,6 +69096,8 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
           }
         });
       }
+
+
     }
   }])
 
@@ -69449,13 +69464,11 @@ angular.module('ui.bootstrap.modal', ['ui.bootstrap.multiMap', 'ui.bootstrap.sta
           if (modal.animation) {
             backdropDomEl.attr('modal-animation', 'true');
           }
-          $compile(backdropDomEl)(backdropScope);
-          $animate.enter(backdropDomEl, appendToElement);
-          if ($uibPosition.isScrollable(appendToElement)) {
-            scrollbarPadding = $uibPosition.scrollbarPadding(appendToElement);
-            if (scrollbarPadding.heightOverflow && scrollbarPadding.scrollbarWidth) {
-              appendToElement.css({paddingRight: scrollbarPadding.right + 'px'});
-            }
+
+          $animate.enter($compile(backdropDomEl)(backdropScope), appendToElement);
+          scrollbarPadding = $uibPosition.scrollbarPadding(appendToElement);
+          if (scrollbarPadding.heightOverflow && scrollbarPadding.scrollbarWidth) {
+            appendToElement.css({paddingRight: scrollbarPadding.right + 'px'});
           }
         }
 

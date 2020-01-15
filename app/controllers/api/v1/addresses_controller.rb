@@ -76,4 +76,9 @@ module Api; module V1; class AddressesController < Api::V1::ApiCoreModuleControl
     OpenChain::Api::V1::AddressApiJsonGenerator.new
   end
 
+  #overrides ApiCoreModuleControllerBase
+  def max_per_page
+    1000
+  end
+
 end; end; end
