@@ -64816,8 +64816,8 @@ angular
         params.timeout = httpCanceller.promise;
         httpCallInProgress = true;
         $http.get(url, params)
-          .success(httpSuccessCallbackGen(str))
-          .error(httpErrorCallback)
+          .then(httpSuccessCallbackGen(str))
+          .catch(httpErrorCallback)
           .finally(function(){httpCallInProgress=false;});
       }
 
@@ -73120,9 +73120,9 @@ angular.module('ui.bootstrap.tooltip').run(function() {!angular.$$csp().noInline
 angular.module('ui.bootstrap.timepicker').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTimepickerCss && angular.element(document).find('head').prepend('<style type="text/css">.uib-time input{width:50px !important;}</style>'); angular.$$uibTimepickerCss = true; });
 angular.module('ui.bootstrap.typeahead').run(function() {!angular.$$csp().noInlineStyle && !angular.$$uibTypeaheadCss && angular.element(document).find('head').prepend('<style type="text/css">[uib-typeahead-popup].dropdown-menu{display:block;}</style>'); angular.$$uibTypeaheadCss = true; });
 //! ChainCommon
-//! Build Time: Wed Oct 09 2019 16:44:31 GMT-0500 (Central Daylight Time)
-//! Git SHA: 9c7896e2a792f5663a119fea3b2eee35e602ba04
-//! Git Branch: fix_back_navigation_to_main_screen
+//! Build Time: Fri Jan 17 2020 09:57:59 GMT-0600 (Central Standard Time)
+//! Git SHA: 58e043aaa27e6bfd37663a531e9405b21db2fb24
+//! Git Branch: update_angular
 
 function Domainer(domainDataAccessSetup) {
   this.das = domainDataAccessSetup;
