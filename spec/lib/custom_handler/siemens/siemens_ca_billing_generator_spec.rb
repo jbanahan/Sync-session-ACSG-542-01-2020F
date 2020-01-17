@@ -348,9 +348,22 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(csv_lines.second).to eq ["2015-06-01", "123456", "1234567890", "0", "1", "2", "10.5", "9.25", "1.5", "9.45", "5.5", "5", "25.7"]
       end
 
-      it "re-raises any errors, prepending the file # to the error" do
-        expect(subject).to receive(:write_entry_data_line).and_raise "ERROR!"
-        expect {subject.write_entry_data StringIO.new, StringIO.new, @ed}.to raise_error "File # 123456 - ERROR!"
+      it "logs errors, prepending the file # to the error message and continues on with processing" do
+        # This is just a field that's accessed towards the end of the file writing...blow up on it
+        # to make sure that we're not actually writing to the given io / report objects until
+        # we're sure there's no errors w/ writing the data.
+        io = StringIO.new
+        report = StringIO.new
+
+        expect(@ed).to receive(:total_amount).and_raise "ERROR!"
+        expect_any_instance_of(StandardError).to receive(:log_me) do |instance|
+          expect(instance.message).to eq "File # 123456 - ERROR!"
+        end
+        expect(subject.write_entry_data io, report, @ed).to eq false
+
+        # Make sure no data was written to the outputs
+        expect(io.pos).to eq 0
+        expect(report.pos).to eq 0
       end
     end
 
@@ -437,6 +450,16 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           # in the text as \n...the encoding SHOULD be an "identity" encoding.  Meaning the encoded and decoded values
           # of the source, but they're not.
           expect(att.read.lines("\n").length).to eq 2
+        end
+
+        it "sends nothing if all entries failed to generate data" do
+          expect(subject).to receive(:write_entry_data).and_return false
+          expect(subject).not_to receive(:ftp_sync_file)
+
+          subject.generate_and_send [@entry]
+
+          @entry.reload
+          expect(@entry.sync_records.length).to eq 0
         end
       end
     end

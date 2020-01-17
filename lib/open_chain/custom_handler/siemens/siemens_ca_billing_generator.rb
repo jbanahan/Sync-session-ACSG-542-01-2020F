@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     sent = false
     filename = "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}#{counter}.dat"
 
-    generate_file_data_to_tempfiles(entries, filename) do |outfile, report|
+    generate_file_data_to_tempfiles(entries, filename) do |outfile, report, generated_entries|
       encrypt_file(outfile) do |encrypted_file|
         Attachment.add_original_filename_method encrypted_file, filename+".pgp"
         completed = false
@@ -57,11 +57,11 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
           # shouldn't span too much clock time.
           sync_records = []
           Entry.transaction do 
-            entries.each do |e|
+            generated_entries.each do |e|
               sync_records << e.sync_records.build(trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed)
             end
 
-            counter_item.update_attributes! json_data: {counter: counter}.to_json
+            counter_item.update! json_data: {counter: counter}.to_json
 
             # At this point, since we're in a transaction, the only issue we could run into is if the ftp was successful, but then saving the ftp session
             # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.  
@@ -98,8 +98,10 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
           write_report_headers billing_report
           Attachment.add_original_filename_method billing_report, "siemens-billing-#{Time.zone.now.strftime("%Y-%m-%d")}.csv"
           
+          valid_entries = []
           entries.each do |e|
-            write_entry_data billing_file, billing_report, generate_entry_data(e)
+            valid = write_entry_data billing_file, billing_report, generate_entry_data(e)
+            valid_entries << e if valid
           end
           billing_file.flush
           billing_file.rewind
@@ -107,7 +109,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
           billing_report.flush
           billing_report.rewind
 
-          yield billing_file, billing_report
+          yield billing_file, billing_report, valid_entries if valid_entries.length > 0
         end
       end
     end
@@ -115,16 +117,31 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
   def write_entry_data billing_file, billing_report, entry
     # Keep in mind these are the struct classes above, not actual entry/invoice/line classes
+    entry_written = false
     begin
+      buffered_billing_file_data = StringIO.new
+      bufferend_report_data = StringIO.new
+
       entry.commercial_invoice_lines.each_with_index do |line, x|
-        write_entry_data_line billing_file, entry, line, x == 0
-        write_report_data billing_report, entry, line
+        write_entry_data_line buffered_billing_file_data, entry, line, x == 0
+        write_report_data bufferend_report_data, entry, line
       end
+
+      buffered_billing_file_data.rewind
+      bufferend_report_data.rewind
+
+      billing_file.write buffered_billing_file_data.read
+      billing_report.write bufferend_report_data.read
+
+      entry_written = true
     rescue => e
-      # Rescue the error and then re-raise it after inserting which file # was the culprit for the error
-      raise e, "File # #{entry.broker_reference} - #{e.message}", e.backtrace
+      # Rescue the error and then log it, returning false to indicate the data for the entry wasn't written
+      new_error = StandardError.new("File # #{entry.broker_reference} - #{e.message}")
+      new_error.set_backtrace(e.backtrace)
+      new_error.log_me
     end
-    nil
+
+    entry_written
   end 
 
   def write_entry_data_line io, entry, line, first_entry_line = false
