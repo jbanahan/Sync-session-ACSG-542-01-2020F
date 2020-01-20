@@ -77,7 +77,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleBrokerInvoiceFieldFormat: {label: 'Broker Invoice Field Format'},
                 ValidationRuleBrokerInvoiceLineFieldFormat: {label: 'Broker Invoice Line Field Format'},
                 ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
-                ValidationRuleManifestDiscrepancies: { label: "ABI Manifest Discrepancies" },
+                ValidationRuleEntryTariffsMustIncludeAllTariffsOnProduct: { label: "Entry Tariffs Include all Product Tariffs" },
                 #DEPRECATED - doesn't appear in menu
                 ValidationRuleFieldComparison: {label: "Field Comparison", enabled_lambda: lambda { nil } },
                 'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
