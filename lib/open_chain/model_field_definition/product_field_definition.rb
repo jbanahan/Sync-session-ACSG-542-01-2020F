@@ -71,7 +71,15 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
           end
           r.nil? ? "" : r.hts_format
         },
-        :qualified_field_name => "(select hts_1 from tariff_records fht inner join classifications fhc on fhc.id = fht.classification_id  where fhc.product_id = products.id and fhc.country_id = (SELECT id from countries ORDER BY ifnull(classification_rank,9999), iso_code ASC LIMIT 1) LIMIT 1)",
+        :qualified_field_name => <<-SQL,
+          (SELECT hts_1 
+           FROM tariff_records fht 
+             INNER JOIN classifications fhc on fhc.id = fht.classification_id
+             INNER JOIN countries co on co.id = fhc.country_id 
+           WHERE fhc.product_id = products.id
+           ORDER BY IFNULL(co.classification_rank, 9999), co.iso_code, fht.line_number ASC
+           LIMIT 1)
+          SQL
         :data_type=>:string,
         :history_ignore=>true,
         :read_only => true
