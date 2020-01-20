@@ -181,7 +181,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       expect(subject.process_command(cmd)).to eq({'response_type'=>'error','message'=>"Can't figure out what to do for path /some/invalid/path"})
     end
 
-    it "handles legacy style sqs messages" do 
+    it "handles legacy style sqs messages" do
       expect(master_setup).to receive(:custom_features_list).and_return ['Ellery']
       p = class_double("OpenChain::CustomHandler::Ellery::ElleryOrderParser")
       expect(OpenChain::CustomHandler::Ellery::ElleryOrderParser).to receive(:delay).and_return p
@@ -440,7 +440,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "handles vandegrift kewill accounting report 5001" do
         do_parser_test("alliance", OpenChain::CustomHandler::Vandegrift::VandegriftKewillAccountingReport5001, '/arprfsub/file.rpt')
       end
-      
+
       it "handles Kewill Tariff files" do
         do_parser_test("Kewill Entries", OpenChain::CustomHandler::Vandegrift::KewillTariffClassificationsParser, "/kewill_tariffs/file.json")
       end
@@ -569,6 +569,12 @@ describe OpenChain::IntegrationClientCommandProcessor do
     context "Amazon Parts" do
       it "handles Amazon Parts files" do
         do_parser_test("Amazon Parts", OpenChain::CustomHandler::Amazon::AmazonProductParserBroker, '/amazon_parts/file.csv')
+      end
+    end
+
+    context "Rockport Feeds" do
+      it "handles Rockport Invoice xml files" do
+        do_parser_test("Rockport Feeds", OpenChain::CustomHandler::Rockport::RockportGtnInvoiceXmlParser, '/rockport_invoice/file.xml')
       end
     end
   end

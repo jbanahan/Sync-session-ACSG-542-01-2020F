@@ -72,6 +72,7 @@ require 'open_chain/custom_handler/pvh/pvh_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/pvh/pvh_gtn_asn_xml_parser'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/amazon/amazon_product_parser_broker'
+require 'open_chain/custom_handler/rockport/rockport_gtn_invoice_xml_parser'
 
 module OpenChain
   class IntegrationClient
@@ -118,7 +119,7 @@ module OpenChain
 
     def self.process_command_response response, sqs_message
       case response.try(:[], 'response_type').to_s.downcase
-      when "remote_file" 
+      when "remote_file"
         # Do Nothing...successful processing, which just results in teh message getting removed
       when "shutdown"
         # There's not really much point to a shutdown response with this running via a scheduler,
@@ -336,6 +337,8 @@ module OpenChain
         OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "amazon_parts") && custom_features.include?("Amazon Parts")
         OpenChain::CustomHandler::Amazon::AmazonProductParserBroker.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "rockport_invoice") && custom_features.include?("Rockport Feeds")
+        OpenChain::CustomHandler::Rockport::RockportGtnInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

@@ -287,7 +287,7 @@ Factory.define :commercial_invoice_tariff do |f|
   f.association :commercial_invoice_line
 end
 Factory.define :invoice do |f|
-  
+
 end
 Factory.define :invoice_line do |f|
   f.association :invoice
@@ -611,4 +611,8 @@ end
 Factory.define :daily_statement_entry do |f|
   f.association :daily_statement
 end
-
+Factory.define :unit_of_measure do |f|
+  f.uom 'foo'
+  f.description 'bar'
+  f.system 'Customs Management'
+end

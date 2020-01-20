@@ -22,7 +22,7 @@ require 'csv'
 class DataCrossReference < ActiveRecord::Base
   attr_accessible :company_id, :company, :cross_reference_type, :key, :value,
     :created_at
-  
+
   belongs_to :company
   validates_presence_of :key, :cross_reference_type
 
@@ -82,6 +82,7 @@ class DataCrossReference < ActiveRecord::Base
   # This list determines which documents should only retain a single version of the document
   CARGOWISE_SINGLE_DOCUMENT_CODE ||= "cargowise_single_document_code"
   VFI_CALENDAR ||= "vfi_calendar"
+  UNIT_OF_MEASURE ||= "unit_of_measure"
 
   scope :for_type, -> (xref_type) { where(cross_reference_type: xref_type) }
 

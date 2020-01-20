@@ -2,20 +2,29 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator do
 
   describe "generate_invoice" do
     let (:importer) {
-      with_customs_management_id(Factory(:company), "IMP")
+      with_customs_management_id(Factory(:importer), "IMP")
     }
+    let (:other_importer) { with_customs_management_id(Factory(:importer), "AHH")}
 
     let (:coo) {
-      c = Country.new 
+      c = Country.new
       c.iso_code = "CO"
       c
     }
 
     let (:coe) {
-     c = Country.new 
+      c = Country.new
       c.iso_code = "CE"
-      c 
+      c
     }
+
+    let! (:prs) { Factory(:unit_of_measure, uom: "PRS", description: "Pairs") }
+    let! (:pcs) { Factory(:unit_of_measure, uom: "PCS", description: "Pieces") }
+    let! (:too) { Factory(:unit_of_measure, uom: "TOO", description: "Alsoness") }
+    let! (:data_cross_reference) { DataCrossReference.create! cross_reference_type: "unit_of_measure", key: pcs.uom,
+      value: prs.uom, company: importer }
+    let! (:another_data_cross_reference) { DataCrossReference.create! cross_reference_type: "unit_of_measure", key: prs.uom,
+      value: "TOO", company: other_importer }
 
     let (:invoice) {
       i = Invoice.new
@@ -35,6 +44,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator do
       l.mid = "MID"
       l.unit_price = BigDecimal("10.10")
       l.part_description = "Description"
+      l.quantity_uom = "BEE"
       l.quantity = BigDecimal("10")
       l.customs_quantity = BigDecimal("1")
       l.customs_quantity_uom = "UOM"
@@ -86,6 +96,45 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceGenerator do
       expect(cl.first_sale).to eq 75
       expect(cl.related_parties).to eq true
       expect(cl.container_number).to eq "CONT123456789"
+    end
+
+    it "returns nil if the given uom is not known or cross referenced" do
+      ce = subject.generate_invoice invoice
+      expect(ce).to be_a described_class::CiLoadEntry
+
+      ci = ce.invoices.first
+      cl = ci.invoice_lines.first
+      expect(cl.pieces_uom).to eq nil
+    end
+
+    it "defaults the unit of measure to PCS if it is blank" do
+      invoice.invoice_lines.first.quantity_uom = ""
+      ce = subject.generate_invoice invoice
+      expect(ce).to be_a described_class::CiLoadEntry
+
+      ci = ce.invoices.first
+      cl = ci.invoice_lines.first
+      expect(cl.pieces_uom).to eq "PCS"
+    end
+
+    it "changes the pieces unit of measure if there is a cross reference for change" do
+      invoice.invoice_lines.first.quantity_uom = "PCS"
+      ce = subject.generate_invoice invoice
+      expect(ce).to be_a described_class::CiLoadEntry
+
+      ci = ce.invoices.first
+      cl = ci.invoice_lines.first
+      expect(cl.pieces_uom).to eq "PRS"
+    end
+
+    it "ignores cross references for other company UOM" do
+      invoice.invoice_lines.first.quantity_uom = "TOO"
+      ce = subject.generate_invoice invoice
+      expect(ce).to be_a described_class::CiLoadEntry
+
+      ci = ce.invoices.first
+      cl = ci.invoice_lines.first
+      expect(cl.pieces_uom).to eq "TOO"
     end
 
     it "handles gross weight imperial conversion" do

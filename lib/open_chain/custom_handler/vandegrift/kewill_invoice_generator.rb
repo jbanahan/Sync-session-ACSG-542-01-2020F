@@ -16,9 +16,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceGe
   def generate_invoice invoice
     ci_entry = generate_entry_data(invoice)
     ci_invoice = generate_invoice_header(invoice)
+    company = Company.with_customs_management_number(ci_entry.customer).first
     ci_entry.invoices << ci_invoice
     invoice.invoice_lines.each do |line|
-      ci_invoice.invoice_lines << generate_invoice_line(line)
+      ci_invoice.invoice_lines << generate_invoice_line(line, company)
     end
 
     ci_entry
@@ -33,7 +34,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceGe
   end
 
   def generate_invoice_header invoice
-    ci_invoice = CiLoadInvoice.new 
+    ci_invoice = CiLoadInvoice.new
     ci_invoice.invoice_number = invoice.invoice_number
     ci_invoice.invoice_date = invoice.invoice_date
     ci_invoice.currency = invoice.currency
@@ -41,7 +42,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceGe
     ci_invoice
   end
 
-  def generate_invoice_line invoice_line
+  def generate_invoice_line invoice_line, company
     cil = CiLoadInvoiceLine.new
     cil.po_number = invoice_line.po_number
     cil.part_number = invoice_line.part_number
@@ -54,6 +55,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceGe
     cil.unit_price = invoice_line.unit_price
     cil.description = invoice_line.part_description
     cil.pieces = invoice_line.quantity
+    cil.pieces_uom = check_uom_xref(invoice_line.quantity_uom, company)
     cil.quantity_1 = invoice_line.customs_quantity
     cil.uom_1 = invoice_line.customs_quantity_uom
     cil.spi = invoice_line.spi
@@ -69,6 +71,20 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillInvoiceGe
     cil
   end
 
+  def check_uom_xref uom, company
+    if uom.blank?
+      return "PCS"
+    else
+      # See if there's a cross reference uom value set up for this company, if so, use it
+      newUOM = DataCrossReference.where(cross_reference_type: DataCrossReference::UNIT_OF_MEASURE, key:uom, company: company).first
+      if newUOM.nil?
+        # If no xref'ed value is present, verify the passed in value against the standard list, if it's found return the value, else nil
+       return UnitOfMeasure.where(system: "Customs Management", uom: uom).first&.uom
+      else
+        return newUOM.value
+      end
+    end
+  end
 
   def metric_weight amount, uom
     return nil unless amount
