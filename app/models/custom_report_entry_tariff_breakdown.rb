@@ -24,72 +24,89 @@ class CustomReportEntryTariffBreakdown < CustomReport
   end
 
   def run run_by, row_limit = nil
-    entries = Entry.search_secure run_by, Entry.group("entries.id")
-    self.search_criterions.each {|sc| entries = sc.apply(entries)}
-    row_limit = SearchSetup.max_results(run_by) if row_limit.blank?
-    entries = entries.limit(row_limit)
-
-    # This might look weird but in order to eager load the invoices / tariffs we can't add the includes on the search query (some 
-    # activerecord weirdness happens with the criterions that are added above that results in bad joins).
-    # Therefore, we're running the query and then "piping" the ids into a plain active record where clause.
-    entries = Entry.where(id: entries.pluck("entries.id")).includes(commercial_invoices: {commercial_invoice_lines: :commercial_invoice_tariffs})
-
-    # Report is meant to have one row per invoice line, with each line containing rolled up content for all HTS
-    # numbers that may be connected to that line.  Unfortunately, since we won't know the max number of HTS numbers
-    # involved until we've analyzed all the invoice lines, and the column positioning depends on the max number
-    # of HTS numbers, we can't actually build the report output on the first pass through the data.
-    max_hts_count = get_max_standard_hts_count entries, row_limit
-
-    # Make the headers.  These will vary based on the number of HTS groups involved.  If there's more than 1 group,
-    # we have to dupe a block of columns for each and add prefixes to them, like "HTS 1", "HTS 2" and so forth.
-    headers = build_headers max_hts_count
-    row_cursor = -1
-    write_headers (row_cursor += 1), headers, run_by
-
-    # Write the report data.  This involves a hash we already put together of HTS values, combining all HTS values for
-    # an invoice line into one report line.
-    entries.each do |ent|
-      ent.commercial_invoices.each do |inv|
-        inv.commercial_invoice_lines.each do |inv_line|
-        
-          user_selected_cols = []
-          self.search_columns.each do |col|
-            mf = col.model_field
-            if mf.core_module.klass == Entry
-              user_selected_cols << mf.process_export(ent, run_by)
-            elsif mf.core_module.klass == CommercialInvoice
-              user_selected_cols << mf.process_export(inv, run_by)
-            elsif mf.core_module.klass == CommercialInvoiceLine
-              user_selected_cols << mf.process_export(inv_line, run_by)
-            end
-          end
-
-          row_data = user_selected_cols + get_hts_row_content(inv_line, max_hts_count)
-          write_row (row_cursor += 1), ent, row_data, run_by
-        end
-      end
-
-      return if row_limit && row_cursor >= row_limit
+    distribute_reads do
+      run_report run_by, row_limit
     end
-
-    write_no_data (row_cursor +=1) if row_cursor == 0
-    nil
   end
 
   private
-    def get_max_standard_hts_count entries, row_limit
-      invoice_line_count = 0
-      inv_line_to_hts_content_hash = {}
-      max_length = 0
-      entries.each do |ent|
-        ent.commercial_invoices.each do |invoice|
-          invoice.commercial_invoice_lines.each do |invoice_line|
-            tariff_count = invoice_line.commercial_invoice_tariffs.reject { |t| special_tariff?(t.hts_code) }.length
-            max_length = tariff_count if tariff_count > max_length
+    def run_report run_by, row_limit = nil
+      entries = Entry.search_secure run_by, Entry.group("entries.id")
+      self.search_criterions.each {|sc| entries = sc.apply(entries)}
+      row_limit = SearchSetup.max_results(run_by) if row_limit.blank?
+      entries = entries.limit(row_limit > 1000 ? 1000 : row_limit)
+      entries = entries.order(:file_logged_date)
+
+      # This might look weird but in order to eager load the invoices / tariffs we can't add the includes on the search query (some 
+      # activerecord weirdness happens with the criterions that are added above that results in bad joins).
+      # Therefore, we're running the query and then "piping" the ids into a plain active record where clause.
+      entry_ids = entries.pluck("entries.id")
+      entries = Entry.where(id: entry_ids).includes(commercial_invoices: {commercial_invoice_lines: :commercial_invoice_tariffs})
+
+      # Report is meant to have one row per invoice line, with each line containing rolled up content for all HTS
+      # numbers that may be connected to that line.  Unfortunately, since we won't know the max number of HTS numbers
+      # involved until we've analyzed all the invoice lines, and the column positioning depends on the max number
+      # of HTS numbers, we can't actually build the report output on the first pass through the data.
+      max_hts_count = get_max_standard_hts_count entry_ids
+
+      # Make the headers.  These will vary based on the number of HTS groups involved.  If there's more than 1 group,
+      # we have to dupe a block of columns for each and add prefixes to them, like "HTS 1", "HTS 2" and so forth.
+      headers = build_headers max_hts_count
+      row_cursor = -1
+      write_headers (row_cursor += 1), headers, run_by
+
+      # We're going to work across groups of 25 entries to try and limit to some degree the number of queries run, but also to
+      # keep memory useage at a minimum as well.
+      entry_ids.each_slice(25) do |ids|
+        entries = Entry.where(id: ids).includes(commercial_invoices: {commercial_invoice_lines: :commercial_invoice_tariffs}).order(:file_logged_date)
+        entries.each do |ent|
+          ent.commercial_invoices.each do |inv|
+            inv.commercial_invoice_lines.each do |inv_line|
+            
+              user_selected_cols = []
+              self.search_columns.each do |col|
+                mf = col.model_field
+                if mf.core_module.klass == Entry
+                  user_selected_cols << mf.process_export(ent, run_by)
+                elsif mf.core_module.klass == CommercialInvoice
+                  user_selected_cols << mf.process_export(inv, run_by)
+                elsif mf.core_module.klass == CommercialInvoiceLine
+                  user_selected_cols << mf.process_export(inv_line, run_by)
+                end
+              end
+
+              row_data = user_selected_cols + get_hts_row_content(inv_line, max_hts_count)
+              write_row (row_cursor += 1), ent, row_data, run_by
+            end
           end
         end
+
+        return if row_limit && row_cursor >= row_limit
       end
-      max_length
+      write_no_data (row_cursor +=1) if row_cursor == 0
+      nil
+    end
+
+    def get_max_standard_hts_count entry_ids
+      # We're going to employ a query to determine the max number of standard HTS codes that are utilized over the 
+      # full range of entries that are on the report, this should be much faster and less memory intensive than
+      # loading all the entries into memory that will appear on the report and parsing through them to count the tariffs utilized
+      query = <<-QRY
+SELECT e.id, i.id, l.id, count(t.id)
+FROM entries e
+INNER JOIN commercial_invoices i ON e.id = i.entry_id
+INNER JOIN commercial_invoice_lines l ON l.commercial_invoice_id = i.id
+INNER JOIN commercial_invoice_tariffs t ON t.commercial_invoice_line_id = l.id
+WHERE e.id IN (?)
+AND t.hts_code NOT LIKE '9902%' AND t.hts_code NOT LIKE '9903%'
+GROUP BY e.id, i.id, l.id
+HAVING count(t.id) > 1
+ORDER BY count(t.id) DESC
+LIMIT 1
+QRY
+      results = ActiveRecord::Base.connection.execute(ActiveRecord::Base.sanitize_sql_array([query, entry_ids]))
+      max_length = results.first.try(:[], 3).to_i
+      max_length > 0 ? max_length : 1
     end
 
     def special_tariff? hts_code

@@ -1,4 +1,6 @@
 describe ModelField do
+  let! (:ms) { stub_master_setup }
+
   describe "Product Custom Defintion On Other Module" do
     before :each do
       @cd = Factory(:custom_definition,module_type:'Product',data_type:'string')
@@ -7,7 +9,7 @@ describe ModelField do
       order_line = Factory(:order_line) #make to ensure that order_lines.id != products.id
       @order_line = Factory(:order_line, product:@p, order: order_line.order)
       @mf = ModelField.create_and_insert_product_custom_field @cd, CoreModule::ORDER_LINE, 1
-      MasterSetup.get.update_attributes(order_enabled:true)
+      allow(ms).to receive(:order_enabled?).and_return true
     end
     it "should query properly" do
       ss = SearchSetup.new(module_type:'Order')
@@ -973,7 +975,7 @@ describe ModelField do
 
     context "broker_invoice_total" do
       before :each do
-        MasterSetup.get.update_attributes(:broker_invoice_enabled=>true)
+        allow(ms).to receive(:broker_invoice_enabled).and_return true
       end
       it "should allow you to see broker_invoice_total if you can view broker_invoices" do
         u = Factory(:user,:broker_invoice_view=>true,:company=>Factory(:company,:master=>true))
