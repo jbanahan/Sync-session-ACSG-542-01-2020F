@@ -209,7 +209,6 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
       order = Order.where(importer_id: importer.id, customer_order_number: k).first
       unless order
         business_logic_errors[:missing_orders] << k
-        return
       end
       h[k] = order
     end
