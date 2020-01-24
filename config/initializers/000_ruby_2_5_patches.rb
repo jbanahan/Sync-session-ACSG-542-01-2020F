@@ -22,6 +22,15 @@ if RUBY_VERSION =~ /^2\.[456789]/
   end
 
   module Kernel
+    # When there's time to fully test this - this change will remove a warning about 
+    # BigDecimal.new being deprecated.
+    #
+    # alias :old_BigDecimal :BigDecimal
+
+    # def BigDecimal *args
+    #   old_BigDecimal(*args)
+    # end
+
     def BigDecimal *args
       BigDecimal.new(*args)
     end

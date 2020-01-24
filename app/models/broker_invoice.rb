@@ -48,7 +48,7 @@ class BrokerInvoice < ActiveRecord::Base
     :broker_reference, :currency, :customer_number, :entry_id, :fiscal_date, 
     :fiscal_month, :fiscal_year, :invoice_date, :invoice_number, 
     :invoice_total, :last_file_bucket, :last_file_path, :locked, 
-    :source_system, :suffix, :summary_statement_id, :broker_invoice_lines_attributes
+    :source_system, :suffix, :summary_statement_id, :broker_invoice_lines_attributes, :entry
   
   belongs_to :entry, touch: true, inverse_of: :broker_invoices
   belongs_to :bill_to_country, :class_name=>'Country'
