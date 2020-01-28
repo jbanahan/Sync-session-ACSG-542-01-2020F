@@ -25,12 +25,12 @@ class CustomReportEntryTariffBreakdown < CustomReport
 
   def run run_by, row_limit = nil
     distribute_reads do
-      run_report run_by, row_limit
+      execute_report run_by, row_limit
     end
   end
 
   private
-    def run_report run_by, row_limit = nil
+    def execute_report run_by, row_limit = nil
       entries = Entry.search_secure run_by, Entry.group("entries.id")
       self.search_criterions.each {|sc| entries = sc.apply(entries)}
       row_limit = SearchSetup.max_results(run_by) if row_limit.blank?
