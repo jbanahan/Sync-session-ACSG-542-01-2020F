@@ -1,3 +1,9 @@
+class FiscalDateError < StandardError; end
+
+class MissingFiscalDateError < FiscalDateError; end
+
+class DuplicateFiscalDateError < FiscalDateError; end
+
 module OpenChain; class FiscalMonthAssigner
   def self.assign entry
     fiscal_reference = entry.importer.try(:fiscal_reference)
@@ -54,15 +60,15 @@ module OpenChain; class FiscalMonthAssigner
     fiscal_date = fiscal_model_field.data_type == :date ? fiscal_ref_date : fiscal_ref_date.in_time_zone("America/New_York").to_date
     fms = FiscalMonth.where("company_id = ? AND start_date <= ? AND end_date >= ?", entry.importer_id, fiscal_date, fiscal_date).all
 
-    raise "More than one fiscal month found for Entry ##{entry.entry_number} with #{fiscal_model_field.label} #{fiscal_date}." if fms.length > 1
-    raise "No fiscal month found for Entry ##{entry.entry_number} with #{fiscal_model_field.label} #{fiscal_date}." if fms.length.zero?
+    raise DuplicateFiscalDateError, "More than one fiscal month found for Entry ##{entry.entry_number} with #{fiscal_model_field.label} #{fiscal_date}." if fms.length > 1
+    raise MissingFiscalDateError, "No fiscal month found for Entry ##{entry.entry_number} with #{fiscal_model_field.label} #{fiscal_date}." if fms.length.zero?
     fms.first
   end
 
   def self.get_invoice_fiscal_month brok_inv
     fms = FiscalMonth.where("company_id = ? #{} AND start_date <= ? AND end_date >= ?", brok_inv.entry.importer_id, brok_inv.invoice_date, brok_inv.invoice_date).all
-    raise "More than one fiscal month found for Broker Invoice ##{brok_inv.invoice_number} with Invoice Date #{brok_inv.invoice_date}." if fms.length > 1
-    raise "No fiscal month found for Broker Invoice ##{brok_inv.invoice_number} with Invoice Date #{brok_inv.invoice_date}." if fms.length.zero?
+    raise DuplicateFiscalDateError, "More than one fiscal month found for Broker Invoice ##{brok_inv.invoice_number} with Invoice Date #{brok_inv.invoice_date}." if fms.length > 1
+    raise MissingFiscalDateError, "No fiscal month found for Broker Invoice ##{brok_inv.invoice_number} with Invoice Date #{brok_inv.invoice_date}." if fms.length.zero?
     fms.first
   end
 end; end;

@@ -1265,6 +1265,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(brok_inv.fiscal_year).to eq 2015
     end
 
+    it "handles fiscal date errors by logging them, but not failing the entry load" do
+      expect(OpenChain::FiscalMonthAssigner).to receive(:assign).and_raise MissingFiscalDateError, "Date missing"
+      expect_any_instance_of(MissingFiscalDateError).to receive(:log_me)
+
+      expect {subject.process_entry @e}.not_to raise_error
+    end
+
     it "does not create entries that have cancelled dates" do
       @e['dates'] << {'date_no'=>5023, 'date'=>201503021000}
       expect(subject.process_entry @e).to be_nil

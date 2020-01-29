@@ -233,7 +233,13 @@ module OpenChain; class FenixParser
 
         set_entry_dates @entry, accumulated_dates
 
-        OpenChain::FiscalMonthAssigner.assign @entry
+        begin
+          OpenChain::FiscalMonthAssigner.assign @entry
+        rescue FiscalDateError => e
+          # If the fiscal date is missing, then log it so we know there's an issue...but we don't want that to actually bomb
+          # the entry load.
+          e.log_me
+        end
 
         @entry.save!
         #match up any broker invoices that might have already been loaded

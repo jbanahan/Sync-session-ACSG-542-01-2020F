@@ -749,7 +749,14 @@ describe OpenChain::FenixParser do
     expect(e.fiscal_date).to eq fm.start_date
     expect(e.fiscal_month).to eq 1
     expect(e.fiscal_year).to eq 2015
-  end    
+  end
+
+  it "handles fiscal date errors by logging them, but not failing the entry load" do
+    expect(OpenChain::FiscalMonthAssigner).to receive(:assign).and_raise MissingFiscalDateError, "Date missing"
+    expect_any_instance_of(MissingFiscalDateError).to receive(:log_me)
+
+    expect {OpenChain::FenixParser.parse @entry_lambda.call}.not_to raise_error
+  end
 
   context "with fenix admin group" do
     let (:group) {Group.create! system_code: "fenix_admin", name: "Fenix Admin"}

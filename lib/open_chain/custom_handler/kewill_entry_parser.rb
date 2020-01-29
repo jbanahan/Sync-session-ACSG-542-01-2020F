@@ -203,7 +203,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
         postprocess e, entry, user
 
-        OpenChain::FiscalMonthAssigner.assign entry
+        begin
+          OpenChain::FiscalMonthAssigner.assign entry
+        rescue FiscalDateError => e
+          # If the fiscal date is missing, then log it so we know there's an issue...but we don't want that to actually bomb
+          # the entry load.
+          e.log_me
+        end
 
         entry.save!
         entry.update_column :time_to_process, ((Time.now-start_time) * 1000)

@@ -67,22 +67,22 @@ describe OpenChain::FiscalMonthAssigner do
 
     it "raises exception if company's fiscal calendar is enabled but entry's date doesn't have a matching fiscal month" do
       ent.update_attributes!(release_date: DateTime.new(2016, 5, 15, 12, 00))
-      expect{described_class.assign ent}.to raise_error "No fiscal month found for Entry #entry num with Release Date 2016-05-15."
+      expect{described_class.assign ent}.to raise_error MissingFiscalDateError, "No fiscal month found for Entry #entry num with Release Date 2016-05-15."
     end
 
     it "raises exception if company's fiscal calendar is enabled but broker invoice's invoice_date doesn't have a matching fiscal month" do
       brok_inv.update_attributes!(invoice_date: Date.new(2016,5,15))
-      expect{described_class.assign ent}.to raise_error "No fiscal month found for Broker Invoice #inv num with Invoice Date 2016-05-15."
+      expect{described_class.assign ent}.to raise_error MissingFiscalDateError, "No fiscal month found for Broker Invoice #inv num with Invoice Date 2016-05-15."
     end
 
     it "raises exception if more than one fiscal month is found for an entry" do
       Factory(:fiscal_month, company: co, year: 2016, month_number: 5, start_date: Date.new(2016,3,2), end_date: Date.new(2016,4,20))
-      expect{described_class.assign ent}.to raise_error "More than one fiscal month found for Entry #entry num with Release Date 2016-03-31."
+      expect{described_class.assign ent}.to raise_error DuplicateFiscalDateError, "More than one fiscal month found for Entry #entry num with Release Date 2016-03-31."
     end
 
     it "raises exception if more than one fiscal month is found for a broker invoice" do
       Factory(:fiscal_month, company: co, year: 2016, month_number: 5, start_date: Date.new(2016,4,2), end_date: Date.new(2016,4,20))
-      expect{described_class.assign ent}.to raise_error "More than one fiscal month found for Broker Invoice #inv num with Invoice Date 2016-04-15."
+      expect{described_class.assign ent}.to raise_error DuplicateFiscalDateError, "More than one fiscal month found for Broker Invoice #inv num with Invoice Date 2016-04-15."
     end
   end
 end
