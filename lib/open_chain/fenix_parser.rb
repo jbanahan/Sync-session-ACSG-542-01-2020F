@@ -45,7 +45,7 @@ module OpenChain; class FenixParser
     "ACSDECACCP" => :across_declaration_accepted=
   }
 
-  SUPPORTING_LINE_TYPES ||= ['SD', 'CCN', 'CON', 'BL']
+  SUPPORTING_LINE_TYPES ||= ['SD', 'CCN', 'CON', 'BL', 'B3D']
   LVS_LINE_TYPE ||= "LVS"
 
   def self.integration_folder
@@ -171,6 +171,7 @@ module OpenChain; class FenixParser
 
         process_header strip_b3_from_line(lines.first), entry
 
+        current_invoice_line = nil
         lines.each do |line|
 
           case line[0]
@@ -182,10 +183,12 @@ module OpenChain; class FenixParser
             process_container_line line
           when "BL"
             process_bill_of_lading_line line
+          when "B3D"
+            process_line_detail_line line, current_invoice_line
           else
             line = strip_b3_from_line(line)
             process_invoice line
-            process_invoice_line line, fenix_nd_entry
+            current_invoice_line = process_invoice_line line, fenix_nd_entry
           end
         end
 
@@ -439,6 +442,8 @@ module OpenChain; class FenixParser
     inv_ln.customs_line_number = int_val(line[92])
     @max_line_number = inv_ln.customs_line_number if inv_ln.customs_line_number.to_i > @max_line_number
     inv_ln.subheader_number = int_val(line[93])
+    inv_ln.add_to_make_amount = BigDecimal.new(0)
+    inv_ln.miscellaneous_discount = BigDecimal.new(0)
     accumulate_string :exp_country, exp[0]
     accumulate_string :exp_state, exp[1]
     accumulate_string :org_country, org[0]
@@ -521,6 +526,8 @@ module OpenChain; class FenixParser
     t.excise_rate_code = str_val(line[51])
     t.excise_amount = dec_val(line[52])
     t.tariff_description = line[24]
+
+    inv_ln
   end
 
   def process_activity_line entry, line, accumulated_dates
@@ -939,6 +946,17 @@ module OpenChain; class FenixParser
 
   def summary_entry_type? entry
     entry.entry_type.to_s.upcase == "F"
+  end
+
+  def process_line_detail_line line, invoice_line
+    amount = dec_val(line[3])
+    if amount && invoice_line
+      if amount < 0
+        invoice_line.miscellaneous_discount += -amount
+      elsif amount > 0
+        invoice_line.add_to_make_amount += amount
+      end
+    end
   end
 
 end; end
