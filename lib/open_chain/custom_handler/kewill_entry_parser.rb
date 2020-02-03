@@ -158,7 +158,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     json = outer['entry']
     return nil if json.nil?
     
-    entry = self.new.process_entry json, opts
+    entry = nil
+
+    begin
+      entry = self.new.process_entry json, opts
+    rescue => e
+      error_handler e, json
+    end
 
     if entry
       if MasterSetup.get.custom_feature?("Kewill Imaging")
@@ -180,62 +186,61 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     start_time = Time.zone.now
     user = User.integration
     entry = find_and_process_entry(json.with_indifferent_access) do |e, entry|
-      begin
-        preprocess entry
-        process_entry_header e, entry
-        process_dates e, entry
-        # Liquidation data depends on the presence of the liquidation date
-        # So we parse it after we've parsed dates.
-        process_liquidation e, entry
-        process_notes e, entry
-        process_bill_numbers e, entry
-        #Process containers before commercial invoices since invoice lines can link to containers
-        process_containers e, entry
-        process_commercial_invoices e, entry
-        process_post_summary_corrections e, entry
-        process_broker_invoices e, entry
-        process_fda_dates e, entry
-        
-        if opts[:key] && opts[:bucket]
-          entry.last_file_path = opts[:key]
-          entry.last_file_bucket = opts[:bucket]
-        end
-
-        postprocess e, entry, user
-
-        begin
-          OpenChain::FiscalMonthAssigner.assign entry
-        rescue FiscalDateError => e
-          # If the fiscal date is missing, then log it so we know there's an issue...but we don't want that to actually bomb
-          # the entry load.
-          e.log_me
-        end
-
-        entry.save!
-        entry.update_column :time_to_process, ((Time.now-start_time) * 1000)
-
-        entry.create_snapshot user
-        entry
-      rescue => e
-        # Re-raise a deadlock error, there's nothing wrong with the data, so the entry should
-        # process next time through when the job queue reprocesses the file.
-        raise e if OpenChain::DatabaseUtils.deadlock_error?(e) || !MasterSetup.get.production?
-
-        # Add the entity wrapper name back in so the data can easily just be passed back through
-        # the parser for testing/problem solving
-        self.class.json_to_tempfile({"entry" => json}) do |f|
-          e.log_me ["Kewill Entry Parser Failure"], [f.path]
-        end
-
-        # Make sure if we run into errors that we return nil, otherwise the calling method will broadcast save events on unsaved changes
-        entry = nil
+      preprocess entry
+      process_entry_header e, entry
+      process_dates e, entry
+      # Liquidation data depends on the presence of the liquidation date
+      # So we parse it after we've parsed dates.
+      process_liquidation e, entry
+      process_notes e, entry
+      process_bill_numbers e, entry
+      #Process containers before commercial invoices since invoice lines can link to containers
+      process_containers e, entry
+      process_commercial_invoices e, entry
+      process_post_summary_corrections e, entry
+      process_broker_invoices e, entry
+      process_fda_dates e, entry
+      
+      if opts[:key] && opts[:bucket]
+        entry.last_file_path = opts[:key]
+        entry.last_file_bucket = opts[:bucket]
       end
+
+      postprocess e, entry, user
+
+      begin
+        OpenChain::FiscalMonthAssigner.assign entry
+      rescue FiscalDateError => e
+        # If the fiscal date is missing, then log it so we know there's an issue...but we don't want that to actually bomb
+        # the entry load.
+        e.log_me
+      end
+
+      entry.save!
+      entry.update_column :time_to_process, ((Time.now-start_time) * 1000)
+
+      entry.create_snapshot user
+      entry
     end
 
     entry
   end
 
   private
+
+    def self.error_handler e, json
+      # Re-raise a deadlock error, there's nothing wrong with the data, so the entry should
+      # process next time through when the job queue reprocesses the file.
+      raise e if OpenChain::DatabaseUtils.deadlock_error?(e) || !MasterSetup.get.production?
+
+      # Add the entity wrapper name back in so the data can easily just be passed back through
+      # the parser for testing/problem solving
+      json_to_tempfile({"entry" => json}) do |f|
+        e.log_me ["Kewill Entry Parser Failure"], [f.path]
+      end
+
+      nil
+    end
 
     def self.json_to_tempfile json
        Tempfile.open([Time.zone.now.iso8601, ".json"]) do |f|

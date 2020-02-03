@@ -1388,12 +1388,6 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.prorated_mpf).to eq 2.34
     end
 
-    it "reraises deadlock_errors" do
-      error = ActiveRecord::TransactionIsolationConflict.new "Deadlock, Shmedlock"
-      expect(subject).to receive(:preprocess).and_raise error
-      expect { subject.process_entry @e }.to raise_error error
-    end
-
     it "does not attempt to create importers accounts with missing customer numbers" do
       @e['cust_no'] = ""
       entry = subject.process_entry @e
@@ -1421,6 +1415,20 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     it "skips files with a 0 file number" do
       @e["file_no"] = "0"
       expect(subject.process_entry(@e)).to be_nil
+    end
+
+    it "rolls back if error is raised" do
+      # create an entry with actual line level data which would have gotten destroyed if a rollback didn't occur
+      t = Factory(:commercial_invoice_tariff)
+      e = t.commercial_invoice_line.commercial_invoice.entry
+      e.update! broker_reference: "12345", source_system: "Alliance"
+
+      expect(OpenChain::FiscalMonthAssigner).to receive(:assign).and_raise "Error"
+
+      expect { subject.process_entry @e }.to raise_error "Error"
+
+      # If the error didn't roll back, then the tariff would have been deleted and wouldn't exist in the database
+      expect(t).to exist_in_db
     end
 
     context "with statement updates" do
@@ -1513,42 +1521,69 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   end
 
   describe "parse" do
-    let (:master_setup) { double("MasterSetup") }
+    subject { described_class }
+
+    let! (:master_setup) { 
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).with("Kewill Imaging").and_return true
+      ms
+    }
+
     before :each do
       allow(OpenChain::AllianceImagingClient).to receive(:request_images)
-      allow(MasterSetup).to receive(:get).and_return master_setup
-      allow(master_setup).to receive(:custom_feature?).with("Kewill Imaging").and_return true
     end
 
+    let (:json) { {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}.with_indifferent_access }
+
     it "reads json, parses it, notifies listeners" do
-      json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
       entry = Entry.new(broker_reference: "TESTING")
-      expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {}).and_return entry
+      expect_any_instance_of(subject).to receive(:process_entry).with(json[:entry], {}).and_return entry
 
       expect(OpenChain::AllianceImagingClient).to receive(:request_images).with "TESTING", delay_seconds: 600
       expect(entry).to receive(:broadcast_event).with(:save)
 
-      described_class.parse json.to_json
+      subject.parse json.to_json
     end
 
     it "handles a hash instead of json" do
-      json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}.with_indifferent_access
-      expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {})
-      described_class.parse json
+      expect_any_instance_of(subject).to receive(:process_entry).with(json[:entry], {})
+      subject.parse json
     end
 
     it "returns if there is no entry wrapped" do
-      described_class.parse({})
+      subject.parse({})
     end
 
     it "does not call request images if Kewill Imaging is not enabled" do
-      json = {entry: {'file_no'=>12345, 'extract_time'=>"2015-04-01 00:00"}}
       expect(master_setup).to receive(:custom_feature?).with("Kewill Imaging").and_return false
       expect(OpenChain::AllianceImagingClient).not_to receive(:request_images)
 
       entry = Entry.new(broker_reference: "TESTING")
-      expect_any_instance_of(described_class).to receive(:process_entry).with(json[:entry], {}).and_return entry
-      described_class.parse json.to_json
+      expect_any_instance_of(subject).to receive(:process_entry).with(json[:entry], {}).and_return entry
+      subject.parse json.to_json
+    end
+
+    it "handles errors raised by process_entry in production" do
+      expect(master_setup).to receive(:production?).and_return true
+
+      e = StandardError.new
+      expect_any_instance_of(subject).to receive(:process_entry).and_raise e
+
+      expect(e).to receive(:log_me) do |messages, paths|
+        expect(messages).to eq ["Kewill Entry Parser Failure"]
+        expect(IO.read(paths.first)).to eq json.to_json
+      end
+
+      subject.parse json
+    end
+
+    it "re-raises deadlock errors" do
+      # If there's a deadlock error, we should reraise it so delayed jobs will reprocess the file again
+      e = StandardError.new
+      expect_any_instance_of(subject).to receive(:process_entry).and_raise e
+      expect(OpenChain::DatabaseUtils).to receive(:deadlock_error?).with(e).and_return true
+
+      expect { subject.parse json}.to raise_error e
     end
   end
 
