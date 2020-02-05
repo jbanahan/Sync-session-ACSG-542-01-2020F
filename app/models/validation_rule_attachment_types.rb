@@ -1,5 +1,7 @@
 # -*- SkipSchemaAnnotations
 
+# Checks that entity has all specified attachment types
+# {'attachment_types' : [string] | string}
 class ValidationRuleAttachmentTypes < BusinessValidationRule
 
   def run_validation obj
@@ -16,14 +18,10 @@ class ValidationRuleAttachmentTypes < BusinessValidationRule
     @types = [@types] if @types.instance_of?(String)
     object_attachment_types = obj.attachments.collect {|a| a.attachment_type.downcase}
 
-    @types.each do |t|
-      if !object_attachment_types.include?(t.downcase)
-        return "Missing attachment type #{t}."
-      end
-    end
+    missing = @types.select{ |t| !object_attachment_types.include?(t.downcase) }
+    return "Missing attachment types: #{missing.join(', ')}." if missing.present?
 
     return nil
-
   end
 
 end
