@@ -8,15 +8,18 @@ module OpenChain; module Report; class PvhDutyDiscountReport
   extend OpenChain::FiscalCalendarSchedulingSupport
 
   PVH_DUTY_DISCOUNT_REPORT_USERS ||= 'pvh_duty_discount_report'
-
+  
   PvhReportData ||= Struct.new(:entry_number, :invoice_number, :po_number, :shipment_number, :po_line_number,
                                :hts_code, :eta_date, :vendor_invoice_value, :duty_assist_amount, :dutiable_value,
-                               :duty_rate_pct, :first_cost_po, :units_shipped, :total_duty_adj_amount,
-                               :total_duty_savings, :total_duty_difference, :rows, :base_duty_adj_amount) do
+                               :dutiable_value_7501, :duty_rate_pct, :first_cost_po, :units_shipped, :total_duty_adj_amount,
+                               :total_duty_savings, :total_duty_difference, :rows, :base_duty_adj_amount, :transport_mode) do
     def initialize
       self.vendor_invoice_value ||= 0.0
       self.duty_assist_amount ||= 0.0
+      # used for calculations
       self.dutiable_value ||= 0.0
+      # used for display
+      self.dutiable_value_7501 ||= 0.0
       self.total_duty_adj_amount ||= 0.0
       self.total_duty_savings ||= 0.0
       self.total_duty_difference ||= 0.0
@@ -54,16 +57,13 @@ module OpenChain; module Report; class PvhDutyDiscountReport
 
   def run_duty_discount_report settings, current_fiscal_month:nil
     fiscal_date_start, fiscal_date_end, fiscal_month = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month
-    mode_of_transport_text = settings['mode_of_transport']
-    modes_of_transport = Entry.get_transport_mode_codes_us_ca(mode_of_transport_text)
-    raise "Mode of Transportation is required." unless modes_of_transport.length > 0
 
     workbook = nil
     distribute_reads do
-      workbook = generate_report fiscal_date_start, fiscal_date_end, modes_of_transport
+      workbook = generate_report fiscal_date_start, fiscal_date_end
     end
 
-    file_name = "PVH_Duty_Discount_#{mode_of_transport_text}_Fiscal_#{fiscal_month}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
+    file_name = "PVH_Duty_Discount_US_Fiscal_#{fiscal_month}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH Duty Discount", file_name: "#{file_name}" do |temp|
         OpenMailer.send_simple_html(settings['email'], "PVH Duty Discount Report", "The duty discount report is attached, covering #{fiscal_date_start} to #{fiscal_date_end}.", temp).deliver_now
@@ -98,11 +98,11 @@ module OpenChain; module Report; class PvhDutyDiscountReport
       [start_date, end_date, fiscal_month_choice]
     end
 
-    def generate_report fiscal_date_start, fiscal_date_end, modes_of_transport
+    def generate_report fiscal_date_start, fiscal_date_end
       wb = XlsxBuilder.new
       assign_styles wb
 
-      result_set = ActiveRecord::Base.connection.exec_query make_query(fiscal_date_start, fiscal_date_end, modes_of_transport)
+      result_set = ActiveRecord::Base.connection.exec_query make_query(fiscal_date_start, fiscal_date_end)
       shipments_hash = {}
 
       raw_data = []
@@ -120,13 +120,14 @@ module OpenChain; module Report; class PvhDutyDiscountReport
           d = PvhReportData.new
           d.entry_number = result_set_row['entry_number']
           d.invoice_number = result_set_row['invoice_number']
+          d.transport_mode = result_set_row['transport_mode_code']
           d.po_number = result_set_row['po_number']
 
           # The value for the "Shipment Number" field varies by mode of transportation.
           ship_mode = result_set_row['transport_mode_code']
           if Entry.get_transport_mode_codes_us_ca("Sea").include? ship_mode.to_i
             d.shipment_number = result_set_row['container_number']
-          elsif Entry.get_transport_mode_codes_us_ca("Air").include? ship_mode.to_i
+          else
             d.shipment_number = result_set_row['master_bills_of_lading']
           end
 
@@ -141,6 +142,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
           end
           d.duty_assist_amount = (result_set_row['add_to_make_amount'] || BigDecimal.new(0)).round(2)
           d.dutiable_value = entered_value
+          d.dutiable_value_7501 = result_set_row['entered_value_7501'].to_i
           d.duty_rate_pct = ((tar.duty_rate || BigDecimal.new(0)) * BigDecimal.new(100)).round(2)
           d.first_cost_po = (unit_price || BigDecimal.new(0)).round(2)
           d.units_shipped = result_set_row['quantity']
@@ -154,6 +156,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
             d.vendor_invoice_value = BigDecimal.new(0)
             d.duty_assist_amount = BigDecimal.new(0)
             d.dutiable_value = BigDecimal.new(0)
+            d.dutiable_value_7501 = BigDecimal.new(0)
           end
           raw_data << d
         end
@@ -213,10 +216,12 @@ module OpenChain; module Report; class PvhDutyDiscountReport
             # This data should be consistent through all rows related to the same entry.
             entry_data.entry_number = row.entry_number
             entry_data.eta_date = row.eta_date
+            entry_data.transport_mode = row.transport_mode
           end
           entry_data.vendor_invoice_value += row.vendor_invoice_value
           entry_data.duty_assist_amount += row.duty_assist_amount
           entry_data.dutiable_value += row.dutiable_value
+          entry_data.dutiable_value_7501 += row.dutiable_value_7501
           entry_data.total_duty_adj_amount += row.duty_adj_amount
           entry_data.total_duty_savings += row.duty_savings
           entry_data.total_duty_difference += row.duty_difference
@@ -231,23 +236,23 @@ module OpenChain; module Report; class PvhDutyDiscountReport
       sheet = wb.create_sheet "Detail", headers: ["Customs Entry Number", "Vendor Invoice Number", "PO Number",
                                                   "Shipment Number", "PO Line", "HTS Number", "ETA",
                                                   "Vendor Invoice Value", "Duty Assist Amount", "Dutiable Value",
-                                                  "Duty Rate PCT", "Duty Adj Amount", "Duty Savings",
-                                                  "First Cost - PO", "Units Shipped"]
+                                                  "Duty Adj Amount", "Duty Savings", "Duty Rate PCT",
+                                                  "First Cost - PO", "Units Shipped", "Mode of Transport"]
 
       entry_hash.each_key do |entry_number|
         summary_row = entry_hash[entry_number]
-        styles = [nil, nil, nil, nil, nil, nil, nil, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :integer]
+        styles = [nil, nil, nil, nil, nil, nil, nil, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :integer, nil]
         summary_row.rows.each do |row|
           values = [row.entry_number, row.invoice_number, row.po_number, row.shipment_number, row.po_line_number,
-                    row.hts_code, row.eta_date, row.vendor_invoice_value, row.duty_assist_amount, row.dutiable_value,
-                    row.duty_rate_pct, row.duty_adj_amount, row.duty_savings, row.first_cost_po, row.units_shipped]
+                    row.hts_code, row.eta_date, row.vendor_invoice_value, row.duty_assist_amount, row.dutiable_value_7501,
+                    row.duty_adj_amount, row.duty_savings, row.duty_rate_pct, row.first_cost_po, row.units_shipped, convert_transport_mode(row.transport_mode)]
           wb.add_body_row sheet, values, styles: styles
         end
         # Summary row.
         values = [summary_row.entry_number, nil, nil, nil, nil,
-                  nil, nil, summary_row.vendor_invoice_value, summary_row.duty_assist_amount, summary_row.dutiable_value,
-                  nil, summary_row.total_duty_adj_amount, summary_row.total_duty_savings, nil, nil]
-        summary_styles = [:bold, nil, nil, nil, nil, nil, nil, :bold_decimal, :bold_decimal, :bold_decimal, nil, :bold_decimal, :bold_decimal, nil, nil]
+                  nil, nil, summary_row.vendor_invoice_value, summary_row.duty_assist_amount, summary_row.dutiable_value_7501,
+                  summary_row.total_duty_adj_amount, summary_row.total_duty_savings, nil, nil, nil, convert_transport_mode(summary_row.transport_mode)]
+        summary_styles = [:bold, nil, nil, nil, nil, nil, nil, :bold_decimal, :bold_decimal, :bold_decimal, :bold_decimal, :bold_decimal, nil, nil, nil, :bold]
         wb.add_body_row sheet, values, styles: summary_styles
       end
 
@@ -259,12 +264,12 @@ module OpenChain; module Report; class PvhDutyDiscountReport
     def generate_summary_sheet wb, entry_hash
       sheet = wb.create_sheet "Summary", headers: ["Customs Entry Number", "ETA", "Vendor Invoice Value",
                                                    "Duty Assist Amount", "Dutiable Value", "Duty Difference",
-                                                   "Duty Savings"]
+                                                   "Duty Savings", "Mode of Transport"]
 
       entry_hash.each_value do |row|
         values = [row.entry_number, row.eta_date, row.vendor_invoice_value, row.duty_assist_amount,
-                  row.dutiable_value, row.total_duty_difference, row.total_duty_savings]
-        styles = [nil, nil, :decimal, :decimal, :decimal, :decimal, :decimal]
+                  row.dutiable_value_7501, row.total_duty_difference, row.total_duty_savings, convert_transport_mode(row.transport_mode)]
+        styles = [nil, nil, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
         wb.add_body_row sheet, values, styles: styles
       end
 
@@ -280,7 +285,12 @@ module OpenChain; module Report; class PvhDutyDiscountReport
       wb.create_style :bold_decimal, {format_code:"#,##0.00", b:true}
     end
 
-    def make_query fiscal_date_start, fiscal_date_end, modes_of_transport
+    def convert_transport_mode value
+      @transport_mode_lambda ||= transport_mode_us_ca_translation_lambda
+      @transport_mode_lambda.call(nil, value)
+    end
+
+    def make_query fiscal_date_start, fiscal_date_end
       <<-SQL
           SELECT
             ent.entry_number, 
@@ -289,7 +299,8 @@ module OpenChain; module Report; class PvhDutyDiscountReport
             cont.container_number, 
             ent.arrival_date, 
             cil.contract_amount, 
-            cil.value, 
+            cil.value,
+            cil.entered_value_7501,
             cil.add_to_make_amount, 
             cil.quantity, 
             cil.part_number, 
@@ -315,7 +326,6 @@ module OpenChain; module Report; class PvhDutyDiscountReport
             ent.customer_number = 'PVH' AND
             ent.fiscal_date >= '#{fiscal_date_start}' AND 
             ent.fiscal_date <= '#{fiscal_date_end}' AND 
-            ent.transport_mode_code IN (#{modes_of_transport.join(',')}) AND 
             (
               (cil.contract_amount IS NOT NULL AND cil.contract_amount > 0) OR
               (cil.non_dutiable_amount IS NOT NULL AND cil.non_dutiable_amount > 0)

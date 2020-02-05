@@ -11,10 +11,4 @@
         <%=field_row "Fiscal Period", select_tag(:fiscal_month, options_for_select(@fiscal_months), :class=>'form-control isdate')%>
       </span>
       </div>
-      <div>
-      <span>
-        <%=field_row "Mode of Transport", select_tag(:mode_of_transport, options_for_select(["Sea","Air"]))%>
-      </span>
-      </div>
-    </div>
 <%end%>

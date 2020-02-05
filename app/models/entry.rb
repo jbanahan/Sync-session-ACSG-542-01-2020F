@@ -444,6 +444,16 @@ class Entry < ActiveRecord::Base
     transport_mode_codes
   end
 
+  # Generates hash for determining type of code.
+  def self.get_transport_mode_name_lookup_us_ca
+    table = {}
+    ['AIR', 'SEA', 'RAIL', 'TRUCK'].each do |name|
+      codes = get_transport_mode_codes_us_ca name
+      codes.each { |c| table[c] = name }
+    end
+    table
+  end
+
   def value_for_tax
     return nil unless self.canadian?
     values = self.commercial_invoices.map(&:value_for_tax).compact

@@ -215,6 +215,14 @@ describe OpenChain::Report::ReportHelper do
     end
   end
 
+  describe "transport_mode_us_ca_translation_lambda" do
+    it "creates a lambda that translates an integer value into its corresponding transport mode descriptor" do
+      conversion = subject.transport_mode_us_ca_translation_lambda
+      translated = conversion.call nil, 21
+      expect(translated).to eq "RAIL"
+    end
+  end
+
   describe "weblink_translation_lambda" do
     it "creates a lambda capable of transating an Id value to a URL" do
       ms = double("MasterSetup")

@@ -1285,8 +1285,8 @@ describe ReportsController do
           expect(report_class).to receive(:permission?).with(user).and_return true
           expect(ReportResult).to receive(:run_report!).with("PVH Duty Discount Report", user,
                                                              OpenChain::Report::PvhDutyDiscountReport,
-                                                             :settings=>{fiscal_month:'2019-04', mode_of_transport:'Sea'}, :friendly_settings=>[])
-          post :run_pvh_duty_discount_report, {fiscal_month:'2019-04', mode_of_transport:'Sea'}
+                                                             :settings=>{fiscal_month:'2019-04'}, :friendly_settings=>[])
+          post :run_pvh_duty_discount_report, {fiscal_month:'2019-04'}
           expect(response).to be_redirect
           expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
         end

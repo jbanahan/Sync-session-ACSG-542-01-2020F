@@ -598,6 +598,15 @@ describe Entry do
     end
   end
 
+  describe "get_transport_mode_name_lookup_us_ca" do
+    it "returns hash with numeric codes as keys, mode descriptors as values" do
+      expect(Entry.get_transport_mode_name_lookup_us_ca).to eq({1 => "AIR", 40 => "AIR", 41 => "AIR",
+                                                                9 => "SEA", 10 => "SEA", 11 => "SEA",
+                                                                6 => "RAIL", 20 => "RAIL", 21 => "RAIL",
+                                                                2 => "TRUCK", 30 => "TRUCK", 31 => "TRUCK"})
+    end
+  end
+
   describe "ocean_mode?" do
     [10, 11, 9].each do |code|
       it "returns true for #{code}" do 

@@ -40,6 +40,11 @@ module OpenChain; module Report; module BaseReportHelper
       }
     end
 
+    def transport_mode_us_ca_translation_lambda
+      transport_modes = Entry.get_transport_mode_name_lookup_us_ca
+      lambda { |result_set_row, raw_column_value| transport_modes[raw_column_value.to_i] }
+    end
+
     def csv_translation_lambda join_string = ", ", split_expression = /\n\s*/
       lambda { |result_set_row, raw_column_value|
         if raw_column_value.blank?
