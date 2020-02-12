@@ -484,9 +484,11 @@ describe User do
       end
     end
     context "drawback" do
-      before :each do
-        MasterSetup.get.update_attributes(:drawback_enabled=>true)
-      end
+      let! (:master_setup) {
+        ms = stub_master_setup
+        allow(ms).to receive(:drawback_enabled?).and_return true
+        ms
+      }
       it "should allow user to view if permission is set and drawback enabled" do
         expect(Factory(:user,:drawback_view=>true).view_drawback?).to be_truthy
       end
@@ -494,7 +496,7 @@ describe User do
         expect(Factory(:user,:drawback_edit=>true).edit_drawback?).to be_truthy
       end
       it "should not allow view/edit if drawback not enabled" do
-        MasterSetup.get.update_attributes(:drawback_enabled=>false)
+        allow(master_setup).to receive(:drawback_enabled?).and_return false
         u = Factory(:user,:drawback_view=>true,:drawback_edit=>true)
         expect(u.view_drawback?).to be_falsey
         expect(u.edit_drawback?).to be_falsey
@@ -606,9 +608,11 @@ describe User do
         @u = Factory(:master_user, product_edit: true)
       end
       context "enabled" do
-        before :each do
-          MasterSetup.get.update_attributes(variant_enabled: true)
-        end
+        let! (:master_setup) {
+          ms = stub_master_setup
+          allow(ms).to receive(:variant_enabled).and_return true
+          ms
+        }
 
         it "should pass with user enabled" do
           @u.update_attributes(variant_edit:true)
@@ -621,9 +625,11 @@ describe User do
         end
       end
       context "disabled" do
-        before :each do
-          MasterSetup.get.update_attributes(variant_enabled: false)
-        end
+        let! (:master_setup) {
+          ms = stub_master_setup
+          allow(ms).to receive(:variant_enabled).and_return false
+          ms
+        }
 
         it "should fail with user enabled" do
           @u.update_attributes(variant_edit:true)
@@ -647,7 +653,7 @@ describe User do
           group.users << user
           expect(user.edit_power_of_attorneys?).to eq true
         end
-        
+
         it "returns false if user isn't a member of group" do
           expect(user.edit_power_of_attorneys?).to eq false
         end
@@ -997,7 +1003,7 @@ describe User do
 
     context "azure oauth" do
       let(:auth) { {"info" => {"email" => "susan@maersk.com"}}.with_indifferent_access }
-      
+
       it "returns user when found" do
         @user.update_attributes! email: "susan@maersk.com"
         expect(User.from_omniauth("azure_oauth2", auth)).to eq ({user: @user, errors: []})

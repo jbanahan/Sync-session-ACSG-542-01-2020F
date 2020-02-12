@@ -184,12 +184,18 @@ describe OpenChain::Report::UaDutyPlanningReport do
   end
 
   describe '#permission?' do
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).with("UA-TPP").and_return true
+      ms
+    }
+
     before :each do
       c = Company.new(master:true)
       @u = User.new
       @u.company = c
       allow(@u).to receive(:view_products?).and_return true
-      MasterSetup.get.update_attributes(custom_features:'UA-TPP')
     end
     it 'should be available if user can view products and is in master company and UA-TPP is enabled' do
       expect(described_class.permission?(@u)).to be_truthy
@@ -205,7 +211,7 @@ describe OpenChain::Report::UaDutyPlanningReport do
         @u.company.master = false
       end
       it 'if UA-TPP not enabled' do
-        MasterSetup.get.update_attributes(custom_features:'')
+        expect(master_setup).to receive(:custom_feature?).with("UA-TPP").and_return false
       end
     end
   end

@@ -1,5 +1,11 @@
 describe OpenMailer do
 
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:request_host).and_return "host.xxx"
+    ms
+  }
+
   describe "send_simple_text" do
     it "should send message" do
       OpenMailer.send_simple_text("test@vfitrack.net", "my subject", "my body\ngoes here").deliver_now
@@ -289,7 +295,6 @@ describe OpenMailer do
   end
 
   it "should not save an email attachment if the attachment is empty" do
-    MasterSetup.get.update_attributes(:request_host=>"host.xxx")
     Tempfile.open(["file","txt"]) do |f|
       Tempfile.open(["file2", "txt"]) do |f2|
         f.binmode
@@ -344,8 +349,6 @@ describe OpenMailer do
   end
 
   it "should save an email attachment if the attachment is too large" do
-    MasterSetup.get.update_attributes(:request_host=>"host.xxx")
-
     # One attachment should get mailed, the second should get saved off and a link for
     # downloading added to the email
     Tempfile.open(["file", "txt"]) do |f|
@@ -450,7 +453,6 @@ describe OpenMailer do
     end
 
     it "should not save an email attachment if the attachment is empty" do
-      MasterSetup.get.update_attributes(:request_host=>"host.xxx")
       Tempfile.open(["file","txt"]) do |f|
         Tempfile.open(["file2", "txt"]) do |f2|
           f.binmode
@@ -479,8 +481,6 @@ describe OpenMailer do
     end
 
     it "should save an email attachment if the attachment is too large" do
-      MasterSetup.get.update_attributes(:request_host=>"host.xxx")
-
       # One attachment should get mailed, the second should get saved off and a link for
       # downloading added to the email
       Tempfile.open(["file", "txt"]) do |f|
@@ -675,7 +675,7 @@ describe OpenMailer do
 
   describe "send_invite" do
     before :each do
-      MasterSetup.get.update_attributes request_host: "localhost"
+      allow(master_setup).to receive(:request_host).and_return "localhost"
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
     end
 
@@ -768,7 +768,6 @@ describe OpenMailer do
 
   describe "send_survey_invite" do
     before :each do
-      stub_master_setup
       @user = Factory(:user, first_name: "Joe", last_name: "Schmoe", email: "me@there.com")
       @survey = Factory(:survey)
       @survey.email_subject = "test subject"

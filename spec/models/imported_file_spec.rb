@@ -56,6 +56,9 @@ describe ImportedFile do
   end
   describe 'make_updated_file' do
     context 'product' do
+      let! (:master_setup) {
+        stub_master_setup
+      }
       before :each do
         @xlc = double "XLClient"
         @attached = double "Attachment"
@@ -64,7 +67,7 @@ describe ImportedFile do
         @imported_file = Factory(:imported_file,:module_type=>"Product",:user=>Factory(:user),:attached_file_name=>'abc.xls')
         expect(@imported_file).to receive(:attached).and_return(@attached)
         success_hash = {"result"=>"success"}
-        @expected_alternate_location = /#{MasterSetup.get.uuid}\/updated_imported_files\/#{@imported_file.user_id}\/[0-9]{10}\.xls/
+        @expected_alternate_location = /#{master_setup.uuid}\/updated_imported_files\/#{@imported_file.user_id}\/[0-9]{10}\.xls/
         expect(@xlc).to receive(:save).with(@expected_alternate_location).and_return(success_hash)
       end
       it 'should save the result file' do
@@ -358,7 +361,7 @@ describe ImportedFile do
       let!(:user) { Factory(:user) }
       let!(:imported_file) { Factory(:imported_file, module_type: "Product", starting_row: 2, note: "nota bene") }
       let(:obj) { Factory(:product) }
-      let(:listener) do 
+      let(:listener) do
         l = described_class.new(imported_file, user.id)
         l.process_start Time.now
         l

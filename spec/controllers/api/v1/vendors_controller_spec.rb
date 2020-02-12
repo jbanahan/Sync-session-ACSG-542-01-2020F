@@ -1,7 +1,11 @@
 describe Api::V1::VendorsController do
   context 'base methods' do
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:vendor_management_enabled?).and_return true
+      ms
+    }
     before :each do
-      MasterSetup.get.update_attributes(vendor_management_enabled:true)
       @u = Factory(:master_user,vendor_view:true,vendor_edit:true)
       allow_api_access @u
     end

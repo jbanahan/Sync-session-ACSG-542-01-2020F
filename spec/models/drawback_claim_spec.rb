@@ -82,14 +82,18 @@ describe DrawbackClaim do
     end
   end
   describe "viewable" do
-    before :each do
-      MasterSetup.get.update_attributes(:drawback_enabled=>true)
-      @base_claim = Factory(:drawback_claim)
-    end
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:drawback_enabled?).and_return true
+      ms
+    }
+
+    let! (:base_claim) {Factory(:drawback_claim)}
+
     it "should not limit master user with permission" do
       d = Factory(:drawback_claim)
       u = Factory(:master_user,:drawback_view=>true)
-      expect(DrawbackClaim.viewable(u).to_a).to eq([@base_claim,d])
+      expect(DrawbackClaim.viewable(u).to_a).to eq([base_claim,d])
     end
     it "should return nothing if user does not have permission" do
       u = Factory(:master_user,:drawback_view=>false)
@@ -111,7 +115,7 @@ describe DrawbackClaim do
   end
 
   describe "can_view?" do
-    before :each do 
+    before :each do
       @d = Factory(:drawback_claim)
     end
     context "with_permission" do

@@ -278,13 +278,17 @@ describe EntitySnapshot, :snapshot do
   end
 
   describe "bucket_name" do
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:system_code).and_return 'syscode'
+      ms
+    }
     it "should append env.system_code.snapshots.vfitrack.net" do
       env = Rails.env
-      MasterSetup.get.update_attributes(system_code:'syscode')
       expect(EntitySnapshot.bucket_name).to eq "#{env}.syscode.snapshots.vfitrack.net"
     end
     it "should raise error if longer than 63 characters (AWS limit)" do
-      MasterSetup.get.update_attributes(system_code:'123456789012345678901234567890123456789012345678901234567890')
+      allow(master_setup).to receive(:system_code).and_return '123456789012345678901234567890123456789012345678901234567890'
       expect{EntitySnapshot.bucket_name}.to raise_error(/Bucket name too long/)
     end
   end
@@ -315,7 +319,7 @@ describe EntitySnapshot, :snapshot do
       u = Factory(:user)
       allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
       expect(described_class).to receive(:write_to_s3).with(expected_json, ent).and_return({bucket: expected_bucket, key: expected_path, version: expected_version})
-      
+
       es = EntitySnapshot.create_from_entity(ent,u)
       expect(es.bucket).to eq expected_bucket
       expect(es.doc_path).to eq expected_path

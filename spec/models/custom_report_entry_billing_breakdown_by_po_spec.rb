@@ -20,7 +20,7 @@ describe CustomReportEntryBillingBreakdownByPo do
       to_find = CoreModule::BROKER_INVOICE.model_fields.values.select {|mf| mf.can_view?(@master_user)}
       expect(fields).to eq(to_find)
     end
-    
+
     it "should not show column fields that user doesn't have permission to see" do
       importer_user = Factory(:importer_user)
       fields = CustomReportEntryBillingBreakdownByPo.column_fields_available importer_user
@@ -44,11 +44,14 @@ describe CustomReportEntryBillingBreakdownByPo do
       expect(CustomReportEntryBillingBreakdownByPo.can_view?(user)).to be_truthy
 
       expect(user).to receive(:view_broker_invoices?).and_return false
-      expect(CustomReportEntryBillingBreakdownByPo.can_view?(user)).to be_falsey      
+      expect(CustomReportEntryBillingBreakdownByPo.can_view?(user)).to be_falsey
     end
   end
 
   context "run" do
+
+    let! (:master_setup) { stub_master_setup }
+
     before :each do
       @user = Factory(:master_user)
       allow(@user).to receive(:view_broker_invoices?).and_return(true)
@@ -114,7 +117,6 @@ describe CustomReportEntryBillingBreakdownByPo do
     end
 
     it "should add web links" do
-      MasterSetup.get.update_attributes(:request_host=>"http://host.xxx")
       @report.include_links = true
       @report.include_rule_links = true
       r = @report.to_arrays @user

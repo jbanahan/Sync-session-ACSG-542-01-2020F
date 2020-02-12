@@ -27,7 +27,7 @@ describe DelayedJobManager do
     allow(subject).to receive(:memcache).and_return cache
   end
 
-  describe 'monitor_backlog' do    
+  describe 'monitor_backlog' do
 
     it "monitors queue backlog and emails if messages are backed up" do
       "word".delay({run_at: 16.minutes.ago, queue: "default"}).size
@@ -39,7 +39,7 @@ describe DelayedJobManager do
 
       expect(ActionMailer::Base.deliveries.length).to eq 1
       mail = ActionMailer::Base.deliveries.first
-      expect(mail.subject).to include "#{MasterSetup.get.system_code} - Delayed Job Queue Too Big: 2 Items"
+      expect(mail.subject).to include "#{master_setup.system_code} - Delayed Job Queue Too Big: 2 Items"
       expect(cache.get("DelayedJobManager:next_backlog_warning")).not_to be_nil
       expect(cache.get("DelayedJobManager:next_backlog_warning")).to be_within(15.minutes).of(Time.zone.now)
     end
@@ -92,7 +92,7 @@ describe DelayedJobManager do
       expect(DelayedJobManager.report_delayed_job_error).to eq true
       email = ActionMailer::Base.deliveries.last
       expect(email).not_to be_nil
-      expect(email.subject).to include "#{MasterSetup.get.system_code} - 1 delayed job(s) have errors."
+      expect(email.subject).to include "#{master_setup.system_code} - 1 delayed job(s) have errors."
       expect(email.body.raw_source).to include "Job Error: Error!"
       expect(cache.get("DelayedJobManager:next_report_delayed_job_error")).not_to be_nil
       expect(cache.get("DelayedJobManager:next_report_delayed_job_error")).to be_within(16.minutes).of(Time.zone.now)

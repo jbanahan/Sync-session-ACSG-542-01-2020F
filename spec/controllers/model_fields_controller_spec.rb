@@ -1,4 +1,12 @@
 describe ModelFieldsController do
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:broker_invoice_enabled).and_return true
+    allow(ms).to receive(:friendly_name).and_return 'Mr Rogers'
+    ms
+  }
+
   it "should filter fields w/o permission" do
     u = Factory(:user)
 
@@ -8,8 +16,8 @@ describe ModelFieldsController do
     found_uids = r.collect {|mf| mf["uid"]}
     expect(found_uids).not_to include("ent_broker_invoice_total")
   end
+
   it "should include fields w permission" do
-    MasterSetup.get.update_attributes(:broker_invoice_enabled=>true)
     u = Factory(:user,:company=>Factory(:company,:master=>true),:broker_invoice_view=>true)
 
     sign_in_as u

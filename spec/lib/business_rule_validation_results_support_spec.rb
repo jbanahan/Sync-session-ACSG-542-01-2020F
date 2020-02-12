@@ -123,8 +123,13 @@ describe FakeJsonController, :type => :controller do
       @bvrr_3.business_validation_result = @bvr_2; @bvrr_3.save!
     end
 
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:entry_enabled).and_return true
+      ms
+    }
+
     before :each do
-      MasterSetup.get.update_attributes(:entry_enabled=>true)
       @u = Factory(:master_user,entry_view:true)
       allow_api_access @u
     end

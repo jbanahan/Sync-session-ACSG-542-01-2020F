@@ -1,7 +1,10 @@
 describe HmController do
-  before :each do
-    MasterSetup.get.update_attributes(custom_features:'H&M')
-  end
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:custom_feature?).with('H&M').and_return true
+    ms
+  }
+
   describe "index" do
     it "should not allow view unless master user" do
       u = Factory(:user)
@@ -11,7 +14,7 @@ describe HmController do
       expect(flash[:errors].size).to eq 1
     end
     it "should not allow view unless H&M custom feature enabled" do
-      MasterSetup.get.update_attributes(custom_features:'')
+      expect(master_setup).to receive(:custom_feature?).with('H&M').and_return false
       u = Factory(:master_user)
       sign_in_as u
       get :index

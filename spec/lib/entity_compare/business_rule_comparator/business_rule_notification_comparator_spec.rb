@@ -1,8 +1,8 @@
 describe OpenChain::EntityCompare::BusinessRuleComparator::BusinessRuleNotificationComparator do
-  before { stub_master_setup }
+  let! (:master_setup) { stub_master_setup }
   let(:co) { Factory(:company, name: "ACME") }
-  let(:entry) { Factory(:entry, broker_reference: "brok ref", importer: co, customer_number: "cust num") }              
-  let(:url) { Rails.application.routes.url_helpers.entry_url(entry.id, host: MasterSetup.get.request_host, protocol: 'http' ) }
+  let(:entry) { Factory(:entry, broker_reference: "brok ref", importer: co, customer_number: "cust num") }
+  let(:url) { Rails.application.routes.url_helpers.entry_url(entry.id, host: master_setup.request_host, protocol: 'http' ) }
   let(:bvre) { Factory(:business_validation_result, validatable: entry)}
   let(:bvru_1) { Factory(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }
   let(:bvru_2) { Factory(:business_validation_rule, notification_recipients: "tufnel@stonehenge.biz", suppress_pass_notice: false, suppress_review_fail_notice: false, suppress_skipped_notice: false) }

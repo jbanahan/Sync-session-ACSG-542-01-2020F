@@ -57,10 +57,17 @@ describe OpenChain::BulkAction::BulkActionRunner do
     end
   end
   describe '#process_object_ids' do
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:uuid).and_return 'test-uuid'
+      ms
+    }
+
     it 'should write to s3 and delay run_s3' do
       Timecop.freeze(Time.now) do
         data_to_write = {user_id:@u.id,keys:[1,2,3],opts:@opts}.to_json
-        key = "#{MasterSetup.get.uuid}/bulk_action_run/#{Digest::MD5.hexdigest data_to_write}-#{Time.now.to_i}.json"
+        key = "#{master_setup.uuid}/bulk_action_run/#{Digest::MD5.hexdigest data_to_write}-#{Time.now.to_i}.json"
         expect(OpenChain::S3).to receive(:upload_data).with(@bucket_name,key,data_to_write)
         expect(described_class).to receive(:delay).and_return(described_class)
         expect(described_class).to receive(:run_s3).with(key,@ac)

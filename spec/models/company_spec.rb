@@ -99,12 +99,17 @@ describe Company do
     end
   end
   context 'security' do
-    before :each do
-      MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)
-    end
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:entry_enabled).and_return true
+      allow(ms).to receive(:broker_invoice_enabled).and_return true
+      ms
+    }
+
     context "trade lanes" do
       before :each do
-        allow_any_instance_of(MasterSetup).to receive(:trade_lane_enabled?).and_return(true)
+        allow(master_setup).to receive(:trade_lane_enabled?).and_return(true)
       end
       context '#view_trade_lanes? and #edit_trade_lanes' do
         it "should allow for master company" do
@@ -118,7 +123,7 @@ describe Company do
           expect(c.edit_trade_lanes?).to be_falsey
         end
         it "should not allow if trade lanes not enabled" do
-          allow_any_instance_of(MasterSetup).to receive(:trade_lane_enabled?).and_return(false)
+          allow(master_setup).to receive(:trade_lane_enabled?).and_return(false)
           c = Factory(:master_company)
           expect(c.view_trade_lanes?).to be_falsey
           expect(c.edit_trade_lanes?).to be_falsey
@@ -139,7 +144,7 @@ describe Company do
     end
     context "security filings" do
       before :each do
-        allow_any_instance_of(MasterSetup).to receive(:security_filing_enabled?).and_return(true)
+        allow(master_setup).to receive(:security_filing_enabled?).and_return(true)
       end
       context "view" do
         it "should allow for importers" do
@@ -155,7 +160,7 @@ describe Company do
           expect(Company.new.view_security_filings?).to be_falsey
         end
         it "should not allow if master setup is disabled" do
-          allow_any_instance_of(MasterSetup).to receive(:security_filing_enabled?).and_return(false)
+          allow(master_setup).to receive(:security_filing_enabled?).and_return(false)
           expect(Company.new(:master=>true).view_security_filings?).to be_falsey
         end
       end
@@ -170,7 +175,7 @@ describe Company do
           expect(Company.new.edit_security_filings?).to be_falsey
         end
         it "should not allow if master setup is disabled" do
-          allow_any_instance_of(MasterSetup).to receive(:security_filing_enabled?).and_return(false)
+          allow(master_setup).to receive(:security_filing_enabled?).and_return(false)
           expect(Company.new(:master=>true).edit_security_filings?).to be_falsey
         end
       end
@@ -191,7 +196,7 @@ describe Company do
     end
     context 'entries' do
       it 'should not allow view if master setup is disabled' do
-        MasterSetup.get.update_attributes(:entry_enabled=>false)
+        allow(master_setup).to receive(:entry_enabled).and_return false
         c = Factory(:company,:importer=>true)
         expect(c.view_entries?).to be_falsey
         expect(c.comment_entries?).to be_falsey
@@ -218,7 +223,7 @@ describe Company do
     end
     context 'broker invoices' do
       it 'should not allow view if master setup is disabled' do
-        MasterSetup.get.update_attributes(:broker_invoice_enabled=>false)
+        allow(master_setup).to receive(:broker_invoice_enabled).and_return false
         c = Factory(:company,:importer=>true)
         expect(c.view_broker_invoices?).to be_falsey
       end
@@ -243,14 +248,14 @@ describe Company do
     end
     context 'customer invoices' do
       it 'should allow if invoices are enabled' do
-        MasterSetup.get.update_attributes(:invoices_enabled=>true)
+        allow(master_setup).to receive(:invoices_enabled?).and_return true
         expect(Company.new.view_commercial_invoices?).to eq true
         expect(Company.new.view_customer_invoices?).to eq true
         expect(Company.new.edit_commercial_invoices?).to eq true
         expect(Company.new.edit_customer_invoices?).to eq true
       end
       it 'should not allow if entry is disabled' do
-        MasterSetup.get.update_attributes(:invoices_enabled=>false)
+        allow(master_setup).to receive(:invoices_enabled?).and_return false
         expect(Company.new.view_commercial_invoices?).to eq false
         expect(Company.new.view_customer_invoices?).to eq false
         expect(Company.new.edit_commercial_invoices?).to eq false
@@ -259,17 +264,17 @@ describe Company do
     end
     context 'projects' do
       it 'should allow for master company' do
-        MasterSetup.get.update_attributes(project_enabled:true)
+        allow(master_setup).to receive(:project_enabled?).and_return true
         expect(Company.new(master:true).view_projects?).to be_truthy
         expect(Company.new(master:true).edit_projects?).to be_truthy
       end
       it 'should not allow for non-master Company' do
-        MasterSetup.get.update_attributes(project_enabled:true)
+        allow(master_setup).to receive(:project_enabled?).and_return true
         expect(Company.new(master:false).view_projects?).to be_falsey
         expect(Company.new(master:false).edit_projects?).to be_falsey
       end
       it "should not allow if module disabled" do
-        MasterSetup.get.update_attributes(project_enabled:false)
+        allow(master_setup).to receive(:project_enabled?).and_return false
         expect(Company.new(master:true).view_projects?).to be_falsey
         expect(Company.new(master:true).edit_projects?).to be_falsey
       end
@@ -456,12 +461,12 @@ describe Company do
       expect(linked.linked_company? company).to eq false
     end
   end
-  
-  describe "view_statements" do 
+
+  describe "view_statements" do
     let (:master_setup) { stub_master_setup }
 
     context "with statements enabled" do
-      before :each do 
+      before :each do
         allow(master_setup).to receive(:customs_statements_enabled?).and_return true
       end
 

@@ -1,13 +1,36 @@
 describe QuickSearchController do
-  before :each do 
-    MasterSetup.get.update_attributes(vendor_management_enabled: true, entry_enabled: true, broker_invoice_enabled: true)
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:broker_invoice_enabled).and_return true
+    allow(ms).to receive(:broker_invoice_enabled?).and_return true
+    allow(ms).to receive(:classification_enabled?).and_return true
+    allow(ms).to receive(:customs_statements_enabled?).and_return true
+    allow(ms).to receive(:delivery_enabled?).and_return true
+    allow(ms).to receive(:drawback_enabled?).and_return true
+    allow(ms).to receive(:entry_enabled?).and_return true
+    allow(ms).to receive(:entry_enabled).and_return true
+    allow(ms).to receive(:invoices_enabled?).and_return true
+    allow(ms).to receive(:order_enabled?).and_return true
+    allow(ms).to receive(:sales_order_enabled?).and_return true
+    allow(ms).to receive(:security_filing_enabled?).and_return true
+    allow(ms).to receive(:shipment_enabled?).and_return true
+    allow(ms).to receive(:trade_lane_enabled?).and_return true
+    allow(ms).to receive(:variant_enabled?).and_return true
+    allow(ms).to receive(:vendor_management_enabled?).and_return true
+    allow(ms).to receive(:vendor_management_enabled).and_return true
+    allow(ms).to receive(:vfi_invoice_enabled?).and_return true
+    ms
+  }
+
+  before :each do
     c = Factory(:company,:master=>true, :show_business_rules=>true)
     @u = Factory(:user, vendor_view: true, entry_view: true, company: c, broker_invoice_view: true)
 
     sign_in_as @u
   end
 
-  context "show" do 
+  context "show" do
     it "should put appropriate modules into @available_modules" do
       expect_any_instance_of(described_class).to receive(:core_modules_with_quicksearch_fields).with(@u).and_return([CoreModule::ENTRY, CoreModule::PRODUCT])
 

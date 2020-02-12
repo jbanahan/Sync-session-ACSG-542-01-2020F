@@ -66,13 +66,13 @@ describe Product do
         cdefs = double "cdefs"
         line_data = entry.commercial_invoices
                          .flat_map(&:commercial_invoice_lines)
-                         .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number, 
-                                      line_num: cil.line_number, 
+                         .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number,
+                                      line_num: cil.line_number,
                                       part_num: cil.part_number} }
-        expect(Product.create_prod_part_hsh(imp.id, 
+        expect(Product.create_prod_part_hsh(imp.id,
           line_data.map{ |l| l[:part_num] }, cdefs)).to include(
-            product_1.id=>"attr_part_1", 
-            product_2.id=>"attr_part_2", 
+            product_1.id=>"attr_part_1",
+            product_2.id=>"attr_part_2",
             product_3.id=>"attr_part_3")
       end
     end
@@ -247,8 +247,14 @@ describe Product do
     end
   end
   context "security" do
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:variant_enabled).and_return true
+      allow(ms).to receive(:classification_enabled).and_return true
+      ms
+    }
+
     before :each do
-      MasterSetup.get.update!(:variant_enabled=>true)
       @master_user = Factory(:master_user,:product_view=>true,:product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
       @importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
         @other_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)

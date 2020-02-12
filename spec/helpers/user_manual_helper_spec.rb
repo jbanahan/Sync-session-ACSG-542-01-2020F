@@ -1,7 +1,7 @@
 describe UserManualHelper do
 
   let!(:um) { Factory(:user_manual, document_url: "http://www.document_url.com", wistia_code: "wistful") }
- 
+
   describe "url" do
     it "returns the document_url if it exists" do
       expect(helper.url(um)).to eq "http://www.document_url.com"
@@ -13,8 +13,7 @@ describe UserManualHelper do
     end
 
     it "returns download_user_manual_url if neither document_url nor wistia_code are present" do
-      ms = stub_master_setup
-      allow(ms).to receive(:request_host).and_return "localhost:3000"
+      stub_master_setup
       um.update_attributes! document_url: "", wistia_code: ""
       expect(helper.url(um)).to eq Rails.application.routes.url_helpers.download_user_manual_url(um, host: "localhost:3000", protocol: "https")
     end

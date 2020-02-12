@@ -1,8 +1,13 @@
 describe ProjectUpdatesController do
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:project_enabled).and_return true
+    ms
+  }
+
   before :each do
     @u = Factory(:master_user,project_view:true,project_edit:true)
-    MasterSetup.get.update_attributes(project_enabled:true)
-
     sign_in_as @u
   end
   describe "create" do
@@ -17,7 +22,7 @@ describe ProjectUpdatesController do
       pu = p.project_updates.first
       expect(pu.body).to eq 'abc'
       expect(pu.created_by).to eq @u
-      
+
       r = JSON.parse(response.body)
       expect(r['project_update']['id']).to eq pu.id
       expect(r['project_update']['created_by_id']).to eq pu.created_by_id

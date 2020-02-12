@@ -68,9 +68,14 @@ describe EntryComment do
   end
 
   context "can_view?" do
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:entry_enabled).and_return true
+      ms
+    }
+
     before :each do
       @user = Factory(:master_user, :entry_view => true)
-      MasterSetup.get.update_attributes :entry_enabled => true
     end
 
     it "should allow anyone to view public comments" do

@@ -47,8 +47,11 @@ describe SearchSetup do
     end
   end
   describe "give_to" do
+    let! (:master_setup) {
+      stub_master_setup
+    }
+
     before :each do
-      MasterSetup.get.update_attributes(request_host:"localhost:3000")
       @u = Factory(:user,:first_name=>"A",:last_name=>"B")
       @u2 = Factory(:user)
       @s = SearchSetup.create!(:name=>"X",:module_type=>"Product",:user_id=>@u.id)
@@ -84,7 +87,7 @@ describe SearchSetup do
       expect(@u2.messages.count).to eq 1
       msg = @u2.messages.first
       expect(msg.subject).to eq "New Report from #{@u.username}"
-      expect(msg.body).to eq "#{@u.username} has sent you a report titled #{@s.name}. Click <a href=\'#{Rails.application.routes.url_helpers.advanced_search_url(SearchSetup.last.id, host: MasterSetup.get.request_host, protocol: 'http')}\'>here</a> to view it."
+      expect(msg.body).to eq "#{@u.username} has sent you a report titled #{@s.name}. Click <a href=\'#{Rails.application.routes.url_helpers.advanced_search_url(SearchSetup.last.id, host: master_setup.request_host, protocol: 'http')}\'>here</a> to view it."
     end
 
   end

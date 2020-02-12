@@ -22,11 +22,11 @@ describe CustomReport do
       expect(@u2.messages.count).to eq 1
       msg = @u2.messages.first
       expect(msg.subject).to eq "New Report from #{@u.username}"
-      expect(msg.body).to eq "#{@u.username} has sent you a report titled #{@s.name}. Click <a href=\'#{Rails.application.routes.url_helpers.custom_report_url(CustomReport.last.id, host: MasterSetup.get.request_host, protocol: 'http')}\'>here</a> to view it."
+      expect(msg.body).to eq "#{@u.username} has sent you a report titled #{@s.name}. Click <a href=\'#{Rails.application.routes.url_helpers.custom_report_url(CustomReport.last.id, host: master_setup.request_host, protocol: 'http')}\'>here</a> to view it."
     end
   end
   describe "deep_copy" do
-    before :each do 
+    before :each do
       @u = Factory(:user)
       @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true, :include_rule_links=>true)
     end

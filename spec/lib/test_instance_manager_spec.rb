@@ -23,15 +23,23 @@ describe OpenChain::TestInstanceManager do
     end
   end
   describe "update_master_setup" do
-    before :each do 
-      MasterSetup.get.update_attributes!(system_code:'oldcode',uuid:'olduuid',suppress_ftp:false,suppress_email:false,custom_features:'cf',request_host:'oldhost')
-    end
-    
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:system_code).and_return 'oldcode'
+      allow(ms).to receive(:uuid).and_return 'olduuid'
+      allow(ms).to receive(:suppress_ftp).and_return false
+      allow(ms).to receive(:suppress_email).and_return false
+      allow(ms).to receive(:custom_features).and_return 'cf'
+      allow(ms).to receive(:request_host).and_return 'oldhost'
+      ms
+    }
+
     context "without uuid" do
       it "updates master setup test values" do
         subject.update_master_setup! 'new.request.host', nil, "friendly"
         ms = MasterSetup.first
-        expect(ms.system_code).to eq('new') 
+        expect(ms.system_code).to eq('new')
         expect(ms.uuid).to eq UUIDTools::UUID.md5_create(UUIDTools::UUID_DNS_NAMESPACE, 'new.request.host').to_s
         expect(ms.suppress_email).to eq true
         expect(ms.suppress_ftp).to eq true

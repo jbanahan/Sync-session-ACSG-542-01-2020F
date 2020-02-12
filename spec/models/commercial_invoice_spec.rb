@@ -33,8 +33,13 @@ describe CommercialInvoice do
     end
   end
   describe "can_edit?" do
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:entry_enabled).and_return true
+      ms
+    }
+
     before(:each) do
-      MasterSetup.get.update_attributes(:entry_enabled=>true)
       @ci = CommercialInvoice.new
     end
     it "should allow edit if user from master company and can edit invoices" do
@@ -78,9 +83,12 @@ describe CommercialInvoice do
     end
   end
   describe "can_view?" do
-    before :each do
-      MasterSetup.get.update_attributes(:entry_enabled=>true)
-    end
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:entry_enabled).and_return true
+      ms
+    }
+
     it "should allow view if user is from master and can view invoices" do
       u = Factory(:master_user,company: Factory(:company, master: true), entry_view:true)
       expect(CommercialInvoice.new.can_view?(u)).to be_truthy
@@ -91,7 +99,7 @@ describe CommercialInvoice do
       expect(CommercialInvoice.new(:importer=>c).can_view?(u)).to be_truthy
     end
   end
-  
+
   describe "destroys_snapshots?" do
     it "destroys snapshots for standalone invoice" do
       expect(subject.destroys_snapshots?).to eq true
@@ -102,7 +110,7 @@ describe CommercialInvoice do
       expect(subject.destroys_snapshots?).to eq false
     end
   end
-  
+
   describe "value_for_tax" do
     let(:ci1) {Factory(:commercial_invoice, commercial_invoice_lines:
       [Factory(:commercial_invoice_line,

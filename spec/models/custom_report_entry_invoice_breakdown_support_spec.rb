@@ -11,7 +11,9 @@ describe CustomReportEntryInvoiceBreakdownSupport do
   context "report" do
     subject { Cr.new }
 
-    let! (:master_user) { 
+    let! (:master_setup) { stub_master_setup }
+
+    let! (:master_user) {
       u = Factory(:master_user)
       allow(u).to receive(:view_broker_invoices?).and_return(true)
       u
@@ -94,7 +96,6 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       end
     end
     it "should include web links as first column" do
-      MasterSetup.get.update!(:request_host=>"http://xxxx")
       rpt = Cr.create!(:include_links=>true, :include_rule_links=>true)
       rows = rpt.to_arrays(master_user)
       expect(rows[0][0]).to eq "Web Links"
@@ -148,7 +149,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
 
     context "security" do
       let! (:importer_user) { Factory(:importer_user) }
-      
+
       it "should secure entries by linked companies for importers" do
         allow(importer_user).to receive(:view_broker_invoices?).and_return(true)
         invoice_line_1.broker_invoice.entry.update!(:importer_id=>importer_user.company_id)

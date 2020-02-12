@@ -1,7 +1,12 @@
 describe EntriesController do
 
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:entry_enabled).and_return true
+    ms
+  }
+
   before :each do
-    MasterSetup.get.update_attributes(:entry_enabled=>true)
     c = Factory(:company,:master=>true,show_business_rules:true)
     @u = Factory(:master_user,entry_view:true,:company=>c)
 

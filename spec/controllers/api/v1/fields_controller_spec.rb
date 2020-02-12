@@ -1,6 +1,12 @@
 describe Api::V1::FieldsController do
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:shipment_enabled).and_return true
+    ms
+  }
+
   before(:each) do
-    MasterSetup.get.update_attributes(shipment_enabled:true)
     @u = Factory(:master_user,shipment_view:true)
     allow_api_access @u
   end

@@ -23,8 +23,14 @@ describe BrokerInvoice do
     end
   end
   context 'security' do
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:broker_invoice_enabled).and_return true
+      ms
+    }
+
     before :each do
-      MasterSetup.get.update!(:broker_invoice_enabled=>true)
       @importer = Factory(:company,:importer=>true)
       @importer_user = Factory(:user,:company_id=>@importer.id,:broker_invoice_view=>true)
       @entry = Factory(:entry,:importer_id=>@importer.id)
@@ -54,7 +60,7 @@ describe BrokerInvoice do
       end
     end
     it 'should be visible for importer' do
-      expect(@inv.can_view?(@importer_user)).to be_truthy 
+      expect(@inv.can_view?(@importer_user)).to be_truthy
     end
     it 'should not be visible for another importer' do
       u = Factory(:user,:company_id=>Factory(:company,:importer=>true).id,:broker_invoice_view=>true)
@@ -190,7 +196,7 @@ describe BrokerInvoice do
       end
     end
 
-    
+
   end
 
   describe "has_charge_code?" do

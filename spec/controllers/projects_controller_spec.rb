@@ -1,8 +1,13 @@
 describe ProjectsController do
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:project_enabled).and_return true
+    ms
+  }
+
   before :each do
     @u = Factory(:master_user,project_view:true,project_edit:true)
-    MasterSetup.get.update_attributes(project_enabled:true)
-
     sign_in_as @u
   end
   describe "index" do
@@ -182,7 +187,7 @@ describe ProjectsController do
       @p = Factory(:project)
       @ps = Factory(:project_set)
       @p.project_sets << @ps
-      allow_any_instance_of(User).to receive(:edit_projects?).and_return true 
+      allow_any_instance_of(User).to receive(:edit_projects?).and_return true
     end
     it "should allow deleting project set" do
       delete :remove_project_set, id: @p.id, project_set_name: @ps.name

@@ -1,11 +1,11 @@
 describe CustomReportBillingStatementByPo do
-  
+
   context "Class Methods" do
 
     before :each do
       @r = CustomReportBillingStatementByPo
     end
-    
+
     it "should only allow broker invoice users to view" do
       user = double("user")
       allow(user).to receive(:view_broker_invoices?).and_return(true)
@@ -26,6 +26,8 @@ describe CustomReportBillingStatementByPo do
   end
 
   context "run report" do
+
+    let! (:master_setup) { stub_master_setup }
 
     before :each do
       @user = Factory(:master_user)
@@ -93,12 +95,11 @@ describe CustomReportBillingStatementByPo do
       row = r[1]
       expect(row).to eq(["No data was returned for this report."])
     end
-  
+
     it "should include hyperlinks when enabled" do
-      MasterSetup.get.update_attributes(:request_host=>"http://host.xxx")
       @report.include_links = true
       @report.include_rule_links = true
-      
+
       r = @report.to_arrays @user
       expect(r.length).to eq(4)
       expect(r[0]).to eq(["Web Links", "Business Rule Links", "Invoice Number", "Invoice Date", "Invoice Total", "PO Number"])

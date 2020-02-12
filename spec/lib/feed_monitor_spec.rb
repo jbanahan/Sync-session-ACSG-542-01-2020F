@@ -4,16 +4,20 @@ describe OpenChain::FeedMonitor do
   end
 
   context "Alliance" do
-    before :each do
-      MasterSetup.get.update_attributes(:custom_features=>'alliance')
-    end
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
+      ms
+    }
+
     it "should error if last entry is more than 2 hours ago between M-F 8:00-20:00" do
       Factory(:entry,:source_system=>'Alliance',:last_exported_from_source=>@est.parse("2012-10-01 4:00"))
       OpenChain::FeedMonitor.monitor @est.parse("2012-10-01 12:00")
       expect(ErrorLogEntry.first.error_message.starts_with?("Alliance not updating")).to be_truthy
     end
     it "should not error if alliance custom feature is not set" do
-      MasterSetup.get.update_attributes(:custom_features=>'')
+      expect(master_setup).to receive(:custom_feature?).with("alliance").and_return false
       Factory(:entry,:source_system=>'Alliance',:last_exported_from_source=>@est.parse("2012-10-01 4:00"))
       OpenChain::FeedMonitor.monitor @est.parse("2012-10-01 12:00")
       expect(ErrorLogEntry.count).to eq(0)
@@ -34,9 +38,16 @@ describe OpenChain::FeedMonitor do
       expect(ErrorLogEntry.count).to eq(0)
     end
   end
+
   context "Alliance Images" do
-    before :each do 
-      MasterSetup.get.update_attributes(:custom_features=>'alliance')
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).with("alliance").and_return true
+      ms
+    }
+
+    before :each do
       @ent = Factory(:entry,:source_system=>'Alliance')
       @img = @ent.attachments.create!
     end
@@ -46,7 +57,7 @@ describe OpenChain::FeedMonitor do
       expect(ErrorLogEntry.first.error_message.starts_with?("Alliance Imaging not updating.")).to be_truthy
     end
     it "should not error if alliance custom feature is not set" do
-      MasterSetup.get.update_attributes(:custom_features=>'')
+      expect(master_setup).to receive(:custom_feature?).with("alliance").and_return false
       @img.update_attributes(:updated_at=>@est.parse("2011-10-01 00:00"))
       OpenChain::FeedMonitor.monitor @est.parse("2011-10-01 12:00")
       expect(ErrorLogEntry.count).to eq(0)
@@ -68,16 +79,20 @@ describe OpenChain::FeedMonitor do
     end
   end
   context "Fenix" do
-    before :each do
-      MasterSetup.get.update_attributes(:custom_features=>'fenix')
-    end
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).with("fenix").and_return true
+      ms
+    }
+
     it "should error if last entry is more than 2 hours ago between M-F 8:00-20:00 EST" do
       Factory(:entry,:source_system=>'Fenix',:last_exported_from_source=>@est.parse("2012-10-01 4:00"))
       OpenChain::FeedMonitor.monitor @est.parse("2012-10-01 12:00")
       expect(ErrorLogEntry.first.error_message.starts_with?("Fenix not updating")).to be_truthy
     end
     it "should not error if fenix custom feature is not set" do
-      MasterSetup.get.update_attributes(:custom_features=>'')
+      expect(master_setup).to receive(:custom_feature?).with("fenix").and_return false
       Factory(:entry,:source_system=>'Fenix',:last_exported_from_source=>@est.parse("2012-10-01 4:00"))
       OpenChain::FeedMonitor.monitor @est.parse("2012-10-01 12:00")
       expect(ErrorLogEntry.count).to eq(0)

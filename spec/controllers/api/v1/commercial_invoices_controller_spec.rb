@@ -1,6 +1,12 @@
 describe Api::V1::CommercialInvoicesController do
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:entry_enabled).and_return true
+    ms
+  }
+
   before(:each) do
-    MasterSetup.get.update_attributes(entry_enabled:true)
     @u = Factory(:user,entry_edit: true,entry_view: true)
     @u.company.update_attributes(importer:true,broker: true,system_code:'SYS')
     allow_api_access @u
@@ -16,7 +22,7 @@ describe Api::V1::CommercialInvoicesController do
       res = j['results']
       expect(res.size).to eql 2
       expect(res[0]['ci_invoice_number']).to eql '0ci'
-      # make sure blank fields are rendered as blank string, not nil 
+      # make sure blank fields are rendered as blank string, not nil
       #(the view page reqires this for some reason that I currently don't have the time to investigat)
       expect(res[0]['ci_currency']).to eq ""
       expect(res[1]['ci_invoice_number']).to eql '1ci'

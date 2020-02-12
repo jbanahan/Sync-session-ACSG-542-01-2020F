@@ -1,6 +1,13 @@
 describe Api::V1::ShipmentsController do
+
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:shipment_enabled).and_return true
+    allow(ms).to receive(:order_enabled).and_return true
+    ms
+  }
+
   before(:each) do
-    MasterSetup.get.update_attributes(shipment_enabled:true)
     @u = Factory(:master_user,shipment_edit:true,shipment_view:true,order_view:true,product_view:true)
     allow_api_access @u
   end
@@ -333,8 +340,8 @@ describe Api::V1::ShipmentsController do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
       expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
       expect(response.status).to eq 403
-    end    
-    
+    end
+
     it "should fail if attachment is not attached to this shipment" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       a2 = Factory(:attachment, attached_file_name: "not attached.txt")

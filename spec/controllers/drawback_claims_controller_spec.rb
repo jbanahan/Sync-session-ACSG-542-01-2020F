@@ -146,9 +146,15 @@ describe DrawbackClaimsController do
     end
   end
 
-    describe 'validation_results' do
+  describe 'validation_results' do
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:drawback_enabled?).and_return true
+      ms
+    }
+
     before :each do
-      MasterSetup.get.update_attributes(:drawback_enabled => true)
       @u = Factory(:drawback_user)
       @u.company.update_attributes! master: true, show_business_rules: true
       sign_in_as @u

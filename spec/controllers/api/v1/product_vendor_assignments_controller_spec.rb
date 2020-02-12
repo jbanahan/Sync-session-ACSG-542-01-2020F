@@ -43,8 +43,14 @@ describe Api::V1::ProductVendorAssignmentsController do
     end
   end
   describe '#bulk_create' do
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:vendor_management_enabled?).and_return true
+      ms
+    }
+
     before :each do
-      MasterSetup.get.update_attributes(vendor_management_enabled:true)
       @u = Factory(:master_user)
       allow_api_access @u
     end
@@ -195,9 +201,13 @@ describe Api::V1::ProductVendorAssignmentsController do
     end
   end
   describe '#bulk_update' do
-    before :each do
-      MasterSetup.get.update_attributes(vendor_management_enabled:true)
-    end
+
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:vendor_management_enabled?).and_return true
+      ms
+    }
+
     it "should update records" do
       u = Factory(:master_user)
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true

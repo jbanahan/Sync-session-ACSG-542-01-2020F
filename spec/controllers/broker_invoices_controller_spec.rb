@@ -1,7 +1,13 @@
 describe BrokerInvoicesController do
-  before :each do
-    MasterSetup.get.update_attributes(:entry_enabled=>true,:broker_invoice_enabled=>true)
 
+  let! (:master_setup) {
+    ms = stub_master_setup
+    allow(ms).to receive(:entry_enabled?).and_return true
+    allow(ms).to receive(:broker_invoice_enabled?).and_return true
+    ms
+  }
+
+  before :each do
     @user = Factory(:user,:company=>Factory(:company,:master=>true),:broker_invoice_edit=>true,:entry_view=>true)
     sign_in_as @user
   end

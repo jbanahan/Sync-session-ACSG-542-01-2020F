@@ -89,17 +89,23 @@ describe OpenChain::CustomHandler::DeliveryOrderSpreadsheetGenerator do
       expect(sub).to receive(:set_multiple_vertical_cells).with(index, "B", 23, d.body, 1000)
     end
 
+    let! (:master_setup) {
+      ms = stub_master_setup
+      allow(ms).to receive(:uuid).and_return 'test-uuid'
+      ms
+    }
+
     it "generates spreadsheet data using xl client" do
       xl_client = double("OpenChain::XLClient")
       expect(xl_client).to receive(:delete_sheet).with 0
-      expect(xl_client).to receive(:save).with "#{MasterSetup.get.uuid}/delivery_orders/REF.xlsx", bucket: "chainio-temp"
+      expect(xl_client).to receive(:save).with "#{master_setup.uuid}/delivery_orders/REF.xlsx", bucket: "chainio-temp"
       allow(subject).to receive(:xl).and_return xl_client
 
       tab_expectations subject, delivery_order, 1
 
       files = subject.generate_delivery_order_spreadsheets delivery_order
       expect(files.length).to eq 1
-      expect(files.first).to eq({bucket: 'chainio-temp', path: "#{MasterSetup.get.uuid}/delivery_orders/REF.xlsx"})
+      expect(files.first).to eq({bucket: 'chainio-temp', path: "#{master_setup.uuid}/delivery_orders/REF.xlsx"})
     end
 
     it "handles no delivery order files" do
