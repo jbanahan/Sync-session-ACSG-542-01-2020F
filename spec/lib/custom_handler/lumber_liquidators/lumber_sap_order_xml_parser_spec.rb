@@ -198,6 +198,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
         expect(ActionMailer::Base.deliveries.length).to eq 0
       end
       it "should allow update to quantity" do
+        # Prevents totals validation from failing.
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>29736.31</SUMME')
+
         booked_order
         @test_data.gsub!('MENGE>5602.800</MENGE','MENGE>1.800</MENGE')
         do_parse
@@ -213,12 +216,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       end
       it "should allow update to price" do
         # Prevents totals validation from failing.
-        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>50098.04</SUMME')
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>37296.76</SUMME')
 
         booked_order
-        @test_data.gsub!('NETWR>10365.18</NETWR','NETWR>20365.18</NETWR')
+        @test_data.gsub!('VPREI>1.85</VPREI','VPREI>1.35</VPREI')
         do_parse
-        expect(Order.first.order_lines.first.price_per_unit).to eq 3.6348
+        expect(Order.first.order_lines.first.price_per_unit).to eq 1.35
         expect(ActionMailer::Base.deliveries.length).to eq 0
       end
       it "should soft delete a line not mentioned in the XML" do
@@ -277,6 +280,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
         expect(ActionMailer::Base.deliveries.length).to eq 0
       end
       it "should allow update to quantity" do
+        # Prevents totals validation from failing.
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>29736.31</SUMME')
+
         shipped_order
         @test_data.gsub!('MENGE>5602.800</MENGE','MENGE>1.800</MENGE')
         do_parse
@@ -292,12 +298,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
       end
       it "should allow update to price" do
         # Prevents totals validation from failing.
-        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>50098.04</SUMME')
+        @test_data.gsub!('SUMME>40098.16</SUMME','SUMME>37296.76</SUMME')
 
         shipped_order
-        @test_data.gsub!('NETWR>10365.18</NETWR','NETWR>20365.18</NETWR')
+        @test_data.gsub!('VPREI>1.85</VPREI','VPREI>1.35</VPREI')
         do_parse
-        expect(Order.first.order_lines.first.price_per_unit).to eq 3.6348
+        expect(Order.first.order_lines.first.price_per_unit).to eq 1.35
         expect(ActionMailer::Base.deliveries.length).to eq 0
       end
       it "should soft delete a line not mentioned in the XML" do
@@ -567,17 +573,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlParser do
 
       expect{subject.parse_dom(dom)}.to raise_error("Unexpected order total. Got 40098.16, expected 40098.15")
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unexpected order total. Got 40098.16, expected 40098.15"
-    end
-
-    it "should allow zero costs for missing NETWR element" do
-      td = @test_data.gsub(/<NETWR.*\/NETWR>/,'').gsub(/<SUMME.*\/SUMME>/,'')
-      dom = REXML::Document.new(td)
-
-      expect{subject.parse_dom(dom)}.to change(Order,:count).from(0).to(1)
-
-      o = Order.first
-      # all prices should be nil
-      expect(o.order_lines.collect {|ln| ln.price_per_unit}.compact).to eq []
     end
 
     it "should delete order line" do

@@ -465,17 +465,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       qty = BigDecimal(et(line_el,'MENGE'),4)
       uom = convert_uom(et(line_el,'MENEE'))
 
-      # price might not be sent.  If it is, use it to get the price_per_unit, otherwise clear the price
-      price_per_unit = nil
-      extended_cost_text = et(line_el,'NETWR')
-      if !extended_cost_text.blank?
-        extended_cost = BigDecimal(extended_cost_text,4)
-        price_per_unit = extended_cost / qty
-      end
-
       validate_line_not_changed(ol, product) if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
 
-      ol.price_per_unit = price_per_unit
+      ol.price_per_unit = BigDecimal(et(line_el,'VPREI').to_s,4)
       ol.product = product
       ol.quantity = qty
       ol.unit_of_measure = uom
