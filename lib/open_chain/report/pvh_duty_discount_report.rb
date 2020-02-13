@@ -125,7 +125,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
 
           # The value for the "Shipment Number" field varies by mode of transportation.
           ship_mode = result_set_row['transport_mode_code']
-          if Entry.get_transport_mode_codes_us_ca("Sea").include? ship_mode.to_i
+          if Entry.get_transport_mode_codes_us_ca("Sea").include?(ship_mode.to_i) || Entry.get_transport_mode_codes_us_ca("Truck").include?(ship_mode.to_i)
             d.shipment_number = result_set_row['container_number']
           else
             d.shipment_number = result_set_row['master_bills_of_lading']
@@ -241,7 +241,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
 
       entry_hash.each_key do |entry_number|
         summary_row = entry_hash[entry_number]
-        styles = [nil, nil, nil, nil, nil, nil, nil, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :integer, nil]
+        styles = [nil, nil, nil, nil, nil, nil, :date, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :integer, nil]
         summary_row.rows.each do |row|
           values = [row.entry_number, row.invoice_number, row.po_number, row.shipment_number, row.po_line_number,
                     row.hts_code, row.eta_date, row.vendor_invoice_value, row.duty_assist_amount, row.dutiable_value_7501,
@@ -269,7 +269,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
       entry_hash.each_value do |row|
         values = [row.entry_number, row.eta_date, row.vendor_invoice_value, row.duty_assist_amount,
                   row.dutiable_value_7501, row.total_duty_difference, row.total_duty_savings, convert_transport_mode(row.transport_mode)]
-        styles = [nil, nil, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
+        styles = [nil, :date, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
         wb.add_body_row sheet, values, styles: styles
       end
 
@@ -283,6 +283,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
       wb.create_style :decimal, {format_code:"#,##0.00"}
       wb.create_style :integer, {format_code:"#,##0"}
       wb.create_style :bold_decimal, {format_code:"#,##0.00", b:true}
+      wb.create_style :date, {format_code: "MM/DD/YYYY"}
     end
 
     def convert_transport_mode value

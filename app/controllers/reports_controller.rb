@@ -1077,9 +1077,12 @@ class ReportsController < ApplicationController
 
   def show_pvh_duty_discount_report
     if OpenChain::Report::PvhDutyDiscountReport.permission? current_user
-      @fiscal_months = []
+      @fiscal_months_us, @fiscal_months_canada = [], []
       FiscalMonth.where(company_id: Company.where(system_code:"PVH").first&.id).order("start_date ASC").each do |fm|
-        @fiscal_months << fm.fiscal_descriptor
+        @fiscal_months_us << fm.fiscal_descriptor
+      end
+      FiscalMonth.where(company_id: Company.where(system_code:"PVHCANADA").first&.id).order("start_date ASC").each do |fm|
+        @fiscal_months_canada << fm.fiscal_descriptor
       end
       render
     else
@@ -1090,7 +1093,13 @@ class ReportsController < ApplicationController
   def run_pvh_duty_discount_report
     klass = OpenChain::Report::PvhDutyDiscountReport
     if klass.permission? current_user
-      run_report "PVH Duty Discount Report", klass, {fiscal_month: params[:fiscal_month]}, []
+      if params[:importer] == 'PVH'
+        run_report "PVH Duty Discount Report", klass, {fiscal_month: params[:fiscal_month_us]}, []
+      elsif params[:importer] == 'PVH Canada'
+        run_report "PVH Canada Duty Discount Report", OpenChain::Report::PvhCanadaDutyDiscountReport, {fiscal_month: params[:fiscal_month_canada]}, []
+      else
+        error_redirect "An importer must be selected."
+      end
     else
       error_redirect "You do not have permission to view this report"
     end

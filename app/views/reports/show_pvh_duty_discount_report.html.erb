@@ -1,3 +1,21 @@
+<% content_for :javascript do -%>
+    $(document).ready(function() {
+        $('#fiscal-period-canada-div').hide();
+    });
+
+    $(function() {
+        $('#importer').change(function () {
+            if (this.value == 'PVH') {
+                $('#fiscal-period-us-div').show();
+                $('#fiscal-period-canada-div').hide();
+            } else {
+                $('#fiscal-period-us-div').hide();
+                $('#fiscal-period-canada-div').show();
+            }
+        })
+    });
+<%end-%>
+
 <% content_for :action_bar do %>
     <button class="form_to" form_id="frm_run">Run Report</button>
     <button class="btn_link" link_to="<%=request.referrer%>">Back</button>
@@ -7,8 +25,19 @@
 <%=form_tag reports_run_pvh_duty_discount_report_path, :id=>'frm_run' do -%>
     <div class="container">
       <div>
-      <span>
-        <%=field_row "Fiscal Period", select_tag(:fiscal_month, options_for_select(@fiscal_months), :class=>'form-control isdate')%>
-      </span>
+        <span>
+          <%=field_row "Importer", select_tag(:importer, options_for_select(["PVH","PVH Canada"]))%>
+        </span>
       </div>
+      <div id="fiscal-period-us-div">
+        <span>
+          <%=field_row "Fiscal Period", select_tag(:fiscal_month_us, options_for_select(@fiscal_months_us), :class=>'form-control isdate')%>
+        </span>
+      </div>
+      <div id="fiscal-period-canada-div">
+        <span>
+          <%=field_row "Fiscal Period", select_tag(:fiscal_month_canada, options_for_select(@fiscal_months_canada), :class=>'form-control isdate')%>
+        </span>
+      </div>
+    </div>
 <%end%>

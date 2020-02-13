@@ -1251,12 +1251,12 @@ describe ReportsController do
 
         it "renders for authorized users" do
           pvh = Factory(:company, name:'PVH', system_code:'PVH')
-          another_importer = Factory(:company, name:'Another Importer', system_code:'imp')
+          pvh_ca = Factory(:company, name:'PVH', system_code:'PVHCANADA')
 
           FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019,4,1))
           FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019,2,20))
-          # This one belongs to a different importer and should not be included.
-          FiscalMonth.create!(company_id:another_importer.id, year:2019, month_number:4, start_date:Date.new(2019,7,1))
+          FiscalMonth.create!(company_id:pvh_ca.id, year:2019, month_number:2, start_date:Date.new(2019,3,1))
+          FiscalMonth.create!(company_id:pvh_ca.id, year:2019, month_number:1, start_date:Date.new(2019,1,20))
 
           expect(report_class).to receive(:permission?).with(user).and_return true
           get :show_pvh_duty_discount_report
@@ -1264,10 +1264,15 @@ describe ReportsController do
 
           # Ensure fiscal month instance variables, used for dropdowns, were loaded properly.
           # They should be sorted by start date.
-          fiscal_months = subject.instance_variable_get(:@fiscal_months)
-          expect(fiscal_months.length).to eq 2
-          expect(fiscal_months[0]).to eq '2019-02'
-          expect(fiscal_months[1]).to eq '2019-03'
+          fiscal_months_us = subject.instance_variable_get(:@fiscal_months_us)
+          expect(fiscal_months_us.length).to eq 2
+          expect(fiscal_months_us[0]).to eq '2019-02'
+          expect(fiscal_months_us[1]).to eq '2019-03'
+
+          fiscal_months_ca = subject.instance_variable_get(:@fiscal_months_canada)
+          expect(fiscal_months_ca.length).to eq 2
+          expect(fiscal_months_ca[0]).to eq '2019-01'
+          expect(fiscal_months_ca[1]).to eq '2019-02'
         end
       end
 
@@ -1281,14 +1286,34 @@ describe ReportsController do
           expect(flash[:notices]).to be_nil
         end
 
-        it "runs for authorized users" do
+        it "runs for authorized users (US)" do
           expect(report_class).to receive(:permission?).with(user).and_return true
           expect(ReportResult).to receive(:run_report!).with("PVH Duty Discount Report", user,
                                                              OpenChain::Report::PvhDutyDiscountReport,
                                                              :settings=>{fiscal_month:'2019-04'}, :friendly_settings=>[])
-          post :run_pvh_duty_discount_report, {fiscal_month:'2019-04'}
+          post :run_pvh_duty_discount_report, {importer:'PVH', fiscal_month_us:'2019-04'}
           expect(response).to be_redirect
           expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+        end
+
+        it "runs for authorized users (CA)" do
+          expect(report_class).to receive(:permission?).with(user).and_return true
+          expect(ReportResult).to receive(:run_report!).with("PVH Canada Duty Discount Report", user,
+                                                             OpenChain::Report::PvhCanadaDutyDiscountReport,
+                                                             :settings=>{fiscal_month:'2019-04'}, :friendly_settings=>[])
+          post :run_pvh_duty_discount_report, {importer:'PVH Canada', fiscal_month_canada:'2019-04'}
+          expect(response).to be_redirect
+          expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+        end
+
+        it "errors when importer is not selected" do
+          expect(report_class).to receive(:permission?).with(user).and_return true
+
+          expect(ReportResult).not_to receive(:run_report!)
+          post :run_pvh_duty_discount_report, {fiscal_month:'2019-04', mode_of_transport:'Sea'}
+          expect(response).to be_redirect
+          expect(flash[:errors].first).to eq("An importer must be selected.")
+          expect(flash[:notices]).to be_nil
         end
       end
     end
