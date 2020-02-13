@@ -123,6 +123,8 @@ gem 'clamby'
 
 gem 'fuzzy_match'
 
+gem 'get_process_mem', '0.2.5'
+
 group :development,:test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.  

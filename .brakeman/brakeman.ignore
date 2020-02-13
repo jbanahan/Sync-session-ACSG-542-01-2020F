@@ -3291,7 +3291,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/search_setups_controller.rb",
-      "line": 61,
+      "line": 62,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(core_module_class(SearchSetup.for_user(current_user).find(params[:id]).deep_copy((params[:new_name] or \"Copy of #{SearchSetup.for_user(current_user).find(params[:id]).name}\"))))",
       "render_path": null,
@@ -4565,6 +4565,26 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
+    },
+    {
+      "warning_type": "Command Injection",
+      "warning_code": 14,
+      "fingerprint": "82dd44af6618f036b231575d78fe3758299e1a43d2d34452e5127548666f2ad0",
+      "check_name": "Execute",
+      "message": "Possible command injection",
+      "file": "lib/open_chain/chain_delayed_jobs_plugin.rb",
+      "line": 39,
+      "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
+      "code": "Open3.capture3({}, *[\"lsof\", \"-t\", MasterSetup.instance_directory.join(\"log\", \"delayed_job.log\").to_s])",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::ChainDelayedJobPlugin",
+        "method": "s(:self).number_of_running_queues"
+      },
+      "user_input": "MasterSetup.instance_directory.join(\"log\", \"delayed_job.log\")",
+      "confidence": "High",
+      "note": "Array form of Open3.capture3 escapes command line components."
     },
     {
       "warning_type": "Command Injection",
@@ -7950,7 +7970,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/controllers/api/v1/api_core_module_controller_base.rb",
-      "line": 179,
+      "line": 181,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "outer_query.order(\"#{sc.model_field.qualified_field_name}#{sc.descending? ? (\" desc\") : (\"\")}\")",
       "render_path": null,
@@ -8730,6 +8750,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2019-12-20 13:13:31 -0600",
+  "updated": "2020-02-13 14:25:15 -0600",
   "brakeman_version": "4.5.0"
 }
