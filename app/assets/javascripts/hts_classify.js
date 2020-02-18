@@ -46,12 +46,13 @@ var Classify = (function() {
         to_write.on('click',"a.sched_b_option",function(ev) {
           ev.preventDefault();
           schedBField.val($(this).html());
+          schedBField.blur();
         });
       }); 
     }
   }
 
-  var validateOfficialValue = function(country_id,uri,hts_field,writeDataFunction) {
+  var validateOfficialValue = function(country_id,tariff_line_num,uri,hts_field,writeDataFunction) {
     var get_result_box = function() {
       var to_write = hts_field.siblings(".tariff_result");
       if(to_write.length==0) {
@@ -65,7 +66,7 @@ var Classify = (function() {
       hts_field.addClass("error");
       var to_write = get_result_box();
       to_write.html("Invalid tariff number.");
-      Chain.fireTariffCallbacks('invalid',country_id,hts_field.val());
+      Chain.fireTariffValidationCallbacks('invalid',country_id,tariff_line_num,hts_field.val());
     }
     var valid_callback = function(data) {
       var schedBField, col, htsNumber;
@@ -82,10 +83,10 @@ var Classify = (function() {
         }
         if(schedBField.length) {
           htsNumber = hts_field.val()
-          writeScheduleBMatches(htsNumber,country_id,schedBField);
+          writeScheduleBMatches(htsNumber,tariff_line_num,schedBField);
         }
       }
-      Chain.fireTariffCallbacks('valid',country_id,hts_field.val());
+      Chain.fireTariffValidationCallbacks('valid',country_id,tariff_line_num,hts_field.val());
     }
     var writeTariffInfo = function(data) {
       var t, h, to_write;
@@ -98,7 +99,7 @@ var Classify = (function() {
     if(hts.length==0) {
       $(this).removeClass("error");
       get_result_box().html("");
-      Chain.fireTariffCallbacks('empty',country_id,'');
+      Chain.fireTariffValidationCallbacks('empty',country_id,tariff_line_num,'');
       return;
     }
     if(!validateHTSFormat(hts)) {
@@ -127,10 +128,10 @@ var Classify = (function() {
       return h;
     }
 
-    validateOfficialValue(hts_field.attr("country"),'/official_tariffs/find_schedule_b?hts='+hts_field.val(),hts_field,wdf);
+    validateOfficialValue(hts_field.attr("country"), hts_field.attr("tariff-line-num"), '/official_tariffs/find_schedule_b?hts='+hts_field.val(),hts_field,wdf);
   }
 
-  var validateHTSValue = function(country_id,hts_field) {
+  var validateHTSValue = function(country_id,tariff_line_num,hts_field) {
     var wdf = function(data) {  
       if(data!="country not loaded") {
         var t = data.official_tariff;
@@ -160,11 +161,11 @@ var Classify = (function() {
         if(t.export_regulations) {
           h+="Export Regulations: "+t.export_regulations+"<br />";
         }
-        h+="<a href='#' class='lnk_tariff_popup btn btn-sm' country='"+country_id+"' hts='"+t.hts_code+"'>info</a>";
+        h+="<a href='#' class='lnk_tariff_popup btn btn-sm' country='"+country_id+" tariff-line-num='"+tariff_line_num+"' hts='"+t.hts_code+"'>info</a>";
       }
       return h;
     }
-    validateOfficialValue(country_id,'/official_tariffs/find?hts='+hts_field.val()+'&cid='+country_id,hts_field,wdf)
+    validateOfficialValue(country_id,tariff_line_num,'/official_tariffs/find?hts='+hts_field.val()+'&cid='+country_id,hts_field,wdf)
   }
 
   var scheduleBPopUp = function(hts) {
@@ -238,16 +239,20 @@ var Classify = (function() {
       });
 
       $(document).on('blur', 'input.hts_field', function() {
-        validateHTSValue($(this).attr('country'), $(this));
+        validateHTSValue($(this).attr('country'), $(this).attr('tariff-line-num'), $(this));
       });
 
       $(".hts_field").each(function() {
-        validateHTSValue($(this).attr('country'), $(this));
+        validateHTSValue($(this).attr('country'), $(this).attr('tariff-line-num'), $(this));
       });
     },
 
     validateHTS: function(value) {
       return validateHTSFormat(value);
+    },
+
+    validateHTSValue: function(countryId, tariffLineNum, htsField) {
+      return validateHTSValue(countryId, tariffLineNum, htsField);
     },
 
     removeFieldFromInvalidTariffList: function(hts_field) {

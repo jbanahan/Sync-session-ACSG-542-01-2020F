@@ -874,6 +874,7 @@ ing/:heading', to: 'hts#heading'
       post 'bulk_instant_classify'
       post 'show_bulk_instant_classify'
       post 'bulk_send_last_integration_file_to_test'
+      get :show_region_modal
     end
     member do
       get 'show_beta'

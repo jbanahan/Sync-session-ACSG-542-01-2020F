@@ -12,6 +12,13 @@ describe OfficialTariffsController do
       expect(response).to be_success
       expect(JSON.parse(response.body)).to eq(['1234567890','1234567899'])
     end
+
+    it "provides description if specified" do
+      get :auto_complete, 'hts'=>'1234', 'country'=>@us.id.to_s, 'description' => true, :format=>:json
+      expect(response).to be_success
+      expect(JSON.parse(response.body)).to eq([{'label' => '1234567890', 'desc' => 'abc'}, 
+                                               {'label' => '1234567899', 'desc' => "def"}])
+    end
   end
   describe "auto_classify" do
     it "should return import country classifications" do

@@ -237,4 +237,26 @@ describe ProductsController do
       expect(response).to redirect_to("http://test.host/somewhere?key=val")
     end
   end
+
+  describe "show_region_modal" do
+    let!(:c1) { Factory(:country, iso_code: "US", name: "United States") }
+    let!(:c2) { Factory(:country, iso_code: "CA", name: "Canada") }
+    let!(:c3) { Factory(:country, iso_code: "CN", name: "China") }
+    let!(:region) { Factory(:region, name: "N. America", countries: [c1, c2]) }
+    let!(:region_2) { Factory(:region, name: "Asia", countries: [c3])}
+
+    it "renders for user who can edit classifications" do
+      get :show_region_modal, country_ids: "#{c2.id}, #{c1.id}"
+      expect(assigns(:countries)).to eq [{id: c2.id, name: "Canada"}, {id: c1.id, name: "United States"}]
+      expect(assigns(:regions)).to eq({region.id => {country_ids: [c2.id, c1.id], name: "N. America"}})
+      expect(response).to be_ok
+    end
+
+    it "redirects otherwise" do
+      @user.classification_edit = false; @user.save!
+      get :show_region_modal, country_ids: "#{c1.id}, #{c2.id}"
+      expect(response).to be_redirect
+      expect(flash[:errors]).to eq ["You do not have permission to edit classifications"]
+    end
+  end
 end

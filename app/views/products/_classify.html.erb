@@ -16,7 +16,7 @@ $(function() {
     var vs = tf_row.children('[name$="[hts_view_sequence]"]');
     vs.attr('value',seed);
     $(this).parent().before(tf_row);
-    Chain.htsAutoComplete();
+    Chain.htsAutoComplete('input.hts_field');
     tf_row.show();
   });
 });

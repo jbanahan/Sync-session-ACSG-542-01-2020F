@@ -8,7 +8,9 @@ class OfficialTariffsController < ApplicationController
     else
       ot = ot.where('country_id = (select id from countries where iso_code = ?)',params[:country_iso])
     end
-    render :json=>ot.where("hts_code LIKE ?","#{TariffRecord.clean_hts(params[:hts])}%").pluck(:hts_code)
+    tariffs = ot.where("hts_code LIKE ?","#{TariffRecord.clean_hts(params[:hts])}%")
+                .map { |t| {label: t.hts_code, desc: t.remaining_description} }
+    render :json => params[:description] ? tariffs : tariffs.map{ |t| t[:label] }
   end
   def auto_classify
     h = params[:hts].blank? ? '' : params[:hts].strip.gsub('.','')

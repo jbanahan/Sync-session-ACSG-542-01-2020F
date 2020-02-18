@@ -1,0 +1,108 @@
+<script type='text/javascript'>
+  $(function() {
+    var regions = <%= raw @regions.to_json %>;
+    var modal = $('#region_modal');
+    
+    modal.on('dialogclose', function(){
+      changeAll(false);
+    });
+
+    $('#btn-all').click(function() {
+      changeAll(true);
+    });
+
+    $('#btn-none').click(function() {
+      changeAll(false);
+    });
+  
+    for (var id in regions) {
+      (function(id) {
+        $('#btn-' + id).click(function() {
+          regions[id].country_ids.forEach(function (countryId, idx) {
+            checkBox = $('#box-' + countryId);
+            // have each button toggle the countries for that region
+            checkBox.prop("checked", !checkBox.prop("checked"));            
+          });
+        });
+      }(id));
+    }
+
+    $('#btn-continue').click(function() {
+      var selector = "div[data-target='auto-classify']";
+      var sourceCountryId = parseInt(modal.data('country'));
+      var destinationCountryIds = $('#country-choices input').filter(function() {
+                                    var id = $(this).attr('id');
+                                    // ignore the box that belongs to the country being autoclassified (the "source country")
+                                    return $(this).prop("checked") == true && (id != "box-"+sourceCountryId);
+                                  }).map(function() {
+                                    return parseInt($(this).attr('id').split('-')[1])
+                                  }).toArray();
+                          
+      Chain.loadAutoClassifications(modal.data('hts'), modal.data('tariff-line-num'), sourceCountryId, destinationCountryIds, selector);
+      modal.dialog('close');
+    });
+
+    $('#btn-cancel').click(function() {
+      modal.dialog('close');
+    });
+
+    function changeAll(value) {
+      $('#country-choices input').each(function() {
+        $(this).prop("checked", value);
+      });
+    }
+  });
+</script>
+<style type="text/css">
+  ul {
+    padding: 0px;
+    list-style-type: none;
+  }
+
+  button {
+    margin: 2px;
+  }
+
+  .button-grp {
+    margin-bottom: 10px;
+  }
+
+  .region-container {
+    margin-top: 10px;
+  }
+</style>
+<div class="container region-container">
+  <div class="row">
+    <% @countries.each_slice((@countries.count / 3.0).ceil) do |country_grp| %>
+      <div class="col-sm">
+        <ul id="country-choices">
+          <% country_grp.each do |g| %>
+            <li>
+              <input type="checkbox" id="box-<%= g[:id] %>">
+              <label for="box-<%= g[:id] %>"><%= g[:name] %></label>
+            </li>  
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+  <div class="row">
+    <div class="col-md-2 btn-group-vertical">
+      <button id="btn-all" type="button">Select All</button>
+      <button id="btn-none" type="button">Deselect All</button>
+    </div>
+    <% @regions.keys.each_slice(2) do |region_id_grp| %>
+      <div class="col-md-2 btn-group-vertical">
+        <% region_id_grp.each do |region_id| %>
+          <button id="btn-<%= region_id %>" type="button"><%= @regions[region_id][:name] %></button>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+<div class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix">
+  <div class="ui-dialog-buttonset">
+    <button id="btn-continue" class="ui-button ui-corner-all ui-widget">Continue</button>
+    <button id="btn-cancel" class="ui-button ui-corner-all ui-widget">Cancel</button>
+  </div>
+</div>

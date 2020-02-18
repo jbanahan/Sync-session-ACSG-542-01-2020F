@@ -250,6 +250,31 @@ class ProductsController < ApplicationController
     @preview_instant_classification = InstantClassification.find_by_product(@preview_product, current_user)
   end
 
+  #render html for quick-classification modal
+  def show_region_modal
+    if current_user.edit_classifications?
+      @regions = Hash.new{ |h,k| h[k] = {} }
+      regions = Region.includes(:countries)
+      country_ids = params[:country_ids].split(",").map(&:to_i)
+      # order hashes to match country_ids array
+      @countries = Country.where(id: country_ids)
+                          .map{ |c| {id: c.id, name: c.name} }
+                          .sort{ |a,b| country_ids.index(a[:id]) <=> country_ids.index(b[:id]) }
+                          
+      regions.each do |r| 
+        ids = country_ids & r.countries.map(&:id)
+        if ids.present?
+          @regions[r.id][:country_ids] = ids
+          @regions[r.id][:name] = r.name
+        end
+      end
+      @content_only = true
+      render :partial=> 'show_region_modal'
+    else
+      error_redirect "You do not have permission to edit classifications"
+    end
+  end
+
   private
 
   def secure_classifications

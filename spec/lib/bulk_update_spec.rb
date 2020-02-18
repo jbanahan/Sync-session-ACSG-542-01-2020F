@@ -320,21 +320,23 @@ describe OpenChain::BulkUpdateClassification do
   describe "quick_classify" do
     before :each do 
       @u = Factory(:user,:company=>Factory(:company,:master=>true),:product_edit=>true,:classification_edit=>true, :product_view=> true)
-      @products = 2.times.collect {Factory(:product)}
       @country = Factory(:country, :iso_code => "US")
-      @hts = '1234567890'
+      @products = [Factory(:product, classifications: [Factory(:classification, country: @country)]), 
+                   Factory(:product)]
       @ms = MasterSetup.new :request_host => "localhost"
       allow(MasterSetup).to receive(:get).and_return @ms
 
+      @hts = '1234567890'
       @parameters = {
         'pk' => ["#{@products[0].id}", "#{@products[1].id}"],
         'product' => {
             'classifications_attributes' => {
-              "0" => {
+              @country.id.to_s => {
                   'class_cntry_id' => "#{@country.id}",
                   'tariff_records_attributes' => {
-                      "0" => {
-                        "hts_hts_1" => @hts
+                      "1" => {
+                        "hts_hts_1" => @hts,
+                        "line_number" => "1"
                       }
                   }
               }
@@ -348,6 +350,7 @@ describe OpenChain::BulkUpdateClassification do
 
       @products.each do |p|
         p.reload
+
         expect(p.classifications.size).to eq(1)
         expect(p.classifications[0].country_id).to eq @country.id
 
@@ -380,7 +383,7 @@ describe OpenChain::BulkUpdateClassification do
 
     it "does not add custom value even if there is one present in the parameters" do
       class_cd = Factory(:custom_definition,:module_type=>'Classification',:data_type=>:string)
-      @parameters['product']['classifications_attributes']['0'][class_cd.model_field_uid.to_s] = 'VALUE'
+      @parameters['product']['classifications_attributes'][@country.id.to_s][class_cd.model_field_uid.to_s] = 'VALUE'
 
       OpenChain::BulkUpdateClassification.quick_classify @parameters.to_json, @u
 
@@ -393,11 +396,12 @@ describe OpenChain::BulkUpdateClassification do
 
     it "should update existing classification and tariff records on a product" do
       p = @products[0]
-      p.classifications.create!(:country_id=>@country.id).tariff_records.create! hts_1: "75315678"
+      p.classifications.first.tariff_records.create! hts_1: "75315678", line_number: 1
 
       @parameters['pk'] = ["#{@products[0].id}"]
-      @parameters['product']['classifications_attributes']["0"]["id"] = "#{p.classifications[0].id}"
-      @parameters['product']['classifications_attributes']["0"]["tariff_records_attributes"]["0"]["id"] = "#{p.classifications[0].tariff_records[0].id}"
+      @parameters['product']['classifications_attributes'][@country.id.to_s]["id"] = "#{p.classifications[0].id}"
+      @parameters['product']['classifications_attributes'][@country.id.to_s]["tariff_records_attributes"]["1"]["id"] = "#{p.classifications[0].tariff_records[0].id}"
+      @parameters['product']['classifications_attributes'][@country.id.to_s]["tariff_records_attributes"]["2"] = {"hts_hts_1" => "0101301234", "line_number" => "2" }
 
       messages = OpenChain::BulkUpdateClassification.quick_classify @parameters, @u
 
@@ -405,8 +409,9 @@ describe OpenChain::BulkUpdateClassification do
       expect(p.classifications.size).to eq(1)
       expect(p.classifications[0].country_id).to eq @country.id
 
-      expect(p.classifications[0].tariff_records.size).to eq(1)
+      expect(p.classifications[0].tariff_records.size).to eq(2)
       expect(p.classifications[0].tariff_records[0].hts_1).to eq @hts
+      expect(p.classifications[0].tariff_records[1].hts_1).to eq "0101301234"
     end
 
     it "should handle errors in product updates" do 

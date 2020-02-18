@@ -32,7 +32,7 @@ class TariffRecord < ActiveRecord::Base
   
   attr_accessible :country_id, :country, :product_id, :product,
     :created_at, :updated_at, :instant_classification_id, :hts_1, 
-    :hts_2, :hts_3, :line_number
+    :hts_2, :hts_3, :schedule_b_1, :schedule_b_2, :schedule_b_3, :line_number
 
   belongs_to :classification, :touch=>true, :inverse_of=>:tariff_records
   has_one :product, :through=>:classification

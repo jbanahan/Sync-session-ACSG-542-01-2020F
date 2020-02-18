@@ -174,7 +174,7 @@ module OpenChain
                 # deep_dup is required because if clone/dup is used the 'classification_attributes' hash will
                 # be a reference to the same object for each bulk object iteration
                 classification_params = params.deep_dup
-                classification_params['product']['classifications_attributes'].each do |index, class_attr|
+                classification_params['product']['classifications_attributes'].each do |country_id, class_attr|
 
                   # Because of the way rail's update_attributes method will create new child objects
                   # when no id values are present, we don't have to worry at all about cases where
@@ -185,23 +185,20 @@ module OpenChain
                     id = class_attr['id'].to_i
                     classification = p.classifications.find {|c| c.id == id}
                   else
-                    country_id = class_attr['class_cntry_id'].to_i
-                    classification = p.classifications.find {|c| c.country_id == country_id}
+                    classification = p.classifications.find {|c| c.country_id == country_id.to_i}
 
                     if classification
                       class_attr['id'] = classification.id
                     end
                   end
 
-                  # We'll now set the tariff record's id if it's not already set.  We'll use the index value 
+                  # We'll now set the tariff record's id if it's not already set.  We'll use the line number 
                   # as the indicator for which tariff row we're going to update if there is no id value.
-                  # This also allows for expansion of the quick classify to support sending multiple tariff lines
-                  # should we want to implement that in the future.
                   if classification
-                    class_attr['tariff_records_attributes'].each do |index, tariff_attr|
+                    class_attr['tariff_records_attributes'].each do |line_number, tariff_attr|
 
                       unless tariff_attr['id']
-                        tariff = classification.tariff_records[index.to_i]
+                        tariff = classification.tariff_records.find{ |tr| tr.line_number == line_number.to_i }
                         if tariff
                           tariff_attr['id'] = tariff.id
                         end

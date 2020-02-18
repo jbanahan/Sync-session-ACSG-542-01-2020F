@@ -233,108 +233,317 @@ root.Chain =
   # Tariff Classification Mangaement Stuff
   #
 
-  htsAutoComplete : ->
-    $("input.hts_field").each((inp) ->
+  htsAutoComplete : (fieldSelector) ->
+    $(fieldSelector).each((inp) ->
       return if $(@).is(':data(autocomplete)')
       country = $(@).attr('country')
       $(@).autocomplete({
         source:(req,add) ->
-          $.getJSON("/official_tariffs/auto_complete?country="+country+"&hts="+req.term, (data) ->
+          $.getJSON("/official_tariffs/auto_complete?country=#{country}&hts=#{req.term}&description=true", (data) ->
             r = []
             r.push(h) for h in data
             add(r)
           )
-        select: (event,ui) ->
+        select: (event,ui) ->          
           $(@).val(ui.item.label)
           $(@).blur()
-      })
+
+        # Needed to prevent the drop-down from stretching/breaking the bottom of the modal
+        # The modal's outermost div is automatically generated, hence this less-than-ideal selector
+        appendTo: "[aria-describedby='mod_quick_classify']"
+      }).autocomplete("instance")._renderItem = (ul, item) ->
+          $("ul").addClass("autocomplete-list")
+          $("<li>").append("<div>#{item.label}<br>#{item.desc}</div>").appendTo(ul)
     )
 
   #load auto classification values an populate into containers that match destination_selector and also have country='[country_id]'
-  loadAutoClassifications : (hts,country_id,destination_selector) ->
+  loadAutoClassifications : (hts,tariff_line_num,source_country_id,destination_country_ids,destination_selector) ->
     cleanHTS = hts.replace( /[^\dA-Za-z]/g, "" )
     jQuery.get '/official_tariffs/auto_classify/'+cleanHTS+'.json', (data) ->
-      Chain.populateAutoClassifications destination_selector, data
+      Chain.populateAutoClassifications destination_selector, tariff_line_num, source_country_id, destination_country_ids, data
+
+  writeAutoClassificationOptions : (destination_selector,country_result,tariff_line_num) ->
+    h = ""
+    target = $(destination_selector+"[country='#{country_result.country_id}'][tariff-line-num='#{tariff_line_num}']")
+    if target.length == 0
+      classi = Chain.quickClassifyProduct.classifications.find (cl) -> cl.country_id == country_result.country_id
+      Chain.insertQuickClassifyTariff classi, {line_number: tariff_line_num}, "div[quick-class-content-id='#{country_result.country_id}'] div.hts-tab"
+      target = $(target.selector)
+    h +="<div class='auto-class-title'>Auto Classifications</div>"
+    for hts in country_result['hts']
+      h += "<div class='auto-class-container'><a href='#' class='hts_option'>"+hts.code+"</a>"
+      h += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>" if hts.use_count
+      h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-secondary btn-sm' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
+      h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />"
+      h += "</div>"
+    target.find("*").remove()
+    target.append(h)
 
   #fill the countries that match the destination_selectors with the classification date
-  populateAutoClassifications : (destination_selector,data) ->
+  populateAutoClassifications : (destination_selector,tariff_line_num,source_country_id,destination_country_ids,data) ->
     write = (country_result) ->
-      target = $(destination_selector+"[country='"+country_result.country_id+"']")
-      h ="<div class='auto-class-title'>Auto Classifications</div>"
-      for hts in country_result['hts']
-        h += "<div class='auto-class-container'><a href='#' class='hts_option'>"+hts.code+"</a>"
-        h += "&nbsp;<span class='badge badge-info' title='This tariff number is used about "+numberWithCommas(hts.use_count)+" times.' data-toggle='tooltip'>"+abbrNum(hts.use_count,2)+"</span>" if hts.use_count
-        h += "&nbsp;<a href='#' class='lnk_tariff_popup btn btn-secondary btn-sm' iso='"+country_result.iso+"' hts='"+hts.code+"'>info</a>"
-        h += "<br />"+hts.desc+"<br />"+"Common Rate: "+hts.rate+"<br />"
-        h += "</div>"
-      target.html(h)
-    write cntry for cntry in data
+      Chain.writeAutoClassificationOptions destination_selector, country_result, tariff_line_num
+      quickClassSel = $("div.quick_class_country[country_id='#{country_result.country_id}'] i")
+      inputSel = $(".hts_cell").find("input.hts_field[country='#{country_result.country_id}'][tariff-line-num=#{tariff_line_num}]")
+      Chain.htsAutoComplete inputSel
+      $("div[quick-class-content-id='#{country_result.country_id}'] input.hts_field[tariff-line-num='#{tariff_line_num}']").each(()-> 
+        Classify.validateHTSValue country_result.country_id, tariff_line_num, $(this)
+        Chain.updateTariffList(country_result.country_id))
+      if country_result['hts'].length == 1
+        inputSel.val(country_result['hts'][0]['code'])
+        # Ensures tariff description, 'auto-classify' button appears without additional clicks
+        inputSel.val(country_result['hts'][0]['code']).blur()
+        quickClassSel.removeClass('fa fa-check-circle fa-question-circle').addClass('fa fa-exclamation-triangle')
+        Chain.updateTariffList(country_result.country_id)
+      else if country_result['hts'].length > 1
+        inputSel.val("").blur()
+        quickClassSel.removeClass('fa fa-check-circle fa-exclamation-triangle').addClass('fa fa-question-circle')
+    
+    for cntry in data
+      if cntry.country_id == source_country_id
+        # only write the options; don't update icons or overwrite HTS for the source country
+        Chain.writeAutoClassificationOptions destination_selector, cntry, tariff_line_num
+      else
+        continue if cntry.country_id not in destination_country_ids
+        # don't auto-classify any country with an invalid HTS
+        write cntry unless $("div.quick_class_country[country_id='#{cntry.country_id}'] i").hasClass("fa-times-circle")
 
   #add callback that will be fired if user enters a tariff number that results in the given state
   #state options are "valid", "invalid", "empty"
-  addTariffCallback : (state,country_id,callback) ->
+  addTariffValidationCallback : (state,country_id,tariff_line_num,callback) ->
     @tariffCallbacks = {} unless @tariffCallbacks
-    cb_set = @tariffCallbacks[state]
-    if !cb_set
-      cb_set = {}
-      @tariffCallbacks[state] = cb_set
-    country_cb = cb_set[country_id]
-    if !country_cb
-      country_cb = []
-      cb_set[country_id] = country_cb
-    country_cb.push callback
+    state_cb_set = @tariffCallbacks[state]
+    if !state_cb_set
+      state_cb_set = {}
+      @tariffCallbacks[state] = state_cb_set
+    country_cb_set = state_cb_set[country_id]
+    if !country_cb_set
+      country_cb_set = {}
+      state_cb_set[country_id] = country_cb_set
+    tariff_cb = country_cb_set[tariff_line_num]
+    if !tariff_cb
+      tariff_cb = []
+      country_cb_set[tariff_line_num] = tariff_cb
+    tariff_cb.push callback
 
   #fire these callbacks when a tariff field is flagged as valid
-  fireTariffCallbacks : (state,country_id,bad_tariff_number) ->
+  fireTariffValidationCallbacks : (state,country_id,tariff_line_num,bad_tariff_num) ->
     return unless @tariffCallbacks
     @tariffCallbacks = {} unless @tariffCallbacks
-    cb_set = @tariffCallbacks[state]
-    return unless cb_set
-    country_cb = cb_set[country_id]
-    return unless country_cb
-    cb(bad_tariff_number) for cb in country_cb
+    state_cb_set = @tariffCallbacks[state]
+    return unless state_cb_set
+    country_cb_set = state_cb_set[country_id]
+    return unless country_cb_set
+    tariff_cb = country_cb_set[tariff_line_num]
+    return unless tariff_cb
+    cb(bad_tariff_num) for cb in tariff_cb
     return
+
+  #Returns HTML for one HTS/Sched B field
+  quickClassifyTariff: (classification, tariff, allowDelete) ->
+    c = classification
+    tariffLineNum = tariff.line_number || 1
+    html = ""
+    html += "<div class='tariff' tariff-line-num='#{tariffLineNum}' country='#{c.country_id}'><div>"
+    html += "<div class='tariff-header'>HTS Row: #{tariffLineNum}</div>"
+    html += "HTS: <input type='text' class='hts_field' country='#{c.country_id}' tariff-line-num='#{tariffLineNum}' orig-value='#{tariff.hts_1 || ''}' value='#{tariff.hts_1 || ''}' id='product_classification_attributes_#{c.country_id}_tariff_records_attributes_#{tariffLineNum}_hts_hts_1' name='product[classifications_attributes][#{c.country_id}][tariff_records_attributes][#{tariffLineNum}][hts_hts_1]' />"
+    html += "&nbsp;<a href='#' class='btn btn-sm btn-secondary' #{"style='display:none'" unless tariff.hts_1} data-action='auto-classify' country='#{c.country_id}' tariff-line-num='#{tariffLineNum}'>Auto-Classify</a><input type='hidden' value='#{c.country_id}' name='product[classifications_attributes][#{c.country_id}][class_cntry_id]' />"
+    if tariffLineNum == 1
+      schedB = $("#sched-b-tab-#{c.country_id} input").val()
+      html += """<p class='sched-b-display' style='display: #{if schedB then "inline" else "none" }; padding-left: 20px;'>SCHED B: <span class='sched-b-display-val'>#{schedB}</span></p>"""
+    if tariffLineNum > 1 && allowDelete
+      html += "&nbsp;&nbsp;&nbsp;<small><button class='btn btn-sm btn-danger btn-delete' type='button' title='Delete'><i class='fa fa-trash'></i></button></small>"
+    if c.id?
+      html += "<input type='hidden' value='#{c.id}' name='product[classifications_attributes][#{c.country_id}][id]' />"
+    if tariff.id
+      html += "<input type='hidden' value='#{tariff.id}' name='product[classifications_attributes][#{c.country_id}][tariff_records_attributes][#{tariffLineNum}][id]' />"
+    html   += "<input type='hidden' value='#{tariffLineNum}' name='product[classifications_attributes][#{c.country_id}][tariff_records_attributes][#{tariffLineNum}][line_number]'>"
+    html += "</div>"
+    html += "<div data-target='auto-classify' country='#{c.country_id}' tariff-line-num='#{tariffLineNum}'></div></div>"
+
+  #Appends one HTS/Sched B field
+  appendQuickClassifyTariff: (classification, tariff, selector, allowDelete) ->
+    c = classification
+    t = tariff
+    if c.country.iso_code == "US" and t.line_number == 1
+      schedBTag = "<div style='margin-top: 20px;'>SCHED B: <input type='text' class='sched_b_field' country='#{c.country_id}' tariff-line-num='#{t.line_number}' value='#{t.schedule_b_1 || ''}' name='product[classifications_attributes][#{c.country_id}][tariff_records_attributes][#{t.line_number}][hts_hts_1_schedb]' /><div class='tariff_result'></div></div>"
+      $(selector).parent().find("div.sched-b-tab").append schedBTag
+    $(selector).append(Chain.quickClassifyTariff c, t, allowDelete)
+    Chain.addTariffCallbacks(c, t)
+
+
+  #Inserts one HTS/Sched B field
+  insertQuickClassifyTariff: (classification, tariff, selector) ->
+    existingTariffLineNums = $(selector + " input.hts_field").map(() -> $(this).attr('tariff-line-num')).toArray()
+    allLineNums = existingTariffLineNums.concat([tariff.line_number]).sort()
+    previousLineNum = allLineNums.indexOf tariff.line_number
+    previousTariffSel = "div[quick-class-content-id='#{classification.country_id}'] div.tariff[tariff-line-num='#{previousLineNum}']"
+    $(Chain.quickClassifyTariff(classification, tariff, true)).insertAfter $(previousTariffSel)
+    newTariffSel = "div[quick-class-content-id='#{classification.country_id}'] div.tariff[tariff-line-num='#{previousLineNum + 1}']"
+    Chain.addTariffCallbacks(classification, tariff) 
+
+  addTariffCallbacks: (classification, tariff) ->
+    c = classification
+    t = tariff
+    iconSel = $("div.quick_class_country[country_id='#{c.country_id}'] i")
+    htsFields = $("div [quick-class-content-id='#{c.country_id}']").find(".sched_b_field, .hts_field")
+    autoClassifyButtonSel = $("a[data-action='auto-classify'][country='#{c.country_id}'][tariff-line-num='#{t.line_number}']")
+
+    Chain.addTariffValidationCallback('invalid',c.country_id, t.line_number, do (c, t) ->
+      (bad_hts) ->
+        iconSel.removeClass('fa fa-check-circle fa-question-circle fa-exclamation-triangle').addClass('fa fa-times-circle')
+        autoClassifyButtonSel.hide()
+    )
+    Chain.addTariffValidationCallback('empty',c.country_id, t.line_number, do (c, t) ->
+      () ->
+        errorThisCountry = emptyHtsThisCountry = false
+        htsFields.each () ->
+          errorThisField = $(@).hasClass('error') 
+          errorThisCountry = true if errorThisField
+          emptyHtsThisField = $(@).val().length == 0 && $(@).hasClass('hts_field')
+          emptyHtsThisCountry = true if emptyHtsThisField
+          if !errorThisField && emptyHtsThisField
+            autoClassifyButtonSel.hide()
+
+        if !errorThisCountry && emptyHtsThisCountry
+          autoClassCount = $(".tariff[tariff-line-num='#{t.line_number}'][country='#{c.country_id}']").find(".auto-class-container").length
+          if autoClassCount > 1
+            # If there are multiple auto-classify options, restore the question-mark icon
+            iconSel.removeClass('fa fa-times-circle fa-exclamation-triangle fa-check-circle').addClass('fa fa-question-circle')
+          else
+            iconSel.removeClass('fa fa-times-circle fa-question-circle fa-exclamation-triangle fa-check-circle')
+
+        # Errored Sched B has been cleared
+        else if !emptyHtsThisCountry
+          iconSel.removeClass('fa fa-times-circle fa-question-circle fa-exclamation-triangle').addClass('fa fa-check-circle')
+    )
+    Chain.addTariffValidationCallback('valid',c.country_id, t.line_number, do (c, t) ->
+      (good_hts) ->
+        errorThisCountry = emptyHtsThisCountry = false
+        htsFields.each () ->
+          errorThisField = $(@).hasClass('error')
+          errorThisCountry = true if errorThisField
+          emptyHtsThisField = $(@).val().length == 0 && $(@).hasClass('hts_field')
+          emptyHtsThisCountry = true if emptyHtsThisField
+          unless errorThisField || emptyHtsThisField
+            autoClassifyButtonSel.show()
+          
+        countrySel = $("div.quick_class_country[country_id='#{c.country_id}']")
+        # If the exclamation point has been set that also implies that HTS is valid, so don't replace it
+        unless errorThisCountry || emptyHtsThisCountry || countrySel.find('.fa-exclamation-triangle').length > 0
+          countrySel.find('i').removeClass('fa fa-times-circle fa-question-circle fa-exclamation-triangle').addClass('fa fa-check-circle')
+    )
+    $("div[quick-class-content-id='#{c.country_id}'] .btn-delete").click (evt) ->
+      evt.preventDefault()
+      countryId = $(@).closest("div.quick_class_target").attr('quick-class-content-id')
+      $(@).closest("div.tariff").remove()
+      Chain.updateTariffList countryId
+    
+    # Synchronize Sched B fields on HTS/Sched B tabs
+    $("input.sched_b_field[country='#{c.country_id}']").blur (evt) ->
+      newValue = $(this).val()
+      contentSel = $("div[quick-class-content-id='#{c.country_id}']")
+      schedBSel = contentSel.find(".sched-b-display")
+      if newValue.length > 0
+        contentSel.find(".sched-b-display-val").html newValue
+        schedBSel.css("display", "inline")
+      else
+        schedBSel.hide()
+
+  nextTariffLineNum: (countryId) ->
+    lineNums = $("input.hts_field[country='#{countryId}']").map(() -> parseInt $(this).attr('tariff-line-num')).toArray()
+    if lineNums.length > 0
+      #Applies max function to arrays. See https://stackoverflow.com/a/6102340/965613
+      Math.max.apply(Math, lineNums) + 1
+    else 1
+
+  updateTariffList: (countryId) ->
+    htsList = $("div[quick-class-content-id='#{countryId}'] input.hts_field").map(() -> $(this).val()).toArray().join("</br>")
+    htsCell = $("table#quick_class_table div.quick_class_country[country_id='#{countryId}']").closest('tr').find('td.tariff-list')
+    htsCell.html("<div>#{htsList}</div>")
+
+  countryLookup: () ->
+    lookup = {}
+    $('.quick_class_country').each () ->
+      id = $(@).attr("country_id")
+      name = $(@).find('a').html()
+      lookup[id] = name
+    lookup
+
+  # return names of countries that have a blank tariff followed by a populated one
+  countriesWithBlankTariffs: () ->
+    countryList = []
+    lookup = Chain.countryLookup()
+    $('.quick_class_target').each () ->     
+      countryId = parseInt $(@).attr('quick-class-content-id')
+      tariffList = $(@).find('.tariff').map () ->
+                     htsValue = $(@).find('.hts_field').val()
+                     tariffLineNum = parseInt $(@).attr("tariff-line-num")
+                     {lineNumber: tariffLineNum, hts: htsValue}
+      sortedTariffList = tariffList.sort (a, b) ->
+                           if a.lineNumber > b.lineNumber
+                             1
+                           else if a.lineNumber < b.lineNumber
+                             -1
+                           else
+                             0
+      $.each sortedTariffList, (idx, t) ->
+        if (sortedTariffList[idx + 1] && sortedTariffList[idx + 1] != "") && t.hts == ""
+          countryList.push lookup[countryId]
+          return
+    countryList
 
   #show modal for quick classify window based on given product json and saveUrl
   showQuickClassify : (product,saveUrl,bulk_options) ->
-    classificationIndex = 0
+    Chain.quickClassifyProduct = product
     writeClassification = (c) ->
       hts_val = c.tariff_records[0]?.hts_1 ? ""
       sched_b_val = c.tariff_records[0]?.schedule_b_1 ? ""
-      Chain.addTariffCallback('invalid',c.country_id,(bad_hts) ->
-        $("div.quick_class_country[country_id='"+c.country_id+"']").removeClass('good_class').addClass('bad_class')
-        $("a[data-action='auto-classify'][country='"+c.country_id+"']").hide()
-      )
-      Chain.addTariffCallback('empty',c.country_id,() ->
-        $("div.quick_class_country[country_id='"+c.country_id+"']").removeClass('bad_class').removeClass('good_class')
-        $("a[data-action='auto-classify'][country='"+c.country_id+"']").hide()
-      )
-      Chain.addTariffCallback('valid',c.country_id,(good_hts) ->
-        $("div.quick_class_country[country_id='"+c.country_id+"']").removeClass('bad_class').addClass('good_class')
-        $("a[data-action='auto-classify'][country='"+c.country_id+"']").show()
-      )
-      $("#quick_class_countries").append("<div class='quick_class_country "+(if hts_val.length then "good_class" else "")+"' country_id='"+c.country_id+"'><a href='#' country_id='"+c.country_id+"' data-action='quick-class-country'>"+c.country.name+"</a></div>")
-      r = "<div quick-class-content-id='"+c.country_id+"' class='quick_class_target hts_cell' >"
-      r += "<div>"
-      r += "<input type='hidden' value='"+c.country_id+"' name='product[classifications_attributes]["+classificationIndex+"][class_cntry_id]' />"
-      r += "HTS: <input type='text' class='hts_field' country='"+c.country_id+"' value='"+hts_val+"' id='product_classification_attributes_"+classificationIndex+"_tariff_records_attributes_0_hts_hts_1' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_hts_1]' />"
-      if c.id?
-        r += "<input type='hidden' value='"+c.id+"' name='product[classifications_attributes]["+classificationIndex+"][id]' />"
-      if c.tariff_records[0]?.id
-        r += "<input type='hidden' value='"+c.tariff_records[0].id+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][id]' />"
-      r += "&nbsp;<a href='#' class='btn btn-sm btn-secondary' data-action='auto-classify' style='display:none;' country='"+c.country_id+"'>Auto-Classify</a>"
-      r += "</div>"
-      r += "<div data-target='auto-classify' country='"+c.country_id+"'></div>"
-      if c.country.iso_code=='US'
-        r += "<hr /><div>SCHED B: <input type='text' class='sched_b_field' country='"+c.country_id+"' value='"+sched_b_val+"' name='product[classifications_attributes]["+classificationIndex+"][tariff_records_attributes][0][hts_hts_1_schedb]' /><div class='tariff_result'></div></div>"
-      r += "</div>"
-      classificationIndex++
-      $("#quick_class_content").append(r)
+      $("#quick_class_table").append """
+        <tr>
+          <td>
+            <div class='quick_class_country' country_id='#{c.country_id}'>
+              <div class='icon-container'>
+                <i class='#{if hts_val.length then 'fa fa-check-circle' else ''}'></i>
+              </div>
+              <a href='#' country_id='#{c.country_id}' data-action='quick-class-country'>#{c.country.name}</a>
+            </div>
+          </td>
+          <td class='tariff-list'></td>
+        </tr>
+        """
+      $("#quick_class_content").append """
+        <div quick-class-content-id='#{c.country_id}' class='quick_class_target hts_cell'>
+          <div class= "tab-content">
+            <div class='tab-pane fade show active hts-tab' id='hts-tab-#{c.country_id}' role='tabpanel' aria-labelledby='hts-tab'></div>
+            <div class='tab-pane fade sched-b-tab' id='sched-b-tab-#{c.country_id}' role='tabpanel' aria-labelledby='sched-b-tab'></div>
+          </div>
+        </div>
+        """
+      # Every classification should start with at least one tariff
+      c.tariff_records.push {} unless c.tariff_records.length > 0
+      for t, idx in c.tariff_records
+        t.line_number = idx + 1 unless t.line_number  #callbacks need a line number to latch onto
+        Chain.appendQuickClassifyTariff c, t, "div[quick-class-content-id='#{c.country_id}'] div.hts-tab"
+
+     #The containing quick_class_target div needs to contract when tabs are visible and expand when they're not
+    changeTabs = (action) ->
+      tabsSel = $('#quick_class_content ul.nav-tabs')
+      qcSel = $('.quick_class_target')
+      if action == "show" && tabsSel.css("display") == "none"
+        tabsSel.show "fade",200, () -> 
+          qcSel.each () -> $(@).css("height", $(@).height() - tabsSel.height())
+      else if action == "hide" && tabsSel.css("display") != "none"
+        tabsHeight = tabsSel.height()
+        tabsSel.hide () -> 
+          qcSel.each () -> $(@).css("height", $(@).height() + tabsHeight)  
+    
     modal = $("#mod_quick_classify")
     unless modal.length
       $('body').append("<div style='display:none;' id='mod_quick_classify' class='ui-front'>x</div>")
       modal = $("#mod_quick_classify")
     modal.html("")
+
     h = "<form>"
     if bulk_options
       if bulk_options["sr_id"]
@@ -345,32 +554,60 @@ root.Chain =
           h += "<input type='hidden' value='"+p+"' name='pk["+pk_counter+"]' />"
           pk_counter++
     h += "<div class='quick_class_outer'>"
-    h += "<div id='quick_class_content'></div><div id='quick_class_countries'></div>"
+    h += "<div id='quick_class_content'></div>"
+    h += "<div id='quick_class_countries'><table id='quick_class_table'></table></div>"
     h += "</div></form>"
     modal.html(h)
     writeClassification(c) for c in product.classifications
     Classify.enableHtsChecks() #check for HTS values inline
-
+    Chain.updateTariffList(c.country_id) for c in product.classifications
+    $('#quick_class_content').prepend """
+      <ul class='nav nav-tabs' style="display: none;" role='tablist'>
+        <li class='nav-item'>
+          <a class='nav-link active' id='hts-tab' data-toggle='tab' role='tab' aria-controls='hts' aria-selected='true'>HTS</a>
+        </li>
+        <li class='nav-item'>
+          <a class='nav-link' id='sched-b-tab' data-toggle='tab' role='tab' aria-controls='hts' aria-selected='false'>Schedule B</a>
+        </li>
+      </ul>
+      """
     RailsHelper.prepRailsForm modal.find("form"), saveUrl, (if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"]) then 'post' else 'put')
     buttons = {
-    'Cancel': () ->
-      $("#mod_quick_classify").remove()
     'Save': (e) ->
-      if Classify.hasInvalidTariffs()
+      countriesWithBlankTariffs = Chain.countriesWithBlankTariffs()
+      if countriesWithBlankTariffs.length > 0
+        window.alert("A populated tariff line cannot appear after a blank one: #{countriesWithBlankTariffs.join(', ')} ")      
+      else if Classify.hasInvalidTariffs()
         window.alert("Please correct or erase all bad tariff numbers.")
       else
         # disable the save button, otherwise the user can repeatedly click it while the page loads, resulting in numerous identical http requests
         $(e.target).attr("disabled", true)
         $("#mod_quick_classify form").submit()
+    'Cancel': () ->
+      $("#mod_quick_classify").remove()
+    'Additional Tariff': () ->
+      countryId = parseInt $('#quick_class_table .selected .quick_class_country').attr("country_id")
+      classi = Chain.quickClassifyProduct.classifications.find (cl) -> cl.country_id == countryId
+      contentSel = "div[quick-class-content-id='#{countryId}']"
+      nextLineNumber = Chain.nextTariffLineNum(countryId)
+      Chain.appendQuickClassifyTariff(classi, {line_number: nextLineNumber}, (contentSel + ' div.hts-tab'), true)
+      Chain.htsAutoComplete("div.tariff[country = '#{countryId}'][tariff-line-num= '#{nextLineNumber}'] input.hts_field")
+      $(contentSel).scrollTop($(contentSel)[0].scrollHeight)
+
     }
     $("#quick_class_countries a").click((evt) ->
       evt.preventDefault()
       cid = $(@).attr('country_id')
-      $("div.quick_class_country").removeClass("selected")
-      $(@).parent("div.quick_class_country").addClass("selected")
+      $("#quick_class_table tr.selected").removeClass("selected")
+      $(@).closest("tr").addClass("selected")
       $("div[quick-class-content-id]").hide()
-      $("div[quick-class-content-id='"+cid+"']").show("blind",{direction:'left'},500)
+      $("div[quick-class-content-id='"+cid+"']").show("fade", 200)
+      $('#hts-tab').attr("href", "#hts-tab-#{cid}")
+      $('#sched-b-tab').attr("href", "#sched-b-tab-#{cid}")
+      iso = (Chain.quickClassifyProduct.classifications.find (cl) -> parseInt(cid) == cl.country_id).country.iso_code
+      if iso == "US" then changeTabs("show") else changeTabs("hide")
     )
+
     if bulk_options && (bulk_options["pk"] || bulk_options["sr_id"])
       buttons['Advanced'] = () ->
         # $("#mod_quick_classify") = modal (model not reference directly due to circular reference / garbage collection concerns)
@@ -406,10 +643,21 @@ root.Chain =
           )
       should_submit
 
-    Chain.htsAutoComplete()
-    modal.dialog(title:"Quick Classify",width:550,buttons:buttons,modal:true)
+    Chain.setupRegionModal()
+    Chain.htsAutoComplete("input.hts_field")
+    modal.dialog(title:"Quick Classify",width:960,buttons:buttons,resizable:false,modal:true)
     modal.dialog('open')
 
+  setupRegionModal: () ->
+    unless $("#region_modal").length
+      $('body').append("<div style='display:none;' id='region_modal' class='ui-front'>x</div>")
+    regionModal = $("#region_modal")
+    if !regionModal.data("remotely-rendered")
+      regionModal.dialog(title:"Select Countries",width:890,resizable:false,modal:true)
+      countryIds = $(".quick_class_country a").map(() -> $(this).attr("country_id")).toArray()
+      Chain.renderRemote(requestPath: "/products/show_region_modal?country_ids=#{countryIds}", target: "#region_modal")
+    # not sure why this opens automatically
+    regionModal.dialog('close')
 
   getAuthToken : () ->
     # First check for the csrf cookie (since that's what angular uses as well), then fall back to the meta tag.
@@ -514,7 +762,11 @@ $(document).ready () ->
 
   $(document).on 'click', "a[data-action='auto-classify']", (evt) ->
     evt.preventDefault()
-    Chain.loadAutoClassifications($(@).parent().find('.hts_field').val(),$(@).attr['country'],"div[data-target='auto-classify']")
+    regionModal = $('#region_modal')   
+    regionModal.data("hts", $(@).parent().find('.hts_field').val())
+    regionModal.data("tariff-line-num", parseInt($(@).attr('tariff-line-num')))
+    regionModal.data("country", $(@).attr('country'))
+    regionModal.dialog('open')
 
   $(document).on 'click', "a.lnk_tariff_popup", (evt) ->
     evt.preventDefault()
@@ -525,7 +777,7 @@ $(document).ready () ->
 
   $(document).on 'click', "a.hts_option", (evt) ->
     evt.preventDefault()
-    h = $(@).parents(".hts_cell").find("input.hts_field")
+    h = $(@).parents(".tariff").find("input.hts_field")
     h.val($(@).html())
     h.blur()
 
@@ -594,3 +846,6 @@ $(document).ready () ->
         h = "<span class='fa fa-check-circle-o'></span>" if data.msg_state
         $('.task-wrap .task-email-check-wrap').html(h)
     }
+
+  $(document).on 'blur', 'input.hts_field', () ->
+        Chain.updateTariffList $(@).attr('country')

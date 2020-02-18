@@ -19,6 +19,7 @@ describe OpenChain::CustomHandler::Polo::PoloSystemInit do
         expect(OpenChain::EntityCompare::ComparatorRegistry).to receive(:register).with OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator
         expect(OpenChain::EntityCompare::ComparatorRegistry).to receive(:register).with OpenChain::CustomHandler::Polo::PoloFdaProductComparator
         expect(OpenChain::EntityCompare::ComparatorRegistry).to receive(:register).with OpenChain::CustomHandler::Polo::PoloNonTextileProductComparator
+        expect(OpenChain::EntityCompare::ComparatorRegistry).to receive(:register).with OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator
         subject.init
       end
     end

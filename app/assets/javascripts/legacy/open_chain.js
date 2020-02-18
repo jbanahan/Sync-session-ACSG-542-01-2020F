@@ -346,7 +346,7 @@ var OpenChain = (function() {
         removeEmptyClassifications();
       });
       Classify.enableHtsChecks(); 
-      Chain.htsAutoComplete();
+      Chain.htsAutoComplete("input.hts_field");
     },
     add_tf_row: function(link,parent_index,country_id) {
       my_index = new Date().getTime();
