@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       @line = CommercialInvoiceLine.new line_number: "2", customs_line_number: "1", po_number: "PO123", part_number: "PART2", quantity: BigDecimal("1"), value: BigDecimal("2"),
                                           country_origin_code: "CN", country_export_code: "VN", subheader_number: "0"
       @inv.commercial_invoice_lines << @line                                          
-      @tariff = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "Description",
+      @tariff = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "TraversÃ©",
                                              sima_code: "1", value_for_duty_code: "11", sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM", gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
                                              excise_amount: BigDecimal("9.45")
       @line.commercial_invoice_tariffs << @tariff
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       @line2 = CommercialInvoiceLine.new line_number: "1", customs_line_number: "1", po_number: "PO123", part_number: "PART1", quantity: BigDecimal("1"), value: BigDecimal("2"),
                                           country_origin_code: "US", country_export_code: "US", state_origin_code: "PA", state_export_code: "IL", subheader_number: "0"
       @inv.commercial_invoice_lines << @line2                                        
-      @tariff2 = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "Description",
+      @tariff2 = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "Bad Char א",
                                              sima_code: "1", value_for_duty_code: "11", sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM", gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
                                              excise_amount: BigDecimal("9.45")
       @line2.commercial_invoice_tariffs << @tariff2
@@ -160,12 +160,12 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l.gst_amount).to eq BigDecimal("5.50")
         expect(l.excise_rate_code).to eq "9"
         expect(l.excise_amount).to eq BigDecimal("9.45")
-        expect(l.description).to eq "Description"
+        expect(l.description).to eq "Bad Char א"
         expect(l.value_for_tax).to eq BigDecimal("19.75")
         expect(l.duty).to eq BigDecimal("9.25")
         expect(l.entered_value).to eq BigDecimal("10.50")
         expect(l.special_authority).to eq "6"
-        expect(l.description).to eq "Description"
+        expect(l.description).to eq "Bad Char א"
         expect(l.value_for_duty_code).to eq "11"
 
         l = data.commercial_invoice_lines.second
@@ -198,12 +198,12 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l.gst_amount).to eq BigDecimal("5.50")
         expect(l.excise_rate_code).to eq "9"
         expect(l.excise_amount).to eq BigDecimal("9.45")
-        expect(l.description).to eq "Description"
+        expect(l.description).to eq "TraversÃ©"
         expect(l.value_for_tax).to eq BigDecimal("19.75")
         expect(l.duty).to eq BigDecimal("9.25")
         expect(l.entered_value).to eq BigDecimal("10.50")
         expect(l.special_authority).to eq "6"
-        expect(l.description).to eq "Description"
+        expect(l.description).to eq "TraversÃ©"
         expect(l.value_for_duty_code).to eq "11"
       end
 
@@ -224,6 +224,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
       it "writes out formatted entry data to an IO source" do
         io = StringIO.new
+        io.binmode
         report = StringIO.new
         subject.write_entry_data io, report, @ed
 
@@ -259,7 +260,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l[257..259]).to eq " 11"
         expect(l[260..270]).to eq "1050".rjust(11)
         expect(l[271..286]).to eq "6".ljust(16)
-        expect(l[287..345]).to eq "Description".ljust(59)
+        expect(l[287..345]).to eq "Bad Char ?".ljust(59)
         expect(l[346..361]).to eq "7034567890000001"
         expect(l[362..364]).to eq "  1"
         expect(l[365..369]).to eq "    0"
@@ -314,7 +315,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l[257..259]).to eq " 11"
         expect(l[260..270]).to eq "1050".rjust(11)
         expect(l[271..286]).to eq "6".ljust(16)
-        expect(l[287..345]).to eq "Description".ljust(59)
+        expect(l[287..345].bytes).to eq "TraversÃ©".ljust(59).encode("Windows-1252", invalid: :replace, undef: :replace, replace: "?").bytes
         expect(l[346..361]).to eq "7034567890000002"
         expect(l[362..364]).to eq "  1"
         expect(l[365..369]).to eq "    0"

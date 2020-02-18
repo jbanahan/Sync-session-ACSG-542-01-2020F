@@ -120,18 +120,20 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     entry_written = false
     begin
       buffered_billing_file_data = StringIO.new
-      bufferend_report_data = StringIO.new
+      buffered_billing_file_data.set_encoding("Windows-1252", "Windows-1252")
+      buffered_report_data = StringIO.new
+      buffered_report_data.set_encoding("Windows-1252", "Windows-1252")
 
       entry.commercial_invoice_lines.each_with_index do |line, x|
         write_entry_data_line buffered_billing_file_data, entry, line, x == 0
-        write_report_data bufferend_report_data, entry, line
+        write_report_data buffered_report_data, entry, line
       end
 
       buffered_billing_file_data.rewind
-      bufferend_report_data.rewind
+      buffered_report_data.rewind
 
       billing_file.write buffered_billing_file_data.read
-      billing_report.write bufferend_report_data.read
+      billing_report.write buffered_report_data.read
 
       entry_written = true
     rescue => e
