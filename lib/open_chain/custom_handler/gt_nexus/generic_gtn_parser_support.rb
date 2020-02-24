@@ -1,3 +1,5 @@
+require 'open_chain/custom_handler/nokogiri_xml_helper'
+
 module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserSupport
   extend ActiveSupport::Concern
 
@@ -13,23 +15,62 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
       a = company.addresses.build system_code: address_system_code
     end
 
-    a.name = party_xml.text "name"
     a.address_type = party_address_type
-    a.line_1 = party_xml.text "address/addressLine1"
-    a.line_2 = party_xml.text "address/addressLine2"
-    a.line_3 = party_xml.text "address/addressLine3"
-    a.city = party_xml.text "address/city"
-    a.state = party_xml.text "address/stateOrProvince"
-    a.postal_code = party_xml.text "address/postalCodeNumber"
 
-    country = party_xml.text "address/countryCode"
-    if country
-      a.country_id = Country.where(iso_code: country).first.try(:id)
+    if _simple_party_xml?(party_xml)
+      _simple_address_parse(a, party_xml)
     else
-      a.country = nil
+      _complex_address_parse(a, party_xml)
     end
 
     a
+  end
+
+  def _simple_party_xml? party_xml
+    party_xml.name == "PartyInfo"
+  end
+
+  def _simple_address_parse a, party_xml
+    a.name = _element_text(party_xml, "Name")
+    address_lines = xpath(party_xml, "Address/AddressLine")
+    address_lines.each_with_index do |address_line, idx|
+      break if idx > 2
+
+      a.public_send("line_#{idx + 1}=".to_sym, address_line.text)
+    end
+
+    # Clear out any unused address lines
+    a.line_3 = nil if address_lines.length < 3
+    a.line_2 = nil if address_lines.length < 2
+    a.line_1 = nil if address_lines.length < 1
+
+    a.city = _element_text(party_xml, "City/CityName")
+    a.state = _element_text(party_xml, "City/State")
+    a.postal_code = _element_text(party_xml, "PostalCode")
+
+    country = _element_text(party_xml, "City/CountryCode")
+    if country
+      a.country_id = find_country(country).try(:id)
+    else
+      a.country = nil
+    end
+  end
+
+  def _complex_address_parse a, party_xml
+    a.name = _element_text(party_xml, "name")
+    a.line_1 = _element_text(party_xml, "address/addressLine1")
+    a.line_2 = _element_text(party_xml, "address/addressLine2")
+    a.line_3 = _element_text(party_xml, "address/addressLine3")
+    a.city = _element_text(party_xml, "address/city")
+    a.state = _element_text(party_xml, "address/stateOrProvince")
+    a.postal_code = _element_text(party_xml, "address/postalCodeNumber")
+
+    country = _element_text(party_xml, "address/countryCode")
+    if country
+      a.country_id = find_country(country).try(:id)
+    else
+      a.country = nil
+    end
   end
 
   # By default, we'll want to prefix system codes, this method can be overridden to 
@@ -44,7 +85,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
     # create them inside the full order transaction.
     parties = {}
     party_map.each_pair do |party_type, xpath|
-      party_xml = REXML::XPath.first(xml, xpath)
+      party_xml = _xpath_first(xml, xpath)
       next if party_xml.nil?
 
       if [:ship_to, :ship_from].include? party_type
@@ -60,14 +101,45 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
     parties
   end
 
+  # This method is an adapter so that this module can be used by parsers that use the nokogiri based parsers or REXML ones.
+  def _xpath_first(xml, xpath_expression)
+    if _nokogiri?
+      return xpath(xml, xpath_expression).first
+    else
+      return REXML::XPath.first(xml, xpath_expression)
+    end
+  end
+
+  # This method is an adapter so that this module can be used by parsers that use the nokogiri based parsers or REXML ones.
+  def _element_text(xml, xpath_expression)
+    if _nokogiri?
+      return first_text(xml, xpath_expression)
+    else
+      xml.text xpath_expression
+    end
+  end
+
+  def _element_attribute(xml, xpath_expression)
+    if _nokogiri?
+      return first_text(xml, xpath_expression)
+    else
+      REXML::XPath.first(xml, xpath_expression).try(:value)
+    end
+  end
+
+  def _nokogiri? 
+    self.class < OpenChain::CustomHandler::NokogiriXmlHelper
+  end
+
   # Looks up / creates a given party.
   def find_or_create_company party_xml, user, filename, party_type
     system_code = party_system_code(party_xml, party_type)
     return nil if system_code.blank?
+    name = party_company_name(party_xml, party_type)
+    return nil if name.blank?
 
     party_type_id = party_type.to_s.titleize
     company = nil
-    name = party_company_name(party_xml, party_type)
     created = false
     system_id = nil
     Lock.acquire("Company-#{system_code}") do
@@ -96,6 +168,11 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
       company.name = name
       address = parse_address_info(company, party_xml, party_type_id, address_system_code: "#{system_id}-#{system_code}")
 
+      if (party_type == :factory || party_type == :vendor) && _simple_party_xml?(party_xml)
+        # MID is sent for only these 2 types
+        company.mid = et(party_xml, "References[Type = 'MIDNumber']/Value")
+      end
+
       set_additional_party_information(company, party_xml, party_type)
       
       if company.changed? || address.changed?
@@ -109,7 +186,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
   end
 
   def party_company_name party_xml, party_type
-    party_xml.text "name"
+    _simple_party_xml?(party_xml) ? _element_text(party_xml, "Name") : _element_text(party_xml, "name")
   end
 
   # Callback that allows implementing class to determine if party information should be updated
@@ -172,22 +249,22 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
 
   # Retrieves a reference/value given a type code value
   def reference_value reference_parent, code
-    reference_parent.text("reference[type = '#{code}']/value")
+    _element_text(reference_parent, "reference[type = '#{code}']/value")
   end
 
   # Retrieves a itemIdentifier/itemIdentifierValue given a itemIdentifierTypeCode value
   def item_identifier_value identifier_parent, code
-    identifier_parent.text("itemIdentifier[itemIdentifierTypeCode = '#{code}']/itemIdentifierValue")
+    _element_text(identifier_parent, "itemIdentifier[itemIdentifierTypeCode = '#{code}']/itemIdentifierValue")
   end
 
   # Retrieves a itemDescriptor/itemDescriptorValue given a itemDescriptorTypeCode value
   def item_descriptor_value descriptor_parent, code
-    descriptor_parent.text("itemDescriptor[itemDescriptorTypeCode = '#{code}']/itemDescriptorValue")
+    _element_text(descriptor_parent, "itemDescriptor[itemDescriptorTypeCode = '#{code}']/itemDescriptorValue")
   end
 
   # Retrieves an identification/value given a type code
   def identification_value parent, code
-    parent.text "identification[type = '#{code}']/value"
+    _element_text(parent, "identification[type = '#{code}']/value")
   end
 
   # Prefixes the given value with the provided company's system code if the prefix_identifiers_with_system_codes

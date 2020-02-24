@@ -577,5 +577,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         do_parser_test("Rockport Feeds", OpenChain::CustomHandler::Rockport::RockportGtnInvoiceXmlParser, '/rockport_invoice/file.xml')
       end
     end
+    
+    context "Kirklands" do
+      it "handles Kirklands GTN PO files" do
+        do_parser_test("Kirklands GTN XML", OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser, '/kirklands_850/kirklands.xml')
+      end
+    end
   end
 end

@@ -1,0 +1,317 @@
+<OrderMessage>
+  <TransactionInfo>
+    <MessageSender>ACSKRLND</MessageSender>
+    <MessageRecipient>ACSKRLND</MessageRecipient>
+    <MessageID>20191030174908870_675974</MessageID>
+    <Created>2019-10-30T17:49:08</Created>
+    <FileName>ACSKRLND_20191030_174908870_PO_675974.xml</FileName>
+    <MessageOriginator>KIRKLANDS</MessageOriginator>
+  </TransactionInfo>
+  <Order>
+    <Header>
+      <OrderMessageID>20191030174908870_675974</OrderMessageID>
+      <OrderNumber>675974</OrderNumber>
+      <OrderDateTime>2019-10-30T12:00:00.000</OrderDateTime>
+      <Purpose>CREATE</Purpose>
+      <CustomerCode>ACSKRLD</CustomerCode>
+      <CustomerDepartmentCode>25</CustomerDepartmentCode>
+      <CustomerDepartmentName>TEXTILES</CustomerDepartmentName>
+      <OrderType>Cross-Border</OrderType>
+      <PaymentTerms>CC</PaymentTerms>
+      <BuyerIdentification>
+        <IdentificationCode>233</IdentificationCode>
+        <FirstName>TONI</FirstName>
+        <LastName>WARREN</LastName>
+      </BuyerIdentification>
+      <ShipWindow>
+        <StartDate>2020-01-22T12:00:00.000</StartDate>
+        <EndDate>2020-01-28T12:00:00.000</EndDate>
+        <CancelDate>2020-01-28T12:00:00.000</CancelDate>
+      </ShipWindow>
+      <PoReferenceDate1>2020-01-22T12:00:00.000</PoReferenceDate1>
+      <PoReferenceDate2>2020-01-28T12:00:00.000</PoReferenceDate2>
+      <PoReferenceNumber1/>
+      <PoReferenceNumber2>Intl</PoReferenceNumber2>
+      <PartyInfo>
+        <Type>BillTo</Type>
+        <Code>Kirklands</Code>
+        <Name>Kirkland's, Inc.</Name>
+        <Address>
+          <AddressLine>5310 Maryland Way</AddressLine>
+        </Address>
+        <City>
+          <CityName>Brentwood</CityName>
+          <State>TN</State>
+          <CountryCode>US</CountryCode>
+        </City>
+        <PostalCode>37027</PostalCode>
+        <Email>AP@kirklands.com</Email>
+        <References>
+          <Type>TelephoneNumber</Type>
+          <Value>(615)872-4811</Value>
+        </References>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Consignee</Type>
+        <Code>Kirklands</Code>
+        <Name>Kirkland's, Inc.</Name>
+        <Address>
+          <AddressLine>5310 Maryland Way</AddressLine>
+        </Address>
+        <City>
+          <CityName>Brentwood</CityName>
+          <State>TN</State>
+          <CountryCode>US</CountryCode>
+        </City>
+        <PostalCode>37027</PostalCode>
+        <Email>_KirklandsImporting@kirklands.com</Email>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>ShipTo</Type>
+        <Code>5000</Code>
+        <Name>Kirkland's Distribution Center</Name>
+        <Address>
+          <AddressLine>431 Smith Lane</AddressLine>
+        </Address>
+        <City>
+          <CityName>Jackson</CityName>
+          <State>TN</State>
+          <CountryCode>US</CountryCode>
+        </City>
+        <PostalCode>38305</PostalCode>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Supplier</Type>
+        <Code>28536</Code>
+        <Name>FWS_VIVSUN EXPORT</Name>
+        <Address>
+          <AddressLine>23/47 LINI RD INDUSTRIAL AREA</AddressLine>
+        </Address>
+        <City>
+          <CityName>GHAZIABAD</CityName>
+          <CountryCode>IN</CountryCode>
+        </City>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Factory</Type>
+        <Code>28537</Code>
+        <Name>GUPTA EXIM (INDIA) PVT. LTD.</Name>
+        <Address>
+          <AddressLine>(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1</AddressLine>
+        </Address>
+        <City>
+          <CityName>FARIDABAD</CityName>
+          <CountryCode>IN</CountryCode>
+        </City>
+        <References>
+          <Type>MIDNumber</Type>
+          <Value>INGUP103XXXX</Value>
+        </References>
+      </PartyInfo>
+      <PartyInfo>
+        <Type>Agent</Type>
+        <Code>28387</Code>
+        <Name>FLAT WORLD SOURCE INC</Name>
+        <Address>
+          <AddressLine>V-12 ,GREEN PARK EXTN</AddressLine>
+        </Address>
+        <City>
+          <CityName>NEW DELHI</CityName>
+          <CountryCode>IN</CountryCode>
+        </City>
+        <PostalCode>110016</PostalCode>
+      </PartyInfo>
+      <Comments/>
+      <StringReferences>
+        <Type>StringReference1</Type>
+        <Value>FOB</Value>
+      </StringReferences>
+      <StringReferences>
+        <Type>StringReference2</Type>
+        <Value>Origin Port</Value>
+      </StringReferences>
+      <StringReferences>
+        <Type>StringReference3</Type>
+        <Value>Direct Import - Kirkland's Nominated Freight Forwarder</Value>
+      </StringReferences>
+      <StringReferences>
+        <Type>StringReference4</Type>
+        <Value>FCR 60</Value>
+      </StringReferences>
+      <DateReferences>
+        <Type>DateReference1</Type>
+        <Value>2020-04-02T12:00:00.000</Value>
+      </DateReferences>
+      <DateReferences>
+        <Type>DateReference2</Type>
+        <Value>2020-01-28T12:00:00.000</Value>
+      </DateReferences>
+    </Header>
+    <Details>
+      <LineItem>
+        <LineItemNumber>5</LineItemNumber>
+        <Quantity Unit="Each">360.0000</Quantity>
+        <FirstCostPrice Currency="USD">4.8500</FirstCostPrice>
+        <RetailCostPrice Currency="USD">24.9900</RetailCostPrice>
+        <ProductCode>219397</ProductCode>
+        <ProductName>PILLOW OPEN PLAID BLK 20IN</ProductName>
+        <HarmonizedCode>9404901000</HarmonizedCode>
+        <HarmonizedCodeInfo>
+          <References>
+            <Type>HTS</Type>
+            <Value>940490</Value>
+          </References>
+        </HarmonizedCodeInfo>
+        <ProdReferenceNumber1/>
+        <ProdReferenceNumber2>119118 BLACK</ProdReferenceNumber2>
+        <ProdReferenceNumber3>25</ProdReferenceNumber3>
+        <ProdReferenceNumber5>251_PILLOWS_2510_ACCENT PILLOWS</ProdReferenceNumber5>
+        <ProdReferenceDate1>2020-03-08T12:00:00.000</ProdReferenceDate1>
+        <ProdReferenceDate2>2020-03-14T12:00:00.000</ProdReferenceDate2>
+        <Volume Unit="Cubic Meters">6.7308813</Volume>
+        <ReportableQuantity>60</ReportableQuantity>
+        <MasterPackQuantity Unit="EACH">6.0000</MasterPackQuantity>
+        <CartonDimensions Unit="Inches">
+          <DimensionInfo>
+            <Length>19.5000</Length>
+            <Width>19.5000</Width>
+            <Height>18.0000</Height>
+          </DimensionInfo>
+        </CartonDimensions>
+        <ShipWindow>
+          <StartDate>2020-01-22T12:00:00.000</StartDate>
+          <EndDate>2020-01-28T12:00:00.000</EndDate>
+          <CancelDate>2020-01-28T12:00:00.000</CancelDate>
+        </ShipWindow>
+        <ETAFinalDestinationDate>2020-04-02T12:00:00.000</ETAFinalDestinationDate>
+        <TransportationMode>OCEAN</TransportationMode>
+        <Origin>
+          <CityName>Chennai</CityName>
+          <CountryCode>IN</CountryCode>
+        </Origin>
+        <PortOfLoading>
+          <CityName>Chennai</CityName>
+          <CountryCode>IN</CountryCode>
+        </PortOfLoading>
+        <PortOfDischarge>
+          <CityName>Memphis</CityName>
+          <CountryCode>US</CountryCode>
+        </PortOfDischarge>
+        <FinalDestination>
+          <LocationCode>5000</LocationCode>
+          <Name>Kirkland's Distribution Center</Name>
+          <Address>
+            <AddressLine>431 Smith Lane</AddressLine>
+          </Address>
+          <City>
+            <CityName>Jackson</CityName>
+            <State>TN</State>
+            <CountryCode>US</CountryCode>
+          </City>
+          <PostalCode>38305</PostalCode>
+        </FinalDestination>
+        <PartyInfo>
+          <Type>Consolidator</Type>
+          <Code>ACS</Code>
+          <Name>Allport Cargo Services</Name>
+        </PartyInfo>
+        <PartyInfo>
+          <Type>Supplier</Type>
+          <Code>28536</Code>
+          <Name>FWS_VIVSUN EXPORT</Name>
+          <Address>
+            <AddressLine>23/47 LINI RD INDUSTRIAL AREA</AddressLine>
+          </Address>
+          <City>
+            <CityName>GHAZIABAD</CityName>
+            <CountryCode>IN</CountryCode>
+          </City>
+        </PartyInfo>
+        <StringReferences>
+          <Type>StringReference1</Type>
+          <Value/>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference5</Type>
+          <Value>yes</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference6</Type>
+          <Value>yes</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference7</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference8</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference9</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference10</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference11</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference12</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference13</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference14</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference15</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference16</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference17</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference18</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference19</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference20</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference21</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference22</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference23</Type>
+          <Value>no</Value>
+        </StringReferences>
+        <StringReferences>
+          <Type>StringReference24</Type>
+          <Value>no</Value>
+        </StringReferences>
+      </LineItem>
+    </Details>
+  </Order>
+</OrderMessage>

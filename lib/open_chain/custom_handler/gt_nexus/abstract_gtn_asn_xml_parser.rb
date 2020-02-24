@@ -1,15 +1,13 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_asn_parser_support'
 
 module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
-  include OpenChain::CustomHandler::GtNexus::GenericGtnParserSupport
   include OpenChain::CustomHandler::GtNexus::GenericGtnAsnParserSupport
-  extend OpenChain::CustomHandler::XmlHelper
+  include OpenChain::CustomHandler::XmlHelper
 
   # Sets any additional customer specific information into the shipment.
   # in the generic case, this method is a no-op

@@ -1,23 +1,8 @@
+require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
+
 module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnParserSupport
   extend ActiveSupport::Concern
-
-  # This is a simple method that allows using this module with both Nokogiri and REXML based
-  # XML parser classes
-  def _element_text(xml, xpath_expression)
-    if self.respond_to?(:first_text)
-      return first_text(xml, xpath_expression)
-    else
-      xml.text xpath_expression
-    end
-  end
-
-  def _element_attribute(xml, xpath_expression)
-    if self.respond_to?(:first_text)
-      return first_text(xml, xpath_expression)
-    else
-      REXML::XPath.first(xml, xpath_expression).try(:value)
-    end
-  end
+  include OpenChain::CustomHandler::GtNexus::GenericGtnParserSupport
 
   def find_port port_xml, lookup_type_order: [:schedule_d_code, :schedule_k_code, :unlocode, :iata_code]
     return nil if port_xml.nil?

@@ -15,7 +15,11 @@ module OpenChain; module CustomHandler; module Kirklands; module KirklandsCustom
     prod_add: {label: "ADD?", data_type: :boolean, module_type: "Product", cdef_uid: "prod_add"},
     prod_add_case: {label: "ADD Case Number", data_type: :string, module_type: "Product", cdef_uid: "prod_add_case"},
     prod_cvd: {label: "CVD?", data_type: :boolean, module_type: "Product", cdef_uid: "prod_cvd"},
-    prod_cvd_case: {label: "CVD Case Number", data_type: :string, module_type: "Product", cdef_uid: "prod_cvd_case"}
+    prod_cvd_case: {label: "CVD Case Number", data_type: :string, module_type: "Product", cdef_uid: "prod_cvd_case"},
+    prod_vendor_item_number: {label: "Vendor Item Number", data_type: :string, module_type: "Product", cdef_uid: "prod_vendor_item_number"},
+    ord_department: {label: "Department", data_type: :string, module_type: "Order", cdef_uid: "ord_department"},
+    ord_department_code: {label: "Department Code", data_type: :string, module_type: "Order", cdef_uid: "ord_department_code"},
+    ord_type: {label: "Type", data_type: :string, module_type: "Order", cdef_uid: "ord_type"}
   }
 
   def self.included(base)

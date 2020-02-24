@@ -73,6 +73,7 @@ require 'open_chain/custom_handler/pvh/pvh_gtn_asn_xml_parser'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/amazon/amazon_product_parser_broker'
 require 'open_chain/custom_handler/rockport/rockport_gtn_invoice_xml_parser'
+require 'open_chain/custom_handler/kirklands/kirklands_gtn_order_xml_parser'
 
 module OpenChain
   class IntegrationClient
@@ -339,6 +340,8 @@ module OpenChain
         OpenChain::CustomHandler::Amazon::AmazonProductParserBroker.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "rockport_invoice") && custom_features.include?("Rockport Feeds")
         OpenChain::CustomHandler::Rockport::RockportGtnInvoiceXmlParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "kirklands_850") && custom_features.include?("Kirklands GTN XML")
+        OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

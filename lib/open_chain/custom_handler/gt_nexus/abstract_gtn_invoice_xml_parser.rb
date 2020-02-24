@@ -29,7 +29,7 @@ require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
 module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoiceXmlParser
   include OpenChain::CustomHandler::GtNexus::GenericGtnParserSupport
   include OpenChain::IntegrationClientParser
-  extend OpenChain::CustomHandler::XmlHelper
+  include OpenChain::CustomHandler::XmlHelper
   
   # Used as an extension point for any extending class to add any customer
   # specific information to the invoice.

@@ -29,7 +29,8 @@ module OpenChain; module ModelFieldDefinition; module OrderLineFieldDefinition
           ol.product && !ol.product.variants.empty?
         },
         qualified_field_name: "(SELECT IF((SELECT count(*) FROM products INNER JOIN variants ON variants.product_id = products.id where order_lines.product_id = products.id)>0,1,null))"
-      }]
+      }],
+      [13, :ordln_msrp, :unit_msrp, "MSRP / Unit", {data_type: :decimal} ]
     ]
     add_fields CoreModule::ORDER_LINE, make_product_arrays(100,"ordln","order_lines")
     add_fields CoreModule::ORDER_LINE, make_ship_to_arrays(200,"ordln","order_lines")
