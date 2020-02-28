@@ -480,4 +480,27 @@ describe CoreObjectSupport do
       expect(ent.split_newline_values("\n \na\n\n")).to eq ["a"]
     end
   end
+
+  describe "find_or_initialize_sync_record" do
+    subject { Factory(:entry) }
+
+    it "initializes a new sync record if one isn't find for the specified trading partner" do
+      sr = subject.find_or_initialize_sync_record("TRADING")
+      expect(sr.persisted?).to eq false
+      expect(sr.syncable).to eq subject
+      expect(sr.trading_partner).to eq "TRADING"
+      expect(sr.sent_at).to be_nil
+      expect(sr.confirmed_at).to be_nil
+    end
+
+    it "returns an existing sync record for the given trading partner" do 
+      sr = subject.sync_records.create! trading_partner: "TRADING"
+      expect(subject.find_or_initialize_sync_record("TRADING")).to eq sr
+    end
+
+    it "ignores sync records for other trading partners" do
+      sr = subject.sync_records.create! trading_partner: "NOT TRADING"
+      expect(subject.find_or_initialize_sync_record("TRADING")).not_to eq sr
+    end
+  end
 end

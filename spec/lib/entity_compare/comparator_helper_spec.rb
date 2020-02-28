@@ -426,5 +426,40 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(subject.find_entity_object_by_snapshot_values(snapshot, reference: :shp_ref, booking_number: :shp_booking_number)).to be_nil
     end
   end
+
+  describe "failed_business_rules?" do
+    let(:snapshot) {
+      {
+      "entity" => {
+        "core_module" => "Shipment",
+        "model_fields" => {
+          "shp_failed_business_rules" => "Some Random Rule"
+          }
+        }
+      }
+    }
+
+    it "returns true if snapshot includes any field business rules" do
+      expect(subject.failed_business_rules? snapshot).to eq true
+    end
+
+    it "returns false if business rule field is blank" do
+      snapshot["entity"]["model_fields"]["shp_failed_business_rules"] = ""
+      expect(subject.failed_business_rules? snapshot).to eq false
+    end
+
+    it "returns false if business rule field is missing" do
+      snapshot["entity"]["model_fields"].delete "shp_failed_business_rules"
+      expect(subject.failed_business_rules? snapshot).to eq false
+    end
+
+    it "handles different core modules" do
+      snapshot["entity"]["model_fields"].delete "shp_failed_business_rules"
+      
+      snapshot["entity"]["core_module"] = "Entry"
+      snapshot["entity"]["model_fields"]["ent_failed_business_rules"] = "Rule 1"
+      expect(subject.failed_business_rules? snapshot).to eq true
+    end
+  end
   
 end

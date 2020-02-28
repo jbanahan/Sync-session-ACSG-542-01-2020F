@@ -98,7 +98,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
 
   def find_entity_object(entity)
     entity = unwrap_entity(entity)
-    cm = CoreModule.find_by_class_name(entity['core_module'])
+    cm = find_core_module(entity)
     obj = nil
     if cm
       obj = cm.klass.where(id: entity['record_id']).first
@@ -109,7 +109,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
 
   def find_entity_object_by_snapshot_values(snapshot, fields_hash = {})
     entity = unwrap_entity(snapshot)
-    cm = CoreModule.find_by_class_name(entity['core_module'])
+    cm = find_core_module(entity)
     obj = nil
     if cm && fields_hash.size > 0
       relation = cm.klass
@@ -121,6 +121,10 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     end
 
     obj
+  end
+
+  def find_core_module snapshot_entity
+    cm = CoreModule.find_by_class_name(snapshot_entity['core_module'])
   end
 
   # This method assumes the values given are coming raw from a snapshot JSON,
@@ -228,6 +232,14 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     return true if any_entities_missing_from_list?(primary_list, secondary_list)
     # Now do the inverse and validate that the secondary list has the same entities
     any_entities_missing_from_list?(secondary_list, primary_list)
+  end
+
+  def failed_business_rules? snapshot
+    entity = unwrap_entity(snapshot)
+    cm = find_core_module(entity)
+    prefix = CoreModule.module_abbreviation(cm)
+
+    return !mf(snapshot, "#{prefix}_failed_business_rules").blank?
   end
 
 end; end; end

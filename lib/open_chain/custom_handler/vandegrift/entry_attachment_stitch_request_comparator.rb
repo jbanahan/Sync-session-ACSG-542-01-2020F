@@ -1,4 +1,6 @@
 require 'open_chain/sqs'
+require 'open_chain/entity_compare/comparator_helper'
+require 'open_chain/entity_compare/entry_comparator'
 
 module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachmentStitchRequestComparator
   extend OpenChain::EntityCompare::EntryComparator

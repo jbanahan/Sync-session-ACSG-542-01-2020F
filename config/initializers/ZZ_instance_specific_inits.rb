@@ -17,6 +17,9 @@ if !Rails.env.test? && MasterSetup.master_setup_initialized?
   require 'open_chain/custom_handler/polo/polo_system_init'
   OpenChain::CustomHandler::Polo::PoloSystemInit.init
 
+  require 'open_chain/custom_handler/kirklands/kirklands_system_init'
+  OpenChain::CustomHandler::Kirklands::KirklandsSystemInit.init
+
   if Rails.env.development?
     require 'open_chain/custom_handler/dev_system_init'
     OpenChain::CustomHandler::DevSystemInit.init

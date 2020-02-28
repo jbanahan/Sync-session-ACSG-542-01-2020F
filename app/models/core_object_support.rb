@@ -189,6 +189,13 @@ module CoreObjectSupport
     self.class.split_newline_values string_containing_newlines
   end
 
+  def find_or_initialize_sync_record trading_partner
+    sr = self.sync_records.find { |sr| sr.trading_partner == trading_partner}
+    sr = self.sync_records.build(trading_partner: trading_partner) if sr.nil?
+
+    sr
+  end
+
   module ClassMethods
     def find_by_custom_value custom_definition, value
       self.joins(:custom_values).where('custom_values.custom_definition_id = ?',custom_definition.id).where("custom_values.#{custom_definition.data_column} = ?",value).first
