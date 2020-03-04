@@ -79,10 +79,10 @@ module OpenChain; module CustomHandler; module Generator315Support
     # Voyage must be at least 2 chars to fit EDI document standards for the 315, so zero-pad the voyage to 2 chars
     add_element root, "VoyageNumber", data.voyage_number.to_s.rjust(2, "0")
     add_element root, "PortOfEntry", data.port_of_entry
-    write_location_xml(root, data.port_of_entry, "PortOfEntry", data.port_of_entry_location)
     add_element root, "PortOfLading", data.port_of_lading
-    write_location_xml(root, data.port_of_lading, "PortOfLading", data.port_of_lading_location)
     add_element root, "PortOfUnlading", data.port_of_unlading
+    write_location_xml(root, data.port_of_entry, "PortOfEntry", data.port_of_entry_location)
+    write_location_xml(root, data.port_of_lading, "PortOfLading", data.port_of_lading_location)
     write_location_xml(root, data.port_of_unlading, "PortOfUnlading", data.port_of_unlading_location)
     add_element root, "CargoControlNumber", data.cargo_control_number
 
