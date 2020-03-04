@@ -22,7 +22,8 @@ module OpenChain
       attr_reader :row_count, :custom_where, :synced_product_ids
 
       def initialize(opts={})
-        @custom_where = opts[:where]
+        @custom_where = opts[:custom_where].presence || opts[:where]
+        
         if opts[:custom_definitions]
           @definitions = opts[:custom_definitions]
         end

@@ -22,11 +22,27 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductParserBroker do
 
     it "identifies OGA parts files" do
       # For now, since these parsers aren't written, this should error
-      expect { subject.get_parser "/path/to/US_PGA_RAD_A2UCU5QTD5G4BE_11132019.csv" }.to raise_error "No parser exists to handle Amazon RAD OGA file types."
+      expect { subject.get_parser "/path/to/US_PGA_BLA_A2UCU5QTD5G4BE_11132019.csv" }.to raise_error "No parser exists to handle Amazon BLA OGA file types."
     end
 
     it "identifies Document files" do
       expect(subject.get_parser "/path/to/US_12345789_EE908U_Ion#Enterprises_PGA_RAD_RadiationCertificate.pdf").to eq OpenChain::CustomHandler::Amazon::AmazonProductDocumentsParser
+    end
+
+    it "identifies FDA RAD parts files" do
+      expect(subject.get_parser "/path/to/US_PGA_RAD_11132019.csv").to eq OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser
+    end
+
+    it "identifies CVD parts files" do
+      expect(subject.get_parser "/path/to/US_PGA_CVD_11132019.csv").to eq OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser
+    end
+
+    it "identifies ADD parts files" do
+      expect(subject.get_parser "/path/to/US_PGA_ADD_11132019.csv").to eq OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser
+    end
+
+    it "identifies Lacey parts files" do
+      expect(subject.get_parser "/path/to/US_PGA_ALG_11132019.csv").to eq OpenChain::CustomHandler::Amazon::AmazonLaceyProductParser
     end
 
     it "errors on unexpected files" do

@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaProductParser do
         p = Factory(:product, importer: importer, unique_identifier: "CMID-EL89890")
         p.update_custom_value! cdefs[:prod_fda_affirmation_compliance], "CCC"
         p.update_custom_value! cdefs[:prod_fda_affirmation_compliance_value], "AR56T1"
-        csv_rows.first[17] = ""
+        csv_rows.first[16] = ""
 
         expect { subject.process_part_lines(user, "US_PGA_FCT_date.csv", csv_rows) }.not_to change { Product.count }.from(1)
 

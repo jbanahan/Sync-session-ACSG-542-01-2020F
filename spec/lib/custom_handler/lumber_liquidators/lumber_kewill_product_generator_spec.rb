@@ -9,8 +9,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
     let! (:product) {
       p = Factory(:product, importer: importer, unique_identifier: "0000000123", name: "Description")
       c = p.classifications.create! country: us
+      c.update_custom_value!(cdefs[:class_special_program_indicator], "SP")
       c.tariff_records.create! hts_1: "12345678"
       p.update_custom_value!(cdefs[:prod_country_of_origin], "CO")
+      p.update_custom_value!(cdefs[:prod_cvd_case], "CVDCASE")
+      p.update_custom_value!(cdefs[:prod_add_case], "ADDCASE")
 
       p
     }
@@ -35,7 +38,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
       expect(parent.text "descr").to eq "DESCRIPTION"
       expect(parent.text "CatTariffClassList/CatTariffClass/seqNo").to eq "1"
       expect(parent.text "CatTariffClassList/CatTariffClass/tariffNo").to eq "12345678"
+      expect(parent.text "CatTariffClassList/CatTariffClass/spiPrimary").to eq "SP"
       expect(parent.text "countryOrigin").to eq "CO"
+
+      penalties = REXML::XPath.match(parent, "CatPenaltyList/CatPenalty").to_a
+      expect(penalties.length).to eq 2
+
+      p = penalties.first
+      expect(p.text "partNo").to eq "123"
+      expect(p.text "custNo").to eq "LUMBER"
+      expect(p.text "dateEffective").to eq "20140101"
+      expect(p.text "penaltyType").to eq "CVD"
+      expect(p.text "caseNo").to eq "CVDCASE"
+
+      p = penalties.second
+      expect(p.text "penaltyType").to eq "ADA"
+      expect(p.text "caseNo").to eq "ADDCASE"      
     end
 
     it "does not sync previously synced products" do
@@ -111,7 +129,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
       end
 
       it "adds exclusion 301 tariff and ignores standard 301 tariff" do
-        row[21] = "99038812"
+        row[4] = "99038812"
         special_tariff.update! special_tariff_type: "301"
 
         subject.write_row_to_xml parent, 1, row

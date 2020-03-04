@@ -1,6 +1,9 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/amazon/amazon_product_parser'
 require 'open_chain/custom_handler/amazon/amazon_fda_product_parser'
+require 'open_chain/custom_handler/amazon/amazon_fda_rad_product_parser'
+require 'open_chain/custom_handler/amazon/amazon_cvd_add_product_parser'
+require 'open_chain/custom_handler/amazon/amazon_lacey_product_parser'
 require 'open_chain/custom_handler/amazon/amazon_product_documents_parser'
 
 # Amazon sends us a whole bunch of different product csv files, and they're all going to end up
@@ -35,6 +38,15 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
       case oga_code
       when "FDG", "FCT"
         return OpenChain::CustomHandler::Amazon::AmazonFdaProductParser
+      when "RAD"
+        return OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser
+      when "CVD", "ADD"
+        # I don't actually know how the CVD / ADD part files are going to be named...we don't have 
+        # sample files for them, so it's just a best guess.  The detection algorithm for them might
+        # have to change here.
+        return OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser
+      when "ALG"
+        return OpenChain::CustomHandler::Amazon::AmazonLaceyProductParser
       else
         inbound_file.reject_and_raise "No parser exists to handle Amazon #{oga_code} OGA file types."
       end

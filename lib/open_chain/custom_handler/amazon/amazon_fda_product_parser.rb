@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonFdaProductPar
 
   def process_fct_file(product, changed, line)
     standard_parsing(product, changed, line)
-    chinese_ceramic_factory_code_number = text(line[17])
+    chinese_ceramic_factory_code_number = text(line[16])
     if chinese_ceramic_factory_code_number.blank?
       set_custom_value(product, :prod_fda_affirmation_compliance, changed, nil)
       set_custom_value(product, :prod_fda_affirmation_compliance_value, changed, chinese_ceramic_factory_code_number)
@@ -60,8 +60,8 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonFdaProductPar
 
   def standard_parsing product, changed, line
     set_custom_value(product, :prod_fda_product, changed, true)
-    set_custom_value(product, :prod_fda_brand_name, changed, text(line[13]))
-    set_custom_value(product, :prod_fda_product_code, changed, text(line[16]))
+    set_custom_value(product, :prod_fda_brand_name, changed, text(line[12]))
+    set_custom_value(product, :prod_fda_product_code, changed, text(line[15]))
   end
 
   def self.file_type filename

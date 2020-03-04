@@ -1,3 +1,5 @@
+# -*- SkipSchemaAnnotations
+
 class ValidationRuleEntryTariffsMustIncludeAllTariffsOnProduct < BusinessValidationRule
   include ValidatesCommercialInvoiceLine
 

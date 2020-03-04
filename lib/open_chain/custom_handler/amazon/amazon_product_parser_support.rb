@@ -99,4 +99,22 @@ module OpenChain; module CustomHandler; module Amazon; module AmazonProductParse
     text(row[0])
   end
 
+  def parse_date value, date_format: "%m/%d/%Y"
+    return nil if value.blank?
+
+    Date.strptime(value, date_format) rescue nil
+  end
+
+  def parse_boolean value
+    return nil if value.blank?
+
+    value.to_s.strip.downcase == "true"
+  end
+
+  def parse_decimal value
+    return nil if value.blank?
+
+    BigDecimal(value) rescue nil
+  end
+
 end; end; end; end

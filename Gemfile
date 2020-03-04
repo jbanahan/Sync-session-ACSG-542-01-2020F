@@ -125,6 +125,8 @@ gem 'fuzzy_match'
 
 gem 'get_process_mem', '0.2.5'
 
+gem 'nonschema_migrations', '1.0.1'
+
 group :development,:test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.  

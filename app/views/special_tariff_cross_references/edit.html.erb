@@ -26,7 +26,7 @@
 
       <div class="form-group">
         <label>Origin Country</label>
-        <%= f.select(:country_origin_iso, options_from_collection_for_select(@countries, :iso_code, :name, @special_tariff.country_origin_iso), {}, class: "form-control") %>
+        <%= f.select(:country_origin_iso, options_from_collection_for_select(@countries, :iso_code, :name, @special_tariff.country_origin_iso), {include_blank: true}, class: "form-control") %>
       </div>
 
       <div class="form-group">

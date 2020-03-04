@@ -83,6 +83,7 @@ class DataCrossReference < ActiveRecord::Base
   CARGOWISE_SINGLE_DOCUMENT_CODE ||= "cargowise_single_document_code"
   VFI_CALENDAR ||= "vfi_calendar"
   UNIT_OF_MEASURE ||= "unit_of_measure"
+  ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'
 
   scope :for_type, -> (xref_type) { where(cross_reference_type: xref_type) }
 

@@ -6,13 +6,38 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
     let (:row) {
       r = base_row
-      r[22] = "MID"
-      r[23] = "CUST_NO"
+      r[23] = "MID"
+      r[24] = "CUST_NO"
+      r[27] = "KO" # SPI Primary
       r
     }
     
     let (:fda_row) {
-      base_row + ["Y", "FDACODE", "UOM", "CP", "MID", "SID", "FDADESC", "ESTNO", "Dom1", "Dom2", "Dom3", "Name", "Phone", "COD", "AFFCOMP", "F"]
+      base_row + ["Y", "FDACODE", "UOM", "CP", "MID", "SID", "FDADESC", "ESTNO", "Dom1", "Dom2", "Dom3", "Name", "Phone", "COD", "AFFCOMP", "F", "ASS"]
+    }
+
+    let (:penalty_row) {
+      # Lower case and add hyphens to make sure they get removed
+      base_row[25] = "cvd-case"
+      base_row[26] = "add-case"
+      base_row
+    }
+
+    let (:lacey_row) {
+      base_row[28] = "COMPONENT"
+      base_row[29] = "NAME"
+      base_row[30] = "EMAIL"
+      base_row[31] = "PHONE"
+      base_row[32] = "CO"
+      base_row[33] = 100.0
+      base_row[34] = "UOM"
+      base_row[35] = 25.0
+      base_row[36] = "GENUS"
+      base_row[37] = "SPECIES"
+      base_row[38] = "GENUS 2"
+      base_row[39] = "SPECIES 2"
+
+      base_row
     }
 
     let (:base_row) {
@@ -38,6 +63,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(parent.text "part/productLine").to eq "BRAND"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/seqNo").to eq "1"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/tariffNo").to eq "1234567890"
+      expect(parent.text "part/CatTariffClassList/CatTariffClass/spiPrimary").to eq "KO"
 
       # Make sure no FDA information was written - even though blank tags would techincally be fine
       # I want to make sure the size of these files is as small as possible to allow for more data in them before
@@ -72,7 +98,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(fda.text "contactPhone").to eq "Phone"
       expect(fda.text "cargoStorageStatus").to eq "F"
 
-      aff = REXML::XPath.first fda, "CatFdaEsComplianceList/CatFdaEsCompliance"
+      affirmations = REXML::XPath.each(fda, "CatFdaEsComplianceList/CatFdaEsCompliance").to_a
+      expect(affirmations.length).to eq 2
+      aff = affirmations[0]
       expect(aff).not_to be_nil
       expect(aff.text "partNo").to eq "STYLE"
       expect(aff.text "styleNo").to eq "STYLE"
@@ -83,6 +111,27 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(aff.text "seqNoEntryOrder").to eq "1"
       expect(aff.text "complianceCode").to eq "COD"
       expect(aff.text "complianceQualifier").to eq "AFFCOMP"
+      
+      aff = affirmations[1]
+      expect(aff).not_to be_nil
+      expect(aff.text "partNo").to eq "STYLE"
+      expect(aff.text "styleNo").to eq "STYLE"
+      expect(aff.text "custNo").to eq "CUST"
+      expect(aff.text "dateEffective").to eq "20140101"
+      expect(aff.text "seqNo").to eq "1"
+      expect(aff.text "fdaSeqNo").to eq "1"
+      expect(aff.text "seqNoEntryOrder").to eq "2"
+      expect(aff.text "complianceCode").to eq "ACC"
+      expect(aff.text "complianceQualifier").to eq "ASS"
+
+    end
+
+    it "writes FDA data even if FDA Product? flag is blank as long as an fda product code is present" do
+      fda_row[5] = ""
+
+      subject.write_row_to_xml parent, 1, fda_row
+      fda = REXML::XPath.first parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs"
+      expect(fda).not_to be_nil
     end
 
     it "trims non-key fields to size" do
@@ -127,7 +176,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "falls back to customer_number set up in constructor if not present in query" do
-      row[23] = nil
+      row[24] = nil
       subject.write_row_to_xml parent, 1, row
       expect(parent.text "part/id/custNo").to eq "CUST"
     end
@@ -144,7 +193,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "sends multiple tariffs" do
-      # Include FDA information, so we know it's written to both classifications
+      # Include FDA information, so we know it's written only to the first tariff
       fda_row[2] = "12345678*~*987654321"
       subject.write_row_to_xml parent, 1, fda_row
 
@@ -163,9 +212,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       t = tariffs.second
       expect(t.text "seqNo").to eq "2"
       expect(t.text "tariffNo").to eq "987654321"
-      expect(t.text "CatFdaEsList/CatFdaEs/seqNo").to eq "2"
-      expect(t.text "CatFdaEsList/CatFdaEs/fdaSeqNo").to eq "1"
-      expect(t.text "CatFdaEsList/CatFdaEs/productCode").to eq "FDACODE"
+      # We should not include FDA data on the second line - only the primary tariff should carry it
+      expect(t.text "CatFdaEsList/CatFdaEs/seqNo").to be_nil
     end
 
     it "allows for default values to be sent at all levels" do
@@ -204,25 +252,126 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "skips invalid top level MIDS" do
-      row[22] = "INVALIDMID"
+      row[23] = "INVALIDMID"
       subject.write_row_to_xml parent, 1, row
       expect(parent.text "part/manufacturerId").to eq ""
     end
 
     it "prioritizes FDA MID over Standard at top level" do
       ManufacturerId.create! mid: "STANDARD"
-      fda_row[22] = "STANDARD"
+      fda_row[23] = "STANDARD"
 
       subject.write_row_to_xml parent, 1, fda_row
       expect(parent.text "part/manufacturerId").to eq "MID"
     end
 
     it "falls back to standard MID if FDA MID is invalid" do
-      fda_row[22] = "MID"
+      fda_row[23] = "MID"
       fda_row[9] = "INVALID"
 
       subject.write_row_to_xml parent, 1, fda_row
       expect(parent.text "part/manufacturerId").to eq "MID"
+    end
+
+    it "adds CVD / ADD information" do
+      subject.write_row_to_xml parent, 1, penalty_row
+
+      penalties = REXML::XPath.match(parent, "part/CatPenaltyList/CatPenalty").to_a
+      expect(penalties.length).to eq 2
+
+      p = penalties.first
+      expect(p.text "partNo").to eq "STYLE"
+      expect(p.text "styleNo").to eq "STYLE"
+      expect(p.text "custNo").to eq "CUST"
+      expect(p.text "dateEffective").to eq "20140101"
+      expect(p.text "penaltyType").to eq "CVD"
+      expect(p.text "caseNo").to eq "CVDCASE"
+
+      p = penalties.second
+      expect(p.text "penaltyType").to eq "ADA"
+      expect(p.text "caseNo").to eq "ADDCASE"      
+    end
+
+    it "adds Lacey information" do
+      subject.write_row_to_xml parent, 1, lacey_row
+
+      lacey_list = REXML::XPath.match(parent, "part/CatTariffClassList/CatTariffClass/CatPgEsList").to_a
+      expect(lacey_list.length).to eq 1
+
+      l = REXML::XPath.first(lacey_list.first, "CatPgEs")
+      expect(l.text "partNo").to eq "STYLE"
+      expect(l.text "custNo").to eq "CUST"
+      expect(l.text "dateEffective").to eq "20140101"
+      expect(l.text "seqNo").to eq "1"
+      expect(l.text "pgCd").to eq "AL1"
+      expect(l.text "pgAgencyCd").to eq "APH"
+      expect(l.text "pgProgramCd").to eq "APL"
+      expect(l.text "pgSeqNbr").to eq "1"
+
+      l = REXML::XPath.first(l, "CatPgAphisEs")
+      expect(l.text "partNo").to eq "STYLE"
+      expect(l.text "custNo").to eq "CUST"
+      expect(l.text "dateEffective").to eq "20140101"
+      expect(l.text "seqNo").to eq "1"
+      expect(l.text "pgCd").to eq "AL1"
+      expect(l.text "pgAgencyCd").to eq "APH"
+      expect(l.text "pgProgramCd").to eq "APL"
+      expect(l.text "pgSeqNbr").to eq "1"
+      expect(l.text "productSeqNbr").to eq "1"
+      expect(l.text "importerIndividualName").to eq "NAME"
+      expect(l.text "importerEmailAddress").to eq "EMAIL"
+      expect(l.text "importerPhoneNo").to eq "PHONE"
+
+      component = REXML::XPath.match(l, "CatPgAphisEsComponentsList/CatPgAphisEsComponents").to_a
+
+      expect(component.length).to eq 1
+      l = component.first
+      expect(l.text "partNo").to eq "STYLE"
+      expect(l.text "custNo").to eq "CUST"
+      expect(l.text "dateEffective").to eq "20140101"
+      expect(l.text "seqNo").to eq "1"
+      expect(l.text "pgCd").to eq "AL1"
+      expect(l.text "pgSeqNbr").to eq "1"
+      expect(l.text "productSeqNbr").to eq "1"
+      expect(l.text "componentSeqNbr").to eq "1"
+      expect(l.text "componentName").to eq "COMPONENT"
+      expect(l.text "componentQtyAmt").to eq "100.0"
+      expect(l.text "componentUom").to eq "UOM"
+      expect(l.text "countryHarvested").to eq "CO"
+      expect(l.text "percentRecycledMaterialAmt").to eq "25.0"
+      expect(l.text "scientificGenusName").to eq "GENUS"
+      expect(l.text "scientificSpeciesName").to eq "SPECIES"
+
+      names = REXML::XPath.match(l, "CatPgAphisEsAddScientificList/CatPgAphisEsAddScientific").to_a
+      expect(names.length).to eq 1
+      l = names.first
+      expect(l.text "partNo").to eq "STYLE"
+      expect(l.text "custNo").to eq "CUST"
+      expect(l.text "dateEffective").to eq "20140101"
+      expect(l.text "seqNo").to eq "1"
+      expect(l.text "pgCd").to eq "AL1"
+      expect(l.text "pgSeqNbr").to eq "1"
+      expect(l.text "productSeq").to eq "1"
+      expect(l.text "componentSeqNbr").to eq "1"
+      expect(l.text "scientificSeqNbr").to eq "1"
+      expect(l.text "scientificGenusName").to eq "GENUS 2"
+      expect(l.text "scientificSpeciesName").to eq "SPECIES 2"
+    end
+
+    it "skips Lacey information if no component name" do
+      lacey_row[28] = nil
+      subject.write_row_to_xml parent, 1, lacey_row
+
+      lacey_list = REXML::XPath.match(parent, "part/CatTariffClassList/CatTariffClass/CatPgEsList").to_a
+      expect(lacey_list.length).to eq 0
+    end
+
+    it "doesn't add second scientific name if no second name is present" do
+      lacey_row[38] = nil
+      subject.write_row_to_xml parent, 1, lacey_row
+
+      lacey_list = REXML::XPath.match(parent, "part/CatTariffClassList/CatTariffClass/CatPgEsList/CatPgEs/CatPgAphisEsComponentsList/CatPgAphisEsComponents/CatPgAphisEsAddScientificList/CatPgAphisEsAddScientific").to_a
+      expect(lacey_list.length).to eq 0
     end
 
     context "with special tariffs" do
@@ -277,7 +426,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       end
 
        it "includes special tariffs with countries and without countries" do
-        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), priority: -1
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date)
 
         subject.write_row_to_xml parent, 1, row
 
@@ -320,7 +469,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(t.text "tariffNo").to eq "1234567890"
       end
 
-      it "reorders special tariffs to be before standard ones, but after added tariffs" do
+      it "prioritizes special tariffs based on their priority setting" do
         SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
         # The change to the row here, represents the product having the special tariff as the second tariff row
         # The code will then re-order it to be before the standard tariff number.
@@ -371,7 +520,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       end
 
       it "adds exlusion 301 tariff and ignores standard 301 tariff" do
-        row[21] = "99038812"
+        row[22] = "99038812"
         special_tariff.update! special_tariff_type: "301"
 
         subject.write_row_to_xml parent, 1, row
@@ -386,6 +535,34 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
         t = tariffs.second
         expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "1234567890"
+      end
+
+      it "utilizes default 301 / MTB Tariff ordering when priorities are not present for them" do
+        # This whole test is functionally testing the primary scenario we'll encounter for parts that are keyed with an MTB tariff and then have a 301 tariff added.
+        # In that case, the default sorting should make sure the 301 is in the first position, the MTB is in the second and the primary tariff is in the 3rd
+
+        # Priority is set to nil, to make sure we're not accidentally reording these in some other manner and are truly relying on the default priority sorting
+        special_tariff.update! special_hts_number: "99038803", special_tariff_type: "301", priority: nil
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "99020662", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true, special_tariff_type: "MTB", priority: nil
+
+        row[2] = "#{row[2]}*~*99020662"
+        subject.write_row_to_xml parent, 1, row
+        
+        tariffs = []
+        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+        expect(tariffs.length).to eq 3
+
+        t = tariffs.first
+        expect(t.text "seqNo").to eq "1"
+        expect(t.text "tariffNo").to eq "99038803"
+
+        t = tariffs.second
+        expect(t.text "seqNo").to eq "2"
+        expect(t.text "tariffNo").to eq "99020662"
+
+        t = tariffs.third
+        expect(t.text "seqNo").to eq "3"
         expect(t.text "tariffNo").to eq "1234567890"
       end
     end
@@ -626,6 +803,29 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(part).to have_xpath_value("id/partNo", "PART_NO_2")
         expect(part).to have_xpath_value("id/custNo", "CHILD2")
       end
+    end
+
+    it "sends products for multiple given customer numbers" do
+      product = create_product("PART_NO", importer_id: with_customs_management_id(Factory(:importer), "CUST1").id)
+      product2 = create_product("PART_NO_2", importer_id: with_customs_management_id(Factory(:importer), "CUST2").id)
+
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable("customer_numbers" => ["CUST1", "CUST2"])
+      doc = REXML::Document.new(data)
+      expect(doc).to have_xpath_value("count(/requests/request/kcData/parts/part)", 2)
+
+      parts = REXML::XPath.each(doc, "/requests/request/kcData/parts/part").to_a
+      part = parts.first
+      expect(part).to have_xpath_value("id/partNo", "PART_NO")
+      expect(part).to have_xpath_value("id/custNo", "CUST1")
+
+      part = parts.second
+      expect(part).to have_xpath_value("id/partNo", "PART_NO_2")
+      expect(part).to have_xpath_value("id/custNo", "CUST2")
     end
   end
 end

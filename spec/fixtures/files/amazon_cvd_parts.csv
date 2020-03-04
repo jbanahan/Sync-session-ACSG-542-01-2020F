@@ -1,0 +1,2 @@
+IORId,ASIN,SKU,DestinationCountry,CountryOfOrigin,Manufacturer.ManufacturerName,Manufacturer.AddressLine1,Manufacturer.AddressLine2,Manufacturer.City,Manufacturer.Country,Manufacturer.PostalCode,CVDWarning,CVDCaseNumber,CVDCaseDescription,LinkToCaseSuffixGuidance,isCVDDisclaimed
+IOR-X76YHUR3GKHXS,B071KSQ13C,EL89890,US,CN,Atrium Corporation,USGRE45BIR 45 Royal Crescent,Dongcheng,Beijing,China,100010,Some Message,C-462-809,This is the case referred.,www.xyz.com,TRUE

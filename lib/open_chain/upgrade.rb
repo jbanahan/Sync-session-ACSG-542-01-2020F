@@ -240,6 +240,12 @@ module OpenChain
         end
         raise UpgradeFailure.new("Migration lock wait timed out.") unless MasterSetup.get_migration_lock
         capture_and_log "rake db:migrate"
+        # Run data migrations (nonschema_migrations) now as well
+        begin
+          capture_and_log "rake data:migrate"
+        rescue UpgradeFailure => e
+          e.log_me
+        end
       ensure
         MasterSetup.release_migration_lock
       end
