@@ -704,6 +704,100 @@ describe ReportsController do
     end
   end
 
+  describe "PVH Canada Duty Assist Report" do
+    let(:report_class) { OpenChain::CustomHandler::Pvh::PvhDutyAssistReport }
+    let!(:user) { Factory(:user) }
+    let!(:pvh_canada) do
+      co = with_fenix_id(Factory(:importer, name: 'PVH Canada'), '833231749RM0001')
+      co
+    end
+    let!(:fm) { Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 2, end_date: Date.new(2020,03,01)) }
+
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(false)
+        get :show_pvh_canada_duty_assist_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(true)
+        get :show_pvh_canada_duty_assist_report
+        expect(response).to be_success
+        expect(assigns(:fiscal_months)).to eq(["2020-02"])
+      end
+    end
+
+    context "run" do
+      let(:args) { {'fiscal_month' => '2020-01'} }
+
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(false)
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_pvh_canada_duty_assist_report, args
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(true)
+        expect(ReportResult).to receive(:run_report!).with("PVH Canada Duty Assist Report", user, OpenChain::CustomHandler::Pvh::PvhDutyAssistReport,
+                                                           settings: {'fiscal_month': "2020-01", 'cust_number': 'PVHCANADA'}, friendly_settings: ["Fiscal Month 2020-01", "Customer Number: PVHCANADA"])
+        post :run_pvh_canada_duty_assist_report, args
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
+  describe "PVH Duty Assist Report" do
+    let(:report_class) { OpenChain::CustomHandler::Pvh::PvhDutyAssistReport }
+    let!(:user) { Factory(:user) }
+    let!(:pvh) do
+      co = with_customs_management_id(Factory(:importer, name: 'PVH'), "PVH")
+      co
+    end
+    let!(:fm) { Factory(:fiscal_month, company: pvh, year: 2020, month_number: 2, end_date: Date.new(2020,03,01)) }
+
+    before { sign_in_as user }
+
+    context "show" do
+      it "doesn't render page for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(false)
+        get :show_pvh_duty_assist_report
+        expect(response).not_to be_success
+      end
+
+      it "renders for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(true)
+        get :show_pvh_duty_assist_report
+        expect(response).to be_success
+        expect(assigns(:fiscal_months)).to eq(["2020-02"])
+      end
+    end
+
+    context "run" do
+      let(:args) { {'fiscal_month' => '2020-01'} }
+
+      it "doesn't run for unauthorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(false)
+        expect(ReportResult).not_to receive(:run_report!)
+        post :run_pvh_duty_assist_report, args
+        expect(flash[:errors].first).to eq("You do not have permission to view this report")
+      end
+
+      it "runs for authorized users" do
+        expect(report_class).to receive(:permission?).with(user).and_return(true)
+        expect(ReportResult).to receive(:run_report!).with("PVH Duty Assist Report", user, OpenChain::CustomHandler::Pvh::PvhDutyAssistReport,
+                                                           settings: {'fiscal_month': "2020-01", 'cust_number': 'PVH'}, friendly_settings: ["Fiscal Month 2020-01", "Customer Number: PVH"])
+        post :run_pvh_duty_assist_report, args
+        expect(response).to be_redirect
+        expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
+      end
+    end
+  end
+
   describe "Ascena MPF Savings Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport }
     let!(:user) { Factory(:user) }

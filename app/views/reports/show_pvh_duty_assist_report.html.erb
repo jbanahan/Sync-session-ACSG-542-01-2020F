@@ -1,0 +1,14 @@
+<% content_for :action_bar do %>
+  <button class="form_to" form_id="frm_run">Run Report</button>
+  <button class="btn_link" link_to="<%=reports_path%>">Back</button>
+<%end%>
+<h2>PVH Duty Assist Report</h2>
+<%= form_tag(reports_run_pvh_duty_assist_report_path, id: 'frm_run') do %>
+
+  <div class="container">
+    <div class="row" style="line-height: 2.5">
+      <div class="col-md-2"><label class="control-label" for="start_date">Fiscal Month:</label></div>
+      <div class="col-md-3"><%=select_tag :fiscal_month, options_for_select(@fiscal_months), :class=>'form-control isdate'%></div>
+    </div>
+  </div>
+<% end %>
