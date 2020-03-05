@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
   end
 
   def can_view?(user)
-    user.company.master? && MasterSetup.get.custom_feature?("WWW")
+    user.company.master? && MasterSetup.get.custom_feature?("WWW VFI Track Reports")
   end
 
   def process user

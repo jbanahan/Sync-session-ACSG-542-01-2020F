@@ -396,7 +396,7 @@ describe DataCrossReference do
 
     context "vfi system" do
       before :each do 
-        allow(master_setup).to receive(:custom_feature?).with("WWW").and_return true
+        allow(master_setup).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
       end
 
       it "returns information about xref screens sys-admin user has access to" do
@@ -491,7 +491,7 @@ describe DataCrossReference do
 
     context "vfi system" do
       before :each do
-        allow(master_setup).to receive(:custom_feature?).with("WWW").and_return true
+        allow(master_setup).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
       end
 
       context "us_hts_to_ca" do

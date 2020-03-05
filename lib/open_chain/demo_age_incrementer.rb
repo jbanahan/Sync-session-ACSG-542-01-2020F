@@ -34,11 +34,7 @@ module OpenChain; class DemoAgeIncrementer
         begin
           fields.each do |field|
               initial_value = record.public_send(field)
-              if initial_value == nil
-                record.public_send("#{field}=", days_to_increment.days)
-              else
-                record.public_send("#{field}=", initial_value + days_to_increment.days)
-              end
+              record.public_send("#{field}=", initial_value + days_to_increment.days) unless initial_value == nil
             end
             record.save!
             @updated_records += 1

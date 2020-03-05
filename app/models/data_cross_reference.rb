@@ -161,11 +161,11 @@ class DataCrossReference < ActiveRecord::Base
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       MasterSetup.get.custom_feature? "Polo"
     when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS, ASCE_BRAND, MID_XREF, CA_HTS_TO_DESCR
-      MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?('xref-maintenance'))
+      MasterSetup.get.custom_feature?("WWW VFI Track Reports") && (user.sys_admin? || user.in_group?('xref-maintenance'))
     when UA_SITE_TO_COUNTRY
       MasterSetup.get.custom_feature?("UnderArmour")
     when HM_PARS_NUMBER
-      MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?("pars-maintenance"))
+      MasterSetup.get.custom_feature?("WWW VFI Track Reports") && (user.sys_admin? || user.in_group?("pars-maintenance"))
     when OTA_REFERENCE_FIELDS
       user.admin?
     when LL_CARB_STATEMENTS, LL_PATENT_STATEMENTS

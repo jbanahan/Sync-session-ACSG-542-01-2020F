@@ -3,7 +3,7 @@ require 'open_chain/report/builder_output_report_helper'
 module OpenChain; module Report; class UsBillingSummary
   include OpenChain::Report::BuilderOutputReportHelper
     def self.permission? user
-      (MasterSetup.get.custom_feature?("WWW") || Rails.env.development?) && user.company.master? && user.view_broker_invoices?
+      (MasterSetup.get.custom_feature?("WWW VFI Track Reports") || Rails.env.development?) && user.company.master? && user.view_broker_invoices?
     end
 
     def self.run_report run_by, settings={}

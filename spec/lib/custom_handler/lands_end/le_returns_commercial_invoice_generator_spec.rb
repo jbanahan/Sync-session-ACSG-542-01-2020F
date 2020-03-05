@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
     let (:master_user) { Factory(:master_user) }
     let! (:master_setup) {
       ms = stub_master_setup
-      allow(ms).to receive(:custom_feature?).with("WWW").and_return custom_feature_enabled
+      allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return custom_feature_enabled
       ms
     }
 

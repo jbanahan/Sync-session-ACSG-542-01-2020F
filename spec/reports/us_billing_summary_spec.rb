@@ -36,7 +36,7 @@ describe OpenChain::Report::UsBillingSummary do
     
     before do
       expect(MasterSetup).to receive(:get).and_return ms
-      allow(ms).to receive(:custom_feature?).with("WWW").and_return true
+      allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
       allow(user).to receive(:view_broker_invoices?).and_return true
     end
 
@@ -45,7 +45,7 @@ describe OpenChain::Report::UsBillingSummary do
     end
 
     it "returns 'false' if not on the main instance" do
-      allow(ms).to receive(:custom_feature?).with("WWW").and_return false
+      allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return false
       expect(described_class.permission? user).to eq false
     end
 

@@ -6,7 +6,7 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.permission? user
-    MasterSetup.get.custom_feature?("WWW") &&
+    MasterSetup.get.custom_feature?("WWW VFI Track Reports") &&
     (user.company.master? || user.company.system_code=='JJILL') &&
     user.view_shipments?
   end
