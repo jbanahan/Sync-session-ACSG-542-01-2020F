@@ -4,11 +4,6 @@ require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGenerator < OpenChain::CustomHandler::VfiTrackProductApiSyncClient
   include AnnCustomDefinitionSupport
 
-  def initialize opts = {}
-    super
-    @custom_where = opts[:custom_where]
-  end
-
   def process_query_result row, opts
     # We have a 1-many situation due to the exploding of styles (1 part in Ann's system can be up to 5 parts in VFI Track)
     # So we need to both track products by unique identifier in the foreign system and ALSO the id in the local system to know
@@ -23,7 +18,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
     # Ann can potentially have multiple "styles" associated with a single product record.  Each linked style is 
     # reference in the related styles custom field, so we need to expload all those relates styles out and send
     # distinct API calls to create/update each of those too.
-    styles = [row[1]].push *row[5].to_s.split(/\s*\r?\n\s*/)
+    styles = [row[1]].push *row[7].to_s.split(/\s*\r?\n\s*/)
     
     styles.each do |style|
       next if style.blank?
@@ -56,7 +51,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
 
       # We can't have more than 1 of the same line number, so we can always assume that each tariff record from the 
       # the query is a new one.
-      classification["tariff_records"] << {"hts_line_number" => row[3], "hts_hts_1" => row[4]} unless row[6].to_s.to_boolean
+      classification["tariff_records"] << {"hts_line_number" => row[3], "hts_hts_1" => row[4], "hts_hts_2" => row[5], "hts_hts_3" => row[6]} unless row[8].to_s.to_boolean
     end
 
     # If this is the last row from the query, then we need to stop buffering and return everything
@@ -99,32 +94,36 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
       prod_uid: nil,
       class_cntry_iso: nil,
       hts_line_number: nil,
-      hts_hts_1: nil
+      hts_hts_1: nil,
+      hts_hts_2: nil,
+      hts_hts_3: nil
     }
   end
 
   def query
     # We only want 1 row per product, we're handling exploading out the records in the query processing method
-    qry = <<-QRY
-SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1, related_style.text_value, manual.boolean_value
-FROM products products
-INNER JOIN classifications c on products.id = c.product_id
-INNER JOIN tariff_records r on r.classification_id = c.id
-INNER JOIN countries iso on iso.id = c.country_id and iso.iso_code in ('US', 'CA')
-LEFT OUTER JOIN custom_values related_style on related_style.customizable_id = products.id and related_style.customizable_type = 'Product' and related_style.custom_definition_id = #{cdefs[:related_styles].id} and length(related_style.text_value) > 0
-LEFT OUTER JOIN custom_values manual on manual.customizable_id = c.id and manual.customizable_type = 'Classification' and manual.custom_definition_id = #{cdefs[:manual_flag].id}
-QRY
-    if @custom_where.blank?
+    qry = <<-SQL
+      SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1, r.hts_2, r.hts_3, related_style.text_value, manual.boolean_value
+      FROM products products
+        INNER JOIN classifications c ON products.id = c.product_id
+        INNER JOIN tariff_records r ON r.classification_id = c.id
+        INNER JOIN countries iso ON iso.id = c.country_id AND iso.iso_code IN ('US', 'CA')
+        LEFT OUTER JOIN custom_values related_style ON related_style.customizable_id = products.id AND related_style.customizable_type = 'Product' 
+          AND related_style.custom_definition_id = #{cdefs[:related_styles].id} AND LENGTH(related_style.text_value) > 0
+        LEFT OUTER JOIN custom_values manual ON manual.customizable_id = c.id AND manual.customizable_type = 'Classification' 
+          AND manual.custom_definition_id = #{cdefs[:manual_flag].id}
+    SQL
+    if custom_where.blank?
       qry += "\n" + Product.need_sync_join_clause(sync_code)
       qry += "\nWHERE " + Product.need_sync_where_clause + "\n AND r.hts_1 <> ''"
     else
-      qry += "\nWHERE " + @custom_where
+      qry += "\nWHERE " + custom_where
     end
 
     qry += " ORDER BY products.id, iso.iso_code"
 
     # If a custom where is given, it's assumed to be limiting the query to the exact results needed
-    if @custom_where.blank?
+    if custom_where.blank?
       qry += " LIMIT 1000"
     end
 
@@ -144,11 +143,6 @@ QRY
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions([:related_styles, :manual_flag])
-  end
-
-  def continue_looping? loop_count
-    # Don't keep looping if we used a custom where...that'll just result in the same values sent in an endless loop.
-    @custom_where.blank? ? true : (loop_count < 1)
   end
 
 end; end; end; end;

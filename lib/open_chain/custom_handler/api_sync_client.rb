@@ -37,8 +37,13 @@ require 'digest/md5'
 # Return nil to skip sending data for a particular object
 #
 module OpenChain; module CustomHandler; class ApiSyncClient
+  attr_reader :custom_where
 
   ApiSyncObject = Struct.new(:syncable_id, :local_data)
+
+  def initialize opts = {}
+    @custom_where = opts['custom_where']
+  end
 
   def sync
     raise "#{self.class} must respond to the 'query' method or the 'objects_to_sync' method." unless respond_to?(:query) || respond_to?(:objects_to_sync)
@@ -170,7 +175,7 @@ module OpenChain; module CustomHandler; class ApiSyncClient
     # base sync client. Useful for cases where you may only be syncing specific values (like if a custom where
     # clause can be utilized from the console)
     def continue_looping? loop_count
-      return true
+      custom_where.blank? ? true : (loop_count < 1)
     end
 
   private

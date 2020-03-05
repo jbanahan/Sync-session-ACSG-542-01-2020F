@@ -10,11 +10,11 @@ INNER JOIN classifications c on products.id = c.product_id
 INNER JOIN tariff_records r on r.classification_id = c.id 
 INNER JOIN countries iso on iso.id = c.country_id and iso.iso_code = 'CA'
 QRY
-    if @custom_where.blank?
+    if custom_where.blank?
       qry += "\n" + Product.need_sync_join_clause(sync_code)
       qry += "\nWHERE " + Product.need_sync_where_clause + "\n AND r.hts_1 <> ''"
     else
-      qry += "\nWHERE " + @custom_where
+      qry += "\nWHERE " + custom_where
     end
 
     qry

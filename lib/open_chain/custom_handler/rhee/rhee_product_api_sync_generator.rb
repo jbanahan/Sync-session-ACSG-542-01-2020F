@@ -5,7 +5,6 @@ module OpenChain; module CustomHandler; module Rhee; class RheeProductApiSyncGen
   include RheeCustomDefinitionSupport
 
   def initialize opts = {}
-    @custom_where = opts[:where]
     @cdefs = self.class.prep_custom_definitions [:fda_product_code]
     super opts
   end
@@ -19,11 +18,11 @@ INNER JOIN tariff_records r on r.classification_id = c.id
 INNER JOIN countries iso on iso.id = c.country_id and iso.iso_code = 'US'
 LEFT OUTER JOIN custom_values fda on fda.customizable_id = products.id and fda.customizable_type = 'Product' and fda.custom_definition_id = #{@cdefs[:fda_product_code].id}
 QRY
-    if @custom_where.blank?
+    if custom_where.blank?
       qry += "\n" + Product.need_sync_join_clause(sync_code)
       qry += "\nWHERE " + Product.need_sync_where_clause + "\n AND r.hts_1 <> ''"
     else
-      qry += "\nWHERE " + @custom_where
+      qry += "\nWHERE " + custom_where
     end
 
     # Initialize the previous product var for the result parsing method

@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       g.ftp_file(f) unless f.nil?
     ensure
       f.close! unless f.nil? || f.closed?
-    end while !f.nil? && !opts[:no_loop]
+    end while !f.nil? && !(opts[:no_loop] || opts[:custom_where].present?)
     nil
   end
 
@@ -576,70 +576,91 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def query
-    qry = <<-QRY
-SELECT products.id,
-#{has_option?(:use_unique_identifier) ? "products.unique_identifier" : cd_s(custom_defs[:prod_part_number].id)},
-products.name,
-#{has_option?(:allow_multiple_tariffs) ? "(SELECT GROUP_CONCAT(hts_1 ORDER BY line_number SEPARATOR '*~*') FROM tariff_records tar WHERE tar.classification_id = classifications.id and length(tar.hts_1) >= 8 )" : "(SELECT tar.hts_1 FROM tariff_records tar WHERE tar.classification_id = classifications.id and length(tar.hts_1) >= 8 and tar.line_number = 1)" },
-IF(length(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})=2,#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true},""),
-#{cd_s custom_defs[:prod_brand].id},
-#{cd_s(custom_defs[:prod_fda_product].id, boolean_y_n: true)},
-#{cd_s custom_defs[:prod_fda_product_code].id},
-#{cd_s custom_defs[:prod_fda_uom].id},
-#{cd_s custom_defs[:prod_fda_country].id},
-#{cd_s custom_defs[:prod_fda_mid].id},
-#{cd_s custom_defs[:prod_fda_shipper_id].id},
-#{cd_s custom_defs[:prod_fda_description].id},
-#{cd_s custom_defs[:prod_fda_establishment_no].id},
-#{cd_s custom_defs[:prod_fda_container_length].id},
-#{cd_s custom_defs[:prod_fda_container_width].id},
-#{cd_s custom_defs[:prod_fda_container_height].id},
-#{cd_s custom_defs[:prod_fda_contact_name].id},
-#{cd_s custom_defs[:prod_fda_contact_phone].id},
-#{cd_s custom_defs[:prod_fda_affirmation_compliance].id},
-#{cd_s custom_defs[:prod_fda_affirmation_compliance_value].id},
-#{cd_s custom_defs[:prod_fda_temperature].id},
-#{cd_s custom_defs[:prod_fda_accession_number]},
-#{cd_s custom_defs[:prod_301_exclusion_tariff]},
-(SELECT mid.system_code FROM addresses mid INNER JOIN product_factories pf ON pf.address_id = mid.id WHERE pf.product_id = products.id ORDER BY mid.created_at LIMIT 1),
-sys_id.code,
-#{cd_s custom_defs[:prod_cvd_case]},
-#{cd_s custom_defs[:prod_add_case]},
-#{cd_s custom_defs[:class_special_program_indicator]},
-#{cd_s custom_defs[:prod_lacey_component_of_article]},
-#{cd_s custom_defs[:prod_lacey_preparer_name]},
-#{cd_s custom_defs[:prod_lacey_preparer_email]},
-#{cd_s custom_defs[:prod_lacey_preparer_phone]},
-#{cd_s custom_defs[:prod_lacey_country_of_harvest]},
-#{cd_s custom_defs[:prod_lacey_quantity]},
-#{cd_s custom_defs[:prod_lacey_quantity_uom]},
-#{cd_s custom_defs[:prod_lacey_percent_recycled]},
-#{cd_s custom_defs[:prod_lacey_genus_1]},
-#{cd_s custom_defs[:prod_lacey_species_1]},
-#{cd_s custom_defs[:prod_lacey_genus_2]},
-#{cd_s custom_defs[:prod_lacey_species_2]}
-FROM products
-LEFT OUTER JOIN companies ON companies.id = products.importer_id
-LEFT OUTER JOIN system_identifiers sys_id ON sys_id.company_id = companies.id AND sys_id.system = 'Customs Management'
-INNER JOIN classifications on classifications.country_id = (SELECT id FROM countries WHERE iso_code = "US") AND classifications.product_id = products.id
-QRY
+    qry = <<-SQL
+      SELECT products.id,
+        #{has_option?(:use_unique_identifier) ? "products.unique_identifier" : cd_s(custom_defs[:prod_part_number].id)},
+        products.name,
+    SQL
+    if has_option?(:allow_multiple_tariffs)
+      qry += <<-SQL
+        (SELECT GROUP_CONCAT(CONCAT_WS('***', hts_1, hts_2, hts_3) ORDER BY line_number SEPARATOR '*~*') 
+         FROM tariff_records tar 
+         WHERE tar.classification_id = classifications.id AND LENGTH(tar.hts_1) >= 8),
+      SQL
+    else
+      qry += <<-SQL
+        (SELECT CONCAT_WS('***', hts_1, hts_2, hts_3)
+         FROM tariff_records tar 
+         WHERE tar.classification_id = classifications.id AND LENGTH(tar.hts_1) >= 8 AND tar.line_number = 1),
+      SQL
+    end
+    qry += <<-SQL 
+        IF(LENGTH(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})=2,#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true},""),
+        #{cd_s custom_defs[:prod_brand].id},
+        #{cd_s(custom_defs[:prod_fda_product].id, boolean_y_n: true)},
+        #{cd_s custom_defs[:prod_fda_product_code].id},
+        #{cd_s custom_defs[:prod_fda_uom].id},
+        #{cd_s custom_defs[:prod_fda_country].id},
+        #{cd_s custom_defs[:prod_fda_mid].id},
+        #{cd_s custom_defs[:prod_fda_shipper_id].id},
+        #{cd_s custom_defs[:prod_fda_description].id},
+        #{cd_s custom_defs[:prod_fda_establishment_no].id},
+        #{cd_s custom_defs[:prod_fda_container_length].id},
+        #{cd_s custom_defs[:prod_fda_container_width].id},
+        #{cd_s custom_defs[:prod_fda_container_height].id},
+        #{cd_s custom_defs[:prod_fda_contact_name].id},
+        #{cd_s custom_defs[:prod_fda_contact_phone].id},
+        #{cd_s custom_defs[:prod_fda_affirmation_compliance].id},
+        #{cd_s custom_defs[:prod_fda_affirmation_compliance_value].id},
+        #{cd_s custom_defs[:prod_fda_temperature].id},
+        #{cd_s custom_defs[:prod_fda_accession_number]},
+        #{cd_s custom_defs[:prod_301_exclusion_tariff]},
+        (SELECT mid.system_code 
+         FROM addresses mid 
+           INNER JOIN product_factories pf ON pf.address_id = mid.id 
+         WHERE pf.product_id = products.id 
+         ORDER BY mid.created_at LIMIT 1),
+        sys_id.code,
+        #{cd_s custom_defs[:prod_cvd_case]},
+        #{cd_s custom_defs[:prod_add_case]},
+        #{cd_s custom_defs[:class_special_program_indicator]},
+        #{cd_s custom_defs[:prod_lacey_component_of_article]},
+        #{cd_s custom_defs[:prod_lacey_preparer_name]},
+        #{cd_s custom_defs[:prod_lacey_preparer_email]},
+        #{cd_s custom_defs[:prod_lacey_preparer_phone]},
+        #{cd_s custom_defs[:prod_lacey_country_of_harvest]},
+        #{cd_s custom_defs[:prod_lacey_quantity]},
+        #{cd_s custom_defs[:prod_lacey_quantity_uom]},
+        #{cd_s custom_defs[:prod_lacey_percent_recycled]},
+        #{cd_s custom_defs[:prod_lacey_genus_1]},
+        #{cd_s custom_defs[:prod_lacey_species_1]},
+        #{cd_s custom_defs[:prod_lacey_genus_2]},
+        #{cd_s custom_defs[:prod_lacey_species_2]}
+      FROM products
+        LEFT OUTER JOIN companies ON companies.id = products.importer_id
+        LEFT OUTER JOIN system_identifiers sys_id ON sys_id.company_id = companies.id AND sys_id.system = 'Customs Management'
+        INNER JOIN classifications on classifications.country_id = (SELECT id 
+                                                                    FROM countries 
+                                                                    WHERE iso_code = "US") AND classifications.product_id = products.id
+    SQL
 
     # custom_where attr_reader method is defined in parent class
     if self.custom_where.blank?
-      qry += "#{Product.need_sync_join_clause(sync_code)} 
-WHERE 
-#{Product.need_sync_where_clause()} "
+      qry += "#{Product.need_sync_join_clause(sync_code)} WHERE #{Product.need_sync_where_clause()} "
     else 
       qry += "WHERE #{self.custom_where} "
     end
     
     qry += " AND (products.inactive IS NULL OR products.inactive = 0)"
-    qry += " AND length(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0" unless has_option?(:use_unique_identifier)
+    qry += " AND LENGTH(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0" unless has_option?(:use_unique_identifier)
     qry += importer_id_query_clause
 
-
     unless has_option?(:allow_blank_tariffs)
-      qry += " AND LENGTH((SELECT GROUP_CONCAT(hts_1 ORDER BY line_number SEPARATOR '#{tariff_separator}') FROM tariff_records tar WHERE tar.classification_id = classifications.id and length(tar.hts_1) >= 8)) >= 0"
+      qry += <<-SQL
+        AND LENGTH((SELECT GROUP_CONCAT(hts_1 ORDER BY line_number SEPARATOR '#{line_separator}') 
+                    FROM tariff_records tar 
+                    WHERE tar.classification_id = classifications.id AND LENGTH(tar.hts_1) >= 8)) >= 0
+      SQL
     end
     
     if self.custom_where.blank?
@@ -680,8 +701,14 @@ WHERE
 
   def tariffs product_data, row
     # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
-    # here into individual classification fields.
-    product_tariffs = Array.wrap(tariff_numbers(row).to_s.split(tariff_separator))
+    # here into individual classification fields. Since only the first line tariff fields (hts 1-3) are subject to
+    # supplemental tariff handling/sorting, we separate them from the rest at the outset.
+    
+    first_line_tariffs, remaining_tariffs = Array.wrap(tariff_numbers(row).to_s.split(line_separator))
+    first_line_tariffs = first_line_tariffs&.split("***")&.select{ |t| t.present? } || []
+    remaining_tariffs = remaining_tariffs&.split("***")
+                                         &.select{ |t| t.present? }
+                                         &.map{ |t| TariffData.new(t, nil, nil, nil, nil) } || []
 
     all_tariffs = []
     # By starting at zero, any special tariff with a blank priority will get prioritized in front of the primary
@@ -689,7 +716,7 @@ WHERE
     # We're assuming that special tariffs in their default state (.ie without priorities)
     # should be sent to CMUS (aka Kewill) prior to the primary tariff numbers keyed on the part
     priority = 0.00
-    product_tariffs.each_with_index do |t, index|
+    first_line_tariffs.each_with_index do |t, index|
       td = TariffData.new(t, (priority -= 0.01), secondary_priority(t), (index == 0), false)
 
       # Check if any of the keyed tariffs are considered special tariffs, if so, use the priority
@@ -704,6 +731,7 @@ WHERE
       # In other words, in order for MTB numbers to get sent to CMUS, they need to be keyed into the tariff fields.
       # If it is keyed, we need to make sure we utilize the special priority.
       # In the case of MTB tariffs, they need to be sent to CMUS prior to the primary tariff.
+      
       special_tariff_priority = keyed_special_tariff_priority(country_of_origin(row), t)
       
       if !special_tariff_priority.nil?
@@ -735,8 +763,8 @@ WHERE
         all_tariffs << TariffData.new(special_tariff.special_hts_number, special_tariff.priority.to_f, secondary_priority(special_tariff.special_hts_number), false, true)
       end
     end
-
-    all_tariffs.sort_by {|t| [t.priority, t.secondary_priority] }.reverse
+    
+    all_tariffs.sort_by {|t| [t.priority, t.secondary_priority] }.reverse.concat remaining_tariffs
   end
 
   def special_tariff_numbers product_country_origin, hts_number, exclude_301_tariffs
@@ -842,7 +870,7 @@ WHERE
     0
   end
 
-  def tariff_separator
+  def line_separator
     "*~*"
   end
 

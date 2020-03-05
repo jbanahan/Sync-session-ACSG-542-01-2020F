@@ -11,9 +11,11 @@ require 'open_chain/api/product_api_client'
 module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < OpenChain::CustomHandler::ApiSyncClient
 
   def initialize opts = {}
+    super
     # This is primarily just here as a guard so we only actually automate the api endpoint in production
     if Rails.env.production? && opts[:api_client].nil?
-      @api_client = OpenChain::Api::ProductApiClient.new("vfitrack")
+      client_id = MasterSetup.secrets.api_client&.keys&.first.presence || 'vfitrack'
+      @api_client = OpenChain::Api::ProductApiClient.new client_id
     else
       raise "You must pass an api_client as an ops key." unless opts[:api_client]
       @api_client = opts[:api_client]
@@ -55,7 +57,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
   end
 
   def valid_columns 
-    [:product_id, :prod_uid, :prod_name, :prod_country_of_origin, :fda_product_code, :class_cntry_iso, :class_customs_description, :hts_line_number, :hts_hts_1]
+    [:product_id, :prod_uid, :prod_name, :prod_country_of_origin, :fda_product_code, :class_cntry_iso, :class_customs_description, :hts_line_number, :hts_hts_1, :hts_hts_2, :hts_hts_3]
   end
 
   def process_query_result row, opts
@@ -113,6 +115,8 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
     
     tariff['hts_line_number'] = row[@query_map[:hts_line_number]]
     tariff['hts_hts_1'] = row[@query_map[:hts_hts_1]] if @query_map[:hts_hts_1]
+    tariff['hts_hts_2'] = row[@query_map[:hts_hts_2]] if @query_map[:hts_hts_2]
+    tariff['hts_hts_3'] = row[@query_map[:hts_hts_3]] if @query_map[:hts_hts_3]
 
     nil
   end
@@ -173,7 +177,9 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
         class_cntry_iso: 'class_cntry_iso',
         class_customs_description: '*cf_99',
         hts_line_number: 'hts_line_number',
-        hts_hts_1: 'hts_hts_1'
+        hts_hts_1: 'hts_hts_1',
+        hts_hts_2: 'hts_hts_2',
+        hts_hts_3: 'hts_hts_3'
       }.with_indifferent_access
       fields = @query_map.keys.map {|k| custom_field_map[k]}.compact.flatten
       fields << 'prod_imp_syscode'
@@ -280,6 +286,8 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       end
 
       remote_tariff['hts_hts_1'] = local_tariff["hts_hts_1"].hts_format if @query_map.has_key?(:hts_hts_1)
+      remote_tariff['hts_hts_2'] = local_tariff["hts_hts_2"]&.hts_format if @query_map.has_key?(:hts_hts_2)
+      remote_tariff['hts_hts_3'] = local_tariff["hts_hts_3"]&.hts_format if @query_map.has_key?(:hts_hts_3)
       nil
     end
 

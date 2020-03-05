@@ -452,7 +452,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
         # The change to the row here, represents the product having the special tariff as the second tariff row
         # The code will then re-order it to be before the standard tariff number.
-        row[2] = "#{row[2]}*~*9999999999"
+        row[2] = "#{row[2]}***9999999999"
 
         subject.write_row_to_xml parent, 1, row
 
@@ -473,7 +473,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
         # The change to the row here, represents the product having the special tariff as the second tariff row
         # The code will then re-order it to be before the standard tariff number.
-        row[2] = "#{row[2]}*~*9999999999"
+        row[2] = "#{row[2]}***9999999999"
 
         subject.write_row_to_xml parent, 1, row
 
@@ -498,7 +498,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
         # The change to the row here, represents the product having the special tariff as the second tariff row
         # The code will then re-order it to be before the standard tariff number.
-        row[2] = "#{row[2]}*~*9999999999*~*0987654321"
+        row[2] = "#{row[2]}***9999999999***0987654321"
 
         subject.write_row_to_xml parent, 1, row
 
@@ -546,7 +546,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         special_tariff.update! special_hts_number: "99038803", special_tariff_type: "301", priority: nil
         SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "99020662", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true, special_tariff_type: "MTB", priority: nil
 
-        row[2] = "#{row[2]}*~*99020662"
+        row[2] = "#{row[2]}***99020662"
         subject.write_row_to_xml parent, 1, row
         
         tariffs = []
@@ -734,9 +734,37 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "000001"
     end
 
-    it "allows for sending multiple tarifs" do
+    it "sends single tariffs, handles special tariffs" do
+      SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9902345678", country_origin_iso: "CN", priority: 100, effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day)
       p = create_product("000001")
-      t2 = p.classifications.first.tariff_records.create! hts_1: "9876543210"
+      p.update_custom_value! CustomDefinition.find_by(cdef_uid: "prod_country_of_origin"), "CN"
+      t = p.classifications.first.tariff_records.first
+      t.update! hts_2: "9902345678", hts_3: "1357911131"
+      t2 = p.classifications.first.tariff_records.create! hts_1: "9876543210", hts_2: "9902345678"
+
+      data = nil
+      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        data = file.read
+      end
+
+      subject.run_schedulable "alliance_customer_number" => "CUST", "allow_multiple_tariffs" => false
+
+      doc = REXML::Document.new(data)
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "9902345678"
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "1234567890"
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo").to eq "1357911131"
+      
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo").to be_nil
+    end
+
+    # same test as previous but with "allow_multiple_tariffs" flag
+    it "allows for sending multiple tariffs, only doing special-tariff handling for the first one" do
+      SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9902345678", country_origin_iso: "CN", priority: 100, effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day)
+      p = create_product("000001")
+      p.update_custom_value! CustomDefinition.find_by(cdef_uid: "prod_country_of_origin"), "CN"
+      t = p.classifications.first.tariff_records.first
+      t.update! hts_2: "9902345678", hts_3: "1357911131"
+      t2 = p.classifications.first.tariff_records.create! hts_1: "9876543210", hts_2: "9902345678"
 
       data = nil
       expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
@@ -746,8 +774,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       subject.run_schedulable "alliance_customer_number" => "CUST", "allow_multiple_tariffs" => true
 
       doc = REXML::Document.new(data)
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "1234567890"
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "9876543210"
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "9902345678"
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "1234567890"
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo").to eq "1357911131"
+      
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo").to eq "9876543210"
+      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '5']/tariffNo").to eq "9902345678"
     end
 
     it "sends MID" do

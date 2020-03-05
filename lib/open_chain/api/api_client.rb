@@ -14,6 +14,7 @@ module OpenChain; module Api; class ApiClient
     "bdemo" => 'https://bdemo.vfitrack.net',
     "das" => 'https://das.vfitrack.net',
     "ll"=> "https://ll.vfitrack.net",
+    "vfitrack-test" => "https://test.vfitrack.net",
     "dev" => "http://0.0.0.0:3000",
     "test" => "http://www.notadomain.com"
   }

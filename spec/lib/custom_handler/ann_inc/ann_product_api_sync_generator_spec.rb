@@ -5,11 +5,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
   describe "process_query_result" do
 
     let (:us_query_row) {
-      [1, "UID", "US", 1, "1234567890", "", 0]
+      [1, "UID", "US", 1, "1234567890", "9876543210", "2468101214", "", 0]
     }
 
     let (:ca_query_row) {
-      [1, "UID", "CA", 1, "9876543210", "", 0]
+      [1, "UID", "CA", 1, "1357911131", nil, nil, "", 0]
     }
 
     it "handles query result, buffering results and returning nothing since this is first product seen" do
@@ -41,7 +41,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
             "tariff_records" => [
               {
                 "hts_line_number" => 1,
-                "hts_hts_1" => "1234567890"
+                "hts_hts_1" => "1234567890",
+                "hts_hts_2" => "9876543210",
+                "hts_hts_3" => "2468101214"
               }
             ]
           }
@@ -76,7 +78,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
             "tariff_records" => [
               {
                 "hts_line_number" => 1,
-                "hts_hts_1" => "1234567890"
+                "hts_hts_1" => "1234567890",
+                "hts_hts_2" => "9876543210",
+                "hts_hts_3" => "2468101214"
               }
             ]
           },
@@ -85,7 +89,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
             "tariff_records" => [
               {
                 "hts_line_number" => 1,
-                "hts_hts_1" => "9876543210"
+                "hts_hts_1" => "1357911131",
+                "hts_hts_2" => nil,
+                "hts_hts_3" => nil
               }
             ]
           }
@@ -99,8 +105,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
     end
 
     it "creates multiple products for each related style" do
-      us_query_row[5] = "UID2\nUID3"
-      ca_query_row[5] = "UID2\nUID3"
+      us_query_row[7] = "UID2\nUID3"
+      ca_query_row[7] = "UID2\nUID3"
 
       # Make sure we're also building up the classificaitons/tariffs as well for each related style
       subject.process_query_result us_query_row, {}
@@ -147,7 +153,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
     end
 
     it "blanks tariffs of files listed as manual entry processing" do
-      us_query_row[6] = true
+      us_query_row[8] = true
       result = subject.process_query_result us_query_row, {last_result: true}
 
       expect(result.length).to eq 1
@@ -178,7 +184,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
       p = Factory(:product, unique_identifier: "UID")
       c = p.classifications.create! country: Factory(:country, iso_code: "US")
       c.update_custom_value! cdefs[:manual_flag], false
-      t = c.tariff_records.create! line_number: 1, hts_1: "1234567890"
+      t = c.tariff_records.create! line_number: 1, hts_1: "1234567890", hts_2: "2468101214", hts_3: "1357911131"
 
       c2 = p.classifications.create! country: Factory(:country, iso_code: "CA")
       c2.update_custom_value! cdefs[:manual_flag], true
@@ -195,8 +201,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
 
       expect(result.size).to eq 2
 
-      expect(result.first).to eq [product.id, "UID", "CA", 1, "9876543210", "ABC\nDEF", 1]
-      expect(result.second).to eq [product.id, "UID", "US", 1, "1234567890", "ABC\nDEF", 0]
+      expect(result.first).to eq [product.id, "UID", "CA", 1, "9876543210", nil, nil, "ABC\nDEF", 1]
+      expect(result.second).to eq [product.id, "UID", "US", 1, "1234567890","2468101214", "1357911131", "ABC\nDEF", 0]
     end
 
     it "returns nothing if everything is already synced" do
@@ -206,7 +212,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
     end
 
     it "allows custom where" do
-      c = described_class.new custom_where: "iso.iso_code = 'US'", api_client: true
+      c = described_class.new "custom_where" => "iso.iso_code = 'US'", api_client: true
 
       query = c.query
       result = ActiveRecord::Base.connection.execute(query).to_a
