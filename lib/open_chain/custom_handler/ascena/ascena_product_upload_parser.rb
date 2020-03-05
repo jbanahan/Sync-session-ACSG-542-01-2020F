@@ -5,11 +5,13 @@ require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 module OpenChain; module CustomHandler; module Ascena; class AscenaProductUploadParser
   include OpenChain::CustomHandler::CustomFileCsvExcelParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::Report::ReportHelper
 
   attr_accessor :importer
 
   def initialize custom_file
     @custom_file = custom_file
+    @blanked_hts_lines ||= {}
   end
 
   def self.can_view? user
@@ -20,10 +22,25 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     self.class.can_view? user
   end
 
+  def send_exception_report(user)
+    group = MailingList.where(system_code: 'ascena_parts_exceptions').first
+
+    wb = XlsxBuilder.new
+    sheet = wb.create_sheet("Ascena Part Exceptions", headers: ["Part Number", "Previous HTS", "Classification Notes"])
+    @blanked_hts_lines.each do |key, value|
+      wb.add_body_row(sheet, [key, value[:previous_hts], value[:notes]])
+    end
+
+    date = ActiveSupport::TimeZone[user.time_zone || "America/New_York"].now.strftime('%m_%e_%Y')
+    file = xlsx_workbook_to_tempfile(wb, 'temp', file_name: "ascena_part_exceptions_#{date}.xlsx")
+    OpenMailer.send_simple_html(group, 'Ascena Parts Exceptions', 'Attached is a list of all Ascena parts that have had their HTS numbers blanked', file).deliver_now
+  end
+
   def process user
     begin
       process_file @custom_file, user
       user.messages.create subject: "File Processing Complete", body: "Ascena Product Upload processing for file #{@custom_file.attached_file_name} is complete."
+      send_exception_report(user) if @blanked_hts_lines.present?
     rescue => e
       user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
     end
@@ -97,7 +114,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     duplicate_styles.each_pair do |style, rows|
       # Basically, at this point, we're using the key as the style and then extracting the garment type and hts from
       # each row and putting them in the classification notes field (sort them alphabetically based on the garment type)
-      classification_notes = rows.map {|row| [text_value(row[2]), hts_val(row)]}.sort {|a, b| a[0].to_s <=> b[0].to_s }.map {|v| "#{v[0]}: #{v[1].hts_format}"}.join "\n "
+      classification_notes = rows.map {|row| [text_value(row[2]), hts_val(row)]}.sort {|a, b| a[0].to_s <=> b[0].to_s }.uniq.map {|v| "#{v[0]}: #{v[1].hts_format}"}.join("\n ")
       process_file_row(user, custom_file.attached_file_name, rows.first, style, nil, classification_notes)
     end
 
@@ -168,11 +185,15 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
       set_custom_value(classification, cdefs[:class_classification_notes], classification_notes, changed)
 
       tariff = classification.tariff_records.find {|t| t.line_number == 1 }
+
+      previous_hts = tariff.hts_1 if tariff.present?
+
       # If the hts value is nil, remove the tariff record
-      if hts.nil? && tariff
+      if hts.blank? && tariff
+        @blanked_hts_lines[text(row[1])] = {previous_hts: previous_hts, notes: classification_notes}
         tariff.destroy
         changed.value = true
-      elsif !hts.nil?
+      elsif !hts.blank?
         if tariff.nil?
           changed.value = true
           tariff = classification.tariff_records.build line_number: 1
@@ -183,7 +204,6 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
           tariff.hts_1 = hts
         end
       end
-      
 
       if product.changed? || changed.value
         product.save!

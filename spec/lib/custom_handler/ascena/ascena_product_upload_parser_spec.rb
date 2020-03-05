@@ -174,6 +174,63 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect(prod.entity_snapshots.length).to eq 2
     end
 
+    it "sends a report if any HTS numbers are blanked" do
+      user.time_zone = "America/New_York"
+      user.email = "test@test.com"
+      user.save
+
+      group = MailingList.create!(user: user, company: ascena, name: "Ascena Parts Exceptions", system_code: 'ascena_parts_exceptions')
+      group.email_addresses = "#{user.email}"
+      group.save
+      group.reload
+
+      allow(subject).to receive(:foreach).with(custom_file, skip_headers: true).and_yield(file_row)
+
+      subject.process_file custom_file, user
+
+      no_hts = file_row.dup
+      no_hts[9] = nil
+
+      allow(subject).to receive(:foreach).with(custom_file, skip_headers: true).and_yield(no_hts)
+
+      subject.process user
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to include(user.email)
+      expect(mail.subject).to include("Ascena Parts Exceptions")
+    end
+
+    it "handles duplicate garment types" do
+      row_2 = file_row.dup
+      row_2[2] = "A Garment Type 2"
+      row_2[9] = "1234.56.7800"
+
+      allow(subject).to receive(:foreach).with(custom_file, skip_headers: true).and_yield(file_row).and_yield(row_2)
+
+      subject.process_file custom_file, user
+
+      prod = Product.where(unique_identifier: "ASCENA-Style").first
+      expect(prod).not_to be_nil
+      expect(prod.classifications.length).to eq 1
+      c = prod.classifications.first
+      expect(c.country).to eq us
+      expect_custom_value(c, cdefs[:class_customs_description], "Customs Description")
+
+      # Subsequent run
+      # We are giving the parser the same rows twice to duplicate a bug that was brought up in ticket 26648
+      allow(subject).to receive(:foreach).with(custom_file, skip_headers: true).and_yield(file_row).and_yield(row_2).and_yield(file_row).and_yield(row_2)
+
+      subject.process_file custom_file, user
+
+      prod = Product.where(unique_identifier: "ASCENA-Style").first
+      expect(prod).not_to be_nil
+      expect(prod.classifications.length).to eq 1
+      c = prod.classifications.first
+      expect(c.country).to eq us
+      expect_custom_value(c, cdefs[:class_customs_description], "Customs Description")
+      expect_custom_value(c, cdefs[:class_classification_notes], "A Garment Type 2: 1234.56.7800\n Garment Type: 1234.56.7890")
+    end
+
     it "handles same styles with different garment types in the file" do
       row_2 = file_row.dup
       row_2[2] = "A Garment Type 2"
