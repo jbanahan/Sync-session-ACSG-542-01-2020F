@@ -33,7 +33,7 @@ describe DelayedJobManager do
       "word".delay({run_at: 16.minutes.ago, queue: "default"}).size
       "word".delay({run_at: 16.minutes.ago, queue: "default"}).size
 
-      expect(Lock).to receive(:acquire).with("Monitor Queue Backlog", yield_in_transaction: false).and_yield
+      expect(Lock).to receive(:acquire).with("Monitor Queue Backlog", yield_in_transaction: false, raise_timeout: false, timeout: 5).and_yield
       expect(OpenChain::CloudWatch).to receive(:send_delayed_job_queue_depth).with(2)
       expect(subject.monitor_backlog max_messages: 1).to eq true
 
@@ -69,12 +69,6 @@ describe DelayedJobManager do
       expect(subject.monitor_backlog max_messages: 1).to eq false
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
-
-    it "retries 3 times to acquire lock" do
-      e = Timeout::Error.new "Error"
-      expect(Lock).to receive(:acquire).with("Monitor Queue Backlog", yield_in_transaction: false).exactly(3).times.and_raise e
-      expect { subject.monitor_backlog max_messages: 1 }.to raise_error e
-    end
   end
 
   describe "report_delayed_job_error" do
@@ -87,7 +81,7 @@ describe DelayedJobManager do
 
     it "reports delayed jobs with errors" do
       errored_job
-      expect(Lock).to receive(:acquire).with("Report Delayed Job Error", yield_in_transaction: false).and_yield
+      expect(Lock).to receive(:acquire).with("Report Delayed Job Error", yield_in_transaction: false, raise_timeout: false, timeout: 5).and_yield
       expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(1)
       expect(DelayedJobManager.report_delayed_job_error).to eq true
       email = ActionMailer::Base.deliveries.last
@@ -139,12 +133,6 @@ describe DelayedJobManager do
       email = ActionMailer::Base.deliveries.last
       expect(email.body.raw_source).to include "Job Error: Error!"
       expect(email.body.raw_source).not_to include "Job Error: Job 2 Error"
-    end
-
-    it "retries 3 times to acquire lock" do
-      e = Timeout::Error.new "Error"
-      expect(Lock).to receive(:acquire).with("Report Delayed Job Error", yield_in_transaction: false).exactly(3).times.and_raise e
-      expect { subject.report_delayed_job_error }.to raise_error e
     end
   end
 

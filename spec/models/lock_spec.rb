@@ -219,10 +219,10 @@ describe Lock do
         begin
           Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false) {}
         rescue => e
-          done = true
           error = e
           error_time = Time.zone.now
         end
+        done = true
       }
 
       t1.join(10) if t1.status
@@ -237,6 +237,39 @@ describe Lock do
       # did pass it would mean our looping functionality in the lock is not working correctly and the error
       # is just raised after the loop completes and the lock was actually retrieved)
       expect(start_time).to be_within(3.seconds).of error_time
+    end
+
+    it "does not raise a timeout error when waiting for the lock times out, but raising is disabled" do
+      done = false
+      lockAcquired = false
+      end_time = Time.now + 10.seconds
+      t1 = Thread.new {
+        Lock.acquire('LockSpec', yield_in_transaction: false) do
+          lockAcquired = true
+          sleep(0.1) while !done && Time.now < end_time
+        end
+      }
+      # Make sure t1 is the first to acquire the lock
+      sleep(0.1) unless t1.alive?
+
+      error = nil
+      start_time = Time.zone.now
+      error_time = nil
+      t2 = Thread.new {
+        sleep (0.1) while !lockAcquired
+        begin
+          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false, raise_timeout: false) {}
+        rescue => e
+          error = e
+          error_time = Time.zone.now
+        end
+        done = true
+      }
+
+      t1.join(10) if t1.status
+      t2.join(1) if t2.status
+
+      expect(error).to be_nil
     end
 
     it "attempts to retry connecting if server is not reachable" do

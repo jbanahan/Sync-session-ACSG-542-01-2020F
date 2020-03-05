@@ -71,6 +71,10 @@ class Lock
   # lock_expiration - The amount of time in seconds before the lock is reaped by the lock server.  This is largely here
   # to ensure that failed clients don't lock out others indefinitely. Defaults to 300.  Note, if the process is still
   # running, the lock will continue to lock..it will not simply time out after 300 seconds.
+  #
+  # raise_timeout - If true (defaults to true), then a timeout is raised if the lock could not be obtained inside the given
+  # timeout period.  You might want this to be false for processes that are run fairly often and if they can't get a lock
+  # in a certain period, then it doesn't really matter since they're run again shortly.
   def self.acquire(lock_name, opts = {})
     internal_lock_name = clean_lock_name(lock_name)
     already_acquired = definitely_acquired?(internal_lock_name)
@@ -80,7 +84,7 @@ class Lock
     # and if you want a PERMANENT lock, you will need to explicitly pass nil for lock_expiration
     # The VAST majority of time we're using this lock construct is for things that take seconds at most, so
     # we won't have to retrofit any external callsites with this change
-    opts = {timeout: 60, yield_in_transaction: true, lock_expiration: 300}.merge opts
+    opts = {timeout: 60, yield_in_transaction: true, lock_expiration: 300, raise_timeout: true}.merge opts
 
     yield_in_transaction = opts[:yield_in_transaction] == true
     result = nil
@@ -98,7 +102,7 @@ class Lock
         end
       rescue Timeout::Error, Redis::TimeoutError => e
         # Just catch and re-raise the error after normalize the message (since we raise an error and the connection pool/redis potentially raises one)
-        raise Timeout::Error, "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to acquire lock '#{lock_name}'.", e.backtrace
+        maybe_raise_timeout(opts[:raise_timeout], "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to acquire lock '#{lock_name}'.", e.backtrace)
       rescue Redis::CannotConnectError, Redis::ConnectionError => e
         # In this case, the attempt to connect to redis for the lock failed (server restart/maint etc)..keep retrying until we've waiting longer than
         # the given timeout.
@@ -106,7 +110,7 @@ class Lock
           sleep(1)
           retry
         else
-          raise Timeout::Error, "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to connect to lock server for lock '#{lock_name}'.", e.backtrace
+          maybe_raise_timeout(opts[:raise_timeout], "Waited #{timeout} #{"second".pluralize(timeout)} while attempting to connect to lock server for lock '#{lock_name}'.", e.backtrace)
         end
       ensure
         release_lock(internal_lock_name)
@@ -180,6 +184,16 @@ class Lock
     "#{MasterSetup.instance_identifier}:#{lock_name}"
   end
   private_class_method :clean_lock_name
+
+  def self.maybe_raise_timeout should_raise, message, backtrace
+    return unless should_raise
+    
+    if backtrace.nil?
+      raise Timeout::Error, message
+    else
+      raise Timeout::Error, message, backtrace
+    end
+  end
 
   def self.acquire_for_class klass, opts={}
     return self.acquire(klass.name,opts) {yield}
