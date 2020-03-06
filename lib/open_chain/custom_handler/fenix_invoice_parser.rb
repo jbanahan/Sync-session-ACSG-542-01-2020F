@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
 
   def self.process_invoice_rows rows, log, opts
     begin
-      self.new rows, log, opts
+      self.new.process_invoice_data rows, log, opts
     rescue => e
       e.log_me ["Failed to process Fenix Invoice # #{get_invoice_number(rows.first)}" + (opts[:key] ? " from file '#{opts[:key]}'" : "") + "."]
     end
@@ -55,13 +55,16 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       "#{prefix}-#{number}-#{suffix}"
     end
   end
-  
+
   #don't call this, use the static parse method
-  def initialize rows, log, opts
+  def process_invoice_data rows, log, opts
     invoice = nil
+    entry_number = nil
+
     find_and_process_invoice(rows.first, log) do |yielded_invoice|
       invoice = yielded_invoice
       make_header invoice, rows.first
+      entry_number = rows.first[5].to_s.strip
 
       invoice.last_file_bucket = opts[:bucket]
       invoice.last_file_path = opts[:key]
@@ -89,7 +92,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
 
     # Only do intacct stuff in WWW instance
     if MasterSetup.get.custom_feature?("WWW")
-      create_intacct_invoice(invoice) unless invoice.nil? || invoice.customer_number == "GENERIC"
+      create_intacct_invoice(invoice, entry_number) unless invoice.nil? || invoice.customer_number == "GENERIC"
     end
   end
 
@@ -153,7 +156,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       return val.blank? ? val : val.strip
     end
 
-    def create_intacct_invoice invoice
+    def create_intacct_invoice invoice, entry_number
       # Use the xref value if there is one, otherwise use the raw value from Fenix
       xref = DataCrossReference.find_intacct_customer_number 'Fenix', invoice.customer_number
       customer_number = (xref.blank? ? invoice.customer_number : xref)
@@ -161,6 +164,12 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       # if the name is there, then the company is 'als', otherwise it's 'vcu'
       company =  DataCrossReference.has_key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
       
+      # If the invoice data comes in prior to the entry data coming from Fenix, then there's not going to be an Entry that the invoice
+      # is associated with.  The actual invoice csv data does have the entry number in it, so we'll fall back to using
+      # that data if the entry is not present.
+      # In general, this shouldn't happen, but there's been a few times where B2B systems are acting wonky where this has happened.
+      real_entry_number = invoice.entry&.entry_number.presence || entry_number
+
       r = IntacctReceivable.where(company: company, invoice_number: invoice.invoice_number).first_or_create!
       Lock.db_lock(r) do
         # If the data has already been uploaded to Intacct, then there's nothing we can do to update it (at least for now)
@@ -181,7 +190,8 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
           pl.charge_description = line.charge_description
           pl.amount = line.charge_amount
           pl.line_of_business = "Brokerage"
-          pl.broker_file = invoice.entry.entry_number unless invoice.entry.nil?
+          pl.broker_file = real_entry_number
+
           # For whatever reason, a location code is tied exclusively to a single entity in Intacct.  So we need to use
           # different location codes for the same office depending on which invoicing system the customer's data originates from.
           pl.location = r.company == "als" ? "TOR" : "Toronto"
@@ -203,7 +213,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       end
 
       # We also want to queue up a send to push the broker file number dimension to intacct
-      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension 'Broker File', invoice.entry.entry_number, invoice.entry.entry_number unless invoice.entry.nil?
+      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension 'Broker File', real_entry_number, real_entry_number unless real_entry_number.blank?
     end
   
 end; end; end
