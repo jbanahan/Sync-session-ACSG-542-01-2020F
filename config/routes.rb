@@ -11,15 +11,10 @@ OpenChain::Application.routes.draw do
   get '/:subpath/fonts/:font.woff', to: redirect('/fonts/%{font}.woff', status: 302)
   get '/:subpath/fonts/:font.ttf', to: redirect('/fonts/%{font}.ttf', status: 302)
   get '/:subpath/fonts/:font.svg', to: redirect('/fonts/%{font}.svg', status: 302)
-  get '/:subpath/fonts/:font.eo
-
-
-
-t', to: redirect('/fonts/%{font}.eot', status: 302)
+  get '/:subpath/fonts/:font.eot', to: redirect('/fonts/%{font}.eot', status: 302)
 
   get '/hts/subscribed_countries', to: 'hts#subscribed_countries'
-  get '/hts/:iso/
-ing/:heading', to: 'hts#heading'
+  get '/hts/:iso/heading/:heading', to: 'hts#heading'
   get '/hts/:iso/chapter/:chapter', to: 'hts#chapter'
   get '/hts/:iso', to: 'hts#country'
   get '/hts', to: 'hts#index'
