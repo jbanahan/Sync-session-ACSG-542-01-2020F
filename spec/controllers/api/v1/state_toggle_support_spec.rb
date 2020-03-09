@@ -13,16 +13,17 @@ describe Api::V1::ShipmentsController do
     
     it "should toggle state" do
       btn = instance_double(StateToggleButton)
-      expect(btn).to receive(:async_toggle!).with(shipment, user)
+      expect(btn).to receive(:toggle!).with(shipment, user)
       allow(btn).to receive(:id).and_return 10
       expect(StateToggleButton).to receive(:for_core_object_user).with(shipment, user).and_return([btn])
+      expect(Lock).to receive(:db_lock).with(shipment).and_yield
       post :toggle_state_button, id: shipment.id.to_s, button_id: '10'
       expect(response).to be_success
     end
     
     it "should not toggle state if user cannot access button" do
       btn = instance_double(StateToggleButton)
-      expect(btn).not_to receive(:async_toggle!).with(shipment, user)
+      expect(btn).not_to receive(:toggle!).with(shipment, user)
       allow(btn).to receive(:id).and_return 10
       expect(StateToggleButton).to receive(:for_core_object_user).with(shipment, user).and_return([])
       post :toggle_state_button, id: shipment.id.to_s, button_id: '10'
@@ -31,7 +32,7 @@ describe Api::V1::ShipmentsController do
 
     it "allows access to the state toggle button via the button's identifier" do
       btn = instance_double(StateToggleButton)
-      expect(btn).to receive(:async_toggle!).with(shipment, user)
+      expect(btn).to receive(:toggle!).with(shipment, user)
       allow(btn).to receive(:id).and_return 10
       allow(btn).to receive(:identifier).and_return "identifier"
       expect(StateToggleButton).to receive(:for_core_object_user).with(shipment, user).and_return([btn])

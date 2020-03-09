@@ -92,10 +92,6 @@ class StateToggleButton < ActiveRecord::Base
     nil
   end
 
-  def async_toggle! obj, user
-    self.toggle! obj, user, true
-  end
-
   def to_be_activated? obj
     # If this is a simple button, then we ALWAYS update the date/user attributes - we never blank them
     return true if self.simple_button?
