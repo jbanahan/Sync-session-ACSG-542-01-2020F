@@ -1,5 +1,13 @@
 describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
-  subject {OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator.new('spec/fixtures/files/vfitrack-passphraseless.gpg.key')}
+  subject {OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator.new('vfitrack')}
+
+  describe "initialize" do
+    subject { described_class.new }
+
+    it "uses correct default gpg_secrets_key" do
+      expect(subject.gpg_secrets_key).to eq "siemens"
+    end
+  end
 
   describe "find_entries" do
     context "with siemens tax ids" do
@@ -71,7 +79,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
       expect_any_instance_of(described_class).to receive(:ftp_sync_file).and_return true
 
-      described_class.run_schedulable({'public_key' => 'spec/fixtures/files/vfitrack.gpg.key'})
+      described_class.run_schedulable({'gpg_secrets_key' => 'vfitrack'})
       # All that we care about here is ultimately 1 line of something was encrypted
       # the rest is tested below.
       expect(file_data.lines.size).to eq 1
@@ -394,15 +402,13 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
 
           # decrypt the file then make sure it's formatted the way we expect
-          gpg = OpenChain::GPG.new 'spec/fixtures/files/vfitrack-passphraseless.gpg.key', 'spec/fixtures/files/vfitrack-passphraseless.gpg.private.key'
-
           decrypted_file = nil
           Tempfile.open("decrypt") do |f|
             Tempfile.open("encrypted") do |en|
               en.binmode
               en << encrypted_file
               en.flush
-              gpg.decrypt_file en, f
+              OpenChain::GPG.decrypt_io en, f, 'vfitrack'
             end
 
             decrypted_file = f.read

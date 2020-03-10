@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
-  subject { described_class.new "public_key_path" => 'spec/fixtures/files/vfitrack-passphraseless.gpg.key' }
+  subject { described_class.new "gpg_secrets_key" => 'vfitrack_passphraseless' }
 
   let(:cdefs) { subject.cdefs }
   let(:us) { Factory(:country, iso_code: "US") }

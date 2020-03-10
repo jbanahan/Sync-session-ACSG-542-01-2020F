@@ -63,6 +63,8 @@ require 'open_chain/custom_handler/vandegrift/kewill_tariff_classifications_pars
 require 'open_chain/custom_handler/vandegrift/maersk_cargowise_broker_invoice_file_parser'
 require 'open_chain/custom_handler/vandegrift/maersk_cargowise_entry_file_parser'
 require 'open_chain/custom_handler/vandegrift/maersk_cargowise_event_file_parser'
+require 'open_chain/custom_handler/vandegrift/vandegrift_catair_3461_parser'
+require 'open_chain/custom_handler/vandegrift/vandegrift_catair_7501_parser'
 require 'open_chain/custom_handler/advance/advance_prep_7501_shipment_parser'
 require 'open_chain/custom_handler/lt/lt_850_parser'
 require 'open_chain/custom_handler/descartes/descartes_basic_shipment_xml_parser'
@@ -74,6 +76,7 @@ require 'open_chain/custom_handler/gt_nexus/generic_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/amazon/amazon_product_parser_broker'
 require 'open_chain/custom_handler/rockport/rockport_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/kirklands/kirklands_gtn_order_xml_parser'
+
 
 module OpenChain
   class IntegrationClient
@@ -191,6 +194,10 @@ module OpenChain
         OpenChain::CustomHandler::Vandegrift::KewillTariffClassificationsParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "kewill_customers") && custom_features.include?("Kewill Entries")
         OpenChain::CustomHandler::Vandegrift::KewillCustomerParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "catair_3461") && custom_features.include?("Catair Parser")
+        OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "catair_7501") && custom_features.include?("Catair Parser")
+        OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ascena_po") && custom_features.include?('Ascena PO')
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ascena_apll_asn") && custom_features.include?('Ascena APLL ASN')

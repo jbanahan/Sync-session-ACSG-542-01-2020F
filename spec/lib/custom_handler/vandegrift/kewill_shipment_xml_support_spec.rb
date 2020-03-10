@@ -27,7 +27,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
       let (:dates) {
         [
           described_class::CiLoadEntryDate.new(:est_arrival_date, Date.new(2018,3,1)),
-          described_class::CiLoadEntryDate.new(:export_date, Date.new(2018,2,1))
+          described_class::CiLoadEntryDate.new(:export_date, Date.new(2018,2,1)),
+          described_class::CiLoadEntryDate.new(:arrival_date, Date.new(2020,2,1)),
         ]
       }
 
@@ -42,6 +43,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         e.customs_ship_mode = 10
         e.lading_port = "LPORT"
         e.unlading_port = "PORT"
+        e.entry_port = "EPORT"
         e.pieces = 5
         e.pieces_uom = "SUOM"
         e.goods_description = "DESC"
@@ -50,6 +52,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         e.ultimate_consignee_code = "ULTCONS"
         e.country_of_origin = "OR"
         e.country_of_export = "EX"
+        e.bond_type = "B"
+        e.destination_state = "XX"
+        e.location_of_goods = "GOODS LOCATION"
+        e.entry_type = "1"
+        e.entry_filer_code = "316"
+        e.entry_number = "31612345"
+        e.total_value_us = BigDecimal("12.50")
+        e.firms_code = "FIRM"
+        e.mode_of_transportation = "10"
 
         e.dates = dates
         e.containers = [container]
@@ -67,6 +78,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
 
         expect(s.text "fileNo").to eq "12345"
         expect(s.text "custNo").to eq "CUST"
+        expect(s.text "entryType").to eq "1"
+        expect(s.text "entryFilerCode").to eq "316"
+        expect(s.text "entryNo").to eq "31612345"
+        expect(s.text "valueUsAmt").to eq "12.50"
         expect(s.text "custRef").to eq "REF"
         expect(s.text "vesselAirlineName").to eq "VESSEL"
         expect(s.text "voyageFlightNo").to eq "VOYAGE"
@@ -74,8 +89,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "carrier").to eq "CARR"
         expect(s.text "mot").to eq "10"
         expect(s.text "portLading").to eq "LPORT"
-        expect(s.text "portDist").to eq "PORT"
+        expect(s.text "distPort").to eq "PORT"
+        expect(s.text "distPortEntry").to eq "EPOR"
         expect(s.text "dateEstArrival").to eq "20180301"
+        expect(s.text "dateArrival").to eq "20200201"
         expect(s.text "masterBill").to eq "1234567890"
         expect(s.text "houseBill").to eq "9876543210"
         expect(s.text "pieceCount").to eq "5"
@@ -87,6 +104,17 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "ultimateConsignee").to eq "ULTCONS"
         expect(s.text "countryOrigin").to eq "OR"
         expect(s.text "countryExport").to eq "EX"
+        expect(s.text "bondType").to eq "B"
+        expect(s.text "destinationState").to eq "XX"
+        expect(s.text "firmsCode").to eq "FIRM"
+        expect(s.text "mot").to eq "10"
+
+        expect(s.text "EdiShipmentHeaderAux/masterBill").to eq "1234567890"
+        expect(s.text "EdiShipmentHeaderAux/houseBill").to eq "9876543210"
+        expect(s.text "EdiShipmentHeaderAux/subBill").to eq "5678901234"
+        expect(s.text "EdiShipmentHeaderAux/subSubBill").to eq "5432109876"
+        expect(s.text "EdiShipmentHeaderAux/locationOfGoods").to eq "GOODS LOCATION"
+
 
         expect(s.text "EdiShipmentIdList/EdiShipmentId/seqNo").to eq "1"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/masterBill").to eq "1234567890"
@@ -162,6 +190,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         l.uom_1 = "QT1"
         l.quantity_2 = BigDecimal("52")
         l.uom_2 = "QT2"
+        l.quantity_3 = BigDecimal("75")
+        l.uom_3 = "QT3"
         l.po_number = "5301195481"
         l.first_sale = BigDecimal("218497.20")
         l.department = 1.0
@@ -182,6 +212,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         l.ftz_priv_status_date = "20190315"
         l.description = "Description"
         l.container_number = "ContainerNo"
+        l.category_number = "123"
+        l.exported_date = Date.new(2020, 2, 13)
+        l.visa_date = Date.new(2020, 2, 7)
+        l.visa_number = "12345"
+        l.lading_port = 12345
+        l.textile_category_code = "123"
+        l.ruling_type = 'B'
+        l.ruling_number = "123"
+
         i.invoice_lines << l
 
         l = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
@@ -204,6 +243,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         l.spi = "JO"
         l.unit_price = BigDecimal("15.50")
         l.container_number = "ContainerNo"
+
         i.invoice_lines << l
 
         e
@@ -218,6 +258,23 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
 
       let (:mid) {
         ManufacturerId.create! mid: "MID", name: "Manufacturer", address_1: "Addr1", address_2: "Addr2", city: "City", country: "CO", postal_code: "00000", active: true
+      }
+
+      let (:invoice_party) {
+        p = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadParty.new
+        p.qualifier = "PY"
+        p.name = "PARTY"
+        p.address_1 = "ADDR 1"
+        p.address_2 = "ADDR 2"
+        p.address_3 = "ADDR 3"
+        p.city = "CITY"
+        p.country_subentity = "STATE"
+        p.country = "CO"
+        p.customer_number = "CUSTNO"
+        p.zip = "12345"
+        p.mid = "COMANUFACTURER"
+
+        p
       }
 
       it "generates entry data to given xml element" do
@@ -270,6 +327,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(l.text "uom1Class").to eq "QT1"
         expect(l.text "qty2Class").to eq "5200"
         expect(l.text "uom2Class").to eq "QT2"
+        expect(l.text "qty3Class").to eq "7500"
+        expect(l.text "uom3Class").to eq "QT3"
         expect(l.text "purchaseOrderNo").to eq "5301195481"
         expect(l.text "custRef").to eq "5301195481"
         expect(l.text "contract").to eq "218497.2"
@@ -289,6 +348,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(l.text "ftzPrivStatusDate").to eq "20190315"
         expect(l.text "descr").to eq "Description"
         expect(l.text "noContainer").to eq "ContainerNo"
+        expect(l.text "categoryNo").to eq "123"
+        expect(l.text "dateExport").to eq "20200213"
+        expect(l.text "visaDate").to eq "20200207"
+        expect(l.text "portLading").to eq "12345"
+        expect(l.text "categoryNo").to eq "123"
+        expect(l.text "rulingType").to eq "B"
+        expect(l.text "rulingNo").to eq "123"
 
         parties = REXML::XPath.first l, "EdiInvoicePartyList"
         expect(parties).not_to be_nil
@@ -319,6 +385,48 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(seller.text "country").to eq "CO"
         expect(seller.text "name").to eq "Manufacturer"
         expect(seller.text "zip").to eq "00000"
+      end
+
+      it "allows for manually adding distinct parties" do
+        entry_data.invoices.first.invoice_lines.first.parties = [invoice_party]
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
+        expect(t).not_to be_nil
+
+        p = REXML::XPath.first t, "EdiInvoicePartyList/EdiInvoiceParty[partiesQualifier = 'PY']"
+        expect(p).not_to be_nil
+        expect(p.text "commInvNo").to eq "15MSA10"
+        expect(p.text "commInvLineNo").to eq "10"
+        expect(p.text "dateInvoice").to eq "20151101"
+        expect(p.text "manufacturerId").to eq "597549"
+        expect(p.text "name").to eq "PARTY"
+        expect(p.text "address1").to eq "ADDR 1"
+        expect(p.text "address2").to eq "ADDR 2"
+        expect(p.text "address3").to eq "ADDR 3"
+        expect(p.text "city").to eq "CITY"
+        expect(p.text "country").to eq "CO"
+        expect(p.text "countrySubentity").to eq "STATE"
+        expect(p.text "zip").to eq "12345"
+        expect(p.text "custNo").to eq "CUSTNO"
+        expect(p.text "partyMidCd").to eq "COMANUFACTURER"
+      end
+
+      it "pulls MID code from MF party, skipping the party data " do
+        invoice_party.qualifier = "MF"
+        invoice_line = entry_data.invoices.first.invoice_lines.first
+        invoice_line.parties = [invoice_party]
+        invoice_line.mid = nil
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
+        expect(t).not_to be_nil
+
+        expect(t.text "manufacturerId2").to eq "COMANUFACTURER"
+        p = REXML::XPath.first t, "EdiInvoicePartyList"
+        expect(p).to be_nil
       end
 
       it "generates 999999999 as cert value when cotton fee flag is 1" do
@@ -425,7 +533,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         t
       }
 
-      it "builds multiple tariff lines when tariff lines are present" do
+      it "builds multiple tariff lines when tariff lines are present, identifying special tariffs and sorting accordingly" do
         tariff_1 = tariff_line
         tariff_2 = tariff_line.dup
         tariff_2.hts = "9903000000"
@@ -449,7 +557,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t1.text "dateInvoice").to eq "20151101"
         expect(t1.text "commInvLineNo").to eq "10"
         expect(t1.text "tariffLineNo").to eq "1"
-        expect(t1.text "tariffNo").to eq "1234567890"
+        expect(t1.text "tariffNo").to eq "9903000000"
         expect(t1.text "weightGross").to eq "12345"
         expect(t1.text "kilosPounds").to eq "KG"
         expect(t1.text "valueForeign").to eq "98765"
@@ -466,7 +574,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t2.text "dateInvoice").to eq "20151101"
         expect(t2.text "commInvLineNo").to eq "10"
         expect(t2.text "tariffLineNo").to eq "2"
-        expect(t2.text "tariffNo").to eq "9903000000"
+        expect(t2.text "tariffNo").to eq "1234567890"
         expect(t2.text "weightGross").to eq "12345"
         expect(t2.text "kilosPounds").to eq "KG"
         expect(t2.text "valueForeign").to eq "98765"
@@ -529,8 +637,32 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t2.text "spiSecondary").to eq "A+"
       end
 
-      it "automatically adds special tariff when multi-tariffs are present" do
-        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", country_origin_iso: "PH", effective_date_start: Date.new(2015, 11, 1), special_hts_number: "1111111111"
+      it "automatically adds special tariff when multi-tariffs are present, sorting 9902 and 9903 tariff lines correctly" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", country_origin_iso: "PH", effective_date_start: Date.new(2015, 11, 1), special_hts_number: "9903000000"
+
+        tariff_1 = tariff_line
+        tariff_2 = tariff_line.dup
+        tariff_2.hts = "9902000000"
+        tariff_2.foreign_value = nil
+        entry_data.invoices.first.invoice_lines.first.tariff_lines = [tariff_1, tariff_2]
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        t = REXML::XPath.match(doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines/EdiInvoiceTariffClassList/EdiInvoiceTariffClass").to_a
+        expect(t).not_to be_nil
+        expect(t.length).to eq 3
+
+        # We can just verify the tariff numbers involved to tell that the special tariff was added in the right position
+        expect(t[0].text "tariffNo").to eq "9903000000"
+        expect(t[0].text "valueForeign").to be_nil
+        expect(t[1].text "tariffNo").to eq "9902000000"
+        expect(t[1].text "valueForeign").to be_nil 
+        expect(t[2].text "tariffNo").to eq "1234567890"
+        expect(t[2].text "valueForeign").to eq "98765"
+      end
+
+      it "does not add special tariffs for tariff numbers that are already present in the tariff lines" do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", country_origin_iso: "PH", effective_date_start: Date.new(2015, 11, 1), special_hts_number: "9903000000"
 
         tariff_1 = tariff_line
         tariff_2 = tariff_line.dup
@@ -542,15 +674,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
 
         t = REXML::XPath.match(doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines/EdiInvoiceTariffClassList/EdiInvoiceTariffClass").to_a
         expect(t).not_to be_nil
-        expect(t.length).to eq 3
+        expect(t.length).to eq 2
 
         # We can just verify the tariff numbers involved to tell that the special tariff was added in the right position
-        expect(t[0].text "tariffNo").to eq "1111111111"
+        expect(t[0].text "tariffNo").to eq "9903000000"
         expect(t[0].text "valueForeign").to be_nil
         expect(t[1].text "tariffNo").to eq "1234567890"
         expect(t[1].text "valueForeign").to eq "98765"
-        expect(t[2].text "tariffNo").to eq "9903000000"
-        expect(t[2].text "valueForeign").to be_nil
       end
     end
   end

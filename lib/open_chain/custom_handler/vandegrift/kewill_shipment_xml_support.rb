@@ -7,6 +7,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
   CI_LOAD_DATE_CODES ||= {
     est_arrival_date: "dateEstArrival",
+    arrival_date: "dateArrival",
+    elected_entry_date: "dateEntry",
     export_date: "1"
   }
 
@@ -18,15 +20,32 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   # The included here is done so that every generator instance that includes this module can have the structs below
   # namespaced to their own class
   included do
-    CiLoadEntry ||= Struct.new(:file_number, :customer, :invoices, :containers, :bills_of_lading, :dates, :edi_identifier, :customer_reference, :vessel, :voyage, :carrier, :customs_ship_mode, :lading_port, :unlading_port, :pieces, :pieces_uom, :goods_description, :weight_kg, :consignee_code, :ultimate_consignee_code, :country_of_origin, :country_of_export)
+    CiLoadEntry ||= Struct.new(
+      :file_number, :customer, :invoices, :containers, :bills_of_lading, :dates, :edi_identifier, :customer_reference, :vessel, :voyage, :carrier, 
+      :customs_ship_mode, :lading_port, :unlading_port, :entry_port, :pieces, :pieces_uom, :goods_description, :weight_kg, :consignee_code, 
+      :ultimate_consignee_code, :country_of_origin, :country_of_export, :location_of_goods, :destination_state, :bond_type, :entry_filer_code,
+      :entry_type, :entry_number, :total_value_us, :firms_code, :mode_of_transportation
+    )
     CiLoadEdiIdentifier ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :scac)
     # code is the symbol matching to the key above in the CI_LOAD_DATE_CODES constant
+    # In other words, to send an export date use a code of "1"...to send an Arrival Date, use a code of 'arrival_date'
     CiLoadEntryDate ||= Struct.new(:code, :date)
     CiLoadBillsOfLading ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :pieces, :pieces_uom)
     CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type)
-    CiLoadInvoice ||= Struct.new(:invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number)
-    CiLoadInvoiceLine ||= Struct.new(:tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, :description, :container_number, :ftz_quantity, :ftz_zone_status, :ftz_priv_status_date)
-    CiLoadInvoiceTariff ||= Struct.new(:hts, :gross_weight, :spi, :spi2, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2)
+    CiLoadInvoice ||= Struct.new(
+      :invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number, 
+      :invoice_total
+    )
+    CiLoadInvoiceLine ||= Struct.new(
+      :tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, 
+      :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, 
+      :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, 
+      :description, :container_number, :ftz_quantity, :ftz_zone_status, :ftz_priv_status_date, :ftz_expired_hts_number, :category_number, :parties,
+      :exported_date, :visa_number, :visa_date, :lading_port, :textile_category_code, :ruling_type, :ruling_number, :quantity_3, :uom_3
+    )
+    CiLoadInvoiceTariff ||= Struct.new(:hts, :gross_weight, :spi, :spi2, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :quantity_3, :uom_3)
+    # Qualifier should be one of MF (Manufacturer) or BY (Buyer)
+    CiLoadParty ||= Struct.new(:qualifier, :name, :address_1, :address_2, :address_3, :city, :country_subentity, :zip, :country, :customer_number, :mid)
   end
 
   # Generate XML from data presented via the structs above.
@@ -84,6 +103,11 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     generate_identifier_data(parent, edi_identifier)
     add_element(parent, "fileNo", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true))
     add_element(parent, "custNo", g.string(entry.customer, 10, pad_string: false, exception_on_truncate: true))
+    add_element(parent, "entryType", g.string(entry.entry_type, 2, pad_string: false)) unless entry.entry_type.blank?
+    add_element(parent, "entryFilerCode", g.string(entry.entry_filer_code, 3, pad_string: false)) unless entry.entry_filer_code.blank?
+    add_element(parent, "entryNo", g.string(entry.entry_number, 9, pad_string: false)) unless entry.entry_number.blank?
+    add_element(parent, "valueUsAmt", g.number(entry.total_value_us, 13, decimal_places: 2, pad_string: false)) unless entry.total_value_us.blank?
+    add_element(parent, "mot", g.number(entry.mode_of_transportation, 2, decimal_places: 0, pad_string: false)) unless entry.mode_of_transportation.blank?
 
     add_element(parent, "custRef", g.string(entry.customer_reference, 35, pad_string: false))
     add_element(parent, "vesselAirlineName", g.string(entry.vessel, 20, pad_string: false))
@@ -93,22 +117,11 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "carrier", g.string(entry.carrier, 4, pad_string: false))
     add_element(parent, "mot", g.number(entry.customs_ship_mode, 2, decimal_places: 0, strip_decimals: true, pad_string: false))
     add_element(parent, "portLading", g.string(entry.lading_port, 5, pad_string: false))
-    add_element(parent, "portDist", g.string(entry.unlading_port, 4, pad_string: false))
+    add_element(parent, "distPort", g.string(entry.unlading_port, 4, pad_string: false))
+    add_element(parent, "distPortEntry", g.string(entry.entry_port, 4, pad_string: false))
 
-    # This is here to counteract some stupid bug or loading protocol in Kewill that we haven't figured out.  If you have multiple Master Bills, the quantity on the shipment
-    # carries to the first master bill record (for some reason).  So, if you have multiple bills, we can't put the total piece count for the shipment here,
-    # as it will push down to the master bill record.  Instead we'll put the first master bill record's piece count here and let it push down, the user
-    # will then have to key the total - REALLY stupid.
-    skip_first_bol_pieces = false
-    if false #Array.wrap(entry.bills_of_lading).length > 1 && entry.bills_of_lading.first.try(:pieces).to_i > 0
-      bill = entry.bills_of_lading.first
-      add_element(parent, "pieceCount", g.number(bill.pieces, 12, decimal_places: 0, strip_decimals: true, pad_string: false))
-      add_element(parent, "uom", g.string(bill.pieces_uom, 6, pad_string: false))
-      #skip_first_bol_pieces = true
-    else
-      add_element(parent, "pieceCount", g.number(entry.pieces, 12, decimal_places: 0, strip_decimals: true, pad_string: false))
-      add_element(parent, "uom", g.string(entry.pieces_uom, 6, pad_string: false))
-    end
+    add_element(parent, "pieceCount", g.number(entry.pieces, 12, decimal_places: 0, strip_decimals: true, pad_string: false))
+    add_element(parent, "uom", g.string(entry.pieces_uom, 6, pad_string: false))
     
     add_element(parent, "descOfGoods", g.string(entry.goods_description, 70, pad_string: false))
 
@@ -121,13 +134,26 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "ultimateConsignee", g.string(entry.ultimate_consignee_code, 10, pad_string: false))
     add_element(parent, "countryOrigin", g.string(entry.country_of_origin, 2, pad_string: false, exception_on_truncate: true)) unless entry.country_of_origin.blank?
     add_element(parent, "countryExport", g.string(entry.country_of_export, 2, pad_string: false, exception_on_truncate: true)) unless entry.country_of_export.blank?
-    
+    add_element(parent, "bondType", g.string(entry.bond_type, 1, pad_string: false)) unless entry.bond_type.blank?
+    add_element(parent, "destinationState", g.string(entry.destination_state, 2, pad_string: false)) unless entry.destination_state.blank?
+    add_element(parent, "firmsCode", g.string(entry.firms_code, 4, pad_string: false)) unless entry.firms_code.blank?
 
-    generate_bills(parent, entry, edi_identifier, skip_first_bol_pieces)
+    generate_shipment_header_aux(parent, entry, edi_identifier)
+    generate_bills(parent, entry, edi_identifier)
     generate_entry_dates(parent, entry, edi_identifier)
     generate_containers(parent, entry, edi_identifier)
     
     parent
+  end
+
+  def generate_shipment_header_aux(parent, entry, edi_identifier)
+    # For the moment, location of goods is the only field in the Aux element we're sending so just
+    # skip it unless that field is present
+    if entry.location_of_goods.present?
+      aux = add_element(parent, "EdiShipmentHeaderAux")
+      generate_identifier_data(aux, edi_identifier)
+      add_element(aux, "locationOfGoods", g.string(entry.location_of_goods, 35, pad_string: false))
+    end
   end
 
   def generate_entry_dates parent, entry, edi_identifier
@@ -154,12 +180,12 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     end
   end
 
-  def generate_bills(parent, entry, edi_identifier, skip_first_bol_pieces)
+  def generate_bills(parent, entry, edi_identifier)
     if Array.wrap(entry.bills_of_lading).length > 0
       id_list = add_element(parent, "EdiShipmentIdList")
 
       Array.wrap(entry.bills_of_lading).each_with_index do |bill_of_lading, index|
-        generate_shipment_id(id_list, bill_of_lading, edi_identifier, (index + 1), skip_first_bol_pieces)
+        generate_shipment_id(id_list, bill_of_lading, edi_identifier, (index + 1))
       end
       
     end
@@ -235,7 +261,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
   end
 
-  def generate_shipment_id parent, bol, edi_identifier, sequence, skip_first_bol_pieces
+  def generate_shipment_id parent, bol, edi_identifier, sequence
     id = add_element(parent, "EdiShipmentId")
     add_element(id, "seqNo", sequence)
     generate_identifier_data(id, edi_identifier)
@@ -256,13 +282,6 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(id, "subBillAddl", g.string(sub_bill, 12, pad_string: false))
     *, sub_sub_bill = chop_bill(bol.sub_sub_bill)
     add_element(id, "subSubBillAddl", g.string(sub_sub_bill, 12, pad_string: false))
-
-    # We skip the first qty sometimes as a workaround for a "bug" in Kewill loading quantities to 
-    # master bill records
-    # if (sequence != 1 || !skip_first_bol_pieces) && bol.pieces.to_i > 0
-    #   add_element(id, "qty", g.number(bol.pieces, 12, decimal_places: 0, pad_string: false))
-    #   add_element(id, "uom", g.string(bol.pieces_uom, 6, pad_string: false))
-    # end
 
     add_element(id, "qty", g.number(bol.pieces, 12, decimal_places: 0, pad_string: false))
     add_element(id, "uom", g.string(bol.pieces_uom, 6, pad_string: false))
@@ -330,16 +349,32 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       add_element(parent, "exemptionCertificate", "999999999")
     end
 
-    add_element(parent, "manufacturerId2", g.string(line.mid, 15, pad_string: false, exception_on_truncate: true)) unless line.mid.blank?
+    mid = line.mid
+    if line.mid.blank?
+      # See if there's an MF party with an MID, if so, pull it from there
+      mid = mid_from_manufacturer_party(line)
+    end
+
+    add_element(parent, "manufacturerId2", g.string(mid, 15, pad_string: false, exception_on_truncate: true)) unless mid.blank?
     add_element(parent, "cartons", g.number(line.cartons, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.cartons)
 
     seller_mid = get_seller_mid(line) unless line.seller_mid.blank?
     buyer_address = get_buyer(line) unless line.buyer_customer_number.blank?
 
-    if seller_mid || buyer_address
+    if seller_mid || buyer_address || Array.wrap(line.parties).length > 0
       parties = add_element(parent, "EdiInvoicePartyList")
-      add_seller_mid(parties, entry, invoice, counter, seller_mid) if seller_mid
-      add_buyer(parties, entry, invoice, counter, buyer_address) if buyer_address
+      add_seller_mid(parties, entry, invoice, invoice_line_number, seller_mid) if seller_mid
+      add_buyer(parties, entry, invoice, invoice_line_number, buyer_address) if buyer_address
+
+      Array.wrap(line.parties).each do |party|
+        # If we had an MID already included, then skip sending the MF party..we don't need it
+        next if mid.present? && party.qualifier.to_s.upcase == "MF"
+
+        add_invoice_line_party(parties, entry, invoice, invoice_line_number, party)
+      end
+
+      # Don't leave a blank parties element in the line
+      parent.delete_element(parties) if parties.children.length == 0
     end
 
     add_element(parent, "detailLineNo", line.line_number.to_i) unless line.line_number.blank?
@@ -348,23 +383,83 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "ftzQuantity", g.number(line.ftz_quantity, 10, pad_string: false, decimal_places: 0)) if nonzero?(line.ftz_quantity)
     add_element(parent, "ftzZoneStatus", g.string(line.ftz_zone_status, 1, pad_string: false, exception_on_truncate: true)) unless line.ftz_zone_status.blank?
     add_element(parent, "ftzPrivStatusDate", g.date(line.ftz_priv_status_date)) unless line.ftz_priv_status_date.blank?   
+    add_element(parent, "prevExpiredFtzTariffNo", g.string(line.ftz_expired_hts_number, 10, pad_string: false)) unless line.ftz_expired_hts_number.blank?
     
     add_element(parent, "descr", g.string(line.description, 40, pad_string: false)) unless line.description.blank?
     add_element(parent, "noContainer", g.string(line.container_number, 15, pad_string: false)) unless line.container_number.blank?
-
+    add_element(parent, "categoryNo", g.string(line.category_number, 3, pad_string: false)) unless line.category_number.blank?
+    add_element(parent, "dateExport", g.date(line.exported_date)) unless line.exported_date.nil?
+    add_element(parent, "visaDate", g.date(line.visa_date)) unless line.visa_date.nil?
+    add_element(parent, "visaNo", g.string(line.visa_number, 2, pad_string: false)) unless line.visa_number.blank?
+    add_element(parent, "portLading", g.string(line.lading_port, 5, pad_string: false)) unless line.lading_port.blank?
+    add_element(parent, "categoryNo", g.number(line.textile_category_code, 3, decimal_places: 0, pad_string: false)) unless line.textile_category_code.blank?
+    add_element(parent, "rulingType", g.string(line.ruling_type, 1, pad_string: false)) unless line.ruling_type.blank?
+    add_element(parent, "rulingNo", g.string(line.ruling_number, 6, pad_string: false)) unless line.ruling_number.blank?
 
     tariff_lines = Array.wrap(line.tariff_lines)
+    if add_special_tariffs?(entry, invoice, line)
+      tariff_lines = process_special_tariffs(invoice, line, tariff_lines)
+    end
+    
+    if tariff_lines.blank?
+      add_tariff_fields(parent, line)
+    else
+      tariff_counter = 0
+      tariff_class_element = add_element(parent, "EdiInvoiceTariffClassList")
+      sort_tariff_lines(tariff_lines).each do |tariff|
+        tariff_class = add_element(tariff_class_element, "EdiInvoiceTariffClass")
+        add_invoice_tariff_line(tariff_class, entry, invoice, invoice_line_number, tariff, (tariff_counter += 1))
+      end
+    end
+    
+    nil
+  end
 
+  def mid_from_manufacturer_party line
+    manufacturer = Array.wrap(line.parties).find { |p| p.qualifier.to_s.upcase == "MF" }
+    manufacturer&.mid.presence || nil
+  end
+
+  def sort_tariff_lines tariff_lines
+    # Make sure any 9903 numbers appear first, then 9902 numbers and then just retain the original order of other
+    # tariff lines
+    sorted_lines = []
+
+    dup_tariff_lines = tariff_lines.dup
+    
+    # The order the tariff numbers appear here are the priority order they'll end up in the actual output sorted 
+    # in front of the "primary tariffs"
+    ["9903", "9902"].each do |priority_code|
+      dup_tariff_lines.each_with_index do |t, index|
+        next if t.nil?
+
+        if t.hts.to_s.starts_with?(priority_code)
+          sorted_lines << t
+          dup_tariff_lines[index] = nil
+        end
+      end
+    end
+    sorted_lines.push *dup_tariff_lines.select {|t| !t.nil? }
+
+    sorted_lines
+  end
+
+  def process_special_tariffs invoice, line, tariff_lines
     # In Kewill's EDI system you can send simple tariff data along w/ the commercial invoice line without having to send
     # child tariff line records.  However, if you do want to send multiple lines...then you need to send the child records.
     # We'll handle both ways...at least partially due to the handling of the special tariff cross references that allow for
     # adding special tariffs on the fly.
     if tariff_lines.length > 0
+      #don't add special tariffs for tariff numbers that are already present in the tariff list
+      existing_tariffs = Set.new(tariff_lines.map &:hts)
+
       special_tariff_line = nil
       special_tariff_lines = []
       tariff_lines.each do |tariff|
         special_tariffs = additional_tariff_number(invoice.invoice_date, line.country_of_origin, tariff.hts)
         special_tariffs.each_with_index do |special_tariff, idx|
+          next if existing_tariffs.include?(special_tariff.special_hts_number)
+
           special_tariff_line = tariff.dup
           special_tariff_line.hts = special_tariff.special_hts_number
           # Special tariff lines don't carry any actual value
@@ -387,23 +482,17 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       tariff_lines << convert_invoice_line_to_tariff(line, copy_value: true) unless tariff_lines.blank?
     end
 
-    if tariff_lines.blank?
-      add_tariff_fields(parent, line)
-    else
-      tariff_counter = 0
-      tariff_class_element = add_element(parent, "EdiInvoiceTariffClassList")
-      tariff_lines.each do |tariff|
-        tariff_class = add_element(tariff_class_element, "EdiInvoiceTariffClass")
-        add_invoice_tariff_line(tariff_class, entry, invoice, invoice_line_number, tariff, (tariff_counter += 1))
-      end
-    end
-    
-    nil
+    tariff_lines
   end
 
-  def add_invoice_line_key_fields parent, entry, invoice, invoice_line_number
+  # This method provides a way for including classes to disable the automatic addition of the supplemental tariffs
+  def add_special_tariffs? entry, invoice, line
+    true
+  end
+
+  def add_invoice_line_key_fields parent, entry, invoice, invoice_line_number, suppress_mid: false
     file_number = invoice.file_number.presence || entry.file_number
-    add_element(parent, "manufacturerId", g.string(file_number, 15, pad_string: false, exception_on_truncate: true))
+    add_element(parent, "manufacturerId", g.string(file_number, 15, pad_string: false, exception_on_truncate: true)) unless suppress_mid
     add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
     add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
     add_element(parent, "commInvLineNo", invoice_line_number)
@@ -428,7 +517,25 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "uom1Class", g.string(line.uom_1, 3, pad_string: false)) unless line.uom_1.blank?
     add_element(parent, "qty2Class", g.number(line.quantity_2, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_2)
     add_element(parent, "uom2Class", g.string(line.uom_2, 3, pad_string: false)) unless line.uom_2.blank?
+    add_element(parent, "qty3Class", g.number(line.quantity_3, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_3)
+    add_element(parent, "uom3Class", g.string(line.uom_3, 3, pad_string: false)) unless line.uom_3.blank?
     nil
+  end
+
+  def add_invoice_line_party parent, entry, invoice, invoice_line_number, party
+    el = add_element(parent, "EdiInvoiceParty")
+    add_invoice_line_key_fields(el, entry, invoice, invoice_line_number)
+    add_element(el, "partiesQualifier", g.string(party.qualifier, 2, pad_string: false, exception_on_truncate: true))
+    add_element(el, "custNo", g.string(party.customer_number, 10, pad_string: false, exception_on_truncate: true)) unless party.customer_number.blank?
+    add_element(el, "name", g.string(party.name, 104, pad_string: false)) unless party.name.blank?
+    add_element(el, "address1", g.string(party.address_1, 95, pad_string: false)) unless party.address_1.blank?
+    add_element(el, "address2", g.string(party.address_2, 104, pad_string: false)) unless party.address_2.blank?
+    add_element(el, "address3", g.string(party.address_3, 35, pad_string: false)) unless party.address_3.blank?
+    add_element(el, "city", g.string(party.city, 93, pad_string: false)) unless party.city.blank?
+    add_element(el, "countrySubentity", g.string(party.country_subentity, 9, pad_string: false)) unless party.country_subentity.blank?
+    add_element(el, "country", g.string(party.country, 2, pad_string: false)) unless party.country.blank?
+    add_element(el, "zip", g.string(party.zip, 9, pad_string: false)) unless party.zip.blank?
+    add_element(el, "partyMidCd", g.string(party.mid, 15, pad_string: false, exception_on_truncate: true)) unless party.mid.blank?
   end
 
   def convert_invoice_line_to_tariff line, hts: nil, copy_value: false
@@ -500,12 +607,9 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     mid
   end
 
-  def add_seller_mid parent, entry, invoice, counter, mid
+  def add_seller_mid parent, entry, invoice, invoice_line_number, mid
     party = add_element(parent, "EdiInvoiceParty")
-    add_element(party, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
-    add_element(party, "commInvLineNo", (counter * 10))
-    add_element(party, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
-    add_element(party, "manufacturerId", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true))
+    add_invoice_line_key_fields(party, entry, invoice, invoice_line_number)
     add_element(party, "partiesQualifier","SE")
     add_element(party, "address1", g.string(mid.address_1, 95, pad_string: false, exception_on_truncate: true)) unless mid.address_1.blank?
     add_element(party, "address2", g.string(mid.address_2, 104, pad_string: false, exception_on_truncate: true)) unless mid.address_2.blank?
@@ -513,6 +617,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(party, "country", g.string(mid.country, 2, pad_string: false, exception_on_truncate: true)) unless mid.country.blank?
     add_element(party, "name", g.string(mid.name, 104, pad_string: false, exception_on_truncate: true)) unless mid.name.blank?
     add_element(party, "zip", g.string(mid.postal_code, 9, pad_string: false, exception_on_truncate: true)) unless mid.postal_code.blank?
+    add_element(party, "partyMidCd", g.string(mid.mid, 15, pad_string: false, exception_on_truncate: true)) unless mid.mid.blank?
     nil
   end
 
@@ -544,12 +649,9 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     address
   end
 
-  def add_buyer parent, entry, invoice, counter, buyer
+  def add_buyer parent, entry, invoice, invoice_line_number, buyer
     party = add_element(parent, "EdiInvoiceParty")
-    add_element(party, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
-    add_element(party, "commInvLineNo", (counter * 10))
-    add_element(party, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
-    add_element(party, "manufacturerId", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true))
+    add_invoice_line_key_fields(party, entry, invoice, invoice_line_number)
     add_element(party, "partiesQualifier","BY")
     add_element(party, "address1", g.string(buyer.line_1, 95, pad_string: false, exception_on_truncate: true)) unless buyer.line_1.blank?
     add_element(party, "address2", g.string(buyer.line_2, 104, pad_string: false, exception_on_truncate: true)) unless buyer.line_2.blank?

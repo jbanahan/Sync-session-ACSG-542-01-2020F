@@ -96,6 +96,14 @@ jobs:
                 port: 6379
               memcache:
                 server: localhost:11211
+              gpg:
+                vfitrack_passphraseless:
+                  public_key_path: spec/fixtures/files/vfitrack-passphraseless.gpg.key
+                  private_key_path: spec/fixtures/files/vfitrack-passphraseless.gpg.private.key
+                vfitrack:
+                  public_key_path: spec/fixtures/files/vfitrack.gpg.key
+                  private_key_path: spec/fixtures/files/vfitrack.gpg.private.key
+                  passphrase: passphrase
             " > config/secrets.yml
       - run: 
           name: Create / Migrate Database

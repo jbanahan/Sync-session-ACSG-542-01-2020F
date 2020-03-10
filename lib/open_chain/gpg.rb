@@ -3,6 +3,150 @@
 # and to insulate from any shifting of the GPG implementation we may need to do.
 module OpenChain; class GPG
 
+  # This method provides abstractions to be able to utilize GPG to decrypted an encrypted 
+  # IO object. Because this decryption scheme involves utilize the gpg command line program
+  # and feeding file paths to it, the abstraction utilizes tempfiles for the data (unless given
+  # File IO objects), thus the process is not particularly performant.
+  # 
+  # It relies on drawing all data about the GPG private key from a key value that points to a key
+  # below a primary 'gpg' key in the secrets.yml file.  A valid set up would look like this.
+  # public_key_path is only needed for encryption (not decryption).
+  #
+  #  gpg:
+  #    some_key:
+  #      private_key_path: config/some_key.asc
+  #      passphrase: jklasdfj1u9012jay8123l
+  #      public_key: config/some_public_key.asc
+  # 
+  #
+  # NOTE: 
+  # It looks like it's possible to utilize stdin / stdout with the gpg binary (which should allow for
+  # piping those directly from / to the given IO objects), but doing so would involve heavy 
+  # refactoring of the internals of this class which is out of scope at the moment, though probably
+  # a fun little project to consider in the future.
+  # 
+  def self.decrypt_io encrypted_input, decrypted_output, gpg_secrets_key
+    key_data = get_key_data(gpg_secrets_key, private_key_required: true)
+    
+    gpg = self.new(nil, key_data['private_key_path'])
+    
+    input_buffer = nil
+    output_buffer = nil
+    begin
+      input_buffer = possibly_make_tempfile(encrypted_input, ["encrypted", "in"])
+      output_buffer = possibly_make_tempfile(decrypted_output, ["decrypted", "out"])
+      # If we are buffering the input internally, we need to copy the data from the given input to our buffer
+      if input_buffer[:temp]
+        IO.copy_stream(encrypted_input, input_buffer[:io])
+        input_buffer[:io].flush
+      end
+
+      # Do the actual decryption
+      gpg.decrypt_file input_buffer[:io].path, output_buffer[:io].path, key_data['passphrase']
+
+      # If we're buffering the output internally, then copy the buffered data to the actual output stream
+      if output_buffer[:temp]
+        output_buffer[:io].rewind
+        IO.copy_stream output_buffer[:io], decrypted_output
+      end
+    ensure
+      # Make sure to close the input/output buffers if we provided our own internally here
+      begin
+        input_buffer[:io].close! if input_buffer.try(:[], :temp)
+      ensure
+        output_buffer[:io].close! if output_buffer.try(:[], :temp)
+      end
+    end
+
+    nil
+  end
+
+  # This method provides abstractions to be able to utilize GPG to encrypted data in an
+  # IO object. Because this decryption scheme involves utilize the gpg command line program
+  # and feeding file paths to it, the abstraction utilizes tempfiles for the data (unless given
+  # File IO objects), thus the process is not particularly performant.
+  # 
+  # It relies on drawing all data about the GPG private key from a key value that points to a key
+  # below a primary 'gpg' key in the secrets.yml file.  A valid set up would look like this.
+  # public_key_path is only needed for encryption (not decryption).
+  #
+  #  gpg:
+  #    some_key:
+  #      public_key_path: config/some_key.asc
+  # 
+  #
+  # NOTE: 
+  # It looks like it's possible to utilize stdin / stdout with the gpg binary (which should allow for
+  # piping those directly from / to the given IO objects), but doing so would involve heavy 
+  # refactoring of the internals of this class which is out of scope at the moment, though probably
+  # a fun little project to consider in the future.
+  # 
+  def self.encrypt_io plaintext_input, encrypted_output, gpg_secrets_key
+    key_data = get_key_data(gpg_secrets_key, public_key_required: true)
+    gpg = self.new(key_data['public_key_path'], nil)
+
+    input_buffer = nil
+    output_buffer = nil
+    begin
+      input_buffer = possibly_make_tempfile(plaintext_input, ["encrypted", "in"])
+      output_buffer = possibly_make_tempfile(encrypted_output, ["decrypted", "out"])
+      # If we are buffering the input internally, we need to copy the data from the given input to our buffer
+      if input_buffer[:temp]
+        IO.copy_stream(plaintext_input, input_buffer[:io])
+        input_buffer[:io].flush
+      end
+
+      # Do the actual decryption
+      gpg.encrypt_file input_buffer[:io].path, output_buffer[:io].path
+
+      # If we're buffering the output internally, then copy the buffered data to the actual output stream
+      if output_buffer[:temp]
+        output_buffer[:io].rewind
+        IO.copy_stream output_buffer[:io], encrypted_output
+      end
+    ensure
+      # Make sure to close the input/output buffers if we provided our own internally here
+      begin
+        input_buffer[:io].close! if input_buffer.try(:[], :temp)
+      ensure
+        output_buffer[:io].close! if output_buffer.try(:[], :temp)
+      end
+    end
+
+    nil
+  end
+
+  # Gets the key data for the given 
+  def self.get_key_data gpg_secrets_key, private_key_required: false, public_key_required: false
+    key_data = MasterSetup.secrets["gpg"].try(:[], gpg_secrets_key.to_s)
+    raise ArgumentError, "Missing gpg configuration for '#{gpg_secrets_key}'" if key_data.nil?
+    raise ArgumentError, "Missing 'private_key_path' key in secrets.yml for gpg:#{gpg_secrets_key}." if private_key_required && key_data['private_key_path'].blank?
+    raise ArgumentError, "Missing 'public_key_path' key in secrets.yml for gpg:#{gpg_secrets_key}." if public_key_required && key_data['public_key_path'].blank?
+
+    key_data
+  end
+  private_class_method :get_key_data
+
+  def self.possibly_make_tempfile possible_io, possible_tempfile_name
+    temp = false
+    io = nil
+
+
+    # Basically, the only thing we can utilize currently passed from the caller is a File instance
+    # of some sort...because the data needs to be written to disk for the GPG binary to be able to
+    # decrypt it
+    if possible_io.is_a?(Tempfile) || possible_io.is_a?(File)
+      io = possible_io
+    else
+      io = Tempfile.open(possible_tempfile_name)
+      io.binmode
+      temp = true
+    end
+
+    {io: io, temp: temp}
+  end
+  private_class_method :possibly_make_tempfile
+
   # This is set in an initailizer (it defaults to gpg1)
   cattr_accessor :gpg_binary
 
@@ -86,14 +230,13 @@ module OpenChain; class GPG
         end
 
         def self.decrypt_file(public_key_file_name, private_key_file_name, input_file_name, output_file_name, passphrase=nil)
-          raise ArgumentError.new("Public key file \"#{public_key_file_name}\" does not exist") unless File.exist?(public_key_file_name)
-          raise ArgumentError.new("Private key file \"#{private_key_file_name}\" does not exist") unless File.exist?(private_key_file_name)
+         raise ArgumentError.new("Private key file \"#{private_key_file_name}\" does not exist") unless File.exist?(private_key_file_name)
           raise ArgumentError.new("Input file \"#{input_file_name}\" does not exist") unless File.exist?(input_file_name)
 
           
           with_temp_home_dir do |home_dir|
             recipient = get_recipient(home_dir, private_key_file_name)
-            with_temporary_decrypt_keyrings(home_dir, public_key_file_name, private_key_file_name, passphrase) do |keyring_file_name, secret_keyring_file_name|
+            with_temporary_decrypt_keyrings(home_dir, private_key_file_name, passphrase) do |keyring_file_name, secret_keyring_file_name|
               args = ['--keyring', keyring_file_name,
                      '--secret-keyring', secret_keyring_file_name,
                      '--decrypt',
@@ -191,7 +334,7 @@ module OpenChain; class GPG
           end
         end
 
-        def self.with_temporary_decrypt_keyrings(home_dir, public_key_file_name, private_key_file_name, passphrase)
+        def self.with_temporary_decrypt_keyrings(home_dir, private_key_file_name, passphrase)
           with_temporary_keyring_file do |keyring_file_name|
             with_temporary_keyring_file do |secret_keyring_file_name|
               args = []

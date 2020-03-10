@@ -662,6 +662,48 @@ class Entry < ActiveRecord::Base
     ")"
   end
 
+  def self.calculate_cbp_check_digit filer_code, file_number
+    # This calculation comes from the ACE CATAIR Appendix E
+    filer_code = filer_code.upcase
+    file_number = file_number.rjust(7, "0")
+
+    # Turn any non-numeric values in the filer_code into numbers (A=1, B=2, I = 9, J = 1...R = 9, S = 2..Z = 9)
+    digit_map = {}
+    "A".upto("I").each_with_index {|v, i| digit_map[v] = (i+1) }
+    "J".upto("R").each_with_index {|v, i| digit_map[v] = (i+1) }
+    "S".upto("Z").each_with_index {|v, i| digit_map[v] = (i+2) } # No idea why, but this series starts with 2, not 1
+
+    digits = []
+    filer_code.each_char {|c| digits << (digit_map[c].presence || c.to_i) }
+    file_number.each_char {|c| digits << c.to_i }
+
+    # From the right most number in the file number, take every other number and multiply it by 2.  
+    # If the value is over 10, add 1 to the ones digit and drop the tens digit
+    # then add all the results together.
+    odd_digits = []
+    even_digits = []
+    digits.reverse.each_with_index {|v, i| (i + 1).odd? ? (odd_digits << v) : (even_digits << v) }
+
+    odd_sum = odd_digits.map do |v|
+      v = v * 2
+      if v >= 10
+        v = ((v + 1) - 10)
+      end
+      v
+    end.sum
+
+    # Total all the even digits together
+    even_sum = even_digits.sum
+
+    # Add the two sums together
+    total = odd_sum + even_sum
+
+    # Calculate the ones digit (.ie sum mod 10)
+    remainder = total % 10
+    check_digit = remainder > 0 ? (10 - remainder) : 0
+    check_digit.to_s
+  end
+
   private
 
     def populated_us_holds

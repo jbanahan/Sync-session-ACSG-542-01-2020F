@@ -1,15 +1,8 @@
 describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler do
 
-  describe "gpg_helper" do
-    it "has the correct key paths" do
-      expect(subject.gpg_helper.public_key_path).to eq "config/siemens.asc"
-      expect(subject.gpg_helper.private_key_path).to eq "config/vfi-canada.asc"
-    end
-  end
-
-  describe "gpg_passphrase" do
-    it "uses the correct passphrase" do
-      expect(subject.gpg_passphrase).to eq "R!ch2805"
+  describe "gpg_secrets_key" do
+    it "has the correct key" do
+      expect(subject.gpg_secrets_key).to eq "vfi_canada"
     end
   end
 

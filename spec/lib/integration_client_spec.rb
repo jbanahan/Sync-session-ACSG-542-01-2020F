@@ -1,6 +1,3 @@
-require 'open_chain/integration_client'
-require 'open_chain/s3'
-
 describe OpenChain::IntegrationClient do
   let! (:master_setup) { stub_master_setup }
   let (:system_code) { master_setup.system_code }
@@ -463,6 +460,14 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
       it "handles Kewill Customer files" do
         do_parser_test("Kewill Entries", OpenChain::CustomHandler::Vandegrift::KewillCustomerParser, "/kewill_customers/file.json")
+      end
+
+      it "handles Catair 3461 files" do
+        do_parser_test("Catair Parser", OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser, "/catair_3461/file.txt")
+      end
+
+      it "handles Catair 3461 files" do
+        do_parser_test("Catair Parser", OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser, "/catair_7501/file.txt")
       end
     end
 

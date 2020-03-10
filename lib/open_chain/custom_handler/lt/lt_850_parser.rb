@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
     ["www-vfitrack-net/_lt_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lt_850"]
   end
 
-  def self.pre_process_data data
+  def self.pre_process_data data, opts: {}
     # LT 850's appear to be Windows encoded.  We received a file where there were windows em-dashes
     # in the vendors name.
     data.force_encoding("Windows-1252")

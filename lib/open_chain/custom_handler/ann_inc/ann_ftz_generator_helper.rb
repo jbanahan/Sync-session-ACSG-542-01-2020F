@@ -1,10 +1,10 @@
 module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHelper
 
   def initialize opts={}
-    settings = {"public_key_path" => "config/ann-integration-point.asc"}.merge(opts)
+    settings = {"gpg_secrets_key" => "ann_integration_point"}.merge(opts)
     super(settings)
     @row_buffer = []
-    @gpg = OpenChain::GPG.new settings["public_key_path"]
+    @gpg_secrets_key = settings["gpg_secrets_key"]
   end
 
   # Since Integration Point isn't doing any CSV parsing, we have to prevent quotes from being escaped.
@@ -71,7 +71,7 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
   def encrypt_file source_file
     Tempfile.open(["ann_bom", ".dat"]) do |f|
       f.binmode
-      @gpg.encrypt_file source_file, f
+      OpenChain::GPG.encrypt_io source_file, f, @gpg_secrets_key
       yield f
     end
   end

@@ -17,6 +17,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCustomerParser do
       expect(c.system_code).to eq "CHYOU"
       expect(c.name).to eq "CHEER YOU E-BUSINESS CO., LTD."
       expect(c).to have_system_identifier("Customs Management", "CHYOU")
+      expect(c.irs_number).to eq "12-3456789"
 
       expect(c.entity_snapshots.length).to eq 1
       expect(c.entity_snapshots.first.user).to eq user
@@ -84,6 +85,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCustomerParser do
       expect(existing.entity_snapshots.length).to eq 1
       expect(existing.entity_snapshots.first.user).to eq user
       expect(existing.entity_snapshots.first.context).to eq "file.json"
+    end
+
+    it "does not blank out IRS Number if company has an IRS Number, but json is missing one" do
+      existing = with_customs_management_id(Factory(:company, name: "CUSTNO", system_code: "CODE", irs_number: "12345"), "CHYOU")
+      json["irs_no"] = ""
+      subject.parse_customer(json, user, 'file.json')
+      existing.reload
+      expect(existing.irs_number).to eq "12345"
     end
   end
 

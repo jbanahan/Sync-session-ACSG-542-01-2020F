@@ -13,13 +13,15 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
                                   :value_for_tax, :duty, :entered_value, :special_authority, :description, :value_for_duty_code, :customs_line_number
 
   def self.run_schedulable opts = {}
-    c = opts['public_key'].blank? ? self.new : self.new(opts['public_key'])
+    c = opts['gpg_secrets_key'].blank? ? self.new : self.new(opts['gpg_secrets_key'])
     c.generate_and_send c.find_entries
   end
 
-  def initialize public_key_path = "config/siemens.asc"
-    raise "Siemens public key must be provided" unless File.exist?(public_key_path)
-    @gpg = OpenChain::GPG.new public_key_path
+  attr_reader :gpg_secrets_key
+
+  def initialize gpg_secrets_key = "siemens"
+    raise "GPG secrets key must be provided." unless gpg_secrets_key.present?
+    @gpg_secrets_key = gpg_secrets_key
 
     super({output_timezone: "Eastern Time (US & Canada)"})
   end
@@ -426,7 +428,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     def encrypt_file source_file
       Tempfile.open(["siemens_billing", ".dat"]) do |f|
         f.binmode
-        @gpg.encrypt_file source_file, f
+        OpenChain::GPG.encrypt_io source_file, f, self.gpg_secrets_key
 
         yield f
       end

@@ -22,7 +22,7 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
       [9,:cmp_importer,:importer,"Is Importer",{data_type: :boolean,
         can_edit_lambda: admin_edit_lambda()
       }],
-      [10,:cmp_alliance,:kewill_customer_number,"Alliance Customer Number",{
+      [10,:cmp_alliance,:kewill_customer_number,"Kewill Customer Number",{
         data_type: :string,
         can_view_lambda: lambda {|u| u.company.broker?},
         can_edit_lambda: admin_edit_lambda(),
@@ -64,6 +64,7 @@ module OpenChain; module ModelFieldDefinition; module CompanyFieldDefinition
         qualified_field_name: "(SELECT cw_id.code FROM system_identifiers cw_id WHERE cw_id.system = 'Cargowise' and cw_id.company_id = companies.id)",
         import_lambda: lambda {|obj, data| obj.set_system_identifier("Cargowise", data) }
       }],
+      [23,:cmp_tax_id,:irs_number,"Tax ID",{data_type: :string, can_edit_lambda: admin_edit_lambda()}]
     ]
     add_fields CoreModule::COMPANY, make_attachment_arrays(100,'cmp',CoreModule::COMPANY)
     add_fields CoreModule::COMPANY, make_business_rule_arrays(200,'cmp','companies','Company')

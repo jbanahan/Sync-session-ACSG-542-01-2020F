@@ -797,4 +797,22 @@ describe Entry do
     end
     
   end
+
+  describe "calculate_cbp_check_digit" do
+    it "calculates check digit using CATAIR example" do
+      expect(Entry.calculate_cbp_check_digit "B76", "324527").to eq "8"
+    end
+
+    it "calculates check digit for 316 filer code" do
+      expect(Entry.calculate_cbp_check_digit "316", "2509314").to eq "6"
+    end
+
+    it "calculates check digit for 595 filer code" do
+      expect(Entry.calculate_cbp_check_digit "595", "5663812").to eq "6"
+    end
+
+    it "calculates check digits that evaluate to 10" do
+      expect(Entry.calculate_cbp_check_digit "316", "0000504").to eq "0"
+    end
+  end
 end

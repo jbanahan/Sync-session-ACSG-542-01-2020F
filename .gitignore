@@ -20,16 +20,13 @@ coverage.data
 public/assets/*
 vendor/
 config/google_auth.json
-config/ann-integration-point.asc
 config/api_client.yml
 config/freshservice_client.yml
 config/pepsi.pem
 config/google_oauth2_api_login.json
 config/slack_client.yml
-config/siemens.asc
 config/secrets.yml
 config/fenix_sql_proxy.yml
-config/vfi-canada.asc
 config/support_request.yml
 config/fenix_b3_forwarding.yml
 config/kewill_imaging.yml
@@ -40,6 +37,7 @@ config/intacct.yml
 config/pepsi-idp-metadata.xml
 config/stitcher.yml
 config/recaptcha.yml
+config/*.asc
 .idea
 dump.rdb
 .byebug_history

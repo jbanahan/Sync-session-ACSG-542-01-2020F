@@ -37,17 +37,18 @@ module OpenChain; module CustomHandler; module GpgDecryptPassthroughSupport
 
     Tempfile.open([File.basename(filename, ".*"), File.extname(filename)]) do |outfile|
       outfile.binmode
-
       Attachment.add_original_filename_method(outfile, filename)
 
-      gpg_helper().decrypt_file(file, outfile, gpg_passphrase())
+      OpenChain::GPG.decrypt_io(file, outfile, gpg_secrets_key)
+
+      outfile.rewind
 
       yield outfile
     end
   end
 
-  def gpg_passphrase
-    # By default, assume we don't need a passphrase to decrypt
+  def gpg_secrets_key
+    raise "You must define a gpg_secrets_key method when including this module."
     nil
   end
 end; end; end;

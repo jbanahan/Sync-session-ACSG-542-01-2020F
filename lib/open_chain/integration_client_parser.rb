@@ -107,7 +107,7 @@ module OpenChain; module IntegrationClientParser
           # This method can be used to do things like set a non-standard encoding.  Having this method makes it easier for
           # parsers that utilize frameworks that already implement the parse data to deal with having to mutute the incoming data
           # prior to the framework's parse method executing (.ie edi_parser_support).
-          proced_data = pre_process_data(data)
+          proced_data = pre_process_data(data, opts)
           # If we just mutated the data in place and nil is returned, then don't modify our data var, continue to use it as is.
           # If anything other than nil is returned, then use that instead of the existing data.
           data = proced_data unless proced_data.nil?

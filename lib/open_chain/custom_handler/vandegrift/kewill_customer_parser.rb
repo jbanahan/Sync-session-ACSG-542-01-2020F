@@ -26,6 +26,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCustomerP
     company = Company.find_or_create_company!("Customs Management", data["customer_number"], {name: "***#{data["customer_name"]}***", importer: true})
     Lock.db_lock(company) do
       company.name = data["customer_name"]
+
+      # Don't blank out an IRS number in VFI Track if the data is missing from the feed.
+      irs_no = irs_number(data)
+      company.irs_number = irs_no unless irs_no.blank?
       # System code is still utilized as part of the importer identifier for products management, so make sure we populate
       # it if it's not already populated.  Don't overwrite anything that's already there though, since it's possible
       # that another code was utilized prior to this feed being established.
@@ -85,6 +89,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCustomerP
       if note["note_cust"].to_s =~ /IOR-([A-Z0-9]+)/i
         SystemIdentifier.where(system: "Amazon Reference", code: $1, company_id: company.id).first_or_create! 
       end
+    end
+
+    def irs_number data
+      return nil if data["irs_no"].blank?
+
+      data["irs_no"].to_s.strip
     end
 
 end; end; end; end

@@ -28,6 +28,7 @@ $(function() {
         <%= field_bootstrap(render_field_label("Kewill Customer Number"), text_field_tag("company[kewill_customer_number]", @company.kewill_customer_number,  class: "form-control")) if @include_alliance %>
         <%= field_bootstrap(render_field_label("Fenix Customer Number"), text_field_tag("company[fenix_customer_number]", @company.fenix_customer_identifier,  class: "form-control")) if @include_fenix%>
         <%= field_bootstrap(render_field_label("Cargowise Customer Number"), text_field_tag("company[cargowise_customer_number]", @company.cargowise_customer_number,  class: "form-control")) if @include_cargowise%>
+        <%= show_model_fields f, [:cmp_tax_id] %>
         <%= show_custom_fields f %>
       </div>
     </div>

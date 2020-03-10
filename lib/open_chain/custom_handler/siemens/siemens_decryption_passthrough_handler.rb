@@ -31,13 +31,8 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionP
     end
   end
 
-  def gpg_helper
-    OpenChain::GPG.new("config/siemens.asc", "config/vfi-canada.asc")
-  end
-
-  def gpg_passphrase
-    # This ideally ends up in the secrets.yml file when we go to Rails 4...in the interest of getting things done..it's in the code for now
-    "R!ch2805"
+  def gpg_secrets_key
+    "vfi_canada"
   end
 
   private 
