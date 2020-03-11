@@ -50,21 +50,23 @@ class DelayedJobManager
       # If we're not ready to send out a notification...then there's not really any point in continuing
       return false if next_warning_time && Time.zone.now < next_warning_time
 
-      errored_jobs = Delayed::Job.where("last_error IS NOT NULL").order("created_at DESC").limit(1000).select(:last_error).all
-      real_error_count = errored_jobs.length
+      # There's a primary key/index on id (not created_at) so using id to determine creation order is the simplest
+      # and quickest way (db-wise) to get results order by created at
+      job_errors = Delayed::Job.where("last_error IS NOT NULL").order({id: :desc}).limit(1000).pluck(:last_error)
+      real_error_count = job_errors.length
     
       error_messages = []
       max_message_length = 500
 
-      errored_jobs.each_with_index do |job, i|
+      job_errors.each_with_index do |last_error, i|
         break if i >= max_error_count
-        m = job.last_error.length < max_message_length ? job.last_error : job.last_error[0, max_message_length]
+        m = last_error.length < max_message_length ? last_error : last_error[0, max_message_length]
         error_messages << "Job Error: " + m
       end
       memcache.set "DelayedJobManager:next_report_delayed_job_error", min_reporting_age_minutes.minutes.from_now
     end
 
-    OpenChain::CloudWatch.send_delayed_job_error_count real_error_count
+    OpenChain::CloudWatch.send_delayed_job_error_count real_error_count.to_i
 
     if real_error_count > 0
       OpenMailer.send_generic_exception(StandardError.new("#{MasterSetup.get.system_code} - #{real_error_count} delayed job(s) have errors."), error_messages).deliver_now

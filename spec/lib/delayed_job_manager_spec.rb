@@ -131,8 +131,8 @@ describe DelayedJobManager do
       expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(2)
       expect(DelayedJobManager.report_delayed_job_error max_error_count: 1).to eq true
       email = ActionMailer::Base.deliveries.last
-      expect(email.body.raw_source).to include "Job Error: Error!"
-      expect(email.body.raw_source).not_to include "Job Error: Job 2 Error"
+      expect(email.body.raw_source).not_to include "Job Error: Error!"
+      expect(email.body.raw_source).to include "Job Error: Job 2 Error"
     end
   end
 
