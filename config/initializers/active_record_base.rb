@@ -2,6 +2,7 @@
 module ActiveRecord; class Base
   if ActiveRecord::VERSION::MAJOR < 5
     public_class_method :sanitize_sql_array
+    public_class_method :sanitize_sql_like
   elsif ActiveRecord::VERSION::MAJOR >= 5
     raise "Remove this initializer..it's no longer needed."
   end

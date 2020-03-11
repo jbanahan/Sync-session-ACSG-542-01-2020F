@@ -131,6 +131,52 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :qualified_field_name=> public_business_rule_templates_qry(table_name, module_type, "Review"),
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
+      }],
+      [rank_start+10,"#{uid_prefix}_public_failed_business_rule_messages",:public_failed_business_rule_messages,"Failed Business Rule Messages",{:data_type=>:string,
+        :import_lambda=>lambda {|o,d| "Failed Business Rule Messages ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.business_rules("Fail", include_private: false).join("\n ") },
+        :qualified_field_name=> <<-SQL,
+            (SELECT GROUP_CONCAT(failed_bvrr.message ORDER BY failed_rule.name SEPARATOR '\n ')
+             FROM business_validation_results failed_bvr
+               INNER JOIN business_validation_templates template ON template.id = failed_bvr.business_validation_template_id
+               INNER JOIN business_validation_rules failed_rule ON failed_rule.business_validation_template_id = failed_bvr.business_validation_template_id
+               INNER JOIN business_validation_rule_results failed_bvrr ON failed_bvr.id = failed_bvrr.business_validation_result_id AND failed_bvrr.business_validation_rule_id = failed_rule.id AND failed_bvrr.state = 'Fail'
+             WHERE failed_bvr.validatable_id = #{table_name}.id AND failed_bvr.validatable_type = '#{module_type}'
+               AND (template.private = false OR template.private IS NULL)
+             GROUP BY failed_bvr.validatable_id)
+          SQL
+        :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
+        :read_only=>true
+      }],
+      [rank_start+11,"#{uid_prefix}_review_business_rule_messages",:review_business_rule_messages,"Internal Review Business Rule Messages",{:data_type=>:string,
+        :import_lambda=>lambda {|o,d| "Internal Review Business Rule Messages ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.business_rules("Review").join("\n ") },
+        :qualified_field_name=> <<-SQL,
+            (SELECT GROUP_CONCAT(review_bvrr.message ORDER BY review_rule.name SEPARATOR '\n ')
+             FROM business_validation_results review_bvr
+               INNER JOIN business_validation_rules review_rule ON review_rule.business_validation_template_id = review_bvr.business_validation_template_id
+               INNER JOIN business_validation_rule_results review_bvrr ON review_bvr.id = review_bvrr.business_validation_result_id AND review_bvrr.business_validation_rule_id = review_rule.id AND review_bvrr.state = 'Review'
+             WHERE review_bvr.validatable_id = #{table_name}.id AND review_bvr.validatable_type = '#{module_type}'
+             GROUP BY review_bvr.validatable_id)
+          SQL
+        :can_view_lambda=>lambda {|u| u ? u.view_all_business_validation_results? : false},
+        :read_only=>true
+      }],
+      [rank_start+12,"#{uid_prefix}_public_review_business_rule_messages",:public_review_business_rule_messages,"Review Business Rule Messages",{:data_type=>:string,
+        :import_lambda=>lambda {|o,d| "Review Business Rule Messages ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.business_rules("Review", include_private: false).join("\n ") },
+        :qualified_field_name=> <<-SQL,
+            (SELECT GROUP_CONCAT(review_bvrr.message ORDER BY review_rule.name SEPARATOR '\n ')
+             FROM business_validation_results review_bvr
+               INNER JOIN business_validation_templates template ON template.id = review_bvr.business_validation_template_id
+               INNER JOIN business_validation_rules review_rule ON review_rule.business_validation_template_id = review_bvr.business_validation_template_id
+               INNER JOIN business_validation_rule_results review_bvrr ON review_bvr.id = review_bvrr.business_validation_result_id AND review_bvrr.business_validation_rule_id = review_rule.id AND review_bvrr.state = 'Review'
+             WHERE review_bvr.validatable_id = #{table_name}.id AND review_bvr.validatable_type = '#{module_type}'
+               AND (template.private = false OR template.private IS NULL)
+             GROUP BY review_bvr.validatable_id)
+          SQL
+        :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
+        :read_only=>true
       }]
     ]
   end

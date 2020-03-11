@@ -100,6 +100,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
     prod_country_of_origin: {label: 'Country of Origin', data_type: :string, module_type: 'Product', cdef_uid: "prod_country_of_origin"},
     prod_add_case: {label: "ADD Case Number", data_type: :string, module_type: "Product", cdef_uid: "prod_add_case"},
     prod_cvd_case: {label: "CVD Case Number", data_type: :string, module_type: "Product", cdef_uid: "prod_cvd_case"},
+    prod_fta: {label: 'FTA', data_type: :string, module_type: 'Product', cdef_uid: "prod_fta"},
     class_proposed_hts: {label: "Proposed HTS", data_type: :string, module_type: "Classification", cdef_uid: "class_proposed_hts"},
     class_customs_description: {label: "Customs Description", data_type: :string, module_type: "Classification", cdef_uid: "class_customs_description"},
     class_special_program_indicator: {label: "Special Program Indicator", data_type: :string, module_type: "Classification", cdef_uid: "class_special_program_indicator"},

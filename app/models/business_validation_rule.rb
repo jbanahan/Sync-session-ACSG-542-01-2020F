@@ -90,6 +90,11 @@ class BusinessValidationRule < ActiveRecord::Base
                     label: 'Lumber PO Vendor Variant Assignment',
                     enabled_lambda: lambda { MasterSetup.get.custom_feature? "Lumber Business Rules" }
                   },
+                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleCanadaEntryNafta'.to_sym=>
+                  {
+                      label: 'Lumber Canada Entry NAFTA Flagged Product',
+                      enabled_lambda: lambda { MasterSetup.get.custom_feature? "Lumber Business Rules" }
+                  },
                 'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryInvoicePartMatchesOrder'.to_sym=>
                   {
                     label: 'Lumber Entry Invoice Part Matches Order',
@@ -263,6 +268,8 @@ end
 
 # need require statements at end because they depend on the class existing
 require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_order_vendor_variant'
+require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_canada_entry_nafta'
+require_dependency 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_entry_invoice_part_matches_order'
 require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_invoice_audit'
 require_dependency 'open_chain/custom_handler/ascena/validation_rule_ascena_first_sale'
 require_dependency 'open_chain/custom_handler/hm/validation_rule_hm_invoice_line_field_format'
