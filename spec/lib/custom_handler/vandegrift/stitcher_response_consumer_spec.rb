@@ -79,16 +79,27 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
       expect{ subject.process_stitch_response stitch_response }.to change(ErrorLogEntry,:count).by(1)
     end
 
-    it "swallows specific error response" do
+    it "swallows specific error response for EOFException" do
       error = <<-ERR
-A pdftk error occurred while stitching together the paths ["file", "file2"]: Error: Unexpected Exception in open_reader()
-Unhandled Java Exception:
-java.lang.NullPointerException
-   at gnu.gcj.runtime.NameFinder.lookup(libgcj.so.14)
-   at java.lang.Throwable.getStackTrace(libgcj.so.14)
-   at java.lang.Throwable.stackTraceString(libgcj.so.14)
-   at java.lang.Throwable.printStackTrace(libgcj.so.14)
-   at java.lang.Throwable.printStackTrace(libgcj.so.14)
+A pdftk error occurred while stitching together the paths ["file", "file2"]: Unhandled Java Exception in create_output():
+java.io.EOFException
+   at pdftk.com.lowagie.text.pdf.RandomAccessFileOrArray.readFully(pdftk)
+   at pdftk.com.lowagie.text.pdf.RandomAccessFileOrArray.readFully(pdftk)
+   at pdftk.com.lowagie.text.pdf.PdfReader.getStreamBytesRaw(pdftk)
+   at pdftk.com.lowagie.text.pdf.PdfReader.getStreamBytesRaw(pdftk)
+ERR
+      stitch_response['stitch_response']['errors'] = [{'message' => error}]
+
+      expect {
+        expect(subject.process_stitch_response stitch_response).to be_nil
+      }.to_not change(ErrorLogEntry,:count)
+    end
+
+    it "swallows specific error response for ClassCastException" do
+      error = <<-ERR
+A pdftk error occurred while stitching together the paths ["file", "file2"]: Unhandled Java Exception in create_output():
+java.lang.ClassCastException: pdftk.com.lowagie.text.pdf.PdfNull cannot be cast to pdftk.com.lowagie.text.pdf.PdfArray
+   at pdftk.com.lowagie.text.pdf.PdfCopy.addPage(pdftk)
 ERR
       stitch_response['stitch_response']['errors'] = [{'message' => error}]
 

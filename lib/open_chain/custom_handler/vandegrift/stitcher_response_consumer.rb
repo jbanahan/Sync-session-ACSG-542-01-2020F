@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
       rescue => e
         # We have to raise / catch / log this, otherwise the stitch response message isn't removed from the queue...which is not what we want
         # Swallow this main excpetion error we get when the docs have some issue w/ the pdf and the pdf is not capable of being stitched together
-        e.log_me unless e.message =~ /Unexpected Exception in open_reader\(\)\nUnhandled Java Exception:\njava\.lang\.NullPointerException\n/
+        e.log_me unless swallow_error?(e.message)
       end
       return nil
     end
@@ -80,5 +80,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
       queue
     end
     private_class_method :response_queue
+
+    def self.swallow_error? message
+      (message =~ /Unhandled Java Exception in create_output\(\):/) && [/java.io.EOFException/, /java.lang.ClassCastException/].any? {|e| message.match? e }
+    end
 
 end; end; end; end
