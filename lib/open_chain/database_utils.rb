@@ -29,6 +29,13 @@ module OpenChain; class DatabaseUtils
     parse_database_config
   end
 
+  def self.mysql_deadlock_error_message? message
+    [ "Deadlock found when trying to get lock",
+          "Lock wait timeout exceeded"].any? do |error_message|
+      message =~ /#{Regexp.escape( error_message )}/i
+    end
+  end
+
   # Private class methods
   class << self
 
@@ -88,10 +95,7 @@ module OpenChain; class DatabaseUtils
       end
 
       def mysql_deadlock_error? error
-        [ "Deadlock found when trying to get lock",
-          "Lock wait timeout exceeded"].any? do |error_message|
-          error.message =~ /#{Regexp.escape( error_message )}/i
-        end
+        mysql_deadlock_error_message?(error.message)
       end
   end
 

@@ -134,6 +134,14 @@ describe DelayedJobManager do
       expect(email.body.raw_source).not_to include "Job Error: Error!"
       expect(email.body.raw_source).to include "Job Error: Job 2 Error"
     end
+
+    it "does not report mysql deadlock errors" do
+      errored_job
+      expect(OpenChain::DatabaseUtils).to receive(:mysql_deadlock_error_message?).with("Error!").and_return true
+
+      expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(0)
+      expect(DelayedJobManager.report_delayed_job_error).to eq false
+    end
   end
 
 end

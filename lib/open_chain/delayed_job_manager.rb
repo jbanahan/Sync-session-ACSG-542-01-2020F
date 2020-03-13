@@ -52,7 +52,7 @@ class DelayedJobManager
 
       # There's a primary key/index on id (not created_at) so using id to determine creation order is the simplest
       # and quickest way (db-wise) to get results order by created at
-      job_errors = Delayed::Job.where("last_error IS NOT NULL").order({id: :desc}).limit(1000).pluck(:last_error)
+      job_errors = remove_transient_errors(Delayed::Job.where("last_error IS NOT NULL").order({id: :desc}).limit(1000).pluck(:last_error))
       real_error_count = job_errors.length
     
       error_messages = []
@@ -73,6 +73,13 @@ class DelayedJobManager
       return true
     else
       return false
+    end
+  end
+
+  def self.remove_transient_errors messages
+    # We don't really need to report deadlock errors, they will eventually resolve themselves by being replayed
+    messages.select do |m|
+      !OpenChain::DatabaseUtils.mysql_deadlock_error_message?(m)
     end
   end
 

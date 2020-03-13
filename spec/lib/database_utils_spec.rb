@@ -159,4 +159,18 @@ describe OpenChain::DatabaseUtils do
       end
     end
   end
+
+  describe "mysql_deadlock_error_message?" do
+    it "identifies 'Lock wait' message" do
+      expect(subject.mysql_deadlock_error_message? "Something something, LOCK Wait timeout exceeded message").to eq true
+    end
+
+    it "identifies 'Deadlock' message" do
+      expect(subject.mysql_deadlock_error_message? "Something something Deadlock found when trying to get lock message").to eq true
+    end
+
+    it "does not identify other messages" do 
+      expect(subject.mysql_deadlock_error_message? "this is a generic error message").to eq false
+    end
+  end
 end
