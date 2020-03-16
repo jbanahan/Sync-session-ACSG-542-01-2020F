@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       unrolled_by_hts_coo = double("unrolled_by_hts_coo")
       fenix_by_hts_coo = double("fenix_by_hts_coo")
       style_list = ["styles"]
-      expect(validator).to receive(:gather_unrolled).with(%Q("123456789", "987654321"), 1137).and_return(unrolled_results)
+      expect(validator).to receive(:gather_unrolled).with("123456789, 987654321", 1137).and_return(unrolled_results)
       expect(validator).to receive(:gather_entry).with(ent).and_return(fenix_results)
       expect(validator).to receive(:sum_per_hts_coo).with(unrolled_results).and_return unrolled_by_hts_coo
       expect(validator).to receive(:arrange_by_hts_coo).with(fenix_results).and_return fenix_by_hts_coo

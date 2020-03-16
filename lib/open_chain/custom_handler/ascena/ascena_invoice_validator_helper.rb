@@ -3,7 +3,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
   # assumptions: No commercial_invoice_line on the entry has more than one commercial_invoice_tariff
   #              No hts/coo combination appears on a fenix invoice more than once
   def audit entry, style_list
-    invoice_numbers = entry.commercial_invoice_numbers.split("\n").map{ |x| x.strip.inspect }.join(", ")
+    invoice_numbers = entry.commercial_invoice_numbers.split("\n").map(&:strip).join(", ")
     unrolled = gather_unrolled(invoice_numbers, entry.importer_id)
     fenix = gather_entry entry
     unrolled_by_hts_coo = sum_per_hts_coo(unrolled)
