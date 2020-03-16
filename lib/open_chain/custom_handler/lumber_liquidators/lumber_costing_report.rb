@@ -94,7 +94,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     # Not ALL the rules for when to send data are in here...there's a couple rules that aren't well suited for SQL
     # that are evaulated later during the generate pass.  In other words, not every result returned by this query
     # will get sent.
-    
+
     # Data should be sent ONLY ONCE
     v = Entry.select("DISTINCT entries.id").
           # We have to have broker invoices before we send this data
@@ -174,10 +174,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
           line_number = find_po_line(line.po_number, line.part_number)
 
           # There is supposed to be business rules preventing the entry of any po / parts that were not on existing orders
-          # That's why we raise an error if the line number isn't found, the validation rule should have already marked this 
+          # That's why we raise an error if the line number isn't found, the validation rule should have already marked this
           # and the code should not have made it to this execution point - since we don't process entries with failed business rules (see above)
           raise "Unable to find Lumber PO Line Number for PO # '#{line.po_number}' and Part '#{line.part_number}'." if line_number.nil?
-
 
           line_values = calculate_proration_for_lines(line, total_entered_value, charge_totals, charge_buckets)
 
@@ -236,7 +235,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     if entry.business_rules("Fail").length == 0
 
       entry.broker_invoices.each do |inv|
-        # We can send if we find any invoice having an Ocean Freight (0004) charge 
+        # We can send if we find any invoice having an Ocean Freight (0004) charge
         line = inv.broker_invoice_lines.find {|c| c.charge_code  == "0004"}
         if line
           send = true
@@ -245,7 +244,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
       end
 
       # If there hasn't been a freight billing and we're <= 3 days out on arrival, then send.
-      if !send 
+      if !send
         send = entry.arrival_date && ((Time.zone.now.to_date + 3.days) >= entry.arrival_date.to_date)
       end
     end

@@ -4,12 +4,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   let (:entry) do 
       entry = Factory(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, arrival_date: '2016-01-20 12:00', customer_number: "LUMBER", source_system:"Alliance", export_country_codes: "VN", transport_mode_code: "10")
       container = Factory(:container, entry: entry, container_number: "CONT") 
-      invoice_line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: entry), container: container, 
+      invoice_line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: entry), container: container,
                              po_number: "PO", part_number: "000123", quantity: 10, value: 100.0, add_duty_amount: 110.0, cvd_duty_amount: 120.00, hmf: 130.00, prorated_mpf: 140.00)
-      tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 100, duty_amount: 200)
+      tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 100, duty_amount: 200, gross_weight:BigDecimal.new("200"))
 
       broker_invoice = Factory(:broker_invoice, entry: entry)
-      invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0004", charge_description: "Ocean Freight", charge_amount: 100
+      invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0004", charge_description: "Ocean Freight", charge_amount: 200
+      invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0007", charge_description: "Brokerage", charge_amount: 100
       entry.reload
       entry
     end
@@ -44,46 +45,58 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       e, data = subject.generate_entry_data entry
       expect(e).not_to be_nil
       expect(data.size).to eq 1
-      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", "100.000", "200.000", "110.000", "120.000", nil, nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
+      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", "200.000", "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
     end
 
     context "with prorated amounts" do
       let (:invoice) { entry.commercial_invoices.first }
       before :each do
-        # Create 3 lines that each have 1/3 valuation of the entered value, this will force the proration of the $100 brokerage charge to add an extra cent onto the first line
+        # Create 3 lines that each have 1/3 valuation of the entered value, this will force the proration of the $100 brokerage charge to add an extra cent onto the first line.
+        # They have varying gross weights as well, which affects the proration of ocean rate charges.
         entry.update_attributes! entered_value: 300
+        entry.commercial_invoices.first.update_attributes! gross_weight:BigDecimal.new("400")
         container = entry.containers.first
         line = invoice.commercial_invoice_lines.create! container: container, po_number: "PO", part_number: "000123", quantity: 10, value: 100
-        line.commercial_invoice_tariffs.create! entered_value: 100
+        line.commercial_invoice_tariffs.create! entered_value: 100, gross_weight:BigDecimal.new("150")
         line = invoice.commercial_invoice_lines.create! container: container, po_number: "PO", part_number: "000123", quantity: 10, value: 100
-        line.commercial_invoice_tariffs.create! entered_value: 100
+        line.commercial_invoice_tariffs.create! entered_value: 100, gross_weight:BigDecimal.new("50")
       end
 
+      # Col 9 is ocean rate, which prorates by gross weight.  Col 13 is brokerage, which prorates by entered value.
       it "prorates charge values" do
         e, data = subject.generate_entry_data entry
-        expect(data.first[9]).to eq "33.334"
-        expect(data[1][9]).to eq "33.333"
-        expect(data[2][9]).to eq "33.333"
+        expect(data.first[9]).to eq "100.000"
+        expect(data.first[13]).to eq "33.334"
+        expect(data[1][9]).to eq "75.000"
+        expect(data[1][13]).to eq "33.333"
+        expect(data[2][9]).to eq "25.000"
+        expect(data[2][13]).to eq "33.333"
       end
 
       it "does not add prorated amounts to lines with no entred value" do
         line = invoice.commercial_invoice_lines.create! po_number: "PO", part_number: "000123", quantity: 10, value: 100
 
         e, data = subject.generate_entry_data entry
-        expect(data.first[9]).to eq "33.334"
-        expect(data[1][9]).to eq "33.333"
-        expect(data[2][9]).to eq "33.333"
+        expect(data.first[9]).to eq "100.000"
+        expect(data.first[13]).to eq "33.334"
+        expect(data[1][9]).to eq "75.000"
+        expect(data[1][13]).to eq "33.333"
+        expect(data[2][9]).to eq "25.000"
+        expect(data[2][13]).to eq "33.333"
         expect(data[3][9]).to be_nil
+        expect(data[3][13]).to be_nil
       end
     end
     
 
     [{"0004"=>9},{"0007"=>13},{'0176'=>14},{'0050'=>14},{'0142'=>14},{'0235'=>15},{'0191'=>16},{'0189'=>19},{'0720'=>19},{'0739'=>19},{'0212'=>22},{'0016'=>23},{'0031'=>24},{'0125'=>24},{'0026'=>24},{'0193'=>25},{'0196'=>25}, {'0915'=>16}].each do |charge|
       it "uses the correct output charge column for code #{charge.keys.first}" do
-        entry.broker_invoices.first.broker_invoice_lines.first.update_attributes! charge_code: charge.keys.first
+        broker_invoice = entry.broker_invoices.first
+        broker_invoice.broker_invoice_lines.delete_all
+        broker_invoice.broker_invoice_lines.create! charge_code: charge.keys.first, charge_description: "Test", charge_amount: 200
 
         e, data = subject.generate_entry_data entry
-        expect(data.first[charge.values.first]).to eq "100.000"
+        expect(data.first[charge.values.first]).to eq "200.000"
       end
     end
 

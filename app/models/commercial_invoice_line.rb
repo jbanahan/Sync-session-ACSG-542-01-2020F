@@ -154,4 +154,10 @@ class CommercialInvoiceLine < ActiveRecord::Base
     # If we don't have a contract amount (.ie it's nil), then any calculation based off it should be nil too
     (contract_amount.nil? || quantity.nil? || quantity.zero?) ? nil : (contract_amount / quantity).round(2)
   end
+
+  # Returns the first non-zero gross weight from the tariffs, defaulting to zero (rather than nil) if no
+  # are found.
+  def gross_weight
+    BigDecimal.new(self.commercial_invoice_tariffs.map(&:gross_weight).compact.find { |t| t > 0 } || 0)
+  end
 end

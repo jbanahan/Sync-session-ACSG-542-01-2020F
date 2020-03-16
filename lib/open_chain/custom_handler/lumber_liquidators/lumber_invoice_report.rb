@@ -34,14 +34,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
       where("sync_records.id IS NULL OR sync_records.sent_at IS NULL")
 
     cost_file_invoices = base_query.
-                          joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = ?" + 
-                                " AND cost_sync.syncable_type = 'BrokerInvoice' AND cost_sync.syncable_id = broker_invoices.id AND cost_sync.sent_at >= ?" + 
+                          joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN sync_records cost_sync ON cost_sync.trading_partner = ?" +
+                                " AND cost_sync.syncable_type = 'BrokerInvoice' AND cost_sync.syncable_id = broker_invoices.id AND cost_sync.sent_at >= ?" +
                                 " AND cost_sync.sent_at < ?", OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport.sync_code, start_date.to_s(:db), end_date.to_s(:db)])).to_a
-    
+
     # Find all invoices that were on a supplemental invoice this past week
     supplemental_invoices = base_query.
-                          joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN sync_records supp_sync ON supp_sync.trading_partner = ?" + 
-                                " AND supp_sync.syncable_type = 'BrokerInvoice' AND supp_sync.syncable_id = broker_invoices.id AND supp_sync.sent_at >= ?" + 
+                          joins(ActiveRecord::Base.sanitize_sql_array(["INNER JOIN sync_records supp_sync ON supp_sync.trading_partner = ?" +
+                                " AND supp_sync.syncable_type = 'BrokerInvoice' AND supp_sync.syncable_id = broker_invoices.id AND supp_sync.sent_at >= ?" +
                                 " AND supp_sync.sent_at < ?", OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceSender.sync_code, start_date.to_s(:db), end_date.to_s(:db)])).to_a
 
     # reject any invoices that have failed business rules
@@ -131,13 +131,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
         h[k] = BigDecimal("0")
       end
       po_container_values = Hash.new do |h, k|
-        h[k] = {entered_value: BigDecimal("0"), zlf3: BigDecimal("0")}
+        h[k] = {entered_value: BigDecimal("0"), zlf3: BigDecimal("0"), gross_weight: BigDecimal("0")}
       end
 
       invoice.entry.commercial_invoice_lines.each do |line|
         key = "#{line.po_number}~#{line.container.try(:container_number)}"
         po_container_values[key][:entered_value] += line.total_entered_value
         po_container_values[key][:zlf3] += line.duty_plus_fees_add_cvd_amounts
+        po_container_values[key][:gross_weight] += line.gross_weight
       end
 
       total_invoiced_duty = po_container_values.values.map {|v| v[:zlf3] }.sum
@@ -176,7 +177,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
             report_amounts[cont][:zlf3] = values[:zlf3]
           end
         else
-          prorations = prorate(po_container_values, v)
+          prorations = prorate(po_container_values, v, k == :zlf1)
 
           prorations.each_pair do |cont, value|
             report_amounts[cont][k] += value
@@ -195,7 +196,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
       report_amounts.dup
     end
 
-    def prorate values, amount_to_prorate
+    # TODO could probably use LumberCostFileCalculationsSupport here (though it would take some rework)
+    def prorate values, amount_to_prorate, gross_weight_proration
       total_entered_value = values.values.map {|v| v[:entered_value] }.sum
 
       prorations = Hash.new do |h, k|
@@ -210,8 +212,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
 
       proration_left = amount_to_prorate
       values.each_pair do |k, value_hash|
-        entered_value = value_hash[:entered_value]
-        ideal_proration = ((total_entered_value.nonzero? ? (entered_value / total_entered_value) : 0) * amount_to_prorate).round(2, BigDecimal::ROUND_HALF_UP)
+        if gross_weight_proration
+          # For gross weight-based proration, we're not really prorating at all.  The amount is divided up
+          # evenly among the containers.  Each item in the values hash represents a unique container.
+          # We might need to deal with pennies in the end if the charge amount is not evenly divisible by
+          # the number of containers.
+          ideal_proration = (amount_to_prorate / values.length).round(2, BigDecimal::ROUND_HALF_UP)
+        else
+          ideal_proration = ((total_entered_value.nonzero? ? (value_hash[:entered_value] / total_entered_value) : 0) * amount_to_prorate).round(2, BigDecimal::ROUND_HALF_UP)
+        end
 
         if proration_left - ideal_proration > 0
           prorations[k] += ideal_proration
@@ -222,23 +231,24 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
         end
       end
 
-      if proration_left > 0
+      if proration_left > 0 && total_entered_value.nonzero?
+        # This counter exists to catch extremely-unlikely-in-real-use situations where none of the lines have
+        # a value set in them (could happen if no gross weights at tariff level, potentially).
+        iteration_count = 0
         begin
           prorations.each_pair do |k, v|
-            # Don't add leftover proration amounts into buckets that have no existing value, it basically means that 
-            # there was no entered value on them so they shouldn't have any of the leftover amount dropped back into them.
+            iteration_count += 1
 
-            # Since we're only adding the proration amounts to lines with entered value, make sure that there's at least one
-            # line with entered value (should ONLY ever happen in a testing scenario since I don't know how an entry could have
-            # have a cotton fee without any lines with entered values), but it'll hang here if that does happen
-            next if v.zero? && total_entered_value.nonzero?
+            # Don't add leftover proration amounts into buckets that have no existing value, it basically means that
+            # there was no entered value on them so they shouldn't have any of the leftover amount dropped back into them.
+            next if v.zero?
 
             prorations[k] = (v + BigDecimal("0.01"))
             proration_left -= BigDecimal("0.01")
 
             break if proration_left <= 0
           end
-        end while proration_left > 0
+        end while proration_left > 0 && iteration_count < 1000
       end
 
       if negative

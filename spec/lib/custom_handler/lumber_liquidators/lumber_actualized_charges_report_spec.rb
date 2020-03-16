@@ -139,9 +139,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       container1 = entry.containers.create! container_number: "CONT1", container_size: "40"
       container2 = entry.containers.create! container_number: "CONT2", container_size: "20"
 
-      invoice = entry.commercial_invoices.create! invoice_number: "123"
+      invoice = entry.commercial_invoices.create! invoice_number: "123", gross_weight: BigDecimal("400")
       line = invoice.commercial_invoice_lines.create! container: container1, po_number: "PO", add_duty_amount: BigDecimal("10"), cvd_duty_amount: BigDecimal("20"), vendor_name: "Vendor 1", quantity: BigDecimal("200"), hmf: BigDecimal("1"), prorated_mpf: BigDecimal("2")
-      tariff = line.commercial_invoice_tariffs.create! gross_weight: BigDecimal("100"), entered_value: BigDecimal("25"), duty_amount: BigDecimal("25")
+      tariff = line.commercial_invoice_tariffs.create! gross_weight: BigDecimal("300"), entered_value: BigDecimal("25"), duty_amount: BigDecimal("25")
       tariff = line.commercial_invoice_tariffs.create! gross_weight: BigDecimal("100"), entered_value: BigDecimal("50"), duty_amount: BigDecimal("25")
 
       line = invoice.commercial_invoice_lines.create! container: container2, po_number: "PO", add_duty_amount: BigDecimal("30"), cvd_duty_amount: BigDecimal("40"), vendor_name: "Vendor 2", quantity: BigDecimal("100"), hmf: BigDecimal("3"), prorated_mpf: BigDecimal("4")
@@ -180,8 +180,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       expect(l[:po_numbers]).to eq "PO"
       expect(l[:vendors]).to eq "Vendor 1"
       expect(l[:quantity]).to eq BigDecimal("200")
-      expect(l[:gross_weight_kg]).to eq 200
-      expect(l[:gross_weight]).to eq BigDecimal("440.92")
+      expect(l[:gross_weight_kg]).to eq 400
+      expect(l[:gross_weight]).to eq BigDecimal("881.85")
       expect(l[:ocean_rate]).to eq BigDecimal("150")
       expect(l[:brokerage]).to eq BigDecimal("75")
       expect(l[:acessorial]).to eq BigDecimal("300")
@@ -231,20 +231,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
     it "handles value prorations with uneven splits" do
       entry.update_attributes entered_value: "30"
       invoice = entry.commercial_invoices.first
+      invoice.update_attributes gross_weight: BigDecimal("60")
       tariffs = invoice.commercial_invoice_lines.first.commercial_invoice_tariffs
-      tariffs.first.update_attributes! entered_value: BigDecimal("10")
-      tariffs.second.update_attributes! entered_value: BigDecimal("10")
+      tariffs.first.update_attributes! entered_value: BigDecimal("10"), gross_weight: BigDecimal("20")
+      tariffs.second.update_attributes! entered_value: BigDecimal("10"), gross_weight: nil
 
       tariffs = invoice.commercial_invoice_lines.second.commercial_invoice_tariffs
-      tariffs.first.update_attributes! entered_value: BigDecimal("5")
-      tariffs.second.update_attributes! entered_value: BigDecimal("5")
+      tariffs.first.update_attributes! entered_value: BigDecimal("5"), gross_weight: BigDecimal("40")
+      tariffs.second.update_attributes! entered_value: BigDecimal("5"), gross_weight: nil
 
 
       data = subject.generate_entry_data entry
       expect(data.length).to eq 2
 
       l = data.first
-      expect(l[:ocean_rate]).to eq BigDecimal("133.333")
+      expect(l[:ocean_rate]).to eq BigDecimal("66.667")
       expect(l[:brokerage]).to eq BigDecimal("66.667")
       expect(l[:isf]).to eq BigDecimal("200")
       expect(l[:acessorial]).to eq BigDecimal("266.667")
@@ -252,7 +253,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       expect(l[:clean_truck]).to eq BigDecimal("400")
 
       l = data.second
-      expect(l[:ocean_rate]).to eq BigDecimal("66.667")
+      expect(l[:ocean_rate]).to eq BigDecimal("133.333")
       expect(l[:brokerage]).to eq BigDecimal("33.333")
       expect(l[:isf]).to eq BigDecimal("100")
       expect(l[:acessorial]).to eq BigDecimal("133.333")

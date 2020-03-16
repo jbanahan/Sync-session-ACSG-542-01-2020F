@@ -134,4 +134,27 @@ describe CommercialInvoiceLine do
       expect(Factory(:commercial_invoice_line, contract_amount: BigDecimal("100"), quantity: 0).first_sale_unit_price).to be_nil
     end
   end
+
+  describe "gross_weight" do
+    it "returns the first non-zero gross weight found in the tariff lines" do
+      line = CommercialInvoiceLine.new
+      line.commercial_invoice_tariffs.build gross_weight: BigDecimal.new("0")
+      line.commercial_invoice_tariffs.build gross_weight: nil
+      line.commercial_invoice_tariffs.build gross_weight: BigDecimal.new("4")
+      line.commercial_invoice_tariffs.build gross_weight: BigDecimal.new("5")
+
+      expect(line.gross_weight).to eq BigDecimal("4")
+    end
+
+    it "returns zero when no tariff weights are non-zero" do
+      line = CommercialInvoiceLine.new
+      line.commercial_invoice_tariffs.build gross_weight: BigDecimal.new("0")
+      line.commercial_invoice_tariffs.build gross_weight: nil
+
+      line_no_tariffs = CommercialInvoiceLine.new
+
+      expect(line.gross_weight).to eq BigDecimal(0)
+      expect(line_no_tariffs.gross_weight).to eq BigDecimal(0)
+    end
+  end
 end

@@ -7,12 +7,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
     invoice = Factory(:commercial_invoice, entry: entry)
     line1 = Factory(:commercial_invoice_line, commercial_invoice: invoice, container: c1, po_number: "PO1", prorated_mpf: 25, hmf: 10, cotton_fee: 5)
-    tariff1 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line1, entered_value: 100, duty_amount: 50)
-    tariff2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line1, entered_value: 100, duty_amount: 50)
+    tariff1 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line1, entered_value: 100, duty_amount: 50, gross_weight: 100)
+    tariff2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line1, entered_value: 100, duty_amount: 50, gross_weight: 20)
 
 
     line2 = Factory(:commercial_invoice_line, commercial_invoice: invoice, container: c2, po_number: "PO2", add_duty_amount: 25, cvd_duty_amount: 75)
-    tariff2_1 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line2, entered_value: 100, duty_amount: 50)
+    tariff2_1 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line2, entered_value: 100, duty_amount: 50, gross_weight: 50)
 
 
     entry.reload
@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
   let (:invoice) {
     invoice = Factory(:broker_invoice, entry: entry, invoice_number: "INV123", invoice_date: Date.new(2016, 3, 1), customer_number: "LUMBER", source_system: "Alliance")
     line_1 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: 290)
-    line_2 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0004", charge_amount: 100)
+    line_2 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0004", charge_amount: 99.99)
     line_3 = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0005", charge_amount: 150)
 
 
@@ -61,8 +61,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       sheet = wb.worksheet "Details"
 
       expect(sheet.row(0)).to eq ["VFI Invoice Number", "Invoice Date", "Invoice Total", "PO Number", "Container Number", "Ocean Freight", "Duty", "Fees", "PO Total"]
-      expect(sheet.row(1)).to eq [Spreadsheet::Link.new(invoice.entry.excel_url, "INV123"), Date.new(2016, 3, 1), 540.0, "PO1", "12345", 66.67, 140.0, 100.0, 306.67]
-      expect(sheet.row(2)).to eq ["", "", "", "PO2", "98765", 33.33, 150.0, 50.0, 233.33]
+      expect(sheet.row(1)).to eq [Spreadsheet::Link.new(invoice.entry.excel_url, "INV123"), Date.new(2016, 3, 1), 539.99, "PO1", "12345", 50.0, 140.0, 100.0, 290.0]
+      expect(sheet.row(2)).to eq ["", "", "", "PO2", "98765", 49.99, 150.0, 50.0, 249.99]
 
       # What this is testing is that we're prorating the duty amounts IF the duty amount listed on the broker invoice is not the same as the amount
       # on the actual entry (.ie cases where we back out duty amounts or the original billed amount was wrong).
@@ -70,7 +70,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       expect(sheet.row(3)).to eq [Spreadsheet::Link.new(invoice_2.entry.excel_url, "INV123A"), Date.new(2016, 3, 2), -150.0, "PO1", "12345", 0.0, -100, 0.0, -100]
       expect(sheet.row(4)).to eq ["", "", "", "PO2", "98765", 0, -50, 0, -50]
       expect(sheet.row(5)).to eq []
-      expect(sheet.row(6)).to eq ["GRAND TOTAL", "", 390.0]
+      expect(sheet.row(6)).to eq ["GRAND TOTAL", "", 389.99]
     end
   end
 

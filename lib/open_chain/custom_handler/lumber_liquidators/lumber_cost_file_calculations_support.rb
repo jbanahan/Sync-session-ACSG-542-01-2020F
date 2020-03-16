@@ -42,6 +42,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
       [:ocean_rate, :brokerage, :acessorial, :isc_management, :isf, :blp_handling, :blp, :pier_pass, :inland_freight, :courier, :oga, :clean_truck]
     end
 
+    # Fields that use gross weight to prorate rather than entered value (the default).
+    def self.weight_based_proration_values
+      [:ocean_rate]
+    end
+
     def self.calculate_charge_totals entry
       totals = Hash.new do |h, k|
         h[k] = BigDecimal("0")
@@ -76,9 +81,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
       lines = Array.wrap(lines)
 
       line_entered_value = lines.inject(BigDecimal("0")) {|sum, line| sum += line.total_entered_value }
+      line_gross_weight = lines.inject(BigDecimal("0")) {|sum, line| sum += line.gross_weight }
 
-      # Don't round this value, we'll round the end amount to 3 decimals
-      proration_percentage = total_entered_value.try(:nonzero?) ? (line_entered_value / total_entered_value) : 0
+      # Don't round these values.  We'll round the end amounts to 3 decimals.
+      value_proration_percentage = total_entered_value.try(:nonzero?) ? (line_entered_value / total_entered_value) : 0
 
       c = {}
       c[:entered_value] = (line_entered_value || BigDecimal("0"))
@@ -90,9 +96,31 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
 
       # Figure the "ideal" proration value, we'll then compare to what's technically left over from the actual charge buckets
       prorated_values.each do |k|
-        next if charge_totals[k].nil?
+        charge_amount = charge_totals[k]
+        next if charge_amount.nil?
 
-        ideal_proration = (charge_totals[k] * proration_percentage).round(3, BigDecimal::ROUND_HALF_UP)
+        if weight_based_proration_values.include?(k)
+          # Weight-based proration is handled abnormally.  It does not follow the same pattern as entered
+          # value-based proration.  Instead, it's assumed that the charge amount will be evenly split among
+          # the containers/invoices (i.e. each container and invoice gets same percentage of the total -
+          # a 4 container/invoice entry, for example,  would have 25% of the charge applied to each
+          # container/invoice).  Proration is involved to divvy up the invoice-level amount amongst the
+          # various lines within that invoice.  We are assuming there is a 1:1 relationship between
+          # commercial invoice and container, even though it doesn't appear that this is always true.
+          # (Invoice count is what is actually used for this process, not container count, for consistency.)
+          # Per Mindy, who also admitted that this didn't make much sense and seemed more failure-prone than
+          # entered-value-style proration, "[LL] said that [this proration system] gets their costing
+          # much closer to their contracts for the containers".
+          inv = lines[0].commercial_invoice
+          proration_percentage = inv.gross_weight.try(:nonzero?) ? (line_gross_weight / inv.gross_weight) : 0
+          commercial_invoice_count = lines[0].commercial_invoice.entry.commercial_invoices.length
+          amount_to_prorate = charge_amount / commercial_invoice_count
+        else
+          proration_percentage = value_proration_percentage
+          amount_to_prorate = charge_amount
+        end
+
+        ideal_proration = (amount_to_prorate * proration_percentage).round(3, BigDecimal::ROUND_HALF_UP)
 
         # If we go negative, it means the proration amount is too big to alot the full localized amount (in general, this should basically just be a few pennies
         # that we'll short the final line on)

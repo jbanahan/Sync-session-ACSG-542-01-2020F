@@ -55,10 +55,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
 
   describe "calculate_proration_for_lines" do
 
+    let (:entry) {
+      entry = Factory(:entry)
+      # This second invoice exists only so that 50% of the charge amount is considered for proration against our
+      # test line(s), which all belong to a different invoice, for gross-weight-based prorations.  The actual
+      # gross weight of this line doesn't matter.  It's 100 and the other line is 50, but the two invoices are
+      # to be distributed charge prorations 50/50.
+      other_inv = entry.commercial_invoices.build gross_weight:BigDecimal("100")
+      entry
+    }
+
     let (:line) {
-      line = CommercialInvoiceLine.new add_duty_amount: BigDecimal("10"), cvd_duty_amount: BigDecimal("20"), hmf: BigDecimal("30"), prorated_mpf: BigDecimal("40")
-      line.commercial_invoice_tariffs.build entered_value: BigDecimal("30.00"), duty_amount: BigDecimal("90")
-      line.commercial_invoice_tariffs.build entered_value: BigDecimal("3.33"), duty_amount: BigDecimal("10")
+      inv = entry.commercial_invoices.build gross_weight:BigDecimal("50")
+      line = inv.commercial_invoice_lines.build add_duty_amount: BigDecimal("10"), cvd_duty_amount: BigDecimal("20"), hmf: BigDecimal("30"), prorated_mpf: BigDecimal("40")
+      line.commercial_invoice_tariffs.build entered_value: BigDecimal("30.00"), duty_amount: BigDecimal("90"), gross_weight:BigDecimal("10.00")
+      line.commercial_invoice_tariffs.build entered_value: BigDecimal("3.33"), duty_amount: BigDecimal("10"), gross_weight:BigDecimal("1.11")
 
       line
     }
@@ -75,11 +86,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
       expect(charges[:hmf]).to eq 30
       expect(charges[:mpf]).to eq 40
       # At this point, a straight proration by the exact percentage of the entered value for the line
-      # has taken place.  Any remainder values should be in the bucket
-      expect(charges[:ocean_rate]).to eq BigDecimal("33.33")
+      # has taken place.  Any remainder values should be in the bucket.
+      expect(charges[:ocean_rate]).to eq BigDecimal("10.00")
       expect(charges[:brokerage]).to eq BigDecimal("66.66")
 
-      expect(bucket[:ocean_rate]).to eq BigDecimal("66.67")
+      expect(bucket[:ocean_rate]).to eq BigDecimal("90.00")
       expect(bucket[:brokerage]).to eq BigDecimal("133.34")
     end
 
@@ -110,10 +121,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
       expect(charges[:cvd]).to eq 60
       expect(charges[:hmf]).to eq 90
       expect(charges[:mpf]).to eq 120
-      expect(charges[:ocean_rate]).to eq BigDecimal("49.995")
+      expect(charges[:ocean_rate]).to eq BigDecimal("30.00")
       expect(charges[:brokerage]).to eq BigDecimal("99.99")
 
-      expect(bucket[:ocean_rate]).to eq BigDecimal("50.005")
+      expect(bucket[:ocean_rate]).to eq BigDecimal("70.00")
       expect(bucket[:brokerage]).to eq BigDecimal("100.01")
     end
   end
