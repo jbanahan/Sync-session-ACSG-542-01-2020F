@@ -35,7 +35,7 @@ module OpenChain
 
     if Rails.env.production?
       config.middleware.use(ExceptionNotification::Rack,
-        ignore_if: lambda { |env, exception| exception.is_a?(UnreportedError) || MasterSetup.get.custom_feature?("Suppress Exception Emails") }, 
+        ignore_if: lambda { |env, exception| exception.is_a?(ActionController::InvalidAuthenticityToken) || exception.is_a?(UnreportedError) || MasterSetup.get.custom_feature?("Suppress Exception Emails") }, 
         email: {
           email_prefix: "[VFI Track Exception]",
           sender_address: %{"Exception Notifier" <bug@vandegriftinc.com>},
