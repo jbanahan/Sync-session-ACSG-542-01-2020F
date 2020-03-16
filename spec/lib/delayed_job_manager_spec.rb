@@ -142,6 +142,12 @@ describe DelayedJobManager do
       expect(OpenChain::CloudWatch).to receive(:send_delayed_job_error_count).with(0)
       expect(DelayedJobManager.report_delayed_job_error).to eq false
     end
+
+    it "handles Lock.acquire failures" do
+      expect(Lock).to receive(:acquire).with("Report Delayed Job Error", yield_in_transaction: false, raise_timeout: false, timeout: 5).and_return nil
+      expect(OpenChain::CloudWatch).not_to receive(:send_delayed_job_error_count)
+      expect(DelayedJobManager.report_delayed_job_error).to eq false
+    end
   end
 
 end

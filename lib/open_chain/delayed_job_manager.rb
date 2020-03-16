@@ -66,14 +66,16 @@ class DelayedJobManager
       memcache.set "DelayedJobManager:next_report_delayed_job_error", min_reporting_age_minutes.minutes.from_now
     end
 
-    OpenChain::CloudWatch.send_delayed_job_error_count real_error_count.to_i
+    # if the error count is nil, it means the Lock acquire failed, so don't bother submitting any metrics.
+    if real_error_count
+      OpenChain::CloudWatch.send_delayed_job_error_count real_error_count
 
-    if real_error_count > 0
-      OpenMailer.send_generic_exception(StandardError.new("#{MasterSetup.get.system_code} - #{real_error_count} delayed job(s) have errors."), error_messages).deliver_now
-      return true
-    else
-      return false
+      if real_error_count > 0
+        OpenMailer.send_generic_exception(StandardError.new("#{MasterSetup.get.system_code} - #{real_error_count} delayed job(s) have errors."), error_messages).deliver_now
+      end
     end
+
+    return real_error_count.to_i > 0
   end
 
   def self.remove_transient_errors messages
