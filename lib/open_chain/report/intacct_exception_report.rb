@@ -36,26 +36,29 @@ SQL
     check_query = ActiveRecord::Base.sanitize_sql_array([check_query, companies])
     
     total_rows = 0
-    wb = builder 
-    result_set = ActiveRecord::Base.connection.execute receivable_query
-    if result_set.size > 0
-      total_rows += result_set.size
-      sheet = wb.create_sheet "Receivable Errors"
-      write_result_set_to_builder(wb, sheet, result_set, data_conversions: {0=>link_lambda('receivable'), 5=>receivable_suggested_fix_lambda})
+    wb = builder
+    execute_query(receivable_query) do |result_set|
+      if result_set.size > 0
+        total_rows += result_set.size
+        sheet = wb.create_sheet "Receivable Errors"
+        write_result_set_to_builder(wb, sheet, result_set, data_conversions: {0=>link_lambda('receivable'), 5=>receivable_suggested_fix_lambda})
+      end
     end
 
-    result_set = ActiveRecord::Base.connection.execute payable_query
-    if result_set.size > 0
-      total_rows += result_set.size
-      sheet = wb.create_sheet "Payable Errors"
-      write_result_set_to_builder(wb, sheet, result_set, data_conversions: {0=>link_lambda('payable'), 6=>payable_suggested_fix_lambda})
+    execute_query(payable_query) do |result_set|
+      if result_set.size > 0
+        total_rows += result_set.size
+        sheet = wb.create_sheet "Payable Errors"
+        write_result_set_to_builder(wb, sheet, result_set, data_conversions: {0=>link_lambda('payable'), 6=>payable_suggested_fix_lambda})
+      end
     end
 
-    result_set = ActiveRecord::Base.connection.execute check_query
-    if result_set.size > 0
-      total_rows += result_set.size
-      sheet = wb.create_sheet "Check Errors"
-      write_result_set_to_builder(wb, sheet, result_set, data_conversions: {0=>link_lambda('check'), 7=>payable_suggested_fix_lambda})
+    execute_query(check_query) do |result_set|
+      if result_set.size > 0
+        total_rows += result_set.size
+        sheet = wb.create_sheet "Check Errors"
+        write_result_set_to_builder(wb, sheet, result_set, data_conversions: {0=>link_lambda('check'), 7=>payable_suggested_fix_lambda})
+      end
     end
 
     if total_rows > 0

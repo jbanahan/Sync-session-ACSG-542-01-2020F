@@ -918,13 +918,15 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaDutySavingsRe
 
     def run cust_numbers, start_date, end_date
       # performance issues require one query per importer
-      results = cust_numbers.flat_map{ |cnum| unpack_mysql2(run_query cnum, start_date, end_date) }
+      results = cust_numbers.flat_map do |cnum|
+        results_arr = []
+        execute_query(query cnum, start_date, end_date) do |result_set|
+          results_arr = unpack_mysql2 result_set
+        end
+        results_arr
+      end
       FieldFiller.new(results).fill_missing_fields
       results
-    end
-
-    def run_query cust_number, start_date, end_date
-      ActiveRecord::Base::connection.execute query(cust_number, start_date, end_date)
     end
 
     def unpack_mysql2 result

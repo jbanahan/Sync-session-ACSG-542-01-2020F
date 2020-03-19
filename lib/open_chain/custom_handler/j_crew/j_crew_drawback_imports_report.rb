@@ -14,23 +14,26 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImports
 
   def run user, opts
     start_date, end_date = dates(user, opts)
-    results = ActiveRecord::Base.connection.execute query(start_date, end_date)
-    workbook, sheet = XlsMaker.create_workbook_and_sheet "Drawback Imports #{start_date.to_date.strftime("%m.%d.%Y")} - #{end_date.to_date.strftime("%m.%d.%Y")}", results.fields
-    x = 0
-    column_widths = []
-    results.each do |result|
-      # Have to write a distinct row to the excel file for each mbol found
-      mbols = result[2].to_s.split(/\n */)
-      mbols << "" if mbols.blank?
-      mbols.each do |bol|
-        row = result.clone
-        row[2] = bol
-        row[4] = row[4].in_time_zone(user.time_zone).to_date if row[4]
-        XlsMaker.add_body_row sheet, (x+=1), row, column_widths, true
+    f = nil
+    execute_query(query(start_date, end_date)) do |results|
+      workbook, sheet = XlsMaker.create_workbook_and_sheet "Drawback Imports #{start_date.to_date.strftime("%m.%d.%Y")} - #{end_date.to_date.strftime("%m.%d.%Y")}", results.fields
+      x = 0
+      column_widths = []
+      results.each do |result|
+        # Have to write a distinct row to the excel file for each mbol found
+        mbols = result[2].to_s.split(/\n */)
+        mbols << "" if mbols.blank?
+        mbols.each do |bol|
+          row = result.clone
+          row[2] = bol
+          row[4] = row[4].in_time_zone(user.time_zone).to_date if row[4]
+          XlsMaker.add_body_row sheet, (x+=1), row, column_widths, true
+        end
       end
-    end
 
-    workbook_to_tempfile workbook, "Drawback Imports ", file_name: "Drawback Imports Drawback Imports #{start_date.strftime("%Y-%m-%d")} - #{end_date.strftime("%Y-%m-%d")}.xls"
+      f = workbook_to_tempfile workbook, "Drawback Imports ", file_name: "Drawback Imports Drawback Imports #{start_date.strftime("%Y-%m-%d")} - #{end_date.strftime("%Y-%m-%d")}.xls"
+    end
+    f
   end
 
   def dates user, opts

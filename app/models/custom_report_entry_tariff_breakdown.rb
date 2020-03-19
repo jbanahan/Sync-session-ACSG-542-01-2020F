@@ -1,6 +1,10 @@
 # -*- SkipSchemaAnnotations
 
+require 'open_chain/report/report_helper'
+
 class CustomReportEntryTariffBreakdown < CustomReport
+  include OpenChain::Report::ReportHelper
+
   attr_accessible :include_links, :name, :no_time, :type, :user_id
 
   def self.template_name
@@ -104,8 +108,10 @@ HAVING count(t.id) > 1
 ORDER BY count(t.id) DESC
 LIMIT 1
 QRY
-      results = ActiveRecord::Base.connection.execute(ActiveRecord::Base.sanitize_sql_array([query, entry_ids]))
-      max_length = results.first.try(:[], 3).to_i
+      max_length = 0
+      execute_query(ActiveRecord::Base.sanitize_sql_array([query, entry_ids])) do |results|
+        max_length = results.first.try(:[], 3).to_i
+      end
       max_length > 0 ? max_length : 1
     end
 

@@ -67,8 +67,12 @@ AND broker_invoice_lines.charge_type #{not_in ? "NOT IN" : "IN"} (?)
 AND broker_invoices.invoice_date >= ? AND broker_invoices.invoice_date < ? AND broker_invoices.customer_number = ?
 QRY
         qry = ActiveRecord::Base.sanitize_sql_array([qry, first_of_month.in_time_zone("UTC"), end_of_month.in_time_zone("UTC"), customer_number, charge_types, first_of_month.strftime("%Y-%m-%d"), end_of_month.strftime("%Y-%m-%d"), customer_number])
-        val = ActiveRecord::Base.connection.execute(qry).try(:first).try(:first)
-        val.presence || BigDecimal("0")
+        r_val = BigDecimal("0")
+        execute_query(qry) do |result_set|
+          val = result_set.try(:first).try(:first)
+          r_val = val unless val.nil?
+        end
+        r_val
       end
 
     end

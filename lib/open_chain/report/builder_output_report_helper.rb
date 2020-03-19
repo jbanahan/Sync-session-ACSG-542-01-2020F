@@ -72,8 +72,9 @@ module OpenChain; module Report; module BuilderOutputReportHelper
   end
 
   def write_query_to_builder builder, sheet, query, data_conversions: {}
-    result_set = ActiveRecord::Base.connection.execute query
-    write_result_set_to_builder(builder, sheet, result_set, data_conversions: data_conversions)
+    execute_query(query) do |result_set|
+      write_result_set_to_builder(builder, sheet, result_set, data_conversions: data_conversions)
+    end
   end
 
   def write_result_set_to_builder builder, sheet, result_set, data_conversions: {}

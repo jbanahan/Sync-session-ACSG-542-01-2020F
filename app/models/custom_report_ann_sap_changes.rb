@@ -2,9 +2,11 @@
 
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 require 'open_chain/custom_handler/ann_inc/ann_sap_product_handler'
+require 'open_chain/report/report_helper'
 
 class CustomReportAnnSapChanges < CustomReport
   include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
+  include OpenChain::Report::ReportHelper
 
   attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
   
@@ -40,68 +42,69 @@ INNER JOIN classifications on products.id = classifications.product_id
 INNER JOIN custom_values appr on appr.customizable_id = classifications.id and appr.custom_definition_id = #{cdefs[:approved_date].id}
 INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom_definition_id = #{cdefs[:sap_revised_date].id}
 #{make_where} #{row_limit.blank? ? "" : " LIMIT #{row_limit}"}"
-    r = ActiveRecord::Base.connection.execute qry
-    row_cursor = 0
-    col_cursor = 0
-    heading_row 0
-    if self.include_links?
-      left_columns_count += 1
-      write row_cursor, col_cursor, "Web Links"
-      col_cursor += 1
-    end
-    if self.include_rule_links?
-      left_columns_count += 1
-      write row_cursor, col_cursor, "Business Rule Links"
-      col_cursor += 1
-    end
-    left_columns_count += search_columns.size
-    search_columns.each do |sc|
-      write row_cursor, col_cursor, sc.model_field.label
-      col_cursor += 1
-    end
-    rpf.each do |d|
-      mf = cdefs[d].model_field
-      write row_cursor, col_cursor, "Old #{mf.label}"
-      col_cursor += 1
-      write row_cursor, col_cursor, "New #{mf.label}"
-      col_cursor += 1
-    end
-    row_cursor += 1
-    request_host = MasterSetup.get.request_host
-    r.each do |row|
+    execute_query(qry) do |r|
+      row_cursor = 0
       col_cursor = 0
+      heading_row 0
       if self.include_links?
-        write_hyperlink row_cursor, col_cursor, show_url(klass: Product, id: row.last), "Web View"
+        left_columns_count += 1
+        write row_cursor, col_cursor, "Web Links"
         col_cursor += 1
       end
       if self.include_rule_links?
-        write_hyperlink row_cursor, col_cursor, validation_results_url(klass: Product, id: row.last), "Web View"
+        left_columns_count += 1
+        write row_cursor, col_cursor, "Business Rule Links"
         col_cursor += 1
       end
-      search_columns.each_with_index do |sc,idx|
-        write row_cursor, col_cursor, sc.model_field.process_query_result(row[idx],run_by)
+      left_columns_count += search_columns.size
+      search_columns.each do |sc|
+        write row_cursor, col_cursor, sc.model_field.label
         col_cursor += 1
       end
-
-      snapshot_id = row[search_columns.size + rpf.size]
-      snapshot = EntitySnapshot.where(id: snapshot_id).first if snapshot_id.to_i > 0
-      if snapshot
-        es_json = snapshot.snapshot_json
-      end
-      
-      es_hash = es_json.blank? ? {'entity'=>{'model_fields'=>{}}} : es_json
-      rpf.each_with_index do |d,i|
+      rpf.each do |d|
         mf = cdefs[d].model_field
-        new_col = left_columns_count+1+(i*2)
-        new_val_position = left_columns_count+i
-        write row_cursor, new_col, mf.process_query_result(row[new_val_position],run_by)
-
-        old_col = left_columns_count+(i*2)
-        old_val = ""
-        old_val = es_hash['entity']['model_fields'][mf.uid.to_s] unless es_hash['entity']['model_fields'][mf.uid.to_s].blank?
-        write row_cursor, old_col, old_val
+        write row_cursor, col_cursor, "Old #{mf.label}"
+        col_cursor += 1
+        write row_cursor, col_cursor, "New #{mf.label}"
+        col_cursor += 1
       end
       row_cursor += 1
+      request_host = MasterSetup.get.request_host
+      r.each do |row|
+        col_cursor = 0
+        if self.include_links?
+          write_hyperlink row_cursor, col_cursor, show_url(klass: Product, id: row.last), "Web View"
+          col_cursor += 1
+        end
+        if self.include_rule_links?
+          write_hyperlink row_cursor, col_cursor, validation_results_url(klass: Product, id: row.last), "Web View"
+          col_cursor += 1
+        end
+        search_columns.each_with_index do |sc,idx|
+          write row_cursor, col_cursor, sc.model_field.process_query_result(row[idx],run_by)
+          col_cursor += 1
+        end
+
+        snapshot_id = row[search_columns.size + rpf.size]
+        snapshot = EntitySnapshot.where(id: snapshot_id).first if snapshot_id.to_i > 0
+        if snapshot
+          es_json = snapshot.snapshot_json
+        end
+
+        es_hash = es_json.blank? ? {'entity'=>{'model_fields'=>{}}} : es_json
+        rpf.each_with_index do |d,i|
+          mf = cdefs[d].model_field
+          new_col = left_columns_count+1+(i*2)
+          new_val_position = left_columns_count+i
+          write row_cursor, new_col, mf.process_query_result(row[new_val_position],run_by)
+
+          old_col = left_columns_count+(i*2)
+          old_val = ""
+          old_val = es_hash['entity']['model_fields'][mf.uid.to_s] unless es_hash['entity']['model_fields'][mf.uid.to_s].blank?
+          write row_cursor, old_col, old_val
+        end
+        row_cursor += 1
+      end
     end
   end
 

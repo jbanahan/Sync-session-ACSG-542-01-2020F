@@ -82,14 +82,12 @@ module OpenChain; module Report; class HmStatisticsReport
 
     cursor += 2
 
-    totals = total_values start_date, end_date
-    XlsMaker.add_body_row sheet, cursor, ["Total Duty",totals[1]]
-    cursor += 1
-    XlsMaker.add_body_row sheet, cursor, ["Total Entered Value",totals[0]]
-  end
-
-  def total_values start_date, end_date
-    ActiveRecord::Base.connection.execute(totals_query(start_date, end_date)).first
+    execute_query(totals_query(start_date, end_date)) do |result_set|
+      totals = result_set.first
+      XlsMaker.add_body_row sheet, cursor, ["Total Duty",totals[1]]
+      cursor += 1
+      XlsMaker.add_body_row sheet, cursor, ["Total Entered Value",totals[0]]
+    end
   end
 
   def totals_query start_date, end_date
@@ -107,8 +105,9 @@ module OpenChain; module Report; class HmStatisticsReport
   end
   
   def load_order_data master_hash, start_date, end_date
-    result_set = ActiveRecord::Base.connection.execute orders_query(start_date, end_date)
-    load_order_dh result_set, master_hash
+    execute_query(orders_query(start_date, end_date)) do |result_set|
+      load_order_dh result_set, master_hash
+    end
   end
 
   def load_order_dh result_set, master_hash
@@ -146,8 +145,9 @@ module OpenChain; module Report; class HmStatisticsReport
   end
 
   def load_ocean_tu_data master_hash, start_date, end_date
-    result_set = ActiveRecord::Base.connection.execute ocean_tu_query(start_date, end_date)
-    load_ocean_tu_dh result_set, master_hash
+    execute_query(ocean_tu_query(start_date, end_date)) do |result_set|
+      load_ocean_tu_dh result_set, master_hash
+    end
   end
 
   def load_ocean_tu_dh result_set, master_hash
@@ -174,8 +174,9 @@ module OpenChain; module Report; class HmStatisticsReport
   end
 
   def load_air_tu_data master_hash, start_date, end_date
-    result_set = ActiveRecord::Base.connection.execute raw_air_query(start_date, end_date)
-    load_air_tu_dh result_set, master_hash
+    execute_query(raw_air_query(start_date, end_date)) do |result_set|
+      load_air_tu_dh result_set, master_hash
+    end
   end
 
   def load_air_tu_dh result_set, master_hash

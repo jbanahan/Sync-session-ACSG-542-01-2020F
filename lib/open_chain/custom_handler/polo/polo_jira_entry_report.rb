@@ -45,8 +45,10 @@ module OpenChain; module CustomHandler; module Polo; class PoloJiraEntryReport
 
   def comments_lambda 
     lambda do |result_set_row, raw_column_value|
-      results = ActiveRecord::Base.connection.execute "SELECT actionbody FROM jiradb.jiraaction WHERE issueid = #{raw_column_value.to_i} AND actiontype = 'comment' ORDER BY created"
-      results.map {|r| r[0] }.join "\n-----------------------\n"
+      qry = "SELECT actionbody FROM jiradb.jiraaction WHERE issueid = #{raw_column_value.to_i} AND actiontype = 'comment' ORDER BY created"
+      execute_query(qry) do |results|
+        results.map {|r| r[0] }.join "\n-----------------------\n"
+      end
     end
   end
 

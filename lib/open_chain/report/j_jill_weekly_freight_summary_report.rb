@@ -318,10 +318,11 @@ INNER JOIN (
   WHERE inner_ol.order_id = ? AND sl.shipment_id = ?) l ON l.order_line_id = ol.id
 QRY
     qry = ActiveRecord::Base.sanitize_sql_array([qry, order_id, shipment_id])
-    result = ActiveRecord::Base.connection.execute qry
-
-    qty = result.first.first
-    qty ? qty : 0
+    qty = 0
+    execute_query(qry) do |result|
+      qty = result.first.first || 0
+    end
+    qty
   end
 
   def quantity qty1, qty2

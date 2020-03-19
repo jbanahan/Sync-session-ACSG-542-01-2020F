@@ -27,15 +27,16 @@ module OpenChain; module Report; class PreparerSiteInvalidEntryReport
     sheet = wb.worksheets[0]
     XlsMaker.add_body_row sheet, 0, ['Broker Reference', 'Entry Filed Date', 'Release Date', 'Release Certification Message', 'Port Code', 'Port Name', 'User Notes']
 
-    results = ActiveRecord::Base.connection.execute qry
     invalid_entries = []
 
-    results.each do |result|
-      entry = Entry.find(result[0])
-      note = entry.entry_comments.find(result[1])
-      fixed_note = entry.entry_comments.where("entry_comments.created_at >= ? AND (entry_comments.body LIKE '%SUMMARY HAS BEEN ADDED%' or entry_comments.body like '%SUMMARY HAS BEEN REPLACED%')", note.created_at)
-      next if fixed_note.present?
-      invalid_entries << {entry: entry, note: note}
+    execute_query(qry) do |results|
+      results.each do |result|
+        entry = Entry.find(result[0])
+        note = entry.entry_comments.find(result[1])
+        fixed_note = entry.entry_comments.where("entry_comments.created_at >= ? AND (entry_comments.body LIKE '%SUMMARY HAS BEEN ADDED%' or entry_comments.body like '%SUMMARY HAS BEEN REPLACED%')", note.created_at)
+        next if fixed_note.present?
+        invalid_entries << {entry: entry, note: note}
+      end
     end
 
     if invalid_entries.blank?

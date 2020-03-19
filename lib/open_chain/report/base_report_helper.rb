@@ -95,6 +95,14 @@ module OpenChain; module Report; module BaseReportHelper
       translation
     end
 
+    # Executes a query against the read replica version of the database.  A result set is yielded.
+    def execute_query query
+      distribute_reads do
+        yield ActiveRecord::Base.connection.execute(query)
+      end
+      nil
+    end
+
     # Allows report results to be indexed by field name. field_map is a hash of name => index
     class RowWrapper
       attr_reader :field_map

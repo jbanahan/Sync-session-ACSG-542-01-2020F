@@ -57,12 +57,13 @@ module OpenChain; module Report; class StaleTariffs
                                  name]
 
       row_cursor = 1
-      result = get_query_result(field, countries, importer_ids)
-      result.each do |result_row|
-        row_content = []
-        (0..3).each {|i| row_content.push result_row[i] }
-        wb.add_body_row sheet, row_content
-        row_cursor += 1
+      execute_query(get_query(field, countries, importer_ids)) do |result_set|
+        result_set.each do |result_row|
+          row_content = []
+          (0..3).each {|i| row_content.push result_row[i] }
+          wb.add_body_row sheet, row_content
+          row_cursor += 1
+        end
       end
 
       if row_cursor ==1 #we haven't written any records
@@ -72,7 +73,7 @@ module OpenChain; module Report; class StaleTariffs
     wb
   end
 
-  def get_query_result(hts_field, countries, importer_ids)
+  def get_query(hts_field, countries, importer_ids)
     sql = base_query hts_field
 
     if countries.try(:length).to_i > 0
@@ -85,7 +86,7 @@ module OpenChain; module Report; class StaleTariffs
 
     sql += " ORDER BY ctr.name, comp.name, tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)}, p.unique_identifier"
 
-    TariffRecord.connection.execute(sql)
+    sql
   end
 
   def base_query hts_field

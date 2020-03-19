@@ -208,8 +208,10 @@ module OpenChain; class ActivitySummary
       AND #{tracking_open_clause} AND #{country_clause}
       GROUP BY ports.name, ports.#{port_code_field}"
       r = {}
-      ActiveRecord::Base.connection.execute(sql).each do |row|
-        r[row.first] = {'code'=>row[1],'val'=>row.last}
+      execute_query(sql) do |result_set|
+        result_set.each do |row|
+          r[row.first] = {'code'=>row[1],'val'=>row.last}
+        end
       end
       r
     end
@@ -252,8 +254,10 @@ module OpenChain; class ActivitySummary
       AND #{tracking_open_clause} AND #{country_clause}
       GROUP BY left(commercial_invoice_tariffs.hts_code,2)"
       r = {}
-      ActiveRecord::Base.connection.execute(sql).each do |row|
-        r[row.first] = {'code'=>row.first,'val'=>row.last}
+      execute_query(sql) do |result_set|
+        result_set.each do |row|
+          r[row.first] = {'code'=>row.first,'val'=>row.last}
+        end
       end
       r
     end
@@ -270,8 +274,10 @@ module OpenChain; class ActivitySummary
       ORDER BY sum(commercial_invoice_tariffs.entered_value) DESC
       LIMIT 5"
       r = []
-      ActiveRecord::Base.connection.execute(sql).each do |row|
-        r << {'name'=>row.first,'entered'=>row.last}
+      execute_query(sql) do |result_set|
+        result_set.each do |row|
+          r << {'name'=>row.first,'entered'=>row.last}
+        end
       end
       r
     end
@@ -351,16 +357,22 @@ module OpenChain; class ActivitySummary
                  WHERE (#{date_clause}) AND (#{w}) AND #{tracking_open_clause} AND #{country_clause} 
                    AND #{format_where more_where_clauses}
                SQL
-      result_row = ActiveRecord::Base.connection.execute(sql).first
-      {
-        'count'=>result_row[0],
-        'duty'=>result_row[1],
-        'gst'=>result_row[2],
-        'entered'=>result_row[3],
-        'invoiced'=>result_row[4],
-        'units'=>result_row[5],
-        'duty_gst'=>result_row[6]
-      }
+      line_hash = {}
+      execute_query(sql) do |result_set|
+        result_row = result_set.first
+        if result_row
+          line_hash = {
+              'count'=>result_row[0],
+              'duty'=>result_row[1],
+              'gst'=>result_row[2],
+              'entered'=>result_row[3],
+              'invoiced'=>result_row[4],
+              'units'=>result_row[5],
+              'duty_gst'=>result_row[6]
+          }
+        end
+      end
+      line_hash
     end
     def generate_k84_section importer_id, base_date_utc
       r = [] 
@@ -374,10 +386,11 @@ and (#{Entry.search_where_by_company_id importer_id})
       AND #{tracking_open_clause} AND #{country_clause}
 group by importer_id, k84_due_date
 order by importer_id, k84_due_date desc"
-      results = ActiveRecord::Base.connection.execute qry
-      return r if results.first.nil? || results.first.first.nil?
-      results.each do |row|
-        r << {'due'=>row[0],'amount'=>row[1],'importer_name'=>row[3]}
+      execute_query(qry) do |results|
+        return r if results.first.nil? || results.first.first.nil?
+        results.each do |row|
+          r << {'due'=>row[0],'amount'=>row[1],'importer_name'=>row[3]}
+        end
       end
       r
     end
@@ -445,10 +458,11 @@ and (#{Entry.search_where_by_company_id importer_id})
       AND #{tracking_open_clause} AND #{country_clause}
 group by importer_id, monthly_statement_due_date, monthly_statement_paid_date
 order by importer_id, monthly_statement_due_date desc"
-      results = ActiveRecord::Base.connection.execute qry
-      return r if results.first.nil? || results.first.first.nil?
-      results.each do |row|
-        r << {'due'=>row[0],'paid'=>row[1],'amount'=>row[2], 'importer_name'=>row[4]}
+      execute_query(qry) do |results|
+        return r if results.first.nil? || results.first.first.nil?
+        results.each do |row|
+          r << {'due'=>row[0],'paid'=>row[1],'amount'=>row[2], 'importer_name'=>row[4]}
+        end
       end
       r
     end
@@ -469,15 +483,21 @@ order by importer_id, monthly_statement_due_date desc"
                  WHERE (#{date_clause}) AND (#{w}) AND #{tracking_open_clause} AND #{country_clause}
                    AND #{format_where more_where_clauses}
                SQL
-      result_row = ActiveRecord::Base.connection.execute(sql).first
-      {
-        'count'=>result_row[0],
-        'duty'=>result_row[1],
-        'fees'=>result_row[2],
-        'entered'=>result_row[3],
-        'invoiced'=>result_row[4],
-        'units'=>result_row[5]
-      }
+      line_hash = {}
+      execute_query(sql) do |result_set|
+        result_row = result_set.first
+        if result_row
+          line_hash = {
+              'count'=>result_row[0],
+              'duty'=>result_row[1],
+              'fees'=>result_row[2],
+              'entered'=>result_row[3],
+              'invoiced'=>result_row[4],
+              'units'=>result_row[5]
+          }
+        end
+      end
+      line_hash
     end
   end
 

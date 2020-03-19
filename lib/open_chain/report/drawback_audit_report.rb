@@ -21,15 +21,12 @@ module OpenChain
 
       def run_and_attach_to_dc(user, dc_id)
         dc = DrawbackClaim.find dc_id
-        results = exec_query user, dc_id
-        create_attachment results, dc
+        execute_query(drawback_claim_query(user, dc_id)) do |results|
+          create_attachment results, dc
+        end
         send_message user, dc_id
       end
 
-      def exec_query(user, dc_id)
-        ActiveRecord::Base.connection.execute drawback_claim_query(user, dc_id)
-      end
-      
       def create_attachment(results, dc)
         Tempfile.open(['DrawbackClaim-', '.csv']) do |t|
           t.binmode

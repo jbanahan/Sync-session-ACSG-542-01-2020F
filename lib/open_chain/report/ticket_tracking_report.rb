@@ -61,10 +61,16 @@ module OpenChain; module Report; class TicketTrackingReport
   end
 
   def run_queries project_keys, start_date, end_date
-    jira_result = ActiveRecord::Base.connection.execute jira_query(project_keys, start_date, end_date)
-    broker_refs = extract_broker_refs(jira_result).presence
-    vfi_result = broker_refs ? ActiveRecord::Base.connection.execute(vfi_query broker_refs) : []
-    graft_results jira_result, vfi_result
+    execute_query(jira_query(project_keys, start_date, end_date)) do |jira_result|
+      broker_refs = extract_broker_refs(jira_result).presence
+      if broker_refs
+        execute_query(vfi_query broker_refs) do |vfi_result|
+          graft_results jira_result, vfi_result
+        end
+      else
+        graft_results jira_result, []
+      end
+    end
   end
 
   def graft_results jira_result, vfi_result
@@ -98,8 +104,10 @@ module OpenChain; module Report; class TicketTrackingReport
   def comments_lambda
     lambda do |result_set_row, raw_column_value|
       q = ActiveRecord::Base.sanitize_sql_array(["SELECT actionbody FROM jiradb.jiraaction WHERE issueid = ? AND actiontype = 'comment' ORDER BY created", raw_column_value.to_i ])
-      results = ActiveRecord::Base.connection.execute q
-      comments = results.map {|r| r[0] }.join "\n-----------------------\n"
+      comments = ""
+      execute_query(q) do |results|
+        comments = results.map {|r| r[0] }.join "\n-----------------------\n"
+      end
       # Trim results to 10,000 chars.  Some ticket comments values exceed the maximum
       # number of chars allowed by Excel (32,767 chars), causing Excel to error.
       # 10K is not 32K, but is still very generous for a report field.  32K was deemed

@@ -38,15 +38,17 @@ module OpenChain
       end
 
       def combined_query(report_type, invoice_numbers)
-        brokerage_duty_qry = ActiveRecord::Base.connection.execute query(report_type, true, invoice_numbers)
-        column_names = brokerage_duty_qry.fields[0..-1]
-        fees_query = ActiveRecord::Base.connection.execute query(report_type, false, invoice_numbers)
-
+        column_names = []
         combined = []
-        brokerage_duty_qry.each do |outer_line|
-          combined << outer_line
-          matching = fees_query.find{ |inner_line| inner_line[5] == outer_line[5] }
-          combined << matching if matching
+        execute_query(query(report_type, true, invoice_numbers)) do |brokerage_duty_qry|
+          column_names = brokerage_duty_qry.fields[0..-1]
+          execute_query(query(report_type, false, invoice_numbers)) do |fees_query|
+            brokerage_duty_qry.each do |outer_line|
+              combined << outer_line
+              matching = fees_query.find{ |inner_line| inner_line[5] == outer_line[5] }
+              combined << matching if matching
+            end
+          end
         end
         {header: column_names, results: combined}
       end

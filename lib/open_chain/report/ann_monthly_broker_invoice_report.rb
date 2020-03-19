@@ -51,8 +51,11 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
 
   def get_invoices start_date
     end_date = start_date.end_of_month
-    results = ActiveRecord::Base.connection.execute query(self.class.importer.id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
-    results.count > 0 ? compile_invoices(results) : []
+    invoices = []
+    execute_query query(self.class.importer.id, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')) do |result_set|
+      invoices = compile_invoices(result_set) unless result_set.count == 0
+    end
+    invoices
   end
 
   def compile_invoices results

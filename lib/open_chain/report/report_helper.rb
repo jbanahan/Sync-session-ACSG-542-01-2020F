@@ -20,8 +20,11 @@ module OpenChain
       # will be output into the excel cell.  Define the hash key as either the string/symbolized column name or as the
       # integer column number (the name key takes priority in case of collisions).
       def table_from_query sheet, query, data_conversions = {}, opts = {}
-        result_set = ActiveRecord::Base.connection.execute query
-        table_from_query_result sheet, result_set, data_conversions, opts
+        result = nil
+        execute_query query do |result_set|
+          result = table_from_query_result sheet, result_set, data_conversions, opts
+        end
+        result
       end
 
       # opt[:column_names] is required if result_set is not a Mysql2::Result
@@ -89,7 +92,7 @@ module OpenChain
         }
       end
 
-    private 
+    private
 
       def write_tempfile obj, prefix, ext, opts={}, proc
         if proc
