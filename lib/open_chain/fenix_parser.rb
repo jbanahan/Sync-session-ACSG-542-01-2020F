@@ -470,7 +470,8 @@ module OpenChain; class FenixParser
 
     t = inv_ln.commercial_invoice_tariffs.build
     t.spi_primary = str_val(line[28])
-    t.hts_code = str_val(line[29])
+    hts_code = str_val(line[29])
+    t.hts_code = hts_code.gsub('.', '').length < 10 ? "0#{hts_code}" : hts_code
     t.tariff_provision = str_val(line[30])
     t.classification_qty_1 = dec_val(line[31])
     t.classification_uom_1 = str_val(line[32]) 

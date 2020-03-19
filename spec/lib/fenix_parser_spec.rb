@@ -577,6 +577,13 @@ describe OpenChain::FenixParser do
     expect(ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.duty_rate).to be_nil
   end
 
+  it "should 0 pad nine digit hts numbers" do
+    @hts = "3044.10.000"
+    OpenChain::FenixParser.parse @entry_lambda.call
+    ent = Entry.find_by(broker_reference: @file_number)
+    expect(ent.commercial_invoice_lines.first.commercial_invoice_tariffs.first.hts_code).to eql("03044.10.000")
+  end
+
   it "should handle specific duty" do
     # Make sure we're not translating specific duty values like we do for adval duties
     @duty_rate = "1.23"
