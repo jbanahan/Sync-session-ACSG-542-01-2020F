@@ -765,6 +765,11 @@ describe OpenChain::FenixParser do
     expect {OpenChain::FenixParser.parse @entry_lambda.call}.not_to raise_error
   end
 
+  it "doesn't fail if hts is blank" do
+    @hts = ''
+    expect { OpenChain::FenixParser.parse @entry_lambda.call }.not_to raise_error
+  end
+
   context "with fenix admin group" do
     let (:group) {Group.create! system_code: "fenix_admin", name: "Fenix Admin"}
     let (:user) {u = Factory(:user); group.users << u; group.save!; u}
