@@ -2,8 +2,8 @@
 #
 # Table name: intacct_alliance_exports
 #
-#  ap_total            :decimal(10, 2)
-#  ar_total            :decimal(10, 2)
+#  ap_total            :decimal(12, 2)
+#  ar_total            :decimal(12, 2)
 #  check_number        :string(255)
 #  created_at          :datetime         not null
 #  customer_number     :string(255)

@@ -2,7 +2,7 @@
 #
 # Table name: intacct_payable_lines
 #
-#  amount               :decimal(10, 2)
+#  amount               :decimal(12, 2)
 #  bank_cash_gl_account :string(255)
 #  bank_number          :string(255)
 #  broker_file          :string(255)

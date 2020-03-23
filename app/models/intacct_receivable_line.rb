@@ -2,7 +2,7 @@
 #
 # Table name: intacct_receivable_lines
 #
-#  amount                :decimal(10, 2)
+#  amount                :decimal(12, 2)
 #  broker_file           :string(255)
 #  charge_code           :string(255)
 #  charge_description    :string(255)
