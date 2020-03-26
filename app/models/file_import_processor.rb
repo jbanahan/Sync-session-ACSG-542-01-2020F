@@ -477,7 +477,7 @@ class FileImportProcessor
       mf = col.model_field
       r = row[col.rank + base_column]
       r = r.value if r.respond_to? :value #get real value for Excel formulas
-      r = r.strip if r.is_a? String
+      r = r.strip_all_whitespace if r.is_a? String
       data_map[mf.core_module][mf.uid] = sanitize_file_data(r, mf) unless mf.blank?
     end
     data_map

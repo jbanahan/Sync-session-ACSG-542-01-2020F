@@ -42,6 +42,11 @@ String.class_eval do
   def to_boolean
     ActiveRecord::ConnectionAdapters::Column::TRUE_VALUES.include?(self.upcase)
   end
+
+  # Like String#strip but removes a wider variety of characters, including non-breaking space
+  def strip_all_whitespace
+    self.gsub(/\A[[:space:]]+|[[:space:]]+\z/, "")
+  end
 end
 
 class SerializableNoMethodError < StandardError; end;

@@ -76,6 +76,15 @@ describe "hts_format" do
   end
 end
 
+describe "strip_all_whitespace" do
+  it "removes a more comprehensive list of whitespace characters than String#strip" do
+    # unicode spaces http://jkorpela.fi/chars/spaces.html
+    sp = ["\u0020", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005", "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u202F", "\u205F", "\u3000"]
+    
+    expect("\n\r#{sp.join('')}some string#{sp.join('')}\n\r".strip_all_whitespace).to eq "some string"
+  end
+end
+
 describe "log_me" do
 
   it "delays an email send if log_me call has no attachments" do

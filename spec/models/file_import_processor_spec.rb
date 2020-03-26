@@ -49,7 +49,8 @@ describe FileImportProcessor do
         SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
         SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
       ])
-      pro.do_row 0, ['uid-abc','name'], true, -1, @u
+      # removes whitespace
+      pro.do_row 0, ["\tuid-abc ","name"], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').name).to eq('name')
     end
     it "should not set blank values" do
