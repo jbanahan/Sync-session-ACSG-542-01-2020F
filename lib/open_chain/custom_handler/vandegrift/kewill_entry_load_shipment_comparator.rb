@@ -55,13 +55,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
   end
 
   def generate_and_send shipment, sync_record
-    xml = invoice_generator(shipment.importer.kewill_customer_number).generate_xml shipment
-    Tempfile.open(["ci_load_#{shipment.reference}_", ".xml"]) do |file|
-      xml.write file
-      file.flush
-
-      ftp_sync_file file, sync_record, ecs_connect_vfitrack_net("kewill_edi/to_kewill")
-    end
+    # All generator should implement a `generate_xml_and_send` method
+    invoice_generator(shipment.importer.kewill_customer_number).generate_xml_and_send(shipment, sync_records: sync_record)
   end
 
   def send_xml? shipment, sr, custom_definition, old_bucket, old_path, old_version, new_bucket, new_path, new_version

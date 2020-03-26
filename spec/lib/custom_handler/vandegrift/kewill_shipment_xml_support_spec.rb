@@ -60,7 +60,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         e.entry_number = "31612345"
         e.total_value_us = BigDecimal("12.50")
         e.firms_code = "FIRM"
-        e.mode_of_transportation = "10"
+        e.recon_value_flag = true
+        e.charges = BigDecimal("123.456")
 
         e.dates = dates
         e.containers = [container]
@@ -70,8 +71,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
       }
 
       it "builds entry xml" do
-        doc = subject.generate_entry_xml entry
-
+        now = Time.zone.now
+        doc = nil
+        Timecop.freeze(now) { doc = subject.generate_entry_xml entry }
+        
         # We're only concerned here with the data under ediShipment, the rest is tested elsewhere
         s = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment"
         expect(s).not_to be_nil
@@ -108,6 +111,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "destinationState").to eq "XX"
         expect(s.text "firmsCode").to eq "FIRM"
         expect(s.text "mot").to eq "10"
+        expect(s.text "reconValue").to eq "Y"
+        expect(s.text "chargesAmt").to eq "123.46"
+        # It should add this by default since edi_received_date wasn't used
+        expect(s.text "dateReceived").to eq now.in_time_zone("America/New_York").strftime("%Y%m%d")
 
         expect(s.text "EdiShipmentHeaderAux/masterBill").to eq "1234567890"
         expect(s.text "EdiShipmentHeaderAux/houseBill").to eq "9876543210"
@@ -169,6 +176,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "EdiShipmentIdList/EdiShipmentId/subBillAddl").to eq "123456789012"
         expect(s.text "EdiShipmentIdList/EdiShipmentId/subSubBillAddl").to eq "987654321098"
       end
+
+      it "does not add default receivedDate if one is already present" do
+        entry.dates << described_class::CiLoadEntryDate.new(:edi_received_date, Date.new(2020, 3, 24))
+        doc = subject.generate_entry_xml entry
+        s = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment"
+        expect(s).not_to be_nil
+        expect(s.text "dateReceived").to eq "20200324"
+      end
     end
 
     context "with commercial invoice data" do
@@ -177,6 +192,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         i = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new '15MSA10', Date.new(2015,11,1), []
         i.non_dutiable_amount = BigDecimal("5")
         i.add_to_make_amount = BigDecimal("25")
+        i.charges = BigDecimal("99999999999.989")
+        i.customer_reference = "CUSTREF"
+        i.net_weight = BigDecimal("9999999.999989")
+        i.net_weight_uom = "KG"
+        i.gross_weight_kg = BigDecimal("99.99")
+
         e.invoices << i
         l = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoiceLine.new
         l.part_number = "PART"
@@ -220,6 +241,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         l.textile_category_code = "123"
         l.ruling_type = 'B'
         l.ruling_number = "123"
+        l.net_weight = BigDecimal("9999999.999989")
+        l.net_weight_uom = "KG"
 
         i.invoice_lines << l
 
@@ -243,6 +266,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         l.spi = "JO"
         l.unit_price = BigDecimal("15.50")
         l.container_number = "ContainerNo"
+        l.net_weight = BigDecimal("1")
 
         i.invoice_lines << l
 
@@ -303,6 +327,11 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t.text "exchangeRate").to eq "1000000"
         expect(t.text "qty").to eq "30"
         expect(t.text "uom").to eq "CTNS"
+        expect(t.text "chargesAmt").to eq "99999999999.99"
+        expect(t.text "netWeightAmt").to eq "9999999.99999"
+        expect(t.text "netWtUom").to eq "KG"
+        expect(t.text "custRef").to eq "CUSTREF"
+        expect(t.text "weightGross").to eq "100"
 
         l = REXML::XPath.first t, "EdiInvoiceLinesList/EdiInvoiceLines"
         expect(l).not_to be_nil
@@ -338,7 +367,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(l.text "addToMakeAmt").to eq "1500"
         expect(l.text "exemptionCertificate").to be_nil
         expect(l.text "manufacturerId2").to eq "PHMOUINS2106BAT"
-        expect(l.text "cartons").to eq "1000"
+        expect(l.text "cartonsAmt").to eq "10.00"
         expect(l.text "detailLineNo").to eq "123"
         expect(l.text "countryExport").to eq "CE"
         expect(l.text "chargesAmt").to eq "20.25"
@@ -355,6 +384,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(l.text "categoryNo").to eq "123"
         expect(l.text "rulingType").to eq "B"
         expect(l.text "rulingNo").to eq "123"
+        expect(l.text "netWeightAmt").to eq "9999999.99999"
+        expect(l.text "netWtUom").to eq "KG"
 
         parties = REXML::XPath.first l, "EdiInvoicePartyList"
         expect(parties).not_to be_nil
@@ -516,6 +547,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         root = doc.root
         expect(root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/manufacturerId", "INVOICE1")
         expect(root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines/manufacturerId", "INVOICE1")
+      end
+
+      it "defaults net weight uom to 'KG' if not given" do
+        entry_data.invoices.first.invoice_lines.first.net_weight_uom = nil
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+        t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
+        expect(t).not_to be_nil
+        expect(t.text "netWtUom").to eq "KG"
       end
 
       let (:tariff_line) {

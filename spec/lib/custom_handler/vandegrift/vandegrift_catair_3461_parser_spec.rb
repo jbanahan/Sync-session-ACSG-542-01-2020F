@@ -6,11 +6,11 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
     file
   }
 
-  describe "process_file" do
+  let! (:importer) {
+    with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "CUSTNO")
+  }
 
-    let! (:importer) {
-      with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "CUSTNO")
-    }
+  describe "process_file" do 
 
     it "parses catair file and generates xml" do
       shipments = subject.process_file data
@@ -157,6 +157,22 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
       expect(party.address_1).to eq "123 Fake ST, Building A"
       expect(party.address_2).to be_nil
       expect(party.address_3).to be_nil
+    end
+  end
+
+  describe "parse" do
+    subject { described_class }
+    let (:shipment) { described_class::CiLoadEntry.new }
+
+    before :each do 
+      allow_any_instance_of(subject).to receive(:inbound_file).and_return inbound_file
+    end
+
+    it "parses a file and ftps the resulting xml" do
+      expect_any_instance_of(subject).to receive(:process_file).with(data).and_return [shipment]
+      expect_any_instance_of(subject).to receive(:generate_and_send_shipment_xml).with([shipment])
+      expect_any_instance_of(subject).to receive(:send_email_notification).with([shipment], "3461")
+      subject.parse data
     end
   end
 end

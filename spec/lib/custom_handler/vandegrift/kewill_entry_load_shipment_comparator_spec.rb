@@ -1,3 +1,14 @@
+
+# This is admittedly strange, but since we need to generate the class from a constantized string, I
+# believe this is the only way to accomplish that.
+module OpenChain; class FakeKewillShipmentEntryXmlGenerator < OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator
+
+  def generate_xml_and_send shipments, sync_records: 
+
+  end
+
+end; end;
+
 describe OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator do
 
   let (:importer) { with_customs_management_id(Factory(:importer), "TEST") }
@@ -39,17 +50,10 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator
       before :each do
         shipment.update_custom_value! custom_definition, Time.zone.now
       end
-      
-      def ftp_xml_expectations generator_class
-        xml = instance_double(REXML::Document)
-        expect(xml).to receive(:write).with(an_instance_of(Tempfile))
-        expect_any_instance_of(generator_class).to receive(:generate_xml).with(shipment).and_return xml
-        expect(subject).to receive(:ftp_sync_file).with(an_instance_of(Tempfile), an_instance_of(SyncRecord), hash_including({username: 'ecs', folder: "kewill_edi/to_kewill"}))
-      end
 
       it "generates and sends an entry if the shipment is entry prepared and does not have a sent date" do
-        ftp_xml_expectations(OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator)
-
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator).to receive(:generate_xml_and_send).with(shipment, sync_records: instance_of(SyncRecord))
+ 
         now = Time.zone.now
         Timecop.freeze { subject.compare shipment, nil, nil, nil, nil, nil, nil }
 
@@ -62,10 +66,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator
       end
 
       it "uses an alternate generator" do
-        # Just need to use a generator that has a method sig like 'generate_xml obj'..
-        cross_reference.update_attributes! value: "OpenChain::CustomHandler::Crocs::Crocs210Generator"
-        ftp_xml_expectations(OpenChain::CustomHandler::Crocs::Crocs210Generator)
-
+        cross_reference.update_attributes! value: "OpenChain::FakeKewillShipmentEntryXmlGenerator"
+        expect_any_instance_of(OpenChain::FakeKewillShipmentEntryXmlGenerator).to receive(:generate_xml_and_send).with(shipment, sync_records: instance_of(SyncRecord))
+ 
         subject.compare shipment, nil, nil, nil, nil, nil, nil
 
         shipment.reload

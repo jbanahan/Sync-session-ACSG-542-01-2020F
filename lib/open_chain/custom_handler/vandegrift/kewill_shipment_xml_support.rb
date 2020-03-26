@@ -9,7 +9,9 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     est_arrival_date: "dateEstArrival",
     arrival_date: "dateArrival",
     elected_entry_date: "dateEntry",
-    export_date: "1"
+    export_date: "1",
+    import_date: "7",
+    edi_received_date: "dateReceived"
   }
 
   # UOM
@@ -24,8 +26,11 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       :file_number, :customer, :invoices, :containers, :bills_of_lading, :dates, :edi_identifier, :customer_reference, :vessel, :voyage, :carrier, 
       :customs_ship_mode, :lading_port, :unlading_port, :entry_port, :pieces, :pieces_uom, :goods_description, :weight_kg, :consignee_code, 
       :ultimate_consignee_code, :country_of_origin, :country_of_export, :location_of_goods, :destination_state, :bond_type, :entry_filer_code,
-      :entry_type, :entry_number, :total_value_us, :firms_code, :mode_of_transportation
+      :entry_type, :entry_number, :total_value_us, :firms_code, :charges, :recon_value_flag
     )
+    # You don't have to use scac in general when sending an EDI Identifier, just put the full master bill in the
+    # master_bill field.  The internals of this class will end up splitting the master bill into the scac / numeric components
+    # to send to Customs Management
     CiLoadEdiIdentifier ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :scac)
     # code is the symbol matching to the key above in the CI_LOAD_DATE_CODES constant
     # In other words, to send an export date use a code of "1"...to send an Arrival Date, use a code of 'arrival_date'
@@ -34,14 +39,14 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type)
     CiLoadInvoice ||= Struct.new(
       :invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number, 
-      :invoice_total
+      :invoice_total, :charges, :customer_reference, :gross_weight_kg, :net_weight, :net_weight_uom
     )
     CiLoadInvoiceLine ||= Struct.new(
       :tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, 
       :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, 
       :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, 
       :description, :container_number, :ftz_quantity, :ftz_zone_status, :ftz_priv_status_date, :ftz_expired_hts_number, :category_number, :parties,
-      :exported_date, :visa_number, :visa_date, :lading_port, :textile_category_code, :ruling_type, :ruling_number, :quantity_3, :uom_3
+      :exported_date, :visa_number, :visa_date, :lading_port, :textile_category_code, :ruling_type, :ruling_number, :quantity_3, :uom_3, :net_weight, :net_weight_uom
     )
     CiLoadInvoiceTariff ||= Struct.new(:hts, :gross_weight, :spi, :spi2, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :quantity_3, :uom_3)
     # Qualifier should be one of MF (Manufacturer) or BY (Buyer)
@@ -101,42 +106,43 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     parent = add_element(shipment_element, "ediShipment")
 
     generate_identifier_data(parent, edi_identifier)
-    add_element(parent, "fileNo", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true))
+    add_element(parent, "fileNo", g.string(entry.file_number, 15, pad_string: false, exception_on_truncate: true)) unless entry.file_number.blank?
     add_element(parent, "custNo", g.string(entry.customer, 10, pad_string: false, exception_on_truncate: true))
     add_element(parent, "entryType", g.string(entry.entry_type, 2, pad_string: false)) unless entry.entry_type.blank?
     add_element(parent, "entryFilerCode", g.string(entry.entry_filer_code, 3, pad_string: false)) unless entry.entry_filer_code.blank?
     add_element(parent, "entryNo", g.string(entry.entry_number, 9, pad_string: false)) unless entry.entry_number.blank?
     add_element(parent, "valueUsAmt", g.number(entry.total_value_us, 13, decimal_places: 2, pad_string: false)) unless entry.total_value_us.blank?
-    add_element(parent, "mot", g.number(entry.mode_of_transportation, 2, decimal_places: 0, pad_string: false)) unless entry.mode_of_transportation.blank?
 
-    add_element(parent, "custRef", g.string(entry.customer_reference, 35, pad_string: false))
-    add_element(parent, "vesselAirlineName", g.string(entry.vessel, 20, pad_string: false))
-    add_element(parent, "voyageFlightNo", g.string(entry.voyage, 10, pad_string: false))
+    add_element(parent, "custRef", g.string(entry.customer_reference, 35, pad_string: false)) unless entry.customer_reference.blank?
+    add_element(parent, "vesselAirlineName", g.string(entry.vessel, 20, pad_string: false)) unless entry.vessel.blank?
+    add_element(parent, "voyageFlightNo", g.string(entry.voyage, 10, pad_string: false)) unless entry.voyage.blank?
     # This is just some weirdness so that Kewill doesn't generate a secondary scac-less master bill record
     add_element(parent, "scac", g.string(edi_identifier.scac, 4, pad_string:false)) unless edi_identifier.scac.blank?
-    add_element(parent, "carrier", g.string(entry.carrier, 4, pad_string: false))
-    add_element(parent, "mot", g.number(entry.customs_ship_mode, 2, decimal_places: 0, strip_decimals: true, pad_string: false))
-    add_element(parent, "portLading", g.string(entry.lading_port, 5, pad_string: false))
-    add_element(parent, "distPort", g.string(entry.unlading_port, 4, pad_string: false))
-    add_element(parent, "distPortEntry", g.string(entry.entry_port, 4, pad_string: false))
+    add_element(parent, "carrier", g.string(entry.carrier, 4, pad_string: false)) unless entry.carrier.blank?
+    add_element(parent, "mot", g.number(entry.customs_ship_mode, 2, decimal_places: 0, strip_decimals: true, pad_string: false)) unless entry.customs_ship_mode.blank?
+    add_element(parent, "portLading", g.string(entry.lading_port, 5, pad_string: false)) unless entry.lading_port.blank?
+    add_element(parent, "distPort", g.string(entry.unlading_port, 4, pad_string: false)) unless entry.unlading_port.blank?
+    add_element(parent, "distPortEntry", g.string(entry.entry_port, 4, pad_string: false)) unless entry.entry_port.blank?
 
-    add_element(parent, "pieceCount", g.number(entry.pieces, 12, decimal_places: 0, strip_decimals: true, pad_string: false))
-    add_element(parent, "uom", g.string(entry.pieces_uom, 6, pad_string: false))
+    add_element(parent, "pieceCount", g.number(entry.pieces, 12, decimal_places: 0, strip_decimals: true, pad_string: false)) if nonzero?(entry.pieces)
+    add_element(parent, "uom", g.string(entry.pieces_uom, 6, pad_string: false)) unless entry.pieces_uom.blank?
     
-    add_element(parent, "descOfGoods", g.string(entry.goods_description, 70, pad_string: false))
+    add_element(parent, "descOfGoods", g.string(entry.goods_description, 70, pad_string: false)) unless entry.goods_description.blank?
 
     if entry.weight_kg && entry.weight_kg > 0
       add_element(parent, "weightGross", g.number(entry.weight_kg, 12, decimal_places: 0, pad_string: false))
       add_element(parent, "uomWeight", "KG")
     end
 
-    add_element(parent, "consignee", g.string(entry.consignee_code, 10, pad_string: false))
-    add_element(parent, "ultimateConsignee", g.string(entry.ultimate_consignee_code, 10, pad_string: false))
+    add_element(parent, "consignee", g.string(entry.consignee_code, 10, pad_string: false)) unless entry.consignee_code.blank?
+    add_element(parent, "ultimateConsignee", g.string(entry.ultimate_consignee_code, 10, pad_string: false)) unless entry.ultimate_consignee_code.blank?
     add_element(parent, "countryOrigin", g.string(entry.country_of_origin, 2, pad_string: false, exception_on_truncate: true)) unless entry.country_of_origin.blank?
     add_element(parent, "countryExport", g.string(entry.country_of_export, 2, pad_string: false, exception_on_truncate: true)) unless entry.country_of_export.blank?
     add_element(parent, "bondType", g.string(entry.bond_type, 1, pad_string: false)) unless entry.bond_type.blank?
     add_element(parent, "destinationState", g.string(entry.destination_state, 2, pad_string: false)) unless entry.destination_state.blank?
     add_element(parent, "firmsCode", g.string(entry.firms_code, 4, pad_string: false)) unless entry.firms_code.blank?
+    add_element(parent, "reconValue", "Y") if entry.recon_value_flag
+    add_element(parent, "chargesAmt", g.number(entry.charges, 13, decimal_places: 2, pad_string: false, max_value: BigDecimal("99999999999.99"), exclude_decimal_from_length_validation: true)) if entry.charges
 
     generate_shipment_header_aux(parent, entry, edi_identifier)
     generate_bills(parent, entry, edi_identifier)
@@ -158,6 +164,15 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
   def generate_entry_dates parent, entry, edi_identifier
     list = nil
+
+    # Unless the date is already present, we're going to add the current date as the dateReceived.  Which shows up as EDI Received Date
+    # in the Load EDI search screen in CMUS.
+    received_date = Array.wrap(entry.dates).find {|d| d.code == :edi_received_date }
+    if received_date.nil?
+      entry.dates ||= []
+      entry.dates << CiLoadEntryDate.new(:edi_received_date, ActiveSupport::TimeZone["America/New_York"].now.to_date)
+    end
+
     Array.wrap(entry.dates).each do |date|
       code = CI_LOAD_DATE_CODES[date.code]
       # If the code is strictly numeric, then it needs to be added as an EdiShipmentDate element (.ie tracing date record in Kewill parlance)
@@ -184,8 +199,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     if Array.wrap(entry.bills_of_lading).length > 0
       id_list = add_element(parent, "EdiShipmentIdList")
 
-      Array.wrap(entry.bills_of_lading).each_with_index do |bill_of_lading, index|
-        generate_shipment_id(id_list, bill_of_lading, edi_identifier, (index + 1))
+      Array.wrap(entry.bills_of_lading).each_with_index do |bill_of_lading, bol_index|
+        shipment_id = generate_shipment_id(id_list, bill_of_lading, edi_identifier, (bol_index + 1))
       end
       
     end
@@ -202,20 +217,25 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       raise MissingCiLoadDataError, "At least one Bill of Lading record must be present for all entry data sent to Kewill." if bills.length == 0
 
       # Use the first bill of lading and generate an identifier from it..
-      bill_of_lading = bills.first
-      identifier = CiLoadEdiIdentifier.new
-      if !bill_of_lading.master_bill.blank?
-        scac, bol = chop_bill(bill_of_lading.master_bill.to_s.strip)
-        identifier.scac = scac
-        identifier.master_bill = bol
-      end
-
-      identifier.house_bill = chop_bill(bill_of_lading.house_bill.to_s.strip)[1] if !bill_of_lading.house_bill.blank?
-      identifier.sub_bill = chop_bill(bill_of_lading.sub_bill.to_s.strip)[1] if !bill_of_lading.sub_bill.blank?
-      identifier.sub_sub_bill = chop_bill(bill_of_lading.sub_sub_bill.to_s.strip)[1] if !bill_of_lading.sub_sub_bill.blank?
+      identifier = generate_entry_identifier_from_bol bills.first
     else
       raise MissingCiLoadDataError, "At least one Edi Identifier value must be present." if identifier.master_bill.blank? && identifier.house_bill.blank? && identifier.sub_bill.blank? && identifier.sub_sub_bill.blank?
     end
+
+    identifier
+  end
+
+  def generate_entry_identifier_from_bol bill_of_lading
+    identifier = CiLoadEdiIdentifier.new
+    if !bill_of_lading.master_bill.blank?
+      scac, bol = chop_bill(bill_of_lading.master_bill.to_s.strip)
+      identifier.scac = scac
+      identifier.master_bill = bol
+    end
+
+    identifier.house_bill = chop_bill(bill_of_lading.house_bill.to_s.strip)[1] if !bill_of_lading.house_bill.blank?
+    identifier.sub_bill = chop_bill(bill_of_lading.sub_bill.to_s.strip)[1] if !bill_of_lading.sub_bill.blank?
+    identifier.sub_sub_bill = chop_bill(bill_of_lading.sub_sub_bill.to_s.strip)[1] if !bill_of_lading.sub_sub_bill.blank?
 
     identifier
   end
@@ -240,12 +260,12 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def generate_container parent, entry, container, edi_identifier
     c = add_element(parent, "EdiContainers")
     generate_identifier_data(c, edi_identifier)
-    add_element(c, "noContainer", g.string(container.container_number, 15, pad_string: false))
-    add_element(c, "sealNo", g.string(container.seal_number, 15, pad_string: false))
+    add_element(c, "noContainer", g.string(container.container_number, 15, pad_string: false)) unless container.container_number.blank?
+    add_element(c, "sealNo", g.string(container.seal_number, 15, pad_string: false)) unless container.seal_number.blank?
     add_element(c, "custNo", g.string(entry.customer, 10, pad_string: false))
-    add_element(c, "contSize", g.string(container.size, 7, pad_string: false))
-    add_element(c, "descContent1", g.string(container.description, 40, pad_string: false))
-    add_element(c, "containerType", g.string(container.container_type, 5, pad_string: false))
+    add_element(c, "contSize", g.string(container.size, 7, pad_string: false)) unless container.size.blank?
+    add_element(c, "descContent1", g.string(container.description, 40, pad_string: false)) unless container.description.blank?
+    add_element(c, "containerType", g.string(container.container_type, 5, pad_string: false)) unless container.container_type.blank?
     # Pieces and UOM must both be present
     if container.pieces.to_i > 0
       raise "Container #{container.container_number} must have a Pieces UOM value present if any pieces are given." if container.pieces_uom.blank?
@@ -272,19 +292,21 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     # we're going to assume that if the sequence is > 1 then we're dealing with additional bills
     
     scac, bill = chop_bill(bol.master_bill)
-    add_element(id, "scac", g.string(scac, 4, pad_string: false))
-    add_element(id, "masterBillAddl", g.string(bill, 12, pad_string: false))
+    add_element(id, "scac", g.string(scac, 4, pad_string: false)) unless scac.blank?
+    add_element(id, "masterBillAddl", g.string(bill, 12, pad_string: false)) unless bill.blank?
     scac, bill = chop_bill(bol.house_bill)
-    add_element(id, "scacHouse", g.string(scac, 4, pad_string: false))
-    add_element(id, "houseBillAddl", g.string(bill, 12, pad_string: false))
+    add_element(id, "scacHouse", g.string(scac, 4, pad_string: false)) unless scac.blank?
+    add_element(id, "houseBillAddl", g.string(bill, 12, pad_string: false)) unless bill.blank?
 
     *, sub_bill = chop_bill(bol.sub_bill)
-    add_element(id, "subBillAddl", g.string(sub_bill, 12, pad_string: false))
+    add_element(id, "subBillAddl", g.string(sub_bill, 12, pad_string: false)) unless sub_bill.blank?
     *, sub_sub_bill = chop_bill(bol.sub_sub_bill)
-    add_element(id, "subSubBillAddl", g.string(sub_sub_bill, 12, pad_string: false))
+    add_element(id, "subSubBillAddl", g.string(sub_sub_bill, 12, pad_string: false)) unless sub_sub_bill.blank?
 
-    add_element(id, "qty", g.number(bol.pieces, 12, decimal_places: 0, pad_string: false))
-    add_element(id, "uom", g.string(bol.pieces_uom, 6, pad_string: false))
+    add_element(id, "qty", g.number(bol.pieces, 12, decimal_places: 0, pad_string: false)) if nonzero?(bol.pieces)
+    add_element(id, "uom", g.string(bol.pieces_uom, 6, pad_string: false)) unless bol.pieces_uom.blank?
+
+    id
   end
 
   def generate_identifier_data parent, identifier
@@ -314,6 +336,16 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "qty", g.number(lines.inject(BigDecimal("0")) {|sum, line| sum += (nonzero?(line.cartons) ? line.cartons : 0)}, 12, decimal_places: 0, strip_decimals: true, pad_string: false))
     # Always set the uom to be CTNS if it's blank
     add_element(parent, "uom", g.string((invoice.uom.to_s.blank? ? "CTNS" : invoice.uom), 6, pad_string: false))
+    add_element(parent, "chargesAmt", g.number(invoice.charges, 13, decimal_places: 2, pad_string: false, max_value: BigDecimal("99999999999.99"), exclude_decimal_from_length_validation: true)) if invoice.charges
+
+    if nonzero?(invoice.net_weight)
+      add_element(parent, "netWeightAmt", g.number(invoice.net_weight, 15, decimal_places: 5, pad_string: false, max_value: BigDecimal("9999999.99999")))
+      uom = invoice.net_weight_uom.presence || "KG"
+      add_element(parent, "netWtUom", g.string(uom, 6, pad_string: false))
+    end
+
+    add_element(parent, "custRef", g.string(invoice.customer_reference, 35, pad_string: false, exception_on_truncate: false)) unless invoice.customer_reference.blank?
+    add_element(parent, "weightGross", g.number(invoice.gross_weight_kg, 12, decimal_places: 0, pad_string: false)) if nonzero?(invoice.gross_weight_kg)
 
     nil
   end
@@ -356,7 +388,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     end
 
     add_element(parent, "manufacturerId2", g.string(mid, 15, pad_string: false, exception_on_truncate: true)) unless mid.blank?
-    add_element(parent, "cartons", g.number(line.cartons, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.cartons)
+    add_element(parent, "cartonsAmt", g.number(line.cartons, 12, decimal_places: 2, strip_decimals: false, pad_string: false)) if nonzero?(line.cartons)
 
     seller_mid = get_seller_mid(line) unless line.seller_mid.blank?
     buyer_address = get_buyer(line) unless line.buyer_customer_number.blank?
@@ -395,6 +427,12 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "categoryNo", g.number(line.textile_category_code, 3, decimal_places: 0, pad_string: false)) unless line.textile_category_code.blank?
     add_element(parent, "rulingType", g.string(line.ruling_type, 1, pad_string: false)) unless line.ruling_type.blank?
     add_element(parent, "rulingNo", g.string(line.ruling_number, 6, pad_string: false)) unless line.ruling_number.blank?
+
+    if nonzero?(line.net_weight)
+      add_element(parent, "netWeightAmt", g.number(line.net_weight, 15, decimal_places: 5, pad_string: false, max_value: BigDecimal("9999999.99999")))
+      uom = line.net_weight_uom.presence || "KG"
+      add_element(parent, "netWtUom", g.string(uom, 6, pad_string: false))
+    end
 
     tariff_lines = Array.wrap(line.tariff_lines)
     if add_special_tariffs?(entry, invoice, line)
@@ -490,11 +528,14 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     true
   end
 
-  def add_invoice_line_key_fields parent, entry, invoice, invoice_line_number, suppress_mid: false
-    file_number = invoice.file_number.presence || entry.file_number
-    add_element(parent, "manufacturerId", g.string(file_number, 15, pad_string: false, exception_on_truncate: true)) unless suppress_mid
+  def add_invoice_key_fields parent, entry, invoice, suppress_mid: false
+    add_file_number(parent, entry, invoice) unless suppress_mid
     add_element(parent, "commInvNo", g.string(invoice.invoice_number, 22, pad_string: false, exception_on_truncate: false))
     add_element(parent, "dateInvoice", g.date(invoice.invoice_date)) unless invoice.invoice_date.nil?
+  end
+
+  def add_invoice_line_key_fields parent, entry, invoice, invoice_line_number, suppress_mid: false
+    add_invoice_key_fields(parent, entry, invoice, suppress_mid: suppress_mid)
     add_element(parent, "commInvLineNo", invoice_line_number)
     nil
   end

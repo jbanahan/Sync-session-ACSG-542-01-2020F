@@ -1,13 +1,15 @@
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
+require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_sender_support'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentEntryXmlGenerator
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
-  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport
+  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport
 
-  def generate_xml shipments
+  def generate_xml_and_send shipments, sync_records: 
     data = generate_kewill_shipment_data(shipments)
-    generate_entry_xml(data, add_entry_info: true)
+    # This is purposefully wrapped in an array, because all the sync records for the
+    # sole data object being generated
+    generate_and_send_shipment_xml data, sync_records: [sync_records]
   end
 
   def generate_kewill_shipment_data shipments

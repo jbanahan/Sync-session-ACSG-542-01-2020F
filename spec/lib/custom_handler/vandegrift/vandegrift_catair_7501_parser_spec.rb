@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
       expect(shipment.entry_number).to eq "00000019"
       expect(shipment.entry_port).to eq 4103
       expect(shipment.entry_type).to eq "06"
-      expect(shipment.mode_of_transportation).to eq 10
+      expect(shipment.customs_ship_mode).to eq 10
       expect(shipment.edi_identifier&.master_bill).to eq "31600000019"
       expect(shipment.file_number).to eq "1"
       expect(shipment.customer).to eq "CUSTNO"
@@ -98,40 +98,17 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
 
   describe "parse" do
     subject { described_class }
+    let (:shipment) { described_class::CiLoadEntry.new }
 
     before :each do 
       allow_any_instance_of(subject).to receive(:inbound_file).and_return inbound_file
-      importer
     end
 
     it "parses a file and ftps the resulting xml" do
-      expect_any_instance_of(subject).to receive(:generate_entry_xml).and_return REXML::Document.new("<root><child>A</child></root>")
-      ftp_data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file, info|
-        ftp_data = file.read
-      end
-
+      expect_any_instance_of(subject).to receive(:process_file).with(data).and_return [shipment]
+      expect_any_instance_of(subject).to receive(:generate_and_send_shipment_xml).with([shipment])
+      expect_any_instance_of(subject).to receive(:send_email_notification).with([shipment], "7501")
       subject.parse data
-      expect(ftp_data).to eq "<root><child>A</child></root>"
-    end
-  end
-
-  describe "generate_and_send_shipment" do
-    let (:shipment) { instance_double(described_class::CiLoadEntry) }
-    let (:doc) { instance_double(REXML::Document) }
-
-    it "generates xml and ftps it" do
-      expect(shipment).to receive(:file_number).and_return "fileno"
-      expect(subject).to receive(:generate_entry_xml).with(shipment).and_return doc
-      expect(doc).to receive(:write) do |file|
-        file.write "document"
-      end
-      expect(subject).to receive(:ftp_file) do |file, info|
-        expect(info[:folder]).to eq "kewill_edi/to_kewill"
-        expect(file.read).to eq "document"
-      end
-
-      subject.generate_and_send_shipment shipment
     end
   end
 end

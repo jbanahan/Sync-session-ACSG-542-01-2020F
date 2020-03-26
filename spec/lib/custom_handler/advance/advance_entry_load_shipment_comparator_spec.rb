@@ -69,22 +69,10 @@ describe OpenChain::CustomHandler::Advance::AdvanceEntryLoadShipmentComparator d
   describe "generate_and_send_kewill" do
     let (:sync_record) { SyncRecord.new }
     let (:shipment) { Shipment.new reference: "REF"}
-    let (:file) { 
-      file = instance_double("Tempfile")
-      allow(file).to receive(:flush)
-      file
-    }
-    let (:xml) {
-      xml = instance_double("REXML::Document")
-      xml
-    }
 
     it "generates and sends kewill xml" do
-      expect_any_instance_of(OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerator).to receive(:generate_xml).with(shipment).and_return xml
-      expect(subject).to receive(:ftp_sync_file).with(file, sync_record, hash_including(folder: "kewill_edi/to_kewill"))
-      expect(Tempfile).to receive(:open).with(["ci_load_REF_", ".xml"]).and_yield file
-      expect(xml).to receive(:write).with(file)
-
+      # This method is just a straight callthrough to the Advan generator
+      expect_any_instance_of(OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerator).to receive(:generate_xml_and_send).with(shipment, sync_records: sync_record)
       subject.generate_and_send_kewill(shipment, sync_record)
     end
   end
@@ -92,11 +80,6 @@ describe OpenChain::CustomHandler::Advance::AdvanceEntryLoadShipmentComparator d
   describe "generate_and_send_fenix" do
     let (:sync_record) { SyncRecord.new }
     let (:shipment) { Shipment.new reference: "REF"}
-    let (:file) { 
-      file = instance_double("Tempfile")
-      allow(file).to receive(:flush)
-      file
-    }
 
     it "generates and sends fenix data" do
       # This method is just a straight callthrough to the CQ generator

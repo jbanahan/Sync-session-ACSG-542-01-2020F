@@ -223,6 +223,21 @@ describe OpenChain::FixedPositionGenerator do
       g = described_class.new numeric_strip_decimals: true
       expect(g.number(5.2, 3, decimal_places: 2)).to eq "520"
     end
+    it "errors if max_value is given and value is greater than max_value" do
+      expect { subject.number(100, 3, decimal_places: 2, max_value: 99.99) }.to raise_error described_class::DataTruncationError, "Number 100.0 cannot be greater than 99.99."
+    end
+    it "errors if max_value is given and value is greater than max_value, after rounding" do
+      expect { subject.number(BigDecimal("99.999"), 3, decimal_places: 2, max_value: 99.99) }.to raise_error described_class::DataTruncationError, "Number 100.0 cannot be greater than 99.99."
+    end
+    it "does not error if value is same as max_value" do
+      expect { subject.number(BigDecimal("99.999"), 6, decimal_places: 3, max_value: 99.999) }.not_to raise_error
+    end
+    it "allows excluding the decimal point from string output length" do
+      expect { subject.number(BigDecimal("99.999"), 5, decimal_places: 3, max_value: 99.999, exclude_decimal_from_length_validation: true) }.not_to raise_error
+    end
+    it "errors if decimal point is not excluded from string output length" do
+      expect { subject.number(BigDecimal("99.999"), 5, decimal_places: 3, max_value: 99.999, exclude_decimal_from_length_validation: false) }.to raise_error described_class::DataTruncationError, "Number 99.999 doesn't fit in 5 character field"
+    end
   end
   describe "date" do
     it "should handle nil" do

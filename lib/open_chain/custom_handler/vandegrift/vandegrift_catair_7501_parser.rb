@@ -1,24 +1,22 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/gpg_integration_client_parser_support'
-require 'open_chain/ftp_file_support'
-require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
+require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_sender_support'
 require 'open_chain/custom_handler/vandegrift/catair_parser_support'
 
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatair7501Parser
   include OpenChain::IntegrationClientParser
-  include OpenChain::FtpFileSupport
-  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport
   include OpenChain::GpgIntegrationClientParserSupport
   include OpenChain::CustomHandler::Vandegrift::CatairParserSupport
+  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport
 
   def self.parse data, opts = {}
     self.new.parse(data, opts)
   end
 
   def parse data, opts = {}
-    Array.wrap(process_file(data)).each do |shipment|
-      generate_and_send_shipment(shipment)
-    end
+    shipments = process_file(data)
+    generate_and_send_shipment_xml(shipments)
+    send_email_notification(shipments, "7501")
     nil
   end
 
@@ -87,18 +85,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     shipments
   end
 
-  def generate_and_send_shipment shipment
-    xml = generate_entry_xml shipment
-    Tempfile.open(["CI_LOAD_#{shipment.file_number}_", ".xml"]) do |file|
-      xml.write file
-      file.flush
-      file.rewind
-
-      ftp_file file, ecs_connect_vfitrack_net("kewill_edi/to_kewill")
-    end
-    nil
-  end
-
   def process_B shipment, line
     application_code = extract_string(line, (11..12))
     # SE in 11-12 indictates an Entry Summary (7501)..if that's not there we need to reject the file because
@@ -112,7 +98,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     shipment.entry_number = extract_string(line, (9..16))
     shipment.entry_port = extract_integer(line, (18..21))
     shipment.entry_type = extract_string(line, (34..35))
-    shipment.mode_of_transportation = extract_integer(line, (36..37))
+    shipment.customs_ship_mode = extract_integer(line, (36..37))
 
     populate_edi_identifiers(shipment)
     nil
@@ -132,7 +118,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
   def process_20 shipment, line
     shipment.carrier = extract_string(line, (3..6))
     shipment.unlading_port = extract_integer(line, (7..10))
-    est_arrival_date = extract_date(line, (11..16))
+    est_arrival_date = extract_date(line, (11..16), date_format: date_format)
     if est_arrival_date
       shipment.dates << CiLoadEntryDate.new(:est_arrival_date, est_arrival_date) 
     end
@@ -161,20 +147,20 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     invoice_line.spi2 = extract_string(line, 8)
     invoice_line.country_of_origin = extract_string(line, (9..10))
     invoice_line.country_of_export = extract_string(line, (11..12))
-    invoice_line.exported_date = extract_date(line, (13..18))
-    invoice_line.visa_date = extract_date(line, (19..24))
+    invoice_line.exported_date = extract_date(line, (13..18), date_format: date_format)
+    invoice_line.visa_date = extract_date(line, (19..24), date_format: date_format)
     invoice_line.spi = extract_string(line, (25..26))
     invoice_line.charges = extract_integer(line, (27..36))
     invoice_line.lading_port = extract_integer(line, (37..41))
     invoice_line.gross_weight = extract_integer(line, (42..51))
     invoice_line.textile_category_code = extract_integer(line, (52..54))
-    invoice_line.related_parties = extract_boolean(line, 56)
+    invoice_line.related_parties = extract_boolean(line, 56, blank_string_returns_nil: true)
     nil
   end
 
   def process_41 invoice_line, line
     invoice_line.ftz_zone_status = extract_string(line, 3)
-    invoice_line.ftz_priv_status_date = extract_date(line, (4..9))
+    invoice_line.ftz_priv_status_date = extract_date(line, (4..9), date_format: date_format)
     invoice_line.ftz_quantity = extract_integer(line, (10..19))
     nil
   end
@@ -211,12 +197,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     # skipping duty amount, there's no EDI field for it to CMUS...
     # which makes sense, since CMUS should calc it based on the tariff
     # information provided.
-    invoice_tariff.foreign_value = extract_integer(line, (25..34))
-    invoice_tariff.quantity_1 = extract_decimal(line, (36..47))
+    foreign_value = extract_integer(line, (25..34))
+    if foreign_value && foreign_value.nonzero?
+      invoice_tariff.foreign_value = foreign_value
+    end
+    invoice_tariff.quantity_1 = extract_implied_decimal(line, (36..47), decimal_places: 2)
     invoice_tariff.uom_1 = extract_string(line, (48..50))
-    invoice_tariff.quantity_2 = extract_decimal(line, (51..62))
+    invoice_tariff.quantity_2 = extract_implied_decimal(line, (51..62), decimal_places: 2)
     invoice_tariff.uom_2 = extract_string(line, (63..65))
-    invoice_tariff.quantity_3 = extract_decimal(line, (66..77))
+    invoice_tariff.quantity_3 = extract_implied_decimal(line, (66..77), decimal_places: 2)
     invoice_tariff.uom_3 = extract_string(line, (78..80))
 
     nil

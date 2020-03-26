@@ -1,9 +1,7 @@
-require 'open_chain/ftp_file_support'
-require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
+require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_sender_support'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercialInvoiceGenerator
-  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport
-  include OpenChain::FtpFileSupport
+  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport
 
   def generate_and_send_invoices file_number, commercial_invoices, opts = {}
     entry = CiLoadEntry.new(file_number, nil, [])
@@ -46,32 +44,17 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
       end
     end
 
-    generate_and_send [entry]
+    generate_and_send entry
+    nil
   end
 
   def generate_and_send entries, sync_record: nil 
-    Array.wrap(entries).each do |entry|
-      if entry.invoices.length > 0
-        doc = generate_entry_xml(entry, add_entry_info: false)
-
-        Tempfile.open(["CI_Load_#{entry.file_number.to_s.gsub("/", "_")}_", ".xml"]) do |file|
-          file.binmode
-          write_xml doc, file
-          file.rewind
-
-          ftp_sync_file file, sync_record
-        end
-      end
-    end
+    generate_and_send_invoice_xml(entries, sync_records: sync_record)
     nil
   # Just rescue any sort of fixed position generation error and re-raise it as a missing data error, that way callers only really
   # have one exception to deal with that covers all cases and don't need to know internals of how this class generates data
   rescue OpenChain::FixedPositionGenerator::FixedPositionGeneratorError => e
     raise MissingCiLoadDataError, e.message, e.backtrace
-  end
-
-  def ftp_credentials
-    ecs_connect_vfitrack_net('kewill_edi/to_kewill')
   end
 
   # Generates a CI Load worksheet in the standard column layout

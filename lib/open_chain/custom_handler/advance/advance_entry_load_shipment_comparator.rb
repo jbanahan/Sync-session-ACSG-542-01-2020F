@@ -37,13 +37,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceEntryLoadSh
   end
 
   def generate_and_send_kewill shipment, sync_record
-    xml = OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerator.new.generate_xml shipment
-    Tempfile.open(["ci_load_#{shipment.reference}_", ".xml"]) do |file|
-      xml.write file
-      file.flush
-
-      ftp_sync_file file, sync_record, ecs_connect_vfitrack_net("kewill_edi/to_kewill")
-    end
+    OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerator.new.generate_xml_and_send(shipment, sync_records: sync_record)
   end
 
   def generate_and_send_fenix shipment, sync_record

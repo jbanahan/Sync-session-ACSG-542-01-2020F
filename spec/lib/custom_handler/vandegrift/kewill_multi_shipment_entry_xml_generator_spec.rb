@@ -25,22 +25,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMultiShipmentEntryXmlGenera
     }
 
     it "finds unsynced shipments, generates xml for them and sends them" do
-      expect(xml_generator).to receive(:generate_xml) do |shipments|
+      expect(xml_generator).to receive(:generate_xml_and_send) do |shipments, sync_records|
         expect(shipments.first).to eq synced_shipment
         expect(shipments.second).to eq unsynced_shipment
-        xml_output
+        expect(sync_records[:sync_records].length).to eq 2
       end
 
-      expect(xml_output).to receive(:write).with(instance_of(Tempfile))
-      expect(subject).to receive(:ftp_sync_file) do |file, sync_records, ftp_info|
-        expect(file).to be_instance_of(Tempfile)
-        expect(sync_records.length).to eq 2
-        shipment_ids = sync_records.map {|r| r.syncable_id }
-        expect(shipment_ids).to include(synced_shipment.id)
-        expect(shipment_ids).to include(unsynced_shipment.id)
-
-        expect(ftp_info[:folder]).to eq "kewill_edi/to_kewill"
-      end
       expect(subject).to receive(:poll).and_yield((Time.zone.now - 1.hour), Time.zone.now)
       synced_sent_at = synced_shipment.sync_records.first.sent_at
 
@@ -61,20 +51,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMultiShipmentEntryXmlGenera
       ca = Factory(:country, iso_code: "CA")
       synced_shipment.update_attributes! country_import_id: ca.id
 
-      expect(xml_generator).to receive(:generate_xml) do |shipments|
+      expect(xml_generator).to receive(:generate_xml_and_send) do |shipments, sync_records|
         expect(shipments.length).to eq 1
         expect(shipments.first).to eq unsynced_shipment
-        xml_output
+        expect(sync_records[:sync_records].length).to eq 1
+        expect(sync_records[:sync_records].first.syncable_id).to eq unsynced_shipment.id
       end
-      expect(xml_output).to receive(:write).with(instance_of(Tempfile))
 
-      expect(subject).to receive(:ftp_sync_file) do |file, sync_records, ftp_info|
-        expect(sync_records.length).to eq 1
-        shipment_ids = sync_records.map {|r| r.syncable_id }
-        expect(shipment_ids).to include(unsynced_shipment.id)
-      end
-      expect(subject).to receive(:poll).and_yield((Time.zone.now - 1.hour), Time.zone.now)
-      
+      expect(subject).to receive(:poll).and_yield((Time.zone.now - 1.hour), Time.zone.now)      
       subject.find_generate_and_send(run_opts)
     end
 

@@ -26,79 +26,6 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
     end
   end
 
-  describe "extract_string" do
-
-    it "extracts a string from another string using given range - adjusted to match Catair indices" do
-      expect(subject.extract_string("ABCDEFGHIJK", (5..7))).to eq "EFG"
-    end
-
-    it "extracts a character from another string using index - adjusted to match Catair index" do
-      expect(subject.extract_string("ABCDEFGHIJK", 5)).to eq "E"
-    end
-
-    it "trims whitespace by default from ranges" do
-      expect(subject.extract_string("A   B   CDEF", (2..8))).to eq "B"
-    end
-
-    it "does not trim whitespace if instructed" do
-      expect(subject.extract_string("A   B   CDEF", (2..8), trim_whitespace: false)).to eq "   B   "
-    end
-
-    it "handles ranges going beyond end of the line" do
-      expect(subject.extract_string("AB", (2..8))).to eq "B"
-    end
-
-    it "handles values extracted from line starting beyond end of the line" do
-      expect(subject.extract_string("", (1..10))).to eq ""
-    end
-  end
-
-  describe "extract_integer" do
-    it "extracts integer value from string" do
-      expect(subject.extract_integer("12345", (2..4))).to eq 234
-    end
-
-    it "returns nil when no integer value is found" do
-      expect(subject.extract_integer("      ", (2..4))).to eq nil
-    end
-
-    it "handles invalid integer values by returning nil" do
-      expect(subject.extract_integer("ABCD", (2..3))).to eq nil
-    end
-
-    it "handles leading zeros" do
-      expect(subject.extract_integer("00011", (1..5))).to eq 11
-    end
-  end
-
-  describe "extract_date" do
-    it "extracts date value from string with default format" do
-      expect(subject.extract_date("AB020320C", (3..9))).to eq Date.new(2020, 2, 3)
-    end
-
-    it "extracts date value from string using alternate format" do
-      expect(subject.extract_date("AB20200203C", (3..11), date_format: "%Y%m%d")).to eq Date.new(2020, 2, 3)
-    end
-
-    it "returns nil for invalid dates" do
-      expect(subject.extract_date("ABCDEFGHIJK", (3..9))).to eq nil
-    end
-  end
-
-  describe "extract_decimal" do
-    it "extracts a decimal value from string" do
-      expect(subject.extract_decimal("   12345   ", (2..8))).to eq BigDecimal("123.45")
-    end
-
-    it "extracts decimal value from string with leaing zeros" do
-      expect(subject.extract_decimal("00012345   ", (2..8))).to eq BigDecimal("123.45")
-    end
-
-    it "allows for different decimal place values" do
-      expect(subject.extract_decimal("   12345   ", (2..8), decimal_places: 4)).to eq BigDecimal("1.2345")
-    end
-  end
-
   describe "find_customer_number" do
     let! (:importer) { with_customs_management_id(Factory(:importer, irs_number: "XX-XXXXXXX"), "CMUS")}
     let! (:inbound_file) { 
@@ -132,6 +59,39 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
   describe "gpg_secrets_key" do
     it "uses open_chain secrets key" do
       expect(subject.class.gpg_secrets_key({})).to eq "open_chain"
+    end
+  end
+
+  describe "send_email_notification" do 
+    let (:importer) { with_customs_management_id(Factory(:importer), "CUST")}
+    let! (:mailing_list) { MailingList.create! system_code: "CUST 3461 EDI", email_addresses: "me@there.com", company: importer, name: "3461 EDI", user: Factory(:user, company: importer) }
+    let (:shipment) { 
+      e = OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser::CiLoadEntry.new 
+      e.customer = "CUST"
+      e.entry_filer_code = "123"
+      e.entry_number = "123456"
+      e
+    }
+
+    it "notifies of received shipment data" do
+      subject.send_email_notification [shipment], "3461"
+      expect(ActionMailer::Base.deliveries.length).to eq 1
+      m = ActionMailer::Base.deliveries.first
+      expect(m.to).to eq ["me@there.com"]
+      expect(m.subject).to eq "CUST 3461 EDI File Receipt"
+      expect(m.body.raw_source).to include "EDI data was generated and sent to Customs Management for Entry Number: 123-12345-6."
+    end
+
+    it "does not send notification if no email group exists" do
+      mailing_list.destroy
+      subject.send_email_notification [shipment], "3461"
+      expect(ActionMailer::Base.deliveries.length).to eq 0
+    end
+
+    it "does not send notification if customer number doesn't exist" do
+      importer.destroy
+      subject.send_email_notification [shipment], "3461"
+      expect(ActionMailer::Base.deliveries.length).to eq 0
     end
   end
 end

@@ -79,13 +79,20 @@ module OpenChain; class FixedPositionGenerator
   # :pad_string - If false, no padding will be done to decimals that are smaller in width than the max field width parameter
   # :pad_zero - If true, a value of zero will be left as zero and not padded out with zeros for the decimal places.
   # :strip_trailing_zeros - If true, all insiginificant zeros will be removed from the output string.
-  def number n, width, decimal_places: 0, round_mode: BigDecimal::ROUND_HALF_UP, strip_trailing_zeros: false, strip_decimals: nil, pad_string: true, pad_char: nil, justification: :right, pad_zero: false
+  # :max_value - If given, an error is raised if value is greater than given max value
+  # :exclude_decimal_from_length_validation - If true, width validation for resulting string will not consider the decimal point.
+  def number n, width, decimal_places: 0, round_mode: BigDecimal::ROUND_HALF_UP, strip_trailing_zeros: false, strip_decimals: nil, pad_string: true, pad_char: nil, justification: :right, pad_zero: false, max_value: nil, exclude_decimal_from_length_validation: false
     s = ''
     if n.nil?
       s = ''
     else
       # Round first since number_with_precision doesn't allow for specifiying the rounding mode
       value = BigDecimal(n.to_s).round(decimal_places, round_mode)
+
+      if max_value
+        raise DataTruncationError, "Number #{value} cannot be greater than #{max_value}." if value > max_value
+      end
+
       # The value should already be rounded, so there should be no additional rounding being done 
       # by the number_with_precision call here, instead precision is here for display purposes only
       # Only use en locale so we don't end up with different decimal point value if somehow our default locale 
@@ -110,7 +117,13 @@ module OpenChain; class FixedPositionGenerator
       r = s
     end
 
-    raise DataTruncationError, "Number #{r}#{strip_decimals ? " (#{decimal_places} implied decimals) " : " "}doesn't fit in #{width} character field" if r.size > width
+    if exclude_decimal_from_length_validation
+      length = r.gsub(".", "").length
+    else
+      length = r.length
+    end
+
+    raise DataTruncationError, "Number #{r}#{strip_decimals ? " (#{decimal_places} implied decimals) " : " "}doesn't fit in #{width} character field" if length > width
     r
   end
 

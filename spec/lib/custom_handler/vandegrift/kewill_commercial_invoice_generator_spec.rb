@@ -52,43 +52,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
   }
 
   describe "generate_and_send" do
-    it "generates data to a tempfile and ftps it" do
-      filename = nil
-      data = nil
-      expect(subject).to receive(:ftp_file) do |temp|
-        data = temp.read
-        filename = File.basename(temp.path)
-      end
+    it "proxies method call to generate_and_send_invoice_xml" do
+      expect(subject).to receive(:generate_and_send_invoice_xml).with [entry_data], sync_records: nil
       subject.generate_and_send [entry_data]
-
-      doc = REXML::Document.new data
-      expect(REXML::XPath.first doc, "/requests/request/kcData/ediShipments/ediShipment").not_to be_nil
-      expect(filename).to start_with "CI_Load_597549_"
-      expect(filename).to end_with ".xml"
     end
 
     it "catches data overflow errors and re-raises them as MissingCiLoadDataError" do
-      # File number overflows at 15 chars
-      entry_data.file_number = "1234567890123456"
-
-      ex = nil
-      begin
-        subject.generate_and_send [entry_data]
-        fail("Should have raised an error.")
-      rescue OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::MissingCiLoadDataError => e
-        ex = e
-      end
-
-      expect(ex.message).to eq "String '#{entry_data.file_number}' is longer than 15 characters"
-      expect(ex.backtrace).not_to be_blank
-    end
-  end
-
-  describe "ftp_credentials" do
-    it "uses credentials for connect.vfitrack.net" do
-      expect(subject.ftp_credentials).to eq(
-        {server: 'connect.vfitrack.net', username: 'ecs', password: 'wzuomlo', folder: "kewill_edi/to_kewill", protocol: 'sftp', port: 2222}
-      )
+      expect(subject).to receive(:generate_and_send_invoice_xml).with([entry_data], sync_records: nil).and_raise OpenChain::FixedPositionGenerator::FixedPositionGeneratorError, "Fixed Position Error"
+      expect { subject.generate_and_send [entry_data] }.to raise_error OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::MissingCiLoadDataError, "Fixed Position Error"
     end
   end
 
@@ -126,8 +97,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
     it "receives commercial invoices, translates them to internal file objects and sends them" do
       entry = nil
       expect(subject).to receive(:generate_and_send) do |entries|
-        expect(entries.length).to eq 1
-        entry = entries.first
+        expect(entries).to be_a(described_class::CiLoadEntry)
+        entry = entries
       end
 
       subject.generate_and_send_invoices("12345", invoice)
@@ -164,8 +135,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
       invoice.commercial_invoice_lines.first.commercial_invoice_tariffs.first.gross_weight = 1000
       entry = nil
       expect(subject).to receive(:generate_and_send) do |entries|
-        expect(entries.length).to eq 1
-        entry = entries.first
+        entry = entries
       end
 
       subject.generate_and_send_invoices("12345", invoice, gross_weight_uom: "G")
@@ -177,9 +147,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
       invoice.commercial_invoice_lines.first.commercial_invoice_tariffs.first.gross_weight = 10
       entry = nil
       expect(subject).to receive(:generate_and_send) do |entries|
-        expect(entries.length).to eq 1
-        entry = entries.first
+        entry = entries
       end
+      
 
       subject.generate_and_send_invoices("12345", invoice, gross_weight_uom: "G")
 
@@ -191,8 +161,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
 
       entry = nil
       expect(subject).to receive(:generate_and_send) do |entries|
-        expect(entries.length).to eq 1
-        entry = entries.first
+        entry = entries
       end
 
       subject.generate_and_send_invoices("12345", invoice)

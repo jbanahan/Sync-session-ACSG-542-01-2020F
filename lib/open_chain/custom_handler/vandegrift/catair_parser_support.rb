@@ -1,11 +1,39 @@
+require 'open_chain/custom_handler/fixed_position_parser_support'
+
 module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSupport
   extend ActiveSupport::Concern
+  include OpenChain::CustomHandler::FixedPositionParserSupport
 
   module ClassMethods
     # GPG params for decrypting catair files (if required)
     def gpg_secrets_key opts
       'open_chain'
     end
+  end
+
+  def send_email_notification shipments, catair_type
+    notifications = {}
+
+    shipments.each do |s|
+      cust_no = s.customer
+      next if cust_no.blank?
+
+      if notifications[cust_no].nil?
+        company = Company.with_customs_management_number(cust_no).first
+        notifications[cust_no] = {company: company, entry_numbers: Set.new }
+      end
+
+      notifications[cust_no][:entry_numbers] << "#{s.entry_filer_code}-#{s.entry_number.to_s[0..-2]}-#{s.entry_number.to_s[-1]}"
+    end
+
+    notifications.each_pair do |cust_no, obj|
+      mailing_list = MailingList.where(company: obj[:company], system_code: "#{cust_no} #{catair_type} EDI").first
+      next unless mailing_list
+
+      message = "EDI data was generated and sent to Customs Management for #{"Entry Number".pluralize(obj[:entry_numbers].length)}: #{obj[:entry_numbers].to_a.join(', ')}."
+      OpenMailer.send_simple_html(mailing_list, "#{cust_no} #{catair_type} EDI File Receipt", message).deliver_now
+    end
+    nil
   end
 
   def record_type line
@@ -21,74 +49,6 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     # catair types.
     first_four = extract_string(line, (1..4))
     first_four =~ /^\d\d/ ? first_four[0..1] : first_four
-  end
-
-  # The idea here is to be able to utilize the actual record input positions
-  # from the actual Catair spec (which are not zero indexed positions).
-  # Thus making it a little easier to key the positions we're going to be using.
-  def extract_string line, catair_range, trim_whitespace: true
-    start_pos = nil
-    end_pos = nil
-    if catair_range.is_a?(Range)
-      start_pos = catair_range.begin - 1
-      end_pos = catair_range.end - 1
-    elsif catair_range.is_a?(Numeric)
-      start_pos = catair_range.to_i - 1
-      end_pos = catair_range.to_i - 1
-    else
-      raise "Invalid line position given #{catair_range}."
-    end
-
-    v = line[start_pos..end_pos].to_s
-    trim_whitespace ? v.strip : v
-  end
-
-  def extract_integer line, catair_range
-    v = extract_string(line, catair_range)
-    return nil if v.blank?
-    # For some fields, there's going to be leading zeros in the numeric value...this causes the Integer 
-    # initializer to interpret the value as Octal, thus giving a completely unexpected number.
-    # In order words, we need to strip leading zeros from the value
-    while (v.starts_with?("0"))
-      v = v[1..-1]
-    end
-
-    Integer(v) rescue nil
-  end
-
-  def extract_decimal line, catair_range, decimal_places: 2
-    # This seems a little weird, but all the actual data we'll 
-    # get in the Catair will have implied decimal places, so we
-    # can parse the value as an integer (getting the benefit of 
-    # the leading zero stripping) and then inject the 
-    # decimal place in after the fact
-    int = extract_integer(line, catair_range).to_s
-    return nil if int.blank?
-
-    # Inject the decimal back in
-    if decimal_places > 0
-      # add leading zeros back on until the length of the string is more than the decimal places
-      while(int.length < decimal_places)
-        int = "0" + int
-      end
-
-      int = int[0..(int.length - (decimal_places + 1))] + "." + int[(int.length - decimal_places)..-1]
-    end
-
-    BigDecimal(int)
-  end
-
-  def extract_date line, catair_range, date_format: "%m%d%y"
-    v = extract_string(line, catair_range)
-    return nil if v.blank?
-    Date.strptime(v, date_format) rescue nil
-  end
-
-  def extract_boolean line, catair_range
-    v = extract_string(line, catair_range)
-    return nil if v.blank?
-
-    v == "Y"
   end
 
   def find_customer_number ior_type, ior_identifier
@@ -141,6 +101,10 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     # The file number is the value from the entry number between the hyphens (stripping all leading zeros)
     shipment.file_number = compose_full_entry_number(shipment)[1].to_s.gsub(/\A0+/, "")
     nil
+  end
+
+  def date_format
+    "%m%d%y"
   end
 
 end; end; end; end

@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator do
   
-  describe "generate_xml" do
+  describe "generate_xml_and_send" do
 
     let (:entry_data) {
       e = described_class::CiLoadEntry.new
@@ -13,13 +13,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       Shipment.new
     }
 
+    let (:sync_records) {
+      [SyncRecord.new, SyncRecord.new]
+    }
+
     it "generates shipment data and renders it as xml" do
       expect(subject).to receive(:generate_kewill_shipment_data).with(shipment).and_return entry_data
-      doc = subject.generate_xml shipment
-      # Just make sure the vessel is in the XML location we expect it to be in..
-      # The specifics of XML generation is not part of this class as it's just
-      # calling through to a module
-      expect(doc.root.text "request/kcData/ediShipments/ediShipment/vesselAirlineName").to eq "VESS"
+      expect(subject).to receive(:generate_and_send_shipment_xml).with(entry_data, sync_records: [sync_records])
+      doc = subject.generate_xml_and_send shipment, sync_records: sync_records
     end
 
   end

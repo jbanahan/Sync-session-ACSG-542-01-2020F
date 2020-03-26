@@ -30,6 +30,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillMultiShip
           generate_and_send(shipments)
         rescue => e
           # Don't let one group of potentially bad shipments stop others from executing
+          raise e if MasterSetup.test_env?
+
           e.log_me ["Master Bill: #{shipments.first.master_bill_of_lading}"]
         end
       end
@@ -38,16 +40,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillMultiShip
   end
 
   def generate_and_send shipments
-    xml = xml_generator.generate_xml sort_shipments_for_generation(shipments)
+    sorted_shipments = sort_shipments_for_generation(shipments)
     ActiveRecord::Base.transaction do 
       sync_records = shipment_sync_records(shipments)
-      Tempfile.open(["ci_load_#{shipments.first.reference}_", ".xml"]) do |file|
-        xml.write file
-        file.flush
-
-        ftp_sync_file file, sync_records, ecs_connect_vfitrack_net("kewill_edi/to_kewill")
-      end
-
+      xml_generator.generate_xml_and_send sorted_shipments, sync_records: shipment_sync_records(shipments)
       mark_sync_records_as_synced sync_records
     end
   end

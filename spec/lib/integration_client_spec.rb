@@ -588,5 +588,11 @@ describe OpenChain::IntegrationClientCommandProcessor do
         do_parser_test("Kirklands GTN XML", OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser, '/kirklands_850/kirklands.xml')
       end
     end
+
+    context "Target" do
+      it 'handles Target Entry Initiation Files' do
+        do_parser_test("Target Feeds", OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser, '/target_entry/entry.txt')
+      end
+    end
   end
 end

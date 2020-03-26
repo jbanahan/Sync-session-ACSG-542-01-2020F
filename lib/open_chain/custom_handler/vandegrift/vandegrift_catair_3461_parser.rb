@@ -1,24 +1,22 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/gpg_integration_client_parser_support'
-require 'open_chain/ftp_file_support'
-require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
+require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_sender_support'
 require 'open_chain/custom_handler/vandegrift/catair_parser_support'
 
 module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatair3461Parser
   include OpenChain::IntegrationClientParser
-  include OpenChain::FtpFileSupport
-  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport
   include OpenChain::GpgIntegrationClientParserSupport
   include OpenChain::CustomHandler::Vandegrift::CatairParserSupport
+  include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport
 
   def self.parse data, opts = {}
     self.new.parse(data, opts)
   end
 
   def parse data, opts = {}
-    Array.wrap(process_file(data)).each do |shipment|
-      generate_and_send_shipment(shipment)
-    end
+    shipments = process_file(data)
+    generate_and_send_shipment_xml(shipments)
+    send_email_notification(shipments, "3461")
     nil
   end
 
@@ -79,17 +77,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     shipments
   end
 
-  def generate_and_send_shipment shipment
-    xml = generate_entry_xml shipment
-    Tempfile.open(["CI_LOAD_#{shipment.file_number}_", ".xml"]) do |file|
-      xml.write file
-      file.flush
-
-      ftp_file file, ecs_connect_vfitrack_net("kewill_edi/to_kewill")
-    end
-    nil
-  end
-
   def process_B shipment, line
     application_code = extract_string(line, (11..12))
     # SE in 11-12 indictates a Cargo Release (3461)..if that's not there we need to reject the file because
@@ -119,7 +106,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
   def process_SE11 shipment, line
     # There is no CMUS EDI field for the Entry Date Election Code (which is only present
     # for FTZ entries) and would have a value of W
-    elected_entry_date = extract_date(line, (6..11))
+    elected_entry_date = extract_date(line, (6..11), date_format: date_format)
     if elected_entry_date
       shipment.dates << CiLoadEntryDate.new(:elected_entry_date, elected_entry_date)
     end
@@ -141,7 +128,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
 
   def process_SE41 invoice_line, line
     invoice_line.ftz_zone_status = extract_string(line, 5)
-    invoice_line.ftz_priv_status_date = extract_date(line, (6..11))
+    invoice_line.ftz_priv_status_date = extract_date(line, (6..11), date_format: date_format)
     invoice_line.ftz_quantity = extract_integer(line, (12..19))
     nil
   end
