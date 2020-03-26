@@ -36,6 +36,10 @@ module OpenChain; class Purge
     Message.delay.purge_messages
     ReportResult.delay.purge
     EntityComparatorLog.delay.purge
+
+    # We don't want to use the reference_date because we retain an audit trail for 2 years
+    RunAsSession.delay.purge
+    RequestLog.delay.purge
   end
 
 end; end;

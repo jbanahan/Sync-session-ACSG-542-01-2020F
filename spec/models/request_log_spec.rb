@@ -4,7 +4,7 @@ describe RequestLog do
     {"HEADER" => "value"}
   }
 
-  let (:request) { 
+  let (:request) {
     r = instance_double(ActionDispatch::Request)
     allow(r).to receive(:original_url).and_return "URL"
     allow(r).to receive(:method).and_return "METHOD"
@@ -20,7 +20,7 @@ describe RequestLog do
 
   describe "build_log_from_request" do
     subject { described_class }
-    let (:user) { 
+    let (:user) {
       u = User.new
       u.username = "test"
       u
@@ -76,16 +76,56 @@ describe RequestLog do
     end
   end
 
-
   describe "create_json_attachment" do
     subject { described_class }
 
-    it "creates a json attachment" do 
+    it "creates a json attachment" do
       io = subject.create_json_attachment({test: "Testing"}, "file.json")
 
       expect(io.content_type).to eq "application/json"
       expect(io.original_filename).to eq "file.json"
       expect(io.read).to eq '{"test":"Testing"}'
+    end
+  end
+
+  describe "purge" do
+    subject { described_class }
+
+    it "removes anything older than one month and does not belong to a RunAsSession" do
+      error = nil
+      Timecop.freeze(Time.zone.now - 1.month) {
+        ras = RunAsSession.create!
+        error = RequestLog.create!(run_as_session_id: ras.id)
+      }
+      RequestLog.delete_all
+
+      subject.purge
+
+      expect(error).not_to exist_in_db
+    end
+
+    it "does not remove items newer than one month old" do
+      error = nil
+      Timecop.freeze(Time.zone.now - 1.day) {
+        ras = RunAsSession.create!
+        error = RequestLog.create!(run_as_session_id: ras.id)
+      }
+
+      subject.purge
+
+      expect(error).to exist_in_db
+    end
+
+    it "does not remove items that belong to a RunAsSession" do
+      error = nil
+      Timecop.freeze(Time.zone.now - 1.month) {
+        ras = RunAsSession.create!
+        error = RequestLog.create!(run_as_session_id: ras.id)
+      }
+
+      subject.purge
+
+      expect(error).to exist_in_db
     end
   end
 end

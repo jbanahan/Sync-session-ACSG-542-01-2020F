@@ -5,7 +5,7 @@ describe OpenChain::Purge do
   describe "purge_data_prior_to", :disable_delayed_jobs do
     let (:reference_date) { Time.zone.now }
 
-    it "purges data" do 
+    it "purges data" do
       expect(History).to receive(:purge).with reference_date
       expect(DebugRecord).to receive(:purge).with reference_date
       expect(ErrorLogEntry).to receive(:purge).with reference_date
@@ -16,6 +16,9 @@ describe OpenChain::Purge do
       expect(Message).to receive(:purge_messages)
       expect(ReportResult).to receive(:purge)
       expect(EntityComparatorLog).to receive(:purge)
+
+      expect(RunAsSession).to receive(:purge)
+      expect(RequestLog).to receive(:purge)
 
       subject.purge_data_prior_to reference_date
     end
@@ -33,6 +36,9 @@ describe OpenChain::Purge do
       expect(Message).to receive(:delay).and_return obj
       expect(ReportResult).to receive(:delay).and_return obj
       expect(EntityComparatorLog).to receive(:delay).and_return obj
+
+      expect(RunAsSession).to receive(:delay).and_return obj
+      expect(RequestLog).to receive(:delay).and_return obj
 
       subject.purge_data_prior_to reference_date
     end

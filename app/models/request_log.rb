@@ -18,7 +18,7 @@
 
 class RequestLog < ActiveRecord::Base
   attr_accessible :http_method, :run_as_session_id, :url, :user_id
-  
+
   belongs_to :user
   belongs_to :run_as_session, inverse_of: :request_logs
   has_one :attachment, as: :attachable, dependent: :destroy
@@ -33,7 +33,7 @@ class RequestLog < ActiveRecord::Base
     if request_id.blank?
       request_id = Time.zone.now.utc.strftime("%Y%m%d%H%M%S%L")
     end
-    
+
     hash = request_to_hash(request, parameters)
     log.build_attachment attached: create_json_attachment(hash, "#{request_id}.json")
 
@@ -76,5 +76,9 @@ class RequestLog < ActiveRecord::Base
 
   def can_view?(user)
     user.admin?
+  end
+
+  def self.purge
+    RequestLog.where("created_at < ? and run_as_session_id IS NULL", 1.month.ago).destroy_all
   end
 end
