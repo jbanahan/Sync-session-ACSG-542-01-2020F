@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser do
     it "errors if importer cannot be found" do
       importer.system_identifiers.destroy_all
 
-      expect { subject.process_invoice invoice_xml, user, "bucket", "key" }.to raise_error "No 'GT Nexus Invoice Consignee' System Identifier present for values '63480155069' or 'PVH CANADA, INC.'. Please set add identifier in order to process this file."
+      expect { subject.process_invoice invoice_xml, user, "bucket", "key" }.to raise_error "No 'GT Nexus Invoice Consignee' System Identifier present for values '63480155069' or 'PVH CANADA, INC.'. Please add identifier in order to process this file."
     end
 
     it "errors if importer doesn't have a system code" do
