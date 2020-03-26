@@ -1,6 +1,6 @@
 <%content_for :javascript do%>
 $(function() {
-  $(".search-query ").val("<%=j raw(@value)%>");
+  $(".search-query ").val("<%=escape_javascript raw(@value)%>");
   $('[data-qs-panel]').hide();
   $("[data-qs-activate]").click(function() {
     var btn, activateTarget, defaultModule;
