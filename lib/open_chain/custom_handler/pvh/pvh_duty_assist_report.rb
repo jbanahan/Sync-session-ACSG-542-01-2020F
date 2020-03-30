@@ -88,6 +88,9 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     us_entries = (customer_number == "PVH")
 
     wb = builder
+    decimal_style = wb.create_style :decimal, {format_code:"#,##0.00"}
+    us_styles = [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, decimal_style, decimal_style, decimal_style,
+                 decimal_style, decimal_style, decimal_style, decimal_style, nil, nil, nil, nil, nil]
     sheet = wb.create_sheet("Results", headers: (us_entries ? us_headers : ca_headers))
     wb.freeze_horizontal_rows(sheet, 1)
     Array.wrap(entry_ids).each do |id|
@@ -105,7 +108,12 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
           row = us_entries ?
                     generate_us_report_row(entry, invoice, invoice_line, shipment_line) :
                     generate_ca_report_row(entry, invoice, invoice_line, shipment_line)
-          wb.add_body_row(sheet, row) unless row.blank?
+          # We need a special format for US rows so we check which row type
+          if us_entries
+            wb.add_body_row(sheet, row, styles: us_styles) unless row.blank?
+          else
+            wb.add_body_row(sheet, row) unless row.blank?
+          end
         end
       end
     end
@@ -171,33 +179,39 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     row << invoice_line.country_origin_code # C
     row << invoice_line.po_number # D
     row << shipment_line&.order_line&.line_number # E
-    row << in_timezone(entry.entry_filed_date) # F
-    row << entry.import_date # G
+    row << in_timezone(entry.entry_filed_date).strftime("%m/%d/%Y") # F
+    row << entry.import_date.strftime("%m/%d/%Y") # G
     row << primary_tariff.tariff_description # H
     row << shipment_number(entry, invoice_line, shipment_line) # I
-    row << in_timezone(entry.arrival_date) # J
+    row << in_timezone(entry.arrival_date).strftime("%m/%d/%Y") # J
 
     dutiable_value = invoice_line.commercial_invoice_tariffs.map { |t| ensure_numeric(t.entered_value) }.sum
     vendor_invoice_value = ensure_numeric(invoice_line.value_foreign)
     duty_assist_amount = ensure_numeric(invoice_line.add_to_make_amount)
     contract_amount = ensure_numeric(invoice_line.contract_amount)
-    duty_savings = (dutiable_value - vendor_invoice_value - duty_assist_amount)
+    line_value = ensure_numeric(invoice_line.value)
+    duty_savings = (dutiable_value - vendor_invoice_value - duty_assist_amount).round(2)
     duty_rate = ensure_numeric(primary_tariff.duty_rate)
+    price_per_unit = ensure_numeric(shipment_line&.order_line&.price_per_unit).round(2)
 
-    row << vendor_invoice_value # K
+    row << line_value # K
     row << duty_assist_amount # L
     row << dutiable_value # M
-    row << duty_savings # N
+    if invoice_line.first_sale # N
+      row << BigDecimal.new("0.00")
+    else
+      row << duty_savings
+    end
     # Duty Adjustment amount is negative (.ie they reduced duty by X amount)
     # but the savings should be a positive amount
-    row << ((duty_savings * -1) * duty_rate) # O
-    row << duty_rate # P
-    row << invoice_line.unit_price # Q
+    row << ((duty_savings * -1) * duty_rate).round(2) # O
+    row << (duty_rate * 100).round(2) # P
+    row << price_per_unit # Q
     row << invoice_line.quantity # R
     row << invoice.exchange_rate # S
     row << primary_tariff.hts_code # T
     row << tariff_301&.hts_code # U
-    row << tariff_301&.duty_rate # V
+    row << (ensure_numeric(tariff_301&.duty_rate) * 100).round(2) # V
 
     row
   end
@@ -298,16 +312,16 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     row << invoice_line.po_number # C
     row << shipment_number(entry, invoice_line, shipment_line) # D
     row << shipment_line&.order_line&.line_number # E
-    row << in_timezone(entry.release_date) # F
+    row << in_timezone(entry.release_date).strftime("%m/%d/%Y") # F
 
     if entry.eta_date
-      row << entry.eta_date # G
+      row << entry.eta_date.strftime("%m/%d/%Y") # G
     else
-      row << in_timezone(entry.arrival_date).to_date # G
+      row << in_timezone(entry.arrival_date).to_date.strftime("%m/%d/%Y") # G
     end
 
-    row << in_timezone(entry.across_sent_date) # H
-    row << in_timezone(entry.arrival_date) # I
+    row << in_timezone(entry.across_sent_date).strftime("%m/%d/%Y") # H
+    row << in_timezone(entry.arrival_date).strftime("%m/%d/%Y") # I
     row << invoice_line.part_number # J
     row << invoice_line.country_origin_code # K
     row << tariff.tariff_description # L
@@ -322,6 +336,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     duty_rate = ensure_numeric(tariff.duty_rate)
     total_adjustments = ensure_numeric(invoice_line.adjustments_amount)
     adjusted_value = total_adjustments
+    dutiable_value = (invoice_value + duty_assists + duty_deductions)
 
     row << exchange_rate # O
     row << invoice_value # P
@@ -330,10 +345,11 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     row << duty_deductions # S
     # Deductions should be a negative value ( so we should add instead of subtract these numbers to
     # find the dutiable value - SOW says to subtract)
-    row << (invoice_value + duty_assists + duty_deductions) # T
+    row << dutiable_value # T
     row << (duty_rate * 100) # U
-    row << duty_deductions # V - Yes, this duplicates column Q..that's what they want
-    row << ((duty_deductions * duty_rate).round(2) * BigDecimal(-1)) # W (duty deductions is negative so convert it back to positive for this savings calculation)
+    row << duty_deductions.abs # V - Yes, this duplicates column Q..that's what they want
+    row << (duty_deductions * duty_rate).round(2).abs # W
+    # row << ((invoice_value - dutiable_value) * duty_rate).round(2).abs # W
     row << invoice_line.unit_price # X
     row << invoice_line.quantity # Y
 
