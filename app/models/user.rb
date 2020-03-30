@@ -257,7 +257,7 @@ class User < ActiveRecord::Base
     errors = []
     if omniauth_provider == "pepsi-saml"
       user = User.where(username: auth_info.uid).first
-      errors << "Pepsi User ID #{auth_info.uid} has not been set up in VFI Track." unless user
+      errors << "Pepsi User ID #{auth_info.uid} has not been set up in #{MasterSetup.application_name}." unless user
     elsif omniauth_provider == "google_oauth2"
       if user = User.where(email: auth_info[:info][:email]).first
         user.provider = auth_info.provider
@@ -279,7 +279,7 @@ class User < ActiveRecord::Base
   end
 
   def self.oauth_error_msg provider_name, email
-    "#{provider_name} email account #{email} has not been set up in VFI Track." +
+    "#{provider_name} email account #{email} has not been set up in #{MasterSetup.application_name}." +
     " If you would like to request an account, please click the 'Need an account?' link below."
   end
 
@@ -601,7 +601,7 @@ class User < ActiveRecord::Base
 
     def send_password_change_email
       change_date = (self.time_zone.present? ? self.password_changed_at.in_time_zone(self.time_zone) : self.password_changed_at).strftime "%Y-%m-%d %H:%M"
-      body = "<p>This email was sent to notify you that the password for your VFI Track account ‘#{self.username}’ was changed on #{change_date}.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
-      OpenMailer.send_simple_html(self.email, "VFI Track Password Change", body).deliver_now
+      body = "<p>This email was sent to notify you that the password for your #{MasterSetup.application_name} account ‘#{self.username}’ was changed on #{change_date}.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
+      OpenMailer.send_simple_html(self.email, "#{MasterSetup.application_name} Password Change", body).deliver_now
     end
 end

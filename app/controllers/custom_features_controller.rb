@@ -795,7 +795,7 @@ class CustomFeaturesController < ApplicationController
   end
 
   def le_product_upload
-    generic_upload(LE_PRODUCT, "Lands' End Products", "le_product") do |f|     
+    generic_upload(LE_PRODUCT, "Lands' End Products", "le_product") do |f|
       if !f.attached_file_name.blank? && !LE_PRODUCT.constantize.valid_file?(f.attached_file_name)
         add_flash :errors, "You must upload a valid Excel file or csv file."
       end
@@ -831,7 +831,7 @@ class CustomFeaturesController < ApplicationController
       }
     end
 
-    def generic_upload class_name, mod_name, custom_feature_path, additional_process_params: {}, flash_notice: "Your file is being processed.  You'll receive a VFI Track message when it completes."
+    def generic_upload class_name, mod_name, custom_feature_path, additional_process_params: {}, flash_notice: "Your file is being processed.  You'll receive a " + MasterSetup.application_name + " message when it completes."
       f = CustomFile.new(:file_type=>class_name,:uploaded_by=>current_user,:attached=>params[:attached])
       action_secure(f.can_view?(current_user),f,{:verb=>"upload",:module_name=>mod_name,:lock_check=>false}) {
 

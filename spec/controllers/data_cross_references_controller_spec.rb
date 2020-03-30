@@ -224,14 +224,14 @@ describe DataCrossReferencesController do
 
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
       expect(response).to redirect_to request.referer
-      expect(flash[:notices]).to eq ["Your file is being processed.  You'll receive a VFI Track message when it completes."]
+      expect(flash[:notices]).to eq ["Your file is being processed.  You'll receive a " + MasterSetup.application_name + " message when it completes."]
     end
 
     it "returns error if attachment missing" do
       expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return true
-      
+
       post :upload, cross_reference_type: 'cross_ref_type', attached: nil
-      
+
       expect(response).to redirect_to request.referer
       expect(flash[:errors]).to eq ["You must select a file to upload."]
     end
@@ -240,9 +240,9 @@ describe DataCrossReferencesController do
       expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return true
       file = fixture_file_upload('/files/test_sheet_4.txt', 'text/plain')
       expect_any_instance_of(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
-      
+
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
-      
+
       expect(response).to redirect_to request.referer
       expect(flash[:errors]).to eq ["Only XLS, XLSX, and CSV files are accepted."]
     end

@@ -2,6 +2,7 @@
  * Off Canvas
  * --------------------------------------------------
  */
+@import "vfi_colors";
 @media screen {
 
   #sidebar {
@@ -28,7 +29,7 @@
 
   #sidebar {
     margin-top: -1em;
-    border-right: 1px solid #62bcf3;
+    border-right: 1px solid $vfi-primary;
   }
 
   #sidebar .card {
@@ -37,7 +38,7 @@
     border-radius: 0px;
   }
   #sidebar .card-body {
-    background-color: #62bcf3;
+    background-color: $vfi-primary;
     border-radius: 0px;
   }
   #sidebar .card-title a {
@@ -67,7 +68,7 @@
   font-size: 1rem;
   z-index:1031; // One above the action bar
   .ui-widget-header {
-    background: #62bcf3;
+    background: $vfi-primary;
   }
   .ui-dialog-titlebar-close {
     overflow:hidden;

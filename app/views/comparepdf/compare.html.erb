@@ -35,7 +35,7 @@
       </li>
     </ul>
     <form class='navbar-form float-right'>
-      <%= image_tag(master_setup.logo_image.blank? ? "vfi_track_logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
+      <%= image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
     </form>
   </div>
 </footer>
@@ -49,11 +49,11 @@
     });
 
     PDFObject.embed(
-      "<%= @att1.secure_url(90.seconds, response_content_disposition: "inline").html_safe %>", 
+      "<%= @att1.secure_url(90.seconds, response_content_disposition: "inline").html_safe %>",
       '#file1-canvas', {PDFJS_URL: "https://vfitrack-pdf-viewer.s3.amazonaws.com/pdfjs-2.0.930/web/viewer.html"}
     );
     PDFObject.embed(
-      "<%= @att2.secure_url(90.seconds, response_content_disposition: "inline").html_safe %>", 
+      "<%= @att2.secure_url(90.seconds, response_content_disposition: "inline").html_safe %>",
       '#file2-canvas', {PDFJS_URL: "https://vfitrack-pdf-viewer.s3.amazonaws.com/pdfjs-2.0.930/web/viewer.html"}
     );
   });

@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module PdfGeneratorSupport
 
   # Text box with an outline.
   def b_text_box document, text, at, width, height, overflow: :shrink_to_fit, align: :left
-    document.bounding_box([at[0], at[1]], width: width, height: height) do 
+    document.bounding_box([at[0], at[1]], width: width, height: height) do
       document.stroke_bounds
     end
 
@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module PdfGeneratorSupport
   # layout: :portrait, or :landscape.  Defaults to :portrait.
   # metadata: Page metadata can go here by default CreateDate, Creator and Producer is set.
   # document_options: Any other option prawn pdfs accept can be passed here (for instance, non-default margins)
-  def pdf_document page_size: "LETTER", layout: :portrait, metadata: { Creator: "VFI Track", Producer: "VFI Track", CreationDate: Time.now}, document_options: {}
+  def pdf_document page_size: "LETTER", layout: :portrait, metadata: { Creator: MasterSetup.application_name, Producer: MasterSetup.application_name, CreationDate: Time.now}, document_options: {}
     if document_options[:info]
       document_options[:info] = metatdata.merge document_options[:info]
     else

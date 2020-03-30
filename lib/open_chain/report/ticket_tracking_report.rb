@@ -7,7 +7,7 @@ module OpenChain; module Report; class TicketTrackingReport
 
 
   def self.permission? user
-    (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) && 
+    (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) &&
       (user.view_entries? && !get_project_keys(user).empty?)
   end
 
@@ -25,7 +25,7 @@ module OpenChain; module Report; class TicketTrackingReport
   def self.run_report run_by, settings
     self.new.run run_by, settings
   end
-  
+
   def run run_by, settings
     start_date = sanitize_date_string settings['start_date'], run_by.time_zone
     end_date = sanitize_date_string settings['end_date'], run_by.time_zone
@@ -49,7 +49,7 @@ module OpenChain; module Report; class TicketTrackingReport
      'Entry Number', 'PO Numbers', 'Part Numbers', 'Product Lines',
      'Vendors', 'MIDs', 'Countries of Origin', 'Master Bills', 'House Bills',
      'Container Numbers', 'Release Date', 'Link to Jira issue',
-     'Link to VFI Track entry']
+     "Link to Entry"]
   end
 
   def create_workbook start_date, end_date, project_keys, time_zone
@@ -76,7 +76,7 @@ module OpenChain; module Report; class TicketTrackingReport
   def graft_results jira_result, vfi_result
     r = []
     vfi_hash = hash_results_by_broker_ref(vfi_result)
-    jira_result.each do |jr| 
+    jira_result.each do |jr|
       #move the ticketing_system_code from the jira result to the vfi result
       jira_broker_ref = jr[13]
       if vfi_hash[jira_broker_ref]
@@ -130,31 +130,31 @@ module OpenChain; module Report; class TicketTrackingReport
   end
 
   def conversions(time_zone, wb)
-    {"Issue Created" => datetime_translation_lambda(time_zone), 
-     "Issue Resolved" => datetime_translation_lambda(time_zone), 
+    {"Issue Created" => datetime_translation_lambda(time_zone),
+     "Issue Resolved" => datetime_translation_lambda(time_zone),
      "Release Date" => datetime_translation_lambda(time_zone),
      "Comments" => comments_lambda,
      "Order Number(s)" =>list_format_lambda,
      "Part Number(s)" =>list_format_lambda,
-     "Link to VFI Track entry" => weblink_translation_lambda(wb, CoreModule::ENTRY.klass),
+     "Link to Entry" => weblink_translation_lambda(wb, CoreModule::ENTRY.klass),
      "Link to Jira issue" => jira_url_lambda(wb)
      }
   end
-  
+
   def jira_query project_keys, start_date, end_date
     q = <<-SQL
-          SELECT i.issuenum AS 'Issue Number', 
-                 t.pname AS 'Issue Type', 
-                 s.pname AS 'Status', 
-                 i.SUMMARY AS 'Summary', 
+          SELECT i.issuenum AS 'Issue Number',
+                 t.pname AS 'Issue Type',
+                 s.pname AS 'Status',
+                 i.SUMMARY AS 'Summary',
                  ordnum.STRINGVALUE AS 'Order Number(s)',
                  part.STRINGVALUE AS 'Part Number(s)',
-                 LEFT(i.DESCRIPTION, 10000) AS 'Description', 
-                 i.id AS 'Comments', 
-                 i.ASSIGNEE 'Assignee', 
-                 i.REPORTER 'Reporter', 
-                 eta.DATEVALUE AS 'Shipment ETA', 
-                 i.CREATED AS 'Issue Created', 
+                 LEFT(i.DESCRIPTION, 10000) AS 'Description',
+                 i.id AS 'Comments',
+                 i.ASSIGNEE 'Assignee',
+                 i.REPORTER 'Reporter',
+                 eta.DATEVALUE AS 'Shipment ETA',
+                 i.CREATED AS 'Issue Created',
                  i.RESOLUTIONDATE AS 'Issue Resolved',
                  ship.STRINGVALUE AS 'Broker Reference',
                  p.pkey
@@ -178,19 +178,19 @@ module OpenChain; module Report; class TicketTrackingReport
   def vfi_query brok_ref_list
     q = <<-SQL
           SELECT e.broker_reference,
-                 e.entry_number AS "Entry Number", 
-                 e.po_numbers AS "PO Numbers", 
-                 e.part_numbers AS "Part Numbers", 
-                 e.product_lines AS "Product Lines", 
-                 e.vendor_names AS "Vendors", 
-                 e.mfids AS "MIDs", 
-                 e.origin_country_codes AS "Countries of Origin", 
-                 e.master_bills_of_lading AS "Master Bills", 
-                 e.house_bills_of_lading AS "House Bills", 
-                 e.container_numbers AS "Container Numbers", 
+                 e.entry_number AS "Entry Number",
+                 e.po_numbers AS "PO Numbers",
+                 e.part_numbers AS "Part Numbers",
+                 e.product_lines AS "Product Lines",
+                 e.vendor_names AS "Vendors",
+                 e.mfids AS "MIDs",
+                 e.origin_country_codes AS "Countries of Origin",
+                 e.master_bills_of_lading AS "Master Bills",
+                 e.house_bills_of_lading AS "House Bills",
+                 e.container_numbers AS "Container Numbers",
                  e.release_date AS "Release Date",
                  "URL" AS 'Link to Jira issue',
-                 e.id AS "Link to VFI Track entry"
+                 e.id AS "Link to Entry"
           FROM entries e
             INNER JOIN countries c ON c.id = e.import_country_id AND c.iso_code = "US"
           WHERE e.broker_reference IN (?)

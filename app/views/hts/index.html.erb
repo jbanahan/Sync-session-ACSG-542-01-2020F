@@ -59,7 +59,7 @@
           <div class='col-md-12'>
             <button class='btn btn-sm ' ng-hide='ch.headings.length>0' ng-click='loadChapter(country,ch)'>+</button>
             <button class='btn btn-sm ' ng-show='ch.headings.length>0' ng-click='ch.headings = []'>-</button>
-            {{ch.num}}. {{ch.name}} 
+            {{ch.num}}. {{ch.name}}
           </div>
           <div class="col-md-12" ng-repeat='h in ch.headings'>
             <div class='row'>
@@ -103,6 +103,6 @@
 </div>
 <footer class='footer'>
   <div id="action_bar" class='navbar fixed-bottom justify-content-end py-0 m-0'>
-    <%= image_tag(master_setup.logo_image.blank? ? "vfi_track_logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
+    <%= image_tag(master_setup.logo_image.blank? ? "logo.png" : master_setup.logo_image, :id=>'dash-logo', :alt=>'Company Logo', :style=>'max-height: 3.5em;')%>
   </div>
 </footer>

@@ -8,11 +8,11 @@ class ApplicationController < ActionController::Base
   include OpenChain::ApplicationControllerLegacy
   include RequestLoggingSupport
   include AuthTokenSupport
-  
+
   # Prevent CSRF attacks by raising an exception.
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
-  
+
   # This is Clearances default before filter...we already handle its use cases in require_user more to our liking
   skip_before_filter :require_login
   before_filter :chainio_redirect
@@ -46,7 +46,7 @@ class ApplicationController < ActionController::Base
   after_filter :set_auth_token_cookie
 
   def set_page_title
-    @page_title = "VFI Track"
+    @page_title = MasterSetup.application_name
   end
 
   # render generic json error message

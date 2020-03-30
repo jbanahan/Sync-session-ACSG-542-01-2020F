@@ -12,7 +12,7 @@ class IntacctErrorsController < ApplicationController
     end
   end
 
-  def clear_payable 
+  def clear_payable
     action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "Payable") do
       intacct_object = IntacctPayable.where(id: params[:id]).first
 
@@ -61,7 +61,7 @@ class IntacctErrorsController < ApplicationController
     action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "page") do
       OpenChain::CustomHandler::Intacct::IntacctDataPusher.delay.run_schedulable companies: ['vfc', 'lmd', 'vcu', 'als']
 
-      add_flash :notices, "All Accounting data loaded into VFI Track without errors will be pushed to Intacct shortly."
+      add_flash :notices, "All Accounting data loaded into " + MasterSetup.application_name + " without errors will be pushed to Intacct shortly."
       redirect_to action: "index"
     end
   end

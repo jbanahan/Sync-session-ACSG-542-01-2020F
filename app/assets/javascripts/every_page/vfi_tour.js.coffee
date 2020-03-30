@@ -84,7 +84,7 @@ root.VfiTour = {
             clearInterval
             resolve()
             return
-            
+
            ), 100)
         return
     )
@@ -106,7 +106,7 @@ root.VfiTour = {
             clearInterval
             resolve()
             return
-            
+
            ), 100)
         return
     )
@@ -128,7 +128,7 @@ root.VfiTour = {
             clearInterval
             resolve()
             return
-            
+
            ), 100)
         return
     )
@@ -166,7 +166,7 @@ root.VfiTour = {
           closeUserMenu()
       steps: [
         {
-          title: 'Welcome to the VFI Track Tour'
+          title: 'Welcome to the Maersk Navigator Tour'
           content: "You can use the arrow keys to move back and forth through the tour."
         }
         {
@@ -211,23 +211,23 @@ root.VfiTour = {
         {
           element: '.search-query:visible'
           title: "Quick Search"
-          content: "If you already have a known value, such as a PO number or 
+          content: "If you already have a known value, such as a PO number or
           Bill of Lading, than you can find it with Quick Search. Just type it in here.
           <br /><br /><br />
           Use the '/' key to jump here.
-          <br /><br />Pro tip: This is a great short cut to jump back up to the top 
+          <br /><br />Pro tip: This is a great short cut to jump back up to the top
           of the page when you’ve scrolled all the way down to the bottom."
         }
-        
+
         {
           element: "#btn_home"
           title: "Home Button"
-          content: "Click this home button to take you back to your VFI Track homepage."
+          content: "Click this home button to take you back to your Maersk Navigator homepage."
         }
         {
           element: '#user_dropdown_menu'
           title: "Your User Menu"
-          content: "The new user menu contains settings and information pertaining to your account and interaction with VFI Track.<br /><br />Jump into this menu with the 'u' key."
+          content: "The new user menu contains settings and information pertaining to your account and interaction with Maersk Navigator.<br /><br />Jump into this menu with the 'u' key."
           onNext: () ->
             unless $('#user_dropdown_menu').hasClass('show')
               openUserMenu()
@@ -262,10 +262,10 @@ root.VfiTour = {
         {
           element: '#nav-set-homepage'
           title: 'Setting your Homepage'
-          content: "This changes the page you'll be taken to when clicking on the home 
-            button in the nav bar above and the default page you will see when visiting 
-            VFI Track.<br /><br />You can use this if you want to always start at a specific screen 
-            in VFI Track when you log in."
+          content: "This changes the page you'll be taken to when clicking on the home
+            button in the nav bar above and the default page you will see when visiting
+            Maersk Navigator.<br /><br />You can use this if you want to always start at a specific screen
+            in Maersk Navigator when you log in."
           onShow: () ->
             unless ($('#user_dropdown_menu').hasClass('show'))
               openUserMenu()
@@ -273,8 +273,8 @@ root.VfiTour = {
         {
           element: '#btn_user_manuals'
           title: 'User Manuals'
-          content: 'Access manuals for using VFI Track here. 
-            The manuals can also be found through the notification bell icon on the left 
+          content: 'Access manuals for using Maersk Navigator here.
+            The manuals can also be found through the notification bell icon on the left
             side of the navigation bar.'
           onShow: () ->
             unless ($('#user_dropdown_menu').hasClass('show'))
@@ -283,14 +283,14 @@ root.VfiTour = {
         {
           element: '#nav-support'
           title: 'Requesting support'
-          content: 'Need some help with VFI Track? Click here to ask our skilled support professionals for assistance.'
+          content: 'Need some help with Maersk Navigator? Click here to ask our skilled support professionals for assistance.'
           onShow: () ->
             unless ($('#user_dropdown_menu').hasClass('show'))
               openUserMenu()
         }
         {
           element: '#btn_menu_tour'
-          title: "VFI Track Tours"
+          title: "Maersk Navigator Tours"
           content: "You can launch this tour again from any screen."
           onShow: () ->
             unless ($('#user_dropdown_menu').hasClass('show'))
@@ -343,8 +343,8 @@ root.VfiTour = {
               $('#notification_bell').click()
         }
         {
-          title: 'Thank You for Using VFI Track'
-          content: 'This completes the VFI Track tour.'
+          title: 'Thank You for Using Maersk Navigator'
+          content: 'This completes the Maersk Navigator tour.'
           template: "<div class='popover tour'>
         <div class='arrow'></div>
         <h3 class='popover-header'></h3>

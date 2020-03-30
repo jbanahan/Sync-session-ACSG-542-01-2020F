@@ -12375,9 +12375,9 @@ a.text-dark:hover, a.text-dark:focus {
 }
 
 /*! ChainCommon */
-/*! Build Time: Wed Oct 09 2019 16:44:31 GMT-0500 (Central Daylight Time) */
-/*! Git SHA: 9c7896e2a792f5663a119fea3b2eee35e602ba04 */
-/*! Git Branch: fix_back_navigation_to_main_screen */
+/*! Build Time: Fri Mar 27 2020 13:24:25 GMT-0500 (Central Daylight Time) */
+/*! Git SHA: 04bf4d8958151c98c7992abfec29d3d7b32bb713 */
+/*! Git Branch: master */
 
 .angucomplete-holder {
   position: relative; }
@@ -12402,7 +12402,7 @@ a.text-dark:hover, a.text-dark:focus {
   font-weight: bold; }
 
 .angucomplete-selected-row {
-  background-color: #62bcf3;
+  background-color: #42b0d5;
   color: #ffffff; }
 
 .angucomplete-image-holder {
@@ -12558,17 +12558,17 @@ chain-field-value pre {
   0%,
   80%,
   100% {
-    box-shadow: 0 2.5em 0 -1.3em #62bcf3; }
+    box-shadow: 0 2.5em 0 -1.3em #42b0d5; }
   40% {
-    box-shadow: 0 2.5em 0 0 #62bcf3; } }
+    box-shadow: 0 2.5em 0 0 #42b0d5; } }
 
 @keyframes load7 {
   0%,
   80%,
   100% {
-    box-shadow: 0 2.5em 0 -1.3em #62bcf3; }
+    box-shadow: 0 2.5em 0 -1.3em #42b0d5; }
   40% {
-    box-shadow: 0 2.5em 0 0 #62bcf3; } }
+    box-shadow: 0 2.5em 0 0 #42b0d5; } }
 
 #chain-messages-modal .subject {
   cursor: pointer; }

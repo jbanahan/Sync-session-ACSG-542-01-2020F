@@ -144,12 +144,12 @@ div.chainActionBarWrap {
   display: inline;
 }
 .btn-primary {
-  background-color: #40aef2;
+  background-color: $vfi-primary;
   border-color: #FFFFFF;
 }
 .btn-primary:hover {
-  background-color: #108ad5;
-  border-color: #2aa3ef;
+  background-color: $vfi-primary-shade;
+  border-color: #58bada;
 }
 .btn-warning {
   color: #FFFFFF;

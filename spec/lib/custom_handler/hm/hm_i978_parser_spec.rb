@@ -492,7 +492,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         data = xlsx_data(spreadsheet, sheet_name: "INV Exceptions")
         expect(data.length).to eq 2
         expect(data[0]).to eq ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
-        expect(data[1]).to eq ["12345", "PO", "CN", "DESC", nil, nil, 9.99, "MID", nil, "REF", "No Product record exists in VFI Track.  H&M did not send an I1 file for this product."]
+        expect(data[1]).to eq ["12345", "PO", "CN", "DESC", nil, nil, 9.99, "MID", nil, "REF", "No Product record exists in " + MasterSetup.application_name + ".  H&M did not send an I1 file for this product."]
       end
 
       it "generates spreadsheet if hts is missing" do
@@ -503,7 +503,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         data = xlsx_data(spreadsheet, sheet_name: "INV Exceptions")
         expect(data.length).to eq 2
         expect(data[0]).to eq ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
-        expect(data[1]).to eq ["12345", "PO", "CN", "DESC", nil, "6115.95.0000", 9.99, "MID", "12345", "REF", "Use linked Product and add Canadian classification in VFI Track."]
+        expect(data[1]).to eq ["12345", "PO", "CN", "DESC", nil, "6115.95.0000", 9.99, "MID", "12345", "REF", "Use linked Product and add Canadian classification in " + MasterSetup.application_name + "."]
       end
     end
 
@@ -523,7 +523,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
         data = xlsx_data(spreadsheet, sheet_name: "INV Exceptions")
         expect(data.length).to eq 2
         expect(data[0]).to eq ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
-        expect(data[1]).to eq ["12345", "PO", "CN", "DESC", nil, nil, 9.99, "MID", nil, "REF", "No Product record exists in VFI Track.  H&M did not send an I1 file for this product."]
+        expect(data[1]).to eq ["12345", "PO", "CN", "DESC", nil, nil, 9.99, "MID", nil, "REF", "No Product record exists in " + MasterSetup.application_name + ".  H&M did not send an I1 file for this product."]
       end
 
       it "generates spreadsheet if tariff is missing" do

@@ -136,7 +136,7 @@ describe IntacctErrorsController do
 
       post :push_to_intacct
       expect(response).to redirect_to action: :index
-      expect(flash[:notices]).to include "All Accounting data loaded into VFI Track without errors will be pushed to Intacct shortly."      
+      expect(flash[:notices]).to include "All Accounting data loaded into " + MasterSetup.application_name + " without errors will be pushed to Intacct shortly."
     end
 
     it "rejects unapproved users" do
@@ -144,7 +144,7 @@ describe IntacctErrorsController do
       sign_in_as u
 
       post :push_to_intacct
-      
+
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to view this page."
     end

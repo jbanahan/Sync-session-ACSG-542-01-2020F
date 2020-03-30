@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
   def can_view? user
     self.class.can_view? user
   end
-  
+
   def initialize custom_file
     @custom_file = custom_file
   end
@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
   end
 
   def write_xl xl_client, urls
-    xl_client.set_cell(0, 6, 16, "VFI Track Entry Link")
+    xl_client.set_cell(0, 6, 16, "#{MasterSetup.application_name} Entry Link")
     count = 7
     xl_client.all_row_values(starting_row_number: 7) do |row|
       url = urls[format row[2]]
@@ -51,12 +51,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
 
   def send_xl user, urls, file_name
     missing_invoices = urls.select{ |h,k| !k.present? }.keys
-    OpenChain::S3.download_to_tempfile(s3_destination_bucket, s3_file_path) do |t| 
+    OpenChain::S3.download_to_tempfile(s3_destination_bucket, s3_file_path) do |t|
       Attachment.add_original_filename_method(t, file_name)
-      send_success_email user.email, t, missing_invoices 
+      send_success_email user.email, t, missing_invoices
     end
   end
-  
+
   def get_urls invoice_nums
     urls = BrokerInvoice.joins(:entry)
                         .where(invoice_number: invoice_nums)

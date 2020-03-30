@@ -14,11 +14,11 @@ describe XlsxBuilder do
 
   def header_format? sheet, row, column
     cell = reader.cell(sheet, row, column)
-    cell.try(:fill_color) == "FF62BCF3"
+    cell.try(:fill_color) == "FF42B0D5"
   end
 
   describe "create_sheet" do
-    it "creates a new worksheet" do 
+    it "creates a new worksheet" do
       sheet = subject.create_sheet "Test"
       expect(sheet).to be_a XlsxBuilder::XlsxSheet
       expect(sheet.name).to eq "Test"

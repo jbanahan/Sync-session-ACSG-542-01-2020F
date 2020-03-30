@@ -8,7 +8,7 @@ class OneTimeAlertsController < ApplicationController
     'name' => {:field => 'name', :label=> 'One Time Alert Name'},
     'creator_name' => {:field => 'creator_name', :label => 'Alert Creator'},
     'created_at' => {:field => 'one_time_alerts.created_at', :label => 'Alert Creation Date'},
-    'module_type' => {:field => 'module_type', :label => 'VFI Track Module'},
+    'module_type' => {:field => 'module_type', :label => MasterSetup.application_name + " Module"},
     'expire_date' => {:field => 'expire_date', :label => 'Expiration Date'},
     'updater_name' => {:field => 'updater_name', :label => 'Exp. Date Updated By'},
     'reference_field_uids' => {:field => 'reference_field_uids', :label => 'Reference Fields'}

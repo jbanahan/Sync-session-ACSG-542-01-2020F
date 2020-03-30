@@ -302,7 +302,7 @@ describe User do
           u.company.update_attributes(show_business_rules:true)
           expect(u.view_all_business_validation_results?).to be_falsey
           expect(u.edit_all_business_validation_results?).to be_falsey
-        end   
+        end
       end
     end
     context "business_validation_rule_results" do
@@ -324,7 +324,7 @@ describe User do
         expect(u.view_business_validation_rule_results?).to be_truthy
         expect(u.edit_business_validation_rule_results?).to be_truthy
       end
-      
+
       context "private rules" do
         it "allows master users" do
           u = Factory(:master_user)
@@ -879,9 +879,9 @@ describe User do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq [@user.email]
-        expect(mail.subject).to eq "VFI Track Password Change"
+        expect(mail.subject).to eq "#{MasterSetup.application_name} Password Change"
         # Change time should be in Central, not UTC+2 (Kaliningrad/European summer time).
-        expect(mail.body).to include "<p>This email was sent to notify you that the password for your VFI Track account ‘#{@user.username}’ was changed on 2019-09-09 02:09.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
+        expect(mail.body).to include "<p>This email was sent to notify you that the password for your " + MasterSetup.application_name + " account ‘#{@user.username}’ was changed on 2019-09-09 02:09.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
       end
     end
 
@@ -896,9 +896,9 @@ describe User do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq [@user.email]
-        expect(mail.subject).to eq "VFI Track Password Change"
+        expect(mail.subject).to eq "#{MasterSetup.application_name} Password Change"
         # Change time should be displayed in default UTC zone.
-        expect(mail.body).to include "<p>This email was sent to notify you that the password for your VFI Track account ‘#{@user.username}’ was changed on 2019-09-09 07:09.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
+        expect(mail.body).to include "<p>This email was sent to notify you that the password for your " + MasterSetup.application_name + " account ‘#{@user.username}’ was changed on 2019-09-09 07:09.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
       end
     end
 
@@ -917,7 +917,7 @@ describe User do
       expect(User.authenticate @user.username, 'newpassword').to eq @user
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.subject).to eq "VFI Track Password Change"
+      expect(mail.subject).to eq "#{MasterSetup.application_name} Password Change"
     end
 
     it "does not send password change email if told to not do so" do
@@ -997,7 +997,7 @@ describe User do
         creds = OpenStruct.new({"token" => "123456789", "expires_at" => (Time.now + 5.days).to_i})
         auth = OpenStruct.new({"info" => info, "provider" => "google_oauth2", "uid" => "someuid123", "credentials" => creds})
 
-        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in VFI Track. If you would like to request an account, please click the 'Need an account?' link below."]})
+        expect(User.from_omniauth("google_oauth2", auth)).to eq ({user: nil, errors: ["Google email account susan@rice.com has not been set up in #{MasterSetup.application_name}. If you would like to request an account, please click the 'Need an account?' link below."]})
       end
     end
 
@@ -1010,7 +1010,7 @@ describe User do
       end
 
       it "returns nil if user not found" do
-        expect(User.from_omniauth("azure_oauth2", auth)).to eq ({user: nil, errors: ["Maersk email account susan@maersk.com has not been set up in VFI Track. If you would like to request an account, please click the 'Need an account?' link below."]})
+        expect(User.from_omniauth("azure_oauth2", auth)).to eq ({user: nil, errors: ["Maersk email account susan@maersk.com has not been set up in #{MasterSetup.application_name}. If you would like to request an account, please click the 'Need an account?' link below."]})
       end
     end
 
@@ -1020,7 +1020,7 @@ describe User do
       end
 
       it "returns an error if user is not found" do
-        expect(User.from_omniauth("pepsi-saml", OpenStruct.new({"uid" => "notausername"}))).to eq ({user: nil, errors: ["Pepsi User ID notausername has not been set up in VFI Track."]})
+        expect(User.from_omniauth("pepsi-saml", OpenStruct.new({"uid" => "notausername"}))).to eq ({user: nil, errors: ["Pepsi User ID notausername has not been set up in #{MasterSetup.application_name}."]})
       end
     end
   end
@@ -1115,7 +1115,7 @@ describe User do
       expect(user.view_statements?).to eq true
     end
 
-    it "disallows users whose companies can't view statements from viewing statements" do 
+    it "disallows users whose companies can't view statements from viewing statements" do
       expect(user.company).to receive(:view_statements?).and_return false
       expect(user.view_statements?).to eq false
     end
@@ -1128,7 +1128,7 @@ describe User do
   end
 
   describe "user_auth_token" do
-    let (:user) { 
+    let (:user) {
       Factory(:user, username: "username", api_auth_token: "authtoken")
     }
 

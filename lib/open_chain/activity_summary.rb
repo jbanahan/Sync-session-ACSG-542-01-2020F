@@ -3,10 +3,10 @@ require 'open_chain/mutable_number'
 
 module OpenChain; class ActivitySummary
 
-  DETAILS = {'1w' => 'Released In The Last 7 Days', 
-             '4w' => 'Released In The Last 28 Days', 
-             'op' => 'Filed / Not Released', 
-             'ytd' => 'Released Year To Date', 
+  DETAILS = {'1w' => 'Released In The Last 7 Days',
+             '4w' => 'Released In The Last 28 Days',
+             'op' => 'Filed / Not Released',
+             'ytd' => 'Released Year To Date',
              'holds' => 'Entries On Hold'}
 
   def self.generate_us_entry_summary company_id, base_date=Time.zone.now.midnight
@@ -29,7 +29,7 @@ module OpenChain; class ActivitySummary
 
   # US ONLY
   module DutyDetail
-   
+
     def create_linked_digests(current_user, company)
       company.linked_companies.select{|co| co.importer?}.map{|co| create_digest(current_user, co)}.compact
     end
@@ -50,8 +50,8 @@ module OpenChain; class ActivitySummary
           port_ptr[:port_total_fees] += ent.total_fees
           port_ptr[:port_total_duty_and_fees] += ent.total_duty_and_fees
           port_ptr[:port_entry_count] += 1
-          port_ptr[:entries] << {ent_id: ent.entry_id, ent_entry_number: ent.entry_number, ent_entry_type: ent.entry_type, ent_port_name: ent.port_name, release_date_mf.uid => ent.send(release_date_mf.field_name), 
-                                 ent_customer_references: ent.customer_references, ent_duty_due_date: ent.duty_due_date, ent_total_fees: ent.total_fees, 
+          port_ptr[:entries] << {ent_id: ent.entry_id, ent_entry_number: ent.entry_number, ent_entry_type: ent.entry_type, ent_port_name: ent.port_name, release_date_mf.uid => ent.send(release_date_mf.field_name),
+                                 ent_customer_references: ent.customer_references, ent_duty_due_date: ent.duty_due_date, ent_total_fees: ent.total_fees,
                                  ent_total_duty: ent.total_duty, ent_total_duty_and_fees: ent.total_duty_and_fees}
 
           date_ptr[:date_total_duty] += ent.total_duty
@@ -66,7 +66,7 @@ module OpenChain; class ActivitySummary
         end
       co
     end
-    
+
     def get_entries(current_user, company)
       if current_user.view_entries? && company.can_view?(current_user)
         Entry.search_secure(current_user, Entry.select("companies.name AS company_name, duty_due_date, ports.name AS port_name, entries.id AS entry_id, entry_number, "\
@@ -77,7 +77,7 @@ module OpenChain; class ActivitySummary
                                                .where("#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} IS NOT NULL")
                                                .where("duty_due_date >= ?", Time.zone.now.in_time_zone(current_user.time_zone).to_date)
                                                .where(monthly_statement_due_date: nil)
-                                               .order("duty_due_date"))                                        
+                                               .order("duty_due_date"))
       else []
       end
     end
@@ -125,7 +125,7 @@ module OpenChain; class ActivitySummary
       h['summary']['ytd'] = generate_ytd_summary company_id, b_utc
       h['by_port'] = generate_port_breakouts company_id, b_utc
       h['by_hts'] = generate_hts_breakouts company_id, b_utc
-      h['vendors_ytd'] = generate_top_vendors company_id, b_utc 
+      h['vendors_ytd'] = generate_top_vendors company_id, b_utc
       h['ports_ytd'] = generate_ports_ytd company_id, b_utc
       h
     end
@@ -133,7 +133,7 @@ module OpenChain; class ActivitySummary
     def by_release_range_query importer_id, base_date, range
       date_clause = nil
       base_date = base_date_utc base_date
-      
+
       case range
       when '1w'
         date_clause = week_clause base_date
@@ -148,7 +148,7 @@ module OpenChain; class ActivitySummary
       else
         raise ArgumentError, "Invalid date range of #{range} specified. Valid values are '1w', '4w', 'op', 'ytd'."
       end
-      
+
       Entry.where(date_clause)
            .where(Entry.search_where_by_company_id(importer_id))
            .where(tracking_open_clause)
@@ -161,7 +161,7 @@ module OpenChain; class ActivitySummary
       ActiveSupport::TimeZone['Eastern Time (US & Canada)']
     end
 
-    private 
+    private
     def format_where clauses
       Array.wrap(clauses).join(' AND ').presence || "1=1"
     end
@@ -185,10 +185,10 @@ module OpenChain; class ActivitySummary
     end
 
     def generate_ytd_summary importer_id, base_date_utc
-      generate_summary_line importer_id, ytd_clause(base_date_utc) 
+      generate_summary_line importer_id, ytd_clause(base_date_utc)
     end
     def generate_port_breakouts importer_id, base_date_utc
-      generate_breakout_hash lambda {|imp,dc| generate_port_breakout_line(imp,dc)}, importer_id, base_date_utc 
+      generate_breakout_hash lambda {|imp,dc| generate_port_breakout_line(imp,dc)}, importer_id, base_date_utc
     end
 
     def generate_ports_ytd importer_id, base_date_utc
@@ -199,9 +199,9 @@ module OpenChain; class ActivitySummary
       end
       r.sort {|a,b| b['count'] <=> a['count']}
     end
-    
+
     def generate_port_breakout_line importer_id, date_clause
-      sql = "SELECT ports.name, ports.#{port_code_field}, count(*) 
+      sql = "SELECT ports.name, ports.#{port_code_field}, count(*)
       FROM entries
       INNER JOIN ports on ports.#{port_code_field} = entries.entry_port_code
       WHERE (#{Entry.search_where_by_company_id importer_id}) AND (#{date_clause})
@@ -245,7 +245,7 @@ module OpenChain; class ActivitySummary
       generate_breakout_hash lambda {|imp,dc| generate_hts_breakout_line(imp,dc)}, importer_id, base_date_utc
     end
     def generate_hts_breakout_line importer_id, date_clause
-      sql = "SELECT left(commercial_invoice_tariffs.hts_code,2), count(*) 
+      sql = "SELECT left(commercial_invoice_tariffs.hts_code,2), count(*)
       FROM entries
       INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id
       INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id
@@ -262,15 +262,15 @@ module OpenChain; class ActivitySummary
       r
     end
     def generate_top_vendors importer_id, base_date_utc
-      sql = "SELECT #{vendor_field}, sum(commercial_invoice_tariffs.entered_value) 
+      sql = "SELECT #{vendor_field}, sum(commercial_invoice_tariffs.entered_value)
       FROM entries
       INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id
       INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id
       INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id
-      WHERE (#{Entry.search_where_by_company_id importer_id}) 
-      AND (#{ytd_clause(base_date_utc)}) 
+      WHERE (#{Entry.search_where_by_company_id importer_id})
+      AND (#{ytd_clause(base_date_utc)})
       AND (#{tracking_open_clause}) AND #{country_clause}
-      GROUP BY #{vendor_field} 
+      GROUP BY #{vendor_field}
       ORDER BY sum(commercial_invoice_tariffs.entered_value) DESC
       LIMIT 5"
       r = []
@@ -282,7 +282,7 @@ module OpenChain; class ActivitySummary
       r
     end
 
-    # generate a where clause for the previous 1 week 
+    # generate a where clause for the previous 1 week
     def week_clause base_date_utc
       ActiveRecord::Base.sanitize_sql_array(["(#{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} > DATE_ADD(?,INTERVAL -1 WEEK) AND #{ActiveRecord::Base.connection.quote_column_name(release_date_mf.field_name)} < ?)", base_date_utc, end_of_day(base_date_utc)])
     end
@@ -351,10 +351,10 @@ module OpenChain; class ActivitySummary
 
     def generate_summary_line importer_id, date_clause, more_where_clauses=[]
       w = Entry.search_where_by_company_id importer_id
-      sql = <<-SQL 
+      sql = <<-SQL
                  SELECT COUNT(*), SUM(total_duty), SUM(total_gst), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units), SUM(total_duty_gst)
-                 FROM entries 
-                 WHERE (#{date_clause}) AND (#{w}) AND #{tracking_open_clause} AND #{country_clause} 
+                 FROM entries
+                 WHERE (#{date_clause}) AND (#{w}) AND #{tracking_open_clause} AND #{country_clause}
                    AND #{format_where more_where_clauses}
                SQL
       line_hash = {}
@@ -375,14 +375,14 @@ module OpenChain; class ActivitySummary
       line_hash
     end
     def generate_k84_section importer_id, base_date_utc
-      r = [] 
+      r = []
       qry = "
       select k84_due_date, sum(ifnull(total_duty_gst, 0)), importer_id, companies.name
-from entries 
+from entries
 inner join companies on companies.id = entries.importer_id
 where k84_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) )
 and k84_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) )
-and (#{Entry.search_where_by_company_id importer_id}) 
+and (#{Entry.search_where_by_company_id importer_id})
       AND #{tracking_open_clause} AND #{country_clause}
 group by importer_id, k84_due_date
 order by importer_id, k84_due_date desc"
@@ -444,17 +444,17 @@ order by importer_id, k84_due_date desc"
                   .group("customer_number")
     end
 
-    private 
+    private
     def generate_pms_section importer_id, base_date_utc
-      r = [] 
+      r = []
       qry = "
       select monthly_statement_due_date, monthly_statement_paid_date, sum(ifnull(total_duty, 0)) + sum(ifnull(total_fees, 0)) as 'Duty & Fees',
       importer_id, companies.name
-from entries 
+from entries
 inner join companies on companies.id = entries.importer_id
-where monthly_statement_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH)) 
-and monthly_statement_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH)) 
-and (#{Entry.search_where_by_company_id importer_id}) 
+where monthly_statement_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH))
+and monthly_statement_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH))
+and (#{Entry.search_where_by_company_id importer_id})
       AND #{tracking_open_clause} AND #{country_clause}
 group by importer_id, monthly_statement_due_date, monthly_statement_paid_date
 order by importer_id, monthly_statement_due_date desc"
@@ -477,9 +477,9 @@ order by importer_id, monthly_statement_due_date desc"
 
     def generate_summary_line importer_id, date_clause, more_where_clauses=[]
       w = Entry.search_where_by_company_id importer_id
-      sql = <<-SQL 
-                 SELECT COUNT(*), SUM(total_duty), SUM(total_fees), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units)  
-                 FROM entries 
+      sql = <<-SQL
+                 SELECT COUNT(*), SUM(total_duty), SUM(total_fees), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units)
+                 FROM entries
                  WHERE (#{date_clause}) AND (#{w}) AND #{tracking_open_clause} AND #{country_clause}
                    AND #{format_where more_where_clauses}
                SQL
@@ -504,7 +504,7 @@ order by importer_id, monthly_statement_due_date desc"
   class EntrySummaryDownload
     include OpenChain::Report::ReportHelper
     attr_accessor :iso_code, :importer
-    
+
     def self.permission? user, importer_id
       Entry.can_view_importer?(Company.find(importer_id),user)
     end
@@ -513,7 +513,7 @@ order by importer_id, monthly_statement_due_date desc"
       self.new(settings['importer_id'], settings['iso_code'], run_by.try(:time_zone)).run
     end
 
-    # required args: system_code (or alliance_customer_number or fenix_customer_number), iso_code, email 
+    # required args: system_code (or alliance_customer_number or fenix_customer_number), iso_code, email
     def self.run_schedulable settings={}
       iso = settings['iso_code'].upcase
       imp = find_company settings
@@ -539,7 +539,7 @@ order by importer_id, monthly_statement_due_date desc"
           report.close
         end
       end
-      
+
       def self.update_args generator, addresses, subject, body, user_id
         today = generator.now.to_date.strftime('%Y-%m-%d')
         default_subject = "#{generator.importer.name} #{generator.iso_code} entry summary for #{today}"
@@ -552,7 +552,7 @@ order by importer_id, monthly_statement_due_date desc"
       def self.update_args_with_user addresses, body, user_id
         user = User.find_by_id user_id
         if addresses.blank?
-          addresses = user.email 
+          addresses = user.email
         else
           body = "<p>#{user.first_name} #{user.last_name} (#{user.email}) has sent you a report.</p><br>".html_safe + body
         end
@@ -563,7 +563,7 @@ order by importer_id, monthly_statement_due_date desc"
     # Because Axlsx (and therefore XlsxBuilder) doesn't allow random access to rows, data is written here first.
     class DrawingBoard
       attr_reader :rows
-      
+
       def initialize
         @rows = []
       end
@@ -571,12 +571,12 @@ order by importer_id, monthly_statement_due_date desc"
       def insert_row row_number, starting_col_number, row_data, styles = [], merged_cells = []
         row = @rows[row_number] || {data: [], styles: [], merged_cells: []}
         ending_col_number = starting_col_number + row_data.count
-        
+
         row[:data][starting_col_number...ending_col_number] = row_data
         row[:styles][starting_col_number...ending_col_number] = styles.presence || Array.new(row_data.count, nil)
         row[:merged_cells][starting_col_number...ending_col_number] = merged_cells.presence || Array.new(row_data.count, nil)
         @rows[row_number] = row
-        
+
         nil
       end
     end
@@ -601,7 +601,7 @@ order by importer_id, monthly_statement_due_date desc"
       @time_zone = time_zone
       @row_num = MutableNumber.new 0
     end
-    
+
     def run
       us_meth = :generate_us_entry_summary
       ca_meth = :generate_ca_entry_summary
@@ -612,7 +612,7 @@ order by importer_id, monthly_statement_due_date desc"
     def now
       Time.zone.now.in_time_zone(@time_zone || "Eastern Time (US & Canada)")
     end
-    
+
     def row_num= n
       @row_num.value = n
     end
@@ -675,7 +675,7 @@ order by importer_id, monthly_statement_due_date desc"
       write_released_ytd board, summary, (self.row_num += 3)
       transcribe wb, sheet, board
       wb.set_column_widths sheet, 40, 20, 20, 20, 20, 20, 20,20
-      wb.add_image sheet, "app/assets/images/vfi_track_logo.png", 198, 59, 4, 2
+      wb.add_image sheet, "app/assets/images/logo.png", 198, 59, 4, 2
       nil
     end
 
@@ -701,7 +701,7 @@ order by importer_id, monthly_statement_due_date desc"
     end
 
     def write_header board
-      board.insert_row 0, 0, ["Vandegrift VFI Track Insights"] + Array.new(us? ? 6 : 7, nil), Array.new(us? ? 7 : 8, :default_header), Array.new(us? ? 7 : 8, true)
+      board.insert_row 0, 0, ["#{MasterSetup.application_name} Insights"] + Array.new(us? ? 6 : 7, nil), Array.new(us? ? 7 : 8, :default_header), Array.new(us? ? 7 : 8, true)
       board.insert_row 1, 0, ["#{iso_code} Entry Activity"], [:bold]
       board.insert_row 2, 0, ["Date", now]
       board.insert_row 3, 0, ["Customer Number", importer.system_code.presence || (us? ? (importer.kewill_customer_number.presence? || importer.cargowise_customer_number) : importer.fenix_customer_number)]
@@ -743,7 +743,7 @@ order by importer_id, monthly_statement_due_date desc"
       board.insert_row (self.row_num += 1), fst_col, ["Company", "Due", "Paid", "Amount"], Array.new(4, :bold)
       rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['paid'], r['amount']], [nil,nil,nil,:default_currency] }
     end
-      
+
     def write_k84 board, rows, row_num
       board.insert_row row_num, fst_col, ["Estimated K84 Statement",nil,nil], Array.new(3, :default_header), Array.new(3, true)
       board.insert_row (self.row_num += 1), fst_col, ["Name", "Due", "Amount"], Array.new(3, :bold)
@@ -757,7 +757,7 @@ order by importer_id, monthly_statement_due_date desc"
     end
 
     def write_breakouts board, sum, row_num
-      board.insert_row row_num, fst_col, ["Entry Breakouts",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)      
+      board.insert_row row_num, fst_col, ["Entry Breakouts",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
       write_ent_ports board, sum["by_port"], (self.row_num += 1)
       write_lines_by_chpt board, sum["by_hts"], (self.row_num +=2 )
     end
@@ -786,10 +786,10 @@ order by importer_id, monthly_statement_due_date desc"
       board.insert_row (self.row_num += 1), snd_col, ["Entries", rows['count']]
       board.insert_row (self.row_num += 1), snd_col, ["Duty", rows['duty']], [nil, :default_currency]
       if us?
-        board.insert_row (self.row_num += 1), snd_col, ["Fees", rows['fees']], [nil, :default_currency] 
+        board.insert_row (self.row_num += 1), snd_col, ["Fees", rows['fees']], [nil, :default_currency]
       else
-        board.insert_row (self.row_num += 1), snd_col, ["GST", rows['gst']], [nil, :default_currency] 
-        board.insert_row (self.row_num += 1), snd_col, ["Duty/GST", rows['duty_gst']], [nil, :default_currency] 
+        board.insert_row (self.row_num += 1), snd_col, ["GST", rows['gst']], [nil, :default_currency]
+        board.insert_row (self.row_num += 1), snd_col, ["Duty/GST", rows['duty_gst']], [nil, :default_currency]
       end
       board.insert_row (self.row_num += 1), snd_col, ["Entered Value", rows['entered']], [nil, :default_currency]
       board.insert_row (self.row_num += 1), snd_col, ["Invoiced Value", rows['invoiced']], [nil, :default_currency]

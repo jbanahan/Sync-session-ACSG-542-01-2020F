@@ -774,8 +774,8 @@ describe OpenChain::ActivitySummary do
         file.rewind
         reader = XlsxTestReader.new(file.path).raw_workbook_data
         sheet = reader["Summary"]
-      
-        expect(sheet[0]).to eq ["Vandegrift VFI Track Insights",nil,nil,nil,nil,nil,nil]
+
+        expect(sheet[0]).to eq [MasterSetup.application_name + " Insights",nil,nil,nil,nil,nil,nil]
         expect(sheet[1]).to eq ["US Entry Activity"]
         expect(sheet[2][0]).to eq "Date"
         # Tolerance is needed due to the way the excel lib can be inexact with times
@@ -964,7 +964,7 @@ describe OpenChain::ActivitySummary do
           t.flush
           reader = XlsxTestReader.new(t.path).raw_workbook_data
           sheet = reader["Summary"]
-          expect(sheet[0]).to eq ["Vandegrift VFI Track Insights",nil,nil,nil,nil,nil,nil]
+          expect(sheet[0]).to eq [MasterSetup.application_name + " Insights",nil,nil,nil,nil,nil,nil]
         end
       end
     end

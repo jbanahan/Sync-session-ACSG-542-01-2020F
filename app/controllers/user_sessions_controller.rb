@@ -59,12 +59,12 @@ class UserSessionsController < ApplicationController
         end
       else
         session.delete :user_id
-        # There are several layers of login guards (see config/initializers/clearance.rb), so it's possible the user's login wasn't a success, but we did create a 
+        # There are several layers of login guards (see config/initializers/clearance.rb), so it's possible the user's login wasn't a success, but we did create a
         # cookie, etc for them...log them out so the remember token is rotated, cookies are removed, etc
         log_out
         respond_to do |format|
           format.html {
-            add_flash :errors, "Your log in attempt was not successful.  If you do not remember your login information please use the 'Forgot your VFI Track password?' link below the password box to reset your password."
+            add_flash :errors, "Your log in attempt was not successful.  If you do not remember your login information please use the 'Forgot your password?' link below the password box to reset your password."
             redirect_to new_user_session_path
           }
           format.json { render :json => {"errors"=>["Your log in attempt was not successful"]} }

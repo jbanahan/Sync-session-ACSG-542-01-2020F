@@ -1,27 +1,53 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>VFI Track</title>
+    <title>Maersk Customs Navigator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <%= app_internals(MasterSetup.get) %>
     <%= stylesheet_link_tag "login", :media => "all" -%>
     <%= csrf_meta_tags %>
   </head>
   <body>
-    <%= render "shared/flash_notice" %>
+    <nav class="navbar navbar-light bg-light p-0 mt-0 mb-3" style="background-color: #42b0d5 !important;">
+      <ul class="navbar-nav px-0">
+        <li class="nav-item px-4" style="background-color: white;">
+          <%= image_tag("logo.png", :class=>'img-fluid', :alt=>'Maersk Logo', :style=>'max-height: 3em;') %>
+        </li>
+      </ul>
+    </nav>
     <div class='container-fluid'>
-      <div class="row py-2">
-        <div class="col-md-3"></div>
-        <div class="col-md-6 col-12">
-          <div class="text-center">
-            <a href="https://www.vandegriftinc.com/">
-            <%= image_tag(master_setup.logo_image.blank? ? "vfi_track_logo.png" : master_setup.logo_image, :id=>'dash-logo', :class=>'img-fluid', :alt=>'Vandegrift Logo')%>
-            </a>
+      <%= render "shared/flash_notice" %>
+      <div class="row">
+        <div class="col-12">
+          <h1 class="text-center">Maersk Customs Navigator</h1>
+        </div>
+      </div>
+      <div class="row">
+        <% if master_setup.logo_image.blank? -%>
+        <div class="col-md-6">
+          <div class="box h-100 d-flex justify-content-center flex-column pt-2 float-right">
+            <h3 class="maersksecondary">powered by</h3>
           </div>
         </div>
-        <div class="col-md-3"></div>
+        <div class="col-md-6 pl-0 ml-0">
+          <div class="box h-100 d-flex justify-content-center flex-column pt-2 float-left">
+            <h2>Vandegrift</h2>
+          </div>
+        </div>
+        <% else -%>
+        <div class="col-md-12 text-center">
+          <%= image_tag(master_setup.logo_image, :id=>'company-logo', :alt=>'Company Logo', :class=>'img-fluid')%>
+        </div>
+        <% end -%>
       </div>
-      <div class="row py-md-1">
+      <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8">
+          <h4>We are pleased to announce that VFI Track is now called Maersk Customs Navigator. All system features and functionality remain intact as users continue to experience the same powerful visibility and reporting tools within all areas of the platform.</h4>
+        </div>
+        <div class="col-md-2"></div>
+      </div>
+      <div class="row pb-md-1 pt-md-3">
         <div class="col-md-2"></div>
       <% if MasterSetup.get.custom_feature?('public hts') || !PublicField.all.empty? || MasterSetup.get.custom_feature?('fenix') -%>
         <div class="col-md-4 col-sm-12">
@@ -30,7 +56,7 @@
       <% end -%>
           <div class="card mr-md-0">
             <div class="card-header pb-md-0">
-              <h3>Sign In to VFI Track</h3>
+              <h3>Login to Maersk Customs Navigator</h3>
             </div>
             <div id='login' class='card-body'>
               <%= form_tag("/user_sessions", :method=>'post', :id=>"new_user_session") do -%>
@@ -64,7 +90,7 @@
                         <span>
                           <%= link_to raw('<button class="btn btn-maersk" type="button">Log In With Your Maersk ID</button>'), "/auth/azure_oauth2", method: :post %>
                         </span>
-                        
+
                     <% end %>
                     <% if Rails.application.config.pepsi_sso_url %> or
                       <a href="<%=Rails.application.config.pepsi_sso_url%>" alt="myPepsiCo Login"><%= image_tag "mypepsico.png"%></a>
@@ -74,7 +100,7 @@
                 <div class="form-group small-margin">
                   <div class="controls">
                     <div class="row">
-                      <div class="col"><a id="forgot_password" href="javascript:void(0)" data-toggle="modal" data-target="#forgot-password-modal">Forgot your VFI Track password?</a>
+                      <div class="col"><a id="forgot_password" href="javascript:void(0)" data-toggle="modal" data-target="#forgot-password-modal">Forgot your password?</a>
                       </div>
                     </div>
                     <% if Rails.application.config.pepsi_sso_url.blank? %>
@@ -235,8 +261,8 @@
           </div>
         </div>
         <div class="col-md-8 col-12">
-          <div class="card">
-            <div class="card-header"><a id="news-header" class="pb-0" href="https://www.vandegriftinc.com/news" target="_blank"><h3>Recent News from Vandegrift</h3></a>
+          <div class="card pb-0">
+            <div class="card-header"><a id="news-header" href="https://www.vandegriftinc.com/news" target="_blank"><h3>Recent News from Vandegrift</h3></a>
             </div>
             <div id="news-box" class="card-body"></div>
           </div>

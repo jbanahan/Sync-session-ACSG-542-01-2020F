@@ -80,7 +80,7 @@ class BusinessValidationTemplatesController < ApplicationController
     }
   end
 
-  def download    
+  def download
     admin_secure {
       bvt = BusinessValidationTemplate.find params[:id]
       json = bvt.copy_attributes.to_json
@@ -98,7 +98,7 @@ class BusinessValidationTemplatesController < ApplicationController
         uploader = OpenChain::BusinessRulesCopier::TemplateUploader
         cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: current_user, attached: file)
         CustomFile.delay.process(cf.id, current_user.id)
-        add_flash(:notices, "Your file is being processed. You'll receive a VFI Track message when it completes.")
+        add_flash(:notices, "Your file is being processed. You'll receive a " + MasterSetup.application_name + " message when it completes.")
         redirect_to business_validation_templates_path
       end
     }
@@ -107,7 +107,7 @@ class BusinessValidationTemplatesController < ApplicationController
   def copy
     admin_secure {
       OpenChain::BusinessRulesCopier.delay.copy_template(current_user.id, params[:id].to_i)
-      add_flash(:notices, "Business Validation Template is being copied. You'll receive a VFI Track message when it completes.")
+      add_flash(:notices, "Business Validation Template is being copied. You'll receive a " + MasterSetup.application_name + " message when it completes.")
       redirect_to business_validation_templates_path
     }
   end

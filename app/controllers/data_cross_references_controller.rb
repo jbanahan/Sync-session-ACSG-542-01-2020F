@@ -116,7 +116,7 @@ class DataCrossReferencesController < ApplicationController
       end
       cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: user, attached: file)
       CustomFile.delay.process(cf.id, current_user.id, cross_reference_type: xref_type, company_id: params[:company])
-      add_flash(:notices, "Your file is being processed.  You'll receive a VFI Track message when it completes.")
+      add_flash(:notices, "Your file is being processed.  You'll receive a " + MasterSetup.application_name + " message when it completes.")
     end
   end
 
@@ -159,7 +159,7 @@ class DataCrossReferencesController < ApplicationController
     allow_save = true
     # See if we may allow duplicate xref keys..(some instances may require duplicates - though likely not via the screen edits)
     if !edit_hash[xref.cross_reference_type].try(:[], :allow_duplicate_keys)
-      
+
       query = DataCrossReference.where(cross_reference_type: xref.cross_reference_type, key: xref.key)
       if xref.id.try(:nonzero?)
         query = query.where("id <> ?", xref.id)

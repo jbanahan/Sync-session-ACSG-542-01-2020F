@@ -72,7 +72,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     <% else %>
       <%= button_to 'Run As', run_as_users_path, params: {username: @user.username}, method: :post, class: 'btn navbar-btn',  form_class:'inline-button-to' -%>
     <% end %>
-    
+
     <% if @user.locked? %>
       <%= button_to 'Unlock User', unlock_user_path(@user), data: {}, method: :post, class: 'btn navbar-btn',  form_class:'inline-button-to' -%>
     <% end %>
@@ -133,8 +133,8 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 
         <% if current_user.admin? && current_user.sys_admin? %>
           <div class="form-group" style="margin-top: 8px;">
-            <label>VFI Track homepage</label>
-            <%= f.text_field :homepage, value: @user.homepage, class: "form-control", placeholder: "VFI Track Homepage" %>
+            <label>Maersk Navigator homepage</label>
+            <%= f.text_field :homepage, value: @user.homepage, class: "form-control", placeholder: "Maersk Navigator Homepage" %>
           </div>
         <% end %>
 

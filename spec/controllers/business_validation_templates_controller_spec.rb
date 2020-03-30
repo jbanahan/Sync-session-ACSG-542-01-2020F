@@ -232,12 +232,12 @@ describe BusinessValidationTemplatesController do
       expect(CustomFile).to receive(:process).with(1, user.id)
       put :upload, attached: file
       expect(response).to redirect_to business_validation_templates_path
-      expect(flash[:notices]).to include "Your file is being processed. You'll receive a VFI Track message when it completes."
+      expect(flash[:notices]).to include "Your file is being processed. You'll receive a " + MasterSetup.application_name + " message when it completes."
     end
 
     it "only allows admin" do
       user = Factory(:user)
-      sign_in_as user     
+      sign_in_as user
       expect(CustomFile).to_not receive(:create!)
     end
 
@@ -258,7 +258,7 @@ describe BusinessValidationTemplatesController do
       expect(OpenChain::BusinessRulesCopier).to receive(:copy_template).with user.id, bvt.id
       post :copy, id: bvt.id
       expect(response).to redirect_to business_validation_templates_path
-      expect(flash[:notices]).to include "Business Validation Template is being copied. You'll receive a VFI Track message when it completes."      
+      expect(flash[:notices]).to include "Business Validation Template is being copied. You'll receive a " + MasterSetup.application_name + " message when it completes."
     end
 
     it "only allows admin" do

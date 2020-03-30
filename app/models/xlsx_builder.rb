@@ -1,12 +1,12 @@
 require 'axlsx'
 
 # Simple interface for building an .xlsx Excel file
-# 
+#
 # This class has absolutely no read functionality (since axlsx doesn't read xlsx files)
 # Any reading should be done via the OpenChain::XlClient interfaces.
 class XlsxBuilder
 
-  HEADER_BG_COLOR_HEX ||= "62BCF3"
+  HEADER_BG_COLOR_HEX ||= "42B0D5"
 
   # This is a simple wrapper class that is here as a means to track raw access to any sheet functionality
   # that might be needed.

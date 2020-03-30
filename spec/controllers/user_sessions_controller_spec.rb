@@ -1,6 +1,6 @@
 describe UserSessionsController do
   let (:sign_in_failure) {
-    "Your log in attempt was not successful.  If you do not remember your login information please use the 'Forgot your VFI Track password?' link below the password box to reset your password."
+    "Your log in attempt was not successful.  If you do not remember your login information please use the 'Forgot your password?' link below the password box to reset your password."
   }
 
   describe 'index' do
@@ -35,7 +35,7 @@ describe UserSessionsController do
     it 'should allow a user to log in' do
       expect_any_instance_of(User).to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
-      
+
       expect(response).to be_redirect
       expect(response).to redirect_to root_path
       expect(cookies[:remember_me]).to be_nil
@@ -66,18 +66,18 @@ describe UserSessionsController do
         expect(cookies[:remember_me]).to be_nil
       end
     end
-    
+
     it 'redirects to specified return to page' do
       session[:return_to] = "/return_to"
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
-      
+
       expect(response).to be_redirect
       expect(response).to redirect_to "/return_to"
     end
 
     it 'should fail with invalid credentials' do
       expect_any_instance_of(User).not_to receive(:on_successful_login).with request
-      post :create, :user_session => {'username'=>@user.username, 'password'=>"password"} 
+      post :create, :user_session => {'username'=>@user.username, 'password'=>"password"}
       expect(response).to be_redirect
       expect(response).to redirect_to "/user_sessions/new"
       expect(flash[:errors]).to include sign_in_failure
@@ -96,7 +96,7 @@ describe UserSessionsController do
       expect(flash[:errors]).to include sign_in_failure
     end
 
-    it "does not allow users with access disabled to log in" do 
+    it "does not allow users with access disabled to log in" do
       # This is testing a clearance sign in guard, set up in config/initializers/clearance
       expect(User).to receive(:access_allowed?).with(an_instance_of(User)).and_return false
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}
@@ -108,7 +108,7 @@ describe UserSessionsController do
     it "should allow a user to log in with via json" do
       expect_any_instance_of(User).to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>'this is my password'}, :format => "json"
-    
+
       expect(response).to be_success
       expect(response.body).to be_blank
     end
@@ -116,7 +116,7 @@ describe UserSessionsController do
     it "should return json with errors if login failed" do
       expect_any_instance_of(User).not_to receive(:on_successful_login).with request
       post :create, :user_session => {'username'=>@user.username, 'password'=>'password'}, :format => "json"
-    
+
       expect(response).to be_success
       expect(response.body).to eq({"errors" => ["Your log in attempt was not successful"]}.to_json)
     end
@@ -152,7 +152,7 @@ describe UserSessionsController do
     it "signs out the user and removes the remember me coookie" do
       sign_in_as @user
       request.cookies[:remember_me] = ""
-      
+
       delete :destroy
       expect(response.cookies[:remember_me]).to be_nil
       expect(flash[:notices]).to include "You are logged out. Thanks for visiting."

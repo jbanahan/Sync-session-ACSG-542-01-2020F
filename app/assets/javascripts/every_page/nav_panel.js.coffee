@@ -194,12 +194,12 @@ root.ChainNavPanel = {
             <a "+ ( if mobile then "" else "id='nav-set-homepage'" )+" class='dropdown-item' href='javascript:void(null);'>Set Homepage</a> 
             <a "+ ( if mobile then "" else "id='btn_user_manuals'" )+" class='dropdown-item' href='javascript:void(null);'>User Manuals</a> 
             <a "+ ( if mobile then "" else "id='nav-support'" )+" class='dropdown-item' href='javascript:void(null);'>Support</a>
-            "+ ( if mobile then "" else "<button id='btn_menu_tour' class='dropdown-item' href='javascript:void(null);'>VFI Track Tour</button>" )+"
-            <a "+ ( if mobile then "" else "id='btn_vandegrift_link'" )+" class='dropdown-item' href='https://www.vandegriftinc.com' target='_blank'>Vandegriftinc.com</a> 
+            "+ ( if mobile then "" else "<button id='btn_menu_tour' class='dropdown-item' href='javascript:void(null);'>Maersk Navigator Tour</button>" )+"
+            <a "+ ( if mobile then "" else "id='btn_vandegrift_link'" )+" class='dropdown-item' href='https://www.vandegriftinc.com' target='_blank'>Vandegriftinc.com</a>
             <div class='dropdown-divider'></div> 
-            <a class='dropdown-item' href='/logout'>Log Out</a> 
-          </div>" 
-          wrapper.append(html) 
+            <a class='dropdown-item' href='/logout'>Log Out</a>
+          </div>"
+          wrapper.append(html)
       }
 
     setupHomepageModal = ->

@@ -196,7 +196,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       for i in 0..3
         wb.add_body_row sheet, [] # blank row
       end
-      wb.add_image sheet, "app/assets/images/vfi_track_logo.png", 198, 59, 0, 0
+      wb.add_image sheet, "app/assets/images/logo.png", 198, 59, 0, 0
 
       counter = 6 # 4 blank rows at top plus 2 blanks in between the year blocks and the comparison block.
       counter += add_row_block wb, sheet, year_1, nil, 1, year_hash, group_by_mode_of_transport, opt_fields, sum_units_by_mode_of_transport
@@ -254,7 +254,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       if opt_fields['total_taxes']
         wb.add_body_row sheet, get_category_row_for_year_month("Total Taxes", year_hash, year, comp_year, block_pos, :total_taxes), styles: [:bold] + Array.new(13, :currency)
         counter += 1
-      end     
+      end
       if opt_fields['other_fees']
         wb.add_body_row sheet, get_category_row_for_year_month("Other Fees", year_hash, year, comp_year, block_pos, :other_fees), styles: [:bold] + Array.new(13, :currency)
         counter += 1

@@ -4,7 +4,7 @@ require 'open_chain/custom_handler/vandegrift/fenix_nd_invoice_810_generator'
 require 'open_chain/custom_handler/hm/hm_business_logic_support'
 
 # HM (for some reason) names all their feeds with random numeric values.
-# This is for processing an XML file containing truck crossing data 
+# This is for processing an XML file containing truck crossing data
 # for trucks into and out of Canada.
 #
 # Trucks into Canada are delivering online purchases and the data will
@@ -19,8 +19,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
   include OpenChain::CustomHandler::Hm::HmBusinessLogicSupport
 
   def self.parse_file file_content, log, opts = {}
-    # Each file is supposed to represent a single truck shipment's data, so we should be ok just parsing them all 
-    # in a single parse attempt and not breaking them up into smaller distinct delayed job units (like we might do 
+    # Each file is supposed to represent a single truck shipment's data, so we should be ok just parsing them all
+    # in a single parse attempt and not breaking them up into smaller distinct delayed job units (like we might do
     # with an EDI file)
     user = User.integration
     parser = self.new
@@ -61,7 +61,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     inv = find_or_create_invoice(shipment) do |invoice|
       invoice.last_file_bucket = bucket
       invoice.last_file_path = filename
-      
+
       set_invoice_header(shipment, invoice)
 
       shipment["DELIVERY_ITEMS"].each do |item|
@@ -95,11 +95,11 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     lines = 0
     invoice.invoice_lines.each do |line|
       if line.product_id.nil?
-        resolution = "No Product record exists in VFI Track.  H&M did not send an I1 file for this product."
+        resolution = "No Product record exists in #{MasterSetup.application_name}.  H&M did not send an I1 file for this product."
       else
         if fenix?(invoice)
           if line.hts_number.blank?
-            resolution = "Use linked Product and add Canadian classification in VFI Track."
+            resolution = "Use linked Product and add Canadian classification in #{MasterSetup.application_name}."
           end
         else
           if line.hts_number.blank? || line.mid.blank?
@@ -184,7 +184,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     i.invoice_total = number_to_currency(invoice.invoice_total_foreign)
 
     i.employee = "Shahzad Dad"
-    
+
     i.firm_address = OpenChain::CustomHandler::CommercialInvoicePdfGenerator::ADDRESS.new
     i.firm_address.name = "Geodis"
     i.firm_address.line_1 = "281 AirTech Pkwy. Suite 191"
@@ -204,7 +204,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     Tempfile.open(["ParsCoversheet", ".pdf"]) do |tempfile|
       tempfile.binmode
       OpenChain::CustomHandler::Hm::HmParsPdfGenerator.generate_pars_pdf(file_data, tempfile)
-      # Use the first invoice date from the data 
+      # Use the first invoice date from the data
       data = file_data.find {|d| !d.invoice_date.nil? }
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
       filename = "PARS Coversheet - #{date}.pdf"
@@ -220,7 +220,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     end
   end
 
-  private 
+  private
 
     def generate_and_send_ca_files invoice
       # If this file invoice has already been synced...then don't send anything
@@ -269,7 +269,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       files = []
       begin
         files << create_tempfile_report(addendum_builder, "Invoice Addendum #{Attachment.get_sanitized_filename(invoice.invoice_number)}.xlsx")
-        files << create_tempfile_report(nil, "Invoice #{Attachment.get_sanitized_filename(invoice.invoice_number)}.pdf", write_lambda: lambda {|file| OpenChain::CustomHandler::CommercialInvoicePdfGenerator.render_content file, pdf_data}) 
+        files << create_tempfile_report(nil, "Invoice #{Attachment.get_sanitized_filename(invoice.invoice_number)}.pdf", write_lambda: lambda {|file| OpenChain::CustomHandler::CommercialInvoicePdfGenerator.render_content file, pdf_data})
 
         OpenMailer.send_simple_html(email_us_files_to, "[VFI Track] H&M Returns Shipment # #{invoice.invoice_number}", "The Commercial Invoice printout and addendum for invoice # #{invoice.invoice_number} is attached to this email.", files, reply_to: "nb@vandegriftinc.com", bcc: "nb@vandegriftinc.com").deliver_now
       ensure
@@ -338,7 +338,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
     def set_invoice_header full_shipment, invoice
       shipment = full_shipment["SHIPMENT"]
-      
+
       invoice.invoice_date = invoice_date(shipment)
       invoice.terms_of_sale = shipment["DeliveryTerms"]
       invoice.customer_reference_number = shipment["BillingDocumentNumber"]
@@ -372,7 +372,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     end
 
     def set_invoice_line shipment, item, line
-      # This is actually the order number to the customer (.ie what you'd see on your 
+      # This is actually the order number to the customer (.ie what you'd see on your
       # order if you purchased something online.)
       line.po_number = item["SalesOrderNumber"]
       line.po_line_number = item["SalesOrderItemNumber"]
@@ -405,7 +405,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
       # H&M are implementing a feature at some point in the near future where the CustomerOrderNumber/CustomerOrderItemNumber
       # will represent the their HybrisOrderNumber for both movements to and from Canada.
-      # The HybrisOrderNumber contains distinct order movement ids for each into/out of Canada movement.  Thus, the 
+      # The HybrisOrderNumber contains distinct order movement ids for each into/out of Canada movement.  Thus, the
       # CustomerOrderNumber is consistent between the two and should be a unique means for tying a good into and out of the country
       # for drawback purposes.
       if item["CustomerOrder"]
@@ -415,7 +415,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
         line.secondary_po_number = item["HybrisOrderNumber"]
         line.secondary_po_line_number = item["HybrisOrderItemNumber"]
       end
-      
+
       # We don't need MID's for Canada imports only US Returns - Canada doesn't do MIDs
       if kewill?(shipment)
         invoice_line = find_commercial_invoice_line(line.customer_reference_number, line.country_origin&.iso_code, line.part_number)
@@ -465,7 +465,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       inbound_file.reject_and_raise("Expected to find Invoice Number in the BILLING_SHIPMENT/ExternalID element, but it was blank or missing.") if invoice_number.blank?
 
       invoice = nil
-      Lock.acquire("Invoice-#{invoice_number}") do 
+      Lock.acquire("Invoice-#{invoice_number}") do
 
         i = Invoice.where(importer_id: importer(shipment_data).id, invoice_number: invoice_number).first_or_create!
         inbound_file.add_identifier :invoice_number, i.invoice_number, object: i
@@ -475,10 +475,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
         end
       end
 
-      # This is here because I need to run the pars lookup outside a transaction, this is because we need to immediately mark the 
+      # This is here because I need to run the pars lookup outside a transaction, this is because we need to immediately mark the
       # pars number as utilized.  If we didn't do this, and instead ran this inside the lock transacion used below it's possible
       # to have 2 simultaneous transactions open at the same time where the pars number is not used, both would select the same one
-      # and then both use it.  The ideal solution here is probably to write a stored proc that doles out the next number which 
+      # and then both use it.  The ideal solution here is probably to write a stored proc that doles out the next number which
       # would mean we could then reference it from anywhere, but that's rather involved for this single case.
 
       # If this isn't the primary parser for CA, we can't use Pars Numbers.
@@ -550,20 +550,20 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       return [data] if data["DELIVERY_ITEMS"].length < max_invoice_length
 
       # So what we need to do is split the lines on the max length BUT we need to make sure
-      # all the lines for a particular purchase order appear on the same shipment. So, if we're at 
+      # all the lines for a particular purchase order appear on the same shipment. So, if we're at
       # line 997 and the next PO has 4 lines..we need to split the file at 997.
       all_files = []
       current_file_rows = []
       current_po_row_list = []
       current_po = nil
 
-      do_swap_lambda = lambda do 
+      do_swap_lambda = lambda do
         new_shipment = {}
         new_shipment["SHIPMENT"] = data["SHIPMENT"].deep_dup
-        # If we're splitting multiple files we need to add a file index to the ExternalId (used for invoice number) 
+        # If we're splitting multiple files we need to add a file index to the ExternalId (used for invoice number)
         # so that we're using a distinct invoice number for each split
         new_shipment["SHIPMENT"]["ExternalID"] = "#{new_shipment["SHIPMENT"]["ExternalID"]}-#{(all_files.length + 1).to_s.rjust(2, "0")}"
-        
+
         new_shipment["DELIVERY_ITEMS"] = current_file_rows
 
         all_files << new_shipment
@@ -703,7 +703,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
       # Just stay using the XML element names
       shipment["SHIPMENT"] = extract_xml_data_to_hash(xml)
       shipment["DELIVERY_ITEMS"] = extract_delivery_item_data(xml)
-      
+
       if shipment["SHIPMENT"]
         sending_site = shipment["SHIPMENT"]["SendingSite"]
         shipment["SHIPMENT"]["CustomsSystem"] = case sending_site.to_s.upcase
@@ -712,7 +712,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
           when "W184"
             :kewill
           else
-            inbound_file.reject_and_raise("Invalid SendingSite value found: '#{sending_site}'.  Unable to determine what system to forward shipment data to.")      
+            inbound_file.reject_and_raise("Invalid SendingSite value found: '#{sending_site}'.  Unable to determine what system to forward shipment data to.")
           end
       end
 
@@ -720,7 +720,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     end
 
     # Because of the way we need to potentially split up the file data for canada into multiple
-    # invoices, we're going to pull out the data in the file into a hash for each item, it will make it 
+    # invoices, we're going to pull out the data in the file into a hash for each item, it will make it
     # easier to work with.
     def extract_delivery_item_data xml
       delivery_items = []
@@ -770,7 +770,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
     def country_origin iso_code, kewill_system
       return nil if iso_code.blank?
 
-      # The US code for Burma/Myanmaar is still BU, however, Geodis/H&M are sending MM.  We're just going to 
+      # The US code for Burma/Myanmaar is still BU, however, Geodis/H&M are sending MM.  We're just going to
       # translate it to BU internally.
       if kewill_system && iso_code.to_s.upcase == "MM"
         iso_code = "BU"

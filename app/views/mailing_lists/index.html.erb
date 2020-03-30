@@ -38,7 +38,7 @@
       <th>Distribution List Name</th>
       <th>Created By</th>
       <th>Creation Date</th>
-      <th>Has Non-VFI Track User Emails?</th>
+      <th>Has Non-Maersk Navigator User Emails?</th>
     <% if current_user.sys_admin? %>
       <th>Sys Admin Only?</th>
     <% end %>
@@ -53,7 +53,7 @@
         <td><%= list.created_at %></td>
         <td>
           <% if list.non_vfi_addresses? %>
-            <i title="Some users included in this distribution list do not have VFI Track User accounts." class="fa fa-exclamation-triangle text-warning"></i>
+            <i title="Some users included in this distribution list do not have Maersk Navigator User accounts." class="fa fa-exclamation-triangle text-warning"></i>
           <% end %>
         </td>
         <% if current_user.sys_admin? %>

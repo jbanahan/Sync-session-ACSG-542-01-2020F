@@ -4,7 +4,7 @@ describe OpenChain::Report::TicketTrackingReport do
   let(:now) { ActiveSupport::TimeZone["UTC"].local(2016,05,15) }
   let(:tomorrow) { now + 1.day }
   let(:day_after_tomorrow) { tomorrow + 1.day }
-  
+
   #                          0               1          2          3            4              5               6            7           8           9             10              11               12                  13
   let(:jira_header) { ['Issue Number', 'Issue Type', 'Status', 'Summary', 'Order Number(s)', 'Part Number(s)', 'Description', 'Comments', 'Assignee', 'Reporter', 'Shipment ETA', 'Issue Created', 'Issue Resolved', 'Broker Reference'] }
   let(:jira_result) do
@@ -12,15 +12,15 @@ describe OpenChain::Report::TicketTrackingReport do
      ['issue num2', 'issue type2', 'stat2', 'summary2', 'ord num2', 'part num2', 'descr2', 'issue id 2', 'assignee2', 'reporter2', 'shipment eta2', now, now, 'brok ref2', 'pkey2'],
      ['issue num3', 'issue type3', 'stat3', 'summary3', 'ord num3', 'part num3', 'descr3', 'issue id 3', 'assignee3', 'reporter3', 'shipment eta3', day_after_tomorrow, now, 'brok ref3', 'pkey3']]
   end
-  
+
   #                           0                  1             2              3                4            5         6              7                   8              9                 10                 11               12                       13
-  let(:vfi_header) { ["broker_reference", "Entry Number", "PO Numbers", "Part Numbers", "Product Lines", "Vendors", "MIDs", "Countries of Origin", "Master Bills", "House Bills", "Container Numbers", "Release Date", "Link to Jira issue", "Link to VFI Track entry"] }
+  let(:vfi_header) { ["broker_reference", "Entry Number", "PO Numbers", "Part Numbers", "Product Lines", "Vendors", "MIDs", "Countries of Origin", "Master Bills", "House Bills", "Container Numbers", "Release Date", "Link to Jira issue", "Link to Entry"] }
   let(:vfi_result) do
     [["brok ref", "ent num", "po nums", "part nums", "prod lines", "vend names", "mfids", "coo", "mbols", "hbols", "container nums", now, "URL", 1],
      ["brok ref2", "ent num2", "po nums2", "part nums2", "prod lines2", "vend names2", "mfids2", "coo2", "mbols2", "hbols2", "container nums2", now, "URL", 2]]
   end
   #                               0              1           2         3             4              5              6             7           8           9             10             11                12                 13                14              15            16              17             18       19              20                 21              22               23                 24               25                       26
-  let (:combined_header) { ['Issue Number', 'Issue Type', 'Status', 'Summary', 'Order Number(s)', 'Part Number(s)', 'Description', 'Comments', 'Assignee', 'Reporter', 'Shipment ETA', 'Issue Created', 'Issue Resolved', 'Broker Reference', "Entry Number", "PO Numbers", "Part Numbers", "Product Lines", "Vendors", "MIDs", "Countries of Origin", "Master Bills", "House Bills", "Container Numbers", "Release Date", "Link to Jira issue", "Link to VFI Track entry"] }
+  let (:combined_header) { ['Issue Number', 'Issue Type', 'Status', 'Summary', 'Order Number(s)', 'Part Number(s)', 'Description', 'Comments', 'Assignee', 'Reporter', 'Shipment ETA', 'Issue Created', 'Issue Resolved', 'Broker Reference', "Entry Number", "PO Numbers", "Part Numbers", "Product Lines", "Vendors", "MIDs", "Countries of Origin", "Master Bills", "House Bills", "Container Numbers", "Release Date", "Link to Jira issue", "Link to Entry"] }
 
   let(:combined_result) do
      [['issue num2', 'issue type2', 'stat2', 'summary2', 'ord num2', 'part num2', 'descr2', 'issue id 2', 'assignee2', 'reporter2', 'shipment eta2', now, now, 'brok ref2', "ent num2", "po nums2", "part nums2", "prod lines2", "vend names2", "mfids2", "coo2", "mbols2", "hbols2", "container nums2", now, 'pkey2', 2],
@@ -43,14 +43,14 @@ describe OpenChain::Report::TicketTrackingReport do
         expect(described_class).to receive(:get_project_keys).with(user).and_return ["FOO"]
         expect(described_class.permission? user).to eq true
       end
-      
+
       it "doesn't allow users not belonging to a company with a ticketing_system_code" do
         expect(described_class).to receive(:get_project_keys).with(user).and_return []
         expect(described_class.permission? user).to eq false
       end
     end
 
-    it "doesn't allow users who can't view entries" do    
+    it "doesn't allow users who can't view entries" do
       expect(user).to receive(:view_entries?).and_return false
       allow(described_class).to receive(:get_project_keys).with(user).and_return ["FOO"]
       expect(described_class.permission? user).to eq false
@@ -89,7 +89,7 @@ describe OpenChain::Report::TicketTrackingReport do
     let!(:co) { Factory(:company, ticketing_system_code: "BAR", linked_companies: [linked]) }
     let!(:other_co) { Factory(:company, ticketing_system_code: "BAZ") }
     let!(:user) { Factory(:user, company: co)}
-    
+
     it "returns codes of all companies as well as default list for master user" do
       co.update_attributes(master: true)
       expect(described_class.get_project_keys user).to eq ["BAR", "BAZ", "DEMO", "FOO", "IT", "TP"]
@@ -123,16 +123,16 @@ describe OpenChain::Report::TicketTrackingReport do
   end
 
   describe "vfi_query" do
-    let!(:ent) { Factory(:entry, entry_number: "ent num", broker_reference: "brok ref", po_numbers: "po nums", part_numbers: "part nums", 
-                          product_lines: "prod lines", vendor_names: "vend names", mfids: "mfids", origin_country_codes: "coo", 
-                          master_bills_of_lading: "mbols", house_bills_of_lading: "hbols", container_numbers: "container nums", 
+    let!(:ent) { Factory(:entry, entry_number: "ent num", broker_reference: "brok ref", po_numbers: "po nums", part_numbers: "part nums",
+                          product_lines: "prod lines", vendor_names: "vend names", mfids: "mfids", origin_country_codes: "coo",
+                          master_bills_of_lading: "mbols", house_bills_of_lading: "hbols", container_numbers: "container nums",
                           release_date: now, import_country_id: us.id)}
 
     it "returns expected results" do
       r = ActiveRecord::Base.connection.execute(report.vfi_query ["brok ref"])
       expect(r.fields).to eq vfi_header
       expect(r.count).to eq 1
-      expect(r.first).to eq ["brok ref", "ent num", "po nums", "part nums", "prod lines", "vend names", "mfids", "coo", "mbols", "hbols", 
+      expect(r.first).to eq ["brok ref", "ent num", "po nums", "part nums", "prod lines", "vend names", "mfids", "coo", "mbols", "hbols",
                              "container nums", now, "URL", ent.id]
     end
 

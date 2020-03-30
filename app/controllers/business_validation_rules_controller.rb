@@ -71,11 +71,11 @@ class BusinessValidationRulesController < ApplicationController
       end
 
       emails = params[:business_validation_rule][:notification_recipients]
-      if emails.present? && !email_list_valid?(params[:business_validation_rule][:notification_recipients])        
+      if emails.present? && !email_list_valid?(params[:business_validation_rule][:notification_recipients])
         render json: {error: "Could not save due to invalid email."}, status: 500
         return
       end
-      
+
       if params[:business_validation_rule][:search_criterions].present?
         params[:business_validation_rule][:search_criterions].each { |search_criterion| add_search_criterion_to_rule(@bvr, search_criterion) }
       end
@@ -114,7 +114,7 @@ class BusinessValidationRulesController < ApplicationController
         uploader = OpenChain::BusinessRulesCopier::RuleUploader
         cf = CustomFile.create!(file_type: uploader.to_s, uploaded_by: current_user, attached: file)
         CustomFile.delay.process(cf.id, current_user.id, bvt_id: bvt_id)
-        add_flash(:notices, "Your file is being processed. You'll receive a VFI Track message when it completes.")
+        add_flash(:notices, "Your file is being processed. You'll receive a " + MasterSetup.application_name + " message when it completes.")
         redirect_to business_validation_template_path(bvt_id)
       end
     }
@@ -124,7 +124,7 @@ class BusinessValidationRulesController < ApplicationController
     admin_secure {
       destination_template_id = params[:new_template_id]
       OpenChain::BusinessRulesCopier.delay.copy_rule(current_user.id, params[:id].to_i, destination_template_id.to_i)
-      add_flash(:notices, "Business Validation Rule is being copied. You'll receive a VFI Track message when it completes.")
+      add_flash(:notices, "Business Validation Rule is being copied. You'll receive a " + MasterSetup.application_name + " message when it completes.")
       redirect_to edit_business_validation_template_path(destination_template_id)
     }
   end

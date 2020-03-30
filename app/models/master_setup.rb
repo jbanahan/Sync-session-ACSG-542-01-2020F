@@ -376,4 +376,9 @@ class MasterSetup < ActiveRecord::Base
   def self.server_user_account
     "ubuntu"
   end
+
+  # Returns the name for the applicaiton since it has become ever changing
+  def self.application_name
+    "Maersk Customs Navigator"
+  end
 end

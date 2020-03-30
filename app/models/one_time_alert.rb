@@ -92,7 +92,7 @@ class OneTimeAlert < ActiveRecord::Base
   def log obj, time
     self.log_entries.create! alertable: obj, logged_at: time, reference_fields: reference_fields
   end
-  
+
   private
 
   def reference_fields
@@ -106,7 +106,7 @@ class OneTimeAlert < ActiveRecord::Base
 
   def body_preamble obj
     notification_string = "#{label(obj)}: #{reference_fields}"
-    "<p>A One Time Alert was triggered from VFI Track for #{notification_string}</p>"
+    "<p>A One Time Alert was triggered from #{MasterSetup.application_name} for #{notification_string}</p>"
   end
 
   def label obj

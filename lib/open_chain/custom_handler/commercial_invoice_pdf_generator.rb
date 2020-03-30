@@ -6,8 +6,8 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
 
   ADDRESS ||= Struct.new :name, :line_1, :line_2, :line_3
 
-  # The PDF has much more data on it, but at this point, only data for a specific purpose is being 
-  # added.  Only fields the generator knows how to print are present.  
+  # The PDF has much more data on it, but at this point, only data for a specific purpose is being
+  # added.  Only fields the generator knows how to print are present.
   INVOICE ||= Struct.new :control_number, :exporter_reference, :exporter_address, :consignee_address, :terms, :origin, :destination,
                 :local_carrier, :export_carrier, :port_of_entry, :lading_location, :export_date, :related, :duty_for, :date_of_sale,
                 :total_packages, :total_gross_weight, :description_of_goods, :export_reason, :mode_of_transport, :containerized, :employee,
@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
 
   def self.render_content file, invoice
     pdf_template = nil
-    # CombinePDF isn't a huge fan of the template we're using 
+    # CombinePDF isn't a huge fan of the template we're using
     # It spits out some warnings that are basically useless, so silence them.
     # No need to have the appear in our stderr log (or on rspec test output)
     # The PDF still works fine.
@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
 
     pdf_content.pages.each {|page| page << pdf_template }
 
-    file << pdf_content.to_pdf(subject: "Commercial Invoice", producer: "VFI Track")
+    file << pdf_content.to_pdf(subject: "Commercial Invoice", producer: "#{MasterSetup.application_name}")
 
     nil
   end
@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
     d = pdf_document(document_options: {margin: [0, 0, 0, 0]})
 
     d.font_size = 12
-    d.font("Courier") do 
+    d.font("Courier") do
       text_box d, invoice.control_number, [315, 753], 191, 13
       text_box d, invoice.exporter_reference, [509, 753], 83, 13
       text_box d, "1", [533, 735], 10, 13
@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
       text_box(d, "X", agent_coords, 10, 10) if agent_coords
       text_box d, invoice.invoice_total, [509, 179], 80, 10, align: :right
     end
-    
+
 
     d.render
   end
@@ -105,7 +105,7 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
       [470.5, 515]
     when "CONSIGNEE"
       [535.5, 515]
-    else 
+    else
       nil
     end
   end
@@ -144,4 +144,4 @@ module OpenChain; module CustomHandler; class CommercialInvoicePdfGenerator
     end
   end
 
-end; end; end;  
+end; end; end;

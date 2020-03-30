@@ -293,12 +293,12 @@ describe BusinessValidationRulesController do
       expect(CustomFile).to receive(:process).with(1, user.id, bvt_id: '2')
       put :upload, attached: file, business_validation_template_id: 2
       expect(response).to redirect_to business_validation_template_path(2)
-      expect(flash[:notices]).to include "Your file is being processed. You'll receive a VFI Track message when it completes."
+      expect(flash[:notices]).to include "Your file is being processed. You'll receive a " + MasterSetup.application_name + " message when it completes."
     end
 
     it "only allows admin" do
       user = Factory(:user)
-      sign_in_as user     
+      sign_in_as user
       expect(CustomFile).to_not receive(:create!)
     end
 
@@ -315,12 +315,12 @@ describe BusinessValidationRulesController do
     let(:bvru) { Factory(:business_validation_rule) }
 
     before { sign_in_as user }
-    
+
     it "copies business rule to specified template" do
       expect(OpenChain::BusinessRulesCopier).to receive(:copy_rule).with(user.id, bvru.id, bvt.id)
       post :copy, business_validation_template_id: bvt.id, id: bvru.id, new_template_id: bvt.id
       expect(response).to redirect_to(edit_business_validation_template_path bvt)
-      expect(flash[:notices]).to include "Business Validation Rule is being copied. You'll receive a VFI Track message when it completes."
+      expect(flash[:notices]).to include "Business Validation Rule is being copied. You'll receive a " + MasterSetup.application_name + " message when it completes."
     end
 
     it "requires admin" do

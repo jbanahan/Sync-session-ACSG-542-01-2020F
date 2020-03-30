@@ -90,13 +90,13 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
       handler.send_xl u, {"k1" => "foo", "k2" => "bar", "k3" => nil}, "foo.xls"
     end
   end
-  
+
   context "XlClient" do
     let(:xl_client) { instance_double "XlClient" }
 
     describe "process" do
       let(:u) { Factory(:user, email: "tufnel@stonehenge.biz") }
-      
+
       it "adds URLs to file, saves it to S3, and emails it" do
         urls = instance_double "Hash"
         expect(cf).to receive :path
@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
         r = [nil,nil,"inv_num"]
         r2 = [nil,nil,"inv_num_2"]
         r3 = [nil,nil,"inv_num_3"] # this one doesn't get written since it's missing from the hash
-        expect(xl_client).to receive(:set_cell).with 0, 6, 16, "VFI Track Entry Link"
+        expect(xl_client).to receive(:set_cell).with 0, 6, 16, MasterSetup.application_name + " Entry Link"
         expect(xl_client).to receive(:all_row_values).with(starting_row_number: 7).and_yield(r).and_yield(r2).and_yield(r3)
         expect(xl_client).to receive(:set_cell).with 0, 7, 16, "Web Link", "http://entry_link"
         expect(xl_client).to receive(:set_cell).with 0, 8, 16, "Web Link", "http://entry_link_2"
