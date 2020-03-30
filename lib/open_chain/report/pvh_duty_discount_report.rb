@@ -56,14 +56,16 @@ module OpenChain; module Report; class PvhDutyDiscountReport
   end
 
   def run_duty_discount_report settings, current_fiscal_month:nil
-    fiscal_date_start, fiscal_date_end, fiscal_month = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month
+    quarterly = (settings["quarterly"].presence || false).to_s.to_boolean
+    fiscal_date_start, fiscal_date_end, fiscal_month, fiscal_year = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month, quarterly
 
     workbook = nil
     distribute_reads do
       workbook = generate_report fiscal_date_start, fiscal_date_end
     end
 
-    file_name = "PVH_Duty_Discount_US_Fiscal_#{fiscal_month}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
+    filename_fiscal_descriptor = quarterly ? "#{fiscal_year}-Quarter-#{((fiscal_month / 4) + 1)}" : "#{fiscal_year}-#{fiscal_month.to_s.rjust(2, "0")}"
+    file_name = "PVH_Duty_Discount_US_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH Duty Discount", file_name: "#{file_name}" do |temp|
         OpenMailer.send_simple_html(settings['email'], "PVH Duty Discount Report", "The duty discount report is attached, covering #{fiscal_date_start} to #{fiscal_date_end}.", temp).deliver_now
@@ -76,7 +78,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
   private
     # Pull month start/end values from the settings, or default to the start/end dates of the fiscal month
     # immediately preceding  the current fiscal month if none are provided.
-    def get_fiscal_month_dates fiscal_month_choice, current_fiscal_month
+    def get_fiscal_month_dates fiscal_month_choice, current_fiscal_month, quarterly
       pvh = Company.where(system_code:"PVH").first
       # Extremely unlikely exception.
       raise "PVH company account could not be found." unless pvh
@@ -85,17 +87,22 @@ module OpenChain; module Report; class PvhDutyDiscountReport
         fm = fm&.back 1
         # This should not be possible unless the FiscalMonth table has not been kept up to date or is misconfigured.
         raise "Fiscal month to use could not be determined." unless fm
-        fiscal_month_choice = "#{fm.year}-#{fm.month_number.to_s.rjust(2, "0")}"
       else
         fiscal_year, fiscal_month = fiscal_month_choice.scan(/\w+/).map { |x| x.to_i }
         fm = FiscalMonth.where(company_id: pvh.id, year: fiscal_year, month_number: fiscal_month).first
         # This should not be possible since the screen dropdown contents are based on the FiscalMonth table.
         raise "Fiscal month #{fiscal_month_choice} not found." unless fm
       end
+
       # These dates are inclusive (i.e. entries with fiscal dates occurring on them should be matched up with this month).
-      start_date = fm.start_date.strftime("%Y-%m-%d")
-      end_date = fm.end_date.strftime("%Y-%m-%d")
-      [start_date, end_date, fiscal_month_choice]
+      if quarterly
+        start_date, end_date = self.class.get_fiscal_quarter_start_end_dates fm
+        raise "Quarter boundaries could not be determined." if (!start_date || !end_date)
+      else
+        start_date = fm.start_date
+        end_date = fm.end_date
+      end
+      [start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), fm.month_number, fm.year]
     end
 
     def generate_report fiscal_date_start, fiscal_date_end
@@ -136,10 +143,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
           # Yes, we are displaying the arrival date as the ETA date instead of the entry's ETA date.  Ops weirdness.
           # It's best not to dwell on it.
           d.eta_date = result_set_row['arrival_date']
-          d.vendor_invoice_value = (result_set_row['contract_amount'] || BigDecimal.new(0)).round(2)
-          if d.vendor_invoice_value == 0
-            d.vendor_invoice_value = (result_set_row['value'] || BigDecimal.new(0)).round(2)
-          end
+          d.vendor_invoice_value = (result_set_row['value'] || BigDecimal.new(0)).round(2)
           d.duty_assist_amount = (result_set_row['add_to_make_amount'] || BigDecimal.new(0)).round(2)
           d.dutiable_value = entered_value
           d.dutiable_value_7501 = result_set_row['entered_value_7501'].to_i
@@ -263,19 +267,38 @@ module OpenChain; module Report; class PvhDutyDiscountReport
 
     def generate_summary_sheet wb, entry_hash
       sheet = wb.create_sheet "Summary", headers: ["Customs Entry Number", "ETA", "Vendor Invoice Value",
-                                                   "Duty Assist Amount", "Dutiable Value", "Duty Difference",
-                                                   "Duty Savings", "Mode of Transport"]
+                                                   "Duty Assist Amount", "Duty Adj Amount", "Dutiable Value",
+                                                   "Duty Difference", "Duty Savings", "Mode of Transport"]
 
       entry_hash.each_value do |row|
         values = [row.entry_number, row.eta_date, row.vendor_invoice_value, row.duty_assist_amount,
-                  row.dutiable_value_7501, row.total_duty_difference, row.total_duty_savings, convert_transport_mode(row.transport_mode)]
-        styles = [nil, :date, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
+                  row.total_duty_adj_amount, row.dutiable_value_7501, row.total_duty_difference,
+                  row.total_duty_savings, convert_transport_mode(row.transport_mode)]
+        styles = [nil, :date, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
         wb.add_body_row sheet, values, styles: styles
       end
 
-      wb.set_column_widths sheet, *Array.new(7, 20)
+      # Totals row
+      values = ["Grand Totals", nil, make_sum_formula("C", entry_hash.size), make_sum_formula("D", entry_hash.size), make_sum_formula("E", entry_hash.size), make_sum_formula("F", entry_hash.size), make_sum_formula("G", entry_hash.size), make_sum_formula("H", entry_hash.size), nil]
+      styles = [:bold, nil, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
+      wb.add_body_row sheet, values, styles: styles
+
+      # Entry count rows
+      styles = [:bold, :integer]
+      wb.add_body_row sheet, ["Total Entries (SEA)", make_entry_count_formula("SEA", entry_hash.size)], styles: styles
+      wb.add_body_row sheet, ["Total Entries (AIR)", make_entry_count_formula("AIR", entry_hash.size)], styles: styles
+
+      wb.set_column_widths sheet, *Array.new(9, 20)
 
       sheet
+    end
+
+    def make_sum_formula column, entry_count
+      entry_count > 0 ? "=SUBTOTAL(9, #{column}2:#{column}#{entry_count+1})" : BigDecimal.new("0")
+    end
+
+    def make_entry_count_formula transport_mode, entry_count
+      entry_count > 0 ? "=COUNTIF(I2:I#{entry_count+1}, \"#{transport_mode}\")" : 0
     end
 
     def assign_styles wb
@@ -327,10 +350,20 @@ module OpenChain; module Report; class PvhDutyDiscountReport
             ent.customer_number = 'PVH' AND
             ent.fiscal_date >= '#{fiscal_date_start}' AND 
             ent.fiscal_date <= '#{fiscal_date_end}' AND 
+            (cil.first_sale = false OR cil.first_sale IS NULL) AND 
             (
-              (cil.contract_amount IS NOT NULL AND cil.contract_amount > 0) OR
-              (cil.non_dutiable_amount IS NOT NULL AND cil.non_dutiable_amount > 0)
-            )  
+              (
+                ent.transport_mode_code IN (#{Entry.get_transport_mode_codes_us_ca("SEA").join(",")}) AND 
+                cil.non_dutiable_amount IS NOT NULL AND 
+                cil.non_dutiable_amount != 0
+              ) OR (
+                ent.transport_mode_code IN (#{Entry.get_transport_mode_codes_us_ca("AIR").join(",")}) AND 
+                cil.freight_amount IS NOT NULL AND 
+                cil.freight_amount != 0
+              ) OR (
+                ent.transport_mode_code NOT IN (#{(Entry.get_transport_mode_codes_us_ca("AIR") + Entry.get_transport_mode_codes_us_ca("SEA")).join(",")}) 
+              )
+            )
           ORDER BY
             ent.entry_number, 
             ci.invoice_number, 

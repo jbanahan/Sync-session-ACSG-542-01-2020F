@@ -114,4 +114,24 @@ describe OpenChain::FiscalCalendarSchedulingSupport do
       expect {|b| subject.run_if_configured(config, &b)}.not_to yield_control
     end
   end
+
+  describe "get_fiscal_quarter_start_end_dates" do
+    let(:company) { Factory(:company) }
+
+    it "gets quarter start end dates" do
+      fm_1 = FiscalMonth.create!(year:2025, month_number:1, start_date:Date.new(2025,4,5), end_date:Date.new(2025,5,4), company_id:company.id)
+      fm_2 = FiscalMonth.create!(year:2025, month_number:2, start_date:Date.new(2025,5,5), end_date:Date.new(2025,6,4), company_id:company.id)
+      fm_3 = FiscalMonth.create!(year:2025, month_number:3, start_date:Date.new(2025,6,5), end_date:Date.new(2026,7,4), company_id:company.id)
+
+      expect(subject.get_fiscal_quarter_start_end_dates fm_1).to eq [fm_1.start_date, fm_3.end_date]
+      expect(subject.get_fiscal_quarter_start_end_dates fm_2).to eq [fm_1.start_date, fm_3.end_date]
+      expect(subject.get_fiscal_quarter_start_end_dates fm_3).to eq [fm_1.start_date, fm_3.end_date]
+    end
+
+    it "handles incomplete fiscal calendar" do
+      fm_2 = FiscalMonth.create!(year:2025, month_number:2, start_date:Date.new(2025,5,5), end_date:Date.new(2025,6,4), company_id:company.id)
+
+      expect(subject.get_fiscal_quarter_start_end_dates fm_2).to eq [nil, nil]
+    end
+  end
 end

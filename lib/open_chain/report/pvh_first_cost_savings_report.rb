@@ -54,14 +54,16 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
   end
 
   def run_first_cost_savings_report settings, current_fiscal_month:nil
-    fiscal_date_start, fiscal_date_end, fiscal_month = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month
+    quarterly = (settings["quarterly"].presence || false).to_s.to_boolean
+    fiscal_date_start, fiscal_date_end, fiscal_month, fiscal_year = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month, quarterly
 
     workbook = nil
     distribute_reads do
       workbook = generate_report fiscal_date_start, fiscal_date_end
     end
 
-    file_name = "PVH_Cost_Savings_for_Fiscal_#{fiscal_month}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
+    filename_fiscal_descriptor = quarterly ? "#{fiscal_year}-Quarter-#{((fiscal_month / 4) + 1)}" : "#{fiscal_year}-#{fiscal_month.to_s.rjust(2, "0")}"
+    file_name = "PVH_Cost_Savings_for_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH First Cost Savings", file_name: "#{file_name}" do |temp|
         OpenMailer.send_simple_html(settings['email'], "PVH First Cost Savings Report", "The first cost savings report is attached, covering #{fiscal_date_start} to #{fiscal_date_end}.", temp).deliver_now
@@ -74,7 +76,7 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
   private
     # Pull month start/end values from the settings, or default to the start/end dates of the fiscal month
     # immediately preceding  the current fiscal month if none are provided.
-    def get_fiscal_month_dates fiscal_month_choice, current_fiscal_month
+    def get_fiscal_month_dates fiscal_month_choice, current_fiscal_month, quarterly
       pvh = Company.where(system_code:"PVH").first
       # Extremely unlikely exception.
       raise "PVH company account could not be found." unless pvh
@@ -83,17 +85,22 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
         fm = fm&.back 1
         # This should not be possible unless the FiscalMonth table has not been kept up to date or is misconfigured.
         raise "Fiscal month to use could not be determined." unless fm
-        fiscal_month_choice = "#{fm.year}-#{fm.month_number.to_s.rjust(2, "0")}"
       else
         fiscal_year, fiscal_month = fiscal_month_choice.scan(/\w+/).map { |x| x.to_i }
         fm = FiscalMonth.where(company_id: pvh.id, year: fiscal_year, month_number: fiscal_month).first
         # This should not be possible since the screen dropdown contents are based on the FiscalMonth table.
         raise "Fiscal month #{fiscal_month_choice} not found." unless fm
       end
+
       # These dates are inclusive (i.e. entries with fiscal dates occurring on them should be matched up with this month).
-      start_date = fm.start_date.strftime("%Y-%m-%d")
-      end_date = fm.end_date.strftime("%Y-%m-%d")
-      [start_date, end_date, fiscal_month_choice]
+      if quarterly
+        start_date, end_date = self.class.get_fiscal_quarter_start_end_dates fm
+        raise "Quarter boundaries could not be determined." if (!start_date || !end_date)
+      else
+        start_date = fm.start_date
+        end_date = fm.end_date
+      end
+      [start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), fm.month_number, fm.year]
     end
 
     def generate_report fiscal_date_start, fiscal_date_end
@@ -162,7 +169,7 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
     def get_po_line_values result_set_row, shipments_hash
       # Involving a hash because there could be many lines per entry, and the shipments look-up is entry-level.
       transport_mode_code = result_set_row['transport_mode_code']
-      master_bills = result_set_row['ent_master_bills_of_lading']
+      master_bills = result_set_row['master_bills_of_lading']
       house_bills = result_set_row['house_bills_of_lading']
       key = [transport_mode_code, master_bills, house_bills]
       if shipments_hash.has_key? key
@@ -265,7 +272,6 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
           factory_company.name AS factory_name, 
           cil.po_number, 
           cont.container_number, 
-          ci.master_bills_of_lading, 
           ent.transport_mode_code, 
           cil.quantity, 
           cil.country_origin_code, 
@@ -273,7 +279,7 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
           cil.contract_amount, 
           cil.part_number, 
           cil.id AS commercial_invoice_line_id, 
-          ent.master_bills_of_lading as ent_master_bills_of_lading, 
+          ent.master_bills_of_lading, 
           ent.house_bills_of_lading, 
           ent.fcl_lcl 
         FROM 

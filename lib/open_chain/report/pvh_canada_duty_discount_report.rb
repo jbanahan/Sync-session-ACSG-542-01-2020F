@@ -9,34 +9,40 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
 
   PvhReportData ||= Struct.new(:entry_number, :invoice_number, :po_number, :shipment_number, :po_line_number,
                                :release_date, :eta_date, :currency, :exchange_rate, :vendor_invoice_value,
-                               :entered_value, :duty_reductions, :duty_additions, :dutiable_value,
+                               :entered_value, :duty_deductions, :duty_assist_amount, :dutiable_value,
                                :duty_rate_pct, :first_cost, :units_shipped, :hts_code, :mode_of_transport,
-                               :total_duty_adj_amount, :total_duty_savings, :total_duty_difference, :rows) do
+                               :total_duty_savings, :total_duty_difference, :total_dutiable_value, :rows) do
     def initialize
       self.vendor_invoice_value ||= 0.0
-      self.duty_reductions ||= 0.0
-      self.duty_additions ||= 0.0
-      self.dutiable_value ||= 0.0
-      self.total_duty_adj_amount ||= 0.0
+      self.duty_deductions ||= 0.0
+      self.duty_assist_amount ||= 0.0
+      self.total_dutiable_value ||= 0.0
       self.total_duty_savings ||= 0.0
       self.total_duty_difference ||= 0.0
       self.rows ||= []
     end
 
-    def duty_adj_amount
-      # We're just duping the Duty Reductions field in this field.  Has to do with PVH not wanting to update
-      # macros.
-      self.duty_reductions
+    def duty_savings
+      # Duty savings is only to be calculated if the duty deduction is no more than a quarter of the vendor
+      # invoice value.  If that's not the case, savings is deemed to be zero.  (This decree came from PVH.
+      # The "why" is unclear, but probably ties into some customs regulation.)
+      if self.vendor_invoice_value * BigDecimal.new(".25") >= self.duty_deductions.abs
+        # PVH wants this to be displayed as a positive number.
+        (self.duty_deductions.abs * (self.duty_rate_pct / BigDecimal.new(100))).round(2).abs
+      else
+        BigDecimal.new(0)
+      end
     end
 
-    def duty_savings
-      (self.duty_reductions * (self.duty_rate_pct / BigDecimal.new(100))).round(2)
+    def dutiable_value
+      # Duty deductions is a negative number.
+      self.vendor_invoice_value + self.duty_assist_amount + self.duty_deductions
     end
 
     def duty_difference
-      # We're just duping the Duty Reductions field in this field.  Has to do with PVH not wanting to update
-      # macros.
-      self.duty_reductions
+      # We're just duping the Duty Deductions field in this field, then making the negative value positive.
+      # Has to do with PVH not wanting to update macros.
+      self.duty_deductions.abs
     end
   end
 
@@ -56,14 +62,16 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
   end
 
   def run_duty_discount_report settings, current_fiscal_month:nil
-    fiscal_date_start, fiscal_date_end, fiscal_month = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month
+    quarterly = (settings["quarterly"].presence || false).to_s.to_boolean
+    fiscal_date_start, fiscal_date_end, fiscal_month, fiscal_year = get_fiscal_month_dates settings['fiscal_month'], current_fiscal_month, quarterly
 
     workbook = nil
     distribute_reads do
       workbook = generate_report fiscal_date_start, fiscal_date_end
     end
 
-    file_name = "PVHCANADA_Duty_Discount_Fiscal_#{fiscal_month}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
+    filename_fiscal_descriptor = quarterly ? "#{fiscal_year}-Quarter-#{((fiscal_month / 4) + 1)}" : "#{fiscal_year}-#{fiscal_month.to_s.rjust(2, "0")}"
+    file_name = "PVHCANADA_Duty_Discount_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH Duty Discount", file_name: "#{file_name}" do |temp|
         OpenMailer.send_simple_html(settings['email'], "PVH Canada Duty Discount Report", "The duty discount report is attached, covering #{fiscal_date_start} to #{fiscal_date_end}.", temp).deliver_now
@@ -76,7 +84,7 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
   private
     # Pull month start/end values from the settings, or default to the start/end dates of the fiscal month
     # immediately preceding  the current fiscal month if none are provided.
-    def get_fiscal_month_dates fiscal_month_choice, current_fiscal_month
+    def get_fiscal_month_dates fiscal_month_choice, current_fiscal_month, quarterly
       pvh = Company.where(system_code:"PVHCANADA").first
       # Extremely unlikely exception.
       raise "PVH company account could not be found." unless pvh
@@ -85,17 +93,22 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
         fm = fm&.back 1
         # This should not be possible unless the FiscalMonth table has not been kept up to date or is misconfigured.
         raise "Fiscal month to use could not be determined." unless fm
-        fiscal_month_choice = "#{fm.year}-#{fm.month_number.to_s.rjust(2, "0")}"
       else
         fiscal_year, fiscal_month = fiscal_month_choice.scan(/\w+/).map { |x| x.to_i }
         fm = FiscalMonth.where(company_id: pvh.id, year: fiscal_year, month_number: fiscal_month).first
         # This should not be possible since the screen dropdown contents are based on the FiscalMonth table.
         raise "Fiscal month #{fiscal_month_choice} not found." unless fm
       end
+
       # These dates are inclusive (i.e. entries with fiscal dates occurring on them should be matched up with this month).
-      start_date = fm.start_date.strftime("%Y-%m-%d")
-      end_date = fm.end_date.strftime("%Y-%m-%d")
-      [start_date, end_date, fiscal_month_choice]
+      if quarterly
+        start_date, end_date = self.class.get_fiscal_quarter_start_end_dates fm
+        raise "Quarter boundaries could not be determined." if (!start_date || !end_date)
+      else
+        start_date = fm.start_date
+        end_date = fm.end_date
+      end
+      [start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"), fm.month_number, fm.year]
     end
 
     def generate_report fiscal_date_start, fiscal_date_end
@@ -134,13 +147,12 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
         d.exchange_rate = result_set_row['exchange_rate']
         d.vendor_invoice_value = (result_set_row['value'] || BigDecimal.new(0)).round(2)
         d.entered_value = (result_set_row['entered_value'] || BigDecimal.new(0)).round(2)
-        d.duty_reductions = (result_set_row['miscellaneous_discount'] || BigDecimal.new(0)).round(2)
-        if d.duty_reductions > 0
+        d.duty_deductions = (result_set_row['miscellaneous_discount'] || BigDecimal.new(0)).round(2)
+        if d.duty_deductions > 0
           # These values should always be positive in the database, but PVH wants them displayed as negative.
-          d.duty_reductions = -d.duty_reductions
+          d.duty_deductions = -d.duty_deductions
         end
-        d.duty_additions = (result_set_row['add_to_make_amount'] || BigDecimal.new(0)).round(2)
-        d.dutiable_value = d.vendor_invoice_value + d.duty_additions + d.duty_reductions
+        d.duty_assist_amount = (result_set_row['add_to_make_amount'] || BigDecimal.new(0)).round(2)
         d.duty_rate_pct = ((result_set_row['duty_rate'] || BigDecimal.new(0)) * BigDecimal.new(100)).round(2)
         d.first_cost = (result_set_row['unit_price'] || BigDecimal.new(0)).round(2)
         d.units_shipped = result_set_row['quantity']
@@ -180,30 +192,26 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
     end
 
     # Condenses the rows in the array together by entry number, returning them as a hash (containing sub-arrays).
-    # Also limits the report to rows with duty savings.  Any rows with no duty savings are effectively thrown away by
-    # this method.
     def summarize_by_entry_number data_arr
       entry_hash = {}
       data_arr.each do |row|
-        if row.duty_savings
-          entry_data = entry_hash[row.entry_number]
-          if entry_data.nil?
-            entry_data = PvhReportData.new
-            entry_hash[row.entry_number] = entry_data
+        entry_data = entry_hash[row.entry_number]
+        if entry_data.nil?
+          entry_data = PvhReportData.new
+          entry_hash[row.entry_number] = entry_data
 
-            # This data should be consistent through all rows related to the same entry.
-            entry_data.entry_number = row.entry_number
-            entry_data.eta_date = row.eta_date
-          end
-          entry_data.vendor_invoice_value += row.vendor_invoice_value
-          entry_data.duty_reductions += row.duty_reductions
-          entry_data.duty_additions += row.duty_additions
-          entry_data.dutiable_value += row.dutiable_value
-          entry_data.total_duty_adj_amount += row.duty_adj_amount
-          entry_data.total_duty_savings += row.duty_savings
-          entry_data.total_duty_difference += row.duty_difference
-          entry_data.rows << row
+          # This data should be consistent through all rows related to the same entry.
+          entry_data.entry_number = row.entry_number
+          entry_data.eta_date = row.eta_date
+          entry_data.mode_of_transport = row.mode_of_transport
         end
+        entry_data.vendor_invoice_value += row.vendor_invoice_value
+        entry_data.duty_deductions += row.duty_deductions
+        entry_data.duty_assist_amount += row.duty_assist_amount
+        entry_data.total_dutiable_value += row.dutiable_value
+        entry_data.total_duty_savings += row.duty_savings
+        entry_data.total_duty_difference += row.duty_difference
+        entry_data.rows << row
       end
       entry_hash
     end
@@ -211,31 +219,30 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
     # There is no need to condense the overall data on this tab.
     def generate_detail_sheet wb, entry_hash
       sheet = wb.create_sheet "Detail", headers: ["Entry Number", "Invoice Number", "PO Number",
-                                                  "Shipment Number", "PO Line", "Release Date", "ETA",
-                                                  "Currency Type", "Exchange Rate",
-                                                  "Vendor Invoice Value (USD)", "Tariff Entered Value (CAD)",
-                                                  "Duty Reductions (USD)", "Duty Additions (USD)",
-                                                  "Dutiable Value (USD)", "Duty Rate PCT",
-                                                  "Duty Adj Amount (USD)", "Duty Savings (USD)", "First Cost (USD)",
-                                                  "Units Shipped", "HTS Code", "Mode of Transport"]
+                                                  "Shipment Number", "PO Line", "HTS Code", "Release Date", "ETA",
+                                                  "Currency Type", "Exchange Rate", "Vendor Invoice Value (USD)",
+                                                  "Tariff Entered Value (CAD)", "Duty Assist Amount (USD)",
+                                                  "Duty Deductions (USD)", "Dutiable Value (USD)",
+                                                  "Duty Savings (USD)", "Duty Rate PCT", "First Cost (USD)",
+                                                  "Units Shipped", "Mode of Transport"]
 
       entry_hash.each_key do |entry_number|
         summary_row = entry_hash[entry_number]
-        styles = [nil, nil, nil, nil, nil, :date, :date, nil, :decimal_4_digits, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :integer, nil, nil]
+        styles = [nil, nil, nil, nil, nil, nil, :date, :date, nil, :decimal_4_digits, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, :integer, nil]
         summary_row.rows.each do |row|
           values = [row.entry_number, row.invoice_number, row.po_number, row.shipment_number, row.po_line_number,
-                    row.release_date, row.eta_date, row.currency, row.exchange_rate, row.vendor_invoice_value,
-                    row.entered_value, row.duty_reductions, row.duty_additions, row.dutiable_value,
-                    row.duty_rate_pct, row.duty_adj_amount, row.duty_savings, row.first_cost,
-                    row.units_shipped, row.hts_code, convert_transport_mode(row.mode_of_transport)]
+                    row.hts_code, row.release_date, row.eta_date, row.currency, row.exchange_rate,
+                    row.vendor_invoice_value, row.entered_value, row.duty_assist_amount, row.duty_deductions,
+                    row.dutiable_value, row.duty_savings, row.duty_rate_pct, row.first_cost, row.units_shipped,
+                    convert_transport_mode(row.mode_of_transport)]
           wb.add_body_row sheet, values, styles: styles
         end
         # Summary row.
-        values = [summary_row.entry_number, nil, nil, nil, nil, nil, nil, nil, nil,
-                  summary_row.vendor_invoice_value, nil, summary_row.duty_reductions,
-                  summary_row.duty_additions, summary_row.dutiable_value, nil, summary_row.total_duty_adj_amount,
+        values = [summary_row.entry_number, nil, nil, nil, nil, nil, nil, nil, nil, nil,
+                  summary_row.vendor_invoice_value, nil, summary_row.duty_assist_amount,
+                  summary_row.duty_deductions, summary_row.total_dutiable_value,
                   summary_row.total_duty_savings, nil, nil, nil, nil]
-        summary_styles = [:bold, nil, nil, nil, nil, nil, nil, nil, nil, :bold_decimal, nil, :bold_decimal, :bold_decimal, :bold_decimal, nil, :bold_decimal, :bold_decimal, nil, nil, nil, nil]
+        summary_styles = [:bold, nil, nil, nil, nil, nil, nil, nil, nil, nil, :bold_decimal, nil, :bold_decimal, :bold_decimal, :bold_decimal, :bold_decimal, nil, nil, nil, nil]
         wb.add_body_row sheet, values, styles: summary_styles
       end
 
@@ -246,19 +253,38 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
 
     def generate_summary_sheet wb, entry_hash
       sheet = wb.create_sheet "Summary", headers: ["Entry Number", "ETA", "Vendor Invoice Value (USD)",
-                                                   "Duty Reductions (USD)", "Duty Additions (USD)", "Dutiable Value (USD)",
-                                                   "Duty Difference (USD)", "Duty Savings (USD)"]
+                                                   "Duty Assist Amount (USD)", "Duty Deductions (USD)",
+                                                   "Dutiable Value (USD)", "Duty Difference (USD)",
+                                                   "Duty Savings (USD)", "Mode of Transport"]
 
       entry_hash.each_value do |row|
-        values = [row.entry_number, row.eta_date, row.vendor_invoice_value, row.duty_reductions, row.duty_additions,
-                  row.dutiable_value, row.total_duty_difference, row.total_duty_savings]
-        styles = [nil, :date, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal]
+        values = [row.entry_number, row.eta_date, row.vendor_invoice_value, row.duty_assist_amount, row.duty_deductions,
+                  row.total_dutiable_value, row.total_duty_difference, row.total_duty_savings, convert_transport_mode(row.mode_of_transport)]
+        styles = [nil, :date, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
         wb.add_body_row sheet, values, styles: styles
       end
 
-      wb.set_column_widths sheet, *Array.new(8, 20)
+      # Totals row
+      values = ["Grand Totals", nil, make_sum_formula("C", entry_hash.size), make_sum_formula("D", entry_hash.size), make_sum_formula("E", entry_hash.size), make_sum_formula("F", entry_hash.size), make_sum_formula("G", entry_hash.size), make_sum_formula("H", entry_hash.size), nil]
+      styles = [:bold, nil, :decimal, :decimal, :decimal, :decimal, :decimal, :decimal, nil]
+      wb.add_body_row sheet, values, styles: styles
+
+      # Entry count rows.
+      styles = [:bold, :integer]
+      wb.add_body_row sheet, ["Total Entries (SEA)", make_entry_count_formula("SEA", entry_hash.size)], styles: styles
+      wb.add_body_row sheet, ["Total Entries (AIR)", make_entry_count_formula("AIR", entry_hash.size)], styles: styles
+
+      wb.set_column_widths sheet, *Array.new(9, 20)
 
       sheet
+    end
+
+    def make_sum_formula column, entry_count
+      entry_count > 0 ? "=SUBTOTAL(9, #{column}2:#{column}#{entry_count+1})" : BigDecimal.new("0")
+    end
+
+    def make_entry_count_formula transport_mode, entry_count
+      entry_count > 0 ? "=COUNTIF(I2:I#{entry_count+1}, \"#{transport_mode}\")" : 0
     end
 
     def assign_styles wb
@@ -312,7 +338,9 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
           WHERE 
             ent.customer_number = 'PVHCANADA' AND
             ent.fiscal_date >= '#{fiscal_date_start}' AND 
-            ent.fiscal_date <= '#{fiscal_date_end}'  
+            ent.fiscal_date <= '#{fiscal_date_end}' AND 
+            cil.miscellaneous_discount IS NOT NULL AND 
+            cil.miscellaneous_discount > 0 
           ORDER BY
             ent.entry_number, 
             ci.invoice_number, 

@@ -386,6 +386,10 @@ module Helpers
               # semblance of one), the TimeWithZone you get back is going to reflect the raw time in the 
               # default timezone (not necessarily the offset you might expect)
               v = Time.zone.parse(v.iso8601)
+            elsif cell.try(:formula)
+              # If we're dealing with a formula cell, for testing purposes, return the formula text.
+              # Cell value will be nil for these cells.
+              v = cell.formula.expression
             end
 
             vals << v

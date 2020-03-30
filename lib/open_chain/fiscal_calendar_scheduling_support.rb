@@ -40,6 +40,14 @@ module OpenChain; module FiscalCalendarSchedulingSupport
     end
   end
 
+  # Gets the starting and ending dates to the fiscal quarter the provided fiscal month belongs to.
+  # It is assumed that fiscal_month is not nil.
+  def get_fiscal_quarter_start_end_dates fiscal_month
+    first_month = FiscalCalculations.get_first_month_of_quarter fiscal_month
+    last_month = FiscalCalculations.get_last_month_of_quarter fiscal_month
+    [first_month&.start_date, last_month&.end_date]
+  end
+
   # This class is here mostly here to avoid polluting the method namespace with methods that the scheduling
   # support uses exclusively (.ie they'd be private methods if modules supported that)
   class FiscalCalculations
@@ -64,11 +72,7 @@ module OpenChain; module FiscalCalendarSchedulingSupport
       # They could very well be the same thing.
       month = fiscal_months.first
       if quarterly
-        while !is_first_month_of_quarter(month) do
-          prev_month = month.back 1
-          return nil if prev_month.nil?
-          month = prev_month
-        end
+        month = get_first_month_of_quarter month
       end
 
       [month, fiscal_date]
@@ -82,6 +86,21 @@ module OpenChain; module FiscalCalendarSchedulingSupport
       else
         Company.where(system_code: importer).first
       end
+    end
+
+    def self.get_first_month_of_quarter month
+      while !is_first_month_of_quarter(month) do
+        prev_month = month.back 1
+        return nil if prev_month.nil?
+        month = prev_month
+      end
+      month
+    end
+
+    def self.get_last_month_of_quarter month
+      first_month = get_first_month_of_quarter month
+      last_month = first_month&.forward 2
+      last_month
     end
 
     # Returns true if the provided month, an integer 1-12, represents the first month of a quarter.
