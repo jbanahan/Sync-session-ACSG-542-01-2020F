@@ -1,3 +1,4 @@
+require 'open_chain/database_utils'
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/csv_excel_parser'
@@ -344,7 +345,19 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     data = HmShipmentData.new
     data.invoice_number = invoice.invoice_number
     data.invoice_date = invoice.invoice_date
-    data.pars_number = DataCrossReference.find_and_mark_next_unused_hm_pars_number
+    # Since this method is running inside of a transaction, if we try and get the next pars number
+    # inside this current transaction, the value that method sets into the cross reference it pulls
+    # the pars number from won't get committed until the outer transaction commits.  If another transaction
+    # is running at the same time and pulls the same value and sets the same update times, it's possible the database 
+    # will try and merge the transaction results and that can result in multiple invoices using the same
+    # PARS number.  Which we don't want.
+    # The solution is to drop back out to a dedicated db connection / transaction just for this call so that
+    # it completes immediately (internally, the find/mark method uses db locking to ensure gated access
+    # to the next record)
+    OpenChain::DatabaseUtils.run_in_separate_connection do 
+      data.pars_number = DataCrossReference.find_and_mark_next_unused_hm_pars_number
+    end
+
     data.weight = invoice.gross_weight
 
     # For every unique PO number, count it as a single carton...for the time being, since cartons,

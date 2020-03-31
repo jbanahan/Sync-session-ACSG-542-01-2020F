@@ -332,11 +332,24 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.find_and_mark_next_unused_hm_pars_number
-    Lock.acquire("HM-Pars-Number") do 
+    key = nil
+    while key.nil? do
+      # Find the next available pars number from the list...
       pars = add_pars_clause(DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER)).order("`key`, id").first
-      pars.update_attributes!(value: "1") if pars
-      pars.try(:key)
+      return nil if pars.nil?
+
+      # Lock it (this will actually reload the data) and will lock the database row
+      Lock.db_lock(pars) do 
+        # It's possible that this record (while waiting for the lock) has actually been used..in which case, try again
+        next unless pars.value.blank?
+
+        # if the value is blank, then we can use this record...mark it as used and then return the number
+        pars.update! value: "1"
+        key = pars.key
+      end
     end
+
+    key
   end
 
   def self.unused_pars_count

@@ -36,6 +36,29 @@ module OpenChain; class DatabaseUtils
     end
   end
 
+  # This method can be used to run code inside a completely separate database 
+  # connection.  This can be useful if you need to "drop out" of 
+  # an existing transaction for any reason and query the "live" data set.
+  def self.run_in_separate_connection wait_for_completion: true
+    raise "A block must be given to utilize this method." unless block_given?
+
+    result = nil
+  
+    # The new thread is needed because ActiveRecord uses a thread local to cache the current connection.
+    # Since we want to ensure a "clean" connection is establish, we're using a 
+    # new, distinct Thread.
+    #
+    # I think this could be managed directly with direct calls to ActiveRecord::Base.connection_pool.checkout / checkin 
+    # but then I'd have to do all the exception handling as well..this just seems simpler. 
+    Thread.new do
+      ActiveRecord::Base.connection_pool.with_connection do
+        result = yield 
+      end
+    end.join
+
+    result
+  end
+
   # Private class methods
   class << self
 

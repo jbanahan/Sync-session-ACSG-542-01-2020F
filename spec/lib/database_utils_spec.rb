@@ -173,4 +173,33 @@ describe OpenChain::DatabaseUtils do
       expect(subject.mysql_deadlock_error_message? "this is a generic error message").to eq false
     end
   end
+
+  describe "run_in_separate_connection" do
+    it "runs code in separate database connection context" do
+      current_connection = ActiveRecord::Base.connection
+      current_connection_count = ActiveRecord::Base.connection_pool.connections.length
+      new_connection = nil
+      result = subject.run_in_separate_connection do 
+        # This ensures that the call above opened up a new distinct connection
+        new_connection = ActiveRecord::Base.connection
+        true
+      end
+
+      expect(current_connection.object_id).not_to eq new_connection.object_id
+      expect(result).to eq true
+    end
+
+    it "utilizes connection pool checkouts" do
+      # This test is kinda hacky, because it's basically just testing distinct method calls are being
+      # executed, but it's important enough to ensure that these exact calls are used (since they
+      # prevent database connection leakages from occuring) that I'm writing this test to ensure
+      # they're utilized as so.
+      
+      expect(ActiveRecord::Base.connection_pool).to receive(:with_connection).and_yield
+      expect(ActiveRecord::Base).to receive(:connection_pool).times.and_call_original
+
+
+      subject.run_in_separate_connection { true }
+    end
+  end
 end
