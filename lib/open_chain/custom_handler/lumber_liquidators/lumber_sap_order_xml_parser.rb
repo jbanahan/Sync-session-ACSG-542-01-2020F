@@ -698,6 +698,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         "D005" => "T/T .5% 15 Days, Net 45",
         "D006" => "T/T 1% 15 Days, Net 45",
         "D007" => "T/T 1% 10 Days, Net 30",
+        "D008" => "T/T 1% 30 Days, Net 31",
         "T120" => "T/T 120 Days",
         "TT90" => "T/T Net 90 days"
       }
