@@ -126,9 +126,9 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
       expect(summary_sheet.length).to eq 3
-      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
-      expect(summary_sheet[1]).to eq ["Vendco", "factory-1", "CN", "PO", "entry-1", 91.41, 77.0, 14.41, 9.87]
-      expect(summary_sheet[2]).to eq ["Vendco-2", "factory-2", "IN", "PO", "entry-2", 72.22, 35, 37.22, 18.61]
+      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
+      expect(summary_sheet[1]).to eq ["Vendco", "factory-1", "CN", "PO-A", "entry-1", 91.41, 77.0, 14.41, 9.87]
+      expect(summary_sheet[2]).to eq ["Vendco-2", "factory-2", "IN", "PO-C", "entry-2", 72.22, 35, 37.22, 18.61]
     end
 
     def make_utc_date year, month, day
@@ -177,8 +177,8 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
       expect(summary_sheet.length).to eq 2
-      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
-      expect(summary_sheet[1]).to eq ["Vendco", "factory-1", "CN", "PO", "entry-1", 20.2, 33, -12.8, -4.26]
+      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
+      expect(summary_sheet[1]).to eq ["Vendco", "factory-1", "CN", "PO-A", "entry-1", 20.2, 33, -12.8, -4.26]
     end
 
     it "generates spreadsheet for the current fiscal quarter" do
@@ -243,9 +243,9 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
       expect(summary_sheet.length).to eq 3
-      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
-      expect(summary_sheet[1]).to eq ["Vendco", "factory-1", "CN", "PO", "entry-1", 40.2, 9.0, 31.2, 10.39]
-      expect(summary_sheet[2]).to eq ["Vendco-2", "factory-2", "IN", "PO", "entry-2", 72.22, 35, 37.22, 18.61]
+      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
+      expect(summary_sheet[1]).to eq ["Vendco", "factory-1", "CN", "PO-A", "entry-1", 40.2, 9.0, 31.2, 10.39]
+      expect(summary_sheet[2]).to eq ["Vendco-2", "factory-2", "IN", "PO-C", "entry-2", 72.22, 35, 37.22, 18.61]
     end
 
     it "errors when provided fiscal month does not exist" do
@@ -320,8 +320,8 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
       expect(summary_sheet.length).to eq 2
-      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
-      expect(summary_sheet[1]).to eq ["Vendco", nil, "CN", "PO", "entry-1", 0.0, 0.0, 0.0, 0.0]
+      expect(summary_sheet[0]).to eq ["Vendor Name", "Factory Name", "Origin", "Co/Div", "Entry Number", "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
+      expect(summary_sheet[1]).to eq ["Vendco", nil, "CN", "PO-A", "entry-1", 0.0, 0.0, 0.0, 0.0]
     end
 
   end

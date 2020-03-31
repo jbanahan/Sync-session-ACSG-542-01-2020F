@@ -12,7 +12,7 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
   PvhReportData ||= Struct.new(:entry_number, :vendor_name, :factory_name, :po_number, :po_line_number, :shipment,
                                :unit_cost, :units_shipped, :origin, :invoice_number, :hts_code,
                                :duty_rate_pct, :vendor_invoice_value, :customs_value, :total_difference,
-                               :total_savings, :base_difference, :customs_entry_date) do
+                               :total_savings, :base_difference, :customs_entry_date, :co_div) do
     def initialize
       self.vendor_invoice_value ||= 0.0
       self.customs_value ||= 0.0
@@ -129,6 +129,7 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
           d.factory_name = result_set_row['factory_name']
           d.po_number = result_set_row['po_number']
           d.po_line_number = po_line_number
+          d.co_div = result_set_row['codiv']
 
           # The value for the "Shipment" field varies by mode of transportation.
           ship_mode = result_set_row['transport_mode_code']
@@ -222,14 +223,16 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
     end
 
     def generate_summary_sheet wb, data_arr
-      sheet = wb.create_sheet "Summary", headers: ["Vendor Name", "Factory Name", "Origin", "Co", "Entry Number",
+      sheet = wb.create_sheet "Summary", headers: ["Vendor Name", "Factory Name", "Origin", "Co/Div", "Entry Number",
                                                    "Vendor Invoice Value", "Customs Value", "Difference", "Savings"]
       entry_hash = {}
       data_arr.each do |row|
-        entry_data = entry_hash[row.entry_number]
+        roll_up_key = "#{row.vendor_name}-#{row.factory_name}-#{row.origin}-#{row.co_div}"
+        entry_hash[row.entry_number] = {} unless entry_hash[row.entry_number].is_a?(Hash)
+        entry_data = entry_hash[row.entry_number][roll_up_key]
         if entry_data.nil?
           entry_data = PvhReportData.new
-          entry_hash[row.entry_number] = entry_data
+          entry_hash[row.entry_number][roll_up_key] = entry_data
 
           # This data should be consistent through all rows related to the same entry.
           entry_data.vendor_name = row.vendor_name
@@ -239,6 +242,7 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
           # field in the condensed entry data object out of convenience.
           entry_data.po_number = row.po_number.try(:[], 0, 2)
           entry_data.entry_number = row.entry_number
+          entry_data.co_div = row.co_div
         end
         entry_data.vendor_invoice_value += row.vendor_invoice_value
         entry_data.customs_value += row.customs_value
@@ -247,10 +251,12 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
       end
 
       entry_hash.each_value do |row|
-        values = [row.vendor_name, row.factory_name, row.origin, row.po_number, row.entry_number,
-                  row.vendor_invoice_value, row.customs_value, row.total_difference, row.total_savings]
-        styles = [nil, nil, nil, nil, nil, :decimal, :decimal, :decimal, :decimal]
-        wb.add_body_row sheet, values, styles: styles
+        row.each_value do |subrow|
+          values = [subrow.vendor_name, subrow.factory_name, subrow.origin, subrow.co_div, subrow.entry_number,
+                    subrow.vendor_invoice_value, subrow.customs_value, subrow.total_difference, subrow.total_savings]
+          styles = [nil, nil, nil, nil, nil, :decimal, :decimal, :decimal, :decimal]
+          wb.add_body_row sheet, values, styles: styles
+        end
       end
 
       wb.set_column_widths sheet, *Array.new(9, 20)
@@ -281,7 +287,8 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
           cil.id AS commercial_invoice_line_id, 
           ent.master_bills_of_lading, 
           ent.house_bills_of_lading, 
-          ent.fcl_lcl 
+          ent.fcl_lcl,
+          LEFT(cil.po_number, 4) AS codiv
         FROM 
           entries AS ent 
           INNER JOIN commercial_invoices AS ci ON 
