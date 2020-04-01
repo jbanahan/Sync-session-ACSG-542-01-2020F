@@ -579,6 +579,7 @@ Factory.define :fiscal_month do |f|
 end
 Factory.define :attachment_archive_setup do |f|
   f.association :company
+  f.output_path ''
 end
 Factory.define :random_audit do |f|
   f.association :user

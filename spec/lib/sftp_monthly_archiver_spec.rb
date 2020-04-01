@@ -54,10 +54,12 @@ describe OpenChain::SftpMonthlyArchiver do
     subject {
       OpenChain::SftpMonthlyArchiver.new({'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'})
     }
-    
+
     let (:attachment) {
-      attachment = entry.attachments.create! attached_file_name: "file.pdf", attachment_type: "Entry Packet", attached_file_size: 100
+      entry.attachments.create! attached_file_name: "file.pdf", attachment_type: "Entry Packet", attached_file_size: 100
     }
+
+    let! (:archive_setup) { entry.importer.create_attachment_archive_setup(:start_date=>1.year.ago) }
 
     let (:archived_attachment) {
       attachment_archives_attachment = archive.attachment_archives_attachments.create! file_name: "archived-file.pdf"

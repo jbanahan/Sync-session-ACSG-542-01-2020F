@@ -27,10 +27,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
   def compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     new_json = get_json_hash(new_bucket, new_path, new_version)
     return unless new_att_id = get_archive_packet_id(new_json)
-    
+
     old_json = get_json_hash old_bucket, old_path, old_version
     old_att_id = get_archive_packet_id old_json
-    
+
     archive = Attachment.where(id: new_att_id).first
     ftp_archive(archive) if archive && new_att_id != old_att_id
   end
@@ -42,7 +42,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
   def ftp_archive archive
     ent = archive.attachable
     cust_no = customer_number(ent)
-    filename = "#{ent.entry_number}_#{archive.attachment_type.gsub(" ", "_")}_#{Time.zone.now.strftime("%Y%m%d%H%M")}.pdf"
+
+    aas = self.class.attachment_archive_setup_for ent
+    if aas.company.attachment_archive_setup.output_path.blank?
+      filename = "#{ent.entry_number}_#{archive.attachment_type.gsub(" ", "_")}_#{Time.zone.now.strftime("%Y%m%d%H%M")}.pdf"
+    else
+      liquid_string = aas.company.attachment_archive_setup.output_path
+      variables = {'attachment' => ActiveRecordLiquidDelegator.new(archive),
+        'archive_attachment' => ActiveRecordLiquidDelegator.new(aas),
+        'entry' => ActiveRecordLiquidDelegator.new(ent)}
+
+      filename = Attachment.get_sanitized_filename(OpenChain::TemplateUtil.interpolate_liquid_string(liquid_string, variables))
+    end
+
     S3.download_to_tempfile archive.bucket, archive.path, original_filename: filename  do |arc|
       ftp_file arc, connect_vfitrack_net("to_ecs/attachment_archive/#{cust_no}")
     end

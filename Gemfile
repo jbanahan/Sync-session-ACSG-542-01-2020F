@@ -79,7 +79,7 @@ gem 'concurrent-ruby', '1.1.4'
 gem "mono_logger", '1.1.0'
 gem "net-sftp", '2.1.2'
 # Can update to net-ssh 5 when we're using a Ruby version > 2.2.5
-gem "net-ssh", '4.2.0' 
+gem "net-ssh", '4.2.0'
 gem "clearance", '1.16.1'
 
 gem 'connection_pool', '2.2.2'
@@ -94,6 +94,9 @@ gem 'slack-ruby-client', '0.13.1'
 gem 'rest-client', '2.0.2'
 
 gem 'email_validator', '1.6.0'
+
+# Templating language for secure user input
+gem 'liquid', '4.0.3'
 
 # EDI Processor
 gem 'REX12', '~> 0.2'
@@ -131,7 +134,7 @@ gem 'nokogiri', '1.10.9'
 
 group :development,:test do
   gem 'byebug'
-  # This is here exclusively so we can validate the xlsx files we produce.  
+  # This is here exclusively so we can validate the xlsx files we produce.
   # axlsx, while being a FAR more complete and better gem for writing xlsx files, cannot
   # read them.  So we need to use a different solution for reading them in test cases.
   gem 'rubyXL', '3.4.6'

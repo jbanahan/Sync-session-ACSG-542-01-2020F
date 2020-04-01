@@ -10,6 +10,7 @@
 #  end_date                        :date
 #  id                              :integer          not null, primary key
 #  include_only_listed_attachments :boolean
+#  output_path                     :text(65535)
 #  send_as_customer_number         :string(255)
 #  send_in_real_time               :boolean
 #  start_date                      :date
@@ -21,9 +22,10 @@
 #
 
 class AttachmentArchiveSetup < ActiveRecord::Base
-  attr_accessible :company_id, :start_date, :combine_attachments, 
-    :combined_attachment_order, :include_only_listed_attachments, 
-    :send_in_real_time, :archive_scheme, :end_date, :send_as_customer_number
+  attr_accessible :company_id, :start_date, :combine_attachments,
+    :combined_attachment_order, :include_only_listed_attachments,
+    :send_in_real_time, :archive_scheme, :end_date, :send_as_customer_number,
+    :output_path
 
   belongs_to :company
 
