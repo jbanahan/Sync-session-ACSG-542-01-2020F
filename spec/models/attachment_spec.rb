@@ -145,6 +145,10 @@ describe Attachment do
       f = Attachment.get_sanitized_filename "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031.jpg"
       expect(f).to eq("_________________________.jpg")
     end
+
+    it "trims filenames to max length" do
+      expect(Attachment.get_sanitized_filename "照片 014.jpg", max_filename_length: 9).to eq "__ 01.jpg"
+    end
   end
 
   describe "sanitize callback" do

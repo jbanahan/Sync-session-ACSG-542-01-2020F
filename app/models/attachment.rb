@@ -210,7 +210,7 @@ end
     end
   end
 
-  def self.get_sanitized_filename filename
+  def self.get_sanitized_filename filename, max_filename_length: 255
     # This encodes to latin1 converting unknown chars along the way to _, then back to UTF-8.
     # The encoding translation is necessitated only because our charsets in the database for the filename are latin1
     # instead of utf8, and converting them to utf8 is a process we don't want to deal with at the moment.
@@ -227,6 +227,16 @@ end
     extension = File.extname(filename)
     if !extension.blank?
       filename = filename.gsub(/_+$/, "")
+    end
+
+    # Filenames (NTFS and Linux) can generally only be 255 chars (which is actually how long the DB column is too)
+    #...so if the filename is longer than that, then start trimming characters from the name (being careful to not trim from 
+    # the actual file extension)
+    if filename.length > max_filename_length
+      file = File.basename(filename, ".*")
+      extension = File.extname(filename)
+
+      filename = file[0..(max_filename_length - (extension.length + 1))] + extension
     end
 
     filename

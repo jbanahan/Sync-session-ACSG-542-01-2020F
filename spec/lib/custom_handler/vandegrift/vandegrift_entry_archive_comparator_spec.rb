@@ -108,13 +108,14 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
     end
 
     it "uses the custom file naming output_path in the attachment archive setup" do
-      e.update! customer_references: "2345"
+      # Add multiple references so we can verify that the multi-value substitution in the code is working to remove the newline+spaces
+      e.update! customer_references: "2345\n 6789"
       aas.update! output_path: "{{entry.customer_references}}-{{attachment.attached_file_name}}"
       ftp_opts = "ftp opts"
       attachment_tempfile = instance_double(Tempfile)
       expect(att).to receive(:bucket).and_return "bucket"
       expect(att).to receive(:path).and_return "path"
-      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", {original_filename: "2345-foo.bar"}).and_yield attachment_tempfile
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", {original_filename: "2345_6789-foo.bar"}).and_yield attachment_tempfile
       expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/attachment_archive/CUSTNUM").and_return ftp_opts
       expect(subject).to receive(:ftp_file).with(attachment_tempfile, ftp_opts)
 

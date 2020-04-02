@@ -52,7 +52,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
         'archive_attachment' => ActiveRecordLiquidDelegator.new(aas),
         'entry' => ActiveRecordLiquidDelegator.new(ent)}
 
-      filename = Attachment.get_sanitized_filename(OpenChain::TemplateUtil.interpolate_liquid_string(liquid_string, variables))
+      filename = OpenChain::TemplateUtil.interpolate_liquid_string(liquid_string, variables)
+      # This is sort of a pre-optimization...there's several multi-value fields in the entry that could be used as template variables
+      # that contain '\n ' which we know can't be used in a filename.  The sanitize call below will fix that, but it will change them
+      # to '_ '.  I'd like that to be just "_" so I'm clearing that out here first before the sanitize call
+      filename = Attachment.get_sanitized_filename(filename.gsub(/\n[[:space:]]*/, "_"))
     end
 
     S3.download_to_tempfile archive.bucket, archive.path, original_filename: filename  do |arc|
