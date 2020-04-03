@@ -1,8 +1,8 @@
 # This configuration was automatically generated from a CircleCI 1.0 config and manually edited to meet
-# our needs for OpenChain. It should include any build commands CircleCI inferred from your project structure. 
+# our needs for OpenChain. It should include any build commands CircleCI inferred from your project structure.
 # The idiom for configuration has changed substantially in 2.0 to allow arbitrary jobs rather
 # than the prescribed lifecycle of 1.0.
-version: 2
+version: 2.1
 jobs:
   build:
     working_directory: ~/OpenChain
@@ -11,8 +11,8 @@ jobs:
     # CircleCI 2.0 does not support environment variables that refer to each other the same way as 1.0 did.
     # If any of these refer to each other, rewrite them so that they don't or see https://circleci.com/docs/2.0/env-vars/#interpolating-environment-variables-to-set-other-environment-variables .
     environment:
-      RAILS_ENV: test
-      RACK_ENV: test
+    - RAILS_ENV: test
+    - RACK_ENV: test
     # In CircleCI 1.0 we used a pre-configured image with a large number of languages and other packages.
     # In CircleCI 2.0 you can now specify your own image, or use one of our pre-configured images.
     # The following configuration line tells CircleCI to use the specified docker image as the runtime environment for you job.
@@ -23,122 +23,119 @@ jobs:
     # To see the list of pre-built images that CircleCI provides for most common languages see
     # https://circleci.com/docs/2.0/circleci-images/
     docker:
-      - image: circleci/ruby:2.5.1-browsers
-        environment:
-          RAILS_ENV: test
-          DB_HOST: localhost
-          REDIS_HOST: 127.0.0.1
+    - image: circleci/ruby:2.5.1-browsers
+      environment:
+        RAILS_ENV: test
+        DB_HOST: localhost
+        REDIS_HOST: 127.0.0.1
 
-      # We don't use utf8mb4 because real utf doesn't fit into the index
-      #  https://stackoverflow.com/questions/42043205/how-to-fix-mysql-index-column-size-too-large-laravel-migrate
-      - image: circleci/mysql:5.6.37-ram
-        command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --innodb-large-prefix=true --innodb-file-format=Barracuda --sort-buffer-size=67108864
-
-      - image: redis
+    # We don't use utf8mb4 because real utf doesn't fit into the index
+    #  https://stackoverflow.com/questions/42043205/how-to-fix-mysql-index-column-size-too-large-laravel-migrate
+    - image: circleci/mysql:5.6.37-ram
+      command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci --innodb-large-prefix=true --innodb-file-format=Barracuda --sort-buffer-size=67108864
+    - image: redis
 
     steps:
-      # Machine Setup
-      # If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
-      # The following `checkout` command checks out your code to your working directory. In 1.0 we did this implicitly. In 2.0 you can choose where in the course of a job your code should be checked out.
-      - checkout
-      # Restore the dependency cache
-      - restore_cache:
-          keys:
-          # This branch if available
-          - v1-dep-{{ .Branch }}-
-          # Default branch if not
-          - v1-dep-master-
-          # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
-          - v1-dep-
-      # This is based on your 1.0 configuration file or project settings
-      - run: mkdir -p ./tmp
-      - run: mkdir -p ./spec/support/tmp
-      - run: 
-          name: Bundle Install
-          command: |-
-            bundle check --path=vendor/bundle || bundle install --path=vendor/bundle --jobs=4 --retry=3
-      # The following line was run implicitly in your 1.0 builds based on what CircleCI inferred about the structure of your project. In 2.0 you need to be explicit about which commands should be run. In some cases you can discard inferred commands if they are not relevant to your project.
-      # Save dependency cache
-      - save_cache:
-          key: v1-dep-{{ .Branch }}-{{ epoch }}
-          paths:
-          - vendor/bundle
-          - ~/.bundle
-          - ~/.cache/bower
-      - run:
-          name: Generate config/database.yml 
-          command: |-
-            mkdir -p config && echo 'test:
-              adapter: mysql2
-              database: circle_test
-              username: root
-              host: 127.0.0.1
-              encoding: utf8mb4
-              collation: utf8mb4_general_ci
-            ' > config/database.yml
-      - run:
-          name: Generate config/secrets.yml
-          command: |-
-            echo "test:
-              secret_token: 26d141c9a7204906121db95e892d2c8b500c3db440c06d3eaa6715f0cbf8763f
-              secret_key_base: d8d79c3a681e63dad3b221dd189fe83df5480b79bca4458ffa4fcffbd1035608
-              aws:
-                access_key_id: $AWS_ACCESS_KEY_ID
-                secret_access_key: $AWS_SECRET_ACCESS_KEY
-                region: us-east-1
-              google_authentication:
-                integration-dev@vandegriftinc.com:
-                  client_id: $GOOGLE_CLIENT_ID
-                  client_secret: $GOOGLE_CLIENT_SECRET
-                  refresh_token: $GOOGLE_REFRESH_TOKEN
-              redis:
-                server: localhost
-                port: 6379
-              memcache:
-                server: localhost:11211
-              gpg:
-                vfitrack_passphraseless:
-                  public_key_path: spec/fixtures/files/vfitrack-passphraseless.gpg.key
-                  private_key_path: spec/fixtures/files/vfitrack-passphraseless.gpg.private.key
-                vfitrack:
-                  public_key_path: spec/fixtures/files/vfitrack.gpg.key
-                  private_key_path: spec/fixtures/files/vfitrack.gpg.private.key
-                  passphrase: passphrase
-            " > config/secrets.yml
-      - run: 
-          name: Create / Migrate Database
-          command: |-
-            bundle exec rake db:create db:migrate --trace
-            
-      # GPG version 1 is needed because version 2 no longer really allows for passing the password to encrypt on the command line.
-      - run: sudo apt-get update
-      - run:
-          name: Install gpg version 1
-          command: sudo apt-get install gnupg1
+    - checkout
+    # Restore the dependency cache
+    - restore_cache:
+        keys:
+        # This branch if available
+        - v1-dep-{{ .Branch }}-
+        # Default branch if not
+        - v1-dep-master-
+        # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
+        - v1-dep-
 
-      # TEST_FILES is broken out into it's own variable because of random bash parsing issues which case "bundler: failed to load command: rspec"
-      - run: 
-          name: Rspec Unit Tests
-          no_output_timeout: "20m"
-          command: |-
-            bundle exec rspec --require spec_helper --format RspecJunitFormatter --out /tmp/circle-tests/rspec/rspec.xml --format progress $(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
-      # This is based on your 1.0 configuration file or project settings
-      # TODO Figure out how to run Jasmine tests in Headless Chrome
-      - run:
-          name: Jasmine Unit Tests
-          command: |-
-            if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake jasmine:ci; fi
-      - run:
-          name: Brakeman Static Analysis
-          command: |-
-            if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake brakeman:scan; fi
-      # Teardown
-      #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
-      # Save test results
-      - store_test_results:
-          path: /tmp/circle-tests
-      # Save artifacts - these are viewable in the Artifacts tab of the CircleCI interface after a build is complete
-      - store_artifacts:
-          path: /tmp/circle-tests
-      - store_artifacts:
-          path: tmp/brakeman
+    - run: mkdir -p ./tmp
+    - run: mkdir -p ./spec/support/tmp
+    - run:
+        name: Bundle Install
+        command: bundle check --path=vendor/bundle || bundle install --path=vendor/bundle --jobs=4 --retry=3
+
+    # Save dependency cache
+    - save_cache:
+        key: v1-dep-{{ .Branch }}-{{ epoch }}
+        paths:
+        - vendor/bundle
+        - ~/.bundle
+        - ~/.cache/bower
+    - run:
+        name: Generate config/database.yml
+        command: |-
+          mkdir -p config && echo 'test:
+            adapter: mysql2
+            database: circle_test
+            username: root
+            host: 127.0.0.1
+            encoding: utf8mb4
+            collation: utf8mb4_general_ci
+          ' > config/database.yml
+    - run:
+        name: Generate config/secrets.yml
+        command: |-
+          echo "test:
+            secret_token: 26d141c9a7204906121db95e892d2c8b500c3db440c06d3eaa6715f0cbf8763f
+            secret_key_base: d8d79c3a681e63dad3b221dd189fe83df5480b79bca4458ffa4fcffbd1035608
+            aws:
+              access_key_id: $AWS_ACCESS_KEY_ID
+              secret_access_key: $AWS_SECRET_ACCESS_KEY
+              region: us-east-1
+            google_authentication:
+              integration-dev@vandegriftinc.com:
+                client_id: $GOOGLE_CLIENT_ID
+                client_secret: $GOOGLE_CLIENT_SECRET
+                refresh_token: $GOOGLE_REFRESH_TOKEN
+            redis:
+              server: localhost
+              port: 6379
+            memcache:
+              server: localhost:11211
+            gpg:
+              vfitrack_passphraseless:
+                public_key_path: spec/fixtures/files/vfitrack-passphraseless.gpg.key
+                private_key_path: spec/fixtures/files/vfitrack-passphraseless.gpg.private.key
+              vfitrack:
+                public_key_path: spec/fixtures/files/vfitrack.gpg.key
+                private_key_path: spec/fixtures/files/vfitrack.gpg.private.key
+                passphrase: passphrase
+          " > config/secrets.yml
+    - run:
+        name: Create / Migrate Database
+        command: bundle exec rake db:create db:migrate --trace
+
+    # GPG version 1 is needed because version 2 no longer really allows for passing the password to encrypt on the command line.
+    - run:
+        command: sudo apt-get update
+    - run:
+        name: Install gpg version 1
+        command: sudo apt-get install gnupg1
+
+    # TEST_FILES is broken out into it's own variable because of random bash parsing issues which case "bundler: failed to load command: rspec"
+    - run:
+        name: Rspec Unit Tests
+        no_output_timeout: 20m
+        command: bundle exec rspec --require spec_helper --format RspecJunitFormatter --out /tmp/circle-tests/rspec/rspec.xml --format progress $(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
+
+    # TODO Figure out how to run Jasmine tests in Headless Chrome
+    - run:
+        name: Jasmine Unit Tests
+        command: if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake jasmine:ci; fi
+    - run:
+        name: Brakeman Static Analysis
+        command: if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake brakeman:scan; fi
+    # Teardown
+    #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
+    # Save test results
+    - store_test_results:
+        path: /tmp/circle-tests
+    # Save artifacts - these are viewable in the Artifacts tab of the CircleCI interface after a build is complete
+    - store_artifacts:
+        path: /tmp/circle-tests
+    - store_artifacts:
+        path: tmp/brakeman
+workflows:
+  version: 2
+  workflow:
+    jobs:
+    - build
