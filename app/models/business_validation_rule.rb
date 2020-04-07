@@ -168,6 +168,11 @@ class BusinessValidationRule < ActiveRecord::Base
                  {
                     label: 'Ann Product Has One Tariff',
                     enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" } 
+                 },
+                 'OpenChain::CustomHandler::Vandegrift::SpiClaimEntryValidationRule'.to_sym =>
+                 {
+                     label: 'No SPI Claimed',
+                     enabled_lambda: lambda { MasterSetup.get.custom_feature? "WWW" }
                  }
               }
 
@@ -284,3 +289,4 @@ require_dependency 'open_chain/custom_handler/ann_inc/ann_validation_rule_produc
 
 require_dependency 'open_chain/custom_handler/vandegrift/kewill_entry_statement_validation_rule'
 require_dependency 'open_chain/custom_handler/pvh/pvh_validation_rule_entry_invoice_line_matches_shipment_line'
+require_dependency 'open_chain/custom_handler/vandegrift/spi_claim_entry_validation_rule'

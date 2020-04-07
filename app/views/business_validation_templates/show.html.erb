@@ -27,7 +27,7 @@
       <ul>
         <%@bv_template.search_criterions.each do |sc|%>
           <li>
-            <%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%>
+            <%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%><%=sc.include_empty ? " (including empty values)" : ""%>
           </li> 
         <%end%>
       </ul>
@@ -49,7 +49,7 @@
       <ul>
         <%bvr.search_criterions.each do |sc|%>
           <li>
-            <%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%>  
+            <%=sc.model_field.label%> <%=CriterionOperator.find_by_key(sc.operator).label%> <%=sc.value%><%=sc.include_empty ? " (including empty values)" : ""%>
           </li> 
         <%end%>
       </ul>

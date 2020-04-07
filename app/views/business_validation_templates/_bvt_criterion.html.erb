@@ -7,7 +7,7 @@
 <% @criteria.each do |cr| %>
   <div class="row">
     <div class="col-md-12">
-      * <%= cr.model_field.label %> <%= CriterionOperator.find_by_key(cr.operator).label %> <%= cr.value %>
+      * <%= cr.model_field.label %> <%= CriterionOperator.find_by_key(cr.operator).label %> <%= cr.value %><%=cr.include_empty ? " (including empty values)" : ""%>
     </div>
   </div>
 <% end %>

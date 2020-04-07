@@ -28,6 +28,19 @@ describe OpenChain::DataCrossReferenceUploadPreprocessor do
         expect(preproc.call("x", "3/35/2017")).to eq({key: 'x', value: nil})
       end
     end
+
+    context "spi_available_country_combination" do
+      let(:preproc) { described_class.preprocessors["spi_available_country_combination"] }
+
+      it "parses input" do
+        # Normal case.
+        expect(preproc.call("AB", "CD")).to eq({key: "AB#{DataCrossReference.compound_key_token}CD", value: "X"})
+        # Whitespace is trimmed.
+        expect(preproc.call("EF ", " GH")).to eq({key: "EF#{DataCrossReference.compound_key_token}GH", value: "X"})
+        # Nil-handling: almost certainly wouldn't occur in real usage.
+        expect(preproc.call(nil, nil)).to eq({key: DataCrossReference.compound_key_token, value: "X"})
+      end
+    end
   end
 
 end

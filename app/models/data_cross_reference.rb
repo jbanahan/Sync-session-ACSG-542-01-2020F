@@ -84,6 +84,8 @@ class DataCrossReference < ActiveRecord::Base
   VFI_CALENDAR ||= "vfi_calendar"
   UNIT_OF_MEASURE ||= "unit_of_measure"
   ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'
+  # Combination of entry export and origin country codes that have SPI available.
+  SPI_AVAILABLE_COUNTRY_COMBINATION ||= 'spi_available_country_combination'
 
   scope :for_type, -> (xref_type) { where(cross_reference_type: xref_type) }
 
@@ -106,7 +108,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(ASCE_BRAND, "Ascena Brands", "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", key_label: "Brand Name", value_label: "Brand Abbrev", upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false),
       xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
       xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
-      xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label:"MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B.")
+      xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label:"MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."),
+      xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION]),
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -170,6 +173,8 @@ class DataCrossReference < ActiveRecord::Base
       user.admin?
     when LL_CARB_STATEMENTS, LL_PATENT_STATEMENTS
       MasterSetup.get.custom_feature?("Lumber Liquidators") && user.admin?
+    when SPI_AVAILABLE_COUNTRY_COMBINATION
+      MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?('xref-maintenance'))
     else
       false
     end

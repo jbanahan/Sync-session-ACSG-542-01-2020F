@@ -86,7 +86,7 @@
           <%= form_tag "/data_cross_references/upload", :multipart => true, :class=>'form-horizontal', :id=>"frm_run" do %>
             <p>
             <% if @xref_info[:upload_instructions].blank? %>
-              Spreadsheet should contain a header row, with <%=@xref_info[:key_label]%> in column A <%= @xref_info[:show_value_column] ? "and #{@xref_info[:value_label]} in column B" : ""%>
+              Spreadsheet should contain a header row, with <%=@xref_info[:key_upload_label].present? ? @xref_info[:key_upload_label] : @xref_info[:key_label]%> in column A <%= @xref_info[:show_value_column] ? "and #{@xref_info[:value_upload_label].present? ? @xref_info[:value_upload_label] : @xref_info[:value_label]} in column B" : ""%>
             <% else %>
               <%= @xref_info[:upload_instructions] %>
             <% end %>
