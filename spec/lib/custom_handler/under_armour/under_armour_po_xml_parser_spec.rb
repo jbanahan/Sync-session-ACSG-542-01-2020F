@@ -93,12 +93,14 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
     end
 
     it "handles prepack lines" do
+      # This file contains two prepack lines and three prepack component lines.  The component lines should be
+      # ignored.  The resulting order should contain two lines.
       subject.process_order prepack_xml, user, "bucket", "file.xml", log
 
       order = Order.where(order_number: "UNDAR-4200001923").first
       expect(order).not_to be_nil
 
-      expect(order.order_lines.length).to eq 1
+      expect(order.order_lines.length).to eq 2
 
       l = order.order_lines.first
       expect(l.line_number).to eq 10
@@ -115,6 +117,11 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
       expect(p.custom_value(cdefs[:prod_prepack])).to eq true
       expect(l.variant).to be_nil
       expect(p.variants.length).to eq 0
+
+      l = order.order_lines.last
+      expect(l.line_number).to eq 20
+      expect(l.sku).to eq "9000004-PPK-ASST"
+      expect(l.product.unique_identifier).to eq "UAPARTS-9000004"
     end
 
     it "handles updating orders (deleting all lines)" do

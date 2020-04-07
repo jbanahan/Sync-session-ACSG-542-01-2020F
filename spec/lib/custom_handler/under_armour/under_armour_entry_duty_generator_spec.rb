@@ -1,17 +1,25 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
   let (:ua) { with_fenix_id(Factory(:importer), "874548506RM0001") }
-    let! (:entry) { 
-      e = Factory(:entry, importer: ua, cadex_accept_date: Date.new(2019, 10, 1))
-      invoice = e.commercial_invoices.create! invoice_number: "ASNNUMBER", exchange_rate: 1.2
-      line = invoice.commercial_invoice_lines.create! part_number: "ARTICLE", po_number: "PONUMBER"
-      tariff = line.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 100
+  let! (:entry) {
+    e = Factory(:entry, importer: ua, cadex_accept_date: Date.new(2019, 10, 1))
+    invoice = e.commercial_invoices.create! invoice_number: "ASNNUMBER", exchange_rate: 1.2
+    line = invoice.commercial_invoice_lines.create! part_number: "ARTICLE", po_number: "PONUMBER"
+    tariff = line.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 100
 
-      e
-    }
+    e
+  }
 
   describe "generate_xml" do
-  
+
+    let (:cdefs) { subject.send(:cdefs) }
+    let! (:product) {
+      p = Factory(:product, unique_identifier:"UAPARTS-ARTICLE")
+      p.update_custom_value! cdefs[:prod_prepack], false
+      p.update_custom_value! cdefs[:prod_part_number], "PROD-1"
+      p
+    }
+
     it "builds xml file for UA entries between start / end dates" do
       xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
 
@@ -30,6 +38,32 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       expect(r).to have_xpath_value("Header/Details/ItemInfo/Duty", "100.0")
       expect(r).to have_xpath_value("Header/Details/ItemInfo/Currency", "CAD")
       expect(r).to have_xpath_value("Header/Details/ItemInfo/ExchRate", "1.2")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/CustomerField/CustomerFieldValue", nil)
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/CustomerField/@CustomerFieldName", nil)
+    end
+
+    it "builds xml file for a prepack entry" do
+      product.update_custom_value! cdefs[:prod_prepack], true
+
+      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+
+      expect(entries.length).to eq 1
+      expect(entries.first).to eq entry
+
+      expect(xml_data).not_to be_nil
+      r = xml_data.root
+      expect(r.name).to eq "UA_PODuty"
+
+      expect(r).to have_xpath_value("Header/PONum", "PONUMBER")
+      expect(r).to have_xpath_value("Header/Details/BrokerRefNum", "ASNNUMBER")
+      expect(r).to have_xpath_value("Header/Details/BrokerRefNumType", "ASN")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/Article", "ARTICLE")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/HTSCode", "1234567890")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/Duty", "100.0")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/Currency", "CAD")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/ExchRate", "1.2")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/CustomerField/CustomerFieldValue", "PROD-1")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo/CustomerField/CustomerFieldValue/@CustomerFieldName", "PREPACK")
     end
 
     it "handles multiple PO numbers" do
@@ -51,7 +85,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       expect(r).to have_xpath_value("Header[PONum = 'PO2']/Details/ItemInfo/ExchRate", "1.2")
     end
 
-    it "handles multiple ASN numbers with single PO" do 
+    it "handles multiple ASN numbers with single PO" do
       invoice = entry.commercial_invoices.create! invoice_number: 'ASN2', exchange_rate: 1.8
       line = invoice.commercial_invoice_lines.create! po_number: "PONUMBER", part_number: "ARTICLE2"
       tariff = line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
@@ -71,7 +105,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       expect(r).to have_xpath_value("Header/Details[BrokerRefNum = 'ASN2']/ItemInfo/ExchRate", "1.8")
     end
 
-    it "handles multiple ASN numbers with multiple PO numbers" do 
+    it "handles multiple ASN numbers with multiple PO numbers" do
       invoice = entry.commercial_invoices.create! invoice_number: 'ASN2', exchange_rate: 1.8
       line = invoice.commercial_invoice_lines.create! po_number: "PONUMBER2", part_number: "ARTICLE2"
       tariff = line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
@@ -95,6 +129,41 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       expect(r).to have_xpath_value("Header/Details[BrokerRefNum = 'ASN2']/ItemInfo/Duty", "50.0")
       expect(r).to have_xpath_value("Header/Details[BrokerRefNum = 'ASN2']/ItemInfo/Currency", "CAD")
       expect(r).to have_xpath_value("Header/Details[BrokerRefNum = 'ASN2']/ItemInfo/ExchRate", "1.8")
+    end
+
+    it "rolls up like part/HTS combinations" do
+      line2 = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "PONUMBER", part_number: "ARTICLE"
+      tariff2 = line2.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 25
+      tariff3 = line2.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
+
+      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+
+      expect(xml_data).not_to be_nil
+      r = xml_data.root
+
+      expect(r).to have_xpath_value("count(Header/PONum)", 1)
+      expect(r).to have_xpath_value("count(Header/Details)", 1)
+      expect(r).to have_xpath_value("count(Header/Details/ItemInfo)", 2)
+
+      expect(r).to have_xpath_value("Header/Details/ItemInfo[HTSCode = '1234567890']/Duty", "125.0")
+      expect(r).to have_xpath_value("Header/Details/ItemInfo[HTSCode = '9876543210']/Duty", "50.0")
+    end
+
+    it "does not roll up like part/HTS combinations on different POs" do
+      line2 = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "PONUMBER2", part_number: "ARTICLE"
+      tariff2 = line2.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 25
+
+      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+
+      expect(xml_data).not_to be_nil
+      r = xml_data.root
+
+      expect(r).to have_xpath_value("count(Header/PONum)", 2)
+      expect(r).to have_xpath_value("count(Header[PONum='PONUMBER']/Details/ItemInfo)", 1)
+      expect(r).to have_xpath_value("count(Header[PONum='PONUMBER2']/Details/ItemInfo)", 1)
+
+      expect(r).to have_xpath_value("Header[PONum='PONUMBER']/Details/ItemInfo/Duty", "100.0")
+      expect(r).to have_xpath_value("Header[PONum='PONUMBER2']/Details/ItemInfo/Duty", "25.0")
     end
 
     it "errors if ua importer isn't found" do

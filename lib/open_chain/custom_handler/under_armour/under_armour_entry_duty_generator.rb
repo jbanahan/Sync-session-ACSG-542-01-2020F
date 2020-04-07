@@ -1,11 +1,13 @@
+require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/xml_builder'
 require 'open_chain/ftp_file_support'
 
 module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEntryDutyGenerator
+  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::XmlBuilder
   include OpenChain::FtpFileSupport
 
-  UnderArmourDutyData = Struct.new(:article, :hts_code, :duty, :currency, :exchange_rate)
+  UnderArmourDutyData = Struct.new(:article, :hts_code, :duty, :currency, :exchange_rate, :prepack, :part_number)
   SYNC_CODE ||= "UA Duty"
 
   def self.run_schedulable opts={}
@@ -50,7 +52,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
         
         now = Time.zone.now
         confirmed = now + 1.minute
-        sync_records.each do |sr| 
+        sync_records.each do |sr|
           sr.sent_at = now
           sr.confirmed_at = confirmed
           sr.save!
@@ -99,7 +101,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
           add_element(asn_element, "BrokerRefNum", asn_number)
           add_element(asn_element, "BrokerRefNumType", "ASN")
 
-          asn_detail_data.each do |duty_data|
+          asn_detail_data.each_value do |duty_data|
             item_element = add_element(asn_element, "ItemInfo")
 
             add_element(item_element, "Article", duty_data.article)
@@ -107,6 +109,12 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
             add_element(item_element, "Duty", duty_data.duty)
             add_element(item_element, "Currency", duty_data.currency)
             add_element(item_element, "ExchRate", duty_data.exchange_rate)
+
+            if duty_data.prepack
+              customer_field_element = add_element(item_element, "CustomerField")
+              customer_field_value_element = add_element(customer_field_element, "CustomerFieldValue", duty_data.part_number)
+              customer_field_value_element.add_attribute("CustomerFieldName", "PREPACK")
+            end
           end
         end
       end
@@ -117,10 +125,12 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
 
     def build_xml_data importer, start_date, end_date
       po_data = Hash.new do |h, k|
-        # The internal "asn_data" is simply an array of UnderArmourDutyData structs
-        # One for each tariff line associated with this PO / ASN combination
+        # The internal "asn_data" is simply a hash of UnderArmourDutyData structs, keyed on a 2-value array
+        # containing article and HTS code.  The goal is to wind up with one data element for each unique
+        # article/HTS combination associated with this PO / ASN combination, with data from multiple
+        # lines/tariffs sharing article/HTS rolled up together.
         h[k] = Hash.new do |hash, key|
-          hash[key] = []
+          hash[key] = {}
         end
       end
 
@@ -140,16 +150,25 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
 
             asn_data = po_data[line.po_number]
 
-            line.commercial_invoice_tariffs.each do |tariff|
-              duty_data = UnderArmourDutyData.new
-              duty_data.article = line.part_number
-              duty_data.hts_code = tariff.hts_code
-              duty_data.duty = tariff.duty_amount
-              # The duty is ALWAYS Canadian dollars..
-              duty_data.currency = "CAD"
-              duty_data.exchange_rate = inv.exchange_rate
+            product = Product.where(unique_identifier:"UAPARTS-#{line.part_number}").first
 
-              asn_data[inv.invoice_number] << duty_data
+            # Roll up lines with the same PO, article and HTS code.  Duty is the only value that would change
+            # between lines.  It needs to be summed in the rolled up duty_data object.
+            line.commercial_invoice_tariffs.each do |tariff|
+              key = [line.part_number, tariff.hts_code]
+              duty_data = asn_data[inv.invoice_number][key]
+              if duty_data.nil?
+                duty_data = UnderArmourDutyData.new
+                duty_data.article = line.part_number
+                duty_data.hts_code = tariff.hts_code
+                # The duty is ALWAYS Canadian dollars..
+                duty_data.currency = "CAD"
+                duty_data.exchange_rate = inv.exchange_rate
+                duty_data.prepack = product&.custom_value(cdefs[:prod_prepack])
+                duty_data.part_number = product&.custom_value(cdefs[:prod_part_number])
+                asn_data[inv.invoice_number][key] = duty_data
+              end
+              duty_data.duty = (duty_data.duty || BigDecimal.new(0)) + tariff.duty_amount
             end
           end
         end
@@ -175,6 +194,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
 
     def preload_entry entry
       ActiveRecord::Associations::Preloader.new.preload(entry, [{commercial_invoices: {commercial_invoice_lines: :commercial_invoice_tariffs}}, :sync_records])
+    end
+
+    def cdefs
+      @cd ||= self.class.prep_custom_definitions([:prod_prepack, :prod_part_number])
     end
 
 end; end; end; end;

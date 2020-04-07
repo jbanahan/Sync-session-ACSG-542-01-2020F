@@ -179,42 +179,24 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
         expect(inv.commercial_invoice_lines.length).to eq 2
       end
 
-      it "explodes prepack values and rolls them up" do
+      it "does not exploded prepack values" do
         copy_product.update_custom_value! cdefs[:prod_prepack], true
 
-        # Just add a second variant. This will end up exploading to 2 lines - 
-        # The first variant should get rolled together with the first shipment line, the second 
-        # should produce a second invoice line
+        # Older versions of this generator would use these variants to explode out the quantity.
+        # Since that's no longer done (qty is already exploded in shipment line),
+        # this test exists now mostly to verify that we are NOT exploding the variant values.
         copy_product.variants.create! variant_identifier: "PROD-3-XL"
         copy_product.variants.first.update_custom_value! cdefs[:var_units_per_inner_pack], 5
         copy_product.variants.second.update_custom_value! cdefs[:var_units_per_inner_pack], 10
 
         shipment.reload
         inv = subject.generate_invoice shipment
-        expect(inv.commercial_invoice_lines.length).to eq 2
+        expect(inv.commercial_invoice_lines.length).to eq 1
 
-        # Just validate all the fields so we know the prepack lines are exploding using the data we expect
-        # them to
         line = inv.commercial_invoice_lines.first
-
-
         expect(line.part_number).to eq "PROD-2"
         expect(line.country_origin_code).to eq "CN"
-        expect(line.quantity).to eq 110
-        expect(line.unit_price).to eq BigDecimal("1.55")
-        expect(line.po_number).to eq "PO"
-        expect(line.customer_reference).to eq "REF"
-
-        expect(line.commercial_invoice_tariffs.length).to eq 1
-        t = line.commercial_invoice_tariffs.first
-        expect(t.hts_code).to eq "1234567890"
-        expect(t.tariff_description).to eq "Customs Description 2"
-
-        line = inv.commercial_invoice_lines.second
-
-        expect(line.part_number).to eq "PROD-3"
-        expect(line.country_origin_code).to eq "CN"
-        expect(line.quantity).to eq 200
+        expect(line.quantity).to eq 30
         expect(line.unit_price).to eq BigDecimal("1.55")
         expect(line.po_number).to eq "PO"
         expect(line.customer_reference).to eq "REF"

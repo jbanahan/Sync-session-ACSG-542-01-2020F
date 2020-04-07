@@ -42,15 +42,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
       process_order_header(order_xml, order)
 
       order_xml.each_element("OrderDetails") do |detail|
-        line, prepack = process_order_detail(order, detail, product_cache)
-        # Under Armour's system (SAP) sends the prepack line AND all the prepack components as OrderDetails
-        # (essentially like sublines).  UA told us that they'll only ever have a prepack and nothing else on the PO
-        # so we're breaking out of the order detail loop if we hit a prepack.
-
-        # If this logic becomes an issue (.ie they start sending multiple prepacks or non-prepack components on orders with a prepack),
-        # there appears to be a ReferenceLine element only on the prepack sublines we could probably also use as 
-        # an indicator of whether to process the OrderDetail element or not
-        break if prepack
+        process_order_detail(order, detail, product_cache)
       end
 
       order.save!
@@ -64,6 +56,18 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
   end
 
   def process_order_detail order, xml, product_cache
+    # Under Armour's system (SAP) sends the prepack line AND all the prepack components as OrderDetails
+    # (essentially like sublines).  UA originally told us that they'll only ever have a prepack and
+    # nothing else on the PO, however this turned out not to be true.  Multiple prepacks are possible on one
+    # PO.  They did say (Feb 2020) that prepack and non-prepack content should not be found on the same PO.
+    #
+    # Prepack components (i.e. details within a prepack) are not meant to be created as order details.  They
+    # can be safely skipped.  We can determine whether or not a detail represents a prepack component by the
+    # presence of a ReferenceLine element value.  A prepack component's ReferenceLine will connect back to the
+    # prepack it is part of.  Bail out of this method if the current detail is a prepack component.
+    prepack_component = xml.text("ReferenceLine").present?
+    return unless !prepack_component
+
     line = order.order_lines.build
     line.line_number = xml.text("LineNum").to_i
     line.quantity = BigDecimal(xml.text("Qty/Quantity").to_s)
@@ -87,8 +91,6 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     if !prepack
       line.variant = product.variants.find {|v| v.variant_identifier == product_sku }
     end
-
-    [line, prepack]
   end
 
   def find_or_create_order customer_order_number, revision, last_file_bucket, last_file_path

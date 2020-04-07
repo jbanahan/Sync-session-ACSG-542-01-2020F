@@ -128,5 +128,165 @@
         <Description>Variant</Description>
       </ArticleAttributes>
     </OrderDetails>
+    <OrderDetails>
+      <LineNum>00020</LineNum>
+      <Action>ADD</Action>
+      <SKU>9000004-PPK-ASST</SKU>
+      <VariantArticle>000000000009000004</VariantArticle>
+      <ArticleDescription ISOLanguage="EN">UA Tech SS Tee</ArticleDescription>
+      <StyleDescription ISOLanguage="EN"/>
+      <UPC>191632030128</UPC>
+      <Qty>
+        <Quantity UOM="EA">66.000</Quantity>
+      </Qty>
+      <DateTime>
+        <Date DateQualifier="ReqDelDate">20161218</Date>
+      </DateTime>
+      <DateTime>
+        <Date DateQualifier="CancelDate">00000000</Date>
+      </DateTime>
+      <DateTime>
+        <Date DateQualifier="Ex-FactoryDate">20161219</Date>
+      </DateTime>
+      <Price>
+        <Amount Type="Net">38.72</Amount>
+      </Price>
+      <CustomerSoldTo>
+        <ID>0010003177</ID>
+      </CustomerSoldTo>
+      <CustomerSalesOrder>0000512441</CustomerSalesOrder>
+      <CommodityCode>6109.90.0010</CommodityCode>
+      <Quality>1</Quality>
+      <Kit>01</Kit>
+      <AccountGroup>ZZZ</AccountGroup>
+      <Channel>ZZ</Channel>
+      <TechPack>SS17</TechPack>
+      <ArticleAttributes>
+        <Code Type="ProductDivision">1002-Apparel</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="Gender"/>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="FitType">-</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="GearLine">-</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="ArticleType">11</Code>
+        <Description>Prepack</Description>
+      </ArticleAttributes>
+    </OrderDetails>
+    <OrderDetails>
+      <LineNum>00021</LineNum>
+      <Action>ADD</Action>
+      <SKU>1266252-001-6.5</SKU>
+      <VariantArticle>1266252-001006</VariantArticle>
+      <ArticleDescription ISOLanguage="EN">UA W Micro G Assert 6-BLK, 6.5 Womens</ArticleDescription>
+      <StyleDescription ISOLanguage="EN">UA W Micro G Assert 6</StyleDescription>
+      <UPC>889362245348</UPC>
+      <ReferenceLine>00020</ReferenceLine>
+      <Qty>
+        <Quantity UOM="PR">32.000</Quantity>
+      </Qty>
+      <DateTime>
+        <Date DateQualifier="ReqDelDate">20171001</Date>
+      </DateTime>
+      <DateTime>
+        <Date DateQualifier="CancelDate">20171201</Date>
+      </DateTime>
+      <DateTime>
+        <Date DateQualifier="Ex-FactoryDate">20170520</Date>
+      </DateTime>
+      <CustomerSoldTo>
+        <ID>0011055030</ID>
+      </CustomerSoldTo>
+      <CustomerSalesOrder>0000531739</CustomerSalesOrder>
+      <CommodityCode>6403.99.9092</CommodityCode>
+      <CommodityCodeDesc>
+        <Text Type="CommodityCodeDesc1">W/G Children's Leather Footwear</Text>
+      </CommodityCodeDesc>
+      <FabricContent/>
+      <ShippingInstructions>08</ShippingInstructions>
+      <ShippingInstDesc>OCEAN</ShippingInstDesc>
+      <CountryOfOrigin>NI</CountryOfOrigin>
+      <Quality>1</Quality>
+      <Kit>01</Kit>
+      <AccountGroup>ZZZ</AccountGroup>
+      <Channel>ZZ</Channel>
+      <TechPack>FW17</TechPack>
+      <ArticleAttributes>
+        <Code Type="ProductDivision">1003-Footwear</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="Gender">0005-Womens</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="FitType">008-Regular</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="GearLine">004-N/A</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="ArticleType">02</Code>
+        <Description>Variant</Description>
+      </ArticleAttributes>
+    </OrderDetails>
+    <OrderDetails>
+      <LineNum>00022</LineNum>
+      <Action>ADD</Action>
+      <SKU>1266252-001-6.5</SKU>
+      <VariantArticle>1266252-001006</VariantArticle>
+      <ArticleDescription ISOLanguage="EN">UA W Micro G Assert 6-BLK, 6.5 Womens</ArticleDescription>
+      <StyleDescription ISOLanguage="EN">UA W Micro G Assert 6</StyleDescription>
+      <UPC>889362245348</UPC>
+      <ReferenceLine>00020</ReferenceLine>
+      <Qty>
+        <Quantity UOM="PR">32.000</Quantity>
+      </Qty>
+      <DateTime>
+        <Date DateQualifier="ReqDelDate">20171001</Date>
+      </DateTime>
+      <DateTime>
+        <Date DateQualifier="CancelDate">20171201</Date>
+      </DateTime>
+      <DateTime>
+        <Date DateQualifier="Ex-FactoryDate">20170520</Date>
+      </DateTime>
+      <CustomerSoldTo>
+        <ID>0011055030</ID>
+      </CustomerSoldTo>
+      <CustomerSalesOrder>0000531739</CustomerSalesOrder>
+      <CommodityCode>6403.99.9092</CommodityCode>
+      <CommodityCodeDesc>
+        <Text Type="CommodityCodeDesc1">W/G Children's Leather Footwear</Text>
+      </CommodityCodeDesc>
+      <FabricContent/>
+      <ShippingInstructions>08</ShippingInstructions>
+      <ShippingInstDesc>OCEAN</ShippingInstDesc>
+      <CountryOfOrigin>NI</CountryOfOrigin>
+      <Quality>1</Quality>
+      <Kit>01</Kit>
+      <AccountGroup>ZZZ</AccountGroup>
+      <Channel>ZZ</Channel>
+      <TechPack>FW17</TechPack>
+      <ArticleAttributes>
+        <Code Type="ProductDivision">1003-Footwear</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="Gender">0005-Womens</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="FitType">008-Regular</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="GearLine">004-N/A</Code>
+      </ArticleAttributes>
+      <ArticleAttributes>
+        <Code Type="ArticleType">02</Code>
+        <Description>Variant</Description>
+      </ArticleAttributes>
+    </OrderDetails>
   </Orders>
 </ns0:UA_Order>

@@ -45,30 +45,29 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
     def rollup_shipment_lines shipment
       rollups = {}
       shipment.shipment_lines.each do |line|
-        line_data(line).each do |data|
-          key = rollup_key(data)
+        data = line_data(line)
 
-          if rollups[key]
-            rollups[key].quantity += data[:quantity]
-          else
-            cil = CommercialInvoiceLine.new
-            cil.part_number = data[:style]
-            cil.country_origin_code = data[:country_origin]
-            cil.quantity = data[:quantity]
-            cil.unit_price = data[:unit_price]
-            cil.po_number = data[:order_number]
-            cil.customer_reference = shipment.importer_reference
+        key = rollup_key(data)
 
-            tariff = cil.commercial_invoice_tariffs.build
+        if rollups[key]
+          rollups[key].quantity += data[:quantity]
+        else
+          cil = CommercialInvoiceLine.new
+          cil.part_number = data[:style]
+          cil.country_origin_code = data[:country_origin]
+          cil.quantity = data[:quantity]
+          cil.unit_price = data[:unit_price]
+          cil.po_number = data[:order_number]
+          cil.customer_reference = shipment.importer_reference
 
-            tariff.hts_code = data[:hts]
-            tariff.tariff_description = data[:description]
+          tariff = cil.commercial_invoice_tariffs.build
 
-            rollups[key] = cil
-          end
+          tariff.hts_code = data[:hts]
+          tariff.tariff_description = data[:description]
 
+          rollups[key] = cil
         end
-        
+
       end
 
       rollups.values
@@ -81,7 +80,6 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
     end
 
     def line_data shipment_line
-      data = []
       # If the product on the shipment line is a prepack, we need to "explode" it out
       # and add a shipment line for every variant listed on the product...which we'll then 
       # roll up
@@ -89,52 +87,39 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
       variants = []
       prepack = false
 
-      if product.custom_value(cdefs[:prod_prepack]) == true
+      if product.custom_value(cdefs[:prod_prepack])
         prepack = true
         variants = shipment_line.product.variants.to_a
       else
         variants << shipment_line.variant
       end
 
-      variants.each do |variant|
-        datum = {}
-        datum[:country_origin] = shipment_line.custom_value(cdefs[:shpln_coo])
-        order_line = shipment_line.order_lines.first
-        datum[:order_number] = order_line.order.customer_order_number
-        datum[:unit_price] = order_line.price_per_unit || BigDecimal("0")
-        datum[:quantity] = shipment_line.quantity.presence || BigDecimal("0")
-        
-        if prepack
-          # The "true" quantity on a prepack line is the # of items in a prepack (found from variant), multiplied
-          # by the ship'ed quantity
-          datum[:quantity] = datum[:quantity] * BigDecimal(variant.custom_value(cdefs[:var_units_per_inner_pack]).to_s)
+      datum = {}
+      datum[:country_origin] = shipment_line.custom_value(cdefs[:shpln_coo])
+      order_line = shipment_line.order_lines.first
+      datum[:order_number] = order_line.order.customer_order_number
+      datum[:unit_price] = order_line.price_per_unit || BigDecimal("0")
+      # For prepacks, this quantity is already an exploded quantity.  There's no need to loop through the
+      # variants.
+      datum[:quantity] = shipment_line.quantity.presence || BigDecimal("0")
+      datum[:style] = product.custom_value(cdefs[:prod_part_number])
 
-          # The styles we should use here are the article #'s you'd normally find on the product...which are the characters found
-          # before the 2nd hyphen in the full style.
-          datum[:style] = article_number(variant.variant_identifier)
-        else
-          datum[:style] = product.custom_value(cdefs[:prod_part_number])
-        end
-        
-        # Under Armour has the potential to have an HTS value at the variant level...(due to their sizes 
-        # potentially having differing HTS numbers).
-        # In this case, check the variant first and then check the actual CA tariff
-        datum[:hts] = variant.custom_value(cdefs[:var_hts_code])
-        description = nil
-        classification = product.classifications.find {|c| c.country == ca}
-        if classification
-          # Tariff description can come from multiple potential spots...
-          # First, look to the Classification's Customs Description, then fall back to the Product name field
-          datum[:description] = classification.custom_value(cdefs[:class_customs_description])
-          datum[:hts] = classification.tariff_records[0].try(:hts_1) if datum[:hts].blank?
-        end
-
-        datum[:description] = product.name if datum[:description].blank?
-
-        data << datum
+      # Under Armour has the potential to have an HTS value at the variant level...(due to their sizes
+      # potentially having differing HTS numbers).
+      # In this case, check the variant first and then check the actual CA tariff
+      datum[:hts] = variants[0]&.custom_value(cdefs[:var_hts_code])
+      description = nil
+      classification = product.classifications.find {|c| c.country == ca}
+      if classification
+        # Tariff description can come from multiple potential spots...
+        # First, look to the Classification's Customs Description, then fall back to the Product name field
+        datum[:description] = classification.custom_value(cdefs[:class_customs_description])
+        datum[:hts] = classification.tariff_records[0].try(:hts_1) if datum[:hts].blank?
       end
 
-      data
+      datum[:description] = product.name if datum[:description].blank?
+
+      datum
     end
 
     def ca 
