@@ -59,7 +59,10 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
     context "with canadian shipment" do 
 
+      let! (:pars) { DataCrossReference.create! key: "PARSley", value: nil, cross_reference_type: "hm_pars" }
+
       before :each do
+        allow(OpenChain::DatabaseUtils).to receive(:run_in_separate_connection).and_yield
         # Turn off pars notifications for now
         allow_any_instance_of(described_class).to receive(:pars_thresholds).and_return []
         allow(DataCrossReference).to receive(:unused_pars_count).and_return 1000
@@ -79,7 +82,8 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           file.flush
         end
 
-        expect(DataCrossReference).to receive(:find_and_mark_next_unused_hm_pars_number).and_return('PARSley')
+        # Make sure the parser is using this method to get the pars numbers
+        expect(OpenChain::DatabaseUtils).to receive(:run_in_separate_connection).and_yield
 
         expect(Lock).to receive(:acquire).with('Invoice-INV#-hm_i2_shipment_export_invoice_number').and_yield
         expect(Lock).to receive(:with_lock_retry).and_yield
@@ -142,6 +146,9 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
         expect(log.company).to eq hm
         expect(log.identifiers.length).to eq 0
+
+        pars.reload
+        expect(pars.value).to eq "1"
       end
 
       it "prefers the US entry's commercial invoice unit price over the product data" do
@@ -330,6 +337,18 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         expect(att.filename).to eq("HM-Dupe-I2-INV#.csv")
         expect(att.body).to eq(ca_file)
       end
+
+      it "unmarks used PARS numbers if an error is raised" do
+        error = RuntimeError.new("Error")
+        expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).to receive(:generate)
+        expect(OpenChain::CustomHandler::Hm::HmParsPdfGenerator).to receive(:generate_pars_pdf).and_raise error
+        expect(DataCrossReference).to receive(:find_and_mark_next_unused_hm_pars_number).and_call_original
+
+        expect { described_class.parse_file ca_file, log }.to raise_error error
+
+        pars.reload
+        expect(pars.value).to eq nil
+      end
     end
 
     context "with us shipment" do
@@ -353,7 +372,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
           invoice = inv
         end
 
-        expect(DataCrossReference).to receive(:find_and_mark_next_unused_hm_pars_number).and_return('PARSley')
+        expect(DataCrossReference).not_to receive(:find_and_mark_next_unused_hm_pars_number)
 
         expect(Lock).to receive(:acquire).with('Invoice-INV#-hm_i2_shipment_returns_invoice_number').and_yield
         expect(Lock).to receive(:with_lock_retry).and_yield

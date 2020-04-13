@@ -636,7 +636,7 @@ describe DataCrossReference do
         used_data_cross_reference
         unused_data_cross_reference
 
-        expect(DataCrossReference.find_and_mark_next_unused_hm_pars_number).to eq "Pars-Unused"
+        expect(DataCrossReference.find_and_mark_next_unused_hm_pars_number).to eq unused_data_cross_reference
         expect(unused_data_cross_reference.reload.value).to eq "1"
 
         # If the cross reference was marked as used...then there should be no more left and nil shoudl be returned
@@ -645,8 +645,8 @@ describe DataCrossReference do
 
       it "uses alphabetic sorting to determine next pars number to use" do
         unused_data_cross_reference
-        DataCrossReference.add_hm_pars_number("A Pars-Unused")
-        expect(DataCrossReference.find_and_mark_next_unused_hm_pars_number).to eq "A Pars-Unused"
+        new_unused = DataCrossReference.add_hm_pars_number("A Pars-Unused")
+        expect(DataCrossReference.find_and_mark_next_unused_hm_pars_number).to eq new_unused
       end
     end
 

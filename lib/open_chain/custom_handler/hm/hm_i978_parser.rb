@@ -483,7 +483,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
       # If this isn't the primary parser for CA, we can't use Pars Numbers.
       if invoice.customer_reference_number_2.blank? && fenix?(shipment_data) && primary_ca_import_parser?
-        invoice.customer_reference_number_2 = DataCrossReference.find_and_mark_next_unused_hm_pars_number
+        pars = DataCrossReference.find_and_mark_next_unused_hm_pars_number
+        invoice.customer_reference_number_2 = pars&.key
         inbound_file.add_identifier :pars_number, invoice.customer_reference_number_2
         # save the invoice immediately, so that we ensure even if this invoice number errors for some reason that when it's reloaded
         # the same pars number will be used

@@ -337,8 +337,8 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.find_and_mark_next_unused_hm_pars_number
-    key = nil
-    while key.nil? do
+    xref = nil
+    while xref.nil? do
       # Find the next available pars number from the list...
       pars = add_pars_clause(DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER)).order("`key`, id").first
       return nil if pars.nil?
@@ -350,11 +350,11 @@ class DataCrossReference < ActiveRecord::Base
 
         # if the value is blank, then we can use this record...mark it as used and then return the number
         pars.update! value: "1"
-        key = pars.key
+        xref = pars
       end
     end
 
-    key
+    xref
   end
 
   def self.unused_pars_count

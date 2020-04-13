@@ -34,22 +34,36 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     if lock_cr
-      # The intention of this check is to prevent two dupe files from being processed near-simultaneously (H&M dupes
-      # are a regular problem).  The way we're doing this, we're also effectively eliminating updates at an invoice
-      # number level.  Updates are said not to happen.
-      Lock.with_lock_retry(lock_cr) do
-        # Checking value here ensures that another process didn't already start to lock processing for this invoice
-        # number.  A value (current date) will be present only if a file for this invoice number has already been
-        # processed.
-        if lock_cr.value.nil?
-          parse_with_locked_invoice rows, system, forward_to_entry_system, log, invoice_number
+      begin
+        completed = false
+        # Check PARS totals for file data bound for fenix.
+        starting_pars_count = system == :fenix ? DataCrossReference.unused_pars_count : 0
+        # The intention of this check is to prevent two dupe files from being processed near-simultaneously (H&M dupes
+        # are a regular problem).  The way we're doing this, we're also effectively eliminating updates at an invoice
+        # number level.  Updates are said not to happen.
+        Lock.with_lock_retry(lock_cr) do
+          # Checking value here ensures that another process didn't already start to lock processing for this invoice
+          # number.  A value (current date) will be present only if a file for this invoice number has already been
+          # processed.
+          if lock_cr.value.nil?
+            parse_with_locked_invoice rows, system, forward_to_entry_system, log, invoice_number
 
-          lock_cr.value = Time.zone.now
-          lock_cr.save!
-        else
-          # Sends an email announcing the rejection.  This seems like it'll be annoying, but was specifically requested.
-          send_dupe_rejection_email invoice_number, file_contents
+            lock_cr.value = Time.zone.now
+            lock_cr.save!
+            completed = true
+          else
+            # Sends an email announcing the rejection.  This seems like it'll be annoying, but was specifically requested.
+            send_dupe_rejection_email invoice_number, file_contents
+          end
         end
+
+        if system == :fenix && completed
+          check_unused_pars_count(starting_pars_count)
+        end
+      rescue => e
+        # If there was an error raised, we need to unmark all the pars numbers utilized before re-raising the error
+        unmark_used_pars_numbers
+        raise e
       end
     end
 
@@ -64,9 +78,6 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       return
     end
 
-    # Check PARS totals...
-    starting_pars_count = DataCrossReference.unused_pars_count
-
     # Canadian customs requires that electronically filed PARS entries must be under 999 lines (WTF, eh?).
     # So, we need to chunk the file into groups of 999 lines for CA and then process each chunk of lines like
     # a completely separate file.
@@ -78,12 +89,6 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
     if system == :fenix
       generate_and_send_pars_pdf(totals, invoice_number)
-
-      # Check PARS totals...
-      ending_pars_count = DataCrossReference.unused_pars_count
-      if pars_threshold_crossed?(starting_pars_count, ending_pars_count)
-        OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{ending_pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
-      end
     end
   end
 
@@ -116,6 +121,13 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     return false
+  end
+
+  def check_unused_pars_count starting_pars_count
+    ending_pars_count = DataCrossReference.unused_pars_count
+    if pars_threshold_crossed?(starting_pars_count, ending_pars_count)
+      OpenMailer.send_simple_html(email_list, "More PARS Numbers Required", "#{ending_pars_count} PARS numbers are remaining to be used for H&M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed.", [], reply_to: "hm_support@vandegriftinc.com").deliver_now
+    end
   end
 
   def cdefs
@@ -232,7 +244,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       end
     end
 
-    generate_file_totals(invoice)
+    generate_file_totals(invoice, system)
   end
 
   def determine_system first_line, log
@@ -341,21 +353,14 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
   end
 
-  def generate_file_totals invoice
+  def generate_file_totals invoice, system
     data = HmShipmentData.new
     data.invoice_number = invoice.invoice_number
     data.invoice_date = invoice.invoice_date
-    # Since this method is running inside of a transaction, if we try and get the next pars number
-    # inside this current transaction, the value that method sets into the cross reference it pulls
-    # the pars number from won't get committed until the outer transaction commits.  If another transaction
-    # is running at the same time and pulls the same value and sets the same update times, it's possible the database 
-    # will try and merge the transaction results and that can result in multiple invoices using the same
-    # PARS number.  Which we don't want.
-    # The solution is to drop back out to a dedicated db connection / transaction just for this call so that
-    # it completes immediately (internally, the find/mark method uses db locking to ensure gated access
-    # to the next record)
-    OpenChain::DatabaseUtils.run_in_separate_connection do 
-      data.pars_number = DataCrossReference.find_and_mark_next_unused_hm_pars_number
+    
+    # Don't add PARS numbers unless we're running a Fenix file
+    if system == :fenix
+      data.pars_number = get_next_pars_number
     end
 
     data.weight = invoice.gross_weight
@@ -702,6 +707,45 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
   def primary_us_import_parser?
     @is_primary_us ||= !MasterSetup.get.custom_feature?("H&M i978 US Import Live")
+  end
+
+  def get_next_pars_number
+    # Since this method is running inside of a transaction, if we try and get the next pars number
+    # inside this current transaction, the value that method sets into the cross reference it pulls
+    # the pars number from won't get committed until the outer transaction commits.  If another transaction
+    # is running at the same time and pulls the same value and sets the same update times, it's possible the database 
+    # will try and merge the transaction results and that can result in multiple invoices using the same
+    # PARS number.  Which we don't want.
+    # The solution is to drop back out to a dedicated db connection / transaction just for this call so that
+    # it completes immediately (internally, the find/mark method uses db locking to ensure gated access
+    # to the next record)
+    number = nil
+    OpenChain::DatabaseUtils.run_in_separate_connection do 
+      pars_numbers = used_pars_numbers
+      pars = DataCrossReference.find_and_mark_next_unused_hm_pars_number
+      pars_numbers << pars unless pars.nil?
+
+      number = pars&.key
+    end
+    
+    number
+  end
+
+  def used_pars_numbers
+    @used_pars_numbers ||= []
+  end
+
+  def unmark_used_pars_numbers
+    pars_numbers = used_pars_numbers
+    return if pars_numbers.blank?
+
+    OpenChain::DatabaseUtils.run_in_separate_connection do 
+      DataCrossReference.where(id: pars_numbers.map(&:id)).update_all value: nil
+    end
+
+    pars_numbers.clear
+    
+    nil
   end
 
 end; end; end; end;
