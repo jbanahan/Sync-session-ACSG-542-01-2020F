@@ -14,8 +14,9 @@ module OpenChain; module FiscalCalendarSchedulingSupport
     timezone = config["relative_to_timezone"].presence || "America/New_York"
     relative_to_start = (config["relative_to_start"].presence || true).to_s.to_boolean
     quarterly = (config["quarterly"].presence || false).to_s.to_boolean
+    fiscal_day = config["fiscal_day"].to_i.zero? ? 1 : config["fiscal_day"].to_i
 
-    run_if_fiscal_day(config["company"], config["fiscal_day"].to_i, relative_to_timezone: timezone, relative_to_start: relative_to_start, quarterly: quarterly) do |fiscal_month, fiscal_date|
+    run_if_fiscal_day(config["company"], fiscal_day, relative_to_timezone: timezone, relative_to_start: relative_to_start, quarterly: quarterly) do |fiscal_month, fiscal_date|
       yield fiscal_month, fiscal_date
     end
   end
@@ -30,7 +31,8 @@ module OpenChain; module FiscalCalendarSchedulingSupport
     fiscal_month, fiscal_date = FiscalCalculations.current_fiscal_month(importer, current_time, relative_to_timezone, quarterly)
     return false unless fiscal_month
 
-    day_count = relative_to_start ? (fiscal_month.start_date + day.days) : (fiscal_month.end_date - day.days)
+    # Subtract 1 from day to ensure that the first day of the fiscal month corresponds to 1 rather than 0
+    day_count = relative_to_start ? (fiscal_month.start_date + (day - 1).days) : (fiscal_month.end_date - (day - 1).days)
 
     if day_count == fiscal_date
       yield fiscal_month, fiscal_date

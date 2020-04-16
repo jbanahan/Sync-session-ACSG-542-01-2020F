@@ -6,7 +6,7 @@ class FiscalMonthsController < ApplicationController
 
   def index
     sys_admin_secure {
-      @fiscal_months = FiscalMonth.where(company_id: params[:company_id]).order("year DESC, month_number ASC")
+      @fiscal_months = FiscalMonth.where(company_id: params[:company_id]).order("year DESC, month_number DESC")
       @company = Company.find params[:company_id]
     }
   end

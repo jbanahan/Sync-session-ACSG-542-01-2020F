@@ -183,7 +183,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
     it "emailed attachment has correct data" do
       create_data
-      Timecop.freeze(DateTime.new(2016,9,4,12)){ described_class.run_schedulable({'email' => ['test@vandegriftinc.com'], 'company' => 'ASCENA', 'fiscal_day' => 3}) }
+      Timecop.freeze(DateTime.new(2016,9,4,12)){ described_class.run_schedulable({'email' => ['test@vandegriftinc.com'], 'company' => 'ASCENA', 'fiscal_day' => 4}) }
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq [ "test@vandegriftinc.com" ]
       expect(mail.subject).to eq "Actual vs Potential First Sale Report"

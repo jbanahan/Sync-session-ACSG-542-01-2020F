@@ -274,7 +274,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
 
   describe "run_schedulable" do
     it "intializes the report class and runs it" do
-      settings = {"email_to"=>["goofus@fakeemail.com"], "quarterly"=>true, "fiscal_day"=>35, "cust_numbers" => ["ASCE", "MAUR"]}
+      settings = {"email_to"=>["goofus@fakeemail.com"], "quarterly"=>true, "fiscal_day"=>36, "cust_numbers" => ["ASCE", "MAUR"]}
 
       Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-04-05").in_time_zone("UTC")) do
         # Current fiscal month, which is the second month of the quarter.

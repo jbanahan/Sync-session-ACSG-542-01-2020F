@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
           subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                   'cust_numbers' => ['ASCE', 'ATAYLOR'],
                                   'company' => 'ASCENA',
-                                  'fiscal_day' => 3)
+                                  'fiscal_day' => 4)
         end
 
         mail = ActionMailer::Base.deliveries.pop

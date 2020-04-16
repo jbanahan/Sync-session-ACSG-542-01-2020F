@@ -84,7 +84,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
         Timecop.freeze(DateTime.new(2020,3,5,12,0)) do
           subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                   'cust_number' => 'PVH',
-                                  'fiscal_day' => 3)
+                                  'fiscal_day' => 4)
 
           mail = ActionMailer::Base.deliveries.pop
           expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'])
@@ -107,7 +107,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
         Timecop.freeze(DateTime.new(2020,3,5,12,0)) do
           subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                   'cust_number' => 'PVH',
-                                  'fiscal_day' => 3)
+                                  'fiscal_day' => 4)
 
           mail = ActionMailer::Base.deliveries.pop
           expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'])
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
       Timecop.freeze(DateTime.new(2020,3,5,12,0)) do
         subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                 'cust_number' => 'PVHCANADA',
-                                'fiscal_day' => 3)
+                                'fiscal_day' => 4)
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'])
