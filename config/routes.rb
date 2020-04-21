@@ -465,7 +465,9 @@ OpenChain::Application.routes.draw do
   get "/attachments/email_attachable/:attachable_type/:attachable_id", to: "attachments#show_email_attachable"
   post "/attachments/email_attachable/:attachable_type/:attachable_id", to: "attachments#send_email_attachable"
 
-  resources :attachments, only: [:delete, :create] do
+  # Although there's no actual show method in the controller, show is a required named route
+  # to generate a path helper (attachments_path) to invoke the destroy method.
+  resources :attachments, only: [:destroy, :create, :show] do
     member do
       get 'download'
     end
