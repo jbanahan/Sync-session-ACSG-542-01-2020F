@@ -1168,6 +1168,11 @@ OpenChain::Application.routes.draw do
     match 'clear_receivable', on: :member, via: [:get, :put]
     match 'clear_payable', on: :member, via: [:get, :put]
     match 'clear_check', on: :member, via: [:get, :put]
+    member do
+      put 'report_unfixable_receivable'
+      put 'report_unfixable_payable'
+      put 'report_unfixable_check'
+    end
   end
   match "/intacct_errors/push_to_intacct" => "intacct_errors#push_to_intacct", via: :post
 

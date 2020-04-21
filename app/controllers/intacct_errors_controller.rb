@@ -42,6 +42,51 @@ class IntacctErrorsController < ApplicationController
     end
   end
 
+  def report_unfixable_check
+    action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "Payable") do
+      intacct_object = IntacctCheck.where(id: params[:id]).first
+
+      if intacct_object.nil?
+        add_flash :errors, "No Intacct Error message found to mark unfixable."
+      else
+        intacct_object.update! intacct_errors: params[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
+        add_flash :notices, "Intacct Error message has been set as unfixable."
+      end
+
+      redirect_to action: "index"
+    end
+  end
+
+  def report_unfixable_receivable
+    action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "Payable") do
+      intacct_object = IntacctReceivable.where(id: params[:id]).first
+
+      if intacct_object.nil?
+        add_flash :errors, "No Intacct Error message found to mark unfixable."
+      else
+        intacct_object.update! intacct_errors: params[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
+        add_flash :notices, "Intacct Error message has been set as unfixable."
+      end
+
+      redirect_to action: "index"
+    end
+  end
+
+  def report_unfixable_payable
+    action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "Payable") do
+      intacct_object = IntacctPayable.where(id: params[:id]).first
+
+      if intacct_object.nil?
+        add_flash :errors, "No Intacct Error message found to mark unfixable."
+      else
+        intacct_object.update! intacct_errors: params[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
+        add_flash :notices, "Intacct Error message has been set as unfixable."
+      end
+
+      redirect_to action: "index"
+    end
+  end
+
   def clear_check
     action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "Check") do
       intacct_object = IntacctCheck.where(id: params[:id]).first

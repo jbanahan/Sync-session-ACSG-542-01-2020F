@@ -69,6 +69,96 @@ describe IntacctErrorsController do
     end
   end
 
+  describe "report_unfixable_check" do
+    it "marks the error unfixable" do
+      p1 = IntacctCheck.create! intacct_errors: "ERROR"
+
+      put :report_unfixable_check, id: p1.id, reason: "It's broken."
+      expect(response).to redirect_to action: :index
+      expect(flash[:notices]).to include "Intacct Error message has been set as unfixable."
+      expect(p1.reload.intacct_errors).to eql("It's broken.")
+      expect(p1.reload.intacct_key).to eql("N/A")
+    end
+
+    it "rejects unapproved users" do
+      u = Factory(:user, username: 'notallowed')
+      sign_in_as u
+      p1 = IntacctCheck.create! intacct_errors: "ERROR"
+
+      put :report_unfixable_check, id: p1.id
+
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to view this Payable."
+    end
+
+    it "handles missing payable" do
+      put :report_unfixable_check, id: -1
+
+      expect(response).to redirect_to action: :index
+      expect(flash[:errors]).to include "No Intacct Error message found to mark unfixable."
+    end
+  end
+
+  describe "report_unfixable_receivable" do
+    it "marks the error unfixable" do
+      p1 = IntacctReceivable.create! intacct_errors: "ERROR"
+
+      put :report_unfixable_receivable, id: p1.id, reason: "It's broken."
+      expect(response).to redirect_to action: :index
+      expect(flash[:notices]).to include "Intacct Error message has been set as unfixable."
+      expect(p1.reload.intacct_errors).to eql("It's broken.")
+      expect(p1.reload.intacct_key).to eql("N/A")
+    end
+
+    it "rejects unapproved users" do
+      u = Factory(:user, username: 'notallowed')
+      sign_in_as u
+      p1 = IntacctReceivable.create! intacct_errors: "ERROR"
+
+      put :report_unfixable_receivable, id: p1.id
+
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to view this Payable."
+    end
+
+    it "handles missing payable" do
+      put :report_unfixable_receivable, id: -1
+
+      expect(response).to redirect_to action: :index
+      expect(flash[:errors]).to include "No Intacct Error message found to mark unfixable."
+    end
+  end
+
+  describe "report_unfixable_payable" do
+    it "marks the error unfixable" do
+      p1 = IntacctPayable.create! intacct_errors: "ERROR"
+
+      put :report_unfixable_payable, id: p1.id, reason: "It's broken."
+      expect(response).to redirect_to action: :index
+      expect(flash[:notices]).to include "Intacct Error message has been set as unfixable."
+      expect(p1.reload.intacct_errors).to eql("It's broken.")
+      expect(p1.reload.intacct_key).to eql("N/A")
+    end
+
+    it "rejects unapproved users" do
+      u = Factory(:user, username: 'notallowed')
+      sign_in_as u
+      p1 = IntacctPayable.create! intacct_errors: "ERROR"
+
+      put :report_unfixable_payable, id: p1.id
+
+      expect(response).to be_redirect
+      expect(flash[:errors]).to include "You do not have permission to view this Payable."
+    end
+
+    it "handles missing payable" do
+      put :report_unfixable_payable, id: -1
+
+      expect(response).to redirect_to action: :index
+      expect(flash[:errors]).to include "No Intacct Error message found to mark unfixable."
+    end
+  end
+
   describe "clear_payable" do
     it "clears an error from payable" do
       p1 = IntacctPayable.create! intacct_errors: "ERROR"

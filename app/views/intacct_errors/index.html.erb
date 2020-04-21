@@ -1,3 +1,19 @@
+<%- content_for :javascript do -%>
+  $(function() {
+    $('.unable_to_fix').click(function(e) {
+      e.preventDefault;
+      $('#intacct-modal form').attr('action', e.target.href)
+      $('#intacct-modal').modal();
+      return false;
+    });
+
+    $('#intacct-modal .btn-primary').click(function(e) {
+      e.preventDefault;
+      $('#intacct-modal form').submit();
+      return false;
+    });
+  });
+<% end %>
 <% if @checks.blank? && @payables.blank? && @receivables.blank? %>
 <div class="row">
     <div class="col-md-12 text-center">
@@ -21,6 +37,7 @@
     <thead>
       <tr>
         <th>&nbsp;</th>
+        <th>&nbsp;</th>
         <th>Company</th>
         <th>Customer</th>
         <th>Vendor</th>
@@ -35,6 +52,7 @@
     <% @checks.each do |c| %>
       <tr>
         <td><%=link_to 'Clear Error', clear_check_intacct_error_path(c), method: :put %></td>
+        <td><%=link_to 'Unable to Fix', report_unfixable_check_intacct_error_path(c), method: :put, class: 'unable_to_fix' %></td>
         <td><%=c.company%></td>
         <td><%=c.customer_number%></td>
         <td><%=c.vendor_number%></td>
@@ -62,6 +80,7 @@
     <thead>
       <tr>
         <th>&nbsp;</th>
+        <th>&nbsp;</th>
         <th>Company</th>
         <th>Customer</th>
         <th>Vendor</th>
@@ -75,6 +94,7 @@
     <% @payables.each do |p| %>
       <tr>
         <td><%=link_to 'Clear Error', clear_payable_intacct_error_path(p), method: :put %></td>
+        <td><%=link_to 'Unable to Fix', report_unfixable_payable_intacct_error_path(p), method: :put, class: 'unable_to_fix' %></td>
         <td><%=p.company%></td>
         <td><%=p.intacct_payable_lines.first.customer_number%></td>
         <td><%=p.vendor_number%></td>
@@ -100,6 +120,7 @@
     <thead>
       <tr>
         <th>&nbsp;</th>
+        <th>&nbsp;</th>
         <th>Company</th>
         <th>Customer</th>
         <th>Invoice Number</th>
@@ -112,6 +133,7 @@
     <% @receivables.each do |r| %>
       <tr>
         <td><%=link_to 'Clear Error', clear_receivable_intacct_error_path(r), method: :put %></td>
+        <td><%=link_to 'Unable to Fix', report_unfixable_recivable_intacct_error_path(r), method: :put, class: 'unable_to_fix' %></td>
         <td><%=r.company%></td>
         <td><%=r.customer_number%></td>
         <td><%=r.invoice_number%></td>
@@ -123,6 +145,31 @@
     </tbody>
   </table>
 <% end %>
+<div id="intacct-modal" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Unable to fix</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form method="post">
+          <input name="_method" type="hidden" value="put" />
+          <%= hidden_field_tag :authenticity_token, form_authenticity_token -%>
+          <div class="form-group">
+            <textarea class="form-control" id="unable-to-fix-reason" name="reason" placeholder="Reason"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 <%-content_for :action_bar do-%>
   <%=button_to "Push To Intacct", {action: :push_to_intacct}, method: :post, class:'btn btn-secondary navbar-btn', form_class:'inline-button-to' -%>
 <% end %>
