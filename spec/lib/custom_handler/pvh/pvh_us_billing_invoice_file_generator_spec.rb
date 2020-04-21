@@ -64,12 +64,12 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
     expect(x).to have_xpath_value("TransactionInfo/File/ReceivedTime/Date", "2018-11-07")
     expect(x).to have_xpath_value("TransactionInfo/File/ReceivedTime/Time", "07:00:00")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/FileType", "XML")
-    expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/FileName", "GI_VANDE_PVH_#{file_invoice}_#{now.strftime("%Y%m%d%H%M%S")}.xml")
+    expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/FileName", "VANDE_PVH_GI_#{file_invoice}_#{now.strftime("%Y%m%d%H%M")}.xml")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/MessageType", "GENINV")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/MessageId", "1541592000")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/ControlNumber", "1541592000")
     expect(x).to have_xpath_value("TransactionInfo/File/OriginalFile/HeaderControlNumber", "1541592000")
-    expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/FileName", "GI_VANDE_PVH_#{file_invoice}_#{now.strftime("%Y%m%d%H%M%S")}.xml")
+    expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/FileName", "VANDE_PVH_GI_#{file_invoice}_#{now.strftime("%Y%m%d%H%M")}.xml")
     expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/CreateTime/Date", "2018-11-07")
     expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/CreateTime/Time", "07:00:00")
     expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/@Type", "Broker Invoice")
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(captured_xml.length).to eq 1
 
       x = REXML::Document.new(captured_xml.first).root
-      validate_invoice_header(x, "ENTRYNUM-DUTY")
+      validate_invoice_header(x, "ENTRYNUM")
 
       inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
       
@@ -285,7 +285,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(captured_xml.length).to eq 1
 
       x = REXML::Document.new(captured_xml.first).root
-      validate_invoice_header(x, "12345-CONTAINER")
+      validate_invoice_header(x, "12345")
 
       inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
       h = REXML::XPath.first(x, "GenericInvoices/GenericInvoice/InvoiceHeader")
@@ -514,7 +514,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(captured_xml.length).to eq 1
 
       x = REXML::Document.new(captured_xml.first).root
-      validate_invoice_header(x, "12345-CONTAINER")
+      validate_invoice_header(x, "12345")
 
       inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
       expect(inv).to have_xpath_value("InvoiceSummary/NumberOfInvoiceLineItems", "2")

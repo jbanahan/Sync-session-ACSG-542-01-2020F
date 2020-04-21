@@ -483,7 +483,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     doc, root = build_xml_document("GenericInvoiceMessage")
     invoice_date = mf(broker_invoice_snapshot, :bi_invoice_date)
 
-    filename = "GI_VANDE_PVH_#{invoice_number}_#{invoice_type}_#{Time.zone.now.strftime("%Y%m%d%H%M%S")}.xml"
+    filename = "VANDE_PVH_GI_#{invoice_number}_#{Time.zone.now.strftime("%Y%m%d%H%M")}.xml"
 
     invoice_element, invoice_header, invoice_details = generate_invoice_file_header(root, broker_invoice_snapshot, invoice_number, invoice_date, filename)
 
