@@ -133,7 +133,7 @@
     <% @receivables.each do |r| %>
       <tr>
         <td><%=link_to 'Clear Error', clear_receivable_intacct_error_path(r), method: :put %></td>
-        <td><%=link_to 'Unable to Fix', report_unfixable_recivable_intacct_error_path(r), method: :put, class: 'unable_to_fix' %></td>
+        <td><%=link_to 'Unable to Fix', report_unfixable_receivable_intacct_error_path(r), method: :put, class: 'unable_to_fix' %></td>
         <td><%=r.company%></td>
         <td><%=r.customer_number%></td>
         <td><%=r.invoice_number%></td>
