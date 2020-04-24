@@ -70,9 +70,13 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
       fm = fiscal_month.back(1)
       report = self.new.run(fm.year, fm.month_number, config['cust_number'])
       cust_number = config['cust_number']
-      report = xlsx_workbook_to_tempfile(report, "Duty Assist", file_name: "#{cust_number}_Duty Assist Data Dump_Fiscal_#{fiscal_month.start_date.strftime('%Y-%m')}_#{Date.today.strftime('%Y-%m-%d')}.xlsx")
-      body = "Attached is the #{cust_number} Assist Report for #{fm.year}-#{fm.month_number}"
-      OpenMailer.send_simple_html(config['email'], "#{cust_number} Duty Assist #{fm.year}-#{fm.month_number}", body, report).deliver_now
+      report = xlsx_workbook_to_tempfile(report, "Duty Assist", file_name: "#{cust_number}_Data_Dump_Fiscal_#{fiscal_month.start_date.strftime('%Y-%m')}_#{Date.today.strftime('%Y-%m-%d')}.xlsx")
+      body = if cust_number == "PVH"
+                 "Attached is the \"PVH Duty Dump Report, #{fm.year.to_s}-#{fm.month_number.to_s}\" based on ACH Due Date."
+               else
+                 "Attached is the \"PVHCANADA Duty Dump Report, #{fm.year.to_s}-#{fm.month_number.to_s}\" based on CADEX Acceptance Date."
+             end
+      OpenMailer.send_simple_html(config['email'], "#{cust_number} Data Dump #{fm.year}-#{fm.month_number}", body, report).deliver_now
     end
   end
 

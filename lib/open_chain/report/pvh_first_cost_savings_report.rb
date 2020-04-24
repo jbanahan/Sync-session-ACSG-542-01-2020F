@@ -63,10 +63,11 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
     end
 
     filename_fiscal_descriptor = quarterly ? "#{fiscal_year}-Quarter-#{((fiscal_month / 4) + 1)}" : "#{fiscal_year}-#{fiscal_month.to_s.rjust(2, "0")}"
-    file_name = "PVH_Cost_Savings_for_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
+    file_name = "PVH_First_Cost_Savings_for_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH First Cost Savings", file_name: "#{file_name}" do |temp|
-        OpenMailer.send_simple_html(settings['email'], "PVH First Cost Savings Report", "The first cost savings report is attached, covering #{fiscal_date_start} to #{fiscal_date_end}.", temp).deliver_now
+        body_msg = "Attached is the \"PVH First Cost Savings Report, #{fiscal_year.to_s}-#{fiscal_month.to_s}\" based on ACH Due Date."
+        OpenMailer.send_simple_html(settings['email'], "PVH First Cost Savings Report", body_msg, temp).deliver_now
       end
     else
       workbook_to_tempfile(workbook, "PVH First Cost Savings", file_name: "#{file_name}")

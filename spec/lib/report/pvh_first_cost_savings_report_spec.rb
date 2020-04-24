@@ -107,7 +107,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       Timecop.freeze(make_eastern_date(2019,9,30)) do
         @temp = described_class.run_report(u, {'fiscal_month'=>'2019-01'})
       end
-      expect(@temp.original_filename).to eq "PVH_Cost_Savings_for_Fiscal_2019-01_2019-09-30.xlsx"
+      expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-01_2019-09-30.xlsx"
 
       reader = XlsxTestReader.new(@temp.path).raw_workbook_data
       expect(reader.length).to eq 2
@@ -163,7 +163,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       Timecop.freeze(make_eastern_date(2019,9,30)) do
         @temp = described_class.run_report(u, {})
       end
-      expect(@temp.original_filename).to eq "PVH_Cost_Savings_for_Fiscal_2019-09_2019-09-30.xlsx"
+      expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-09_2019-09-30.xlsx"
 
       reader = XlsxTestReader.new(@temp.path).raw_workbook_data
       expect(reader.length).to eq 2
@@ -228,7 +228,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       Timecop.freeze(make_eastern_date(2019,9,30)) do
         @temp = described_class.run_report(u, {'quarterly'=>'true'})
       end
-      expect(@temp.original_filename).to eq "PVH_Cost_Savings_for_Fiscal_2019-Quarter-3_2019-09-30.xlsx"
+      expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-Quarter-3_2019-09-30.xlsx"
 
       reader = XlsxTestReader.new(@temp.path).raw_workbook_data
       expect(reader.length).to eq 2
@@ -306,7 +306,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       Timecop.freeze(make_eastern_date(2019,9,30)) do
         @temp = described_class.run_report(u, {'fiscal_month'=>'2019-01'})
       end
-      expect(@temp.original_filename).to eq "PVH_Cost_Savings_for_Fiscal_2019-01_2019-09-30.xlsx"
+      expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-01_2019-09-30.xlsx"
 
       reader = XlsxTestReader.new(@temp.path).raw_workbook_data
       expect(reader.length).to eq 2

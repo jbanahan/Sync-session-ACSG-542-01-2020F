@@ -118,16 +118,14 @@ describe OpenChain::Report::PvhDutyDiscountReport do
 
       detail_sheet = reader["Detail"]
       expect(detail_sheet).to_not be_nil
-      expect(detail_sheet.length).to eq 9
+      expect(detail_sheet.length).to eq 7
       expect(detail_sheet[0]).to eq ["Customs Entry Number", "Vendor Invoice Number", "PO Number", "Shipment Number", "PO Line", "HTS Number", "ETA", "Vendor Invoice Value", "Duty Assist Amount", "Dutiable Value", "Duty Adj Amount", "Duty Savings", "Duty Rate PCT", "First Cost - PO", "Units Shipped", "Mode of Transport"]
       expect(detail_sheet[1]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "235679012", Date.new(2018,12,13), 40.2, 2.22, 33.0, -9.42, 3.14, 33.3, 5.67, 10.0, "SEA"]
       expect(detail_sheet[2]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "235679015", Date.new(2018,12,13), 0.0, 0.0, 0.0, 0.0, 0.19, 2.0, 5.67, 10.0, "SEA"]
       expect(detail_sheet[3]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "990279014", Date.new(2018,12,13), 0.0, 0.0, 0.0, 0.0, 0.94, 10.0, 5.67, 10.0, "SEA"]
       expect(detail_sheet[4]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "990379013", Date.new(2018,12,13), 0.0, 0.0, 0.0, 0.0, 2.36, 25.0, 5.67, 10.0, "SEA"]
       expect(detail_sheet[5]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 3, "356790123", Date.new(2018,12,13), 51.21, 1.21, 44.0, -8.42, 5.62, 66.7, 6.78, 11.0, "SEA"]
-      expect(detail_sheet[6]).to eq ["entry-1", nil, nil, nil, nil, nil, nil, 91.41, 3.43, 77.0, -17.84, 12.25, nil, nil, nil, "SEA"]
-      expect(detail_sheet[7]).to eq ["entry-2", "inv-2", "PO-C", "cont-2", 5, "567901234", Date.new(2019,1,12), 72.22, 3.23, 35.0, -40.45, 20.23, 50.0, 7.89, 12.0, "SEA"]
-      expect(detail_sheet[8]).to eq ["entry-2", nil, nil, nil, nil, nil, nil, 72.22, 3.23, 35.0, -40.45, 20.23, nil, nil, nil, "SEA"]
+      expect(detail_sheet[6]).to eq ["entry-2", "inv-2", "PO-C", "cont-2", 5, "567901234", Date.new(2019,1,12), 72.22, 3.23, 35.0, -40.45, 20.23, 50.0, 7.89, 12.0, "SEA"]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
@@ -182,10 +180,9 @@ describe OpenChain::Report::PvhDutyDiscountReport do
 
       detail_sheet = reader["Detail"]
       expect(detail_sheet).to_not be_nil
-      expect(detail_sheet.length).to eq 3
+      expect(detail_sheet.length).to eq 2
       expect(detail_sheet[0]).to eq ["Customs Entry Number", "Vendor Invoice Number", "PO Number", "Shipment Number", "PO Line", "HTS Number", "ETA", "Vendor Invoice Value", "Duty Assist Amount", "Dutiable Value", "Duty Adj Amount", "Duty Savings", "Duty Rate PCT", "First Cost - PO", "Units Shipped", "Mode of Transport"]
       expect(detail_sheet[1]).to eq ["entry-1", "inv-1", "PO-A", "MBOL_X", 14, "235679012", Date.new(2019,8,13), 20.2, 0.2, 33, 12.6, 4.2, 33.3, 5.67, 10.0, "AIR"]
-      expect(detail_sheet[2]).to eq ["entry-1", nil, nil, nil, nil, nil, nil, 20.2, 0.2, 33.0, 12.6, 4.2, nil, nil, nil, "AIR"]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
@@ -260,16 +257,14 @@ describe OpenChain::Report::PvhDutyDiscountReport do
 
       detail_sheet = reader["Detail"]
       expect(detail_sheet).to_not be_nil
-      expect(detail_sheet.length).to eq 9
+      expect(detail_sheet.length).to eq 7
       expect(detail_sheet[0]).to eq ["Customs Entry Number", "Vendor Invoice Number", "PO Number", "Shipment Number", "PO Line", "HTS Number", "ETA", "Vendor Invoice Value", "Duty Assist Amount", "Dutiable Value", "Duty Adj Amount", "Duty Savings", "Duty Rate PCT", "First Cost - PO", "Units Shipped", "Mode of Transport"]
       expect(detail_sheet[1]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "235679012", Date.new(2018,12,13), 0.0, 2.22, 33, 30.78, 10.25, 33.3, 5.67, 10.0, "SEA"]
       expect(detail_sheet[2]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "235679015", Date.new(2018,12,13), 0.0, 0.0, 0.0, 0.0, 0.62, 2.0, 5.67, 10.0, "SEA"]
       expect(detail_sheet[3]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "990279014", Date.new(2018,12,13), 0.0, 0.0, 0.0, 0.0, 3.08, 10.0, 5.67, 10.0, "SEA"]
       expect(detail_sheet[4]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 1, "990379013", Date.new(2018,12,13), 0.0, 0.0, 0.0, 0.0, 7.7, 25.0, 5.67, 10.0, "SEA"]
       expect(detail_sheet[5]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", 3, "356790123", Date.new(2018,12,13), 0.0, 1.21, 44, 42.79, 28.54, 66.7, 6.78, 11.0, "SEA"]
-      expect(detail_sheet[6]).to eq ["entry-1", nil, nil, nil, nil, nil, nil, 0.0, 3.43, 77.0, 73.57, 50.19, nil, nil, nil, "SEA"]
-      expect(detail_sheet[7]).to eq ["entry-2", "inv-2", "PO-C", "cont-2", 5, "567901234", Date.new(2019,1,12), 0.0, 3.23, 35, 31.77, 15.89, 50.0, 7.89, 12.0, "SEA"]
-      expect(detail_sheet[8]).to eq ["entry-2", nil, nil, nil, nil, nil, nil, 0.0, 3.23, 35.0, 31.77, 15.89, nil, nil, nil, "SEA"]
+      expect(detail_sheet[6]).to eq ["entry-2", "inv-2", "PO-C", "cont-2", 5, "567901234", Date.new(2019,1,12), 0.0, 3.23, 35, 31.77, 15.89, 50.0, 7.89, 12.0, "SEA"]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
@@ -347,10 +342,9 @@ describe OpenChain::Report::PvhDutyDiscountReport do
 
       detail_sheet = reader["Detail"]
       expect(detail_sheet).to_not be_nil
-      expect(detail_sheet.length).to eq 3
+      expect(detail_sheet.length).to eq 2
       expect(detail_sheet[0]).to eq ["Customs Entry Number", "Vendor Invoice Number", "PO Number", "Shipment Number", "PO Line", "HTS Number", "ETA", "Vendor Invoice Value", "Duty Assist Amount", "Dutiable Value", "Duty Adj Amount", "Duty Savings", "Duty Rate PCT", "First Cost - PO", "Units Shipped", "Mode of Transport"]
       expect(detail_sheet[1]).to eq ["entry-1", "inv-1", "PO-A", "cont-1", nil, "235679012", Date.new(2018,12,13), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, nil, "SEA"]
-      expect(detail_sheet[2]).to eq ["entry-1", nil, nil, nil, nil, nil, nil, 0.0, 0.0, 0.0, 0.0, 0.0, nil, nil, nil, "SEA"]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil

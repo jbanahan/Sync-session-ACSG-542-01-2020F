@@ -88,8 +88,8 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
 
           mail = ActionMailer::Base.deliveries.pop
           expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'])
-          expect(mail.subject).to eq("PVH Duty Assist 2020-1")
-          expect(mail.body).to match(/Attached is the PVH Assist Report for 2020-1/)
+          expect(mail.subject).to eq("PVH Data Dump 2020-1")
+          expect(mail.body).to match(/PVH Duty Dump Report, 2020-1/)
           expect(mail.attachments.count).to eql(1)
 
           test_reader = XlsxTestReader.new(StringIO.new(mail.attachments[0].read)).raw_workbook_data
@@ -111,8 +111,8 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
 
           mail = ActionMailer::Base.deliveries.pop
           expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'])
-          expect(mail.subject).to eq("PVH Duty Assist 2020-1")
-          expect(mail.body).to match(/Attached is the PVH Assist Report for 2020-1/)
+          expect(mail.subject).to eq("PVH Data Dump 2020-1")
+          expect(mail.body).to match(/PVH Duty Dump Report, 2020-1/)
           expect(mail.attachments.count).to eql(1)
 
           test_reader = XlsxTestReader.new(StringIO.new(mail.attachments[0].read)).raw_workbook_data
@@ -180,8 +180,8 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
 
         mail = ActionMailer::Base.deliveries.pop
         expect(mail.to).to eq(['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'])
-        expect(mail.subject).to eq("PVHCANADA Duty Assist 2020-1")
-        expect(mail.body).to match(/Attached is the PVHCANADA Assist Report for 2020-1/)
+        expect(mail.subject).to eq("PVHCANADA Data Dump 2020-1")
+        expect(mail.body).to match(/PVHCANADA Duty Dump Report, 2020-1/)
         expect(mail.attachments.count).to eql(1)
 
         test_reader = XlsxTestReader.new(StringIO.new(mail.attachments[0].read)).raw_workbook_data

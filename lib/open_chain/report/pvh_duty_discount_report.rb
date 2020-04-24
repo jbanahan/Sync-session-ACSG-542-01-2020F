@@ -68,7 +68,8 @@ module OpenChain; module Report; class PvhDutyDiscountReport
     file_name = "PVH_Duty_Discount_US_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH Duty Discount", file_name: "#{file_name}" do |temp|
-        OpenMailer.send_simple_html(settings['email'], "PVH Duty Discount Report", "The duty discount report is attached, covering #{fiscal_date_start} to #{fiscal_date_end}.", temp).deliver_now
+        body_msg = "Attached is the \"Duty Discount Report, #{fiscal_year.to_s}-#{fiscal_month.to_s}\" based on ACH Due Date."
+        OpenMailer.send_simple_html(settings['email'], "PVH Duty Discount Report", body_msg, temp).deliver_now
       end
     else
       workbook_to_tempfile(workbook, "PVH Duty Discount Savings", file_name: "#{file_name}")
@@ -252,12 +253,6 @@ module OpenChain; module Report; class PvhDutyDiscountReport
                     row.duty_adj_amount, row.duty_savings, row.duty_rate_pct, row.first_cost_po, row.units_shipped, convert_transport_mode(row.transport_mode)]
           wb.add_body_row sheet, values, styles: styles
         end
-        # Summary row.
-        values = [summary_row.entry_number, nil, nil, nil, nil,
-                  nil, nil, summary_row.vendor_invoice_value, summary_row.duty_assist_amount, summary_row.dutiable_value_7501,
-                  summary_row.total_duty_adj_amount, summary_row.total_duty_savings, nil, nil, nil, convert_transport_mode(summary_row.transport_mode)]
-        summary_styles = [:bold, nil, nil, nil, nil, nil, nil, :bold_decimal, :bold_decimal, :bold_decimal, :bold_decimal, :bold_decimal, nil, nil, nil, :bold]
-        wb.add_body_row sheet, values, styles: summary_styles
       end
 
       wb.set_column_widths sheet, *Array.new(15, 20)

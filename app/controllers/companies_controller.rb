@@ -67,7 +67,8 @@ class CompaniesController < ApplicationController
   # GET /companies/new.xml
   def new
     @company = Company.new
-    @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release]
+    @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release, :ent_release_date,
+                                                       :ent_duty_due_date, :ent_cadex_accept_date]
     action_secure(current_user.company.master, @company, {:verb => "create ", :module_name=>"company"}) {
       set_includes
       respond_to do |format|
@@ -79,7 +80,8 @@ class CompaniesController < ApplicationController
   # GET /companies/1/edit
   def edit
      @company = Company.find(params[:id])
-     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release, :ent_release_date]
+     @fiscal_reference_opts = fiscal_reference_options [:ent_arrival_date, :ent_first_release, :ent_release_date,
+                                                        :ent_duty_due_date, :ent_cadex_accept_date]
      action_secure(current_user.company.master, @company, {:verb => "edit", :module_name=>"company"}) {
        set_includes
      }
