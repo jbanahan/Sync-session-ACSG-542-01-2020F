@@ -2,12 +2,39 @@
 
 VFI Track is the primary application developed by Vandegrift, Inc.  It runs atop the Amazon Web Services Cloud.
 
+## Docker development environment
+
+For local docker development environment you should first install dependecies and run migrations with:
+```
+docker-compose run runner .dockerdev/setup
+```
+
+To run the environment
+```
+docker-compose up rails
+```
+
+Some recommended Docker aliases to put into your `~/.bashrc`
+```
+alias dcr='docker-compose run'
+alias dcu='docker-compose up'
+alias dcd='docker-compose down'
+alias dcb='docker-compose build'
+```
+
+Some helpful examples:
+```
+dcu rails
+dcr runner rails c
+dcr runner rspec spec/models/address_spec.rb
+```
+
 ## Staging a New Build
 
 **_DO NOT_** stage a new build until the Circle CI build dashboard shows a clean (green) build on the master branch.
 
 
-VFI Track's upgrade process relies on git tags to know which version to deploy to the servers.  To that end, any developer with commit access on this 
+VFI Track's upgrade process relies on git tags to know which version to deploy to the servers.  To that end, any developer with commit access on this
 repository can stage a build.
 
 ### To stage a build:
