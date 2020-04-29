@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberFa
       csv = OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator.generate_csv shipment
       sr = shipment.sync_records.where(trading_partner: 'Factory Pack Declaration').first_or_initialize
 
-      Tempfile.open(["factory_pack_#{shipment.reference}_",'.csv']) do |tf|
+      Tempfile.open(["factory_pack_#{shipment.reference}_", '.csv']) do |tf|
         tf.write csv
         tf.flush
         current_time = Time.zone.now

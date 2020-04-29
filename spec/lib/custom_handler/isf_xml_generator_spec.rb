@@ -87,7 +87,7 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
       expect(r.text('EdiBillLading/MASTER_BILL_NBR')).to eq ' is a master bill'
       expect(r.text('EdiBillLading/MASTER_BILL_SCAC_CD')).to eq 'this'
 
-      REXML::XPath.each(r,'EdiEntity') do |entity|
+      REXML::XPath.each(r, 'EdiEntity') do |entity|
         case entity.text('ENTITY_TYPE_CD')
           when 'IM'
             expect(entity.text('BROKERAGE_ACCT_CD')).to eq "asjhdajhdjasgd"
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
             expect(entity.text('ENTITY_ID')).to eq @shipment.consignee.irs_number
             expect(entity.text('ENTITY_ID_TYPE_CD')).to eq 'EI'
             expect(entity.text('NAME')).to eq @shipment.consignee.name
-          when 'SE','BY','ST','LG','CS'
+          when 'SE', 'BY', 'ST', 'LG', 'CS'
             match_address_entity_by_type(entity, entity.text('ENTITY_TYPE_CD'))
           when 'MF'
             index = entity.text('ENTITY_ID').to_i - 1
@@ -105,10 +105,10 @@ describe OpenChain::CustomHandler::ISFXMLGenerator do
         end
       end
 
-      expect(REXML::XPath.each(r,'EdiLine').count).to eq @shipment.shipment_lines.count - 1
+      expect(REXML::XPath.each(r, 'EdiLine').count).to eq @shipment.shipment_lines.count - 1
 
       # Every shipment line matches exactly one EdiLine
-      expect(@shipment.shipment_lines.all? { |line| REXML::XPath.each(r,'EdiLine').select { |edi| edi_line_matches_shipment_line? edi, line }.count == 1 }).to eq true
+      expect(@shipment.shipment_lines.all? { |line| REXML::XPath.each(r, 'EdiLine').select { |edi| edi_line_matches_shipment_line? edi, line }.count == 1 }).to eq true
 
     end
 

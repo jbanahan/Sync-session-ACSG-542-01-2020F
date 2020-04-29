@@ -1,13 +1,13 @@
 describe SurveysController do
   before :each do
 
-    @u = Factory(:user,:survey_view=>true,:survey_edit=>true)
+    @u = Factory(:user, :survey_view=>true, :survey_edit=>true)
     sign_in_as @u
   end
   describe 'index' do
     it "should only show surveys for logged in company" do
-      to_find = Factory(:survey,:company=>@u.company)
-      archived = Factory(:survey,:company=>@u.company, archived: true)
+      to_find = Factory(:survey, :company=>@u.company)
+      archived = Factory(:survey, :company=>@u.company, archived: true)
       not_to_find = Factory(:survey)
       get :index
       expect(assigns(:surveys)).to eq [to_find]
@@ -21,8 +21,8 @@ describe SurveysController do
     end
 
     it "shows archived surveys if prompted" do
-      to_find = Factory(:survey,:company=>@u.company)
-      archived = Factory(:survey,:company=>@u.company, archived: true)
+      to_find = Factory(:survey, :company=>@u.company)
+      archived = Factory(:survey, :company=>@u.company, archived: true)
       get :index, show_archived: true
 
       expect(assigns(:surveys)).to eq [to_find]
@@ -43,7 +43,7 @@ describe SurveysController do
   end
   describe "show" do
     before :each do
-      @s = Factory(:survey,:company_id=>@u.company_id, :name=>"Name")
+      @s = Factory(:survey, :company_id=>@u.company_id, :name=>"Name")
     end
     it "should fail if user doesn't have view survey permission" do
       @u.update_attributes(:survey_view=>false)
@@ -61,7 +61,7 @@ describe SurveysController do
       get :show, :id=>@s.id
       expect(assigns(:survey)).to eq(@s)
     end
-    it "should write excel file for excel formats" do 
+    it "should write excel file for excel formats" do
       wb = double
       expect(Survey).to receive(:find).with(@s.id.to_s).and_return(@s)
       expect(@s).to receive(:to_xls).and_return(wb)
@@ -72,7 +72,7 @@ describe SurveysController do
         expect(data).to eq("Test")
         expect(options[:type]).to eq(:xls)
         expect(options[:filename]).to eq(@s.name + ".xls")
-        
+
         # Need this so the controller knows some template was utilized (since we mocked
         # away the send_data call)
         @controller.render :nothing => true
@@ -92,7 +92,7 @@ describe SurveysController do
 
         @controller.render :nothing => true
       end
-      
+
       get :show, {:id=>@s.id,  :format=>:xls}
     end
     it "should enable showing archived responses" do
@@ -109,7 +109,7 @@ describe SurveysController do
   end
   describe "edit" do
     before :each do
-      @s = Factory(:survey,:company_id=>@u.company_id) 
+      @s = Factory(:survey, :company_id=>@u.company_id)
     end
     it "should reject if survey is locked" do
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
@@ -133,7 +133,7 @@ describe SurveysController do
   end
   describe "update" do
     before :each do
-      @s = Factory(:survey,:company_id=>@u.company_id)
+      @s = Factory(:survey, :company_id=>@u.company_id)
     end
     it "should reject is survey is locked" do
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
@@ -152,8 +152,8 @@ describe SurveysController do
       expect(Survey.find(@s.id).name).to eq 'abcdef'
     end
     it "should clear warnings" do
-      q = @s.questions.create!(:content=>"ABC def 123",:choices=>"a\nb",:warning=>true, :require_comment => true, :require_attachment => true)
-      post :update, {:id=>@s.id, :survey=>{:name=>'abcdef',:questions_attributes=>{q.id=>{:id=>q.id,:content=>"ABC def 123"}}}}
+      q = @s.questions.create!(:content=>"ABC def 123", :choices=>"a\nb", :warning=>true, :require_comment => true, :require_attachment => true)
+      post :update, {:id=>@s.id, :survey=>{:name=>'abcdef', :questions_attributes=>{q.id=>{:id=>q.id, :content=>"ABC def 123"}}}}
       expect(response.body).to eq ({flash: {errors: nil}, redirect: edit_survey_path(@s)}.to_json)
       q = Question.find(q.id)
       expect(q.warning).to be_falsey
@@ -178,12 +178,12 @@ describe SurveysController do
   describe "create" do
     it "should reject if user does not have edit_survey permission" do
       @u.update_attributes(:survey_edit=>false)
-      post :create, {:survey=>{:name=>'abc'}} 
+      post :create, {:survey=>{:name=>'abc'}}
       expect(response.body).to eq ({flash: {errors: ["You do not have permission to edit surveys."]}, redirect: nil}.to_json)
       expect(Survey.count).to eq 0
     end
     it "should pass if user has edit_survey permission" do
-      post :create, {:survey=>{:name=>'abc'}} 
+      post :create, {:survey=>{:name=>'abc'}}
       expect(response.body).to eq ({flash: {errors: nil}, redirect: edit_survey_path(Survey.first)}.to_json)
       expect(Survey.first.name).to eq 'abc'
       expect(Survey.first.company_id).to eq @u.company_id
@@ -200,7 +200,7 @@ describe SurveysController do
       expect(Question.first.rank).to eql(0)
     end
     it "should set company_id based on current_user not parameter" do
-      post :create, {:survey=>{:name=>'abc',:company_id => (@u.company_id+1)}} 
+      post :create, {:survey=>{:name=>'abc', :company_id => (@u.company_id+1)}}
       parsed_response = JSON.parse response.body
       expect(parsed_response["redirect"]).to eq edit_survey_path(Survey.first)
       expect(parsed_response["flash"]["errors"]).to be_nil
@@ -213,25 +213,25 @@ describe SurveysController do
   end
   describe "destroy" do
     before :each do
-      @s = Factory(:survey,:company_id=>@u.company_id)
+      @s = Factory(:survey, :company_id=>@u.company_id)
     end
     it "should reject if survey is locked" do
       expect_any_instance_of(Survey).to receive(:locked?).and_return(true)
-      delete :destroy, :id=>@s.id 
+      delete :destroy, :id=>@s.id
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
-      expect(Survey.find(@s.id)).to eq(@s) #not deleted
+      expect(Survey.find(@s.id)).to eq(@s) # not deleted
     end
     it "should reject if user cannot edit" do
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(false)
-      delete :destroy, :id=>@s.id 
+      delete :destroy, :id=>@s.id
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
-      expect(Survey.find(@s.id)).to eq(@s) #not deleted
+      expect(Survey.find(@s.id)).to eq(@s) # not deleted
     end
     it "should pass if user can edit" do
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
-      delete :destroy, :id=>@s.id 
+      delete :destroy, :id=>@s.id
       expect(response).to redirect_to surveys_path
       expect(flash[:notices].first).to eq("Survey deleted successfully.")
       expect(Survey.count).to eq(0)
@@ -239,7 +239,7 @@ describe SurveysController do
   end
   describe "show_assign" do
     before :each do
-      @s = Factory(:survey,:company_id=>@u.company_id)
+      @s = Factory(:survey, :company_id=>@u.company_id)
     end
     it "should show assignment page if user can edit survey" do
       c = Factory(:company, name: "Z is my Company Name")
@@ -259,15 +259,15 @@ describe SurveysController do
     end
   end
   describe "assign", :disable_delayed_jobs do
-    before :each do 
+    before :each do
       @s = Factory(:survey)
-      allow_any_instance_of(SurveyResponse).to receive(:invite_user!) #don't want to deal with this except in the notify test
+      allow_any_instance_of(SurveyResponse).to receive(:invite_user!) # don't want to deal with this except in the notify test
     end
     it "should assign if user can edit survey" do
       u2 = Factory(:user)
       u3 = Factory(:user)
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
-      post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s,"1"=>u3.id.to_s}
+      post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s, "1"=>u3.id.to_s}
       expect(response).to redirect_to survey_path(@s)
       expect(flash[:notices].size).to eq(1)
       expect(SurveyResponse.find_by(survey: @s.id, user: u2.id)).not_to be_nil
@@ -290,14 +290,14 @@ describe SurveysController do
     end
     it "should assign to the same user twice" do
       u2 = Factory(:user)
-      Factory(:survey_response,:survey=>@s,:user=>u2) #making this one exist already
-      u3 = Factory(:user) #this user should still have one created
+      Factory(:survey_response, :survey=>@s, :user=>u2) # making this one exist already
+      u3 = Factory(:user) # this user should still have one created
       allow_any_instance_of(Survey).to receive(:can_edit?).and_return(true)
-      post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s,"1"=>u3.id.to_s}
+      post :assign, :id=>@s.id, :assign=>{"0"=>u2.id.to_s, "1"=>u3.id.to_s}
       expect(response).to redirect_to survey_path(@s)
       expect(flash[:notices].size).to eq(1)
       expect(SurveyResponse.find_by(survey: @s.id, user: u3.id)).not_to be_nil
-      expect(SurveyResponse.where(:user_id=>u2.id,:survey_id=>@s.id).count).to eq(2)
+      expect(SurveyResponse.where(:user_id=>u2.id, :survey_id=>@s.id).count).to eq(2)
     end
     it "should set subtitle" do
       u2 = Factory(:user)
@@ -321,7 +321,7 @@ describe SurveysController do
       allow_any_instance_of(Company).to receive(:can_view?).and_return(true)
       expect {
         post :assign, :id=>@s.id, :assign=>{'0'=>@u.id.to_s}, :base_object_type => 'Company', :base_object_id => @u.company_id.to_s
-      }.to change(SurveyResponse.where(base_object_id:@u.company_id,base_object_type:'Company'),:count).from(0).to(1)
+      }.to change(SurveyResponse.where(base_object_id:@u.company_id, base_object_type:'Company'), :count).from(0).to(1)
       expect(flash[:errors]).to be_blank
       expect(response).to be_redirect
     end
@@ -330,7 +330,7 @@ describe SurveysController do
       allow_any_instance_of(Company).to receive(:can_view?).and_return(false)
       expect {
         post :assign, :id=>@s.id, :assign=>{'0'=>@u.id.to_s}, :base_object_type => 'Company', :base_object_id => @u.company_id.to_s
-      }.to_not change(SurveyResponse,:count)
+      }.to_not change(SurveyResponse, :count)
       expect(flash[:errors].first).to match /not found/
     end
     it "should redirect to special path" do
@@ -346,11 +346,11 @@ describe SurveysController do
     end
   end
   describe "toggle subscription", :disable_delayed_jobs do
-    before :each do 
+    before :each do
       @s = Factory(:survey, :company_id => @u.company_id)
     end
     it "should not create subscription if user cannot see surveys" do
-      @u = Factory(:user,:survey_view => false)
+      @u = Factory(:user, :survey_view => false)
       sign_in_as @u
       expect do
         @u.survey_view = false
@@ -380,7 +380,7 @@ describe SurveysController do
 
   describe "archive" do
     it "archives surveys" do
-      to_find = Factory(:survey,:company=>@u.company)
+      to_find = Factory(:survey, :company=>@u.company)
 
       put :archive, id: to_find.id
 
@@ -391,7 +391,7 @@ describe SurveysController do
     end
 
     it "does not allow archiving of surveys user cannot edit" do
-      to_find = Factory(:survey,:company=>@u.company)
+      to_find = Factory(:survey, :company=>@u.company)
       expect_any_instance_of(Survey).to receive(:can_edit?).and_return false
 
       put :archive, id: to_find.id
@@ -402,7 +402,7 @@ describe SurveysController do
 
   describe "restore" do
     it "restores surveys" do
-      to_find = Factory(:survey,:company=>@u.company, archived: true)
+      to_find = Factory(:survey, :company=>@u.company, archived: true)
 
       put :restore, id: to_find.id
 
@@ -413,7 +413,7 @@ describe SurveysController do
     end
 
     it "does not allow restoring of surveys user cannot edit" do
-      to_find = Factory(:survey,:company=>@u.company)
+      to_find = Factory(:survey, :company=>@u.company)
       expect_any_instance_of(Survey).to receive(:can_edit?).and_return false
 
       put :restore, id: to_find.id

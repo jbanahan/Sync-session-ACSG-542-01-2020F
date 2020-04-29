@@ -1,6 +1,6 @@
 module Api; module V1; module Admin; class MilestoneNotificationConfigsController < Api::V1::Admin::AdminApiController
 
-  def index 
+  def index
     configs = MilestoneNotificationConfig.order(:customer_number, :testing).all.collect {|c| config_json(c)}
     render json: {configs: configs, output_styles: output_styles, module_types: module_types}
   end
@@ -58,11 +58,11 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
       c.testing = config[:testing].to_s.to_boolean
       c.gtn_time_modifier = config[:gtn_time_modifier].to_s.to_boolean
       c.module_type = config[:module_type]
-      
+
       config[:search_criterions].each do |sc|
         c.search_criterions.build model_field_uid: sc[:mfid], operator: sc[:operator], value: sc[:value], include_empty: sc[:include_empty]
       end if config[:search_criterions]
-      
+
       setup = config[:setup_json]
       setup_json = {}
       if setup
@@ -82,7 +82,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
         fingerprint_fields = []
         Array.wrap(setup[:fingerprint_fields]).each do |field|
           next if field.blank?
-          
+
           mf = ModelField.find_by_uid(field)
           raise "Missing identifier field for #{c.customer_number}.  No model field for code '#{field}' found." unless mf
           fingerprint_fields << field
@@ -138,7 +138,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
         model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: mf.label(true), datatype: mf.data_type.to_s} }
         fields = fields.sort {|x, y| x[:label] <=> y[:label]}
       end
-      
+
       fields
     end
 
@@ -150,7 +150,7 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
         model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: "#{mf.label} (#{mf.field_name}) - #{mf.data_type.to_s == "datetime" ? "Datetime" : "Date"}", datatype: mf.data_type.to_s} }
         fields = fields.sort {|x, y| x[:label] <=> y[:label]}
       end
-      
+
       fields
     end
 

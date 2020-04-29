@@ -5,9 +5,9 @@ describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
     u
   end
 
-  let(:cf) do 
+  let(:cf) do
     file = instance_double "CustomFile"
-    allow(file).to receive(:attached_file_name).and_return "filename.xlsx"  
+    allow(file).to receive(:attached_file_name).and_return "filename.xlsx"
     file
   end
 
@@ -44,7 +44,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
     let(:user) { Factory :user }
 
     subject { described_class.new cf }
-    
+
     it "assigns completion message" do
       expect(subject).to receive(:process_file).with cf, user
       subject.process user
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
 
     it "parses products" do
       expect(subject).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1).and_yield(row_2).and_yield(row_3).and_yield(row_4)
-      expect{ subject.process_file cf, user }.to change(Product, :count).from(0).to(2)
+      expect { subject.process_file cf, user }.to change(Product, :count).from(0).to(2)
       p1, p2 = Product.all
 
       expect(p1.unique_identifier).to eq "LANDS1-4996236"
@@ -129,7 +129,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
 
     it "updates products" do
       expect(subject).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1).and_yield(row_2).and_yield(row_3).and_yield(row_4)
-      expect{ subject.process_file cf, user }.to change(Product, :count).from(0).to(2)
+      expect { subject.process_file cf, user }.to change(Product, :count).from(0).to(2)
       p1, p2 = Product.all
 
       row_1 = ["2196", "PERSONALIZED ORNAMENT", "4996236", "1706", "WHITE SWAN FINE PEWTER", "", "US", "", "", "", "9505.10.2500"]
@@ -138,7 +138,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeProductParser do
       row_4 = ["51357", "WM SS PLEATED SOFT BLOUSE", "3388954", "2594", "VENTURA ENTERPRISE CO INC", "", "LK", "", "", "", "6206.40.3031"]
 
       expect(subject).to receive(:foreach).with(cf, skip_headers: true).and_yield(row_1).and_yield(row_2).and_yield(row_3).and_yield(row_4)
-      expect{ subject.process_file cf, user }.to_not change(Product, :count)
+      expect { subject.process_file cf, user }.to_not change(Product, :count)
       p1.reload; p2.reload
 
       expect(p1.unique_identifier).to eq "LANDS1-4996236"

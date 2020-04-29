@@ -10,7 +10,7 @@ describe Api::V1::TppHtsOverridesController do
   end
   describe '#index' do
     it 'should find overrides' do
-      o = Factory(:tpp_hts_override,hts_code:'0101010101')
+      o = Factory(:tpp_hts_override, hts_code:'0101010101')
       get :index
       expect(response).to be_success
       h = JSON.parse(response.body)['results']
@@ -26,7 +26,7 @@ describe Api::V1::TppHtsOverridesController do
 
   describe '#show' do
     it 'should get override' do
-      o = Factory(:tpp_hts_override,hts_code:'0101010101')
+      o = Factory(:tpp_hts_override, hts_code:'0101010101')
       get :show, id: o.id.to_s
       expect(response).to be_success
       h = JSON.parse(response.body)
@@ -55,7 +55,7 @@ describe Api::V1::TppHtsOverridesController do
       }
     end
     it 'should create override' do
-      expect{post :create, make_hash}.to change(TppHtsOverride,:count).from(0).to(1)
+      expect {post :create, make_hash}.to change(TppHtsOverride, :count).from(0).to(1)
 
       expect(response).to be_success
 
@@ -67,7 +67,7 @@ describe Api::V1::TppHtsOverridesController do
     it 'should fail if tpp does not exist' do
       h = make_hash
       h['tpp_hts_override']['tpphtso_trade_preference_program_id'] = '999999'
-      expect{post :create, h}.to_not change(TppHtsOverride,:count)
+      expect {post :create, h}.to_not change(TppHtsOverride, :count)
 
       expect(response).to_not be_success
     end
@@ -75,7 +75,7 @@ describe Api::V1::TppHtsOverridesController do
       allow_any_instance_of(TppHtsOverride).to receive(:can_edit?).and_return false
 
 
-      expect{post :create, make_hash}.to_not change(TppHtsOverride,:count)
+      expect {post :create, make_hash}.to_not change(TppHtsOverride, :count)
 
       expect(response).to_not be_success
     end
@@ -85,7 +85,7 @@ describe Api::V1::TppHtsOverridesController do
       @o = Factory(:tpp_hts_override)
       @h = {
         'id' => @o.id.to_s,
-        'tpp_hts_override'=>{'id'=>@o.id.to_s,'tpphtso_note'=>'mynote'}
+        'tpp_hts_override'=>{'id'=>@o.id.to_s, 'tpphtso_note'=>'mynote'}
       }
     end
     it 'should update' do

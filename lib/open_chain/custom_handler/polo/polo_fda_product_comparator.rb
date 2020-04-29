@@ -30,15 +30,15 @@ module OpenChain; module CustomHandler; module Polo; class PoloFdaProductCompara
 
   def self.fda_indicator_from_tariffs tariffs, us_official_tariffs
     polo_fda_indicator = nil
-    tariffs.find do |t| 
-      fda_indicator = us_official_tariffs.find{ |ot| ot.hts_code == t }.try(:fda_indicator)
+    tariffs.find do |t|
+      fda_indicator = us_official_tariffs.find { |ot| ot.hts_code == t }.try(:fda_indicator)
       polo_fda_indicator = extract_polo_indicator fda_indicator
     end
     polo_fda_indicator
   end
 
   def self.extract_polo_indicator fda_indicator_field
-    fda_indicator_field ? fda_indicator_field.split("\n ").find{ |fi| ["FD1", "FD2"].include? fi  } : nil
+    fda_indicator_field ? fda_indicator_field.split("\n ").find { |fi| ["FD1", "FD2"].include? fi  } : nil
   end
 
   def self.tariffs_identical? fst_prod_json, snd_prod_json

@@ -36,9 +36,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
           else
             l.gross_weight = tar.gross_weight
           end
-          
+
           l.spi = tar.spi_primary
-          
+
           invoice.invoice_lines << l
         end
       end
@@ -48,7 +48,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
     nil
   end
 
-  def generate_and_send entries, sync_record: nil 
+  def generate_and_send entries, sync_record: nil
     generate_and_send_invoice_xml(entries, sync_records: sync_record)
     nil
   # Just rescue any sort of fixed position generation error and re-raise it as a missing data error, that way callers only really
@@ -79,12 +79,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCommercia
       t.flush
       t.rewind
 
-      OpenChain::GoogleDrive.upload_file drive_path, t 
+      OpenChain::GoogleDrive.upload_file drive_path, t
     end
     nil
   end
 
-  private 
+  private
     def add_xls_lines sheet, last_row_number, entry, widths
       entry_data = []
       entry_data[0] = (entry.file_number.to_s.blank? || entry.file_number.to_s =~ /^0(\.0)?$/) ? nil : entry.file_number.to_s

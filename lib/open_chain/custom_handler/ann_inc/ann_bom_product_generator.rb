@@ -80,7 +80,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnBomProductGenera
   def starts_with_91? hts
     hts.to_s.match(/^91/)
   end
-  
+
   def query
     q = <<-SQL
           SELECT products.id,
@@ -93,10 +93,10 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnBomProductGenera
                  IFNULL(percent_of_value.integer_value, 0),
                  SUBSTR(key_description.text_value,1,50)
           FROM products
-            LEFT OUTER JOIN custom_values related_styles ON related_styles.customizable_id = products.id 
+            LEFT OUTER JOIN custom_values related_styles ON related_styles.customizable_id = products.id
               AND related_styles.customizable_type = "Product" AND related_styles.custom_definition_id = ?
             INNER JOIN classifications cl ON products.id = cl.product_id
-            LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id 
+            LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id
               AND classification_type.customizable_type = "Classification" AND classification_type.custom_definition_id = ?
             LEFT OUTER JOIN custom_values AS approved_date ON cl.id = approved_date.customizable_id
               AND approved_date.customizable_type = "Classification" AND approved_date.custom_definition_id = ?
@@ -111,7 +111,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnBomProductGenera
           ORDER BY products.id, tr.line_number
           LIMIT ?
         SQL
-    ActiveRecord::Base.sanitize_sql_array([q, cdefs[:related_styles].id,cdefs[:classification_type].id,cdefs[:approved_date].id,cdefs[:set_qty].id,cdefs[:percent_of_value].id,cdefs[:key_description].id,max_results])
+    ActiveRecord::Base.sanitize_sql_array([q, cdefs[:related_styles].id, cdefs[:classification_type].id, cdefs[:approved_date].id, cdefs[:set_qty].id, cdefs[:percent_of_value].id, cdefs[:key_description].id, max_results])
   end
 
   def where_clause

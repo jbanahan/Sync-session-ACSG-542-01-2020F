@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Hm::HmI977Parser do
 
   let(:xml_data) { IO.read 'spec/fixtures/files/hm_i977.xml' }
-  
+
   describe "process_article" do
     let (:user) { Factory(:user) }
     let (:cdefs) { subject.cdefs }

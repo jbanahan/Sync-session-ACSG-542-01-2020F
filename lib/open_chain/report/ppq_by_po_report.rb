@@ -20,7 +20,7 @@ module OpenChain; module Report; class PpqByPoReport
 
   def create_workbook customer_numbers, po_numbers, run_by
     wb, sheet = XlsMaker.create_workbook_and_sheet "PPQ By PO Numbers"
-    qry = query(customer_numbers,po_numbers,run_by)
+    qry = query(customer_numbers, po_numbers, run_by)
     table_from_query sheet, qry, conversions(run_by.time_zone)
     wb
   end
@@ -28,7 +28,7 @@ module OpenChain; module Report; class PpqByPoReport
   def conversions time_zone
     {"Release Date" => datetime_translation_lambda(time_zone)}
   end
-  
+
   def rows_to_csv str
     return '' unless str
     c = ActiveRecord::Base.connection
@@ -38,7 +38,7 @@ module OpenChain; module Report; class PpqByPoReport
   def query customer_numbers, po_numbers, run_by
     return "select \"PO AND CUSTOMER REQUIRED\" as \"ERROR\"" if customer_numbers.blank? || po_numbers.blank?
     <<-SQL
-    select entries.entry_number as 'Entry Number', entries.release_date as 'Release Date', cit.hts_code as 'HTS Code', cil.po_number as 'PO Number', cil.part_number as 'Part Number', 
+    select entries.entry_number as 'Entry Number', entries.release_date as 'Release Date', cit.hts_code as 'HTS Code', cil.po_number as 'PO Number', cil.part_number as 'Part Number',
 cic.detailed_description as 'Description',
 cic.value as 'PPQ Value',
 cic.name as 'PPQ Name',

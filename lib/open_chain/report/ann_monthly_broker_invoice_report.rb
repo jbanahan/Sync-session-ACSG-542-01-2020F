@@ -5,13 +5,13 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
 
   SYSTEM_CODE = "ATAYLOR"
 
-  ROW_MAP = {id: 0, company_code: 1, vendor_number: 2, invoice_date: 3, posting_date: 4, invoice_number: 5, invoice_total: 6, currency: 7, 
-             tax_amount: 8, item_text: 9, baseline_date: 10, partner_bank: 11, assignment_number: 12, invoice_number_2: 13, general_ledger_account: 14, 
+  ROW_MAP = {id: 0, company_code: 1, vendor_number: 2, invoice_date: 3, posting_date: 4, invoice_number: 5, invoice_total: 6, currency: 7,
+             tax_amount: 8, item_text: 9, baseline_date: 10, partner_bank: 11, assignment_number: 12, invoice_number_2: 13, general_ledger_account: 14,
              debit_credit: 15, amount: 16, sales_tax_code: 17, item_text_2: 18, cost_center: 19, profit_center: 20, blank_field: 21 }
 
-  HEADER = ["ID Column", "Company Code", "Vendor Number", "Invoice Date in Document", "Posting Date in Document", 
-            "Invoice Number", "Invoice Total Amount", "Currency Key", "Tax Amount", "Item Text (Description)", "Baseline Date", 
-            "Partner Bank Type", "Assignment Number", "Invoice Number", "General Ledger Account", "Debit/Credit Indicator", 
+  HEADER = ["ID Column", "Company Code", "Vendor Number", "Invoice Date in Document", "Posting Date in Document",
+            "Invoice Number", "Invoice Total Amount", "Currency Key", "Tax Amount", "Item Text (Description)", "Baseline Date",
+            "Partner Bank Type", "Assignment Number", "Invoice Number", "General Ledger Account", "Debit/Credit Indicator",
             "Amount in Document Currency", "Sales Tax Code", "Item Text", "Cost Center", "Profit Center", "BLANK FIELD"]
 
   def self.importer
@@ -42,11 +42,11 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
   end
 
   def dt_lambda
-    lambda{ |result_set_row, raw_column_value| DateTime.parse(raw_column_value).in_time_zone("Eastern Time (US & Canada)").strftime('%m-%d-%y')}
+    lambda { |result_set_row, raw_column_value| DateTime.parse(raw_column_value).in_time_zone("Eastern Time (US & Canada)").strftime('%m-%d-%y')}
   end
 
   def assignment_number_lambda
-    lambda{ |result_set_row, raw_column_value| raw_column_value.split("\n ").first }
+    lambda { |result_set_row, raw_column_value| raw_column_value.split("\n ").first }
   end
 
   def get_invoices start_date
@@ -74,7 +74,7 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
   end
 
   def arrange_rows rows
-    rows.sort! { |a,b| by_description a, b }
+    rows.sort! { |a, b| by_description a, b }
     arranged = []
     add_header rows.first, arranged
     add_details rows.drop(1), arranged
@@ -109,19 +109,19 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
       SELECT "" AS "ID Column",
              "1100" AS "Company Code",
              "1003709" AS "Vendor Number",
-             bi.invoice_date AS "Invoice Date in Document", 
+             bi.invoice_date AS "Invoice Date in Document",
              "" AS "Posting Date in Document",
-             bi.invoice_number AS "Invoice Number", 
-             Abs(bi.invoice_total) AS "Invoice Total Amount", 
-             "USD" AS "Currency Key", 
+             bi.invoice_number AS "Invoice Number",
+             Abs(bi.invoice_total) AS "Invoice Total Amount",
+             "USD" AS "Currency Key",
              "" AS "Tax Amount",
-             bil.charge_description AS "Item Text (Description)", 
+             bil.charge_description AS "Item Text (Description)",
              bi.invoice_date AS "Baseline Date",
              "USD1" AS "Partner Bank Type",
              e.po_numbers AS "Assignment Number",
              bi.invoice_number AS "Invoice Number",
              "200190" AS "General Ledger Account",
-             (IF(bil.charge_amount >= 0, "S", "H")) AS 'Debit/Credit Indicator', 
+             (IF(bil.charge_amount >= 0, "S", "H")) AS 'Debit/Credit Indicator',
              Abs(bil.charge_amount) AS "Amount in Document Currency",
              "U1" AS "Sales Tax Code",
              bil.charge_description AS "Item Text",
@@ -131,8 +131,8 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
       FROM entries e
         INNER JOIN broker_invoices bi ON e.id = bi.entry_id
         INNER JOIN broker_invoice_lines bil ON bi.id = bil.broker_invoice_id
-      WHERE e.importer_id = #{importer_id} 
-            AND (bi.invoice_date BETWEEN '#{start_date}' AND '#{end_date}') 
+      WHERE e.importer_id = #{importer_id}
+            AND (bi.invoice_date BETWEEN '#{start_date}' AND '#{end_date}')
             AND (bil.charge_type <> 'D' OR bil.charge_type IS NULL)
       ORDER BY bi.invoice_number
     SQL

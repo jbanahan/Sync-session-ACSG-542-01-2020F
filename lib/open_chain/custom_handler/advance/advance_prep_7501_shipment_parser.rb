@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
 
       container_xmls = []
       # For whatever reason, the container data for a single container number can be split across multiple
-      # ASN elements.  For that reason, just build the containers and then process all the line items 
+      # ASN elements.  For that reason, just build the containers and then process all the line items
       # after doing that.  This also allows sorting the line items across the whole shipment rather than
       # just a single ASN.
       xpath(xml, "/Prep7501Message/Prep7501/ASN/Container") do |container_xml|
@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       # So we can't make order lines...ergo, don't attempt to
       if !inbound_file.failed?
         # The data in the XML seems to come in an entirely random order.  It doesn't match the order of the
-        # paper packing list or the commercial invoice (even the commercial invoice data inside this 7501 
+        # paper packing list or the commercial invoice (even the commercial invoice data inside this 7501
         # doesn't match the order of the commercial invoice - it's totally random).
         # The existing feed orders the data based on the LineItemNumber (.ie the PO line number), so we'll continue
         # doing that.
@@ -111,7 +111,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       line_items = xpath(container_xml, "LineItems")
       items.push *line_items if line_items.length > 0
     end
-    
+
     items.sort do |a, b|
       v = et(a, "PONumber", true) <=>  et(b, "PONumber", true)
 
@@ -152,7 +152,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     line.quantity = parse_decimal(et(line_xml, "Quantity"))
     line.gross_kgs = parse_weight(first_xpath(line_xml, "Weight"))
     line.cbms = parse_volume(first_xpath(line_xml, "Volume"))
-    
+
     order_number = et(line_xml, "PONumber")
     order = orders_cache[order_number]
     if order
@@ -189,7 +189,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     reference = "#{importer.system_code}-#{house_bill}"
     inbound_file.add_identifier :shipment_number, reference
     shipment = nil
-    Lock.acquire(reference) do 
+    Lock.acquire(reference) do
       s = Shipment.where(importer_id: importer.id, reference: reference).first_or_create! last_exported_from_source: last_exported_from_source
       inbound_file.set_identifier_module_info(:shipment_number, Shipment, s.id) if s
 
@@ -239,7 +239,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
 
     snapshot_order = false
     order = orders_cache[customer_order_number]
-    
+
     if order.nil?
       order_number = "#{importer.system_code}-#{customer_order_number}"
       Lock.acquire("Order-#{order_number}") do
@@ -264,9 +264,9 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     product = products_cache[product_code]
     Lock.db_lock(order) do
       line_number = et(line_xml, "LineItemNumber", true).to_i
-    
+
       if advan_importer? importer
-        # Line number is supposed to be a unique line number, not 100% sure it's unique to the order for ADVAN.  
+        # Line number is supposed to be a unique line number, not 100% sure it's unique to the order for ADVAN.
         line = order.order_lines.find {|l| l.line_number == line_number }
 
         # If we happen to hit a case where the line number is shared between shipments and has different products on it
@@ -294,12 +294,12 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         inbound_file.add_reject_message "Unable to find Commerical Invoice Line for Order Number #{customer_order_number} / Item Number #{product_code} / Line #{line_number}"
         return nil
       end
-      
+
       line.quantity = parse_decimal(et(invoice_line, "Quantity"))
       line.unit_of_measure = et(invoice_line, "QuantityUOM")
 
       if advan_importer? importer
-        # For whatever reason, CQ invoices don't have pricing included on them.  The unit cost needs to come from 
+        # For whatever reason, CQ invoices don't have pricing included on them.  The unit cost needs to come from
         # the CQ PO Origin Report (AdvancePoOriginReportParser).
         total_cost = first_xpath(invoice_line, "ItemTotalPrice")
         if total_cost
@@ -356,7 +356,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       product = part_number
     else
       unique_identifier = "#{importer.system_code}-#{part_number}"
-      Lock.acquire("Product-#{unique_identifier}") do 
+      Lock.acquire("Product-#{unique_identifier}") do
         # The products SHOULD all exist already, and we don't want to update data on them if they do.
         product = Product.where(unique_identifier: unique_identifier, importer_id: importer.id).first_or_initialize
 
@@ -395,7 +395,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
 
     found = nil
     hash = Address.make_hash_key address
-    Lock.acquire("Address-#{hash}") do 
+    Lock.acquire("Address-#{hash}") do
       found = Address.where(company_id: importer.id, address_hash: hash).first
 
       if found.nil?
@@ -403,7 +403,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         found = address
       end
     end
-    
+
     found
   end
 
@@ -435,7 +435,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     hash = Address.make_hash_key address
     company = nil
     created = false
-    Lock.acquire("Address-#{hash}") do 
+    Lock.acquire("Address-#{hash}") do
       company = Company.where(system_code: "#{importer.system_code}-#{hash}").first_or_initialize
       if !company.persisted?
         company.name = address.name

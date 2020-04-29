@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentOrderDataRecorderComparator do
 
-  before :all do 
+  before :all do
     described_class.new.send(:cdefs)
   end
 
@@ -139,7 +139,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentOrderDataRec
     end
   end
 
-  describe "compare" do 
+  describe "compare" do
 
     subject { described_class }
 
@@ -154,7 +154,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentOrderDataRec
     end
   end
 
-  describe "accept?" do 
+  describe "accept?" do
 
     subject { described_class }
 

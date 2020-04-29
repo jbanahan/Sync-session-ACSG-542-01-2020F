@@ -58,13 +58,13 @@ module Api; module V1; class ApiController < ActionController::Base
     }.merge(options)
 
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
-    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj)
+    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0, 1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj)
     unless err_msg.nil?
       render_forbidden err_msg
     else
       # We can only db_lock active record objects and only those that are actually persisted
       if opts[:yield_in_db_lock] && (obj.is_a?(ActiveRecord::Base) && obj.persisted?)
-        Lock.db_lock(obj) do 
+        Lock.db_lock(obj) do
           yield
         end
       else
@@ -93,7 +93,7 @@ module Api; module V1; class ApiController < ActionController::Base
 
       content_type = request.headers["CONTENT_TYPE"]
       content_type = "" if content_type.nil?
-      if ["POST","PUT"].include?(request.method)  && !content_type.match(/application\/json/)
+      if ["POST", "PUT"].include?(request.method)  && !content_type.match(/application\/json/)
         raise StatusableError.new("Content-Type '#{content_type}' not supported.", :not_acceptable)
       end
     end
@@ -199,7 +199,7 @@ module Api; module V1; class ApiController < ActionController::Base
     end
 
     def prep_exception_notifier
-      #prep for exception notification
+      # prep for exception notification
       request.env["exception_notifier.exception_data"] = {
         server_name: InstanceInformation.server_name,
         server_role: InstanceInformation.server_role

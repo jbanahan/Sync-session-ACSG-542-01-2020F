@@ -31,7 +31,7 @@ describe Api::V1::SupportRequestsController do
       expect(sr.user).to eq user
 
       req = JSON.parse(response.body)
-      expect(JSON.parse(response.body)).to eq({"support_request_response" => {"ticket_number" => sr.ticket_number,"more_help_message"=>"mhm"}})
+      expect(JSON.parse(response.body)).to eq({"support_request_response" => {"ticket_number" => sr.ticket_number, "more_help_message"=>"mhm"}})
     end
 
     it "rolls back save if error occurs in sending" do

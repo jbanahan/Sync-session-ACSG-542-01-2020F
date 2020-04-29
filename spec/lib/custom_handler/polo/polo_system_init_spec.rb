@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Polo::PoloSystemInit do
     }
 
     context "with Polo custom feature" do
-      before :each do 
+      before :each do
         expect(master_setup).to receive(:custom_feature?).with("Polo").and_return true
       end
 
@@ -24,10 +24,10 @@ describe OpenChain::CustomHandler::Polo::PoloSystemInit do
       end
     end
 
-    it "does nothing" do 
+    it "does nothing" do
       expect(OpenChain::EntityCompare::ComparatorRegistry).not_to receive(:register)
       subject.init
     end
-    
+
   end
 end

@@ -53,7 +53,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
       return self.state != original_value
     end
     messages = self.business_validation_rule.run_validation(obj)
-    # Use blank because we do allow arrays to be returned, so we consider any value 
+    # Use blank because we do allow arrays to be returned, so we consider any value
     # of blank that is returned (blank strings, blank arrays) to be an indication of passing
     if !messages.blank?
       # Allow for returning multiple messages directly from the run_validation method

@@ -10,13 +10,13 @@ describe OpenChain::IntegrationClient do
       response1 = instance_double("Aws::Sqs::Types::ReceiveMessageResult")
 
       parser_message = instance_double("Aws::Sqs::Types::Message")
-      allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}.to_json)
+      allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file', :path=>'/a/b/c.txt', :remote_path=>'some/thing/remote'}.to_json)
       allow(response1).to receive(:messages).and_return [parser_message]
 
       expect(OpenChain::SQS).to receive(:get_queue_url).with(system_code).and_return "queue.url"
       expect(OpenChain::SQS).to receive(:poll).with("queue.url", max_message_count: 3, visibility_timeout: 5, yield_raw: true).and_yield(parser_message)
 
-      remote_file_response = {'response_type'=>'remote_file','status'=>'ok'}
+      remote_file_response = {'response_type'=>'remote_file', 'status'=>'ok'}
       expect(OpenChain::IntegrationClientCommandProcessor).to receive(:process_remote_file).and_return(remote_file_response)
 
       expect(subject.process_queue system_code, max_message_count: 3, visibility_timeout: 5).to eq 1
@@ -26,14 +26,14 @@ describe OpenChain::IntegrationClient do
       response1 = instance_double("Aws::Sqs::Types::ReceiveMessageResult")
 
       parser_message = instance_double("Aws::Sqs::Types::Message")
-      allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}.to_json)
+      allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file', :path=>'/a/b/c.txt', :remote_path=>'some/thing/remote'}.to_json)
       allow(response1).to receive(:messages).and_return [parser_message]
 
       expect(OpenChain::SQS).to receive(:get_queue_url).with(system_code).and_return nil
       expect(OpenChain::SQS).to receive(:create_queue).with(system_code).and_return "queue.url"
       expect(OpenChain::SQS).to receive(:poll).with("queue.url", max_message_count: 3, visibility_timeout: 5, yield_raw: true).and_yield(parser_message)
 
-      remote_file_response = {'response_type'=>'remote_file','status'=>'ok'}
+      remote_file_response = {'response_type'=>'remote_file', 'status'=>'ok'}
       expect(OpenChain::IntegrationClientCommandProcessor).to receive(:process_remote_file).and_return(remote_file_response)
 
       expect(subject.process_queue system_code, max_message_count: 3, visibility_timeout: 5).to eq 1
@@ -43,12 +43,12 @@ describe OpenChain::IntegrationClient do
       expect(OpenChain::SQS).to receive(:get_queue_url).and_return "queue.url"
 
       parser_message = instance_double("Aws::Sqs::Types::Message")
-      allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file',:path=>'/a/b/c.txt',:remote_path=>'some/thing/remote'}.to_json)
+      allow(parser_message).to receive(:body).and_return({:request_type=>'remote_file', :path=>'/a/b/c.txt', :remote_path=>'some/thing/remote'}.to_json)
 
-      #Just mock out the retrieve queue messages call here, since it's not needed to test message handling
+      # Just mock out the retrieve queue messages call here, since it's not needed to test message handling
       expect(OpenChain::SQS).to receive(:poll).and_yield parser_message
       expect(OpenChain::IntegrationClientCommandProcessor).to receive(:process_command).with(JSON.parse(parser_message.body)).and_raise "Error"
-      
+
       expect { subject.process_queue "queue.url" }.to raise_error "Error"
     end
 
@@ -62,7 +62,7 @@ describe OpenChain::IntegrationClient do
       parser_message = instance_double("Aws::Sqs::Types::Message")
       allow(parser_message).to receive(:body).and_return("{badjson}")
 
-      #Just mock out the retrieve queue messages call here, since it's not needed to test message handling
+      # Just mock out the retrieve queue messages call here, since it's not needed to test message handling
       expect(OpenChain::SQS).to receive(:poll).and_yield parser_message
 
       expect(subject.process_queue "queue.url").to eq 1
@@ -123,7 +123,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     else
       expect(parser_class).to receive(:delay).and_return p
     end
-    
+
     if block_given?
       yield p
     else
@@ -133,40 +133,40 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(p).to receive(:process_from_s3).with "bucket", '12345'
       end
     end
-    cmd = {'request_type'=>'remote_file','original_path'=>original_path,'s3_bucket'=>'bucket', 's3_path'=>'12345'}
+    cmd = {'request_type'=>'remote_file', 'original_path'=>original_path, 's3_bucket'=>'bucket', 's3_path'=>'12345'}
     expect(subject.process_command(cmd)).to eq(success_hash)
   end
 
   subject {described_class}
 
-  let! (:master_setup) { 
-    ms = stub_master_setup 
+  let! (:master_setup) {
+    ms = stub_master_setup
     allow(ms).to receive(:custom_features_list).and_return []
     ms
   }
-  let (:success_hash) { {'response_type'=>'remote_file','status'=>'success'} }
+  let (:success_hash) { {'response_type'=>'remote_file', 'status'=>'success'} }
 
   describe "process_remote_file" do
     it "handles raised errors by returning an error response" do
       # This is just the first method call that's easy to mock out and raise something in the method, could be
       # replaced by anything else.
-      cmd = {'request_type'=>'remote_file','original_path'=>'file.txt','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+      cmd = {'request_type'=>'remote_file', 'original_path'=>'file.txt', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(cmd).to receive(:[]).and_raise "Error"
-      expect(subject.process_remote_file(cmd)).to eq({'response_type'=>'error','message'=>"Error"})
+      expect(subject.process_remote_file(cmd)).to eq({'response_type'=>'error', 'message'=>"Error"})
     end
   end
 
   describe "process_command", :disable_delayed_jobs do
     it 'should create linkable attachment if linkable attachment rule match' do
-      LinkableAttachmentImportRule.create!(:path=>'/path/to',:model_field_uid=>'prod_uid')
-      cmd = {'request_type'=>'remote_file','original_path'=>'/path/to/this.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+      LinkableAttachmentImportRule.create!(:path=>'/path/to', :model_field_uid=>'prod_uid')
+      cmd = {'request_type'=>'remote_file', 'original_path'=>'/path/to/this.csv', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(LinkableAttachmentImportRule).to receive(:delay).and_return LinkableAttachmentImportRule
-      expect(LinkableAttachmentImportRule).to receive(:process_from_s3).with("bucket",'12345', original_filename: 'this.csv', original_path: '/path/to')
+      expect(LinkableAttachmentImportRule).to receive(:process_from_s3).with("bucket", '12345', original_filename: 'this.csv', original_path: '/path/to')
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
 
     it "processes imported files" do
-      cmd = {'request_type'=>'remote_file','original_path'=>'/test/to_chain/module/file.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+      cmd = {'request_type'=>'remote_file', 'original_path'=>'/test/to_chain/module/file.csv', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
       expect(ImportedFile).to receive(:delay).and_return ImportedFile
       expect(ImportedFile).to receive(:process_integration_imported_file).with("bucket", '12345', '/test/to_chain/module/file.csv')
       expect(subject.process_command(cmd)).to eq(success_hash)
@@ -174,8 +174,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
     it 'should return error if not imported_file or linkable_attachment' do
       expect(LinkableAttachmentImportRule).to receive(:find_import_rule).and_return(nil)
-      cmd = {'request_type'=>'remote_file','original_path'=>'/some/invalid/path','s3_bucket'=>'bucket', 's3_path'=>'12345'}
-      expect(subject.process_command(cmd)).to eq({'response_type'=>'error','message'=>"Can't figure out what to do for path /some/invalid/path"})
+      cmd = {'request_type'=>'remote_file', 'original_path'=>'/some/invalid/path', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
+      expect(subject.process_command(cmd)).to eq({'response_type'=>'error', 'message'=>"Can't figure out what to do for path /some/invalid/path"})
     end
 
     it "handles legacy style sqs messages" do
@@ -183,13 +183,13 @@ describe OpenChain::IntegrationClientCommandProcessor do
       p = class_double("OpenChain::CustomHandler::Ellery::ElleryOrderParser")
       expect(OpenChain::CustomHandler::Ellery::ElleryOrderParser).to receive(:delay).and_return p
       expect(p).to receive(:process_from_s3).with OpenChain::S3.integration_bucket_name, '12345'
-      cmd = {'request_type'=>'remote_file','path'=>'/ellery_po/file.csv', 'remote_path'=>'12345'}
+      cmd = {'request_type'=>'remote_file', 'path'=>'/ellery_po/file.csv', 'remote_path'=>'12345'}
       expect(subject.process_command(cmd)).to eq(success_hash)
     end
 
     it 'should return error if bad request type' do
       cmd = {'something_bad'=>'crap'}
-      expect(subject.process_command(cmd)).to eq({'response_type'=>'error','message'=>"Unknown command: #{cmd}"})
+      expect(subject.process_command(cmd)).to eq({'response_type'=>'error', 'message'=>"Unknown command: #{cmd}"})
     end
 
     context "ascena" do
@@ -215,7 +215,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(master_setup).to receive(:custom_features_list).and_return ['H&M I2 Interface']
         expect(OpenChain::CustomHandler::Hm::HmI2ShipmentParser).to receive(:delay).with(priority: -5).and_return OpenChain::CustomHandler::Hm::HmI2ShipmentParser
         expect(OpenChain::CustomHandler::Hm::HmI2ShipmentParser).to receive(:process_from_s3).with("bucket", '12345')
-        cmd = {'request_type'=>'remote_file','original_path'=>'/_hm_i2/a.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        cmd = {'request_type'=>'remote_file', 'original_path'=>'/_hm_i2/a.csv', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
 
@@ -231,7 +231,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(master_setup).to receive(:custom_features_list).and_return ['H&M Interfaces']
         expect(OpenChain::CustomHandler::Hm::HmI977Parser).to receive(:delay).and_return OpenChain::CustomHandler::Hm::HmI977Parser
         expect(OpenChain::CustomHandler::Hm::HmI977Parser).to receive(:process_from_s3).with("bucket", '12345')
-        cmd = {'request_type'=>'remote_file','original_path'=>'/_hm_i977/a.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        cmd = {'request_type'=>'remote_file', 'original_path'=>'/_hm_i977/a.xml', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
 
@@ -239,7 +239,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         expect(master_setup).to receive(:custom_features_list).and_return ['H&M Interfaces']
         expect(OpenChain::CustomHandler::Hm::HmI978Parser).to receive(:delay).with(priority: -5).and_return OpenChain::CustomHandler::Hm::HmI978Parser
         expect(OpenChain::CustomHandler::Hm::HmI978Parser).to receive(:process_from_s3).with("bucket", '12345')
-        cmd = {'request_type'=>'remote_file','original_path'=>'/_hm_i978/a.xml','s3_bucket'=>'bucket', 's3_path'=>'12345'}
+        cmd = {'request_type'=>'remote_file', 'original_path'=>'/_hm_i978/a.xml', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
         expect(subject.process_command(cmd)).to eq(success_hash)
       end
     end
@@ -304,7 +304,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
     context "eddie_bauer" do
       it "should send ack files to ack parser for _eb_ftz_ack" do
         do_parser_test('Eddie Bauer Feeds', OpenChain::CustomHandler::AckFileHandler, '/_eb_ftz_ack/file.txt') do |parser|
-          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
+          expect(parser).to receive(:process_from_s3).with "bucket", '12345', {username:'eddie_ftz_notification', sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE, csv_opts:{col_sep:'|'}, module_type:'Entry'}
         end
       end
       it "should send data to eddie bauer po parser for _eddie_po" do
@@ -350,8 +350,8 @@ describe OpenChain::IntegrationClientCommandProcessor do
 
       it "should not raise errors on test files" do
         ack = double("ack_file")
-        cmd = {'request_type'=>'remote_file','original_path'=>'/test_from_msl/a.csv','s3_bucket'=>'bucket', 's3_path'=>'12345'}
-        expect{subject.process_command(cmd)}.to_not raise_error
+        cmd = {'request_type'=>'remote_file', 'original_path'=>'/test_from_msl/a.csv', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
+        expect {subject.process_command(cmd)}.to_not raise_error
       end
 
       it 'should process CSM Acknowledgements' do
@@ -582,7 +582,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
         do_parser_test("Rockport Feeds", OpenChain::CustomHandler::Rockport::RockportGtnInvoiceXmlParser, '/rockport_invoice/file.xml')
       end
     end
-    
+
     context "Kirklands" do
       it "handles Kirklands GTN PO files" do
         do_parser_test("Kirklands GTN XML", OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser, '/kirklands_850/kirklands.xml')

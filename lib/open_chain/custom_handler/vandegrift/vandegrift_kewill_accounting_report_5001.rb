@@ -97,7 +97,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftKewil
       'Inv Date', 'Open A/R', 'Open A/P', 'Total A/R-', 'Total A/P=', 'Profit',
       'Bill To'])
     wb.freeze_horizontal_rows(sheet, 1)
-    
+
     total_section = Hash.new(BigDecimal("0"))
 
     lines.each do |input_line|

@@ -10,7 +10,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
     let(:invoice_2) { Factory(:commercial_invoice, entry: entry, invoice_number: "654321") }
     let!(:line_2) { Factory(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 1) }
     let!(:line_2_2) { Factory(:commercial_invoice_line, commercial_invoice: invoice_2, line_number: 2) }
-    
+
     let!(:product_1) { Factory(:product, importer: imp, unique_identifier: "attr_part_1")}
     let!(:product_2) { Factory(:product, importer: imp, unique_identifier: "attr_part_2")}
     let!(:product_3) { Factory(:product, importer: imp, unique_identifier: "attr_part_3")}
@@ -32,7 +32,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
       let!(:cval_part_no_1) { CustomValue.create! custom_definition: cdef_part_no, customizable: product_1, string_value: "cdef_part_1" }
       let!(:cval_part_no_2) { CustomValue.create! custom_definition: cdef_part_no, customizable: product_2, string_value: "cdef_part_2" }
       let!(:cval_part_no_3) { CustomValue.create! custom_definition: cdef_part_no, customizable: product_3, string_value: "cdef_part_3" }
-      
+
       it "fails and returns all invoice/line/part numbers" do
         expect(rule.run_validation entry).to eq "Fish and Wildlife Transmission Date missing but F&W products found:\ninvoice 123456 / line 1 / part cdef_part_1\ninvoice 654321 / line 1 / part cdef_part_2"
       end
@@ -44,7 +44,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
         rule.rule_attributes_json = {importer_system_code: "ACME"}.to_json; rule.save!
         expect(rule.run_validation entry).to eq "Fish and Wildlife Transmission Date missing but F&W products found:\ninvoice 654321 / line 1 / part cdef_part_2"
       end
-      
+
       it "passes if no product with flag is found" do
         cval_fw_1.update_attributes! boolean_value: false
         cval_fw_2.update_attributes! boolean_value: false
@@ -52,7 +52,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
       end
 
       it "passes if product is found and f&w date is present" do
-        entry.update_attributes! fish_and_wildlife_transmitted_date: Date.new(2019,3,15)
+        entry.update_attributes! fish_and_wildlife_transmitted_date: Date.new(2019, 3, 15)
         expect(rule.run_validation entry).to be_nil
       end
     end
@@ -78,7 +78,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
         rule.rule_attributes_json = {importer_system_code: "ACME"}.to_json; rule.save!
         expect(rule.run_validation entry).to eq "Fish and Wildlife Transmission Date missing but F&W products found:\ninvoice 654321 / line 1 / part attr_part_2"
       end
-      
+
       it "passes if no product with flag is found" do
         cval_fw_1.update_attributes! boolean_value: false
         cval_fw_2.update_attributes! boolean_value: false
@@ -86,7 +86,7 @@ describe ValidationRuleEntryFishWildlifeTransmittedDateFilled do
       end
 
       it "passes if product is found and f&w date is present" do
-        entry.update_attributes! fish_and_wildlife_transmitted_date: Date.new(2019,3,15)
+        entry.update_attributes! fish_and_wildlife_transmitted_date: Date.new(2019, 3, 15)
         expect(rule.run_validation entry).to be_nil
       end
     end

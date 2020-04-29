@@ -1,18 +1,18 @@
 describe DrawbackImportLine do
   describe "unallocated" do
     it "should return if no allocations" do
-      d = Factory(:drawback_import_line,quantity:10)
+      d = Factory(:drawback_import_line, quantity:10)
       expect(DrawbackImportLine.unallocated.to_a).to eql([d])
     end
 
     it "should return if unallocated quantity" do
-      d = Factory(:drawback_import_line,quantity:10)
+      d = Factory(:drawback_import_line, quantity:10)
       d.drawback_allocations.create!(quantity:9)
       expect(DrawbackImportLine.unallocated.to_a).to eql([d])
     end
 
     it "should not return if fully allocated" do
-      d = Factory(:drawback_import_line,quantity:10)
+      d = Factory(:drawback_import_line, quantity:10)
       d.drawback_allocations.create!(quantity:10)
       expect(DrawbackImportLine.unallocated.to_a).to be_empty
     end
@@ -20,7 +20,7 @@ describe DrawbackImportLine do
 
   describe "unallocated_quantity" do
     it "should return difference between quantities and allocations" do
-      d = Factory(:drawback_import_line,quantity:10)
+      d = Factory(:drawback_import_line, quantity:10)
       d.drawback_allocations.create!(quantity:9)
       expect(d.unallocated_quantity).to eql(1)
     end
@@ -28,8 +28,8 @@ describe DrawbackImportLine do
 
   describe "not_in_duty_calc_file" do
     it "should find line not linked" do
-      d1 = Factory(:drawback_import_line) 
-      d2 = Factory(:drawback_import_line) 
+      d1 = Factory(:drawback_import_line)
+      d2 = Factory(:drawback_import_line)
       dcl = DutyCalcImportFileLine.create!(:drawback_import_line_id=>d2.id)
 
       expect(DrawbackImportLine.not_in_duty_calc_file.all).to eq([d1])
@@ -39,13 +39,13 @@ describe DrawbackImportLine do
   describe "duty_calc_line_legacy" do
     it "should generate line" do
       d = DrawbackImportLine.create!(
-        :product=>Factory(:product,:unique_identifier=>"123456"),
+        :product=>Factory(:product, :unique_identifier=>"123456"),
         :entry_number=>'12345678901',
         :quantity=>BigDecimal("10.04"),
         :part_number=>"123456",
         :hts_code=>"1234567890",
-        :import_date=>Date.new(2010,4,1),
-        :received_date=>Date.new(2010,4,2),
+        :import_date=>Date.new(2010, 4, 1),
+        :received_date=>Date.new(2010, 4, 2),
         :port_code=>"4601",
         :box_37_duty=>BigDecimal("100.10"),
         :box_40_duty=>BigDecimal("101.10"),
@@ -62,8 +62,8 @@ describe DrawbackImportLine do
       )
       line = d.duty_calc_line_legacy
       csv = CSV.parse(line).first
-      [d.entry_number,"04/01/2010","04/02/2010","","4601","100.10","101.10","","5000.01","485.00","1","",d.id.to_s,"","",d.country_of_origin_code,"","",
-      d.part_number,d.part_number,d.hts_code,d.description,d.unit_of_measure,"","10.040000000","10.040000000","","2.0450000","","","","0.030000000","","","","0.153000000","7","","Y"].each_with_index do |v,i|
+      [d.entry_number, "04/01/2010", "04/02/2010", "", "4601", "100.10", "101.10", "", "5000.01", "485.00", "1", "", d.id.to_s, "", "", d.country_of_origin_code, "", "",
+      d.part_number, d.part_number, d.hts_code, d.description, d.unit_of_measure, "", "10.040000000", "10.040000000", "", "2.0450000", "", "", "", "0.030000000", "", "", "", "0.153000000", "7", "", "Y"].each_with_index do |v, i|
         expect(csv[i]).to eq(v)
       end
     end
@@ -72,14 +72,14 @@ describe DrawbackImportLine do
   describe "duty_calc_line_array_standard" do
     it "should generate array" do
       d = DrawbackImportLine.create!(
-          :product=>Factory(:product,:unique_identifier=>"123456"),
+          :product=>Factory(:product, :unique_identifier=>"123456"),
           :importer=>with_customs_management_id(Factory(:company), '555666'),
           :entry_number=>'12345678901',
           :quantity=>BigDecimal("10.04"),
           :part_number=>"123456",
           :hts_code=>"1234567890",
-          :import_date=>Date.new(2010,4,1),
-          :liquidation_date=>Date.new(2010,4,3),
+          :import_date=>Date.new(2010, 4, 1),
+          :liquidation_date=>Date.new(2010, 4, 3),
           :port_code=>"4601",
           :box_37_duty=>BigDecimal("100.10"),
           :box_40_duty=>BigDecimal("101.10"),
@@ -124,15 +124,15 @@ describe DrawbackImportLine do
 
     it "handles nils when generating array" do
       d = DrawbackImportLine.create!(
-          :product=>Factory(:product,:unique_identifier=>"123456")
+          :product=>Factory(:product, :unique_identifier=>"123456")
       )
 
       arr = d.duty_calc_line_array_standard
       expect(arr.length).to eq(23)
-      expect(arr[1]).to eq('') #import_date
-      expect(arr[5]).to eq('') #liquidation_date
-      expect(arr[8]).to eq('') #importer.alliance_customer_number
-      expect(arr[22]).to eq('') #ocean
+      expect(arr[1]).to eq('') # import_date
+      expect(arr[5]).to eq('') # liquidation_date
+      expect(arr[8]).to eq('') # importer.alliance_customer_number
+      expect(arr[22]).to eq('') # ocean
     end
   end
 

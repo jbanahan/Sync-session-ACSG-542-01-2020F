@@ -16,7 +16,7 @@ module OpenChain
 
         self.new.process_ack_file file_contents, opts[:sync_code], opts[:username], opts
       end
-      
+
       def process_ack_file file_content, sync_code, username, opts={}
         file_name = inbound_file.file_name
 
@@ -50,7 +50,7 @@ module OpenChain
             errors << "#{cm.label} #{row[0]} confirmed, but it does not exist." if opts[:email_warnings] == true
             next
           end
-          sync = prod.sync_records.find_by_trading_partner sync_code 
+          sync = prod.sync_records.find_by_trading_partner sync_code
           if sync.nil?
             errors << "#{cm.label} #{row[0]} confirmed, but it was never sent." if opts[:email_warnings] == true
             next
@@ -60,7 +60,7 @@ module OpenChain
           # get something other than "OK" in C, that becomes our fail message UNLESS we get a value in column D
           # (error description, added spring 2019). D wins out over C in that case.
           fail_message = row[2].to_s.strip.upcase=='OK' ? nil : (error_description.present? ? error_description : row[2])
-          sync.update_attributes(:confirmed_at=>Time.zone.now,:confirmation_file_name=>file_name,:failure_message=>fail_message)
+          sync.update_attributes(:confirmed_at=>Time.zone.now, :confirmation_file_name=>file_name, :failure_message=>fail_message)
           errors << "#{cm.label} #{row[0]} failed: #{fail_message}" unless fail_message.blank?
         end
         errors
@@ -81,7 +81,7 @@ module OpenChain
 
         email_addresses = ["support@vandegriftinc.com"] if email_addresses.blank?
 
-        Tempfile.open(["temp",".csv"]) do |t|
+        Tempfile.open(["temp", ".csv"]) do |t|
           t << file_content
           t.flush
           t.rewind
@@ -89,12 +89,12 @@ module OpenChain
           OpenMailer.send_ack_file_exception(email_addresses, messages, t, file_name, sync_code).deliver_now
         end
       end
-      
-      #override this to do custom handling if a product isn't found in the database
+
+      # override this to do custom handling if a product isn't found in the database
       def find_object row, opts
         cm = core_module opts
         SearchCriterion.new(model_field_uid:cm.unique_id_field.uid,
-          operator:'eq',value:row[0]).apply(cm.klass).first
+          operator:'eq', value:row[0]).apply(cm.klass).first
       end
 
       def core_module opts

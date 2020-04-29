@@ -28,13 +28,13 @@ describe DrawbackUploadFilesController do
       end
       it "should fail if user cannot edit drawback" do
         allow_any_instance_of(User).to receive(:edit_drawback?).and_return(false)
-        post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
+        post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS, 'attachment_attributes'=>{'attached'=>@file}}
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq("You cannot upload files because you do not have permission to edit Drawback.")
       end
       it "should fail if processor is not set" do
         allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
-        post :create, 'drawback_upload_file'=>{'processor'=>'','attachment_attributes'=>{'attached'=>@file}}
+        post :create, 'drawback_upload_file'=>{'processor'=>'', 'attachment_attributes'=>{'attached'=>@file}}
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq("You cannot upload this file because the processor is not set.  Please contact support.")
       end
@@ -46,7 +46,7 @@ describe DrawbackUploadFilesController do
       end
       it "should set start_at" do
         allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
-        post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
+        post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS, 'attachment_attributes'=>{'attached'=>@file}}
         expect(response).to be_redirect
         expect(flash[:errors]).to be_nil
         expect(flash[:notices].size).to eq(1)
@@ -57,7 +57,7 @@ describe DrawbackUploadFilesController do
       expect_any_instance_of(DrawbackUploadFile).to receive(:process).with(@user)
       expect_any_instance_of(DrawbackUploadFile).to receive(:delay).and_return(DrawbackUploadFile.new)
       allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
-      post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
+      post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS, 'attachment_attributes'=>{'attached'=>@file}}
       expect(response).to be_redirect
       expect(flash[:errors]).to be_nil
       expect(flash[:notices].size).to eq(1)
@@ -65,7 +65,7 @@ describe DrawbackUploadFilesController do
     it "should call process job" do
       expect_any_instance_of(DrawbackUploadFile).to receive(:process)
       allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
-      post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS,'attachment_attributes'=>{'attached'=>@file}}
+      post :create, 'drawback_upload_file'=>{'processor'=>DrawbackUploadFile::PROCESSOR_UA_WM_IMPORTS, 'attachment_attributes'=>{'attached'=>@file}}
       expect(response).to be_redirect
       expect(flash[:errors]).to be_nil
       expect(flash[:notices].size).to eq(1)

@@ -6,7 +6,7 @@ class OpenChain::SurveyExpirationProcessor
 		SurveyResponse.reminder_email_needed.each { |sr| surveys_with_expired_responses << sr.survey }
 		surveys_with_expired_responses.each do |expired_survey|
 			responses = expired_survey.survey_responses.reminder_email_needed
-			recipient_addresses = expired_survey.survey_subscriptions.map{|ss| ss.user.email}.compact
+			recipient_addresses = expired_survey.survey_subscriptions.map {|ss| ss.user.email}.compact
 			recipient_addresses.each do |recipient|
 				OpenMailer.send_survey_expiration_reminder(recipient, expired_survey, responses).deliver_now
 			end

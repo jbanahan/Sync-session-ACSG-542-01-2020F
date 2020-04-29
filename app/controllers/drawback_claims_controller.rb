@@ -24,13 +24,13 @@ class DrawbackClaimsController < ApplicationController
 
   def edit
     claim = DrawbackClaim.find params[:id]
-    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+    action_secure(claim.can_edit?(current_user), claim, :verb=>'edit', :lock_check=>false, :module_name=>'drawback claim') {
       @drawback_claim = claim
     }
   end
   def update
     claim = DrawbackClaim.find params[:id]
-    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+    action_secure(claim.can_edit?(current_user), claim, :verb=>'edit', :lock_check=>false, :module_name=>'drawback claim') {
       claim.update_model_field_attributes params[:drawback_claim]
       errors_to_flash claim
       if claim.errors.empty?
@@ -40,12 +40,12 @@ class DrawbackClaimsController < ApplicationController
     }
   end
   def new
-    action_secure(current_user.edit_drawback?,current_user,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+    action_secure(current_user.edit_drawback?, current_user, :verb=>'edit', :lock_check=>false, :module_name=>'drawback claim') {
       @drawback_claim = DrawbackClaim.new
     }
   end
   def create
-    action_secure(current_user.edit_drawback?,current_user,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+    action_secure(current_user.edit_drawback?, current_user, :verb=>'edit', :lock_check=>false, :module_name=>'drawback claim') {
       d = DrawbackClaim.new
       d.update_model_field_attributes params[:drawback_claim]
       errors_to_flash d
@@ -59,7 +59,7 @@ class DrawbackClaimsController < ApplicationController
   end
   def clear_claim_audits
     claim = DrawbackClaim.find params[:id]
-    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+    action_secure(claim.can_edit?(current_user), claim, :verb=>'edit', :lock_check=>false, :module_name=>'drawback claim') {
       DrawbackClaimAudit.where(drawback_claim_id:claim.id).delete_all
       add_flash :notices, 'Claim Audits cleared.'
       redirect_to claim
@@ -67,7 +67,7 @@ class DrawbackClaimsController < ApplicationController
   end
   def clear_export_histories
     claim = DrawbackClaim.find params[:id]
-    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+    action_secure(claim.can_edit?(current_user), claim, :verb=>'edit', :lock_check=>false, :module_name=>'drawback claim') {
       DrawbackExportHistory.where(drawback_claim_id:claim.id).delete_all
       add_flash :notices, 'Export Histories cleared.'
       redirect_to claim
@@ -80,7 +80,7 @@ class DrawbackClaimsController < ApplicationController
   }
   def process_report
     claim = DrawbackClaim.find(params[:id])
-    action_secure(claim.can_edit?(current_user),claim,:verb=>'edit',:lock_check=>false,:module_name=>'drawback claim') {
+    action_secure(claim.can_edit?(current_user), claim, :verb=>'edit', :lock_check=>false, :module_name=>'drawback claim') {
       parser = REPORT_PARSERS[params[:process_type]]
       if parser.nil?
         add_flash :errors, "Invalid parser type #{params[:process_type]}"

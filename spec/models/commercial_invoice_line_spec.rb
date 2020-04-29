@@ -18,7 +18,7 @@ describe CommercialInvoiceLine do
 
   describe "total_duty" do
     it "sum duty for line" do
-      line = CommercialInvoiceLine.new 
+      line = CommercialInvoiceLine.new
       line.commercial_invoice_tariffs.build duty_amount: BigDecimal.new("4")
       line.commercial_invoice_tariffs.build duty_amount: BigDecimal.new("5")
 
@@ -34,7 +34,7 @@ describe CommercialInvoiceLine do
 
   describe "total_entered_value" do
     it "sums entered value for all tariff lines" do
-      line = CommercialInvoiceLine.new 
+      line = CommercialInvoiceLine.new
       line.commercial_invoice_tariffs.build entered_value: BigDecimal.new("4")
       line.commercial_invoice_tariffs.build entered_value: BigDecimal.new("5")
 
@@ -53,9 +53,9 @@ describe CommercialInvoiceLine do
   end
 
   describe "first_sale_savings" do
-    let!(:line) { Factory(:commercial_invoice_line, contract_amount: 500, value: 200, 
+    let!(:line) { Factory(:commercial_invoice_line, contract_amount: 500, value: 200,
                      commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)]) }
-    
+
     it "calculates first sale savings when contract amount isn't zero or nil" do
       expect(line.first_sale_savings).to eq 900
       # amount - value * duty_amount / entered_value
@@ -97,10 +97,10 @@ describe CommercialInvoiceLine do
 
   describe "value_for_tax" do
     let!(:line1) { Factory(:commercial_invoice_line,
-                     commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, 
+                     commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff,
                       duty_amount: 1, entered_value: 2, sima_amount: 3, excise_amount: 4, value_for_duty_code: 1234)]) }
     let!(:line2) { Factory(:commercial_invoice_line,
-                     commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, 
+                     commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff,
                       duty_amount: 1, entered_value: 2, sima_amount: 3, excise_amount: 4, value_for_duty_code: nil)]) }
 
 

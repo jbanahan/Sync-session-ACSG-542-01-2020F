@@ -4,7 +4,7 @@ class AttachmentArchivesController < ApplicationController
     r = nil
     begin
       if current_user.edit_attachment_archives?
-        c = Company.find params[:company_id] 
+        c = Company.find params[:company_id]
         archive_setup = c.attachment_archive_setup
         if archive_setup
           if archive_setup.entry_attachments_available?
@@ -23,13 +23,13 @@ class AttachmentArchivesController < ApplicationController
       errors << $!.message
     end
     if errors.empty?
-      render :json=>r.attachment_list_json 
+      render :json=>r.attachment_list_json
     else
       render :json=>{'errors'=>errors}.to_json
     end
   end
 
-  def show 
+  def show
     errors = []
     archive = nil
     if current_user.edit_attachment_archives?
@@ -38,13 +38,13 @@ class AttachmentArchivesController < ApplicationController
       if archive.nil?
         errors << "Archive not found."
       end
-    else 
+    else
       errors << "You do not have permission to view archives."
     end
 
     if errors.empty?
       render :json=>archive.attachment_list_json
-    else 
+    else
       render :json=>{'errors'=>errors}.to_json
     end
   end
@@ -58,5 +58,4 @@ class AttachmentArchivesController < ApplicationController
   end
 
   private
-  
 end

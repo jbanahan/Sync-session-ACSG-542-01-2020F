@@ -7,19 +7,19 @@ class CustomDefinitionsController < ApplicationController
     'd_type' => {:field => 'data_type', :label => 'Data Type'},
     's_rank' => {:field => 'rank', :label => 'Sort Rank'}
   }
-  
+
   def set_page_title
     @page_title = 'Tools'
   end
 
   def index
-    s =  build_search(SEARCH_PARAMS,'label','m_type','a')
+    s =  build_search(SEARCH_PARAMS, 'label', 'm_type', 'a')
 
     respond_to do |format|
       format.html {
         @custom_definitions = s.paginate(:per_page => 20, :page => params[:page])
         render :layout => 'one_col'
-      } 
+      }
       format.xml  { render :xml => @custom_definitions }
     end
   end
@@ -34,7 +34,7 @@ class CustomDefinitionsController < ApplicationController
   # GET /custom_definitions/new.xml
   def new
     c = CustomDefinition.new
-    action_secure(c.can_edit?(current_user),c,{:lock_check => false, :verb => "create", :module_name=>"custom_field"}) {
+    action_secure(c.can_edit?(current_user), c, {:lock_check => false, :verb => "create", :module_name=>"custom_field"}) {
       @custom_definition = c
       respond_to do |format|
         format.html # new.html.erb
@@ -46,7 +46,7 @@ class CustomDefinitionsController < ApplicationController
   # GET /custom_definitions/1/edit
   def edit
     c = CustomDefinition.find(params[:id])
-    action_secure(c.can_edit?(current_user),c,{:verb => "edit", :module_name=>"custom field"}) {
+    action_secure(c.can_edit?(current_user), c, {:verb => "edit", :module_name=>"custom field"}) {
       @custom_definition = c
     }
   end
@@ -58,7 +58,7 @@ class CustomDefinitionsController < ApplicationController
     if c.cdef_uid.blank?
       c.cdef_uid = CustomDefinition.generate_cdef_uid(c)
     end
-    action_secure(c.can_edit?(current_user),c,{:verb => "create", :module_name=>"custom field"}) {
+    action_secure(c.can_edit?(current_user), c, {:verb => "create", :module_name=>"custom field"}) {
       @custom_definition = c
       respond_to do |format|
         if @custom_definition.save
@@ -111,10 +111,8 @@ class CustomDefinitionsController < ApplicationController
       end
     }
   end
-  
-  
-  
-  private    
+
+  private
     def secure
       r = CustomDefinition.where("1=0")
       if current_user.company.master

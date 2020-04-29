@@ -1,14 +1,14 @@
 describe BrokerInvoice do
   describe "hst_amount" do
     it "should calculate HST based on existing charge codes" do
-      with_hst_code_1 = Factory(:charge_code,:apply_hst=>true)
-      with_hst_code_2 = Factory(:charge_code,:apply_hst=>true)
-      without_hst = Factory(:charge_code,:apply_hst=>false)
+      with_hst_code_1 = Factory(:charge_code, :apply_hst=>true)
+      with_hst_code_2 = Factory(:charge_code, :apply_hst=>true)
+      without_hst = Factory(:charge_code, :apply_hst=>false)
 
       bi = BrokerInvoice.new
-      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_1.code,:charge_description=>with_hst_code_1.description,:charge_amount=>10,:hst_percent=>0.05)
-      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_2.code,:charge_description=>with_hst_code_2.description,:charge_amount=>20,:hst_percent=>0.10)
-      bi.broker_invoice_lines.build(:charge_code=>without_hst.code,:charge_description=>with_hst_code_1.description,:charge_amount=>10)
+      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_1.code, :charge_description=>with_hst_code_1.description, :charge_amount=>10, :hst_percent=>0.05)
+      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_2.code, :charge_description=>with_hst_code_2.description, :charge_amount=>20, :hst_percent=>0.10)
+      bi.broker_invoice_lines.build(:charge_code=>without_hst.code, :charge_description=>with_hst_code_1.description, :charge_amount=>10)
 
       expect(bi.hst_amount).to eq(2.5)
     end
@@ -31,58 +31,58 @@ describe BrokerInvoice do
     }
 
     before :each do
-      @importer = Factory(:company,:importer=>true)
-      @importer_user = Factory(:user,:company_id=>@importer.id,:broker_invoice_view=>true)
-      @entry = Factory(:entry,:importer_id=>@importer.id)
-      @inv = Factory(:broker_invoice,:entry_id=>@entry.id)
+      @importer = Factory(:company, :importer=>true)
+      @importer_user = Factory(:user, :company_id=>@importer.id, :broker_invoice_view=>true)
+      @entry = Factory(:entry, :importer_id=>@importer.id)
+      @inv = Factory(:broker_invoice, :entry_id=>@entry.id)
     end
     context 'search secure' do
       before :each do
-        entry_2 = Factory(:entry,:importer_id=>Factory(:company,:importer=>true).id)
-        inv_2 = Factory(:broker_invoice,:entry_id=>entry_2.id)
+        entry_2 = Factory(:entry, :importer_id=>Factory(:company, :importer=>true).id)
+        inv_2 = Factory(:broker_invoice, :entry_id=>entry_2.id)
       end
       it 'should restrict non master by entry importer id' do
-        found = BrokerInvoice.search_secure(@importer_user,BrokerInvoice)
+        found = BrokerInvoice.search_secure(@importer_user, BrokerInvoice)
         expect(found.size).to eq(1)
         expect(found.first).to eq(@inv)
       end
       it 'should allow all for master' do
-        u = Factory(:user,:broker_invoice_view=>true)
+        u = Factory(:user, :broker_invoice_view=>true)
         u.company.update!(:master=>true)
-        found = BrokerInvoice.search_secure(u,BrokerInvoice)
+        found = BrokerInvoice.search_secure(u, BrokerInvoice)
         expect(found.size).to eq(2)
       end
       it 'should allow for linked company' do
-        child = Factory(:company,:importer=>true)
-        i3 = Factory(:broker_invoice,:entry=>Factory(:entry,:importer_id=>child.id))
+        child = Factory(:company, :importer=>true)
+        i3 = Factory(:broker_invoice, :entry=>Factory(:entry, :importer_id=>child.id))
         @importer.linked_companies << child
-        expect(BrokerInvoice.search_secure(@importer_user,BrokerInvoice).all).to eq([@inv,i3])
+        expect(BrokerInvoice.search_secure(@importer_user, BrokerInvoice).all).to eq([@inv, i3])
       end
     end
     it 'should be visible for importer' do
       expect(@inv.can_view?(@importer_user)).to be_truthy
     end
     it 'should not be visible for another importer' do
-      u = Factory(:user,:company_id=>Factory(:company,:importer=>true).id,:broker_invoice_view=>true)
+      u = Factory(:user, :company_id=>Factory(:company, :importer=>true).id, :broker_invoice_view=>true)
       expect(@inv.can_view?(u)).to be_falsey
     end
     it 'should be visible for parent importer' do
-      parent = Factory(:company,:importer=>true)
+      parent = Factory(:company, :importer=>true)
       parent.linked_companies << @importer
-      u = Factory(:user,:company_id=>parent.id,:broker_invoice_view=>true)
+      u = Factory(:user, :company_id=>parent.id, :broker_invoice_view=>true)
       expect(@inv.can_view?(u)).to be_truthy
     end
     it 'should not be visible without permission' do
-      u = Factory(:user,:broker_invoice_view=>false)
+      u = Factory(:user, :broker_invoice_view=>false)
       u.company.update!(:master=>true)
       expect(@inv.can_view?(u)).to be_falsey
     end
     it 'should not be visible without company permission' do
-      u = Factory(:user,:broker_invoice_view=>true)
+      u = Factory(:user, :broker_invoice_view=>true)
       expect(@inv.can_view?(u)).to be_falsey
     end
     it 'should be visible with permission' do
-      u = Factory(:user,:broker_invoice_view=>true)
+      u = Factory(:user, :broker_invoice_view=>true)
       u.company.update!(:master=>true)
       expect(@inv.can_view?(u)).to be_truthy
     end

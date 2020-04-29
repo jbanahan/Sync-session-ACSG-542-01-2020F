@@ -9,8 +9,8 @@ describe OpenChain::CustomHandler::MassOrderCreator do
 
   describe "create_orders" do
 
-    let (:order_attributes) do 
-      {ord_ord_num: "12345", ord_ord_date: "2016-02-01", ord_imp_id: importer.id, 
+    let (:order_attributes) do
+      {ord_ord_num: "12345", ord_ord_date: "2016-02-01", ord_imp_id: importer.id,
         order_lines_attributes: [
           {
             ordln_ordered_qty: 10,
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
               prod_uid: "PROD123", prod_name: "Description", prod_imp_id: importer.id,
               classifications_attributes: [
                 {
-                  class_cntry_id: country.id, 
+                  class_cntry_id: country.id,
                   tariff_records_attributes: [
                     hts_hts_1: "1234567890"
                   ]
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
 
       order_attributes[:order_lines_attributes].first[:product][:prod_uid] = product.unique_identifier
 
-      creater = Class.new do 
+      creater = Class.new do
         include OpenChain::CustomHandler::MassOrderCreator
         def match_lines_method
           :ordln_puid
@@ -168,7 +168,7 @@ describe OpenChain::CustomHandler::MassOrderCreator do
       order = Order.create! order_number: "12345", importer: importer
       order_line = order.order_lines.create! product: product, quantity: 20
 
-      creater = Class.new do 
+      creater = Class.new do
         include OpenChain::CustomHandler::MassOrderCreator
         def destroy_unreferenced_lines?
           true
@@ -197,10 +197,10 @@ describe OpenChain::CustomHandler::MassOrderCreator do
     end
 
     it "works without a single transaction" do
-      # Not entirely sure how to determine this works correctly, since we do eventually utilize  
+      # Not entirely sure how to determine this works correctly, since we do eventually utilize
       # a transactional lock when saving (just not a blanket one over the whole order create/save).
       # For now, I'm just making sure the whole thing works.
-      creater = Class.new do 
+      creater = Class.new do
         include OpenChain::CustomHandler::MassOrderCreator
         def single_transaction_per_order?
           false

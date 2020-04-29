@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerHtsParser do
     let(:log) { InboundFile.new }
 
     before do
-      @company = with_customs_management_id(Factory(:company),'FOOLO')
+      @company = with_customs_management_id(Factory(:company), 'FOOLO')
       @cdefs = described_class.prep_custom_definitions [:prod_part_number, :prod_country_of_origin, :class_customs_description, :prod_season]
     end
 
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerHtsParser do
     it 'creates a new product' do
       h = default_values
       expect_any_instance_of(Product).to receive(:create_snapshot)
-      expect{described_class.new.process_file(make_row, 'file_name', log)}.to change(Product, :count).by(1)
+      expect {described_class.new.process_file(make_row, 'file_name', log)}.to change(Product, :count).by(1)
 
       p = Product.first
       classification = p.classifications.find {|c| c.country_id == us.id }
@@ -118,13 +118,13 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerHtsParser do
       h = default_values
       no_hts_row = make_row({hts: nil}, 'file_name')
 
-      expect{described_class.new.process_file(no_hts_row, 'file_name', log)}.to change(Product, :count).by(1)
+      expect {described_class.new.process_file(no_hts_row, 'file_name', log)}.to change(Product, :count).by(1)
     end
 
     it 'errors if importer cannot be found' do
       @company.destroy
 
-      expect{described_class.new.process_file(default_values, 'file_name', log)}.to raise_error "Unable to process Foot Locker HTS file because no company record could be found with Alliance Customer number '#{described_class::FOOT_LOCKER_CUSTOMER_NUMBER}'."
+      expect {described_class.new.process_file(default_values, 'file_name', log)}.to raise_error "Unable to process Foot Locker HTS file because no company record could be found with Alliance Customer number '#{described_class::FOOT_LOCKER_CUSTOMER_NUMBER}'."
       expect(log.messages.length).to eq 1
       expect(log.messages[0].message_status).to eq(InboundFileMessage::MESSAGE_STATUS_REJECT)
       expect(log.messages[0].message).to eq("Unable to process Foot Locker HTS file because no company record could be found with Alliance Customer number '#{described_class::FOOT_LOCKER_CUSTOMER_NUMBER}'.")
@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerHtsParser do
     it 'errors if country cannot be found (US)' do
       us.destroy
 
-      expect{described_class.new.process_file(make_row({}, 'us'), 'file_name', log)}.to raise_error "USA Country not found."
+      expect {described_class.new.process_file(make_row({}, 'us'), 'file_name', log)}.to raise_error "USA Country not found."
       expect(log.messages.length).to eq 1
       expect(log.messages[0].message_status).to eq(InboundFileMessage::MESSAGE_STATUS_REJECT)
       expect(log.messages[0].message).to eq("USA Country not found.")
@@ -142,7 +142,7 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerHtsParser do
     it 'errors if country cannot be found (CA)' do
       ca.destroy
 
-      expect{described_class.new.process_file(make_row({}, 'ca'), 'file_name', log)}.to raise_error "CA Country not found."
+      expect {described_class.new.process_file(make_row({}, 'ca'), 'file_name', log)}.to raise_error "CA Country not found."
       expect(log.messages.length).to eq 1
       expect(log.messages[0].message_status).to eq(InboundFileMessage::MESSAGE_STATUS_REJECT)
       expect(log.messages[0].message).to eq("CA Country not found.")

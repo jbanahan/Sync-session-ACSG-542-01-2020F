@@ -21,9 +21,9 @@ describe CustomReportContainerListing do
 
   describe "run" do
     it "should make a row for each container" do
-      ent = Factory(:entry,:container_numbers=>"123\n456",:broker_reference=>"ABC")
+      ent = Factory(:entry, :container_numbers=>"123\n456", :broker_reference=>"ABC")
       rpt = described_class.new
-      rpt.search_columns.build(:rank=>0,:model_field_uid=>:ent_brok_ref)
+      rpt.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
       arrays = rpt.to_arrays @u
       expect(arrays.size).to eq(3)
       expect(arrays[0]).to eq ["Container Number", "Broker Reference"]
@@ -36,9 +36,9 @@ describe CustomReportContainerListing do
       allow(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:request_host).and_return "localhost"
 
-      ent = Factory(:entry,:container_numbers=>"123\n456",:broker_reference=>"ABC")
+      ent = Factory(:entry, :container_numbers=>"123\n456", :broker_reference=>"ABC")
       rpt = described_class.new include_links: true
-      rpt.search_columns.build(:rank=>0,:model_field_uid=>:ent_brok_ref)
+      rpt.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
 
       arrays = rpt.to_arrays @u
       expect(arrays[0]).to eq ["Web Links", "Container Number", "Broker Reference"]

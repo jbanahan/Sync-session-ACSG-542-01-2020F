@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     log.company = parser.parts_importer
 
     # Disable quoting (or set the char to the bell char which we'll never see in the file),
-    #they've disabled it themselves in the output now too
+    # they've disabled it themselves in the output now too
     data.force_encoding "Windows-1252"
     CSV.parse(data, col_sep: "|", quote_char: "\007") do |row|
       row = convert_to_utf8 row
@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
 
   def import_country row, log
     c = row[22].to_s.upcase.strip
-    if c == "US" 
+    if c == "US"
       return "US"
     elsif c == "CA"
       return "CA"
@@ -81,7 +81,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     vals = {header: nil, details: [], party: nil}
 
     rows.each do |row|
-      case row[0].to_s.upcase 
+      case row[0].to_s.upcase
       when "HDR"
         vals[:header] = row
       when "DTL"
@@ -178,7 +178,6 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
         details[key][:quantity] += BigDecimal(v(line[8]))
       end
     end
-    
 
     details.values
   end
@@ -242,11 +241,11 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerComme
     @parts_imp
   end
 
-  def ca 
+  def ca
     @canada ||= Country.where(iso_code: "CA").first
   end
 
-  def us 
+  def us
     @usa ||= Country.where(iso_code: "US").first
   end
 

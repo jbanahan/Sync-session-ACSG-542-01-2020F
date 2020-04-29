@@ -1,7 +1,7 @@
 require 'open_chain/name_incrementer'
 
 module OpenChain; module BusinessRulesCopier
-  
+
   class TemplateUploader
     def initialize custom_file
       @custom_file = custom_file
@@ -16,7 +16,7 @@ module OpenChain; module BusinessRulesCopier
           bvt.update_attributes! name: name, disabled: true
           user.messages.create subject: "File Processing Complete", body: "Business Validation Template upload for file #{@custom_file.attached_file_name} is complete."
         end
-      rescue => e        
+      rescue => e
         user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
       end
     end
@@ -38,7 +38,7 @@ module OpenChain; module BusinessRulesCopier
           bvt.business_validation_rules << bvr
           user.messages.create subject: "File Processing Complete", body: "Business Validation Rule upload for file #{@custom_file.attached_file_name} is complete."
         end
-      rescue => e        
+      rescue => e
         user.messages.create(:subject=>"File Processing Complete With Errors", :body=>"Unable to process file #{@custom_file.attached_file_name} due to the following error:<br>#{e.message}")
       end
     end
@@ -81,7 +81,7 @@ module OpenChain; module BusinessRulesCopier
   def self.template_names
     BusinessValidationTemplate.where(delete_pending: [nil, false]).map(&:name)
   end
-  
+
   def self.rule_names template_id
     BusinessValidationRule.where(business_validation_template_id: template_id, delete_pending: [nil, false]).map(&:name)
   end

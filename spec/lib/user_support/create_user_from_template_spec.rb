@@ -9,7 +9,7 @@ describe OpenChain::UserSupport::CreateUserFromTemplate do
     end
 
     it "rollsback change on failure" do
-      expect{subject.transactional_user_creation(Factory(:user, email: current_user.email),
+      expect {subject.transactional_user_creation(Factory(:user, email: current_user.email),
         current_user, nil, nil)}.to raise_exception(ActiveRecord::RecordInvalid, "Validation failed: Email has already been taken")
         .and change {User.count}.by(0)
     end

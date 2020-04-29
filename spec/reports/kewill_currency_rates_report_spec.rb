@@ -58,7 +58,7 @@ describe OpenChain::Report::KewillCurrencyRatesReport do
     after :each do
       @tf.close! if @tf
     end
-    
+
     it "handles all post-query processing on data returned from sql_proxy server" do
       u = User.new
       results = [{'c'=>"CN", 'cn' => "China", "cur" => "CNY", "der" => "20160401", 'er' => 123456, "ct" => "D", "not"=>"Notes"}]

@@ -8,15 +8,15 @@ describe OpenChain::InvoiceGeneratorSupport do
     d.binmode
     d << "Detail content"
     d.rewind
-    d   
+    d
   end
 
   describe "email invoice" do
     it "creates and emails Excel invoice along with optional file" do
       co = Factory(:company, name: "ACME")
-      inv = Factory(:vfi_invoice, customer: co, invoice_date: Date.new(2018,1,1), invoice_number: "inv num", currency: "USD")
+      inv = Factory(:vfi_invoice, customer: co, invoice_date: Date.new(2018, 1, 1), invoice_number: "inv num", currency: "USD")
       Factory(:vfi_invoice_line, vfi_invoice: inv, line_number: 1, charge_description: "descr", charge_amount: 10, charge_code: "CODE", quantity: 2, unit: "EA", unit_price: 5)
-      
+
       generator.email_invoice inv, "tufnel@stonehenge.biz", "generator email", "invoice", detail
 
       expect(detail.closed?).to eq true
@@ -28,7 +28,7 @@ describe OpenChain::InvoiceGeneratorSupport do
       expect(mail.attachments["invoice.xls"]).not_to be_nil
       invoice_att, detail_att = mail.attachments
       expect(detail_att.filename).to match(/detail/)
-      
+
       Tempfile.open('temp') do |t|
         t.binmode
         t << invoice_att.read
@@ -52,7 +52,5 @@ describe OpenChain::InvoiceGeneratorSupport do
 
     end
   end
-
-  
 
 end

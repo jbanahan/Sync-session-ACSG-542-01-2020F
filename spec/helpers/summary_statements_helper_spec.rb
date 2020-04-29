@@ -27,8 +27,8 @@ describe SummaryStatementsHelper do
       sheet = wb.worksheets.first
 
       expect(sheet.row(4)).to eq ["Invoice Number", "Invoice Date", "Amount", "Customer Name", "Entry Number", "Bill To Name", "Release Date", "PMS Month"]
-      expect(sheet.row(5)).to eq [bi.invoice_number, bi.invoice_date, bi.invoice_total, @company.name, ent.entry_number, bi.bill_to_name, 
-                                  ent.release_date, ent.monthly_statement_due_date, "Web View"] #can't access link in last field
+      expect(sheet.row(5)).to eq [bi.invoice_number, bi.invoice_date, bi.invoice_total, @company.name, ent.entry_number, bi.bill_to_name,
+                                  ent.release_date, ent.monthly_statement_due_date, "Web View"] # can't access link in last field
     end
 
     it "renders data for CA invoices" do
@@ -36,13 +36,13 @@ describe SummaryStatementsHelper do
                      entry_number: "246810", k84_month: 5, cadex_accept_date: Time.zone.parse("2015-12-02 13:50"))
       bi = Factory(:broker_invoice, summary_statement: @sum_stat, entry: ent, invoice_number: "123456789",
                    invoice_date: Date.today, invoice_total: 100, bill_to_name: @company.name)
-    
+
       wb = helper.render_summary_xls @sum_stat
       sheet = wb.worksheets.first
 
       expect(sheet.row(4)).to eq ["Invoice Number", "Invoice Date", "Amount", "Customer Name", "Entry Number", "Bill To Name", "K84 Month", "Cadex Accept Date"]
-      expect(sheet.row(5)).to eq [bi.invoice_number, bi.invoice_date, bi.invoice_total, @company.name, ent.entry_number, bi.bill_to_name, 
-                                  ent.k84_month, ent.cadex_accept_date, "Web View"] #can't access link in last field
+      expect(sheet.row(5)).to eq [bi.invoice_number, bi.invoice_date, bi.invoice_total, @company.name, ent.entry_number, bi.bill_to_name,
+                                  ent.k84_month, ent.cadex_accept_date, "Web View"] # can't access link in last field
     end
   end
 

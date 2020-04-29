@@ -43,8 +43,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       parser = new_parser
       expect(parser).to receive(:can_view?).with(u).and_return true
       expect(parser).to receive(:collect_rows).and_yield 'cr'
-      expect(parser).to receive(:update_data_hash).with(instance_of(Hash),'cr')
-      expect(parser).to receive(:process_data_hash).with(instance_of(Hash),u)
+      expect(parser).to receive(:update_data_hash).with(instance_of(Hash), 'cr')
+      expect(parser).to receive(:process_data_hash).with(instance_of(Hash), u)
       parser.process(u)
       u.reload
       expect(u.messages.first.subject).to eq "Style/Color/Region Parser Complete"
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       u = Factory(:user)
       parser = new_parser
       expect(parser).to receive(:can_view?).with(u).and_return false
-      expect{parser.process(u)}.to raise_error(/permission/)
+      expect {parser.process(u)}.to raise_error(/permission/)
     end
   end
 
@@ -64,7 +64,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       expect(OpenChain::XLClient).to receive(:new_from_attachable).with(@cf).and_return xlc
       expect(xlc).to receive(:all_row_values).with(chunk_size: 500).and_yield('a').and_yield('b')
       new_parser.collect_rows {|row| r << row}
-      expect(r).to eq ['a','b']
+      expect(r).to eq ['a', 'b']
     end
   end
 
@@ -73,56 +73,56 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       @h = Hash.new
     end
     let :row do
-      Factory(:country,iso_code:'MX')
-      ['1234567','Style Name','1234567-001','Style-CLR','Apparel','FW17','123456','Factname','factname2','MX','Mexico']
+      Factory(:country, iso_code:'MX')
+      ['1234567', 'Style Name', '1234567-001', 'Style-CLR', 'Apparel', 'FW17', '123456', 'Factname', 'factname2', 'MX', 'Mexico']
     end
     it 'should skip rows that do not have 11 elements' do
-      new_parser.update_data_hash(@h,['a'])
+      new_parser.update_data_hash(@h, ['a'])
       expect(@h).to be_empty
     end
     it 'should skip rows where first value == Style' do
       r = row
       r[0] = 'Style'
-      new_parser.update_data_hash(@h,r)
+      new_parser.update_data_hash(@h, r)
       expect(@h).to be_empty
     end
     it 'should skip rows where color has a letter' do
       r = row
       r[2] = '1234567-S01'
-      new_parser.update_data_hash(@h,r)
+      new_parser.update_data_hash(@h, r)
       expect(@h).to be_empty
     end
     it 'should fail if a row has 11 elements and column A is not a 7 digit number' do
       r = row
       r[0] = '12'
-      expect{new_parser.update_data_hash(@h,r)}.to raise_error(/Style .* must be a 7 digit number/)
+      expect {new_parser.update_data_hash(@h, r)}.to raise_error(/Style .* must be a 7 digit number/)
     end
     it 'should fail on bad country of origin code' do
       r = row
       r[9] = 'AB'
-      expect{new_parser.update_data_hash(@h,r)}.to raise_error(/Country .* not found/)
+      expect {new_parser.update_data_hash(@h, r)}.to raise_error(/Country .* not found/)
     end
     it 'should skip country code XX' do
       Country.delete_all
       r = row
       r[9] = 'XX'
-      new_parser.update_data_hash(@h,r)
+      new_parser.update_data_hash(@h, r)
       expect(@h).to be_empty
     end
     it 'should fail on bad color code' do
       r = row
       r[2] = '1234567'
-      expect{new_parser.update_data_hash(@h,r)}.to raise_error(/Color portion of style-color/)
+      expect {new_parser.update_data_hash(@h, r)}.to raise_error(/Color portion of style-color/)
     end
     it 'should append to existing style' do
-      @h = {'1234567'=>{name:'a',colors:{'999'=>['US'],'001'=>['US']},division:'X',seasons:['SS15']}}
-      new_parser.update_data_hash(@h,row)
-      expected = {'1234567'=>{name:'Style Name',colors:{'999'=>['US'],'001'=>['US','MX']},division:'Apparel',seasons:['SS15','FW17'],style:'1234567'}}
+      @h = {'1234567'=>{name:'a', colors:{'999'=>['US'], '001'=>['US']}, division:'X', seasons:['SS15']}}
+      new_parser.update_data_hash(@h, row)
+      expected = {'1234567'=>{name:'Style Name', colors:{'999'=>['US'], '001'=>['US', 'MX']}, division:'Apparel', seasons:['SS15', 'FW17'], style:'1234567'}}
       expect(@h).to eq expected
     end
     it 'should create new style' do
-      new_parser.update_data_hash(@h,row)
-      expected = {'1234567'=>{name:'Style Name',colors:{'001'=>['MX']},division:'Apparel',seasons:['FW17'],style:'1234567'}}
+      new_parser.update_data_hash(@h, row)
+      expected = {'1234567'=>{name:'Style Name', colors:{'001'=>['MX']}, division:'Apparel', seasons:['FW17'], style:'1234567'}}
       expect(@h).to eq expected
     end
   end
@@ -132,10 +132,10 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       u = double('user')
       a = double('a')
       b = double('b')
-      h = {'1234567'=>a,'7891234'=>b}
+      h = {'1234567'=>a, '7891234'=>b}
       p = new_parser
-      expect(p).to receive(:update_product).with(a,u)
-      expect(p).to receive(:update_product).with(b,u)
+      expect(p).to receive(:update_product).with(a, u)
+      expect(p).to receive(:update_product).with(b, u)
       p.process_data_hash h, u
     end
   end
@@ -145,9 +145,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
       {
         style:'1234567',
         name:'My Name',
-        colors:{'001'=>['MX','AU'],'002'=>['MX']},
+        colors:{'001'=>['MX', 'AU'], '002'=>['MX']},
         division:'Apparel',
-        seasons:['SS15','FW17']
+        seasons:['SS15', 'FW17']
       }
     end
     let :user do
@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
     end
     it 'should create new style and division' do
       cdefs = custom_defs
-      expect{new_parser.update_product(hash,user)}.to change(Product,:count).from(0).to(1)
+      expect {new_parser.update_product(hash, user)}.to change(Product, :count).from(0).to(1)
       p = Product.first
       expect(p.name).to eq 'My Name'
       expect(p.unique_identifier).to eq '1234567'
@@ -182,10 +182,10 @@ describe OpenChain::CustomHandler::UnderArmour::UaStyleColorFactoryParser do
     end
     it 'should update existing style' do
       cdefs = custom_defs
-      p = Factory(:product,name:'somename',unique_identifier:'1234567')
-      p.update_custom_value!(cdefs[:prod_seasons],"FW17\nSS17")
-      v = Factory(:variant,product:p,variant_identifier:'001')
-      expect{new_parser.update_product(hash,user)}.to_not change(Product,:count)
+      p = Factory(:product, name:'somename', unique_identifier:'1234567')
+      p.update_custom_value!(cdefs[:prod_seasons], "FW17\nSS17")
+      v = Factory(:variant, product:p, variant_identifier:'001')
+      expect {new_parser.update_product(hash, user)}.to_not change(Product, :count)
       p = Product.first
       expect(p.name).to eq 'My Name'
       expect(p.get_custom_value(cdefs[:prod_seasons]).value).to eq "FW17\nSS15\nSS17"

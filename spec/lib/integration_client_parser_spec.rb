@@ -1,7 +1,7 @@
 describe OpenChain::IntegrationClientParser do
 
   class FakeParser
-    include OpenChain::IntegrationClientParser 
+    include OpenChain::IntegrationClientParser
 
     def self.integration_folder
       raise "Mock me"
@@ -18,20 +18,20 @@ describe OpenChain::IntegrationClientParser do
   describe "process_past_days" do
     it "processes files from the previous few days, default options" do
       expect(subject).to receive(:delay).with({priority: 500}).and_return(subject).exactly(3)
-      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,6), { imaging: false, skip_delay:false })
-      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,7), { imaging: false, skip_delay:false })
-      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,8), { imaging: false, skip_delay:false })
+      expect(subject).to receive(:process_day).with(DateTime.new(2018, 8, 6), { imaging: false, skip_delay:false })
+      expect(subject).to receive(:process_day).with(DateTime.new(2018, 8, 7), { imaging: false, skip_delay:false })
+      expect(subject).to receive(:process_day).with(DateTime.new(2018, 8, 8), { imaging: false, skip_delay:false })
 
-      Timecop.freeze(Date.new(2018,8,8)) do
+      Timecop.freeze(Date.new(2018, 8, 8)) do
         subject.process_past_days 3
       end
     end
 
     it "processes files from the previous few days, no delay" do
-      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,7), { skip_delay:true })
-      expect(subject).to receive(:process_day).with(DateTime.new(2018,8,8), { skip_delay:true })
+      expect(subject).to receive(:process_day).with(DateTime.new(2018, 8, 7), { skip_delay:true })
+      expect(subject).to receive(:process_day).with(DateTime.new(2018, 8, 8), { skip_delay:true })
 
-      Timecop.freeze(Date.new(2018,8,8)) do
+      Timecop.freeze(Date.new(2018, 8, 8)) do
         subject.process_past_days 2, { skip_delay: true }
       end
     end
@@ -40,12 +40,12 @@ describe OpenChain::IntegrationClientParser do
   describe "process_day" do
     it "processes files from a specific day" do
       expect(subject).to receive(:integration_folder).and_return "the_folder"
-      expect(OpenChain::S3).to receive(:integration_keys).with(Date.new(2018,8,8), "the_folder").and_yield("the_key").and_yield("the_key_2")
+      expect(OpenChain::S3).to receive(:integration_keys).with(Date.new(2018, 8, 8), "the_folder").and_yield("the_key").and_yield("the_key_2")
       expect(OpenChain::S3).to receive(:integration_bucket_name).and_return("the_bucket").twice
       expect(subject).to receive(:process_from_s3).with("the_bucket", "the_key", {imaging:false })
       expect(subject).to receive(:process_from_s3).with("the_bucket", "the_key_2", {imaging:false })
 
-      subject.process_day Date.new(2018,8,8)
+      subject.process_day Date.new(2018, 8, 8)
     end
   end
 
@@ -54,7 +54,7 @@ describe OpenChain::IntegrationClientParser do
     let(:s3_path) { "2018-09/10/the_system/the_directory/the_file_name.1510174475.txt" }
 
     context "with parser that implements parse_file" do
-      subject { 
+      subject {
         Class.new {
           include OpenChain::IntegrationClientParser
 
@@ -84,14 +84,14 @@ describe OpenChain::IntegrationClientParser do
 
         expect(subject).to receive(:post_process_data).with data
 
-        Timecop.freeze(Date.new(2018,8,8)) do
+        Timecop.freeze(Date.new(2018, 8, 8)) do
           subject.process_from_s3(s3_bucket, s3_path, { base_opt:"abc" })
         end
 
         log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
         expect(log).to_not be_nil
-        expect(log.process_start_date).to eq(Date.new(2018,8,8))
-        expect(log.process_end_date).to eq(Date.new(2018,8,8))
+        expect(log.process_start_date).to eq(Date.new(2018, 8, 8))
+        expect(log.process_end_date).to eq(Date.new(2018, 8, 8))
         expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_WARNING)
         expect(log.parser_name).to eq("the_package_name::the_parser_name")
         expect(log.file_name).to eq("the_file_name.txt")
@@ -115,7 +115,7 @@ describe OpenChain::IntegrationClientParser do
 
       it "reprocesses a file from S3" do
         # Existing inbound file log record indicates that this is a document being reprocessed for the third time.
-        existing_log = InboundFile.create!(s3_bucket:s3_bucket, s3_path:s3_path, requeue_count:2, original_process_start_date:Date.new(2006,6,6))
+        existing_log = InboundFile.create!(s3_bucket:s3_bucket, s3_path:s3_path, requeue_count:2, original_process_start_date:Date.new(2006, 6, 6))
         original_process_start_date = existing_log.original_process_start_date
 
         data = "datafile"
@@ -128,7 +128,7 @@ describe OpenChain::IntegrationClientParser do
           param_log.add_info_message "This is an info message"
         end
 
-        Timecop.freeze(Date.new(2018,8,8)) do
+        Timecop.freeze(Date.new(2018, 8, 8)) do
           subject.process_from_s3(s3_bucket, s3_path, { base_opt:"abc" })
         end
 
@@ -136,7 +136,7 @@ describe OpenChain::IntegrationClientParser do
         expect(logs.length).to eq 1
         log = logs.first
         expect(log.id).not_to eq existing_log.id
-        expect(log.process_start_date).to eq(Date.new(2018,8,8))
+        expect(log.process_start_date).to eq(Date.new(2018, 8, 8))
         expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_SUCCESS)
         expect(log.original_process_start_date).to eq(original_process_start_date)
         expect(log.requeue_count).to eq 3
@@ -166,7 +166,7 @@ describe OpenChain::IntegrationClientParser do
         expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return "datafile"
         expect(subject).to receive(:parse_file).and_raise(UnreportedError.new("Oh the humanity"))
 
-        expect{ subject.process_from_s3(s3_bucket, s3_path) }.not_to raise_error
+        expect { subject.process_from_s3(s3_bucket, s3_path) }.not_to raise_error
 
         log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
         expect(log).to_not be_nil
@@ -181,8 +181,8 @@ describe OpenChain::IntegrationClientParser do
         expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return "datafile"
         expect(subject).to receive(:parse_file).and_raise(LoggedParserRejectionError.new("Oh the humanity"))
 
-        expect{ subject.process_from_s3(s3_bucket, s3_path) }.not_to raise_error
-        
+        expect { subject.process_from_s3(s3_bucket, s3_path) }.not_to raise_error
+
         log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
         expect(log).to_not be_nil
         expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_SUCCESS)
@@ -233,7 +233,7 @@ describe OpenChain::IntegrationClientParser do
 
       it "makes the inbound log available to the parser via an 'inbound_log' method" do
 
-        p = Class.new do 
+        p = Class.new do
           include OpenChain::IntegrationClientParser
 
           def self.parse_file data, log, opts={}
@@ -264,7 +264,7 @@ describe OpenChain::IntegrationClientParser do
         expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return "datafile"
         expect(subject).to receive(:finalize_inbound_file_log).and_raise "Error"
         expect(subject).to receive(:post_process_data).with "datafile"
-        
+
         expect { subject.process_from_s3 s3_bucket, s3_path }.to raise_error "Error"
       end
 
@@ -328,7 +328,7 @@ describe OpenChain::IntegrationClientParser do
     end
 
     context "with parser that implements parse" do
-      subject { 
+      subject {
         Class.new {
           include OpenChain::IntegrationClientParser
 
@@ -354,15 +354,15 @@ describe OpenChain::IntegrationClientParser do
           param_log.add_info_message "This is an info message"
         end
 
-        Timecop.freeze(Date.new(2018,8,8)) do
+        Timecop.freeze(Date.new(2018, 8, 8)) do
           subject.process_from_s3(s3_bucket, s3_path, { base_opt:"abc" })
         end
 
         log = InboundFile.where(s3_bucket:s3_bucket, s3_path:s3_path).first
         expect(log).to_not be_nil
-        expect(log.process_start_date).to eq(Date.new(2018,8,8))
+        expect(log.process_start_date).to eq(Date.new(2018, 8, 8))
         expect(log.process_status).to eq(InboundFile::PROCESS_STATUS_SUCCESS)
-        expect(log.original_process_start_date).to eq(Date.new(2018,8,8))
+        expect(log.original_process_start_date).to eq(Date.new(2018, 8, 8))
         expect(log.requeue_count).to eq 0
 
         expect(log.messages.length).to eq 1
@@ -375,11 +375,11 @@ describe OpenChain::IntegrationClientParser do
       let (:s3_bucket) { "bucket" }
       let (:s3_path) { "path" }
 
-      before :each do 
+      before :each do
         expect(OpenChain::S3).to receive(:get_data).with(s3_bucket, s3_path).and_return data
       end
 
-      subject { 
+      subject {
         Class.new {
           include OpenChain::IntegrationClientParser
 
@@ -433,7 +433,7 @@ describe OpenChain::IntegrationClientParser do
 
   describe "delay_file_chunk_to_s3" do
     let (:parser) {
-      Class.new do 
+      Class.new do
         include OpenChain::IntegrationClientParser
 
         def self.parse_file_chunk data, opts
@@ -446,7 +446,7 @@ describe OpenChain::IntegrationClientParser do
       stub_master_setup
     }
 
-    let (:opts) { 
+    let (:opts) {
       {bucket: "bucket", key: "key"}
     }
 
@@ -463,7 +463,7 @@ describe OpenChain::IntegrationClientParser do
       expect(subject).to receive(:parser_class_name).and_return "parser_class"
       expect(OpenChain::S3).to receive(:upload_data).with("chain-io-integration-temp", "test/parser_class/#{now.to_f}-file.txt", "Contents").and_return upload_result
       expect(subject).to receive(:process_file_chunk_from_s3).with("temp_bucket", "temp_key", opts, delete_from_s3: true, parse_method: :parse_file_chunk)
-      Timecop.freeze(now) { 
+      Timecop.freeze(now) {
         subject.delay_file_chunk_to_s3("/path/to/file.txt", "Contents", opts)
       }
     end
@@ -485,7 +485,7 @@ describe OpenChain::IntegrationClientParser do
 
   describe "process_file_chunk_from_s3" do
 
-    let (:opts) { 
+    let (:opts) {
       {bucket: "bucket", key: "key"}
     }
 
@@ -508,7 +508,7 @@ describe OpenChain::IntegrationClientParser do
       expect(FakeDoFileParser).to receive(:retrieve_file_data).with("bucket", "key", opts).and_return "Downloaded Data"
       expect(OpenChain::S3).to receive(:delete).with "bucket", "key"
 
-      FakeDoFileParser.process_file_chunk_from_s3 "bucket", "key", opts, parse_method: :do_file     
+      FakeDoFileParser.process_file_chunk_from_s3 "bucket", "key", opts, parse_method: :do_file
     end
 
     it "does not delete file if instructed" do

@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloTradecard810Parse
     parse_dom(REXML::Document.new(data), log, opts)
   end
 
-  private 
+  private
 
     def parse_dom dom, log, opts = {}
       log.company = Company.where(system_code:'polo').first
@@ -71,7 +71,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloTradecard810Parse
 
     def process_tradecard_invoice invoice_number, log
       invoice = nil
-      Lock.acquire("CommercialInvoice-#{invoice_number}") do 
+      Lock.acquire("CommercialInvoice-#{invoice_number}") do
         invoice = CommercialInvoice.where(invoice_number: invoice_number, vendor_name: "Tradecard").includes(:commercial_invoice_lines).first_or_create!
       end
 
@@ -87,7 +87,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloTradecard810Parse
     end
 
     def parse_date val
-      val.blank? ? nil : Date.strptime(val, "%y%m%d") 
+      val.blank? ? nil : Date.strptime(val, "%y%m%d")
     rescue
       nil
     end

@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
     return has_entry_load_configured? snapshot.recordable
   end
 
-  # This method primariy exists as an override point for extending classes that might be hardcoded 
+  # This method primariy exists as an override point for extending classes that might be hardcoded
   # to one or two importer accounts
   def self.has_entry_load_configured? shipment
     kewill_customer_number = shipment.importer.try(:kewill_customer_number)
@@ -74,7 +74,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
       return OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator.new
     else
       # This assumes the generator class has already been required...it should always be by virtue
-      # of the snapshot comparator always running in a delayed job queue (which loads every class/file 
+      # of the snapshot comparator always running in a delayed job queue (which loads every class/file
       # in lib)
       return generator_string.constantize.new
     end
@@ -92,5 +92,4 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
     end
     sr
   end
- 
 end; end; end; end;

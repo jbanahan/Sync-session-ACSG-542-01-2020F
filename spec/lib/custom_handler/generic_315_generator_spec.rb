@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         expect(subject.accepts? :save, e).to eq false
       end
 
-      it "doesn't accept entries without customer numbers" do 
+      it "doesn't accept entries without customer numbers" do
         config
         e = Entry.new broker_reference: "cust"
         expect(subject.accepts? :save, e).to eq false
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
         expect(subject.accepts? :save, e).to eq true
       end
 
-      context "with linked importer company" do 
+      context "with linked importer company" do
 
         let (:importer) { Factory(:importer) }
 
@@ -74,13 +74,13 @@ describe OpenChain::CustomHandler::Generic315Generator do
           expect(subject.accepts? :save, e).to eq false
         end
       end
-      
+
     end
-    
+
     it "doesn't accept entries if 'Entry 315' custom feature isn't enabled" do
       e = Entry.new broker_reference: "ref", customer_number: "cust"
       c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
-      c.save! 
+      c.save!
 
       ms = double
       allow(MasterSetup).to receive(:get).and_return ms
@@ -102,9 +102,9 @@ describe OpenChain::CustomHandler::Generic315Generator do
     let! (:entry) {
       Factory(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00", master_bills_of_lading: "A\nB", container_numbers: "E\nF", cargo_control_number: "CCN1\nCCN2")
     }
-    
+
     it "generates and sends xml for 315 update" do
-      expect(Lock).to receive(:acquire).with("315-123").and_yield 
+      expect(Lock).to receive(:acquire).with("315-123").and_yield
       file_contents = nil
       ftp_opts = nil
       expect(subject).to receive(:ftp_file) do |file, opts|
@@ -310,7 +310,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
   describe "create_315_data" do
     let(:entry) {
-      Entry.new(broker_reference: "REF", entry_number: "ENT", transport_mode_code: "10", fcl_lcl: "F", carrier_code: "CAR", 
+      Entry.new(broker_reference: "REF", entry_number: "ENT", transport_mode_code: "10", fcl_lcl: "F", carrier_code: "CAR",
         vessel: "VES", voyage: "VOY", entry_port_code: "1234", lading_port_code: "65433", unlading_port_code: "9876", po_numbers: "ABC\n DEF")
     }
     let(:milestone) { OpenChain::CustomHandler::Generator315Support::MilestoneUpdate.new('code', Time.zone.now.to_date, SyncRecord.new) }
@@ -358,7 +358,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "raises an error if the Canadian Port does not have an associated UN Locode" do
       entry.assign_attributes import_country: canada, ca_entry_port: Port.new(cbsa_port: "1234")
-      expect{subject.send(:create_315_data, entry, {}, milestone)}.to raise_error "Missing UN Locode for Canadian Port Code 1234."
+      expect {subject.send(:create_315_data, entry, {}, milestone)}.to raise_error "Missing UN Locode for Canadian Port Code 1234."
     end
 
     it "doesn't raise error if Canadian Port is unset" do

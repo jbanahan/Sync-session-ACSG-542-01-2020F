@@ -67,7 +67,7 @@ module OpenChain; module CustomHandler; module CustomFileCsvExcelParser
       @reader_options = reader_options
     end
 
-    def foreach 
+    def foreach
       sheet_number = @reader_options.delete :sheet_number
       sheet_number = 0 unless sheet_number
 

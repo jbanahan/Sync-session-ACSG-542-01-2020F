@@ -19,7 +19,7 @@ class UsersController < ApplicationController
       respond_to do |format|
         format.html {
           if current_user.admin?
-              @active_users = User.where(["company_id = ? AND (disabled = false OR disabled IS NULL)" ,params[:company_id]]).order(:username)
+              @active_users = User.where(["company_id = ? AND (disabled = false OR disabled IS NULL)" , params[:company_id]]).order(:username)
               @disabled_users = User.where(["company_id = ? AND disabled = true", params[:company_id]]).order(:username)
               @company = Company.find(params[:company_id])
               render :layout => 'one_col' # index.html.erb
@@ -29,7 +29,7 @@ class UsersController < ApplicationController
         }
         format.json {
           companies = current_user.company.visible_companies_with_users.includes(:users)
-          render :json => companies.to_json(:only=>[:name],:include=>{:users=>{:only=>[:id,:first_name,:last_name],:methods=>:full_name}})
+          render :json => companies.to_json(:only=>[:name], :include=>{:users=>{:only=>[:id, :first_name, :last_name], :methods=>:full_name}})
         }
       end
     end
@@ -64,7 +64,7 @@ class UsersController < ApplicationController
     # GET /users/1/edit
     def edit
       @user = User.find(params[:id])
-      action_secure(@user.can_edit?(current_user),@user,{:lock_check=>false,:module_name=>"user",:verb=>"edit"}) {
+      action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false, :module_name=>"user", :verb=>"edit"}) {
         @company = @user.company
         add_user_groups_to_page @user
       }
@@ -77,9 +77,9 @@ class UsersController < ApplicationController
         # on attribute assignment since they're not accessible
         password = params[:user].delete :password
         password_confirmation = params[:user].delete :password_confirmation
-        
+
         @user = User.new(params[:user])
-        set_admin_params(@user,params)
+        set_admin_params(@user, params)
         set_debug_expiration(@user)
         @user.password_reset = true
         @user.password = password
@@ -93,7 +93,7 @@ class UsersController < ApplicationController
             if valid
               search_setups = params[:assigned_search_setup_ids]
               if search_setups && @user.id
-                search_setups.each do |ss_id| 
+                search_setups.each do |ss_id|
                   ss = SearchSetup.find(ss_id.to_i)
                   ss.simple_give_to! @user
                 end
@@ -167,15 +167,14 @@ class UsersController < ApplicationController
     # PUT /users/1.xml
     def update
       @user = User.find(params[:id])
-      action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false,:verb=>"edit",:module_name=>"user"}) {
+      action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false, :verb=>"edit", :module_name=>"user"}) {
         @company = @user.company
-        set_admin_params(@user,params)
+        set_admin_params(@user, params)
         set_debug_expiration(@user)
         set_password_reset(@user)
 
         valid = false
-        User.transaction do 
-          
+        User.transaction do
           # Deleting password params because they're not set as accessible in the user model
           password = params[:user].delete(:password)
           password_conf = params[:user].delete(:password_confirmation)
@@ -184,11 +183,11 @@ class UsersController < ApplicationController
           update_password = password.blank? ? true : @user.update_user_password(password, password_conf, false)
 
           valid =  update_password && @user.update_attributes(params[:user])
-          
+
           # Ensure that change to group assignments is reflected in time stamp
           @user.touch
           @user.create_snapshot(current_user)
-          
+
           # Rollback is swallowed by the transaction block
           raise ActiveRecord::Rollback, "Bad user create." unless valid
         end
@@ -260,7 +259,7 @@ class UsersController < ApplicationController
       if current_user.admin?
         u = User.find_by(username: params[:username])
         if u
-          Lock.db_lock(current_user) do 
+          Lock.db_lock(current_user) do
             if !u.disabled? && !u.password_locked? && !u.password_expired? && !u.password_reset?
               user = current_user
               user.run_as = u
@@ -280,11 +279,11 @@ class UsersController < ApplicationController
     end
 
     def disable_run_as
-      cu = current_user #load current_user here in case not logged in since we're skipping filters to avoid the portal_redirect
+      cu = current_user # load current_user here in case not logged in since we're skipping filters to avoid the portal_redirect
 
       # run_as_user is defined in application_controller
       if cu && run_as_user
-        Lock.db_lock(run_as_user) do 
+        Lock.db_lock(run_as_user) do
           run_as_user.run_as = nil
           run_as_user.save!
           session = RunAsSession.current_session(run_as_user).first
@@ -298,7 +297,7 @@ class UsersController < ApplicationController
       end
       redirect_to '/'
     end
-    
+
   def hide_message
     if params[:message_name].blank?
       render :json=>{error:'Message Name missing.'}
@@ -330,7 +329,7 @@ class UsersController < ApplicationController
       company = Company.find(params[:company_id])
       results = parse_bulk_csv(params['bulk_user_csv'])
       begin
-        User.transaction do 
+        User.transaction do
           results.each do |res|
             password = res.delete('password')
             res.merge! params[:user]
@@ -365,30 +364,30 @@ class UsersController < ApplicationController
   end
 
   def move_to_new_company
-    admin_secure("Only administrators can move other users to a new company."){
+    admin_secure("Only administrators can move other users to a new company.") {
       destination_company = Company.find(params[:destination_company_id])
       params[:id].each do |user_id|
         user = User.find(user_id)
         user.company = destination_company
         user.save!
-      end if params[:id] #ignore the whole block if no users were selected
+      end if params[:id] # ignore the whole block if no users were selected
 
       redirect_to :back
     }
   end
-  
+
   def find_by_email
     admin_secure "Only admins can use this page" do
       email = params[:email]
       if !email.blank?
-        u = User.find_by_email email 
+        u = User.find_by_email email
         if u.nil?
           add_flash :errors, "User not found with email: #{email}"
         else
-          redirect_to [u.company,u]
+          redirect_to [u.company, u]
         end
       end
-    end 
+    end
   end
 
   def set_homepage
@@ -398,7 +397,7 @@ class UsersController < ApplicationController
         uri = ""
       else
         uri = URI.parse params[:homepage]
-        # We want to strip the scheme and host from the URL since we want it to always be relative to the current server/ http scheme 
+        # We want to strip the scheme and host from the URL since we want it to always be relative to the current server/ http scheme
         # that is in effect on the login homepage redirect
         uri = uri.path + (uri.query ? ("?"+uri.query) : "") + (uri.fragment ? ("#" + uri.fragment): "")
       end
@@ -422,7 +421,7 @@ class UsersController < ApplicationController
     CSV.parse(data) do |row|
       next if row.empty?
       raise "Every row must have 5 elements." unless row.size == 5
-      rval << {'username'=>row[0],'email'=>row[1],'first_name'=>row[2],'last_name'=>row[3],'password'=>row[4]}
+      rval << {'username'=>row[0], 'email'=>row[1], 'first_name'=>row[2], 'last_name'=>row[3], 'password'=>row[4]}
     end
     rval
   end
@@ -436,7 +435,7 @@ class UsersController < ApplicationController
       u.password_reset = params[:password_reset] == 'true' ? true : false
     end
   end
-  def set_admin_params(u,p)
+  def set_admin_params(u, p)
     if current_user.admin?
       u.admin = !p[:is_admin].nil? && p[:is_admin]=="true"
       u.sys_admin = !p[:is_sys_admin].nil? && p[:is_sys_admin]=="true"
@@ -446,7 +445,7 @@ class UsersController < ApplicationController
 
   def toggle_enabled
     @user = User.find(params[:id])
-    action_secure(@user.can_edit?(current_user),@user,{:lock_check=>false,:module_name=>"user",:verb=>"change"}) {
+    action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false, :module_name=>"user", :verb=>"change"}) {
       msg_word = @user.disabled ? "enabled" : "disabled"
       @user.disabled = !@user.disabled
       if @user.save
@@ -455,7 +454,7 @@ class UsersController < ApplicationController
         @user.create_snapshot(current_user, nil, snapshot_context)
       end
       errors_to_flash @user
-      redirect_to company_user_path(@user.company,@user) 
+      redirect_to company_user_path(@user.company, @user)
     }
   end
 
@@ -487,21 +486,21 @@ class UsersController < ApplicationController
     attribs = source_user.attributes
                          .symbolize_keys
                          .extract!(:time_zone, :disabled, :disallow_password, :portal_mode, :tariff_subscribed, :support_agent, :system_user,
-                                   :order_view, :order_edit, :order_delete, :order_comment, :order_attach, 
-                                   :shipment_view, :shipment_edit, :shipment_delete, :shipment_comment, :shipment_attach, 
-                                   :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_comment, :sales_order_attach, 
-                                   :delivery_view, :delivery_edit, :delivery_delete, :delivery_comment, :delivery_attach, 
-                                   :product_view, :product_edit, :product_delete, :product_comment, :product_attach, 
-                                   :classification_edit, 
+                                   :order_view, :order_edit, :order_delete, :order_comment, :order_attach,
+                                   :shipment_view, :shipment_edit, :shipment_delete, :shipment_comment, :shipment_attach,
+                                   :sales_order_view, :sales_order_edit, :sales_order_delete, :sales_order_comment, :sales_order_attach,
+                                   :delivery_view, :delivery_edit, :delivery_delete, :delivery_comment, :delivery_attach,
+                                   :product_view, :product_edit, :product_delete, :product_comment, :product_attach,
+                                   :classification_edit,
                                    :variant_edit,
-                                   :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach, 
-                                   :entry_attach, :entry_comment, :entry_edit, :entry_view, 
-                                   :broker_invoice_edit, :broker_invoice_view,                                    
-                                   :commercial_invoice_edit, :commercial_invoice_view, 
+                                   :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
+                                   :entry_attach, :entry_comment, :entry_edit, :entry_view,
+                                   :broker_invoice_edit, :broker_invoice_view,
+                                   :commercial_invoice_edit, :commercial_invoice_view,
                                    :statement_view,
-                                   :drawback_edit, :drawback_view, 
-                                   :survey_edit, :survey_view, 
-                                   :project_edit, :project_view, 
+                                   :drawback_edit, :drawback_view,
+                                   :survey_edit, :survey_view,
+                                   :project_edit, :project_view,
                                    :vendor_attach, :vendor_comment, :vendor_edit, :vendor_view,
                                    :vfi_invoice_view)
     destination_user.update(attribs)

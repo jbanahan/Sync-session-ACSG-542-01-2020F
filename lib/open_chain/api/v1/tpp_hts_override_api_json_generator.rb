@@ -30,5 +30,4 @@ module OpenChain; module Api; module V1; class TppHtsOverrideApiJsonGenerator
       can_edit: obj.can_edit?(cu)
     }
   end
-  
 end; end; end; end;

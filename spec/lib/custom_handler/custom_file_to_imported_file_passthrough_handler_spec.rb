@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler do
           ss = SearchSetup.create! name: "Search", module_type: "Product", user_id: user.id
           ss.search_columns.create! model_field_uid: :prod_name
 
-          expect{ subject.process_file(custom_file, user) }.to raise_error "Expected to find the field 'Unique Identifier' in column 1, but found field 'Name' instead."
+          expect { subject.process_file(custom_file, user) }.to raise_error "Expected to find the field 'Unique Identifier' in column 1, but found field 'Name' instead."
         end
       end
 

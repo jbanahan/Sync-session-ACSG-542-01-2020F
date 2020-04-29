@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
     raise "This method must be overridden."
   end
 
-  def process_attachment(shipment, attachment, user) 
+  def process_attachment(shipment, attachment, user)
     process_rows(shipment, foreach(attachment), user)
   end
 
@@ -91,7 +91,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
   def review_orders user, shipment
     ord_nums = order_cache.values.map(&:order_number)
     flag_unaccepted ord_nums
-    if @enable_warnings      
+    if @enable_warnings
       warnings ord_nums, shipment
     else
       shipment.warning_overridden_at = Time.zone.now
@@ -110,7 +110,7 @@ module OpenChain; module CustomHandler; module GenericShipmentWorksheetParserSup
     end
   end
 
-  def shipment_lines(rows) 
+  def shipment_lines(rows)
     cursor = file_layout[:header_row]
     while (cursor+=1) < rows.size
       row = rows[cursor]

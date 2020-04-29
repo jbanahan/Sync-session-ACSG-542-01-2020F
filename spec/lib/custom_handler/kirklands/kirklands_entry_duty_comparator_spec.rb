@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsEntryDutyComparator do
       os = old_snapshot
       entry.update! last_7501_print: (Time.zone.now + 1.day)
       expect_any_instance_of(OpenChain::CustomHandler::Kirklands::KirklandsEntryDutyFileGenerator).to receive(:generate_and_send).with(new_snapshot)
-      
+
       subject.generate_and_send entry, os, new_snapshot
     end
 

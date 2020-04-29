@@ -1,8 +1,8 @@
 class EntitySnapshotsController < ApplicationController
   def show
     es = EntitySnapshot.find params[:id]
-    action_secure(es.recordable.can_view?(current_user),es.recordable,{:verb=>"view",:module_name=>"history",:lock_check=>false}) {
-      @base_object = es.recordable 
+    action_secure(es.recordable.can_view?(current_user), es.recordable, {:verb=>"view", :module_name=>"history", :lock_check=>false}) {
+      @base_object = es.recordable
       @snapshots = [es]
       @content_only = true
       render :partial=>'shared/history_widget', :locals=>{:diff=>es.diff_vs_previous}
@@ -10,13 +10,13 @@ class EntitySnapshotsController < ApplicationController
   end
 
   def download
-    sys_admin_secure do 
+    sys_admin_secure do
       es = EntitySnapshot.find params[:id]
       redirect_to es.snapshot_download_link
     end
   end
 
-  def download_integration_file 
+  def download_integration_file
     sys_admin_secure do
       es = EntitySnapshot.find params[:id]
       raise ActiveRecord::RecordNotFound unless es.s3_integration_file_context?

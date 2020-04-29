@@ -8,7 +8,7 @@ module OpenChain; class DataCrossReferenceUploader
     @custom_file = custom_file
   end
 
-  def process user, parameters #requires cross_reference_type
+  def process user, parameters # requires cross_reference_type
     recoverable_errors = []
     begin
       validate_file @custom_file
@@ -40,9 +40,9 @@ module OpenChain; class DataCrossReferenceUploader
   def self.check_extension file_name
     ext = File.extname file_name
     valid = [".CSV", ".XLS", ".XLSX"].include? ext.upcase
-    !valid ? "Only XLS, XLSX, and CSV files are accepted." : nil 
+    !valid ? "Only XLS, XLSX, and CSV files are accepted." : nil
   end
-  
+
   def process_rows custom_file, xref_hsh, xref_type, errors, co=nil
     foreach(custom_file, skip_blank_lines:true) do |row, row_number|
       next if row_number == 0
@@ -52,12 +52,12 @@ module OpenChain; class DataCrossReferenceUploader
 
   def process_row row, row_number, company_id, xref_hsh, xref_type, errors
     success = DataCrossReference.preprocess_and_add_xref! xref_type, row[0], row[1], company_id
-    errors << row_number unless success 
+    errors << row_number unless success
   end
 
   def recoverable_errors_to_user(user, errors)
     if errors.presence
-      user.messages.create!(subject: "File Processing Complete With Errors", 
+      user.messages.create!(subject: "File Processing Complete With Errors",
                             body: "Cross-reference uploader generated errors on the following row(s): #{errors.join(', ')}. Missing or invalid field.")
     end
   end

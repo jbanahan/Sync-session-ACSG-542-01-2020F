@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsSystemInit do
   subject { described_class }
 
   describe 'init' do
-    let! (:ms) { 
+    let! (:ms) {
       ms = stub_master_setup
       allow(ms).to receive(:custom_feature?).with("Kirklands").and_return false
       ms
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsSystemInit do
     end
 
     context 'with custom feature' do
-      let! (:ms) { 
+      let! (:ms) {
         ms = stub_master_setup
         allow(ms).to receive(:custom_feature?).with("Kirklands").and_return true
         ms

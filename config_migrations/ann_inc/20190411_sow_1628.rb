@@ -51,7 +51,7 @@ module ConfigMigrations; module AnnInc; class Sow1628
     BusinessValidationTemplate.where(system_code: "FTZ").destroy_all
     bvt = BusinessValidationTemplate.new name: "FTZ", system_code: "FTZ", description: "Validate FTZ-specific fields", module_type: "Product", disabled: true
     bvt.search_criterions << SearchCriterion.new(model_field_uid: defs[:approved_date].model_field_uid, operator: "notnull", value: "")
-    
+
     bvt.business_validation_rules << RULE_STEM::AnnValidationRuleProductClassTypeSet.new(fail_state: "Fail", name: "Classification Type set", description: "Fail if Manual Entry Processing is true and Classification Type is blank.")
     bvt.business_validation_rules << RULE_STEM::AnnValidationRuleProductTariffPercentOfValueSet.new(fail_state: "Fail", name: "Percent of Value set", description: "Fail if Classification Type is Multi and any tariff is missing a Percent of Value.")
     bvt.business_validation_rules << RULE_STEM::AnnValidationRuleProductTariffPercentsAddTo100.new(fail_state: "Fail", name: "Percent of Value adds to 100", description: "Fail if Classification Type is Multi and tariff Percent of Value fields don't add to 100.")
@@ -66,19 +66,19 @@ module ConfigMigrations; module AnnInc; class Sow1628
                              .joins("LEFT OUTER JOIN custom_values cv ON cv.customizable_id = classifications.id AND cv.customizable_type = 'Classification' AND cv.custom_definition_id = #{cdef.id}")
                              .where("cv.id IS NULL")
                              .uniq
- 
+
     prods_to_update.find_in_batches(batch_size:1000) do |batched_prods|
       batched_prods.each do |prod|
         # avoids read-only error associated with #joins
         prod = Product.find prod.id
-        classis_to_update = prod.classifications.reject{ |cl| cl.custom_value(cdef).present? }
+        classis_to_update = prod.classifications.reject { |cl| cl.custom_value(cdef).present? }
         Product.transaction do
           classis_to_update.each { |cl| cl.find_and_set_custom_value cdef, "Not Applicable" }
           prod.save!
           prod.create_snapshot(User.integration, nil, "Ann SOW 1628 Config migration") if classis_to_update.present?
         end
       end
-    end                        
+    end
   end
 
   def drop_custom_fields
@@ -103,7 +103,7 @@ module ConfigMigrations; module AnnInc; class Sow1628
 
   def matching_cvals entity, cdefs
     cdef_ids = new_defs.values.map(&:id)
-    entity.custom_values.select{ |cval| cdef_ids.include? cval.custom_definition_id }
+    entity.custom_values.select { |cval| cdef_ids.include? cval.custom_definition_id }
   end
 
   def drop_business_rules

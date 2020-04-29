@@ -4,8 +4,8 @@ module OpenChain; module ModelFieldGenerator; module CountryGenerator
     association_title = association_title.blank? ? "" : "#{association_title} "
 
     r = []
-    r << [rank_start,"#{uid_prefix}_cntry_name".to_sym, :name,"#{association_title}Country Name", {
-      :import_lambda => lambda {|detail,data|
+    r << [rank_start, "#{uid_prefix}_cntry_name".to_sym, :name, "#{association_title}Country Name", {
+      :import_lambda => lambda {|detail, data|
         c = Country.where(:name => data).first
         detail.public_send("#{association_name}=".to_sym, c)
         unless c.nil?
@@ -19,8 +19,8 @@ module OpenChain; module ModelFieldGenerator; module CountryGenerator
       :data_type=>:string,
       :history_ignore=>true
     }]
-    r << [rank_start+1,"#{uid_prefix}_cntry_iso".to_sym, :iso_code, "#{association_title}Country ISO Code",{
-      :import_lambda => lambda {|detail,data|
+    r << [rank_start+1, "#{uid_prefix}_cntry_iso".to_sym, :iso_code, "#{association_title}Country ISO Code", {
+      :import_lambda => lambda {|detail, data|
         c = Country.where(:iso_code => data).first
         detail.public_send("#{association_name}=".to_sym, c)
         unless c.nil?
@@ -33,7 +33,7 @@ module OpenChain; module ModelFieldGenerator; module CountryGenerator
       :qualified_field_name=>"(SELECT iso_code from countries where countries.id = #{table_name}.#{foreign_key})",
       :data_type=>:string
     }]
-    r << [rank_start+2,"#{uid_prefix}_cntry_id".to_sym, :country_id, "#{association_title}Country",{
+    r << [rank_start+2, "#{uid_prefix}_cntry_id".to_sym, :country_id, "#{association_title}Country", {
       import_lambda:  lambda {|detail, data|
         c = Country.where(id: data).first
         detail.public_send("#{association_name}=".to_sym, c)

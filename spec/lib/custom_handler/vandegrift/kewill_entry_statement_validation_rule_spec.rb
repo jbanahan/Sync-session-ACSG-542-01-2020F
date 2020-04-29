@@ -1,4 +1,4 @@
-describe OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule do 
+describe OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule do
 
   let! (:statement) {
     s = DailyStatement.create! statement_number: "12345"

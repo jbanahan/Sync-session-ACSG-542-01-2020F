@@ -21,9 +21,9 @@ class SummaryStatement < ActiveRecord::Base
 
   def belongs_to_customer? invoice_id
     broker_invoice = BrokerInvoice.where(id: invoice_id).first
-    return false unless broker_invoice 
+    return false unless broker_invoice
     linked_co_qry = "SELECT companies.id
-                     FROM companies 
+                     FROM companies
                       INNER JOIN entries ON companies.id = entries.importer_id
                       INNER JOIN broker_invoices ON entries.id = broker_invoices.entry_id
                       INNER JOIN linked_companies on parent_id = #{self.customer_id} AND entries.importer_id = child_id"
@@ -39,7 +39,7 @@ class SummaryStatement < ActiveRecord::Base
   end
 
   def total
-    broker_invoices.inject(0){ |acc, nxt| acc += nxt.invoice_total }
+    broker_invoices.inject(0) { |acc, nxt| acc += nxt.invoice_total }
   end
 
   def add! invoice_id

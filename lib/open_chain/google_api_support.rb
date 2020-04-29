@@ -26,7 +26,7 @@ module OpenChain; module GoogleApiSupport
       raise "You do not appear to have set up google authentication.  Please add authentication information to secrets.yml under 'google_authentication' key." if data.blank?
       store = {}
       data.each_pair do |email_account, data|
-        # Symbolize the yaml keys - that's the way google likes them (one liner curtesy of https://gist.github.com/Integralist/9503099 ) 
+        # Symbolize the yaml keys - that's the way google likes them (one liner curtesy of https://gist.github.com/Integralist/9503099 )
         creds = data.reduce({}) { |memo, (k, v)| memo.merge({ k.to_sym => v}) }
         SCOPES.each do |default_scope|
           scope_creds = creds.dup
@@ -65,7 +65,7 @@ module OpenChain; module GoogleApiSupport
 
   def activity_service google_account_name: nil
     credentials = account_credentials(google_account: google_account_name, scope: Google::Apis::AppsactivityV1::AUTH_ACTIVITY)
-    
+
     activity = Google::Apis::AppsactivityV1::AppsactivityService.new
     activity.authorization = credentials
     activity
@@ -90,7 +90,7 @@ module OpenChain; module GoogleApiSupport
 
       token_store = Google::Auth::Stores::FileTokenStore.new(file: token_file)
       authorizer = Google::Auth::UserAuthorizer.new(client_id, OpenChain::GoogleApiSupport::SCOPES, token_store)
-      
+
       url = authorizer.get_authorization_url(base_url:'urn:ietf:wg:oauth:2.0:oob')
       puts "Open the following URL in a browser, log in as #{account} and authorize the VFI Track access to the given scopes.\nPaste the authorization code here when authorization is granted\n\n\n#{url}\n\n> "
       code = gets
@@ -111,6 +111,5 @@ module OpenChain; module GoogleApiSupport
       nil
     end
   end
-  
 
 end; end

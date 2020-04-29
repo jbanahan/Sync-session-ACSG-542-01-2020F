@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
     beg = find_segment(edi_segments, "BEG")
     refs = find_segments(edi_segments, "REF")
     ns = find_segments(edi_segments, "N1")
-    
+
     order.order_date = parse_dtm_date_value(value(beg, 5)).try(:to_date)
     order.mode = find_value_by_qualifier refs, "REF01", "LSD"
     order.terms_of_sale = find_element_value edi_segments, "ITD01"
@@ -86,7 +86,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
 
     # N1 factory and ship_to segments are line level, so re-purposing this method
     extract_n1_loops(line_segments).each { |n1| process_order_header_n1(order, n1) }
-      
+
     hts = find_value_by_qualifier refs, "REF01", "HTS"
     if hts != "9999.99.9999"
       line.line_number = value(po1_segment, 1)
@@ -116,20 +116,20 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
     elsif party_data[:entity_type] == "ST" && order.ship_to.nil?
       order.ship_to = find_or_create_address_from_n1_data(party_data, importer)
     elsif party_data[:entity_type] == "VN"
-      #VN = Vendor 
+      # VN = Vendor
       order.vendor = find_or_create_company_from_n1_data(party_data, system_code_prefix: "Vendor", company_type_hash: {vendor: true})
     end
   end
 
   def cdef_uids
-    [:ord_type, :ord_country_of_origin, :ord_assigned_agent, :ord_line_color, :ord_line_color_description, 
+    [:ord_type, :ord_country_of_origin, :ord_assigned_agent, :ord_line_color, :ord_line_color_description,
      :ord_line_season, :ord_line_size, :ord_line_size_description, :prod_part_number]
   end
 
   ##########
 
   def explode_line line, ref_segments, po1_segment
-    hsts = ref_segments.select{ |r| r.element(1)&.value == "HST" && r.element(2)&.value != "9999.99.9999" }
+    hsts = ref_segments.select { |r| r.element(1)&.value == "HST" && r.element(2)&.value != "9999.99.9999" }
     raise EdiStructuralError, "Order # #{line.order.customer_order_number}, UPC # #{line.sku}: Expecting REF with HST qualifier but none found" if hsts.count.zero?
     split_lines = copy_lines line, (hsts.count - 1)
     hsts.each_with_index do |ref, i|
@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
       ln.price_per_unit = BigDecimal ref.element(-1).sub_element(-1)&.value
       ln.line_number = value(po1_segment, 1).to_i * 100 + (i + 1)
     end
-    
+
     nil
   end
 
@@ -149,7 +149,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt850Parser < OpenChain
       line.custom_values.each { |cv| ln.custom_values.build cv.attributes }
       ln
     end
-    
+
     split_lines.unshift line
   end
 

@@ -32,9 +32,9 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
   let (:inbound_file) { InboundFile.new s3_path: "/path/to/file.xml"}
   subject { FakeGtnAsnXmlParser.new }
 
-  describe "process_asn_update" do  
+  describe "process_asn_update" do
 
-    before :each do 
+    before :each do
       india
       ca
       importer
@@ -195,7 +195,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
     end
 
     context "it creates shell orders if instructed" do
-      
+
       let(:cdefs) { subject.cdefs }
 
       context "with prefixed system codes" do
@@ -263,7 +263,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
         end
 
       end
-      
+
       context "without system identifiers" do
         subject { FakeGtnAsnXmlParser.new(create_missing_purchase_orders: true, prefix_identifiers_with_system_codes: false) }
 
@@ -275,12 +275,12 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
 
           order = Order.all.first
           product = Product.all.first
-          
+
           expect(order.order_number).to eq "RTTC216384"
           expect(order.customer_order_number).to be_nil
           expect(product.unique_identifier).to eq "7696164"
           expect(product.custom_value(cdefs[:prod_part_number])).to be_nil
-        end 
+        end
       end
     end
   end
@@ -290,7 +290,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
 
     it "cancels the shipment" do
       shipment
-      
+
       expect_any_instance_of(Shipment).to receive(:cancel_shipment!) do |instance, user, opts|
         expect(instance).to eq shipment
         expect(user).to eq user
@@ -327,7 +327,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
       "<LineItems><InvoiceNumber>#{invoice}</InvoiceNumber><PONumber>#{po}</PONumber><LineItemNumber>#{line}</LineItemNumber></LineItems>"
     end
 
-    it "sorts lines based on Invoice #, PO Number, Line Number" do 
+    it "sorts lines based on Invoice #, PO Number, Line Number" do
       container = create_container([
         create_line("INV-C", "PO-B", "1"),
         create_line("INV-A", "PO-Z", "1"),
@@ -397,4 +397,4 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
     end
   end
 
-end 
+end

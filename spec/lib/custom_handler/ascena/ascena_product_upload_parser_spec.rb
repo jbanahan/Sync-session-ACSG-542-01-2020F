@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
-  let (:custom_file) { 
+  let (:custom_file) {
     f = instance_double(CustomFile)
     allow(f).to receive(:attached_file_name).and_return "file.xls"
     f
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
   end
 
   describe "process_file" do
-    let (:file_row) do 
+    let (:file_row) do
       row = ["Brand", "Style", "Garment Type", "ParentID", 300, nil, "Description", nil, "CO", "1234.56.7890"]
       row[33] = "FDA Product Code"
       row[38] = "Customs Description"
@@ -128,12 +128,12 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       file_row[0] = "MAU"
 
       expect(subject).to receive(:foreach).with(custom_file, skip_headers: true).exactly(2).times.and_yield file_row
-      expect{ subject.process_file custom_file, user }.to raise_error "Unable to find Maurices company account."
+      expect { subject.process_file custom_file, user }.to raise_error "Unable to find Maurices company account."
     end
 
     it "doesn't save or snapshot products that haven't changed any information" do
-      # The easiest way to do this is just process the file twice...once using a time that's 
-      # in the past, and then the current time and then checking that the product's updated_at 
+      # The easiest way to do this is just process the file twice...once using a time that's
+      # in the past, and then the current time and then checking that the product's updated_at
       # value isn't changed from the previous time.
       allow(subject).to receive(:foreach).with(custom_file, skip_headers: true).and_yield file_row
 
@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       expect(prod.try(:updated_at).to_i).to eq yesterday.to_i
 
       subject.process_file custom_file, user
-      
+
       prod.reload
       expect(prod.try(:updated_at).to_i).to eq yesterday.to_i
 
@@ -240,7 +240,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
 
       subject.process_file custom_file, user
 
-      # The big difference here is that a single product should get made, but it shouldn't have a classification and it should 
+      # The big difference here is that a single product should get made, but it shouldn't have a classification and it should
       # show garment types and their HTS in the Classification Notes field.
 
       prod = Product.where(unique_identifier: "ASCENA-Style").first
@@ -286,7 +286,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
       prod.update_custom_value!(cdefs[:prod_fda_product_code], "foo")
       prod.update_custom_value!(cdefs[:prod_fda_product], true)
       subject.assign_fda prod, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], "", changed
-      
+
       expect_custom_value(prod, cdefs[:prod_fda_product_code], nil)
       expect_custom_value(prod, cdefs[:prod_fda_product], nil)
       expect(changed.value).to eq true

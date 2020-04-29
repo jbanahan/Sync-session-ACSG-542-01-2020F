@@ -23,7 +23,7 @@ module OpenChain; module Report; class AscenaCumulativeEntryReport
     fm_num, fy = fiscal_month.month_number, fiscal_month.year
     start_date = fiscal_month.start_date.strftime("%Y-%m-%d")
     end_date = fiscal_month.end_date.strftime("%Y-%m-%d")
-    
+
     wb = XlsMaker.new_workbook
     add_main_sheet wb, fm_num, fy
     add_isf_sheet wb, start_date, end_date
@@ -58,23 +58,23 @@ module OpenChain; module Report; class AscenaCumulativeEntryReport
 
   def main_query fiscal_month, fiscal_year
     <<-SQL
-      SELECT COUNT(entry_number) AS 'Total Entries', 
-             SUM(IF(transport_mode_code IN (40, 41),1,0)) AS 'Air Entries',  
-             SUM(IF(transport_mode_code IN (10, 11),1,0)) AS 'Ocean Entries', 
-             SUM((SELECT COUNT(*) 
-                  FROM commercial_invoices 
-                    INNER JOIN commercial_invoice_lines ON commercial_invoices.id = commercial_invoice_lines.commercial_invoice_id 
+      SELECT COUNT(entry_number) AS 'Total Entries',
+             SUM(IF(transport_mode_code IN (40, 41),1,0)) AS 'Air Entries',
+             SUM(IF(transport_mode_code IN (10, 11),1,0)) AS 'Ocean Entries',
+             SUM((SELECT COUNT(*)
+                  FROM commercial_invoices
+                    INNER JOIN commercial_invoice_lines ON commercial_invoices.id = commercial_invoice_lines.commercial_invoice_id
                   WHERE commercial_invoices.entry_id = entries.id)) AS 'Invoice Line Count',
-             SUM((SELECT COUNT(*) 
-                  FROM commercial_invoices 
+             SUM((SELECT COUNT(*)
+                  FROM commercial_invoices
                   WHERE commercial_invoices.entry_id = entries.id)) AS 'Invoice Count',
              SUM(IF(transport_mode_code IN (40,41),gross_weight,0)) AS 'Air Weight',
              SUM(IF(transport_mode_code IN (10,11),gross_weight,0)) AS 'Ocean Weight',
              SUM(entries.mpf) AS 'MPF',
              SUM(entries.entered_value) AS 'Entered Value',
              SUM(entries.total_duty) AS 'Total Duty'
-      FROM entries 
-      WHERE import_country_id = #{us.id} AND customer_number = '#{CUSTOMER_NUMBER}' 
+      FROM entries
+      WHERE import_country_id = #{us.id} AND customer_number = '#{CUSTOMER_NUMBER}'
             AND fiscal_month = #{fiscal_month} AND fiscal_year = #{fiscal_year}
     SQL
   end

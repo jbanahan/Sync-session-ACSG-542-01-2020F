@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     if mode.to_s.upcase != "AIR" && shipment.containers.length > 0
       preload_shipment(shipment, lines_through_containers: true)
       # This grouping stuff is because user's can make multiple container records with the same container number.
-      # If we don't handle this then because we use the container number as the tab name, the excel file builder 
+      # If we don't handle this then because we use the container number as the tab name, the excel file builder
       # blows up due to duplicate sheets named that.
       container_groups(shipment.containers).each_pair do |container_number, containers|
         sheet = new_sheet(builder, container_number)
@@ -116,15 +116,15 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
   end
 
   def roll_up shipment, user, lines
-    lines_by_order = Hash.new{|k,v| k[v] = [] }
+    lines_by_order = Hash.new {|k, v| k[v] = [] }
     lines.each { |line| add_line_to_hsh(shipment, user, line, lines_by_order) }
     flatten lines_by_order
   end
-  
+
   def flatten lines_by_order
     out = []
     lines_by_order.each_value do |lines|
-      ord = Hash.new{|k,v| k[v] = [] }
+      ord = Hash.new {|k, v| k[v] = [] }
       lines.each do |l|
         ord[:container_num] << l[0]
         ord[:cust_ord_num] << l[1]
@@ -143,9 +143,9 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
         ord[:fish_wildlife] << l[14]
         ord[:warehouse] << l[15]
       end
-      out << [format_str(ord[:container_num]), format_str(ord[:cust_ord_num]), format_str(ord[:uid]), format_str(ord[:manufacturer_addr]), 
-                         ord[:carton_qty].compact.sum, ord[:shipped_qty].compact.sum, ord[:cbms].compact.sum, ord[:window_end].max, 
-                         format_str(ord[:freight_terms]), format_str(ord[:shipment_type]), ord[:first_exp_del].min, ord[:booking_rec].max, 
+      out << [format_str(ord[:container_num]), format_str(ord[:cust_ord_num]), format_str(ord[:uid]), format_str(ord[:manufacturer_addr]),
+                         ord[:carton_qty].compact.sum, ord[:shipped_qty].compact.sum, ord[:cbms].compact.sum, ord[:window_end].max,
+                         format_str(ord[:freight_terms]), format_str(ord[:shipment_type]), ord[:first_exp_del].min, ord[:booking_rec].max,
                          ord[:cargo_on_hand].max, ord[:docs_rec].max, format_bool(ord[:fish_wildlife]), format_str(ord[:warehouse])]
     end
     out
@@ -325,7 +325,7 @@ module OpenChain; module CustomHandler; module JJill; class JJillShipmentDownloa
     field.respond_to?(:model_field) ? field.model_field : ModelField.find_by_uid(field)
   end
 
-  def cdefs 
+  def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:prod_part_number]
   end
 

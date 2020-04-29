@@ -14,7 +14,7 @@ include Helpers
 
 RSpec.configure do |config|
   config.raise_errors_for_deprecations!
-  #allows us to create anonymous controllers in tests for other base controller classes
+  # allows us to create anonymous controllers in tests for other base controller classes
   config.infer_base_class_for_anonymous_controllers = true
 
   config.before(:all) do
@@ -27,11 +27,11 @@ RSpec.configure do |config|
     # load "#{Rails.root}/config/routes.rb"
     ModelField.reload
   end
-  
+
   config.after(:all) do
     DatabaseCleaner.clean
   end
-  
+
   config.before(:each, :type => :controller) do
     request.env["HTTP_REFERER"] = "/"
   end
@@ -65,7 +65,7 @@ RSpec.configure do |config|
       stub_event_publisher
     end
 
-    #clear all registries
+    # clear all registries
     OpenChain::EntityCompare::ComparatorRegistry.clear
     OpenChain::Registries::OrderBookingRegistry.clear
     OpenChain::Registries::PasswordValidationRegistry.clear

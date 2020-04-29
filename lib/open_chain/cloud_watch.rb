@@ -2,12 +2,12 @@ require 'aws-sdk-cloudwatch'
 require 'open_chain/aws_config_support'
 
 module OpenChain; class CloudWatch
-  extend OpenChain::AwsConfigSupport 
+  extend OpenChain::AwsConfigSupport
 
   @@default_dimensions = {}
   cattr_reader :default_dimensions
-  
-  # Don't use this unless you know what you're doing and are intending on 
+
+  # Don't use this unless you know what you're doing and are intending on
   # adding new global dimensions to all metrics
   def self.add_default_dimension name, value
     default_dimensions[name] = value
@@ -25,7 +25,7 @@ module OpenChain; class CloudWatch
   end
 
   class << self
-    private 
+    private
 
       # This method marshals the data together and sends it to Cloudwatch.
       # Metric Name - name of the metric
@@ -39,7 +39,7 @@ module OpenChain; class CloudWatch
           namespace: namespace,
           metric_data: [metric_hash(metric_name, value, unit, dimensions, timestamp, include_default_dimensions)]
         }
-        
+
         cloudwatch_client.put_metric_data request
         nil
       end
@@ -66,8 +66,8 @@ module OpenChain; class CloudWatch
       def append_default_dimensions dimensions
         if default_dimensions.size > 0
           dimensions = default_dimensions.dup.merge dimensions
-        end          
-        
+        end
+
         dimensions.map {|k, v| {name: k, value: v} }
       end
 

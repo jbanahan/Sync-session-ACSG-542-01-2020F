@@ -10,7 +10,7 @@ describe Api::V1::IntacctDataController do
   end
 
   describe "receive_alliance_invoice_details" do
-    
+
     it "forwards results to intacct invoice details parser" do
       post "receive_alliance_invoice_details", results: [{:a => "b"}]
       expect(response.body).to eq ({"OK" => ""}.to_json)

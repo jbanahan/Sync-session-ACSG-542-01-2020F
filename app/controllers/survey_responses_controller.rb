@@ -22,10 +22,10 @@ class SurveyResponsesController < ApplicationController
         @respond_mode = respond_mode?(sr, current_user)
         @rate_mode = rate_mode?(sr, current_user)
 
-        if old_ie_version? 
+        if old_ie_version?
           add_flash :errors, "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers.", now: true
         end
-        
+
         @no_action_bar = true
       end
 
@@ -34,7 +34,7 @@ class SurveyResponsesController < ApplicationController
       end
     end
   end
-  
+
   def update
     sr = SurveyResponse.find params[:id]
     if !sr.can_view?(current_user) && !sr.can_edit?(current_user)
@@ -50,21 +50,20 @@ class SurveyResponsesController < ApplicationController
         end
       else
         sr.update_attributes survey_response_params(sr)
-        sr.survey_response_logs.create!(:message=>"Response saved.",:user=>current_user)
+        sr.survey_response_logs.create!(:message=>"Response saved.", :user=>current_user)
         sr.log_update current_user
         add_flash :notices, "Response saved successfully."
       end
     end
-    
+
     respond_to do |format|
       format.html {redirect_to sr}
       format.json {render json: {ok:'ok'}}
     end
-    
   end
 
   def index
-    if old_ie_version? 
+    if old_ie_version?
       add_flash :errors, "You are using an unsupported version of Internet Explorer.  Upgrade to at least version 9 or consider using Google Chrome before filling in any survey answers.", now: true
     end
     @survey_responses = survey_responses_for_index(current_user)
@@ -93,11 +92,11 @@ class SurveyResponsesController < ApplicationController
       error_redirect "You do not have permission to work with this survey."
     end
   end
-  
-  #send user invite
+
+  # send user invite
   def invite
     sr = SurveyResponse.find params[:id]
-    if !sr.can_edit?(current_user) 
+    if !sr.can_edit?(current_user)
       error_redirect "You do not have permission to send invites for this survey."
       return
     end
@@ -118,13 +117,13 @@ class SurveyResponsesController < ApplicationController
     unless sr.can_edit?(current_user)
       error_redirect "You do not have permission to work with this survey."
       return
-    end    
+    end
     email_to = params[:email_to]
     if email_to.blank?
-      render json: {error: "Email address is required."}  
+      render json: {error: "Email address is required."}
     else
       email_list = email_to.split(' ')
-      unless email_list.map{ |e| EmailValidator.valid? e }.all?
+      unless email_list.map { |e| EmailValidator.valid? e }.all?
         render json: {error: "Invalid email. Be sure to separate multiple addresses with spaces."}
       else
         OpenMailer.send_survey_reminder(sr, email_list, params[:email_subject], params[:email_body]).deliver_later
@@ -133,7 +132,7 @@ class SurveyResponsesController < ApplicationController
     end
   end
 
-  private 
+  private
 
     def survey_response_params sr
       if can_rate?(sr, current_user)

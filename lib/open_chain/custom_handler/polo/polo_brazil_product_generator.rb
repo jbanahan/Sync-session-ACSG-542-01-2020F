@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
 
   # Generate the file with data that needs to be sent back to MSL+
   def generate_outbound_sync_file products
-    file = Tempfile.new(['msl_outbound','.csv'])
+    file = Tempfile.new(['msl_outbound', '.csv'])
     headers = ["Style", "Country", "MP1 Flag", "HTS 1", "HTS 2", "HTS 3", "Length", "Width", "Height"]
     (1..15).each do |x|
       headers << "Fabric Type - #{x}"
@@ -44,7 +44,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
     init_outbound_custom_definitions
     products.each do |p|
       line_count = 0
-      classifications = p.classifications.includes(:country, :tariff_records).where("classifications.country_id IN (?)",send_countries)
+      classifications = p.classifications.includes(:country, :tariff_records).where("classifications.country_id IN (?)", send_countries)
       classifications.each do |cl|
         iso = cl.country.iso_code
         cl.tariff_records.order("line_number ASC").each do |tr|
@@ -70,19 +70,19 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
   end
 
   # Send the file created by `generate_outbound_sync_file`
-  def send_and_delete_sync_file local_file, send_time=Time.now #only override send_time for test case
+  def send_and_delete_sync_file local_file, send_time=Time.now # only override send_time for test case
     send_file local_file, "ChainIO_HTSExport_#{send_time.strftime('%Y%m%d%H%M%S')}.csv"
     File.delete local_file
   end
 
   def send_file local_file, destination_file_name
-    FtpSender.send_file("connect.vfitrack.net",'polo','pZZ117',local_file,{:folder=>(@env==:qa ? '/_test_to_RL_Brazil' : '/_to_RL_Brazil'), :protocol=>"sftp", :remote_file_name=>destination_file_name})
+    FtpSender.send_file("connect.vfitrack.net", 'polo', 'pZZ117', local_file, {:folder=>(@env==:qa ? '/_test_to_RL_Brazil' : '/_to_RL_Brazil'), :protocol=>"sftp", :remote_file_name=>destination_file_name})
   end
 
   private
 
     def send_classification_countries
-      @send_countries ||= Country.where("iso_code IN (?)",['IT']).pluck :id
+      @send_countries ||= Country.where("iso_code IN (?)", ['IT']).pluck :id
     end
 
     def hts_value hts, country_iso
@@ -92,7 +92,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
     def mp1_value tariff_record, country_iso
       return "" unless tariff_record && country_iso == 'TW'
       found = OfficialTariff.
-        where("hts_code IN (?)",[tariff_record.hts_1,tariff_record.hts_2,tariff_record.hts_3].compact).
+        where("hts_code IN (?)", [tariff_record.hts_1, tariff_record.hts_2, tariff_record.hts_3].compact).
         where("country_id = (SELECT ID from countries where iso_code = \"TW\")").
         where("import_regulations like \"%MP1%\"").count
       found > 0 ? "true" : ""
@@ -126,7 +126,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloBrazilProductGene
       # RL wants the MSL system to receive product level data, BUT the MSL system can't receive data if it doesn't have a country code, SO
       # we're defaulting to IT when there is no classification for the product.
 
-      file = [p.unique_identifier, (iso.presence || "IT"), mp1_value(tr,iso), hts_value(tr.try(:hts_1), iso), hts_value(tr.try(:hts_2), iso), hts_value(tr.try(:hts_3), iso)]
+      file = [p.unique_identifier, (iso.presence || "IT"), mp1_value(tr, iso), hts_value(tr.try(:hts_1), iso), hts_value(tr.try(:hts_2), iso), hts_value(tr.try(:hts_3), iso)]
       file.push *get_custom_values(p, :length_cm, :width_cm, :height_cm)
 
       if skip_fiber_fields? p

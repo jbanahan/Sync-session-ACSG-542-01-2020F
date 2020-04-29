@@ -1,0 +1,12 @@
+Rails/UniqueValidationWithoutIndex:
+  Exclude:
+    - 'app/models/official_tariff.rb'
+    - 'app/models/entity_type.rb'
+    - 'app/models/product_group.rb'
+    - 'app/models/search_template.rb'
+    - 'app/models/tariff_record.rb'
+    - 'app/models/user.rb'
+    - 'app/models/variant.rb'
+    - 'app/models/vfi_invoice.rb'
+    - 'app/models/field_label.rb'
+    - 'app/models/linkable_attachment_import_rule.rb'

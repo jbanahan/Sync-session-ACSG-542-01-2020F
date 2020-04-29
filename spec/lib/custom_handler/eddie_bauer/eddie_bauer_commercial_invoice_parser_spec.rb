@@ -30,11 +30,11 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
   describe "process_ca_invoice_rows" do
     let (:country) { Factory(:country, iso_code: "CA")}
     let! (:eddie) { with_fenix_id(Factory(:importer), "855157855RM0001") }
-    let! (:product) { 
+    let! (:product) {
       p = Factory(:product, unique_identifier: "EDDIE-009-5123")
       classification = Factory(:classification, product: p, country: country)
       tariff = Factory(:tariff_record, hts_1: "9876543210", classification: classification)
-      p      
+      p
     }
 
     it "parses CSV data into invoice" do
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
 
     context "rollup scenarios" do
 
-      after(:each) do 
+      after(:each) do
         inv = subject.process_ca_invoice_rows row_arrays
         expect(inv.commercial_invoice_lines.length).to eq 3
       end
@@ -124,11 +124,11 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
   describe "process_us_invoice_rows" do
 
     let (:country) { Factory(:country, iso_code: "US")}
-    let! (:product) { 
+    let! (:product) {
       p = Factory(:product, unique_identifier: "EDDIE-009-5123")
       classification = Factory(:classification, product: p, country: country)
       tariff = Factory(:tariff_record, hts_1: "9876543210", classification: classification)
-      p      
+      p
     }
 
     it "populates a kewill entry object" do
@@ -191,7 +191,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser
       # Not US or CA, so fails.
       row_arrays.first[22] = "XX"
 
-      expect{subject.process_and_send_invoice row_arrays, log}.to raise_error "Unexpected Import Country value received: 'XX'."
+      expect {subject.process_and_send_invoice row_arrays, log}.to raise_error "Unexpected Import Country value received: 'XX'."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unexpected Import Country value received: 'XX'."
     end
   end

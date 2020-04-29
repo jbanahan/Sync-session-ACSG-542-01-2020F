@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
     }
 
     let (:shipment) {
-      s = Factory(:shipment, reference: "reference", forwarder: Factory(:company, name: "Forwarder"), requested_equipment: "Equipment", cargo_ready_date: Date.new(2016,10,5), mode: "Mode", shipment_type: "Type", 
+      s = Factory(:shipment, reference: "reference", forwarder: Factory(:company, name: "Forwarder"), requested_equipment: "Equipment", cargo_ready_date: Date.new(2016, 10, 5), mode: "Mode", shipment_type: "Type",
                   number_of_packages: 20, number_of_packages_uom: "CTNS", gross_weight: BigDecimal(10), volume: BigDecimal(20), lacey_act: true, hazmat: false, marks_and_numbers: "Marks\n And\nNumbers",
                   first_port_receipt: Factory(:port, name: "Port Name", unlocode: "AAAAA"), importer: Factory(:importer, name: "Importer"))
     }
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
       order = Factory(:order, customer_order_number: "Order", vendor: Factory(:vendor, name: "Vendor Name"))
       product = Factory(:product, unique_identifier: "Product")
       order_line = Factory(:order_line, order: order, product: product, line_number: 2, unit_of_measure: "FT")
-      
+
       order.order_from_address = Factory(:address, company: order.vendor, line_1: "Address 1", line_2: "Address 2", city: "City", state: "State", postal_code: "12345", country: Factory(:country, iso_code: "US", name: "USA"))
       order.save!
 
@@ -130,7 +130,7 @@ describe OpenChain::CustomHandler::BookingSpreadsheetGenerator do
       let (:booking_line) {
         Factory(:booking_line, shipment: shipment, line_number: 1, quantity: BigDecimal(30), variant: Factory(:variant, variant_identifier: "Variant", product: order_line.product), product: order_line.product, order_line: order_line, order: order_line.order)
       }
-      
+
       def setup_line_expectations xl
         expect(xl).to receive(:set_cell).with(0, 20, "A", 1)
         expect(xl).to receive(:set_cell).with(0, 20, "B", "Order")

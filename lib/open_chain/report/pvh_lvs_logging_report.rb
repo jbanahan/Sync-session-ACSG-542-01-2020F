@@ -28,8 +28,8 @@ module OpenChain
         start_date_time, end_date_time = query_time
         wb = XlsMaker.create_workbook 'LVS Logging'
         XlsMaker.create_sheet wb, 'HVS Logging'
-        table_from_query wb.worksheet(0), query(:lvs, start_date_time, end_date_time), {'CADEX Sent Date' => date_conversion_lambda} 
-        table_from_query wb.worksheet(1), query(:hvs, start_date_time, end_date_time), {'Entry Filed Date' => date_conversion_lambda} 
+        table_from_query wb.worksheet(0), query(:lvs, start_date_time, end_date_time), {'CADEX Sent Date' => date_conversion_lambda}
+        table_from_query wb.worksheet(1), query(:hvs, start_date_time, end_date_time), {'Entry Filed Date' => date_conversion_lambda}
         wb
       end
 
@@ -39,7 +39,7 @@ module OpenChain
 
       def send_email(settings)
         wb = create_workbook
-        
+
         workbook_to_tempfile wb, 'PVH-' do |t|
           start_date, end_date = formatted_local_time
           subject = "LVS Logging Report for the Period #{start_date} to #{end_date}"
@@ -55,7 +55,7 @@ module OpenChain
         <<-SQL
           SELECT e.cargo_control_number AS 'Cargo Control Number',
             e.po_numbers AS 'PO #',
-            '' AS Division, 
+            '' AS Division,
             '' AS CO,
             e.vendor_names AS Vendor,
             e.origin_country_codes AS 'Factory Country',
@@ -81,7 +81,7 @@ module OpenChain
             '' AS Contact,
             '' AS 'Bill Code',
             '' AS Paid
-          FROM entries AS e 
+          FROM entries AS e
             INNER JOIN broker_invoices AS bi ON e.id = bi.entry_id
             LEFT OUTER JOIN broker_invoice_lines gst_ab ON gst_ab.broker_invoice_id = bi.id AND gst_ab.charge_code = '251'
             LEFT OUTER JOIN broker_invoice_lines gst_mb ON gst_mb.broker_invoice_id = bi.id AND gst_mb.charge_code = '254'
@@ -101,4 +101,3 @@ module OpenChain
     end
   end
 end
-      

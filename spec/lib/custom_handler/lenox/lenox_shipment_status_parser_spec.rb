@@ -1,10 +1,10 @@
 describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
   def default_row overrides={}
-    h = {po:'ORD123',part:'PART',qty:100,pol:'Yantian, China',
+    h = {po:'ORD123', part:'PART', qty:100, pol:'Yantian, China',
       etd:'2014-01-01',
-      pod:'Norfolk, Virginia',bol:'OOLU12345678',vessel:'VESS',
-      container:'CONT12345678',size:'SZ',gross_weight:'49.2',cartons:4,
-      volume:'29.4',seal_number:'SL123',invoice_number:'INV123'}.merge overrides
+      pod:'Norfolk, Virginia', bol:'OOLU12345678', vessel:'VESS',
+      container:'CONT12345678', size:'SZ', gross_weight:'49.2', cartons:4,
+      volume:'29.4', seal_number:'SL123', invoice_number:'INV123'}.merge overrides
     r = Array.new 19
     r[3] = h[:po]
     r[4] = h[:part]
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       allow(OpenChain::XLClient).to receive(:new_from_attachable).and_return(double('x'))
       expect(described_class).to receive(:can_view?).and_return true
       expect_any_instance_of(described_class).to receive(:parse).and_raise "some error"
-      expect{described_class.new(@cf).process(u)}.to change(u.messages,:count).from(0).to(1)
+      expect {described_class.new(@cf).process(u)}.to change(u.messages, :count).from(0).to(1)
       expect(u.messages.first.subject).to match /ERROR/
     end
   end
@@ -64,19 +64,19 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
       allow_any_instance_of(MasterSetup).to receive(:custom_feature?).and_return true
     end
     it "should be false if user not from LENOX or master" do
-      u = Factory(:user,shipment_view:true)
+      u = Factory(:user, shipment_view:true)
       expect(described_class.new(@cf).can_view?(u)).to eq false
     end
     it "should be false if user cannot view shipments" do
-      u = Factory(:master_user,shipment_view:false)
+      u = Factory(:master_user, shipment_view:false)
       expect(described_class.new(@cf).can_view?(u)).to eq false
     end
     it "should pass for master user who can view shipments" do
-      u = Factory(:master_user,shipment_view:true)
+      u = Factory(:master_user, shipment_view:true)
       expect(described_class.new(@cf).can_view?(u)).to eq true
     end
     it "should pass for lenox user who can view shipments" do
-      u = Factory(:user,shipment_view:true,company:Factory(:company,:system_code=>'LENOX'))
+      u = Factory(:user, shipment_view:true, company:Factory(:company, :system_code=>'LENOX'))
       allow(u).to receive(:view_shipments?).and_return true
       expect(described_class.new(@cf).can_view?(u)).to eq true
     end
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     it "should collect shipments and pass them to process_shipment" do
       r1 = default_row
       r2 = default_row({bol:'BOL2'})
-      x = mock_xl_client([r1,r2])
+      x = mock_xl_client([r1, r2])
       p = described_class.new(double(:attachable))
       expect(p).to receive(:process_shipment).with([r1])
       expect(p).to receive(:process_shipment).with([r2])
@@ -106,27 +106,27 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
 
   describe "process_shipment" do
     before :each do
-      @u = Factory(:master_user,shipment_edit:true)
+      @u = Factory(:master_user, shipment_edit:true)
       allow_any_instance_of(User).to receive(:edit_shipments?).and_return true
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       @p = described_class.new(double(:custom_file))
-      @c = Factory(:company,system_code:'LENOX')
+      @c = Factory(:company, system_code:'LENOX')
       @v = Factory(:company)
-      @o = Factory(:order,importer:@c,order_number:'LENOX-ORD123',customer_order_number:'ORD123',vendor:@v)
-      @prod = Factory(:product,unique_identifier:'LENOX-PART',importer:@c)
-      @ol = @o.order_lines.create!(product_id:@prod.id,quantity:1000)
-      @pol = Factory(:port,name:'Yantian, China')
-      @pod = Factory(:port,name:'Norfolk, VA')
+      @o = Factory(:order, importer:@c, order_number:'LENOX-ORD123', customer_order_number:'ORD123', vendor:@v)
+      @prod = Factory(:product, unique_identifier:'LENOX-PART', importer:@c)
+      @ol = @o.order_lines.create!(product_id:@prod.id, quantity:1000)
+      @pol = Factory(:port, name:'Yantian, China')
+      @pod = Factory(:port, name:'Norfolk, VA')
     end
     it "should create shipment" do
       r = default_row
-      expect {@p.process_shipment [r]}.to change(Shipment,:count).from(0).to(1)
+      expect {@p.process_shipment [r]}.to change(Shipment, :count).from(0).to(1)
       s = Shipment.first
       expect(s.house_bill_of_lading).to eq r[9]
       expect(s.reference).to eq "LENOX-#{r[9]}"
       expect(s.lading_port).to eq @pol
       expect(s.unlading_port).to eq @pod
-      expect(s.est_departure_date).to eq Date.new(2014,1,1)
+      expect(s.est_departure_date).to eq Date.new(2014, 1, 1)
       expect(s.vessel).to eq r[10]
       expect(s.importer).to eq @c
       expect(s.containers.count).to eq 1
@@ -146,11 +146,11 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     end
     it "should fail on bad lading port" do
       @pol.update_attributes(name:'x')
-      expect{@p.process_shipment [default_row]}.to raise_error /\ lading port/
+      expect {@p.process_shipment [default_row]}.to raise_error /\ lading port/
     end
     it "should fail on bad unlading port" do
       @pod.update_attributes(name:'x')
-      expect{@p.process_shipment [default_row]}.to raise_error /\ unlading port/
+      expect {@p.process_shipment [default_row]}.to raise_error /\ unlading port/
     end
     it "should clean trailing .0 from product" do
       r = default_row
@@ -161,15 +161,15 @@ describe OpenChain::CustomHandler::Lenox::LenoxShipmentStatusParser do
     it "should skip shipment that already exists" do
       r = default_row
       t = 1.week.ago
-      s = Factory(:shipment,reference:"LENOX-#{r[9]}",importer:@c,updated_at:t)
-      expect {@p.process_shipment [r]}.to_not change(Shipment.order(:updated_at),:first)
+      s = Factory(:shipment, reference:"LENOX-#{r[9]}", importer:@c, updated_at:t)
+      expect {@p.process_shipment [r]}.to_not change(Shipment.order(:updated_at), :first)
       expect(Shipment.count).to eq 1
     end
     it "should allocate multiple lines to same container" do
-      expect {@p.process_shipment [default_row,default_row]}.to change(Container,:count).from(0).to(1)
+      expect {@p.process_shipment [default_row, default_row]}.to change(Container, :count).from(0).to(1)
     end
     it "should allocate to order line with same product and closest unshipped quantity" do
-      @ol2 = @o.order_lines.create!(product_id:@prod.id,quantity:101)
+      @ol2 = @o.order_lines.create!(product_id:@prod.id, quantity:101)
       @p.process_shipment [default_row]
       expect(Shipment.first.shipment_lines.first.order_lines.to_a).to eq [@ol2]
     end

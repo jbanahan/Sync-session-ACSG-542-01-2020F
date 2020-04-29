@@ -7,7 +7,7 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
   cattr_accessor :next_memory_check
 
   def self.is_upgrade_delayed_job? job
-    # Scan the jobs handler (yaml serialization) to see if it contains a reference to the 
+    # Scan the jobs handler (yaml serialization) to see if it contains a reference to the
     # method call which runs the upgrade process on the delayed job machine.
 
     # The reason we're doing this by method reference is so that we throw an error if the upgrade method is
@@ -22,7 +22,7 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
     end
   end
 
-  def self.upgrade_started? 
+  def self.upgrade_started?
     # The upgrade in progress check relies on checking the existence of an upgrade_running file, however, this
     # file is cleaned up after the upgrade is complete, so then we're using the check for the repository release version
     # number vs. code version as the fallback to see if an upgrade was run.  This is done as a fallback since
@@ -58,7 +58,7 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
     # them..if not, then we'll run the job and lock them down so no reloads occur during the job run.
     ModelField.reload_if_stale
     ModelField.disable_stale_checks = true
-    # This effectively reloads the master setup from memcache before each delayed job and then locks it in place for 
+    # This effectively reloads the master setup from memcache before each delayed job and then locks it in place for
     # the duration of the job.
     MasterSetup.current = MasterSetup.get(false)
     begin
@@ -75,7 +75,7 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
   #
   # At the moment, it only checks if the current worker is utilizing too much memory.
   #
-  # I can see other heuristics also being used in the future, which is why this method exists as an 
+  # I can see other heuristics also being used in the future, which is why this method exists as an
   # external touch point.
   #
   # Returns true if continue or false if not
@@ -128,16 +128,16 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
 
   callbacks do |lifecycle|
     # FYI..this call is currently made from delayed_job's worker.rb via the run_callbacks call.  Args passed to that method
-    # (after the callback's identifier symbol) are what are passed into this block. args splat is here just in 
+    # (after the callback's identifier symbol) are what are passed into this block. args splat is here just in
     # case any future args are added so that they'll get passed down the callback chain
-    lifecycle.around(:perform) do |worker, job, *args, &block| 
+    lifecycle.around(:perform) do |worker, job, *args, &block|
 
-      # This is used in conjunction with the dj_monitor.sh script to ensure only job queues running the most up 
+      # This is used in conjunction with the dj_monitor.sh script to ensure only job queues running the most up
       # to date version of the code stay running.  If we kill off outdated queues, the monitor script will then
       # restart the job queues.
       upgrade_job = is_upgrade_delayed_job?(job)
       if do_upgrade? && !upgrade_job
-        
+
         # We can actually save off this job just by rescheduling it, that way after the upgrade is complete it will
         # run with any updated code.  The job attempts reset is to prevent the reschedule from running too many times and
         # having it kill the job.
@@ -147,7 +147,7 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
         worker.reschedule(job, job.run_at)
 
         # If we're in the process of upgrading, we shouldn't run any more delayed jobs with this worker.
-        # We can actually tell the worker to stop, which will shut down this current worker process after it 
+        # We can actually tell the worker to stop, which will shut down this current worker process after it
         # handles any cleanup on this job.
 
         # We only want to stop the worker if we know an update has already been started, otherwise, it's possible
@@ -158,13 +158,13 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
           if OpenChain::ChainDelayedJobPlugin.number_of_running_queues > 1 && OpenChain::ChainDelayedJobPlugin.upgrade_started?
             worker.stop
           end
-        end 
+        end
 
         # We're going to purposefully NOT forward to anything in the callback chain since we're, in effect, cancelling
         # this job's run.
         false
       else
-        # Call through to any other plugins that may be attached to this callback chain, the last 
+        # Call through to any other plugins that may be attached to this callback chain, the last
         # callback in the chain is always the execution of the job (which will return true if the job ran without error
         # and false if it errored).
         result = false
@@ -175,7 +175,7 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
             result = block.call(worker, job, *args)
 
             # When we stop the worker here, we're relying on the job queue monitoring script to restart it.
-            # The script runs as a service, so it's always running and will restart the job worker within 
+            # The script runs as a service, so it's always running and will restart the job worker within
             # a minute or so once it notices this system's queue is down one queue.
             if upgrade_job
               worker.stop if OpenChain::Upgrade.upgraded?
@@ -196,14 +196,14 @@ module OpenChain; class ChainDelayedJobPlugin < Delayed::Plugin
     # in the process of upgrading.
 
     # This callback is pretty much entirely here to make sure all the other job queues are shut down as the update is concurrently running.
-    # If this isn't done then it's very possible if no other jobs are queued during the upgrade one of the waiting queues will start 
+    # If this isn't done then it's very possible if no other jobs are queued during the upgrade one of the waiting queues will start
     # another upgrade process after the other is completed (since the above callback to stop the queues only runs if a job is picked up).
-    # It relies on the sleep time between job checks for the worker (Delayed::Worker.sleep_dealy) to be set in such a manner that there's 
+    # It relies on the sleep time between job checks for the worker (Delayed::Worker.sleep_dealy) to be set in such a manner that there's
     # no way a queue can be sleeping during the entirety of the upgrade process. By default, the sleep time is 1 second.
     lifecycle.before(:loop) do |worker, *args|
 
       # We need to make sure that we allow for cases where the upgrade ran and errored out - which leaves the running flag file in place.
-      # We want to keep at least a single queue alive when this happens so that when we fix the issue and clear the 
+      # We want to keep at least a single queue alive when this happens so that when we fix the issue and clear the
       # upgrade_running.txt file the upgrade will automatically pick up and go without us having to manually spin up a delayed job queue.
       if OpenChain::Upgrade.in_progress? && !OpenChain::Upgrade.errored?
         worker.stop

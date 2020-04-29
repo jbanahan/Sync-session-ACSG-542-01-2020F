@@ -5,9 +5,9 @@ require 'digest/md5'
 module OpenChain; module CustomHandler; module UnderArmour
   class UaWinshuttleProductGenerator < OpenChain::CustomHandler::ProductGenerator
     include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
-    
+
     def self.run_and_email email_address
-      ActiveRecord::Base.transaction do #if the file isn't sent and archived, then it never happened
+      ActiveRecord::Base.transaction do # if the file isn't sent and archived, then it never happened
         g = self.new
         f = g.sync_xls
         return if f.nil?
@@ -17,11 +17,11 @@ module OpenChain; module CustomHandler; module UnderArmour
     end
 
     def initialize options = {}
-      defs = self.class.prep_custom_definitions([:plant_codes,:colors])
+      defs = self.class.prep_custom_definitions([:plant_codes, :colors])
       @plant_cd = defs[:plant_codes]
       @colors_cd = defs[:colors]
       @plant_code_country_map = {}
-      DataCrossReference.hash_for_type(DataCrossReference::UA_PLANT_TO_ISO).each do |k,v|
+      DataCrossReference.hash_for_type(DataCrossReference::UA_PLANT_TO_ISO).each do |k, v|
         @plant_code_country_map[k] = Country.find_by_iso_code(v).id
       end
       @custom_where = options[:custom_where]
@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module UnderArmour
     def email_file f, email_address
       Attachment.add_original_filename_method f
       f.original_filename = "winshuttle_#{Time.now.strftime('%Y%m%d')}.xls"
-      OpenMailer.send_simple_html(email_address,'Winshuttle Product Output File','Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com',[f]).deliver_now
+      OpenMailer.send_simple_html(email_address, 'Winshuttle Product Output File', 'Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com', [f]).deliver_now
     end
 
     def preprocess_row base_row, opts = {}
@@ -78,12 +78,12 @@ module OpenChain; module CustomHandler; module UnderArmour
       q = "SELECT products.id,
       '' as 'Log Winshuttle RUNNER for TRANSACTION 10.2\nMM02-Change HTS Code.TxR\n#{Time.now.strftime('%-m/%-d/%Y %l:%M %p')}\nMode:  Batch\nPRD-100, pmckeldin',
       products.unique_identifier as 'Material Number',
-      plant.text_value as 'Plant', 
+      plant.text_value as 'Plant',
       tr.hts_1 as 'HTS Code',
       classifications.country_id as '',
       color.text_value as ''
       FROM products
-      #{Product.need_sync_join_clause(sync_code)} 
+      #{Product.need_sync_join_clause(sync_code)}
       INNER JOIN classifications on products.id = classifications.product_id AND classifications.country_id in (select distinct countries.id from countries inner join data_cross_references on data_cross_references.cross_reference_type = '#{DataCrossReference::UA_PLANT_TO_ISO}' AND countries.iso_code = data_cross_references.value)
       INNER JOIN (select * FROM tariff_records where line_number = 1) as tr on classifications.id = tr.classification_id
       INNER JOIN custom_values as plant on plant.customizable_type = 'Product' AND plant.customizable_id = products.id AND plant.custom_definition_id = #{@plant_cd.id} AND length(plant.text_value) > 0

@@ -4,7 +4,7 @@ module Api; module V1; module Admin; class CustomViewTemplatesController < Api::
   def edit
     template = CustomViewTemplate.find params[:id]
     mf_digest = get_mf_digest template
-    render json: { template: template, criteria: template.search_criterions.map{ |sc| sc.json(current_user) }, model_fields: mf_digest }
+    render json: { template: template, criteria: template.search_criterions.map { |sc| sc.json(current_user) }, model_fields: mf_digest }
   end
 
   def update
@@ -22,8 +22,7 @@ module Api; module V1; module Admin; class CustomViewTemplatesController < Api::
 
   def get_mf_digest template
     mfs = CoreModule.find_by_class_name(template.module_type).default_module_chain.model_fields.values
-    ModelField.sort_by_label(mfs).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
+    ModelField.sort_by_label(mfs).collect {|mf| {:mfid=>mf.uid, :label=>mf.label, :datatype=>mf.data_type}}
   end
-  
 
 end; end; end; end

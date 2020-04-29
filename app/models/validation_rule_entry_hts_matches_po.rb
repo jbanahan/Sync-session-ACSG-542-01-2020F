@@ -37,7 +37,7 @@ class ValidationRuleEntryHtsMatchesPo < ValidationRuleEntryInvoiceLineMatchesPoL
         product_ids = matching_order_lines.map {|l| l.product_id}.uniq.compact
         matching_product_count = Product.joins(classifications: [:country, :tariff_records]).
                                   includes(classifications: [:tariff_records]).
-                                  where(id: product_ids, countries: {iso_code: product_classification_country}, 
+                                  where(id: product_ids, countries: {iso_code: product_classification_country},
                                           tariff_records: {hts_1: tariffs}).
                                   size
 

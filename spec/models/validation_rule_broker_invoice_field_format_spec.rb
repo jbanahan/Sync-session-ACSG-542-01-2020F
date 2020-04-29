@@ -20,7 +20,7 @@ describe ValidationRuleBrokerInvoiceFieldFormat do
   end
 
   it 'should allow blanks when allow_blank is true' do
-    @rule.rule_attributes_json = {allow_blank:true, model_field_uid: 'bi_invoice_total',operator: 'gt', value:5000}.to_json
+    @rule.rule_attributes_json = {allow_blank:true, model_field_uid: 'bi_invoice_total', operator: 'gt', value:5000}.to_json
     @bi.update_attributes(invoice_total: '')
     expect(@rule.run_validation(@bi.entry)).to be_nil
   end

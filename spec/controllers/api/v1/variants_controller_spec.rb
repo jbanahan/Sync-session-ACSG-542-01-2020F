@@ -5,7 +5,7 @@ describe Api::V1::VariantsController do
   end
   describe '#show' do
     before :each do
-      @v = Factory(:variant,variant_identifier:'v123')
+      @v = Factory(:variant, variant_identifier:'v123')
     end
     it 'should show if user can view variant' do
       expect_any_instance_of(Variant).to receive(:can_view?).with(@u).and_return true
@@ -26,15 +26,15 @@ describe Api::V1::VariantsController do
       product = Factory(:product)
       plant = Factory(:plant)
       c = plant.company
-      v1 = Factory(:variant,product:product)
+      v1 = Factory(:variant, product:product)
 
       # this one won't return because user cannot view it
-      v2 = Factory(:variant,product:product)
+      v2 = Factory(:variant, product:product)
 
       # this one won't return because it's not associated with the company
-      Factory(:variant,product:product)
+      Factory(:variant, product:product)
 
-      [v1,v2].each { |v| plant.plant_variant_assignments.create!(variant:v)}
+      [v1, v2].each { |v| plant.plant_variant_assignments.create!(variant:v)}
 
       allow_any_instance_of(Variant).to receive(:can_view?) do |inst|
         inst!=v2

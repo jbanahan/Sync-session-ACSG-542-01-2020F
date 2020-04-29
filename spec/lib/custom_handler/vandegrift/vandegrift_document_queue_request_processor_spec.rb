@@ -2,10 +2,10 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftDocumentQueueRequestPro
 
   subject { described_class }
 
-  describe "process_document_request_queue" do 
+  describe "process_document_request_queue" do
     let (:kewill_item) { DocumentRequestQueueItem.create! system: "KeWiLL", identifier: "12345", request_at: Time.zone.now }
     let (:fenix_item) { DocumentRequestQueueItem.create! system: "FeNiX", identifier: "12345", request_at: Time.zone.now }
-    let (:secrets) { 
+    let (:secrets) {
       {
         "kewill_imaging" => {
           "s3_bucket" => "bucket",
@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftDocumentQueueRequestPro
         }
       }
     }
-    let! (:imaging_config) { 
+    let! (:imaging_config) {
       expect(MasterSetup).to receive(:secrets).and_return secrets
     }
 
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftDocumentQueueRequestPro
 
   describe "request_kewill_images_for_queue_item" do
     let (:queue_item) { DocumentRequestQueueItem.new system: "kewill", identifier: "12345"}
-    let (:secrets) { 
+    let (:secrets) {
       {
         "kewill_imaging" => {
           "s3_bucket" => "bucket",
@@ -119,7 +119,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftDocumentQueueRequestPro
 
   describe "request_fenix_images_for_queue_item" do
     let (:queue_item) { DocumentRequestQueueItem.new system: "fenix", identifier: "12345"}
-    let (:secrets) { 
+    let (:secrets) {
       {
         "kewill_imaging" => {
           "s3_bucket" => "bucket",

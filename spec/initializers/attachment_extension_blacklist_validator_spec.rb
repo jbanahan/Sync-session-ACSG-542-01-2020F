@@ -23,7 +23,7 @@ describe Paperclip::Validators::AttachmentExtensionBlacklistValidator do
   end
 
   describe "blacklisted?" do
-    ['.﻿bat', '.chm', '.cmd', '.com', '.cpl', '.crt', '.exe', '.hlp', '.hta', '.inf', 
+    ['.﻿bat', '.chm', '.cmd', '.com', '.cpl', '.crt', '.exe', '.hlp', '.hta', '.inf',
     '.ins', '.isp', '.jse', '.lnk', '.mdb', '.ms', '.pcd', '.pif', '.reg', '.scr', '.sct', '.shs', '.vb', '.ws'].each do |extension|
 
       it "blacklists '#{extension}' type files" do

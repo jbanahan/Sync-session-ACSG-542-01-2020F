@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module UnderArmour; module UaSitesSubsHe
   include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
   extend ActiveSupport::Concern
   included { include UnderArmourCustomDefinitionSupport; extend ClassMethods }
-    
+
     module ClassMethods
       def process opts={}
         g = self.new(opts)
@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module UnderArmour; module UaSitesSubsHe
     def site_countries
       @site_countries ||= Country.where(european_union: true).pluck(:iso_code).concat ["US", "CA", "HK", "PA"]
     end
-    
+
     def ftp_credentials
       {server: 'transfer.underarmour.com', username: 'ftpvandegrift', password: 'k1mbIXyu', protocol: "sftp"}
     end

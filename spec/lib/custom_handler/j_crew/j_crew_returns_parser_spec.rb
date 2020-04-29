@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
         expect(rows.first[-3..-1]).to eq ["RESTRICTED", "RESTRICTED", "RESTRICTED"]
       end
     end
-    
+
     context "pdf file" do
       let (:file) { File.open("spec/fixtures/files/crew_returns.pdf", "r") }
 
@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
         expect(rows[1]).to eq ["62974", "CN", "6203424050", "MEN'S 100% COTTON WOVEN SHORT", "3700015360", "1", "8.95", "8.95", hts_number, mid, coo]
       end
     end
-    
+
 
     context "with zip file" do
       let (:file) { File.open("spec/fixtures/files/crew_returns.zip", "r") }
@@ -142,5 +142,5 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
       end
     end
   end
-  
+
 end

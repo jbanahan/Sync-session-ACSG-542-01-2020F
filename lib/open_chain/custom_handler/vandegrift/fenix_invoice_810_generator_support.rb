@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module FenixInvoice81
     }
   end
 
-  def detail_format 
+  def detail_format
     @detail ||= {
       map_name: :detail,
       fields: [
@@ -87,7 +87,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module FenixInvoice81
   # up Fenix (! and | for some reason)
   def output_string value, length, format_hash
     if !value.nil?
-      # We need to make sure we're only exporting ASCII chars so add a ? for any character that can't 
+      # We need to make sure we're only exporting ASCII chars so add a ? for any character that can't
       # be transliterated
       value = ActiveSupport::Inflector.transliterate(value)
 

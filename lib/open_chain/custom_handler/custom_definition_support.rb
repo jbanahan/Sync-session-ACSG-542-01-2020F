@@ -1,6 +1,6 @@
 module OpenChain; module CustomHandler; module CustomDefinitionSupport
 
-  #find or create all given custom definitions based on the available_fields
+  # find or create all given custom definitions based on the available_fields
   def prep_custom_defs fields_to_init, available_fields
     # The overwhelmingly vast majority of time, the custom definitions are going to already exist, so if we can load them all with a single
     # query, that will save us time over querying for each custom definition one by one
@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
       cdi = field_hash.clone
       read_only = cdi.delete :read_only
 
-      # The lock here is to prevent muliple processes from trying to create the same custom definition at the same time, which 
+      # The lock here is to prevent muliple processes from trying to create the same custom definition at the same time, which
       # can happen when multiple distinct delayed jobs are running over the same file type at the same time (.ie same parser class).
       Lock.acquire("CustomDefinition-#{cdi[:cdef_uid]}", yield_in_transaction: false) do
         # Don't open an unnecessary transaction here, all we need is locking across processes, not atomicity
@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
         end
       end
     end
-    
+
     custom_definitions
   end
 

@@ -26,7 +26,7 @@ class AutomatedBillingSetup < ActiveRecord::Base
 
     tests = self.search_criterions.map {|sc| sc.test? entry}.uniq.compact
 
-    # If there were no criterions, then we send...otherwise, the tests result should 
+    # If there were no criterions, then we send...otherwise, the tests result should
     # all have been true, in which case after uniq'ing the results the only value should be true
     tests.length == 0 || (tests.length == 1 && tests[0] == true)
   end

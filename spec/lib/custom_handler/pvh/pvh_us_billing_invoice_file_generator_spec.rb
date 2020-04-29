@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
 
   let (:captured_xml) { [] }
 
-  before :each do 
+  before :each do
     allow(subject).to receive(:ftp_sync_file) do |temp, sync_record|
       captured_xml << temp.read
     end
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
     expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/CreateTime/Time", "07:00:00")
     expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/@Type", "Broker Invoice")
     expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/Purpose", "Create")
-    
+
     nil
   end
 
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       i
     }
 
-    before :each do 
+    before :each do
       entry
       broker_invoice_duty
       shipment
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       validate_invoice_header(x, "ENTRYNUM-DUTY")
 
       inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
-      
+
       h = REXML::XPath.first(inv, "InvoiceHeader")
       expect(h).to have_xpath_value("InvoiceNumber", "ENTRYNUM")
       expect(h).to have_xpath_value("InvoiceDateTime", "2018-11-07T12:00:00")
@@ -217,7 +217,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
 
       it 'handles cases where hmf summed at the line is less than the total hmf' do
         entry.update_attributes! hmf: 20.05
-        
+
         inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
         subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
 
@@ -232,7 +232,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
 
       it 'handles cases where hmf summed at the line is more than the total hmf' do
         entry.update_attributes! hmf: 19.95
-        
+
         inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
         subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
 
@@ -374,7 +374,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "HBOL987654321")
     end
 
-    it "uses house bill for LCL ocean modes" do 
+    it "uses house bill for LCL ocean modes" do
       c = shipment.containers.first
       c.fcl_lcl = "LCL"
       c.save!
@@ -402,14 +402,14 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       container_2 = shipment_2.containers.create! container_number: "ABCD1234567890", fcl_lcl: "LCL"
       shipment_line_2 = Factory(:shipment_line, shipment: shipment_2, container: container_2, quantity: 10, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100, invoice_number: "INVOICE2")
       shipment_2.reload
-      
+
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
 
       expect(captured_xml.length).to eq 1
       invoice_details = REXML::XPath.first(REXML::Document.new(captured_xml.first).root, "GenericInvoices/GenericInvoice/InvoiceDetails")
       expect(invoice_details.length).to eq 4
-    
+
       expect(invoice_details[0]).to have_xpath_value("BLNumber", "HBOL987654321")
       expect(invoice_details[0]).to have_xpath_value("ContainerNumber", "ABCD1234567890")
       expect(invoice_details[0]).to have_xpath_value("ChargeField/Type/Code", "C080")
@@ -431,7 +431,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(invoice_details[3]).to have_xpath_value("ChargeField/Value", "33.33")
     end
 
-    it "falls back to master bill for LCL if house bill is blank" do 
+    it "falls back to master bill for LCL if house bill is blank" do
       shipment.update_attributes! house_bill_of_lading: ""
       c = shipment.containers.first
       c.fcl_lcl = "LCL"
@@ -458,14 +458,14 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       container_2 = shipment_2.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
       shipment_line_2 = Factory(:shipment_line, shipment: shipment_2, container: container_2, quantity: 10, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100, invoice_number: "INVOICE2")
       shipment_2.reload
-      
+
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
 
       expect(captured_xml.length).to eq 1
       invoice_details = REXML::XPath.first(REXML::Document.new(captured_xml.first).root, "GenericInvoices/GenericInvoice/InvoiceDetails")
       expect(invoice_details.length).to eq 4
-    
+
       expect(invoice_details[0]).to have_xpath_value("BLNumber", "MBOL1234567890")
       expect(invoice_details[0]).to have_xpath_value("ContainerNumber", "ABCD1234567890")
       expect(invoice_details[0]).to have_xpath_value("ChargeField/Type/Code", "C080")
@@ -491,7 +491,7 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       broker_invoice_line_container_charges.update_attributes! invoice_total: -300
       broker_invoice_line_container_charges.broker_invoice_lines.first.update_attributes! charge_amount: -200
       broker_invoice_line_container_charges.broker_invoice_lines.second.update_attributes! charge_amount: -100
-      
+
       inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
       subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
 

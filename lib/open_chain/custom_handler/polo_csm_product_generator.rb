@@ -25,7 +25,7 @@ module OpenChain
         else
           ftp_file sync_csv
         end
-        
+
         nil
       end
 
@@ -36,10 +36,10 @@ module OpenChain
       def auto_confirm?
         @auto_confirm
       end
-      
-      #overriding to handle special splitting of CSM numbers
+
+      # overriding to handle special splitting of CSM numbers
       def sync_csv include_headers=true
-        f = Tempfile.new(['ProductSync','.csv'])
+        f = Tempfile.new(['ProductSync', '.csv'])
         cursor = 0
         sync(include_headers: include_headers) do |rv|
           if include_headers || cursor > 0
@@ -50,7 +50,7 @@ module OpenChain
               (0..max_col).each do |i|
                 v = i==1 ? c : rv[i]
                 v = "" if v.blank?
-                v = v.hts_format if [10,13,16].include?(i)
+                v = v.hts_format if [10, 13, 16].include?(i)
                 row << v.to_s.gsub(/\r?\n/, " ")
               end
               f << row.to_csv
@@ -66,18 +66,18 @@ module OpenChain
           return nil
         end
       end
-      
-      #custom remote file name required by trading partner (yes, we know that granularity to the second is bad)
+
+      # custom remote file name required by trading partner (yes, we know that granularity to the second is bad)
       def remote_file_name
         "Chain#{Time.now.strftime("%Y%m%d%H%M%S")}.csv"
       end
 
       def ftp_credentials
-        {:server=>'connect.vfitrack.net',:username=>'polo',:password=>'pZZ117',:folder=>'/_to_csm',:remote_file_name=>remote_file_name}
+        {:server=>'connect.vfitrack.net', :username=>'polo', :password=>'pZZ117', :folder=>'/_to_csm', :remote_file_name=>remote_file_name}
       end
 
       def query
-        q = "SELECT products.id, 
+        q = "SELECT products.id,
 #{cd_s 101},
 #{cd_s CustomDefinition.find_by_label('CSM Number').id},
 #{cd_s 2},
@@ -104,11 +104,11 @@ tariff_records.hts_3 as 'Tariff - HTS Code 3',
         (85..94).each do |i|
           q << cd_s(i)+","
         end
-        q << cd_s(95) 
+        q << cd_s(95)
         q << "
 FROM products
 LEFT OUTER JOIN classifications ON classifications.product_id = products.id
-LEFT OUTER JOIN tariff_records ON tariff_records.classification_id = classifications.id 
+LEFT OUTER JOIN tariff_records ON tariff_records.classification_id = classifications.id
 LEFT OUTER JOIN custom_values csm_v on csm_v.custom_definition_id = (SELECT id from custom_definitions where label = 'CSM Number') and customizable_id = products.id"
         q << " #{Product.need_sync_join_clause(sync_code)} " if @custom_where.blank?
 

@@ -5,16 +5,16 @@ module OpenChain
     module AnnInc
       # send updated product information to Ann's Zymmetry system
       class AnnZymProductGenerator < OpenChain::CustomHandler::ProductGenerator
-        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
+        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
         include OpenChain::CustomHandler::AnnInc::AnnRelatedStylesSupport
-       
+
         SYNC_CODE ||= 'ANN-ZYM'
 
-        #SchedulableJob compatibility
+        # SchedulableJob compatibility
         def self.run_schedulable opts={}
           self.generate opts
         end
-        
+
         def self.generate opts={}
           g = self.new(opts)
           begin
@@ -24,7 +24,7 @@ module OpenChain
 
         def initialize opts={}
           super(opts)
-          @cdefs = self.class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article,:related_styles]
+          @cdefs = self.class.prep_custom_definitions [:approved_date, :approved_long, :long_desc_override, :origin, :article, :related_styles]
           @qa = opts[:env] == :qa
         end
 
@@ -36,7 +36,7 @@ module OpenChain
         end
         def trim_fingerprint row
           fp = row.pop
-          [fp,row]
+          [fp, row]
         end
         def ftp_credentials
           ftp2_vandegrift_inc((@qa ? "to_ecs/ANN/ZYM-TEST": "to_ecs/Ann/ZYM"))
@@ -47,7 +47,7 @@ module OpenChain
             origins = row[3].blank? ? [''] : row[3].split("\n")
             origins.each do |o|
               x = {}
-              row.each {|k,v| x[k] = (k==3 ? o : v)}
+              row.each {|k, v| x[k] = (k==3 ? o : v)}
               r << x
             end
             r
@@ -56,19 +56,19 @@ module OpenChain
         def before_csv_write cursor, vals
           clean_string_values vals, false, true
 
-          #replace the long description with the override value from the classification
-          #unless the override is blank
+          # replace the long description with the override value from the classification
+          # unless the override is blank
           vals[2] = vals[5] unless vals[5].blank?
 
-          [2,3].each { |i| vals[i] = nil if vals[i].blank?} #prevents empty string from returning quotes
+          [2, 3].each { |i| vals[i] = nil if vals[i].blank?} # prevents empty string from returning quotes
 
-          #remove the long description override value
+          # remove the long description override value
           vals.pop
 
           vals
         end
         def sync_csv
-          super(include_headers: false, csv_opts: {col_sep:'|'}) #no headers, pipe delimited, no quoting
+          super(include_headers: false, csv_opts: {col_sep:'|'}) # no headers, pipe delimited, no quoting
         end
         def query
           md5 = "md5(concat(
@@ -89,16 +89,16 @@ module OpenChain
             'tariff_records.hts_1',
             cd_s(@cdefs[:long_desc_override].id),
             cd_s(@cdefs[:related_styles].id),
-            md5 
+            md5
           ]
           r = "SELECT #{fields.join(', ')}
 FROM products
-INNER JOIN (SELECT classifications.id, classifications.product_id, countries.iso_code 
-  FROM classifications 
+INNER JOIN (SELECT classifications.id, classifications.product_id, countries.iso_code
+  FROM classifications
   INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code = \"US\"
 ) as classifications on classifications.product_id = products.id
-INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0 
-#{Product.need_sync_join_clause(sync_code)} 
+INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
+#{Product.need_sync_join_clause(sync_code)}
 INNER JOIN custom_values AS a_date ON a_date.custom_definition_id = #{@cdefs[:approved_date].id} AND a_date.customizable_id = classifications.id and a_date.date_value is not null
 INNER JOIN custom_values AS a_type ON a_type.custom_definition_id = #{@cdefs[:article].id} AND a_type.customizable_id = products.id and a_type.string_value = 'ZSCR'
 "

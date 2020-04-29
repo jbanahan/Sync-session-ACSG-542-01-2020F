@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Kirklands; class KirklandsGtnOrde
     # the default mapping
     order_line.price_per_unit = BigDecimal(et(line_xml, "FirstCostPrice", true))
     order_line.unit_msrp = BigDecimal(et(line_xml, "RetailCostPrice", true))
-    
+
     nil
   end
 

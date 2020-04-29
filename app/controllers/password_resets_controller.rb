@@ -60,7 +60,7 @@ class PasswordResetsController < ApplicationController
       @user.on_successful_login request
       add_flash :notices, "Password successfully updated"
       redirect_to root_url
-    else 
+    else
       errors_to_flash @user, now: true
       render :action => :edit
     end

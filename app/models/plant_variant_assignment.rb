@@ -30,7 +30,7 @@ class PlantVariantAssignment < ActiveRecord::Base
 
   scope :enabled, -> { where(disabled: [nil, 0]) }
 
-  dont_shallow_merge :PlantVariantAssignment, ['id','created_at','updated_at']
+  dont_shallow_merge :PlantVariantAssignment, ['id', 'created_at', 'updated_at']
 
 
   def self.search_secure user, base_object

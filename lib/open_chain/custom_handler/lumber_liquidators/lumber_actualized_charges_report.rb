@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAc
     start_date = (now - 7.days)
     # Subtract days until we're at a Monday
     start_date -= 1.day while start_date.wday != 1
-    # Basically, we're formatting these dates so the represent the Monday @ Midnight and the following Monday @ midnight, relying on the 
+    # Basically, we're formatting these dates so the represent the Monday @ Midnight and the following Monday @ midnight, relying on the
     # where clause being >= && <.  We don't want any results showing that are actually on the following Monday based on Eastern timezone
     [start_date.beginning_of_day, (start_date + 7.days).beginning_of_day]
   end
@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAc
         OpenMailer.send_simple_html(email_to, "[VFI Track] Actualized Charges Report", "Attached is your Actualized Charges report for entries released after #{start_date} and prior to #{end_date}.", file).deliver_now
       end
     else
-      workbook_to_tempfile wb, "report", file_name: "Actualized Charges #{start_date} - #{end_date}.xls"  
+      workbook_to_tempfile wb, "report", file_name: "Actualized Charges #{start_date} - #{end_date}.xls"
     end
   end
 
@@ -75,7 +75,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAc
 
     entry.commercial_invoices.each do |invoice|
       invoice.commercial_invoice_lines.each do |line|
-        # It's possible if ops keyed the data wrong that container is nil, handle that as if 
+        # It's possible if ops keyed the data wrong that container is nil, handle that as if
         # no container was keyed
         container_number = line.container.try(:container_number).to_s
         containers[container_number][:lines] << line
@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAc
 
     # Third, prorate those amounts against the entered value from the container lines
     entry_values = []
-    containers.values.each do |container|
+    containers.each_value do |container|
       next unless container[:lines].length > 0
 
       values = calculate_proration_for_lines(container[:lines], total_entered_value, charge_totals, charge_buckets)
@@ -147,7 +147,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAc
         row[19] = values[:quantity]
         row[20] = values[:gross_weight_kg]
         row[21] = values[:gross_weight]
-        row[22] = values[:ocean_rate] 
+        row[22] = values[:ocean_rate]
         row[24] = values[:brokerage]
         row[25] = values[:courier]
         row[26] = values[:isc_management]

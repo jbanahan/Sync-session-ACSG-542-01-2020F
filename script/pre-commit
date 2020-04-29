@@ -8,7 +8,7 @@ def check_for_debug_statements
   current_file = nil
   files = []
 
-  diff_lines.each_line do |l| 
+  diff_lines.each_line do |l|
     # strip path from line of form "+++ b/path_to_changed_file"
     current_file = l.match( /(\+\+\+)\W.\/(.+)/ )&.[](2) || current_file
     # if line begins with '+' and contains ' byebug' or ' debugger'
@@ -22,7 +22,7 @@ def check_for_debug_statements
 end
 
 check_for_debug_statements
-#insert additional checks
+# insert additional checks
 
 exit 0
 

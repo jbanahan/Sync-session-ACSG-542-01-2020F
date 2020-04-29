@@ -18,5 +18,4 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzValidationHe
     raise "Country 'US' not found" unless @us
     @us
   end
-  
 end; end; end; end

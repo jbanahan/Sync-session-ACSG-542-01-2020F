@@ -26,9 +26,9 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
   ) do
     # return nil if good and error message if bad
     def validate!
-      validate_equality!('PO',self.entry_po,self.crew_po)
-      validate_equality!('Style',self.entry_part,self.crew_style)
-      validate_equality!('Master Bill',self.entry_mbol,self.crew_mbol)
+      validate_equality!('PO', self.entry_po, self.crew_po)
+      validate_equality!('Style', self.entry_part, self.crew_style)
+      validate_equality!('Master Bill', self.entry_mbol, self.crew_mbol)
       # if self.crew_asn_ship_mode=='Sea' && self.crew_ship_date > self.entry_arrival_date
       #   raise "Error on line #{file_line_number}: Ship date #{self.crew_ship_date.strftime('%Y-%m-%d')} is after arrival date #{self.entry_arrival_date.strftime('%Y-%m-%d')}."
       # end
@@ -45,12 +45,12 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
   end
 
   def self.parse_csv_file path, user
-    parse(IO.read(path),user)
+    parse(IO.read(path), user)
   end
 
   def self.parse data, user
     ds = build_data_structure(data)
-    log = process_data(ds,user)
+    log = process_data(ds, user)
     if !log.empty?
       OpenMailer.send_simple_text(
         user.email,
@@ -64,9 +64,9 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
   def self.process_data data_structure, user
     log = []
     if log.empty?
-      data_structure.each do |entry_number,po_part_hash|
+      data_structure.each do |entry_number, po_part_hash|
         begin
-          process_entry(entry_number,po_part_hash)
+          process_entry(entry_number, po_part_hash)
         rescue
           log << $!.message
         end
@@ -78,22 +78,22 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
   def self.process_entry entry_number, po_part_hash
     Entry.transaction do
       crew = Company.with_customs_management_number('JCREW').first
-      ent = Entry.where('entries.customer_number IN (?)',['JCREW','J0000']).where(entry_number:entry_number).first
+      ent = Entry.where('entries.customer_number IN (?)', ['JCREW', 'J0000']).where(entry_number:entry_number).first
       if ent.blank?
         raise "Entry #{entry_number} not found."
       end
       if DrawbackImportLine.where(entry_number:entry_number).count > 0
         raise "Entry #{entry_number} already has drawback lines."
       end
-      po_part_hash.values.each do |structs|
+      po_part_hash.each_value do |structs|
         base_struct = structs.first
         target = base_struct.entry_units
-        found = structs.inject(0) {|mem,s| mem + s.crew_asn_pieces}
+        found = structs.inject(0) {|mem, s| mem + s.crew_asn_pieces}
         if target != found
           raise "Entry #{entry_number}, PO #{base_struct.entry_po}, Part #{base_struct.entry_part} should have had #{base_struct.entry_units} pieces but found #{found}."
         end
       end
-      po_part_hash.values.each do |structs|
+      po_part_hash.each_value do |structs|
         first_struct = structs.first
         ci_lines = ent.commercial_invoice_lines.where(
           part_number:first_struct.entry_part,
@@ -109,7 +109,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
         ci_line = ci_lines.first
         tariff_line = ci_line.commercial_invoice_tariffs.first
 
-        fob_price = structs.inject(BigDecimal("0.00")) {|mem,obj| mem += (obj.crew_unit_cost * obj.crew_asn_pieces)}
+        fob_price = structs.inject(BigDecimal("0.00")) {|mem, obj| mem += (obj.crew_unit_cost * obj.crew_asn_pieces)}
         discount_rate = tariff_line.entered_value / fob_price
 
         p = Product.where(unique_identifier:"JCREW-#{ci_line.part_number}").first_or_create!
@@ -148,7 +148,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
   def self.find_used_entries entry_numbers
     r = []
     entry_numbers.in_groups_of(500) do |nums|
-      r += DrawbackImportLine.where('entry_number IN (?)',nums).pluck(:entry_number).uniq
+      r += DrawbackImportLine.where('entry_number IN (?)', nums).pluck(:entry_number).uniq
     end
     r.uniq.compact
   end
@@ -156,9 +156,9 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
   def self.build_data_structure data
     h = {}
     row_number = 0
-    CSV.parse(data,headers:true) do |row|
+    CSV.parse(data, headers:true) do |row|
       row_number += 1
-      struct = parse_line(row_number,row)
+      struct = parse_line(row_number, row)
       struct.validate!
       h[struct.entry_number] ||= {}
       po_part_hash = h[struct.entry_number]
@@ -189,13 +189,13 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewDrawbackImportP
       line[21].to_i,
       parse_date(line[22]),
       line[24],
-      BigDecimal(line[25].gsub('$',''))
+      BigDecimal(line[25].gsub('$', ''))
     )
   end
 
   def self.parse_date str
     el = str.split('/')
-    Date.new(el.last.to_i,el.first.to_i,el[1].to_i)
+    Date.new(el.last.to_i, el.first.to_i, el[1].to_i)
   end
 
 end; end; end end;

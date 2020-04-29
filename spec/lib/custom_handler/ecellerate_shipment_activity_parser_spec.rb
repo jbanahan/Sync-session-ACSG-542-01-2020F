@@ -1,9 +1,9 @@
 describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
   def default_row overrides={}
-    #only creating relevant fields
-    h = {prefix:'House Bill',hbol:'HBOL123',mbol:'MBOL123',ior:'CUSTNUM',etd:Date.new(2014,1,1),atd:Date.new(2014,1,2),
-      eta:Date.new(2014,1,3),ata:Date.new(2014,1,4),cargo_ready:Date.new(2014,1,5),
-      est_delivery:Date.new(2014,1,6),act_delivery:Date.new(2014,1,7),line_number:1,cartons:'100.000 CTN',quantity:'52.000 EA',part:'12345',po:'POABC'
+    # only creating relevant fields
+    h = {prefix:'House Bill', hbol:'HBOL123', mbol:'MBOL123', ior:'CUSTNUM', etd:Date.new(2014, 1, 1), atd:Date.new(2014, 1, 2),
+      eta:Date.new(2014, 1, 3), ata:Date.new(2014, 1, 4), cargo_ready:Date.new(2014, 1, 5),
+      est_delivery:Date.new(2014, 1, 6), act_delivery:Date.new(2014, 1, 7), line_number:1, cartons:'100.000 CTN', quantity:'52.000 EA', part:'12345', po:'POABC'
       }.merge overrides
     r = Array.new 65
     r[0] = h[:prefix]
@@ -71,12 +71,12 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
       described_class.new(a).parse x
     end
     before :each do
-      @imp = Factory(:company,importer:true,ecellerate_customer_number:'CUSTNUM')
+      @imp = Factory(:company, importer:true, ecellerate_customer_number:'CUSTNUM')
     end
     it "should update existing shipment" do
-      s = Factory(:shipment,importer:@imp,house_bill_of_lading:'HBOL123')
+      s = Factory(:shipment, importer:@imp, house_bill_of_lading:'HBOL123')
       r = default_row
-      expect {run_parse [r]}.to_not change(Shipment,:count)
+      expect {run_parse [r]}.to_not change(Shipment, :count)
       s.reload
       expect(s.est_departure_date).to eq r[33]
       expect(s.departure_date).to eq r[34]
@@ -89,19 +89,19 @@ describe OpenChain::CustomHandler::EcellerateShipmentActivityParser do
     end
 
     it "should skip rows that don't start with 'House Bill'" do
-      expect {run_parse [default_row(prefix:'OTHER')]}.to_not change(Shipment,:count)
+      expect {run_parse [default_row(prefix:'OTHER')]}.to_not change(Shipment, :count)
       expect(ActionMailer::Base.deliveries.size).to eq 0
     end
     it "should skip shipments where ecellerate_customer_number not found for importer" do
       r = default_row(ior:'OTHER')
       d = 1.week.ago
-      s = Factory(:shipment,importer:@imp,house_bill_of_lading:r[1],updated_at:d)
-      expect {run_parse [r]}.to_not change(s,:updated_at)
+      s = Factory(:shipment, importer:@imp, house_bill_of_lading:r[1], updated_at:d)
+      expect {run_parse [r]}.to_not change(s, :updated_at)
       expect(ActionMailer::Base.deliveries.size).to eq 0
     end
     it "should email errors for shipments not found when importer is found" do
       r = default_row
-      expect {run_parse [r]}.to_not change(Shipment,:count)
+      expect {run_parse [r]}.to_not change(Shipment, :count)
       expect(ActionMailer::Base.deliveries.size).to eq 1
       expect(ActionMailer::Base.deliveries.first.body).to match /HBOL123/
     end

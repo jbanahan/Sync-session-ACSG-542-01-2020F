@@ -28,7 +28,7 @@ class UserTemplatesController < ApplicationController
       u = UserTemplate.find(params[:id])
       if u.update_attributes(params[:user_template])
         add_flash :notices, "Template saved."
-      else 
+      else
         errors_to_flash u
       end
       redirect_to user_templates_path
@@ -39,7 +39,7 @@ class UserTemplatesController < ApplicationController
       u = UserTemplate.find(params[:id])
       if u.destroy
         add_flash :notices, "Template deleted."
-      else 
+      else
         errors_to_flash u
       end
       redirect_to user_templates_path

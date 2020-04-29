@@ -1,4 +1,4 @@
-#Make sure redirect for permissions
+# Make sure redirect for permissions
 RSpec::Matchers.define :be_an_admin_redirect do
   match do |resp|
     resp.status == 302 &&

@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
   describe "sync" do
     let (:api_client) { instance_double(OpenChain::Api::ProductApiClient) }
     let (:importer) { Factory(:importer, system_code: "SYSCODE")}
-    let! (:product) { 
+    let! (:product) {
       product = Factory(:product, importer: importer, unique_identifier: "UID", name: "NAME")
       product.update_custom_value! cdefs[:prod_fda_product_code], "FDA-123"
       product.update_custom_value! cdefs[:prod_country_of_origin], "CN"
@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
       subject.cdefs
     }
 
-    subject { 
+    subject {
       Class.new(OpenChain::CustomHandler::VfiTrackProductApiSyncClient) {
         include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
       end
 
       subject.sync
-      
+
       expect(remote_data).to eq ({ 'product' => {
         'prod_uid' => "SYSCODE-UID",
         'prod_imp_syscode' => "SYSCODE",
@@ -179,7 +179,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
 
     it "syncs data the already exists in vfitrack with a classification" do
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "SYSCODE-UID",
         'classifications' => [{
           'id' => 2,
@@ -221,7 +221,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
 
     it "syncs data the already exists in vfitrack with a tariff_record" do
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "SYSCODE-UID",
         'classifications' => [{
           'id' => 2,
@@ -268,7 +268,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
 
     it "destroys tariff records in VFI Track that don't exist locally" do
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "SYSCODE-UID",
         'classifications' => [{
           'id' => 2,
@@ -306,7 +306,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
             'id' => 3,
             'hts_line_number' => 2,
             '_destroy' => true
-            },{
+            }, {
             'hts_line_number' => 1,
             'hts_hts_1' => "1234.56.7890",
             'hts_hts_2' => "0987.65.4321",
@@ -319,7 +319,7 @@ describe OpenChain::CustomHandler::VfiTrackProductApiSyncClient do
     it "ignores classifications for countries other than those listed locally" do
 
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "SYSCODE-UID",
         'classifications' => [{
           'id' => 2,

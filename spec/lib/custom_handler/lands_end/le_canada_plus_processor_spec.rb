@@ -9,12 +9,12 @@ describe OpenChain::CustomHandler::LandsEnd::LeCanadaPlusProcessor do
   end
 
   describe "process_zip" do
-    it "extracts files from ZIP, creates upload file" do      
+    it "extracts files from ZIP, creates upload file" do
       File.open("#{Rails.root}/spec/fixtures/files/lands_end_canada_plus.zip") do |f|
         described_class.process_zip f
       end
       upload = DrawbackUploadFile.first
-  
+
       expect(DrawbackUploadFile.count).to eq 1
       expect(upload.processor).to eq "lands_end_exports"
       expect(upload.start_at).not_to be_nil

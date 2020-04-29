@@ -6,10 +6,10 @@ module OpenChain; module CustomHandler; module JJill; module JJillSupport
 
   def get_product_category_from_vendor_styles vendor_style_list
     r = 'Other'
-    vals = vendor_style_list.collect {|v| 
+    vals = vendor_style_list.collect {|v|
       return nil if v.blank?
       return nil unless v.length >= 3
-      v[0,3]
+      v[0, 3]
     }.uniq.compact
     return 'Other' if vals.blank?
     return 'Multi' if vals.length > 1
@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module JJill; module JJillSupport
     Digest::MD5.hexdigest f
   end
 
-  private 
+  private
   def my_tos x
     x.blank? ? "_" : x.to_s
   end

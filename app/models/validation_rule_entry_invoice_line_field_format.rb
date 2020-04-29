@@ -1,6 +1,6 @@
 # -*- SkipSchemaAnnotations
 
-#run a field format validation on every invoice line on the entry and fail if ANY line fails the test
+# run a field format validation on every invoice line on the entry and fail if ANY line fails the test
 class ValidationRuleEntryInvoiceLineFieldFormat < BusinessValidationRule
   include ValidatesCommercialInvoiceLine
   include ValidatesFieldFormat
@@ -8,7 +8,7 @@ class ValidationRuleEntryInvoiceLineFieldFormat < BusinessValidationRule
   def run_child_validation invoice_line
     validate_field_format(invoice_line) do |mf, val, regex, fail_if_matches|
       stop_validation unless has_flag?("validate_all")
-      
+
       if fail_if_matches
         "Invoice # #{invoice_line.commercial_invoice.invoice_number} / Line # #{invoice_line.line_number} #{mf.label} value should not match '#{regex}' format."
       else

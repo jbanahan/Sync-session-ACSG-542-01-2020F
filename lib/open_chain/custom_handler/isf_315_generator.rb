@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; class Isf315Generator
         generate_and_send_315s setup, isf, milestones, setup.testing?
       end
     end
-    
+
     isf
   end
 
@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; class Isf315Generator
       d.port_of_lading_location = isf.lading_port
       d.port_of_unlading = v(:sf_unlading_port_code, isf)
       d.port_of_unlading_location = isf.unlading_port
-      
+
       d.master_bills = split_data[:master_bills]
       d.container_numbers = split_data[:container_numbers]
       d.house_bills = split_data[:house_bills]

@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
       log_messages << message
       raise message
     end
-    
+
     Array.wrap(setup['destination_regions']).each do |region|
       # Find all the automated snapshots in the source and destination regions (destination region snapshots
       # will be tagged with their source db-instance identifier, since that value is not retained across regions)
@@ -74,11 +74,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
       end
     end
 
-  ensure 
+  ensure
     session.update_attributes!(log: log_messages.join("\n"), end_time: Time.zone.now) if session
   end
 
-  def delete_destination_snapshot(destination_snapshot, source_snapshots, log_messages) 
+  def delete_destination_snapshot(destination_snapshot, source_snapshots, log_messages)
     source_snapshot = find_matching_source_snapshot(destination_snapshot, source_snapshots)
 
     if source_snapshot.nil?
@@ -92,7 +92,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
   end
 
   def copy_snapshot_to_region source_snapshot, region, session, log_messages
-    # Add the SourceSnapshotType tag so we know when purging snapshots that the snapshot we copied originated as an automated snapshot 
+    # Add the SourceSnapshotType tag so we know when purging snapshots that the snapshot we copied originated as an automated snapshot
     # (since automated snapshots are the only ones we're purging)
     snapshot_copy = OpenChain::Rds.copy_snapshot_to_region source_snapshot, region, tags: {"SourceSnapshotType" => "automated"}
 
@@ -103,7 +103,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
 
   def automated_copy? snapshot
     # We're adding a SourceSnapshotType tag to the snapshots we copy since automated snapshot copies are converted to manual ones.
-    # We need to know which manual copies in the destination region were those that were sourced from automated ones, the tag is our 
+    # We need to know which manual copies in the destination region were those that were sourced from automated ones, the tag is our
     # means of doing that.  (In other words, skip any destination snapshots that do not have a tag of SourceSnapshotType == "automated")
     snapshot.tags["SourceSnapshotType"] == "automated"
   end
@@ -135,7 +135,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
   def handle_errors error: nil, error_message: nil, database_identifier: nil
     begin
       # Send now, so the error object isn't serialized (sending now is fine since this'll be running from the backend anyway)
-      # Apparently some AWS errors when serialized are enormous due to the object references they contain and they overflow the 
+      # Apparently some AWS errors when serialized are enormous due to the object references they contain and they overflow the
       # delayed_jobs handler column.
       error.log_me(nil, nil, true) unless error.nil?
       error_message = error.message if error_message.nil? && !error.nil?
@@ -149,7 +149,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsRd
     ensure
       slack_client.send_message! "it-alerts-warnings", "An error occurred attempting to sync snapshots for #{database_identifier} RDS database."
     end
-    
   end
 
   def slack_client

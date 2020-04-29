@@ -22,16 +22,15 @@ module Delayed; class Worker
   # prepend used here because we effectively want to override the 'handle_failed_job' method in the base
   # Woker class with our re-implementation from UnreportedErrorFailedJobHandler
   prepend OpenChain::UnreportedErrorFailedJobHandler
-  
 end; end;
 
 # Allow the job queue name to come from the vfitrack_settings.yml config file too.
 # By setting this value, every single call to .delay() effectively becomes .delay(queue: "anothervalue").
-# This can be useful if we want to spin up secondary job processing machines and run scripts/jobs that result in the job 
+# This can be useful if we want to spin up secondary job processing machines and run scripts/jobs that result in the job
 # queue being utilized.  By having these jobs queue to a different queue name, we can effectively isolate their impact
 # on the primary job queue system and run all these jobs via a secondary one, limiting the impact on the primary product queue.
 #
-# This can be especially useful in cases where we might need to reprocess a lot of objects/snapshots and want to use a second job queue 
+# This can be especially useful in cases where we might need to reprocess a lot of objects/snapshots and want to use a second job queue
 # ec2 instance.
 #
 # Note: For the actual delayed job worker process, the Delayed Job "queues" command line option superceeds this setting.
@@ -39,7 +38,7 @@ end; end;
 # you need to set the alternate queue value in a `config/dj_queue.txt` file (see scripts/start_dj.sh).
 Delayed::Worker.default_queue_name = MasterSetup.config_value(:delayed_job_queue_name, default: 'default')
 
-# The following setting tells the delayed worker process to raise a signal error and exit immediately when a TERM signal 
+# The following setting tells the delayed worker process to raise a signal error and exit immediately when a TERM signal
 # is received by the worker process.  What this does is kill the job (regardless of its state) and remove the db lock
 # indicators immediately when a TERM signal is received.
 #

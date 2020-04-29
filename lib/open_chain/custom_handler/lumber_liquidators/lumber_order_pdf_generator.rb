@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   include OpenChain::CustomHandler::PdfGeneratorSupport
 
   def self.carb_statement order
-    if (order.order_date || order.created_at) <= Date.new(2017,8,31)
+    if (order.order_date || order.created_at) <= Date.new(2017, 8, 31)
       "All Composite Wood Products contained in finished goods must be compliant to California 93120 Phase 2 for formaldehyde."
     else
       "All Composite Wood Products contained in finished goods must be TSCA Title VI Compliant and must be compliant with California Phase 2 formaldehyde emission standards (17 CCR 93120.2)"
@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.lacey_statement order
-    if (order.order_date || order.created_at) >= Date.new(2018,8,1)
+    if (order.order_date || order.created_at) >= Date.new(2018, 8, 1)
       "All U.S. Domestic and Imported products must be compliant with all applicable laws, including, without limitation and to the extent applicable, the U.S. Lacey Act (16 U.S.C. §§ 3371–3378)"
     end
   end
@@ -125,12 +125,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       d.move_down 2
       d.formatted_text [{text: "\n", size: 8}, {text: self.class.lacey_statement(order), styles: [:bold, :italic], color: "ff0000", size: 8}]
     end
-    
+
     # change log
     d.start_new_page
     d.formatted_text [
       {text: "Change Log\n\n", styles: [:bold], size: 14},
-      {text: "#{order.custom_value(@cdefs[:ord_change_log])}".gsub("\t",Array.new(4,Prawn::Text::NBSP).join('')), size: 12}
+      {text: "#{order.custom_value(@cdefs[:ord_change_log])}".gsub("\t", Array.new(4, Prawn::Text::NBSP).join('')), size: 12}
     ]
 
     d.repeat(:all) do

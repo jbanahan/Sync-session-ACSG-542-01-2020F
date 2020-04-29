@@ -7,7 +7,7 @@ describe OpenChain::EntityCompare::ComparatorRegistryHelper do
   }
 
   let (:registry) {
-    Class.new do 
+    Class.new do
       extend OpenChain::EntityCompare::ComparatorRegistryHelper
     end
   }
@@ -21,15 +21,15 @@ describe OpenChain::EntityCompare::ComparatorRegistryHelper do
     it "should only allow class objects" do
       d = double('FaileEvenThoughInterfaceIsGood')
       allow(d).to receive(:compare)
-      expect{registry.register(d)}.to raise_error(/be a class/)
+      expect {registry.register(d)}.to raise_error(/be a class/)
     end
     it "should only allow objects that respond_to?(:compare)" do
-      expect{registry.register(Object)}.to raise_error "All comparators must respond to #compare"
+      expect {registry.register(Object)}.to raise_error "All comparators must respond to #compare"
     end
 
     it "forces comparators to implement accept? method" do
       c = Class.new { def self.compare; end }
-      expect{registry.register(c)}.to raise_error "All comparators must respond to #accept?"
+      expect {registry.register(c)}.to raise_error "All comparators must respond to #accept?"
     end
   end
   describe "registered" do

@@ -20,7 +20,7 @@
 
 class SpiRate < ActiveRecord::Base
   attr_accessible :country_id, :program_code, :rate, :rate_text, :special_rate_key
-  
+
   belongs_to :country
   validates :country, presence: true
   validates :special_rate_key, presence: true

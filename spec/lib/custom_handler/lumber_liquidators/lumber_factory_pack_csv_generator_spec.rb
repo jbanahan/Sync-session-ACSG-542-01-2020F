@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenera
   describe 'generate_csv' do
     let :vendor_address do
       china = Factory(:country, iso_code: "CN", name: "China")
-      addr = Address.new(system_code:'VCode-CORP',name:'Corporate',line_1:'VA',city:'VC',state:'VS',postal_code:'VP',country:china)
+      addr = Address.new(system_code:'VCode-CORP', name:'Corporate', line_1:'VA', city:'VC', state:'VS', postal_code:'VP', country:china)
       addr.save!
       addr
     end
@@ -17,11 +17,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenera
     end
 
     let :product1 do
-      Product.new(unique_identifier:'PROD1',name:'PNAME1')
+      Product.new(unique_identifier:'PROD1', name:'PNAME1')
     end
 
     let :product2 do
-      Product.new(unique_identifier:'0000PROD2',name:'PNAME2')
+      Product.new(unique_identifier:'0000PROD2', name:'PNAME2')
     end
 
     let :order1 do

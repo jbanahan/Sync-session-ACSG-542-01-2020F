@@ -2,19 +2,19 @@ describe OpenChain::CustomHandler::AnnInc::AnnClassificationDefaultComparator do
   subject { described_class }
   let (:ann) { Factory(:importer, system_code: "ann") }
   let (:cdef) { subject.new.cdef }
-  
+
   describe "compare" do
     let(:prod) { Factory(:product) }
-    
+
     let(:classi_1) { Factory(:classification, product: prod) }
-    
+
     let(:classi_2) do
       c = Factory(:classification, product: prod)
       c.update_custom_value! cdef, ""
       c
     end
-    
-    let(:classi_3) do 
+
+    let(:classi_3) do
       c = Factory(:classification, product: prod)
       c.update_custom_value! cdef, "Multi"
       c
@@ -25,9 +25,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnClassificationDefaultComparator do
       new_snap = JSON.parse CoreModule::PRODUCT.entity_json(prod)
       expect_any_instance_of(subject).to receive(:get_json_hash).and_return new_snap
       expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration, nil, "AnnClassificationDefaultComparator")
-     
+
       subject.compare("Product", prod.id, nil, nil, nil, "new_bucket", "new_path", "new_version")
-     
+
       expect(classi_1.reload.custom_value(cdef)).to eq "Not Applicable"
       expect(classi_2.reload.custom_value(cdef)).to eq "Not Applicable"
       expect(classi_3.reload.custom_value(cdef)).to eq "Multi"
@@ -38,9 +38,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnClassificationDefaultComparator do
       new_snap = JSON.parse CoreModule::PRODUCT.entity_json(prod)
       expect_any_instance_of(subject).to receive(:get_json_hash).and_return new_snap
       expect_any_instance_of(Product).to_not receive(:create_snapshot)
-     
+
       subject.compare("Product", prod.id, nil, nil, nil, "new_bucket", "new_path", "new_version")
-     
+
       expect(classi_3.reload.custom_value(cdef)).to eq "Multi"
     end
   end

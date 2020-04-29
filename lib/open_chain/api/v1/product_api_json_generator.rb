@@ -36,7 +36,7 @@ module OpenChain; module Api; module V1; class ProductApiJsonGenerator
     h = to_entity_hash(obj, field_list)
     h[:permissions] = render_permissions(obj)
     if render_attachments?
-      render_attachments(obj,h)
+      render_attachments(obj, h)
     end
 
     OpenChain::Registries::CustomizedApiResponseRegistry.customize_product_response(obj, current_user, h, params)
@@ -46,7 +46,7 @@ module OpenChain; module Api; module V1; class ProductApiJsonGenerator
 
   private
     def render_permissions product
-      cu = current_user #current_user is method, so saving as variable to prevent multiple calls
+      cu = current_user # current_user is method, so saving as variable to prevent multiple calls
       {
         can_view: product.can_view?(cu),
         can_edit: product.can_edit?(cu),

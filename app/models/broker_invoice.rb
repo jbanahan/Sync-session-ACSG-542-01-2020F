@@ -43,34 +43,34 @@ class BrokerInvoice < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
 
-  attr_accessible :bill_to_address_1, :bill_to_address_2, :bill_to_city, 
-    :bill_to_country_id, :bill_to_name, :bill_to_state, :bill_to_zip, 
-    :broker_reference, :currency, :customer_number, :entry_id, :fiscal_date, 
-    :fiscal_month, :fiscal_year, :invoice_date, :invoice_number, 
-    :invoice_total, :last_file_bucket, :last_file_path, :locked, 
+  attr_accessible :bill_to_address_1, :bill_to_address_2, :bill_to_city,
+    :bill_to_country_id, :bill_to_name, :bill_to_state, :bill_to_zip,
+    :broker_reference, :currency, :customer_number, :entry_id, :fiscal_date,
+    :fiscal_month, :fiscal_year, :invoice_date, :invoice_number,
+    :invoice_total, :last_file_bucket, :last_file_path, :locked,
     :source_system, :suffix, :summary_statement_id, :broker_invoice_lines_attributes, :entry
-  
+
   belongs_to :entry, touch: true, inverse_of: :broker_invoices
   belongs_to :bill_to_country, :class_name=>'Country'
   belongs_to :summary_statement
   has_many :broker_invoice_lines, :dependent => :destroy, :inverse_of=>:broker_invoice
-  
+
   before_validation {self.currency = "USD" if self.currency.blank?}
   validates_uniqueness_of :invoice_number, {:scope => :source_system}
 
   accepts_nested_attributes_for :broker_invoice_lines, :allow_destroy=>true, :reject_if => lambda {|q|
     q[:charge_description].blank? || q[:charge_amount].blank?
   }
-  
-  #calculate HST by looking up all included charge codes and calculating HST amount at 13% fixed rate for Ontario
+
+  # calculate HST by looking up all included charge codes and calculating HST amount at 13% fixed rate for Ontario
   def hst_amount
-    self.broker_invoice_lines.each.inject(BigDecimal("0.00")) {|sum,line| sum + (line.hst_percent.blank? || line.charge_amount.blank? ? 0 : (line.hst_percent * line.charge_amount))}
+    self.broker_invoice_lines.each.inject(BigDecimal("0.00")) {|sum, line| sum + (line.hst_percent.blank? || line.charge_amount.blank? ? 0 : (line.hst_percent * line.charge_amount))}
   end
 
   def can_view? user
     self.class.can_view? user, self.entry
   end
-  
+
   def can_edit? user
     !self.locked? && can_view?(user) && user.edit_broker_invoices?
   end

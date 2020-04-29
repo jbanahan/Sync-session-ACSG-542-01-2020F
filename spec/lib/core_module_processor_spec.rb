@@ -1,7 +1,7 @@
 describe OpenChain::CoreModuleProcessor do
 
   describe "validate_and_save_module" do
-    before :each do 
+    before :each do
       @object = Product.new :unique_identifier => "unique_id"
       User.current = Factory(:user)
     end
@@ -16,7 +16,7 @@ describe OpenChain::CoreModuleProcessor do
       FieldValidatorRule.create! starts_with: "unique", module_type: "Product", model_field_uid: "prod_uid"
 
       # Create a custom field to ensure they're being parsed
-      prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
+      prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
       params = {'product'=>{"prod_uid" => "unique_id", prod_cd.model_field_uid.to_s => "custom"}}
 
       succeed = nil
@@ -38,7 +38,7 @@ describe OpenChain::CoreModuleProcessor do
       FieldValidatorRule.create! starts_with: "unique", module_type: "Product", model_field_uid: "prod_uid"
 
       # Create a custom field to ensure they're being parsed
-      prod_cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>:string)
+      prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
       params = {'product'=>{"prod_uid" => "unique_id", prod_cd.model_field_uid.to_s => "custom"}}
 
       succeed = nil
@@ -58,7 +58,7 @@ describe OpenChain::CoreModuleProcessor do
 
       succeed = nil
       snapshot = nil
-      succeed_lambda = -> p,s {succeed = true; snapshot = s}
+      succeed_lambda = -> p, s {succeed = true; snapshot = s}
       described_class.validate_and_save_module params, p, params, User.current, succeed_lambda, nil
       expect(succeed).to be_truthy
       expect(EntitySnapshot.first.id).to eq snapshot.id
@@ -85,8 +85,8 @@ describe OpenChain::CoreModuleProcessor do
 
       # Create a custom field to ensure they're being parsed
       country = Factory(:country)
-      prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
-      
+      prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
+
       params = {
         'product'=> {
           'prod_uid' => 'unique_id',
@@ -128,7 +128,7 @@ describe OpenChain::CoreModuleProcessor do
       p = cl.product
 
       country = Factory(:country)
-      prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
+      prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
 
       params = {
         'product'=> {
@@ -137,7 +137,7 @@ describe OpenChain::CoreModuleProcessor do
           prod_cd.model_field_uid.to_s => "custom",
           'classifications_attributes' => {'0' => {
             'id' => cl.id.to_s,
-            # This is actually updating the country, which won't really happen in usage, but there's no 
+            # This is actually updating the country, which won't really happen in usage, but there's no
             # technical reason that it shouldn't work behind the scenese
             'class_cntry_iso' => country.iso_code,
             'tariff_records_attributes' => {'0' => {
@@ -176,7 +176,7 @@ describe OpenChain::CoreModuleProcessor do
       p = cl.product
 
       country = Factory(:country)
-      prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
+      prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
 
       params = {
         'product'=> {
@@ -346,7 +346,7 @@ describe OpenChain::CoreModuleProcessor do
 
       succeed = nil
       snapshot = nil
-      succeed_lambda = -> o,s {succeed = true; snapshot = s}
+      succeed_lambda = -> o, s {succeed = true; snapshot = s}
       described_class.validate_and_save_module params, o, params, User.current, succeed_lambda, nil
       expect(succeed).to be_truthy
       expect(EntitySnapshot.first.id).to eq snapshot.id
@@ -407,6 +407,6 @@ describe OpenChain::CoreModuleProcessor do
       expect(yielded).to eq [@obj, @obj2]
       expect(good_count).to eq 2
     end
-    
+
   end
 end

@@ -5,10 +5,10 @@ require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGenerator < OpenChain::FixedPositionGenerator
   include OpenChain::FtpFileSupport
 
-  SiemensEntry ||= Struct.new :entry_port, :entry_number, :broker_reference, :release_date, :cargo_control_number, :ship_mode, :direct_shipment_date, :port_exit, :accounting_date, :importer_tax_id, 
+  SiemensEntry ||= Struct.new :entry_port, :entry_number, :broker_reference, :release_date, :cargo_control_number, :ship_mode, :direct_shipment_date, :port_exit, :accounting_date, :importer_tax_id,
                                 :customer_number, :customer_name, :entry_type, :total_duty, :total_sima, :total_excise, :total_gst, :total_amount, :commercial_invoice_lines
 
-  SiemensInvLine ||= Struct.new :vendor_name, :vendor_number, :currency, :exchange_rate, :po_number, :part_number, :quantity, :value, :b3_line_duty_value, :hts, :tariff_provision, :country_origin, :spi, :country_export, :line_number, :duty_rate, 
+  SiemensInvLine ||= Struct.new :vendor_name, :vendor_number, :currency, :exchange_rate, :po_number, :part_number, :quantity, :value, :b3_line_duty_value, :hts, :tariff_provision, :country_origin, :spi, :country_export, :line_number, :duty_rate,
                                   :sequence_number, :sima_code, :subheader_number, :sima_value, :uom, :gst_rate_code, :gst_amount, :excise_rate_code, :excise_amount,
                                   :value_for_tax, :duty, :entered_value, :special_authority, :description, :value_for_duty_code, :customs_line_number
 
@@ -54,11 +54,11 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
           # I'm a little uncomfortable putting the entry sync record creations and counter in the same transaction
           # as the ftp (since it's possible the ftp could take a bit), but we really do need to our best to ensure that
-          # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending 
+          # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending
           # to our local connect ftp server on the same network segment the transfer should be very quick so the transaction
           # shouldn't span too much clock time.
           sync_records = []
-          Entry.transaction do 
+          Entry.transaction do
             generated_entries.each do |e|
               sync_records << e.sync_records.build(trading_partner: sync_code, sent_at: send_time, confirmed_at: confirmed)
             end
@@ -66,12 +66,12 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
             counter_item.update! json_data: {counter: counter}.to_json
 
             # At this point, since we're in a transaction, the only issue we could run into is if the ftp was successful, but then saving the ftp session
-            # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.  
+            # data off had an error - which would mean we sent the file but then the sync records and counter would get rolled back.
             # The chances of that happening are so miniscule that I'm not going to bother handling that condition.
             ftp_sync_file encrypted_file, sync_records
 
             sync_records.each {|sr| sr.save! }
-            
+
             completed = true
           end
         ensure
@@ -88,9 +88,9 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
   def generate_file_data_to_tempfiles entries, filename
     # Ensure only a single process can run this at a time.
-    Lock.acquire_for_class(self.class, yield_in_transaction: false) do 
+    Lock.acquire_for_class(self.class, yield_in_transaction: false) do
       Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |billing_file|
-        # We're encoding the file data directly when writing to the file stream...so make sure 
+        # We're encoding the file data directly when writing to the file stream...so make sure
         # the IO doesn't do any extra encoding translations.
         billing_file.binmode
         # Add the original_filename method, both the ftp and the mailer will utilize this method to name the file when sending
@@ -99,7 +99,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
         Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |billing_report|
           write_report_headers billing_report
           Attachment.add_original_filename_method billing_report, "siemens-billing-#{Time.zone.now.strftime("%Y-%m-%d")}.csv"
-          
+
           valid_entries = []
           entries.each do |e|
             valid = write_entry_data billing_file, billing_report, generate_entry_data(e)
@@ -146,7 +146,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     end
 
     entry_written
-  end 
+  end
 
   def write_entry_data_line io, entry, line, first_entry_line = false
     s = StringIO.new
@@ -156,18 +156,18 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     s << num(line.value, 14, 2) # 50-63
     s << num(line.b3_line_duty_value, 11, 2, numeric_strip_decimals: true, numeric_no_pad_zero: true) # 64-74
     s << str(line.hts, 10) # 75 - 84
-    s << num(line.tariff_provision, 4, 0, numeric_pad_char: '0') #85-88
-    s << num(entry.entry_port, 4) #89-92
-    s << str(entry.entry_number, 14) #93-106
+    s << num(line.tariff_provision, 4, 0, numeric_pad_char: '0') # 85-88
+    s << num(entry.entry_port, 4) # 89-92
+    s << str(entry.entry_number, 14) # 93-106
     s << date(entry.release_date) # 107-114
-    s << str(line.country_origin, 3) #115-117
-    s << num(line.spi, 3) #118-120
-    s << str(line.country_export, 3) #121-123
+    s << str(line.country_origin, 3) # 115-117
+    s << num(line.spi, 3) # 118-120
+    s << str(line.country_export, 3) # 121-123
     s << num(line.customs_line_number, 3) # 124-126
     s << str(line.vendor_name, 35) # 127-161
     s << str(line.currency, 3) # 162-164
-    s << str(entry.cargo_control_number, 25) #165-189
-    s << str(entry.ship_mode, 1) #190
+    s << str(entry.cargo_control_number, 25) # 165-189
+    s << str(entry.ship_mode, 1) # 190
     s << num(line.duty_rate, 9, 5) # 191 -199
     s << num(0, 9, 2) # 200-208
     s << num(line.duty, 11, 2) # 209 - 219
@@ -175,7 +175,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     s << str(line.vendor_number, 15) # 234-248
     s << num(line.exchange_rate, 9, 6) # 249-257
     s << num(line.value_for_duty_code, 3) # 258-260
-    s << num(line.entered_value, 11, 2, numeric_strip_decimals: true) #261-271
+    s << num(line.entered_value, 11, 2, numeric_strip_decimals: true) # 261-271
     s << str(line.special_authority, 16) # 272 - 287
     s << str(line.description, 59) # 288 - 346
     s << str(line.sequence_number, 16) # 347-362
@@ -184,19 +184,19 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     s << num(line.sima_value, 11, 2) # 371-281
     s << date(entry.direct_shipment_date) # 382-389
     s << num(entry.port_exit, 4) # 390-393
-    s << str(line.uom, 3) #394-396
-    s << date(entry.accounting_date) #397-404
-    s << str(entry.importer_tax_id, 15) #405-419
-    s << str(entry.customer_number, 10) #420-429
-    s << str(entry.customer_name, 35) #430 - 464
-    s << str(entry.entry_type, 2) #465-466
+    s << str(line.uom, 3) # 394-396
+    s << date(entry.accounting_date) # 397-404
+    s << str(entry.importer_tax_id, 15) # 405-419
+    s << str(entry.customer_number, 10) # 420-429
+    s << str(entry.customer_name, 35) # 430 - 464
+    s << str(entry.entry_type, 2) # 465-466
     s << num(line.gst_rate_code, 4, 2, numeric_strip_decimals: true) # 467-470
     s << num(line.gst_amount, 14, 2) # 471-484
     s << str("", 14) # Previous Transaction # (not using) 485-498
     s << num(0, 3, 0, numeric_pad_char: '0') # 499-501
     s << num(line.excise_rate_code, 7, 0, numeric_pad_char: '0') # 502-508
     s << num(line.excise_amount, 9, 2) # 509-517
-    s << num(line.value_for_tax, 14, 2) #518-531
+    s << num(line.value_for_tax, 14, 2) # 518-531
     if first_entry_line
       s << num(entry.total_duty, 14, 2) # 532-545 (Total Duty)
       s << num(entry.total_sima, 11, 2) # 546-556 (Total Sima)
@@ -216,7 +216,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     s.flush
     s.rewind
 
-    # Handle the encoding directly here and just replace non-windows charset chars w/ ?.  
+    # Handle the encoding directly here and just replace non-windows charset chars w/ ?.
     # These are only going to be in descriptions or something like that anyway, so it's not going
     # to be a big deal if they're not showing 100% correct.
     io.write encode(s.read)
@@ -281,7 +281,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
     e.customer_number = entry.customer_number
     e.customer_name = entry.customer_name
     e.entry_type = entry.entry_type
-    
+
     e.commercial_invoice_lines = []
 
     b3_line_duty_values = Hash.new() {|h, k| h[k] = BigDecimal(0)}
@@ -313,8 +313,8 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
           l.country_origin = country_code(line.country_origin_code, line.state_origin_code)
           l.spi = tar.spi_primary
           l.country_export = country_code(line.country_export_code, line.state_export_code)
-          
-          
+
+
           l.duty_rate = tar.duty_rate.try(:nonzero?) ? (tar.duty_rate * 100) : BigDecimal(0)
           l.duty = tar.duty_amount || BigDecimal(0)
           l.entered_value = tar.entered_value || BigDecimal(0)
@@ -378,7 +378,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
   end
 
   private
-    
+
     def country_code country_code, state_code
       country_code == "US" ? "U" + state_code : country_code
     end
@@ -410,13 +410,13 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       KeyJsonItem.siemens_billing('counter').first
     end
 
-    def sync_code 
+    def sync_code
       "Siemens Billing"
     end
 
     def siemens_tax_ids
-      ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001", 
-        "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001", 
+      ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001",
+        "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001",
         "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
         "761672690RM0001", "768899288RM0001", "858557895RM0001", "772310736RM0001", "772310736RM0002"]
     end

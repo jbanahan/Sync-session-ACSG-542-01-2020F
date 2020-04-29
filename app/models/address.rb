@@ -35,10 +35,10 @@ require 'digest/md5'
 
 class Address < ActiveRecord::Base
   attr_accessible :address_hash, :address_type, :city, :company_id, :company,
-    :country_id, :country, :fax_number, :in_address_book, :line_1, :line_2, 
+    :country_id, :country, :fax_number, :in_address_book, :line_1, :line_2,
     :line_3, :name, :phone_number, :postal_code, :shipping, :state, :system_code,
     :port_id
-  
+
   belongs_to :company
 	belongs_to :country
   belongs_to :port
@@ -46,7 +46,7 @@ class Address < ActiveRecord::Base
   before_destroy :check_in_use
   has_many :product_factories, dependent: :destroy
   has_many :products, through: :product_factories
-  #has_and_belongs_to_many :products, :join_table=>"product_factories", :foreign_key=>'address_id', :association_foreign_key=>'product_id'
+  # has_and_belongs_to_many :products, :join_table=>"product_factories", :foreign_key=>'address_id', :association_foreign_key=>'product_id'
 
   def can_view? user
     return user.company.master? ||
@@ -67,32 +67,32 @@ class Address < ActiveRecord::Base
     base_object.where search_where user
   end
 
-  #make a key that will match the #address_hash if the two addresses are the same
+  # make a key that will match the #address_hash if the two addresses are the same
   def self.make_hash_key a
     base = "#{a.name}#{a.line_1}#{a.line_2}#{a.line_3}#{a.city}#{a.state}#{a.postal_code}#{a.country_id}#{a.system_code}"
     if !a.address_type.blank?
       base += "#{a.address_type}"
     end
-    
+
     Digest::MD5.hexdigest base
   end
 
   def google_maps_url query_options={}
     inner_opts = {q:"#{self.line_1} #{self.line_2} #{self.line_3}, #{self.city} #{self.state}, #{self.country.try(:iso_code)}",
-      key:'AIzaSyD-m0qPlvgU9SZ9eniFuRLF8DJD7CqszZU',zoom:6}
+      key:'AIzaSyD-m0qPlvgU9SZ9eniFuRLF8DJD7CqszZU', zoom:6}
     qry = inner_opts.merge(query_options).to_query
     "https://www.google.com/maps/embed/v1/place?#{qry}"
   end
 
   def self.find_shipping
-		return self.where(["shipping = ?",true])
+		return self.where(["shipping = ?", true])
   end
 
   def full_address_array skip_name: false
     ary = skip_name ? [] : [self.name]
-    [self.line_1,self.line_2,self.line_3].each {|x| ary << x unless x.blank?}
+    [self.line_1, self.line_2, self.line_3].each {|x| ary << x unless x.blank?}
 
-    #last line is combined
+    # last line is combined
     last_line = ""
     last_line << self.city unless self.city.blank?
     last_line << ", " if !self.city.blank? && !self.state.blank?

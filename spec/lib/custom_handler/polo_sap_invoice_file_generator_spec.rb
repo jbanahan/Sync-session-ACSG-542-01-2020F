@@ -8,15 +8,15 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     with_fenix_id(Factory(:importer), "806167003RM0001")
   }
 
-  let! (:rl_canada_list) { 
+  let! (:rl_canada_list) {
     MailingList.create! system_code: "sap_billing", name: "SAP Billing", email_addresses: "rl_canada@rl.com", user: user, company: importer
   }
 
-  let! (:club_monaco_list) { 
+  let! (:club_monaco_list) {
     MailingList.create! system_code: "sap_billing_2", name: "SAP Billing 2", email_addresses: "club_monaco@rl.com", user: user, company: importer
   }
 
-  let! (:factory_stores_list) { 
+  let! (:factory_stores_list) {
     MailingList.create! system_code: "sap_billing_3", name: "SAP Billing 3", email_addresses: "factory_stores@rl.com", user: user, company: importer
   }
 
@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     @tariff_line = @cil.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("4.00"))
     @tariff_line2 = @cil.commercial_invoice_tariffs.create!(:duty_amount => BigDecimal.new("1.99"))
 
-    @broker_invoice = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013,06,01), :invoice_number => 'INV#')
+    @broker_invoice = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 01), :invoice_number => 'INV#')
     @broker_invoice_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
     @broker_invoice_line2 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("4.00"))
     @broker_invoice_line3 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("-1.00"))
@@ -415,7 +415,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
           # create a second broker invoice for the same entry, and make sure it's output in FFI format
           # this also tests making multiple export jobs and attaching multiple files to the email
 
-          @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013,06,02), :invoice_number => 'INV2')
+          @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 02), :invoice_number => 'INV2')
           @broker_invoice2_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
 
           @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
@@ -515,12 +515,12 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         expect(sheet.name).to eq("FFI")
         now = job.start_time.strftime("%m/%d/%Y")
         rows = []
-        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "31", "100023825", nil, BigDecimal.new("18.99"), "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "49999999", nil, @entry.entry_number, nil]
-        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23109000", nil, @entry.total_duty, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "Duty"]
-        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @entry.total_gst, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "GST"]
-        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @broker_invoice_line1.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line1.charge_description[0, 50]]
-        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "52111300", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
-        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017',now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line3.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017', now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "31", "100023825", nil, BigDecimal.new("18.99"), "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "49999999", nil, @entry.entry_number, nil]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017', now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23109000", nil, @entry.total_duty, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "Duty"]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017', now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @entry.total_gst, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, "GST"]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017', now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "14311000", nil, @broker_invoice_line1.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line1.charge_description[0, 50]]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017', now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "52111300", nil, @broker_invoice_line2.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line2.charge_description[0, 50]]
+        rows << [@broker_invoice.invoice_date.strftime("%m/%d/%Y"), 'KR', '1017', now, 'CAD', nil, nil, nil, @broker_invoice.invoice_number, "40", "23101900", nil, @broker_invoice_line3.charge_amount, "0001", now, nil, nil, nil, nil, nil, nil, nil, nil, nil, "19999999", nil, @entry.entry_number, @broker_invoice_line3.charge_description[0, 50]]
 
         expect(sheet.row(1)).to eq(rows[0])
         expect(sheet.row(2)).to eq(rows[1])
@@ -767,7 +767,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
         # this also tests making multiple export jobs and attaching multiple files to the email
         make_sap_po
 
-        @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013,06,01), :invoice_number => 'INV2')
+        @broker_invoice2 = Factory(:broker_invoice, :entry => @entry, :invoice_date => Date.new(2013, 06, 01), :invoice_number => 'INV2')
         @broker_invoice2_line1 = Factory(:broker_invoice_line, :broker_invoice => @broker_invoice, :charge_amount => BigDecimal("5.00"))
 
         @gen.generate_and_send_invoices :rl_canada, Time.zone.now, [@broker_invoice, @broker_invoice2]
@@ -922,7 +922,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
     it "should instantiate a new generator and run the process" do
       # The only thing this method does is instantiate a new generator and call a method..just make sure it's doing that
       expect_any_instance_of(OpenChain::CustomHandler::PoloSapInvoiceFileGenerator).to receive(:find_generate_and_send_invoices)
-      OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.run_schedulable {}
+      OpenChain::CustomHandler::PoloSapInvoiceFileGenerator.run_schedulable{}
     end
   end
 
@@ -932,7 +932,7 @@ describe OpenChain::CustomHandler::PoloSapInvoiceFileGenerator do
       # during the invoice file generation
       expect(@gen).to receive(:determine_invoice_output_format).and_raise "Error to log."
       sheet = nil
-      expect(OpenMailer).to receive(:send_generic_exception) do |ex,messages,message,trace,file_paths|
+      expect(OpenMailer).to receive(:send_generic_exception) do |ex, messages, message, trace, file_paths|
         expect(messages[0]).to eq("See attached spreadsheet for full list of invoice numbers that could not be generated.")
         sheet = Spreadsheet.open(file_paths[0]).worksheet 0
         obj = double('mailer')

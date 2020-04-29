@@ -1,7 +1,7 @@
 describe OpenChain::Report::HmStatisticsReport do
-  let!(:day_before) {ActiveSupport::TimeZone["UTC"].local(2016,01,14)}
-  let!(:assigned_day) {ActiveSupport::TimeZone["UTC"].local(2016,01,15)}
-  let!(:day_after) {ActiveSupport::TimeZone["UTC"].local(2016,01,16)}
+  let!(:day_before) {ActiveSupport::TimeZone["UTC"].local(2016, 01, 14)}
+  let!(:assigned_day) {ActiveSupport::TimeZone["UTC"].local(2016, 01, 15)}
+  let!(:day_after) {ActiveSupport::TimeZone["UTC"].local(2016, 01, 16)}
   let!(:report) { described_class.new }
 
   describe "run_report" do
@@ -36,12 +36,12 @@ describe OpenChain::Report::HmStatisticsReport do
       expect(ocean.name).to eq "Ocean"
       expect(ocean.row(0)).to eq ["Export Country Codes", "Transport Mode Code", "Release Date", "Invoice No.", "Container No.", "Entry No."]
       tz_adj_assigned_day = assigned_day.in_time_zone(u.time_zone).strftime("%Y-%m-%d %H:%M")
-      expect(ocean.row(1)[0..5]).to eq [ "US", "10", tz_adj_assigned_day, "123456", "cont num", "ent num"] #for some reason datetime doesn't evaluate properly without '[0..5]'
-      
+      expect(ocean.row(1)[0..5]).to eq [ "US", "10", tz_adj_assigned_day, "123456", "cont num", "ent num"] # for some reason datetime doesn't evaluate properly without '[0..5]'
+
       air = wb.worksheets[2]
       expect(air.name).to eq "Air"
       expect(air.row(0)).to eq ["Export Country Codes", "House Bills", "Master Bills", "Transport Mode Code", "Release Date", "Invoice No.", "Entry No."]
-      expect(air.row(1)[0..6]).to eq ["US", "house", "master", "40", tz_adj_assigned_day, "123456", "ent num"] #for some reason datetime doesn't evaluate properly without '[0..6]'
+      expect(air.row(1)[0..6]).to eq ["US", "house", "master", "40", tz_adj_assigned_day, "123456", "ent num"] # for some reason datetime doesn't evaluate properly without '[0..6]'
     end
   end
 
@@ -87,7 +87,7 @@ describe OpenChain::Report::HmStatisticsReport do
     end
 
     it "only includes entries with release date in specified range" do
-      ent.update_attributes(release_date: DateTime.new(2015,01,01))
+      ent.update_attributes(release_date: DateTime.new(2015, 01, 01))
       query = described_class.new.raw_air_query(day_before, day_after)
       results = ActiveRecord::Base.connection.execute query
       expect(results.count).to eq 0
@@ -133,7 +133,7 @@ describe OpenChain::Report::HmStatisticsReport do
     end
 
     it "only includes entries with release date in specified range" do
-      ent.update_attributes(release_date: DateTime.new(2015,01,01))
+      ent.update_attributes(release_date: DateTime.new(2015, 01, 01))
       query = described_class.new.raw_ocean_query(day_before, day_after)
       results = ActiveRecord::Base.connection.execute query
       expect(results.count).to eq 0
@@ -177,7 +177,7 @@ describe OpenChain::Report::HmStatisticsReport do
     end
 
     it "only includes entries with release date in specified range" do
-      ent.update_attributes(release_date: DateTime.new(2015,01,01))
+      ent.update_attributes(release_date: DateTime.new(2015, 01, 01))
       query = described_class.new.ocean_tu_query(day_before, day_after)
       results = ActiveRecord::Base.connection.execute query
       expect(results.count).to eq 0
@@ -241,7 +241,7 @@ describe OpenChain::Report::HmStatisticsReport do
     end
 
     it "only includes entries with release date in specified range" do
-      ent_5.update_attributes(release_date: DateTime.new(2015,01,01))
+      ent_5.update_attributes(release_date: DateTime.new(2015, 01, 01))
       query = described_class.new.orders_query(day_before, day_after)
       results = ActiveRecord::Base.connection.execute query
       expect(results.count).to eq 2
@@ -299,7 +299,7 @@ describe OpenChain::Report::HmStatisticsReport do
     end
 
     it "only includes entries with release date in specified range" do
-      ent.update_attributes(release_date: DateTime.new(2015,01,01))
+      ent.update_attributes(release_date: DateTime.new(2015, 01, 01))
       query = described_class.new.totals_query(day_before, day_after)
       results = ActiveRecord::Base.connection.execute query
       expect(results.first[0]).to be_nil
@@ -316,7 +316,7 @@ describe OpenChain::Report::HmStatisticsReport do
       report.data_holder(mh, "US")
       mh["US"].total_unit = 1
       report.load_air_tu_dh results, mh
-      
+
       expect(mh["US"].air_unit).to eq 3
       expect(mh["US"].total_unit).to eq 4
     end
@@ -326,7 +326,7 @@ describe OpenChain::Report::HmStatisticsReport do
       report.data_holder(mh, "US")
       mh["US"].total_unit = 1
       report.load_air_tu_dh results, mh
-      
+
       expect(mh["US"].air_unit).to eq 2
       expect(mh["US"].total_unit).to eq 3
     end

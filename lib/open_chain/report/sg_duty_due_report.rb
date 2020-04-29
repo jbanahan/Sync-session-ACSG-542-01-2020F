@@ -45,7 +45,7 @@ module OpenChain; module Report; class SgDutyDueReport
   end
 
   def generate_pdf(user, company)
-    Prawn::Font::AFM.hide_m17n_warning = true #suppress warning triggered by #indent
+    Prawn::Font::AFM.hide_m17n_warning = true # suppress warning triggered by #indent
     d = Prawn::Document.new page_size: "LETTER", page_layout: :landscape, margin: [36, 20, 36, 20]
     d.font("Courier", :size => 10)
     d.repeat(:all, :dynamic => true) { d.text_box header(d.page_number, company.name), :at => [0, d.bounds.top] }
@@ -54,7 +54,7 @@ module OpenChain; module Report; class SgDutyDueReport
       write_body content, create_digest(get_entries user, company)
       d.table(content, header: true, cell_style: { borders: []}, width: table_width, column_widths: column_widths) do |t|
         t.columns(5).style(align: :right)
-        t.rows(0..-1).style(padding: [0,5,0,5])
+        t.rows(0..-1).style(padding: [0, 5, 0, 5])
       end
     end
     d
@@ -62,12 +62,12 @@ module OpenChain; module Report; class SgDutyDueReport
 
   def write_body content, digest
     digest.each do |group|
-      date_data = {duties: group[:date_total_duties_and_fees], statement_appr: group[:daily_statement_approved], 
+      date_data = {duties: group[:date_total_duties_and_fees], statement_appr: group[:daily_statement_approved],
                    statement_num: group[:daily_statement_number], debit: group[:est_debit_date] }
-      group.keys.select{|k| k.is_a?(String)}.each do |sched_d|
-        group[sched_d][:entries].each do |ent| 
-          content << row(ent[:entry_number], ent[:entry_type], ent[:release_date], 
-                         ent[:arrival_date], ent[:broker_reference], ent[:total_duties_and_fees], 
+      group.keys.select {|k| k.is_a?(String)}.each do |sched_d|
+        group[sched_d][:entries].each do |ent|
+          content << row(ent[:entry_number], ent[:entry_type], ent[:release_date],
+                         ent[:arrival_date], ent[:broker_reference], ent[:total_duties_and_fees],
                          ent[:customer_references] || "")
         end
         content << sub_total(group[sched_d][:port_name], sched_d, group[sched_d][:port_total_duties_and_fees],
@@ -88,14 +88,14 @@ module OpenChain; module Report; class SgDutyDueReport
                                              .where("release_date IS NOT NULL")
                                              .where("duty_due_date >= ?", Time.zone.now.in_time_zone(user.time_zone).to_date)
                                              .where(monthly_statement_due_date: nil)
-                                             .order("release_date"))                                      
+                                             .order("release_date"))
       else []
     end
   end
-  
-  #returns array of hashes, each representing a group of entries that corresponds to a release_date,
-  #except when it's Fri/Sat/Sun, which is treated as a single date
-  def create_digest(entries) 
+
+  # returns array of hashes, each representing a group of entries that corresponds to a release_date,
+  # except when it's Fri/Sat/Sun, which is treated as a single date
+  def create_digest(entries)
     digest = []
     previous_date = nil
     group_ptr = nil
@@ -120,25 +120,25 @@ module OpenChain; module Report; class SgDutyDueReport
   end
 
   def weekend? date
-    weekend = [0,5,6]
+    weekend = [0, 5, 6]
     weekend.include? date.wday
   end
 
-  def init_group_hsh ent 
-    {ent[:port_sched_d] => init_port_hsh(ent), 
+  def init_group_hsh ent
+    {ent[:port_sched_d] => init_port_hsh(ent),
      date_total_duties_and_fees: 0,
      daily_statement_approved: ent[:daily_statement_approved_date],
      daily_statement_number: Set.new([ent[:daily_statement_number]]),
      est_debit_date: ent[:duty_due_date]}
   end
-  
+
   def init_port_hsh ent
     {port_total_duties_and_fees: 0, port_name: ent[:port_name], entries: []}
   end
 
   def init_entry_hsh ent
-    {release_date: ent[:release_date], arrival_date: ent[:arrival_date], broker_reference: ent[:broker_reference], 
-     entry_number: ent[:entry_number], entry_type: ent[:entry_type], customer_references: ent[:customer_references], 
+    {release_date: ent[:release_date], arrival_date: ent[:arrival_date], broker_reference: ent[:broker_reference],
+     entry_number: ent[:entry_number], entry_type: ent[:entry_type], customer_references: ent[:customer_references],
      total_duties_and_fees: ent[:total_duties_and_fees]}
   end
 
@@ -172,7 +172,7 @@ module OpenChain; module Report; class SgDutyDueReport
   def forecast_total(due, daily, debit)
     [{ content: "#{indent 5}FORECASTED TOTAL FOR REGULAR IMPORTER STATEMENTS", colspan: 5 }, number_to_currency(due), "REGULAR DAILY: #{date(daily)}  EST. DEBIT DATE: #{date(debit)}"]
   end
- 
+
   def date d
     d ? d.strftime("%m/%d/%Y") : "          "
   end

@@ -41,7 +41,7 @@ class FtpSessionsController < ApplicationController
         add_flash :errors, "File could not be found."
         redirect_to request.referrer
       else
-        send_data @ftp_session.data, 
+        send_data @ftp_session.data,
         :filename => @ftp_session.file_name,
         # :type => @ftp_session.file_type,
         :disposition => 'attachment'
@@ -49,7 +49,7 @@ class FtpSessionsController < ApplicationController
     }
   end
 
-  private 
+  private
   def secure
     FtpSession.find_can_view(current_user)
   end

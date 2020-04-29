@@ -1,12 +1,12 @@
 class FileImportProcessor
   require 'open_chain/field_logic.rb'
 
-#YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
-  def self.process(import_file,listeners=[])
-    find_processor(import_file,listeners).process_file
+# YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
+  def self.process(import_file, listeners=[])
+    find_processor(import_file, listeners).process_file
   end
   def self.preview(import_file)
-    find_processor(import_file,[PreviewListener.new]).preview_file
+    find_processor(import_file, [PreviewListener.new]).preview_file
   end
 
   def initialize(import_file, data, listeners=[])
@@ -52,7 +52,7 @@ class FileImportProcessor
     if import_file.attached_file_name.downcase.ends_with?("xls") or import_file.attached_file_name.downcase.ends_with?("xlsx")
       return SpreadsheetImportProcessor.new(import_file, OpenChain::XLClient.new(import_file.attached.path), listeners)
     else
-      return CSVImportProcessor.new(import_file,import_file.attachment_data,listeners)
+      return CSVImportProcessor.new(import_file, import_file.attachment_data, listeners)
     end
   end
   # get the array of SearchColumns to be used by the processor
@@ -86,10 +86,10 @@ class FileImportProcessor
           if fields_for_me_or_children? data_map, mod
             parent_mod = @module_chain.parent mod
             obj = find_or_build_by_unique_field data_map, object_map, mod
-            @core_object = obj if parent_mod.nil? #this is the top level object
+            @core_object = obj if parent_mod.nil? # this is the top level object
             object_map[mod] = obj
             custom_fields = {}
-            data_map[mod].each do |uid,data|
+            data_map[mod].each do |uid, data|
               mf = ModelField.find_by_uid uid
               # Rails evaluates boolean false as blank (boo!), so if we've got a boolean false value
               # don't skip it since we're likely dealing w/ a boolean field and should actually handle the value.
@@ -118,16 +118,16 @@ class FileImportProcessor
                 process_import mf, obj, data, user, messages, error_messages
               end
             end
-            obj = merge_or_create obj, save, !parent_mod #if !parent_mod then we're at the top level
+            obj = merge_or_create obj, save, !parent_mod # if !parent_mod then we're at the top level
             object_map[mod] = obj
           end
         end
         if save
-          object_map.values.each do |obj|
+          object_map.each_value do |obj|
             if obj.class.include?(StatusableSupport)
               sr = obj.status_rule
               obj.set_status
-              obj.save! unless sr == obj.status_rule #only save if status changed
+              obj.save! unless sr == obj.status_rule # only save if status changed
             end
           end
         end
@@ -166,7 +166,7 @@ class FileImportProcessor
           messages << "ERROR: #{m}"
         }
       end
-      fire_row row_number, nil, messages, true #true = failed
+      fire_row row_number, nil, messages, true # true = failed
     rescue => e
       e.log_me(["Imported File ID: #{@import_file.id}"])
       messages << "SYS ERROR: #{e.message}"
@@ -189,13 +189,13 @@ class FileImportProcessor
     end
   end
 
-  #is this record allowed to be added / updated based on the search_setup's update mode
+  # is this record allowed to be added / updated based on the search_setup's update mode
   def update_mode_check obj, update_mode, was_new
     case update_mode
     when "add"
       @created_objects = [] unless @created_objects
       FileImportProcessor.raise_validation_exception obj, "Cannot update record when Update Mode is set to \"Add Only\"." if !was_new && !@created_objects.include?(obj.id)
-      @created_objects << obj.id #mark that this object was created in this session so we know it can be updated again even in add mode
+      @created_objects << obj.id # mark that this object was created in this session so we know it can be updated again even in add mode
     when "update"
       FileImportProcessor.raise_validation_exception obj, "Cannot add a record when Update Mode is set to \"Update Only\"." if was_new
     end
@@ -204,9 +204,9 @@ class FileImportProcessor
   def get_boolean_value  data
     if !data.nil? && data.to_s.length>0
       dstr = data.to_s.downcase.strip
-      if ["y","t", "1"].include?(dstr[0])
+      if ["y", "t", "1"].include?(dstr[0])
         return true
-      elsif ["n","f", "0"].include?(dstr[0])
+      elsif ["n", "f", "0"].include?(dstr[0])
         return false
       end
     end
@@ -222,19 +222,19 @@ class FileImportProcessor
   end
 
   def data_map_has_values? data_map_hash
-    data_map_hash.values.each do |v|
+    data_map_hash.each_value do |v|
       return true unless v.blank?
     end
     return false
   end
 
-  def merge_or_create(base,save,is_top_level,options={})
+  def merge_or_create(base, save, is_top_level, options={})
     dest = base
     is_new = dest.new_record?
     before_save dest
     dest.save! if save
-    #if this is the top level object, check against the search_setup#update_mode
-    update_mode_check(dest,@import_file.update_mode,is_new) if is_top_level
+    # if this is the top level object, check against the search_setup#update_mode
+    update_mode_check(dest, @import_file.update_mode, is_new) if is_top_level
     return dest
   end
 
@@ -242,7 +242,7 @@ class FileImportProcessor
     get_rules_processor.before_save dest, @core_object
   end
 
-  def before_merge(shell,database_object)
+  def before_merge(shell, database_object)
     get_rules_processor.before_merge shell, database_object, @core_object
   end
 
@@ -272,7 +272,7 @@ class FileImportProcessor
 
     def get_rows preview: false, &block
       start_row = @import_file.starting_row - 1
-      begin        
+      begin
         utf_8_parse @data, start_row, preview, block
       rescue ArgumentError => e
         if e.message =~ /invalid byte sequence in UTF-8/
@@ -301,7 +301,7 @@ class FileImportProcessor
         had_content = skip_comma_blanks converted_row, row_num, start_row, block
         row_num += 1
         break if had_content && preview
-      end      
+      end
     end
 
     def skip_comma_blanks row, row_num, start_row, block
@@ -350,19 +350,19 @@ class FileImportProcessor
 
   class RulesProcessor
     def before_save obj, top_level_object
-      #stub
+      # stub
     end
     def before_merge obj, database_object, top_level_object
-      #stub
+      # stub
     end
   end
 
   class ProductRulesProcessor < RulesProcessor
     def before_save obj, top_level_object
       if obj.is_a? TariffRecord
-        #make sure the tariff is valid
+        # make sure the tariff is valid
         country_id = obj.classification.country_id
-        [obj.hts_1,obj.hts_2,obj.hts_3].each_with_index do |h,i|
+        [obj.hts_1, obj.hts_2, obj.hts_3].each_with_index do |h, i|
           unless h.blank?
             ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id
             if ot.nil?
@@ -375,23 +375,23 @@ class FileImportProcessor
             end
           end
         end
-        #make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
+        # make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
         FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
       elsif obj.is_a? Classification
-        #make sure there is a country
+        # make sure there is a country
         if obj.country_id.blank? && obj.country.blank?
           FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty classification country."
         end
       end
     end
 
-    def before_merge(shell,database_object,top_level_object)
+    def before_merge(shell, database_object, top_level_object)
     end
   end
 
   class OrderRulesProcessor < RulesProcessor
 
-    def before_merge(shell,database_object,top_level_object)
+    def before_merge(shell, database_object, top_level_object)
       if shell.class == Order && !shell.vendor_id.nil? && shell.vendor_id != database_object.vendor_id
           FileImportProcessor.raise_validation_exception top_level_object, "An order's vendor cannot be changed via a file upload."
       end
@@ -399,7 +399,7 @@ class FileImportProcessor
   end
 
   class SaleRulesProcessor < CSVImportProcessor
-    def before_merge(shell,database_object,top_level_object)
+    def before_merge(shell, database_object, top_level_object)
       if shell.class == SalesOrder && !shell.customer_id.nil? && shell.customer_id!=database_object.customer_id
         FileImportProcessor.raise_validation_exception top_level_object, "A sale's customer cannot be changed via a file upload."
       end
@@ -409,15 +409,15 @@ class FileImportProcessor
   class PreviewListener
     attr_accessor :messages
     def process_row row_number, object, messages, failed=false
-      self.messages = messages.reject{ |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
+      self.messages = messages.reject { |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
     end
 
     def process_start time
-      #stub
+      # stub
     end
 
     def process_end time
-      #stub
+      # stub
     end
   end
 
@@ -429,7 +429,7 @@ class FileImportProcessor
   # find or build a new object based on the unique identfying column optionally scoped by the parent object
   def find_or_build_by_unique_field data_map, object_map, my_core_module
 
-    search_scope = my_core_module.klass.all #search the whole table unless parent is found below
+    search_scope = my_core_module.klass.all # search the whole table unless parent is found below
 
     # get the next core module up the chain
     parent_core_module = @module_chain.parent my_core_module
@@ -476,7 +476,7 @@ class FileImportProcessor
     get_columns.each do |col|
       mf = col.model_field
       r = row[col.rank + base_column]
-      r = r.value if r.respond_to? :value #get real value for Excel formulas
+      r = r.value if r.respond_to? :value # get real value for Excel formulas
       r = r.strip_all_whitespace if r.is_a? String
       data_map[mf.core_module][mf.uid] = sanitize_file_data(r, mf) unless mf.blank?
     end

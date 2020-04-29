@@ -4,7 +4,7 @@ require 'open_chain/api/v1/api_json_support'
 # This class is a first step at moving the API json generation outside of the actual controller
 # classes.  The actual json generation in api_json_support relies  HEAVILY on controller methods to determine
 # which fields/relations to generate, etc... My hope is to eventually abstract/extract all of that
-# out so that generating a json entity has no real dependence on a controller environment. That's a 
+# out so that generating a json entity has no real dependence on a controller environment. That's a
 # much large project than I have time allotted for at the moment, so this is a bit of a stopgap.
 #
 # This class is intended to be included on all module specific implementations of ApiJsonGenerators.

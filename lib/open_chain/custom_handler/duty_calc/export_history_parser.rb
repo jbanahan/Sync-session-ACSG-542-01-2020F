@@ -1,6 +1,6 @@
 require 'csv'
 require 'open_chain/xl_client'
-module OpenChain; module CustomHandler; module DutyCalc; 
+module OpenChain; module CustomHandler; module DutyCalc;
   class ExportHistoryParser
 
     # processes the given attachment which must be attached to a claim with no
@@ -8,14 +8,14 @@ module OpenChain; module CustomHandler; module DutyCalc;
     def self.process_from_attachment attachment_id, user_id
       attachment_name = "UNKNOWN"
       msg = ""
-      has_error = false  
+      has_error = false
       u = User.find user_id
       begin
         att = Attachment.find attachment_id
         attachment_name = att.attached_file_name
         claim = att.attachable
 
-        raise "Invalid file format for #{attachment_name}." unless (attachment_name.downcase.match(/xlsx$/) || attachment_name.downcase.match(/csv$/)) 
+        raise "Invalid file format for #{attachment_name}." unless (attachment_name.downcase.match(/xlsx$/) || attachment_name.downcase.match(/csv$/))
 
         raise "Attachment with ID #{att.id} is not attached to a DrawbackClaim." unless claim.is_a?(DrawbackClaim)
 
@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module DutyCalc;
         $!.log_me
         msg = "Error processing export history file (#{attachment_name}): #{$!.message}"
       ensure
-        u.messages.create!(subject:"Drawback Export History Complete #{has_error ? 'WITH ERRORS' : ''}",body:msg)
+        u.messages.create!(subject:"Drawback Export History Complete #{has_error ? 'WITH ERRORS' : ''}", body:msg)
       end
       return has_error
     end
@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module DutyCalc;
           end
         end
       end
-      self.parse(rp.new(xl_client,@inner_opts),claim)
+      self.parse(rp.new(xl_client, @inner_opts), claim)
     end
 
     def parse_csv_from_attachment attachment, claim
@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; module DutyCalc;
     end
 
     def parse_csv data, claim
-      rp = Class.new do 
+      rp = Class.new do
         def initialize d
           @data = d
         end
@@ -80,17 +80,17 @@ module OpenChain; module CustomHandler; module DutyCalc;
           end
         end
       end
-      self.parse(rp.new(data),claim)
+      self.parse(rp.new(data), claim)
     end
 
     def parse row_parser, claim
-      ActiveRecord::Base.transaction do 
+      ActiveRecord::Base.transaction do
         rows = []
         row = 0
         row_parser.parse do |r|
           row += 1
-          #manually skipping first row so we don't get the ruby built in header mapping
-          #which makes the row sizes all report 11 even if columns are blank
+          # manually skipping first row so we don't get the ruby built in header mapping
+          # which makes the row sizes all report 11 even if columns are blank
           next if row == 1
           next unless r.size == 11 && r[10] && r[10].to_s.match(/[0-9]/)
           if rows.size == @inner_opts[:group_size]
@@ -99,15 +99,15 @@ module OpenChain; module CustomHandler; module DutyCalc;
           end
           rows << r
         end
-        process_rows(rows,claim) if rows.size > 0
+        process_rows(rows, claim) if rows.size > 0
       end
     end
 
-    private 
+    private
     def process_rows rows, claim
-      claim_entry_number = claim.entry_number.strip.gsub(/-/,'')
+      claim_entry_number = claim.entry_number.strip.gsub(/-/, '')
       histories = rows.collect do |r|
-        raise "Claim number in row (#{r[7]}) doesn't match claim (#{claim.entry_number})." unless claim_entry_number == OpenChain::XLClient.string_value(r[7]).strip.gsub(/-/,'')
+        raise "Claim number in row (#{r[7]}) doesn't match claim (#{claim.entry_number})." unless claim_entry_number == OpenChain::XLClient.string_value(r[7]).strip.gsub(/-/, '')
         DrawbackExportHistory.new(
           part_number:r[0],
           export_ref_1:r[1],
@@ -125,7 +125,7 @@ module OpenChain; module CustomHandler; module DutyCalc;
       raise "Can't handle blank export date for row #{r}" if s.blank?
       return s if s.respond_to?(:acts_like_date?) || s.respond_to?(:acts_like_time?)
       sd = s.split('/')
-      Date.new(sd.last.to_i,sd.first.to_i,sd[1].to_i)
+      Date.new(sd.last.to_i, sd.first.to_i, sd[1].to_i)
     end
   end
 end; end; end

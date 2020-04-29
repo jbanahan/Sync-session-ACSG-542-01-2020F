@@ -1,11 +1,11 @@
 describe HomeController do
 
   before :each do
-    @user = Factory(:master_user,:email=>'a@example.com')
+    @user = Factory(:master_user, :email=>'a@example.com')
     sign_in_as @user
   end
 
-  describe "index" do 
+  describe "index" do
 
     it "redirects to dashboard widgets by default" do
       get :index

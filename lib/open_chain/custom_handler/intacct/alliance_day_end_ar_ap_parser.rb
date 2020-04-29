@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
         # and then having to backtrace what's going on.
         xref = DataCrossReference.where(cross_reference_type: DataCrossReference::ALLIANCE_INVOICE_REPORT_CHECKSUM, key: md5).where("created_at > ? ", Time.zone.now - 1.month).first
 
-        day_end_file = CustomFile.new(:file_type=>self.name,:uploaded_by=>integration)
+        day_end_file = CustomFile.new(:file_type=>self.name, :uploaded_by=>integration)
         day_end_file.attached = tmp
         if xref
           day_end_file.start_at = Time.zone.now
@@ -78,12 +78,12 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
       # Look for a line that starts with ---------- , this signifies that the next lines will have data for a single invoice
       if line.starts_with? "----------"
         header_found = true
-      elsif header_found 
+      elsif header_found
 
         # Any line that begins with numeric values in fields 0-10 is an invoice line
-        if line.strip.length > 100 && line[0,10].strip =~ /^\d+$/
+        if line.strip.length > 100 && line[0, 10].strip =~ /^\d+$/
           # Anything w/ charge codes ending in * are for "reporting" purposes and should be skipped.
-          # In Alliance parlance, they're "accounting suppressed".  
+          # In Alliance parlance, they're "accounting suppressed".
           # You generally see this for duty paid direct or freight paid direct lines.
           next if line[19, 5].strip =~ /\*$/
 
@@ -105,7 +105,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
           # There's some per company summartion lines that we want to skip, at which point there will be no
           # buffered invoice lines, so use that to tell if we need to save off anything
           if buffered_invoice_lines.length > 0
-            # We found the total line for the current invoice being parsed.  Just extract the totals 
+            # We found the total line for the current invoice being parsed.  Just extract the totals
             # and store them off for validation later
 
             # The parse number uses a gsub regex, so parse these off first so we retain the capture groups
@@ -130,10 +130,10 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
             grand_total_found = false
 
             # once we hit the grand total line, we need to quit...there's more invoices listed after the grand total,
-            # but they're credit invoices that have already been processed. 
+            # but they're credit invoices that have already been processed.
             break
           end
-          
+
           header_found = false
         elsif line =~ /\*\s*G\s*R\s*A\s*N\s*D\s*T\s*O\s*T\s*A\s*L\s*S\s*\*/i
           grand_total_found = true
@@ -181,7 +181,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
       error += " already been filed in Intacct for File # #{invoice_number}."
       errors << error
     else
-      Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do 
+      Lock.acquire(Lock::INTACCT_DETAILS_PARSER) do
         suffix = first_line[:suffix].blank? ? nil : first_line[:suffix].strip
         export = IntacctAllianceExport.where(file_number: first_line[:invoice_number], suffix: suffix, export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE).first_or_create!
       end
@@ -234,7 +234,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
       errors
     end
 
-  private 
+  private
     def parse_date value
       Date.strptime value, "%m/%d/%y"
     end
@@ -247,7 +247,6 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndArAp
       if val[-1] == "-"
         val = "-" + val[0..-2].strip
       end
-      
 
       BigDecimal.new val
     end

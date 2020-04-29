@@ -12,6 +12,6 @@
 
 class ChargeCode < ActiveRecord::Base
   attr_accessible :apply_hst, :code, :description
-  
+
   validates_uniqueness_of :code
 end

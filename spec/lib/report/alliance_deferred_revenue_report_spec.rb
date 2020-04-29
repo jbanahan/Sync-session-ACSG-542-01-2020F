@@ -43,7 +43,7 @@ describe OpenChain::Report::AllianceDeferredRevenueReport do
     after :each do
       @tf.close! if @tf
     end
-    
+
     it "handles all post-query processing" do
       u = User.new
       results = [{'bf'=>"12345", 'ff' => "98765", "bid" => "2014-01-01", "c" => "CUST", 'dr' => "12.5", "fid" => "2014-02-01"}]

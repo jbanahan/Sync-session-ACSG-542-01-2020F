@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
     let (:cdefs) { subject.send(:cdefs) }
     let! (:product) {
-      p = Factory(:product, unique_identifier:"UAPARTS-ARTICLE")
+      p = Factory(:product, unique_identifier: "UAPARTS-ARTICLE")
       p.update_custom_value! cdefs[:prod_prepack], false
       p.update_custom_value! cdefs[:prod_part_number], "PROD-1"
       p
@@ -230,7 +230,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       end
 
       Timecop.freeze(now) { subject.generate_and_send Date.new(2019, 1, 30), Date.new(2019, 10, 30) }
-      
+
       expect(file_data).not_to be_nil
       expect(REXML::Document.new(file_data).root.name).to eq "UA_PODuty"
       expect(sync_records.length).to eq 1
@@ -252,7 +252,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       end
 
       subject.generate_and_send Date.new(2019, 1, 30), Date.new(2019, 10, 30)
-      
+
       expect(ftp_info).not_to be_blank
       expect(ftp_info[:username]).to eq "www-vfitrack-net"
       expect(ftp_info[:folder]).to eq "to_ecs/ua_duty_test"
@@ -264,7 +264,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       expect(subject).not_to receive(:ftp_sync_file)
 
       subject.generate_and_send Date.new(2019, 1, 30), Date.new(2019, 10, 30)
-      
+
       entry.reload
       sr = entry.sync_records.first
       expect(sr).not_to be_nil

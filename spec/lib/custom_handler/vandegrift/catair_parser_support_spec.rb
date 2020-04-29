@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
 
-  subject { 
+  subject {
     Class.new {
       include OpenChain::CustomHandler::Vandegrift::CatairParserSupport
 
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
 
   describe "find_customer_number" do
     let! (:importer) { with_customs_management_id(Factory(:importer, irs_number: "XX-XXXXXXX"), "CMUS")}
-    let! (:inbound_file) { 
+    let! (:inbound_file) {
       i = InboundFile.new
       allow(subject).to receive(:inbound_file).and_return i
       i
@@ -43,7 +43,7 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
       expect(inbound_file).to have_reject_message("Importer Record Types of 'XX' are not supported at this time.")
     end
 
-    it "logs and raises an error if no Importer is found with the given EIN #" do 
+    it "logs and raises an error if no Importer is found with the given EIN #" do
       expect { subject.find_customer_number "EI", "YY-YYYYYYY"}.to raise_error "Failed to find any importer account associated with EIN # 'YY-YYYYYYY' that has a CMUS Customer Number."
       expect(inbound_file).to have_reject_message("Failed to find any importer account associated with EIN # 'YY-YYYYYYY' that has a CMUS Customer Number.")
     end
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
 
       expect { subject.find_customer_number "EI", "XX-XXXXXXX"}.to raise_error "Failed to find any importer account associated with EIN # 'XX-XXXXXXX' that has a CMUS Customer Number."
       expect(inbound_file).to have_reject_message("Failed to find any importer account associated with EIN # 'XX-XXXXXXX' that has a CMUS Customer Number.")
-    end    
+    end
   end
 
   describe "gpg_secrets_key" do
@@ -62,11 +62,11 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
     end
   end
 
-  describe "send_email_notification" do 
+  describe "send_email_notification" do
     let (:importer) { with_customs_management_id(Factory(:importer), "CUST")}
     let! (:mailing_list) { MailingList.create! system_code: "CUST 3461 EDI", email_addresses: "me@there.com", company: importer, name: "3461 EDI", user: Factory(:user, company: importer) }
-    let (:shipment) { 
-      e = OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser::CiLoadEntry.new 
+    let (:shipment) {
+      e = OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser::CiLoadEntry.new
       e.customer = "CUST"
       e.entry_filer_code = "123"
       e.entry_number = "123456"

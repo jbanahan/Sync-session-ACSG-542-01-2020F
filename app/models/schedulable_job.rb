@@ -48,7 +48,7 @@ class SchedulableJob < ActiveRecord::Base
     SchedulableJob.where(run_class: "SurveyResponseUpdate").first_or_create! base_opts.merge(run_interval: "1h", time_zone_name: "Eastern Time (US & Canada)")
     SchedulableJob.where(run_class: "OfficialTariff").first_or_create! base_opts.merge(run_interval: "12h", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
     SchedulableJob.where(run_class: "OpenChain::LoadCountriesSchedulableJob").first_or_create! base_opts.merge(run_hour: '2', run_minute: '0', time_zone_name: "Eastern Time (US & Canada)")
-    SchedulableJob.where(run_class: "OpenChain::Report::MonthlyUserAuditReport").first_or_create!({run_hour:'6',run_minute:'0',time_zone_name: "Eastern Time (US & Canada)",day_of_month:'1'})
+    SchedulableJob.where(run_class: "OpenChain::Report::MonthlyUserAuditReport").first_or_create!({run_hour:'6', run_minute:'0', time_zone_name: "Eastern Time (US & Canada)", day_of_month:'1'})
     SchedulableJob.where(run_class: "OpenChain::BusinessRulesNotifier").first_or_create!({run_hour: '8', run_minute: '30', time_zone_name: "Eastern Time (US & Canada)"})
     SchedulableJob.where(run_class: "EntitySnapshotFailure").first_or_create! base_opts.merge(run_interval: "10m", time_zone_name: "Eastern Time (US & Canada)", no_concurrent_jobs: true)
     SchedulableJob.where(run_class: "OpenChain::ScheduledJobMonitor").first_or_create! base_opts.merge(run_interval: "10m", time_zone_name: "Eastern Time (US & Canada)")
@@ -59,15 +59,15 @@ class SchedulableJob < ActiveRecord::Base
 
   def run log=nil
     begin
-      rc = self.run_class.gsub("::",":")
+      rc = self.run_class.gsub("::", ":")
       components = rc.split(":")
       begin
         camel_case_components = components.collect {|c| c.underscore}
         require_path = camel_case_components.join("/")
         require require_path
       rescue LoadError
-        #just move on, if we needed the file it'll throw an exception below
-        #otherwise this isn't an issue
+        # just move on, if we needed the file it'll throw an exception below
+        # otherwise this isn't an issue
       end
       k = Kernel
       components.each {|c| k = k.const_get(c)}
@@ -92,14 +92,14 @@ class SchedulableJob < ActiveRecord::Base
         Thread.current.thread_variable_set("scheduled_job", nil)
       end
 
-      OpenMailer.send_simple_html(self.success_email,"[VFI Track] Scheduled Job Succeeded",
+      OpenMailer.send_simple_html(self.success_email, "[VFI Track] Scheduled Job Succeeded",
           "Scheduled job for #{k.to_s} with options #{run_opts} has succeeded.").deliver_now unless self.success_email.blank?
     rescue => e
       if self.failure_email.blank?
         # Log the error if no failure email is set.
         e.log_me ["Scheduled job for #{k.to_s} with options #{run_opts} has failed"]
       else
-        OpenMailer.send_simple_html(self.failure_email,"[VFI Track] Scheduled Job Failed",
+        OpenMailer.send_simple_html(self.failure_email, "[VFI Track] Scheduled Job Failed",
             "Scheduled job for #{k.to_s} with options #{run_opts} has failed. The error message is below:<br><br>
             #{e.message}".html_safe).deliver_now
       end

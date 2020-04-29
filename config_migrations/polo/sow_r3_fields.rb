@@ -1,6 +1,6 @@
 module ConfigMigrations; module Polo; class SowR3Fields
 
-  def up 
+  def up
     migrate_custom_fields
   end
 
@@ -24,12 +24,11 @@ module ConfigMigrations; module Polo; class SowR3Fields
         knit_woven = CustomDefinition.create!(label: "Knit / Woven", data_type: "string", module_type: "Product")
         FieldValidatorRule.where(model_field_uid: knit_woven.model_field_uid, module_type: "Product", one_of: "Knit\nWoven", read_only: false).first_or_create!
       end
-      
+
       if CustomDefinition.where(label: "Allocation Category", data_type: "string", module_type: "Product").first.nil?
         allocation_category = CustomDefinition.create!(label: "Allocation Category", data_type: "string", module_type: "Product")
         FieldValidatorRule.where(model_field_uid: allocation_category.model_field_uid, module_type: "Product", one_of: "BJT\nCTS\nFUR\nNCT\nSPE\nSTR\nWOD", read_only: false).first_or_create!
       end
-      
     end
   end
 

@@ -24,7 +24,7 @@ describe QuickSearchController do
   }
 
   before :each do
-    c = Factory(:company,:master=>true, :show_business_rules=>true)
+    c = Factory(:company, :master=>true, :show_business_rules=>true)
     @u = Factory(:user, vendor_view: true, entry_view: true, company: c, broker_invoice_view: true)
 
     sign_in_as @u
@@ -48,10 +48,10 @@ describe QuickSearchController do
     it "should return result for core module" do
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
       cd_1 = Factory(:custom_definition, :module_type=>"Entry", :quick_searchable => true, :label=>'cfield')
-      ent = Factory(:entry,:entry_number=>'12345678901')
+      ent = Factory(:entry, :entry_number=>'12345678901')
       ent.update_custom_value! cd_1, "Test"
-      bvre_1 = Factory(:business_validation_result, state: "Pass", validatable: ent) 
-      bvre_2 = Factory(:business_validation_result, state: "Fail", validatable: ent) 
+      bvre_1 = Factory(:business_validation_result, state: "Pass", validatable: ent)
+      bvre_2 = Factory(:business_validation_result, state: "Fail", validatable: ent)
 
       expected_response = {
         'qs_result'=>{
@@ -68,13 +68,13 @@ describe QuickSearchController do
       CoreModule::ENTRY.quicksearch_fields.each do |uid|
         mf = ModelField.find_by_uid(uid)
         expected_response['qs_result']['fields'][uid.to_s] = mf.label
-        expected_response['qs_result']['vals'][0][uid.to_s] = mf.process_export(ent,nil,true)
+        expected_response['qs_result']['vals'][0][uid.to_s] = mf.process_export(ent, nil, true)
       end
       expected_response['qs_result']['fields']["*cf_#{cd_1.id}"] = 'cfield'
       expected_response['qs_result']['vals'][0]["*cf_#{cd_1.id}"] = 'Test'
       expected_response['qs_result']['vals'][0]['view_url'] = "/entries/#{ent.id}"
       expected_response['qs_result']['search_term'] = '123'
-      
+
       get :by_module, module_type:'Entry', v: '123'
       expect(response).to be_success
       j = JSON.parse response.body
@@ -85,12 +85,12 @@ describe QuickSearchController do
       Factory(:entry, :broker_reference => "123")
       Factory(:entry, :entry_number => "123")
       expect(CoreModule::ENTRY).to receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
-      
+
       get :by_module, module_type:'Entry', v: '123', limit_fields: 'ent_entry_num'
       expect(response).to be_success
       j = JSON.parse response.body
       expect(j["qs_result"]["vals"].count).to eq 1
-      
+
       expect(j["qs_result"]["vals"].first["ent_entry_num"]).to eq "123"
     end
 
@@ -99,11 +99,11 @@ describe QuickSearchController do
       Factory(:entry, :broker_reference => "123_last", :file_logged_date => DateTime.now - 2)
       Factory(:entry, :broker_reference => "123_first", :file_logged_date => DateTime.now)
       expect(CoreModule::ENTRY).to receive(:quicksearch_sort_by).at_least(1).times.and_return "entries.file_logged_date"
-      
+
       get :by_module, module_type:'Entry', v: '123'
       expect(response).to be_success
       j = JSON.parse response.body
-      
+
       expect(j["qs_result"]["vals"].first["ent_brok_ref"]).to eq "123_first"
       expect(j["qs_result"]["vals"].second["ent_brok_ref"]).to eq "123_second"
       expect(j["qs_result"]["vals"].third["ent_brok_ref"]).to eq "123_last"
@@ -115,7 +115,7 @@ describe QuickSearchController do
       get :by_module, module_type: "Company", v: 'Co'
       expect(response).to be_success
       r = JSON.parse response.body
-    
+
       expect(r['qs_result']['vals']).to eq [{'id' => vendor.id, 'view_url' => "/vendors/#{vendor.id}", "cmp_name" => vendor.name, "cmp_sys_code" => vendor.system_code}]
       expect(r['qs_result']['module_type']).to eq "Company"
       expect(r['qs_result']['fields']).to eq({"cmp_name" => "Name", "cmp_sys_code" => "System Code"})
@@ -147,7 +147,7 @@ describe QuickSearchController do
       get :by_module, module_type: "Entry", v: "Cleveland"
       expect(response).to be_success
       r = JSON.parse response.body
-      
+
       expect(r['qs_result']['extra_fields']).to eq({'ent_importer_tax_id' => "Importer Tax ID"})
       expect(r['qs_result']['extra_vals']).to eq({ e.id.to_s => {'ent_importer_tax_id' => "TAX_ID 1"}, e2.id.to_s => {'ent_importer_tax_id' => "TAX_ID 2"}})
     end
@@ -161,17 +161,17 @@ describe QuickSearchController do
       get :by_module, module_type: "Entry", v: "Cleveland", override_extra_fields: "ent_carrier_code"
       expect(response).to be_success
       r = JSON.parse response.body
-      
+
       expect(r['qs_result']['extra_fields']).to eq({'ent_carrier_code' => "Carrier Code"})
       expect(r['qs_result']['extra_vals']).to eq({ e.id.to_s => {'ent_carrier_code' => "CARRIER 1"}, e2.id.to_s => {'ent_carrier_code' => "CARRIER 2"}})
     end
 
     it "suppresses attachments and rule results if specified" do
       allow_any_instance_of(CoreModule).to receive(:quicksearch_extra_fields).and_return []
-      ent = Factory(:entry,:entry_number=>'12345678901')
+      ent = Factory(:entry, :entry_number=>'12345678901')
 
-      Factory(:business_validation_result, state: "Pass", validatable: ent) 
-      Factory(:business_validation_result, state: "Fail", validatable: ent) 
+      Factory(:business_validation_result, state: "Pass", validatable: ent)
+      Factory(:business_validation_result, state: "Fail", validatable: ent)
 
       get :by_module, module_type:'Entry', v: '123', hide_attachments: "true", hide_business_rules: "true"
       expect(response).to be_success

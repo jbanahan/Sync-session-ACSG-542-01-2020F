@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillUpdatedCu
     context = {s3_bucket: opts['s3_bucket'], s3_path: opts['s3_path'], sqs_queue: opts['sqs_queue']}
 
     default_aws_data = proxy_client.aws_context_hash "json", path_date: date, parser_identifier: "kewill_customers"
-    
+
     context[:s3_bucket] = default_aws_data[:s3_bucket] if context[:s3_bucket].blank?
     context[:s3_path] = default_aws_data[:s3_path] if context[:s3_path].blank?
     context[:sqs_queue] = default_aws_data[:sqs_queue] if context[:sqs_queue].blank?

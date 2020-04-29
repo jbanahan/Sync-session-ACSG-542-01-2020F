@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
       @t = Factory(:tariff_record, line_number: 0, hts_1: "1234567890", classification: Factory(:classification, country: us, product: Factory(:product, importer: Factory(:importer, system_code: "LENOX"))))
       @c = @t.classification
       @p = @t.product
-      
+
       @p.update_custom_value! @cust_defs[:prod_part_number], "PARTNO"
       @p.update_custom_value! @cust_defs[:prod_fda_product_code], "FDA"
     end
@@ -120,20 +120,20 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
 
     context "limitations on report" do
       before(:each) do
-        #new hts, shares product & classification with @t
+        # new hts, shares product & classification with @t
         t2 = Factory(:tariff_record, line_number: 2, hts_1: "0987654321", classification: @c, product: @p)
         fingerprint_t2 = Digest::SHA1.base64digest [["PARTNO", @c.country.iso_code, "MULTI", "000", "FDA"],
-                                                    ["PARTNO", @c.country.iso_code, "1234567890", 1, "FDA"], 
+                                                    ["PARTNO", @c.country.iso_code, "1234567890", 1, "FDA"],
                                                     ["PARTNO", t2.classification.country.iso_code, "new hts", 2, "FDA"]].flatten.join('/')
         DataCrossReference.create_lenox_hts_fingerprint!(@p.id, @c.country.iso_code, fingerprint_t2)
 
-        #unchanged hts, different classification, same product
-        t3 = Factory(:tariff_record, line_number: 3, hts_1: "1234567890", classification: Factory(:classification, product: @p)) 
+        # unchanged hts, different classification, same product
+        t3 = Factory(:tariff_record, line_number: 3, hts_1: "1234567890", classification: Factory(:classification, product: @p))
         fingerprint_t3 = Digest::SHA1.base64digest ["PARTNO", t3.classification.country.iso_code, "1234567890", "000", "FDA"].join('/')
         DataCrossReference.create_lenox_hts_fingerprint!(t3.product.id, t3.classification.country.iso_code, fingerprint_t3)
-        
-        #unchanged HTS, different classification, different product
-        @t4 = Factory(:tariff_record, line_number: 4, hts_1: "2468101214", classification: Factory(:classification, product: Factory(:product, importer: @t.product.importer))) 
+
+        # unchanged HTS, different classification, different product
+        @t4 = Factory(:tariff_record, line_number: 4, hts_1: "2468101214", classification: Factory(:classification, product: Factory(:product, importer: @t.product.importer)))
         @t4.product.update_custom_value! @cust_defs[:prod_part_number], "PARTNO_2"
         @t4.product.update_custom_value! @cust_defs[:prod_fda_product_code], "FDA_2"
         fingerprint_t4 = Digest::SHA1.base64digest ["PARTNO_2", @t4.classification.country.iso_code, "2468101214", "000", "FDA_2"].join('/')
@@ -147,10 +147,10 @@ describe OpenChain::CustomHandler::Lenox::LenoxProductGenerator do
         expect(lines.length).to eq 3
         verify_line lines[0], part: "PARTNO", iso: @c.country.iso_code, hts: "MULTI", line: 0, fda: "FDA"
         verify_line lines[1], part: "PARTNO", iso: @c.country.iso_code, hts: "1234567890", line: 1, fda: "FDA"
-        verify_line lines[2], part: "PARTNO", iso: @c.country.iso_code, hts: "0987654321", line: 2, fda: "FDA"  
+        verify_line lines[2], part: "PARTNO", iso: @c.country.iso_code, hts: "0987654321", line: 2, fda: "FDA"
       end
 
-      it "updates sync records regardless of whether product info is sent" do #effectively tests #sync
+      it "updates sync records regardless of whether product info is sent" do # effectively tests #sync
         @g.sync_fixed_position
         expect(SyncRecord.pluck(:syncable_id).sort).to eq [@p.id, @t4.product.id].sort
       end

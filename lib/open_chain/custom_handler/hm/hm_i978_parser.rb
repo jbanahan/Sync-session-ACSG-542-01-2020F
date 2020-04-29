@@ -531,7 +531,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI978Parser
 
         return shipment_data["CustomsSystem"]
       else
-        #Assume it's an invoice
+        # Assume it's an invoice
         shipment_data.importer.system_code == system_code_prefix ? :kewill : :fenix
       end
     end

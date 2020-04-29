@@ -2,19 +2,19 @@ describe Api::V1::EventSubscriptionsController do
   describe "index" do
     before :each do
       @u = Factory(:user)
-      @es1 = Factory(:event_subscription,user:@u,event_type:'1')
+      @es1 = Factory(:event_subscription, user:@u, event_type:'1')
     end
     it "should return subscriptions for user if current_user can_view user" do
-      es2 = Factory(:event_subscription,user:@u,event_type:'2',email:true)
-      es_bad = Factory(:event_subscription) #don't find me because I'm for a different user
+      es2 = Factory(:event_subscription, user:@u, event_type:'2', email:true)
+      es_bad = Factory(:event_subscription) # don't find me because I'm for a different user
 
       allow_api_access @u
 
       get :index, user_id: @u.id
       expect(response).to be_success
       j = JSON.parse(response.body)['event_subscriptions']
-      expect(j).to eq [{'event_type'=>'1','user_id'=>@u.id,'email'=>false},
-        {'event_type'=>'2','user_id'=>@u.id,'email'=>true}
+      expect(j).to eq [{'event_type'=>'1', 'user_id'=>@u.id, 'email'=>false},
+        {'event_type'=>'2', 'user_id'=>@u.id, 'email'=>true}
       ]
     end
     it "should 404 if current_user cannot view user" do
@@ -27,8 +27,8 @@ describe Api::V1::EventSubscriptionsController do
   describe "create" do
     before :each do
       @u = Factory(:user)
-      #bad user ids should be ignored
-      @payload = [{'event_type'=>'CREATE_ORDER','user_id'=>99,'email'=>true, 'system_message'=>true},{'event_type'=>'CREATE_COMMENT','user_id'=>22,'email'=>false}]
+      # bad user ids should be ignored
+      @payload = [{'event_type'=>'CREATE_ORDER', 'user_id'=>99, 'email'=>true, 'system_message'=>true}, {'event_type'=>'CREATE_COMMENT', 'user_id'=>22, 'email'=>false}]
 
     end
     it "should handle create with no subscriptions" do
@@ -68,11 +68,11 @@ describe Api::V1::EventSubscriptionsController do
       allow_api_access Factory(:user)
       post :create, user_id: @u.id, event_subscriptions: @payload
       expect(response.status).to eq 401
-      
+
     end
     it "should do full replace" do
       allow_api_access @u
-      es_erase = Factory(:event_subscription,user:@u)
+      es_erase = Factory(:event_subscription, user:@u)
       post :create, user_id: @u.id, event_subscriptions: @payload
       expect(response).to be_success
       @u.reload

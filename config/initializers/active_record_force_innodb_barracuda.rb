@@ -1,7 +1,7 @@
 # This patch is required to force Rails into creating new tables using the MySQL Barracuda table format.
-# This is required in order to use UTF-8 and retain the 255 character default string limit and still be 
+# This is required in order to use UTF-8 and retain the 255 character default string limit and still be
 # able to index string columns.  This is due to Barracuda's support for longer (wider) index lengths
-# 
+#
 # TL;DR - This resolves errors of 'Mysql2::Error: Index column size too large. The maximum column size is 767 bytes.'
 # when creating indexes that include string columns.
 # See - https://github.com/rails/rails/issues/9855

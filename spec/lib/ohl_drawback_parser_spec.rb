@@ -1,7 +1,7 @@
 describe OpenChain::OhlDrawbackParser do
-  before :all do 
+  before :all do
     @companies = Company.all
-    {'CN'=>'CHINA','TW'=>'TAIWAN','KH'=>'CAMBODIA','VN'=>'VIET NAM','US'=>'UNITED STATES'}.each do |k,v|
+    {'CN'=>'CHINA', 'TW'=>'TAIWAN', 'KH'=>'CAMBODIA', 'VN'=>'VIET NAM', 'US'=>'UNITED STATES'}.each do |k, v|
       Factory(:country, :name=>v, :iso_code=>k)
     end
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
@@ -28,7 +28,7 @@ describe OpenChain::OhlDrawbackParser do
     expect(ent.total_invoiced_value).to eq(528971)
     expect(ent.total_duty).to eq(93098.89)
     expect(ent.merchandise_description).to eq("BACKPACKS/SACKPACKS OF MAN-MADE FIBERS 100% POLYESTER")
-    expect(ent.import_country.iso_code).to eq("US") #Check this logic
+    expect(ent.import_country.iso_code).to eq("US") # Check this logic
     expect(ent.total_duty_direct).to eq(39109.6)
     expect(ent.commercial_invoices.count).to eq(1)
     ci = ent.commercial_invoices.first
@@ -75,10 +75,10 @@ describe OpenChain::OhlDrawbackParser do
   it 'should map header fields' do
     ent = Entry.find_by entry_number: '11350368418'
     expect(ent.entry_port_code).to eq('1303')
-    expect(ent.arrival_date).to eq(@est.parse('2010-12-27')) 
+    expect(ent.arrival_date).to eq(@est.parse('2010-12-27'))
     expect(ent.mpf).to eq(BigDecimal('139.20'))
     expect(ent.transport_mode_code).to eq('40')
-    expect(ent.total_invoiced_value).to eq(BigDecimal('66285.00')) 
+    expect(ent.total_invoiced_value).to eq(BigDecimal('66285.00'))
     expect(ent.total_duty).to eq(BigDecimal('15403.01'))
     expect(ent.total_duty_direct).to eq(BigDecimal('15542.21'))
     expect(ent.merchandise_description).to eq('WEARING APPAREL, FOOTWEAR')
@@ -99,7 +99,7 @@ describe OpenChain::OhlDrawbackParser do
     first_line = lines.first
     expect(first_line.part_number).to eq('1216859-001')
     expect(first_line.po_number).to eq('4500178680')
-    expect(first_line.quantity).to eq(5724) #convert dozens
+    expect(first_line.quantity).to eq(5724) # convert dozens
     last_line = lines.last
     expect(last_line.part_number).to eq('1217342-100')
     expect(last_line.po_number).to eq('4500187813')
@@ -123,13 +123,13 @@ describe OpenChain::OhlDrawbackParser do
     expect(other_hts.duty_rate).to eq(BigDecimal('0.17'))
   end
   it 'should replace invoice lines' do
-    #process again
+    # process again
     OpenChain::OhlDrawbackParser.parse @sample_path
     lines = Entry.find_by(entry_number: '11353554642').commercial_invoices.first.commercial_invoice_lines
     expect(lines.size).to eq(15)
   end
   it 'should create importer company' do
-    c = Company.find_by_name_and_importer('UNDER ARMOUR INC.',true)
+    c = Company.find_by_name_and_importer('UNDER ARMOUR INC.', true)
     Entry.all.each {|ent| expect(ent.importer).to eq(c)}
   end
   it 'should update existing entry' do

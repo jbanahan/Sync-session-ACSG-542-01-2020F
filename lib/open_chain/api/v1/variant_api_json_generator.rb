@@ -14,7 +14,7 @@ module OpenChain; module Api; module V1; class VariantApiJsonGenerator
     )
 
     plant_variant_assignment_fields = limit_fields(
-      [:pva_plant_name,:pva_company_name,:pva_company_id] +
+      [:pva_plant_name, :pva_company_name, :pva_company_id] +
       custom_field_keys(CoreModule::PLANT_VARIANT_ASSIGNMENT)
     )
 

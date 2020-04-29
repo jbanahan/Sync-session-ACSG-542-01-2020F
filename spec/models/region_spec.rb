@@ -1,18 +1,18 @@
 describe Region do
   context "by_name" do
     it "should sort by name" do
-      r1 = Factory(:region,:name=>"B")
-      r2 = Factory(:region,:name=>"A")
-      expect(Region.by_name.where("1").to_a).to eq([r2,r1])
+      r1 = Factory(:region, :name=>"B")
+      r2 = Factory(:region, :name=>"A")
+      expect(Region.by_name.where("1").to_a).to eq([r2, r1])
     end
   end
   context "destroy" do
     it "should destroy associated report objects on destroy based on class count model_field_uid" do
       r = Factory(:region)
-      uid = 
-      col = Factory(:search_column,:model_field_uid=>ModelField.uid_for_region(r,"x"))
-      srch = Factory(:search_criterion,:model_field_uid=>ModelField.uid_for_region(r,"y"))
-      srt = Factory(:sort_criterion,:model_field_uid=>ModelField.uid_for_region(r,"z"))
+      uid =
+      col = Factory(:search_column, :model_field_uid=>ModelField.uid_for_region(r, "x"))
+      srch = Factory(:search_criterion, :model_field_uid=>ModelField.uid_for_region(r, "y"))
+      srt = Factory(:sort_criterion, :model_field_uid=>ModelField.uid_for_region(r, "z"))
       r.destroy
       expect(SearchColumn.exists?(col.id)).to be_falsey
       expect(SearchCriterion.exists?(srch.id)).to be_falsey

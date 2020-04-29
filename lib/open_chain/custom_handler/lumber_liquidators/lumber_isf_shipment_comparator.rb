@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIs
       doc = OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenerator.generate_xml shipment
       sr = shipment.sync_records.where(trading_partner: 'ISF').first_or_initialize
 
-      Tempfile.open(["isf_#{shipment.reference}_",'.xml']) do |tf|
+      Tempfile.open(["isf_#{shipment.reference}_", '.xml']) do |tf|
         doc.write tf
         tf.flush
         current_time = Time.zone.now

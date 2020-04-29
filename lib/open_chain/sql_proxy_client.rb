@@ -6,7 +6,7 @@ module OpenChain; class SqlProxyClient
   def initialize json_client = OpenChain::JsonHttpClient.new
     @json_client = json_client
   end
- 
+
   def request job_name, job_params, request_context, request_params = {}
     request_params = {swallow_error: true}.merge request_params
     request_body = {'job_params' => job_params}

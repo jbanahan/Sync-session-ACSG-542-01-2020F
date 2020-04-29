@@ -1,8 +1,8 @@
 module OpenChain; module ModelFieldGenerator; module CommentGenerator
-  def make_comment_arrays(rank_start,uid_prefix,klass)
+  def make_comment_arrays(rank_start, uid_prefix, klass)
     [
       [
-        rank_start,"#{uid_prefix}_comment_count".to_sym,:comment_count,"Comment Count",{
+        rank_start, "#{uid_prefix}_comment_count".to_sym, :comment_count, "Comment Count", {
           data_type: :integer,
           history_ignore: true,
           read_only: true,
@@ -11,7 +11,7 @@ module OpenChain; module ModelFieldGenerator; module CommentGenerator
           }
       ],
       [
-        rank_start+1,"#{uid_prefix}_last_comment_body".to_sym,:last_comment_body,"Last Comment Body", {
+        rank_start+1, "#{uid_prefix}_last_comment_body".to_sym, :last_comment_body, "Last Comment Body", {
           data_type: :string,
           history_ignore: true,
           read_only: true,
@@ -20,7 +20,7 @@ module OpenChain; module ModelFieldGenerator; module CommentGenerator
         }
       ],
       [
-        rank_start+2,"#{uid_prefix}_last_comment_by".to_sym,:last_comment_by,"Last Comment By", {
+        rank_start+2, "#{uid_prefix}_last_comment_by".to_sym, :last_comment_by, "Last Comment By", {
           data_type: :string,
           history_ignore: true,
           read_only: true,
@@ -29,7 +29,7 @@ module OpenChain; module ModelFieldGenerator; module CommentGenerator
         }
       ],
       [
-        rank_start+3,"#{uid_prefix}_last_comment_at".to_sym,:last_comment_at,"Last Comment Date", {
+        rank_start+3, "#{uid_prefix}_last_comment_at".to_sym, :last_comment_at, "Last Comment Date", {
           data_type: :datetime,
           history_ignore: true,
           read_only: true,
@@ -38,7 +38,7 @@ module OpenChain; module ModelFieldGenerator; module CommentGenerator
         }
       ],
       [
-        rank_start+4,"#{uid_prefix}_last_comment_subject".to_sym,:last_comment_subject,"Last Comment Subject", {
+        rank_start+4, "#{uid_prefix}_last_comment_subject".to_sym, :last_comment_subject, "Last Comment Subject", {
           data_type: :string,
           history_ignore: true,
           read_only: true,

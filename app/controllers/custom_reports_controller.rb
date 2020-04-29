@@ -59,7 +59,7 @@ class CustomReportsController < ApplicationController
     else
       CustomReport.transaction do
         rpt.search_columns.destroy_all
-        #strip fields not accessible to user
+        # strip fields not accessible to user
         sca = params[:custom_report][:search_columns_attributes]
         strip_fields sca unless sca.blank?
         scp = params[:custom_report][:search_criterions_attributes]
@@ -72,7 +72,7 @@ class CustomReportsController < ApplicationController
           raise ActiveRecord::Rollback
         end
       end
-      
+
       redirect_to custom_report_path(rpt)
     end
   end
@@ -85,13 +85,13 @@ class CustomReportsController < ApplicationController
     elsif !report_class.can_view? current_user
       error_redirect "You do not have permission to use the #{report_class.template_name} report."
     else
-      #strip fields not accessible to user
+      # strip fields not accessible to user
       sca = params[:custom_report][:search_columns_attributes]
       strip_fields sca unless sca.blank?
       scp = params[:custom_report][:search_criterions_attributes]
       strip_fields scp unless scp.blank?
 
-      #add user parameter
+      # add user parameter
       params[:custom_report][:user_id] = current_user.id
 
       rpt = report_class.create(params[:custom_report])
@@ -102,7 +102,7 @@ class CustomReportsController < ApplicationController
         @custom_report_type = type
         render action: "new"
       else
-        redirect_to custom_report_path(rpt)  
+        redirect_to custom_report_path(rpt)
       end
     end
   end
@@ -130,14 +130,14 @@ class CustomReportsController < ApplicationController
     if rpt.user_id != current_user.id
       error_redirect "You cannot run another user's report."
     else
-      ReportResult.run_report! rpt.name, current_user, rpt.class, {:friendly_settings=>["Report Template: #{rpt.class.template_name}"],:custom_report_id=>rpt.id}
+      ReportResult.run_report! rpt.name, current_user, rpt.class, {:friendly_settings=>["Report Template: #{rpt.class.template_name}"], :custom_report_id=>rpt.id}
       add_flash :notices, "Your report has been scheduled. You'll receive a system message when it finishes."
       redirect_to custom_report_path(rpt)
     end
   end
-  private 
+  private
   def strip_fields hash
-    hash.delete_if {|k,v| mf = ModelField.find_by_uid(v[:model_field_uid]); !(mf.can_view?(current_user) && mf.user_accessible?)}
+    hash.delete_if {|k, v| mf = ModelField.find_by_uid(v[:model_field_uid]); !(mf.can_view?(current_user) && mf.user_accessible?)}
   end
 
   def find_custom_report_class report_class

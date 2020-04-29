@@ -136,25 +136,25 @@ class User < ActiveRecord::Base
 
   cattr_accessor :current
 
-  attr_accessible :username, :email, :time_zone,:email_format, :company_id, 
-    :first_name, :last_name, :search_open,:order_view, :order_edit, 
+  attr_accessible :username, :email, :time_zone, :email_format, :company_id,
+    :first_name, :last_name, :search_open, :order_view, :order_edit,
     :order_delete, :order_attach, :order_comment, :shipment_view, :shipment_edit,
-    :shipment_delete, :shipment_attach, :shipment_comment, :sales_order_view, 
-    :sales_order_edit, :sales_order_delete, :sales_order_attach, 
-    :sales_order_comment, :delivery_view, :delivery_edit, :delivery_delete, 
-    :delivery_attach, :delivery_comment, :product_view, :product_edit, 
-    :product_delete, :product_attach, :product_comment, :entry_view, 
+    :shipment_delete, :shipment_attach, :shipment_comment, :sales_order_view,
+    :sales_order_edit, :sales_order_delete, :sales_order_attach,
+    :sales_order_comment, :delivery_view, :delivery_edit, :delivery_delete,
+    :delivery_attach, :delivery_comment, :product_view, :product_edit,
+    :product_delete, :product_attach, :product_comment, :entry_view,
     :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
-    :survey_view, :survey_edit, :project_view, :project_edit, 
-    :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach, :vfi_invoice_view, 
-    :vfi_invoice_edit, :trade_lane_view, :trade_lane_edit, :trade_lane_comment, 
-    :trade_lane_attach, :broker_invoice_view, :broker_invoice_edit, 
-    :variant_edit, :classification_edit, :commercial_invoice_view, 
-    :commercial_invoice_edit, :security_filing_view, :security_filing_edit, 
-    :security_filing_comment, :security_filing_attach, :support_agent, 
-    :simple_entry_mode, :tariff_subscribed, :homepage, :provider, :uid, 
-    :google_name, :oauth_token, :oauth_expires_at, :disallow_password, 
-    :disabled, :group_ids, :portal_mode,:system_user, :statement_view, :department,
+    :survey_view, :survey_edit, :project_view, :project_edit,
+    :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach, :vfi_invoice_view,
+    :vfi_invoice_edit, :trade_lane_view, :trade_lane_edit, :trade_lane_comment,
+    :trade_lane_attach, :broker_invoice_view, :broker_invoice_edit,
+    :variant_edit, :classification_edit, :commercial_invoice_view,
+    :commercial_invoice_edit, :security_filing_view, :security_filing_edit,
+    :security_filing_comment, :security_filing_attach, :support_agent,
+    :simple_entry_mode, :tariff_subscribed, :homepage, :provider, :uid,
+    :google_name, :oauth_token, :oauth_expires_at, :disallow_password,
+    :disabled, :group_ids, :portal_mode, :system_user, :statement_view, :department,
     :email_new_messages
 
   belongs_to :company
@@ -211,7 +211,7 @@ class User < ActiveRecord::Base
     u
   end
 
-  #find or create the integration user
+  # find or create the integration user
   def self.integration
     u = User.find_by(username: 'integration')
     if !u
@@ -467,7 +467,7 @@ class User < ActiveRecord::Base
     !self.debug_expires.blank? && self.debug_expires > Time.zone.now
   end
 
-  #send password reset email to user
+  # send password reset email to user
   def deliver_password_reset_instructions!
     forgot_password!
     # Use the ! deliver_now variant because we never want the message to be suppressed on any system
@@ -503,13 +503,13 @@ class User < ActiveRecord::Base
     "#{full_name} (#{username})"
   end
 
-  #should a user message be hidden for this user
+  # should a user message be hidden for this user
   def hide_message? message_name
     parse_hidden_messages
     @parsed_hidden_messages.include? message_name.upcase
   end
 
-  #add a message to the list that shouldn't be displayed for this user
+  # add a message to the list that shouldn't be displayed for this user
   def add_hidden_message message_name
     parse_hidden_messages
     @parsed_hidden_messages << message_name.upcase
@@ -583,7 +583,7 @@ class User < ActiveRecord::Base
     end
 
     def should_update_timestaps?
-      no_timestamp_reset_fields = ['confirmation_token','remember_token','last_request_at', 'last_login_at', 'current_login_at', 'failed_login_count', 'host_with_port']
+      no_timestamp_reset_fields = ['confirmation_token', 'remember_token', 'last_request_at', 'last_login_at', 'current_login_at', 'failed_login_count', 'host_with_port']
       self.record_timestamps = false if (self.changed - no_timestamp_reset_fields).empty?
       true
     end
@@ -594,7 +594,7 @@ class User < ActiveRecord::Base
     end
 
     def valid_email
-      rejected = email.split(/,|;/).map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e }
+      rejected = email.split(/,|;/).map { |e| e.strip}.reject { |e| EmailValidator.valid? e }
       error_message = rejected.count > 1 ? "invalid: #{rejected.join(', ')}" : "invalid"
       errors.add(:email, error_message) unless rejected.empty?
     end

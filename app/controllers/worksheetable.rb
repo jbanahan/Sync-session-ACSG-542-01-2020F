@@ -2,16 +2,16 @@ module Worksheetable
 
   def import_worksheet
     @obj = root_class.find(params[:id])
-    action_secure(@obj.can_edit?(current_user),@obj,{:verb => "import worksheet for",:module_name=>"item"}) {
+    action_secure(@obj.can_edit?(current_user), @obj, {:verb => "import worksheet for", :module_name=>"item"}) {
       process_worksheet @obj
       errors_to_flash @obj
-      redirect_to @obj      
+      redirect_to @obj
     }
   end
 
   def import_new_worksheet
     @obj = root_class.new
-    action_secure(@obj.can_create?(current_user),@obj,{:lock_check=>false,:verb=>"import worksheet for",:module_name=>"item"}) {
+    action_secure(@obj.can_create?(current_user), @obj, {:lock_check=>false, :verb=>"import worksheet for", :module_name=>"item"}) {
       process_worksheet @obj
       errors_to_flash @obj
       redirect_to @obj
@@ -28,11 +28,11 @@ module Worksheetable
     end
     begin
       wc.process obj, w.tempfile.path, current_user
-      obj.attachments.create(:attached=>w,:uploaded_by=>current_user)
+      obj.attachments.create(:attached=>w, :uploaded_by=>current_user)
       add_flash :notices, "Your worksheet was loaded successfully." , :now => true
     rescue Ole::Storage::FormatError
       add_flash :errors, "The file you uploaded was not a valid Excel 1997-2003 Workbook (.xls).  Please try again."
     end
   end
-  
+
 end

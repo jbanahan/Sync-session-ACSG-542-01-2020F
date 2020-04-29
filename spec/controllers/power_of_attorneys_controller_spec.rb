@@ -37,7 +37,7 @@ describe PowerOfAttorneysController do
   end
 
   describe "POST create" do
-    
+
     describe "with valid params" do
       before { expect(@user).to receive(:edit_power_of_attorneys?).and_return true }
       it "creates a new PowerOfAttorney" do
@@ -82,7 +82,7 @@ describe PowerOfAttorneysController do
 
       expect(response).to redirect_to company_path(@company)
     end
-    
+
     describe "with invalid params" do
       it "re-renders the 'new' template" do
         expect(@user).to receive(:edit_power_of_attorneys?).and_return true
@@ -129,7 +129,7 @@ describe PowerOfAttorneysController do
       expect(@controller).to receive(:send_data) do |data, options|
         expect(data).to eq @att_data
         expect(options).to eq(filename: "file_name", type: "content_type", disposition: "attachment")
-        
+
         # Need this so the controller knows some template was utilized (since we mocked
         # away the send_data call)
         @controller.render :nothing => true

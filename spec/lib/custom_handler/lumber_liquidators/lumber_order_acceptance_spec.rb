@@ -7,16 +7,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance do
       subject.prep_custom_definitions([:ord_country_of_origin])
     }
 
-    let! (:order) { 
-      o = Factory(:order,fob_point:'Shanghai',terms_of_sale:'FOB',ship_from:Factory(:address))
-      o.update_custom_value! cdefs[:ord_country_of_origin],'CN'
+    let! (:order) {
+      o = Factory(:order, fob_point:'Shanghai', terms_of_sale:'FOB', ship_from:Factory(:address))
+      o.update_custom_value! cdefs[:ord_country_of_origin], 'CN'
       o
     }
 
     it "passes if fields are populated" do
       expect(subject.can_be_accepted?(order)).to eq true
     end
-    
+
     it "fails if FOB Point is empty" do
       order.update_attributes(fob_point:nil)
       expect(subject.can_be_accepted?(order)).to eq false
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderAcceptance do
     end
 
     it "fails if country of origin is empty" do
-      order.update_custom_value!(cdefs[:ord_country_of_origin],'')
+      order.update_custom_value!(cdefs[:ord_country_of_origin], '')
       expect(subject.can_be_accepted?(order)).to eq false
     end
   end

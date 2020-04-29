@@ -160,10 +160,10 @@ describe Api::V1::UsersController do
       u3 = Factory(:user, company: linked_co, first_name: 'AAA', last_name: 'ZZZZ', username: 'AAA ZZZZ', disabled: nil)
       Factory(:user, company: linked_co, first_name: 'Derek', last_name: 'Smalls', username: 'dsmalls', disabled: true)
       allow_api_access u
-      
+
       get :enabled_users
       expect(response).to be_success
-      expected = [{'company' => 
+      expected = [{'company' =>
                     {
                      'name' => 'Acme',
                      'users' => [ {

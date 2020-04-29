@@ -5,8 +5,8 @@ describe Company do
       @c2 = Factory(:company)
     end
     it "should move user accounts" do
-      u1 = Factory(:user,company_id:@c1.id,updated_at:10.days.ago)
-      u2 = Factory(:user,company_id:@c1.id)
+      u1 = Factory(:user, company_id:@c1.id, updated_at:10.days.ago)
+      u2 = Factory(:user, company_id:@c1.id)
       Factory(:user)
       @c1.migrate_accounts @c2
       @c2.reload
@@ -18,7 +18,7 @@ describe Company do
       expect(u2.company).to eq @c2
     end
     it "should move surveys" do
-      s = Factory(:survey,company_id:@c1.id)
+      s = Factory(:survey, company_id:@c1.id)
       @c1.migrate_accounts @c2
       s.reload
       expect(s.company).to eq @c2
@@ -46,24 +46,24 @@ describe Company do
       @dont_find = Factory(:company)
     end
     it "should find carriers" do
-      c1 = Factory(:company,:carrier=>true)
-      c2 = Factory(:company,:carrier=>true)
-      expect(Company.carriers).to eq([c1,c2])
+      c1 = Factory(:company, :carrier=>true)
+      c2 = Factory(:company, :carrier=>true)
+      expect(Company.carriers).to eq([c1, c2])
     end
     it "should find importers" do
-      c1 = Factory(:company,:importer=>true)
-      c2 = Factory(:company,:importer=>true)
-      expect(Company.importers).to eq([c1,c2])
+      c1 = Factory(:company, :importer=>true)
+      c2 = Factory(:company, :importer=>true)
+      expect(Company.importers).to eq([c1, c2])
     end
     it "should find customers" do
-      c1 = Factory(:company,:customer=>true)
-      c2 = Factory(:company,:customer=>true)
-      expect(Company.customers).to eq([c1,c2])
+      c1 = Factory(:company, :customer=>true)
+      c2 = Factory(:company, :customer=>true)
+      expect(Company.customers).to eq([c1, c2])
     end
     it "should find vendors" do
-      c1 = Factory(:company,:vendor=>true)
-      c2 = Factory(:company,:vendor=>true)
-      expect(Company.vendors).to eq([c1,c2])
+      c1 = Factory(:company, :vendor=>true)
+      c2 = Factory(:company, :vendor=>true)
+      expect(Company.vendors).to eq([c1, c2])
     end
   end
   describe 'linked_companies' do
@@ -82,7 +82,7 @@ describe Company do
       linked_c = Factory(:company)
       c.linked_companies << linked_c
       unlinked_c = Factory(:company)
-      expect(c.unlinked_companies).to include(unlinked_c) #can't check equals because initializer creates extra "My Company" company
+      expect(c.unlinked_companies).to include(unlinked_c) # can't check equals because initializer creates extra "My Company" company
       expect(c.unlinked_companies).not_to include(linked_c)
     end
   end
@@ -197,25 +197,25 @@ describe Company do
     context 'entries' do
       it 'should not allow view if master setup is disabled' do
         allow(master_setup).to receive(:entry_enabled).and_return false
-        c = Factory(:company,:importer=>true)
+        c = Factory(:company, :importer=>true)
         expect(c.view_entries?).to be_falsey
         expect(c.comment_entries?).to be_falsey
         expect(c.attach_entries?).to be_falsey
       end
       it 'should allow master view/comment/attach' do
-        c = Factory(:company,:master=>true)
+        c = Factory(:company, :master=>true)
         expect(c.view_entries?).to be_truthy
         expect(c.comment_entries?).to be_truthy
         expect(c.attach_entries?).to be_truthy
       end
       it 'should allow importer view/comment/attach' do
-        c = Factory(:company,:importer=>true)
+        c = Factory(:company, :importer=>true)
         expect(c.view_entries?).to be_truthy
         expect(c.comment_entries?).to be_truthy
         expect(c.attach_entries?).to be_truthy
       end
       it 'should not allow other company view/comment/attach' do
-        c = Factory(:company,:importer=>false,:master=>false)
+        c = Factory(:company, :importer=>false, :master=>false)
         expect(c.view_entries?).to be_falsey
         expect(c.comment_entries?).to be_falsey
         expect(c.attach_entries?).to be_falsey
@@ -224,19 +224,19 @@ describe Company do
     context 'broker invoices' do
       it 'should not allow view if master setup is disabled' do
         allow(master_setup).to receive(:broker_invoice_enabled).and_return false
-        c = Factory(:company,:importer=>true)
+        c = Factory(:company, :importer=>true)
         expect(c.view_broker_invoices?).to be_falsey
       end
       it 'should allow master view' do
-        c = Factory(:company,:master=>true)
+        c = Factory(:company, :master=>true)
         expect(c.view_broker_invoices?).to be_truthy
       end
       it 'should allow importer view' do
-        c = Factory(:company,:importer=>true)
+        c = Factory(:company, :importer=>true)
         expect(c.view_broker_invoices?).to be_truthy
       end
       it 'should not allow other company view' do
-        c = Factory(:company,:importer=>false,:master=>false)
+        c = Factory(:company, :importer=>false, :master=>false)
         expect(c.view_broker_invoices?).to be_falsey
       end
       it "should allow edit for master" do
@@ -312,54 +312,54 @@ describe Company do
     it "allows me to see myself" do
       u = Factory(:user)
       dont_find = Factory(:company)
-      expect(Company.search_secure(u,Company).to_a).to eq [u.company]
+      expect(Company.search_secure(u, Company).to_a).to eq [u.company]
     end
     it "allows me to see my linked companies" do
       u = Factory(:user)
       c2 = Factory(:company)
       u.company.linked_companies << c2
       dont_find = Factory(:company)
-      expect(Company.search_secure(u,Company).to_a).to eq [u.company,c2]
+      expect(Company.search_secure(u, Company).to_a).to eq [u.company, c2]
     end
     it "allows me to see all if I'm master" do
       u = Factory(:master_user)
       c2 = Factory(:company)
-      expect(Company.search_secure(u,Company).to_a).to eq Company.all.to_a
+      expect(Company.search_secure(u, Company).to_a).to eq Company.all.to_a
     end
   end
 
   describe "can_view_as_vendor?" do
     before :each do
-      @c = Factory(:company,vendor:true)
+      @c = Factory(:company, vendor:true)
     end
     it "should pass if user can view_vendors? and user is from this company" do
-      u = Factory(:user,vendor_view:true,company:@c)
+      u = Factory(:user, vendor_view:true, company:@c)
       allow(u).to receive(:view_vendors?).and_return true
       expect(@c.can_view_as_vendor?(u)).to be_truthy
     end
     it "should pass if user can view_vendors? and user's company is linked" do
-      u = Factory(:user,vendor_view:true)
+      u = Factory(:user, vendor_view:true)
       allow(u).to receive(:view_vendors?).and_return true
       u.company.linked_companies << @c
       expect(@c.can_view_as_vendor?(u)).to be_truthy
     end
     it "should pass if user can view_vendors? and user is from master company" do
-      u = Factory(:master_user,vendor_view:true)
+      u = Factory(:master_user, vendor_view:true)
       allow(u).to receive(:view_vendors?).and_return true
       expect(@c.can_view_as_vendor?(u)).to be_truthy
     end
     it "should fail if user can view_vendors? and is from unrelated company" do
-      u = Factory(:user,vendor_view:true)
+      u = Factory(:user, vendor_view:true)
       allow(u).to receive(:view_vendors?).and_return true
       expect(@c.can_view_as_vendor?(u)).to be_falsey
     end
     it "should fail if user cannot view_vendors?" do
-      u = Factory(:user,vendor_view:false,company:@c)
+      u = Factory(:user, vendor_view:false, company:@c)
       allow(u).to receive(:view_vendors?).and_return false
       expect(@c.can_view_as_vendor?(u)).to be_falsey
     end
     it "should fail if company is not a vendor?" do
-      u = Factory(:user,vendor_view:true)
+      u = Factory(:user, vendor_view:true)
       allow(u).to receive(:view_vendors?).and_return true
       expect(u.company.can_view_as_vendor?(u)).to be_falsey
     end
@@ -491,7 +491,7 @@ describe Company do
 
   describe "parent_system_code" do
     let (:company) { Factory(:company) }
-    let! (:parent_company) { 
+    let! (:parent_company) {
       f = Factory(:company)
       f.linked_companies << company
       f
@@ -503,7 +503,7 @@ describe Company do
 
     context "with parental system code configured" do
 
-      before :each do 
+      before :each do
         parent_company.update! system_code: "SYSTEM"
       end
 
@@ -518,14 +518,14 @@ describe Company do
       end
     end
   end
-  
+
   describe "find_or_create_company!" do
     subject { described_class }
 
     it "creates a new company with a system identifier" do
       expect(Lock).to receive(:acquire).with("Company-System-Code").and_yield
-      expect(Lock).to receive(:db_lock).with(instance_of(SystemIdentifier)).and_yield 
-      
+      expect(Lock).to receive(:db_lock).with(instance_of(SystemIdentifier)).and_yield
+
       c = subject.find_or_create_company!("System", "Code", {name: "Name"})
       expect(c).to be_persisted
       expect(c).to have_system_identifier("System", "Code")
@@ -549,11 +549,11 @@ describe Company do
   end
 
   describe "options_for_companies_with_system_identifier" do
-    let! (:kewill_company) { 
+    let! (:kewill_company) {
       with_customs_management_id(Factory(:company, name: "Z Company", system_code: "SYSCODE"), "KEWILL")
     }
 
-    let (:fenix_company) { 
+    let (:fenix_company) {
       with_fenix_id(Factory(:company, name: "A Company", system_code: "SYSCODE2"), "FENIX")
     }
 

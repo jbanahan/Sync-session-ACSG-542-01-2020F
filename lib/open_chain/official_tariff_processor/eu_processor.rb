@@ -3,13 +3,13 @@ module OpenChain; module OfficialTariffProcessor; class EuProcessor
     cid = official_tariff.country_id
     srk = official_tariff.special_rate_key
     # do nothing if the rates are already built for this key
-    return unless SpiRate.where(special_rate_key:srk,country_id:cid).empty?
+    return unless SpiRate.where(special_rate_key:srk, country_id:cid).empty?
 
     rh = rate_hash(official_tariff)
     rh.each do |rate_data|
       SpiRate.create!(special_rate_key:srk,
-        country_id:cid,program_code:rate_data[:program_code],
-        rate:rate_data[:amount],rate_text:rate_data[:text])
+        country_id:cid, program_code:rate_data[:program_code],
+        rate:rate_data[:amount], rate_text:rate_data[:text])
     end
   end
 
@@ -24,15 +24,15 @@ module OpenChain; module OfficialTariffProcessor; class EuProcessor
       pair = rate_text.split('(')
       amount = parse_rate(pair[0])
       next if pair[1].blank?
-      programs = pair[1].strip.gsub(/\)/,'').split(',').collect{|s| s.strip}
+      programs = pair[1].strip.gsub(/\)/, '').split(',').collect {|s| s.strip}
       programs.each do |p|
         next if p.blank?
         cp = clean_program(p)
-        #only saving Peru & Columbia for now, later sub in other programs we're tracking
-        if ['PE','CO'].include?(cp)
-          rt = pair[0].gsub(/(:|,)/,'').strip
+        # only saving Peru & Columbia for now, later sub in other programs we're tracking
+        if ['PE', 'CO'].include?(cp)
+          rt = pair[0].gsub(/(:|,)/, '').strip
           raise "HTS = #{official_tariff.hts_code}: Expected text in pair[0] for: \"#{pair}\"" if rt.blank?
-          r << {program_code:cp,amount:amount,text:rt}
+          r << {program_code:cp, amount:amount, text:rt}
         end
       end
     end
@@ -40,10 +40,10 @@ module OpenChain; module OfficialTariffProcessor; class EuProcessor
   end
 
   def self.parse_rate r
-    cleaned = r.gsub(/(\%|:|,)/,'').upcase.strip
+    cleaned = r.gsub(/(\%|:|,)/, '').upcase.strip
     return 0 if cleaned=='FREE'
     return nil if !r.strip.match(/^[0-9]{0,3}\\.{0,1}[0-9]{0,3}$/)
-    return BigDecimal(cleaned,3)*0.01
+    return BigDecimal(cleaned, 3)*0.01
   end
 
   def self.clean_program program_text
@@ -52,8 +52,8 @@ module OpenChain; module OfficialTariffProcessor; class EuProcessor
 
   def self.clean_text text
     # handle special cases
-    text = text.gsub("[see U.S. note 3 of this subchapter)","[see U.S. note 3 of this subchapter]")
-    text = text.gsub("(Net weight on dry matter)","[Net weight on dry matter]")
+    text = text.gsub("[see U.S. note 3 of this subchapter)", "[see U.S. note 3 of this subchapter]")
+    text = text.gsub("(Net weight on dry matter)", "[Net weight on dry matter]")
     text
   end
 end; end; end

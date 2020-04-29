@@ -32,8 +32,8 @@ describe SchedulableJob do
     end
     it "should submit options" do
       opts = {:a=>"b"}.to_json
-      expect(TestSchedulable).to receive(:run_schedulable).with('last_start_time'=>nil,'a'=>'b')
-      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts)
+      expect(TestSchedulable).to receive(:run_schedulable).with('last_start_time'=>nil, 'a'=>'b')
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable", :opts=>opts)
       sj.run
     end
     it "should submit options that are non-hash json objects" do
@@ -44,8 +44,8 @@ describe SchedulableJob do
     end
     it "should email when successful" do
       opts = {:a=>"b"}.to_json
-      expect(TestSchedulable).to receive(:run_schedulable).with("last_start_time"=>nil,'a'=>'b')
-      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts, success_email: "success1@email.com,success2@email.com")
+      expect(TestSchedulable).to receive(:run_schedulable).with("last_start_time"=>nil, 'a'=>'b')
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable", :opts=>opts, success_email: "success1@email.com,success2@email.com")
       sj.run
 
       m = OpenMailer.deliveries.pop
@@ -56,7 +56,7 @@ describe SchedulableJob do
     it "should email when unsuccessful" do
       opts = {:a=>"b"}.to_json
       allow(TestSchedulable).to receive(:run_schedulable).and_raise(NameError)
-      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts, failure_email: "failure1@email.com,failure2@email.com")
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable", :opts=>opts, failure_email: "failure1@email.com,failure2@email.com")
 
       sj.run
 
@@ -67,14 +67,14 @@ describe SchedulableJob do
     end
     it "should run run_schedulable method without params" do
       opts = {:a=>"b"}.to_json
-      sj = SchedulableJob.new(:run_class=>"TestSchedulableNoParams",:opts=>opts, success_email: "me@there.com")
+      sj = SchedulableJob.new(:run_class=>"TestSchedulableNoParams", :opts=>opts, success_email: "me@there.com")
       sj.run
 
       m = OpenMailer.deliveries.pop
       expect(m.to.first).to eq "me@there.com"
     end
     it "should not attempt to run classes with no run_schedulable method" do
-      sj = SchedulableJob.new(:run_class=>"BadSchedulable",:opts=>{}, failure_email: "me@there.com")
+      sj = SchedulableJob.new(:run_class=>"BadSchedulable", :opts=>{}, failure_email: "me@there.com")
       sj.run
 
       m = OpenMailer.deliveries.pop
@@ -83,11 +83,11 @@ describe SchedulableJob do
       expect(m.body.raw_source).to include "No 'run_schedulable' method exists on 'BadSchedulable' class."
     end
     it "should log an error if no error email is configured" do
-      opts = {'last_start_time'=>nil,'a'=>"b"}
+      opts = {'last_start_time'=>nil, 'a'=>"b"}
       e = StandardError.new "Message"
       allow(TestSchedulable).to receive(:run_schedulable).and_raise(e)
 
-      sj = SchedulableJob.new(:run_class=>"TestSchedulable",:opts=>opts.to_json)
+      sj = SchedulableJob.new(:run_class=>"TestSchedulable", :opts=>opts.to_json)
       sj.run
 
       expect(ErrorLogEntry.last.additional_messages).to eq ["Scheduled job for TestSchedulable with options #{opts} has failed"]
@@ -124,7 +124,7 @@ describe SchedulableJob do
       expect(SchedulableJob.new.time_zone).to eq(ActiveSupport::TimeZone["Eastern Time (US & Canada)"])
     end
     it "should override" do
-      expect(SchedulableJob.new(:time_zone_name=>"American Samoa").time_zone).to eq(ActiveSupport::TimeZone["American Samoa"]) #Tony Rocky Horror
+      expect(SchedulableJob.new(:time_zone_name=>"American Samoa").time_zone).to eq(ActiveSupport::TimeZone["American Samoa"]) # Tony Rocky Horror
     end
     it "should fail on bad tz" do
       expect {

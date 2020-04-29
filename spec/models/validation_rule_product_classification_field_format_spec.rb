@@ -1,6 +1,6 @@
 describe ValidationRuleProductClassificationFieldFormat do
   let!(:descr_cdef) { Factory(:custom_definition, module_type: 'Classification', data_type: 'string', label: 'Customs Description') }
-  let!(:rule) { described_class.new(rule_attributes_json:{model_field_uid:descr_cdef.model_field_uid,regex:'good descr'}.to_json) }
+  let!(:rule) { described_class.new(rule_attributes_json:{model_field_uid:descr_cdef.model_field_uid, regex:'good descr'}.to_json) }
   let!(:cl) do
     c = Factory(:classification)
     c.update_custom_value!(descr_cdef, 'good descr')
@@ -18,7 +18,7 @@ describe ValidationRuleProductClassificationFieldFormat do
   end
 
   context "fail_if_matches" do
-    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:descr_cdef.model_field_uid,regex:'good descr', fail_if_matches: true}.to_json) }
+    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:descr_cdef.model_field_uid, regex:'good descr', fail_if_matches: true}.to_json) }
 
     it "passes if all lines are valid" do
       cl.update_custom_value!(descr_cdef, 'foo')
@@ -36,7 +36,7 @@ describe ValidationRuleProductClassificationFieldFormat do
   end
 
   it 'should allow blanks when allow_blank is true' do
-    rule.rule_attributes_json = {allow_blank:true, model_field_uid:descr_cdef.model_field_uid,regex:'good descr'}.to_json
+    rule.rule_attributes_json = {allow_blank:true, model_field_uid:descr_cdef.model_field_uid, regex:'good descr'}.to_json
     cl.update_custom_value!(descr_cdef, '')
     expect(rule.run_validation(cl.product)).to be_nil
   end
@@ -55,18 +55,18 @@ describe ValidationRuleProductClassificationFieldFormat do
   describe 'should_skip?' do
 
     it 'should skip on product validation level' do
-      rule.search_criterions.build(model_field_uid:'prod_uid',operator:'eq',value:'bad UID')
+      rule.search_criterions.build(model_field_uid:'prod_uid', operator:'eq', value:'bad UID')
       expect(rule.should_skip?(cl.product)).to be_truthy
     end
 
     it 'should skip on product classification level validation' do
-      rule.search_criterions.build(model_field_uid:descr_cdef.model_field_uid,operator:'eq',value:'bad descr')
+      rule.search_criterions.build(model_field_uid:descr_cdef.model_field_uid, operator:'eq', value:'bad descr')
       expect(rule.should_skip?(cl.product)).to be_truthy
     end
 
     it 'should pass when matching all validations' do
-      rule.search_criterions.build(model_field_uid:'prod_uid',operator:'eq',value:'good UID')
-      rule.search_criterions.build(model_field_uid:descr_cdef.model_field_uid,operator:'eq',value:'good descr')
+      rule.search_criterions.build(model_field_uid:'prod_uid', operator:'eq', value:'good UID')
+      rule.search_criterions.build(model_field_uid:descr_cdef.model_field_uid, operator:'eq', value:'good descr')
       expect(rule.should_skip?(cl.product)).to be_falsey
     end
   end

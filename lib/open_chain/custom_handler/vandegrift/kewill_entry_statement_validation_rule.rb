@@ -1,6 +1,6 @@
 module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryStatementValidationRule < BusinessValidationRule
   include ActionView::Helpers::NumberHelper
- 
+
   def run_validation entry
     return unless entry_has_statement?(entry)
     validation_data = extract_statement_validation_data(entry)
@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryStat
     validate_header_value(entry: entry, entry_field: :ent_total_taxes, validation_data: validation_data, validation_field: :tax_amount, errors: errors)
     validate_header_and_line_values(entry: entry, entry_field: :ent_total_cvd, invoice_line_field: :cil_cvd_duty_amount, validation_data: validation_data, validation_field: :cvd_amount, errors: errors)
     validate_header_and_line_values(entry: entry, entry_field: :ent_total_add, invoice_line_field: :cil_add_duty_amount, validation_data: validation_data, validation_field: :add_amount, errors: errors)
-    
+
     cotton_valid = validate_header_and_line_values(entry: entry, entry_field: :ent_cotton_fee, invoice_line_field: :cil_cotton_fee, validation_data: validation_data, validation_field: :cotton_fee, errors: errors)
     mpf_valid = validate_header_and_line_values(entry: entry, entry_field: :ent_mpf, invoice_line_field: :cil_prorated_mpf, validation_data: validation_data, validation_field: :mpf_fee, errors: errors)
     hmf_valid = validate_header_and_line_values(entry: entry, entry_field: :ent_hmf, invoice_line_field: :cil_hmf, validation_data: validation_data, validation_field: :hmf_fee, errors: errors)
@@ -18,13 +18,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryStat
     # Don't bother validating the total fees field if cotton / mpf / hmf were invalid...it'll always be invalid if any of those were also invalid
     # since they make up a percentage of the totoal fees
     if cotton_valid && mpf_valid && hmf_valid
-      validate_header_and_line_values(entry: entry, entry_field: :ent_total_fees, invoice_line_field: :cil_total_fees, validation_data: validation_data, validation_field: :fee_amount, errors: errors)  
+      validate_header_and_line_values(entry: entry, entry_field: :ent_total_fees, invoice_line_field: :cil_total_fees, validation_data: validation_data, validation_field: :fee_amount, errors: errors)
     end
 
     # We also need to validate that the amount of duty that was billed to a customer matches what is on the statement
     # Keep in mind that there can be multiple broker invoices if the duty was billed and then backed out and rebilled,
     # so our billed duty amount needs to be a sum of the duty lines on teh broker invoices.
-    
+
     valid = errors.blank?
 
     billed_duty = BigDecimal("0")

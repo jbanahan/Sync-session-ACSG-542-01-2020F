@@ -14,17 +14,16 @@
 #
 
 class Delivery < ActiveRecord::Base
-  
   include CoreObjectSupport
 
-  attr_accessible :carrier_id, :customer_id, :mode, :reference, :ship_from_id, 
+  attr_accessible :carrier_id, :customer_id, :mode, :reference, :ship_from_id,
     :ship_to_id
 
   belongs_to  :carrier, :class_name => "Company"
   belongs_to  :customer,  :class_name => "Company"
   belongs_to  :ship_from, :class_name => "Address"
   belongs_to  :ship_to, :class_name => "Address"
-  
+
   has_many   :sales_order_lines, :through => :piece_sets
   has_many   :delivery_lines, :dependent => :destroy
 
@@ -32,7 +31,7 @@ class Delivery < ActiveRecord::Base
   validates :reference, :presence => true
   validates_uniqueness_of :reference, {:scope => :customer_id}
 
-  dont_shallow_merge :Delivery, ['id','created_at','updated_at','customer_id','reference']
+  dont_shallow_merge :Delivery, ['id', 'created_at', 'updated_at', 'customer_id', 'reference']
   def find_same
     f = self.reference.nil? ? [] : Delivery.where(:reference=>self.reference.to_s).where(:customer_id=>self.customer_id)
     raise "Multiple deliveries with reference \"#{self.reference} and customer ID #{self.customer_id} exist." if f.size > 1
@@ -41,12 +40,12 @@ class Delivery < ActiveRecord::Base
 
   def can_edit?(user)
     user.edit_deliveries? && (
-    user.company.master? || 
+    user.company.master? ||
     (!self.carrier.nil? && self.carrier==user.company) )
   end
   def can_view?(user)
     user.view_deliveries? && (
-    user.company.master? || 
+    user.company.master? ||
     (!self.carrier.nil? && self.carrier==user.company) ||
     (!self.customer.nil? && self.customer==user.company) )
   end
@@ -56,7 +55,7 @@ class Delivery < ActiveRecord::Base
   def can_attach?(user)
     user.attach_deliveries? && can_view?(user)
   end
-  def locked? 
+  def locked?
     (!self.carrier.nil? && self.carrier.locked?) ||
     (!self.customer.nil? && self.customer.locked?)
   end

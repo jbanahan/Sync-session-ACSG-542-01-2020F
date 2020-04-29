@@ -1,12 +1,12 @@
 describe OpenChain::EntityCompare::SecurityFilingComparator do
 
-  subject { 
+  subject {
     Class.new {
       extend OpenChain::EntityCompare::SecurityFilingComparator
     }
   }
-  
-  describe "accept?" do 
+
+  describe "accept?" do
 
     let(:snapshot) { EntitySnapshot.new recordable_type: "SecurityFiling"}
 

@@ -8,7 +8,7 @@ module OpenChain
       include OpenChain::XmlBuilder
       include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
-      #SchedulableJob compatibility
+      # SchedulableJob compatibility
       def self.run_schedulable opts={}
         g = self.new(opts)
         f = nil
@@ -20,14 +20,14 @@ module OpenChain
         end while !f.nil?
       end
 
-      #Accepts 3 parameters
+      # Accepts 3 parameters
       # * :env=>:qa to send to qa ftp folder
       # * :custom_where to replace the query where clause
       # * :no_brand_restriction to allow styles to be sent that don't have SAP Brand set
       def initialize params = {}
         @env = params[:env]
         @custom_where = params[:custom_where]
-        @sap_brand = CustomDefinition.find_by_module_type_and_label('Product','SAP Brand')
+        @sap_brand = CustomDefinition.find_by_module_type_and_label('Product', 'SAP Brand')
         @no_brand_restriction = params[:no_brand_restriction]
         @custom_countries = params[:custom_countries]
         raise "SAP Brand custom definition does not exist." unless @sap_brand
@@ -49,7 +49,7 @@ module OpenChain
       end
 
       def sync_xml
-        f = Tempfile.new(['ProductSync-','.xml'])
+        f = Tempfile.new(['ProductSync-', '.xml'])
         cursor = 0
         xml, root = nil
 
@@ -171,7 +171,7 @@ module OpenChain
       def convert_to_ascii value
         if value && value.is_a?(String)
           allowed_conversions = {
-              "\u{00A0}" => " ", #non breaking space
+              "\u{00A0}" => " ", # non breaking space
               "\u{2013}" => "-",
               "\u{2014}" => "-",
               "\u{00BE}" => "3/4",
@@ -179,7 +179,7 @@ module OpenChain
               "\u{201C}" => "\"", # Left quote-mark “
               "\u{00BC}" => "1/4",
               "\u{00BD}" => "1/2",
-              "\u{00FA}" => "u", #u w/ acute http://www.fileformat.info/info/unicode/char/fa/index.htm
+              "\u{00FA}" => "u", # u w/ acute http://www.fileformat.info/info/unicode/char/fa/index.htm
               "\u{00AE}" => "", # blank out registered character
               "\u{2019}" => "'" # Right single quote-mark '
           }
@@ -208,7 +208,7 @@ module OpenChain
       def before_csv_write cursor, vals
         vals[3] = vals[3].hts_format
         vals[8] = vals[8].length==2 ? vals[8].upcase : "" unless vals[8].blank?
-        clean_string_values vals, true #true = remove quotes
+        clean_string_values vals, true # true = remove quotes
         vals
       end
 
@@ -243,7 +243,7 @@ ORDER BY products.updated_at, products.unique_identifier, countries.iso_code, ta
 SELECT DISTINCT products.id
 FROM products
 #{@no_brand_restriction ? "" : "INNER JOIN custom_values sap_brand ON sap_brand.custom_definition_id = #{@sap_brand.id} AND sap_brand.customizable_id = products.id AND sap_brand.boolean_value = 1" }
-INNER JOIN classifications on classifications.product_id = products.id 
+INNER JOIN classifications on classifications.product_id = products.id
 INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (
 #{@custom_countries.blank? ? "'IT','US','CA','KR','JP','HK', 'NO'" : @custom_countries.collect { |c| "'#{c}'" }.join(',')})
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0

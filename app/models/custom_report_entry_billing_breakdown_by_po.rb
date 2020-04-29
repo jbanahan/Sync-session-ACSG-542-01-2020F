@@ -12,7 +12,7 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
   end
 
   def self.column_fields_available user
-  	#Exclude all fields that start with "Total" as well as "Cotton Fee", "HMF", "MPF".
+  	# Exclude all fields that start with "Total" as well as "Cotton Fee", "HMF", "MPF".
     CoreModule::BROKER_INVOICE.model_fields(user).values.select {|mf| valid_model_field mf}
   end
 
@@ -80,7 +80,7 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
       	charge_values[:remaining_invoice_amount] = BigDecimal.new(charge_values[:total])
       	charge_values[:even_split_amount] = (charge_values[:total] / po_numbers.length).round(2, BigDecimal::ROUND_DOWN)
     	end
-      
+
       po_numbers.each_with_index do |po, i|
         col = 0
         cols = []
@@ -96,23 +96,23 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
         end
 
         cols << inv.entry.broker_reference
-        cols << invoice_number 
+        cols << invoice_number
         cols << po
 
         total_charges_per_po = BigDecimal.new("0")
         po_charge_amounts = []
 
-        # We need to include every single charge descripion on each row of the report 
+        # We need to include every single charge descripion on each row of the report
         # even if the invoice didn't have one of these charges on it to keep the report output having
         # the same # of cols per each invoice (othewise, chaos ensues - dogs and cats living together, mass hysteria)
         description_columns.each do |description|
         	po_value = 0.0
         	charge_values = charge_totals[description]
         	if charge_values
-        		if i < (po_numbers.length - 1) 
+        		if i < (po_numbers.length - 1)
 		          po_value = charge_values[:even_split_amount]
 		          charge_values[:remaining_invoice_amount] -= charge_values[:even_split_amount]
-		        else 
+		        else
 		          po_value = charge_values[:remaining_invoice_amount]
 		        end
         	end
@@ -128,7 +128,7 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
         search_cols.each do |c|
           cols << c.model_field.process_export(inv, user)
         end
-        
+
         write_columns row, col, cols
         row += 1
       end
@@ -155,14 +155,14 @@ class CustomReportEntryBillingBreakdownByPo < CustomReport
       end
     end
 
-	  def split_po_numbers entry 
+	  def split_po_numbers entry
 	    # split returns a 0-length array on a blank string..hence the space
 	    po_numbers = (entry.po_numbers.nil? || entry.po_numbers.length == 0) ? " " : entry.po_numbers
 	    po_numbers.split("\n").collect! {|x| x.strip}
 	  end
 
 	  def useable_charge_type code
-	  	#Skip all Duty (D), charge types
+	  	# Skip all Duty (D), charge types
 	  	code.nil? || code.upcase != "D"
 	  end
 

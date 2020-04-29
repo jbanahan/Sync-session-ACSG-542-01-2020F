@@ -61,7 +61,7 @@ module OpenChain; module Report; class EntryContainerCostBreakdown
     Entry.where(id: id).includes([:containers => [:commercial_invoice_lines => [:commercial_invoice_tariffs]], :commercial_invoices => [:commercial_invoice_lines => [:commercial_invoice_tariffs]], :broker_invoices => [:broker_invoice_lines]]).first
   end
 
-  def headers 
+  def headers
     ["Bill Of Lading", "Container Number", "Entry Number", "Freight", "Duty", "HMF", "MPF", "Commercial Invoice Value", "Brokerage Fees", "Total"]
   end
 
@@ -81,7 +81,7 @@ module OpenChain; module Report; class EntryContainerCostBreakdown
         lines = invoice.broker_invoice_lines.find_all {|l| l.charge_code == charge_code}
 
         lines.each do |line|
-          # The charge line may or may not have the container # the freight amount is listed for on the charge description...if it does, record 
+          # The charge line may or may not have the container # the freight amount is listed for on the charge description...if it does, record
           # the amount directly against the container.  If it doesn't, add it to the prorate amount.
           c = container_number_key(line.charge_description)
           if container_numbers.has_key? c
@@ -92,7 +92,7 @@ module OpenChain; module Report; class EntryContainerCostBreakdown
         end
       end
     else
-      # We don't do freight for most customers - for the time being, we're just going to assume that freight is not 
+      # We don't do freight for most customers - for the time being, we're just going to assume that freight is not
       # calculated as part of the invoice total.  We can revist (seeing code in landed_cost_data_generator for how to handle freight charges)
       # later if we need to run this report for customers we bill for freight
       entry.broker_invoices.each {|inv| container_numbers[:prorate_amount] += (inv.invoice_total.presence || 0) }

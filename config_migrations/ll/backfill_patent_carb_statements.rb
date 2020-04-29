@@ -19,7 +19,7 @@ module ConfigMigrations; module LL; class BackfillPatentCarbStatements
 
     query.find_each do |order|
       snapshot = false
-      Lock.db_lock(order) do 
+      Lock.db_lock(order) do
         order.order_lines.each do |line|
           pva = product_vendor_assignment(order.vendor_id, line.product_id)
           if pva
@@ -50,7 +50,7 @@ module ConfigMigrations; module LL; class BackfillPatentCarbStatements
     query = ProductVendorAssignment
     query = query.where(id: ids) unless ids.blank?
     query.find_each do |pva|
-      Lock.db_lock(pva) do 
+      Lock.db_lock(pva) do
         snapshot = false
 
         if !pva.custom_value(cdefs[:prodven_carb]).blank? && pva.constant_text_for_date("CARB Statement").nil?
@@ -60,7 +60,7 @@ module ConfigMigrations; module LL; class BackfillPatentCarbStatements
 
         if !pva.custom_value(cdefs[:prodven_patent]).blank? && pva.constant_text_for_date("Patent Statement").nil?
           pva.constant_texts.create! constant_text: fix_em_dashes(pva.custom_value(cdefs[:prodven_patent])), text_type: "Patent Statement", effective_date_start: Date.new(2000, 1, 1)
-          snapshot = true  
+          snapshot = true
         end
 
         pva.create_snapshot(user, nil, "SOW 1522: Backfill CARB/Patent Statements") if snapshot
@@ -70,7 +70,7 @@ module ConfigMigrations; module LL; class BackfillPatentCarbStatements
     # Lumber wants to migrate all Carb Statements that have a code of "D- Back panel complies with California CA 93120 Phase 2 for formaldehyde"
     # to a new code of "Z - BACKER BOARD COMPLIES WITH TSCA TITLE VI AND CARB PHASE 2 FORMALDEHYDE EMISSION STANDARDS"
     ConstantText.where(text_type: "CARB Statement").where("constant_text LIKE 'D%'").each do |text|
-      Lock.db_lock(text.constant_textable) do 
+      Lock.db_lock(text.constant_textable) do
         text.update_attributes! constant_text: "Z - BACKER BOARD COMPLIES WITH TSCA TITLE VI AND CARB PHASE 2 FORMALDEHYDE EMISSION STANDARDS"
         text.constant_textable.create_snapshot(user, nil, "SOW 1522: Migrate 'D' CARB codes to 'Z'")
       end

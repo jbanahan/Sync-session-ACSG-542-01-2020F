@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillIsfBackfillComparator do
     end
 
     context "with EDDIEFTZ mapping" do
-      before :each do 
+      before :each do
         entry.update_attributes! customer_number: "EDDIEFTZ"
       end
 

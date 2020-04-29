@@ -25,12 +25,12 @@ describe MailingListsController do
   end
 
   describe "create" do
-    before :each do 
+    before :each do
       allow_any_instance_of(User).to receive(:admin?).and_return(true)
     end
 
     let (:mailing_list) {
-      {'user_id'=>user.id, 'company_id'=>user.company.id ,'system_code'=>'system', 'name'=>'mailing list', 'email_addresses'=>'test@domain.com'}
+      {'user_id'=>user.id, 'company_id'=>user.company.id , 'system_code'=>'system', 'name'=>'mailing list', 'email_addresses'=>'test@domain.com'}
     }
 
     it "should create a mailing list given all valid inputs" do

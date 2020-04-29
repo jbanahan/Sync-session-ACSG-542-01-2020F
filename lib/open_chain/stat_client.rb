@@ -1,15 +1,15 @@
 require 'net/https'
-#Client to send aggregated stats to the stat collector server
+# Client to send aggregated stats to the stat collector server
 module OpenChain; class StatClient
 
   def self.run_schedulable
     run
   end
-  
-  #main run class to collect all appropriate stats
+
+  # main run class to collect all appropriate stats
   def self.run
     collect_active_users
-    collect_total_products unless Product.all.empty? 
+    collect_total_products unless Product.all.empty?
     collect_total_entries unless Entry.all.empty?
     collect_report_recipients unless SearchSchedule.all.empty?
     unless Survey.all.empty?
@@ -18,16 +18,16 @@ module OpenChain; class StatClient
     end
   end
 
-  def self.collect_active_users; total_count 'u_act_7', User.where('last_request_at > ?',7.days.ago); end
+  def self.collect_active_users; total_count 'u_act_7', User.where('last_request_at > ?', 7.days.ago); end
   def self.collect_total_survey_responses; total_count 'tot_survey_resp', SurveyResponse; end
   def self.collect_total_surveys; total_count 'tot_survey', Survey; end
   def self.collect_total_entries; total_count 'tot_ent', Entry; end
   def self.collect_total_products; total_count 'tot_prod', Product; end
-  def self.collect_report_recipients 
+  def self.collect_report_recipients
     emails = Set.new
     SearchSchedule.all.pluck(:email_addresses).each do |addresses|
       next if addresses.blank?
-      addresses.split(",").each do |interim_e| 
+      addresses.split(",").each do |interim_e|
         interim_e.split(';').each {|e| emails << e.strip unless e.blank? or e =~ /vandegriftinc\.com/}
       end
     end
@@ -42,7 +42,7 @@ module OpenChain; class StatClient
   end
 
   def self.add_numeric stat_code, value, collected_at=Time.now
-    h = {stat_code:stat_code,value:value,collected_at:collected_at}
+    h = {stat_code:stat_code, value:value, collected_at:collected_at}
     self.delay.post_json! '/api/v1/stat_collector/add_numeric', h
   end
 
@@ -62,7 +62,7 @@ module OpenChain; class StatClient
     json_hash[:api_key] = ms.stats_api_key
     json_hash[:uuid] = ms.uuid
     req.set_form_data json_hash
-    http = Net::HTTP.new(uri.host,uri.port)
+    http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true if base_url =~ /^https/
     res =  http.request req
     case res.code

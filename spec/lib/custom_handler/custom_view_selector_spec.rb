@@ -6,14 +6,14 @@ describe OpenChain::CustomHandler::CustomViewSelector do
 
   describe '#order_view' do
     let (:order) { Order.new }
-  
+
     after :each do
       described_class.register_handler nil
     end
 
-    context "with cache configured" do 
+    context "with cache configured" do
 
-      before :each do 
+      before :each do
         expect(MasterSetup).to receive(:current_code_version).and_return "some value"
       end
 
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::CustomViewSelector do
         expect(handler.order).to be order
       end
     end
-    
+
     it 'should return nil if no registered handler' do
       expect(subject.order_view(order, user)).to be_nil
     end
@@ -53,9 +53,9 @@ describe OpenChain::CustomHandler::CustomViewSelector do
       subject.register_handler nil
     end
 
-    context "with cache configured" do 
+    context "with cache configured" do
 
-      before :each do 
+      before :each do
         expect(MasterSetup).to receive(:current_code_version).and_return "cache"
       end
 
@@ -65,10 +65,10 @@ describe OpenChain::CustomHandler::CustomViewSelector do
           def shipment_view s, u
             @user = u
             @shipment = s
-          
+
             return 'x'
           end
-        end.new 
+        end.new
 
         subject.register_handler handler
 

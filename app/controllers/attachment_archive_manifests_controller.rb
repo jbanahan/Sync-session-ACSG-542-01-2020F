@@ -1,4 +1,4 @@
-class AttachmentArchiveManifestsController < ApplicationController 
+class AttachmentArchiveManifestsController < ApplicationController
   before_filter :secure
   def create
     m = Company.find(params[:company_id]).attachment_archive_manifests.create!
@@ -15,7 +15,7 @@ class AttachmentArchiveManifestsController < ApplicationController
     end
   end
 
-  private 
+  private
   def secure
     if current_user.view_attachment_archives?
       return true

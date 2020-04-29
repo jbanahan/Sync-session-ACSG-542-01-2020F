@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillWebServi
   extend ActiveSupport::Concern
   include OpenChain::XmlBuilder
 
-  def create_document action: "KC", category:, subAction: 
+  def create_document action: "KC", category:, subAction:
     doc, xml = build_xml_document "requests"
     add_element(xml, "password", "lk5ijl9")
     add_element(xml, "userID", "kewill_edi")

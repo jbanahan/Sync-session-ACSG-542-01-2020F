@@ -60,13 +60,13 @@ module OpenChain; module CustomHandler; class CiLoadHandler
   end
 
   def parse_and_send custom_file
-    results = parse custom_file 
+    results = parse custom_file
     kewill_generator.generate_and_send(results[:entries]) unless results[:entries].size == 0
-    results 
+    results
   end
 
   def parse custom_file
-    # We may want to eventually retain the header so we can allow for "fluid" layouts based on the header names, or 
+    # We may want to eventually retain the header so we can allow for "fluid" layouts based on the header names, or
     # use the header row to determine what layout to use, but for now, we can skip it
     rows = foreach(custom_file, skip_headers: true, skip_blank_lines: true)
 
@@ -151,17 +151,17 @@ module OpenChain; module CustomHandler; class CiLoadHandler
 
             v = "#{last}#{first.rjust(2, '0')}#{second.rjust(2, '0')}"
           end
-          
+
         else
           # I don't know why anyone would key a date as 150201 (YYmmdd), but the old VB code allowed this
           # so I'm handling it too.
           if s.length == 6
-            v = "#{2000 + s[0, 2].to_i}#{s[2, 2]}#{s[4,2]}"
+            v = "#{2000 + s[0, 2].to_i}#{s[2, 2]}#{s[4, 2]}"
           elsif s.length == 8
-            if s[0,2] == "20"
+            if s[0, 2] == "20"
               v = s
             else
-              v = "#{s[4,4]}#{s[0, 2]}#{s[2, 2]}"
+              v = "#{s[4, 4]}#{s[0, 2]}#{s[2, 2]}"
             end
           end
         end
@@ -171,7 +171,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       date = nil
       if v
         date = Time.zone.parse(v).to_date
-        if !MasterSetup.test_env? && (date.year - Time.zone.now.year).abs > 2 
+        if !MasterSetup.test_env? && (date.year - Time.zone.now.year).abs > 2
           date = nil
         end
       end

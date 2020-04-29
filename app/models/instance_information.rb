@@ -17,7 +17,7 @@ class InstanceInformation < ActiveRecord::Base
 
   has_many :upgrade_logs, :dependent => :destroy
 
-  #check in with database, the hostname variable only needs to be passed in test cases
+  # check in with database, the hostname variable only needs to be passed in test cases
   def self.check_in hostname = nil
     h = hostname.blank? ? MasterSetup.rails_config_key(:hostname) : hostname
     ii = InstanceInformation.find_or_initialize_by host: h

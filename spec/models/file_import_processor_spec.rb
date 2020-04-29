@@ -1,27 +1,27 @@
 describe FileImportProcessor do
   it 'should initialize without search setup' do
     imp = Factory(:imported_file)
-    expect(imp.search_setup_id).to be_nil #factory shouldn't create this
-    expect { FileImportProcessor.new(imp,'a,b') }.not_to raise_error
+    expect(imp.search_setup_id).to be_nil # factory shouldn't create this
+    expect { FileImportProcessor.new(imp, 'a,b') }.not_to raise_error
   end
   it 'should initialize with bad search_setup_id' do
-    imp = Factory(:imported_file,:search_setup_id=>9999)
-    expect(imp.search_setup).to be_nil #id should not match to anything
-    expect { FileImportProcessor.new(imp,'a,b') }.not_to raise_error
+    imp = Factory(:imported_file, :search_setup_id=>9999)
+    expect(imp.search_setup).to be_nil # id should not match to anything
+    expect { FileImportProcessor.new(imp, 'a,b') }.not_to raise_error
   end
 
   describe "preview" do
     it "should not write to DB" do
       @ss = SearchSetup.new(:module_type=>"Product")
-      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0)
+      @f = ImportedFile.new(:search_setup=>@ss, :module_type=>"Product", :starting_column=>0)
       country = Factory(:country)
-      pro = FileImportProcessor::CSVImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
+      pro = FileImportProcessor::CSVImportProcessor.new(@f, nil, [FileImportProcessor::PreviewListener.new])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"class_cntry_iso",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"class_cntry_iso", :rank=>3)
       ])
-      allow(pro).to receive(:get_rows).with(preview: true).and_yield ['abc-123','pn',country.iso_code]
+      allow(pro).to receive(:get_rows).with(preview: true).and_yield ['abc-123', 'pn', country.iso_code]
       r = pro.preview_file
       expect(r.size).to eq(3)
       expect(Product.count).to eq(0)
@@ -29,9 +29,9 @@ describe FileImportProcessor do
 
     it "should return a SpreadsheetImportProcessor for xls and xlsx files" do
       @ss = SearchSetup.new(:module_type=>"Product")
-      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product",:starting_column=>0, attached_file_name: "file.xlsx")
+      @f = ImportedFile.new(:search_setup=>@ss, :module_type=>"Product", :starting_column=>0, attached_file_name: "file.xlsx")
       country = Factory(:country)
-      pro = FileImportProcessor.new(@f,nil,[FileImportProcessor::PreviewListener.new])
+      pro = FileImportProcessor.new(@f, nil, [FileImportProcessor::PreviewListener.new])
       expect(FileImportProcessor.find_processor(@f)).to be_an_instance_of(FileImportProcessor::SpreadsheetImportProcessor)
     end
 
@@ -40,35 +40,35 @@ describe FileImportProcessor do
   describe "do_row" do
     before :each do
       @ss = SearchSetup.new(:module_type=>"Product")
-      @f = ImportedFile.new(:search_setup=>@ss,:module_type=>"Product")
+      @f = ImportedFile.new(:search_setup=>@ss, :module_type=>"Product")
       @u = User.new
     end
     it "should save row" do
-      pro = FileImportProcessor.new(@f,nil,[])
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2)
       ])
       # removes whitespace
-      pro.do_row 0, ["\tuid-abc ","name"], true, -1, @u
+      pro.do_row 0, ["\tuid-abc ", "name"], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').name).to eq('name')
     end
     it "should not set blank values" do
-      p = Factory(:product,unique_identifier:'uid-abc',name:'name')
-      pro = FileImportProcessor.new(@f,nil,[])
+      p = Factory(:product, unique_identifier:'uid-abc', name:'name')
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2)
       ])
-      pro.do_row 0, ['uid-abc','  '], true, -1, @u
+      pro.do_row 0, ['uid-abc', '  '], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').name).to eq('name')
     end
     it "should set boolean false values" do
-      p = Factory(:product,unique_identifier:'uid-abc',name:'name')
-      pro = FileImportProcessor.new(@f,nil,[])
+      p = Factory(:product, unique_identifier:'uid-abc', name:'name')
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2)
       ])
       pro.do_row 0, ['uid-abc', false], true, -1, @u
       # False values, when put in string fields, turn to 0 via rails type coercion
@@ -76,15 +76,15 @@ describe FileImportProcessor do
     end
     it "should create children" do
       country = Factory(:country)
-      ot = Factory(:official_tariff,:hts_code=>'1234567890',:country=>country)
-      pro = FileImportProcessor.new(@f,nil,[])
+      ot = Factory(:official_tariff, :hts_code=>'1234567890', :country=>country)
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"class_cntry_iso",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"hts_line_number",:rank=>3),
-        SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>4)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"class_cntry_iso", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"hts_line_number", :rank=>3),
+        SearchColumn.new(:model_field_uid=>"hts_hts_1", :rank=>4)
       ])
-      pro.do_row 0, ['uid-abc',country.iso_code,1,'1234567890'], true, -1, @u
+      pro.do_row 0, ['uid-abc', country.iso_code, 1, '1234567890'], true, -1, @u
       p = Product.find_by(unique_identifier: 'uid-abc')
       expect(p.classifications.size).to eq(1)
       cl = p.classifications.first
@@ -94,134 +94,134 @@ describe FileImportProcessor do
       expect(tr.hts_1).to eq('1234567890')
     end
     it "should update row" do
-      p = Factory(:product,unique_identifier:'uid-abc')
-      pro = FileImportProcessor.new(@f,nil,[])
+      p = Factory(:product, unique_identifier:'uid-abc')
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2)
       ])
-      pro.do_row 0, ['uid-abc','name'], true, -1, @u
+      pro.do_row 0, ['uid-abc', 'name'], true, -1, @u
       p.reload
       expect(p.name).to eq('name')
     end
     it "should set custom values" do
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
-      pro = FileImportProcessor.new(@f,nil,[])
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"string")
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name','cval'], true, -1, @u
+      pro.do_row 0, ['uid-abc', 'name', 'cval'], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to eq('cval')
     end
     it "should set boolean custom values" do
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
-      pro = FileImportProcessor.new(@f,nil,[])
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"boolean")
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name',true], true, -1, @u
+      pro.do_row 0, ['uid-abc', 'name', true], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_truthy
     end
     it "should set boolean false custom values" do
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
-      pro = FileImportProcessor.new(@f,nil,[])
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"boolean")
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', false], true, -1, @u
+      pro.do_row 0, ['uid-abc', 'name', false], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_falsey
     end
     it "should set boolean custom value to true w/ text of '1'" do
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
-      pro = FileImportProcessor.new(@f,nil,[])
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"boolean")
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', "1"], true, -1, @u
+      pro.do_row 0, ['uid-abc', 'name', "1"], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to eq true
     end
     it "should set boolean custom value to false w/ text of '0'" do
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
-      pro = FileImportProcessor.new(@f,nil,[])
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"boolean")
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', "0"], true, -1, @u
+      pro.do_row 0, ['uid-abc', 'name', "0"], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to eq false
     end
     it "should not unset boolean custom values when nil value is present" do
       prod = Factory(:product, unique_identifier: 'uid-abc')
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean")
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"boolean")
       prod.update_custom_value! cd, true
 
-      pro = FileImportProcessor.new(@f,nil,[])
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name', nil], true, -1, @u
+      pro.do_row 0, ['uid-abc', 'name', nil], true, -1, @u
       expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_truthy
     end
     it "should not set read only custom values" do
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
-      FieldValidatorRule.create!(:model_field_uid=>"*cf_#{cd.id}",:custom_definition_id=>cd.id,:read_only=>true)
-      pro = FileImportProcessor.new(@f,nil,[])
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"string")
+      FieldValidatorRule.create!(:model_field_uid=>"*cf_#{cd.id}", :custom_definition_id=>cd.id, :read_only=>true)
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
-      pro.do_row 0, ['uid-abc','name','cval'], true, -1, User.new
+      pro.do_row 0, ['uid-abc', 'name', 'cval'], true, -1, User.new
       expect(Product.find_by(unique_identifier: 'uid-abc').get_custom_value(cd).value).to be_blank
     end
     it "should error when user doesn't have permission" do
-      cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
-      FieldValidatorRule.create!(model_field_uid: "*cf_#{cd.id}",custom_definition_id: cd.id, can_edit_groups: "GROUP")
-      pro = FileImportProcessor.new(@f,nil,[])
+      cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"string")
+      FieldValidatorRule.create!(model_field_uid: "*cf_#{cd.id}", custom_definition_id: cd.id, can_edit_groups: "GROUP")
+      pro = FileImportProcessor.new(@f, nil, [])
       allow(pro).to receive(:get_columns).and_return([
-        SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-        SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}",:rank=>3)
+        SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+        SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+        SearchColumn.new(:model_field_uid=>"*cf_#{cd.id}", :rank=>3)
       ])
       expect(pro).to receive(:fire_row).with(anything, anything, include("ERROR: You do not have permission to edit #{cd.label}."), anything)
-      pro.do_row 0, ['uid-abc','name','cval'], true, -1, User.new
+      pro.do_row 0, ['uid-abc', 'name', 'cval'], true, -1, User.new
     end
     context 'special cases' do
       it "should set country classification from product level fields" do
-        c = Factory(:country,:import_location=>true)
+        c = Factory(:country, :import_location=>true)
         ModelField.reload
-        pro = FileImportProcessor.new(@f,nil,[])
+        pro = FileImportProcessor.new(@f, nil, [])
         allow(pro).to receive(:get_columns).and_return([
-          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-          SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
+          SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+          SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}", :rank=>2)
         ])
-        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
+        pro.do_row 0, ['uid-abc', '1234.56.7890'], true, -1, @u
         expect(Product.count).to eq(1)
         p = Product.find_by(unique_identifier: 'uid-abc')
         expect(p.classifications.size).to eq(1)
         expect(p.classifications.where(:country_id=>c.id).first.tariff_records.first.hts_1).to eq('1234567890')
       end
       it "should set country classification from product level for existing product" do
-        Factory(:product,unique_identifier:'uid-abc')
-        c = Factory(:country,:import_location=>true)
+        Factory(:product, unique_identifier:'uid-abc')
+        c = Factory(:country, :import_location=>true)
         ModelField.reload
-        pro = FileImportProcessor.new(@f,nil,[])
+        pro = FileImportProcessor.new(@f, nil, [])
         allow(pro).to receive(:get_columns).and_return([
-          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-          SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
+          SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+          SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}", :rank=>2)
         ])
-        pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
+        pro.do_row 0, ['uid-abc', '1234.56.7890'], true, -1, @u
         expect(Product.count).to eq(1)
         p = Product.find_by(unique_identifier: 'uid-abc')
         expect(p.classifications.size).to eq(1)
@@ -237,13 +237,13 @@ describe FileImportProcessor do
         # 1.0 after the update and that we did update the existing record then we should be good.
         p = Product.create! unique_identifier: "1", name: "ABC"
 
-        pro = FileImportProcessor.new(@f,nil,[])
+        pro = FileImportProcessor.new(@f, nil, [])
         allow(pro).to receive(:get_columns).and_return([
-          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-          SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-          SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
+          SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+          SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+          SearchColumn.new(:model_field_uid=>"prod_uom", :rank=>3)
         ])
-        pro.do_row 0, [1.0,2.0, BigDecimal("3.0")], true, -1, @u
+        pro.do_row 0, [1.0, 2.0, BigDecimal("3.0")], true, -1, @u
         delta_p = Product.find_by(unique_identifier: '1')
         expect(delta_p).not_to be_nil
         expect(delta_p.id).to eq(p.id)
@@ -251,27 +251,27 @@ describe FileImportProcessor do
         expect(delta_p.unit_of_measure).to eq("3")
       end
       it "should convert Float and BigDecimal values to string, retaining decimal point values" do
-        pro = FileImportProcessor.new(@f,nil,[])
+        pro = FileImportProcessor.new(@f, nil, [])
         allow(pro).to receive(:get_columns).and_return([
-          SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-          SearchColumn.new(:model_field_uid=>"prod_name",:rank=>2),
-          SearchColumn.new(:model_field_uid=>"prod_uom",:rank=>3)
+          SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+          SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2),
+          SearchColumn.new(:model_field_uid=>"prod_uom", :rank=>3)
         ])
-        pro.do_row 0, [1,2.1, BigDecimal("3.10")], true, -1, @u
+        pro.do_row 0, [1, 2.1, BigDecimal("3.10")], true, -1, @u
         p = Product.find_by(unique_identifier: '1')
         expect(p.name).to eq("2.1")
         expect(p.unit_of_measure).to eq("3.1")
       end
       it "should NOT convert numbers for numeric fields" do
         ss = SearchSetup.new(:module_type=>"Entry")
-        f = ImportedFile.new(:search_setup=>ss,:module_type=>"Entry")
+        f = ImportedFile.new(:search_setup=>ss, :module_type=>"Entry")
 
-        pro = FileImportProcessor.new(f,nil,[])
+        pro = FileImportProcessor.new(f, nil, [])
         allow(pro).to receive(:get_columns).and_return([
-          SearchColumn.new(:model_field_uid=>"ent_brok_ref",:rank=>1),
-          SearchColumn.new(:model_field_uid=>"ent_total_packages",:rank=>2)
+          SearchColumn.new(:model_field_uid=>"ent_brok_ref", :rank=>1),
+          SearchColumn.new(:model_field_uid=>"ent_total_packages", :rank=>2)
         ])
-        pro.do_row 0, [1,2.0], true, -1, @u
+        pro.do_row 0, [1, 2.0], true, -1, @u
         e = Entry.where(:broker_reference => "1").first
         expect(e.total_packages).to eq(2)
       end
@@ -288,16 +288,16 @@ describe FileImportProcessor do
         end
 
         it "errors on invalid HTS values for First HTS fields" do
-          c = Factory(:country,:import_location=>true)
+          c = Factory(:country, :import_location=>true)
           OfficialTariff.create! country: c, hts_code: "9876543210"
 
           ModelField.reload
-          pro = FileImportProcessor.new(@f,nil,[@listener])
+          pro = FileImportProcessor.new(@f, nil, [@listener])
           allow(pro).to receive(:get_columns).and_return([
-            SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-            SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}",:rank=>2)
+            SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+            SearchColumn.new(:model_field_uid=>"*fhts_1_#{c.id}", :rank=>2)
           ])
-          pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
+          pro.do_row 0, ['uid-abc', '1234.56.7890'], true, -1, @u
 
           expect(Product.count).to eq(0)
           expect(@listener.failed).to be_truthy
@@ -305,31 +305,31 @@ describe FileImportProcessor do
         end
 
         it "informs user of missing key fields" do
-          pro = FileImportProcessor.new(@f,nil,[@listener])
+          pro = FileImportProcessor.new(@f, nil, [@listener])
           allow(pro).to receive(:get_columns).and_return([
-            SearchColumn.new(:model_field_uid=>"prod_name",:rank=>1)
+            SearchColumn.new(:model_field_uid=>"prod_name", :rank=>1)
           ])
           expect {
             pro.do_row 0, ['name'], true, -1, @u
-          }.to_not change(ErrorLogEntry,:count)
+          }.to_not change(ErrorLogEntry, :count)
           expect(@listener.failed).to be_truthy
           expect(@listener.messages).to include("ERROR: Cannot load Product data without a value in the 'Unique Identifier' field.")
         end
 
         it "informs user of missing compound key fields" do
-          c = Factory(:country,:import_location=>true)
+          c = Factory(:country, :import_location=>true)
           OfficialTariff.create! country: c, hts_code: "9876543210"
 
           ModelField.reload
-          pro = FileImportProcessor.new(@f,nil,[@listener])
+          pro = FileImportProcessor.new(@f, nil, [@listener])
           allow(pro).to receive(:get_columns).and_return([
-            SearchColumn.new(:model_field_uid=>"prod_uid",:rank=>1),
-            SearchColumn.new(:model_field_uid=>"hts_hts_1",:rank=>2)
+            SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+            SearchColumn.new(:model_field_uid=>"hts_hts_1", :rank=>2)
           ])
 
           expect {
-            pro.do_row 0, ['uid-abc','1234.56.7890'], true, -1, @u
-          }.to_not change(ErrorLogEntry,:count)
+            pro.do_row 0, ['uid-abc', '1234.56.7890'], true, -1, @u
+          }.to_not change(ErrorLogEntry, :count)
           expect(@listener.failed).to be_truthy
           expect(@listener.messages).to include("ERROR: Cannot load Classification data without a value in one of the 'Country Name' or 'Country ISO Code' fields.")
         end
@@ -339,8 +339,8 @@ describe FileImportProcessor do
 
   describe "CSVImportProcessor" do
     let (:search_setup) { instance_double(SearchSetup) }
-    let (:imported_file) { 
-      f = instance_double(ImportedFile) 
+    let (:imported_file) {
+      f = instance_double(ImportedFile)
       allow(f).to receive(:search_setup).and_return search_setup
       allow(f).to receive(:module_type).and_return "Product"
       expect(f).to receive(:starting_row).and_return 1
@@ -366,8 +366,8 @@ describe FileImportProcessor do
 
       it "doesn't rescue non-encoding exceptions" do
         expect(subject).to receive(:utf_8_parse).and_raise("some other kind of problem")
-        expect(subject).not_to receive(:windows_1252_parse)      
-        expect{ subject.get_rows{|r| rows << r} }.to raise_error("some other kind of problem")
+        expect(subject).not_to receive(:windows_1252_parse)
+        expect { subject.get_rows {|r| rows << r} }.to raise_error("some other kind of problem")
       end
 
       it "only parses the first line for previews" do
@@ -388,8 +388,8 @@ describe FileImportProcessor do
 
   describe "SpreadsheetImportProcessor" do
     let (:search_setup) { instance_double(SearchSetup) }
-    let (:imported_file) { 
-      f = instance_double(ImportedFile) 
+    let (:imported_file) {
+      f = instance_double(ImportedFile)
       allow(f).to receive(:search_setup).and_return search_setup
       allow(f).to receive(:module_type).and_return "Product"
       f

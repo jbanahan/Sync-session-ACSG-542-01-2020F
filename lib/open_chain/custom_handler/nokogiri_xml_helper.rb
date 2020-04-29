@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
     ActiveSupport::TimeZone["Eastern Time (US & Canada)"].at(t.to_i).strftime("%Y-%m-%d %H:%M %Z")
   end
 
-  #get element text
+  # get element text
   # if force_blank_string then send "" instead of null
   def et parent, element_name, force_blank_string=false
     r  = nil
@@ -72,9 +72,9 @@ module OpenChain; module CustomHandler; module NokogiriXmlHelper
     # Build an XML document object from a String or IO object
     def xml_document xml_data, remove_namespaces: true
       doc = Nokogiri::XML(xml_data)
-      # By default, we eliminate namespaces from the document.  In general, most documents we receive utilize a single namespace 
+      # By default, we eliminate namespaces from the document.  In general, most documents we receive utilize a single namespace
       # and that namespace really provides no actual purpose for the document.  Removing the namespace makes all the xpath expressions
-      # utilized on a document more streamlined and easier to read.  
+      # utilized on a document more streamlined and easier to read.
       doc.remove_namespaces! if remove_namespaces
       doc
     end

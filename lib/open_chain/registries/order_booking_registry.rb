@@ -62,5 +62,4 @@ module OpenChain; module Registries; class OrderBookingRegistry
     registered_objects.each {|obj| shipments_query = obj.open_bookings_hook(user, shipments_query, order)}
     shipments_query
   end
-  
 end; end; end

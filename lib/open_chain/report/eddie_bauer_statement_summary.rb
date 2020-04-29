@@ -2,7 +2,7 @@ module OpenChain
   module Report
     class EddieBauerStatementSummary
 
-      #do not create objects for this class, use the #run_report method
+      # do not create objects for this class, use the #run_report method
       def initialize(run_by, parameters = {})
         @run_by = run_by
         @mode = parameters[:mode] ? parameters[:mode] : 'not_paid'
@@ -10,13 +10,13 @@ module OpenChain
         @month = parameters[:month] ? parameters[:month] : (Time.current - 1.month).month
         @customer_number = parameters[:customer_number]
       end
-      
+
       def self.permission? user
         MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.company.master?
       end
 
       def self.run_report run_by, parameters={}
-        self.new(run_by, HashWithIndifferentAccess.new(parameters)).run 
+        self.new(run_by, HashWithIndifferentAccess.new(parameters)).run
       end
 
       def run
@@ -27,12 +27,12 @@ module OpenChain
         @summary_sheet = wb.create_worksheet :name=>"Summary"
         @detail_sheet = wb.create_worksheet :name=>"Details"
         @detail_cursor = 0
-        
-        #write detail headings
+
+        # write detail headings
         r = @detail_sheet.row(@detail_cursor)
-        ["Statement #","ACH #","Entry #","PO","Business","Invoice",
-          "Duty Rate","Duty","Taxes / Fees","ACH Date",
-          "Statement Date","Release Date","Unique ID", "Country of Origin"].each_with_index do |h,i|
+        ["Statement #", "ACH #", "Entry #", "PO", "Business", "Invoice",
+          "Duty Rate", "Duty", "Taxes / Fees", "ACH Date",
+          "Statement Date", "Release Date", "Unique ID", "Country of Origin"].each_with_index do |h, i|
           r[i] = h
         end
         @detail_cursor += 1
@@ -48,7 +48,7 @@ module OpenChain
           ent.commercial_invoices.each do |ci|
             ci.commercial_invoice_lines.each do |cil|
               r = @detail_sheet.row(@detail_cursor)
-              r[0] = monthly 
+              r[0] = monthly
               r[1] = ent.daily_statement_number
               r[2] = ent.entry_number
               r[9] = ent.daily_statement_approved_date
@@ -57,8 +57,8 @@ module OpenChain
               po, business = EddieBauerStatementSummary.split_eddie_po_number cil.po_number
               r[3] = po
               r[4] = business
-              duty_rate = BigDecimal("0.00") 
-              line_duty = BigDecimal("0.00") 
+              duty_rate = BigDecimal("0.00")
+              line_duty = BigDecimal("0.00")
               cil.commercial_invoice_tariffs.each do |cit|
                 duty_rate = (duty_rate > cit.duty_rate) ? duty_rate : cit.duty_rate
                 line_duty += cit.duty_amount.blank? ? 0 : cit.duty_amount
@@ -66,12 +66,12 @@ module OpenChain
               r[6] = duty_rate.to_f * 100
               r[7] = line_duty.to_f
               line_fees = fees(cil).to_f
-              r[8] = line_fees 
+              r[8] = line_fees
               r[12] = "#{ent.entry_number}/#{duty_rate*100}/#{ci.invoice_number}"
               r[13] = cil.country_origin_code
-              r[14] = Spreadsheet::Link.new(ent.view_url,'Web Link')
+              r[14] = Spreadsheet::Link.new(ent.view_url, 'Web Link')
 
-              #prep summary page data
+              # prep summary page data
               statement_hash[business] ||= {:duty=>BigDecimal("0.00"),
                 :fees=>BigDecimal("0.00"),
                 :statement_date=>ent.monthly_statement_received_date
@@ -87,11 +87,11 @@ module OpenChain
 
         @summary_cursor = 0
         r = @summary_sheet.row(@summary_cursor)
-        ["Statement #","Business","Duty","Taxes / Fees","Statement Date"].each_with_index {|t,i| r[i] = t}
+        ["Statement #", "Business", "Duty", "Taxes / Fees", "Statement Date"].each_with_index {|t, i| r[i] = t}
         @summary_cursor += 1
 
-        summary_hash.each do |stmt,bh|
-          bh.each do |business,vals|
+        summary_hash.each do |stmt, bh|
+          bh.each do |business, vals|
             r = @summary_sheet.row(@summary_cursor)
             r[0] = stmt
             r[1] = business
@@ -102,7 +102,7 @@ module OpenChain
           end
         end
 
-        t = Tempfile.new(["EddieBauerStatementSummary-#{@customer_number}-",".xls"])
+        t = Tempfile.new(["EddieBauerStatementSummary-#{@customer_number}-", ".xls"])
         wb.write t
         t
       end
@@ -138,7 +138,7 @@ module OpenChain
       private
       def fees cil
         r = BigDecimal("0.00")
-        [:hmf,:prorated_mpf,:cotton_fee].each do |k|
+        [:hmf, :prorated_mpf, :cotton_fee].each do |k|
           v = cil[k]
           r += v.blank? ? 0 : v
         end

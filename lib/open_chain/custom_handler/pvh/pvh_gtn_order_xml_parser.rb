@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnOrderXmlParser <
       if code && code.length > 1
         country = find_country(code[0, 2])
       end
-      
+
       country
     end
     @country

@@ -75,7 +75,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryDocsComparator do
 
     it "moves attachments even if attachment is in both old and new snapshot" do
       # This is to check to handle the case where the attachment is added at a point in time where the business rules
-      # failed.  The attachment needs to be added at a later time, but at that point the attachment will be in the snapshots 
+      # failed.  The attachment needs to be added at a later time, but at that point the attachment will be in the snapshots
       # and not detected as a change.
 
       # just use the same snapshot for both old / new that way the snapshot will be identical and the docs won't be moved

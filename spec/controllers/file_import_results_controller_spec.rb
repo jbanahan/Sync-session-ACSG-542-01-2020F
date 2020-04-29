@@ -5,7 +5,7 @@ describe FileImportResultsController do
   end
 
   describe "download_all" do
-    before :each do 
+    before :each do
       @fir = Factory(:file_import_result)
       @a = Factory(:attachment)
     end
@@ -33,7 +33,7 @@ describe FileImportResultsController do
   end
 
   describe "download_failed" do
-    before :each do 
+    before :each do
       @fir = Factory(:file_import_result)
       @a = Factory(:attachment)
     end

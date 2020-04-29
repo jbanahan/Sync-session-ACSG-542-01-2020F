@@ -7,10 +7,10 @@ module OpenChain; class FiscalMonthUploader
     @custom_file = custom_file
   end
 
-  def process user, parameters #company_id required
+  def process user, parameters # company_id required
     check_extension(File.extname(@custom_file.path))
     errors = []
-    foreach(@custom_file, skip_blank_lines:true) do |row, row_number| 
+    foreach(@custom_file, skip_blank_lines:true) do |row, row_number|
       next if row_number == 0
       process_row(row, row_number, parameters[:company_id], errors)
     end
@@ -21,7 +21,7 @@ module OpenChain; class FiscalMonthUploader
 
   def check_extension ext
     if ![".xls", ".xlsx", ".csv"].include? ext.downcase
-      raise ArgumentError, "Only XLS, XLSX, and CSV files are accepted." 
+      raise ArgumentError, "Only XLS, XLSX, and CSV files are accepted."
     end
   end
 
@@ -44,7 +44,7 @@ module OpenChain; class FiscalMonthUploader
 
   def errors_to_user user, errors
     if errors.presence
-      user.messages.create!(subject: "Fiscal-month uploader generated errors", 
+      user.messages.create!(subject: "Fiscal-month uploader generated errors",
                             body: "Fiscal-month uploader generated errors on the following row(s): #{errors.join(', ')}. Check the date format.")
     end
   end

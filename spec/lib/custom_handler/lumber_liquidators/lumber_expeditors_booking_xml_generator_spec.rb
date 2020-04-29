@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       Company.new(system_code:'VENSYS')
     end
     let :product1 do
-      p = Product.new(unique_identifier:'PROD1',name:'PNAME1')
+      p = Product.new(unique_identifier:'PROD1', name:'PNAME1')
       p.classifications.build(country:usa).tariff_records.build(hts_1:'1234567890')
       allow(p).to receive(:custom_value).with(prod_merch_cat_def).and_return "MERCHCAT"
       p
@@ -43,14 +43,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       Address.new(system_code:'SHPTOSYS')
     end
     let :ship_from do
-      Address.new(name:'A1Name',line_1:'A1A',city:'A1C',state:'A1S',postal_code:'A1P',country:usa)
+      Address.new(name:'A1Name', line_1:'A1A', city:'A1C', state:'A1S', postal_code:'A1P', country:usa)
     end
     let :order1 do
       o = Order.new(
         order_number:'ORDNUM1',
         currency:'USD',
-        ship_window_start:Date.new(2016,9,10),
-        ship_window_end:Date.new(2016,9,15),
+        ship_window_start:Date.new(2016, 9, 10),
+        ship_window_end:Date.new(2016, 9, 15),
         terms_of_sale:'FOB'
       )
       o.order_lines.build(
@@ -65,12 +65,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       o
     end
     let :product2 do
-      p = Product.new(unique_identifier:'PROD2',name:'PNAME2')
+      p = Product.new(unique_identifier:'PROD2', name:'PNAME2')
       allow(p).to receive(:custom_value).with(prod_merch_cat_def).and_return "MERCHCAT"
       p
     end
     let :order2 do
-      o = Order.new(order_number:'ORDNUM2',currency:'USD')
+      o = Order.new(order_number:'ORDNUM2', currency:'USD')
       o.order_lines.build(
         line_number:1,
         product:product2,
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       s = Shipment.new(
         reference:'SHPREF',
         requested_equipment:"2 40\n3 40HC",
-        cargo_ready_date:Date.new(2016,8,31),
+        cargo_ready_date:Date.new(2016, 8, 31),
         booking_mode:'Air',
         booking_shipment_type:'CY',
         vendor:vendor,
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       s
     end
     it "should generate base xml" do
-      xml = described_class.generate_xml(shipment,cdefs)
+      xml = described_class.generate_xml(shipment, cdefs)
       root = xml.root
       expect(root.name).to eq 'booking'
       expect(root.text('reference')).to eq shipment.reference
@@ -145,9 +145,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       expect(bl1.text('item-late-ship-date')).to eq '20160915'
       expect(bl1.text('inco-terms')).to eq 'FOB'
 
-      match_address(root.elements['address[@type="stuffing"][1]'],ship_from)
-      match_address(root.elements['address[@type="seller"][1]'],ship_from)
-      match_address(root.elements['address[@type="manufacturer"][1]'],ship_from)
+      match_address(root.elements['address[@type="stuffing"][1]'], ship_from)
+      match_address(root.elements['address[@type="seller"][1]'], ship_from)
+      match_address(root.elements['address[@type="manufacturer"][1]'], ship_from)
       ll_corp = Address.new(
         name:'Lumber Liquidators',
         line_1:'4901 Bakers Mill Lane',
@@ -156,37 +156,37 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
         postal_code:'23230-2431',
         country:usa
       )
-      match_address(root.elements['address[@type="buyer"][1]'],ll_corp)
+      match_address(root.elements['address[@type="buyer"][1]'], ll_corp)
     end
 
     it "should generate canceled_date" do
       s = shipment
       s.canceled_date = Time.now
-      xml = described_class.generate_xml(s,cdefs)
+      xml = described_class.generate_xml(s, cdefs)
       expect(xml.root.text('canceled-date')).to match(/^[0-9]{4}/)
     end
     it "should fail on mode other than AIR or OCEAN" do
       s = shipment
       s.booking_mode = 'Truck'
-      expect{described_class.generate_xml(s,cdefs)}.to raise_error(/Invalid mode/)
+      expect {described_class.generate_xml(s, cdefs)}.to raise_error(/Invalid mode/)
     end
     it "should fail on service type other than CY, CFS, or AIR" do
       s = shipment
       s.booking_shipment_type = 'Other'
-      expect{described_class.generate_xml(s,cdefs)}.to raise_error(/Invalid service type/)
+      expect {described_class.generate_xml(s, cdefs)}.to raise_error(/Invalid service type/)
     end
     it "should translate FT2 & FTK to SFT for unit of measure" do
       s = shipment
       s.booking_lines.first.order_line.unit_of_measure = 'FT2'
       s.booking_lines.last.order_line.unit_of_measure = 'FTK'
-      xml = described_class.generate_xml(s,cdefs)
+      xml = described_class.generate_xml(s, cdefs)
       expect(xml.root.elements['booking-lines/booking-line[1]'].text('unit-of-measure')).to eq 'SFT'
       expect(xml.root.elements['booking-lines/booking-line[2]'].text('unit-of-measure')).to eq 'SFT'
     end
     it "should translate FOT to FT for unit of measure" do
       s = shipment
       s.booking_lines.first.order_line.unit_of_measure = 'FOT'
-      xml = described_class.generate_xml(s,cdefs)
+      xml = described_class.generate_xml(s, cdefs)
       expect(xml.root.elements['booking-lines/booking-line[1]'].text('unit-of-measure')).to eq 'FT'
       expect(xml.root.elements['booking-lines/booking-line[2]'].text('unit-of-measure')).to eq 'EA'
     end

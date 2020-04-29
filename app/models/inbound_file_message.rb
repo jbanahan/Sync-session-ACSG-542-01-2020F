@@ -14,7 +14,7 @@
 
 class InboundFileMessage < ActiveRecord::Base
   attr_accessible :inbound_file_id, :message, :message_status
-  
+
   belongs_to :inbound_file, inverse_of: :messages
 
   MESSAGE_STATUS_INFO = "Info"

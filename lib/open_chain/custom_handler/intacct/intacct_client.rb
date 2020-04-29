@@ -67,7 +67,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
       # There must be some slight delay when dimensions are created vs. when they're available to the API,
       # since we're only creating the same dimension one at a time (via locking) and we're still getting duplicate
-      # create errors.  Just look for an error message stating the transaction was already created and then don't 
+      # create errors.  Just look for an error message stating the transaction was already created and then don't
       # bother with the error reporting since our end goal of getting the dimension out there has been met we
       # don't care if this particular call errored.
       message = e.message.try(:downcase)
@@ -163,8 +163,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
         xml += adjustment_xml
       end
 
-      # Because this is in a transaction, all or nothing semantics apply, so either everything 
-      # posts together or nothing does, which is good because it means we can resend the full 
+      # Because this is in a transaction, all or nothing semantics apply, so either everything
+      # posts together or nothing does, which is good because it means we can resend the full
       # request if needed.
       response = post_xml(check.company, true, true, xml, control_ids)
 
@@ -203,7 +203,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       control_ids << function_control_id
       combined_xml << xml
     end
-    
+
     response = post_xml location_id, false, false, combined_xml, control_ids, request_options: {api_version: "3.0"}, read_only: true
 
     objects = []
@@ -225,7 +225,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     function_control_id, xml = @generator.generate_read_by_query intacct_object_type, query, fields: fields
     response = post_xml location_id, false, false, xml, function_control_id, request_options: {api_version: "3.0"}, read_only: true
     data = parse_list_results response, function_control_id, results
-    
+
     # Now determine if there's any more results that we have to retrieve
     result_id = nil
     while (results.length < max_results && data.attributes["numremaining"].to_i > 0 && !(result_id = data.attributes["resultId"].to_s).blank?)
@@ -266,7 +266,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     connection_options = INTACCT_CONNECTION_INFO.merge(request_options)
     connection_options = connection_options.merge(self.class.intacct_config)
 
-    # We're going to allow connecting to the production intacct system if the xml post is marked as read_only, regardless of the 
+    # We're going to allow connecting to the production intacct system if the xml post is marked as read_only, regardless of the
     # status of the current system.
     can_send_request?(connection_options) unless read_only
 
@@ -300,7 +300,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     def can_send_request? connection_options
       raise "Cannot post to Intacct in development mode" unless production? || company_id(connection_options).include?("-sandbox")
     end
-    
+
     def process_response response
       # The response from Intacct should always be an XML document.
       begin
@@ -318,10 +318,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
         errors = error_elements.collect {|el| extract_errors_information(el)}
         message = "Intacct API call failed with errors:\n#{errors.join("\n")}"
 
-        # There seems to be a random error when posting data that pops up every so often that is not data related, just 
+        # There seems to be a random error when posting data that pops up every so often that is not data related, just
         # random failures on the Intacct side.  Throw a retry error so that we can just retry the call again after some manner of delay.
         retry_error? error_elements, message
-        # If the response indicates a dimension was missing, then raise that error so the client can potentially 
+        # If the response indicates a dimension was missing, then raise that error so the client can potentially
         # directly handle that and send the dimension
         dimension_error?(error_elements, message)
 
@@ -334,7 +334,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
           raise IntacctClientError, "Intacct API Function call #{function} failed with status #{status}."
         end
       end
-      
+
       xml
     end
 
@@ -402,7 +402,7 @@ XML
     end
 
     def retry_error? error_elements, error_message
-      # We only really want to retry at this point if the error text has a Correction message like: 
+      # We only really want to retry at this point if the error text has a Correction message like:
       # "Check the transaction for errors or inconsistencies, then try again."
       error_elements.each do |el|
         if el.text("correction") =~ /Check the transaction for errors or inconsistencies/i
@@ -440,7 +440,7 @@ XML
         # Not expecting multi-level config values for this yet, so don't worry about parsing hashes,etc.
 
         config.each_pair do |k, v|
-          # Expected keys are 
+          # Expected keys are
           config[k] = v.encode(xml: :text) if v.is_a?(String)
         end unless config.blank?
 

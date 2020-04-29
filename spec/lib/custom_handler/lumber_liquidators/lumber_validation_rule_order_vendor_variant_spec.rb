@@ -1,24 +1,24 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant do
   before :each do
     @cdefs = described_class.prep_custom_definitions [:pva_pc_approved_date]
-    @vendor = Factory(:vendor,name:'MYVEND')
-    @plant = Factory(:plant,company:@vendor)
-    @plant2 = Factory(:plant,company:@vendor)
+    @vendor = Factory(:vendor, name:'MYVEND')
+    @plant = Factory(:plant, company:@vendor)
+    @plant2 = Factory(:plant, company:@vendor)
 
     @product1 = Factory(:product)
-    @variant1 = Factory(:variant,product:@product1)
+    @variant1 = Factory(:variant, product:@product1)
 
     @product2 = Factory(:product, unique_identifier:'PRODNUM2')
-    @variant2 = Factory(:variant,product:@product2)
+    @variant2 = Factory(:variant, product:@product2)
 
-    @order = Factory(:order,vendor:@vendor)
-    @order_line_1 = Factory(:order_line,product:@product1,order:@order)
-    @order_line_2 = Factory(:order_line,product:@product2,order:@order)
+    @order = Factory(:order, vendor:@vendor)
+    @order_line_1 = Factory(:order_line, product:@product1, order:@order)
+    @order_line_2 = Factory(:order_line, product:@product2, order:@order)
   end
   it "should pass if all order lines have an product with an approved plant variant assignment for one of the vendor's plants" do
     pva1 = @variant1.plant_variant_assignments.create!(plant_id:@plant.id)
     pva2 = @variant2.plant_variant_assignments.create!(plant_id:@plant.id)
-    [pva1,pva2].each {|pva| pva.update_custom_value!(@cdefs[:pva_pc_approved_date],Time.now)}
+    [pva1, pva2].each {|pva| pva.update_custom_value!(@cdefs[:pva_pc_approved_date], Time.now)}
 
     @order.reload
 
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderV
   end
   it "should fail if one of the order lines does not have a plant variant assignment for one of the vendors plants" do
     pva1 = @variant1.plant_variant_assignments.create!(plant_id:@plant.id)
-    pva1.update_custom_value!(@cdefs[:pva_pc_approved_date],Time.now)
+    pva1.update_custom_value!(@cdefs[:pva_pc_approved_date], Time.now)
 
     @order.reload
 
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderV
   end
   it "should fail if one of the order lines has a plant variant assignment but it is not approved" do
     pva1 = @variant1.plant_variant_assignments.create!(plant_id:@plant.id)
-    pva1.update_custom_value!(@cdefs[:pva_pc_approved_date],Time.now)
+    pva1.update_custom_value!(@cdefs[:pva_pc_approved_date], Time.now)
 
     @variant2.plant_variant_assignments.create!(plant_id:@plant.id)
 

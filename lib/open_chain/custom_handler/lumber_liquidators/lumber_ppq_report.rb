@@ -64,7 +64,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPp
     start_date = (now - 7.days)
     # Subtract days until we're at a Monday
     start_date -= 1.day while start_date.wday != 1
-    # Basically, we're formatting these dates so the represent the Monday @ Midnight and the following Monday @ midnight, relying on the 
+    # Basically, we're formatting these dates so the represent the Monday @ Midnight and the following Monday @ midnight, relying on the
     # where clause being >= && <.  We don't want any results showing that are actually on the following Monday based on Eastern timezone
     [start_date.beginning_of_day.in_time_zone("UTC"), (start_date + 7.days).beginning_of_day.in_time_zone("UTC")]
   end

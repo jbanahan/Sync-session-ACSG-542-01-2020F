@@ -92,7 +92,7 @@ module OpenChain; module CustomHandler; class DeliveryOrderSpreadsheetGenerator
 
       set_multiple_vertical_cells tab_index, "B", 23, del.body, 1000
     end
-    
+
     # Clear the primary "template" tab from the spreadsheet - which will always be index 0
     if Array.wrap(delivery_orders).length > 0
       xl.delete_sheet 0
@@ -102,7 +102,6 @@ module OpenChain; module CustomHandler; class DeliveryOrderSpreadsheetGenerator
     else
       []
     end
-    
   end
 
   def send_delivery_order user, file_number, delivery_order_files
@@ -114,14 +113,14 @@ module OpenChain; module CustomHandler; class DeliveryOrderSpreadsheetGenerator
       else
         body = "Attached #{files.size > 1 ? "are" : "is"} the Delivery Order #{"file".pluralize(files.size)} for File # #{file_number}."
       end
-      
-      OpenMailer.send_simple_html(user.email, "Delivery Order for File # #{file_number}", body,files).deliver_now
+
+      OpenMailer.send_simple_html(user.email, "Delivery Order for File # #{file_number}", body, files).deliver_now
     ensure
       files.each {|f| f.close! unless f.closed? }
     end
   end
 
-  private 
+  private
     def set_cell tab, col, row, value
       xl.set_cell(tab, (row - 1), col, value) unless value.nil?
     end

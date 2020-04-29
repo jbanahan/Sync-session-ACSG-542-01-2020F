@@ -7,7 +7,7 @@ class TagTasks
   def initialize
     namespace :tag do
       desc "Automatically determine and apply next release tag to use for OpenChain"
-      task :auto do 
+      task :auto do
         auto_tag()
       end
 
@@ -30,7 +30,7 @@ class TagTasks
     def auto_tag
       branch_name = current_git_branch()
       check_for_outdated_branch(branch_name)
-      
+
       git_describe = run("git describe --tags")
 
       last_tag, next_tag = get_tag_data branch_name
@@ -43,7 +43,7 @@ class TagTasks
           response = get_user_response("Found existing tag #{last_tag}, would you like to tag #{branch_name} with #{next_tag}? ", default_value: "Y")
           tag_to_use = nil
           if response == "Y"
-            tag_to_use = next_tag  
+            tag_to_use = next_tag
           end
         end
 
@@ -100,7 +100,7 @@ class TagTasks
           last_tag_prefix = $1
           last_tag_number = $2
           if branch_name == "master"
-            if last_tag =~ /\A\d{4}\.\d{1,3}\z/ 
+            if last_tag =~ /\A\d{4}\.\d{1,3}\z/
               # We're on master and we have a propertly formattd release tag as the previous tag
               current_year = Time.now.to_date.year
 
@@ -113,7 +113,7 @@ class TagTasks
             end
           else
             # If we're on a non-master branch, don't offer up a next tag number if the previous tag looks like an actual release tag number
-            if last_tag =~ /\A\d{4}\.\d{1,3}\z/ 
+            if last_tag =~ /\A\d{4}\.\d{1,3}\z/
               next_tag_number = nil
             else
               next_tag_number = "#{last_tag_prefix}.#{last_tag_number.to_i + 1}"

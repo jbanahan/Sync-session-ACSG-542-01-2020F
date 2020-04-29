@@ -8,13 +8,13 @@ describe Api::V1::Admin::CustomViewTemplatesController do
 
   describe "edit" do
     it "renders template JSON for a sys-admin" do
-      mf_collection = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer}, 
+      mf_collection = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer},
                        {:mfid=>:prod_attachment_types, :label=>"Attachment Types", :datatype=>:string}]
       cvt = CustomViewTemplate.first
       cvt.search_criterions << Factory(:search_criterion)
       expect_any_instance_of(described_class).to receive(:get_mf_digest).with(cvt).and_return mf_collection
       get :edit, id: cvt.id
-      expect(response.body).to eq({template: cvt, criteria: cvt.search_criterions.map{ |sc| sc.json(@u) }, model_fields: mf_collection}.to_json)
+      expect(response.body).to eq({template: cvt, criteria: cvt.search_criterions.map { |sc| sc.json(@u) }, model_fields: mf_collection}.to_json)
     end
 
     it "prevents access by non-sys-admins" do
@@ -35,14 +35,13 @@ describe Api::V1::Admin::CustomViewTemplatesController do
       @cvt.update_attributes(module_type: "original module_type", template_identifier: "original template identifier", template_path:"/original/template/path")
       @cvt.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator"=>"eq", "value"=>"w", "include_empty"=>true)
     end
-    
+
     it "replaces basic fields and search criterions for a sys-admin, leaves module_type unchanged" do
-      
       put :update, id: @cvt.id, cvt: {module_type: "new module_type", template_identifier: "new template identifier", template_path: "/new/template/path"}, criteria: @cvt_new_criteria
       @cvt.reload
       criteria = @cvt.search_criterions
       new_criterion = (criteria.first.json @u).to_json
-      
+
       expect(@cvt.module_type).to eq "original module_type"
       expect(@cvt.template_identifier).to eq "new template identifier"
       expect(@cvt.template_path).to eq "/new/template/path"
@@ -80,7 +79,7 @@ describe Api::V1::Admin::CustomViewTemplatesController do
     it "takes the model fields associated with a template's module returns only the mfid, label, and datatype fields" do
       cvt = Factory(:custom_view_template, module_type: "Product")
       mfs = described_class.new.get_mf_digest cvt
-      expect(mfs.find{|mf| mf[:mfid] == :prod_uid}).to eq({:mfid => :prod_uid, label: "Unique Identifier", :datatype => :string })
+      expect(mfs.find {|mf| mf[:mfid] == :prod_uid}).to eq({:mfid => :prod_uid, label: "Unique Identifier", :datatype => :string })
     end
   end
 end

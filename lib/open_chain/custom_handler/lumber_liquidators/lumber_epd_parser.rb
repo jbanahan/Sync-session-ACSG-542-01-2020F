@@ -35,11 +35,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
     rows = OpenChain::XLClient.new(file_path).all_row_values(starting_row_number: 1)
     row_structs, parse_errors = parse_row_arrays(rows)
     process_errors = process_rows(row_structs, user)
-    write_results_message(user,(parse_errors+process_errors).flatten.compact.uniq)
+    write_results_message(user, (parse_errors+process_errors).flatten.compact.uniq)
   end
 
   def self.prep_my_custom_definitions
-    self.prep_custom_definitions [:cmp_sap_company,:var_recipe,:pva_pc_approved_by,:pva_pc_approved_date]
+    self.prep_custom_definitions [:cmp_sap_company, :var_recipe, :pva_pc_approved_by, :pva_pc_approved_date]
   end
 
   def self.parse_row_arrays row_arrays
@@ -50,8 +50,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
     errors = []
 
     row_arrays.each_with_index do |r, row_num|
-      user_row = row_num+2 #show the user the row number as it appears in the excel sheet
-      r_struct, err = parse_row_array(row_struct,r,user_row)
+      user_row = row_num+2 # show the user the row number as it appears in the excel sheet
+      r_struct, err = parse_row_array(row_struct, r, user_row)
       rows << r_struct if r_struct
       errors << err if err
     end
@@ -67,7 +67,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
       variant_hash[key] << rs
     end
     cdefs = prep_my_custom_definitions
-    errors = variant_hash.values.collect {|variant| process_variant(variant,user,cdefs)}
+    errors = variant_hash.values.collect {|variant| process_variant(variant, user, cdefs)}
     return errors.compact.uniq
   end
 
@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
 
           cv_val = variant.get_custom_value(cdefs[:var_recipe]).value
           if cv_val!=recipe
-            variant.update_custom_value!(cdefs[:var_recipe],recipe)
+            variant.update_custom_value!(cdefs[:var_recipe], recipe)
             needs_snapshot = true
           end
 
@@ -115,7 +115,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
             return ["Vendor \"#{vendor_num}\" not found for row #{va.first.row_num}."]
           end
 
-          pva_search = ProductVendorAssignment.where(vendor_id:vendor.id,product_id:prod.id)
+          pva_search = ProductVendorAssignment.where(vendor_id:vendor.id, product_id:prod.id)
           if !pva_search.first
             pva = pva_search.first_or_create!
             pva.create_snapshot(user, nil, "System Job: EPD Parser")
@@ -126,8 +126,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
           pva = variant.plant_variant_assignments.where(plant_id:plant.id).first_or_create!
           approved_date_cv = pva.get_custom_value(cdefs[:pva_pc_approved_date])
           if approved_date_cv.value.nil?
-            pva.update_custom_value!(cdefs[:pva_pc_approved_date],0.seconds.ago)
-            pva.update_custom_value!(cdefs[:pva_pc_approved_by],user.id)
+            pva.update_custom_value!(cdefs[:pva_pc_approved_date], 0.seconds.ago)
+            pva.update_custom_value!(cdefs[:pva_pc_approved_by], user.id)
             needs_snapshot = true
           end
         end
@@ -151,27 +151,27 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
       errors.each {|err| body << "<li>#{err}</li>"}
       body << "</ul>"
     end
-    user.messages.create!(subject:subject,body:body)
+    user.messages.create!(subject:subject, body:body)
   end
 
   # PRIVATE STUFF BELOW
 
   def self.parse_row_array struct, row, row_num
     # skip blank row
-    return [nil,nil] if row.length == 0
+    return [nil, nil] if row.length == 0
 
     if row.length < 32
-      return [nil,"Row #{row_num} failed because it only has #{row.length} columns. All rows must have at least 32 columns."]
+      return [nil, "Row #{row_num} failed because it only has #{row.length} columns. All rows must have at least 32 columns."]
     end
 
     rs = struct.new
-    article_base = row[2].to_s.gsub(/\.0$/,'')
-    vendor_base = row[7].to_s.gsub(/\.0$/,'')
-    rs.article_num = lpad(article_base,18)
-    rs.variant_id = row[3].to_s.gsub(/\.0$/,'')
-    rs.vendor_num = lpad(vendor_base,10)
+    article_base = row[2].to_s.gsub(/\.0$/, '')
+    vendor_base = row[7].to_s.gsub(/\.0$/, '')
+    rs.article_num = lpad(article_base, 18)
+    rs.variant_id = row[3].to_s.gsub(/\.0$/, '')
+    rs.vendor_num = lpad(vendor_base, 10)
     rs.component = row[11]
-    rs.component_thickness = row[12].to_s.gsub(/\.0$/,'')
+    rs.component_thickness = row[12].to_s.gsub(/\.0$/, '')
     rs.genus = row[26]
     rs.species = row[27]
     rs.coo = row[28]
@@ -189,7 +189,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEp
     h
   end
 
-  def self.lpad(string,len)
+  def self.lpad(string, len)
     s = string
     s = "0#{s}" while s.length < len
     s

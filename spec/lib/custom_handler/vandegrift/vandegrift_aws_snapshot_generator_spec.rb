@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotGenerator do
       allow(snapshot2).to receive(:snapshot_id).and_return "snapshot-id2"
       allow(snapshot2).to receive(:description).and_return "snapshot-description-2"
       allow(snapshot2).to receive(:tags).and_return({"tag2" => "value2"})
-      
+
       allow(instance).to receive(:tags).and_return({"Name" => "Instance", "Application" => "App", "ServerType" => "App", "Environment" => "Test"})
       allow(instance).to receive(:instance_id).and_return "instance_id"
       allow(instance).to receive(:instance_type).and_return "xl"
@@ -241,7 +241,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotGenerator do
     end
   end
 
-  
+
   describe "run_schedulable" do
     subject { described_class }
 
@@ -259,19 +259,19 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsSnapshotGenerator do
     it "raises an error if setup is missing name" do
       setup.first.delete 'name'
 
-      expect{subject.run_schedulable setup}.to raise_error "A 'name' value must be set on all backup setups."
+      expect {subject.run_schedulable setup}.to raise_error "A 'name' value must be set on all backup setups."
     end
 
     it "raises an error if setup is missing tag" do
       setup.first.delete 'tags'
 
-      expect{subject.run_schedulable setup}.to raise_error "At least one tag filter must be set on all backup setups."
+      expect {subject.run_schedulable setup}.to raise_error "At least one tag filter must be set on all backup setups."
     end
 
     it "raises an error if setup is missing retention_days" do
       setup.first.delete 'retention_days'
 
-      expect{subject.run_schedulable setup}.to raise_error "A 'retention_days' value must be set on all backup setups."
+      expect {subject.run_schedulable setup}.to raise_error "A 'retention_days' value must be set on all backup setups."
     end
 
     it "runs second setup even if first fails" do

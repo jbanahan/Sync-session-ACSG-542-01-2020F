@@ -38,16 +38,16 @@ class BusinessValidationTemplate < ActiveRecord::Base
   def copy_attributes include_external:false
     attrs = JSON.parse self.to_json(except: [:id, :system_code, :created_at, :updated_at, :delete_pending, :disabled])
     attrs["business_validation_template"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
-    attrs["business_validation_template"]["business_validation_rules"] = self.business_validation_rules.map{ |r| r.copy_attributes(include_external: include_external) }
+    attrs["business_validation_template"]["business_validation_rules"] = self.business_validation_rules.map { |r| r.copy_attributes(include_external: include_external) }
     attrs
   end
 
   def self.parse_copy_attributes template_hsh
-    template = BusinessValidationTemplate.new(template_hsh["business_validation_template"].reject{ |k,v| ["search_criterions", "business_validation_rules"].include? k })
+    template = BusinessValidationTemplate.new(template_hsh["business_validation_template"].reject { |k, v| ["search_criterions", "business_validation_rules"].include? k })
     bvt_hsh = template_hsh["business_validation_template"]
-    bvt_hsh["search_criterions"].each{ |sc_hsh| template.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"]) }
-    bvt_hsh["business_validation_rules"].each do |bvru_hsh| 
-      template.business_validation_rules << BusinessValidationRule.parse_copy_attributes(bvru_hsh) 
+    bvt_hsh["search_criterions"].each { |sc_hsh| template.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"]) }
+    bvt_hsh["business_validation_rules"].each do |bvru_hsh|
+      template.business_validation_rules << BusinessValidationRule.parse_copy_attributes(bvru_hsh)
     end
     template
   end
@@ -66,7 +66,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
   end
 
-  # This is pretty much just a simple way to offload rule validation of a bunch of object ids 
+  # This is pretty much just a simple way to offload rule validation of a bunch of object ids
   # to a backend processing queue.  The standard use case for this would be:
   #
   # BusinessValidationTemplate.delay.create_results_for_object_ids! "Product", [1, 2, 3]
@@ -92,7 +92,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
 
     user = User.integration if user.nil?
-    handle_snapshots(tracking_results.compact, obj, user, snapshot_entity: snapshot_entity) 
+    handle_snapshots(tracking_results.compact, obj, user, snapshot_entity: snapshot_entity)
 
     nil
   end
@@ -101,7 +101,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     !self.disabled? && !self.delete_pending? && search_criterions.present?
   end
 
-  #run create
+  # run create
   def create_results! run_validation: false, snapshot_entity: true, user: nil
     # Bailout if the template isn't active, there's absolutely no point in runnign the massive query below if the template is inactive
     return unless active?
@@ -147,21 +147,21 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # Check to see if there are any rule results around for this template, if so, we need to remove them as the template no longer applies.
     # This could be the case is situations where a template was changed to remove a company from the rules.
     if !template_applies
-      Lock.with_lock_retry(obj) do 
+      Lock.with_lock_retry(obj) do
         result = obj.business_validation_results.where(business_validation_template_id: self.id).first
         result.destroy if result
       end
       return nil
     end
 
-    # Inverting the obj/bvr locks is an attempt to reduce the deadlocks in this section of code...the vast majority of 
+    # Inverting the obj/bvr locks is an attempt to reduce the deadlocks in this section of code...the vast majority of
     # time the calling code will already have obtained a lock on the obj (since this code is called when snapshoting an object)
     # therefore, there's going to be few situations where it shouldn't be able to also obtain the bvr lock for the obj.''
     bvr = nil
     state_tracking = nil
-    Lock.with_lock_retry(obj) do 
+    Lock.with_lock_retry(obj) do
       bvr = obj.business_validation_results.where(business_validation_template_id: self.id).first_or_create!
-      
+
       Lock.with_lock_retry(bvr) do
         initialize_business_validation_result bvr, obj
 
@@ -172,7 +172,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
           # We only need to save the whole validation result object if something actually changed
           if self.class.state_tracking_changed?(state_tracking)
-            bvr.updated_at = Time.zone.now #force save
+            bvr.updated_at = Time.zone.now # force save
             bvr.save!
           else
             # If nothing changed, we'll still want to update the rule result's updated_at column so we know if there might be any issue with
@@ -183,7 +183,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
         end
       end
     end
-    
+
     {result: bvr, tracking: state_tracking}
   end
 
@@ -216,7 +216,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     self.business_validation_rules.each do |rule|
       if rule.active?
         # Rather than doing a first_or_create for every rule (which used to be here and resulted in a separate query executed for each rule)
-        #...we can load the association once and then search through it for the rule id...then build the result if it's not present yet.
+        # ...we can load the association once and then search through it for the rule id...then build the result if it's not present yet.
         # The result will be created a few lines below when the validation result is saved.
         rule_result = business_validation_result.business_validation_rule_results.find {|bvrr| bvrr.business_validation_rule_id == rule.id }
         if rule_result.nil?

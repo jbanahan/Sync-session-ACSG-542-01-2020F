@@ -65,12 +65,12 @@ module ConfigMigrations; module LL; class SOW35
   end
 
   def create_groups
-    Group.create!(system_code:'QA_APPROVE_ORDER',name:'QA Approve Orders',description:'QA team members who can approve orders to ship.')
-    Group.create!(system_code:'QA_APPROVE_ORDER_EXEC',name:'QA Exec Approve Orders',description:'QA team members who can hold orders from shipping.')
+    Group.create!(system_code:'QA_APPROVE_ORDER', name:'QA Approve Orders', description:'QA team members who can approve orders to ship.')
+    Group.create!(system_code:'QA_APPROVE_ORDER_EXEC', name:'QA Exec Approve Orders', description:'QA team members who can hold orders from shipping.')
   end
 
   def remove_groups
-    Group.where("system_code IN (?)",['QA_APPROVE_ORDER','QA_APPROVE_ORDER_EXEC']).each {|g| g.destroy}
+    Group.where("system_code IN (?)", ['QA_APPROVE_ORDER', 'QA_APPROVE_ORDER_EXEC']).each {|g| g.destroy}
   end
 
   def create_new_custom_defs
@@ -82,7 +82,7 @@ module ConfigMigrations; module LL; class SOW35
     :ord_inspector_assigned
     ].each do |def_id|
       cd = defs[def_id]
-      fvr = FieldValidatorRule.new(model_field_uid:cd.model_field_uid,module_type:cd.module_type,can_edit_groups:'QA_APPROVE_ORDER',can_view_groups:"QA_APPROVE_ORDER\nALL")
+      fvr = FieldValidatorRule.new(model_field_uid:cd.model_field_uid, module_type:cd.module_type, can_edit_groups:'QA_APPROVE_ORDER', can_view_groups:"QA_APPROVE_ORDER\nALL")
       if def_id==:ord_inspector_assigned
         fvr.one_of = "Bill Ban\nDaniel Wang\nJacky Zhang\nJames Li\nJason Jia\nJohn Zeng\nNick Hu\nPei Feifei\nSadie Yao\nSean Zhu\nTerrence Zhu\nTom Pi\nVilla Xu\n"
       end
@@ -92,7 +92,7 @@ module ConfigMigrations; module LL; class SOW35
   end
 
   def remove_custom_defs
-    OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions(DEFS).values.each do |cd|
+    OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions(DEFS).each_value do |cd|
       cd.destroy
     end
   end
@@ -117,13 +117,13 @@ module ConfigMigrations; module LL; class SOW35
   end
 
   def remove_state_toggle_buttons
-    StateToggleButton.where(activate_text:'QA Approve',module_type:'OrderLine').destroy_all
-    StateToggleButton.where(activate_text:'QA Hold',module_type:'Order').destroy_all
+    StateToggleButton.where(activate_text:'QA Approve', module_type:'OrderLine').destroy_all
+    StateToggleButton.where(activate_text:'QA Hold', module_type:'Order').destroy_all
   end
 
   def create_order_business_rules defs
-    bvt = BusinessValidationTemplate.where(name:'Order Validations',module_type:'Order').first_or_create!(description:'Base Order Validations')
-    bvt.search_criterions.create!(operator:'notnull',value:'',model_field_uid:'ord_ord_num') if bvt.search_criterions.empty?
+    bvt = BusinessValidationTemplate.where(name:'Order Validations', module_type:'Order').first_or_create!(description:'Base Order Validations')
+    bvt.search_criterions.create!(operator:'notnull', value:'', model_field_uid:'ord_ord_num') if bvt.search_criterions.empty?
     bvt.business_validation_rules.create!(
       type:'ValidationRuleOrderLineFieldFormat',
       name:'QA Approval',
@@ -140,7 +140,7 @@ module ConfigMigrations; module LL; class SOW35
     )
   end
   def remove_order_business_rules
-    bvt = BusinessValidationTemplate.where(name:'Order Validations',module_type:'Order').first
+    bvt = BusinessValidationTemplate.where(name:'Order Validations', module_type:'Order').first
     bvt.business_validation_rules.where("name IN ('QA Approval','No QA Hold')").destroy_all
   end
 end; end; end

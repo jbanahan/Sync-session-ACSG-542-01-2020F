@@ -7,11 +7,11 @@ module OpenChain; module CustomHandler; module Generator315Support
   include OpenChain::XmlBuilder
   include OpenChain::FtpFileSupport
 
-  Data315 ||= Struct.new(:broker_reference, :entry_number, :ship_mode, :service_type, :carrier_code, :vessel, 
+  Data315 ||= Struct.new(:broker_reference, :entry_number, :ship_mode, :service_type, :carrier_code, :vessel,
                           :voyage_number, :port_of_entry, :port_of_entry_location, :port_of_lading, :port_of_lading_location,
-                          :port_of_unlading, :port_of_unlading_location, :cargo_control_number, :master_bills, :house_bills, 
+                          :port_of_unlading, :port_of_unlading_location, :cargo_control_number, :master_bills, :house_bills,
                           :container_numbers, :po_numbers, :customer_number, :event_code, :event_date, :datasource, :sync_record)
-                          
+
   MilestoneUpdate ||= Struct.new(:code, :date, :sync_record)
 
   def generate_and_send_xml_document customer_number, data_315s, testing = false
@@ -27,8 +27,8 @@ module OpenChain; module CustomHandler; module Generator315Support
 
     if counter > 0
       Tempfile.open(["315-#{data_315s.first.datasource}-#{data_315s.first.broker_reference}-", ".xml"]) do |fout|
-        # The FTP send and milestone updates all need to be done in one transaction to ensure all or nothing 
-        ActiveRecord::Base.transaction do 
+        # The FTP send and milestone updates all need to be done in one transaction to ensure all or nothing
+        ActiveRecord::Base.transaction do
           doc.write fout
           fout.flush
           fout.rewind
@@ -63,7 +63,7 @@ module OpenChain; module CustomHandler; module Generator315Support
       data_315.sync_record.confirmed_at = Time.zone.now
       data_315.sync_record.save!
     end
-   
+
     nil
   end
 
@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module Generator315Support
     add_collection_element root, "HouseBills", "HouseBill", data.house_bills
     add_collection_element root, "Containers", "Container", data.container_numbers
     add_collection_element root, "PoNumbers", "PoNumber", data.po_numbers
-    
+
     event = add_element root, "Event"
     add_element event, "EventCode", data.event_code
     add_date_elements event, data.event_date, element_prefix: "Event"
@@ -167,7 +167,7 @@ module OpenChain; module CustomHandler; module Generator315Support
     date, hours, min = mu.date.strftime("%Y%m%d %H %M").split(" ")
     total_minutes = hours.to_i * 60 + min.to_i
     timestamps = milestone_uids sync_record, date
-    
+
     # If the timestamp has already been used, oscillate above and below searching for the closest
     # unused one. In the unlikely event they've all been used, stick with the original.
     if timestamps.include?(total_minutes)
@@ -175,9 +175,9 @@ module OpenChain; module CustomHandler; module Generator315Support
     else
       new_timestamp = total_minutes
     end
-      
+
     # convert minutes back into hours/minutes
-    mu.date = tz.parse(date + (new_timestamp.divmod 60).map{ |x| x.to_s.rjust(2,'0') }.join)
+    mu.date = tz.parse(date + (new_timestamp.divmod 60).map { |x| x.to_s.rjust(2, '0') }.join)
     timestamps << new_timestamp
     set_milestone_uids sync_record, date, timestamps
 
@@ -216,8 +216,8 @@ module OpenChain; module CustomHandler; module Generator315Support
     # If the value's already a date, there's nothing to do here...
     if value.respond_to?(:acts_like_time?) && value.acts_like_time?
       # Change to the specified timezone, then change to date if required
-      # Using strftime here specifically so we also drop seconds (if they're there, since 
-      # we're not sending out seconds in the 315, we don't want our comparison with what 
+      # Using strftime here specifically so we also drop seconds (if they're there, since
+      # we're not sending out seconds in the 315, we don't want our comparison with what
       # was sent to include seconds either).
 
       # I'm sure this is a total hack, but I coudln't find another more direct way to zero out
@@ -229,7 +229,7 @@ module OpenChain; module CustomHandler; module Generator315Support
 
     value
   end
-  
+
   def xref_date_value date
     date.iso8601
   end

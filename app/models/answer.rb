@@ -18,14 +18,14 @@
 
 class Answer < ActiveRecord::Base
   attr_accessible :choice, :created_at, :question_id, :question,
-    :rating, :survey_response_id, :survey_response, :updated_at, :answer_comments_attributes, 
+    :rating, :survey_response_id, :survey_response, :updated_at, :answer_comments_attributes,
     :attachments_attributes
 
   belongs_to :survey_response, :touch=>true
   belongs_to :question
   has_many :answer_comments, inverse_of: :answer, dependent: :destroy, autosave: true
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
-  
+
   validates_presence_of :survey_response
   validates_presence_of :question
 
@@ -38,7 +38,7 @@ class Answer < ActiveRecord::Base
 
   # does the question have a multiple choice, comment or attachment associated with the survey response user
   def answered?
-    !self.choice.blank? || !self.answer_comments.where(:user_id=>survey_response.user_id).blank? || !self.attachments.where(:uploaded_by_id=>survey_response.user_id).blank? 
+    !self.choice.blank? || !self.answer_comments.where(:user_id=>survey_response.user_id).blank? || !self.attachments.where(:uploaded_by_id=>survey_response.user_id).blank?
   end
 
   def can_view? user

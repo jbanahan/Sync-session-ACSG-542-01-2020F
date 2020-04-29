@@ -15,7 +15,7 @@ describe Api::V1::ProductsController do
         get "show", {id: @p.id, format: 'json', mf_uids: "prod_uid"}
         expect(response).to be_success
         json = ActiveSupport::JSON.decode response.body
-        json['product'].delete('permissions') #not testing the permissions functionality
+        json['product'].delete('permissions') # not testing the permissions functionality
         expect(json['product']).to eq({
           'id' => @p.id,
           'prod_uid' => @p.unique_identifier
@@ -93,7 +93,7 @@ describe Api::V1::ProductsController do
       get "by_uid", {format: 'json', mf_uids: "prod_uid", path_uid: @p.unique_identifier}
       expect(response).to be_success
       json = ActiveSupport::JSON.decode response.body
-      json['product'].delete('permissions') #not testing the permissions functionality
+      json['product'].delete('permissions') # not testing the permissions functionality
       expect(json['product']).to eq({
         'id' => @p.id,
         'prod_uid' => @p.unique_identifier
@@ -104,7 +104,7 @@ describe Api::V1::ProductsController do
       get "by_uid", {uid: @p.unique_identifier, format: 'json', mf_uids: "prod_uid"}
       expect(response).to be_success
       json = ActiveSupport::JSON.decode response.body
-      json['product'].delete('permissions') #not testing the permissions functionality
+      json['product'].delete('permissions') # not testing the permissions functionality
       expect(json['product']).to eq({
         'id' => @p.id,
         'prod_uid' => @p.unique_identifier
@@ -299,7 +299,7 @@ describe Api::V1::ProductsController do
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
-      uids = j['results'].collect{|r| r['prod_uid']}
+      uids = j['results'].collect {|r| r['prod_uid']}
       expect(uids).to include @p1.unique_identifier
       expect(uids).to include @p2.unique_identifier
     end
@@ -309,7 +309,7 @@ describe Api::V1::ProductsController do
       expect(response).to be_success
       j = JSON.parse response.body
       j['results'].each do |pj|
-        pj.delete('permissions') #not testing the permissions functionality
+        pj.delete('permissions') # not testing the permissions functionality
       end
 
       # 3 keys = id, uid, uom

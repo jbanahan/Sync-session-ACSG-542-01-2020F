@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
      [
       ["VENDOR", "PRODUCT", "CODE", "2018-01-01"],
       ["VENDOR", "PRODUCT", "CODE2", "2018-02-01"]
-     ] 
+     ]
     }
 
     let! (:xref_code) { DataCrossReference.create! key: "CODE", value: "TEXT", cross_reference_type: "ll_patent_statement"}
@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
 
     subject { described_class.new nil }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:custom_file).and_return custom_file
       allow(subject).to receive(:foreach).with(custom_file, skip_headers: true, skip_blank_lines: true).and_yield(row_data[0]).and_yield(row_data[1])
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).with(user).and_return true
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
     subject { described_class }
 
     context "LL system" do
-      before :each do 
+      before :each do
         expect(ms).to receive(:custom_feature?).with("Lumber Liquidators").and_return true
       end
 
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
     end
 
     context "non-LL system" do
-      before :each do 
+      before :each do
         expect(ms).to receive(:custom_feature?).with("Lumber Liquidators").and_return false
       end
 
@@ -85,6 +85,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorPatentS
         expect(subject.can_view? user).to eq false
       end
     end
-    
+
   end
 end

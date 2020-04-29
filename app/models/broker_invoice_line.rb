@@ -23,7 +23,7 @@
 class BrokerInvoiceLine < ActiveRecord::Base
   include CustomFieldSupport
 
-  attr_accessible :broker_invoice_id, :charge_amount, :charge_code, 
+  attr_accessible :broker_invoice_id, :charge_amount, :charge_code,
     :charge_description, :charge_type, :created_at, :hst_percent, :updated_at,
     :vendor_name, :vendor_reference
 
@@ -33,7 +33,7 @@ class BrokerInvoiceLine < ActiveRecord::Base
   validates_presence_of :charge_description
   validates_presence_of :charge_amount
 
-  def duty_charge_type? 
+  def duty_charge_type?
     charge_type && charge_type.upcase == "D"
   end
 

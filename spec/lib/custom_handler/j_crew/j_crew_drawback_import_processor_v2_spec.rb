@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(described_class).to receive(:build_data_structure).with(d).and_raise 'some error'
       expect(described_class).not_to receive(:process_data)
 
-      expect{described_class.parse(d,double('user'))}.to raise_error 'some error'
+      expect {described_class.parse(d, double('user'))}.to raise_error 'some error'
     end
     it 'should process_data if integrity passes' do
       d = double('data')
@@ -13,17 +13,17 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       ds = double('data_structure')
 
       expect(described_class).to receive(:build_data_structure).with(d).and_return(ds)
-      expect(described_class).to receive(:process_data).with(ds,u).and_return []
+      expect(described_class).to receive(:process_data).with(ds, u).and_return []
 
-      described_class.parse(d,u)
+      described_class.parse(d, u)
     end
     it 'should email log to user' do
-      u = Factory(:user,email:'sample@vfitrack.net')
+      u = Factory(:user, email:'sample@vfitrack.net')
       ds = double('data_structure')
       d = double('data')
 
       expect(described_class).to receive(:build_data_structure).with(d).and_return(ds)
-      expect(described_class).to receive(:process_data).with(ds,u).and_return ['bad']
+      expect(described_class).to receive(:process_data).with(ds, u).and_return ['bad']
 
       mail_obj = double('mail')
       allow(mail_obj).to receive(:deliver_now)
@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
         "**J Crew Drawback Import V2 Error Log**\nbad"
       ).and_return(mail_obj)
 
-      described_class.parse(d,u)
+      described_class.parse(d, u)
     end
   end
 
@@ -41,29 +41,29 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
     it "should process entries" do
       content_1 = double('hash content 1')
       content_2 = double('hash content 2')
-      h = {'12345678900'=>content_1,'99999999999'=>content_2}
+      h = {'12345678900'=>content_1, '99999999999'=>content_2}
       u = double('user')
-      expect(described_class).to receive(:process_entry).with(h.keys.first,h.values.first)
-      expect(described_class).to receive(:process_entry).with(h.keys.last,h.values.last)
-      expect(described_class.process_data(h,u)).to be_empty
+      expect(described_class).to receive(:process_entry).with(h.keys.first, h.values.first)
+      expect(described_class).to receive(:process_entry).with(h.keys.last, h.values.last)
+      expect(described_class.process_data(h, u)).to be_empty
     end
 
   end
 
   describe '#process_entry' do
     let! (:us) { Factory(:country, iso_code: "US")}
-    
+
     before :each do
       mo = double('mail_obj')
       allow(mo).to receive(:deliver_now)
       allow(OpenMailer).to receive(:send_simple_text).and_return(mo)
       @crew = with_customs_management_id(Factory(:company), 'JCREW')
       # create underlying entry
-      OpenChain::CustomHandler::KewillEntryParser.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_entry.json'),imaging: false)
+      OpenChain::CustomHandler::KewillEntryParser.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_entry.json'), imaging: false)
     end
     it 'should create drawback_import_lines' do
       u = Factory(:master_user)
-      log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'),u)
+      log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'), u)
       expect(log).to be_empty
       expect(DrawbackImportLine.count).to eq 317
 
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(dil.hts_code).to eq '6204624056'
       expect(dil.description).to eq 'SHORTS,COTTON,WOMEN\'S'
       expect(dil.unit_of_measure).to eq 'PCS'
-      expect(dil.unit_price).to eq 11.44 #first sale value
+      expect(dil.unit_price).to eq 11.44 # first sale value
       expect(dil.rate).to eq BigDecimal("0.166")
       expect(dil.duty_per_unit).to eq BigDecimal("1.89904")
       expect(dil.compute_code).to eq '7'
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,341,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,41,50,12/23/2009,Sea,Sea,$14.48'
       )
-      log = described_class.parse(data,u)
+      log = described_class.parse(data, u)
       expect(log).to eq ['Entry 31604364559, PO 4016516, Part 24892, Quantity 341 not found.']
       expect(DrawbackImportLine.count).to eq 0
     end
@@ -112,23 +112,23 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,41,50,12/23/2009,Sea,Sea,$14.48'
       )
-      log = described_class.parse(data,u)
+      log = described_class.parse(data, u)
       expect(log).to eq ['Entry 31604364559, PO 4016516, Part 24892 should have had 340 pieces but found 341.']
       expect(DrawbackImportLine.count).to eq 0
     end
 
     it "should fail if line isn't found" do
       u = Factory(:master_user)
-      CommercialInvoiceLine.where(part_number:'24892',po_number:'4016516').first.destroy
-      log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'),u)
+      CommercialInvoiceLine.where(part_number:'24892', po_number:'4016516').first.destroy
+      log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'), u)
       expect(log).to eq ['Entry 31604364559, PO 4016516, Part 24892, Quantity 340 not found.']
       expect(DrawbackImportLine.count).to eq 0
     end
 
     it 'should fail on used entries' do
       u = Factory(:master_user)
-      Factory(:drawback_import_line,entry_number:Entry.last.entry_number)
-      log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'),u)
+      Factory(:drawback_import_line, entry_number:Entry.last.entry_number)
+      log = described_class.parse(IO.read('spec/support/bin/j_crew_drawback_import_v2_sample.csv'), u)
       expect(log).to eq ['Entry 31604364559 already has drawback lines.']
       expect(DrawbackImportLine.count).to eq 1
     end
@@ -154,7 +154,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(struct_1.file_line_number).to eq 2
       expect(struct_1.entry_number).to eq '31604364559'
       expect(struct_1.entry_mbol).to eq 'APLU031970557'
-      expect(struct_1.entry_arrival_date).to eq Date.new(2010,1,10)
+      expect(struct_1.entry_arrival_date).to eq Date.new(2010, 1, 10)
       expect(struct_1.entry_po).to eq '4016516'
       expect(struct_1.entry_part).to eq '24892'
       expect(struct_1.entry_coo).to eq 'CN'
@@ -166,7 +166,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
       expect(struct_1.crew_order_line_number).to eq '102'
       expect(struct_1.crew_asn_pieces).to eq 40
       expect(struct_1.crew_order_pieces).to eq 50
-      expect(struct_1.crew_ship_date).to eq Date.new(2009,12,23)
+      expect(struct_1.crew_ship_date).to eq Date.new(2009, 12, 23)
       expect(struct_1.crew_unit_cost).to eq BigDecimal('14.48')
     end
     it 'should fail if Invoice Line PO Number does not match PO number' do
@@ -174,21 +174,21 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2 do
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,401651X,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48'
       )
-      expect{described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Expected PO 4016516 found 401651X."
+      expect {described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Expected PO 4016516 found 401651X."
     end
     it 'should fail if Invoice Line Part Number does not match Part number' do
       @data.gsub!(
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,2489X,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48'
       )
-      expect{described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Expected Style 24892 found 2489X."
+      expect {described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Expected Style 24892 found 2489X."
     end
     it 'should fail if Master Bills does not match Mawb/BillofLading' do
       @data.gsub!(
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU031970557,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48',
         '436455,31604364559,APLU031970557,NULL,JCREW,1/10/2010,4016516,24892,CN,340,APLU03197055X,4016516,2,SEA,24892,BR5804,0,NULL,24892BR58040,102,40,50,12/23/2009,Sea,Sea,$14.48'
       )
-      expect{described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Expected Master Bill APLU031970557 found APLU03197055X."
+      expect {described_class.build_data_structure(@data)}.to raise_error "Error on line 2: Expected Master Bill APLU031970557 found APLU03197055X."
     end
     # it 'should fail if POShipDate is not less than Arrival Date and mode is sea' do
     #   @data.gsub!(

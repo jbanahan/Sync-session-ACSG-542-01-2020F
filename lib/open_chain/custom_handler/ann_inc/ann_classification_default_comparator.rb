@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnClassificationDe
       if type.blank?
         prod ||= Product.where(id: id).includes(:classifications).first
         Lock.db_lock(prod) do
-          classi = prod.classifications.find{ |cl| cl.id == classi_hsh["record_id"] }
+          classi = prod.classifications.find { |cl| cl.id == classi_hsh["record_id"] }
           if classi
             classi.update_custom_value! cdef, "Not Applicable"
             update = true

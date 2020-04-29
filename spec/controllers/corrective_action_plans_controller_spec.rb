@@ -1,16 +1,16 @@
 describe CorrectiveActionPlansController do
   before :each do
 
-    @u = Factory(:user,first_name:'joe',last_name:'user')
+    @u = Factory(:user, first_name:'joe', last_name:'user')
     sign_in_as @u
   end
   describe "add_comment" do
     before :each do
       @cap = Factory(:corrective_action_plan)
-      allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return true 
+      allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return true
     end
     it "should fail if user cannot view" do
-      allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return false 
+      allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return false
       post :add_comment, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, comment:'xyz', format: :json
       expect(response.status).to eq(401)
       expect(@cap.comments).to be_empty
@@ -58,7 +58,7 @@ describe CorrectiveActionPlansController do
       expect(assigns(:cap)).to eq(@cap)
     end
     it "should not show if cannot view" do
-      allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return false 
+      allow_any_instance_of(CorrectiveActionPlan).to receive(:can_view?).and_return false
       get :show, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s
       expect(response).to be_redirect
       expect(assigns(:cap)).to be_nil
@@ -73,7 +73,7 @@ describe CorrectiveActionPlansController do
         expect(r['corrective_action_plan']['id']).to eq(@cap.id)
       end
       it "should include html rendered comments" do
-        comm = @cap.comments.create!(body:'*my text*',user_id:@u.id)
+        comm = @cap.comments.create!(body:'*my text*', user_id:@u.id)
         get :show, survey_response_id: @cap.survey_response_id.to_s, id: @cap.id.to_s, format: 'json'
         r = JSON.parse(response.body)
         c = r['corrective_action_plan']['comments'].first
@@ -89,7 +89,7 @@ describe CorrectiveActionPlansController do
     end
     it "should add comment if it exists" do
       post :update, survey_response_id:@sr_id.to_s, id:@cap.id.to_s, comment:'my comment', format: 'json'
-      expect(response).to be_success 
+      expect(response).to be_success
       @cap.reload
       c = @cap.comments.first
       expect(c.user).to eq(@u)
@@ -97,7 +97,7 @@ describe CorrectiveActionPlansController do
     end
     it "should not add comment if it doesn't exist" do
       post :update, survey_response_id:@sr_id.to_s, id:@cap.id.to_s, comment:'', format: 'json'
-      expect(response).to be_success 
+      expect(response).to be_success
       @cap.reload
       expect(@cap.comments).to be_blank
     end
@@ -127,24 +127,24 @@ describe CorrectiveActionPlansController do
       @sr.reload
       cap = @sr.corrective_action_plan
       expect(cap).not_to be_nil
-      expect(response).to redirect_to [@sr,cap]
+      expect(response).to redirect_to [@sr, cap]
     end
   end
   describe "activate" do
-    before :each do 
+    before :each do
       @cap = Factory(:corrective_action_plan)
     end
     it "should activate if user can edit" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_edit?).and_return(true)
       put :activate, survey_response_id:@cap.survey_response_id.to_s, id: @cap.id.to_s
-      expect(response).to redirect_to [@cap.survey_response,@cap]
+      expect(response).to redirect_to [@cap.survey_response, @cap]
       @cap.reload
       expect(@cap.status).to eq(CorrectiveActionPlan::STATUSES[:active])
     end
     it "should not activate if user cannot edit" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_edit?).and_return(false)
       put :activate, survey_response_id:@cap.survey_response_id.to_s, id: @cap.id.to_s
-      expect(response).to be_redirect 
+      expect(response).to be_redirect
       expect(flash[:errors].first).to eq("You cannot activate this plan.")
       @cap.reload
       expect(@cap.status).to eq(CorrectiveActionPlan::STATUSES[:new])
@@ -156,20 +156,20 @@ describe CorrectiveActionPlansController do
     end
   end
   describe "resolve" do
-    before :each do 
+    before :each do
       @cap = Factory(:corrective_action_plan)
     end
     it "should resolve if user can edit" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_edit?).and_return(true)
       put :resolve, survey_response_id:@cap.survey_response_id.to_s, id: @cap.id.to_s
-      expect(response).to redirect_to [@cap.survey_response,@cap]
+      expect(response).to redirect_to [@cap.survey_response, @cap]
       @cap.reload
       expect(@cap.status).to eq(CorrectiveActionPlan::STATUSES[:resolved])
     end
     it "should not resolve if user cannot edit" do
       allow_any_instance_of(CorrectiveActionPlan).to receive(:can_edit?).and_return(false)
       put :resolve, survey_response_id:@cap.survey_response_id.to_s, id: @cap.id.to_s
-      expect(response).to be_redirect 
+      expect(response).to be_redirect
       expect(flash[:errors].first).to eq("You cannot resolve this plan.")
       @cap.reload
       expect(@cap.status).to eq(CorrectiveActionPlan::STATUSES[:new])

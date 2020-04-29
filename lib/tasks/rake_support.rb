@@ -7,7 +7,7 @@ module OpenChain; module RakeSupport
 
     valid = false
     value = nil
-    while(!valid) do 
+    while(!valid) do
       STDOUT.print message
       STDOUT.flush
       value = STDIN.gets.strip
@@ -47,5 +47,4 @@ module OpenChain; module RakeSupport
     status, stdout, stderr = run_command(command, exit_on_failure: true)
     stdout
   end
-  
 end; end

@@ -183,7 +183,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
     end
 
     def make_data_headers first_col_val
-      [first_col_val,"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Grand Total (YTD)"]
+      [first_col_val, "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Grand Total (YTD)"]
     end
 
     # Note that this query excludes data from the current month and beyond, regardless of whether or not entries
@@ -193,143 +193,143 @@ module OpenChain; module Report; class CompanyYearOverYearReport
       <<-SQL
         SELECT
           range_year,
-          range_month, 
-          division_number, 
-          division_name, 
-          SUM(entry_count) AS entry_count, 
-          SUM(abi_line_count) AS abi_line_count, 
-          SUM(entry_line_count) AS entry_line_count, 
+          range_month,
+          division_number,
+          division_name,
+          SUM(entry_count) AS entry_count,
+          SUM(abi_line_count) AS abi_line_count,
+          SUM(entry_line_count) AS entry_line_count,
           SUM(broker_invoice_total) AS broker_invoice_total
-        FROM 
+        FROM
           (
             (
-              SELECT 
-                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_year, 
-                MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_month, 
-                division_number, 
-                div_xref.value AS division_name, 
-                COUNT(*) AS entry_count, 
+              SELECT
+                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_year,
+                MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_month,
+                division_number,
+                div_xref.value AS division_name,
+                COUNT(*) AS entry_count,
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
                 SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
-                SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
-              FROM 
-                entries 
-                LEFT OUTER JOIN data_cross_references AS div_xref ON 
-                  div_xref.cross_reference_type = '#{DataCrossReference::VFI_DIVISION}' AND 
-                  div_xref.key = entries.division_number 
+                SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total
+              FROM
+                entries
+                LEFT OUTER JOIN data_cross_references AS div_xref ON
+                  div_xref.cross_reference_type = '#{DataCrossReference::VFI_DIVISION}' AND
+                  div_xref.key = entries.division_number
                 LEFT OUTER JOIN (
-                  SELECT 
-                    entries.id AS entry_id, 
-                    COUNT(*) AS entry_line_count 
-                  FROM 
+                  SELECT
+                    entries.id AS entry_id,
+                    COUNT(*) AS entry_line_count
+                  FROM
                     entries
-                    LEFT OUTER JOIN commercial_invoices AS ci ON 
+                    LEFT OUTER JOIN commercial_invoices AS ci ON
                       entries.id = ci.entry_id
-                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
+                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON
                       ci.id = cil.commercial_invoice_id
-                  WHERE 
-                    division_number IS NOT NULL AND 
-                    !(customer_number <=> 'EDDIEFTZ') AND 
+                  WHERE
+                    division_number IS NOT NULL AND
+                    !(customer_number <=> 'EDDIEFTZ') AND
                     #{make_range_field_sql('release_date', year_1, year_2)}
-                  GROUP BY 
+                  GROUP BY
                     entries.id
-                ) AS line_count_tbl ON 
+                ) AS line_count_tbl ON
 	                entries.id = line_count_tbl.entry_id
-              WHERE 
-                division_number IS NOT NULL AND 
-                !(customer_number <=> 'EDDIEFTZ') AND 
+              WHERE
+                division_number IS NOT NULL AND
+                !(customer_number <=> 'EDDIEFTZ') AND
                 #{make_range_field_sql('release_date', year_1, year_2)}
-              GROUP BY 
-                division_number, 
-                div_xref.value, 
-                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")), 
+              GROUP BY
+                division_number,
+                div_xref.value,
+                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")),
                 MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}"))
             ) UNION (
-              SELECT 
-                YEAR(convert_tz(arrival_date, "UTC", "#{get_time_zone}")) AS range_year, 
-                MONTH(convert_tz(arrival_date, "UTC", "#{get_time_zone}")) AS range_month, 
-                division_number, 
-                div_xref.value AS division_name, 
-                COUNT(*) AS entry_count, 
+              SELECT
+                YEAR(convert_tz(arrival_date, "UTC", "#{get_time_zone}")) AS range_year,
+                MONTH(convert_tz(arrival_date, "UTC", "#{get_time_zone}")) AS range_month,
+                division_number,
+                div_xref.value AS division_name,
+                COUNT(*) AS entry_count,
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
                 SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
-                SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
-              FROM 
-                entries 
-                LEFT OUTER JOIN data_cross_references AS div_xref ON 
-                  div_xref.cross_reference_type = '#{DataCrossReference::VFI_DIVISION}' AND 
-                  div_xref.key = entries.division_number 
+                SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total
+              FROM
+                entries
+                LEFT OUTER JOIN data_cross_references AS div_xref ON
+                  div_xref.cross_reference_type = '#{DataCrossReference::VFI_DIVISION}' AND
+                  div_xref.key = entries.division_number
                 LEFT OUTER JOIN (
-                  SELECT 
-                    entries.id AS entry_id, 
-                    COUNT(*) AS entry_line_count 
-                  FROM 
+                  SELECT
+                    entries.id AS entry_id,
+                    COUNT(*) AS entry_line_count
+                  FROM
                     entries
-                    LEFT OUTER JOIN commercial_invoices AS ci ON 
+                    LEFT OUTER JOIN commercial_invoices AS ci ON
                       entries.id = ci.entry_id
-                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
+                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON
                       ci.id = cil.commercial_invoice_id
-                  WHERE 
-                    division_number IS NOT NULL AND 
-                    customer_number = 'EDDIEFTZ' AND 
+                  WHERE
+                    division_number IS NOT NULL AND
+                    customer_number = 'EDDIEFTZ' AND
                     #{make_range_field_sql('arrival_date', year_1, year_2)}
-                  GROUP BY 
+                  GROUP BY
                     entries.id
-                ) AS line_count_tbl ON 
+                ) AS line_count_tbl ON
 	                entries.id = line_count_tbl.entry_id
-              WHERE 
-                division_number IS NOT NULL AND 
-                customer_number = 'EDDIEFTZ' AND 
+              WHERE
+                division_number IS NOT NULL AND
+                customer_number = 'EDDIEFTZ' AND
                 #{make_range_field_sql('arrival_date', year_1, year_2)}
-              GROUP BY 
-                division_number, 
-                div_xref.value, 
-                YEAR(convert_tz(arrival_date, "UTC", "#{get_time_zone}")), 
+              GROUP BY
+                division_number,
+                div_xref.value,
+                YEAR(convert_tz(arrival_date, "UTC", "#{get_time_zone}")),
                 MONTH(convert_tz(arrival_date, "UTC", "#{get_time_zone}"))
             ) UNION (
-              SELECT 
-                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_year, 
-                MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_month, 
-                'CA' AS division_number, 
-                'Toronto' AS division_name, 
-                COUNT(*) AS entry_count, 
+              SELECT
+                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_year,
+                MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS range_month,
+                'CA' AS division_number,
+                'Toronto' AS division_name,
+                COUNT(*) AS entry_count,
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
                 SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
-                SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total 
-              FROM 
-                entries 
+                SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total
+              FROM
+                entries
                 LEFT OUTER JOIN (
-                  SELECT 
-                    entries.id AS entry_id, 
-                    COUNT(*) AS entry_line_count 
-                  FROM 
+                  SELECT
+                    entries.id AS entry_id,
+                    COUNT(*) AS entry_line_count
+                  FROM
                     entries
-                    LEFT OUTER JOIN commercial_invoices AS ci ON 
+                    LEFT OUTER JOIN commercial_invoices AS ci ON
                       entries.id = ci.entry_id
-                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
+                    LEFT OUTER JOIN commercial_invoice_lines AS cil ON
                       ci.id = cil.commercial_invoice_id
-                  WHERE 
-                    division_number IS NOT NULL AND 
-                    !(customer_number <=> 'EDDIEFTZ') AND 
+                  WHERE
+                    division_number IS NOT NULL AND
+                    !(customer_number <=> 'EDDIEFTZ') AND
                     #{make_range_field_sql('release_date', year_1, year_2)}
-                  GROUP BY 
+                  GROUP BY
                     entries.id
-                ) AS line_count_tbl ON 
+                ) AS line_count_tbl ON
 	                entries.id = line_count_tbl.entry_id
-              WHERE 
-                division_number IS NULL AND 
-                entry_number LIKE '1198%' AND 
+              WHERE
+                division_number IS NULL AND
+                entry_number LIKE '1198%' AND
                 #{make_range_field_sql('release_date', year_1, year_2)}
-              GROUP BY 
-                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")), 
+              GROUP BY
+                YEAR(convert_tz(release_date, "UTC", "#{get_time_zone}")),
                 MONTH(convert_tz(release_date, "UTC", "#{get_time_zone}"))
             )
           ) AS tbl
         GROUP BY
-          division_number, 
-          division_name, 
-          range_year, 
-          range_month 
+          division_number,
+          division_name,
+          range_year,
+          range_month
       SQL
     end
 
@@ -338,10 +338,10 @@ module OpenChain; module Report; class CompanyYearOverYearReport
         (
           (
             (
-              #{range_field} >= '#{format_jan_1_date(year_1)}' AND 
+              #{range_field} >= '#{format_jan_1_date(year_1)}' AND
               #{range_field} < '#{format_jan_1_date(year_1 + 1)}'
             ) OR (
-              #{range_field} >= '#{format_jan_1_date(year_2)}' AND 
+              #{range_field} >= '#{format_jan_1_date(year_2)}' AND
               #{range_field} < '#{format_jan_1_date(year_2 + 1)}'
             )
           ) AND

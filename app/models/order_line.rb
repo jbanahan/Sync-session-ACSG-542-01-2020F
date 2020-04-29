@@ -36,8 +36,8 @@ class OrderLine < ActiveRecord::Base
   include ShallowMerger
   include UpdateModelFieldsSupport
 
-  attr_accessible :country_of_origin, :currency, :hts, :line_number, 
-    :order_id, :order, :price_per_unit, :product_id, :product, :quantity, :ship_to_id, 
+  attr_accessible :country_of_origin, :currency, :hts, :line_number,
+    :order_id, :order, :price_per_unit, :product_id, :product, :quantity, :ship_to_id,
     :ship_to, :sku, :total_cost_digits, :unit_msrp, :unit_of_measure, :variant_id,
     :created_at, :updated_at, :variant
 
@@ -115,14 +115,14 @@ class OrderLine < ActiveRecord::Base
     return found.empty? ? nil : found.first
   end
 
-  dont_shallow_merge :OrderLine, ['id','created_at','updated_at','line_number']
+  dont_shallow_merge :OrderLine, ['id', 'created_at', 'updated_at', 'line_number']
 
   private
-  def parent_obj #supporting method for LinesSupport
+  def parent_obj # supporting method for LinesSupport
     self.order
   end
 
-  def parent_id_where #supporting method for LinesSupport
+  def parent_id_where # supporting method for LinesSupport
     return :order_id => self.order.id
   end
 

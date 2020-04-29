@@ -1,12 +1,12 @@
 describe OpenChain::EntityCompare::InvoiceComparator do
 
-  subject { 
+  subject {
     Class.new {
       extend OpenChain::EntityCompare::InvoiceComparator
     }
   }
-  
-  describe "accept?" do 
+
+  describe "accept?" do
 
     let(:snapshot) { EntitySnapshot.new recordable_type: "Invoice"}
 

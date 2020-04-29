@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       data[:containers].each do |container_data|
         container_count += 1
 
-        # We can use a total of 16 container lines per tab, after that we need to 
+        # We can use a total of 16 container lines per tab, after that we need to
         # start a new tab
         current_container_lines = (lcl?(entry) && body.length < 2) ? [] : [""]
 
@@ -101,7 +101,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
             else
               del.bill_of_lading = (bill_of_ladings.size > 1) ? "MULTIPLE - SEE BELOW" : bill_of_ladings.first
             end
-            
+
             del.body.push *body_lines
             del.tab_title = make_tab_title(destination, do_count)
 
@@ -154,10 +154,10 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       del.vessel_voyage = "#{entry.vessel} V#{entry.voyage}"
       del.importing_carrier = entry.carrier_code
     end
-    
+
     del.freight_location = entry.location_of_goods_description
     del.port_of_origin = entry.lading_port.try(:name)
-    
+
     del.arrival_date = entry.arrival_date ? entry.arrival_date.in_time_zone("America/New_York").to_date : nil
     del.instruction_provided_by = ["PVH CORP", "200 MADISON AVE", "NEW YORK, NY 10016-3903"]
     # Reference number has Country of Export prefaced on it.  For PVH, this will only ever be a single country.
@@ -224,7 +224,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
       end
     end
 
-    # If we don't have any data at all that matched to shipments from the PVH workflow spreadsheet, then we'll try our best 
+    # If we don't have any data at all that matched to shipments from the PVH workflow spreadsheet, then we'll try our best
     # to at least just populate the data that we can from the entry onto the delivery order
     if data.length == 0
       # Yes, technically anything that's not an ocean mode we're considering air, which is fine for this case
@@ -248,18 +248,18 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
           container_data[:house_bills] = true
         end
       end
-      
+
       # If there are no containers on here, create a dummy container record (this will be likely for air shipments)
       if entry.containers.length == 0
         container_data = {cartons: entry.total_packages.to_i, priority: nil, container_number: "", container_type: "", seal_number: "", weight: entry.gross_weight.to_i, divisions: [], bols: entry.split_master_bills_of_lading, house_bills: false}
-        dst_data[:containers] << container_data 
+        dst_data[:containers] << container_data
 
         if lcl_shipment || air_shipment
           container_data[:bols] = entry.split_house_bills_of_lading
           container_data[:house_bills] = true
         end
-        
-        
+
+
       end
     end
 
@@ -272,7 +272,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
 
   def get_shipment_lines entry
     containers = entry.containers.map {|c| c.container_number.blank? ? nil : c.container_number.strip }.uniq
-    # For air shipments, the master bill on the shipment matches to the entry's house bill (we don't know in the shipment parser if the 
+    # For air shipments, the master bill on the shipment matches to the entry's house bill (we don't know in the shipment parser if the
     # the shipment is air or ocean, so we just put the bol in master bill)
     bills = entry.master_bills_of_lading.to_s.split(/\s*\n\s*/) + entry.house_bills_of_lading.to_s.split(/\s*\n\s*/)
 
@@ -310,9 +310,9 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
   end
 
   # This method splits lines so that their at most max_line_length long.
-  # If they are over that lenght, then it finds the rightmost occurrence of 
+  # If they are over that lenght, then it finds the rightmost occurrence of
   # the supplied regex as the cutoff point for the string.
-  # 
+  #
   # Returns an array of the split lines.
   def split_line starting_line, max_line_length, separator_regex, prefix, continued_prefix
     next_line = starting_line
@@ -354,7 +354,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDeliveryOrderSpread
     index = 0
     begin
       current_match = string.match regex, index
-      if current_match 
+      if current_match
         match = current_match
         index = match.pre_match.length + match.to_s.length
       end

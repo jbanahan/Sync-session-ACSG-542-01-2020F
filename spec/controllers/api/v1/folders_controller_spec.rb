@@ -2,7 +2,7 @@ describe Api::V1::FoldersController do
 
   let (:user) { Factory(:user) }
   let (:base_object) { Factory(:order) }
-  let (:folder) { 
+  let (:folder) {
     base_object.folders.create! name: "Folder Name", created_by_id: user.id
   }
 
@@ -102,7 +102,7 @@ describe Api::V1::FoldersController do
       get :index, base_object_type: "orders", base_object_id: base_object.id
       expect(response).not_to be_success
       json = JSON.parse response.body
-      expect(json['errors']).to eq ["Access denied."] 
+      expect(json['errors']).to eq ["Access denied."]
     end
 
     it "excludes folder from listing if user cannot view it" do
@@ -143,7 +143,7 @@ describe Api::V1::FoldersController do
       post :create, base_object_type: "orders", base_object_id: base_object.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
-      expect(json['errors']).to eq ["Access denied."] 
+      expect(json['errors']).to eq ["Access denied."]
     end
   end
 
@@ -173,7 +173,7 @@ describe Api::V1::FoldersController do
       put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
-      expect(json['errors']).to eq ["Access denied."] 
+      expect(json['errors']).to eq ["Access denied."]
     end
 
     it "errors if user cannot folder" do
@@ -182,7 +182,7 @@ describe Api::V1::FoldersController do
       put :update, base_object_type: "orders", base_object_id: base_object.id, id: folder.id, folder: {fld_name: "FOLDER"}
       expect(response).not_to be_success
       json = JSON.parse response.body
-      expect(json['errors']).to eq ["Access denied."] 
+      expect(json['errors']).to eq ["Access denied."]
     end
   end
 

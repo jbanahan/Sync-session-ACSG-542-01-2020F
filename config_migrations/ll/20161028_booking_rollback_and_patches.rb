@@ -17,7 +17,7 @@ module ConfigMigrations; module LL; class BookingRollbackAndPatches
 
   def update_production_start_date_planned_permissions cdefs
     cd = cdefs[:ord_production_start_date_planned]
-    fvr = FieldValidatorRule.where(model_field_uid:cd.model_field_uid.to_s,module_type:'Order').first_or_create!
-    fvr.update_attributes(can_view_groups:"ALL\nORDERACCEPT",can_edit_groups:"ALL\nORDERACCEPT")
+    fvr = FieldValidatorRule.where(model_field_uid:cd.model_field_uid.to_s, module_type:'Order').first_or_create!
+    fvr.update_attributes(can_view_groups:"ALL\nORDERACCEPT", can_edit_groups:"ALL\nORDERACCEPT")
   end
 end; end; end

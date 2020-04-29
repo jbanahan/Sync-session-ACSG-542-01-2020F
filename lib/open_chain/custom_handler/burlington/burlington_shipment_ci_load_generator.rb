@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
     self.new.find_generate_and_send
   end
 
-  def find_generate_and_send 
+  def find_generate_and_send
     # Look up any shipments that have last_exported_from_source times over 30 minutes ago that have not been sent.
     # This used to be 12 hours, but since we pull everything for the master bill each time we send, there's no real
     # point in waiting that long any longer.
@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
     grouped_shipments = Hash.new {|h, k| h[k] = [] }
     shipments.each {|s| grouped_shipments[s.master_bill_of_lading] << s }
 
-    grouped_shipments.values.each do |shipments|
+    grouped_shipments.each_value do |shipments|
       begin
         all_shipments = generate_and_send(shipments)
         add_sync_records(all_shipments)
@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
   end
 
   def add_sync_records shipments
-    ActiveRecord::Base.transaction do 
+    ActiveRecord::Base.transaction do
       shipments.each do |s|
         sr = s.sync_records.first_or_initialize trading_partner: "CI Load"
         # We may have some shipments that were already sent in here, don't update these...it'll help potential debugging scenarios
@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
 
     # sort the shipments by the importer reference (which becomes the invoice number in the CI Load)
     all_shipments = all_shipments.sort {|a, b| a.importer_reference.to_s <=> b.importer_reference.to_s }
-    
+
     entry_data = generate_entry_data all_shipments
 
     kewill_generator.generate_xls_to_google_drive "Burlington CI Load/#{Array.wrap(shipments).first.master_bill_of_lading}.xls", [entry_data]
@@ -101,8 +101,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
       lines = {}
 
       shipment.shipment_lines.each do |line|
-        
-        # This should never happen, but it's potentially possible for someone to generate burlington 
+        # This should never happen, but it's potentially possible for someone to generate burlington
         # data via the screen rather than via the 856 feed.  In which case, just skip those lines.
         next unless line.product && line.order_lines.length > 0
 
@@ -143,7 +142,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonShipm
         end
       end
     end
-    
+
     entry
   end
 

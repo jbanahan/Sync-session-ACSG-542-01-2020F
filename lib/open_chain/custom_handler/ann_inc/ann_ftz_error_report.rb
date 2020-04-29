@@ -4,10 +4,10 @@ require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 module OpenChain; module CustomHandler; module AnnInc; class AnnFtzErrorReport
   include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
   include OpenChain::Report::BuilderOutputReportHelper
-  
+
   TEMPLATE_SYS_CODE = "FTZ"
 
-  #required settings: {"distribution_list": <string>}
+  # required settings: {"distribution_list": <string>}
   def self.run_schedulable settings={}
     self.new.run_report settings
   end
@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnFtzErrorReport
   end
 
   def conversions builder
-    {"Link to VFI Track" => weblink_translation_lambda(builder, Product), 
+    {"Link to VFI Track" => weblink_translation_lambda(builder, Product),
      "Manual Entry Processing" => boolean_translation_lambda}
   end
 
@@ -60,14 +60,14 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnFtzErrorReport
              bvrr.message AS "Business Rule Failure Message",
              p.id AS "Link to VFI Track"
       FROM products p
-        LEFT OUTER JOIN custom_values related_styles ON related_styles.customizable_id = p.id 
+        LEFT OUTER JOIN custom_values related_styles ON related_styles.customizable_id = p.id
           AND related_styles.customizable_type = "Product" AND related_styles.custom_definition_id = #{cdefs[:related_styles].id}
         INNER JOIN classifications cl ON p.id = cl.product_id
-        LEFT OUTER JOIN custom_values approved_date ON approved_date.customizable_id = cl.id 
+        LEFT OUTER JOIN custom_values approved_date ON approved_date.customizable_id = cl.id
           AND approved_date.customizable_type = "Classification" AND approved_date.custom_definition_id = #{cdefs[:approved_date].id}
-        LEFT OUTER JOIN custom_values manual_flag ON manual_flag.customizable_id = cl.id 
+        LEFT OUTER JOIN custom_values manual_flag ON manual_flag.customizable_id = cl.id
           AND manual_flag.customizable_type = "Classification" AND manual_flag.custom_definition_id = #{cdefs[:manual_flag].id}
-        LEFT OUTER JOIN custom_values classification_type ON classification_type.customizable_id = cl.id 
+        LEFT OUTER JOIN custom_values classification_type ON classification_type.customizable_id = cl.id
           AND classification_type.customizable_type = "Classification" AND classification_type.custom_definition_id = #{cdefs[:classification_type].id}
         INNER JOIN tariff_records tr ON cl.id = tr.classification_id
         LEFT OUTER JOIN custom_values percent_of_value ON percent_of_value.customizable_id = tr.id

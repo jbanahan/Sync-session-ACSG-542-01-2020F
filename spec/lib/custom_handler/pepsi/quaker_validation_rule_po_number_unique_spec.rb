@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::Pepsi::QuakerValidationRulePoNumberUnique do
     @ci_2 = Factory(:commercial_invoice, entry: @entry_2)
     Factory(:commercial_invoice_line, commercial_invoice: @ci_1, po_number: "C123456")
   end
-  
+
   it "passes if all invoice lines have unique po numbers" do
     Factory(:commercial_invoice_line, commercial_invoice: @ci_2, po_number: "C654321")
     expect(@rule.run_validation(@entry)).to be_nil

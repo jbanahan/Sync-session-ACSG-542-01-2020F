@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
   let!(:ms) { stub_master_setup }
 
   def include_variants doc, ids
-    (["1","2","3"] - ids).each { |id| doc.root.xpath("//UPC[@id='#{id}']").each(&:remove) }
+    (["1", "2", "3"] - ids).each { |id| doc.root.xpath("//UPC[@id='#{id}']").each(&:remove) }
     doc.to_s
   end
 
@@ -33,8 +33,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     it "creates products, variants, tariff records from XML" do
       doc_string = include_variants(doc, ["1", "2"])
 
-      expect_any_instance_of(Product).to receive(:create_snapshot).with(user,nil,"path")
-      expect{ described_class.parse doc_string, key: "path" }.to change(Product, :count).from(0).to(1)
+      expect_any_instance_of(Product).to receive(:create_snapshot).with(user, nil, "path")
+      expect { described_class.parse doc_string, key: "path" }.to change(Product, :count).from(0).to(1)
       expect(Classification.count).to eq 1
       expect(TariffRecord.count).to eq 1
       expect(Variant.count).to eq 2
@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
 
     it "makes no updates if data unchanged" do
       doc_string = include_variants(doc, ["1"])
-      expect_any_instance_of(Product).not_to receive(:create_snapshot) #purpose of the test
+      expect_any_instance_of(Product).not_to receive(:create_snapshot) # purpose of the test
 
       p = Factory(:product, importer: imp, unique_identifier: "UAPARTS-art num", name: "art descr")
       cl = Factory(:classification, product: p, country: ca)
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
     it "fails if importer can't be found" do
       imp.destroy
 
-      expect{described_class.parse include_variants(doc, ["1"]), key: "path"}.to raise_error "Failed to find Under Armour Importer account with system code: UAPARTS"
+      expect {described_class.parse include_variants(doc, ["1"]), key: "path"}.to raise_error "Failed to find Under Armour Importer account with system code: UAPARTS"
     end
   end
 
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       ca
     end
 
-    let(:prod) { 
+    let(:prod) {
       p = Factory(:product, importer: imp)
       p.update_custom_value! cdefs[:prod_part_number], "ARTICLE"
       p
@@ -130,7 +130,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
         end
 
         it "creates product if necessary" do
-          expect{subject.create_or_update_product! art_elem, change_flag}.to change(Product, :count).from(0).to(1)
+          expect {subject.create_or_update_product! art_elem, change_flag}.to change(Product, :count).from(0).to(1)
           p = Product.first
           expect(p.name).to eq "art descr"
           expect(p.unique_identifier).to eq "UAPARTS-art num"
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       end
 
       it "adds variant to product if it doesn't exist" do
-        expect{ subject.create_or_update_variants!(prod, art_elem, change_flag, described_class::PrepackErrorLog.new) }.to change(Variant, :count).from(0).to(1)
+        expect { subject.create_or_update_variants!(prod, art_elem, change_flag, described_class::PrepackErrorLog.new) }.to change(Variant, :count).from(0).to(1)
         v = Variant.first
         expect(v.variant_identifier).to eq "sku 1"
         expect(v.custom_value(cdefs[:var_upc])).to eq "upc num 1"
@@ -369,14 +369,14 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       it "creates a CA classification if product doesn't have one" do
         prod.classifications.destroy_all
         expect(subject).to receive(:create_or_update_tariff!).with(instance_of(Classification), ["1111111111"], change_flag)
-        expect{ subject.create_or_update_classi! prod, "descr", ["1111111111"], change_flag }.to change(Classification, :count).from(0).to(1)
+        expect { subject.create_or_update_classi! prod, "descr", ["1111111111"], change_flag }.to change(Classification, :count).from(0).to(1)
         expect(change_flag.value).to eq true
       end
 
       it "fails if CA country record can't be found" do
         ca.destroy
 
-        expect{subject.create_or_update_classi! prod, "new descr", ["1111111111"], change_flag}.to raise_error "Failed to find Canada."
+        expect {subject.create_or_update_classi! prod, "new descr", ["1111111111"], change_flag}.to raise_error "Failed to find Canada."
       end
     end
 
@@ -401,7 +401,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
         end
 
         it "creates a tariff if classification doesn't have one" do
-          expect{subject.create_or_update_tariff! classi, ["1111111111"], change_flag}.to change(TariffRecord, :count).from(0).to(1)
+          expect {subject.create_or_update_tariff! classi, ["1111111111"], change_flag}.to change(TariffRecord, :count).from(0).to(1)
           classi.reload
           expect(classi.tariff_records.first.hts_1).to eq "1111111111"
           expect(change_flag.value).to eq true
@@ -411,7 +411,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
       it "removes tariff if given more than one HTS" do
         Factory(:tariff_record, classification: classi, hts_1: "1111111111")
         classi.reload
-        expect{subject.create_or_update_tariff! classi, ["1111111111","2222222222"], change_flag}.to change(TariffRecord, :count).from(1).to(0)
+        expect {subject.create_or_update_tariff! classi, ["1111111111", "2222222222"], change_flag}.to change(TariffRecord, :count).from(1).to(0)
         expect(change_flag.value).to eq true
       end
     end
@@ -457,8 +457,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaArticleMasterParser do
   end
 
   describe "error emailing" do
-    let! (:user) { 
-      u = Factory(:user, email: "me@there.com") 
+    let! (:user) {
+      u = Factory(:user, email: "me@there.com")
       u.groups << group
       u
     }

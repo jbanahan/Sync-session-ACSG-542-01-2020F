@@ -68,7 +68,6 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
           amount: 1231.12
         }
       ]
-      
     }.merge overrides
   end
 
@@ -268,7 +267,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     it "fails if importer can't be found" do
       importer.destroy
 
-      expect{subject.write_xml(create_workbook(defaults), log)}.to raise_error "Company with system code SHOES not found."
+      expect {subject.write_xml(create_workbook(defaults), log)}.to raise_error "Company with system code SHOES not found."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Company with system code SHOES not found."
     end
   end
@@ -314,7 +313,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       expect(po).not_to be_nil
       expect(po.importer).to eq importer
       expect(po.customer_order_number).to eq "ORDER#"
-      expect(po.order_date).to eq Date.new(2013,11,14)
+      expect(po.order_date).to eq Date.new(2013, 11, 14)
       expect(po.mode).to eq "Ship Via"
       expect(po.first_expected_delivery_date).to eq Date.new(2013, 11, 15)
       expect(po.terms_of_sale).to eq "PAYMENT Terms"
@@ -391,7 +390,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     it "does not update an order if the order is shipping" do
       order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
 
-      # mock the find_order so we can provide our own order to make sure that when an order is 
+      # mock the find_order so we can provide our own order to make sure that when an order is
       # said to be shipping that it's not updated.
       expect(order).to receive(:shipping?).and_return true
       expect(order).not_to receive(:post_update_logic!)
@@ -409,7 +408,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
     it "does not update an order if the order is booked" do
       order = Factory(:order, order_number: "SHOES-ORDER#", importer: importer)
 
-      # mock the find_order so we can provide our own order to make sure that when an order is 
+      # mock the find_order so we can provide our own order to make sure that when an order is
       # said to be booked that it's not updated.
       expect(order).to receive(:booked?).and_return true
       expect(order).not_to receive(:post_update_logic!)
@@ -438,7 +437,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
     it "uses the alternate PO number if standard order id and order number fields are blank" do
       @overrides[:order_number] = ""
-      
+
       subject.process_po data, log, "bucket", "key"
 
       po = Order.where(order_number: "SHOES-PO#").first
@@ -450,7 +449,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       @overrides[:order_number] = ""
       @overrides[:alternate_po_number] = ""
 
-      expect{subject.process_po data, log, "bucket", "key"}.to raise_error "An order number must be present in all files.  File key is missing an order number."
+      expect {subject.process_po data, log, "bucket", "key"}.to raise_error "An order number must be present in all files.  File key is missing an order number."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "An order number must be present in all files.  File key is missing an order number."
     end
   end

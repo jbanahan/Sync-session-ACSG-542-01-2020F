@@ -15,7 +15,7 @@
 
 class ExportJobLink < ActiveRecord::Base
   attr_accessible :export_job_id, :exportable_id, :exportable_type
-  
+
   belongs_to :exportable, :polymorphic => true
   belongs_to :export_job
 end

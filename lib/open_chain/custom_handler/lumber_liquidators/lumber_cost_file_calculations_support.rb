@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
   def calculate_proration_for_lines lines, total_entered_value, charge_totals, charge_buckets
     Calculations.calculate_proration_for_lines lines, total_entered_value, charge_totals, charge_buckets
   end
-  
+
   def add_remaining_proration_amounts values, charge_buckets
     Calculations.add_remaining_proration_amounts values, charge_buckets
   end
@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
       }
     end
 
-    def self.prorated_values 
+    def self.prorated_values
       [:ocean_rate, :brokerage, :acessorial, :isc_management, :isf, :blp_handling, :blp, :pier_pass, :inland_freight, :courier, :oga, :clean_truck]
     end
 

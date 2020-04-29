@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Generator315Support do
-  subject do 
-    Class.new do 
+  subject do
+    Class.new do
       include OpenChain::CustomHandler::Generator315Support
 
       def split_entry_data_identifiers p1, p2
@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Generator315Support do
   let (:port_unlading) { Factory(:port, schedule_d_code: "9876", name: "Unlading Port", address: Factory(:full_address, country: us)) }
   let (:port_lading) { Factory(:port, schedule_k_code: "65433", name: "Lading Port", address: Factory(:full_address, country: us)) }
 
-  let (:data) { 
+  let (:data) {
     data = OpenChain::CustomHandler::Generator315Support::Data315.new "ref", "ent", 10, "LCL", "SCAC", "ves", "voy", "1234", port_entry, "65433", port_lading, "9876", port_unlading, "CCN", "A\nB", "C\nD", "E\nF", "G\nH", "CUST", "release_date", ActiveSupport::TimeZone["America/New_York"].parse("201501011230")
     data.sync_record = SyncRecord.new
     data
@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::Generator315Support do
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/LocationCode", "CNABC")
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/LocationCodeType", "UNLocode")
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/Name", "Chinese Port")
-    end 
+    end
 
     it "detects IATA codes for LocationCodeType" do
       locode = Factory(:port, iata_code: "YYZ", name: "Toronto Pearson Airport")
@@ -125,7 +125,7 @@ describe OpenChain::CustomHandler::Generator315Support do
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/LocationCode", "YYZ")
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/LocationCodeType", "IATA")
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/Name", "Toronto Pearson Airport")
-    end 
+    end
 
     it "detects CBSA codes for LocationCodeType" do
       locode = Factory(:port, cbsa_port: "9999", name: "Sarnia")
@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::Generator315Support do
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/LocationCode", "9999")
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/LocationCodeType", "CBSA")
       expect(r).to have_xpath_value("Location[LocationType = 'PortOfLading']/Name", "Sarnia")
-    end 
+    end
   end
 
   describe "generate_and_send_xml_document" do
@@ -295,23 +295,23 @@ describe OpenChain::CustomHandler::Generator315Support do
 
       it "works with regular dates" do
         field.merge! no_time: true
-        
+
         milestone = subject.process_field field, user, entry, false, true, []
-        expect(milestone.date).to eq subject.default_timezone.local(2015,12,01,0,0)
+        expect(milestone.date).to eq subject.default_timezone.local(2015, 12, 01, 0, 0)
         expect(milestone.sync_record.context).to eq({"milestone_uids" => {"20151201" => [0]}})
 
         milestone2 = subject.process_field field, user, entry, false, true, []
-        expect(milestone2.date).to eq subject.default_timezone.local(2015,12,01,0,1)
+        expect(milestone2.date).to eq subject.default_timezone.local(2015, 12, 01, 0, 1)
         expect(milestone2.sync_record.context).to eq({"milestone_uids" => {"20151201" => [0, 1]}})
       end
 
       context "sync records" do
         let(:sr) { SyncRecord.new  }
-        
+
         describe "milestone_uids" do
           it "returns uids" do
-            sr = SyncRecord.new trading_partner: "ACME", context: {"milestone_uids" => {"20190315" => [1,2]}}.to_json
-            expect(subject.milestone_uids sr, "20190315").to eq [1,2]
+            sr = SyncRecord.new trading_partner: "ACME", context: {"milestone_uids" => {"20190315" => [1, 2]}}.to_json
+            expect(subject.milestone_uids sr, "20190315").to eq [1, 2]
             expect(subject.milestone_uids sr, "20190316").to be_empty
           end
         end
@@ -319,14 +319,14 @@ describe OpenChain::CustomHandler::Generator315Support do
         describe "set_milestone_uids" do
           it "assigns uid" do
             sr = SyncRecord.new trading_partner: "ACME", context: nil
-            subject.set_milestone_uids sr, "20190315", [1,2]
-            expect(sr.context).to eq({"milestone_uids" => {"20190315" => [1,2]}})
+            subject.set_milestone_uids sr, "20190315", [1, 2]
+            expect(sr.context).to eq({"milestone_uids" => {"20190315" => [1, 2]}})
 
-            subject.set_milestone_uids sr, "20190315", [1,2,3]
-            expect(sr.context).to eq({"milestone_uids" => {"20190315" => [1,2,3]}})
+            subject.set_milestone_uids sr, "20190315", [1, 2, 3]
+            expect(sr.context).to eq({"milestone_uids" => {"20190315" => [1, 2, 3]}})
 
             subject.set_milestone_uids sr, "20190316", [4]
-            expect(sr.context).to eq({"milestone_uids" => {"20190315" => [1,2,3], "20190316" => [4]}})
+            expect(sr.context).to eq({"milestone_uids" => {"20190315" => [1, 2, 3], "20190316" => [4]}})
           end
         end
       end
@@ -336,7 +336,7 @@ describe OpenChain::CustomHandler::Generator315Support do
   describe "generate_and_send_315s" do
 
     let (:config) { MilestoneNotificationConfig.new output_style: MilestoneNotificationConfig::OUTPUT_STYLE_STANDARD, customer_number: "config_cust" }
-    
+
     it "splits data, generates milestones for each and sends" do
       splits = ["S1", "S2"]
       milestones = ["M1", "M2"]
@@ -354,7 +354,7 @@ describe OpenChain::CustomHandler::Generator315Support do
       expect(data.sync_record).to receive(:save!)
       now = Time.zone.now
       Timecop.freeze(now) { subject.generate_and_send_315s config, obj, milestones }
-      
+
       expect(data.sync_record.confirmed_at).to eq now
     end
   end

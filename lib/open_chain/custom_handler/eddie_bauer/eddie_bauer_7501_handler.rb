@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module EddieBauer
 
     def can_view?(user)
       MasterSetup.get.custom_feature?("WWW") &&
-        MasterSetup.get.custom_features_list.include?('Eddie Bauer 7501 Audit') && 
+        MasterSetup.get.custom_features_list.include?('Eddie Bauer 7501 Audit') &&
           Company.with_customs_management_number("EDDIE").first.try(:can_view?, user) && user.view_products?
     end
 
@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def collect_hts file_contents
-      prod_uids = get_column(file_contents, 2).map{ |n| "EDDIE-#{text_value(n)[0..7]}" }.uniq
+      prod_uids = get_column(file_contents, 2).map { |n| "EDDIE-#{text_value(n)[0..7]}" }.uniq
       extract_hts prod_uids
     end
 
@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module EddieBauer
       header = file_contents.first.concat ["VFI Track - HTS", "Match?"]
       book, sheet = XlsMaker.create_workbook_and_sheet "7501 Audit", header
       row_num = 1
-      file_contents.drop(1).each do |original_row| 
+      file_contents.drop(1).each do |original_row|
         original_row[8] = hts_hsh["EDDIE-#{text_value(original_row[2])[0..7]}"]
         original_row[4] = text_value(original_row[4])
         original_row[9] = (original_row[4] == original_row[8]).to_s.upcase
@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; module EddieBauer
           INNER JOIN tariff_records t on cl.id = t.classification_id
           INNER JOIN countries co ON co.id = cl.country_id
         WHERE co.iso_code = "US"
-          AND p.unique_identifier IN (#{prod_uid_arr.map{|uid| ActiveRecord::Base.sanitize uid}.join(", ")})
+          AND p.unique_identifier IN (#{prod_uid_arr.map {|uid| ActiveRecord::Base.sanitize uid}.join(", ")})
       SQL
     end
 
@@ -96,7 +96,7 @@ module OpenChain; module CustomHandler; module EddieBauer
     end
 
     def send_errors email, errors
-      errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."  
+      errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
       body = "Eddie Bauer 7501 '#{@custom_file.attached_file_name}' has finished processing.\n\n#{errors.join("\n")}"
       subject = "Eddie Bauer 7501 Audit Completed With Errors"
       OpenMailer.send_simple_html(email, subject, body).deliver_now

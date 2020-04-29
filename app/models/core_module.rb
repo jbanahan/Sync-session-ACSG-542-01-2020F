@@ -1,37 +1,37 @@
 class CoreModule
   attr_reader :class_name, :label, :table_name,
       :new_object_lambda,
-      :children, #array of child CoreModules used for :has_many (not for :belongs_to)
-      :child_lambdas, #hash of lambdas to access child CoreModule data
-      :child_joins, #hash of join statements to link up child CoreModule to parent
-      :statusable, #works with status rules
-      :worksheetable, #works with worksheet uploads
-      :file_formatable, #can be used for file formats
-      :default_search_columns, #array of columns to be included when a default search is created
-      :show_field_prefix, #should the default option for this module's field's labels be to show the module name as a prefix (true =  "Classification - Country Name", false="Country Name")
-      :changed_at_parents_lambda, #lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers,
-      :object_from_piece_set_lambda, #lambda returning the appropriate object for this module based on the given PieceSet (or nil)
-      :entity_json_lambda, #DO NOT USE - lambda return hash suitable for conversion into json containing all model fields - prefer snapshot_descriptor instead
-      :business_logic_validations, #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
-      :enabled_lambda, #is the module enabled in master setup
-      :key_model_field_uids, #the uids represented by this array of model_field_uids can be used to find a unique record in the database
+      :children, # array of child CoreModules used for :has_many (not for :belongs_to)
+      :child_lambdas, # hash of lambdas to access child CoreModule data
+      :child_joins, # hash of join statements to link up child CoreModule to parent
+      :statusable, # works with status rules
+      :worksheetable, # works with worksheet uploads
+      :file_formatable, # can be used for file formats
+      :default_search_columns, # array of columns to be included when a default search is created
+      :show_field_prefix, # should the default option for this module's field's labels be to show the module name as a prefix (true =  "Classification - Country Name", false="Country Name")
+      :changed_at_parents_lambda, # lambda returning array of objects that should have their changed_at value updated on this module's object's after_save triggers,
+      :object_from_piece_set_lambda, # lambda returning the appropriate object for this module based on the given PieceSet (or nil)
+      :entity_json_lambda, # DO NOT USE - lambda return hash suitable for conversion into json containing all model fields - prefer snapshot_descriptor instead
+      :business_logic_validations, # lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
+      :enabled_lambda, # is the module enabled in master setup
+      :key_model_field_uids, # the uids represented by this array of model_field_uids can be used to find a unique record in the database
       :view_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine view path for the module (may return null if no view path exists)
       :edit_path_proc, # Proc (so you can change execution context via instance_exec and thus use path helpers) used to determine edit path for the module (may return null if no edit path exists)
       :quicksearch_lambda, # Scope for quick searching
       :quicksearch_fields, # List of field / field definitions for quicksearching
       :quicksearch_extra_fields, # List of field / field definitions for displaying along with quicksearch terms
-      :module_chain, #default module chain for searches
+      :module_chain, # default module chain for searches
       :snapshot_descriptor,
       :restorable, # If true, the restore button will appear on the history partial, allowing the user to restore the object to the state it was at the time of that snapshot
       :destroy_snapshots # If true, (default) then when an object for this core module is destroyed snapshots associated with it are also destroyed.
                          # This should be set to false for all leaf value core modules that are snapshotable (like Container, Broker Invoice)
 
-  def initialize(class_name,label,opts={})
-    o = {:worksheetable => false, 
-          :statusable=>false, 
+  def initialize(class_name, label, opts={})
+    o = {:worksheetable => false,
+          :statusable=>false,
           :file_format=>false,
           :new_object => lambda {Kernel.const_get(class_name).new},
-          :children => [], 
+          :children => [],
           :make_default_search => self.class.default_search_lambda(self),
           :entity_json_lambda => self.class.snapshot_lambda(self),
           :business_logic_validations => lambda {|base_object| true},
@@ -98,7 +98,7 @@ class CoreModule
     @destroy_snapshots = o[:destroy_snapshots]
   end
 
-  def quicksearch_sort_by  #returns qualified field name. Getter avoids circular dependency during init
+  def quicksearch_sort_by  # returns qualified field name. Getter avoids circular dependency during init
     unless @quicksearch_sort_by_qfn
       qsbmf = ModelField.find_by_uid(@quicksearch_sort_by_mf ? @quicksearch_sort_by_mf : :nil)
       @quicksearch_sort_by_qfn = qsbmf.blank? ? "#{@table_name}.created_at" : qsbmf.qualified_field_name
@@ -106,15 +106,15 @@ class CoreModule
     @quicksearch_sort_by_qfn
   end
 
-  #lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
+  # lambda accepts object, sets internal errors for any business rules validataions, returns true for pass and false for fail
   def validate_business_logic base_object
     @business_logic_validations.call(base_object)
   end
-  #returns the appropriate object for the core module based on the piece set given
+  # returns the appropriate object for the core module based on the piece set given
   def object_from_piece_set piece_set
     @object_from_piece_set_lambda.call piece_set
   end
-  #returns the model field that you can show to the user to uniquely identify the record
+  # returns the model field that you can show to the user to uniquely identify the record
   def unique_id_field
     ModelField.find_by_uid @unique_id_field_name
   end
@@ -122,15 +122,15 @@ class CoreModule
   # returns a unique key for this instance based on the object given
   def logical_key base_object
     return @logical_key_lambda.call(base_object) if @logical_key_lambda
-    self.unique_id_field.process_export(base_object,nil,true)
+    self.unique_id_field.process_export(base_object, nil, true)
   end
 
-  #can the user view items for this module
+  # can the user view items for this module
   def view? user
     user.view_module? self
   end
 
-  #returns a json representation of the entity and all of it's children
+  # returns a json representation of the entity and all of it's children
   def entity_json base_object
     json = nil
     if @snapshot_descriptor
@@ -141,8 +141,8 @@ class CoreModule
     end
   end
 
-  #find's the given objects parents that should have their changed_at values updated, updates them, and saves them.
-  #This method will not re-update or save a changed_at value that is less than 1 minute old to save on constant DB writes
+  # find's the given objects parents that should have their changed_at values updated, updates them, and saves them.
+  # This method will not re-update or save a changed_at value that is less than 1 minute old to save on constant DB writes
   def touch_parents_changed_at base_object
     @changed_at_parents_lambda.call(base_object).each do |p|
       ca = p.changed_at
@@ -168,15 +168,15 @@ class CoreModule
     dsc = ModelField.viewable_model_fields user, @default_search_columns
     SearchSetup.create_with_columns(self, dsc, user)
   end
-  #can have status set on the module
+  # can have status set on the module
   def statusable?
     @statusable
   end
-  #can have worksheets uploaded
+  # can have worksheets uploaded
   def worksheetable?
     @worksheetable
   end
-  #can be used as the base for an import/export file format
+  # can be used as the base for an import/export file format
   def file_formatable?
     @file_formatable
   end
@@ -212,8 +212,8 @@ class CoreModule
     h
   end
 
-  #hash of model_fields for core_module and any core_modules referenced as children
-  #and their children recursively
+  # hash of model_fields for core_module and any core_modules referenced as children
+  # and their children recursively
   def model_fields_including_children user=nil
     r = block_given? ? model_fields(user, &Proc.new) : model_fields(user)
     @children.each do |c|
@@ -244,16 +244,16 @@ class CoreModule
     r
   end
 
-  def child_objects(child_core_module,base_object)
+  def child_objects(child_core_module, base_object)
     # If you call this on a leaf level core module (.ie tariff record) then the child lambda
     # is likely nil, so just return an empty array
     lmda = @child_lambdas ? @child_lambdas[child_core_module] : nil
     lmda ? lmda.call(base_object) : []
   end
 
-  #how many steps away is the given module from this one in the parent child tree
+  # how many steps away is the given module from this one in the parent child tree
   def module_level(core_module)
-    CoreModule.recursive_module_level(0,self,core_module)
+    CoreModule.recursive_module_level(0, self, core_module)
   end
 
   def child_association_name(child_core_module)
@@ -276,18 +276,18 @@ class CoreModule
     name
   end
 
-  #get all addresses associated with object
+  # get all addresses associated with object
   def available_addresses obj
     @available_addresses_lambda ? @available_addresses_lambda.call(obj) : []
   end
 
   def self.all
-    self.constants.map{|c| self.const_get(c)}.select{|c| c.is_a? CoreModule} || []
+    self.constants.map {|c| self.const_get(c)}.select {|c| c.is_a? CoreModule} || []
   end
 
-  def self.find_by_class_name(c,case_insensitive=false)
+  def self.find_by_class_name(c, case_insensitive=false)
     c = c.to_s if c.is_a?(Class)
-    
+
     self.all.each do|m|
       if case_insensitive
         return m if m.class_name.downcase == c.downcase
@@ -310,23 +310,23 @@ class CoreModule
     test_to_array {|c| c.statusable?}
   end
 
-  #make array of arrays for use in select boxes
+  # make array of arrays for use in select boxes
   def self.to_a_label_class
     to_proc = test_to_array {|c| block_given? ? (yield c) : true}
     r = []
-    to_proc.each {|c| r << [c.label,c.class_name]}
+    to_proc.each {|c| r << [c.label, c.class_name]}
     r
   end
 
-  #make hash of arrays to work with FormOptionsHelper.grouped_options_for_select
+  # make hash of arrays to work with FormOptionsHelper.grouped_options_for_select
   def self.grouped_options user, opts = {}
     inner_opts = {:core_modules => self.all, :filter=>lambda {|f| true}}.merge(opts)
-    core_modules = inner_opts[:core_modules].select {|cm| user.view_module? cm}.sort {|x,y| x.label <=> y.label}
+    core_modules = inner_opts[:core_modules].select {|cm| user.view_module? cm}.sort {|x, y| x.label <=> y.label}
 
     r = {}
     core_modules.each do |cm|
       flds = cm.every_model_field {|mf| mf.can_view?(user) && inner_opts[:filter].call(mf)}
-      r[cm.label] = flds.map {|k, v| [v.label,k]}.sort {|x, y| x[0] <=> y[0]}
+      r[cm.label] = flds.map {|k, v| [v.label, k]}.sort {|x, y| x[0] <=> y[0]}
     end
     r
   end
@@ -338,7 +338,7 @@ class CoreModule
   def self.walk_object_heirarchy object, core_module = nil
     core_module = find_by_object(object) if core_module.nil?
     do_children = false
-    catch(:stop_walking) do 
+    catch(:stop_walking) do
       yield core_module, object
       do_children = true
     end
@@ -470,19 +470,19 @@ class CoreModule
   private
 
   def self.snapshot_lambda core_module
-    lambda do |entity,module_chain|
-      master_hash = {'entity'=>{'core_module'=>core_module.class_name,'record_id'=>entity.id,'model_fields'=>{}}}
+    lambda do |entity, module_chain|
+      master_hash = {'entity'=>{'core_module'=>core_module.class_name, 'record_id'=>entity.id, 'model_fields'=>{}}}
       mf_hash = master_hash['entity']['model_fields']
-      core_module.model_fields_for_snapshot.values.each do |mf|
+      core_module.model_fields_for_snapshot.each_value do |mf|
         v = SnapshotWriter.field_value entity, mf
         mf_hash[mf.uid] = v unless v.nil?
       end
       Array.wrap(module_chain.child(core_module)).each do |child_mc|
-        child_objects = core_module.child_objects(child_mc,entity)
+        child_objects = core_module.child_objects(child_mc, entity)
         unless child_objects.blank?
           master_hash['entity']['children'] ||= []
           child_objects.each do |c|
-            master_hash['entity']['children'] << child_mc.entity_json_lambda.call(c,module_chain)
+            master_hash['entity']['children'] << child_mc.entity_json_lambda.call(c, module_chain)
           end
         end
       end
@@ -492,9 +492,9 @@ class CoreModule
 
   def self.default_search_lambda core_module
     lambda do |user|
-      ss = SearchSetup.create(:name=>"Default",:user => user,:module_type=>core_module.class_name,:simple=>false)
-      core_module.model_fields.keys.each_with_index do |uid,i|
-        ss.search_columns.create(:rank=>i,:model_field_uid=>uid) if i < 3
+      ss = SearchSetup.create(:name=>"Default", :user => user, :module_type=>core_module.class_name, :simple=>false)
+      core_module.model_fields.keys.each_with_index do |uid, i|
+        ss.search_columns.create(:rank=>i, :model_field_uid=>uid) if i < 3
       end
       ss
     end
@@ -506,7 +506,7 @@ class CoreModule
     r
   end
 
-  def self.recursive_module_level(start_level,current_module,target_module)
+  def self.recursive_module_level(start_level, current_module, target_module)
     if current_module == target_module
       return start_level + 0
     elsif current_module.children.include? target_module
@@ -514,14 +514,14 @@ class CoreModule
     else
       r_val = nil
       current_module.children.each do |cm|
-        r_val = recursive_module_level(start_level+1,cm,target_module) if r_val.nil?
+        r_val = recursive_module_level(start_level+1, cm, target_module) if r_val.nil?
       end
       return r_val
     end
   end
 
   def self.initialize_core_module_dependencies
-    # Basically, what we're doing here is turning class references from the module definitions into 
+    # Basically, what we're doing here is turning class references from the module definitions into
     # actual core modules.  Doing it this way frees us from having to worry about the lexical load
     # order in core module definitions forcing us into declaring core modules in a load specific order to prevent
     # circular references from happening.
@@ -545,7 +545,7 @@ class CoreModule
       if cm.child_joins.respond_to?(:each_pair)
         cm.send(:set_child_joins, remap_core_modules(cm, cm.child_joins, cm_object_map, "child joins"))
       end
-      
+
     end
   end
   private_class_method :initialize_core_module_dependencies

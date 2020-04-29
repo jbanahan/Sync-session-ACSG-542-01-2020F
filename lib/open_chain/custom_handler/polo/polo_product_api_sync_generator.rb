@@ -4,10 +4,10 @@ module OpenChain; module CustomHandler; module Polo; class PoloProductApiSyncGen
 
   def query
     qry = <<-QRY
-SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1 
+SELECT products.id, products.unique_identifier, iso.iso_code, r.line_number, r.hts_1
 FROM products products
 INNER JOIN classifications c on products.id = c.product_id
-INNER JOIN tariff_records r on r.classification_id = c.id 
+INNER JOIN tariff_records r on r.classification_id = c.id
 INNER JOIN countries iso on iso.id = c.country_id and iso.iso_code = 'CA'
 QRY
     if custom_where.blank?

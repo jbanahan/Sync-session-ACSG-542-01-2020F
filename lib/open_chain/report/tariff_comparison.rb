@@ -5,7 +5,7 @@ module OpenChain
       def self.available_countries
         Country.where("id in (select country_id from tariff_sets)").order("name ASC")
       end
-      
+
       # Run the report
       # settings = {'old_tariff_set_id'=>1,'new_tariff_set_id'=>2}
       def self.run_report run_by, settings
@@ -34,7 +34,7 @@ module OpenChain
 
         # The number of changes to a tariff file can be massive and can overflow the max number of rows that Excel
         # allows in a single sheet, so we have to make sure that we roll to a new sheet if that happens
-        changed.keys.each do |hts|
+        changed.each_key do |hts|
 
           change_rows = []
           row = []
@@ -44,7 +44,7 @@ module OpenChain
           change_rows << row
           row.push("", "Attribute", "New Value", "Old Value")
           new_hash, old_hash = changed[hts]
-          new_hash.keys.each do |a|
+          new_hash.each_key do |a|
             row = []
             change_rows << row
             row.push("", unfreeze(a), unfreeze(new_hash[a]), unfreeze(old_hash[a]))
@@ -57,11 +57,11 @@ module OpenChain
             c_row = 0
           end
 
-          c_row = write_rows c_sheet, c_row, change_rows          
+          c_row = write_rows c_sheet, c_row, change_rows
         end
 
-        t = Tempfile.new ['tariff_comparison','.xls']
-        wb.write t.path 
+        t = Tempfile.new ['tariff_comparison', '.xls']
+        wb.write t.path
         t
       end
 
@@ -73,15 +73,15 @@ module OpenChain
 
       def self.make_list_sheet sheet, collection
         heading_row = sheet.row 0
-        labels = ["HTS Code","Description","General Rate","Special Rates","Erga Omnes Rate","MFN Rate",
-          "GPT Rate","Ad Valorem Rate","Per Unit Rate",
-          "Calculation Method","UOM","Column 2 Rate","Import Regulations",
+        labels = ["HTS Code", "Description", "General Rate", "Special Rates", "Erga Omnes Rate", "MFN Rate",
+          "GPT Rate", "Ad Valorem Rate", "Per Unit Rate",
+          "Calculation Method", "UOM", "Column 2 Rate", "Import Regulations",
           "Export Regulations"]
         labels.each do |lbl|
-          heading_row.push lbl  
+          heading_row.push lbl
         end
 
-        collection.each_with_index do |t,i|
+        collection.each_with_index do |t, i|
           r = sheet.row i+1
           r.push t.hts_code
           r.push t.full_description

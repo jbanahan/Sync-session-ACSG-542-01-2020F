@@ -59,7 +59,7 @@ class MilestoneDefinition < ActiveRecord::Base
       else
         days_to_add += md.days_after_previous
       end
-      md = md.previous_milestone_definition 
+      md = md.previous_milestone_definition
     end
     return start_date.nil? ? nil : start_date + days_to_add.days
   end
@@ -69,7 +69,7 @@ class MilestoneDefinition < ActiveRecord::Base
     act = nil
     if !mf.blank?
       obj = mf.core_module.object_from_piece_set(piece_set)
-      act = obj.nil? ? nil : mf.process_export(obj,nil,true)
+      act = obj.nil? ? nil : mf.process_export(obj, nil, true)
     end
     act
   end

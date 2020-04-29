@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       add_element bill, "currency", payable.currency
       add_date bill, "exchratedate", payable.bill_date
       add_element bill, "exchratetype", "Intacct Daily Rate"
-      
+
       if payable.intacct_payable_lines.size > 0
         lines = add_element bill, "billitems"
 
@@ -121,7 +121,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       add_element req, "referenceno", check.bill_number
 
       items = add_element req, "gltransactionentries"
-     
+
       append_gl_entry items, "credit", check
       append_gl_entry items, "debit", check
     end
@@ -173,7 +173,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
   end
 
   # This method returns a full API object (.ie a single APBILL, APPayable, etc) from intacct
-  # If you need more than one object, you need to utilize the #generate_read_by_query method and then 
+  # If you need more than one object, you need to utilize the #generate_read_by_query method and then
   # you can generate a read for each result returned.  See IntacctClient's #read_object method which
   # implements this pattern for reading muliple objects.
   def generate_read_query object_type, key, fields: nil
@@ -223,7 +223,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
         if detail.bill_record_no
           add_element(d, "RECORDKEY", detail.bill_record_no)
           add_element(d, "ENTRYKEY", detail.bill_line_id)
-          # Anything with a credit should never use the TRX_PAYMENTAMOUNT, but I actually want 
+          # Anything with a credit should never use the TRX_PAYMENTAMOUNT, but I actually want
           # this to bomb hard w/ an error from intacct if that happens, rather than protect it here
           # since it's possible the caller has the wrong expectation about how to credit a bill line
           # and the Intacct error will dispell that.
@@ -249,11 +249,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
       else
         yield root
       end
-      
 
       control_id = nil
       if root.elements.size == 1
-        # We're going to use the SHA-1 hash of the function contents to be able to seemlessly provide 
+        # We're going to use the SHA-1 hash of the function contents to be able to seemlessly provide
         # indempotency on the function.
         control_id = add_control_id root, root.elements[1]
       end
@@ -263,8 +262,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
 
     def function_element
       doc, root = build_xml_document "function"
-      root 
-      
+      root
     end
 
     def add_date parent_el, child_name, date
@@ -283,7 +281,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
     end
 
     def stringify element
-      s = StringIO.new 
+      s = StringIO.new
       REXML::Formatters::Default.new.write(element, s)
       s.rewind
       s.read

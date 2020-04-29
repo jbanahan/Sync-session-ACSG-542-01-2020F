@@ -15,46 +15,46 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberIsfShipmentXmlGenera
     end
 
     let :vendor do
-      Company.new(system_code:'VCode',name:'VName')
+      Company.new(system_code:'VCode', name:'VName')
     end
 
     let :importer do
       c = Company.create!(system_code: "Importer", name: "Importer")
-      c.addresses.create! address_type: "ISF Importer", system_code:'IMCode',name:'IMName',line_1:'IMA1',line_2:'IMA2',line_3:'IMA3',city:'IMC',state:'IMS',postal_code:'IMP',country:usa
-      c.addresses.create! address_type: "ISF Consignee", system_code:'COCode',name:'COName',line_1:'COA1',line_2:'COA2',line_3:'COA3',city:'COC',state:'COS',postal_code:'COP',country:usa
+      c.addresses.create! address_type: "ISF Importer", system_code:'IMCode', name:'IMName', line_1:'IMA1', line_2:'IMA2', line_3:'IMA3', city:'IMC', state:'IMS', postal_code:'IMP', country:usa
+      c.addresses.create! address_type: "ISF Consignee", system_code:'COCode', name:'COName', line_1:'COA1', line_2:'COA2', line_3:'COA3', city:'COC', state:'COS', postal_code:'COP', country:usa
       c
     end
 
     let :seller do
-      Address.new(system_code:'SECode',name:'SEName',line_1:'SEA1',line_2:'SEA2',line_3:'SEA3',city:'SEC',state:'SES',postal_code:'SEP',country:usa)
+      Address.new(system_code:'SECode', name:'SEName', line_1:'SEA1', line_2:'SEA2', line_3:'SEA3', city:'SEC', state:'SES', postal_code:'SEP', country:usa)
     end
 
     let :buyer do
-      Address.new(system_code:'BYCode',name:'BYName',line_1:'BYA1',line_2:'BYA2',city:'BYC',state:'BYS',postal_code:'BYP',country:usa)
+      Address.new(system_code:'BYCode', name:'BYName', line_1:'BYA1', line_2:'BYA2', city:'BYC', state:'BYS', postal_code:'BYP', country:usa)
     end
 
     let :ship_to do
-      Address.new(system_code:'STCode',name:'STName',line_1:'STA1',line_2:'STA2',line_3:'STA3',city:'STC',state:'STS',postal_code:'STP',country:usa)
+      Address.new(system_code:'STCode', name:'STName', line_1:'STA1', line_2:'STA2', line_3:'STA3', city:'STC', state:'STS', postal_code:'STP', country:usa)
     end
 
     let :consolidator do
-      Address.new(system_code:'CSCode',name:'CSName',line_1:'CSA1',city:'CSC',state:'CSS',postal_code:'CSP',country:china)
+      Address.new(system_code:'CSCode', name:'CSName', line_1:'CSA1', city:'CSC', state:'CSS', postal_code:'CSP', country:china)
     end
 
     let :container_stuffing do
-      Address.new(system_code:'LGCode',name:'LGName',line_1:'LGA1',line_2:'LGA2',city:'LGC',state:'LGS',postal_code:'LGP',country:china)
+      Address.new(system_code:'LGCode', name:'LGName', line_1:'LGA1', line_2:'LGA2', city:'LGC', state:'LGS', postal_code:'LGP', country:china)
     end
 
     let :ship_from do
-      Address.new(system_code:'SFCode',name:'SFName',line_1:'SFA',city:'SFC',state:'SFS',postal_code:'SFP',country:china)
+      Address.new(system_code:'SFCode', name:'SFName', line_1:'SFA', city:'SFC', state:'SFS', postal_code:'SFP', country:china)
     end
 
     let :product1 do
-      Product.new(unique_identifier:'0000000PROD1',name:'PNAME1')
+      Product.new(unique_identifier:'0000000PROD1', name:'PNAME1')
     end
 
     let :product2 do
-      Product.new(unique_identifier:'PROD2',name:'PNAME2')
+      Product.new(unique_identifier:'PROD2', name:'PNAME2')
     end
 
     let :order1 do

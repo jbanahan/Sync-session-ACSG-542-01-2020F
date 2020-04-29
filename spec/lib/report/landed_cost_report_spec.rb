@@ -1,5 +1,5 @@
 describe OpenChain::Report::LandedCostReport do
-  before :each do 
+  before :each do
     @user = Factory :master_user
     @entry1 = Factory(:entry, :customer_number=>"CUST", :broker_reference => "BROK REF 1", :release_date=>(Time.zone.now - 1.day), :entry_number=>"1", :transport_mode_code=>"2", :customer_references=>"3\n4")
     @entry2 = Factory(:entry, :customer_number=>"CUST", :broker_reference => "BROK REF 2", :release_date=>Time.zone.now, :entry_number=>"5", :transport_mode_code=>"6", :customer_references=>"7\n8")
@@ -8,7 +8,7 @@ describe OpenChain::Report::LandedCostReport do
   after :each do
     @tempfile.close! if @tempfile && !@tempfile.closed?
   end
-  
+
   def check_header sheet
     # don't really care about the header names, just make sure they're there
     expect(sheet.row(0)[0]).to eq("Broker Reference")
@@ -16,7 +16,6 @@ describe OpenChain::Report::LandedCostReport do
   end
 
   def check_first_row sheet
-    
     expect(sheet.row(1)[0]).to eq(@entry1.broker_reference)
     expect(sheet.row(1)[1]).to eq(@entry1.entry_number)
     expect(sheet.row(1)[2].strftime("%Y-%m-%d")).to eq(@entry1.release_date.strftime("%Y-%m-%d"))
@@ -53,9 +52,9 @@ describe OpenChain::Report::LandedCostReport do
         ]
     }]}
   end
-  
+
   context "run" do
-    # All the underlying logic for getting the report values is 
+    # All the underlying logic for getting the report values is
     # handled by the landed cost data generator and is tested in its spec.
     # So just make sure we're calling that and handling the appropriate values
     # coming back out of there.

@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Vandegrift::FtzCiLoadParser do
 
       expect(l.ftz_quantity).to eq BigDecimal("100.2")
       expect(l.ftz_zone_status).to eq "P"
-      expect(l.ftz_priv_status_date).to eq Date.new(2019,3,15)
+      expect(l.ftz_priv_status_date).to eq Date.new(2019, 3, 15)
     end
   end
 end

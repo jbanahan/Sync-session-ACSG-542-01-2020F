@@ -17,7 +17,7 @@
 #
 
 class TariffClassificationRate < ActiveRecord::Base
-  attr_accessible :rate_additional, :rate_advalorem, :rate_specific, 
+  attr_accessible :rate_additional, :rate_advalorem, :rate_specific,
     :special_program_indicator, :tariff_classification_id
 
   belongs_to :tariff_classification, inverse_of: :tariff_classification_rates

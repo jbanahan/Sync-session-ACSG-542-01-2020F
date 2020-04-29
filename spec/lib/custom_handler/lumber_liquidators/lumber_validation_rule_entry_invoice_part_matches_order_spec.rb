@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryI
 
     expect(subject.run_validation @ent).to eq "The following invoices have POs that don't match their part numbers: 135A PO 654321 part 123456\n\n"
   end
-  
+
   it "fails if any invoice line doesn't have a PO" do
     expect(@api_client_double).to receive(:find_by_order_number).with(@cil.po_number, [:ord_rule_state, :ordln_puid]).and_return({"order"=>nil})
 
@@ -68,5 +68,4 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryI
 
     expect(subject.run_validation @ent).to be_nil
   end
-  
 end

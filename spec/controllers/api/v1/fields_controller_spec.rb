@@ -7,7 +7,7 @@ describe Api::V1::FieldsController do
   }
 
   before(:each) do
-    @u = Factory(:master_user,shipment_view:true)
+    @u = Factory(:master_user, shipment_view:true)
     allow_api_access @u
   end
 
@@ -18,7 +18,7 @@ describe Api::V1::FieldsController do
       j = JSON.parse response.body
       mf = ModelField.find_by_uid :shp_ref
       found = j['shipment_fields'].find {|f| f['uid']=='shp_ref'}
-      expected = {'uid'=>'shp_ref','label'=>mf.label,'data_type'=>mf.data_type.to_s}
+      expected = {'uid'=>'shp_ref', 'label'=>mf.label, 'data_type'=>mf.data_type.to_s}
       expect(found).to eql expected
     end
     it "should return multiple modules" do

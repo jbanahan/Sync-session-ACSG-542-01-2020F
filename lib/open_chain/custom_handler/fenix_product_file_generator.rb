@@ -26,16 +26,16 @@ module OpenChain
         else
           custom_defintions = []
         end
-        
+
         custom_defintions << :class_stale_classification
         custom_defintions << :prod_part_number if @use_part_number
         custom_defintions << :prod_country_of_origin unless @suppress_country
         custom_defintions << :class_customs_description unless @suppress_description
-        
+
         @cdefs = self.class.prep_custom_definitions custom_defintions
       end
 
-      #automatcially generate file and ftp for trading partner "fenix-#{fenix_customer_code}"
+      # automatcially generate file and ftp for trading partner "fenix-#{fenix_customer_code}"
       def generate update_sync_records: true
         products = nil
         begin
@@ -56,7 +56,7 @@ module OpenChain
           joins("LEFT OUTER JOIN custom_values v on classifications.id = v.customizable_id AND v.customizable_type = 'Classification' AND custom_definition_id = #{@cdefs[:class_stale_classification].id}").
           where("v.boolean_value IS NULL OR v.boolean_value = 0").
           where("classifications.country_id = #{@canada_id} and length(tariff_records.hts_1) > 6").need_sync("fenix-#{@fenix_customer_code}")
-        
+
         bad_prods = bad_product_ids
         if bad_prods.length > 0
           r = r.where("products.id NOT IN (?)", bad_prods)
@@ -82,13 +82,13 @@ module OpenChain
         @bad_products << product.id
         nil
       end
-      
-      def bad_product_ids 
+
+      def bad_product_ids
         defined?(@bad_products) ? @bad_products.to_a : []
       end
-      
+
       def make_file products, update_sync_records = true
-        Tempfile.open(["fenix-#{@fenix_customer_code}",'.txt']) do |t|
+        Tempfile.open(["fenix-#{@fenix_customer_code}", '.txt']) do |t|
           sync_records = []
           t.binmode
           file_has_data = false
@@ -136,7 +136,6 @@ module OpenChain
             end
           end
 
-          
           if file_has_data
             t.flush
             t.rewind
@@ -165,7 +164,7 @@ module OpenChain
       def self.run_schedulable opts_hash={}
         OpenChain::CustomHandler::FenixProductFileGenerator.new(opts_hash["fenix_customer_code"], opts_hash).generate
       end
-      
+
       private
         def file_output fenix_customer_code, p, c, tr
           # For some reason the product line starts with an N followed by 14 blanks
@@ -199,14 +198,14 @@ module OpenChain
           line << str(custom_value(c, :class_sima_code), 2) # SIMA Code (389 - 391)
           # line << str("", 2) # Excise Rate (391 - 393)
 
-          #Because Canada doesn't allow exclamation marks or pipes in B3 files (WTF?, strip them)
-          line = line.gsub(/[!|]/, " ") 
+          # Because Canada doesn't allow exclamation marks or pipes in B3 files (WTF?, strip them)
+          line = line.gsub(/[!|]/, " ")
           line += "\r\n"
         end
 
         def force_fixed str, len
           return str.ljust(len) if str.length <= len
-          str[0,len]
+          str[0, len]
         end
 
         def identifier_field p

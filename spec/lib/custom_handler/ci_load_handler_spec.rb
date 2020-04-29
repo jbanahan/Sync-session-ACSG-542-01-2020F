@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::CiLoadHandler do
 
   let (:row_data) {
-    [ 
+    [
       ["12345", "CUST", "INV-123", "2015-01-01", "US", "PART-1", 12.0, "MID12345", "1234.56.7890", "N", 22.50, 10, 35, 50.5, "Purchase Order", 12, "21.50", "123.45", "19", "A+", "BuyerCustNo", "SellerMID", "X"]
     ]
   }
@@ -173,9 +173,9 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       context "with valid dates" do
 
         around :each do |example|
-          # The code only accepts dates that are within 2 years from the current time..so use Timecop 
+          # The code only accepts dates that are within 2 years from the current time..so use Timecop
           # to freeze time, and allow us to use hardcoded values.
-          Timecop.freeze(Time.zone.parse("2015-02-01 00:00")) do 
+          Timecop.freeze(Time.zone.parse("2015-02-01 00:00")) do
             example.run
           end
         end
@@ -215,7 +215,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
 
       context "with invalid dates" do
-        before :each do 
+        before :each do
           # This logic is only live for non-test envs, to avoid having to update dates in the test files after they get too old
           expect(MasterSetup).to receive(:test_env?).at_least(1).times.and_return false
         end
@@ -312,7 +312,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       it "reports errors to user" do
         expect(subject).to receive(:parse_and_send).and_raise "Error"
 
-        expect{subject.process user}.to raise_error(/Error/)
+        expect {subject.process user}.to raise_error(/Error/)
 
         expect(user.messages.size).to eq 1
         m = user.messages.first

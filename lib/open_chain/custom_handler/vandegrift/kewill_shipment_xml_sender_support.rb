@@ -1,7 +1,7 @@
 require 'open_chain/ftp_file_support'
 require 'open_chain/custom_handler/vandegrift/kewill_shipment_xml_support'
 
-# This module is for using when you need to actually send (FTP) Shipment / Invoice 
+# This module is for using when you need to actually send (FTP) Shipment / Invoice
 # information to Customs Managment (aka Kewill).
 #
 # You're process is reponsible for building the shipment structs from whatever source data
@@ -23,13 +23,13 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def generate_and_send_shipment_xml shipments, sync_records: nil
     Array.wrap(shipments).each.each_with_index do |shipment, index|
       filename = _shipment_file_prefix(shipment)
-      xml = generate_entry_xml shipment  
+      xml = generate_entry_xml shipment
       _send_xml(xml, filename, sync_record(sync_records, index))
     end
     nil
   end
 
-  # Generates XML data to Customs Management (CM / CMUS) that represents a 
+  # Generates XML data to Customs Management (CM / CMUS) that represents a
   # Commercial Invoice.
   #
   # invoices - an array (or single object) of the CiLoadEntry structs

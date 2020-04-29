@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
   def self.parse_file file_content, log, opts={}
     last_invoice_number = ''
     rows = []
-    CSV.parse(file_content,:headers=>true) do |row|
+    CSV.parse(file_content, :headers=>true) do |row|
       my_invoice_number = get_invoice_number row
       next unless my_invoice_number
 
@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
     end
   end
 
-  #don't call this, use the static parse method
+  # don't call this, use the static parse method
   def process_invoice_data rows, log, opts
     invoice = nil
     entry_number = nil
@@ -96,9 +96,9 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
     end
   end
 
-  private 
+  private
     def make_header inv, row
-      inv.broker_invoice_lines.destroy_all #clear existing lines
+      inv.broker_invoice_lines.destroy_all # clear existing lines
       inv.broker_reference = safe_strip row[9]
       inv.currency = safe_strip row[10]
       inv.invoice_date = Date.strptime safe_strip(row[0]), '%m/%d/%Y'
@@ -113,15 +113,15 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       log.add_identifier :invoice_number, invoice_number
 
       broker_reference = safe_strip row[9]
-      # We need a broker reference in the system to link to an entry, so that we can then know which 
+      # We need a broker reference in the system to link to an entry, so that we can then know which
       # customer the invoice belongs to
       if broker_reference.blank?
         log.reject_and_raise "Invoice # #{invoice_number} is missing a broker reference number."
       end
 
       invoice = nil
-      Lock.acquire("BrokerInvoice-#{invoice_number}") do 
-        invoice = BrokerInvoice.where(:source_system=>'Fenix',:invoice_number=>invoice_number).first_or_create!
+      Lock.acquire("BrokerInvoice-#{invoice_number}") do
+        invoice = BrokerInvoice.where(:source_system=>'Fenix', :invoice_number=>invoice_number).first_or_create!
       end
 
       if invoice
@@ -137,12 +137,12 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       charge_code = safe_strip row[6]
       charge_code_prefix = charge_code.split(" ").first
       charge_code = charge_code_prefix if charge_code_prefix.match /^[0-9]*$/
-      line = invoice.broker_invoice_lines.build(:charge_description=>safe_strip(row[7]),:charge_code=>charge_code,:charge_amount=>BigDecimal(safe_strip(row[8])))
-      line.charge_type = (['1', '2', '20','21'].include?(line.charge_code) ? 'D' : 'R')
+      line = invoice.broker_invoice_lines.build(:charge_description=>safe_strip(row[7]), :charge_code=>charge_code, :charge_amount=>BigDecimal(safe_strip(row[8])))
+      line.charge_type = (['1', '2', '20', '21'].include?(line.charge_code) ? 'D' : 'R')
       line
     end
 
-    def customer_number number, currency 
+    def customer_number number, currency
       # For some unknown reason, if the invoice is billed in USD, Fenix sends us the customer number with a U
       # appended to it.  So, strip the U.
       cust_no = number
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       # There are certain customers that are billed in Fenix for a third system, ALS.  These cusotmers are stored in an xref,
       # if the name is there, then the company is 'als', otherwise it's 'vcu'
       company =  DataCrossReference.has_key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
-      
+
       # If the invoice data comes in prior to the entry data coming from Fenix, then there's not going to be an Entry that the invoice
       # is associated with.  The actual invoice csv data does have the entry number in it, so we'll fall back to using
       # that data if the entry is not present.
@@ -215,5 +215,4 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       # We also want to queue up a send to push the broker file number dimension to intacct
       OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension 'Broker File', real_entry_number, real_entry_number unless real_entry_number.blank?
     end
-  
 end; end; end

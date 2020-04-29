@@ -6,9 +6,9 @@ class PublicFieldsController < ApplicationController
   def save
     admin_secure {
       PublicField.transaction do
-        PublicField.destroy_all #start over every time
+        PublicField.destroy_all # start over every time
         field_hash = params[:public_fields]
-        field_hash.each do |k,v|
+        field_hash.each do |k, v|
           pf = PublicField.create!(v) if v[:model_field_uid]
         end
         add_flash :notices, "Your changes have been saved."
@@ -20,7 +20,7 @@ class PublicFieldsController < ApplicationController
   def index
     admin_secure {
       @model_fields = CoreModule::ENTRY.model_fields.values
-    } 
+    }
   end
 
 end

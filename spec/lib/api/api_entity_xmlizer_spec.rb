@@ -11,9 +11,9 @@ describe OpenChain::Api::ApiEntityXmlizer do
     j = double('jsonizer')
     eh = {}
     expect(OpenChain::Api::ApiEntityJsonizer).to receive(:new).with(opts).and_return j
-    expect(j).to receive(:entity_to_hash).with(u,e,m).and_return eh
-    expect_any_instance_of(described_class).to receive(:make_xml).with(e,eh).and_return 'xml'
-    expect(described_class.new(opts).entity_to_xml(u,e,m)).to eq 'xml'
+    expect(j).to receive(:entity_to_hash).with(u, e, m).and_return eh
+    expect_any_instance_of(described_class).to receive(:make_xml).with(e, eh).and_return 'xml'
+    expect(described_class.new(opts).entity_to_xml(u, e, m)).to eq 'xml'
   end
 
   context 'with data' do
@@ -22,7 +22,7 @@ describe OpenChain::Api::ApiEntityXmlizer do
     let (:product) { Product.new unique_identifier: 'PUID' }
     let (:order_line) {  order.order_lines.first }
     let (:order) {
-      order = Order.new order_number: "ORDNUM", order_date: Date.new(2016,5,1)
+      order = Order.new order_number: "ORDNUM", order_date: Date.new(2016, 5, 1)
       order.id = 1
       line = order.order_lines.build line_number:1, quantity:10, product: product
       line.id = 2
@@ -38,14 +38,14 @@ describe OpenChain::Api::ApiEntityXmlizer do
       Timecop.return
     end
     it 'should create xml with base tag names' do
-      xml = subject.entity_to_xml(Factory(:admin_user),order,fields)
-      expect(xml).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample.xml') 
+      xml = subject.entity_to_xml(Factory(:admin_user), order, fields)
+      expect(xml).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample.xml')
     end
     it 'should user xml_tag_overrides from ModelField' do
-      cd = Factory(:custom_definition,module_type:'OrderLine',data_type:'string')
-      FieldValidatorRule.create!(model_field_uid:cd.model_field_uid,xml_tag_name:'custom-tag')
+      cd = Factory(:custom_definition, module_type:'OrderLine', data_type:'string')
+      FieldValidatorRule.create!(model_field_uid:cd.model_field_uid, xml_tag_name:'custom-tag')
       ModelField.reload
-      order_line.find_and_set_custom_value(cd,'myval')
+      order_line.find_and_set_custom_value(cd, 'myval')
       fields << cd.model_field_uid.to_sym
       expect(subject.entity_to_xml(Factory(:admin_user), order, fields)).to eq IO.read('spec/fixtures/files/api_entity_xmlizer_sample_custom_tag.xml')
     end

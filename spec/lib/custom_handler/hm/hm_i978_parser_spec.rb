@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
     let (:xml) { REXML::XPath.first(REXML::Document.new(xml_data), "/ns0:CustomsTransactionalDataTransaction/Payload/CustomsTransactionalData/BILLING_SHIPMENT")}
     let (:user) { Factory(:user) }
 
-    before :each do 
+    before :each do
       product_importer
       cn
       ca
@@ -41,13 +41,13 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
       let! (:importer) { with_fenix_id(Factory(:importer), "887634400RM0001")}
       let! (:country) { ca }
       let! (:data_cross_reference) { DataCrossReference.create! cross_reference_type: "hm_pars", key: "PARS"}
-      let! (:ca_email_lists) { 
+      let! (:ca_email_lists) {
         MailingList.create! user_id: User.integration.id, company_id: product_importer.id, system_code: "h_m_pars_coversheet_1", name: "PARS Coversheet", email_addresses: "parscoversheet@company.com"
         MailingList.create! user_id: User.integration.id, company_id: product_importer.id, system_code: "canada_h_m_i978_files_1", name: "FILES", email_addresses: "cafiles@company.com"
         MailingList.create! user_id: User.integration.id, company_id: product_importer.id, system_code: "PARSNumbersNeeded", name: "PARS Needed", email_addresses: "morepars@company.com"
       }
 
-      before :each do 
+      before :each do
         allow(ms).to receive(:custom_feature?).with("H&M i978 CA Import Live").and_return true
       end
 
@@ -251,7 +251,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
     context "with us import" do
       let! (:importer) { product_importer }
       let! (:country) { us }
-      let! (:us_email_lists) { 
+      let! (:us_email_lists) {
         MailingList.create! user_id: User.integration.id, company_id: importer.id, system_code: "us_h_m_i978_exception_files_1", name: "Exception", email_addresses: "exception@company.com"
         MailingList.create! user_id: User.integration.id, company_id: importer.id, system_code: "us_h_m_i978_files_1", name: "FILES", email_addresses: "usfiles@company.com"
       }
@@ -384,7 +384,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
 
       context "with single invoice" do
 
-        before :each do 
+        before :each do
           xml_data.gsub!("<DeliveryNumber>F000001850</DeliveryNumber>", "<DeliveryNumber>F000002240</DeliveryNumber>").gsub!("<SSCCNumber>8454548</SSCCNumber>", "<SSCCNumber>84547448</SSCCNumber>")
         end
 
@@ -443,10 +443,10 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
           expect(ActionMailer::Base.deliveries.length).to eq 0
         end
       end
-      
+
     end
 
-    context "it errors" do 
+    context "it errors" do
       let! (:country) { ca }
 
       it "if InvoiceNumber is missing" do
@@ -467,11 +467,11 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
 
     let! (:entry) {
       e = Factory(:entry, source_system: "Alliance", importer: product_importer, release_date: Time.zone.now, export_country_codes: "CN", broker_reference: "REF")
-      inv = Factory(:commercial_invoice, entry: e, invoice_number: "PO")      
+      inv = Factory(:commercial_invoice, entry: e, invoice_number: "PO")
       e.reload
     }
 
-    before :each do 
+    before :each do
       us
       ca
     end
@@ -567,7 +567,7 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
     end
   end
 
-  describe "make_pdf_info" do 
+  describe "make_pdf_info" do
     let (:country) { us }
     let (:importer) { product_importer }
     let (:invoice) {
@@ -660,4 +660,4 @@ describe OpenChain::CustomHandler::Hm::HmI978Parser do
       expect(mail.body).to include "99 PARS numbers are remaining to be used for H&amp;M border crossings.  Please supply more to Vandegrift to ensure future crossings are not delayed."
     end
   end
-end 
+end

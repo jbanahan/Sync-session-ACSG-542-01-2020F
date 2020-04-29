@@ -1,7 +1,7 @@
 describe DashboardWidgetsController do
 
   before :each do
-    @user = Factory(:master_user,:email=>'a@example.com')
+    @user = Factory(:master_user, :email=>'a@example.com')
     sign_in_as @user
 
     @search_setup = Factory(:search_setup, user: @user)
@@ -22,7 +22,7 @@ describe DashboardWidgetsController do
   end
 
   describe "edit" do
-    it "sets widgets and searches" do 
+    it "sets widgets and searches" do
       ss2 = Factory(:search_setup, module_type: "Entry", user: @user)
       @user.search_setups << ss2
       @user.save!

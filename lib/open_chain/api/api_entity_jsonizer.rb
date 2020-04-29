@@ -40,7 +40,7 @@ module OpenChain; module Api; class ApiEntityJsonizer
 
     outer = {}
 
-    model_field_hash.keys.each do |k|
+    model_field_hash.each_key do |k|
       inner = []
       model_field_hash[k].each do |mf|
         inner << build_model_field_descriptor(mf)

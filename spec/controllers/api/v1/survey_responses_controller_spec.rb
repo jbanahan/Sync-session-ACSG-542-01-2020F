@@ -101,7 +101,7 @@ describe Api::V1::SurveyResponsesController do
 
     before :each do
       @user = Factory(:user, survey_view: true)
-      @survey_response = Factory(:survey_response,:user=>@user)
+      @survey_response = Factory(:survey_response, :user=>@user)
 
       allow_api_access @user
     end
@@ -135,7 +135,7 @@ describe Api::V1::SurveyResponsesController do
   describe "checkout" do
     before :each do
       @user = Factory(:user, survey_view: true)
-      @survey_response = Factory(:survey_response,:user=>@user)
+      @survey_response = Factory(:survey_response, :user=>@user)
 
       allow_api_access @user
     end
@@ -302,7 +302,7 @@ describe Api::V1::SurveyResponsesController do
       @survey_response = @survey.generate_response! @user
       @survey_response.checkout @user, "token"
       @survey_response.save!
-      
+
       @answer_1 = @survey_response.answers.first
       @answer_2 = @survey_response.answers.second
 
@@ -345,7 +345,7 @@ describe Api::V1::SurveyResponsesController do
     it "checks in a survey" do
       post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
       expect(response).to be_success
-      
+
       @survey_response.reload
 
       expect(@survey_response.name).to eq @req[:name]
@@ -398,7 +398,7 @@ describe Api::V1::SurveyResponsesController do
 
       post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
       expect(response).to be_success
-      
+
       @answer_1.reload
       expect(@answer_1.choice).to eq "Yes"
       expect(@answer_1.answer_comments.size).to eq 1
@@ -422,7 +422,7 @@ describe Api::V1::SurveyResponsesController do
       expect(JSON.parse response.body).to eq({'errors' => ["Invalid Answer of 'I don't know' given for question id #{@question.id}."]})
     end
 
-    it "errors if attempting to update a non-existent answer" do 
+    it "errors if attempting to update a non-existent answer" do
       @req[:answers].first[:id] = -1
       post :checkin, {'id' => @survey_response.id, 'survey_response' => @req}
       expect(response.status).to eq 500
@@ -621,7 +621,7 @@ describe Api::V1::SurveyResponsesController do
       expect(@survey_response.survey_response_updates.first.user).to eq @user
     end
 
-    context "with contact info" do 
+    context "with contact info" do
       before do
         @survey.survey_responses.destroy_all
         @survey.update_attributes require_contact: true
@@ -849,6 +849,6 @@ describe Api::V1::SurveyResponsesController do
         expect(response).to be_success
       end
     end
-    
+
   end
 end

@@ -45,7 +45,7 @@ class Folder < ActiveRecord::Base
     can_edit? user
   end
 
-  private 
+  private
     def core_privilege user
       (user == self.created_by || self.groups.length == 0 || user.in_any_group?(self.groups))
     end

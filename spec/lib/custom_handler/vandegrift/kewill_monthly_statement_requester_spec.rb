@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMonthlyStatementRequester d
 
   describe "run_schedulable" do
 
-    let (:sql_proxy_client) { 
+    let (:sql_proxy_client) {
       c = instance_double(OpenChain::KewillSqlProxyClient)
     }
 
@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMonthlyStatementRequester d
       {}
     }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:sql_proxy_client).and_return sql_proxy_client
     end
 
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMonthlyStatementRequester d
       expect(sql_proxy_client).to receive(:request_monthly_statements_between).with(Date.new(2017, 12, 21), Date.new(2017, 12, 22), "bucket", "path", "queue", customer_numbers: nil)
       expect(subject).to receive(:aws_context_data).with(sql_proxy_client, date, opts).and_return aws_data
 
-      Timecop.freeze(date) do 
+      Timecop.freeze(date) do
         subject.run_schedulable opts
       end
     end
@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMonthlyStatementRequester d
       expect(subject).to receive(:aws_context_data).and_return aws_data
 
       opts[:customer_numbers] = ["1", "2"]
-      Timecop.freeze(date) do 
+      Timecop.freeze(date) do
         subject.run_schedulable opts
       end
     end

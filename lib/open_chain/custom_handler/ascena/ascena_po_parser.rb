@@ -93,7 +93,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     if row[2].to_s.length > 4
       hsh[:ordln_line_number] = row[2] = row[2].to_s[0, 4].to_i
     else
-      hsh[:ordln_line_number] = row[2].to_s.to_i  
+      hsh[:ordln_line_number] = row[2].to_s.to_i
     end
 
     # For prepack lines, .ie line numbers we see more than once, just sum the quantity of the current line into the existing
@@ -115,7 +115,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       hsh[:ordln_wholesale_unit_price] = row[20]
       hsh[:ordln_estimated_unit_landing_cost] = row[21]
       hsh[:ordln_unit_msrp] = row[22]
-      return hsh  
+      return hsh
     end
   end
 
@@ -143,7 +143,6 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
       shipped_lines = []
       ord = update_or_create_order(header, bucket, filename) do |saved_ord|
-        
         shipped_lines = process_detail_rows(detail_rows, header, saved_ord, product_cache)
       end
       ord.create_snapshot user, nil, filename
@@ -174,7 +173,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       body += "<p>Error:<br>#{ERB::Util.html_escape(err.message)}</p>"
       body += "<p>The CSV lines for this PO were extracted from the Ascena file and are attached.</p>"
 
-      OpenMailer.send_simple_html(["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"], "Ascena PO # #{po_number} Errors", body.html_safe, [f]).deliver_now
+      OpenMailer.send_simple_html(["ascena_us@vandegriftinc.com", "edisupport@vandegriftinc.com"], "Ascena PO # #{po_number} Errors", body.html_safe, [f]).deliver_now
     end
   end
 
@@ -210,7 +209,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       product = get_or_create_product(user, header, detail_row, file_name)
       cache[product.unique_identifier] = product
     end
-    
+
     cache
   end
 
@@ -245,7 +244,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     order_lines.each do |line|
       detail = file_details.find {|d| d[:ordln_line_number] == line.line_number }
       if detail
-        if line.shipment_lines.empty? 
+        if line.shipment_lines.empty?
           ok_to_delete << line
         else
           # add the shipment references to the detail here so we can reference them later in an error message
@@ -271,7 +270,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       identifier.update_attributes! company_id: vendor.id
       importer.linked_companies << vendor
     end
-    
+
     vendor.update_attributes!(name: name) unless vendor.name == name
     vendor
   end
@@ -291,7 +290,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
       identifier.update_attributes! company_id: factory.id
       importer.linked_companies << factory
     end
-    
+
     factory
   end
 
@@ -301,7 +300,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     brand = DataCrossReference.find_ascena_brand(header[:ord_department])
     Lock.acquire("ASCENA-#{brand}-#{header[:ord_customer_order_number]}") do
       ord = Order.where("order_number = ? AND importer_id = #{importer.id}", "ASCENA-#{brand}-#{header[:ord_customer_order_number]}")
-                 .includes([:custom_values,:order_lines=>{:product=>:custom_values}])
+                 .includes([:custom_values, :order_lines=>{:product=>:custom_values}])
                  .first_or_initialize(order_number: "ASCENA-#{brand}-#{header[:ord_customer_order_number]}", customer_order_number: header[:ord_customer_order_number],
                                       importer: importer)
       continue = (!ord.persisted? || newer_revision?(ord, header))
@@ -309,7 +308,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
     end
     if continue
       Lock.with_lock_retry(ord) do
-        update_order(ord, header, bucket, filename, &block) 
+        update_order(ord, header, bucket, filename, &block)
       end
     end
 
@@ -318,8 +317,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
 
   def update_order ord, header, bucket, filename
     if newer_revision? ord, header
-      vendor = update_or_create_vendor(header[:ord_vend_system_code],header[:ord_vend_name])
-      factory = update_or_create_factory(header[:ord_fact_system_code],header[:ord_fact_name],header[:ord_fact_mid]) if header[:ord_fact_system_code].presence
+      vendor = update_or_create_vendor(header[:ord_vend_system_code], header[:ord_vend_name])
+      factory = update_or_create_factory(header[:ord_fact_system_code], header[:ord_fact_name], header[:ord_fact_mid]) if header[:ord_fact_system_code].presence
 
       ord.assign_attributes(order_date: date_parse(header[:ord_order_date]), vendor: vendor, terms_of_sale: header[:ord_terms_of_sale],
                             mode: header[:ord_mode], ship_window_start: date_parse(header[:ord_ship_window_start]),
@@ -395,11 +394,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaPoParser
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions [:ord_line_season, :ord_buyer,:ord_division,:ord_revision, :ord_revision_date, 
+    @cdefs ||= self.class.prep_custom_definitions [:ord_line_season, :ord_buyer, :ord_division, :ord_revision, :ord_revision_date,
       :ord_assigned_agent, :ord_department, :ord_selling_agent, :ord_selling_channel, :ord_type, :ord_line_color, :ord_line_color_description,
-      :ord_line_department_code,:ord_line_destination_code, :ord_line_size_description,:ord_line_size,
-      :ord_line_wholesale_unit_price, :ord_line_estimated_unit_landing_cost,:prod_part_number,
-      :prod_product_group,:prod_vendor_style ]
+      :ord_line_department_code, :ord_line_destination_code, :ord_line_size_description, :ord_line_size,
+      :ord_line_wholesale_unit_price, :ord_line_estimated_unit_landing_cost, :prod_part_number,
+      :prod_product_group, :prod_vendor_style ]
   end
 
   def parse_quantity value, nil_if_blank: false

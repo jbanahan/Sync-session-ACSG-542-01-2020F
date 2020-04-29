@@ -4,8 +4,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
 
   describe "accept?" do
     let!(:snap) { Factory(:entity_snapshot, recordable: e) }
-    let!(:bi) { Factory(:broker_invoice, entry: e, invoice_date: Date.new(2018,1,1)) }
-    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018,1,1), end_date: Date.new(2018,1,1), send_in_real_time: true) }
+    let!(:bi) { Factory(:broker_invoice, entry: e, invoice_date: Date.new(2018, 1, 1)) }
+    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018, 1, 1), end_date: Date.new(2018, 1, 1), send_in_real_time: true) }
 
     it "returns true for entries with 'real time' flag enabled" do
       expect(described_class.accept? snap).to eq true
@@ -35,12 +35,12 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
     end
 
     it "returns false if all broker invoices are earlier the the archive setup's start/end range" do
-      e.broker_invoices.first.update_attributes! invoice_date: Date.new(2017,12,31)
+      e.broker_invoices.first.update_attributes! invoice_date: Date.new(2017, 12, 31)
       expect(described_class.accept? snap).to eq false
     end
 
     it "returns false if all broker invoices are after the the archive setup's start/end range" do
-      e.broker_invoices.first.update_attributes! invoice_date: Date.new(2018,1,2)
+      e.broker_invoices.first.update_attributes! invoice_date: Date.new(2018, 1, 2)
       expect(described_class.accept? snap).to eq false
     end
   end
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
 
   describe "ftp_archive" do
     let(:att) { Factory(:attachment, attachable: e, attachment_type: "Archive Packet") }
-    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018,1,1), end_date: Date.new(2018,1,1), send_in_real_time: true) }
+    let!(:aas) { Factory(:attachment_archive_setup, company: e.importer, start_date: Date.new(2018, 1, 1), end_date: Date.new(2018, 1, 1), send_in_real_time: true) }
 
 
     it "FTPs attachment using entry's customer number for file name and destination path" do
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
       expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/attachment_archive/CUSTNUM").and_return ftp_opts
       expect(subject).to receive(:ftp_file).with(attachment_tempfile, ftp_opts)
 
-      Timecop.freeze(DateTime.new(2018,3,15,20,30)) { subject.ftp_archive att }
+      Timecop.freeze(DateTime.new(2018, 3, 15, 20, 30)) { subject.ftp_archive att }
     end
 
     it "uses CustomerNumber defined in the archive setup to send" do
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
       expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/attachment_archive/XXXXX").and_return ftp_opts
       expect(subject).to receive(:ftp_file).with(attachment_tempfile, ftp_opts)
 
-      Timecop.freeze(DateTime.new(2018,3,15,20,30)) { subject.ftp_archive att }
+      Timecop.freeze(DateTime.new(2018, 3, 15, 20, 30)) { subject.ftp_archive att }
     end
 
     it "uses the custom file naming output_path in the attachment archive setup" do
@@ -119,7 +119,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftEntryArchiveComparator 
       expect(subject).to receive(:connect_vfitrack_net).with("to_ecs/attachment_archive/CUSTNUM").and_return ftp_opts
       expect(subject).to receive(:ftp_file).with(attachment_tempfile, ftp_opts)
 
-      Timecop.freeze(DateTime.new(2018,3,15,20,30)) { subject.ftp_archive att }
+      Timecop.freeze(DateTime.new(2018, 3, 15, 20, 30)) { subject.ftp_archive att }
     end
   end
 end

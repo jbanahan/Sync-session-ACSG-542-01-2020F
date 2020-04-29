@@ -1,21 +1,21 @@
 describe ReportResultsController do
-  
+
   before(:each) do
     c = Company.create!(:name=>'btestc')
     @base_user = Factory(:user)
     @admin_user = Factory(:sys_admin_user)
     2.times do |i|
-      @base_report = ReportResult.create!(:name=>'base_report',:run_by_id=>@base_user.id)
-      @admin_report = ReportResult.create!(:name=>'admin_report',:run_by_id=>@admin_user.id)
+      @base_report = ReportResult.create!(:name=>'base_report', :run_by_id=>@base_user.id)
+      @admin_report = ReportResult.create!(:name=>'admin_report', :run_by_id=>@admin_user.id)
     end
 
   end
-  
+
   describe 'index' do
 
     context 'non-admin user' do
       before(:each) do
-        sign_in_as @base_user #log in
+        sign_in_as @base_user # log in
       end
 
       it "should show only their reports, even with flag for show all turned on" do
@@ -27,16 +27,16 @@ describe ReportResultsController do
       end
 
       it "should paginate results" do
-        #add more reports
-        21.times {|i| ReportResult.create(:name=>'base_report',:run_by_id=>@base_user.id)}
+        # add more reports
+        21.times {|i| ReportResult.create(:name=>'base_report', :run_by_id=>@base_user.id)}
         get :index
         expect(response).to be_success
         results = assigns(:report_results)
         expect(results.size).to eq(20)
       end
-      
+
       it "should sort results by run at date desc" do
-        #make last report's run_at before first report's
+        # make last report's run_at before first report's
         first_result = ReportResult.where(:run_by_id=>@base_user.id).last
         first_result.update_attributes(:run_at=>1.minutes.ago)
         last_result = ReportResult.where(:run_by_id=>@base_user.id).first
@@ -63,11 +63,11 @@ describe ReportResultsController do
     end
 
     context 'admin' do
-      
+
       before(:each) do
-        sign_in_as @admin_user #log in
+        sign_in_as @admin_user # log in
       end
-      
+
       it "should show admin users only their reports when show all flag is not there" do
         get :index
         expect(response).to be_success
@@ -75,7 +75,7 @@ describe ReportResultsController do
         expect(results.size).to eq(2)
         results.each {|r| expect(r.name).to eq('admin_report')}
       end
-      
+
       it "should show admin users all reports when show all flag is turned on" do
         get :index, :show_all=>'true'
         expect(response).to be_success

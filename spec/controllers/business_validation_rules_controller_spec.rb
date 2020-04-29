@@ -138,7 +138,7 @@ describe BusinessValidationRulesController do
       post :update,
             id: @bvr.id,
             business_validation_template_id: @bvt.id,
-            business_validation_rule: { 
+            business_validation_rule: {
               search_criterions: [{"mfid" => "ent_cust_name",
                                    "datatype" => "string", "label" => "Customer Name",
                                    "operator" => "eq", "value" => "Joel Zimmerman"}],
@@ -157,7 +157,7 @@ describe BusinessValidationRulesController do
               message_pass: "this rule passed",
               message_review_fail: "this rule failed",
               message_skipped: "this rule was skipped"}
-              
+
       expect(JSON.parse response.body).to eq({"notice" => "Business rule updated"})
       @bvr.reload
       expect(@bvr.rule_attributes_json).to eq('{"valid":"json-4"}')
@@ -187,7 +187,7 @@ describe BusinessValidationRulesController do
       post :update,
             id: @bvr.id,
             business_validation_template_id: @bvt.id,
-            business_validation_rule: { 
+            business_validation_rule: {
               search_criterions: [{"mfid" => "ent_cust_name",
                                    "datatype" => "string", "label" => "Customer Name",
                                    "operator" => "eq", "value" => "Joel Zimmerman",
@@ -208,7 +208,7 @@ describe BusinessValidationRulesController do
       post :update,
             id: @bvr.id,
             business_validation_template_id: @bvt.id,
-            business_validation_rule: { 
+            business_validation_rule: {
              notification_recipients: "tufnel@stone'henge.biz"
              }
        expect(JSON.parse response.body).to eq({"error" => "Could not save due to invalid email."})
@@ -225,7 +225,7 @@ describe BusinessValidationRulesController do
       # since there's some handling required in these cases
       @bvt = Factory(:business_validation_template)
       @group = Factory(:group)
-      @rule = ValidationRuleAttachmentTypes.new description: "DESC", fail_state: "FAIL", name: "NAME", disabled: false, group_id: @group.id, 
+      @rule = ValidationRuleAttachmentTypes.new description: "DESC", fail_state: "FAIL", name: "NAME", disabled: false, group_id: @group.id,
                                                 rule_attributes_json: '{"test":"testing"}', notification_type: "Email", notification_recipients: "tufnel@stonehenge.biz",
                                                 suppress_pass_notice: true, suppress_review_fail_notice: true, suppress_skipped_notice: true, subject_pass: "subject - PASS",
                                                 subject_review_fail: "subject - FAIL", subject_skipped: "subject - SKIPPED", message_pass: "this rule passed",
@@ -238,11 +238,11 @@ describe BusinessValidationRulesController do
     it "should render the correct model_field and business_rule json" do
       u = Factory(:admin_user)
       sign_in_as u
-      get :edit_angular, id: @rule.id 
+      get :edit_angular, id: @rule.id
       r = JSON.parse(response.body)
       expect(r["model_fields"].length).to eq(CoreModule::ENTRY.default_module_chain.model_fields(u).values.size)
       rule = r["business_validation_rule"]
-      expect(rule).to eq({"mailing_lists"=>[],"business_validation_template_id"=>@bvt.id, "mailing_list_id"=>nil,
+      expect(rule).to eq({"mailing_lists"=>[], "business_validation_template_id"=>@bvt.id, "mailing_list_id"=>nil,
           "description"=>"DESC", "fail_state"=>"FAIL", "disabled" => false, "id"=>@rule.id, "group_id"=>@group.id, "type"=>"Has Attachment Types",
           "name"=>"NAME", "rule_attributes_json"=>'{"test":"testing"}', "notification_type" => "Email", "notification_recipients" => "tufnel@stonehenge.biz",
           "suppress_pass_notice"=> true, "suppress_review_fail_notice" => true, "suppress_skipped_notice" => true, "subject_pass" => "subject - PASS", "subject_review_fail" => "subject - FAIL",

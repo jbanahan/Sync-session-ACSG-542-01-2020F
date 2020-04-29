@@ -18,5 +18,4 @@ module OpenChain; module CustomHandler; module Polo; class PoloSystemInit
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator
   end
   private_class_method :register_change_comparators
-  
 end; end; end; end

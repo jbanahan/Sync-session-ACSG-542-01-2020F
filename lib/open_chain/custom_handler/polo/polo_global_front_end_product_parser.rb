@@ -31,11 +31,11 @@ module OpenChain; module CustomHandler; module Polo; class PoloGlobalFrontEndPro
 
   def find_or_create_product style
     product = nil
-    Lock.acquire("Product-#{style}") do 
+    Lock.acquire("Product-#{style}") do
       product = Product.where(unique_identifier: style).first_or_create!
     end
 
-    Lock.db_lock(product) do 
+    Lock.db_lock(product) do
       yield product
     end
   end
@@ -73,8 +73,8 @@ module OpenChain; module CustomHandler; module Polo; class PoloGlobalFrontEndPro
 
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:digit_style_6, :season, :msl_board_number, :sap_brand_name, :rl_merchandise_division_description, 
-      :gender_desc, :product_category, :product_class_description, :ax_subclass, :rl_short_description, :rl_long_description, 
+    @cdefs ||= self.class.prep_custom_definitions([:digit_style_6, :season, :msl_board_number, :sap_brand_name, :rl_merchandise_division_description,
+      :gender_desc, :product_category, :product_class_description, :ax_subclass, :rl_short_description, :rl_long_description,
       :merchandising_fabrication, :heel_height, :material_status, :ax_export_status, :ax_updated_without_change
     ])
   end

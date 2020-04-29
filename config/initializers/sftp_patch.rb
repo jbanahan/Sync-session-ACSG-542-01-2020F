@@ -1,10 +1,10 @@
-# This monkey patch fixes an issue in SFTP where it's attempted to close a socket on session end that 
-# is already closed by the server - which then raises an error on the session. 
-# Our fenixapp.vfitrack.net server exhibits this issues, this patch merely swallows all errors encountered in 
+# This monkey patch fixes an issue in SFTP where it's attempted to close a socket on session end that
+# is already closed by the server - which then raises an error on the session.
+# Our fenixapp.vfitrack.net server exhibits this issues, this patch merely swallows all errors encountered in
 # the session close.
 
 module Net; module SFTP
-    
+
   def self.start(host, user, options={}, &block)
     raise "A block must be given to the Net::SFTP.start method." unless block_given?
 

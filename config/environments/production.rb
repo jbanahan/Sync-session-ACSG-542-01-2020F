@@ -84,7 +84,7 @@ Rails.application.configure do
   # This forces all *_url links generated in mailers to be https (which they all should be in prod.)
   config.action_mailer.default_url_options = { protocol: "https" }
 
-  #set path to include local ruby so forked processes can call bundle & rake
+  # set path to include local ruby so forked processes can call bundle & rake
   ENV['PATH'] = "#{ENV['PATH']}:/usr/local/ruby/bin"
 
   config.broadcast_model_events = true

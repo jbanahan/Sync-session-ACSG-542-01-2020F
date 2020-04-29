@@ -2,7 +2,7 @@ describe StateToggleButtonsController do
 
   let!(:u) { Factory(:user) }
   before { sign_in_as u }
-    
+
   describe "index" do
     let!(:stb) do
       user_cdef = Factory(:custom_definition, data_type: "integer", module_type: "Order", is_user: true, label: "Closed By")
@@ -36,7 +36,7 @@ describe StateToggleButtonsController do
       allow(cm_order).to receive(:class_name).and_return "Order"
 
       expect(CoreModule).to receive(:all).and_return [cm_prod, cm_entry, cm_order]
-      
+
       get :new
       expect(assigns(:button)).to be_instance_of StateToggleButton
       expect(assigns(:cm_list)).to eq ["Entry", "Order", "Product"]
@@ -78,7 +78,7 @@ describe StateToggleButtonsController do
         get :edit, id: stb.id
         expect(response).to render_template :edit
       end
-      
+
       it "prevents access by non-admins" do
         expect(u).to receive(:admin?).and_return false
         get :edit, id: stb.id

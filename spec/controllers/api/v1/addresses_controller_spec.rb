@@ -6,10 +6,10 @@ describe Api::V1::AddressesController do
   describe '#index' do
     it 'should get addresses that user can view' do
       c = Factory(:company)
-      Factory(:address,system_code:'ABCD',company:c)
+      Factory(:address, system_code:'ABCD', company:c)
       Factory(:address) # don't find this one
 
-      allow_api_access Factory(:user,company:c)
+      allow_api_access Factory(:user, company:c)
 
       get :index
       expect(response).to be_success
@@ -19,11 +19,11 @@ describe Api::V1::AddressesController do
     end
     it 'should apply filters' do
       c = Factory(:company)
-      Factory(:address,system_code:'ABCD',company:c)
-      Factory(:address,system_code:'DEFG',company:c)
+      Factory(:address, system_code:'ABCD', company:c)
+      Factory(:address, system_code:'DEFG', company:c)
       Factory(:address) # don't find this one
 
-      allow_api_access Factory(:user,company:c)
+      allow_api_access Factory(:user, company:c)
 
       get :index, sid1:'add_syscode', sop1: 'eq', sv1:'ABCD'
       expect(response).to be_success
@@ -36,7 +36,7 @@ describe Api::V1::AddressesController do
   describe '#create' do
     it 'should make new address' do
       enable_admin
-      us = Factory(:country,iso_code:'US')
+      us = Factory(:country, iso_code:'US')
       c = Factory(:company)
       h = {'address'=>{
         'add_name'=>'My Name',
@@ -46,7 +46,7 @@ describe Api::V1::AddressesController do
         'add_cntry_iso'=>'US',
         'add_comp_db_id'=>c.id.to_s
       }}
-      expect{post :create, h}.to change(Address,:count).from(0).to(1)
+      expect {post :create, h}.to change(Address, :count).from(0).to(1)
       expect(response).to be_success
       a = c.addresses.first
       expect(a.name).to eq 'My Name'
@@ -58,7 +58,7 @@ describe Api::V1::AddressesController do
     end
     it 'should not make address without company' do
       enable_admin
-      Factory(:country,iso_code:'US')
+      Factory(:country, iso_code:'US')
       Factory(:company)
       h = {'address'=>{
         'add_name'=>'My Name',
@@ -67,7 +67,7 @@ describe Api::V1::AddressesController do
         'add_city'=>'new york',
         'add_cntry_iso'=>'US'
       }}
-      expect{post :create, h}.to_not change(Address,:count)
+      expect {post :create, h}.to_not change(Address, :count)
       expect(response.body).to match(/add_comp_db_id/)
       expect(response).to_not be_success
       expect(Address.count).to eq 0
@@ -78,7 +78,7 @@ describe Api::V1::AddressesController do
       user.save!
       allow_any_instance_of(Address).to receive(:can_view?).with(user).and_return true
 
-      us = Factory(:country,iso_code:'US')
+      us = Factory(:country, iso_code:'US')
       c = Factory(:company)
       h = {'address'=>{
         'add_name'=>'My Name',
@@ -99,39 +99,39 @@ describe Api::V1::AddressesController do
       enable_admin
       c = Factory(:company)
       c2 = Factory(:company)
-      a = Factory(:address,company:c)
+      a = Factory(:address, company:c)
       h = {'id'=>a.id.to_s,
         'address'=>{
           'id'=>a.id.to_s,
           'add_comp_db_id'=>c2.id.to_s
       }}
-      expect{put :update, h}.to_not change(a,:updated_at)
+      expect {put :update, h}.to_not change(a, :updated_at)
       expect(response.body).to match(/change the company for an address/)
       expect(response).to_not be_success
     end
     it 'should not allow hash key to be changed' do
       enable_admin
       c = Factory(:company)
-      a = Factory(:address,company:c)
+      a = Factory(:address, company:c)
       h = {'id'=>a.id.to_s,
         'address'=>{
           'id'=>a.id.to_s,
           'add_line_1'=>'other street'
       }}
-      expect{put :update, h}.to_not change(a,:updated_at)
+      expect {put :update, h}.to_not change(a, :updated_at)
       expect(response.body).to match(/change the address, only its setup flags/)
       expect(response).to_not be_success
     end
     it 'should allow shipping flag to be changed' do
       enable_admin
       c = Factory(:company)
-      a = Factory(:address,company:c,shipping:false)
+      a = Factory(:address, company:c, shipping:false)
       h = {'id'=>a.id.to_s,
         'address'=>{
           'id'=>a.id.to_s,
           'add_shipping'=>true
       }}
-      expect{put :update, h}.to_not change(a,:updated_at)
+      expect {put :update, h}.to_not change(a, :updated_at)
       expect(response).to be_success
       a.reload
       expect(a.shipping?).to be_truthy
@@ -141,7 +141,7 @@ describe Api::V1::AddressesController do
 
       enable_admin
       c = Factory(:company)
-      a = Factory(:address,company:c,shipping:false)
+      a = Factory(:address, company:c, shipping:false)
       h = {'id'=>a.id.to_s,
         'address'=>{
           'id'=>a.id.to_s,
@@ -155,15 +155,15 @@ describe Api::V1::AddressesController do
     it 'should not allow in use address to be destroyed' do
       enable_admin
       a = Factory(:address)
-      Factory(:order,ship_from:a)
-      expect{delete :destroy, id: a.id}.to_not change(Address,:count)
+      Factory(:order, ship_from:a)
+      expect {delete :destroy, id: a.id}.to_not change(Address, :count)
       expect(response).to_not be_success
       expect(response.body).to match(/still in use/)
     end
     it 'should allow not in use address to be destroyed' do
       enable_admin
       a = Factory(:address)
-      expect{delete :destroy, id: a.id}.to change(Address,:count).from(1).to(0)
+      expect {delete :destroy, id: a.id}.to change(Address, :count).from(1).to(0)
       expect(response).to be_success
     end
   end

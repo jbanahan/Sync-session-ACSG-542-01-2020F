@@ -367,7 +367,7 @@ describe OpenChain::CustomHandler::Polo::Polo850Parser do
     it "fails if master company can't be found" do
       master_company.destroy
 
-      expect{described_class.parse_file prepack_xml, log}.to raise_error "Unable to find Master RL account.  This account should not be missing."
+      expect {described_class.parse_file prepack_xml, log}.to raise_error "Unable to find Master RL account.  This account should not be missing."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Unable to find Master RL account.  This account should not be missing."
     end
   end

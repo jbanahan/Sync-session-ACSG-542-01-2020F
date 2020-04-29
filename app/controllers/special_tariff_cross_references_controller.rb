@@ -59,7 +59,7 @@ class SpecialTariffCrossReferencesController < ApplicationController
   end
 
   def upload
-    f = CustomFile.new(:file_type=>'OpenChain::SpecialTariffCrossReferenceHandler', :uploaded_by=>current_user,:attached=>params[:attached])
+    f = CustomFile.new(:file_type=>'OpenChain::SpecialTariffCrossReferenceHandler', :uploaded_by=>current_user, :attached=>params[:attached])
     admin_secure do
       if params[:attached].nil?
         add_flash :errors, "You must select a file to upload."

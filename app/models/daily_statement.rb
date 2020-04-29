@@ -47,14 +47,14 @@
 class DailyStatement < ActiveRecord::Base
   include CoreObjectSupport
 
-  attr_accessible :add_amount, :customer_number, :cvd_amount, :due_date, 
-    :duty_amount, :fee_amount, :final_received_date, :importer_id, 
-    :interest_amount, :last_exported_from_source, :last_file_bucket, 
-    :last_file_path, :monthly_statement_id, :monthly_statement_number, 
-    :paid_date, :pay_type, :payment_accepted_date, :port_code, 
-    :preliminary_add_amount, :preliminary_cvd_amount, :preliminary_duty_amount, 
-    :preliminary_fee_amount, :preliminary_interest_amount, 
-    :preliminary_tax_amount, :preliminary_total_amount, :received_date, 
+  attr_accessible :add_amount, :customer_number, :cvd_amount, :due_date,
+    :duty_amount, :fee_amount, :final_received_date, :importer_id,
+    :interest_amount, :last_exported_from_source, :last_file_bucket,
+    :last_file_path, :monthly_statement_id, :monthly_statement_number,
+    :paid_date, :pay_type, :payment_accepted_date, :port_code,
+    :preliminary_add_amount, :preliminary_cvd_amount, :preliminary_duty_amount,
+    :preliminary_fee_amount, :preliminary_interest_amount,
+    :preliminary_tax_amount, :preliminary_total_amount, :received_date,
     :statement_number, :status, :tax_amount, :total_amount
 
   has_many :daily_statement_entries, dependent: :destroy, autosave: true, inverse_of: :daily_statement
@@ -82,7 +82,7 @@ class DailyStatement < ActiveRecord::Base
 
     if self.importer_id.nil?
       return user.master_company?
-    else 
+    else
       return user.master_company? || user.company.id == self.importer_id || user.company.linked_company?(self.importer)
     end
   end

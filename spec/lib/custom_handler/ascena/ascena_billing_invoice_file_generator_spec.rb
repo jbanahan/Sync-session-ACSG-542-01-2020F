@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
     }
 
     let (:broker_invoice_line_brokerage) {
-      Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("200.00"), charge_code: "0007", charge_description: "Brokerage") 
+      Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("200.00"), charge_code: "0007", charge_description: "Brokerage")
     }
 
     let (:entry) {
@@ -262,7 +262,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       expect(subject).to receive(:valid_charge_amount?).and_return false
 
       # the message looks wrong since it says the two amounts are the same,
-      # just because I can't really force the actual proration amount to be bad.  
+      # just because I can't really force the actual proration amount to be bad.
       # Instead, I'm just overriding the validation method to fail, so it raises an error.
       expect { subject.generate_and_send broker_invoice_with_brokerage_snapshot }.to raise_error "Invalid Ascena proration calculation for Invoice # 'INVOICENUMBER'. Should have billed $200.0, actually billed $200.0."
     end
@@ -344,7 +344,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
         end
 
         subject.generate_and_send broker_invoice_with_duty_snapshot
-        
+
         lines = CSV.parse data, col_sep: "|"
 
         expect(lines.length).to eq 3
@@ -363,7 +363,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
         end
 
         subject.generate_and_send broker_invoice_with_duty_snapshot
-        
+
         lines = CSV.parse data, col_sep: "|"
 
         expect(lines.length).to eq 3
@@ -375,7 +375,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
   end
 
   describe "po_organization_xref" do
-    {"CA" => "7218", "DB" => "221", "JST" => "151", "LB" => "7220", "MAU" => "218"}.each_pair do |k,v|
+    {"CA" => "7218", "DB" => "221", "JST" => "151", "LB" => "7220", "MAU" => "218"}.each_pair do |k, v|
       it "uses the correct code for #{k}" do
         expect(subject.po_organization_code(k)).to eq v
       end

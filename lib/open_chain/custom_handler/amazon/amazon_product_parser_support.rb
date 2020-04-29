@@ -61,7 +61,7 @@ module OpenChain; module CustomHandler; module Amazon; module AmazonProductParse
     product = nil
     unique_identifier = "#{importer.kewill_customer_number}-#{part_number}"
     created = false
-    Lock.acquire("Product-#{unique_identifier}") do 
+    Lock.acquire("Product-#{unique_identifier}") do
       product = Product.where(importer_id: importer.id, unique_identifier: unique_identifier).first_or_initialize
       if !product.persisted?
         product.save!

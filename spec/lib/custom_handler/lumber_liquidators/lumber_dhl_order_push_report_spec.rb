@@ -18,14 +18,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
     end
 
     let (:vendor) { Factory(:company, name: "Vendor Name", vendor: true) }
-    let (:order) { 
-      order = Factory(:order, approval_status: "Approved", vendor: vendor) 
+    let (:order) {
+      order = Factory(:order, approval_status: "Approved", vendor: vendor)
       order.business_validation_results.create! state: "Pass"
       order
     }
     let (:user) { Factory(:user, time_zone: "America/New_York") }
 
-    after :each do 
+    after :each do
       @tempfile.close! if @tempfile && !@tempfile.closed?
     end
 
@@ -39,12 +39,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
       end
 
       it "returns results" do
-        Timecop.freeze(Time.zone.parse("2016-04-04 12:00")) do   
+        Timecop.freeze(Time.zone.parse("2016-04-04 12:00")) do
           @tempfile = described_class.run_report user
         end
 
         expect(@tempfile.original_filename).to eq "DHL PO Push 04-04-16.xls"
-        
+
         wb = Spreadsheet.open @tempfile.path
         sheet = wb.worksheet "DHL PO Push"
         expect(sheet).not_to be_nil
@@ -78,7 +78,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
         expect_no_results(described_class.run_report user)
       end
     end
-    
 
     context "with valid country of origin" do
       ['BO', 'BR', 'PE', 'PY'].each do |country|
@@ -121,7 +120,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberDhlOrderPushReport d
         expect(described_class.permission? logistics_user).to be_truthy
       end
     end
-    
+
     it "does not allow non-ll system access" do
       expect(described_class.permission? logistics_user).to be_falsey
     end

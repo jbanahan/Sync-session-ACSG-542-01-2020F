@@ -3,7 +3,7 @@ require 'open_chain/s3'
 require 'open_chain/ftp_file_support'
 
 # This is pretty much just a class that unzips a zip file, extracts everything from it
-# and sends all those files back to an ftp folder - where the other SFC PO handler will 
+# and sends all those files back to an ftp folder - where the other SFC PO handler will
 # eventually process them.
 module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrewsPoZipHandler
   include OpenChain::IntegrationClientParser

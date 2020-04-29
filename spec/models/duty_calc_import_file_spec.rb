@@ -1,9 +1,9 @@
 describe DutyCalcImportFile do
   before :each do
-    @importer = Factory(:company,:importer=>true)
+    @importer = Factory(:company, :importer=>true)
     @product = Factory(:product)
     2.times {DrawbackImportLine.create!(importer_id:@importer.id,
-      product:@product,quantity:10
+      product:@product, quantity:10
     )}
     @zip_path = 'spec/support/tmp/dci.zip'
     File.delete(@zip_path) if File.exist?(@zip_path)
@@ -22,7 +22,7 @@ describe DutyCalcImportFile do
       dcif = DutyCalcImportFile.create!(importer_id:@importer.id)
       att = double('attachment')
       expect(Attachment).to receive(:add_original_filename_method).with(zip)
-      expect(DutyCalcImportFile).to receive(:generate_excel_zip).with(@importer,@user,'tmp/abc.txt',duty_calc_format: :legacy).and_return([dcif,zip])
+      expect(DutyCalcImportFile).to receive(:generate_excel_zip).with(@importer, @user, 'tmp/abc.txt', duty_calc_format: :legacy).and_return([dcif, zip])
       expect(dcif).to receive(:build_attachment).and_return att
       expect(att).to receive(:attached=).with(zip)
       expect(att).to receive(:save!).and_return(true)
@@ -39,7 +39,7 @@ describe DutyCalcImportFile do
       dcif = DutyCalcImportFile.create!(importer_id:@importer.id)
       att = double('attachment')
       expect(Attachment).to receive(:add_original_filename_method).with(zip)
-      expect(DutyCalcImportFile).to receive(:generate_excel_zip).with(@importer,nil,'tmp/abc.txt',duty_calc_format: :standard).and_return([dcif,zip])
+      expect(DutyCalcImportFile).to receive(:generate_excel_zip).with(@importer, nil, 'tmp/abc.txt', duty_calc_format: :standard).and_return([dcif, zip])
       expect(dcif).to receive(:build_attachment).and_return att
       expect(att).to receive(:attached=).with(zip)
       expect(att).to receive(:save!).and_return(true)
@@ -51,7 +51,7 @@ describe DutyCalcImportFile do
 
   describe "generate_excel_zip" do
     it "should generate a single zipped excel file using default legacy duty calc format" do
-      expect(DutyCalcImportFile).to receive(:get_line_array).with(instance_of(DrawbackImportLine), :legacy).and_return(["a","b"]).twice
+      expect(DutyCalcImportFile).to receive(:get_line_array).with(instance_of(DrawbackImportLine), :legacy).and_return(["a", "b"]).twice
 
       d, f = DutyCalcImportFile.generate_excel_zip @importer, @user, @zip_path
       Zip::File.open(f.path) do |zipfile|
@@ -71,7 +71,7 @@ describe DutyCalcImportFile do
     end
 
     it "should generate a single zipped excel file using provided duty calc format" do
-      expect(DutyCalcImportFile).to receive(:get_line_array).with(instance_of(DrawbackImportLine), :standard).and_return(["a","b"]).twice
+      expect(DutyCalcImportFile).to receive(:get_line_array).with(instance_of(DrawbackImportLine), :standard).and_return(["a", "b"]).twice
 
       d, f = DutyCalcImportFile.generate_excel_zip @importer, @user, @zip_path, duty_calc_format: :standard
     end
@@ -79,7 +79,7 @@ describe DutyCalcImportFile do
     it "should generate multiple when the number of lines is over the max_lines_per_file" do
       d, f = DutyCalcImportFile.generate_excel_zip @importer, @user, @zip_path, 1
       Zip::File.open(f.path) do |zipfile|
-        expect(zipfile.dir.entries("/")).to eq(["File 1.xls","File 2.xls"])
+        expect(zipfile.dir.entries("/")).to eq(["File 1.xls", "File 2.xls"])
       end
     end
   end
@@ -104,19 +104,19 @@ describe DutyCalcImportFile do
   describe "get_line_array" do
     it "gets standard array for standard format" do
       line = DrawbackImportLine.first
-      expect(line).to receive(:duty_calc_line_array_standard).and_return(["a","b"])
+      expect(line).to receive(:duty_calc_line_array_standard).and_return(["a", "b"])
       DutyCalcImportFile.get_line_array line, :standard
     end
 
     it "gets legacy array for legacy format" do
       line = DrawbackImportLine.first
-      expect(line).to receive(:duty_calc_line_array_legacy).and_return(["a","b"])
+      expect(line).to receive(:duty_calc_line_array_legacy).and_return(["a", "b"])
       DutyCalcImportFile.get_line_array line, :legacy
     end
 
     it "gets legacy array for nil format" do
       line = DrawbackImportLine.first
-      expect(line).to receive(:duty_calc_line_array_legacy).and_return(["a","b"])
+      expect(line).to receive(:duty_calc_line_array_legacy).and_return(["a", "b"])
       DutyCalcImportFile.get_line_array line, nil
     end
   end

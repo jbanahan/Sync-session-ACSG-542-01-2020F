@@ -30,15 +30,15 @@ class CacheWrapper
   def reset
     @cache.reset
   end
-  
-  def self.get_production_client 
+
+  def self.get_production_client
     server, settings = memcache_settings()
     Dalli::Client.new(server, settings)
   end
 
   def self.memcache_settings
     # Because of how early in the loading process this class is invoked, files from app/models haven't been loaded yet.
-    # Ergo, we're going to pull the memcache endpoint directly from Rails secrets rather than through our proxy method in 
+    # Ergo, we're going to pull the memcache endpoint directly from Rails secrets rather than through our proxy method in
     # MasterSetup.
     secrets_settings = Rails.application.secrets["memcache"]
     raise "No memcache endpoint configuration found in 'secrets.yml' under 'memcache' key." if secrets_settings.blank?
@@ -114,7 +114,7 @@ class CacheWrapper
         if (retry_count += 1) < 3
           log_error(e, ["Swallowed by open_chain/cache_wrapper. The process continued without a cache result."])
         else
-          # This actually closes the connection will re-open it on the next attempt to access the cache.  This 
+          # This actually closes the connection will re-open it on the next attempt to access the cache.  This
           # is what we want in virtually all cases where an exception is raised, since the error is almost always
           # related to network accessibility, so we need to discard the connection and re-open.
           reset

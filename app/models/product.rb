@@ -34,10 +34,10 @@ class Product < ActiveRecord::Base
   include IntegrationParserSupport
 
   attr_accessible :changed_at, :division_id, :entity_type_id, :importer_id,
-    :last_file_bucket, :last_file_path, :last_updated_by_id, :last_updated_by, 
+    :last_file_bucket, :last_file_path, :last_updated_by_id, :last_updated_by,
     :name, :status_rule_id, :unique_identifier, :unit_of_measure, :importer,
     :created_at, :updated_at, :classifications_attributes, :variants_attributes, :inactive
-  
+
   belongs_to :importer, :class_name => "Company"
   belongs_to :division
   belongs_to :status_rule
@@ -71,7 +71,7 @@ class Product < ActiveRecord::Base
   accepts_nested_attributes_for :variants, :allow_destroy => true
   reject_nested_model_field_attributes_if :missing_classification_country?
 
-  dont_shallow_merge :Product, ['id','created_at','updated_at','unique_identifier']
+  dont_shallow_merge :Product, ['id', 'created_at', 'updated_at', 'unique_identifier']
 
   after_commit :clear_manufacturer
 
@@ -81,7 +81,7 @@ class Product < ActiveRecord::Base
 
   def manufacturer
     # This is primarily a read-only cache (to use in conjunction with model fields for the Manufacturer)\
-    # Don't use it unless you're a model field as it can cause issues in cases when you remove the manufacturer address, 
+    # Don't use it unless you're a model field as it can cause issues in cases when you remove the manufacturer address,
     # it does not properly clear the cached variable out.  Like if you destroy the manufacturer.
     @mid ||= factories.first
   end
@@ -103,10 +103,10 @@ class Product < ActiveRecord::Base
       CustomValue.joins("INNER JOIN products ON customizable_type = 'Product' AND customizable_id = products.id")
                  .where("products.importer_id = ?", importer_id)
                  .where(custom_definition_id: cdefs[:prod_part_number].id, string_value: part_numbers)
-                 .each{ |cv| out[cv.customizable_id] = cv.string_value }
+                 .each { |cv| out[cv.customizable_id] = cv.string_value }
     else
       Product.where(importer_id: importer_id, unique_identifier: part_numbers)
-             .each{ |p| out[p.id] = p.unique_identifier }
+             .each { |p| out[p.id] = p.unique_identifier }
     end
     out
   end
@@ -118,7 +118,7 @@ class Product < ActiveRecord::Base
     r = {}
 
     used_classifications = Set.new
-    all_classifications = self.classifications.collect {|c| c} #holding this in memory so we don't do a .to_a and hit the database
+    all_classifications = self.classifications.collect {|c| c} # holding this in memory so we don't do a .to_a and hit the database
 
     Region.includes(:countries).each do |reg|
       r[reg] = matched = []
@@ -135,7 +135,7 @@ class Product < ActiveRecord::Base
     return r
   end
 
-  #are there any classifications written to the database
+  # are there any classifications written to the database
   def saved_classifications_exist?
     r = false
     self.classifications.each do |cls|
@@ -175,7 +175,7 @@ class Product < ActiveRecord::Base
 
   # have any new tariff numbers been added at the 6 digit level for any country since the given time?
   def wto6_changed_after? time_to_compare
-    h = self.entity_snapshots.order('created_at desc').where('created_at <= ?',time_to_compare).limit(1).first
+    h = self.entity_snapshots.order('created_at desc').where('created_at <= ?', time_to_compare).limit(1).first
     return false if h.nil?
     old_list = get_wto6_list_from_entity_snapshot(h)
     new_list = get_wto6_list_from_current_data
@@ -213,16 +213,16 @@ class Product < ActiveRecord::Base
     !self.sales_order_lines.empty?
   end
 
-  #Replace the current classifications with the given collection of classifications and writes this product with the new classifications to the database
-  #Any classification in the existing product that doesn't have a matching one by country in the new set is left alone
+  # Replace the current classifications with the given collection of classifications and writes this product with the new classifications to the database
+  # Any classification in the existing product that doesn't have a matching one by country in the new set is left alone
   def replace_classifications new_classifications
     begin
       Product.transaction do
         new_classifications.each do |nc|
-          self.classifications.where(:country_id=>nc.country_id).destroy_all #clear existing for this country
+          self.classifications.where(:country_id=>nc.country_id).destroy_all # clear existing for this country
           c = self.classifications.build
           c.shallow_merge_into nc
-          c.country_id = nc.country_id #this isn't shallow merged
+          c.country_id = nc.country_id # this isn't shallow merged
           nc.tariff_records.each do |nt|
             t = c.tariff_records.build
             t.shallow_merge_into nt
@@ -257,7 +257,7 @@ class Product < ActiveRecord::Base
   def validate_tariff_numbers
     self.classifications.each do |cls|
       country = cls.country
-      next if country.official_tariffs.empty? #skip if we don't have the database loaded for this country
+      next if country.official_tariffs.empty? # skip if we don't have the database loaded for this country
       cls.tariff_records.each do |tr|
         self.errors[:base] << "Tariff number #{tr.hts_1} is invalid for #{country.iso_code}" if !tr.hts_1.blank? && !tr.hts_1_official_tariff
         self.errors[:base] << "Tariff number #{tr.hts_2} is invalid for #{country.iso_code}" if !tr.hts_2.blank? && !tr.hts_2_official_tariff
@@ -332,18 +332,18 @@ class Product < ActiveRecord::Base
   def get_wto6_list_from_entity_snapshot es
     r = []
     json = es.snapshot_json(true)
-    (1..3).each {|i| r += JsonPath.on(json,"$..hts_hts_#{i}") }
+    (1..3).each {|i| r += JsonPath.on(json, "$..hts_hts_#{i}") }
     r.delete_if {|h| h.blank?}
-    Set.new(r.collect {|h| h.gsub(/\./,'')[0,6]}).to_a
+    Set.new(r.collect {|h| h.gsub(/\./, '')[0, 6]}).to_a
   end
 
   def get_wto6_list_from_current_data
     r = Set.new
     self.classifications.each do |cls|
       cls.tariff_records.each do |tr|
-        [tr.hts_1,tr.hts_2,tr.hts_3].each do |hts|
+        [tr.hts_1, tr.hts_2, tr.hts_3].each do |hts|
           if hts && hts.length >= 6
-            r << hts[0,6]
+            r << hts[0, 6]
           end
         end
       end

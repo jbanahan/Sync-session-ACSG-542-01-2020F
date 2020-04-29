@@ -3,18 +3,18 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_h
 class LlPcReapprovalScript
 
   def initialize
-    @cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions [:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive]
+    @cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions [:ordln_pc_approved_by, :ordln_pc_approved_date, :ordln_pc_approved_by_executive, :ordln_pc_approved_date_executive]
     @cdef_uids = {}
-    @cdefs.each {|k,v| @cdef_uids[k] = v.model_field_uid}
+    @cdefs.each {|k, v| @cdef_uids[k] = v.model_field_uid}
     @integration = User.integration
   end
 
   def run source_file, snapshot_comment, update_orders: false
-    File.open("tmp/log-#{Time.now.to_i}.txt",'wb') do |f|
+    File.open("tmp/log-#{Time.now.to_i}.txt", 'wb') do |f|
       orders_processed = []
       order_numbers = CSV.read(source_file).collect {|line| line.first}
-      order_numbers.in_groups_of(200,false) do |ord_nums|
-        Order.where("order_number in (?)",ord_nums).includes({:order_lines=>:custom_values}).each do |ord|
+      order_numbers.in_groups_of(200, false) do |ord_nums|
+        Order.where("order_number in (?)", ord_nums).includes({:order_lines=>:custom_values}).each do |ord|
           process_order ord, f, snapshot_comment, update_orders
           orders_processed << ord.order_number
         end
@@ -32,7 +32,7 @@ class LlPcReapprovalScript
       return
     end
     order.entity_snapshots.order('entity_snapshots.id desc').each do |es|
-      process_snapshot(unapproved_lines,lines_approved,es, update_orders)
+      process_snapshot(unapproved_lines, lines_approved, es, update_orders)
       break if unapproved_lines.blank?
     end
     if !lines_approved.empty?
@@ -52,7 +52,7 @@ class LlPcReapprovalScript
       if my_line_hash
         approved_date, approved_by, is_exec = get_approvals(my_line_hash)
         if approved_date # found an approval to apply
-          apply_approval(approved_date,approved_by,is_exec,ul) if update_orders
+          apply_approval(approved_date, approved_by, is_exec, ul) if update_orders
           lines_approved << ul
           r_val = true
         end
@@ -64,8 +64,8 @@ class LlPcReapprovalScript
   def apply_approval approved_date, approved_by, is_exec, ol
     date_id = is_exec ? :ordln_pc_approved_date_executive : :ordln_pc_approved_date
     by_id = is_exec ? :ordln_pc_approved_by_executive : :ordln_pc_approved_by
-    ol.update_custom_value!(@cdefs[date_id],approved_date)
-    ol.update_custom_value!(@cdefs[by_id],approved_by)
+    ol.update_custom_value!(@cdefs[date_id], approved_date)
+    ol.update_custom_value!(@cdefs[by_id], approved_by)
   end
 
   def get_approvals myh
@@ -82,7 +82,7 @@ class LlPcReapprovalScript
       approved_by_to_use = my_line_hash[@cdef_uids[:ordln_pc_approved_by_executive]]
       is_exec = true
     end
-    [approved_date_to_use,approved_by_to_use,is_exec]
+    [approved_date_to_use, approved_by_to_use, is_exec]
   end
 
   def get_unapproved_lines order

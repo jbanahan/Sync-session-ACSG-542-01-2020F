@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "this_key")
         expect_any_instance_of(Entry).to receive(:broadcast_event).with(:save)
         expect(subject).to receive(:process_special_tariffs)
-        effective_date = Date.new(2016,6,6)
+        effective_date = Date.new(2016, 6, 6)
         expect(subject).to receive(:tariff_effective_date).and_return(effective_date).once
         # One for each invoice line (because one for each primary tariff, and there's only one of those per line).
         expect(subject).to receive(:calculate_duty_rates).with(kind_of(CommercialInvoiceTariff), kind_of(CommercialInvoiceLine), effective_date, BigDecimal.new(50760)).twice
@@ -357,15 +357,15 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       it "creates a US entry, hitting secondary paths due to missing values" do
         DataCrossReference.create!(cross_reference_type: DataCrossReference::CARGOWISE_TRANSPORT_MODE_US, key:'RAICNT', value:'40')
 
-        test_data.gsub!(/EntryAuthorisation/,'EntreeAuthorization')
-        test_data.gsub!(/FCLStorageCommences/,'KFCStorageCommences')
-        test_data.gsub!(/EntryReleaseDate/,'EntreeReleaseDate')
-        test_data.gsub!(/DischargeDate/,'DiscoDate')
-        test_data.gsub!(/MasterWayBillIssuerSCAC/,'MrMiyagiIssuerSCAC')
-        test_data.gsub!(/TotalWeight/,'ToadWeight')
-        test_data.gsub!(/Value>03/,'Value>OhTree')
-        test_data.gsub!(/PaperlessRelease/,'PaperlessRelouse')
-        test_data.gsub!(/EntryAuthorisation/,'EntryAuthoritarian')
+        test_data.gsub!(/EntryAuthorisation/, 'EntreeAuthorization')
+        test_data.gsub!(/FCLStorageCommences/, 'KFCStorageCommences')
+        test_data.gsub!(/EntryReleaseDate/, 'EntreeReleaseDate')
+        test_data.gsub!(/DischargeDate/, 'DiscoDate')
+        test_data.gsub!(/MasterWayBillIssuerSCAC/, 'MrMiyagiIssuerSCAC')
+        test_data.gsub!(/TotalWeight/, 'ToadWeight')
+        test_data.gsub!(/Value>03/, 'Value>OhTree')
+        test_data.gsub!(/PaperlessRelease/, 'PaperlessRelouse')
+        test_data.gsub!(/EntryAuthorisation/, 'EntryAuthoritarian')
         test_data.gsub!(/CNRU000030320655/, '')
 
         subject.parse make_document(test_data)
@@ -391,10 +391,10 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "creates a US entry, hitting tertiary paths due to missing values" do
-        test_data.gsub!(/EntryReleaseDate/,'EntreeReleaseDate')
-        test_data.gsub!(/<ReleaseDate/,'<RelouseDate')
-        test_data.gsub!(/<\/ReleaseDate/,'<\/RelouseDate')
-        test_data.gsub!(/UDP/,'URP')
+        test_data.gsub!(/EntryReleaseDate/, 'EntreeReleaseDate')
+        test_data.gsub!(/<ReleaseDate/, '<RelouseDate')
+        test_data.gsub!(/<\/ReleaseDate/, '<\/RelouseDate')
+        test_data.gsub!(/UDP/, 'URP')
 
         subject.parse make_document(test_data)
 
@@ -415,10 +415,10 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         exist_entry.commercial_invoices.build
         exist_entry.entry_comments.build(username:"Private Broker", body:"8675309")
         exist_entry.entry_comments.build(username:"Private Broker", body:"This comment should not be deleted.")
-        bi = exist_entry.broker_invoices.build(broker_reference:"X",invoice_date:Date.new(2019,9,9))
+        bi = exist_entry.broker_invoices.build(broker_reference:"X", invoice_date:Date.new(2019, 9, 9))
         bi.broker_invoice_lines.build(charge_code:"Not deferred", charge_description:"X", charge_amount:1)
-        exist_entry.broker_invoices.build(broker_reference:"Y",invoice_date:Date.new(2019,9,10))
-        exist_entry.broker_invoices.build(broker_reference:"Y",invoice_date:Date.new(2019,9,8))
+        exist_entry.broker_invoices.build(broker_reference:"Y", invoice_date:Date.new(2019, 9, 10))
+        exist_entry.broker_invoices.build(broker_reference:"Y", invoice_date:Date.new(2019, 9, 8))
         exist_entry.save!
 
         subject.parse make_document(test_data)
@@ -459,7 +459,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "rejects when broker reference is missing" do
-        test_data.gsub!(/CustomsDeclaration/,'CustomsDucklaration')
+        test_data.gsub!(/CustomsDeclaration/, 'CustomsDucklaration')
 
         subject.parse make_document(test_data)
 
@@ -469,7 +469,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "rejects when unknown country code is provided" do
-        test_data.gsub!(/QMJ/,'POO')
+        test_data.gsub!(/QMJ/, 'POO')
 
         subject.parse make_document(test_data)
 
@@ -489,7 +489,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "raises error when customer number is missing" do
-        test_data.gsub!(/US48733060/,'')
+        test_data.gsub!(/US48733060/, '')
 
         subject.parse make_document(test_data)
 
@@ -499,9 +499,9 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "condenses nested lines" do
-        test_data.gsub!(/<ParentLineNo>  /,'<ParentLineNo>1')
+        test_data.gsub!(/<ParentLineNo>  /, '<ParentLineNo>1')
 
-        effective_date = Date.new(2016,6,6)
+        effective_date = Date.new(2016, 6, 6)
         expect(subject).to receive(:tariff_effective_date).and_return(effective_date).once
         # This should be called only one time per invoice, for the one prime tariff under each.
         expect(subject).to receive(:calculate_classification_related_rates).with(kind_of(CommercialInvoiceTariff), kind_of(CommercialInvoiceLine), effective_date).twice do |tar|
@@ -597,8 +597,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
 
       it "condenses nested lines sorted out of order" do
         # In this case, we're trying to merge line 1 (which is now line 3) into line 2.
-        test_data.gsub!(/<LineNo>1</,'<LineNo>3<')
-        test_data.gsub!(/<ParentLineNo>0</,'<ParentLineNo>2<')
+        test_data.gsub!(/<LineNo>1</, '<LineNo>3<')
+        test_data.gsub!(/<ParentLineNo>0</, '<ParentLineNo>2<')
 
         subject.parse make_document(test_data), { :key=>"this_key"}
 
@@ -632,7 +632,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "does not condense nested lines when they represent XVV lines" do
-        test_data.gsub!(/<ParentLineNo>  /,'<ParentLineNo>1')
+        test_data.gsub!(/<ParentLineNo>  /, '<ParentLineNo>1')
         # Overriding this AddInfo element because it's not used for anything.
         test_data.gsub!(/BOMLineExpanded/, 'SetInd')
 
@@ -665,7 +665,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "handles non-USD currency" do
-        test_data.gsub!(/USD/,'CAD')
+        test_data.gsub!(/USD/, 'CAD')
 
         subject.parse make_document(test_data)
 
@@ -755,7 +755,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "handles missing BOL variants" do
-        test_data.gsub!(/ParentBillNumber/,'ParentWilliamNumber')
+        test_data.gsub!(/ParentBillNumber/, 'ParentWilliamNumber')
 
         subject.parse make_document(test_data)
 
@@ -771,8 +771,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       let! (:country) { Factory(:country, iso_code:'CA') }
 
       it "creates a Canada entry" do
-        test_data.gsub!(/<Code>QMJ/,'<Code>YYZ')
-        test_data.gsub!(/USD/,'CAD')
+        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
+        test_data.gsub!(/USD/, 'CAD')
 
         DataCrossReference.create!(cross_reference_type: DataCrossReference::CARGOWISE_TRANSPORT_MODE_CA, key:'RAICNT', value:'6')
 
@@ -1065,11 +1065,11 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "creates a Canada entry, hitting secondary paths due to missing values" do
-        test_data.gsub!(/<Code>QMJ/,'<Code>YYZ')
-        test_data.gsub!(/PortOfDestination/,'ProfOfDivination')
-        test_data.gsub!(/PortOfDischarge/,'ProfOfDarkArts')
-        test_data.gsub!(/EntryAuthorisation/,'EntryAuthoritarian')
-        test_data.gsub!(/ADD/,'CVD')
+        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
+        test_data.gsub!(/PortOfDestination/, 'ProfOfDivination')
+        test_data.gsub!(/PortOfDischarge/, 'ProfOfDarkArts')
+        test_data.gsub!(/EntryAuthorisation/, 'EntryAuthoritarian')
+        test_data.gsub!(/ADD/, 'CVD')
         test_data.gsub!(/CNRU000030320655/, '')
 
         subject.parse make_document(test_data)
@@ -1092,8 +1092,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "creates a Canada entry, hitting tertiary paths due to missing values" do
-        test_data.gsub!(/<Code>QMJ/,'<Code>YYZ')
-        test_data.gsub!(/ADD/,'SUR')
+        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
+        test_data.gsub!(/ADD/, 'SUR')
 
         subject.parse make_document(test_data)
 
@@ -1110,7 +1110,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "handles non-CAD currency" do
-        test_data.gsub!(/<Code>QMJ/,'<Code>YYZ')
+        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
 
         subject.parse make_document(test_data)
 
@@ -1132,8 +1132,8 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "raises error when customer number is missing" do
-        test_data.gsub!(/<Code>QMJ/,'<Code>YYZ')
-        test_data.gsub!(/US48733060b/,'')
+        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
+        test_data.gsub!(/US48733060b/, '')
 
         subject.parse make_document(test_data)
 

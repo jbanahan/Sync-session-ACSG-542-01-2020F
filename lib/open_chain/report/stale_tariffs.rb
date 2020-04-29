@@ -2,7 +2,7 @@ require 'open_chain/report/report_helper'
 
 module OpenChain; module Report; class StaleTariffs
   include OpenChain::Report::ReportHelper
-  
+
   def self.permission? user
     user.company.master? && user.view_products?
   end
@@ -10,7 +10,7 @@ module OpenChain; module Report; class StaleTariffs
   def self.run_report run_by, settings={}
     self.new.run run_by, settings
   end
-  
+
   def self.run_schedulable settings={}
     self.new.send_email settings
   end
@@ -33,12 +33,12 @@ module OpenChain; module Report; class StaleTariffs
   end
 
   def ids_from_customer_numbers customer_numbers
-    codes = customer_numbers.is_a?(String) ? customer_numbers.split("\n").map{ |c| c.strip.presence }.compact : Array.wrap(customer_numbers)
+    codes = customer_numbers.is_a?(String) ? customer_numbers.split("\n").map { |c| c.strip.presence }.compact : Array.wrap(customer_numbers)
     Company.where(system_code: codes).map(&:id) if codes.present?
   end
-  
+
   private
-  
+
   def extract_settings settings
     countries = settings["countries"]
     importer_ids = settings["importer_ids"] || ids_from_customer_numbers(settings["customer_numbers"])
@@ -48,7 +48,7 @@ module OpenChain; module Report; class StaleTariffs
 
   def create_workbook countries=nil, importer_ids=nil
     wb = XlsxBuilder.new
-    
+
     {"hts_1" => "HTS #1", "hts_2" => "HTS #2", "hts_3" => "HTS #3"}.each_pair do |field, name|
       sheet = wb.create_sheet("Stale Tariffs #{name}")
       wb.add_header_row sheet, [ModelField.find_by_uid(:cmp_name).label,
@@ -66,7 +66,7 @@ module OpenChain; module Report; class StaleTariffs
         end
       end
 
-      if row_cursor ==1 #we haven't written any records
+      if row_cursor ==1 # we haven't written any records
         wb.add_body_row sheet, ["Congratulations! You don't have any stale tariffs."]
       end
     end
@@ -96,7 +96,7 @@ module OpenChain; module Report; class StaleTariffs
         INNER JOIN classifications c ON tr.classification_id = c.id
         INNER JOIN countries ctr ON ctr.id = c.country_id
         INNER JOIN products p ON c.product_id = p.id
-        LEFT OUTER JOIN companies comp ON comp.id = p.importer_id 
+        LEFT OUTER JOIN companies comp ON comp.id = p.importer_id
         LEFT OUTER JOIN official_tariffs ot ON c.country_id = ot.country_id AND tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)} = ot.hts_code
       WHERE ot.id IS NULL AND tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)} IS NOT NULL AND LENGTH(tr.#{ActiveRecord::Base.connection.quote_column_name(hts_field)}) > 0
     SQL

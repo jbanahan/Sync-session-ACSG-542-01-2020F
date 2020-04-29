@@ -5,14 +5,14 @@ describe OpenChain::Report::AscenaCumulativeEntryReport do
   describe "run_schedulable" do
     it "emails report" do
       ascena = Factory(:company, system_code: "ASCENA")
-      this_month = Factory :fiscal_month, company: ascena, month_number: 6, year: 2018, start_date: Date.new(2017,12,31), end_date: Date.new(2018,1,27)
-      last_month = Factory :fiscal_month, company: ascena, month_number: 5, year: 2018, start_date: Date.new(2017,11,26), end_date: Date.new(2017,12,30)
+      this_month = Factory :fiscal_month, company: ascena, month_number: 6, year: 2018, start_date: Date.new(2017, 12, 31), end_date: Date.new(2018, 1, 27)
+      last_month = Factory :fiscal_month, company: ascena, month_number: 5, year: 2018, start_date: Date.new(2017, 11, 26), end_date: Date.new(2017, 12, 30)
       us
-      
+
       expect_any_instance_of(described_class).to receive(:main_query).with(5, 2018).and_call_original
       expect_any_instance_of(described_class).to receive(:isf_query).with("2017-11-26", "2017-12-30").and_call_original
 
-      Timecop.freeze(DateTime.new(2017,12,31,12,0)) do
+      Timecop.freeze(DateTime.new(2017, 12, 31, 12, 0)) do
         described_class.run_schedulable('email'=>'st-hubbins@hellhole.co.uk')
       end
 
@@ -48,9 +48,9 @@ describe OpenChain::Report::AscenaCumulativeEntryReport do
     let!(:cil1) { Factory :commercial_invoice_line, commercial_invoice: ci1 }
     let!(:cil2) { Factory :commercial_invoice_line, commercial_invoice: ci1 }
     let!(:cil3) { Factory :commercial_invoice_line, commercial_invoice: ci2 }
-    
+
     it "produces expected results" do
-      results = ActiveRecord::Base.connection.execute parser.main_query(1,2018)
+      results = ActiveRecord::Base.connection.execute parser.main_query(1, 2018)
       expect(results.fields).to eq ["Total Entries", "Air Entries", "Ocean Entries", "Invoice Line Count", "Invoice Count", "Air Weight", "Ocean Weight", "MPF", "Entered Value", "Total Duty"]
       expect(results.count).to eq 1
       r = results.first
@@ -59,35 +59,35 @@ describe OpenChain::Report::AscenaCumulativeEntryReport do
 
     it "skips non-US entries" do
       e5.update_attributes! import_country: ca
-      results = ActiveRecord::Base.connection.execute parser.main_query(1,2018)
+      results = ActiveRecord::Base.connection.execute parser.main_query(1, 2018)
       expect(results.first[0]).to eq 4
     end
 
     it "skips non-Ascena entries" do
       e5.update_attributes! customer_number: "ACME"
-      results = ActiveRecord::Base.connection.execute parser.main_query(1,2018)
+      results = ActiveRecord::Base.connection.execute parser.main_query(1, 2018)
       expect(results.first[0]).to eq 4
     end
 
     it "skips entries with wrong fiscal month" do
       e5.update_attributes! fiscal_month: 2
-      results = ActiveRecord::Base.connection.execute parser.main_query(1,2018)
+      results = ActiveRecord::Base.connection.execute parser.main_query(1, 2018)
       expect(results.first[0]).to eq 4
     end
 
     it "skips entries with wrong fiscal year" do
       e5.update_attributes! fiscal_year: 2017
-      results = ActiveRecord::Base.connection.execute parser.main_query(1,2018)
+      results = ActiveRecord::Base.connection.execute parser.main_query(1, 2018)
       expect(results.first[0]).to eq 4
     end
   end
 
   describe "isf_query" do
-    let!(:sf) { Factory :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018,1,15) }
-    let!(:sf2) { Factory :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018,1,25) }
-    
+    let!(:sf) { Factory :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018, 1, 15) }
+    let!(:sf2) { Factory :security_filing, importer_account_code: "ASCE", first_sent_date: Date.new(2018, 1, 25) }
+
     it "produces expected results" do
-      results = ActiveRecord::Base.connection.execute parser.isf_query("2018-01-01","2018-01-31")
+      results = ActiveRecord::Base.connection.execute parser.isf_query("2018-01-01", "2018-01-31")
       expect(results.fields).to eq ["Count"]
       expect(results.count).to eq 1
       expect(results.first).to eq [2]
@@ -95,13 +95,13 @@ describe OpenChain::Report::AscenaCumulativeEntryReport do
 
     it "skips filings with wrong customer number" do
       sf.update_attributes! importer_account_code: "ACME"
-      results = ActiveRecord::Base.connection.execute parser.isf_query("2018-01-01","2018-01-31")
+      results = ActiveRecord::Base.connection.execute parser.isf_query("2018-01-01", "2018-01-31")
       expect(results.first).to eq [1]
     end
 
     it "skips filings with first_sent_date outside of range" do
-      sf.update_attributes! first_sent_date: Date.new(2018,2,1)
-      results = ActiveRecord::Base.connection.execute parser.isf_query("2018-01-01","2018-01-31")
+      sf.update_attributes! first_sent_date: Date.new(2018, 2, 1)
+      results = ActiveRecord::Base.connection.execute parser.isf_query("2018-01-01", "2018-01-31")
       expect(results.first).to eq [1]
     end
   end

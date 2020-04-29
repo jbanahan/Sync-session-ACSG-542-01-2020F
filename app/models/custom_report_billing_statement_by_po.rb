@@ -45,12 +45,12 @@ class CustomReportBillingStatementByPo < CustomReport
         invoice_number << inv.suffix unless inv.suffix.blank?
       end
       po_numbers = split_po_numbers entry
-      
+
       # This invoice amount stuff is there to handle the case where, due to rounding the prorated amount you may
       # be left with the need to tack on an extra penny on the last line (ie. 100 / 3 lines = 33.33, 33.33, 33.34)
       remaining_invoice_amount = inv.invoice_total || BigDecimal.new("0")
       even_split_amount = (remaining_invoice_amount / BigDecimal.new(po_numbers.length)).round(2, BigDecimal::ROUND_DOWN)
-      
+
       po_numbers.each_with_index do |po, i|
         col = 0
         cols = []
@@ -66,14 +66,14 @@ class CustomReportBillingStatementByPo < CustomReport
         end
 
         po_value = BigDecimal.new("0")
-        if i < (po_numbers.length - 1) 
+        if i < (po_numbers.length - 1)
           po_value = even_split_amount
           remaining_invoice_amount -= even_split_amount
-        else 
+        else
           po_value = remaining_invoice_amount
         end
 
-        cols << invoice_number 
+        cols << invoice_number
         cols << inv.invoice_date
         cols << po_value
         cols << po
@@ -81,11 +81,11 @@ class CustomReportBillingStatementByPo < CustomReport
         search_cols.each do |c|
           cols << c.model_field.process_export(inv, user)
         end
-        
+
         write_columns row, col, cols
         row += 1
       end
-    end    
+    end
 
     col = 0
     heading_row 0
@@ -103,7 +103,7 @@ class CustomReportBillingStatementByPo < CustomReport
   end
 
   private
-  def split_po_numbers entry 
+  def split_po_numbers entry
     # split returns a 0-length array on a blank string..hence the space
     po_numbers = (entry.po_numbers.nil? || entry.po_numbers.length == 0) ? " " : entry.po_numbers
     po_numbers.split("\n").collect! {|x| x.strip}

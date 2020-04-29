@@ -27,11 +27,11 @@ module OpenChain; module Report; class HmStatisticsReport
     start_date = sanitize_date_string settings['start_date'], run_by.time_zone
     end_date = sanitize_date_string settings['end_date'], run_by.time_zone
     wb = XlsMaker.new_workbook
-    
+
     add_summary_sheet wb, start_date, end_date
     add_ocean_sheet(wb, start_date, end_date, run_by.time_zone)
     add_air_sheet(wb, start_date, end_date, run_by.time_zone)
-    
+
     workbook_to_tempfile wb, 'HmStatisticsReport-'
   end
 
@@ -51,26 +51,26 @@ module OpenChain; module Report; class HmStatisticsReport
 
   def add_summary_sheet wb, start_date, end_date
     sheet = XlsMaker.create_sheet wb, "Statistics"
-    
+
     mh = Hash.new
     load_order_data mh, start_date, end_date
     load_air_tu_data mh, start_date, end_date
     load_ocean_tu_data mh, start_date, end_date
 
-    XlsMaker.add_body_row sheet, 0, [nil,"Order",nil,nil,nil,"Transport Units"]
-    XlsMaker.add_body_row sheet, 1, ["Export Country","AIR","OCEAN","Total Orders",nil,"AIR","OCEAN","Total TU"]
+    XlsMaker.add_body_row sheet, 0, [nil, "Order", nil, nil, nil, "Transport Units"]
+    XlsMaker.add_body_row sheet, 1, ["Export Country", "AIR", "OCEAN", "Total Orders", nil, "AIR", "OCEAN", "Total TU"]
 
     cursor = 2
     mh.keys.sort.each do |country|
       dh = mh[country]
-      XlsMaker.add_body_row sheet, cursor, [country,dh.air_order,dh.ocean_order,dh.total_order,"",dh.air_unit,dh.ocean_unit,dh.total_unit]
+      XlsMaker.add_body_row sheet, cursor, [country, dh.air_order, dh.ocean_order, dh.total_order, "", dh.air_unit, dh.ocean_unit, dh.total_unit]
       cursor += 1
     end
 
     vals = mh.values
 
     XlsMaker.add_body_row sheet, cursor, [
-      "Total Result", 
+      "Total Result",
       vals.inject(0) {|mem, v| mem + v.air_order},
       vals.inject(0) {|mem, v| mem + v.ocean_order},
       vals.inject(0) {|mem, v| mem + v.total_order},
@@ -84,15 +84,15 @@ module OpenChain; module Report; class HmStatisticsReport
 
     execute_query(totals_query(start_date, end_date)) do |result_set|
       totals = result_set.first
-      XlsMaker.add_body_row sheet, cursor, ["Total Duty",totals[1]]
+      XlsMaker.add_body_row sheet, cursor, ["Total Duty", totals[1]]
       cursor += 1
-      XlsMaker.add_body_row sheet, cursor, ["Total Entered Value",totals[0]]
+      XlsMaker.add_body_row sheet, cursor, ["Total Entered Value", totals[0]]
     end
   end
 
   def totals_query start_date, end_date
     <<-SQL
-      SELECT SUM(IFNULL(t.entered_value, 0)) AS entered_value, 
+      SELECT SUM(IFNULL(t.entered_value, 0)) AS entered_value,
              SUM(IFNULL(t.duty_amount, 0) + IFNULL(l.hmf, 0) + IFNULL(l.prorated_mpf, 0) + IFNULL(l.cotton_fee, 0))
       FROM entries e
           INNER JOIN commercial_invoices i ON e.id = i.entry_id
@@ -103,7 +103,7 @@ module OpenChain; module Report; class HmStatisticsReport
           AND (LENGTH(i.invoice_number) IN (6,7) OR INSTR(i.invoice_number, '-') IN (7,8))
     SQL
   end
-  
+
   def load_order_data master_hash, start_date, end_date
     execute_query(orders_query(start_date, end_date)) do |result_set|
       load_order_dh result_set, master_hash
@@ -121,22 +121,22 @@ module OpenChain; module Report; class HmStatisticsReport
         dh.ocean_order = row[2]
         dh.total_order += row[2]
       end
-    end       
+    end
   end
 
   def orders_query start_date, end_date
     <<-SQL
       SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
-        (CASE e.transport_mode_code 
-          WHEN 40 THEN "AIR" 
-          WHEN 41 THEN "AIR" 
+        (CASE e.transport_mode_code
+          WHEN 40 THEN "AIR"
+          WHEN 41 THEN "AIR"
           WHEN 10 THEN "OCEAN"
-          WHEN 11 THEN "OCEAN" 
-          ELSE "OTHER" 
-         END) AS 'Mode', 
+          WHEN 11 THEN "OCEAN"
+          ELSE "OTHER"
+         END) AS 'Mode',
         COUNT(*) AS 'orders'
       FROM entries e
-        INNER JOIN commercial_invoices ci ON ci.entry_id = e.id 
+        INNER JOIN commercial_invoices ci ON ci.entry_id = e.id
           AND (LENGTH(ci.invoice_number) IN (6,7) OR INSTR(ci.invoice_number, '-') IN (7,8))
       WHERE e.customer_number = 'HENNE'
         AND (e.release_date >= '#{start_date}' AND e.release_date < '#{end_date}')
@@ -160,7 +160,7 @@ module OpenChain; module Report; class HmStatisticsReport
 
   def ocean_tu_query start_date, end_date
     <<-SQL
-      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc', 
+      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'ecc',
         COUNT(DISTINCT c.container_number)
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
@@ -180,17 +180,17 @@ module OpenChain; module Report; class HmStatisticsReport
   end
 
   def load_air_tu_dh result_set, master_hash
-    bills = Hash.new do |hash, key| 
-      hash[key] = Hash.new{ |h, k| h[k] = [] }
+    bills = Hash.new do |hash, key|
+      hash[key] = Hash.new { |h, k| h[k] = [] }
     end
-    result_set.each do |row| 
-      if row[1].blank? 
-        bills[row[0]][:master].concat(row[2].try(:split, "\n ") || []) 
-      else 
+    result_set.each do |row|
+      if row[1].blank?
+        bills[row[0]][:master].concat(row[2].try(:split, "\n ") || [])
+      else
         bills[row[0]][:house].concat(row[1].try(:split, "\n ") || [])
       end
     end
-    bills.each do |ctry, blz| 
+    bills.each do |ctry, blz|
       dh = data_holder master_hash, ctry
       dh.air_unit = blz[:master].uniq.count + blz[:house].uniq.count
       dh.total_unit += dh.air_unit
@@ -199,11 +199,11 @@ module OpenChain; module Report; class HmStatisticsReport
 
   def raw_ocean_query start_date, end_date
     <<-SQL
-     SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'Export Country Codes', 
-            e.transport_mode_code "Transport Mode Code", 
-            e.release_date "Release Date", 
-            ci.invoice_number "Invoice No.", 
-            c.container_number "Container No.", 
+     SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'Export Country Codes',
+            e.transport_mode_code "Transport Mode Code",
+            e.release_date "Release Date",
+            ci.invoice_number "Invoice No.",
+            c.container_number "Container No.",
             e.entry_number "Entry No."
      FROM entries e
        INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
@@ -217,12 +217,12 @@ module OpenChain; module Report; class HmStatisticsReport
 
   def raw_air_query start_date, end_date
     <<-SQL
-      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'Export Country Codes', 
-             e.house_bills_of_lading "House Bills", 
-             e.master_bills_of_lading "Master Bills", 
-             e.transport_mode_code "Transport Mode Code", 
-             e.release_date "Release Date", 
-             ci.invoice_number "Invoice No.", 
+      SELECT IF(export_country_codes LIKE '%DE%', 'DE', export_country_codes) AS 'Export Country Codes',
+             e.house_bills_of_lading "House Bills",
+             e.master_bills_of_lading "Master Bills",
+             e.transport_mode_code "Transport Mode Code",
+             e.release_date "Release Date",
+             ci.invoice_number "Invoice No.",
              e.entry_number "Entry No."
       FROM entries e
         INNER JOIN commercial_invoices ci ON e.id = ci.entry_id

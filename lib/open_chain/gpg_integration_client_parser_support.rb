@@ -59,7 +59,7 @@ module OpenChain; module GpgIntegrationClientParserSupport
     #    some_key:
     #      private_key_path: config/some_key.asc
     #      passphrase: jklasdfj1u9012jay8123l
-    # 
+    #
 
     def gpg_secrets_key opts
       raise "You must implement this method and return the key value to use to find the gpg configuration under the secret's gpg key."

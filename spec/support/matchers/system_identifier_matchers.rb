@@ -10,7 +10,7 @@ RSpec::Matchers.define :have_system_identifier do |system, code|
     else
       "expected Company to have system identifier with system of #{system} and code of #{code}, but identifier had a code of #{id.code}."
     end
-    
+
   end
 
   failure_message_when_negated do |actual|

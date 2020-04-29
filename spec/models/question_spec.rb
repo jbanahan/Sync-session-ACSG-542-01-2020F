@@ -1,8 +1,8 @@
 describe Question do
   it 'should default sort by rank' do
-    q2 = Factory(:question,:rank=>2)
-    q1 = Factory(:question,:rank=>1)
-    expect(Question.by_rank.to_a).to eq([q1,q2])
+    q2 = Factory(:question, :rank=>2)
+    q1 = Factory(:question, :rank=>1)
+    expect(Question.by_rank.to_a).to eq([q1, q2])
   end
   it "should touch parent survey" do
     q = Factory(:question)
@@ -14,7 +14,7 @@ describe Question do
   end
   it "should not save if parent survey is locked" do
     s = Factory(:survey)
-    q = Factory(:question,:survey=>s)
+    q = Factory(:question, :survey=>s)
     allow_any_instance_of(Survey).to receive(:locked?).and_return(:true)
     q.content = 'some content length'
     expect(q.save).to be_falsey
@@ -31,9 +31,9 @@ describe Question do
   end
   it "should default scope to sort by rank then id" do
     s = Factory(:survey)
-    q_10 = s.questions.create!(:content=>"1234567890",:rank=>10)
-    q_1 = s.questions.create!(:content=>"12345647879",:rank=>1)
-    q_1_2 = s.questions.create!(:content=>"12345678901",:rank=>1)
+    q_10 = s.questions.create!(:content=>"1234567890", :rank=>10)
+    q_1 = s.questions.create!(:content=>"12345647879", :rank=>1)
+    q_1_2 = s.questions.create!(:content=>"12345678901", :rank=>1)
     sorted = Survey.find(s.id).questions.to_a
     expect(sorted[0]).to eq(q_1)
     expect(sorted[1]).to eq(q_1_2)

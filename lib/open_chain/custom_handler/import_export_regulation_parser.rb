@@ -1,4 +1,4 @@
-module OpenChain 
+module OpenChain
   module CustomHandler
     class ImportExportRegulationParser
 
@@ -82,11 +82,11 @@ module OpenChain
         end
       end
 
-      private 
+      private
 
         def find_parser io, filename = nil
           file_extension = nil
-          if filename 
+          if filename
             file_extension = File.extname(filename)
           end
 

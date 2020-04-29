@@ -7,7 +7,7 @@ describe Api::V1::OfficialTariffsController do
   describe "find" do
     it "should render tariff" do
       allow_any_instance_of(OfficialTariff).to receive(:can_view?).and_return true
-      us = Factory(:country,iso_code:'US',name:'USA')
+      us = Factory(:country, iso_code:'US', name:'USA')
       ot = Factory(:official_tariff,
         hts_code:'1234567890',
         full_description:'Full Desc',
@@ -60,17 +60,17 @@ describe Api::V1::OfficialTariffsController do
       }}
 
 
-      expect(get :find, {iso:'us',hts:'1234567890'}).to be_success
+      expect(get :find, {iso:'us', hts:'1234567890'}).to be_success
 
       expect(JSON.parse(response.body)).to eq expected_response
     end
     it "should strip periods" do
       allow_any_instance_of(OfficialTariff).to receive(:can_view?).and_return true
-      us = Factory(:country,iso_code:'US',name:'USA')
-      ot = Factory(:official_tariff,country:us,hts_code:'1234567890')
-      
-      expect(get :find, {iso:'us',hts:'1234.56.7890'}).to be_success
-      expect(JSON.parse(response.body)['official_tariff']['id']).to eq ot.id         
+      us = Factory(:country, iso_code:'US', name:'USA')
+      ot = Factory(:official_tariff, country:us, hts_code:'1234567890')
+
+      expect(get :find, {iso:'us', hts:'1234.56.7890'}).to be_success
+      expect(JSON.parse(response.body)['official_tariff']['id']).to eq ot.id
     end
   end
 end

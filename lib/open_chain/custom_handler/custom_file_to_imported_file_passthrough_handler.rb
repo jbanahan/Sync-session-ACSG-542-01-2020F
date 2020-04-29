@@ -1,24 +1,24 @@
 require 'open_chain/custom_handler/custom_file_csv_excel_parser'
 
-# This module does most of the heavy lifting when you want to create a custom translation for files 
-# uploaded as CustomFiles that will then feed into the system as ImportedFiles (.ie files uploaded 
+# This module does most of the heavy lifting when you want to create a custom translation for files
+# uploaded as CustomFiles that will then feed into the system as ImportedFiles (.ie files uploaded
 # through the search interface).
-# 
+#
 # The reason for doing this is simple.
 # 1) It allows the user access to the log for uploaded files.
 # 2) It uses the same codebase for importing files - which uses the same validations (.ie valid hts numbers, etc)
 #
 # To use this module you must implement the following methods:
 # - translate_file_line(line) - receives an array which is a line from the file being processed.  You can return a regular array
-# to represent a 1-1 line mapping or you can return a multi-dimensional array consisting of 1 or more arrays representing multiple lines 
+# to represent a 1-1 line mapping or you can return a multi-dimensional array consisting of 1 or more arrays representing multiple lines
 # that will go into the actual file processed by the ImportedFile#process call that ultimately happens.
-# 
+#
 # - search_setup_attributes(file, user) - the search setup attributes to use to create/find the search setup to use for the imported file
-# 
+#
 # - search_column_uids - an array of model field uids that define the file import columns.  These define the file layout
 # that your translate_file_line method should adhere to.
 #
-# You process method (which is what you must implement for the CustomFile interface) should call this module's 
+# You process method (which is what you must implement for the CustomFile interface) should call this module's
 # process_file method, all the rest will be done for you then.
 module OpenChain; module CustomHandler; module CustomFileToImportedFilePassthroughHandler
   extend ActiveSupport::Concern
@@ -44,7 +44,7 @@ module OpenChain; module CustomHandler; module CustomFileToImportedFilePassthrou
           lines = [lines]
         end
 
-        lines.each {|line|  outfile << line.to_csv } 
+        lines.each {|line|  outfile << line.to_csv }
       end
       outfile.flush
       outfile.rewind

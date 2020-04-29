@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module XmlHelper
     ActiveSupport::TimeZone["Eastern Time (US & Canada)"].at(t.to_i).strftime("%Y-%m-%d %H:%M %Z")
   end
 
-  #get element text
+  # get element text
   # if force_blank_string then send "" instead of null
   def et parent, element_name, force_blank_string=false
     r  = nil
@@ -79,7 +79,7 @@ module OpenChain; module CustomHandler; module XmlHelper
       # Use a compact output format just to make the data smaller that REXML needs to deal with
       REXML::Document.new(xml.to_xml(indent: 0, save_with: (Nokogiri::XML::Node::SaveOptions::AS_XML)))
     rescue Exception
-      # If anything blows up here, just return nil...it means we couldn't handle trying to fix the XML and will signal 
+      # If anything blows up here, just return nil...it means we couldn't handle trying to fix the XML and will signal
       # that we should just raise the original exception
       nil
     end

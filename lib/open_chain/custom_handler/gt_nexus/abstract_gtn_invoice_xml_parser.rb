@@ -3,24 +3,24 @@ require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
 
-# This class is meant to be extended for customer specific Invoice loads in the GT Nexus 
+# This class is meant to be extended for customer specific Invoice loads in the GT Nexus
 # invoice xml format.
 #
 # By default, the parse handles finding / creating all invoices listed in the xml
 # and provides simple overridable methods to use to extend the base information extracted from the xml
 # for the Invoice, InvoiceLine and Company records it generates.
-# 
+#
 # Additionally some configuration values can be set by a constructor.
 #
 # The bare minimum that must be done to extend this class is to implement the following methods:
-# 
-# - initialize - Your initialize method must call super and pass a configuration hash.  If you want to 
+#
+# - initialize - Your initialize method must call super and pass a configuration hash.  If you want to
 # stick with the defaults, pass a blank hash.  See initialize below to see the configuration options available.
 # - importer_system_code
 # - party_system_code
 #
 # Additional methods of interest provided for ease of adding customer specific values are:
-# 
+#
 # - set_additional_invoice_information
 # - set_additional_invoice_line_information
 # - set_additional_party_information
@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
   include OpenChain::CustomHandler::GtNexus::GenericGtnParserSupport
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::XmlHelper
-  
+
   # Used as an extension point for any extending class to add any customer
   # specific information to the invoice.
   def set_additional_invoice_information invoice, invoice_xml
@@ -56,12 +56,12 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
     inbound_file.error_and_raise("Your customer specific class extension must implement this method, returning the system code of the importer to utilize on the Invoices.")
   end
 
-  # Return the system code to use for the party xml given.  
+  # Return the system code to use for the party xml given.
   # DO NOT do any prefixing (like w/ the importer system code), the caller will handle all of that
   # for you.  Just return the identifying information for the party using the provided XML party element.
   def party_system_code party_xml, party_type
     # I'm pretty sure in the vast majority of cases we should be using customer specific identifiers
-    # inside the identification element...those appear to be 100% customer specific though and not 
+    # inside the identification element...those appear to be 100% customer specific though and not
     # generic, so we'll have to have this be overriden to determine which internal code in the party object should
     # be used in all cases.
     inbound_file.error_and_raise("This method must be overriden by an implementing class.")
@@ -96,7 +96,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
     inbound_file.reject_and_raise("Unexpected root element. Expected Invoice but found '#{xml.root.name}'.") unless xml.root.name == "Invoice"
 
     # I don't believe GTN actually exports multiple Invoices per XML document, they use the
-    # same schema for uploading to them and downloading from them, so the functionality is 
+    # same schema for uploading to them and downloading from them, so the functionality is
     # there to send them mulitple Invoices, but as to getting them exported to us on event triggers,
     # I don't think we get more than one per XML document
     parser = self.new
@@ -111,7 +111,6 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
     parties = parse_parties(xml, user, key)
     i = nil
     find_or_create_invoice(xml, bucket, key) do |invoice|
-      
       prep_existing_invoice_lines(invoice, xml)
 
       set_parties(invoice, parties)
@@ -130,7 +129,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
   end
 
   def prep_existing_invoice_lines invoice, xml
-    # It appears that GTN doesn't really have any sort of invoice line number in the XML 
+    # It appears that GTN doesn't really have any sort of invoice line number in the XML
     # The specs intimate that ItemSequenceNumber is the invoice line number, but it's not, its just a copy of the
     # order line number...that being the case...we're just going to destroy every line and rebuild the invoice every time.
     invoice.invoice_lines.destroy_all
@@ -138,7 +137,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
 
   def sort_invoice_lines invoice
     # In order for this sorting to work, there's some assumptions being made here..
-    # 1) None of the invoice lines have been persisted yet.  
+    # 1) None of the invoice lines have been persisted yet.
     #    - This should be fine because we're destroying and recreating the invoice lines
     # 2) invoice.invoice_lines.clear is simply clearing the internal object array proxy
     #   - This should be fine because none of the lines are persisted (see #1), thus
@@ -181,7 +180,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
   #
   # Otherwise, if more complex sorting is needed, override the do_invoice_line_sorting method.
   def invoice_line_attribute_sort_order
-    # The reason for ordering the lines according to the PO Number / PO Line Number is that it appears this matches 
+    # The reason for ordering the lines according to the PO Number / PO Line Number is that it appears this matches
     # the default way the commercial invoice printout from GT Nexus is generated.
     [:po_number, :po_line_number]
   end
@@ -240,7 +239,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
       invoice.volume = terms.text "packageDimensionSummary/totalGrossVolume"
       invoice.volume_uom = terms.text "packageDimensionSummary/volumeUnitCode"
     end
-    
+
     set_additional_invoice_information invoice, xml
     nil
   end
@@ -261,7 +260,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
     base_item = item_xml.elements["baseItem"]
     inbound_file.reject_and_raise("All invoiceItem elements must have a baseItem child element.") if base_item.nil?
 
-    # It appears that GTN doesn't really have any sort of invoice line number in the XML 
+    # It appears that GTN doesn't really have any sort of invoice line number in the XML
     # The specs intimate that ItemSequenceNumber is the invoice line number, but it's not, its just a copy of the
     # order line number...that being the case...we're just going to destroy every line and rebuild the invoice every time.
     line = invoice.invoice_lines.build
@@ -277,7 +276,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
         inbound_file.reject_and_raise("Failed to find order line for Order Number '#{order_number(item_xml)}' / Line Number '#{order_line_number(item_xml)}'.")
       end
     end
-    
+
     line.po_number = order_number(item_xml)
     line.po_line_number = order_line_number(item_xml)
     line.unit_price = BigDecimal(item_xml.text("itemPrice/pricePerUnit").to_s)
@@ -326,7 +325,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnInvoice
     date
   end
 
-  def party_map 
+  def party_map
     {vendor: "party[partyRoleCode = 'Seller']", factory: "party[partyRoleCode = 'OriginOfGoods']", ship_to: "party[partyRoleCode = 'ShipmentDestination']"}
   end
 

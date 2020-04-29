@@ -281,7 +281,7 @@ describe BusinessRuleSnapshot do
   describe "delete_from_s3" do
     subject { BusinessRuleSnapshot.new bucket: "bucket", doc_path: "key", version: "version" }
 
-    before :each do 
+    before :each do
       allow(subject.class).to receive(:bucket_name).and_return "bucket"
     end
 

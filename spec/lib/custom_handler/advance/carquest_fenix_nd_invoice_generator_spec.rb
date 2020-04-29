@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
   let (:consignee) {
     c = Factory(:company, name: "Consignee")
     c.addresses.create! line_1: "Con Line 1"
-    c 
+    c
   }
 
   let (:ship_to) {
@@ -55,7 +55,7 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
       i = invoices.first
       expect(i.invoice_number).to eq "INV"
       expect(i.invoice_date).to eq ActiveSupport::TimeZone["America/New_York"].now.to_date
-      
+
       expect(i.consignee).to eq consignee
       # The vendor / importer aren't a straight copy, we're turning an address into a fake company
       v = i.vendor
@@ -102,8 +102,8 @@ describe OpenChain::CustomHandler::Advance::CarquestFenixNdInvoiceGenerator do
     end
 
     it "generates an invoice file and sends it" do
-      # We're intercepting the actual ftp so we can capture the lines and validate 
-      # the correct data was generated..since  we're overriding a field or to 
+      # We're intercepting the actual ftp so we can capture the lines and validate
+      # the correct data was generated..since  we're overriding a field or to
       # in the generation.
       file_contents = nil
       sr = SyncRecord.new

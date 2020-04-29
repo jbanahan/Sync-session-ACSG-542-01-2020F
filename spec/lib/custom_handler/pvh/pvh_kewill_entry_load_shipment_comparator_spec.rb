@@ -22,8 +22,8 @@ describe OpenChain::CustomHandler::Pvh::PvhKewillEntryLoadShipmentComparator do
 
     it "returns false if importer is not PVH" do
       importer.update_attributes! system_code: "NOTPVH"
-      
+
       expect(subject.has_entry_load_configured? shipment).to eq false
-    end    
+    end
   end
 end

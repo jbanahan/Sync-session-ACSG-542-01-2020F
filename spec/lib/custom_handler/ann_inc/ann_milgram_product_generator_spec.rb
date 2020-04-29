@@ -4,13 +4,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     CSV.read @tmp.path, {:col_sep=>"\t"}
   end
 
-  after :each do 
+  after :each do
     @tmp.unlink if @tmp
   end
   before :all do
-    @cdefs = described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:manual_flag,:oga_flag,:fta_flag,:set_qty, :related_styles]
+    @cdefs = described_class.prep_custom_definitions [:approved_date, :approved_long, :long_desc_override, :manual_flag, :oga_flag, :fta_flag, :set_qty, :related_styles]
   end
-  
+
   after :all do
     CustomDefinition.where('1=1').destroy_all
   end
@@ -18,20 +18,20 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
 
   context 'query' do
     before :each do
-      @ca = Factory(:country,:iso_code=>'CA')
+      @ca = Factory(:country, :iso_code=>'CA')
     end
     it "should only send Canadian tariff" do
       p = Factory(:product)
       p.update_custom_value! @cdefs[:approved_long], 'PLONG'
-      [@ca,Factory(:country,:iso_code=>'US')].each do |cntry|
+      [@ca, Factory(:country, :iso_code=>'US')].each do |cntry|
         cls = p.classifications.create!(:country_id=>cntry.id)
         cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
-      p.classifications.find_by(country: @ca).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
+      p.classifications.find_by(country: @ca).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 # the job should clear this since it's not a set
       r = run_to_array
       expect(r.size).to eq(1)
-      expect(r.first).to eq([p.unique_identifier,'','PLONG','','CA12345678','N','N','N','N'])
+      expect(r.first).to eq([p.unique_identifier, '', 'PLONG', '', 'CA12345678', 'N', 'N', 'N', 'N'])
     end
     it "should only send approved products" do
       p = Factory(:product)
@@ -53,8 +53,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
       d_cls = dont_find.classifications.create!(:country_id=>@ca.id)
       d_cls.tariff_records.create!(:hts_1=>"0012345678")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.hour.ago,:confirmed_at=>1.minute.ago)
-      ActiveRecord::Base.connection.execute 'UPDATE products SET updated_at = "2010-01-01"' #reset updated at so product doesn't need sync
+      dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE, :sent_at=>1.hour.ago, :confirmed_at=>1.minute.ago)
+      ActiveRecord::Base.connection.execute 'UPDATE products SET updated_at = "2010-01-01"' # reset updated at so product doesn't need sync
       r = run_to_array
       expect(r.size).to eq(1)
       expect(r.first.first).to eq(p.unique_identifier)
@@ -71,14 +71,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
     end
     it "should explode lines that have related styles" do
       p = Factory(:product)
-      [@ca,Factory(:country,:iso_code=>'US')].each do |cntry|
+      [@ca, Factory(:country, :iso_code=>'US')].each do |cntry|
         cls = p.classifications.create!(:country_id=>cntry.id)
         cls.tariff_records.create!(:hts_1=>"#{cntry.iso_code}12345678")
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
-      p.classifications.find_by(country: @ca).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 #the job should clear this since it's not a set
+      p.classifications.find_by(country: @ca).tariff_records.first.update_custom_value! @cdefs[:set_qty], 2 # the job should clear this since it's not a set
 
-      p.update_custom_value! @cdefs[:related_styles], "#{p.unique_identifier}\np-style\nt-style" #uid should not duplicate
+      p.update_custom_value! @cdefs[:related_styles], "#{p.unique_identifier}\np-style\nt-style" # uid should not duplicate
 
       r = run_to_array
       expect(r.size).to eq(3)
@@ -93,15 +93,15 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
         p.update_custom_value! @cdefs[:approved_long], 'LONG'
         cls = p.classifications.create!(:country_id=>@ca.id)
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-        tr1 = cls.tariff_records.create!(:hts_1=>"0012345678",:line_number=>1)
-        tr2 = cls.tariff_records.create!(:hts_1=>'2222222222',:line_number=>2)
+        tr1 = cls.tariff_records.create!(:hts_1=>"0012345678", :line_number=>1)
+        tr2 = cls.tariff_records.create!(:hts_1=>'2222222222', :line_number=>2)
         tr1.update_custom_value! @cdefs[:set_qty], 10
         tr2.update_custom_value! @cdefs[:set_qty], 20
         r = run_to_array
         expect(r).to eq([
-          [p.unique_identifier,'','LONG','','','Y','N','N','N'],
-          [p.unique_identifier,'1','LONG','10','0012345678','Y','N','N','N'],
-          [p.unique_identifier,'2','LONG','20','2222222222','Y','N','N','N'],
+          [p.unique_identifier, '', 'LONG', '', '', 'Y', 'N', 'N', 'N'],
+          [p.unique_identifier, '1', 'LONG', '10', '0012345678', 'Y', 'N', 'N', 'N'],
+          [p.unique_identifier, '2', 'LONG', '20', '2222222222', 'Y', 'N', 'N', 'N'],
         ])
       end
     end
@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnMilgramProductGenerator do
 
   context "ftp" do
     it "should send proper credentials" do
-      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/MIL', :protocol=>"sftp"})
+      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com', :username=>'VFITRACK', :password=>'RL2VFftp', :folder=>'to_ecs/Ann/MIL', :protocol=>"sftp"})
     end
   end
 end

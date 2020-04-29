@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonCvdAddProduct
 
     find_or_create_product(line) do |product|
       changed = MutableBoolean.new false
-      
+
       standard_parsing @file_type, product, changed, line
 
       if changed.value
@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonCvdAddProduct
 
   def standard_parsing file_type, product, changed, line
     case_number = line[12]
-    
+
     if file_type == :add
       disclaimed = parse_boolean(line[17])
       set_custom_value(product, :prod_add_case, changed, case_number)
@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonCvdAddProduct
 
   def self.file_type filename
     filename = File.basename(filename)
-    
+
     if filename.to_s =~ /^US_PGA_([^_]+)_.+\.csv$/i
       if $1.to_s.upcase == "ADD"
         return :add

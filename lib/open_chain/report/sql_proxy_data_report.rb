@@ -3,11 +3,11 @@ require 'open_chain/report/report_helper'
 
 module OpenChain; module Report; module SqlProxyDataReport
   extend ActiveSupport::Concern
-  include ReportHelper 
-  
+  include ReportHelper
+
   def table_from_sql_proxy_query sheet, results, column_headers, data_conversions = {}
     # The query results are pretty much just a straight JSON'ized ActiveRecord query result set (Rails 4 version).
-    # This ends up being an array containing hash objects for each result row.  
+    # This ends up being an array containing hash objects for each result row.
     # The hash key is the column name (downcased for some reason - active record'ism?) and the value is obviously the query value for the column.
 
     # Nil can be posted back for the results if nothing is found..
@@ -26,11 +26,11 @@ module OpenChain; module Report; module SqlProxyDataReport
     write_result_set_to_sheet fake_result_set, sheet, column_headers.keys, 1, data_conversions
   end
 
-  def alliance_date_conversion 
+  def alliance_date_conversion
     # Alliance dates should come across to us as YYYYMMDD (either as a string or a numeric)
     lambda do |result_set_row, raw_column_value|
-      # Dates in Alliance are stored as numbers...which, depending on how we format the query, 
-      # can be returned as strings or numbers (BigDecimals).  These will never have any 
+      # Dates in Alliance are stored as numbers...which, depending on how we format the query,
+      # can be returned as strings or numbers (BigDecimals).  These will never have any
       # decimal components, so just take the integer value and then to_s it if the value is numeric
       value = raw_column_value.is_a?(Numeric) ? raw_column_value.to_i.to_s : raw_column_value.to_s
       (value.blank? || value =~ /^0+$/) ? nil : Date.parse(value)
@@ -38,7 +38,7 @@ module OpenChain; module Report; module SqlProxyDataReport
   end
 
   def decimal_conversion decimal_offset: 0, decimal_places: 2
-    # One of the quirks of transfering active record results over json is that all decimal values 
+    # One of the quirks of transfering active record results over json is that all decimal values
     # are turned into Strings - since javascript handles decimal values like ruby handles floats (inexactly)
     lambda do |row, value|
       v = value.to_s
@@ -59,7 +59,7 @@ module OpenChain; module Report; module SqlProxyDataReport
   end
 
   # This method receives the posted results of a sql_proxy query and turns them into a spreadsheet
-  # returning the data as a tempfile.  
+  # returning the data as a tempfile.
   def process_results run_by, results, settings
     # This is going to be the main method to extend if you need to make any major adjustments to how you process the query results
     # returned by the sql_proxy query.
@@ -113,15 +113,15 @@ module OpenChain; module Report; module SqlProxyDataReport
       if parameters.blank?
         # The sql_proxy query call will fail if there are parameters that are unaccounted for in the settings hash
         # In order to keep API parity w/ the standard reporting interface I also don't want to add another method parameter.
-        # So, just remove any keys that we might be adding here (or we know will be passed in) from the settings as the 
+        # So, just remove any keys that we might be adding here (or we know will be passed in) from the settings as the
         # default path (anything more complex can easily be done w/ a simple method implementation)
         parameters = settings.dup
         parameters.delete 'report_result_id'
         parameters.delete 'sql_proxy_client'
       end
 
-      # This ends the first part of the report by posting the query data to the sql_proxy.  sql_proxy will then post the 
-      # sql results back as json to the SqlProxyPostbacksController class...which then passes control through to 
+      # This ends the first part of the report by posting the query data to the sql_proxy.  sql_proxy will then post the
+      # sql results back as json to the SqlProxyPostbacksController class...which then passes control through to
       # the ReportResult#continue_sql_proxy_report method (and from there to process_sql_proxy_query_details)
       client.report_query self.sql_proxy_query_name(run_by, settings), parameters, query_context
     end

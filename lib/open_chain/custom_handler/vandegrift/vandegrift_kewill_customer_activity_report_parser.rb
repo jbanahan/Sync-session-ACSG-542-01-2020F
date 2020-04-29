@@ -45,7 +45,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftKewil
     end
 
     def make_data_tab wb, subsections
-      sheet = XlsMaker.create_sheet wb, "Data", ['Customer #','Name and Address','Mgr','Anyst','Slsmn','Terr','Add Date','Billing Amt','Revenue Amt','Profit%','Files']
+      sheet = XlsMaker.create_sheet wb, "Data", ['Customer #', 'Name and Address', 'Mgr', 'Anyst', 'Slsmn', 'Terr', 'Add Date', 'Billing Amt', 'Revenue Amt', 'Profit%', 'Files']
       outbound_row_number = 1
       subsections.each do |section|
         inbound_row_number = 0
@@ -135,7 +135,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftKewil
         val = '-' + val[0...val.length-1]
       end
       # Remove commas.
-      val = val.gsub(',','')
+      val = val.gsub(',', '')
       BigDecimal(val)
     end
 

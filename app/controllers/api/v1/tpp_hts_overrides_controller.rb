@@ -10,10 +10,10 @@ module Api; module V1; class TppHtsOverridesController < Api::V1::ApiCoreModuleC
     o = h['id'].blank? ? TppHtsOverride.new : TppHtsOverride.includes(
       {custom_values:[:custom_definition]}
     ).find_by_id(h['id'])
-    raise StatusableError.new("Object with id #{h['id']} not found.",404) if o.nil?
+    raise StatusableError.new("Object with id #{h['id']} not found.", 404) if o.nil?
     validate_trade_preference_program_not_changed h, o
     import_fields h, o, core_module
-    raise StatusableError.new("You do not have permission to save this HTS Override.",:forbidden) unless o.can_edit?(current_user)
+    raise StatusableError.new("You do not have permission to save this HTS Override.", :forbidden) unless o.can_edit?(current_user)
     raise StatusableError.new("Object cannot be saved without a valid tpphtso_trade_preference_program_id value.") unless o.trade_preference_program_id && o.trade_preference_program
     o.save!
     o

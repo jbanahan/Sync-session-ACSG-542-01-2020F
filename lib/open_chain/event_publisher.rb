@@ -5,7 +5,7 @@ module OpenChain; class EventPublisher
     'development'=>'https://sqs.us-east-1.amazonaws.com/468302385899/event-master-dev',
     'production'=>'https://sqs.us-east-1.amazonaws.com/468302385899/event-master-prod'}
 
-    MessageType ||= Struct.new(:type,:link_lambda,:short_message_lambda,:long_message_lambda) do
+    MessageType ||= Struct.new(:type, :link_lambda, :short_message_lambda, :long_message_lambda) do
       def link obj
         link_lambda.call(obj)
       end

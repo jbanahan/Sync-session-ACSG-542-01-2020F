@@ -1,9 +1,9 @@
 require 'open_chain/integration_client_parser'
 
 # This is a simple header/container level parser for descartes (eCellerate) shipment data.
-# The reason it only handles header / container level data is because we have some customers 
+# The reason it only handles header / container level data is because we have some customers
 # that need us to track their shipment data at a lower / more precise level than descartes allows
-# Generally this is for customers we take PO data for and 
+# Generally this is for customers we take PO data for and
 module OpenChain; module CustomHandler; module Descartes; class DescartesBasicShipmentXmlParser
   include OpenChain::IntegrationClientParser
 
@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
     inbound_file.add_identifier :house_bill, house_bill(xml)
     inbound_file.add_identifier :master_bill, master_bill(xml)
     inbound_file.company = set_importer(xml)
-    
+
     s = nil
     find_shipment(xml) do |shipment|
       set_shipment_header_information(shipment, xml)
@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
   end
 
   def set_shipment_header_information shipment, xml
-    # These string/date/decimal methods are a little weird, the reason I wrote/used them is that since the 
+    # These string/date/decimal methods are a little weird, the reason I wrote/used them is that since the
     # shipment screen is used for keying data in a number of situations in addition to this eCellerate
     # feed.  I don't want blank/nil data from this xml file overwriting something someone keyed.
     # If the data is in the file, it'll take precedence, but blank/nil values will be skipped
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
 
     totals = REXML::XPath.first(xml, "BLDescriptions/BLDescription")
 
-    if totals 
+    if totals
       decimal(totals.text "NumberOfCartons" ) { |d| shipment.number_of_packages = d.to_i }
       string(totals.text "TypeOfCartons") { |s| shipment.number_of_packages_uom = s }
       string(totals.text "Description") { |s| shipment.description_of_goods = s }
@@ -97,7 +97,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
     inbound_file.reject_and_raise("All eCellerate shipment XML files must have a TransactionDateTime element.") if last_exported_from_source.nil?
 
     shipment = nil
-    Lock.acquire("Shipment-#{house_bill}") do 
+    Lock.acquire("Shipment-#{house_bill}") do
       s = Shipment.where(house_bill_of_lading: house_bill, importer_id: importer.id).first_or_create! reference: reference_number(xml)
       if process_file?(s, last_exported_from_source)
         shipment = s
@@ -105,7 +105,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
     end
 
     if shipment
-      Lock.db_lock(shipment) do 
+      Lock.db_lock(shipment) do
         if process_file?(shipment, last_exported_from_source)
           shipment.last_exported_from_source = last_exported_from_source
           shipment.last_file_path = inbound_file.s3_path
@@ -153,7 +153,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
       else
         inbound_file.reject_and_raise("All eCellerate shipment XML files must have an Importer Party element with a PartyCode element.")
       end
-      
+
       @importer = importer
     else
       inbound_file.reject_and_raise("All eCellerate shipment XML files must have an Importer Party element.")
@@ -186,7 +186,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
       return date
     end
     nil
-  rescue 
+  rescue
     nil
   end
 
@@ -244,7 +244,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
       Port.where(schedule_d_code: port_code).first
     else
       inbound_file.add_warning_message("Unexpected LocationIdQualifier of '#{port_type}' found.")
-      nil  
+      nil
     end
 
     if port
@@ -255,7 +255,7 @@ module OpenChain; module CustomHandler; module Descartes; class DescartesBasicSh
   end
 
   def reference_number xml
-    # By default, we're going to use the house bill as the primary reference number as that's how the only 
+    # By default, we're going to use the house bill as the primary reference number as that's how the only
     # current account we have data for has it set up.
     "#{importer_prefix}-#{house_bill(xml)}"
   end

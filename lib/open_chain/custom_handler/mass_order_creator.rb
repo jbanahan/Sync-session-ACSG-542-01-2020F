@@ -8,13 +8,13 @@ module OpenChain; module CustomHandler; module MassOrderCreator
   def single_transaction_per_order?
     # In some cases where there's a TON of lines per order we don't really want to do a single transaction per
     # order.  It's just too taxing on the system.  If that's the case, override this method
-    # to return false and a transaction will be made per product creation and then a transaction will be 
+    # to return false and a transaction will be made per product creation and then a transaction will be
     # run for the order lookup/creation and then another for the actual line updates.
     true
   end
 
   def match_lines_method
-    # If ordln_line_number, this will use the line_number attribute to determine which existing line 
+    # If ordln_line_number, this will use the line_number attribute to determine which existing line
     # the order line attributes may belong to.
 
     # If ordln_puid or prod_uid, then the product style will be utilized
@@ -24,12 +24,12 @@ module OpenChain; module CustomHandler; module MassOrderCreator
   end
 
   def destroy_unreferenced_lines?
-    # If true, this will remove EVERY line from an order that is not included as part of the given 
+    # If true, this will remove EVERY line from an order that is not included as part of the given
     # attribute array.  You ONLY want to use this if you're sure you're getting full orders sent.
     false
   end
 
-  # This method can be overriden if you want to provide a different method for finding which order_line a set of 
+  # This method can be overriden if you want to provide a different method for finding which order_line a set of
   # order_line_attributes belongs to.
   def find_existing_order_line_for_update order, order_line_attributes
     # Name is intentionally long/obscure to prevent accidental override
@@ -107,11 +107,11 @@ module OpenChain; module CustomHandler; module MassOrderCreator
           end
 
           # I'm choosing to not rollback the transaction here.  Largely because all we've done at this point is
-          # just create supporting products and the actual order (header), which will need to be present in the system anyway 
+          # just create supporting products and the actual order (header), which will need to be present in the system anyway
           # for this order to get reloaded (once data is fixed) so there's no real point in rolling back
           break unless order.errors.blank?
 
-          # At this point, add destroy order line attributes that will remove any line in the order that is NOT referenced in 
+          # At this point, add destroy order line attributes that will remove any line in the order that is NOT referenced in
           # order line attributes.
           if @caller.destroy_unreferenced_lines?
             order_lines_to_destroy = order.order_lines.find_all {|ol| !used_order_lines.include?(ol.id) }
@@ -121,7 +121,7 @@ module OpenChain; module CustomHandler; module MassOrderCreator
               end
             end
           end
-          
+
           # At this point, we can use the attributes hash to insert the data into the order
           if @caller.single_transaction_per_order?
             apply_attributes_and_save(order, order_attributes, user)
@@ -138,7 +138,7 @@ module OpenChain; module CustomHandler; module MassOrderCreator
 
     def find_order user, order_attributes
       order = nil
-      Lock.acquire("Order-#{order_attributes['ord_ord_num']}") do 
+      Lock.acquire("Order-#{order_attributes['ord_ord_num']}") do
         order = Order.where(order_number: order_attributes['ord_ord_num']).first
 
         if order.nil?
@@ -167,13 +167,13 @@ module OpenChain; module CustomHandler; module MassOrderCreator
       end
 
       if product.nil? && !product_attributes['prod_uid'].blank?
-        Lock.acquire("Product-#{product_attributes['prod_uid']}") do 
+        Lock.acquire("Product-#{product_attributes['prod_uid']}") do
           product = Product.where(unique_identifier: product_attributes['prod_uid']).first_or_create!
         end
       end
 
       raise "Failed to locate or create product with attributes: #{product_attributes}." unless product
-      
+
       Lock.with_lock_retry(product) do
         apply_attributes_and_save(product, product_attributes, user)
       end

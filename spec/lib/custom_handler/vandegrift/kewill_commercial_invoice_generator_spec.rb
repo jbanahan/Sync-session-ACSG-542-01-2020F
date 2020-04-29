@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
 
   let(:entry_data) {
     e = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new '597549', 'SALOMON', []
-    i = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new '15MSA10', Date.new(2015,11,1), []
+    i = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new '15MSA10', Date.new(2015, 11, 1), []
     i.non_dutiable_amount = BigDecimal("5")
     i.add_to_make_amount = BigDecimal("25")
     e.invoices << i
@@ -149,7 +149,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator 
       expect(subject).to receive(:generate_and_send) do |entries|
         entry = entries
       end
-      
 
       subject.generate_and_send_invoices("12345", invoice, gross_weight_uom: "G")
 

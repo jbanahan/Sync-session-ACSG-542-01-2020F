@@ -1,5 +1,5 @@
 describe RegionsController do
-  
+
   before :each do
 
   end
@@ -19,7 +19,7 @@ describe RegionsController do
       expect(Region.find_by(name: "EMEA")).to be_nil
     end
     it "should restrict destroy" do
-      r = Factory(:region,:name=>"EMEA")
+      r = Factory(:region, :name=>"EMEA")
       delete :destroy, :id=>r.id
       expect(Region.find_by(name: "EMEA")).not_to be_nil
     end
@@ -50,7 +50,7 @@ describe RegionsController do
         r2 = Factory(:region)
         get :index
         expect(response).to be_success
-        expect(assigns(:regions).to_a).to eq([@r,r2])
+        expect(assigns(:regions).to_a).to eq([@r, r2])
       end
     end
     describe "create" do

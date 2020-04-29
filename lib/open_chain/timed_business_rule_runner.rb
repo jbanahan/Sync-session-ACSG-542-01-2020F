@@ -3,7 +3,7 @@ module OpenChain; class TimedBusinessRuleRunner
     run_list = BusinessValidationScheduledJob.where("run_date <= ?", Time.zone.now)
     run_list.each do |job|
       obj = job.validatable
-      Lock.db_lock(obj) do 
+      Lock.db_lock(obj) do
         BusinessValidationTemplate.create_results_for_object! obj
         job.destroy
       end

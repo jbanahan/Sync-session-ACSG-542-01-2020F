@@ -1,11 +1,11 @@
 describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport do
   subject {
-    Class.new do 
+    Class.new do
       include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport
     end.new
   }
 
-  
+
 
 
   describe "generate_and_send_shipment_xml" do
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport do
       REXML::Document.new("<shipment></shipment>")
     }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:generate_entry_xml).and_return xml
     end
 
@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport do
     end
 
     context "without file_number" do
-      before :each do 
+      before :each do
         shipment_data.file_number = nil
       end
 
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport do
       end
 
       context "without edi_identifier" do
-        before :each do 
+        before :each do
           shipment_data_with_bol.edi_identifier = nil
         end
 
@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport do
       REXML::Document.new("<shipment></shipment>")
     }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:generate_entry_xml).and_return xml
     end
 
@@ -168,7 +168,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport do
     end
 
     context "without file_number" do
-      before :each do 
+      before :each do
         invoice_data.file_number = nil
       end
 

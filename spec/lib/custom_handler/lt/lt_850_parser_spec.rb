@@ -15,24 +15,24 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
   }
 
   describe "parse", :disable_delayed_jobs do
-    
+
     subject { described_class }
 
     it "parses order" do
       subject.parse data, bucket: "bucket", key: "lt.edi"
-      
+
       o = Order.where(order_number: "LOLLYT-417208").first
       expect(o.customer_order_number).to eq "417208"
       expect(o.importer).to eq importer
-      expect(o.order_date).to eq Date.new(2018,7,31)
+      expect(o.order_date).to eq Date.new(2018, 7, 31)
       expect(o.mode).to eq "AW"
       expect(o.terms_of_sale).to eq "01"
       expect(o.fob_point).to eq "NEW YORK"
       expect(o.currency).to eq "USD"
       expect(o.season).to eq "183FA 1"
-      expect(o.ship_window_start).to eq Date.new(2018,8,13)
-      expect(o.ship_window_end).to eq Date.new(2018,9,21)
-      
+      expect(o.ship_window_start).to eq Date.new(2018, 8, 13)
+      expect(o.ship_window_end).to eq Date.new(2018, 9, 21)
+
       division = o.division
       expect(division.name).to eq "BRANDED ATHLETICS DIVISION"
       expect(division.company).to eq importer
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ol2.hts).to eq "6103431540"
       expect(ol2.custom_value(cdefs[:ord_line_color])).to eq "XX2"
       expect(ol2.custom_value(cdefs[:ord_line_color_description])).to eq "ASSORTED COLOR 2"
-      expect(ol2.custom_value(cdefs[:ord_line_season])).to eq "183FA 2" 
+      expect(ol2.custom_value(cdefs[:ord_line_season])).to eq "183FA 2"
       expect(ol2.custom_value(cdefs[:ord_line_size])).to eq "PPK3"
       expect(ol2.custom_value(cdefs[:ord_line_size_description])).to eq "PPK4"
 
@@ -116,7 +116,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       expect(ol3.hts).to eq "6109901009"
       expect(ol3.custom_value(cdefs[:ord_line_color])).to eq "XX2"
       expect(ol3.custom_value(cdefs[:ord_line_color_description])).to eq "ASSORTED COLOR 2"
-      expect(ol3.custom_value(cdefs[:ord_line_season])).to eq "183FA 2" 
+      expect(ol3.custom_value(cdefs[:ord_line_season])).to eq "183FA 2"
       expect(ol3.custom_value(cdefs[:ord_line_size])).to eq "PPK3"
       expect(ol3.custom_value(cdefs[:ord_line_size_description])).to eq "PPK4"
     end
@@ -126,7 +126,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
       old_ord_ln = Factory(:order_line, order: old_ord)
 
       subject.parse data, bucket: "bucket", key: "lt.edi"
-      expect{ old_ord_ln.reload }.to raise_error ActiveRecord::RecordNotFound
+      expect { old_ord_ln.reload }.to raise_error ActiveRecord::RecordNotFound
     end
 
     it "assigns business-logic error to order without sending email" do
@@ -139,7 +139,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
 
     it "errors if REF segments don't include HTS qualifier" do
       data.gsub!(/REF\*HST.+$/, '')
-      expect{ subject.parse data, bucket: "bucket", key: "lt.edi" }.to raise_error do |error|
+      expect { subject.parse data, bucket: "bucket", key: "lt.edi" }.to raise_error do |error|
         expect(error.class).to eq OpenChain::EdiParserSupport::EdiStructuralError
         expect(error.message).to eq "Order # 417208, UPC # 192399830914: Expecting REF with HST qualifier but none found"
       end
@@ -156,7 +156,7 @@ describe OpenChain::CustomHandler::Lt::Lt850Parser do
   describe "update_standard_product" do
     let(:p) { Factory(:product, unique_identifier: "LOLLYT-ABKLSC", name: nil) }
 
-    let(:line) do 
+    let(:line) do
       t = REX12.each_transaction(StringIO.new(data)).first
       subject.extract_loop(t.segments, subject.line_level_segment_list).first
     end

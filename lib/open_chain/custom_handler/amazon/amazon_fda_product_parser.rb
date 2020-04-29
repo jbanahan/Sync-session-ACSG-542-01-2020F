@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonFdaProductPar
       # See the FDA's Affirmation of Compliance Codes (currently: https://www.fda.gov/industry/entry-submission-process/affirmation-compliance-codes)
       # for all the codes.  This feed seems to just be about the Chinese Ceramic code.
       set_custom_value(product, :prod_fda_affirmation_compliance, changed, "CCC")
-      set_custom_value(product, :prod_fda_affirmation_compliance_value, changed, chinese_ceramic_factory_code_number)  
+      set_custom_value(product, :prod_fda_affirmation_compliance_value, changed, chinese_ceramic_factory_code_number)
     end
   end
 
@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonFdaProductPar
 
   def self.file_type filename
     filename = File.basename(filename)
-    
+
     if filename.to_s =~ /^US_PGA_([^_]+)_.+\.csv$/i
       if $1.to_s.upcase == "FDG"
         return :fdg

@@ -5,14 +5,14 @@ describe OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser do
   let (:user) { Factory(:user) }
 
   describe "parse_file" do
-    let! (:importer) { 
-      i = Factory(:importer, system_code: "SYSCODE") 
+    let! (:importer) {
+      i = Factory(:importer, system_code: "SYSCODE")
       i.system_identifiers.create! system: "eCellerate", code: "INTIN"
       i
     }
     let (:inbound_file) { InboundFile.new s3_path: "file.xml", s3_bucket: "bucket" }
-    
-    before :each do 
+
+    before :each do
       allow(subject).to receive(:inbound_file).and_return inbound_file
     end
 
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser do
         expect(s).not_to be_nil
         expect(s).to be_persisted
         s.reload
-        
+
         expect(s.importer).to eq importer
         expect(s.reference).to eq "SYSCODE-LMDLSZ18080052"
         expect(s.last_exported_from_source).to eq Time.zone.parse("2018-08-07T14:59:13.00-05:00")
@@ -92,8 +92,8 @@ describe OpenChain::CustomHandler::Descartes::DescartesBasicShipmentXmlParser do
         expect(shipment.entity_snapshots.length).to eq 0
       end
     end
-    
-    context "with xml errors" do 
+
+    context "with xml errors" do
       it "rejects if house bill is missing" do
         xml_data.gsub!("<HouseBillNumber>LMDLSZ18080052</HouseBillNumber>", "")
         expect { subject.parse xml, user }.to raise_error StandardError

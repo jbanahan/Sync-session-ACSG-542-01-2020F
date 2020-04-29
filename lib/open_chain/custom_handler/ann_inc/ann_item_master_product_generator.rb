@@ -26,11 +26,11 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
     30000
   end
 
-  #superclass requires this method
+  # superclass requires this method
   def sync_code
     SYNC_CODE
   end
-  
+
   def ftp_credentials
     folder = MasterSetup.get.production? ? "ITEM_MASTER" : "ITEM_MASTER_TEST"
     connect_vfitrack_net("to_ecs/Ann/#{folder}")
@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
 
   # negative indices are not included in outbound file
   def remap row
-    {  
+    {
       -1 => row[5], # related_styles
        0 => 118340,
        1 => timestamp,
@@ -103,14 +103,14 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
                  SUBSTR(related_styles.text_value,1,50),
                  IFNULL(set_qty.integer_value, 0)
           FROM products
-            LEFT OUTER JOIN custom_values AS related_styles ON products.id = related_styles.customizable_id 
+            LEFT OUTER JOIN custom_values AS related_styles ON products.id = related_styles.customizable_id
               AND related_styles.customizable_type = "Product" AND related_styles.custom_definition_id = ?
-            LEFT OUTER JOIN custom_values AS approved_long ON products.id = approved_long.customizable_id 
+            LEFT OUTER JOIN custom_values AS approved_long ON products.id = approved_long.customizable_id
               AND approved_long.customizable_type = "Product" AND approved_long.custom_definition_id = ?
             INNER JOIN classifications cl ON products.id = cl.product_id
-            LEFT OUTER JOIN custom_values AS long_desc_override ON cl.id = long_desc_override.customizable_id 
+            LEFT OUTER JOIN custom_values AS long_desc_override ON cl.id = long_desc_override.customizable_id
               AND long_desc_override.customizable_type = "Classification" AND long_desc_override.custom_definition_id = ?
-            LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id 
+            LEFT OUTER JOIN custom_values AS classification_type ON cl.id = classification_type.customizable_id
               AND classification_type.customizable_type = "Classification" AND classification_type.custom_definition_id = ?
             LEFT OUTER JOIN custom_values AS approved_date ON cl.id = approved_date.customizable_id
               AND approved_date.customizable_type = "Classification" AND approved_date.custom_definition_id = ?
@@ -121,7 +121,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
           ORDER BY products.id, tr.line_number
           LIMIT ?
         SQL
-    ActiveRecord::Base.sanitize_sql_array([q, cdefs[:related_styles],cdefs[:approved_long],cdefs[:long_desc_override],cdefs[:classification_type],cdefs[:approved_date],cdefs[:set_qty],max_results])
+    ActiveRecord::Base.sanitize_sql_array([q, cdefs[:related_styles], cdefs[:approved_long], cdefs[:long_desc_override], cdefs[:classification_type], cdefs[:approved_date], cdefs[:set_qty], max_results])
   end
 
   def where_clause
@@ -137,5 +137,4 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnItemMasterProduc
     end
     ActiveRecord::Base.sanitize_sql_array([sql, us.id])
   end
-  
 end; end; end; end

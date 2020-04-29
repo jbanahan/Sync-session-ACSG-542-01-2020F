@@ -2,11 +2,11 @@ require 'net/ftp'
 require 'net/sftp'
 
 class FtpSender
-#THIS CLASS IS NOT UNIT TESTED.  THOUGHTS ON BEST WAY TO UNIT TEST ARE WELCOME!
+# THIS CLASS IS NOT UNIT TESTED.  THOUGHTS ON BEST WAY TO UNIT TEST ARE WELCOME!
 
-  #send a file via FTP
+  # send a file via FTP
   # arg_file - can be a path to a file or an actual File object
-  #opts = :binary (defaults to true)
+  # opts = :binary (defaults to true)
   #  :folder (defaults to nil)
   #  :remote_file_name (defaults to local file name)
   #  :passive (defaults to true)
@@ -33,8 +33,8 @@ class FtpSender
       empty_file = false
       begin
         # Use pathname here instead of just stat'ing the file because there are instances where the file handle
-        # may not have been used directly to write the data, but there is in fact data to be read from the filesystem.  
-        #In this case file.size returns 0, when, in fact, the file on the actual filesystem (which we use below in send_file) does have data.
+        # may not have been used directly to write the data, but there is in fact data to be read from the filesystem.
+        # In this case file.size returns 0, when, in fact, the file on the actual filesystem (which we use below in send_file) does have data.
         pathname = Pathname.new(file.path)
         if (pathname.exist? && pathname.size > 0) || my_opts[:force_empty]
           store_sent_file = true
@@ -76,7 +76,7 @@ class FtpSender
                           :last_server_response => (ftp_client.nil? ? nil : ftp_client.last_response),
                           :protocol => my_opts[:protocol],
                           :retry_count => session.retry_count ? session.retry_count + 1 : 0)
-        
+
         # We don't really want to save off empty ftp file send sessions, there's no real point.
         # We do, however, want to return a session always from the send..so, just return one that hasn't
         # been created yet
@@ -114,7 +114,7 @@ class FtpSender
     # since we generally won't have gotten that same object to send (for a variety of reasons - see get_file_to_ftp)
     filename = arg_file.respond_to?(:original_filename) ? arg_file.original_filename : File.basename(local_file)
 
-    {:binary=>true,:passive=>true,:remote_file_name=>filename,
+    {:binary=>true, :passive=>true, :remote_file_name=>filename,
             :force_empty=>false, :protocol=>"ftp"}.with_indifferent_access
   end
 
@@ -268,16 +268,16 @@ class FtpSender
       @client ? @client.last_response : (@last_response ? @last_response : "")
     end
 
-    # Returns an array FtpFile objects representing all the files in the 
+    # Returns an array FtpFile objects representing all the files in the
     # current working directory.
     #
     # Files will by default be converted to the time in the current Time.zone
     # use a different convert_to_time_zone value to change to something else
-    # 
+    #
     # By default only actual files are returned, to list directories too
     # pass false the include_only_files param
     def list_files convert_to_time_zone: Time.zone, include_only_files: true
-      @client.mlsd.map do |f| 
+      @client.mlsd.map do |f|
         next if include_only_files && !f.file?
 
         # I'm sure there's other types of entries other than just file and directory but I'm just going to assume
@@ -313,7 +313,7 @@ class FtpSender
 
       # Other remote servers don't appear to always support compression, so we're going to use compression just with connect.vfitrack.net or ftp2.vandegriftinc.com
       compression = ["connect.vfitrack.net", "ftp2.vandegriftinc.com"].include?(server)
-      
+
       sftp_opts = {password: password, compression: compression, verify_host_key: false, timeout: 10, auth_methods: ["password"]}
       if opts[:port]
         sftp_opts[:port] = opts[:port]
@@ -362,16 +362,16 @@ class FtpSender
       @last_response
     end
 
-    # Returns an array FtpFile objects representing all the files in the 
+    # Returns an array FtpFile objects representing all the files in the
     # current working directory.
     #
     # Files will by default be converted to the time in the current Time.zone
     # use a different convert_to_time_zone value to change to something else
-    # 
+    #
     # By default only actual files are returned, to list directories too
     # pass false the include_only_files param
     def list_files convert_to_time_zone: Time.zone, include_only_files: true
-      @client.dir.entries(@remote_path.to_s).map do |f| 
+      @client.dir.entries(@remote_path.to_s).map do |f|
         next if include_only_files && !f.file?
 
         # I'm sure there's other types of entries other than just file and directory but I'm just going to assume

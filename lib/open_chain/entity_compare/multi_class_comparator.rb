@@ -15,9 +15,9 @@ module OpenChain; module EntityCompare; module MultiClassComparator
         comp = "OpenChain::EntityCompare::#{m}Comparator".constantize
         Class.new { extend comp }
       end
-        
-      define_method(:accept?) do |snapshot| 
-        comparators.any?{ |m| m.accept? snapshot }
+
+      define_method(:accept?) do |snapshot|
+        comparators.any? { |m| m.accept? snapshot }
       end
     end
   end

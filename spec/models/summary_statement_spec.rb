@@ -1,11 +1,11 @@
 describe SummaryStatement do
   before(:each) {@ss = Factory(:summary_statement)}
-  
+
   describe "self.include?" do
     it "returns true only if a statement number exists in the table" do
       bi = Factory(:broker_invoice)
       @ss.broker_invoices << bi
-      
+
       expect(described_class.include?(bi.id)).to be_truthy
       expect(described_class.include?(100)).to be_falsey
     end
@@ -32,7 +32,7 @@ describe SummaryStatement do
     it "rejects invoices that don't belong to either customer or its linked companies" do
       bi = Factory(:broker_invoice, entry: Factory(:entry, importer: Factory(:importer)))
       expect(@ss.belongs_to_customer?(bi.id)).to be_falsey
-    end 
+    end
 
     it "rejects non-existent invoices" do
       expect(@ss.belongs_to_customer?(1000)).to be_falsey
@@ -65,7 +65,7 @@ describe SummaryStatement do
 
     it "raises an error if the invoice doesn't belong to the statement assigned" do
       unassigned_bi_id = Factory(:broker_invoice, invoice_number: '123456789').id
-      expect{@ss.remove! unassigned_bi_id}.to raise_error("Invoice 123456789 is not on this statement.")
+      expect {@ss.remove! unassigned_bi_id}.to raise_error("Invoice 123456789 is not on this statement.")
       expect(@ss.broker_invoices.count).to eq 1
     end
   end
@@ -94,8 +94,8 @@ describe SummaryStatement do
 
     it "raises an error if the invoice company is neither the summary statement customer nor a linked company" do
       bi = Factory(:broker_invoice, invoice_number: '123456789', entry: Factory(:entry, importer: Factory(:company)))
-      
-      expect{@ss.add! bi.id}.to raise_error("Invoice 123456789 does not belong to customer.")
+
+      expect {@ss.add! bi.id}.to raise_error("Invoice 123456789 does not belong to customer.")
       expect(@ss.broker_invoices.count).to eq 0
     end
 
@@ -104,7 +104,7 @@ describe SummaryStatement do
       @ss.broker_invoices << bi
       ss_2 = Factory(:summary_statement)
 
-      expect{ss_2.add! bi.id}.to raise_error("Invoice 123456789 is already assigned to a statement.")
+      expect {ss_2.add! bi.id}.to raise_error("Invoice 123456789 is already assigned to a statement.")
       expect(@ss.broker_invoices.count).to eq 1
       expect(ss_2.broker_invoices.count).to eq 0
     end

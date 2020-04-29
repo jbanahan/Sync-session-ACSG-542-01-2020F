@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module Kirklands; class KirklandsEntryDu
     sr = entry.find_or_initialize_sync_record(OpenChain::CustomHandler::Kirklands::KirklandsEntryDutyFileGenerator::SYNC_CODE)
     generate_file = sr.sent_at.nil?
 
-    # If this isn't the first time we've sent the file (or if resend hasn't been enabled), then 
+    # If this isn't the first time we've sent the file (or if resend hasn't been enabled), then
     # check if the last print date was updated.
     if !generate_file
       generate_file = any_value_changed?(old_snapshot, new_snapshot, :ent_last_7501_print)

@@ -31,7 +31,7 @@ describe OpenChain::Events::EventBroadcaster do
 
       it "should rescue errors from process_event" do
         expect_any_instance_of(OpenChain::Events::EventProcessor).to receive(:process_event).and_raise "Error!"
-        expect{@broadcaster.broadcast :event_type, "Class", 1}.to change(ErrorLogEntry,:count).by(1)
+        expect {@broadcaster.broadcast :event_type, "Class", 1}.to change(ErrorLogEntry, :count).by(1)
       end
     end
 

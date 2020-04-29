@@ -2,7 +2,7 @@ require 'open_chain/custom_handler/custom_file_csv_excel_parser'
 
 module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
   include OpenChain::CustomHandler::CustomFileCsvExcelParser
-  
+
   def initialize custom_file
     @custom_file = custom_file
   end
@@ -149,7 +149,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsParser
 
     def ensure_row_values row
       # Some of the values from the file should be turned into numeric values, do so here
-      # NOTE: The numbers here represent the actual output columns as the values will appear in to the recipient of the file, not 
+      # NOTE: The numbers here represent the actual output columns as the values will appear in to the recipient of the file, not
       # as the came in from the input file.
       row[20] = decimal_value(row[20]) # Quantity
       row[21] = decimal_value(row[21]) # Unit Price

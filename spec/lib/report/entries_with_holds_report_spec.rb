@@ -45,7 +45,7 @@ describe OpenChain::Report::EntriesWithHoldsReport do
       expect(sheet.length).to eq 3
       expect(sheet[0]).to eq ['Broker Reference', 'Entry Number', 'Container Numbers', 'Master Bills', 'House Bills', 'Customer References', 'PO Numbers', 'Release Date', 'Arrival Date']
       expect(sheet[1]).to eq ['br_1', 'en_1', 'cn_1', 'mb_1', 'hb_1', 'cr_1', 'po_1', zone.parse("2019-12-09T00:00:00").to_s, zone.parse("2019-12-02T00:00:00").to_s]
-      expect(sheet[2]).to eq ['br_2', 'en_2', 'cn_2', 'mb_2', 'hb_2', 'cr_2', 'po_2', Date.new(2019,12,10).in_time_zone(u.time_zone).to_s, Date.new(2019,12,3).in_time_zone(u.time_zone).to_s]
+      expect(sheet[2]).to eq ['br_2', 'en_2', 'cn_2', 'mb_2', 'hb_2', 'cr_2', 'po_2', Date.new(2019, 12, 10).in_time_zone(u.time_zone).to_s, Date.new(2019, 12, 3).in_time_zone(u.time_zone).to_s]
     end
   end
 

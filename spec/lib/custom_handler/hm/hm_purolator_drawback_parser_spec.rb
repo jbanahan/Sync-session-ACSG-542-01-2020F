@@ -14,12 +14,12 @@ describe OpenChain::CustomHandler::Hm::HmPurolatorDrawbackParser do
             "x,CARRNO4,0106,2018-01-04,x\n" +
             "x,CARRNO5,0170,2018-01-05,x"
 
-      line_1 = HmI2DrawbackLine.create!(carrier_tracking_number:'prefixCARRNO1suffix', shipment_type:'export', export_received:false, shipment_date:Date.new(2017,3,1))
-      line_2 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO2', shipment_type:'export', export_received:false, shipment_date:Date.new(2017,4,2))
-      line_3 = HmI2DrawbackLine.create!(carrier_tracking_number:'prefixCARRNO3', shipment_type:'export', export_received:false, shipment_date:Date.new(2017,5,3))
-      line_4 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO4', shipment_type:'export', export_received:false, shipment_date:Date.new(2017,6,4))
-      line_5 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO5', shipment_type:'export', export_received:false, shipment_date:Date.new(2018,1,4))
-      line_6 = HmI2DrawbackLine.create!(carrier_tracking_number:'diffprefixCARRNO1suffix', shipment_type:'export', export_received:false, shipment_date:Date.new(2017,8,6))
+      line_1 = HmI2DrawbackLine.create!(carrier_tracking_number:'prefixCARRNO1suffix', shipment_type:'export', export_received:false, shipment_date:Date.new(2017, 3, 1))
+      line_2 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO2', shipment_type:'export', export_received:false, shipment_date:Date.new(2017, 4, 2))
+      line_3 = HmI2DrawbackLine.create!(carrier_tracking_number:'prefixCARRNO3', shipment_type:'export', export_received:false, shipment_date:Date.new(2017, 5, 3))
+      line_4 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO4', shipment_type:'export', export_received:false, shipment_date:Date.new(2017, 6, 4))
+      line_5 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO5', shipment_type:'export', export_received:false, shipment_date:Date.new(2018, 1, 4))
+      line_6 = HmI2DrawbackLine.create!(carrier_tracking_number:'diffprefixCARRNO1suffix', shipment_type:'export', export_received:false, shipment_date:Date.new(2017, 8, 6))
 
       subject.parse_file csv
 
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Hm::HmPurolatorDrawbackParser do
       line_1 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO1', shipment_type:'returns', export_received:false)
 
       # Won't match because its shipment date occurs after the receipt date in the file.
-      line_2 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO3', shipment_type:'export', export_received:false, shipment_date:Date.new(2018,3,1))
+      line_2 = HmI2DrawbackLine.create!(carrier_tracking_number:'CARRNO3', shipment_type:'export', export_received:false, shipment_date:Date.new(2018, 3, 1))
 
       subject.parse_file csv
 

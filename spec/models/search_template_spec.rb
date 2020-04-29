@@ -1,10 +1,10 @@
 describe SearchTemplate do
   before :each do
-    @ss = SearchSetup.new(name:'MyName',module_type:'Order',include_links:true,include_rule_links:true,no_time:true)
-    @ss.search_columns.build(model_field_uid:'ord_ord_num',rank:1)
-    @ss.search_columns.build(model_field_uid:'ord_ord_date',rank:2)
-    @ss.search_criterions.build(model_field_uid:'ord_ord_num',operator:'sw',value:'X')
-    @ss.sort_criterions.build(model_field_uid:'ord_ord_date',descending:true,rank:1)
+    @ss = SearchSetup.new(name:'MyName', module_type:'Order', include_links:true, include_rule_links:true, no_time:true)
+    @ss.search_columns.build(model_field_uid:'ord_ord_num', rank:1)
+    @ss.search_columns.build(model_field_uid:'ord_ord_date', rank:2)
+    @ss.search_criterions.build(model_field_uid:'ord_ord_num', operator:'sw', value:'X')
+    @ss.sort_criterions.build(model_field_uid:'ord_ord_date', descending:true, rank:1)
   end
   describe "create_from_search_setup!" do
     it "should create search template" do
@@ -14,16 +14,16 @@ describe SearchTemplate do
       expect(st.id).to_not be_blank
 
       expected_hash = {
-        'name'=>'MyName','module_type'=>'Order','include_links'=>true,'include_rule_links'=>true,'no_time'=>true,
+        'name'=>'MyName', 'module_type'=>'Order', 'include_links'=>true, 'include_rule_links'=>true, 'no_time'=>true,
         'search_columns'=>[
-          {'model_field_uid'=>'ord_ord_num','rank'=>1},
-          {'model_field_uid'=>'ord_ord_date','rank'=>2}
+          {'model_field_uid'=>'ord_ord_num', 'rank'=>1},
+          {'model_field_uid'=>'ord_ord_date', 'rank'=>2}
         ],
         'search_criterions'=>[
-          {'model_field_uid'=>'ord_ord_num','operator'=>'sw','value'=>'X'}
+          {'model_field_uid'=>'ord_ord_num', 'operator'=>'sw', 'value'=>'X'}
         ],
         'sort_criterions'=>[
-          {'model_field_uid'=>'ord_ord_date','descending'=>true,'rank'=>1}
+          {'model_field_uid'=>'ord_ord_date', 'descending'=>true, 'rank'=>1}
         ]
       }
       expect(JSON.parse(st.search_json)).to eq expected_hash
@@ -51,7 +51,7 @@ describe SearchTemplate do
 
   context 'validations' do
     it "should not allow duplicate template names" do
-      st = SearchTemplate.create!(name:'X',search_json:"{'a':'b'}")
+      st = SearchTemplate.create!(name:'X', search_json:"{'a':'b'}")
       expect {SearchTemplate.create!(name:'X')}.to raise_error /Name has already been taken/
     end
     it "should require name" do

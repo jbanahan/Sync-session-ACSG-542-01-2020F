@@ -4,9 +4,9 @@ describe CustomReport do
 
   describe "give_to" do
     before :each do
-      @u = Factory(:user,:first_name=>"A",:last_name=>"B")
+      @u = Factory(:user, :first_name=>"A", :last_name=>"B")
       @u2 = Factory(:user)
-      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true, :include_rule_links=>true)
+      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC", :user=>@u, :include_links=>true, :include_rule_links=>true)
     end
     it "should copy to another user" do
       @s.give_to @u2
@@ -15,7 +15,7 @@ describe CustomReport do
       expect(d.id).not_to be_nil
       expect(d.class).to eq(CustomReportEntryInvoiceBreakdown)
       @s.reload
-      expect(@s.name).to eq("ABC") #we shouldn't modify the original object
+      expect(@s.name).to eq("ABC") # we shouldn't modify the original object
     end
     it "should create a notification for recipient" do
       @s.give_to @u2
@@ -28,7 +28,7 @@ describe CustomReport do
   describe "deep_copy" do
     before :each do
       @u = Factory(:user)
-      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC",:user=>@u,:include_links=>true, :include_rule_links=>true)
+      @s = CustomReportEntryInvoiceBreakdown.create!(:name=>"ABC", :user=>@u, :include_links=>true, :include_rule_links=>true)
     end
     it "should copy basic search setup" do
       d = @s.deep_copy "new"
@@ -41,7 +41,7 @@ describe CustomReport do
       expect(d.class).to eq(CustomReportEntryInvoiceBreakdown)
     end
     it "should copy parameters" do
-      @s.search_criterions.create!(:model_field_uid=>'a',:value=>'x',:operator=>'y',:status_rule_id=>1,:custom_definition_id=>2)
+      @s.search_criterions.create!(:model_field_uid=>'a', :value=>'x', :operator=>'y', :status_rule_id=>1, :custom_definition_id=>2)
       d = @s.deep_copy "new"
       expect(d.search_criterions.size).to eq(1)
       sc = d.search_criterions.first
@@ -52,7 +52,7 @@ describe CustomReport do
       expect(sc.custom_definition_id).to eq(2)
     end
     it "should copy columns" do
-      @s.search_columns.create!(:model_field_uid=>'a',:rank=>7,:custom_definition_id=>9)
+      @s.search_columns.create!(:model_field_uid=>'a', :rank=>7, :custom_definition_id=>9)
       d = @s.deep_copy "new"
       expect(d.search_columns.size).to eq(1)
       sc = d.search_columns.first
@@ -165,7 +165,7 @@ describe CustomReport do
         expect(r[1][3]).to eq(Time.new(2014, 1, 1).strftime("%Y-%m-%d"))
       end
     end
-    
+
   end
 
   describe "validate_access" do
@@ -177,7 +177,7 @@ describe CustomReport do
       end
     end
 
-    before :each do 
+    before :each do
       @user = Factory(:user)
     end
     it "raises an error if the can_view? class method is false" do
@@ -271,7 +271,7 @@ describe CustomReport do
   describe "setup_report_query" do
     let (:user) { Factory(:user, :product_view => true) }
 
-    subject { 
+    subject {
       r = CustomReport.new
       r.search_criterions.build model_field_uid: "prod_uid", operator: "eq", value: "Test"
       r
@@ -296,8 +296,8 @@ describe CustomReport do
   end
 
   describe "add_tab" do
-    subject { 
-      Class.new(CustomReport) do 
+    subject {
+      Class.new(CustomReport) do
         def run run_by, row_limit=nil
           add_tab "First"
           write_row 0, nil, ["Data1"], nil
@@ -335,7 +335,7 @@ describe CustomReport do
         def run user, row_limit
           nil
         end
-      }.new 
+      }.new
     }
 
     it "runs xlsx custom report" do
@@ -366,7 +366,7 @@ describe CustomReport do
         def run user, row_limit
           nil
         end
-      }.new 
+      }.new
     }
 
     it "runs xls custom report" do
@@ -392,7 +392,7 @@ describe CustomReport do
         def run user, row_limit
           nil
         end
-      }.new 
+      }.new
     }
 
     it "runs csv custom report" do
@@ -414,7 +414,7 @@ describe CustomReport do
         def run user, row_limit
           nil
         end
-      }.new 
+      }.new
     }
 
     it "runs report and returns results as arrays" do

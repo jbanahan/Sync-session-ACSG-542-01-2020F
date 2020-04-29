@@ -19,16 +19,16 @@ module OpenChain; module CustomHandler; class FenixNdInvoiceGenerator
       detail_map = invoice_detail_map
       rollup_by = (self.respond_to? :rollup_by) ? rollup_by : []
 
-      #File should use \r\n newlines and be straight ASCII chars
-      #Ack: MRI Ruby 1.9 has a bug in tempfile that doesn't allow you to use string :mode option here
+      # File should use \r\n newlines and be straight ASCII chars
+      # Ack: MRI Ruby 1.9 has a bug in tempfile that doesn't allow you to use string :mode option here
       importer_tax_id = invoice.importer.try(:fenix_customer_identifier)
       invoice_number = invoice.invoice_number
 
-      Tempfile.open(["#{importer_tax_id}_fenix_invoice_#{invoice_number.to_s.gsub("/", "_")}_",'.txt'], {:external_encoding =>"ASCII"}) do |t|
+      Tempfile.open(["#{importer_tax_id}_fenix_invoice_#{invoice_number.to_s.gsub("/", "_")}_", '.txt'], {:external_encoding =>"ASCII"}) do |t|
         # Write out the header information
         write_line t, header_format, invoice
         t << "\r\n"
-        
+
         line_count = 0
         invoice.commercial_invoice_lines.each do |line|
           line.commercial_invoice_tariffs.each do |tariff|
@@ -61,21 +61,19 @@ module OpenChain; module CustomHandler; class FenixNdInvoiceGenerator
       else
         ftp_file file, ftp_connection_info
       end
-      
     end
   end
-  
 
   # This method should return a mapping of the fields utilized to send header level invoice data to a lambda, method name, or a constant object
   # lambdas will be called using instance_exec giving access to local methods and objects returned will be
   # used directly as an output value.
   #
-  # The mapping field values are: :invoice_number, :invoice_date, :country_origin_code, :country_ultimate_destination, :currency, 
+  # The mapping field values are: :invoice_number, :invoice_date, :country_origin_code, :country_ultimate_destination, :currency,
   # :number_of_cartons, :gross_weight, :total_units, :total_charges, :shipper, :consignee, :importer, :po_number, :mode_of_transportation
   #
   # Shipper, Consignee and Importer are expected to return hashes consisting of any or all of the following keys:
-  # :name, :name_2, :address_1, :address_2, :city, :state, :postal_codereturns a mapping of 
-  # 
+  # :name, :name_2, :address_1, :address_2, :city, :state, :postal_codereturns a mapping of
+  #
   # You can override this method and use the hash returned as a merge point for any customer specific data points.
 
   def invoice_header_map
@@ -97,7 +95,7 @@ module OpenChain; module CustomHandler; class FenixNdInvoiceGenerator
       :mode_of_transportation => "2",
       # We should be sending just "GENERIC" as the importer name in the default case
       # which then will force the ops people to associate the importer account manually as the pull them
-      # into the system.  This partially needs to be done based on the way edi in feninx handling is done on a 
+      # into the system.  This partially needs to be done based on the way edi in feninx handling is done on a
       # per file directory basis.  This avoids extra setup when we just want to pull a generic invoice into the system.
       :importer => lambda { |i| Company.new name: "GENERIC" },
       :reference_identifier => lambda {|i| i.commercial_invoice_lines.select {|l| !l.customer_reference.blank?}.first.try(:customer_reference)},
@@ -107,7 +105,7 @@ module OpenChain; module CustomHandler; class FenixNdInvoiceGenerator
     }
   end
 
-  # invoice_detail_map - 
+  # invoice_detail_map -
   # This method works identical to invoice_header_map with the following fields:
   # This method should return a mapping of the fields utilized to send detail level invoice data
   # These fields are: :part_number, :country_origin_code, :hts_code, :tariff_description, :quantity, :unit_price, , :po_number
@@ -121,7 +119,7 @@ module OpenChain; module CustomHandler; class FenixNdInvoiceGenerator
       :country_origin_code => lambda {|i, line, tariff| line.country_origin_code},
       # Operations asked us to send a value that would easily let them know the HTS value was
       # invalid for cases where there's no HTS number we could find in the value.  Randy
-      # suggested that a value of 0 would always trip any validations and it would 
+      # suggested that a value of 0 would always trip any validations and it would
       # force them to address each invalid line if we did this.
       :hts_code => lambda {|i, line, tariff| (tariff.try(:hts_code).blank?) ? "0" : tariff.hts_code},
       :tariff_description => lambda {|i, line, tariff| tariff.try(:tariff_description)},

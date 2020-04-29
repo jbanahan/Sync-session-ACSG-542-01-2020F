@@ -2,16 +2,16 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberExpeditorsPoGenerator
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  
+
   UOM_TABLE = { "EA" => "EA", "FOT" => "FT", "FT2" => "SFT", "FTK" => "SFT" }
 
-  HEADER = ["orderNumber", "orderIssueDate", "vendorNumber", "consigneeName", "buyerName", "orderDepartment", "orderDivision", 
-            "orderWarehouse", "orderEarlyShipDate", "orderLateShipDate", "orderRequiredDeliveryDate", "orderMode", "orderIncoterms", 
-            "orderCountryOfOrigin", "orderPortOfDestination", "orderReference1", "orderReference2", "orderReference3", "orderReference4", 
-            "itemSkuNumber", "itemLineNumber", "itemQuantity", "itemQuantityUom", "itemOuterPackQuantity", "itemPackQuantityUom", "itemPrice", 
-            "itemCurrencyCode", "itemHtsNumber", "itemDescription", "itemColor", "itemSize", "itemDepartment", "itemDivision", "itemWarehouse", 
+  HEADER = ["orderNumber", "orderIssueDate", "vendorNumber", "consigneeName", "buyerName", "orderDepartment", "orderDivision",
+            "orderWarehouse", "orderEarlyShipDate", "orderLateShipDate", "orderRequiredDeliveryDate", "orderMode", "orderIncoterms",
+            "orderCountryOfOrigin", "orderPortOfDestination", "orderReference1", "orderReference2", "orderReference3", "orderReference4",
+            "itemSkuNumber", "itemLineNumber", "itemQuantity", "itemQuantityUom", "itemOuterPackQuantity", "itemPackQuantityUom", "itemPrice",
+            "itemCurrencyCode", "itemHtsNumber", "itemDescription", "itemColor", "itemSize", "itemDepartment", "itemDivision", "itemWarehouse",
             "itemEarlyShipDate", "itemLateShipDate", "itemRequiredDeliveryDate", "itemReference1", "itemReference2", "itemReference3"]
-  
+
   VALIDATE = {"orderNumber" => {required: true, max_len: 36},
               "orderIssueDate" => {required: false, max_len: 8},
               "vendorNumber" => {required: true, max_len: 40},
@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
               "itemWarehouse" => {required: false, max_len: 16},
               "itemReference1" => {required: false, max_len: 40},
               "itemReference2" => {required: false, max_len: 20}}
-  
+
   def generate_tsv ord_list
     cdefs = self.class.prep_custom_definitions [:ord_country_of_origin, :ord_assigned_agent, :prod_merch_cat, :prod_merch_cat_desc, :ordln_old_art_number]
     CSV.generate(col_sep:"\t") do |tsv|
@@ -75,7 +75,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
           row << filter("itemReference1", ordln.product.get_custom_value(cdefs[:prod_merch_cat_desc]).value, row_num)
           row << filter("itemReference2", ordln.get_custom_value(cdefs[:ordln_old_art_number]).value, row_num)
           row << nil
-          tsv << row 
+          tsv << row
         end
       end
     end

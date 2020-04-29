@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     nil
   end
 
-  # If there is any final information that needs to be added to the shipment before 
+  # If there is any final information that needs to be added to the shipment before
   # it is saved...override this method and add it.
   # This method is called after shipment totals are calculated
   def finalize_shipment shipment, shipment_xml
@@ -48,12 +48,12 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     inbound_file.error_and_raise("Your customer specific class extension must implement this method, returning the system code of the importer to utilize on the Orders.")
   end
 
-  # Return the system code to use for the party xml given.  
+  # Return the system code to use for the party xml given.
   # DO NOT do any prefixing (like w/ the importer system code), the caller will handle all of that
   # for you.  Just return the identifying information for the party using the provided XML party element.
   def party_system_code party_xml, party_type
     # I'm pretty sure in the vast majority of cases we should be using customer specific identifiers
-    # inside the identification element...those appear to be 100% customer specific though and not 
+    # inside the identification element...those appear to be 100% customer specific though and not
     # generic, so we'll have to have this be overriden to determine which internal code in the party object should
     # be used in all cases.
     inbound_file.error_and_raise("This method must be overriden by an implementing class.")
@@ -82,7 +82,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     inbound_file.reject_and_raise("Unexpected root element. Expected ASNMessage but found '#{xml.root.name}'.") unless xml.root.name == "ASNMessage"
 
     # I don't believe GTN actually exports multiple ASN's per XML document, they use the
-    # same schema for uploading to them and downloading from them, so the functionality is 
+    # same schema for uploading to them and downloading from them, so the functionality is
     # there to send them mulitple ASN's, but as to getting them exported to us on event triggers,
     # I don't think we get more than one per XML document
     REXML::XPath.each(xml.root, "/ASNMessage/ASN") do |asn|
@@ -115,7 +115,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   # Processes a Delete purpose code, canceling the shipment.
   def process_asn_cancel xml, user, bucket, key
     set_importer_system_code(xml)
-    
+
     shipment = find_shipment_relation(xml).first
     return unless shipment
 
@@ -132,7 +132,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     s
   end
 
-  # Processes a create/update purpose code.  This will be a full replace of any container 
+  # Processes a create/update purpose code.  This will be a full replace of any container
   # referenced in the XML.
   def process_asn_update xml, user, bucket, key
     # We're going to take the approach that one ASN document maps to a single shipment in VFI Track.
@@ -218,7 +218,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     line.quantity = parse_decimal(line_xml.text("Quantity"))
     line.gross_kgs = parse_weight(line_xml.get_elements("Weight").first)
     line.cbms = parse_volume(line_xml.get_elements("Volume").first)
-    
+
     po_number = line_xml.text "PONumber"
 
     order_number = prefix_identifier_value(importer, po_number)
@@ -293,7 +293,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     container
   end
 
-  # Orders the LineItem elements from a single Container element.  By 
+  # Orders the LineItem elements from a single Container element.  By
   # By default, the ordering is in alphabetical order based on the InvoiceNumber, PONumber, LineItemNumber.
   # This is intended to match what appears to be the default ordering of the commercial invoice printout
   # from the GT Nexus system - which is generally what operations uses to key, validate the entry data.
@@ -302,7 +302,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   # This method can easily be overridden if you want to return LineItems in a different order
   # for a specific customer parser implementation.
   def sorted_line_items container_xml
-    # The document order of the xml LineItems 
+    # The document order of the xml LineItems
     # doesn't appear to represent any sort of actual order of any sort.
     #
     # This is an attempt to emulate the order that it appears that default GT Nexus
@@ -327,7 +327,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   def find_or_create_shipment xml, bucket, key
     shipment = nil
     sent_date = xml_sent_date(xml)
-    Lock.acquire("Shipment-#{shipment_reference(xml)}") do 
+    Lock.acquire("Shipment-#{shipment_reference(xml)}") do
       s = find_shipment_relation(xml).first_or_create!
 
       if process_file? s, sent_date
@@ -366,7 +366,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
         cache[order_number] = create_or_update_order(importer, user, xml, customer_order_number, cache[order_number])
       end
     end
-    
+
     return cache
   end
 
@@ -403,13 +403,13 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
   def update_party_information? party, party_xml, party_type
     # By default, we're not going to update party data...the purchase orders are what will update these
-    # entities.  
+    # entities.
 
     # This overrides a method defined in generic_gtn_parser_support
     false
   end
 
-  def party_map  
+  def party_map
     # The only real company it makes sense to handle by default for the shipment is the vendor.
     {vendor: "PartyInfo[Type = 'Supplier']"}
   end
@@ -440,7 +440,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     a.state = party_xml.text "City/State"
     country_code = party_xml.text "City/CountryCode"
     if !country_code.nil?
-      a.country = Country.where(iso_code: country_code).first 
+      a.country = Country.where(iso_code: country_code).first
     else
       a.country = nil
     end
@@ -511,7 +511,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
   def create_or_update_order_from_line_items(importer, user, line_items, order)
     product_cache = find_or_create_products_from_line_items(importer, user, line_items)
-        
+
     if order.nil?
       new_order, order = find_or_create_order_from_line_item(importer, user, line_items.first)
     else
@@ -573,7 +573,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     line_items.each do |line_item|
       part_number = line_item.text("ProductCode").to_s
       unique_identifier = prefix_identifier_value(importer, part_number)
-      next unless parts_cache[unique_identifier].nil? 
+      next unless parts_cache[unique_identifier].nil?
 
       parts_cache[unique_identifier] = find_or_create_product(importer, user, unique_identifier, part_number)
     end
@@ -583,7 +583,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
   def find_or_create_product importer, user, unique_identifier, part_number
     product = nil
-    Lock.acquire("Product-#{unique_identifier}") do 
+    Lock.acquire("Product-#{unique_identifier}") do
       product = Product.where(importer_id: importer.id, unique_identifier: unique_identifier).first_or_initialize
       if !product.persisted?
         # If we're prefixing identifiers, it means that we're tracking the part number separately w/ a custom value too, so make sure to set it.

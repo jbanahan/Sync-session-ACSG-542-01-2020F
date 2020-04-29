@@ -20,7 +20,7 @@
 
 class SearchTableConfig < ActiveRecord::Base
   attr_accessible :company_id, :config_json, :name, :page_uid, :user_id
-  
+
   # user and company are optional
   belongs_to :user
   belongs_to :company
@@ -31,8 +31,8 @@ class SearchTableConfig < ActiveRecord::Base
   def self.for_user user, page_uid
     self.
       where(page_uid:page_uid).
-      where("search_table_configs.user_id IS NULL OR search_table_configs.user_id = ?",user.id).
-      where("search_table_configs.company_id IS NULL OR search_table_configs.company_id = ?",user.company_id)
+      where("search_table_configs.user_id IS NULL OR search_table_configs.user_id = ?", user.id).
+      where("search_table_configs.company_id IS NULL OR search_table_configs.company_id = ?", user.company_id)
   end
 
   def config_hash

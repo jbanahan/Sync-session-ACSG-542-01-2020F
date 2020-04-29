@@ -15,7 +15,7 @@ describe ReportsController do
         expect(response).to be_success
       end
       it 'should run the report' do
-        post :run_containers_released, {'arrival_date_start'=>'2012-01-01','arrival_date_end'=>'2012-01-02','customer_numbers'=>"A\nB"}
+        post :run_containers_released, {'arrival_date_start'=>'2012-01-01', 'arrival_date_end'=>'2012-01-02', 'customer_numbers'=>"A\nB"}
         expect(response).to redirect_to('/report_results')
         expect(ReportResult.all.size).to eq(1)
         rr = ReportResult.first
@@ -36,7 +36,7 @@ describe ReportsController do
       @ms = stub_master_setup
       allow(@ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
     end
-    
+
     context 'show' do
       it 'renders the page for authorized users' do
         expect(report_class).to receive(:permission?).with(@u).and_return true
@@ -64,7 +64,7 @@ describe ReportsController do
       it 'executes the report for authorized users' do
         expect(report_class).to receive(:permission?).with(@u).and_return(true)
         expect(ReportResult).to receive(:run_report!).with("Stale Tariffs", @u, OpenChain::Report::StaleTariffs, :settings=>{"customer_numbers"=>"code1\ncode2"}, :friendly_settings=>[])
-        
+
         post :run_stale_tariffs, {"customer_numbers"=>"code1\ncode2"}
         expect(response).to redirect_to('/report_results')
         expect(flash[:notices]).to include("Your report has been scheduled. You'll receive a system message when it finishes.")
@@ -74,7 +74,7 @@ describe ReportsController do
         allow(@ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return false
         expect(report_class).to receive(:permission?).with(@u).and_return(true)
         expect(ReportResult).to receive(:run_report!).with("Stale Tariffs", @u, OpenChain::Report::StaleTariffs, :settings=>{"customer_numbers"=>nil}, :friendly_settings=>[])
-        
+
         post :run_stale_tariffs, {"customer_numbers"=>"code1\ncode2"}
         expect(response).to redirect_to('/report_results')
         expect(flash[:notices]).to include("Your report has been scheduled. You'll receive a system message when it finishes.")
@@ -83,7 +83,7 @@ describe ReportsController do
       it "rejects unauthorized users" do
         expect(report_class).to receive(:permission?).with(@u).and_return(false)
         expect_any_instance_of(ReportResult).to_not receive(:execute_report)
-        
+
         post :run_stale_tariffs
         expect(flash[:errors].first).to eq "You do not have permission to view this report."
       end
@@ -98,7 +98,7 @@ describe ReportsController do
         expect(OpenChain::Report::TariffComparison).to receive(:available_countries).and_return [c, c2]
         get :show_tariff_comparison
         expect(response).to be_success
-        
+
         expect(assigns(:countries)).to eq [c, c2]
       end
     end
@@ -110,14 +110,14 @@ describe ReportsController do
 
       it "should call report with tariff ids in settings" do
         allow_any_instance_of(ReportResult).to receive(:execute_report)
-        
-        post :run_tariff_comparison, {'old_tariff_set_id'=>first_tariff_set.id.to_s,'new_tariff_set_id'=>second_tariff_set.id.to_s}
+
+        post :run_tariff_comparison, {'old_tariff_set_id'=>first_tariff_set.id.to_s, 'new_tariff_set_id'=>second_tariff_set.id.to_s}
         expect(response).to redirect_to('/report_results')
         expect(flash[:notices]).to include("Your report has been scheduled. You'll receive a system message when it finishes.")
 
         found = ReportResult.find_by(name: 'Tariff Comparison')
         expect(found.run_by).to eq(@u)
-        expect(found.friendly_settings).to eq(["Country: #{first_tariff_set.country.name}","Old Tariff File: #{first_tariff_set.label}","New Tariff File: #{second_tariff_set.label}"])
+        expect(found.friendly_settings).to eq(["Country: #{first_tariff_set.country.name}", "Old Tariff File: #{first_tariff_set.label}", "New Tariff File: #{second_tariff_set.label}"])
         settings = ActiveSupport::JSON.decode found.settings_json
         expect(settings['old_tariff_set_id']).to eq(first_tariff_set.id.to_s)
         expect(settings['new_tariff_set_id']).to eq(second_tariff_set.id.to_s)
@@ -129,7 +129,7 @@ describe ReportsController do
     let(:report_class) { OpenChain::Report::DailyFirstSaleExceptionReport }
     let(:user) { Factory(:user) }
     before { sign_in_as user}
-    
+
     context "show" do
       it "doesn't render page for unauthorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return false
@@ -180,7 +180,7 @@ describe ReportsController do
 
     context "run" do
       let(:settings) { {"start_date" => "2016-01-01", "end_date" => "2016-02-01", "customer_numbers" => "ACME,\nKonvenientz; \nFoodMarmot"} }
-      
+
       it "doesn't run for users who don't have permission" do
         post :run_duty_savings_report, settings
         expect(flash[:errors].first).to eq("You do not have permission to view this report.")
@@ -226,11 +226,11 @@ describe ReportsController do
 
       it "should run the report for admin users" do
         expect(OpenChain::Report::HmStatisticsReport).to receive(:permission?).and_return true
-        post :run_hm_statistics, {'start_date'=>'2014-01-02','end_date'=>'2014-03-04'}
+        post :run_hm_statistics, {'start_date'=>'2014-01-02', 'end_date'=>'2014-03-04'}
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
       end
-      
+
     end
   end
 
@@ -240,7 +240,7 @@ describe ReportsController do
       @admin.admin = true
       @admin.save
     end
-    
+
     context "show" do
       it "should not render page for non-admin user" do
         get :show_poa_expirations
@@ -383,7 +383,7 @@ describe ReportsController do
     context "show" do
       it "renders page for Vandegrift user" do
         expect(OpenChain::Report::PvhBillingSummary).to receive(:permission?).with(@u).and_return true
-        
+
         get :show_pvh_billing_summary
         expect(response).to be_success
       end
@@ -432,7 +432,7 @@ describe ReportsController do
         get :show_sg_duty_due_report
         expect(response).not_to be_success
       end
-      
+
       it "renders page for authorized users" do
         expect(OpenChain::Report::SgDutyDueReport).to receive(:permission?).with(@u).and_return true
         sgi = with_customs_management_id(Factory(:company, name: 'SGI APPAREL LTD'), 'SGI')
@@ -537,7 +537,7 @@ describe ReportsController do
 
       it "runs for authorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return true
-        expect(ReportResult).to receive(:run_report!).with("Ascena Actual vs Potential First Sale Report", user, report_class, 
+        expect(ReportResult).to receive(:run_report!).with("Ascena Actual vs Potential First Sale Report", user, report_class,
                                                            :settings=>{}, :friendly_settings=>[])
         post :run_ascena_actual_vs_potential_first_sale_report
         expect(response).to be_redirect
@@ -547,15 +547,15 @@ describe ReportsController do
   end
 
   describe "Ascena Entry Audit Report" do
-    
+
     let(:report_class) { OpenChain::Report::AscenaEntryAuditReport }
     let!(:user) { Factory(:user) }
-    let!(:ascena) do 
+    let!(:ascena) do
       co = Factory(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
     end
-    
+
     before { sign_in_as user }
 
     context "show" do
@@ -574,9 +574,9 @@ describe ReportsController do
     end
 
     context "run" do
-      let(:args) { {range_field: "release_date", start_release_date: "start release", end_release_date: "end release", start_fiscal_year_month: "start fy/m", 
+      let(:args) { {range_field: "release_date", start_release_date: "start release", end_release_date: "end release", start_fiscal_year_month: "start fy/m",
                     end_fiscal_year_month: "end fy/m", cust_number: "ASCE" }}
-      
+
       it "doesn't run for unauthorized users" do
         expect(report_class).to receive(:permissions).with(user).and_return []
         expect(ReportResult).not_to receive(:run_report!)
@@ -586,11 +586,11 @@ describe ReportsController do
 
       it "runs for authorized users" do
         expect(report_class).to receive(:permissions).with(user).and_return [{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}]
-        expect(ReportResult).to receive(:run_report!).with("Ascena / Ann Inc. / Maurices Entry Audit Report", user, report_class, 
-                                                           :settings=>args, :friendly_settings=>["Start release date: start release", 
-                                                                                                 "End release date: end release", 
-                                                                                                 "Start Fiscal Year/Month: start fy/m", 
-                                                                                                 "End Fiscal Year/Month: end fy/m", 
+        expect(ReportResult).to receive(:run_report!).with("Ascena / Ann Inc. / Maurices Entry Audit Report", user, report_class,
+                                                           :settings=>args, :friendly_settings=>["Start release date: start release",
+                                                                                                 "End release date: end release",
+                                                                                                 "Start Fiscal Year/Month: start fy/m",
+                                                                                                 "End Fiscal Year/Month: end fy/m",
                                                                                                  "Customer Number: ASCE"])
         post :run_ascena_entry_audit_report, args
         expect(response).to be_redirect
@@ -602,7 +602,7 @@ describe ReportsController do
   describe "Ascena Vendor Scorecard Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport }
     let!(:user) { Factory(:user) }
-    let!(:ascena) do 
+    let!(:ascena) do
       co = Factory(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
@@ -626,7 +626,7 @@ describe ReportsController do
     context "run" do
       let(:args) { {range_field: "first_release_date", start_release_date: "start release", end_release_date: "end release", start_fiscal_year_month: "start fy/m",
                     end_fiscal_year_month: "end fy/m"}}
-      
+
       it "doesn't run for unauthorized users" do
         expect(report_class).to receive(:permissions).with(user).and_return []
         expect(ReportResult).not_to receive(:run_report!)
@@ -636,11 +636,11 @@ describe ReportsController do
 
       it "runs for authorized users, including only importers for which they have permission" do
         expect(report_class).to receive(:permissions).with(user).and_return [{cust_num: "ASCE", name: "ASCENA TRADE SERVICES LLC"}, {cust_num: "ANN", name: "ANN INC"}]
-        expect(ReportResult).to receive(:run_report!).with("Ascena / Maurices Vendor Scorecard Report", user, report_class, :settings=>args.merge(cust_numbers: ["ASCE", "ANN"]), 
-                                                                                                                            :friendly_settings=>["Start release date: start release", 
-                                                                                                                                                 "End release date: end release", 
-                                                                                                                                                 "Start Fiscal Year/Month: start fy/m", 
-                                                                                                                                                 "End Fiscal Year/Month: end fy/m", 
+        expect(ReportResult).to receive(:run_report!).with("Ascena / Maurices Vendor Scorecard Report", user, report_class, :settings=>args.merge(cust_numbers: ["ASCE", "ANN"]),
+                                                                                                                            :friendly_settings=>["Start release date: start release",
+                                                                                                                                                 "End release date: end release",
+                                                                                                                                                 "Start Fiscal Year/Month: start fy/m",
+                                                                                                                                                 "End Fiscal Year/Month: end fy/m",
                                                                                                                                                  "Customer Numbers: ASCE, ANN"])
         post :run_ascena_vendor_scorecard_report, args
         expect(response).to be_redirect
@@ -652,13 +652,13 @@ describe ReportsController do
   describe "Ascena Duty Savings Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport }
     let!(:user) { Factory(:user) }
-    let!(:ascena) do 
+    let!(:ascena) do
       co = Factory(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
     end
     let!(:fm) { Factory(:fiscal_month, company: ascena, year: 2019, month_number: 9) }
-    
+
     before { sign_in_as user }
 
     context "show" do
@@ -711,7 +711,7 @@ describe ReportsController do
       co = with_fenix_id(Factory(:importer, name: 'PVH Canada'), '833231749RM0001')
       co
     end
-    let!(:fm) { Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 2, end_date: Date.new(2020,03,01)) }
+    let!(:fm) { Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 2, end_date: Date.new(2020, 03, 01)) }
 
     before { sign_in_as user }
 
@@ -758,7 +758,7 @@ describe ReportsController do
       co = with_customs_management_id(Factory(:importer, name: 'PVH'), "PVH")
       co
     end
-    let!(:fm) { Factory(:fiscal_month, company: pvh, year: 2020, month_number: 2, end_date: Date.new(2020,03,01)) }
+    let!(:fm) { Factory(:fiscal_month, company: pvh, year: 2020, month_number: 2, end_date: Date.new(2020, 03, 01)) }
 
     before { sign_in_as user }
 
@@ -801,13 +801,13 @@ describe ReportsController do
   describe "Ascena MPF Savings Report" do
     let(:report_class) { OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport }
     let!(:user) { Factory(:user) }
-    let!(:ascena) do 
+    let!(:ascena) do
       co = Factory(:importer)
       co.set_system_identifier "Customs Management", "ASCE"
       co
     end
-    let!(:fm) { Factory(:fiscal_month, company: ascena, year: 2019, month_number: 9, end_date: Date.new(2019,10,31)) }
-    
+    let!(:fm) { Factory(:fiscal_month, company: ascena, year: 2019, month_number: 9, end_date: Date.new(2019, 10, 31)) }
+
     before { sign_in_as user }
 
     context "show" do
@@ -892,7 +892,7 @@ describe ReportsController do
         sign_in_as @u
         expect(ReportResult).not_to receive(:run_report!)
         post :run_eddie_bauer_ca_k84_summary, {date: @date}
-        
+
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq "You do not have permission to view this report"
       end
@@ -900,7 +900,7 @@ describe ReportsController do
       it "doesn't run report with missing date range" do
         expect(ReportResult).not_to receive(:run_report!)
         post :run_eddie_bauer_ca_k84_summary, {date: ""}
-        
+
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq "Please enter a K84 due date."
       end
@@ -1063,7 +1063,7 @@ describe ReportsController do
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
                                           :settings=>{range_field:'some_date', importer_ids:[5], year_1:'2015', year_2:'2017',
                                                       ca:false, include_cotton_fee:true, include_taxes:false, include_other_fees:false,
-                                                      mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:true,
+                                                      mode_of_transport:['Sea'], entry_types:['01', '02'], include_isf_fees:true,
                                                       include_port_breakdown:false, group_by_mode_of_transport:true, include_line_graphs:true,
                                                       sum_units_by_mode_of_transport:true }, :friendly_settings=>[])
         post :run_customer_year_over_year_report, {range_field:'some_date', country:'US', importer_id_us:['5'], importer_id_ca:['6'],
@@ -1080,12 +1080,12 @@ describe ReportsController do
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
-                                         :settings=>{range_field:'some_date', importer_ids:[6,7], ca:true, year_1:'2015', year_2:'2017',
-                                                     include_cotton_fee:false, include_taxes:false,include_other_fees:false,
-                                                     mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:false,
+                                         :settings=>{range_field:'some_date', importer_ids:[6, 7], ca:true, year_1:'2015', year_2:'2017',
+                                                     include_cotton_fee:false, include_taxes:false, include_other_fees:false,
+                                                     mode_of_transport:['Sea'], entry_types:['01', '02'], include_isf_fees:false,
                                                      include_port_breakdown:true, group_by_mode_of_transport:false, include_line_graphs:false,
                                                      sum_units_by_mode_of_transport:false }, :friendly_settings=>[])
-        post :run_customer_year_over_year_report, {range_field:'some_date', country:'CA', importer_id_us:['5'], importer_id_ca:['6','7'],
+        post :run_customer_year_over_year_report, {range_field:'some_date', country:'CA', importer_id_us:['5'], importer_id_ca:['6', '7'],
                                           year_1:'2015', year_2: '2017', cotton_fee:nil, taxes:nil, other_fees:nil,
                                           mode_of_transport:['Sea'], entry_types:"01\r\n02", isf_fees:nil,
                                           port_breakdown:'true', group_by_mode_of_transport:'false', line_graphs:'false',
@@ -1128,9 +1128,9 @@ describe ReportsController do
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("Entry Year Over Year Report", user, OpenChain::Report::CustomerYearOverYearReport,
-                                                           :settings=>{range_field:'some_date', importer_ids:[importer_1.id,importer_2.id], ca: false, 
+                                                           :settings=>{range_field:'some_date', importer_ids:[importer_1.id, importer_2.id], ca: false,
                                                                        year_1:'2015', year_2:'2017', include_cotton_fee:false, include_taxes:true, include_other_fees:true,
-                                                                       mode_of_transport:['Sea'], entry_types:['01','02'], include_isf_fees:false,
+                                                                       mode_of_transport:['Sea'], entry_types:['01', '02'], include_isf_fees:false,
                                                                        include_port_breakdown:true, group_by_mode_of_transport:false, include_line_graphs:false,
                                                                        sum_units_by_mode_of_transport:false }, :friendly_settings=>[])
         post :run_customer_year_over_year_report, {range_field:'some_date', importer_customer_numbers:" SYS01  \r\n\r\ninvalid_code\r\nSYS02\r\n",
@@ -1149,7 +1149,7 @@ describe ReportsController do
         expect(ReportResult).not_to receive(:run_report!)
         post :run_customer_year_over_year_report, {range_field:'some_date', importer_customer_numbers:'   ',
                                                    year_1:'2015', year_2: '2017', cotton_fee:'false', taxes:'true', other_fees:'true',
-                                                   mode_of_transport:['Sea'], entry_types:['01','02'], isf_fees:'false',
+                                                   mode_of_transport:['Sea'], entry_types:['01', '02'], isf_fees:'false',
                                                    port_breakdown:'true', group_by_mode_of_transport:'false'}
         expect(response).to be_redirect
         expect(flash[:errors].first).to eq("At least one importer must be selected.")
@@ -1253,7 +1253,7 @@ describe ReportsController do
       it "renders for authorized user" do
         co_1 = with_customs_management_id(Factory(:importer, name: "ACME US"), "ACME")
         co_2 = with_fenix_id(Factory(:importer, name: "ACME CA"), "ACME CA")
-        
+
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_us_billing_summary
         expect(assigns(:us_importers).to_a).to eq [co_1]
@@ -1274,7 +1274,7 @@ describe ReportsController do
       it "runs for authorized user" do
         expect(report_class).to receive(:permission?).with(user).and_return true
         expect(ReportResult).to receive(:run_report!).with("US Billing Summary", user, OpenChain::Report::UsBillingSummary,
-                                         :settings=>{start_date:'2019-03-03', end_date:'2019-03-10', customer_number: 'ACME'}, 
+                                         :settings=>{start_date:'2019-03-03', end_date:'2019-03-10', customer_number: 'ACME'},
                                          :friendly_settings=>["Customer Number: ACME", "Start Date: 2019-03-03", "End Date: 2019-03-10"])
         post :run_us_billing_summary, {start_date:'2019-03-03', end_date: '2019-03-10', customer_number: 'ACME'}
         expect(response).to be_redirect
@@ -1347,10 +1347,10 @@ describe ReportsController do
           pvh = Factory(:company, name:'PVH', system_code:'PVH')
           pvh_ca = Factory(:company, name:'PVH', system_code:'PVHCANADA')
 
-          FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019,4,1))
-          FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019,2,20))
-          FiscalMonth.create!(company_id:pvh_ca.id, year:2019, month_number:2, start_date:Date.new(2019,3,1))
-          FiscalMonth.create!(company_id:pvh_ca.id, year:2019, month_number:1, start_date:Date.new(2019,1,20))
+          FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019, 4, 1))
+          FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019, 2, 20))
+          FiscalMonth.create!(company_id:pvh_ca.id, year:2019, month_number:2, start_date:Date.new(2019, 3, 1))
+          FiscalMonth.create!(company_id:pvh_ca.id, year:2019, month_number:1, start_date:Date.new(2019, 1, 20))
 
           expect(report_class).to receive(:permission?).with(user).and_return true
           get :show_pvh_duty_discount_report
@@ -1429,10 +1429,10 @@ describe ReportsController do
         pvh = Factory(:company, name:'PVH', system_code:'PVH')
         another_importer = Factory(:company, name:'Another Importer', system_code:'imp')
 
-        FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019,4,1))
-        FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019,2,20))
+        FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:3, start_date:Date.new(2019, 4, 1))
+        FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:2, start_date:Date.new(2019, 2, 20))
         # This one belongs to a different importer and should not be included.
-        FiscalMonth.create!(company_id:another_importer.id, year:2019, month_number:4, start_date:Date.new(2019,7,1))
+        FiscalMonth.create!(company_id:another_importer.id, year:2019, month_number:4, start_date:Date.new(2019, 7, 1))
 
         expect(report_class).to receive(:permission?).with(user).and_return true
         get :show_pvh_first_cost_savings_report

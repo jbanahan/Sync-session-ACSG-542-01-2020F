@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
   }
 
   let (:entry) {
-    e = Entry.new broker_reference: "BROK_REF"    
+    e = Entry.new broker_reference: "BROK_REF"
     e.broker_invoices << invoice
     e
   }
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
   describe "pay_statement" do
 
     let (:ap_bill) {
-      {record_no: 1, record_id: "INV_NUM", total_entered: "1.50", total_due: "1.50", when_paid: "", 
+      {record_no: 1, record_id: "INV_NUM", total_entered: "1.50", total_due: "1.50", when_paid: "",
         ap_bill_items: [
           {record_no: 101, amount: "1.50", broker_reference: "BROK_REF"}
         ]
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
     }
 
     let (:ap_bill_credit) {
-      {record_no: 2, record_id: "INV_NUM_CREDIT", total_entered: "-1.50", total_due: "-1.50", when_paid: "", 
+      {record_no: 2, record_id: "INV_NUM_CREDIT", total_entered: "-1.50", total_due: "-1.50", when_paid: "",
         ap_bill_items: [
           {record_no: 201, amount: "-1.50", broker_reference: "BROK_REF"}
         ]
@@ -179,12 +179,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
     it "does not error for Warehouse Entries (Type 21) where the billed amount matches the total statement amount minus duty" do
       expect(subject).to receive(:post_payment)
       expect_standard
-      
+
       entry.entry_type = 21
       dse = daily_statement.daily_statement_entries.first
       dse.total_amount = 5
       dse.duty_amount = 3.5
-      
+
       expect(subject.pay_statement daily_statement).to be_blank
     end
 
@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
         expect_standard
         errors = subject.pay_statement daily_statement
         expect(errors).to eq [
-          "Invoice # INV_NUM shows $1.50 duty in VFI Track vs. $1.00 in Intacct.", 
+          "Invoice # INV_NUM shows $1.50 duty in VFI Track vs. $1.00 in Intacct.",
           "File # BROK_REF shows $1.00 billed in Intacct but $1.50 on the statement."]
       end
 
@@ -234,7 +234,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
       end
 
       it "validates AP data exists for statements in intacct" do
-        #Just change the invoice number of the bill returned from intacct
+        # Just change the invoice number of the bill returned from intacct
         ap_bill[:record_id] = "INV"
         expect_standard
         errors = subject.pay_statement daily_statement
@@ -242,7 +242,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
       end
 
       it "errors if invoice has already been paid in Intacct" do
-        ap_bill[:when_paid] = Date.new(2018,4,1)
+        ap_bill[:when_paid] = Date.new(2018, 4, 1)
         expect_standard
         errors = subject.pay_statement daily_statement
         expect(errors).to eq ["Invoice # INV_NUM has already been paid in Intacct."]
@@ -263,12 +263,12 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer do
 
       it "errors for Warehouse Entries (Type 21) where the billed amount doesn't match the total statement amount minus duty" do
         expect_standard
-        
+
         entry.entry_type = 21
         dse = daily_statement.daily_statement_entries.first
         dse.total_amount = 5
         dse.duty_amount = 4
-        
+
         expect(subject.pay_statement daily_statement).to include "File # BROK_REF (Entry Type 21) shows $1.50 billed in VFI Track but a total amount (minus Duty) of $1.00 on the statement."
       end
 

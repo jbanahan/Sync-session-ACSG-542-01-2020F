@@ -5,13 +5,13 @@ module OpenChain; module Report; class FenixCurrencyRatesReport
   include SqlProxyDataReport
 
   def self.schedulable_settings user, report_name, opts
-    # Regardless of the schedule source, 
+    # Regardless of the schedule source,
     # return start_date of the previous day.
     settings = {}
     settings['start_date'] = (Time.zone.now.in_time_zone(user.time_zone) - 1.day).to_date.to_s
 
     friendly_settings = ["Exchange Rate Updated On or After #{settings['start_date']}"]
-    
+
     {settings: settings, friendly_settings: friendly_settings}
   end
 
@@ -44,7 +44,7 @@ module OpenChain; module Report; class FenixCurrencyRatesReport
       params['end_date'] = format_date_string(settings['end_date'])
     end
 
-    if !settings['countries'].blank? 
+    if !settings['countries'].blank?
       if settings['countries'].is_a? String
         params['countries'] = settings['countries'].split(/\n */)
       elsif settings['countries'].respond_to?(:map)
@@ -62,7 +62,7 @@ module OpenChain; module Report; class FenixCurrencyRatesReport
 
   def fenix_date_conversion
     # The date values are returned as strings and they are only Date values (the time component is always zero in Fenix)
-    #..so just parse them and return them as dates
+    # ..so just parse them and return them as dates
     lambda { |result_set_row, raw_column_value|
       Time.zone.parse(raw_column_value).try(:to_date)
     }

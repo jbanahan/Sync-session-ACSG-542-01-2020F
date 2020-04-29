@@ -30,14 +30,14 @@ module ValidatesFieldFormat
       end
       next unless passed
 
-      #left operand
+      # left operand
       if ['eqfdec', 'nqfdec', 'gtfdec', 'ltfdec'].include? attrs['operator']
         field_1 = model_field.process_export(obj, nil, true)
         field_2 = attrs['secondary_model_field'].process_export(obj, nil, true)
         val = (((field_1 - field_2) / field_2).abs) * 100
       elsif ['eq', 'nq', 'gt', 'lt'].include? attrs['operator']
         # To make this code simpler, we act as if we are getting actual numbers vs a field.
-        val = model_field.process_export(obj,nil,true)
+        val = model_field.process_export(obj, nil, true)
 
         # If an actual numeric value was passed in from the setup, then we don't really have to evaluate the field
         # just use it as is.  We'll consider any string value as indicating a model field (at gt/lt doesn't make sense on Strings really)
@@ -46,13 +46,13 @@ module ValidatesFieldFormat
 
           # we also want to use the exported value if second_field is indeed a model field.
           # All of this needs to be renamed, but that is a discussion for another day.
-          attrs['value'] = second_field.blank? ? attrs['value'] : second_field.process_export(obj,nil,true)
+          attrs['value'] = second_field.blank? ? attrs['value'] : second_field.process_export(obj, nil, true)
         end
 
         # We want reg to sync up with attrs value since reg is used in the error message below
         reg = attrs['value']
       else
-        val = model_field.process_export(obj,nil,true)
+        val = model_field.process_export(obj, nil, true)
       end
       if attrs['regex']
         reg ||= attrs['regex']
@@ -65,8 +65,8 @@ module ValidatesFieldFormat
         cc_hash["secondary_model_field_uid"] = attrs["secondary_model_field"].uid.to_s
       end
       sc = condition_criterion(cc_hash)
-      op_label = CriterionOperator::OPERATORS.find{ |op| op.key == cc_hash["operator"]}.label.downcase
-      #If this option is used, any block will have to check this attribute and adjust message accordingly
+      op_label = CriterionOperator::OPERATORS.find { |op| op.key == cc_hash["operator"]}.label.downcase
+      # If this option is used, any block will have to check this attribute and adjust message accordingly
       fail_if_matches = attrs['fail_if_matches']
       fail = fail_if_matches ? sc.test?(obj, nil, {split_field: attrs['split_field']}) : !sc.test?(obj, nil, {split_field: attrs['split_field']})
       allow_blank = attrs['allow_blank'].to_s.to_boolean

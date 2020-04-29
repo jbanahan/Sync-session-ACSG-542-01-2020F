@@ -55,8 +55,8 @@ describe CustomReportEntryBillingBreakdownByPo do
     before :each do
       @user = Factory(:master_user)
       allow(@user).to receive(:view_broker_invoices?).and_return(true)
-      @invoice_line_1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>100.00, :broker_invoice=>Factory(:broker_invoice, invoice_number: "ABCD", invoice_date: "2014-01-01"))
-      @invoice_line_2 = Factory(:broker_invoice_line,:broker_invoice=>@invoice_line_1.broker_invoice,:charge_description=>"CD2",:charge_amount=>99.99)
+      @invoice_line_1 = Factory(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.00, :broker_invoice=>Factory(:broker_invoice, invoice_number: "ABCD", invoice_date: "2014-01-01"))
+      @invoice_line_2 = Factory(:broker_invoice_line, :broker_invoice=>@invoice_line_1.broker_invoice, :charge_description=>"CD2", :charge_amount=>99.99)
       @invoice = @invoice_line_1.broker_invoice
       @entry = @invoice.entry
       @entry.update_attributes :broker_reference=>"Entry", :po_numbers=>"1\n 2\r\n 3", :carrier_code => 'SCAC'
@@ -69,7 +69,7 @@ describe CustomReportEntryBillingBreakdownByPo do
     it "should prorate charges across all POs and display each charge column" do
       r = @report.to_arrays @user
 
-      #4 rows..1 header, 3 PO lines
+      # 4 rows..1 header, 3 PO lines
       expect(r.length).to eq(4)
       row = r[0]
       expect(row).to eq(["Broker Reference", "Invoice Number", "PO Number", "PO Total", "CD1", "CD2", ModelField.find_by_uid(:bi_carrier_code).label])
@@ -86,8 +86,8 @@ describe CustomReportEntryBillingBreakdownByPo do
 
     it "should handle different charge codes across multiple different invoices" do
       # Re-use one of the charge descriptions and then add a new one
-      invoice_2_line_1 = Factory(:broker_invoice_line,:charge_description=>"CD2",:charge_amount=>100.00)
-      invoice_2_line_2 = Factory(:broker_invoice_line,:broker_invoice=>invoice_2_line_1.broker_invoice,:charge_description=>"CD3",:charge_amount=>99.99)
+      invoice_2_line_1 = Factory(:broker_invoice_line, :charge_description=>"CD2", :charge_amount=>100.00)
+      invoice_2_line_2 = Factory(:broker_invoice_line, :broker_invoice=>invoice_2_line_1.broker_invoice, :charge_description=>"CD3", :charge_amount=>99.99)
 
       invoice2 = invoice_2_line_1.broker_invoice
       entry2 = invoice2.entry
@@ -95,7 +95,7 @@ describe CustomReportEntryBillingBreakdownByPo do
 
       r = @report.to_arrays @user
 
-      #6 rows..1 header, 5 PO lines
+      # 6 rows..1 header, 5 PO lines
       expect(r.length).to eq(6)
       row = r[0]
       expect(row).to eq(["Broker Reference", "Invoice Number", "PO Number", "PO Total", "CD1", "CD2", "CD3", ModelField.find_by_uid(:bi_carrier_code).label])
@@ -121,20 +121,20 @@ describe CustomReportEntryBillingBreakdownByPo do
       @report.include_rule_links = true
       r = @report.to_arrays @user
 
-      #4 rows..1 header, 3 PO lines
+      # 4 rows..1 header, 3 PO lines
       expect(r.length).to eq(4)
       row = r[0]
       expect(row).to eq(["Web Links", "Business Rule Links", "Broker Reference", "Invoice Number", "PO Number", "PO Total", "CD1", "CD2", ModelField.find_by_uid(:bi_carrier_code).label])
 
       row = r[1]
-      expect(row).to eq([@entry.view_url, "http://localhost:3000/entries/#{@entry.id}/validation_results", @entry.broker_reference, @invoice.invoice_number.to_s, "1", 66.66, BigDecimal.new("33.33"), BigDecimal.new("33.33"), "SCAC"]) 
+      expect(row).to eq([@entry.view_url, "http://localhost:3000/entries/#{@entry.id}/validation_results", @entry.broker_reference, @invoice.invoice_number.to_s, "1", 66.66, BigDecimal.new("33.33"), BigDecimal.new("33.33"), "SCAC"])
     end
 
     it "should show a message if no results are returned" do
       @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>"FAIL")
 
       r = @report.to_arrays @user
-      
+
       expect(r.length).to eq(2)
       row = r[0]
       expect(row).to eq(["Broker Reference", "Invoice Number", "PO Number", "PO Total", ModelField.find_by_uid(:bi_carrier_code).label])
@@ -156,19 +156,19 @@ describe CustomReportEntryBillingBreakdownByPo do
       unpriv_user = Factory(:user)
       allow(unpriv_user).to receive(:view_broker_invoices?).and_return(false)
 
-      expect{@report.to_arrays unpriv_user}.to raise_error {|e|
+      expect {@report.to_arrays unpriv_user}.to raise_error {|e|
         expect(e.message).to eq("User #{unpriv_user.email} does not have permission to view invoices and cannot run the #{CustomReportEntryBillingBreakdownByPo.template_name} report.")
       }
     end
 
     it "orders by entry number and invoice date" do
       # add a second invoice to the @entry
-      @entry.broker_invoices << Factory(:broker_invoice_line, :charge_description=>"CD5",:charge_amount=>100.00, 
+      @entry.broker_invoices << Factory(:broker_invoice_line, :charge_description=>"CD5", :charge_amount=>100.00,
                                           :broker_invoice => Factory(:broker_invoice, invoice_date: "2014-02-01", invoice_number: "EFGH", entry: @entry)).broker_invoice
       @entry.save!
 
       # create a second invoice / entry
-      entry2 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>100.00, 
+      entry2 = Factory(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.00,
                           :broker_invoice=>Factory(:broker_invoice, invoice_date: '2014-01-01', invoice_number: "987654",
                             entry: Factory(:entry, broker_reference: "AAAA", :carrier_code => 'SCAC')
                           )

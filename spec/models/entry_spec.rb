@@ -1,18 +1,18 @@
 describe Entry do
-  
+
   context "tracking_status" do
     context "fenix" do
       it "should default to created" do
-        expect(Factory(:entry,source_system:'Fenix').tracking_status).to eq(Entry::TRACKING_STATUS_CREATED)
+        expect(Factory(:entry, source_system:'Fenix').tracking_status).to eq(Entry::TRACKING_STATUS_CREATED)
       end
       it "should use open for all non-V type entries with across_sent_date" do
-        expect(Factory(:entry,source_system:'Fenix',across_sent_date:Time.now).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
+        expect(Factory(:entry, source_system:'Fenix', across_sent_date:Time.now).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
       end
       it "should use open for all V type entries" do
-        expect(Factory(:entry,source_system:'Fenix',entry_type:'V').tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
+        expect(Factory(:entry, source_system:'Fenix', entry_type:'V').tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
       end
       it "should not override closed" do
-        ent = Factory(:entry,source_system:'Fenix',tracking_status:Entry::TRACKING_STATUS_CLOSED) 
+        ent = Factory(:entry, source_system:'Fenix', tracking_status:Entry::TRACKING_STATUS_CLOSED)
         ent.release_date = Time.now
         ent.save!
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
@@ -20,13 +20,13 @@ describe Entry do
     end
     context "alliance" do
       it "should use created for base entry" do
-        Factory(:entry,source_system:'Alliance').tracking_status == Entry::TRACKING_STATUS_CREATED
+        Factory(:entry, source_system:'Alliance').tracking_status == Entry::TRACKING_STATUS_CREATED
       end
       it "should use open for entries that have been filed" do
-        Factory(:entry,source_system:'Alliance',entry_filed_date:Time.now).tracking_status == Entry::TRACKING_STATUS_OPEN
+        Factory(:entry, source_system:'Alliance', entry_filed_date:Time.now).tracking_status == Entry::TRACKING_STATUS_OPEN
       end
       it "should not override closed" do
-        ent = Factory(:entry,source_system:'Alliance',tracking_status:Entry::TRACKING_STATUS_CLOSED)
+        ent = Factory(:entry, source_system:'Alliance', tracking_status:Entry::TRACKING_STATUS_CLOSED)
         ent.entry_filed_date = Time.now
         ent.save!
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
@@ -37,7 +37,7 @@ describe Entry do
         expect(Factory(:entry).tracking_status).to eq(Entry::TRACKING_STATUS_OPEN)
       end
       it "should not override closed" do
-        ent = Factory(:entry,tracking_status:Entry::TRACKING_STATUS_CLOSED)
+        ent = Factory(:entry, tracking_status:Entry::TRACKING_STATUS_CLOSED)
         ent.entry_filed_date = Time.now
         ent.save!
         expect(ent.tracking_status).to eq(Entry::TRACKING_STATUS_CLOSED)
@@ -46,20 +46,20 @@ describe Entry do
   end
   describe "link_broker_invoices" do
     before :each do
-      @ent = Factory(:entry,:broker_reference=>'5555',:source_system=>'ABC')
+      @ent = Factory(:entry, :broker_reference=>'5555', :source_system=>'ABC')
     end
     it 'should match' do
-      bi = BrokerInvoice.create!(:broker_reference=>'5555',:invoice_number=>'notbrokref',:source_system=>'ABC')
+      bi = BrokerInvoice.create!(:broker_reference=>'5555', :invoice_number=>'notbrokref', :source_system=>'ABC')
       @ent.link_broker_invoices
       expect(@ent.broker_invoices.first).to eq(bi)
     end
     it "should not match if source system doesn't match" do
-      bi = BrokerInvoice.create!(:broker_reference=>'5555',:invoice_number=>'notbrokref',:source_system=>'ZZ')
+      bi = BrokerInvoice.create!(:broker_reference=>'5555', :invoice_number=>'notbrokref', :source_system=>'ZZ')
       @ent.link_broker_invoices
       expect(@ent.broker_invoices.count).to eq(0)
     end
     it "should not match if broker_reference doesn't match" do
-      bi = BrokerInvoice.create!(:broker_reference=>'XX',:invoice_number=>'notbrokref',:source_system=>'ABC')
+      bi = BrokerInvoice.create!(:broker_reference=>'XX', :invoice_number=>'notbrokref', :source_system=>'ABC')
       @ent.link_broker_invoices
       expect(@ent.broker_invoices.count).to eq(0)
     end
@@ -100,7 +100,7 @@ describe Entry do
       ms
     }
     let (:importer) { Factory(:importer) }
-    let (:linked_importer) { 
+    let (:linked_importer) {
       child_importer = Factory(:importer)
       importer.linked_companies << child_importer
       child_importer
@@ -113,7 +113,7 @@ describe Entry do
     }
 
     describe "can_view_importer?" do
-      
+
       it "should allow same company" do
         expect(Entry.can_view_importer?(importer, importer_user)).to eq true
       end
@@ -121,17 +121,17 @@ describe Entry do
       it "should not allow different company" do
         expect(Entry.can_view_importer?(Factory(:company), importer_user)).to eq false
       end
-      
+
       it "should allow master" do
         master_user = Factory(:master_user)
         expect(master_user).to receive(:view_entries?).and_return(true)
         expect(Entry.can_view_importer?(importer, master_user)).to eq true
       end
-      
+
       it "should allow linked" do
         expect(Entry.can_view_importer?(linked_importer, importer_user)).to eq true
       end
-      
+
       it "should not allow nil importer" do
         expect(Entry.can_view_importer?(nil, importer_user)).to eq false
       end
@@ -150,52 +150,52 @@ describe Entry do
     end
 
     context 'search secure' do
-      let! (:entry_2) { Factory(:entry, importer: Factory(:company,:importer=>true)) }
-      before :each do 
+      let! (:entry_2) { Factory(:entry, importer: Factory(:company, :importer=>true)) }
+      before :each do
         entry
       end
 
       it 'should restrict non master' do
-        found = Entry.search_secure(importer_user,Entry).all
+        found = Entry.search_secure(importer_user, Entry).all
         expect(found.entries.size).to eq(1)
         expect(found.first).to eq(entry)
       end
 
       it "should allow linked company for non master" do
-        importer2 = Factory(:company,:importer=>true)
+        importer2 = Factory(:company, :importer=>true)
         importer.linked_companies << importer2
-        e2 = Factory(:entry,:importer_id=>importer.id)
-        entries = Entry.search_secure(importer_user,Entry).all.to_a
+        e2 = Factory(:entry, :importer_id=>importer.id)
+        entries = Entry.search_secure(importer_user, Entry).all.to_a
         expect(entries).to include entry
         expect(entries).to include e2
       end
 
       it 'should allow all for master' do
-        u = Factory(:user,:entry_view=>true)
+        u = Factory(:user, :entry_view=>true)
         u.company.update!(:master=>true)
-        found = Entry.search_secure(u,Entry).all
+        found = Entry.search_secure(u, Entry).all
         expect(found.entries.size).to eq(2)
       end
     end
 
     it 'should allow importer user with permission to view/edit/comment/attach' do
-      importer_user.update!(:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
+      importer_user.update!(:entry_view=>true, :entry_comment=>true, :entry_edit=>true, :entry_attach=>true)
       expect(entry.can_view?(importer_user)).to eq true
-      expect(entry.can_edit?(importer_user)).to eq false #hard coded to false
+      expect(entry.can_edit?(importer_user)).to eq false # hard coded to false
       expect(entry.can_attach?(importer_user)).to eq true
       expect(entry.can_comment?(importer_user)).to eq true
     end
     it 'should allow importer from parent company to view/edit/comment/attach' do
-      parent_company = Factory(:company,:importer=>true)
-      parent_user = Factory(:user,:company=>parent_company,:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
+      parent_company = Factory(:company, :importer=>true)
+      parent_user = Factory(:user, :company=>parent_company, :entry_view=>true, :entry_comment=>true, :entry_edit=>true, :entry_attach=>true)
       parent_company.linked_companies << importer
       expect(entry.can_view?(parent_user)).to eq true
-      expect(entry.can_edit?(parent_user)).to eq false #hard coded to false
+      expect(entry.can_edit?(parent_user)).to eq false # hard coded to false
       expect(entry.can_attach?(parent_user)).to eq true
       expect(entry.can_comment?(parent_user)).to eq true
     end
     it 'should not allow a user from a different company with overall permission to view/edit/comment/attach' do
-      u = Factory(:user,:entry_view=>true,:entry_comment=>true,:entry_edit=>true,:entry_attach=>true)
+      u = Factory(:user, :entry_view=>true, :entry_comment=>true, :entry_edit=>true, :entry_attach=>true)
       u.company.update_attributes(:importer=>true)
       expect(entry.can_view?(u)).to eq false
       expect(entry.can_edit?(u)).to eq false
@@ -203,7 +203,7 @@ describe Entry do
       expect(entry.can_comment?(u)).to eq false
     end
     it 'should allow master user to view' do
-      u = Factory(:user,:entry_view=>true)
+      u = Factory(:user, :entry_view=>true)
       u.company.update_attributes(:master=>true)
       expect(entry.can_view?(u)).to eq true
     end
@@ -218,26 +218,26 @@ describe Entry do
       expect(entry.can_view?(u)).to eq true
     end
     it 'should allow user to comment' do
-      u = Factory(:user,:entry_comment=>true)
+      u = Factory(:user, :entry_comment=>true)
       u.company.update_attributes(:master=>true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to eq true
+      expect(Factory(:entry, :importer=>Factory(:company, :importer=>true)).can_comment?(u)).to eq true
     end
     it 'should not allow user w/o permission to comment' do
-      u = Factory(:user,:entry_comment=>false)
+      u = Factory(:user, :entry_comment=>false)
       u.company.update_attributes(:master=>true)
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_comment?(u)).to eq false
+      expect(Factory(:entry, :importer=>Factory(:company, :importer=>true)).can_comment?(u)).to eq false
     end
     it 'should allow user to attach' do
-      u = Factory(:user,:entry_attach=>true)
+      u = Factory(:user, :entry_attach=>true)
       u.company.update_attributes(:master=>true)
       allow(u).to receive(:view_entries?).and_return true
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to eq true
+      expect(Factory(:entry, :importer=>Factory(:company, :importer=>true)).can_attach?(u)).to eq true
     end
     it 'should not allow user w/o permisstion to attach' do
-      u = Factory(:user,:entry_attach=>false)
+      u = Factory(:user, :entry_attach=>false)
       u.company.update_attributes(:master=>true)
-      expect(Factory(:entry, :importer=>Factory(:company,:importer=>true)).can_attach?(u)).to eq false
+      expect(Factory(:entry, :importer=>Factory(:company, :importer=>true)).can_attach?(u)).to eq false
     end
   end
 
@@ -246,17 +246,17 @@ describe Entry do
       @port = Factory(:port)
     end
     it 'should find matching lading port' do
-      ent = Factory(:entry,:lading_port_code=>@port.schedule_k_code)
+      ent = Factory(:entry, :lading_port_code=>@port.schedule_k_code)
       expect(ent.lading_port).to eq(@port)
     end
     it 'should find matching unlading port' do
-      expect(Factory(:entry,:unlading_port_code=>@port.schedule_d_code).unlading_port).to eq(@port)
+      expect(Factory(:entry, :unlading_port_code=>@port.schedule_d_code).unlading_port).to eq(@port)
     end
     it 'should find matching entry port' do
-      expect(Factory(:entry,:entry_port_code=>@port.schedule_d_code).entry_port).to eq(@port)
+      expect(Factory(:entry, :entry_port_code=>@port.schedule_d_code).entry_port).to eq(@port)
     end
     it 'should find matching us exit port' do
-      expect(Factory(:entry,:us_exit_port_code=>@port.schedule_d_code).us_exit_port).to eq(@port)
+      expect(Factory(:entry, :us_exit_port_code=>@port.schedule_d_code).us_exit_port).to eq(@port)
     end
   end
 
@@ -268,37 +268,37 @@ describe Entry do
     it "should set k84 month" do
       @entry.update_attributes! cadex_accept_date: Time.zone.parse("2013-01-01")
       expect(@entry.k84_month).to eq 1
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013, 1, 25))
     end
 
     it "should set k84 month to next month if cadex accept is 25th or later" do
       @entry.update_attributes! cadex_accept_date: Time.zone.parse("2013-01-25")
       expect(@entry.k84_month).to eq 2
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,2,25))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013, 2, 25))
     end
 
     it "should set k84 month to 1 if cadex accept is after Dec 24th" do
       @entry.update_attributes! cadex_accept_date: Time.zone.parse("2013-12-25")
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2014,1,25))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2014, 1, 25))
       expect(@entry.k84_month).to eq 1
     end
 
     it "uses k84 receive date for manual low-value entries, rather than cadex accept" do
       @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "V", cadex_accept_date: Time.zone.now
       expect(@entry.k84_month).to eq 1
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013, 1, 25))
     end
 
     it "uses k84 receive date for hand-carry entries, rather than cadex accept" do
       @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "C", cadex_accept_date: Time.zone.now
       expect(@entry.k84_month).to eq 1
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013, 1, 25))
     end
 
     it "uses k84 receive date for entry addendums, rather than cadex accept" do
       @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "H", cadex_accept_date: Time.zone.now
       expect(@entry.k84_month).to eq 1
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013, 1, 25))
     end
 
     it "uses k84 month and due date to find the payment due date" do
@@ -307,14 +307,14 @@ describe Entry do
 
       @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "V", cadex_accept_date: Time.zone.now
       expect(@entry.k84_month).to eq 1
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
-      expect(@entry.k84_payment_due_date.to_date).to eq(Date.new(2013,1,29))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013, 1, 25))
+      expect(@entry.k84_payment_due_date.to_date).to eq(Date.new(2013, 1, 29))
     end
 
     it "does not update the k84 payment due date if no calendar event is found" do
       @entry.update_attributes! k84_receive_date: Time.zone.parse("2013-01-01"), entry_number: "119810123459", entry_type: "C", cadex_accept_date: Time.zone.now
       expect(@entry.k84_month).to eq 1
-      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013,1,25))
+      expect(@entry.k84_due_date.to_date).to eq(Date.new(2013, 1, 25))
       expect(@entry.k84_payment_due_date).to be_nil
     end
   end
@@ -460,11 +460,11 @@ describe Entry do
     it "returns the sum of first-sale savings on all child invoices" do
       ent = Factory(:entry)
       inv = Factory(:commercial_invoice, entry:ent)
-      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 500, value: 200, 
+      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 500, value: 200,
                commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 30, entered_value: 10)])
-      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 250, value: 100, 
+      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: 250, value: 100,
                commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 15, entered_value: 5)])
-      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: nil, value: 100, 
+      Factory(:commercial_invoice_line, commercial_invoice: inv, contract_amount: nil, value: 100,
                commercial_invoice_tariffs: [Factory(:commercial_invoice_tariff, duty_amount: 15, entered_value: 5)])
       expect(ent.first_sale_savings).to eq 1350
     end
@@ -477,9 +477,9 @@ describe Entry do
       describe "hold_attributes" do
         it "returns list of matching PGA hold and release dates" do
           e = Factory(:entry)
-          expect(e.hold_attributes).to eq([{hold: :ams_hold_date, release: :ams_hold_release_date}, 
-                                           {hold: :aphis_hold_date, release: :aphis_hold_release_date}, 
-                                           {hold: :atf_hold_date, release: :atf_hold_release_date}, 
+          expect(e.hold_attributes).to eq([{hold: :ams_hold_date, release: :ams_hold_release_date},
+                                           {hold: :aphis_hold_date, release: :aphis_hold_release_date},
+                                           {hold: :atf_hold_date, release: :atf_hold_release_date},
                                            {hold: :cargo_manifest_hold_date, release: :cargo_manifest_hold_release_date},
                                            {hold: :cbp_hold_date, release: :cbp_hold_release_date},
                                            {hold: :cbp_intensive_hold_date, release: :cbp_intensive_hold_release_date},
@@ -499,7 +499,7 @@ describe Entry do
           now = DateTime.now
           yesterday = DateTime.now - 1.day
           e = Factory(:entry, import_country: co, aphis_hold_date: yesterday, aphis_hold_release_date: yesterday, cbp_hold_date: now, nmfs_hold_date: nil)
-          expect(e.populated_holds).to eq [{hold: { mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: yesterday}, release: { mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: yesterday}}, 
+          expect(e.populated_holds).to eq [{hold: { mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: yesterday}, release: { mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: yesterday}},
                                      {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: now}, release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: nil}}]
         end
       end
@@ -513,28 +513,28 @@ describe Entry do
         end
       end
     end
-  
+
     context "CA" do
       let(:co) { Factory(:country, iso_code: "CA") }
 
       describe "populated_holds" do
         it "throws exception" do
           e = Factory(:entry, import_country: co)
-          expect{e.populated_holds}.to raise_error(RuntimeError, "Only valid for US entries!")
+          expect {e.populated_holds}.to raise_error(RuntimeError, "Only valid for US entries!")
         end
       end
 
       describe "active_holds" do
         it "throws_exception" do
           e = Factory(:entry, import_country: co)
-          expect{e.active_holds}.to raise_error(RuntimeError, "Only valid for US entries!")
+          expect {e.active_holds}.to raise_error(RuntimeError, "Only valid for US entries!")
         end
       end
 
       describe "hold_attributes" do
         it "throws exception" do
           e = Factory(:entry, import_country: co)
-          expect{e.hold_attributes}.to raise_error(RuntimeError, "Only valid for US entries!")
+          expect {e.hold_attributes}.to raise_error(RuntimeError, "Only valid for US entries!")
         end
       end
     end
@@ -569,7 +569,7 @@ describe Entry do
 
   describe "split_shipment_date=" do
     let(:ent) { Factory(:entry, split_shipment_date: nil, split_shipment: nil) }
-    let(:dt) { DateTime.new(2018,3,15,15,0) }
+    let(:dt) { DateTime.new(2018, 3, 15, 15, 0) }
 
     it "also sets split_shipment flag to True when assigned" do
       ent.split_shipment_date = dt
@@ -587,13 +587,13 @@ describe Entry do
 
   describe "get_transport_mode_codes_us_ca" do
     it "converts mode descriptor to numeric codes" do
-      expect(Entry.get_transport_mode_codes_us_ca('Air')).to eq [40,41,1]
-      expect(Entry.get_transport_mode_codes_us_ca('Sea')).to eq [10,11,9]
-      expect(Entry.get_transport_mode_codes_us_ca('Rail')).to eq [20,21,6]
-      expect(Entry.get_transport_mode_codes_us_ca('Truck')).to eq [30,31,2]
+      expect(Entry.get_transport_mode_codes_us_ca('Air')).to eq [40, 41, 1]
+      expect(Entry.get_transport_mode_codes_us_ca('Sea')).to eq [10, 11, 9]
+      expect(Entry.get_transport_mode_codes_us_ca('Rail')).to eq [20, 21, 6]
+      expect(Entry.get_transport_mode_codes_us_ca('Truck')).to eq [30, 31, 2]
       expect(Entry.get_transport_mode_codes_us_ca('Dirigible')).to eq []
-      expect(Entry.get_transport_mode_codes_us_ca('air')).to eq [40,41,1]
-      expect(Entry.get_transport_mode_codes_us_ca('AIR')).to eq [40,41,1]
+      expect(Entry.get_transport_mode_codes_us_ca('air')).to eq [40, 41, 1]
+      expect(Entry.get_transport_mode_codes_us_ca('AIR')).to eq [40, 41, 1]
       expect(Entry.get_transport_mode_codes_us_ca(nil)).to eq []
     end
   end
@@ -609,7 +609,7 @@ describe Entry do
 
   describe "ocean_mode?" do
     [10, 11, 9].each do |code|
-      it "returns true for #{code}" do 
+      it "returns true for #{code}" do
         e = Entry.new transport_mode_code: code
         expect(e.ocean_mode?).to eq true
       end
@@ -627,7 +627,7 @@ describe Entry do
 
   describe "air_mode?" do
     [40, 41, 1].each do |code|
-      it "returns true for #{code}" do 
+      it "returns true for #{code}" do
         e = Entry.new transport_mode_code: code
         expect(e.air_mode?).to eq true
       end
@@ -644,8 +644,8 @@ describe Entry do
   end
 
   describe "rail_mode?" do
-    [20,21,6].each do |code|
-      it "returns true for #{code}" do 
+    [20, 21, 6].each do |code|
+      it "returns true for #{code}" do
         e = Entry.new transport_mode_code: code
         expect(e.rail_mode?).to eq true
       end
@@ -662,8 +662,8 @@ describe Entry do
   end
 
   describe "truck_mode?" do
-    [30,31,2].each do |code|
-      it "returns true for #{code}" do 
+    [30, 31, 2].each do |code|
+      it "returns true for #{code}" do
         e = Entry.new transport_mode_code: code
         expect(e.truck_mode?).to eq true
       end
@@ -700,7 +700,7 @@ describe Entry do
 
   describe "total_billed_duty_amount" do
     let (:entry) { Entry.new}
-    let (:invoice_1) { 
+    let (:invoice_1) {
       invoice = BrokerInvoice.new
       entry.broker_invoices << invoice
       invoice
@@ -709,7 +709,7 @@ describe Entry do
     let (:invoice_2) {
       invoice = BrokerInvoice.new
       entry.broker_invoices << invoice
-      invoice 
+      invoice
     }
 
     it "sums duty for each invoice" do
@@ -795,7 +795,7 @@ describe Entry do
         expect(result.first[0]).to eq 0
       end
     end
-    
+
   end
 
   describe "calculate_cbp_check_digit" do

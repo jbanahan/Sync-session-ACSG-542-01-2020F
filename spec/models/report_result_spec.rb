@@ -50,17 +50,17 @@ describe ReportResult do
 
     it "should handle friendly settings array" do
       r = ReportResult.new
-      r.friendly_settings = ['a','b']
-      expect(r.friendly_settings).to eq(['a','b'])
+      r.friendly_settings = ['a', 'b']
+      expect(r.friendly_settings).to eq(['a', 'b'])
     end
 
     it "should return empty array when no friendly settings are set" do
       expect(ReportResult.new.friendly_settings).to eq([])
-    end 
+    end
   end
 
   describe "security" do
-    subject { 
+    subject {
       r = ReportResult.new
       r.run_by = user
       r
@@ -91,12 +91,12 @@ describe ReportResult do
 
     it "should write data on report run" do
       allow_any_instance_of(ReportResult).to receive(:execute_report)
-      ReportResult.run_report! 'nrr', user, SampleReport, {:settings=>{'o1'=>'o2'},:friendly_settings=>['a','b']}
+      ReportResult.run_report! 'nrr', user, SampleReport, {:settings=>{'o1'=>'o2'}, :friendly_settings=>['a', 'b']}
       found = ReportResult.where(name: "nrr").first
       expect(found.run_by).to eq(user)
       expect(found.report_class).to eq(SampleReport.to_s)
       expect(found.run_at).to be > 10.seconds.ago
-      expect(found.friendly_settings_json).to eq(['a','b'].to_json)
+      expect(found.friendly_settings_json).to eq(['a', 'b'].to_json)
       expect(found.settings_json).to eq({'o1'=>'o2'}.to_json)
     end
     it "enqueues report before running" do
@@ -127,10 +127,10 @@ describe ReportResult do
       found = ReportResult.where(name: "msg").first
       m = user.messages
       expect(m.size).to eq(1)
-      expect(m.first.body).to include "/report_results/#{found.id}/download" #message body includes download link
+      expect(m.first.body).to include "/report_results/#{found.id}/download" # message body includes download link
     end
     it "delays the report with priority 100" do
-      allow_any_instance_of(ReportResult).to receive(:execute_report) #don't need report to run
+      allow_any_instance_of(ReportResult).to receive(:execute_report) # don't need report to run
       expect_any_instance_of(ReportResult).to receive(:delay).with(:priority=>-1).and_return(ReportResult.new)
       ReportResult.run_report! 'delay', user, SampleReport
     end
@@ -147,7 +147,7 @@ describe ReportResult do
         expect(Time.zone).to eq(ActiveSupport::TimeZone[run_by.time_zone])
 
         loc = 'test/assets/sample_report.txt'
-        File.open(loc,'w') {|f| f.write('mystring')}
+        File.open(loc, 'w') {|f| f.write('mystring')}
         File.new loc
       end
       ReportResult.run_report! 'user settings', user, SampleReport
@@ -161,11 +161,11 @@ describe ReportResult do
 
         def self.run_report user, opts
           loc = 'spec/support/tmp/sample_report.txt'
-          File.open(loc,'w') {|f| f.write('mystring')}
+          File.open(loc, 'w') {|f| f.write('mystring')}
           File.new loc
         end
       end
-      rr = double("ReportResult") 
+      rr = double("ReportResult")
       expect(rr).to receive(:execute_sql_proxy_report)
       expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
       ReportResult.run_report! 'delay', user, SqlProxyReport
@@ -179,11 +179,11 @@ describe ReportResult do
 
         def self.run_report user, opts
           loc = 'spec/support/tmp/sample_report.txt'
-          File.open(loc,'w') {|f| f.write('mystring')}
+          File.open(loc, 'w') {|f| f.write('mystring')}
           File.new loc
         end
       end
-      rr = double("ReportResult") 
+      rr = double("ReportResult")
       expect(rr).to receive(:execute_report)
       expect_any_instance_of(ReportResult).to receive(:delay).with(priority: -1).and_return(rr)
       ReportResult.run_report! 'delay', user, NonSqlProxyReport
@@ -199,7 +199,7 @@ describe ReportResult do
     end
 
     describe "error handling" do
-      
+
       context "report fails" do
         before(:each) do
           allow(SampleReport).to receive(:run_report).and_raise('some error message')
@@ -224,7 +224,7 @@ describe ReportResult do
           expect(m.first.body).to include "/report_results/#{found.id}"
         end
       end
-      
+
       context "report handling fails" do
         it "deletes the underlying file when report completion fails" do
           expect_any_instance_of(ReportResult).to receive(:complete_report).and_raise "Error"
@@ -239,8 +239,8 @@ describe ReportResult do
   describe "purge" do
     before(:each) do
       6.times do |i|
-        #alternate between making reports that are less than & greater than a week old
-        ReportResult.create!(:name=>'rr',:run_at=>(i.modulo(2)==0 ? 8.days.ago : 6.days.ago))
+        # alternate between making reports that are less than & greater than a week old
+        ReportResult.create!(:name=>'rr', :run_at=>(i.modulo(2)==0 ? 8.days.ago : 6.days.ago))
       end
     end
     it "should have an eligible_for_purge scope that returns all reports more than a week old" do
@@ -282,7 +282,7 @@ describe ReportResult do
       expect(TestReport).to receive(:run_report).with(user, settings)
 
       subject.execute_sql_proxy_report
-      
+
       subject.reload
       expect(subject.status).to eq "Running"
     end
@@ -302,7 +302,7 @@ describe ReportResult do
     subject { ReportResult.create! settings_json: {'settings' => '1'}.to_json, run_by_id: user.id, status: "new", report_class: TestReport.to_s }
 
     let (:tempfile) { Tempfile.new "ContinueAlliancReportSpec" }
-    
+
     after :each do
       tempfile.close! unless tempfile.closed?
     end

@@ -48,7 +48,7 @@ module OpenChain; module Report; class NexeoOceanExportsReport
     <<-QRY
 SELECT b.name,
 (SELECT po.customer_order_number FROM shipment_lines sl inner join piece_sets ps ON ps.shipment_line_id = sl.id inner join order_lines ol ON ol.id = ps.order_line_id INNER JOIN orders po ON po.id = ol.order_id WHERE s.id = sl.shipment_id LIMIT 1),
-s.importer_reference, concat(ifnull(s.vessel, ''), ' V. ', ifnull(s.voyage, '')), '', p.name, s.est_departure_date, dis.body, fin.body, 
+s.importer_reference, concat(ifnull(s.vessel, ''), ' V. ', ifnull(s.voyage, '')), '', p.name, s.est_departure_date, dis.body, fin.body,
 (SELECT con.container_number FROM containers con WHERE con.shipment_id = s.id LIMIT 1),
 s.lcl, s.house_bill_of_lading, car.value, concat(ifnull(s.booking_carrier, ''), ifnull(s.master_bill_of_lading, '')), s.freight_total, s.invoice_total, s.gross_weight
 FROM shipments s
@@ -68,7 +68,7 @@ QRY
   end
 
   def self.convert_to_lbs_translation
-    lambda do |rs, val| 
+    lambda do |rs, val|
       val.nil? ? 0 : (BigDecimal(val) * BigDecimal("2.20462")).round(0, BigDecimal::ROUND_HALF_UP).to_i
     end
   end

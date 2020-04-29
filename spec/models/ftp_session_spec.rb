@@ -3,7 +3,7 @@ describe FtpSession do
   describe "successful?" do
     subject { FtpSession.new log: "" }
 
-    context "ftp" do 
+    context "ftp" do
       before :each do
         subject.protocol = "ftp"
       end
@@ -29,7 +29,6 @@ describe FtpSession do
         expect(subject.successful?).to be_falsey
       end
     end
-    
 
     context "sftp" do
       before :each do
@@ -70,7 +69,7 @@ describe FtpSession do
     it "removes anything older than given date" do
       session = nil
       Timecop.freeze(Time.zone.now - 1.second) { session = FtpSession.create! }
-      
+
       subject.purge Time.zone.now
 
       expect {session.reload}.to raise_error ActiveRecord::RecordNotFound
@@ -80,7 +79,7 @@ describe FtpSession do
       session = nil
       now = Time.zone.now
       Timecop.freeze(now + 1.second) { session = FtpSession.create! }
-      
+
       subject.purge now
 
       expect {session.reload}.not_to raise_error

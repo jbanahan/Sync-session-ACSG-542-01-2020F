@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Advance; class CarquestFenixNdInv
     first_line = shipment_lines.first
     shipment = first_line.shipment
 
-    inv = CommercialInvoice.new 
+    inv = CommercialInvoice.new
     inv.invoice_number = first_line.invoice_number
     inv.invoice_date = ActiveSupport::TimeZone["America/New_York"].now.to_date
     inv.importer = convert_address_to_company(shipment.ship_to)

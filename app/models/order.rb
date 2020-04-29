@@ -69,15 +69,15 @@ class Order < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
 
-  attr_accessible :accepted_at, :accepted_by_id, :agent_id, :approval_status, 
-    :closed_at, :closed_by_id, :currency, :customer_order_number, 
-    :customer_order_status, :division_id, :factory_id, 
+  attr_accessible :accepted_at, :accepted_by_id, :agent_id, :approval_status,
+    :closed_at, :closed_by_id, :currency, :customer_order_number,
+    :customer_order_status, :division_id, :factory_id,
     :first_expected_delivery_date, :fob_point, :importer_id, :importer,
-    :last_exported_from_source, :last_file_bucket, :last_file_path, 
-    :last_revised_date, :mode, :order_date, :order_from_address_id, 
-    :order_number, :processing_errors, :product_category, :season, 
-    :selling_agent_id, :ship_from_id, :ship_from, :ship_to_id, :ship_to_id, 
-    :ship_window_end, :ship_window_start, :terms_of_payment, :terms_of_sale, 
+    :last_exported_from_source, :last_file_bucket, :last_file_path,
+    :last_revised_date, :mode, :order_date, :order_from_address_id,
+    :order_number, :processing_errors, :product_category, :season,
+    :selling_agent_id, :ship_from_id, :ship_from, :ship_to_id, :ship_to_id,
+    :ship_window_end, :ship_window_start, :terms_of_payment, :terms_of_sale,
     :tpp_survey_response_id, :vendor_id, :vendor, :order_lines_attributes
 
   belongs_to :division
@@ -175,7 +175,7 @@ class Order < ActiveRecord::Base
   end
 
   def can_accept? u
-    OpenChain::Registries::OrderAcceptanceRegistry.can_accept?(self,u)
+    OpenChain::Registries::OrderAcceptanceRegistry.can_accept?(self, u)
   end
 
   # Don't use this method directly unless you know there is no acceptance
@@ -188,7 +188,7 @@ class Order < ActiveRecord::Base
   # Order Close Logic
   ########
 
-  #set the order as closed and take a snapshot and save!
+  # set the order as closed and take a snapshot and save!
   def close! user, async_snapshot=false
     close_logic(user)
     self.save!
@@ -202,7 +202,7 @@ class Order < ActiveRecord::Base
     nil
   end
 
-  #set the order as closed, save!, and take an snapshot in another thread
+  # set the order as closed, save!, and take an snapshot in another thread
   def async_close! user
     self.close! user, true
   end
@@ -250,7 +250,7 @@ class Order < ActiveRecord::Base
     end
   end
 
-  #get Enumerable of agents that are shared between the vendor and importer
+  # get Enumerable of agents that are shared between the vendor and importer
   def available_agents
     vendor_agents = []
     importer_agents = []
@@ -269,8 +269,8 @@ class Order < ActiveRecord::Base
     return SurveyResponse.
       not_expired.
       joins(:survey=>:trade_preference_program).
-      where('survey_responses.user_id IN (SELECT id FROM users WHERE users.company_id = ?)',self.vendor_id).
-      where('trade_preference_programs.destination_country_id IN (?)',ship_to_country_ids).
+      where('survey_responses.user_id IN (SELECT id FROM users WHERE users.company_id = ?)', self.vendor_id).
+      where('trade_preference_programs.destination_country_id IN (?)', ship_to_country_ids).
       where('survey_responses.submitted_date IS NOT NULL')
   end
 
@@ -356,7 +356,7 @@ class Order < ActiveRecord::Base
     !self.vendor.nil? && self.vendor.locked?
   end
 
-  dont_shallow_merge :Order, ['id','created_at','updated_at','order_number']
+  dont_shallow_merge :Order, ['id', 'created_at', 'updated_at', 'order_number']
 
   def shipped_qty
     q = 0
@@ -367,7 +367,7 @@ class Order < ActiveRecord::Base
   end
 
   def ordered_qty
-    #optimize with a single query
+    # optimize with a single query
     q = 0
     self.order_lines.each do |line|
       q = q + line.quantity

@@ -8,7 +8,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
   extend OpenChain::FiscalCalendarSchedulingSupport
 
   PVH_DUTY_DISCOUNT_REPORT_USERS ||= 'pvh_duty_discount_report'
-  
+
   PvhReportData ||= Struct.new(:entry_number, :invoice_number, :po_number, :shipment_number, :po_line_number,
                                :hts_code, :eta_date, :vendor_invoice_value, :duty_assist_amount, :dutiable_value,
                                :dutiable_value_7501, :duty_rate_pct, :first_cost_po, :units_shipped, :total_duty_adj_amount,
@@ -68,7 +68,7 @@ module OpenChain; module Report; class PvhDutyDiscountReport
     file_name = "PVH_Duty_Discount_US_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH Duty Discount", file_name: "#{file_name}" do |temp|
-        body_msg = "Attached is the \"Duty Discount Report, #{fiscal_year.to_s}-#{fiscal_month.to_s}\" based on ACH Due Date."
+        body_msg = "Attached is the \"Duty Discount Report, #{fiscal_year}-#{fiscal_month}\" based on ACH Due Date."
         OpenMailer.send_simple_html(settings['email'], "PVH Duty Discount Report", body_msg, temp).deliver_now
       end
     else
@@ -312,56 +312,56 @@ module OpenChain; module Report; class PvhDutyDiscountReport
     def make_query fiscal_date_start, fiscal_date_end
       <<-SQL
           SELECT
-            ent.entry_number, 
-            ci.invoice_number, 
-            cil.po_number, 
-            cont.container_number, 
-            ent.arrival_date, 
-            cil.contract_amount, 
+            ent.entry_number,
+            ci.invoice_number,
+            cil.po_number,
+            cont.container_number,
+            ent.arrival_date,
+            cil.contract_amount,
             cil.value,
             cil.entered_value_7501,
-            cil.add_to_make_amount, 
-            cil.quantity, 
-            cil.part_number, 
-            cil.id AS commercial_invoice_line_id, 
-            ent.transport_mode_code, 
-            ent.master_bills_of_lading, 
-            ent.house_bills_of_lading, 
-            ent.fcl_lcl 
-          FROM 
-            entries AS ent 
-            LEFT OUTER JOIN commercial_invoices AS ci ON 
-              ent.id = ci.entry_id 
-            LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
-              ci.id = cil.commercial_invoice_id 
-            LEFT OUTER JOIN orders AS ord ON 
-              CONCAT('PVH-',cil.po_number) = ord.order_number AND 
-              ent.importer_id = ord.importer_id 
-            LEFT OUTER JOIN companies AS factory_company ON 
-              ord.factory_id = factory_company.id 
-            LEFT OUTER JOIN containers AS cont ON 
-              cil.container_id = cont.id 
-          WHERE 
+            cil.add_to_make_amount,
+            cil.quantity,
+            cil.part_number,
+            cil.id AS commercial_invoice_line_id,
+            ent.transport_mode_code,
+            ent.master_bills_of_lading,
+            ent.house_bills_of_lading,
+            ent.fcl_lcl
+          FROM
+            entries AS ent
+            LEFT OUTER JOIN commercial_invoices AS ci ON
+              ent.id = ci.entry_id
+            LEFT OUTER JOIN commercial_invoice_lines AS cil ON
+              ci.id = cil.commercial_invoice_id
+            LEFT OUTER JOIN orders AS ord ON
+              CONCAT('PVH-',cil.po_number) = ord.order_number AND
+              ent.importer_id = ord.importer_id
+            LEFT OUTER JOIN companies AS factory_company ON
+              ord.factory_id = factory_company.id
+            LEFT OUTER JOIN containers AS cont ON
+              cil.container_id = cont.id
+          WHERE
             ent.customer_number = 'PVH' AND
-            ent.fiscal_date >= '#{fiscal_date_start}' AND 
-            ent.fiscal_date <= '#{fiscal_date_end}' AND 
-            (cil.first_sale = false OR cil.first_sale IS NULL) AND 
+            ent.fiscal_date >= '#{fiscal_date_start}' AND
+            ent.fiscal_date <= '#{fiscal_date_end}' AND
+            (cil.first_sale = false OR cil.first_sale IS NULL) AND
             (
               (
-                ent.transport_mode_code IN (#{Entry.get_transport_mode_codes_us_ca("SEA").join(",")}) AND 
-                cil.non_dutiable_amount IS NOT NULL AND 
+                ent.transport_mode_code IN (#{Entry.get_transport_mode_codes_us_ca("SEA").join(",")}) AND
+                cil.non_dutiable_amount IS NOT NULL AND
                 cil.non_dutiable_amount != 0
               ) OR (
-                ent.transport_mode_code IN (#{Entry.get_transport_mode_codes_us_ca("AIR").join(",")}) AND 
-                cil.freight_amount IS NOT NULL AND 
+                ent.transport_mode_code IN (#{Entry.get_transport_mode_codes_us_ca("AIR").join(",")}) AND
+                cil.freight_amount IS NOT NULL AND
                 cil.freight_amount != 0
               ) OR (
-                ent.transport_mode_code NOT IN (#{(Entry.get_transport_mode_codes_us_ca("AIR") + Entry.get_transport_mode_codes_us_ca("SEA")).join(",")}) 
+                ent.transport_mode_code NOT IN (#{(Entry.get_transport_mode_codes_us_ca("AIR") + Entry.get_transport_mode_codes_us_ca("SEA")).join(",")})
               )
             )
           ORDER BY
-            ent.entry_number, 
-            ci.invoice_number, 
+            ent.entry_number,
+            ci.invoice_number,
             cil.po_number
       SQL
     end

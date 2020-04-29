@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberFa
                'Port of Loading', 'Port of Delivery', 'Shipment Plan Number', 'Container Number', 'Container Size',
                'Seal Number', 'Container Pickup Date', 'Container Return Date', 'PO Number', 'Item', 'Line Item ID',
                'Description', 'Cartons', 'Pieces', 'CBM', 'Gross Weight KGS', 'Remark', 'Container Total Cartons',
-               'Container Total Pieces', 'Container Total CBM','Container Total KGS']
+               'Container Total Pieces', 'Container Total CBM', 'Container Total KGS']
 
     CSV.generate() do |csv|
       csv << headers

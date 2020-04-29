@@ -6,14 +6,14 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
     @air_path = 'spec/support/bin/hm_air.txt'
     @ocean_path = 'spec/support/bin/hm_ocean.txt'
     @u = Factory(:user)
-    @hm = Factory(:company,importer:true,system_code:'HENNE')
+    @hm = Factory(:company, importer:true, system_code:'HENNE')
     @cdefs = described_class.prep_custom_definitions described_class.cdef_keys
   end
   it "should attach file to shipment" do
-    [Product,Order,CommercialInvoice,Shipment].each do |k|
+    [Product, Order, CommercialInvoice, Shipment].each do |k|
       allow_any_instance_of(k).to receive(:can_edit?).and_return(true)
     end
-    expect{described_class.parse(IO.read(@air_path),@u)}.to change(Attachment,:count).from(0).to(1)
+    expect {described_class.parse(IO.read(@air_path), @u)}.to change(Attachment, :count).from(0).to(1)
     expect(Shipment.first.attachments.first.attached_file_name).to eq 'DAPAAL20140923010828556U2577613690.US.txt'
   end
   context 'stubbed attachments' do
@@ -22,12 +22,12 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
     end
     describe "parse" do
       before :each do
-        [Order,Shipment,CommercialInvoice,Product].each {|k| allow_any_instance_of(k).to receive(:can_edit?).and_return true}
-        [:edit_orders?,:edit_commercial_invoices?,:edit_shipments?,:edit_products?].each {|p| allow(@u).to receive(p).and_return true}
+        [Order, Shipment, CommercialInvoice, Product].each {|k| allow_any_instance_of(k).to receive(:can_edit?).and_return true}
+        [:edit_orders?, :edit_commercial_invoices?, :edit_shipments?, :edit_products?].each {|p| allow(@u).to receive(p).and_return true}
       end
       it "should skip non US files" do
-        allow(described_class).to receive(:process_second_line).and_return ['ABC.MX','12345']
-        expect{described_class.parse(IO.read(@air_path),@u)}.to_not change(Shipment,:count)
+        allow(described_class).to receive(:process_second_line).and_return ['ABC.MX', '12345']
+        expect {described_class.parse(IO.read(@air_path), @u)}.to_not change(Shipment, :count)
       end
       context "permission_issues" do
         after :each do
@@ -35,37 +35,37 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
         end
         it "should fail if user cannot edit shipment" do
           expect_any_instance_of(Shipment).to receive(:can_edit?).with(@u).and_return false
-          expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this shipment/
+          expect {described_class.parse(IO.read(@air_path), @u)}.to raise_error /permission to edit this shipment/
         end
         it "should fail if user cannot edit product" do
           expect_any_instance_of(Product).to receive(:can_edit?).with(@u).and_return false
-          expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this product/
+          expect {described_class.parse(IO.read(@air_path), @u)}.to raise_error /permission to edit this product/
         end
         it "should fail if user cannot edit order" do
           expect_any_instance_of(Order).to receive(:can_edit?).with(@u).and_return false
-          expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this order/
+          expect {described_class.parse(IO.read(@air_path), @u)}.to raise_error /permission to edit this order/
         end
         it "should fail if user cannot edit commercial invoice" do
           expect_any_instance_of(CommercialInvoice).to receive(:can_edit?).with(@u).and_return false
-          expect{described_class.parse(IO.read(@air_path),@u)}.to raise_error /permission to edit this commercial invoice/
+          expect {described_class.parse(IO.read(@air_path), @u)}.to raise_error /permission to edit this commercial invoice/
         end
       end
       context "ocean" do
         it "should error if first line doesn't have TRANSPORT INFORMATION" do
           d = "XYZ"
-          expect{described_class.parse(d,@u)}.to raise_error /First line must start with TRANSPORT INFORMATION/
+          expect {described_class.parse(d, @u)}.to raise_error /First line must start with TRANSPORT INFORMATION/
         end
         it "should create ocean shipment from multi-page document" do
-          expect_any_instance_of(Shipment).to receive(:create_snapshot).with(@u) #much faster to not run this
-          expect{described_class.parse(IO.read(@ocean_path),@u)}.to change(Shipment,:count).from(0).to(1)
+          expect_any_instance_of(Shipment).to receive(:create_snapshot).with(@u) # much faster to not run this
+          expect {described_class.parse(IO.read(@ocean_path), @u)}.to change(Shipment, :count).from(0).to(1)
           s = Shipment.first
           expect(s.importer).to eq @hm
           expect(s.reference).to eq "HENNE-38317-23-SEP-2014"
           expect(s.importer_reference).to eq '38317'
           expect(s.vessel).to eq 'HANOVER EXPRESS'
           expect(s.voyage).to eq '051E'
-          expect(s.est_arrival_port_date).to eq Date.new(2014,10,5)
-          expect(s.est_departure_date).to eq Date.new(2014,9,21)
+          expect(s.est_arrival_port_date).to eq Date.new(2014, 10, 5)
+          expect(s.est_departure_date).to eq Date.new(2014, 9, 21)
           expect(s.containers.size).to eq 1
           expect(s.mode).to eq 'Ocean'
           expect(s.receipt_location).to eq 'Shanghai'
@@ -75,7 +75,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
           expect(con.seal_number).to eq 'BA40376'
           expect(con.shipment_lines.count).to eq 2
 
-          #shipment lines
+          # shipment lines
           expect(s.shipment_lines.count).to eq 2
           sl = s.shipment_lines.first
           expect(sl.quantity).to eq 234
@@ -84,13 +84,13 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
           expect(sl.gross_kgs).to eq 42
           expect(sl.fcr_number).to eq '190741600'
 
-          #product setup
+          # product setup
           p = sl.product
           expect(p.importer).to eq @hm
           expect(p.unique_identifier).to eq 'HENNE-100309'
           expect(p.get_custom_value(@cdefs[:prod_part_number]).value).to eq '100309'
 
-          #order setup
+          # order setup
           expect(sl.order_lines.count).to eq 1
           ol = sl.order_lines.first
           expect(ol.product).to eq p
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
           expect(o.order_number).to eq 'HENNE-100309'
           expect(o.customer_order_number).to eq '100309'
 
-          #commercial invoice setup
+          # commercial invoice setup
           expect(sl.commercial_invoice_lines.count).to eq 1
           cil = sl.commercial_invoice_lines.first
           ci = cil.commercial_invoice
@@ -110,44 +110,44 @@ describe OpenChain::CustomHandler::Hm::HmShipmentParser do
           expect(ci.importer).to eq @hm
         end
         it "should add container to existing shipment by importer_reference and voyage" do
-          s = Factory(:shipment,importer:@hm,reference:'HENNE-38317-23-SEP-2014',voyage:'051E',importer_reference:'38317')
-          expect{described_class.parse(IO.read(@ocean_path),@u)}.to_not change(Shipment,:count)
+          s = Factory(:shipment, importer:@hm, reference:'HENNE-38317-23-SEP-2014', voyage:'051E', importer_reference:'38317')
+          expect {described_class.parse(IO.read(@ocean_path), @u)}.to_not change(Shipment, :count)
           s.reload
           expect(s.shipment_lines.size).to eq 2
         end
         it "should link to existing commercial invoice lines by PO importer and quantity" do
           cil = Factory(:commercial_invoice_line,
-            commercial_invoice:Factory(:commercial_invoice,importer:@hm,invoice_number:'100309'),
+            commercial_invoice:Factory(:commercial_invoice, importer:@hm, invoice_number:'100309'),
             quantity:234
           )
-          described_class.parse(IO.read(@ocean_path),@u)
+          described_class.parse(IO.read(@ocean_path), @u)
           cil.reload
           expect(cil.shipment_lines.count).to eq 1
         end
         it "should not duplicate lines when loading a sea shipment twice" do
-          expect{described_class.parse(IO.read(@ocean_path),@u)}.to change(ShipmentLine,:count).from(0).to(2)
-          expect{described_class.parse(IO.read(@ocean_path),@u)}.to_not change(ShipmentLine,:count)
+          expect {described_class.parse(IO.read(@ocean_path), @u)}.to change(ShipmentLine, :count).from(0).to(2)
+          expect {described_class.parse(IO.read(@ocean_path), @u)}.to_not change(ShipmentLine, :count)
         end
       end
       context "air" do
         it "should load air shipment without container" do
-          expect{described_class.parse(IO.read(@air_path),@u)}.to change(Shipment,:count).from(0).to(1)
+          expect {described_class.parse(IO.read(@air_path), @u)}.to change(Shipment, :count).from(0).to(1)
           s = Shipment.first
           expect(s.mode).to eq 'Air'
           expect(s.containers.count).to eq 0
           expect(s.shipment_lines.count).to eq 3
         end
         it "should use ActRcv if FinRcv is blank" do
-          described_class.parse(IO.read(@air_path),@u)
+          described_class.parse(IO.read(@air_path), @u)
           sl = ShipmentLine.first
           expect(sl.order_lines.first.get_custom_value(@cdefs[:ord_line_destination_code]).value).to eq 'US0004'
         end
         it "should not duplicate lines on an air shipment" do
-          expect{described_class.parse(IO.read(@air_path),@u)}.to change(ShipmentLine,:count).from(0).to(3)
-          expect{described_class.parse(IO.read(@air_path),@u)}.to_not change(ShipmentLine,:count)
+          expect {described_class.parse(IO.read(@air_path), @u)}.to change(ShipmentLine, :count).from(0).to(3)
+          expect {described_class.parse(IO.read(@air_path), @u)}.to_not change(ShipmentLine, :count)
         end
         it "should create multiple order lines linked to the same commercial invoice line for the same order" do
-          expect{described_class.parse(IO.read(@air_path),@u)}.to change(Order,:count).from(0).to(2)
+          expect {described_class.parse(IO.read(@air_path), @u)}.to change(Order, :count).from(0).to(2)
           expect(Order.last.order_lines.count).to eq 2
           expect(CommercialInvoiceLine.count).to eq 2
         end

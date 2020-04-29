@@ -5,13 +5,13 @@ describe OpenChain::CloudWatch do
   let (:default_dimensions) { {} }
   let (:now) { Time.zone.parse("2018-09-25 12:00") }
 
-  before :each do 
+  before :each do
     allow(subject).to receive(:cloudwatch_client).and_return client
     allow(subject).to receive(:default_dimensions).and_return default_dimensions
   end
 
   around :each do |ex|
-    Timecop.freeze(now) do 
+    Timecop.freeze(now) do
       ex.run
     end
   end
@@ -39,7 +39,7 @@ describe OpenChain::CloudWatch do
     it "includes default dimensions" do
       default_dimensions["Default1"] = "Value1"
       default_dimensions["Default2"] = "Value2"
-      
+
       expect(client).to receive(:put_metric_data).with({
         namespace: "VFI Track",
         metric_data: [
@@ -115,7 +115,7 @@ describe OpenChain::CloudWatch do
     it "allows disabling the inclusion of default dimensions" do
       default_dimensions["Default1"] = "Value1"
       default_dimensions["Default2"] = "Value2"
-      
+
       expect(client).to receive(:put_metric_data).with({
         namespace: "VFI Track",
         metric_data: [
@@ -133,7 +133,7 @@ describe OpenChain::CloudWatch do
 
   end
 
-  describe "send_delayed_job_queue_depth" do 
+  describe "send_delayed_job_queue_depth" do
     it "invokes put_metric_data" do
       expect(subject).to receive(:put_metric_data).with("Delayed Job Queue Depth", 10, "Count")
 
@@ -150,7 +150,7 @@ describe OpenChain::CloudWatch do
   end
 
   describe "add_default_dimension" do
-    before :each do 
+    before :each do
       @dims = subject.default_dimensions.dup
       subject.default_dimensions.clear
     end

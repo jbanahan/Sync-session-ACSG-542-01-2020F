@@ -17,11 +17,11 @@ describe UserTemplatesController do
   describe '#create' do
     it "should admin secure" do
       sign_in_as Factory(:user)
-      expect{post :create, {user_template:{name:'a',tempalte_json:"{}"}}}.to_not change(UserTemplate,:count)
+      expect {post :create, {user_template:{name:'a', tempalte_json:"{}"}}}.to_not change(UserTemplate, :count)
     end
     it "should create template" do
       sign_in_as Factory(:admin_user)
-      expect{post :create, {user_template:{name:'a',tempalte_json:"{}"}}}.to change(UserTemplate,:count).from(0).to(1)
+      expect {post :create, {user_template:{name:'a', tempalte_json:"{}"}}}.to change(UserTemplate, :count).from(0).to(1)
     end
   end
   describe '#update' do
@@ -68,11 +68,11 @@ describe UserTemplatesController do
     end
     it "should admin secure" do
       sign_in_as Factory(:user)
-      expect{delete :destroy, id: @t.id}.to_not change(UserTemplate,:count)
+      expect {delete :destroy, id: @t.id}.to_not change(UserTemplate, :count)
     end
     it "should delete template" do
       sign_in_as Factory(:admin_user)
-      expect{delete :destroy, id: @t.id}.to change(UserTemplate,:count).from(1).to(0)
+      expect {delete :destroy, id: @t.id}.to change(UserTemplate, :count).from(1).to(0)
     end
   end
 

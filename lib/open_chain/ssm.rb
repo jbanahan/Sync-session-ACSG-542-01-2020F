@@ -28,7 +28,7 @@ module OpenChain; class Ssm
   end
 
   class << self
-    private 
+    private
 
     def send_run_shell_script_command commands, target_hash: nil, instance_ids: nil, working_directory: nil
       # This SSM runs only on AWS managed instances, the ONLY time this call should be executed is on an ec2 instance (.ie in a production environment)
@@ -121,13 +121,13 @@ module OpenChain; class Ssm
       ::Aws::SSM::Client.new(aws_config)
     end
 
-    # What's happening here is that an SSM command runs as root.  There are cases where we need to run a 
+    # What's happening here is that an SSM command runs as root.  There are cases where we need to run a
     # command as a non-root user - generally as ubuntu.  This happens primarily because we're using rvm
-    # to install / manage multiple ruby versions on the servers.  In that case, in order to execute any 
-    # scripts / services that rely on RVM setting up paths, we need to actually run the command through 
-    # a shell that's init with RVM in it under the user.  
+    # to install / manage multiple ruby versions on the servers.  In that case, in order to execute any
+    # scripts / services that rely on RVM setting up paths, we need to actually run the command through
+    # a shell that's init with RVM in it under the user.
     #
-    # This method uses some sudo tricks to be able to do that.  
+    # This method uses some sudo tricks to be able to do that.
     def run_command_in_user_shell username, command, working_directory: nil
       escaped_command = Shellwords.escape(command)
 

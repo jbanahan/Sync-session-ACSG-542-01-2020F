@@ -15,17 +15,17 @@ module OpenChain
 
         def parse data
           cursor = 1
-          #this all has to be in a long running transaction because if there's an error, 
-          #we've incremented values which MUST be undone for the whole file so it can be
-          #reprocessed
+          # this all has to be in a long running transaction because if there's an error,
+          # we've incremented values which MUST be undone for the whole file so it can be
+          # reprocessed
           begin
             ActiveRecord::Base.transaction do
-              CSV.parse(data,headers:true) do |row|
+              CSV.parse(data, headers:true) do |row|
                 cursor += 1
                 next if row.blank? || row[0].match(/Subtotal/) || row[0].match(/Total/) || row[0].match(/Imported Duty/) || row[10].blank?
                 part_number = row[6].split('-').first.strip
                 q = DrawbackImportLine.where(importer_id:@company.id,
-                  entry_number:row[0],part_number:part_number).
+                  entry_number:row[0], part_number:part_number).
                   where("id NOT IN (select drawback_import_line_id from duty_calc_import_file_lines)")
                 p = Product.find_by unique_identifier: "LANDSEND-#{part_number}"
                 if p.nil?
@@ -42,7 +42,7 @@ module OpenChain
                   hts_code:row[5],
                   quantity:0,
                   unit_of_measure:row[8],
-                  unit_price:row[9].gsub('$',''),
+                  unit_price:row[9].gsub('$', ''),
                   rate: duty_rate(row)
                 )
                 d.quantity += BigDecimal(row[7])
@@ -61,11 +61,11 @@ module OpenChain
         private
         def duty_rate row
           return 0 if row[10].blank? && row[11] && row[11]=='0'
-          BigDecimal(row[10].gsub('%',''))*BigDecimal('0.01')
+          BigDecimal(row[10].gsub('%', ''))*BigDecimal('0.01')
         end
         def description raw
           dash = raw.index('-')
-          raw[dash+2,raw.length - dash+2]
+          raw[dash+2, raw.length - dash+2]
         end
         def format_date d
           yr = d.split('/').last.to_i

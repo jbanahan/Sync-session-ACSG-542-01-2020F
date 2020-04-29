@@ -18,7 +18,7 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiCoreModu
     # With enough messing around, this should be able to use the more standardizable approach of updating / creating the invoice data
     # via an update_model_field_attributes call...for now, that's just a bit of a pain to backport into this controller method.
     ci = h['id'].blank? ? CommercialInvoice.new : CommercialInvoice.find(h['id'])
-    raise StatusableError.new("Cannot update commercial invoice attached to customs entry.",:forbidden) if ci.entry_id
+    raise StatusableError.new("Cannot update commercial invoice attached to customs entry.", :forbidden) if ci.entry_id
     h['ci_imp_syscode'] = current_user.company.system_code if h['ci_imp_syscode'].blank? && ci.importer.nil? && current_user.company.importer? && !current_user.company.system_code.blank?
     import_fields h, ci, CoreModule::COMMERCIAL_INVOICE
     load_lines ci, h
@@ -29,13 +29,13 @@ module Api; module V1; class CommercialInvoicesController < Api::V1::ApiCoreModu
 
   def load_lines ci, h
     if h['commercial_invoice_lines']
-      h['commercial_invoice_lines'].each_with_index do |ln,i|
+      h['commercial_invoice_lines'].each_with_index do |ln, i|
         c_line = ci.commercial_invoice_lines.find {|obj| obj.line_number == ln['cil_line_number'].to_i || obj.id == ln['id'].to_i}
         c_line = ci.commercial_invoice_lines.build(line_number:ln['cil_line_number']) if c_line.nil?
         import_fields ln, c_line, CoreModule::COMMERCIAL_INVOICE_LINE
         ci.errors[:base] << "Line #{i+1} is missing #{ModelField.find_by_uid(:cil_line_number).label}." if c_line.line_number.blank?
         unless ln['commercial_invoice_tariffs'].blank?
-          ln['commercial_invoice_tariffs'].each_with_index do |tln,j|
+          ln['commercial_invoice_tariffs'].each_with_index do |tln, j|
             hts = tln['cit_hts_code']
             ct = c_line.commercial_invoice_tariffs.find {|t| t.hts_code == hts}
             ct = c_line.commercial_invoice_tariffs.build(hts_code:hts) if ct.nil?

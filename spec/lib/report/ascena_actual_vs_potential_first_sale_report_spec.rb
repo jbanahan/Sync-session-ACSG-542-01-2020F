@@ -3,7 +3,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
   describe "permission?" do
     let (:ascena) { Factory(:importer, system_code: "ASCENA") }
-  
+
     before(:each) do
       ascena
       ms = stub_master_setup
@@ -54,12 +54,12 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       fm_season_start = Factory(:fiscal_month, company: co, year: 2016, month_number: 7, start_date: '2016-07-01', end_date: '2016-07-31')
       fm_previous = Factory(:fiscal_month, company: co, year: 2016, month_number: 8, start_date: '2016-08-01', end_date: '2016-08-31')
       fm_current = Factory(:fiscal_month, company: co, year: 2016, month_number: 9, start_date: '2016-09-01', end_date: '2016-09-30')
-      
-      #ELIGIBLE (contract_amount > 0)
+
+      # ELIGIBLE (contract_amount > 0)
       vend1 = Factory(:company, name: "vend1")
       vend2 = Factory(:company, name: "vend2")
 
-      #FIRST SALE
+      # FIRST SALE
 
       # previous month
       ent1 = Factory(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
@@ -97,8 +97,8 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       Factory(:order, order_number: 'ASCENA-po num3_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       Factory(:order, order_number: 'ASCENA-po num3_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
       Factory(:order, order_number: 'ASCENA-po num3_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      
-      #MISSED SAVINGS (contract_amount = 0)
+
+      # MISSED SAVINGS (contract_amount = 0)
 
       # previous month
       ent4 = Factory(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
@@ -136,12 +136,12 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       Factory(:order, order_number: 'ASCENA-po num6_1', vendor: vend1, factory: fact1).update_custom_value!(agent_cdef, 'agent')
       Factory(:order, order_number: 'ASCENA-po num6_2', vendor: vend1, factory: fact2).update_custom_value!(agent_cdef, 'agent')
       Factory(:order, order_number: 'ASCENA-po num6_3', vendor: vend2, factory: fact1).update_custom_value!(agent_cdef, 'agent')
-      
-      #INELIGIBLE
+
+      # INELIGIBLE
       vend3 = Factory(:company, name: "vend3")
       vend4 = Factory(:company, name: "vend4")
 
-      #POTENTIAL SAVINGS (contract_amount = 0)
+      # POTENTIAL SAVINGS (contract_amount = 0)
 
       # previous month
       ent7 = Factory(:entry, customer_number: 'ASCE', fiscal_date: '2016-08-04', fiscal_month: 9, fiscal_year: 2016)
@@ -183,17 +183,17 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
     it "emailed attachment has correct data" do
       create_data
-      Timecop.freeze(DateTime.new(2016,9,4,12)){ described_class.run_schedulable({'email' => ['test@vandegriftinc.com'], 'company' => 'ASCENA', 'fiscal_day' => 4}) }
+      Timecop.freeze(DateTime.new(2016, 9, 4, 12)) { described_class.run_schedulable({'email' => ['test@vandegriftinc.com'], 'company' => 'ASCENA', 'fiscal_day' => 4}) }
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq [ "test@vandegriftinc.com" ]
       expect(mail.subject).to eq "Actual vs Potential First Sale Report"
-      expect(mail.attachments.count).to eq 1    
+      expect(mail.attachments.count).to eq 1
       Tempfile.open('attachment') do |t|
         t.binmode
         t << mail.attachments.first.read
         t.flush
         wb = Spreadsheet.open t.path
-        
+
         sheet_1 = wb.worksheet(0)
         expect(sheet_1.row(1)).to eq ["First Sale Eligible Vendors Claiming First Sale at Entry"]
         expect(sheet_1.row(2)).to eq ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Duty Savings', 'Fiscal Season to Date Savings', 'Fiscal YTD Savings']
@@ -202,7 +202,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(sheet_1.row(5)).to eq [nil, nil, nil, 2.70, 5.40, 8.10, 'vend1 Subtotal']
         expect(sheet_1.row(6)).to eq ['vend2', 'agent', 'fact1', 1.00, 2.00, 3.00]
         expect(sheet_1.row(7)).to eq [nil, nil, nil, 1.00, 2.00, 3.00, 'vend2 Subtotal']
-        
+
         expect(sheet_1.row(9)).to eq [nil, nil, nil, 3.70, 7.40, 11.10, 'Total']
 
         expect(sheet_1.row(11)).to eq ['First Sale Eligible Vendors Not Claiming First Sale at Entry']
@@ -216,31 +216,31 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(sheet_1.row(19)).to eq [nil, nil, nil, 10.07, 20.15, 30.22, 'vend1 Subtotal']
         expect(sheet_1.row(20)).to eq ['vend2', 'agent', 'fact1', 5.93, 11.85, 17.78]
         expect(sheet_1.row(21)).to eq [nil, nil, nil, 5.93, 11.85, 17.78, 'vend2 Subtotal']
-        
+
         expect(sheet_1.row(23)).to eq [nil, nil, nil, 16.00, 32.00, 48.00, 'Total']
 
         expect(sheet_1.row(25)).to eq ['First Sale Ineligible Vendors Potential Duty Savings']
         expect(sheet_1.row(26)).to eq [nil, '29.63%', 'Previous Fiscal Period Average Vendor Margin']
         expect(sheet_1.row(27)).to eq [nil, '29.63%', 'Fiscal Season Average Vendor Margin']
         expect(sheet_1.row(28)).to eq [nil, '29.63%', 'Fiscal YTD Average Vendor Margin']
-        
+
         expect(sheet_1.row(30)).to eq ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Potential Duty Savings', 'Fiscal Season to Date Potential Savings', 'Fiscal YTD Potential Savings']
         expect(sheet_1.row(31)).to eq ['vend3', 'agent', 'fact1', 4.74, 9.48, 14.22]
         expect(sheet_1.row(32)).to eq ['vend3', 'agent', 'fact2', 5.33, 10.67, 16.00]
         expect(sheet_1.row(33)).to eq [nil, nil, nil, 10.07, 20.15, 30.22, 'vend3 Subtotal']
         expect(sheet_1.row(34)).to eq ['vend4', 'agent', 'fact1', 5.93, 11.85, 17.78]
         expect(sheet_1.row(35)).to eq [nil, nil, nil, 5.93, 11.85, 17.78, 'vend4 Subtotal']
-        
+
         expect(sheet_1.row(37)).to eq [nil, nil, nil, 16.00, 32.00, 48.00, 'Total']
 
-        detail_header_savings = ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID', 
-                                 'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price', 
-                                 'Invoice Tariff - Duty Rate', 'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501', 
+        detail_header_savings = ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID',
+                                 'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price',
+                                 'Invoice Tariff - Duty Rate', 'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501',
                                  'Invoice Value - 7501', 'Value Reduction', 'Vendor Margin', 'Invoice Line - First Sale Savings', 'First Sale Flag']
 
-        detail_header_missed_potential = ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID', 
-                                          'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price', 'Invoice Tariff - Duty Rate', 
-                                          'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501', 'Invoice Value - 7501', 'First Sale Flag']                                 
+        detail_header_missed_potential = ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID',
+                                          'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price', 'Invoice Tariff - Duty Rate',
+                                          'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501', 'Invoice Value - 7501', 'First Sale Flag']
 
         sheet_2 = wb.worksheet(1)
         expect(sheet_2.rows.count).to eq 4
@@ -252,7 +252,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
         sheet_4 = wb.worksheet(3)
         expect(sheet_4.rows.count).to eq 4
-        expect(sheet_4.row(0)).to eq detail_header_missed_potential    
+        expect(sheet_4.row(0)).to eq detail_header_missed_potential
       end
     end
   end
@@ -264,12 +264,12 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
     describe "split_results" do
       it "splits query results with block" do
         query_results = {previous_fiscal_month: [{'vendor' => 'ACME', 'seller' => 'Smith', 'factory' => 'Smoky', 'first_sale_flag' => 'Y'},
-                                                 {'vendor' => 'ACME', 'seller' => 'Jones', 'factory' => 'Smoky', 'first_sale_flag' => 'N'}], 
+                                                 {'vendor' => 'ACME', 'seller' => 'Jones', 'factory' => 'Smoky', 'first_sale_flag' => 'N'}],
                          fiscal_season_to_date: [{'vendor' => 'ACME', 'seller' => 'Smith', 'factory' => 'Smoky', 'first_sale_flag' => 'N'},
-                                                 {'vendor' => 'ACME', 'seller' => 'Brown', 'factory' => 'Dirty', 'first_sale_flag' => 'Y'}], 
+                                                 {'vendor' => 'ACME', 'seller' => 'Brown', 'factory' => 'Dirty', 'first_sale_flag' => 'Y'}],
                          fiscal_ytd: [{'vendor' => 'Konvenientz', 'seller' => 'Smith', 'factory' => 'Dirty', 'first_sale_flag' => 'N'}]}
         first_sale, missed = converter.split_results(query_results) { |rs| converter.first_sale_partition rs }
-        
+
         expect(first_sale[:previous_fiscal_month]).to eq([{'vendor' => 'ACME', 'seller' => 'Smith', 'factory' => 'Smoky', 'first_sale_flag' => 'Y'}])
         expect(first_sale[:fiscal_season_to_date]).to eq([{'vendor' => 'ACME', 'seller' => 'Brown', 'factory' => 'Dirty', 'first_sale_flag' => 'Y'}])
         expect(first_sale[:fiscal_ytd]).to be_empty
@@ -287,9 +287,9 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         ytd_result = double "fiscal ytd result"
 
         prev_month_hsh = double "prev month hsh"
-        expect(prev_month_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a','b','d']])
+        expect(prev_month_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a', 'b', 'd']])
         season_hsh = double "season hsh"
-        expect(season_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a','c','d']])
+        expect(season_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a', 'c', 'd']])
         ytd_hsh = double "ytd hsh"
         expect(ytd_hsh).to receive(:[]).with(:triplets).and_return([['d', 'e', 'f']])
 
@@ -298,10 +298,10 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(converter).to receive(:convert_one_first_sale_result).with(ytd_result).and_return ytd_hsh
 
         results = {previous_fiscal_month: prev_month_result, fiscal_season_to_date: season_result, fiscal_ytd: ytd_result}
-        expect(converter.convert_first_sale_results results).to eq({previous_fiscal_month: prev_month_hsh, 
-                                                                    fiscal_season_to_date: season_hsh, 
-                                                                    fiscal_ytd: ytd_hsh, 
-                                                                    triplets: {'a' => [['b', 'c'], ['b','d'], ['c', 'd']], 'd' => [['e','f']]}})
+        expect(converter.convert_first_sale_results results).to eq({previous_fiscal_month: prev_month_hsh,
+                                                                    fiscal_season_to_date: season_hsh,
+                                                                    fiscal_ytd: ytd_hsh,
+                                                                    triplets: {'a' => [['b', 'c'], ['b', 'd'], ['c', 'd']], 'd' => [['e', 'f']]}})
 
       end
     end
@@ -313,9 +313,9 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         ytd_result = double "fiscal ytd result"
 
         prev_month_hsh = double "prev month hsh"
-        expect(prev_month_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a','b','d']])
+        expect(prev_month_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a', 'b', 'd']])
         season_hsh = double "season hsh"
-        expect(season_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a','c','d']])
+        expect(season_hsh).to receive(:[]).with(:triplets).and_return([['a', 'b', 'c'], ['a', 'c', 'd']])
         ytd_hsh = double "ytd hsh"
         expect(ytd_hsh).to receive(:[]).with(:triplets).and_return([['d', 'e', 'f']])
         percs_hsh = {previous_fiscal_month: 0.3, fiscal_season_to_date: 0.5, fiscal_ytd: 0.7}
@@ -325,10 +325,10 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(converter).to receive(:convert_one_missed_or_potential_result).with(ytd_result, 0.7).and_return ytd_hsh
 
         results = {previous_fiscal_month: prev_month_result, fiscal_season_to_date: season_result, fiscal_ytd: ytd_result}
-        expect(converter.convert_missed_or_potential_results results, percs_hsh).to eq({previous_fiscal_month: prev_month_hsh, 
-                                                                    fiscal_season_to_date: season_hsh, 
-                                                                    fiscal_ytd: ytd_hsh, 
-                                                                    triplets: {'a' => [['b', 'c'], ['b','d'], ['c', 'd']], 'd' => [['e','f']]}})
+        expect(converter.convert_missed_or_potential_results results, percs_hsh).to eq({previous_fiscal_month: prev_month_hsh,
+                                                                    fiscal_season_to_date: season_hsh,
+                                                                    fiscal_ytd: ytd_hsh,
+                                                                    triplets: {'a' => [['b', 'c'], ['b', 'd'], ['c', 'd']], 'd' => [['e', 'f']]}})
       end
     end
 
@@ -339,13 +339,13 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
          {'vendor' => 'ACME', 'seller' => 'Brown', 'factory' => 'Smoky', 'first_sale_sav' => BigDecimal(3), 'first_sale_diff' => BigDecimal(3), 'inv_val_contract' => BigDecimal(1), 'val_contract_x_tariff_rate' => BigDecimal(5)},
          {'vendor' => 'Konvenientz', 'seller' => 'Smith', 'factory' => 'Smoky', 'first_sale_sav' => BigDecimal(7), 'first_sale_diff' => BigDecimal(1), 'inv_val_contract' => BigDecimal(1), 'val_contract_x_tariff_rate' => BigDecimal(6)}]
       end
-      
+
       describe "convert_one_first_sale_result" do
         it "returns nested savings hash, vendor-total hash, grand total, and average percentage along with list of vendor/seller/factory triplets" do
            r = converter.convert_one_first_sale_result(query_result)
 
-           expect(r[:lines]).to eq({'ACME'=>{'Smith' => {'Smoky' => 5, 
-                                                         'Dirty' => 7}, 
+           expect(r[:lines]).to eq({'ACME'=>{'Smith' => {'Smoky' => 5,
+                                                         'Dirty' => 7},
                                              'Brown' => {'Smoky' =>3}},
                                     'Konvenientz'=> {'Smith'=>{'Smoky'=>7}}})
            expect(r[:vendor_total]).to eq({'ACME' => 15, 'Konvenientz' => 7})
@@ -358,20 +358,20 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       describe "convert_one_missed_or_potential_result" do
           it "returns nested missed/potential hash, vendor-total hash, grand total, along with list of vendor/seller/factory triplets" do
             r = converter.convert_one_missed_or_potential_result(query_result, 0.8)
-            expect(r[:lines]).to eq({'ACME'=>{'Smith' => {'Smoky' => 2.4, 
-                                                          'Dirty' => 3.2}, 
+            expect(r[:lines]).to eq({'ACME'=>{'Smith' => {'Smoky' => 2.4,
+                                                          'Dirty' => 3.2},
                                               'Brown' => {'Smoky' =>4}},
-                                     'Konvenientz'=> {'Smith'=>{'Smoky'=>4.8}}}) 
+                                     'Konvenientz'=> {'Smith'=>{'Smoky'=>4.8}}})
             expect(r[:vendor_total]).to eq({'ACME' => 9.6, 'Konvenientz' => 4.8})
             expect(r[:grand_total]).to eq 14.4
             expect(r[:triplets]).to eq [['ACME', 'Smith', 'Smoky'], ['ACME', 'Smith', 'Dirty'], ['ACME', 'Brown', 'Smoky'], ['Konvenientz', 'Smith', 'Smoky']]
           end
       end
-    
+
     end
   end
 
-  describe "FiscalMonthRange" do 
+  describe "FiscalMonthRange" do
     let!(:co) { Factory(:company, system_code: "ASCENA") }
     let(:fm_range) { described_class::FiscalMonthRange.new }
 
@@ -380,7 +380,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         Factory(:fiscal_month, company: co, year: 2018, month_number: 2, start_date: '2017-08-27', end_date: '2017-09-30')
         Factory(:fiscal_month, company: co, year: 2018, month_number: 3, start_date: '2017-10-01', end_date: '2017-10-28')
 
-        Timecop.freeze(DateTime.new(2017,10,10)) do
+        Timecop.freeze(DateTime.new(2017, 10, 10)) do
           expect(fm_range.range_for_previous_fiscal_month).to eq "e.fiscal_date >= '2017-08-27' AND e.fiscal_date < '2017-10-01'"
         end
       end
@@ -389,7 +389,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         Factory(:fiscal_month, company: co, year: 2018, month_number: 1, start_date: '2017-07-30', end_date: '2017-08-26')
         Factory(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
 
-        Timecop.freeze(Date.new(2017,8,10)) do
+        Timecop.freeze(Date.new(2017, 8, 10)) do
           expect(fm_range.range_for_previous_fiscal_month).to eq "e.fiscal_date >= '2017-07-02' AND e.fiscal_date < '2017-07-30'"
         end
       end
@@ -400,7 +400,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         Factory(:fiscal_month, company: co, year: 2017, month_number: 1, start_date: '2016-07-31', end_date: '2016-08-27')
         Factory(:fiscal_month, company: co, year: 2017, month_number: 5, start_date: '2016-11-27', end_date: '2016-12-31')
 
-        Timecop.freeze(Date.new(2016,12,10)) do
+        Timecop.freeze(Date.new(2016, 12, 10)) do
           expect(fm_range.range_for_fiscal_season_to_date).to eq "e.fiscal_date >= '2016-07-31' AND e.fiscal_date < '2016-11-27'"
         end
       end
@@ -409,7 +409,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         Factory(:fiscal_month, company: co, year: 2017, month_number: 7, start_date: '2017-01-29', end_date: '2017-02-25')
         Factory(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
 
-        Timecop.freeze(Date.new(2017,7,4)) do
+        Timecop.freeze(Date.new(2017, 7, 4)) do
           expect(fm_range.range_for_fiscal_season_to_date).to eq "e.fiscal_date >= '2017-01-29' AND e.fiscal_date < '2017-07-02'"
         end
       end
@@ -420,7 +420,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         Factory(:fiscal_month, company: co, year: 2017, month_number: 1, start_date: '2016-07-31', end_date: '2016-08-27')
         Factory(:fiscal_month, company: co, year: 2017, month_number: 12, start_date: '2017-07-02', end_date: '2017-07-29')
 
-        Timecop.freeze(Date.new(2017,7,04)) do
+        Timecop.freeze(Date.new(2017, 7, 04)) do
           expect(fm_range.range_for_fiscal_ytd).to eq "e.fiscal_date >= '2016-07-31' AND e.fiscal_date < '2017-07-02'"
         end
       end
@@ -440,7 +440,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         @cil = Factory(:commercial_invoice_line, contract_amount: 10.5, value: 7)
         Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_amount: 4.5, entered_value: 8)
         Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, duty_amount: 3, entered_value: 6)
-      
+
         @qry = <<-SQL
                 SELECT #{rep.first_sale_savings('cil')}
                 FROM entries e
@@ -453,7 +453,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       it "returns 0 if contract_amount is NULL" do
         @cil.update_attributes(contract_amount: 0)
         result = []
-        ActiveRecord::Base.connection.execute(@qry).each{ |r| result << r }
+        ActiveRecord::Base.connection.execute(@qry).each { |r| result << r }
         expect(result[0].first).to eq 0
         expect(result[1].first).to eq 0
       end
@@ -461,7 +461,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       it "returns 0 if contract_amount is 0" do
         @cil.update_attributes(contract_amount: nil)
         result = []
-        ActiveRecord::Base.connection.execute(@qry).each{ |r| result << r }
+        ActiveRecord::Base.connection.execute(@qry).each { |r| result << r }
         expect(result[0].first).to eq 0
         expect(result[1].first).to eq 0
       end
@@ -469,18 +469,18 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       it "returns expected result if contract_amount isn't 0 or NULL" do
         result = ActiveRecord::Base.connection.execute @qry
         result = []
-        ActiveRecord::Base.connection.execute(@qry).each{ |r| result << r }
+        ActiveRecord::Base.connection.execute(@qry).each { |r| result << r }
         expect(result[0].first).to eq 1.97
         expect(result[1].first).to eq 1.97
       end
     end
-    
+
     describe "first_sale_difference" do
       before do
         rep = Report.new
         @cil = Factory(:commercial_invoice_line, contract_amount: 10, value: 5.156)
         Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil)
-      
+
         @qry = <<-SQL
                 SELECT #{rep.first_sale_difference('cil')}
                 FROM entries e
@@ -510,7 +510,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
 
   end
 
-  
+
   describe "SavingsQueryRunner" do
     let(:runner) { described_class::SavingsQueryRunner }
 
@@ -536,13 +536,13 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         expect(results.first).to eq ['vend', 'MID', 'agent', 'fact', 'Y', 3.69, 7, 19, 5.6]
       end
     end
-    
+
   end
 
-  
+
   describe "DetailQueryGenerator" do
     let(:generator) { described_class::DetailQueryGenerator }
-    
+
     describe "get_detail_queries" do
       it "returns results of detail queries for first sale savings, missed savings, and potential savings" do
         cdefs = double "cdefs"
@@ -551,17 +551,17 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         first_sale = double "first sale"
         missed = double "missed savings"
         potential = double "potential savings"
-        
+
         expect(generator).to receive(:detail_query).with(cdefs, fm_range, true, "cil.mid IN ('1234','5678','9012') AND cil.contract_amount > 0").and_return first_sale
         expect(generator).to receive(:detail_query).with(cdefs, fm_range, false, "cil.mid IN ('1234','5678','9012') AND cil.contract_amount <= 0").and_return missed
         expect(generator).to receive(:detail_query).with(cdefs, fm_range, false, "(cil.mid NOT IN ('1234','5678','9012') OR cil.mid IS NULL)").and_return potential
-        
+
         expect(generator.get_detail_queries cdefs, eligible_mids, fm_range).to eq({first_sale: first_sale, missed: missed, potential: potential})
       end
     end
 
     describe "detail_query" do
-      
+
       before do
         Factory(:company, system_code: "ASCENA")
         @cdefs = described_class.prep_custom_definitions [:ord_type, :ord_selling_agent, :prod_vendor_style, :ord_line_wholesale_unit_price, :prod_reference_number]
@@ -578,7 +578,7 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
         @o.update_custom_value!(@cdefs[:ord_type], "AGS")
         ol = Factory(:order_line, order: @o, product: prod)
         ol.update_custom_value!(@cdefs[:ord_line_wholesale_unit_price], 10)
-        
+
         @fm_range = double "fiscal month range"
         expect(@fm_range).to receive(:range_for_previous_fiscal_month).and_return("1=1")
       end
@@ -586,33 +586,33 @@ describe OpenChain::Report::AscenaActualVsPotentialFirstSaleReport do
       it "returns expected result for 'savings' tab" do
         results = ActiveRecord::Base.connection.exec_query generator.detail_query(@cdefs, @fm_range, true, "1=1")
         expect(results.count).to eq 1
-        expect(results.columns).to eq ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID', 
-                                       'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price', 
-                                       'Invoice Tariff - Duty Rate', 'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501', 
+        expect(results.columns).to eq ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID',
+                                       'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price',
+                                       'Invoice Tariff - Duty Rate', 'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501',
                                        'Invoice Value - 7501', 'Value Reduction', 'Vendor Margin', 'Invoice Line - First Sale Savings', 'First Sale Flag']
-        
+
         expect(results.first).to eq({'Entry Number'=> 'ent num', 'Entry Filed Date'=>@ent.entry_filed_date, 'Entry First Release Date'=>@ent.first_release_date,
-                                     'Fiscal Month'=> 1, 'AGS Office'=> 'agent', 'Vendor Name'=>'vend', 'MID Supplier Name'=>'fact', 'MID'=>'cil mid', 
-                                     'Invoice Value - Brand'=>60, 'COO'=>'coo', 'Style Number'=>'style', 'PO Number'=>'po num', 'Invoice Number'=>'inv num', 
-                                     'Quantity'=>6, 'Unit Price'=>2, 'Invoice Tariff - Duty Rate'=>2, 'Invoice Tariff - Duty'=>3, 'Invoice Value - Contract'=>4, 
-                                     'Unit Price - 7501'=>BigDecimal(4/3.0,7), 'Invoice Value - 7501'=>8, 'Value Reduction'=>-4, 'Vendor Margin'=>-1, 
+                                     'Fiscal Month'=> 1, 'AGS Office'=> 'agent', 'Vendor Name'=>'vend', 'MID Supplier Name'=>'fact', 'MID'=>'cil mid',
+                                     'Invoice Value - Brand'=>60, 'COO'=>'coo', 'Style Number'=>'style', 'PO Number'=>'po num', 'Invoice Number'=>'inv num',
+                                     'Quantity'=>6, 'Unit Price'=>2, 'Invoice Tariff - Duty Rate'=>2, 'Invoice Tariff - Duty'=>3, 'Invoice Value - Contract'=>4,
+                                     'Unit Price - 7501'=>BigDecimal(4/3.0, 7), 'Invoice Value - 7501'=>8, 'Value Reduction'=>-4, 'Vendor Margin'=>-1,
                                      'Invoice Line - First Sale Savings'=>-3, 'First Sale Flag'=>'Y'})
       end
 
       it "returns expected result for 'missed_potential' tabs" do
         results = ActiveRecord::Base.connection.exec_query generator.detail_query(@cdefs, @fm_range, false, "1=1")
         expect(results.count).to eq 1
-        expect(results.columns).to eq ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID', 
-                                       'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price', 
-                                       'Invoice Tariff - Duty Rate', 'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501', 
+        expect(results.columns).to eq ['Entry Number', 'Entry Filed Date', 'Entry First Release Date', 'Fiscal Month', 'AGS Office', 'Vendor Name', 'MID Supplier Name', 'MID',
+                                       'Invoice Value - Brand', 'COO', 'Style Number', 'PO Number', 'Invoice Number', 'Quantity', 'Unit Price',
+                                       'Invoice Tariff - Duty Rate', 'Invoice Tariff - Duty', 'Invoice Value - Contract', 'Unit Price - 7501',
                                        'Invoice Value - 7501', 'First Sale Flag']
-        
+
         r = results.first
         expect(r).to eq({'Entry Number'=> 'ent num', 'Entry Filed Date'=>@ent.entry_filed_date, 'Entry First Release Date'=>@ent.first_release_date,
-                         'Fiscal Month'=> 1, 'AGS Office'=> 'agent', 'Vendor Name'=>'vend', 'MID Supplier Name'=>'fact', 'MID'=>'cil mid', 
-                         'Invoice Value - Brand'=>60, 'COO'=>'coo', 'Style Number'=>'style', 'PO Number'=>'po num', 'Invoice Number'=>'inv num', 
-                         'Quantity'=>6, 'Unit Price'=>2, 'Invoice Tariff - Duty Rate'=>2, 'Invoice Tariff - Duty'=>3, 'Invoice Value - Contract'=>4, 
-                         'Unit Price - 7501'=>BigDecimal(4/3.0,7), 'Invoice Value - 7501'=>8, 'First Sale Flag'=>'Y'})
+                         'Fiscal Month'=> 1, 'AGS Office'=> 'agent', 'Vendor Name'=>'vend', 'MID Supplier Name'=>'fact', 'MID'=>'cil mid',
+                         'Invoice Value - Brand'=>60, 'COO'=>'coo', 'Style Number'=>'style', 'PO Number'=>'po num', 'Invoice Number'=>'inv num',
+                         'Quantity'=>6, 'Unit Price'=>2, 'Invoice Tariff - Duty Rate'=>2, 'Invoice Tariff - Duty'=>3, 'Invoice Value - Contract'=>4,
+                         'Unit Price - 7501'=>BigDecimal(4/3.0, 7), 'Invoice Value - 7501'=>8, 'First Sale Flag'=>'Y'})
       end
 
       it "returns blank AGS Office if order type is 'NONAGS'" do

@@ -16,8 +16,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
       m
     end
 
-    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
-                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}, 
+    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"},
+                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"},
                                {cust_num: "MAUR", sys_code: "MAUR", name: "MAURICES", short_name: "Maurices"}]}
 
     it "returns empty if 'Ascena Reports' custom feature absent" do
@@ -53,19 +53,19 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
 
     it "omits info for missing company" do
       maurices.destroy
-      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"},
                                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}])
     end
   end
 
   describe "run_schedulable" do
-    let!(:current_fm) { Factory(:fiscal_month, company: ascena, start_date: Date.new(2018,3,15), end_date: Date.new(2018,4,15), year: 2018, month_number: 2) }
-    let!(:previous_fm) { Factory(:fiscal_month, company: ascena, start_date: Date.new(2018,2,15), end_date: Date.new(2018,3,14), year: 2018, month_number: 1) }
+    let!(:current_fm) { Factory(:fiscal_month, company: ascena, start_date: Date.new(2018, 3, 15), end_date: Date.new(2018, 4, 15), year: 2018, month_number: 2) }
+    let!(:previous_fm) { Factory(:fiscal_month, company: ascena, start_date: Date.new(2018, 2, 15), end_date: Date.new(2018, 3, 14), year: 2018, month_number: 1) }
 
     it "runs report for previous fiscal month on fourth day of fiscal month" do
       Tempfile.open(["hi", ".xls"]) do |t|
         expect_any_instance_of(subject).to receive(:run).with(previous_fm).and_yield t
-        Timecop.freeze(DateTime.new(2018,3,18,12,0)) do
+        Timecop.freeze(DateTime.new(2018, 3, 18, 12, 0)) do
           subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                   'cust_numbers' => ['ASCE', 'ATAYLOR'],
                                   'company' => 'ASCENA',
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport do
     end
 
     it "does nothing on other days" do
-      Timecop.freeze(DateTime.new(2018,3,20,12,0)) do
+      Timecop.freeze(DateTime.new(2018, 3, 20, 12, 0)) do
         subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                 'cust_numbers' => ['ASCE', 'ATAYLOR'],
                                 'company' => 'ASCENA',

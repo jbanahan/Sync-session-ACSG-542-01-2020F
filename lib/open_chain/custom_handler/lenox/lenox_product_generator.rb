@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
   end
 
   def ftp_credentials
-    {server:'ftp.lenox.com',username:"vanvendor#{@env=='production' ? '' : 'test'}",password:'$hipments',folder:'.', remote_file_name: "Item_HTS"}
+    {server:'ftp.lenox.com', username:"vanvendor#{@env=='production' ? '' : 'test'}", password:'$hipments', folder:'.', remote_file_name: "Item_HTS"}
   end
 
   def preprocess_row row, opts
@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
       end
     else
       c.tariff_records.order("line_number ASC").each do |t|
-        # HTS codes in chapter 98 are all special case tariffs, Lenox only wants 
+        # HTS codes in chapter 98 are all special case tariffs, Lenox only wants
         # this code as it's the one used to determine the duty rate
         if t.hts_1.to_s.strip[0, 2] == "98"
           rows << [row[0], row[1], t.hts_1, (counter += 1).to_s.rjust(3, "0"), row[4]]
@@ -55,9 +55,9 @@ module OpenChain; module CustomHandler; module Lenox; class LenoxProductGenerato
         end
       end
     end
-    
+
     if rows.length == 1
-    
+
       # They want the row counter for single tariff lines to be zero, not 1, so just
       # change it "post facto" when there's only a single tariff line
       rows[0][3] = "000"

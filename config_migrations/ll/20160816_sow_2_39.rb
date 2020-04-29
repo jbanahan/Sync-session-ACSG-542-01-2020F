@@ -16,14 +16,14 @@ module ConfigMigrations; module LL; class SOW239
   end
 
   def update_orders
-    cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions [:ordln_old_art_number,:ordln_part_name,:prod_old_article]
+    cdefs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions [:ordln_old_art_number, :ordln_part_name, :prod_old_article]
     u = User.integration
     Order.includes(:order_lines).find_each do |o|
       needs_new_pdf = false
       o.order_lines.each do |ol|
-        prod_art_hash = find_product_and_values(ol,cdefs)
-        ol.update_custom_value!(cdefs[:ordln_old_art_number],prod_art_hash[:old_art])
-        ol.update_custom_value!(cdefs[:ordln_part_name],prod_art_hash[:name])
+        prod_art_hash = find_product_and_values(ol, cdefs)
+        ol.update_custom_value!(cdefs[:ordln_old_art_number], prod_art_hash[:old_art])
+        ol.update_custom_value!(cdefs[:ordln_part_name], prod_art_hash[:name])
         needs_new_pdf = true if prod_art_hash[:product].name != prod_art_hash[:name] || prod_art_hash[:current_old_art] != prod_art_hash[:old_art]
       end
       if needs_new_pdf
@@ -35,7 +35,7 @@ module ConfigMigrations; module LL; class SOW239
 
   def find_product_and_values order_line, cdefs
     p = order_line.product
-    es = p.entity_snapshots.where('created_at < ?',order_line.created_at).order('created_at desc').first
+    es = p.entity_snapshots.where('created_at < ?', order_line.created_at).order('created_at desc').first
     old_art = nil
     name = nil
     if es

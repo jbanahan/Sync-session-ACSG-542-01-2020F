@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     # presence of a ReferenceLine element value.  A prepack component's ReferenceLine will connect back to the
     # prepack it is part of.  Bail out of this method if the current detail is a prepack component.
     prepack_component = xml.text("ReferenceLine").present?
-    return unless !prepack_component
+    return if prepack_component
 
     line = order.order_lines.build
     line.line_number = xml.text("LineNum").to_i
@@ -75,7 +75,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     line.unit_of_measure = uom.nil? ? nil : uom.to_s
     line.sku = xml.text "SKU"
     line.price_per_unit = BigDecimal(xml.text("Price/Amount").to_s)
-    line.find_and_set_custom_value(cdefs[:ord_line_ex_factory_date], parse_date(xml, "Ex-FactoryDate"))    
+    line.find_and_set_custom_value(cdefs[:ord_line_ex_factory_date], parse_date(xml, "Ex-FactoryDate"))
     line.find_and_set_custom_value(cdefs[:ord_line_division], xml.text("ArticleAttributes/Code[@Type = 'ProductDivision']"))
 
     prepack = prepack_detail?(xml)
@@ -84,7 +84,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     else
       product_sku = line.sku
     end
-    
+
     product = product_cache[product_sku]
     line.product = product
 
@@ -96,7 +96,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
   def find_or_create_order customer_order_number, revision, last_file_bucket, last_file_path
     order_number = "UNDAR-#{customer_order_number}"
     order = nil
-    Lock.acquire("Order-#{order_number}") do 
+    Lock.acquire("Order-#{order_number}") do
       o = Order.where(importer_id: importer.id, order_number: order_number).first_or_create! customer_order_number: customer_order_number
       order = o if process_file?(o, revision)
     end

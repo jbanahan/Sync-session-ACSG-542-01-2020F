@@ -4,8 +4,8 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
 
   describe 'process' do
     let(:user) { Factory(:master_user) }
-    
-    before :each do 
+
+    before :each do
       allow(cf).to receive(:attached).and_return cf
       allow(cf).to receive(:path).and_return "path/to/file.xlsx"
       allow(cf).to receive(:attached_file_name).and_return "file.xlsx"
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       cil_1 = ci_1.commercial_invoice_lines.first
       cit_1 = cil_1.commercial_invoice_tariffs.first
       expect(CommercialInvoice.count).to eq 2
-            
+
       expect(ci_1.invoice_number).to eq '424913'
       expect(cil_1.part_number).to eq 'HM-1234'
       expect(ci_1.destination_code).to eq 'East'
@@ -75,7 +75,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       expect(cil_1.line_number).to eq 1
       expect(ci_1.total_quantity_uom).to eq 'CTNS'
       expect(ci_1.importer).to eq co
-      #since net wt = 0
+      # since net wt = 0
       expect(cit_1.classification_qty_2).to be_nil
       expect(cit_1.classification_uom_2).to be_nil
 
@@ -105,13 +105,13 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       expect(cil_2.line_number).to eq 1
       expect(ci_2.total_quantity_uom).to eq 'CTNS'
       expect(ci_2.importer).to eq co
-      #since net wt is > 0
+      # since net wt is > 0
       expect(cit_2.classification_qty_2).to eq 4
       expect(cit_2.classification_uom_2).to eq 'KGS'
     end
 
     context "with already existing record" do
-      let!(:ci) { Factory(:commercial_invoice, importer: co, invoice_number: '424913', destination_code: 'West', mfid: 'ZAGBAFIRIDB', total_quantity: 7, invoice_value_foreign: 9, 
+      let!(:ci) { Factory(:commercial_invoice, importer: co, invoice_number: '424913', destination_code: 'West', mfid: 'ZAGBAFIRIDB', total_quantity: 7, invoice_value_foreign: 9,
                      docs_received_date: '2016-10-02', docs_ok_date: '2016-10-02', issue_codes: 'BADC', rater_comments: 'no comments', total_quantity_uom: 'CTNS') }
       let!(:cil) { Factory(:commercial_invoice_line, commercial_invoice: ci, part_number: 'HM-1234' , country_origin_code: 'UK', quantity: 3, unit_price: 8, currency: 'GBP', value_foreign: 10, line_number: 1) }
       let!(:cit) { Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, hts_code: '3333333333', gross_weight: 6, classification_qty_2: nil, classification_uom_2: nil) }
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
         expect(cil_2.line_number).to eq 1
         expect(ci_2.total_quantity_uom).to eq 'CTNS'
         expect(ci_2.importer).to eq co
-        #since net wt = 0
+        # since net wt = 0
         expect(cit_2.classification_qty_2).to be_nil
         expect(cit_2.classification_uom_2).to be_nil
       end
@@ -191,11 +191,11 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
         expect(cil_2.line_number).to eq cil_copy.line_number
         expect(ci_2.total_quantity_uom).to eq ci_copy.total_quantity_uom
         expect(ci_2.importer).to eq ci_copy.importer
-        #since net wt = 0
+        # since net wt = 0
         expect(cit_2.classification_qty_2).to eq cit_copy.classification_qty_2
         expect(cit_2.classification_uom_2).to eq cit_copy.classification_uom_2
       end
-    
+
       it "doesn't generate errors when encountering blank fingerprint values in the db" do
         ci.update_attributes(invoice_value_foreign: nil, docs_received_date: nil)
         cil.update_attributes(part_number: nil)
@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       expect(handler.process_excel(cf)[:fixable]).to eq ["No CI Upload processor exists for .csv file types."]
       expect(CommercialInvoice.count).to eq 0
     end
-  
+
     it "returns an error if row has bad PO number" do
       allow(cf).to receive(:path).and_return "file.xlsx"
       handler = described_class.new cf
@@ -241,7 +241,7 @@ describe OpenChain::CustomHandler::Hm::HmPoLineParser do
       expect(handler.process_excel(cf)[:fixable]).to eq ["Tariff number has wrong format at row 2!"]
       expect(CommercialInvoice.count).to eq 0
     end
-  
+
     it "returns any exceptions thrown by #parse_row!" do
       allow(cf).to receive(:path).and_return "file.xlsx"
       handler = described_class.new cf

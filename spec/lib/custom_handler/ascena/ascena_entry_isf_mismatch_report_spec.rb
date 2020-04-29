@@ -249,7 +249,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryIsfMismatchReport do
 
       expect_any_instance_of(described_class).to receive(:run_report).with(ascena, expected_start, expected_end).and_return tempfile
 
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         described_class.run_schedulable({"email" => ["me@there.com"]})
       end
 

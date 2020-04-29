@@ -31,13 +31,13 @@ class OneTimeAlertsController < ApplicationController
   end
 
   def new
-    if OneTimeAlert.can_edit? current_user 
+    if OneTimeAlert.can_edit? current_user
       @alert = OneTimeAlert.new
       @display_all = params[:display_all]
-      @cm_list = M_CLASS_NAMES.map do |mc_name| 
-        cm = CoreModule.find_by_class_name(mc_name) 
+      @cm_list = M_CLASS_NAMES.map do |mc_name|
+        cm = CoreModule.find_by_class_name(mc_name)
         [cm.class_name, cm.label]
-      end.sort_by{ |tuplet| tuplet[1] }
+      end.sort_by { |tuplet| tuplet[1] }
     else
       error_redirect "You do not have permission to create One Time Alerts."
     end
@@ -56,10 +56,10 @@ class OneTimeAlertsController < ApplicationController
   def create
     if OneTimeAlert.can_edit? current_user
       today = Date.today
-      alert = OneTimeAlert.create!(module_type: params[:module_type], 
+      alert = OneTimeAlert.create!(module_type: params[:module_type],
                                    user_id: current_user.id,
                                    inactive: true,
-                                   expire_date_last_updated_by_id: current_user.id, 
+                                   expire_date_last_updated_by_id: current_user.id,
                                    enabled_date: today,
                                    expire_date: today + 1.year)
       redirect_to edit_one_time_alert_path(alert, display_all_param)
@@ -88,7 +88,7 @@ class OneTimeAlertsController < ApplicationController
   def mass_delete
     if OneTimeAlert.can_edit? current_user
       OneTimeAlert.where(id: params[:ids])
-                  .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
+                  .select { |ota| ota.user_id == current_user.id || current_user.admin? }
                   .each(&:destroy)
       add_flash :notices, "Selected One Time Alerts have been deleted."
       redirect_to one_time_alerts_path(display_all_param)
@@ -101,8 +101,8 @@ class OneTimeAlertsController < ApplicationController
     if OneTimeAlert.can_edit? current_user
       expire_date = Time.zone.now.to_date
       OneTimeAlert.where(id: params[:ids])
-                  .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
-                  .each{ |ota| ota.update_attributes! expire_date: expire_date }
+                  .select { |ota| ota.user_id == current_user.id || current_user.admin? }
+                  .each { |ota| ota.update_attributes! expire_date: expire_date }
       add_flash :notices, "Selected One Time Alerts will expire at the end of the day."
       redirect_to one_time_alerts_path(display_all_param)
     else
@@ -114,8 +114,8 @@ class OneTimeAlertsController < ApplicationController
     if OneTimeAlert.can_edit? current_user
       expire_date = Time.zone.now.to_date + 1.year
       OneTimeAlert.where(id: params[:ids])
-                  .select{ |ota| ota.user_id == current_user.id || current_user.admin? }
-                  .each{ |ota| ota.update_attributes! expire_date: expire_date }
+                  .select { |ota| ota.user_id == current_user.id || current_user.admin? }
+                  .each { |ota| ota.update_attributes! expire_date: expire_date }
       redirect_to one_time_alerts_path(display_all_param)
       add_flash :notices, "Expire dates for selected One Time Alerts have been extended."
     else
@@ -124,16 +124,16 @@ class OneTimeAlertsController < ApplicationController
   end
 
   def reference_fields_index
-    available = M_CLASS_NAMES.map{ |mn| [mn, []]}.to_h
-    included  = M_CLASS_NAMES.map{ |mn| [mn, []]}.to_h
-    
+    available = M_CLASS_NAMES.map { |mn| [mn, []]}.to_h
+    included  = M_CLASS_NAMES.map { |mn| [mn, []]}.to_h
+
     admin_secure {
       xrefs = DataCrossReference.hash_ota_reference_fields
-      M_CLASS_NAMES.map{ |m_name| CoreModule.find_by_class_name m_name }.each do |cm|
+      M_CLASS_NAMES.map { |m_name| CoreModule.find_by_class_name m_name }.each do |cm|
         cm.default_module_chain.model_fields(current_user).each do |mfid, mf|
           h = xrefs[cm.class_name].include?(mfid) ? included : available
           h[cm.class_name] << {"mfid" => mfid.to_s, "label" => mf.label}
-          h[cm.class_name].sort_by!{ |mf_summary| mf_summary["label"] }
+          h[cm.class_name].sort_by! { |mf_summary| mf_summary["label"] }
         end
       end
       @display_all = params[:display_all]
@@ -162,7 +162,7 @@ class OneTimeAlertsController < ApplicationController
     alert_cpy.inactive = true
     alert_cpy.name = OpenChain::NameIncrementer.increment(alert.name, OneTimeAlert.where(user_id: current_user.id).map(&:name))
     alert_cpy.user = alert_cpy.expire_date_last_updated_by = current_user
-    alert.search_criterions.each{ |sc| alert_cpy.search_criterions << sc.dup }
+    alert.search_criterions.each { |sc| alert_cpy.search_criterions << sc.dup }
     alert_cpy.save!
     alert_cpy
   end
@@ -201,7 +201,7 @@ class OneTimeAlertsController < ApplicationController
                 .joins("LEFT OUTER JOIN #{updater_select} ON updater_id = one_time_alerts.expire_date_last_updated_by_id")
   end
 
-  def all_expired  
+  def all_expired
     base_query.where("expire_date < ?", today)
   end
 
@@ -228,7 +228,7 @@ class OneTimeAlertsController < ApplicationController
 
   def message params
     if params[:message] == "update"
-      "One Time Alert has been updated." 
+      "One Time Alert has been updated."
     elsif params[:message] == "ref_update"
       "Available reference fields have been updated."
     elsif params[:message] == "delete"

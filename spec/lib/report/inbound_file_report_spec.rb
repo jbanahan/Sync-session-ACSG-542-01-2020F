@@ -1,4 +1,4 @@
-describe OpenChain::Report::InboundFileReport do 
+describe OpenChain::Report::InboundFileReport do
 
   def xlsx mail_attachment
     XlsxTestReader.new(StringIO.new(mail_attachment.read))
@@ -10,7 +10,7 @@ describe OpenChain::Report::InboundFileReport do
     a = mail.attachments[filename]
     expect(a).not_to be_nil
     x = xlsx(a)
-    sheet = x.sheet "VFI Track Files" 
+    sheet = x.sheet "VFI Track Files"
     expect(x).not_to be_nil
 
     x.raw_data sheet
@@ -18,7 +18,7 @@ describe OpenChain::Report::InboundFileReport do
 
   describe "run" do
     let! (:master_setup) { stub_master_setup }
-    let (:settings) { 
+    let (:settings) {
       {email_to: "me@there.com"}
     }
 
@@ -27,8 +27,8 @@ describe OpenChain::Report::InboundFileReport do
     let! (:error_log) { InboundFile.create! company_id: company.id, file_name: "error.txt", parser_name: "OpenChain::ErrorParser", process_start_date: Time.zone.parse("2018-11-02 12:01"), process_end_date: Time.zone.parse("2018-11-02 12:05"), process_status: "Error"}
     let! (:warning_log) { InboundFile.create! company_id: company.id, file_name: "warning.txt", parser_name: "OpenChain::WarningParser", process_start_date: Time.zone.parse("2018-11-02 12:02"), process_end_date: Time.zone.parse("2018-11-02 12:05"), process_status: "Warning"}
     let! (:success_log) { InboundFile.create! company_id: company.id, file_name: "success.txt", parser_name: "OpenChain::SuccessParser", process_start_date: Time.zone.parse("2018-11-02 12:03"), process_end_date: Time.zone.parse("2018-11-02 12:05"), process_status: "Success"}
-    
-    context "with default settings" do 
+
+    context "with default settings" do
       it "runs report and emails to email_to" do
         subject.run Time.zone.parse("2018-11-02 12:04"), Time.zone.parse("2018-11-02 12:06"), settings
 
@@ -40,12 +40,12 @@ describe OpenChain::Report::InboundFileReport do
         expect(a).not_to be_nil
 
         x = xlsx(a)
-        sheet = x.sheet "VFI Track Files" 
+        sheet = x.sheet "VFI Track Files"
         expect(x).not_to be_nil
 
         data = x.raw_data sheet
 
-        # There's some sort of bug in the xlsx parsing gem (or possibly the xlsx creator) we use.  
+        # There's some sort of bug in the xlsx parsing gem (or possibly the xlsx creator) we use.
         # I think it's using floats internally that's throwing off the times by a second or so, hence the inexactly values below
         expect(data.length).to eq 3
         expect(data[0]).to eq ["Web View", "Parser", "File Name", "Company Name", "Start Time", "End Time", "Status"]
@@ -97,13 +97,13 @@ describe OpenChain::Report::InboundFileReport do
       data = CSV.parse a.read
       expect(data.length).to eq 3
     end
-    
+
   end
 
   describe "run_schedulable" do
-    subject { described_class } 
+    subject { described_class }
 
-    let (:job) { 
+    let (:job) {
       j = instance_double(SchedulableJob)
       allow(j).to receive(:id).and_return 100
       j

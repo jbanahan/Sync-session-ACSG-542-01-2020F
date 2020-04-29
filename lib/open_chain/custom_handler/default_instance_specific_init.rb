@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; class DefaultInstanceSpecificInit
         require 'open_chain/anti_virus/clamby_anti_virus'
         OpenChain::AntiVirus::AntiVirusRegistry.register OpenChain::AntiVirus::ClambyAntiVirus
       end
-      
+
     end
 
     if MasterSetup.get.custom_feature?("Document Stitching")

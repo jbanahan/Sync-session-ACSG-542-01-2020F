@@ -21,7 +21,7 @@ class PartNumberCorrelation < ActiveRecord::Base
   has_one :attachment, as: :attachable, dependent: :destroy
   belongs_to :user
 
-  attr_accessible :starting_row, :part_column, :part_regex, 
+  attr_accessible :starting_row, :part_column, :part_regex,
     :finished_time, :attachment, :entry_country_iso, :importers
 
   def self.can_view?(user)
@@ -35,7 +35,7 @@ class PartNumberCorrelation < ActiveRecord::Base
       importers = Company.where(id: importer_ids).to_a
       tf = OpenChain::TariffFinder.new(self.entry_country_iso, importers)
 
-      #note: indexed at zero
+      # note: indexed at zero
       product_column_number = XlsxBuilder.alphabet_column_to_numeric_column(self.part_column)
 
       rows_used_originally = xlc.get_row(0, 0).length
@@ -66,17 +66,17 @@ class PartNumberCorrelation < ActiveRecord::Base
       end
       xlc.save
       self.finished_time = Time.now; self.save!
-      self.user.messages.create!(subject: "Part Number Correlation Report Finished", 
-        body: "<p>Your report is complete.  You can download the updated file by 
+      self.user.messages.create!(subject: "Part Number Correlation Report Finished",
+        body: "<p>Your report is complete.  You can download the updated file by
         <a href='/attachments/#{self.attachment.id}/download'>clicking here</a>.</p>
-        <p>You can view the full status page by 
+        <p>You can view the full status page by
         <a href='/part_number_correlations'>clicking here</a>.</p>")
 
     rescue
-      self.user.messages.create!(subject: "ERROR: Part Number Correlation Report", 
+      self.user.messages.create!(subject: "ERROR: Part Number Correlation Report",
         body: "<p>We could not complete the processing of this report due to an error.</p>
-        <p>You can view the full status page by 
-        <a href='/part_number_correlations'>clicking here</a>.</p>")      
+        <p>You can view the full status page by
+        <a href='/part_number_correlations'>clicking here</a>.</p>")
     end
   end
 

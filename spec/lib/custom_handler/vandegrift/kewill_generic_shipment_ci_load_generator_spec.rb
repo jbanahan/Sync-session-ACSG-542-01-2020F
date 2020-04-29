@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
       expect(line.cartons).to eq 10
       expect(line.gross_weight).to eq BigDecimal("100.50")
       expect(line.pieces).to eq 99
-      
+
       expect(line.po_number).to eq "PO"
       expect(line.country_of_origin).to eq "CN"
       expect(line.foreign_value).to eq BigDecimal("1286.01")

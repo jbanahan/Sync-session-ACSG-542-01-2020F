@@ -32,14 +32,14 @@ class XlsBuilder
 
   # Creates a new worksheet in the workbook. If headers param is given will set the given headers
   # as the first row of the new worksheet.
-  # 
+  #
   # Returns an XlsSheet wrapper object.
   def create_sheet sheet_name, headers: []
     sheet = XlsSheet.new(@workbook.create_worksheet(name: sheet_name))
     if headers && headers.length > 0
-      add_header_row(sheet, headers) 
+      add_header_row(sheet, headers)
     end
-    
+
     sheet
   end
 
@@ -66,7 +66,7 @@ class XlsBuilder
     row_data = Array.wrap(row_data)
 
     styles = make_style_param(row_data, styles, merged_cell_ranges)
-    
+
     data = prep_row_data(Array.wrap(row_data))
 
     row_num = row_number(sheet)
@@ -77,7 +77,7 @@ class XlsBuilder
     # This takes all the default styles returned from prep_row_data (like for dates)
     # and then overlays any styles passed in on top of them.
     formats = merge_array(data[:default_styles], styles)
-    if formats.length > 0 
+    if formats.length > 0
       row = raw_sheet.row(row_num)
 
       formats.each_with_index do |style, x|
@@ -107,7 +107,7 @@ class XlsBuilder
     nil
   end
 
-  # Creates a new workbook style, the value returned from this method is the value you must pass to add_body_row to apply the style to the 
+  # Creates a new workbook style, the value returned from this method is the value you must pass to add_body_row to apply the style to the
   # cell(s) you wish to apply the style to.
   #
   # format_name - string/symbol format identifer
@@ -142,15 +142,15 @@ class XlsBuilder
   def freeze_horizontal_rows sheet, starting_bottom_panel_row_index
     # This is a no-op because the spreadsheets the gem creates with frozen headers causes Excel (not OpenOffice) to
     # fail validation, and the user must clear it...therefore we're not locking xls files.
-    
+
     # I'm leaving in how to do this just in case there's a situation where we MUST write an xls
     # file w/ frozen rows
 
-    #sheet.raw_sheet.freeze!(starting_bottom_panel_row_index, 0)
+    # sheet.raw_sheet.freeze!(starting_bottom_panel_row_index, 0)
     nil
   end
 
-  # Set the column width to a specific width.  
+  # Set the column width to a specific width.
   # By default, columns sizes are auto calculated based on the data contained in them.
   # The index of the given widths array will correspond to column index you wish to update.
   # If you pass for a particular index, that column will be set to auto calculate the width.
@@ -198,7 +198,7 @@ class XlsBuilder
       sheet.raw_sheet.margins.merge!(margins)
     end
 
-    # fit_to_width/height isn't supported by spreadsheet gem 
+    # fit_to_width/height isn't supported by spreadsheet gem
     nil
   end
 
@@ -266,7 +266,7 @@ class XlsBuilder
 
     def create_default_header_style
       @default_header ||= begin
-        # This is kind of a hacky way to remap our company color to a numeric color, but it's the only way I 
+        # This is kind of a hacky way to remap our company color to a numeric color, but it's the only way I
         # saw that we can actually use custom colors in the spreadsheet gem.
         # RGB(98, 187, 243) -> Hex 0x62BBF3
         # First 41 param means we're mapping this to xl_color_41 in spreadsheet gem
@@ -318,17 +318,17 @@ class XlsBuilder
     end
 
     def make_style_param row_data, styles, merged_cell_ranges=[]
-      # This can be a single value or it can be an array, we need to preserve that because axlsx does different things 
+      # This can be a single value or it can be an array, we need to preserve that because axlsx does different things
       # based on if it's one or the other
       if !styles.respond_to?(:map)
         # Basically, return an array using the single style defined as the value for each index
-        # This makes applying the style easy, what this is essentially saying is use 
+        # This makes applying the style easy, what this is essentially saying is use
         # this style for every column
         styles = row_data.map {|s| styles }
       end
 
       styles = merge_cell_styles styles, merged_cell_ranges
-      styles.map{ |s| find_style s }
+      styles.map { |s| find_style s }
     end
 
     def merge_cell_styles styles, merged_cell_ranges

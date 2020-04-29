@@ -61,7 +61,7 @@ describe OpenChain::SQS do
       allow(response).to receive(:attributes).and_return({"ApproximateNumberOfMessages" => "5"})
       expect(sqs_client).to receive(:get_queue_attributes).with(queue_url: "queue", attribute_names: ["ApproximateNumberOfMessages"]).and_return response
       expect(subject.visible_message_count("queue")).to eq 5
-    end      
+    end
   end
 
   describe "queue_attributes" do
@@ -77,7 +77,7 @@ describe OpenChain::SQS do
   end
 
   describe "poll" do
-    
+
     it "polls queue for messages and yields them to given block" do
       poller = instance_double("Aws::SQS::QueuePoller")
       expect(subject).to receive(:queue_poller).with("queue", {wait_time_seconds: 0, idle_timeout: 0, max_number_of_messages: 10, client: sqs_client}).and_return poller
@@ -143,7 +143,7 @@ describe OpenChain::SQS do
       expect(poller).to receive(:delete_messages).with [message]
 
       messages = []
-      expect{subject.poll("queue") {|msg| raise "Error" if messages.length > 0; messages << msg }}.to raise_error "Error"
+      expect {subject.poll("queue") {|msg| raise "Error" if messages.length > 0; messages << msg }}.to raise_error "Error"
 
       expect(messages.length).to eq 1
     end
@@ -162,7 +162,7 @@ describe OpenChain::SQS do
   end
 
   describe "get_queue_url" do
-    it "returns a url" do 
+    it "returns a url" do
       response = instance_double(Aws::SQS::Types::GetQueueUrlResult)
       expect(response).to receive(:queue_url).and_return "queue_url"
       expect(sqs_client).to receive(:get_queue_url).with({queue_name: "queue_name"}).and_return response

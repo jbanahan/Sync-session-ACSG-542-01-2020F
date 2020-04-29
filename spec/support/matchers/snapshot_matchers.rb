@@ -21,7 +21,7 @@ RSpec::Matchers.define :have_a_snapshot do
     return Array.wrap(obj.entity_snapshots).length > 0
   end
 
-  description do 
+  description do
     "have a snapshot"
   end
 end

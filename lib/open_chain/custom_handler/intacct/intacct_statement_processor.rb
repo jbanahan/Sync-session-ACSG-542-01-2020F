@@ -32,8 +32,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
       nil
     end
     return nil if d.nil?
-
-    
   end
 
   def initialize statement_payer: OpenChain::CustomHandler::Intacct::IntacctDailyStatementPayer.new
@@ -48,7 +46,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
       where(DailyStatement.has_never_been_synced_where_clause()).
       where(pay_type: pay_type, status: "F").
       where("daily_statements.final_received_date IS NOT NULL")
-      
+
     if start_date
       query = query.where("daily_statements.final_received_date >= ?", start_date)
     end
@@ -74,7 +72,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
       Lock.db_lock(daily_statement) do
         errors = nil
         begin
-          # We may be getting daily statements that have nothing owed...just skip them here (there shouldn't be 
+          # We may be getting daily statements that have nothing owed...just skip them here (there shouldn't be
           # any record in Intacct for these) and allow the sync record to write out for them.
           if daily_statement.total_amount.to_f > 0
             errors = @payer.pay_statement daily_statement
@@ -87,9 +85,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
           end
         ensure
           # Mark the statement as synced - regardless of if there are errors...If there are errors, it means the statement
-          # will have to be done manually (if there's systemic errors - [Intacct is down, etc], then we can clear the 
+          # will have to be done manually (if there's systemic errors - [Intacct is down, etc], then we can clear the
           # sync record's sent_at and have the system re-run)
-          sr = daily_statement.sync_records.where(trading_partner: "Intacct").first_or_initialize 
+          sr = daily_statement.sync_records.where(trading_partner: "Intacct").first_or_initialize
           sr.sent_at = Time.zone.now
           sr.confirmed_at = (Time.zone.now + 1.minute)
           if errors.blank?
@@ -149,19 +147,18 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctStatementPr
       workbook.write file
       Attachment.add_original_filename_method(file, filename)
       file.rewind
-      
+
       OpenMailer.send_simple_html(email_to, subject, body.html_safe, file).deliver_now
     end
-    
   end
 
 
   def generate_report pay_results, monthly
     workbook = XlsMaker.new_workbook
 
-    if has_pay_errors?(pay_results) 
+    if has_pay_errors?(pay_results)
       errors = XlsMaker.create_sheet(workbook, "Statement Errors")
-      write_errors_sheet(errors, pay_results[:errored_statements], monthly)  
+      write_errors_sheet(errors, pay_results[:errored_statements], monthly)
     end
 
     paid = XlsMaker.create_sheet workbook, "Paid Statements"

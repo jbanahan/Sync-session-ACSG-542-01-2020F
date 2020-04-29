@@ -19,7 +19,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
     # Technically our spec supports multiple errors, but in practice the stitcher only actually returns a single error message.
     # All errors are also logged in the stitcher logs as well, so we can correlate the two if we needed more information.
     if message_hash['stitch_response']['errors']
-      # Just raise / log the errors as exceptions...that way we know about them.  We also have to make sure this method runs without 
+      # Just raise / log the errors as exceptions...that way we know about them.  We also have to make sure this method runs without
       # error otherwise the queue message isn't deleted.
       begin
         raise "Failed to stitch together documents for reference key #{message_hash['stitch_response']['reference_key']}: #{message_hash['stitch_response']['errors'][0]['message']}"
@@ -41,19 +41,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
         Attachment.add_original_filename_method f
         f.original_filename = "#{entity.entry_number}.pdf"
 
-        Lock.db_lock(entity) do 
+        Lock.db_lock(entity) do
           # There's a possibility (though small) that another archive packet could have been created and added since the one we're receiving was
           # If so, we can just skip this one.
           created_at = Time.zone.parse(message_hash['reference_info']['time'])
           other_archive = entity.attachments.find { |a| a.attachment_type == Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE }
-          if other_archive.nil? || other_archive.created_at <= created_at 
+          if other_archive.nil? || other_archive.created_at <= created_at
             attachment = entity.attachments.build
             # Since we're composing a (potentially large) file from files that have already been virus scanned, we can skip the attachment
             # virus scanning for the archive packets.
             attachment.skip_virus_scan = true
             attachment.attachment_type = Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
             attachment.attached = f
-            # Use the created_at timestamp to record the actual time the stitch request was 
+            # Use the created_at timestamp to record the actual time the stitch request was
             # assembled.  This gives us a precise moment in time to use for finding
             # which other attachments on the entry have been modified since the request was assembled.
             attachment.created_at = created_at

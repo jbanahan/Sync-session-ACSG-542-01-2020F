@@ -4,7 +4,7 @@ module Api; module V1; class SchedulableJobsController < ApiController
 
   def run_jobs
     # Run all Search Schedules and Schedulable Jobs
-    # This action is expected to be hit every minute or so (curl request running from cron job), it is the 
+    # This action is expected to be hit every minute or so (curl request running from cron job), it is the
     # primary means of executing scheduled processes.
     jobs_run = 0
 
@@ -23,7 +23,7 @@ module Api; module V1; class SchedulableJobsController < ApiController
   private
     def run_schedules schedules, is_search_schedule
       jobs_run = 0
-      schedules.each do |ss| 
+      schedules.each do |ss|
         if ss.needs_to_run?
           # Give search schedules a slightly higher priority than other things in the background queue
           if is_search_schedule

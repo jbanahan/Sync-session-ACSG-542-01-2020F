@@ -9,7 +9,7 @@ describe ValidationRuleEntrySpecialTariffsNotClaimed do
       e
     }
 
-    let! (:special_tariff) { 
+    let! (:special_tariff) {
       SpecialTariffCrossReference.create! hts_number: "1234567980", special_hts_number: "9999999999", special_tariff_type: "MTB", import_country_iso: "US", country_origin_iso: "CN", effective_date_start: '2018-10-10'
     }
 

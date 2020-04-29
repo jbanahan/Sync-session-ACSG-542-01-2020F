@@ -26,7 +26,7 @@ describe CustomViewTemplatesController do
     it "renders CVT new view for a sys-admin" do
       expect(@u).to receive(:sys_admin?).and_return true
       Struct.new("Cm", :class_name)
-      cm_arr = ["Product", "Entry", "Order"].map{ |cm_name| Struct::Cm.new(cm_name) }
+      cm_arr = ["Product", "Entry", "Order"].map { |cm_name| Struct::Cm.new(cm_name) }
       expect(CoreModule).to receive(:all).and_return cm_arr
 
       get :new
@@ -51,7 +51,7 @@ describe CustomViewTemplatesController do
         get :edit, id: CustomViewTemplate.first.id
         expect(response).to render_template :edit
       end
-      
+
       it "prevents access by non-sys-admins" do
         expect(@u).to receive(:sys_admin?).and_return false
         get :edit, id: CustomViewTemplate.first.id
@@ -59,7 +59,7 @@ describe CustomViewTemplatesController do
         expect(flash[:errors]).to include "Only system admins can do this."
       end
   end
-  
+
   describe "create" do
     it "creates CVT for a sys-admin" do
       expect(@u).to receive(:sys_admin?).and_return true

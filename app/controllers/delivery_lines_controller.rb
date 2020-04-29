@@ -1,5 +1,5 @@
 class DeliveryLinesController < LinesController
-#LinesController callback(s)
+# LinesController callback(s)
   def before_save line, line_params
     sale_line_id = line_params[:linked_sales_order_line_id]
     ok = true
@@ -15,7 +15,7 @@ class DeliveryLinesController < LinesController
     ok
   end
 
-#BELOW HERE ARE HELPERS FOR LinesController
+# BELOW HERE ARE HELPERS FOR LinesController
   def find_parent
     Delivery.find(params[:delivery_id])
   end

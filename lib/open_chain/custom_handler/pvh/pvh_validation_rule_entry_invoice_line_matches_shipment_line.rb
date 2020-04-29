@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhValidationRuleEntry
     # a difference to how the data is pulled from the ASN (due to split container billing)
     #
     # This might be something we should turn on at all times, but I'm hesitant given that I know there are issues with the invoice number
-    # on the ASN not being 100% accurate - thus we may raise validation errors and extra work for cases where an invoice number exact match isn't 
+    # on the ASN not being 100% accurate - thus we may raise validation errors and extra work for cases where an invoice number exact match isn't
     # that important
     find_shipment_line(shipments, line.container&.container_number, line.po_number, line.part_number, line.quantity, invoice_number: line.commercial_invoice.invoice_number).present?
   end

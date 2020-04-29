@@ -323,7 +323,7 @@ describe FtpSender do
 
     context "with blank file" do
 
-      before :each do 
+      before :each do
         @file.truncate(0)
         @file.rewind
       end
@@ -396,7 +396,7 @@ describe FtpSender do
         expect(@ftp).to receive(:connect).with(@server, "21").and_return(@ftp)
         expect(@ftp).to receive(:login).with(@username, @password).and_return(@ftp)
         # connect sets up some variables so we need to call it every time
-        @client.connect(@server, @username, @password, [], {}){|client|}
+        @client.connect(@server, @username, @password, [], {}) {|client|}
       end
 
       describe "after_login" do
@@ -480,7 +480,7 @@ describe FtpSender do
           expect(f.mtime).to eq file.modify.in_time_zone("America/New_York")
         end
 
-        it "includes directories if specified" do 
+        it "includes directories if specified" do
           expect(@ftp).to receive(:mlsd).and_return [file, directory]
 
           files = @client.list_files include_only_files: false
@@ -563,7 +563,7 @@ describe FtpSender do
 
         expect(@client).to receive(:session_completed?).and_return false
 
-        expect{@client.connect(@server, @username, @password, [], {}) {|client| raise Net::SSH::Disconnect, "Error Message"}}.to raise_error Net::SSH::Disconnect, "Error Message"
+        expect {@client.connect(@server, @username, @password, [], {}) {|client| raise Net::SSH::Disconnect, "Error Message"}}.to raise_error Net::SSH::Disconnect, "Error Message"
         expect(@client.last_response).to eq "4 Error Message"
       end
 
@@ -587,7 +587,7 @@ describe FtpSender do
         @ftp = double("Net::SFTP")
         # connect sets up some variables so we need to call it every time
         expect(Net::SFTP).to receive(:start).and_yield @ftp
-        @client.connect(@server, @username, @password, [], {}){|client|}
+        @client.connect(@server, @username, @password, [], {}) {|client|}
       end
 
       describe "chdir" do
@@ -655,7 +655,7 @@ describe FtpSender do
           # This is purposely a Time, as that's what's returned by the mlsd ftp listing
           allow(attributes).to receive(:mtime).and_return Time.now
           allow(f).to receive(:attributes).and_return attributes
-          
+
           f
         }
 
@@ -700,7 +700,7 @@ describe FtpSender do
           expect(f.mtime).to eq file.attributes.mtime.in_time_zone("America/New_York")
         end
 
-        it "includes directories if specified" do 
+        it "includes directories if specified" do
           expect(@ftp).to receive(:dir).and_return dir_command
           expect(dir_command).to receive(:entries).with("").and_return [file, directory]
 

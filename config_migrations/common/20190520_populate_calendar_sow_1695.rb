@@ -147,74 +147,74 @@ module ConfigMigrations; module Common; class PopulateCalendar
     k84 = DataCrossReference.where(cross_reference_type: DataCrossReference::VFI_CALENDAR, key:'K84Due', value:'K84 Due').first_or_create!
     k842019 = Calendar.where(calendar_type: k84.key, year: 2019).first_or_create!
 
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,1,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,2,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,3,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,4,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,5,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,6,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,7,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,8,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,9,27)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,10,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,11,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019,12,30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 1, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 2, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 3, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 4, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 5, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 6, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 7, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 8, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 9, 27)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 10, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 11, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842019.id, event_date: Date.new(2019, 12, 30)).first_or_create!
 
     k842015 = Calendar.where(calendar_type: k84.key, year: 2015).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,1,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,2,26)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,3,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,4,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,5,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,6,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,7,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,8,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,9,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,10,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,11,27)).first_or_create!
-    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015,12,30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 1, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 2, 26)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 3, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 4, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 5, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 6, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 7, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 8, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 9, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 10, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 11, 27)).first_or_create!
+    CalendarEvent.where(calendar_id: k842015.id, event_date: Date.new(2015, 12, 30)).first_or_create!
 
     k842016 = Calendar.where(calendar_type: k84.key, year: 2016).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,1,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,2,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,3,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,4,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,5,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,6,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,7,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,8,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,9,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,10,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,11,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016,12,30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 1, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 2, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 3, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 4, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 5, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 6, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 7, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 8, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 9, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 10, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 11, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842016.id, event_date: Date.new(2016, 12, 30)).first_or_create!
 
     k842017 = Calendar.where(calendar_type: k84.key, year: 2017).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,1,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,2,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,3,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,4,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,5,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,6,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,7,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,8,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,9,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,10,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,11,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017,12,29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 1, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 2, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 3, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 4, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 5, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 6, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 7, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 8, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 9, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 10, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 11, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842017.id, event_date: Date.new(2017, 12, 29)).first_or_create!
 
     k842018 = Calendar.where(calendar_type: k84.key, year: 2018).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,1,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,2,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,3,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,4,27)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,5,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,6,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,7,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,8,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,9,28)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,10,30)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,11,29)).first_or_create!
-    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018,12,28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 1, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 2, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 3, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 4, 27)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 5, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 6, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 7, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 8, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 9, 28)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 10, 30)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 11, 29)).first_or_create!
+    CalendarEvent.where(calendar_id: k842018.id, event_date: Date.new(2018, 12, 28)).first_or_create!
   end
 
 end; end; end

@@ -11,7 +11,7 @@ module OpenChain; module Registries; class DefaultPasswordValidationRegistry
 
   def self.child_services
     [
-      OpenChain::Validations::Password::PasswordLengthValidator, OpenChain::Validations::Password::UsernameNotPasswordValidator, 
+      OpenChain::Validations::Password::PasswordLengthValidator, OpenChain::Validations::Password::UsernameNotPasswordValidator,
       OpenChain::Validations::Password::PasswordComplexityValidator, OpenChain::Validations::Password::PreviousPasswordValidator
     ]
   end

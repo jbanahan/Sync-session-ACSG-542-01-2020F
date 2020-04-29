@@ -65,7 +65,7 @@ module OpenChain; module FiscalCalendarSchedulingSupport
       else
         fiscal_date = current_time.in_time_zone(relative_to_timezone).to_date
       end
-      
+
       fiscal_months = importer.fiscal_months.where("start_date <= ? AND end_date >= ?", fiscal_date, fiscal_date).all
       return nil if fiscal_months.length == 0
       raise "Multiple Fiscal Months found for #{importer.name} for #{fiscal_date}." if fiscal_months.length > 1
@@ -111,5 +111,5 @@ module OpenChain; module FiscalCalendarSchedulingSupport
       (month.month_number % 3) == 1
     end
   end
-  
+
 end; end

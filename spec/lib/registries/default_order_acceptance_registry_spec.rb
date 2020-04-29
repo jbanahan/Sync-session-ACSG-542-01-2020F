@@ -6,7 +6,7 @@ describe OpenChain::Registries::DefaultOrderAcceptanceRegistry do
 
     it "accepts all orders" do
       expect(subject.can_be_accepted? order ).to eq true
-    end  
+    end
   end
 
   describe "can_accept?" do
@@ -56,5 +56,5 @@ describe OpenChain::Registries::DefaultOrderAcceptanceRegistry do
       end
     end
   end
-  
+
 end

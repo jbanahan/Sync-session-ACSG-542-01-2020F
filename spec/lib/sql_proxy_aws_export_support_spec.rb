@@ -4,7 +4,7 @@ describe OpenChain::SqlProxyAwsExportSupport do
 
     subject { Class.new { include OpenChain::SqlProxyAwsExportSupport } }
 
-    it "generates a hash suitable to instruct sql proxy server where to send files back to" do 
+    it "generates a hash suitable to instruct sql proxy server where to send files back to" do
       expect(subject).to receive(:default_sqs_queue_url).and_return "queue"
       expect(OpenChain::S3).to receive(:integration_bucket_name).and_return "bucket"
       expect(subject.aws_file_export_context_data("path")).to eq({s3_bucket: "bucket", s3_path: "path", sqs_queue: "queue"})

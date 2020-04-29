@@ -10,11 +10,11 @@ describe ValidationRuleEntryInvoiceChargeCode do
       Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '123', charge_amount: 10)
       Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: 15)
 
-      Factory(:broker_invoice_line, charge_code: '999', charge_amount: 17) #unrelated entry
+      Factory(:broker_invoice_line, charge_code: '999', charge_amount: 17) # unrelated entry
     end
 
   describe "run_validation" do
-      
+
     it "passes if invoice lines with white-listed charge codes have a non-zero sum" do
       rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123', '456', '789']}.to_json)
       expect(rule.run_validation(@entry)).to be_nil
@@ -34,14 +34,14 @@ describe ValidationRuleEntryInvoiceChargeCode do
     end
 
     it "passes if suffix-filtered invoice lines with white-listed charge codes have a non-zero sum" do
-      rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123'], 
+      rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123'],
                                                                              filter: 'suffix'}.to_json)
       Factory(:broker_invoice_line, broker_invoice: @inv_suffix, charge_code: '456', charge_amount: -15)
       expect(rule.run_validation(@entry)).to be_nil
     end
 
     it "passes if non-suffix-filtered invoice lines with white-listed charge codes have a non-zero sum" do
-      rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123'], 
+      rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123'],
                                                                              filter: 'no_suffix'}.to_json)
       Factory(:broker_invoice_line, broker_invoice: @inv_no_suffix, charge_code: '456', charge_amount: -10)
       expect(rule.run_validation(@entry)).to be_nil
@@ -49,23 +49,23 @@ describe ValidationRuleEntryInvoiceChargeCode do
   end
 
   describe "query" do
-    before :each do 
+    before :each do
       @results = []
       @rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123', '456', '789']}.to_json)
     end
 
     it "sums amounts for each charge code of every invoice associated with an entry" do
-      @rule.query(@entry.id).each{ |row| @results << row }
+      @rule.query(@entry.id).each { |row| @results << row }
       expect(@results).to eq [{'charge_code' => '123', 'amount' => 20}, {'charge_code' => '456', 'amount' => 25}]
     end
 
     it "sums amounts for each charge code of every suffixed invoice" do
-      @rule.query(@entry.id, 'suffix').each{ |row| @results << row }
+      @rule.query(@entry.id, 'suffix').each { |row| @results << row }
       expect(@results).to eq [{'charge_code' => '123', 'amount' => 15}, {'charge_code' => '456', 'amount' => 15}]
     end
 
     it "sums amounts for each charge code of every non-suffixed invoice" do
-      @rule.query(@entry.id, 'no_suffix').each{ |row| @results << row }
+      @rule.query(@entry.id, 'no_suffix').each { |row| @results << row }
       expect(@results).to eq [{'charge_code' => '123', 'amount' => 5}, {'charge_code' => '456', 'amount' => 10}]
     end
   end
@@ -73,7 +73,7 @@ describe ValidationRuleEntryInvoiceChargeCode do
   describe "check_list" do
     before :each do
       @rule = ValidationRuleEntryInvoiceChargeCode.new(rule_attributes_json: {charge_codes: ['123', '456', '789']}.to_json)
-      @totals = [{'charge_code' => '123', 'amount' => 5}, 
+      @totals = [{'charge_code' => '123', 'amount' => 5},
                 {'charge_code' => '777', 'amount' => 14},
                 {'charge_code' => '888', 'amount' => 0},
                 {'charge_code' => '999', 'amount' => 10}]

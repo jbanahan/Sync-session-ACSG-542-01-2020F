@@ -45,15 +45,15 @@ class SearchSchedule < ActiveRecord::Base
   include OpenChain::ScheduleSupport
   include OpenChain::EmailValidationSupport
 
-  attr_accessible :custom_report_id, :custom_report, :day_of_month, :disabled, 
-    :download_format, :email_addresses, :exclude_file_timestamp, 
-    :ftp_password, :ftp_port, :ftp_server, :ftp_subfolder, :ftp_username, 
-    :last_finish_time, :last_start_time, :mailing_list_id, :protocol, 
-    :report_failure_count, :run_friday, :run_hour, :run_monday, 
-    :run_saturday, :run_sunday, :run_thursday, :run_tuesday, 
+  attr_accessible :custom_report_id, :custom_report, :day_of_month, :disabled,
+    :download_format, :email_addresses, :exclude_file_timestamp,
+    :ftp_password, :ftp_port, :ftp_server, :ftp_subfolder, :ftp_username,
+    :last_finish_time, :last_start_time, :mailing_list_id, :protocol,
+    :report_failure_count, :run_friday, :run_hour, :run_monday,
+    :run_saturday, :run_sunday, :run_thursday, :run_tuesday,
     :run_wednesday, :search_setup_id, :search_setup, :send_if_empty
 
-  RUFUS_TAG = "search_schedule"  
+  RUFUS_TAG = "search_schedule"
 
   belongs_to :search_setup
   belongs_to :custom_report
@@ -68,7 +68,7 @@ class SearchSchedule < ActiveRecord::Base
       nil
     end
   end
-  
+
   # get the time zone to consider for the user
   def time_zone
     tz_str = user.time_zone
@@ -91,7 +91,7 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   def day_to_run
-    self.day_of_month 
+    self.day_of_month
   end
 
   def hour_to_run
@@ -126,7 +126,7 @@ class SearchSchedule < ActiveRecord::Base
     self.run_saturday?
   end
 
-  def send_email name, temp_file,attachment_name, user
+  def send_email name, temp_file, attachment_name, user
     if self.mailing_list.present?
       if self.email_addresses.blank?
         self.email_addresses << "#{mailing_list.split_emails.join(', ')}"
@@ -168,7 +168,7 @@ class SearchSchedule < ActiveRecord::Base
 
           if result_count > 0 || send_if_empty?
             attachment_name = self.class.report_name srch_setup, sw.output_format, include_timestamp: !exclude_file_timestamp
-      
+
             send_email srch_setup.name, tempfile, attachment_name, srch_setup.user
             send_ftp srch_setup.name, tempfile, attachment_name
           end
@@ -178,7 +178,7 @@ class SearchSchedule < ActiveRecord::Base
           failure_count = (self.report_failure_count.to_i + 1)
           disabled = (failure_count >= 5)
           self.update_attributes! report_failure_count: failure_count, disabled: disabled
-          
+
           send_excessive_size_failure_email user, disabled
         end
       end
@@ -236,10 +236,10 @@ class SearchSchedule < ActiveRecord::Base
       begin
         FtpSender.send_file self.ftp_server, self.ftp_username, self.ftp_password, temp_file.path, opts
       rescue IOError => e
-        #do email & internal message here
+        # do email & internal message here
         # The FtpSender already logs all errors emanating from it, and automatically retries to send so there's no point in calling log_me on the error again here
         search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
-        OpenMailer.send_search_fail(user.email,search_name,e.message,self.ftp_server,self.ftp_username,self.ftp_subfolder).deliver_now
+        OpenMailer.send_search_fail(user.email, search_name, e.message, self.ftp_server, self.ftp_username, self.ftp_subfolder).deliver_now
         add_info = ["Protocol: #{protocol}", "Server Name: #{self.ftp_server}", "Account: #{self.ftp_username}", "Subfolder: #{self.ftp_subfolder}"]
         send_error_to_user user, e.message, add_info
       end
@@ -280,7 +280,7 @@ class SearchSchedule < ActiveRecord::Base
     d << "5" if self.run_friday
     d << "6" if self.run_saturday
 
-    return CSV.generate_line(d,{:row_sep=>""})
+    return CSV.generate_line(d, {:row_sep=>""})
   end
 
   def self.sanitize_filename(filename)

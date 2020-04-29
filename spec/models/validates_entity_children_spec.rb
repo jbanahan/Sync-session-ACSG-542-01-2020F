@@ -1,6 +1,6 @@
 describe ValidatesEntityChildren do
 
-  let (:entry) { 
+  let (:entry) {
     entry = Factory(:entry)
     inv = Factory(:commercial_invoice, entry: entry)
     line = Factory(:commercial_invoice_line, commercial_invoice: inv, po_number: "ABC")
@@ -10,7 +10,7 @@ describe ValidatesEntityChildren do
 
   # Create a simple class that validates a commercial invoice line to test the module
   class FakeValidationRule < BusinessValidationRule
-    include ValidatesEntityChildren 
+    include ValidatesEntityChildren
 
     def module_chain
       [CoreModule::ENTRY, CoreModule::COMMERCIAL_INVOICE, CoreModule::COMMERCIAL_INVOICE_LINE]
@@ -51,14 +51,14 @@ describe ValidatesEntityChildren do
     end
 
     it "skip lines that don't match child level search criteria" do
-      subject.search_criterions.build model_field_uid:'cil_po_number',operator:'eq',value:'ABC'
+      subject.search_criterions.build model_field_uid:'cil_po_number', operator:'eq', value:'ABC'
       expect(subject).to receive(:run_child_validation).with(entry.commercial_invoice_lines.first).and_return "Error 1"
 
       expect(subject.run_validation(entry)).to eq "Error 1"
     end
 
     it "skip lines that don't match header level search criteria" do
-      subject.search_criterions.build model_field_uid:'ent_entry_num',operator:'eq',value:'123'
+      subject.search_criterions.build model_field_uid:'ent_entry_num', operator:'eq', value:'123'
       expect(subject).not_to receive(:run_child_validation)
 
       expect(subject.run_validation(entry)).to be_nil
@@ -93,12 +93,12 @@ describe ValidatesEntityChildren do
         expect(subject.run_validation(entry)).to be_nil
       end
     end
-    
+
   end
 
   describe "should_skip?" do
     it "skips validation when no search criterion matches" do
-      subject.search_criterions.build model_field_uid:'ent_entry_num',operator:'eq',value:'123'
+      subject.search_criterions.build model_field_uid:'ent_entry_num', operator:'eq', value:'123'
       expect(subject.should_skip?(entry)).to be_truthy
     end
 
@@ -108,7 +108,7 @@ describe ValidatesEntityChildren do
     end
 
     it "does not skip validation when search criterion matches a single child" do
-      subject.search_criterions.build model_field_uid:'cil_po_number',operator:'eq',value:'ABC'
+      subject.search_criterions.build model_field_uid:'cil_po_number', operator:'eq', value:'ABC'
       expect(subject.should_skip?(entry)).to be_falsey
     end
 

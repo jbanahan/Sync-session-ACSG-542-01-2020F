@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillCiLoadIsfComparator do
       expect(subject.accept? snapshot).to eq false
     end
 
-    it "rejects if snapshot is not for a security filing" do 
+    it "rejects if snapshot is not for a security filing" do
       expect(subject.accept? EntitySnapshot.new(recordable: Entry.new)).to eq false
     end
   end

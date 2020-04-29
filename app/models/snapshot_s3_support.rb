@@ -26,14 +26,14 @@ module SnapshotS3Support
   end
 
   module ClassMethods
-    #bucket name for storing entity snapshots
+    # bucket name for storing entity snapshots
     def bucket_name env = MasterSetup.rails_env
       system_code = MasterSetup.get.system_code
       # This can happen very early in the deployment process if a new system is being deployed..so catch
       # it and raise the error
       raise "The system_code must be set for this deployment." if system_code.blank? && !MasterSetup.test_env?
 
-      # NOTE: DO NOT CHANGE the bucket naming style for live systems without making sure the delete_from_s3 
+      # NOTE: DO NOT CHANGE the bucket naming style for live systems without making sure the delete_from_s3
       # accounts for the potential for multiple bucket naming styles.
       r = "#{env}.#{system_code}.snapshots.vfitrack.net"
       raise "Bucket name too long: #{r}" if r.length > 63
@@ -56,7 +56,7 @@ module SnapshotS3Support
       OpenChain::S3.exist? path[:bucket], path[:key]
     end
 
-    #find or create the bucket for this system's EntitySnapshots
+    # find or create the bucket for this system's EntitySnapshots
     def create_bucket_if_needed!
       bucket = bucket_name
       return if OpenChain::S3.bucket_exists?(bucket)
@@ -73,7 +73,7 @@ module SnapshotS3Support
       # If that happens though, then the bucket we're trying to use is set up wrong.
       # Therefore, we want this to bomb hard with a nil reference error if ver is nil
       raise "Cannot upload snapshots to unversioned bucket.  You must enable versioning on bucket '#{upload_response.bucket}'." if upload_response.version.blank?
-      
+
       {bucket: upload_response.bucket, key: upload_response.key, version: upload_response.version}
     end
 
@@ -87,10 +87,10 @@ module SnapshotS3Support
         class_name = recordable.class.to_s.underscore
       end
 
-      # Not entirely sure why this gsub is here since an id is never going to not have a numeric value, but 
+      # Not entirely sure why this gsub is here since an id is never going to not have a numeric value, but
       # I'm leaving it in for potential legacy reasons, as it's not hurting anything
       # (I suspect the keybase used to be a more complex value in the original pass at the code.)
-      path = "#{class_name}/#{recordable.id.to_s.strip.gsub(/\W/,'_').downcase}.json"
+      path = "#{class_name}/#{recordable.id.to_s.strip.gsub(/\W/, '_').downcase}.json"
       path_prefix.nil? ? path : "#{path_prefix}/#{path}"
     end
 

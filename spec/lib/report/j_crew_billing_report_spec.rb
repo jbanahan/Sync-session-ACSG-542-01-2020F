@@ -20,7 +20,7 @@ describe OpenChain::Report::JCrewBillingReport do
       expect(described_class.permission? Factory(:master_user)).to eq false
     end
   end
-  
+
   describe "run" do
     let! (:entry) {
       entry = Factory(:commercial_invoice_tariff, duty_amount: BigDecimal.new("50"),
@@ -40,7 +40,7 @@ describe OpenChain::Report::JCrewBillingReport do
     subject { OpenChain::Report::JCrewBillingReport.new 'start_date' => "2014-01-01".to_date, 'end_date' => "2014-01-01".to_date }
 
     def extract_xlsx_data file
-      io = StringIO.new 
+      io = StringIO.new
       Zip::File.open(file.path) do |zip|
         zip.file.open("JCrew Billing 2014-01-01 thru 2014-01-01.xlsx", "rb") {|f| io << f.read }
       end
@@ -65,7 +65,7 @@ describe OpenChain::Report::JCrewBillingReport do
       data = nil
       csv_files = nil
       now = ActiveSupport::TimeZone["UTC"].parse("2018-07-18 01:00")
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         subject.run do |tempfile|
           data = extract_xlsx_data tempfile
           csv_files = extract_csv_data tempfile
@@ -140,7 +140,7 @@ describe OpenChain::Report::JCrewBillingReport do
 
         data = nil
         now = ActiveSupport::TimeZone["UTC"].parse("2018-07-18 01:00")
-        Timecop.freeze(now) do 
+        Timecop.freeze(now) do
           subject.run do |tempfile|
             data = extract_xlsx_data tempfile
           end
@@ -176,7 +176,7 @@ describe OpenChain::Report::JCrewBillingReport do
       worksheet = data[data.keys.first]
       expect(worksheet.length).to eq 11
 
-      # Should have 2 rows for direct division (po starts with 1 = direct) - one row for charges and one for duty, 
+      # Should have 2 rows for direct division (po starts with 1 = direct) - one row for charges and one for duty,
       # a row for retail division (po starts with 1 = retail) - one row for charges
       # a row for factory division (po starts with 3 = factory) - one row for charges
       # one row for header
@@ -208,7 +208,7 @@ describe OpenChain::Report::JCrewBillingReport do
       data = nil
       now = ActiveSupport::TimeZone["UTC"].parse("2018-07-18 01:00")
       csv_files = nil
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         subject.run do |tempfile|
           data = extract_xlsx_data tempfile
           csv_files = extract_csv_data tempfile
@@ -249,7 +249,7 @@ describe OpenChain::Report::JCrewBillingReport do
     end
 
     context "with outputs yielding no invoice lines" do
-      after :each do 
+      after :each do
         data = nil
         subject.run do |tempfile|
           data = extract_xlsx_data tempfile
@@ -293,7 +293,7 @@ describe OpenChain::Report::JCrewBillingReport do
       t
     }
 
-    after :each do 
+    after :each do
       tempfile.close! unless tempfile.closed?
     end
 

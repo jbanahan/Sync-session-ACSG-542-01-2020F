@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
         # and then having to backtrace what's going on.
         xref = DataCrossReference.where(cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM, key: md5).where("created_at > ? ", Time.zone.now - 1.month).first
 
-        check_register = CustomFile.new(:file_type=>self.name,:uploaded_by=>integration)
+        check_register = CustomFile.new(:file_type=>self.name, :uploaded_by=>integration)
         check_register.attached = tmp
         if xref
           check_register.start_at = Time.zone.now
@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       # Look for a line that starts with ----------, this signifies that the next lines will have check data
       if line.starts_with? "----------"
         header_found = true
-      elsif header_found 
+      elsif header_found
         # Check information can be extracted on lines where the first 10 characters have the check number in them (.ie a string of digits)
         if line[0, 10].strip =~ /^\d+$/
           local_check_info = {}
@@ -98,7 +98,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
           buffered_checks.each do |c|
             c[:bank_number] = bank_number
           end
-          
+
           check_info[:checks] ||= {}
           check_info[:checks][bank_number] = {check_count: per_bank_check_count, check_total: per_bank_check_sum, checks: buffered_checks}
           buffered_checks = []
@@ -115,7 +115,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
 
   def validate_check_info check_info
     # The file was bad if we didn't find any of the grand totals
-    raise "No Check Register Record Count found." if check_info[:total_check_count].blank? || check_info[:total_check_count] < 0 
+    raise "No Check Register Record Count found." if check_info[:total_check_count].blank? || check_info[:total_check_count] < 0
     raise "No Check Register Grand Total amount found." if check_info[:total_check_amount].blank?
 
     # Validate the total # of checks was valid and the total amount found was valid
@@ -169,7 +169,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
           check_count += 1
           check_total += check[:check_amount]
           duplicate_checks << dupe_key
-        end        
+        end
       end
 
       bank_checks_data[:checks] = checks.values
@@ -203,7 +203,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       # 1) Check is voided multiple times
       # 2) Check is printed multiple times on accident (sometimes the first check of the day is the last check from the previous day)
       previous_check = IntacctCheck.where(bank_number: check_info[:bank_number], check_number: check_info[:check_number], amount: check_info[:check_amount], voided: voided_check,
-                                          file_number: check_info[:invoice_number], suffix: suffix, customer_number: check_info[:customer_number], 
+                                          file_number: check_info[:invoice_number], suffix: suffix, customer_number: check_info[:customer_number],
                                           vendor_number: check_info[:vendor_number]).
                                     where("intacct_upload_date IS NOT NULL").first
 
@@ -221,7 +221,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceCheckRegis
       # Export could already exist if we're having to reload this check if something else errored during the upload process...so we can just re-use the same export object
       export = check.intacct_alliance_export
       if export.nil?
-        export = IntacctAllianceExport.create! file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number], 
+        export = IntacctAllianceExport.create! file_number: check_info[:invoice_number], suffix: suffix, check_number: check_info[:check_number],
                                                 ap_total: check_info[:check_amount], export_type: IntacctAllianceExport::EXPORT_TYPE_CHECK, intacct_checks: [check]
       end
     end

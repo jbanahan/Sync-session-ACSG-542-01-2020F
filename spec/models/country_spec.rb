@@ -1,7 +1,7 @@
 describe Country do
   it "should reload model field on save" do
     expect(ModelField).to receive(:reload).with(true)
-    Country.create!(:name=>'MYC',:iso_code=>'YC')
+    Country.create!(:name=>'MYC', :iso_code=>'YC')
   end
   describe "load_default_countries" do
     it "should create countries" do

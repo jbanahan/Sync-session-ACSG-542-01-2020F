@@ -18,5 +18,4 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     return false if ord.get_custom_value(cdefs[:ord_country_of_origin]).value.blank?
     return true
   end
-  
 end; end; end; end

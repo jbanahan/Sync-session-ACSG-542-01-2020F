@@ -1,9 +1,9 @@
 module OpenChain
   module Report
     class ProductsWithoutAttachments
-      FIELDS = [:prod_uid,:prod_changed_at]
-      #run the report
-      #no settings needed
+      FIELDS = [:prod_uid, :prod_changed_at]
+      # run the report
+      # no settings needed
       def self.run_report run_by, settings={}
         records = Product.select("DISTINCT products.*").
           joins("LEFT OUTER JOIN linked_attachments ON linked_attachments.attachable_id = products.id AND linked_attachments.attachable_type = \"Product\"").
@@ -28,7 +28,7 @@ module OpenChain
             row_cursor += 1
           end
         end
-        t = Tempfile.new(['products_without_attachments','.xls'])
+        t = Tempfile.new(['products_without_attachments', '.xls'])
         wb.write t.path
         t
       end

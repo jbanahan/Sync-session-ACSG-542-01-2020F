@@ -1,4 +1,4 @@
-#List of CoreModules in a parent -> child -> grandchild setup
+# List of CoreModules in a parent -> child -> grandchild setup
 class ModuleChain
 
   class SiblingModules
@@ -17,8 +17,8 @@ class ModuleChain
     end
   end
 
-  #add a CoreModule to the end of the list
-  def add(cm) 
+  # add a CoreModule to the end of the list
+  def add(cm)
     @list = [] if @list.nil?
     raise "SiblingModules cannot be used at the top of a ModuleChain" if @list.size == 0 && cm.is_a?(SiblingModules)
     raise "You cannot add modules to a chain that already contains a SiblingModule. SiblingModules must be at the bottom of the chain." if has_sibling_module?
@@ -41,22 +41,22 @@ class ModuleChain
   def first
     @list.first
   end
-  
-  #returns true if the given module is the first one in the chain
+
+  # returns true if the given module is the first one in the chain
   def top? cm
     index(cm) == 0
   end
 
-  #returns the immediate parent module in the chain (or nil if you're at the top of the chain)
+  # returns the immediate parent module in the chain (or nil if you're at the top of the chain)
   def parent cm
     idx = index(cm)
 
     # Because we're enforcing that sibling modules MUST be at the lowest level of the module chain, we're safe
     # always using the index - 1 for the parent, since the parent will never be a sibling module.
     (idx == 0 || idx.nil?) ? nil : @list[idx - 1]
-  end 
+  end
 
-  #returns the immediate child module in the chain (or nil if you're at the bottom of the chain)
+  # returns the immediate child module in the chain (or nil if you're at the bottom of the chain)
   def child cm
     idx = index(cm)
     return nil if (idx.nil? || idx >= @list.length)
@@ -74,7 +74,7 @@ class ModuleChain
     h
   end
 
-  private 
+  private
     def index cm
       found_index = nil
       Array.wrap(@list).each_with_index do |child, x|

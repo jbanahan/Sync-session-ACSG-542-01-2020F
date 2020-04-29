@@ -1,5 +1,4 @@
 describe OpenChain::CustomHandler::CsvExcelParser do
-  
   class FakeCsvExcelParser
     include OpenChain::CustomHandler::CsvExcelParser
 
@@ -14,10 +13,10 @@ describe OpenChain::CustomHandler::CsvExcelParser do
     let (:file_reader) { double("file_reader") }
     let (:file) { double("file") }
 
-    before :each do 
+    before :each do
       expect(subject).to receive(:file_reader).with(file).and_return file_reader
     end
-    
+
     it "processes lines from custom file and returns rows" do
       expect(file_reader).to receive(:foreach).and_yield(["a", "b", "c"]).and_yield([1, 2, 3])
       rows = subject.foreach(file)
@@ -108,13 +107,13 @@ describe OpenChain::CustomHandler::CsvExcelParser do
     end
 
     context "with date validation enabled" do
-      before :each do 
+      before :each do
         # This logic is only live for non-test envs, to avoid having to update dates in the test files after they get too old
         allow(MasterSetup).to receive(:test_env?).and_return false
       end
 
-      context "with really old max age date" do 
-        before :each do 
+      context "with really old max age date" do
+        before :each do
           expect(subject).to receive(:max_valid_date_age_years).at_least(1).times.and_return 100
         end
 
@@ -126,7 +125,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
           expect(subject.date_value "02-01-16").to eq Date.new(2016, 2, 1)
         end
       end
-      
+
       it "returns nil if date is over max age" do
         expect(subject.date_value (Time.zone.now - 3.years).strftime("%Y-%m-%d")).to eq nil
       end
@@ -179,7 +178,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       expect(subject.boolean_value("y")).to eq true
       expect(subject.boolean_value("yes")).to eq true
       expect(subject.boolean_value("1")).to eq true
-      
+
       expect(subject.boolean_value("false")).to eq false
       expect(subject.boolean_value("n")).to eq false
       expect(subject.boolean_value("no")).to eq false
@@ -205,7 +204,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       it "reads a file object and parses it" do
         r = OpenChain::CustomHandler::CsvExcelParser::LocalCsvReader.new test_file, {}
         rows = []
-        r.foreach {|row| rows << row} 
+        r.foreach {|row| rows << row}
 
         expect(rows).to eq [["1", "2", "3"], ["A", "B", "C"]]
       end
@@ -215,7 +214,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
         rows = []
         # when you turn on headers, csv yields CSVRow objects...so call fields on them.  This is how
         # we know the options "took"
-        r.foreach {|row| rows << row.fields} 
+        r.foreach {|row| rows << row.fields}
 
         expect(rows).to eq [["A", "B", "C"]]
       end
@@ -223,7 +222,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       it "parses csv from string directly" do
         r = OpenChain::CustomHandler::CsvExcelParser::LocalCsvReader.new StringIO.new("1,2,3\nA,B,C"), {}
         rows = []
-        r.foreach {|row| rows << row} 
+        r.foreach {|row| rows << row}
 
         expect(rows).to eq [["1", "2", "3"], ["A", "B", "C"]]
       end
@@ -231,7 +230,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       it "interprets string arg as the path to file" do
         r = OpenChain::CustomHandler::CsvExcelParser::LocalCsvReader.new test_file.path, {}
         rows = []
-        r.foreach {|row| rows << row} 
+        r.foreach {|row| rows << row}
 
         expect(rows).to eq [["1", "2", "3"], ["A", "B", "C"]]
       end
@@ -259,7 +258,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       it "yields all row values from a sheet" do
         r = OpenChain::CustomHandler::CsvExcelParser::LocalExcelReader.new(test_file, {})
         rows = []
-        r.foreach {|row| rows << row} 
+        r.foreach {|row| rows << row}
 
         expect(rows).to eq [["Header1", "Header2"], ["A", "B"]]
       end
@@ -267,7 +266,7 @@ describe OpenChain::CustomHandler::CsvExcelParser do
       it "opens to the sheet specified" do
         r = OpenChain::CustomHandler::CsvExcelParser::LocalExcelReader.new(test_file, sheet_number: 1)
         rows = []
-        r.foreach {|row| rows << row} 
+        r.foreach {|row| rows << row}
 
         expect(rows).to eq [["Header3", "Header4"], ["C", "D"]]
       end

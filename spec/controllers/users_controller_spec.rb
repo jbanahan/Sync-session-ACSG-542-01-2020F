@@ -3,17 +3,17 @@ describe UsersController do
   before :each do
     sign_in_as user
   end
-  
+
   describe "create" do
     it "should create user with apostrophe in email address" do
       allow_any_instance_of(User).to receive(:admin?).and_return(true)
-      u = {'username'=>"c'o@sample.com",'password'=>'pw12345','password_confirmation'=>'pw12345','email'=>"c'o@sample.com",
+      u = {'username'=>"c'o@sample.com", 'password'=>'pw12345', 'password_confirmation'=>'pw12345', 'email'=>"c'o@sample.com",
         'company_id'=>user.company_id.to_s
       }
       expect_any_instance_of(User).to receive(:update_user_password).with(instance_of(String), instance_of(String), false, false).and_call_original
       expect {
-        post :create, {'company_id'=>user.company_id,'user'=>u}
-      }.to change(User,:count).by(1)
+        post :create, {'company_id'=>user.company_id, 'user'=>u}
+      }.to change(User, :count).by(1)
       expect(response).to be_redirect
 
       new_user = User.last
@@ -31,7 +31,7 @@ describe UsersController do
         copied_user.groups << gr_assigned_2 = Factory(:group)
 
         new_user_params = {username: "Fred", email: "fred@abc.com", company_id: copied_user.company.id, password: "pw12345", password_confirmation: "pw12345",
-                           group_ids: copied_user.group_ids} 
+                           group_ids: copied_user.group_ids}
 
         post :create, {company_id: copied_user.company.id, user: new_user_params}
         new_user = User.last
@@ -77,7 +77,7 @@ describe UsersController do
         new_user_params = {username: "Fred", email: "fred@abc.com", company_id: copied_user.company.id} # missing password/confirmation
         post :create, {company_id: copied_user.company.id, user: new_user_params, assigned_search_setup_ids: [ss_assigned_1.id, ss_assigned_2.id],
                        assigned_custom_report_ids: [cr_assigned_1.id, cr_assigned_2.id]}
-      
+
         expect(SearchSetup.count).to eq 2
         expect(CustomReport.count).to eq 2
         expect(response).to render_template(:new)
@@ -154,7 +154,7 @@ describe UsersController do
       end
 
       it "makes search setups belonging to a copied user available to the view" do
-        
+
         ss_assigned_1 = Factory(:search_setup, name: 'bar', user: copied_user)
         ss_assigned_2 = Factory(:search_setup, name: 'foo', user: copied_user)
         3.times { Factory(:search_setup) }
@@ -162,8 +162,8 @@ describe UsersController do
         get :new, company_id: copied_user.company.id, copy: copied_user.id
 
         expect(assigns(:assigned_search_setups)).to be_empty
-        expect(assigns(:available_search_setups)).to eq [ss_assigned_1, ss_assigned_2].sort{|ss1, ss2| ss1.name <=> ss2.name }
-        
+        expect(assigns(:available_search_setups)).to eq [ss_assigned_1, ss_assigned_2].sort {|ss1, ss2| ss1.name <=> ss2.name }
+
       end
 
       it "makes custom reports belonging to a copied user available to the view" do
@@ -174,8 +174,8 @@ describe UsersController do
 
         get :new, company_id: copied_user.company.id, copy: copied_user.id
 
-        expect(assigns(:assigned_custom_reports)).to be_empty 
-        expect(assigns(:available_custom_reports)).to eq [cr_assigned_1, cr_assigned_2].sort{|cr1, cr2| cr1.name <=> cr2.name }
+        expect(assigns(:assigned_custom_reports)).to be_empty
+        expect(assigns(:available_custom_reports)).to eq [cr_assigned_1, cr_assigned_2].sort {|cr1, cr2| cr1.name <=> cr2.name }
       end
 
       it "makes group memberships belonging to a copied user available to the view" do
@@ -187,8 +187,8 @@ describe UsersController do
 
         get :new, company_id: copied_user.company.id, copy: copied_user.id
 
-        expect(assigns(:assigned_groups)).to eq [gr_assigned_1, gr_assigned_2].sort{|gr1, gr2| gr1.name <=> gr2.name }
-        expect(assigns(:available_groups)).to eq [gr_available_1, gr_available_2, gr_available_3].sort{ |gr1, gr2| gr1.name <=> gr2.name }
+        expect(assigns(:assigned_groups)).to eq [gr_assigned_1, gr_assigned_2].sort {|gr1, gr2| gr1.name <=> gr2.name }
+        expect(assigns(:available_groups)).to eq [gr_available_1, gr_available_2, gr_available_3].sort { |gr1, gr2| gr1.name <=> gr2.name }
       end
 
       it "makes copied-user permissions available to view" do
@@ -281,7 +281,7 @@ describe UsersController do
     it "should create users from csv" do
       allow_any_instance_of(User).to receive(:admin?).and_return(true)
       data = "uname,joe@sample.com,Joe,Smith,js1234567\nun2,fred@sample.com,Fred,Dryer,fd654321"
-      post :bulk_upload, 'company_id'=>user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1,'email_format'=>'html'}
+      post :bulk_upload, 'company_id'=>user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1, 'email_format'=>'html'}
       expect(response).to be_success
       expect(JSON.parse(response.body)['count']).to eq(2)
       u = User.find_by(company_id: user.company_id, username: 'uname')
@@ -305,7 +305,7 @@ describe UsersController do
     it "should show errors for some users while creating others" do
       allow_any_instance_of(User).to receive(:admin?).and_return(true)
       data = "uname,joe@sample.com,Joe,Smith,js1234567\n,f,Fred,Dryer,fd654321"
-      post :bulk_upload, 'company_id'=>user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1,'email_format'=>'html'}
+      post :bulk_upload, 'company_id'=>user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1, 'email_format'=>'html'}
       expect(response.status).to eq(400)
       expect(JSON.parse(response.body)['error']).not_to be_blank
     end
@@ -313,7 +313,7 @@ describe UsersController do
       allow_any_instance_of(User).to receive(:admin?).and_return(false)
       uc = User.all.size
       data = "uname,joe@sample.com,Joe,Smith,js1234567\nun2,fred@sample.com,Fred,Dryer,fd654321"
-      post :bulk_upload, 'company_id'=>user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1,'email_format'=>'html'}
+      post :bulk_upload, 'company_id'=>user.company_id.to_s, 'bulk_user_csv'=>data, 'user'=>{'order_view'=>1, 'email_format'=>'html'}
       expect(response).to be_redirect
       expect(User.all.size).to eq(uc)
     end
@@ -326,8 +326,8 @@ describe UsersController do
       h = JSON.parse response.body
       expect(h['results'].size).to eq(2)
       r = h['results']
-      expect(r[0]).to eq({'username'=>'uname','email'=>'joe@sample.com','first_name'=>'Joe','last_name'=>'Smith','password'=>'js1234567'})
-      expect(r[1]).to eq({'username'=>'un2','email'=>'fred@sample.com','first_name'=>'Fred','last_name'=>'Dryer','password'=>'fd654321'})
+      expect(r[0]).to eq({'username'=>'uname', 'email'=>'joe@sample.com', 'first_name'=>'Joe', 'last_name'=>'Smith', 'password'=>'js1234567'})
+      expect(r[1]).to eq({'username'=>'un2', 'email'=>'fred@sample.com', 'first_name'=>'Fred', 'last_name'=>'Dryer', 'password'=>'fd654321'})
     end
     it "should return 400 with error if not valid csv" do
       data = "uname,\""
@@ -408,7 +408,7 @@ describe UsersController do
     let! (:user2) { Factory(:user) }
     let! (:user3) { Factory(:user) }
     let! (:company) { Factory(:company) }
-    
+
     before :each do
       # So the :back redirect in the controller returns something
       request.env["HTTP_REFERER"] = "/referer"
@@ -498,7 +498,7 @@ describe UsersController do
       run_as_user = Factory(:user, username: "AugustusGloop", disabled: false, password_locked: false, password_expired: false, password_reset: false)
 
       now = Time.zone.parse("2017-12-01 12:00")
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         post :enable_run_as, username: "AugustusGloop"
       end
 
@@ -609,7 +609,7 @@ describe UsersController do
 
       now = Time.zone.parse "2017-12-01 12:00"
       Timecop.freeze(now) { post :disable_run_as }
-      
+
       session.reload
       expect(session.end_time).to eq now
     end

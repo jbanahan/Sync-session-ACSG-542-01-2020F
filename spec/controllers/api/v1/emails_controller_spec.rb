@@ -1,4 +1,4 @@
-describe Api::V1::EmailsController do  
+describe Api::V1::EmailsController do
   describe "#validate_email_list" do
     before do
       @u = Factory(:user)

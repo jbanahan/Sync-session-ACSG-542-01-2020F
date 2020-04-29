@@ -8,23 +8,23 @@ describe Api::V1::OrdersController do
   }
 
   let! (:user) {
-    u = Factory(:master_user,order_edit:true,order_view:true,product_view:true)
+    u = Factory(:master_user, order_edit:true, order_view:true, product_view:true)
     allow_api_access u
     u
   }
-  
+
   describe "index" do
     it 'should list orders' do
-      Factory(:order,order_number:'123')
-      Factory(:order,order_number:'ABC')
+      Factory(:order, order_number:'123')
+      Factory(:order, order_number:'ABC')
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
-      expect(j['results'].collect{|r| r['ord_ord_num']}).to eq ['123','ABC']
+      expect(j['results'].collect {|r| r['ord_ord_num']}).to eq ['123', 'ABC']
     end
     it 'should count orders' do
-      Factory(:order,order_number:'123')
-      Factory(:order,order_number:'ABC')
+      Factory(:order, order_number:'123')
+      Factory(:order, order_number:'ABC')
       get :index, count_only: 'true'
       expect(response).to be_success
       j = JSON.parse response.body
@@ -47,11 +47,11 @@ describe Api::V1::OrdersController do
       sr2 = double('sr2')
       allow(sr2).to receive(:id).and_return 2
       allow(sr2).to receive(:long_name).and_return 'def'
-      allow_any_instance_of(Order).to receive(:available_tpp_survey_responses).and_return [sr1,sr2]
+      allow_any_instance_of(Order).to receive(:available_tpp_survey_responses).and_return [sr1, sr2]
 
       expected = [
-        {'id'=>1,'long_name'=>'abc'},
-        {'id'=>2,'long_name'=>'def'}
+        {'id'=>1, 'long_name'=>'abc'},
+        {'id'=>2, 'long_name'=>'def'}
       ]
       o = Factory(:order)
       get :show, id: o.id
@@ -88,18 +88,18 @@ describe Api::V1::OrdersController do
 
   describe "update" do
     before :each do
-      @order = Factory(:order,order_number:'oldordnum')
+      @order = Factory(:order, order_number:'oldordnum')
     end
     it 'should fail if user cannot edit' do
       allow_any_instance_of(Order).to receive(:can_edit?).and_return false
-      h = {'id'=>@order.id,'ord_ord_num'=>'newordnum'}
+      h = {'id'=>@order.id, 'ord_ord_num'=>'newordnum'}
       put :update, id:@order.id, order:h
       expect(response.status).to eq 403
       @order.reload
       expect(@order.order_number).to eq 'oldordnum'
     end
     it 'should save' do
-      h = {'id'=>@order.id,'ord_ord_num'=>'newordnum'}
+      h = {'id'=>@order.id, 'ord_ord_num'=>'newordnum'}
       put :update, id:@order.id, order:h
       expect(response).to be_success
       @order.reload

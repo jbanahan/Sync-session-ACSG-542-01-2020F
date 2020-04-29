@@ -1,7 +1,7 @@
 describe SyncRecordsController do
 
   before :each do
-    @user = Factory(:master_user,:email=>'a@example.com', :product_view => true)
+    @user = Factory(:master_user, :email=>'a@example.com', :product_view => true)
 
     sign_in_as @user
   end

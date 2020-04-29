@@ -46,7 +46,7 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     # The BigDecimal.new stuff is a workaround for a delayed_job bug in serializing BigDecimals as floats...so we pass amount as a string
     amt = (BigDecimal.new(check_amount) * 100).truncate
 
-    request 'check_details', {:file_number => file_number.to_i, check_number: check_number.to_i, 
+    request 'check_details', {:file_number => file_number.to_i, check_number: check_number.to_i,
                                 check_date: check_date.strftime("%Y%m%d").to_i, bank_number: bank_number.to_i, check_amount: amt}, request_context, swallow_error: false
   end
 
@@ -85,8 +85,8 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
     end
   end
 
-  # Requests sql proxy return a list of entry numbers that were updated 
-  # during the timeframe specified by the parameters.  Which are expected 
+  # Requests sql proxy return a list of entry numbers that were updated
+  # during the timeframe specified by the parameters.  Which are expected
   # to be Time objects.
   def request_updated_entry_numbers updated_since, updated_before, customer_numbers = nil
     updated_since = updated_since.in_time_zone("America/New_York").strftime "%Y%m%d%H%M"
@@ -128,7 +128,7 @@ module OpenChain; class KewillSqlProxyClient < SqlProxyClient
   def request_monthly_statements_between start_date, end_date, s3_bucket, s3_path, sqs_queue, customer_numbers: nil
     params = {start_date: start_date.strftime("%Y%m%d").to_i, end_date: end_date.strftime("%Y%m%d").to_i}
     params[:customer_numbers] = csv_customer_list(customer_numbers) unless customer_numbers.blank?
-    
+
     request 'monthly_statements_to_s3', params, s3_export_context_hash(s3_bucket, s3_path, sqs_queue), {swallow_error: false}
   end
 

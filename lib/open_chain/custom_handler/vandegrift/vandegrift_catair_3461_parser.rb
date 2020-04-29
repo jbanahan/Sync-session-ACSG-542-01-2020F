@@ -136,11 +136,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
   def process_SE30_50 party, line
     party.qualifier = extract_string(line, (5..7))
     party.name = extract_string(line, (8..42))
-    # We're going to (ab)use the id qualifier in the Catair spec 
+    # We're going to (ab)use the id qualifier in the Catair spec
     # to allow sending of the MID code along with the Manufacturer party
     # information.  Normally, the spec states that you would only send
     # either a name or a qualifier/code and their is no qualifier for MID.
-    # We have agreed with Integration Point (IP) to extend the spec 
+    # We have agreed with Integration Point (IP) to extend the spec
     # and send us the MID here with an id qualifier of MID.
     if party.qualifier.to_s.upcase == "MF"
       id_qualifier = extract_string(line, (43..45))
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
       addr += " #{addr_2}"
     end
 
-    # Some customers seem to copy the same address data into mutiple lines, so just ignore what we've 
+    # Some customers seem to copy the same address data into mutiple lines, so just ignore what we've
     # extracted if it matches data we've already previously extracted
     return if addr.blank? || matches_existing_address_line?(party, addr)
 
@@ -242,7 +242,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
 
   protected
 
-    # The following methods are protected to allow for potential extending classes to 
+    # The following methods are protected to allow for potential extending classes to
     # override/extend them for potential customer specific handling (if needed)
     def new_shipment
       s = CiLoadEntry.new
@@ -267,7 +267,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     end
 
     def new_commercial_invoice_line shipment, invoice
-      # These 
+      # These
       CiLoadInvoiceLine.new
     end
 

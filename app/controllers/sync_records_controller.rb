@@ -2,11 +2,11 @@ class SyncRecordsController < ApplicationController
 
 	def resend
 		sync = SyncRecord.find params[:id]
-			
+
 		# Verify the user is allowed to access the syncable object associated with the record by means of calling can_view? or can_edit? on the object
 		syncable = sync.syncable
 		access = false
-		if syncable.respond_to?(:can_view?) 
+		if syncable.respond_to?(:can_view?)
 			access = syncable.can_view? current_user
 		end
 

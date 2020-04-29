@@ -38,7 +38,7 @@ describe OpenChain::CustomHandler::BookingEmailSender do
         expect(attachments.length).to eq 1
         expect(attachments.first).to eq shipment_attachment
       end.and_yield File.open("spec/fixtures/files/test_sheets.zip", "rb")
-      
+
       subject.send_email("Message Type", user, shipment, [shipment_line])
 
       expect(ActionMailer::Base.deliveries.length).to eq 1

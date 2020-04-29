@@ -1,7 +1,7 @@
 module OpenChain; module ModelFieldGenerator; module VariantGenerator
-  def make_variant_arrays(rank_start,uid_prefix,table_name)
+  def make_variant_arrays(rank_start, uid_prefix, table_name)
     r = []
-    r << [rank_start,"#{uid_prefix}_varuid".to_sym, :variant_identifier,"Variant Identifier", {
+    r << [rank_start, "#{uid_prefix}_varuid".to_sym, :variant_identifier, "Variant Identifier", {
       read_only: true,
       data_type: :string,
       export_lambda: lambda {|line|
@@ -10,7 +10,7 @@ module OpenChain; module ModelFieldGenerator; module VariantGenerator
       },
       qualified_field_name: "(SELECT variant_identifier FROM variants WHERE variants.id = #{table_name}.variant_id)"
     }]
-    r << [rank_start+1,"#{uid_prefix}_var_db_id".to_sym, :variant_id, "Variant DB ID", {
+    r << [rank_start+1, "#{uid_prefix}_var_db_id".to_sym, :variant_id, "Variant DB ID", {
       data_type: :integer, user_accessible: false
     }]
     r

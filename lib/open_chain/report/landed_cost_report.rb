@@ -29,8 +29,8 @@ module OpenChain; module Report
     end
 
     def create_report arg
-      headers = [:ent_brok_ref, :ent_entry_num, :ent_release_date, :ent_transport_mode_code, :ent_customer_references, 
-        :cit_hts_code, :cil_country_origin_code, :cil_po_number, :cil_part_number, :cil_units, :cit_entered_value, "Entry Fee", "Other Fees", "Actual Freight", 
+      headers = [:ent_brok_ref, :ent_entry_num, :ent_release_date, :ent_transport_mode_code, :ent_customer_references,
+        :cit_hts_code, :cil_country_origin_code, :cil_po_number, :cil_part_number, :cil_units, :cit_entered_value, "Entry Fee", "Other Fees", "Actual Freight",
         :cil_hmf, :cil_prorated_mpf, :cil_cotton_fee, :cit_duty_amount, "Total Per Line", "Total Per Unit"].map {|v| ((v.is_a? String) ? v : ModelField.find_by_uid(v).label(false))}
 
       tab = @entry_number || "#{@customer_number} #{@release_date_start} - #{@release_date_end}"
@@ -39,7 +39,7 @@ module OpenChain; module Report
 
       column_widths = []
       row_counter = MutableNumber.new 0
-      # In order to conserve a bit of memory (and re-use the landed cost per entry api), 
+      # In order to conserve a bit of memory (and re-use the landed cost per entry api),
       # we're just going to pull in the entry id initially and let the data generator re-lookup the full entry data
       # it needs to run all the calculations
       g = LandedCostDataGenerator.new
@@ -71,7 +71,7 @@ module OpenChain; module Report
           XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), entry[:release_date], column_widths, :format=>ReportHelper::DATE_FORMAT_MMDDYY
           XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), entry[:transport_mode_code], column_widths
           XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), entry[:customer_reference].join(", "), column_widths
-          XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), line[:hts_code].collect{|h| h.hts_format}.join(", "), column_widths
+          XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), line[:hts_code].collect {|h| h.hts_format}.join(", "), column_widths
           XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), line[:country_origin_code], column_widths
           XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), line[:po_number], column_widths
           XlsMaker.insert_cell_value sheet, row_counter.value, (column += 1), line[:part_number], column_widths

@@ -18,8 +18,8 @@ module OpenChain; module Events
     def broadcast event_type, object_class, object_id, event_context = nil
       event = make_event(event_type, object_class, object_id, event_context)
       begin
-        # Since the event listeners generally do things like send out files (billing files / 315s) and other 
-        # things that absolutely shouldn't get sent in test or development modes we're just going to store 
+        # Since the event listeners generally do things like send out files (billing files / 315s) and other
+        # things that absolutely shouldn't get sent in test or development modes we're just going to store
         # the events off in these modes and only actually process events in production mode
         if @process_events
           @processor.process_event event
@@ -29,15 +29,14 @@ module OpenChain; module Events
           # Only hold onto the last 10 events to avoid huge memory outlays on large processor runs
           @broadcasted_events.slice!(0) if @broadcasted_events.size > 10
         end
-        
       rescue
         $!.log_me
       end
     end
 
-    private 
+    private
       def make_event event_type, object_class, object_id, event_context
-        e = OpenChainEvent.new 
+        e = OpenChainEvent.new
         e.event_type = event_type
         e.object_class = object_class
         e.object_id = object_id

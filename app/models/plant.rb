@@ -17,7 +17,7 @@ class Plant < ActiveRecord::Base
   include CoreObjectSupport
 
   attr_accessible :company_id, :company, :name
-  
+
   belongs_to :company, inverse_of: :plants, touch: true
 
   has_many :plant_product_group_assignments, inverse_of: :plant, dependent: :destroy

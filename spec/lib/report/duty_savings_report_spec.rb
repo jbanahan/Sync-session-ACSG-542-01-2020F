@@ -1,12 +1,12 @@
 describe OpenChain::Report::DutySavingsReport do
   let(:report) { described_class.new }
-  let(:arrival_date) { DateTime.new(2016,01,15) }
-  let(:release_date) { DateTime.new(2016,01,16) }
-  
+  let(:arrival_date) { DateTime.new(2016, 01, 15) }
+  let(:release_date) { DateTime.new(2016, 01, 16) }
+
   describe "permission?" do
     let(:co) { Factory(:company, master: true) }
     let(:u) { Factory(:user, company: co, entry_view: true)}
-    
+
     it "allows user at master company who can view entries" do
       expect(u).to receive(:view_entries?).and_return true
       expect(described_class.permission?(u)).to eq true
@@ -31,14 +31,14 @@ describe OpenChain::Report::DutySavingsReport do
 
     it "generates spreadsheet" do
       create_data arrival_date, release_date
-      
+
       @temp = described_class.run_report(u, {'start_date' => '2016-01-01', 'end_date' => '2016-02-01', 'customer_numbers' => ["cust num"]})
       wb = Spreadsheet.open @temp.path
       sheet = wb.worksheets[0]
-      
+
       expect(sheet.name).to eq "Duty Savings Report"
       expect(sheet.rows.count).to eq 2
-      expect(sheet.row(0)).to eq ['Broker Ref#', 'Arrival Date', 'Release Date', 'Customer Number', 'Vendor Name', 'PO Number', 'Invoice Line Value', 
+      expect(sheet.row(0)).to eq ['Broker Ref#', 'Arrival Date', 'Release Date', 'Customer Number', 'Vendor Name', 'PO Number', 'Invoice Line Value',
                                   'Entered Value', 'Cost Savings', 'Duty Savings']
     end
 
@@ -71,9 +71,9 @@ describe OpenChain::Report::DutySavingsReport do
         t.flush
         wb = Spreadsheet.open t.path
         sheet = wb.worksheet(0)
-        
+
         expect(sheet.count).to eq 2
-        expect(sheet.row(0)).to eq ['Broker Ref#', 'Arrival Date', 'Release Date', 'Customer Number', 'Vendor Name', 'PO Number', 'Invoice Line Value', 
+        expect(sheet.row(0)).to eq ['Broker Ref#', 'Arrival Date', 'Release Date', 'Customer Number', 'Vendor Name', 'PO Number', 'Invoice Line Value',
                                     'Entered Value', 'Cost Savings', 'Duty Savings']
       end
     end
@@ -102,7 +102,7 @@ describe OpenChain::Report::DutySavingsReport do
     it "generates expected results" do
       r = ActiveRecord::Base.connection.execute report.query('2016-01-01', '2016-02-01', ["cust num"])
       expect(r.count).to eq 1
-      expect(r.first[0..9]).to eq ["brok ref",arrival_date,release_date,"cust num","ACME","PO num",25,15,10,2] #for some reason datetime doesn't evaluate properly without range
+      expect(r.first[0..9]).to eq ["brok ref", arrival_date, release_date, "cust num", "ACME", "PO num", 25, 15, 10, 2] # for some reason datetime doesn't evaluate properly without range
     end
 
     it "assigns 0 to 'duty savings' if calculation < 1" do

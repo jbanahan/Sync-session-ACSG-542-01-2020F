@@ -12,22 +12,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
     let(:log) { InboundFile.new }
 
     it "should fail on bad root element" do
-      @test_data.gsub!(/_-LUMBERL_-VFI_ARTMAS01/,'BADROOT')
+      @test_data.gsub!(/_-LUMBERL_-VFI_ARTMAS01/, 'BADROOT')
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom, log, @opts)}.to raise_error(/root element/)
+      expect {described_class.new.parse_dom(dom, log, @opts)}.to raise_error(/root element/)
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Incorrect root element BADROOT, expecting '_-LUMBERL_-VFI_ARTMAS01'."
     end
 
     it "should fail if material is missing" do
-      @test_data.gsub!(/MATERIAL/,'BAD_MATERIAL_BAD')
+      @test_data.gsub!(/MATERIAL/, 'BAD_MATERIAL_BAD')
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom, log, @opts)}.to raise_error("XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL")
+      expect {described_class.new.parse_dom(dom, log, @opts)}.to raise_error("XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL")
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL"
     end
 
     it "should create article" do
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom, log, @opts)}.to change(Product,:count).from(0).to(1)
+      expect {described_class.new.parse_dom(dom, log, @opts)}.to change(Product, :count).from(0).to(1)
       p = Product.first
 
       expect(p.unique_identifier).to eq '000000000010000328'
@@ -54,14 +54,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
 
     it "should update article" do
       dom = REXML::Document.new(@test_data)
-      op = Factory(:product,unique_identifier:'000000000010000328')
+      op = Factory(:product, unique_identifier:'000000000010000328')
       ord = Factory(:order, order_number:'TEST_ORDER')
       ol = Factory(:order_line, product: op, order: ord)
       c = op.classifications.create! country: Factory(:country, iso_code: "US")
       c.tariff_records.create! line_number: 1, hts_1: "1234567890"
 
       op.create_snapshot(Factory(:user))
-      expect{described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product,:count)
+      expect {described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product, :count)
       p = Product.first
       expect(p.unique_identifier).to eq '000000000010000328'
       expect(p.name).to eq '9/16 x 7 HS MAPLE WHEAT ELITE PRE-SS'
@@ -90,33 +90,33 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapArticleXmlParser 
 
     it "should not change the article number if it already exists" do
       dom = REXML::Document.new(@test_data)
-      op = Factory(:product,unique_identifier:'000000000010000328')
+      op = Factory(:product, unique_identifier:'000000000010000328')
       ol = Factory(:order_line, product: op)
 
       op.create_snapshot(Factory(:user))
-      expect{described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product,:count)
+      expect {described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product, :count)
 
       p = Product.first
       p.find_and_set_custom_value(@cdefs[:prod_old_article], '123456').save!
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], nil).save!
 
-      expect{described_class.new.parse_dom(dom, log)}.to_not change(Product,:count)
+      expect {described_class.new.parse_dom(dom, log)}.to_not change(Product, :count)
       expect(ol.get_custom_value(@cdefs[:ordln_old_art_number]).value).to_not eq '123456'
     end
 
     it "should skip update if article has newer system extract date" do
       dom = REXML::Document.new(@test_data)
-      expect{described_class.new.parse_dom(dom, InboundFile.new, @opts)}.to change(Product,:count).from(0).to(1)
+      expect {described_class.new.parse_dom(dom, InboundFile.new, @opts)}.to change(Product, :count).from(0).to(1)
       op = Product.first
 
       # put sap extract date in the future so we know it's always newer than the second run of the XML
-      op.update_custom_value!(@cdefs[:prod_sap_extract],1.day.from_now)
+      op.update_custom_value!(@cdefs[:prod_sap_extract], 1.day.from_now)
 
       # update the Name in the raw xml so we have a change to make sure is ignored
-      new_test_data = @test_data.gsub(/MAPLE /,"MPL")
+      new_test_data = @test_data.gsub(/MAPLE /, "MPL")
 
       dom = REXML::Document.new(new_test_data)
-      expect{described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product,:count)
+      expect {described_class.new.parse_dom(dom, log, @opts)}.to_not change(Product, :count)
 
       p = Product.first
       expect(p.name).to eq '9/16 x 7 HS MAPLE WHEAT ELITE PRE-SS'

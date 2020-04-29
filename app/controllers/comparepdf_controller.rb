@@ -1,7 +1,7 @@
 class ComparepdfController < ApplicationController
 
   def compare
-    @no_action_bar = true #implements it's own in compare.html.erb
+    @no_action_bar = true # implements it's own in compare.html.erb
 
     if params[:file1].blank? or params[:file2].blank?
       error_redirect "Two files must be provided."

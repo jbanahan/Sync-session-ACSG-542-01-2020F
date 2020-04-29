@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProduct
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.accept? snapshot
-    super && snapshot.recordable.try(:importer).try(:system_code) == "HENNE" 
+    super && snapshot.recordable.try(:importer).try(:system_code) == "HENNE"
   end
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
@@ -61,7 +61,7 @@ module OpenChain; module CustomHandler; module Hm; class HmSystemClassifyProduct
   end
 
   def self.get_classi prod_hsh, iso_code
-    json_child_entities(prod_hsh, "Classification").find{|cl| mf(cl, "class_cntry_iso") == iso_code}
+    json_child_entities(prod_hsh, "Classification").find {|cl| mf(cl, "class_cntry_iso") == iso_code}
   end
 
   def self.get_description hts, importer_id

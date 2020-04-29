@@ -1,7 +1,7 @@
 class MessagesController < ApplicationController
   newrelic_ignore :only=>[:message_count]
-  skip_filter :require_user,:new_relic,:set_user_time_zone,:log_request,:log_run_as_request,:set_cursor_position,:force_reset,:log_last_request_time, :only=>:message_count
-  
+  skip_filter :require_user, :new_relic, :set_user_time_zone, :log_request, :log_run_as_request, :set_cursor_position, :force_reset, :log_last_request_time, :only=>:message_count
+
   def set_page_title
     @page_title = 'Tools'
   end
@@ -22,9 +22,9 @@ class MessagesController < ApplicationController
     }
   end
 
-  def create 
+  def create
     sys_admin_secure {
-      params[:message].each {|k,v| params[:message][k] = help.strip_tags(v)}
+      params[:message].each {|k, v| params[:message][k] = help.strip_tags(v)}
       m = Message.create(params[:message])
       errors_to_flash m, :now=>true
       if m.errors.blank?
@@ -53,29 +53,29 @@ class MessagesController < ApplicationController
       error_redirect "You do not have permission to delete another user's message."
     end
   end
-  
+
   def read
     @message = Message.find(params[:id])
     if @message.user == current_user
       @message.viewed = !@message.viewed
       if !@message.save
         errors_to_flash @message
-      end 
+      end
     else
       add_flash :errors, "You do not have permission to change another user's message."
     end
     render html: Message.unread_message_count(current_user.id)
   end
-  
+
   def read_all
     current_user.messages.update_all :viewed => true
     render json: {ok: 'ok'}
   end
 
   def message_count
-    distribute_reads do 
+    distribute_reads do
       if params[:user_id]
-        render :json => Message.unread_message_count(params[:user_id]) 
+        render :json => Message.unread_message_count(params[:user_id])
       else
         error_redirect "User ID is required."
       end

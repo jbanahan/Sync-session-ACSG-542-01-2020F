@@ -6,16 +6,16 @@ module OpenChain; module CustomHandler; module EntryParserSupport
     return unless entry.import_date
 
     # relation Entry#commercial_invoice_tariffs empty until entry is saved
-    tariffs = entry.commercial_invoices.map{ |ci| ci.commercial_invoice_lines.map{ |cil| cil.commercial_invoice_tariffs}}.flatten
+    tariffs = entry.commercial_invoices.map { |ci| ci.commercial_invoice_lines.map { |cil| cil.commercial_invoice_tariffs}}.flatten
     special_tariffs = SpecialTariffCrossReference.where(special_hts_number: tariffs.map(&:hts_code).uniq)
                           .where(import_country_iso: "US")
                           .where("effective_date_start <= ?", entry.import_date)
                           .where("effective_date_end >= ? OR effective_date_end IS NULL", entry.import_date)
-                          .map{ |st| st.special_hts_number }
+                          .map { |st| st.special_hts_number }
 
-    tariffs.each{ |t| t.special_tariff = true if special_tariffs.include? t.hts_code }
+    tariffs.each { |t| t.special_tariff = true if special_tariffs.include? t.hts_code }
 
-    entry.special_tariff = true if tariffs.find{ |t| t.special_tariff }
+    entry.special_tariff = true if tariffs.find { |t| t.special_tariff }
   end
 
   def calculate_duty_rates invoice_tariff, invoice_line, effective_date, customs_value
@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module EntryParserSupport
     end
 
     def set_any_hold_date date, attribute
-      hold_date_attr, release_date_attr = entry.hold_attributes.find{ |att| att[:hold] == attribute }.values_at(:hold, :release)
+      hold_date_attr, release_date_attr = entry.hold_attributes.find { |att| att[:hold] == attribute }.values_at(:hold, :release)
       # allow blank dates for testing
       if date.blank?
         entry[hold_date_attr] = date
@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module EntryParserSupport
       if attribute == :one_usg_date
         set_one_usg_date date
       else
-        hold_date_attr = entry.hold_attributes.find{ |att| att[:release] == attribute }[:hold]
+        hold_date_attr = entry.hold_attributes.find { |att| att[:release] == attribute }[:hold]
         if entry[hold_date_attr].present?
           entry[attribute] = date
           return if date.blank? # allow blank dates for testing
@@ -108,11 +108,11 @@ module OpenChain; module CustomHandler; module EntryParserSupport
     end
 
     def set_summary_hold_date
-      entry.hold_date = entry.populated_holds.map{ |pair| pair[:hold][:value] }.min
+      entry.hold_date = entry.populated_holds.map { |pair| pair[:hold][:value] }.min
     end
 
-    #If entry isn't on hold: Sets hold_release to One USG if One USG exists and hasn't been overridden, to most recent hold
-    #release since One USG was overridden, or to most recent hold release overall when One USG hasn't been set.
+    # If entry isn't on hold: Sets hold_release to One USG if One USG exists and hasn't been overridden, to most recent hold
+    # release since One USG was overridden, or to most recent hold release overall when One USG hasn't been set.
     def set_summary_hold_release_date
       set_on_hold
       if entry.on_hold?
@@ -120,7 +120,7 @@ module OpenChain; module CustomHandler; module EntryParserSupport
       else
         dates = entry.one_usg_date ? updated_after_one_usg : updated_before_one_usg
         latest = dates.values.compact.max
-        if entry.populated_holds.map{ |pair| pair[:release][:value] }.compact.present?
+        if entry.populated_holds.map { |pair| pair[:release][:value] }.compact.present?
           entry.hold_release_date = latest || entry.one_usg_date
         else
           entry.hold_release_date = nil

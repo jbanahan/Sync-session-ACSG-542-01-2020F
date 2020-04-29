@@ -4,7 +4,7 @@ module ConfigMigrations; module LL; class LlSow1289
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
   def up
-    #configure_vendor_permissions
+    # configure_vendor_permissions
     create_searches
     create_allport
     create_booking_unlocked_date
@@ -18,15 +18,15 @@ module ConfigMigrations; module LL; class LlSow1289
 
   def configure_vendor_permissions
     if MasterSetup.get.custom_feature? "Production"
-      intl_vendor_codes = ['0000100199', '0000100156', '0000100243', '0000100130', '0000100131', '0000100268', '0000206816', '0000100286', 
-        '0000100232', '0000100151', '0000300035', '0000300015', '0000100137', '0000300175', '0000100261', '0000100168', '0000100252', 
-        '0000100143', '0000100121', '0000300165', '0000100170', '0000100202', '0000100222', '0000300007', '0000100128', '0000300206', 
+      intl_vendor_codes = ['0000100199', '0000100156', '0000100243', '0000100130', '0000100131', '0000100268', '0000206816', '0000100286',
+        '0000100232', '0000100151', '0000300035', '0000300015', '0000100137', '0000300175', '0000100261', '0000100168', '0000100252',
+        '0000100143', '0000100121', '0000300165', '0000100170', '0000100202', '0000100222', '0000300007', '0000100128', '0000300206',
         '0000100336', '0000300240', '0000100242', '0000100037', '0000100278', '0000100296']
       intl_vendors = Company.where(vendor: true, system_code: intl_vendor_codes)
     else
       intl_vendors = Company.where(vendor: true)
     end
-    
+
     # Set all configured users belonging to the specified companies to have all the necessary booking permissions
     user_ids = User.where(company_id: intl_vendors).pluck :id
     update_user_permissions(user_ids) if user_ids.length > 0
@@ -72,12 +72,12 @@ module ConfigMigrations; module LL; class LlSow1289
     search_names.each do |name|
       case name
       when "Not Booked"
-        create_search "Not Booked", {hiddenCriteria: [{field:'shp_booking_received_date',operator:'null'}]}
+        create_search "Not Booked", {hiddenCriteria: [{field:'shp_booking_received_date', operator:'null'}]}
       when "Booking Requested"
-        create_search("Booking Requested", 
+        create_search("Booking Requested",
           {hiddenCriteria: [
-            {field:'shp_booking_received_date',operator:'notnull'},
-            {field:'shp_booking_confirmed_date',operator:'null'}
+            {field:'shp_booking_received_date', operator:'notnull'},
+            {field:'shp_booking_confirmed_date', operator:'null'}
           ]}
         )
       when "All"
@@ -114,7 +114,7 @@ module ConfigMigrations; module LL; class LlSow1289
   end
 
   def create_allport
-    allport = Company.where(system_code:'allport').first_or_create!(forwarder:true,name:'Allport Cargo Services')
+    allport = Company.where(system_code:'allport').first_or_create!(forwarder:true, name:'Allport Cargo Services')
     master = Company.where(master:true).first
     master.linked_companies << allport unless master.linked_companies.include?(allport)
     allport

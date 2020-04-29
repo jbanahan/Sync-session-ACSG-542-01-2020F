@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberS
     invoice_total_format = XlsMaker.create_format "Invoice Total", weight: :bold, number_format: "[$$-409]#,##0.00;[RED]-[$$-409]#,##0.00"
 
     column_widths = []
-    # Adjust the width of the first column, the column width calculation in XlsMaker has a limiter by default that only allows 
+    # Adjust the width of the first column, the column width calculation in XlsMaker has a limiter by default that only allows
     # 23 at most, we want more than that
     XlsMaker.calc_column_width sheet, 0, column_widths, 35
     row = -1
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberS
       XlsMaker.add_body_row sheet, (row += 1), ["Statement of Account as of"], column_widths, true, format: bold_format
       XlsMaker.insert_body_row sheet, row, 1, [summary_date], column_widths, true, format: bold_date_format
     end
-    
+
     XlsMaker.add_body_row sheet, (row += 1), ["Company", "Lumber Liquidators"], column_widths, true, format: bold_format
     XlsMaker.add_header_row sheet, (row += 2), ["Invoice", "Invoice Date", "Invoice Amount"], column_widths
 
@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberS
     XlsMaker.add_body_row sheet, row, ["", "Total:"], column_widths, true, format: bold_format
     XlsMaker.insert_body_row sheet, row, 2, [total], column_widths, true, format: invoice_total_format
 
-    
+
     nil
   end
 

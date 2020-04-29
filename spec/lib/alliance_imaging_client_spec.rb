@@ -4,14 +4,14 @@ describe OpenChain::AllianceImagingClient do
 
   describe "bulk_request_images" do
     before :each do
-      @e1 = Factory(:entry,:broker_reference=>'123456',:source_system=>'Alliance')
-      @e2 = Factory(:entry,:broker_reference=>'654321',:source_system=>'Alliance')
-      @e3 = Factory(:entry,:broker_reference=>'777777',:source_system=>'Fenix')
+      @e1 = Factory(:entry, :broker_reference=>'123456', :source_system=>'Alliance')
+      @e2 = Factory(:entry, :broker_reference=>'654321', :source_system=>'Alliance')
+      @e3 = Factory(:entry, :broker_reference=>'777777', :source_system=>'Fenix')
     end
     it 'should request based on primary keys' do
       expect(OpenChain::AllianceImagingClient).to receive(:request_images).with('123456')
       expect(OpenChain::AllianceImagingClient).to receive(:request_images).with('654321')
-      OpenChain::AllianceImagingClient.bulk_request_images primary_keys: [@e1.id,@e2.id]
+      OpenChain::AllianceImagingClient.bulk_request_images primary_keys: [@e1.id, @e2.id]
     end
     it 'should request based on search_run_id' do
       expect(OpenChain::AllianceImagingClient).to receive(:request_images).with('123456')
@@ -54,7 +54,7 @@ describe OpenChain::AllianceImagingClient do
     let (:user) { Factory(:user) }
 
     before :each do
-      @e1 = Factory(:entry,:broker_reference=>'123456',:source_system=>'Alliance')
+      @e1 = Factory(:entry, :broker_reference=>'123456', :source_system=>'Alliance')
       # We need to start w/ an actual pdf file as paperclip no longer just uses the file's
       # filename to discover mime type.
       @tempfile = Tempfile.new ["file", ".pdf"]
@@ -85,7 +85,7 @@ describe OpenChain::AllianceImagingClient do
     it 'should load an attachment into the entry with the proper content type' do
       now = Time.zone.parse("2018-08-01 12:00")
       r = nil
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         r = OpenChain::AllianceImagingClient.process_image_file @tempfile, @hash, user
       end
 
@@ -219,7 +219,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "ensures the file_number value in the hash is a string" do
-      # This might seem weird that I'm mocking out an ActiveRecord call, but it's important because if the file number isn't a string, the 
+      # This might seem weird that I'm mocking out an ActiveRecord call, but it's important because if the file number isn't a string, the
       # DB index on broker_reference / entry_number isn't utilized.
       # This test ensures there's a check to make sure the file number is stringified.
       mock_relation = double("ActiveRecord::Relation")
@@ -354,7 +354,7 @@ describe OpenChain::AllianceImagingClient do
 
     let (:hash) { {"file_name" => "file.txt", "s3_bucket" => "bucket", "s3_key" => "key"} }
 
-    before :each do 
+    before :each do
       allow(OpenChain::AllianceImagingClient).to receive(:imaging_config).and_return config
     end
 
@@ -415,7 +415,7 @@ describe OpenChain::AllianceImagingClient do
         t
       }
 
-      before :each do 
+      before :each do
         hash['export_process'] = "Canada Google Drive"
 
         allow(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300).and_yield hash
@@ -466,7 +466,7 @@ describe OpenChain::AllianceImagingClient do
     end
   end
 
-  describe "proxy_fenix_drive_docs" do 
+  describe "proxy_fenix_drive_docs" do
     let (:entry) { Entry.new customer_number: "TEST" }
     let (:config) { {'TEST' => {"queue" => "queue1"}}}
     let (:message) { {"message" => "message"}}
@@ -479,7 +479,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "forwards message to multiple queues configured for customer" do
-      config["TEST"]["queue"] = ["queue1", "queue2"] 
+      config["TEST"]["queue"] = ["queue1", "queue2"]
       expect(described_class).to receive(:proxy_fenix_drive_docs_config).and_return config
       expect(OpenChain::SQS).to receive(:send_json).with("queue1", message)
       expect(OpenChain::SQS).to receive(:send_json).with("queue2", message)
@@ -497,7 +497,7 @@ describe OpenChain::AllianceImagingClient do
   end
 
   describe "run_schedulable" do
-    
+
     it "implements SchedulableJob interface" do
       allow(OpenChain::AllianceImagingClient).to receive(:delay).and_return OpenChain::AllianceImagingClient
       expect(OpenChain::AllianceImagingClient).to receive(:consume_images)
@@ -538,7 +538,7 @@ describe OpenChain::AllianceImagingClient do
       expect(Lock).to receive(:acquire).with("Entry-Fenix-11981001795105").and_yield
       expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
       r = nil
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         r = OpenChain::AllianceImagingClient.process_fenix_nd_image_file @tempfile, @message, user
       end
       entry = r[:entry]
@@ -639,7 +639,7 @@ describe OpenChain::AllianceImagingClient do
       e = r[:entry]
       expect(e.attachments.size).to eq 2
       expect(e.attachments.map {|a| a.attached_file_name}.sort).to eq ["invoice 123.pdf", "invoice 345.pdf"]
-      #make sure the new file referenced by message was the one that got created, and the existing one got removed
+      # make sure the new file referenced by message was the one that got created, and the existing one got removed
       expect(e.attachments).not_to include a1
       expect(r[:attachment].attached_file_name).to eq "invoice 123.pdf"
     end
@@ -669,7 +669,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "ensures the file_number value in the hash is a string" do
-      # This might seem weird that I'm mocking out an ActiveRecord call, but it's important because if the file number isn't a string, the 
+      # This might seem weird that I'm mocking out an ActiveRecord call, but it's important because if the file number isn't a string, the
       # DB index on broker_reference / entry_number isn't utilized.
       # This test ensures there's a check to make sure the file number is stringified.
       entry = Factory(:entry)
@@ -695,7 +695,7 @@ describe OpenChain::AllianceImagingClient do
 
   describe "request_images" do
     subject { described_class }
-    let (:secrets) { 
+    let (:secrets) {
       {
         "kewill_imaging" => {
           "sqs_send_queue" => "send_queue",
@@ -705,14 +705,14 @@ describe OpenChain::AllianceImagingClient do
       }
     }
 
-    let! (:ms) { 
-      ms = stub_master_setup 
+    let! (:ms) {
+      ms = stub_master_setup
       allow(MasterSetup).to receive(:secrets).and_return secrets
       ms
     }
 
     context "without custom feature enabled" do
-      before :each do 
+      before :each do
         expect(ms).to receive(:custom_feature?).with("Kewill Imaging Request Queue").and_return false
       end
 
@@ -721,9 +721,9 @@ describe OpenChain::AllianceImagingClient do
         described_class.request_images("12345", {opts: 1})
       end
     end
-    
+
     context "with custom feature enabled" do
-      before :each do 
+      before :each do
         expect(ms).to receive(:custom_feature?).with("Kewill Imaging Request Queue").and_return true
       end
 

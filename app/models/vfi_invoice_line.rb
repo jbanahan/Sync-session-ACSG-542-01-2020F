@@ -23,7 +23,7 @@ class VfiInvoiceLine < ActiveRecord::Base
   include DefaultLineNumberSupport
 
   attr_accessible :charge_amount, :charge_code, :charge_description, :line_number, :quantity, :unit, :unit_price, :vfi_invoice_id
-  
+
   belongs_to :vfi_invoice, :inverse_of => :vfi_invoice_lines, :touch => true
   has_many :invoiced_events
 
@@ -43,12 +43,12 @@ class VfiInvoiceLine < ActiveRecord::Base
   end
 
   private
-  
-  def parent_obj #supporting method for LinesSupport
+
+  def parent_obj # supporting method for LinesSupport
     self.vfi_invoice
   end
-  
-  def parent_id_where #supporting method for LinesSupport
+
+  def parent_id_where # supporting method for LinesSupport
     return :vfi_invoice_id => self.vfi_invoice.id
   end
 

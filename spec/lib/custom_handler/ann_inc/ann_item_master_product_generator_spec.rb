@@ -4,14 +4,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
   let(:cdefs) { subject.cdefs }
   let(:us) { Factory(:country, iso_code: "US") }
   let(:ca) { Factory(:country, iso_code: "CA") }
-  let(:product_1) do 
+  let(:product_1) do
     prod = Factory(:product, unique_identifier: "uid 1")
     prod.find_and_set_custom_value cdefs[:approved_long], "approved\u00A0\r\n|\"long 1\"\r"
     prod.find_and_set_custom_value cdefs[:related_styles], "uid 3\nuid 4"
     prod.save!
     prod
   end
-  let(:classi_1_1) do 
+  let(:classi_1_1) do
     cl = Factory(:classification, product: product_1, country: us)
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
     cl.find_and_set_custom_value cdefs[:long_desc_override], "long\r\ndescr 1 1\r"
@@ -22,18 +22,18 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
     Factory(:tariff_record, classification: cl, hts_1: "987654321", line_number: 2)
     cl
   end
-  let(:classi_1_2) do 
+  let(:classi_1_2) do
     cl = Factory(:classification, product: product_1, country: ca)
     cl.update_custom_value! cdefs[:approved_date], cl.updated_at - 2.days
     Factory(:tariff_record, classification: cl, hts_1: "135791011", line_number: 1)
     cl
   end
-  let(:product_2) do 
+  let(:product_2) do
     prod = Factory(:product, unique_identifier: "uid 2")
     prod.update_custom_value! cdefs[:approved_long], "approved long 2"
     prod
   end
-  let(:classi_2_1) do 
+  let(:classi_2_1) do
     cl = Factory(:classification, product: product_2, country: us)
     cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.find_and_set_custom_value cdefs[:classification_type], "Decision"
@@ -55,7 +55,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       file_2 = double "synced file 2"
       encrypted_file_1 = double "encrypted file 1"
       encrypted_file_2 = double "encrypted file 1"
-      
+
       expect(subject).to receive(:sync_csv).ordered do
         subject.instance_variable_set(:@row_count, 1)
         file_1
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       expect(subject).to receive(:ftp_file).with(encrypted_file_2, {remote_file_name: "118340_ITEMMASTER_VFI_20190315023000_v2.txt.gpg"})
 
       # converts to Eastern time
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       Timecop.freeze(now) { subject.generate "118340_ITEMMASTER_VFI_" }
     end
 
@@ -97,7 +97,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       expect(subject).to receive(:ftp_file).with(encrypted_file, {remote_file_name: "118340_ITEMMASTER_VFI_20190315023000.txt.gpg"})
 
       # converts to Eastern time
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       Timecop.freeze(now) { subject.generate "118340_ITEMMASTER_VFI_" }
     end
   end
@@ -105,9 +105,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
   describe "sync_csv" do
     it "returns expected output" do
       load_all
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       file = Timecop.freeze(now) { subject.sync_csv }
-      file.rewind     
+      file.rewind
       lines = file.read.split("\n")
       expect(lines[0]).to eq "118340|20190315T023000|||long descr 1 1||0||0|||||||5|||123456789|||||0|0||0|0||0|0||||0||0||Multi|uid 1|LADIES"
       expect(lines[1]).to eq "118340|20190315T023000|||long descr 1 1||0||0|||||||5|||123456789|||||0|0||0|0||0|0||||0||0||Multi|uid 3|LADIES"
@@ -118,9 +118,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
 
     it "uses Approved Long Description if Long Description Override is missing" do
       classi_1_1.update_custom_value! cdefs[:long_desc_override], nil
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       file = Timecop.freeze(now) { subject.sync_csv }
-      file.rewind     
+      file.rewind
       lines = file.read.split("\n")
       expect(lines[0]).to eq %Q(118340|20190315T023000|||approved? /"long 1"||0||0|||||||5|||123456789|||||0|0||0|0||0|0||||0||0||Multi|uid 1|LADIES)
     end
@@ -129,9 +129,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       classi_1_1.reload
       tr = classi_1_1.tariff_records.first
       tr.update! hts_1: ""
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       file = Timecop.freeze(now) { subject.sync_csv }
-      file.rewind     
+      file.rewind
       lines = file.read.split("\n")
       expect(lines[0]).to eq "118340|20190315T023000|||long descr 1 1||0||0|||||||5||||||||0|0||0|0||0|0||||0||0||Multi|uid 1|LADIES"
     end
@@ -148,13 +148,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
 
     it "returns credentials for production" do
       expect(ms).to receive(:production?).and_return true
-      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$', 
+      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$',
                                              folder: "to_ecs/Ann/ITEM_MASTER", protocol: 'sftp', port: 2222})
     end
 
     it "returns credentials for test" do
       expect(ms).to receive(:production?).and_return false
-      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$', 
+      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$',
                                              folder: "to_ecs/Ann/ITEM_MASTER_TEST", protocol: 'sftp', port: 2222})
     end
   end
@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnItemMasterProductGenerator do
       results = ActiveRecord::Base.connection.execute subject.query
       expect(results.count).to eq 2
       res = []
-      results.each{ |r| res << r }
+      results.each { |r| res << r }
       row_1, row_2 = res
       expect(row_1).to eq [product_1.id, "uid 1", "long\r\ndescr 1 1\r", "approved\u00A0\r\n|\"long 1\"\r", "123456789", "Multi", "uid 3\nuid 4", 5]
       expect(row_2).to eq [product_2.id, "uid 2", "long descr 2 1", "approved long 2", "24681012", "Decision", nil, 0]

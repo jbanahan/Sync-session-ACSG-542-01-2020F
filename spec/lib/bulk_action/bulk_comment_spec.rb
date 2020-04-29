@@ -2,12 +2,12 @@ describe OpenChain::BulkAction::BulkComment do
   describe '#act' do
     before :each do
       @ord = Factory(:order)
-      @u = Factory(:master_user,order_comment:true,order_view:true)
+      @u = Factory(:master_user, order_comment:true, order_view:true)
       @bpl = Factory(:bulk_process_log)
     end
     it 'should comment on object' do
-      opts = {'module_type'=>'Order','subject'=>'sub','body'=>'bod'}
-      expect {described_class.act @u, @ord.id.to_s, opts, @bpl, 99}.to change(Comment,:count).from(0).to(1)
+      opts = {'module_type'=>'Order', 'subject'=>'sub', 'body'=>'bod'}
+      expect {described_class.act @u, @ord.id.to_s, opts, @bpl, 99}.to change(Comment, :count).from(0).to(1)
       c = Comment.first
       expect(c.commentable).to eq @ord
       expect(c.subject).to eq 'sub'
@@ -18,9 +18,9 @@ describe OpenChain::BulkAction::BulkComment do
     end
     it 'should write error if user cannot comment' do
       allow(@ord).to receive(:can_comment?).and_return false
-      expect(Order).to receive(:find).with(@ord.id.to_s).and_return @ord #need exact object to use stubbed can_comment?
-      opts = {'module_type'=>'Order','subject'=>'sub','body'=>'bod'}
-      expect {described_class.act @u, @ord.id.to_s, opts, @bpl, 99}.to_not change(Comment,:count)
+      expect(Order).to receive(:find).with(@ord.id.to_s).and_return @ord # need exact object to use stubbed can_comment?
+      opts = {'module_type'=>'Order', 'subject'=>'sub', 'body'=>'bod'}
+      expect {described_class.act @u, @ord.id.to_s, opts, @bpl, 99}.to_not change(Comment, :count)
       expect(@bpl.change_records.count).to eq 1
       cr = @bpl.change_records.first
       expect(cr).to be_failed

@@ -3,7 +3,7 @@ require 'open_chain/integration_client_parser'
 # This class processes full tariff information about US tariffs.  This includes full rate breakdowns
 # for each tariff.  The FULL set of rates are expected to be sent for every tariff number, not partials
 # as any existing rates for the tariff number are removed and rebuilt from the data in the file.
-# 
+#
 module OpenChain; module CustomHandler; module Vandegrift; class KewillTariffClassificationsParser
   include OpenChain::IntegrationClientParser
 
@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillTariffCla
 
     last_exported_from_source = parse_datetime(t["extract_time"])
     tariff = TariffClassification.where(country_id: us.id, tariff_number: t["tariff_no"], effective_date_start: effective_date).first_or_create!
-    Lock.db_lock(tariff) do 
+    Lock.db_lock(tariff) do
       if process_tariff?(tariff, last_exported_from_source)
         tariff.tariff_classification_rates.destroy_all
         tariff.last_exported_from_source = last_exported_from_source
@@ -43,11 +43,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillTariffCla
         return tariff
       end
     end
-    
+
     nil
   end
 
-  private 
+  private
     def parse_tariff_data tariff, json
       tariff.effective_date_end = parse_date(json["date_tariff_expiration"])
       tariff.number_of_reporting_units = json["no_of_rpt_units"]
@@ -96,7 +96,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillTariffCla
       rate = BigDecimal(data.insert(data.length - decimal_places, ".")) rescue nil
 
       # If the rate is 9999.xxxx then it means, essentially, that the tariff rate shouldn't be used.  We're going to nil
-      # these values out to show they're invalid.  
+      # these values out to show they're invalid.
       # It looks like most of the cases where this occurs in Kewill data are for expired trade treaties.  Not sure why
       # the ABI data from customs doesn't just remove these numbers, but they're still there.
       if rate.to_i == 9999

@@ -25,36 +25,36 @@ describe OpenChain::TariffFileMonitor do
       expect(ftp_connection).to receive(:chdir).with("base_dir")
       time_zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
       expect(ftp_connection).to receive(:list_files).with(include_only_files:false).and_return [
-              FtpSender::FtpFile.new("Australia", 0, time_zone.local(2017,7,7), "directory"),
+              FtpSender::FtpFile.new("Australia", 0, time_zone.local(2017, 7, 7), "directory"),
               # This file should be ignored.  We're looking for folders only.
-              FtpSender::FtpFile.new("errant_zip.zip", 0, time_zone.local(2017,7,8), "file"),
-              FtpSender::FtpFile.new("China", 0, time_zone.local(2017,7,8), "directory"),
-              FtpSender::FtpFile.new("European Union", 0, time_zone.local(2017,7,9), "directory"),
+              FtpSender::FtpFile.new("errant_zip.zip", 0, time_zone.local(2017, 7, 8), "file"),
+              FtpSender::FtpFile.new("China", 0, time_zone.local(2017, 7, 8), "directory"),
+              FtpSender::FtpFile.new("European Union", 0, time_zone.local(2017, 7, 9), "directory"),
               # This directory should be ignored.  It hasn't been updated since the last pickup.
-              FtpSender::FtpFile.new("Argentina", 0, time_zone.local(2017,7,5), "directory")]
+              FtpSender::FtpFile.new("Argentina", 0, time_zone.local(2017, 7, 5), "directory")]
 
       expect(ftp_connection).to receive(:chdir).with("base_dir/Australia")
       expect(ftp_connection).to receive(:list_files).and_return [
-              FtpSender::FtpFile.new("AU_SIMPLE_20170707.ZIP", 0, time_zone.local(2017,7,7), "file"),
+              FtpSender::FtpFile.new("AU_SIMPLE_20170707.ZIP", 0, time_zone.local(2017, 7, 7), "file"),
               # This changes file should be ignored without error.  We're specifically filtering out change files.
-              FtpSender::FtpFile.new("AU_20170707_changes.zip", 0, time_zone.local(2017,7,7), "file"),
+              FtpSender::FtpFile.new("AU_20170707_changes.zip", 0, time_zone.local(2017, 7, 7), "file"),
               # This non-zip file should be ignored without error.  We're specifically looking for only zips.
-              FtpSender::FtpFile.new("AU_SIMPLE_20170709.txt", 0, time_zone.local(2017,7,9), "file"),
+              FtpSender::FtpFile.new("AU_SIMPLE_20170709.txt", 0, time_zone.local(2017, 7, 9), "file"),
               # This one should be also ignored without error.  It's older than the last pickup.
-              FtpSender::FtpFile.new("AU_SIMPLE_20170507.ZIP", 0, time_zone.local(2017,5,7), "file")]
+              FtpSender::FtpFile.new("AU_SIMPLE_20170507.ZIP", 0, time_zone.local(2017, 5, 7), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("AU_SIMPLE_20170707.ZIP", /tariff_upload.+\.zip/)
 
       expect(ftp_connection).to receive(:chdir).with("base_dir/China")
       expect(ftp_connection).to receive(:list_files).and_return [
-              FtpSender::FtpFile.new("C9_SIMPLE_20170708.ZIP", 0, time_zone.local(2017,7,8), "file"),
-              FtpSender::FtpFile.new("CN_SIMPLE_20170707.ZIP", 0, time_zone.local(2017,7,7), "file"),
-              FtpSender::FtpFile.new("CN_20170708_changes.zip", 0, time_zone.local(2017,7,8), "file")]
+              FtpSender::FtpFile.new("C9_SIMPLE_20170708.ZIP", 0, time_zone.local(2017, 7, 8), "file"),
+              FtpSender::FtpFile.new("CN_SIMPLE_20170707.ZIP", 0, time_zone.local(2017, 7, 7), "file"),
+              FtpSender::FtpFile.new("CN_20170708_changes.zip", 0, time_zone.local(2017, 7, 8), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("C9_SIMPLE_20170708.ZIP", /tariff_upload.+\.zip/)
       expect(ftp_connection).to receive(:get_binary_file).with("CN_SIMPLE_20170707.ZIP", /tariff_upload.+\.zip/)
 
       expect(ftp_connection).to receive(:chdir).with("base_dir/European Union")
       expect(ftp_connection).to receive(:list_files).and_return [
-              FtpSender::FtpFile.new("EU_SIMPLE_20170708.ZIP", 0, time_zone.local(2017,7,8), "file")]
+              FtpSender::FtpFile.new("EU_SIMPLE_20170708.ZIP", 0, time_zone.local(2017, 7, 8), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("EU_SIMPLE_20170708.ZIP", /tariff_upload.+\.zip/)
 
       expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
@@ -69,7 +69,7 @@ describe OpenChain::TariffFileMonitor do
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/CN_SIMPLE_20170707.ZIP", tempfile_matching_name("CN_SIMPLE_20170707.ZIP"))
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/EU_SIMPLE_20170708.ZIP", tempfile_matching_name("EU_SIMPLE_20170708.ZIP"))
 
-      current = time_zone.local(2017,10,31,3,3,33)
+      current = time_zone.local(2017, 10, 31, 3, 3, 33)
       Timecop.freeze(current) do
         subject.run({ protocol:"SFTP", hostname:"testftpserver.fake-testing.com", port:"5150", username:"artie_fufkin", password:"pwd555", directory:"base_dir", email_to:["a@b.com", "c@d.com"] })
       end
@@ -105,26 +105,26 @@ describe OpenChain::TariffFileMonitor do
       expect(ftp_connection).to receive(:chdir).with("base_dir")
       time_zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
       expect(ftp_connection).to receive(:list_files).with(include_only_files:false).and_return [
-              FtpSender::FtpFile.new("Australia", 0, time_zone.local(2017,7,7), "directory"),
-              FtpSender::FtpFile.new("Wakanda", 0, time_zone.local(2017,7,8), "directory")]
+              FtpSender::FtpFile.new("Australia", 0, time_zone.local(2017, 7, 7), "directory"),
+              FtpSender::FtpFile.new("Wakanda", 0, time_zone.local(2017, 7, 8), "directory")]
 
       expect(ftp_connection).to receive(:chdir).with("base_dir/Australia")
       expect(ftp_connection).to receive(:list_files).and_return [
-              FtpSender::FtpFile.new("AU_SIMPLE_20170707.ZIP", 0, time_zone.local(2017,7,7), "file"),
-              FtpSender::FtpFile.new("AU_COMPLICATED_20170707.ZIP", 0, time_zone.local(2017,7,7), "file")]
+              FtpSender::FtpFile.new("AU_SIMPLE_20170707.ZIP", 0, time_zone.local(2017, 7, 7), "file"),
+              FtpSender::FtpFile.new("AU_COMPLICATED_20170707.ZIP", 0, time_zone.local(2017, 7, 7), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("AU_SIMPLE_20170707.ZIP", /tariff_upload.+\.zip/)
       expect(ftp_connection).to receive(:get_binary_file).with("AU_COMPLICATED_20170707.ZIP", /tariff_upload.+\.zip/)
 
       expect(ftp_connection).to receive(:chdir).with("base_dir/Wakanda")
       expect(ftp_connection).to receive(:list_files).and_return [
-              FtpSender::FtpFile.new("WA_SIMPLE_20170708.ZIP", 0, time_zone.local(2017,7,8), "file")]
+              FtpSender::FtpFile.new("WA_SIMPLE_20170708.ZIP", 0, time_zone.local(2017, 7, 8), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("WA_SIMPLE_20170708.ZIP", /tariff_upload.+\.zip/)
 
       expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
 
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/AU_SIMPLE_20170707.ZIP", tempfile_matching_name("AU_SIMPLE_20170707.ZIP"))
 
-      current = time_zone.local(2017,10,31,3,3,33)
+      current = time_zone.local(2017, 10, 31, 3, 3, 33)
       Timecop.freeze(current) do
         subject.run({ protocol:"FTP", hostname:"testftpserver.fake-testing.com", port:"5150", username:"artie_fufkin", password:"pwd555", directory:"base_dir", email_to:["a@b.com", "c@d.com"] })
       end
@@ -159,17 +159,17 @@ describe OpenChain::TariffFileMonitor do
       expect(ftp_client).to receive(:connect).with("testftpserver.fake-testing.com", "artie_fufkin", "pwd555", "", {}).and_yield ftp_connection
       expect(ftp_connection).to receive(:chdir).with("base_dir")
       time_zone = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
-      expect(ftp_connection).to receive(:list_files).with(include_only_files:false).and_return [FtpSender::FtpFile.new("Australia", 0, time_zone.local(2017,7,7), "directory")]
+      expect(ftp_connection).to receive(:list_files).with(include_only_files:false).and_return [FtpSender::FtpFile.new("Australia", 0, time_zone.local(2017, 7, 7), "directory")]
 
       expect(ftp_connection).to receive(:chdir).with("base_dir/Australia")
-      expect(ftp_connection).to receive(:list_files).and_return [FtpSender::FtpFile.new("AU_SIMPLE_20170707.ZIP", 0, time_zone.local(2017,7,7), "file")]
+      expect(ftp_connection).to receive(:list_files).and_return [FtpSender::FtpFile.new("AU_SIMPLE_20170707.ZIP", 0, time_zone.local(2017, 7, 7), "file")]
       expect(ftp_connection).to receive(:get_binary_file).with("AU_SIMPLE_20170707.ZIP", /tariff_upload.+\.zip/)
 
       expect(subject).to receive(:ftp_file).with(tempfile_matching_name("AU_SIMPLE_20170707.ZIP"), subject.chainroot_connect_vfitrack_net("inst_1/tariff_file"))
 
       expect(OpenChain::S3).to receive(:upload_file).with(OpenChain::S3.bucket_name, "production/TariffStore/AU_SIMPLE_20170707.ZIP", tempfile_matching_name("AU_SIMPLE_20170707.ZIP"))
 
-      current = time_zone.local(2017,10,31,3,3,33)
+      current = time_zone.local(2017, 10, 31, 3, 3, 33)
       Timecop.freeze(current) do
         subject.run({ protocol:"FTP", hostname:"testftpserver.fake-testing.com", username:"artie_fufkin", password:"pwd555", directory:"base_dir", mailing_list:"IGNORE ME" })
       end

@@ -24,17 +24,17 @@
 class SearchColumn < ActiveRecord::Base
   include HoldsCustomDefinition
 
-  attr_accessible :constant_field_name, :constant_field_value, 
-    :custom_definition_id, :custom_report_id, :imported_file_id, 
+  attr_accessible :constant_field_name, :constant_field_value,
+    :custom_definition_id, :custom_report_id, :imported_file_id,
     :model_field_uid, :rank, :search_setup_id
-  
+
   belongs_to :search_setup
   belongs_to :imported_file
 
   # can this values in this column be used to find the appropriate unique object in the database
   def key_column?
     mf = model_field
-    if mf.core_module #blank won't have core module
+    if mf.core_module # blank won't have core module
       mf.core_module.key_model_field_uids.include? mf.uid
     else
       false
@@ -42,7 +42,7 @@ class SearchColumn < ActiveRecord::Base
   end
 
   # When SearchColumn's MF is a constant, its model_field_uid refers to the temporary uid assigned by the front-end.
-  # The real model_field_uid is generated dynamically below. Assigning an actual constant MF uid will set off 
+  # The real model_field_uid is generated dynamically below. Assigning an actual constant MF uid will set off
   # an infinite recursion (see HoldsCustomDefinition#model_field_uid= )
 
   def model_field

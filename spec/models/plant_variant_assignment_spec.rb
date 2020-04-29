@@ -5,12 +5,12 @@ describe PlantVariantAssignment do
   describe '#search_where / can_view?' do
     before :each do
       @vendor = Factory(:vendor)
-      @plant = Factory(:plant,company:@vendor)
-      @pva = Factory(:plant_variant_assignment,plant:@plant)
+      @plant = Factory(:plant, company:@vendor)
+      @pva = Factory(:plant_variant_assignment, plant:@plant)
       @other_pva = Factory(:plant_variant_assignment)
     end
     it "should find when user can view plant" do
-      u = Factory(:user,company:@vendor)
+      u = Factory(:user, company:@vendor)
       expect(described_class.where(described_class.search_where(u)).to_a).to eq [@pva]
       expect(@pva.can_view?(u)).to be_truthy
     end

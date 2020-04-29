@@ -11,14 +11,14 @@ describe UserTemplate do
       override_template = {
         homepage:'/something',
         department:'blah',
-        permissions: ['order_view','classification_edit'],
+        permissions: ['order_view', 'classification_edit'],
         groups: ['SYSG'],
         event_subscriptions: [
-          {event_type:'ORDER_UPDATE',email:true}
+          {event_type:'ORDER_UPDATE', email:true}
         ]
       }
-      ut = UserTemplate.new(name:'myt',template_json:override_template.to_json)
-      u = ut.create_user!(@c,'joe','smith','jsmith',
+      ut = UserTemplate.new(name:'myt', template_json:override_template.to_json)
+      u = ut.create_user!(@c, 'joe', 'smith', 'jsmith',
         'jsmith@example.com',
         'Eastern Time (US & Canada)',
         false, @current_user)
@@ -42,17 +42,17 @@ describe UserTemplate do
       expect(u.order_view).to eq true
       expect(u.classification_edit).to eq true
       expect(u.order_edit).to eq nil
-      
+
       expect(u.event_subscriptions.count).to eq 1
       es = u.event_subscriptions.first
       expect(es.event_type).to eq 'ORDER_UPDATE'
       expect(es.email?).to eq true
       expect(es.system_message).to eq nil
 
-    end 
+    end
     it 'should default username to email if nil' do
       ut = UserTemplate.new(template_json:'{}')
-      u = ut.create_user!(@c,'joe','smith',nil,'jsmith@example.com','Eastern Time (US & Canada)',false, @current_user)
+      u = ut.create_user!(@c, 'joe', 'smith', nil, 'jsmith@example.com', 'Eastern Time (US & Canada)', false, @current_user)
       expect(u.username).to eq 'jsmith@example.com'
     end
     it "should delay send notification invites" do
@@ -62,7 +62,7 @@ describe UserTemplate do
         expect(user_id).to be_a(Numeric)
       end
 
-      u = ut.create_user!(@c,'joe','smith',nil,'jsmith@example.com','Eastern Time (US & Canada)',
+      u = ut.create_user!(@c, 'joe', 'smith', nil, 'jsmith@example.com', 'Eastern Time (US & Canada)',
         true, @current_user) # <-- this last attribute is what we're testing
     end
   end
@@ -71,13 +71,13 @@ describe UserTemplate do
       override_template = {
         homepage:'/something',
         department:'blah',
-        permissions: ['order_view','classification_edit'],
+        permissions: ['order_view', 'classification_edit'],
         groups: ['SYSG'],
         event_subscriptions: [
-          {event_type:'ORDER_UPDATE',email:true}
+          {event_type:'ORDER_UPDATE', email:true}
         ]
       }
-      ut = UserTemplate.new(name:'myt',template_json:override_template.to_json)
+      ut = UserTemplate.new(name:'myt', template_json:override_template.to_json)
       expect(ut.template_default_merged_hash).to include({
           "disallow_password" => false,
           "department" => 'blah',
@@ -88,10 +88,10 @@ describe UserTemplate do
           "portal_mode" => nil,
           "tariff_subscribed" => false,
           "event_subscriptions" => [
-            {"event_type" => 'ORDER_UPDATE',"email" => true}
+            {"event_type" => 'ORDER_UPDATE', "email" => true}
           ],
           "groups" => ['SYSG'],
-          "permissions" => ['order_view','classification_edit']
+          "permissions" => ['order_view', 'classification_edit']
         })
     end
   end

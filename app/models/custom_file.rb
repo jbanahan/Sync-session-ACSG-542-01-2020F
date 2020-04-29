@@ -90,9 +90,9 @@ class CustomFile < ActiveRecord::Base
       else
         r = h.process user
       end
-      self.update_attributes(:finish_at=>0.seconds.ago,:error_message=>nil)
+      self.update_attributes(:finish_at=>0.seconds.ago, :error_message=>nil)
     rescue => e
-      self.update_attributes(:error_at=>0.seconds.ago,:error_message=>e.message)
+      self.update_attributes(:error_at=>0.seconds.ago, :error_message=>e.message)
       raise e
     end
     r

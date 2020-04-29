@@ -39,7 +39,7 @@ module OpenChain; module Api; module V1; class ShipmentApiJsonGenerator
       h['carton_sets'] = render_carton_sets(s)
     end
     if render_attachments?
-      render_attachments(s,h)
+      render_attachments(s, h)
     end
     if render_summary?
       h['summary'] = render_summary(s)
@@ -53,7 +53,7 @@ module OpenChain; module Api; module V1; class ShipmentApiJsonGenerator
     end
 
     h['permissions'] = render_permissions(s)
-    custom_view = OpenChain::CustomHandler::CustomViewSelector.shipment_view(s,current_user)
+    custom_view = OpenChain::CustomHandler::CustomViewSelector.shipment_view(s, current_user)
     if !custom_view.blank?
       h['custom_view'] = custom_view
     end
@@ -83,7 +83,7 @@ module OpenChain; module Api; module V1; class ShipmentApiJsonGenerator
       else
         return shipment.shipment_lines.includes([{piece_sets: {order_line: [:order]}}, {product: [:custom_values]}])
       end
-      
+
     else
       return shipment.shipment_lines
     end
@@ -204,7 +204,7 @@ module OpenChain; module Api; module V1; class ShipmentApiJsonGenerator
     params[:include] && params[:include].match(/order_lines/)
   end
 
-  #return hash with extra order line fields
+  # return hash with extra order line fields
   def render_order_fields shipment_line
     shipment_line.piece_sets.collect do |ps|
       if ps.order_line_id
@@ -212,8 +212,8 @@ module OpenChain; module Api; module V1; class ShipmentApiJsonGenerator
         order = ol.order
         olh = {'allocated_quantity'=>ps.quantity,
           'order_id'=>order.id,
-          'ord_ord_num'=>export_field(:ord_ord_num,order),
-          'ord_cust_ord_no'=>export_field(:ord_cust_ord_no,order),
+          'ord_ord_num'=>export_field(:ord_ord_num, order),
+          'ord_cust_ord_no'=>export_field(:ord_cust_ord_no, order),
           'id'=>ol.id
         }
         line_fields = limit_fields([

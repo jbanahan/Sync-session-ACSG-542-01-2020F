@@ -26,7 +26,7 @@ module PolymorphicFinders
   def validate_polymorphic_class model_class
     # Do not use the class unless it inherits from ActiveRecord::Base
     # It's possible we could locate the source locations of several methods and see if they
-    # fall inside the OpenChain directory, but doing a core module check should be 
+    # fall inside the OpenChain directory, but doing a core module check should be
     # good enough for now.
     # Something like this could be used to find source locations:
     # model_class.instance_methods(false).map { |m| model_class.instance_method(m).source_location.first }.uniq

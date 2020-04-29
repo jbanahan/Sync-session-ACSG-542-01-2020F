@@ -65,7 +65,7 @@ class ModelField
     if o[:field_validator_rule]
       @field_validator_rule = o[:field_validator_rule]
     else
-      @field_validator_rule = self.class.field_validator_rule uid  
+      @field_validator_rule = self.class.field_validator_rule uid
     end
     @read_only = o[:read_only] || @field_validator_rule.try(:read_only?)
     @mass_edit = o[:mass_edit] || @field_validator_rule.try(:mass_edit?)
@@ -105,7 +105,7 @@ class ModelField
     else
       @default_read_only_lambda = false
     end
-    self.base_label #load from cache if available
+    self.base_label # load from cache if available
   rescue => e
     # Re-raise any error here but add a message identifying the field that failed
     raise e.class, "Failed loading uid #{uid}: #{e.message}", e.backtrace
@@ -199,7 +199,7 @@ class ModelField
 
   def xml_tag_name
     tag_name = @field_validator_rule && !@field_validator_rule.xml_tag_name.blank? ? @field_validator_rule.xml_tag_name : self.uid
-    tag_name.to_s.gsub(/[\W]/,'_')
+    tag_name.to_s.gsub(/[\W]/, '_')
   end
 
   def select_options
@@ -223,7 +223,7 @@ class ModelField
     in_groups = false
     everyone_can_view = false
 
-    # If the field validator rule indicates everyone can view, then that will override any other checks, other than 
+    # If the field validator rule indicates everyone can view, then that will override any other checks, other than
     # the can_view_lambda (essentially, it just overrides the groups checks)
     if @everyone_can_view
       everyone_can_view = @everyone_can_view
@@ -294,25 +294,25 @@ class ModelField
   end
 
   def numeric?
-    [:integer, :decimal].include? data_type 
+    [:integer, :decimal].include? data_type
   end
 
   def date?
     data_type == :date || data_type == :datetime
   end
 
-  #should the entity snapshot system ignore this field when recording an item's history state
+  # should the entity snapshot system ignore this field when recording an item's history state
   def history_ignore?
     @history_ignore
   end
 
-  #get the array of entity types for which this field should be displayed
+  # get the array of entity types for which this field should be displayed
   def entity_type_ids
     EntityTypeField.cached_entity_type_ids self
   end
 
-  #does this field represent the "Entity Type" field for the module.  This is used by the application helper to
-  #make sure that this field is always displayed (even if it is not on the entity type field list)
+  # does this field represent the "Entity Type" field for the module.  This is used by the application helper to
+  # make sure that this field is always displayed (even if it is not on the entity type field list)
   def entity_type_field?
     @entity_type_field
   end
@@ -322,7 +322,7 @@ class ModelField
     tt.nil? ? '' : tt
   end
 
-  #get the label that can be shown to the user.  If force_label is true or false, the CoreModule's prefix will or will not be appended.  If nil, it will use the default of the CoreModule's show_field_prefix
+  # get the label that can be shown to the user.  If force_label is true or false, the CoreModule's prefix will or will not be appended.  If nil, it will use the default of the CoreModule's show_field_prefix
   def label(force_label=nil)
     prefix = ""
     if self.core_module
@@ -333,13 +333,13 @@ class ModelField
     "#{prefix}#{@label_override.nil? ? self.base_label : @label_override}"
   end
 
-  #get the basic label content from the FieldLabel if available
+  # get the basic label content from the FieldLabel if available
   def base_label
     # Load the label once, and no longer even if it's nil - no point in relooking up nil over and over again
     return @base_label if defined?(@base_label)
     f = @@field_label_cache[@uid]
     if f.nil?
-      #didn't find in database, check default cache or custom definition table
+      # didn't find in database, check default cache or custom definition table
       if self.custom?
         @base_label = self.custom_definition.label
       else
@@ -366,7 +366,7 @@ class ModelField
     !@qualified_field_name.nil?
   end
 
-  #table alias to use in where clause
+  # table alias to use in where clause
   def join_alias
     if @join_alias.nil?
       @core_module.table_name
@@ -374,7 +374,7 @@ class ModelField
       @join_alias
     end
   end
-    #code to process when importing a field
+    # code to process when importing a field
   def process_import(obj, data, user, opts = {})
     # There's a couple of scenarios which are system operated where all access level checks should
     # be bypassed (snapshot restoration, being one).  This switch allows this.
@@ -388,7 +388,7 @@ class ModelField
         # where the fields themselves are marked read only without an import lambda set (thus they get default lambda's)
         # but we still need to allow the system to actually set the value even if it's readonly
         if (opts[:bypass_read_only] && @default_read_only_lambda) || @import_lambda.nil?
-          d = [:date,:datetime].include?(self.data_type.to_sym) ? parse_date(data) : data
+          d = [:date, :datetime].include?(self.data_type.to_sym) ? parse_date(data) : data
           if obj.is_a?(CustomValue)
             obj.value = d
           elsif self.custom?
@@ -420,13 +420,13 @@ class ModelField
     v
   end
 
-  #get the unformatted value that can be used for SearchCriterions
+  # get the unformatted value that can be used for SearchCriterions
   def process_query_parameter obj
     @query_parameter_lambda.nil? ? process_export(obj, nil, true) : @query_parameter_lambda.call(obj)
   end
 
-  #show the value for the given field or nil if the user does not have field level permission
-  #if always_view is true, then the user permission check will be skipped
+  # show the value for the given field or nil if the user does not have field level permission
+  # if always_view is true, then the user permission check will be skipped
   def process_export obj, user, always_view = false
     if disabled?  || (!always_view && !can_view?(user))
       nil
@@ -462,7 +462,7 @@ class ModelField
       col = Kernel.const_get(@model).columns_hash[@field_name.to_s]
       # Interrogating the column class vs. using type returns the wrong value on integer types (fixnum instead of integer)
       # and boolean (object vs. boolean)
-      return col.nil? ? nil : col.type #if col is nil, we probably haven't run the migration yet and are in the install process
+      return col.nil? ? nil : col.type # if col is nil, we probably haven't run the migration yet and are in the install process
     end
   end
 
@@ -498,7 +498,7 @@ class ModelField
   end
   private_class_method :blank_model_field
 
-  #called by the testing optimization in CustomDefinition.reset_cache
+  # called by the testing optimization in CustomDefinition.reset_cache
   def self.add_update_custom_field custom_definition
     core_module = CoreModule.find_by_class_name custom_definition.module_type
     return unless core_module
@@ -526,7 +526,7 @@ class ModelField
     elsif(is_integer && custom_definition.is_address?)
       fields_to_add.push(*build_address_fields(custom_definition, core_module, index))
     else
-      fields_to_add << ModelField.new(index,fld,core_module,fld,{custom_definition: custom_definition, label_override: "#{custom_definition.label}",
+      fields_to_add << ModelField.new(index, fld, core_module, fld, {custom_definition: custom_definition, label_override: "#{custom_definition.label}",
         qualified_field_name: custom_definition.qualified_field_name,
         definition: custom_definition.definition, default_label: "#{custom_definition.label}",
         cdef_uid: (custom_definition.cdef_uid.blank? ? nil : custom_definition.cdef_uid),
@@ -537,7 +537,7 @@ class ModelField
     add_model_fields core_module, fields_to_add
   end
 
-  #should be after all class level methods are declared
+  # should be after all class level methods are declared
   MODEL_FIELDS = Hash.new
   private_constant :MODEL_FIELDS
   # We don't want to retain disabled model fields in the main hash (since then we need
@@ -558,12 +558,12 @@ class ModelField
     @@public_field_cache[model_field_uid]
   end
 
-  def self.add_fields(core_module,descriptor_array)
+  def self.add_fields(core_module, descriptor_array)
     descriptor_array.each do |m|
       options = m[4].nil? ? {} : m[4]
       options = {default_label: m[3]}.merge options
 
-      mf = ModelField.new(m[0],m[1],core_module,m[2],options)
+      mf = ModelField.new(m[0], m[1], core_module, m[2], options)
       add_model_fields(core_module, [mf])
     end
   end
@@ -601,11 +601,11 @@ class ModelField
     max = 0
     m_type = core_module.class_name.intern
     model_hash = MODEL_FIELDS[m_type]
-    model_hash.values.each {|mf| max = mf.sort_rank + 1 if mf.sort_rank > max}
+    model_hash.each_value {|mf| max = mf.sort_rank + 1 if mf.sort_rank > max}
     max
   end
 
-  #update the internal last_loaded flag and optionally retrigger all instances to invalidate their caches
+  # update the internal last_loaded flag and optionally retrigger all instances to invalidate their caches
   def self.update_last_loaded update_global_cache
     @@last_loaded = Time.now
     Rails.logger.info "Setting CACHE ModelField:last_loaded to \'#{@@last_loaded}\'" if update_global_cache
@@ -622,7 +622,7 @@ class ModelField
     CoreModule.all.each do |cm|
       h = MODEL_FIELDS[cm.class_name.to_sym]
       raise "No model fields configured for Core Module '#{cm.class_name}'." if h.nil?
-      h.each do |k,v|
+      h.each do |k, v|
         if v.custom?
           h.delete k
           DISABLED_MODEL_FIELDS.delete v.uid
@@ -630,10 +630,10 @@ class ModelField
       end
       ModelField.add_custom_fields_if_needed(cm, cm.class_name.constantize)
     end
-    ModelField.create_and_insert_product_custom_fields(CoreModule::ORDER_LINE,@@custom_definition_cache)
-    ModelField.create_and_insert_product_custom_fields(CoreModule::SHIPMENT_LINE,@@custom_definition_cache)
-    ModelField.create_and_insert_variant_custom_fields(CoreModule::ORDER_LINE,@@custom_definition_cache)
-    ModelField.create_and_insert_variant_custom_fields(CoreModule::SHIPMENT_LINE,@@custom_definition_cache)
+    ModelField.create_and_insert_product_custom_fields(CoreModule::ORDER_LINE, @@custom_definition_cache)
+    ModelField.create_and_insert_product_custom_fields(CoreModule::SHIPMENT_LINE, @@custom_definition_cache)
+    ModelField.create_and_insert_variant_custom_fields(CoreModule::ORDER_LINE, @@custom_definition_cache)
+    ModelField.create_and_insert_variant_custom_fields(CoreModule::SHIPMENT_LINE, @@custom_definition_cache)
     ModelField.update_last_loaded update_cache_time
   end
 
@@ -641,33 +641,33 @@ class ModelField
     ModelField.add_custom_fields(core_module, base_class) if CustomDefinition.cached_find_by_module_type(base_class).any?
   end
 
-  #load the public field cache, then yield, clearing the cache after the yield returns
+  # load the public field cache, then yield, clearing the cache after the yield returns
   def self.public_field_cache
     @@public_field_cache.clear
     begin
-      @@public_field_cache[:warmed_cache] = 'x' #add a value so it's never empty since there's a good chance it will be
+      @@public_field_cache[:warmed_cache] = 'x' # add a value so it's never empty since there's a good chance it will be
       PublicField.all.each {|f| @@public_field_cache[f.model_field_uid.to_sym] = f}
       return yield
     ensure
       @@public_field_cache.clear
     end
   end
-  #load the field validator rules cache, then yield, clearing the cache after the yield returns
+  # load the field validator rules cache, then yield, clearing the cache after the yield returns
   def self.field_validator_rules_cache
     @@field_validator_rules.clear
     begin
-      @@field_validator_rules[:warmed_cache] = 'x' #add a value so it's never empty since there's a good chance it will be
+      @@field_validator_rules[:warmed_cache] = 'x' # add a value so it's never empty since there's a good chance it will be
       FieldValidatorRule.all.each {|f| @@field_validator_rules[f.model_field_uid.to_sym] = f}
       return yield
     ensure
       @@field_validator_rules.clear
     end
   end
-  #load the custom definition cache, then yield, clearing the cache after the yield returns
+  # load the custom definition cache, then yield, clearing the cache after the yield returns
   def self.custom_definition_cache
     @@custom_definition_cache.clear
     begin
-      @@custom_definition_cache[:warmed_cache] = 'x' #add a value so it's never empty
+      @@custom_definition_cache[:warmed_cache] = 'x' # add a value so it's never empty
       CustomDefinition.all.each {|f| @@custom_definition_cache[f.model_field_uid.to_sym] = f}
       return yield
     ensure
@@ -706,15 +706,15 @@ class ModelField
     end
   end
 
-  reload #does the reload when the class is loaded the first time
+  reload # does the reload when the class is loaded the first time
 
-  def self.find_by_uid(uid,dont_retry=false)
+  def self.find_by_uid(uid, dont_retry=false)
     uid = uid.model_field_uid if uid.is_a?(CustomDefinition)
-    
+
     uid_sym = uid.to_sym
-    return ModelField.new(10000,:_blank,nil,nil,{
+    return ModelField.new(10000, :_blank, nil, nil, {
       :label_override => "[blank]",
-      :import_lambda => lambda {|o,d| "Field ignored"},
+      :import_lambda => lambda {|o, d| "Field ignored"},
       :export_lambda => lambda {|o| },
       :data_type => :string,
       :qualified_field_name => "\"\""
@@ -725,15 +725,15 @@ class ModelField
     reloaded = reload_if_stale
 
     return find_constant(uid) if constant_uid? uid
-    
-    MODEL_FIELDS.values.each do |h|
+
+    MODEL_FIELDS.each_value do |h|
       mf = h[uid_sym]
       return mf unless mf.nil?
     end
 
     # There's little point to running a reload here if we just reloaded above
     unless reloaded || dont_retry || !allow_reload_double_check
-      #reload and try again
+      # reload and try again
       ModelField.reload true
       find_by_uid uid, true
     end
@@ -762,20 +762,20 @@ class ModelField
   # caches or anything.  You probably don't want to use it and should
   # opt for using find_by_uid instead.
   def self.model_field_loaded? uid
-    MODEL_FIELDS.values.each do |h|
+    MODEL_FIELDS.each_value do |h|
       u = uid.to_sym
       return true unless h[u].nil?
     end
     return false
   end
 
-  #get array of model fields associated with the given region
+  # get array of model fields associated with the given region
   def self.find_by_region r
     ret = []
     uid_regex = /^\*r_#{r.id}_/
     reload_if_stale
-    MODEL_FIELDS.values.each do |h|
-      h.each do |k,v|
+    MODEL_FIELDS.each_value do |h|
+      h.each do |k, v|
         ret << v if k.to_s.match uid_regex
       end
     end
@@ -798,7 +798,7 @@ class ModelField
     h.nil? ? [] : h.values.to_a
   end
 
-  #get an array of model fields given core module
+  # get an array of model fields given core module
   def self.find_by_core_module cm
     find_by_module_type cm
   end
@@ -807,9 +807,9 @@ class ModelField
     # As any actual parameter to label actually means somehting (.ie nil is NOT the same as false)
     # break out the calls this way
     if show_prefix.nil?
-      return mf_array.sort { |a,b| a.label <=> b.label }
+      return mf_array.sort { |a, b| a.label <=> b.label }
     else
-      return mf_array.sort { |a,b| a.label(show_prefix) <=> b.label(show_prefix) }
+      return mf_array.sort { |a, b| a.label(show_prefix) <=> b.label(show_prefix) }
     end
 
   end
@@ -820,13 +820,13 @@ class ModelField
 
   def self.reload_if_stale
     reloaded = false
-    if !ModelField.disable_stale_checks #see documentation at disable_stale_checks accessor
+    if !ModelField.disable_stale_checks # see documentation at disable_stale_checks accessor
       cache_time = CACHE.get "ModelField:last_loaded"
       if !cache_time.nil? && !cache_time.is_a?(Time)
         begin
           raise "cache_time was a #{cache_time.class} object!"
         rescue
-          $!.log_me ["cache_time: #{cache_time.to_s}","cache_time class: #{cache_time.class.to_s}","@@last_loaded: #{@@last_loaded}"]
+          $!.log_me ["cache_time: #{cache_time.to_s}", "cache_time class: #{cache_time.class.to_s}", "@@last_loaded: #{@@last_loaded}"]
         ensure
           cache_time = nil
           reload
@@ -852,9 +852,9 @@ class ModelField
   def parse_date d
     return d unless d.is_a?(String)
     if /^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/.match(d)
-      return Date.new(d[6,4].to_i,d[0,2].to_i,d[3,2].to_i)
+      return Date.new(d[6, 4].to_i, d[0, 2].to_i, d[3, 2].to_i)
     elsif /^[0-9]{2}-[0-9]{2}-[0-9]{4}$/.match(d)
-      return Date.new(d[6,4].to_i,d[3,2].to_i,d[0,2].to_i)
+      return Date.new(d[6, 4].to_i, d[3, 2].to_i, d[0, 2].to_i)
     else
       return d
     end

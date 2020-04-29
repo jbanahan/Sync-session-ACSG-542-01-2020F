@@ -6,12 +6,12 @@ describe ValidationRuleEntryReleased do
 
   it 'raises an error given an invalid release_date model field' do
     rule = ValidationRuleEntryReleased.new(rule_attributes_json: {hold_date: 'ent_cbp_hold_date', release_date: 'this_is_invalid'}.to_json)
-    expect{rule.run_validation(@entry)}.to raise_error("Invalid Release model field value of this_is_invalid used")
+    expect {rule.run_validation(@entry)}.to raise_error("Invalid Release model field value of this_is_invalid used")
   end
 
   it 'raises an error given an invalid hold_date model_field' do
     rule = ValidationRuleEntryReleased.new(rule_attributes_json: {hold_date: 'this_is_invalid', release_date: 'ent_cbp_hold_release_date'}.to_json)
-    expect{rule.run_validation(@entry)}.to raise_error("Invalid Hold model field value of this_is_invalid used")
+    expect {rule.run_validation(@entry)}.to raise_error("Invalid Hold model field value of this_is_invalid used")
   end
 
   it 'handles a timezone option for failures' do

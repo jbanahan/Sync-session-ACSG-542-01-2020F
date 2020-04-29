@@ -3,11 +3,11 @@ class OpenChain::ProjectDeliverableProcessor
     send_hash = {}
     send_hash = fill_hash_values(send_hash)
     create_emails_from_hash(send_hash)
-    send_hash #for easier testing
+    send_hash # for easier testing
   end
 
   def fill_hash_values user_pd_hash
-    #Go through PDs and make a hash in the form {user_id => [PDx.id, PDy.id, ...], ...}
+    # Go through PDs and make a hash in the form {user_id => [PDx.id, PDy.id, ...], ...}
     ProjectDeliverable.incomplete.not_closed.where(priority: :high).each do |pd|
       assigned_user_id = pd.assigned_to.id
       user_pd_hash = add_to_hash(user_pd_hash, assigned_user_id, pd)

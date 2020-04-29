@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRulePr
     end
 
     return nil if bad_tariffs.empty?
-    tariff_str = bad_tariffs.map{ |t| "#{t[:country]}, line #{t[:line]}" }.join("\n")
+    tariff_str = bad_tariffs.map { |t| "#{t[:country]}, line #{t[:line]}" }.join("\n")
     %Q(If Classification Type equals "Multi", Percent of Value is a required field.\n#{tariff_str})
   end
 
@@ -24,4 +24,4 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRulePr
     percent && percent > 0
   end
 
-end; end; end; end 
+end; end; end; end

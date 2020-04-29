@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       r[27] = "KO" # SPI Primary
       r
     }
-    
+
     let (:fda_row) {
       base_row + ["Y", "FDACODE", "UOM", "CP", "MID", "SID", "FDADESC", "ESTNO", "Dom1", "Dom2", "Dom3", "Name", "Phone", "COD", "AFFCOMP", "F", "ASS"]
     }
@@ -111,7 +111,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(aff.text "seqNoEntryOrder").to eq "1"
       expect(aff.text "complianceCode").to eq "COD"
       expect(aff.text "complianceQualifier").to eq "AFFCOMP"
-      
+
       aff = affirmations[1]
       expect(aff).not_to be_nil
       expect(aff.text "partNo").to eq "STYLE"
@@ -217,15 +217,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "allows for default values to be sent at all levels" do
-      opts = {defaults: 
+      opts = {defaults:
                 {
                   "CatCiLine" => {
                     "printPartNo7501" => "Y",
-                    "process9802" => "N"},  
+                    "process9802" => "N"},
                   "CatTariffClass" => {
                     "ultimateConsignee" => "CONS"},
                   "CatFdaEs" => {
-                    "abiPriorNotice" => "Y"}, 
+                    "abiPriorNotice" => "Y"},
                   "CatFdaEsCompliance" => {
                     "assembler" => "ASS"}
                 }
@@ -289,7 +289,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
       p = penalties.second
       expect(p.text "penaltyType").to eq "ADA"
-      expect(p.text "caseNo").to eq "ADDCASE"      
+      expect(p.text "caseNo").to eq "ADDCASE"
     end
 
     it "adds Lacey information" do
@@ -548,7 +548,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
         row[2] = "#{row[2]}***99020662"
         subject.write_row_to_xml parent, 1, row
-        
+
         tariffs = []
         parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
         expect(tariffs.length).to eq 3
@@ -581,11 +581,11 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
   end
 
   describe "run_schedulable" do
-    before :all do 
+    before :all do
       described_class.new(nil).custom_defs
     end
 
-    after :all do 
+    after :all do
       CustomDefinition.destroy_all
     end
 
@@ -618,7 +618,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect_any_instance_of(subject).to receive(:write_row_to_xml).and_call_original
 
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         subject.run_schedulable "alliance_customer_number" => "CUST"
       end
 
@@ -634,7 +634,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
       # Validate all the "header" xml document stuff that gets added..
       expect(REXML::XPath.first doc, "/requests/request/kcData/parts/part").not_to be_nil
-      
+
       # Make sure the doc base is built correctly
       r = doc.root
       expect(r.text "password").to eq "lk5ijl9"
@@ -656,7 +656,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect_any_instance_of(subject).to receive(:ftp_file)
 
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         subject.run_schedulable "alliance_customer_number" => "CUST", "importer_system_code": "SYSCODE"
       end
       product.reload
@@ -753,7 +753,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "9902345678"
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "1234567890"
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo").to eq "1357911131"
-      
+
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo").to be_nil
     end
 
@@ -777,7 +777,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "9902345678"
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "1234567890"
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo").to eq "1357911131"
-      
+
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo").to eq "9876543210"
       expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '5']/tariffNo").to eq "9902345678"
     end
@@ -811,7 +811,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       let! (:linked_importer_2) {
         i = with_customs_management_id(Factory(:importer), "CHILD2")
         importer.linked_companies << i
-        i 
+        i
       }
 
       it "sends products for linked importers" do

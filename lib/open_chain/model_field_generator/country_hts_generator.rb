@@ -4,26 +4,26 @@ module OpenChain; module ModelFieldGenerator; module CountryHtsGenerator
     lambda do |obj, d|
       p = product_lambda.call(obj)
 
-      #validate HTS
+      # validate HTS
       hts = TariffRecord.clean_hts(d)
       return "Blank HTS ignored for #{country.iso_code}" if hts.blank?
-      unless OfficialTariff.find_by_country_id_and_hts_code(country.id,hts) || OfficialTariff.where(country_id:country.id).empty?
+      unless OfficialTariff.find_by_country_id_and_hts_code(country.id, hts) || OfficialTariff.where(country_id:country.id).empty?
         e = "#{d} is not valid for #{country.iso_code} HTS #{hts_number}"
         # Indicate the message is an error message
         def e.error?; true; end
         return e;
       end
       cls = nil
-      #find classifications & tariff records in memory so this can work on objects that are dirty
+      # find classifications & tariff records in memory so this can work on objects that are dirty
       p.classifications.each do |existing|
         cls = existing if existing.country_id == country.id
         break if cls
       end
       cls = p.classifications.build(:country_id=>country.id) unless cls
       tr = nil
-      tr = cls.tariff_records.sort {|a,b| a.line_number <=> b.line_number}.first
+      tr = cls.tariff_records.sort {|a, b| a.line_number <=> b.line_number}.first
       tr = cls.tariff_records.build unless tr
-      tr.send("hts_#{hts_number}=".to_sym,hts)
+      tr.send("hts_#{hts_number}=".to_sym, hts)
       "#{country.iso_code} HTS #{hts_number} set to #{hts.hts_format}"
     end
   end
@@ -61,7 +61,7 @@ module OpenChain; module ModelFieldGenerator; module CountryHtsGenerator
         mf = ModelField.new((starting_index + x), field_name, core_module, field_name,
           {label_override: "#{label_prefix}First HTS #{i} (#{c.iso_code})", data_type: :string, history_ignore: true, read_only: read_only,
             import_lambda: (read_only ? nil : import_lambda(product_lambda, i, c)),
-            export_lambda: export_lambda(product_lambda, i, c), 
+            export_lambda: export_lambda(product_lambda, i, c),
             qualified_field_name: query_subselect(i, c, join_table_name, core_module == CoreModule::PRODUCT),
             process_query_result_lambda: lambda {|r| r.nil? ? nil : r.hts_format }
           }

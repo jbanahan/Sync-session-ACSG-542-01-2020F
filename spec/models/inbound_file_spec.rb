@@ -254,7 +254,7 @@ describe InboundFile do
 
     it "adds multiple identifiers of same type from an array functionality" do
       inf = InboundFile.new
-      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["ABC123","555222","ABC123"], module_type:"Order", module_id:123
+      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["ABC123", "555222", "ABC123"], module_type:"Order", module_id:123
 
       expect(inf.identifiers.length).to eq 2
       expect(inf.identifiers[0].identifier_type).to eq(InboundFileIdentifier::TYPE_PO_NUMBER)
@@ -270,7 +270,7 @@ describe InboundFile do
 
     it "does not add blank/nil identifiers" do
       inf = InboundFile.new
-      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["   ","ABC123"," ",nil], module_type:"Order", module_id:123
+      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["   ", "ABC123", " ", nil], module_type:"Order", module_id:123
 
       # Only the non-blank identifier should have been added.
       expect(inf.identifiers.length).to eq 1
@@ -371,12 +371,12 @@ describe InboundFile do
       inf.add_info_message "Nearly departed"
       inf.add_identifier "Something With No Module", "whee"
 
-      Timecop.freeze(Date.new(2017,7,7)) do
+      Timecop.freeze(Date.new(2017, 7, 7)) do
         inf.save!
-        expect(inf.created_at).to eq(Date.new(2017,7,7))
+        expect(inf.created_at).to eq(Date.new(2017, 7, 7))
       end
 
-      described_class.purge Date.new(2017,10,10)
+      described_class.purge Date.new(2017, 10, 10)
       expect(InboundFile.where(id:inf.id).length).to eq 0
     end
   end
@@ -387,7 +387,7 @@ describe InboundFile do
       expect(subject.failed?).to eq false
     end
 
-    context "with overall status set" do 
+    context "with overall status set" do
       it "returns true if overall status is error" do
         subject.process_status = InboundFile::PROCESS_STATUS_ERROR
         expect(subject.failed?).to eq true

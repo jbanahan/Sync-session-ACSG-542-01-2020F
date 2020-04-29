@@ -1,7 +1,7 @@
 # This is a simple Set extension that can be used to collect tariff number prefixes and then test
 # full length tariff numbers against those prefixes to determine if the full length tariff number
 # belongs to one of the prefixes.
-# 
+#
 # Example:
 # set = TariffNumberSet.new ["6200"]
 # set.include?("6200.12.3456") -> true
@@ -66,7 +66,7 @@ class TariffNumberSet < Set
         found = __include?(tariff_number)
         if !found
           tariff_number = tariff_number[0..-2]
-        else 
+        else
           return tariff_number
         end
       end

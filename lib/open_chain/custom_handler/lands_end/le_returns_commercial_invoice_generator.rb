@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeReturnsCommerci
       extract[9] = nil # Cotton Fee
       extract[10] = decimal_value(row[25]) # Total Value
       extract[11] = 1 # Qty 1
-      extract[12] = nil  #Qty 2
+      extract[12] = nil  # Qty 2
       extract[13] = nil # Gross Weight
       extract[14] = text_value(row[9]).strip # PO #
       extract[15] = nil # Cartons

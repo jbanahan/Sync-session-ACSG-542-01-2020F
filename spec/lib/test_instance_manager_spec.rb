@@ -56,7 +56,7 @@ describe OpenChain::TestInstanceManager do
   end
   describe "update_users" do
     it "should clear tariff_subscribed flags" do
-      u = Factory(:user,tariff_subscribed:true)
+      u = Factory(:user, tariff_subscribed:true)
       described_class.new.update_users! "localhost"
       u.reload
       expect(u).not_to be_tariff_subscribed

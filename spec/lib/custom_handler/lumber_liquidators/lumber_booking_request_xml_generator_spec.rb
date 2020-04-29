@@ -16,24 +16,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     end
 
     let :vendor do
-      Company.new(system_code:'VCode',name:'VName')
+      Company.new(system_code:'VCode', name:'VName')
     end
 
     let :ship_from do
-      Address.new(system_code:'SFCode',name:'SFName',line_1:'SFA',city:'SFC',state:'SFS',postal_code:'SFP',country:china)
+      Address.new(system_code:'SFCode', name:'SFName', line_1:'SFA', city:'SFC', state:'SFS', postal_code:'SFP', country:china)
     end
 
     let :ship_to do
-      Address.new(system_code:'STCode',name:'STName',line_1:'STA1',line_2:'STA2',line_3:'STA3',city:'STC',state:'STS',postal_code:'STP',country:usa)
+      Address.new(system_code:'STCode', name:'STName', line_1:'STA1', line_2:'STA2', line_3:'STA3', city:'STC', state:'STS', postal_code:'STP', country:usa)
     end
 
     let :product1 do
       # Zero padding should be ignored/stripped.
-      Product.new(unique_identifier:'00000PROD1',name:'PNAME1')
+      Product.new(unique_identifier:'00000PROD1', name:'PNAME1')
     end
 
     let :product2 do
-      Product.new(unique_identifier:'PROD2',name:'PNAME2')
+      Product.new(unique_identifier:'PROD2', name:'PNAME2')
     end
 
     let :order1 do
@@ -232,7 +232,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     end
 
     it "handles missing address content, xrefs, nil-sensitive shipment data, order FOB point" do
-      shipment.update_attributes!(cargo_ready_date:nil,ship_from:nil,vendor:nil,booking_requested_by:nil,requested_equipment:nil)
+      shipment.update_attributes!(cargo_ready_date:nil, ship_from:nil, vendor:nil, booking_requested_by:nil, requested_equipment:nil)
 
       order1.update_attributes!(fob_point:nil, ship_from: nil)
       order1.order_lines.first.update_attributes!(ship_to:nil)
@@ -265,7 +265,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
 
     it "handles missing orders, order lines, products, country" do
       shipment.booking_lines.each do |booking_line|
-        booking_line.update_attributes!(order_line:nil,order:nil,product:nil)
+        booking_line.update_attributes!(order_line:nil, order:nil, product:nil)
       end
 
       xml = described_class.generate_xml(shipment)

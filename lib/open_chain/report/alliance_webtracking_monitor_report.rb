@@ -26,7 +26,7 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
 
     results = JSON.parse json_results
     results.each do |row|
-      # The to_s is there to force the invoice/file # to be a string, since the rails json transfer has a tendency to 
+      # The to_s is there to force the invoice/file # to be a string, since the rails json transfer has a tendency to
       # change it to an int
       ref = row[0].to_s
       if !ref.blank?
@@ -43,7 +43,7 @@ module OpenChain; module Report; class AllianceWebtrackingMonitorReport
     # see which ones are missing.
     missing_entries = []
     entries_to_query.keys.each_slice(100) do |list|
-      # The last exported from source check is doing an end run around data that might have come over via our new real time feed 
+      # The last exported from source check is doing an end run around data that might have come over via our new real time feed
       # adding entry data on the fly, which will almost always be there prior to this check.
       # We still want to report the data as missing, since the real time feed only includes dates currently (4/2/2015)
       found = Entry.where(source_system: 'Alliance', broker_reference: list).where("last_exported_from_source IS NOT NULL").pluck :broker_reference

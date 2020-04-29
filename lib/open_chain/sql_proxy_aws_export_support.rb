@@ -18,7 +18,7 @@ module OpenChain; module SqlProxyAwsExportSupport
 
     # This method constructs a return path for anything writing to s3 using the given parser identifier string.  This
     # string should be the SAME value used for the parser in IntegrationClient.
-    # 
+    #
     def s3_export_path_from_parser_identifier parser_identifier, file_extension, system_code: MasterSetup.get.system_code, path_date: nil, filename_prefix: nil
       raise "Unable to construct accurate s3 export path when system code is blank." if system_code.blank?
 
@@ -46,11 +46,10 @@ module OpenChain; module SqlProxyAwsExportSupport
       @queue_url ||= begin
         default_queue_name = OpenChain::IntegrationClient.default_integration_queue_name
         queue_url = OpenChain::SQS.get_queue_url default_queue_name
-        raise "Unable to determine sqs queue url for '#{default_queue_name}'." if queue_url.blank? 
+        raise "Unable to determine sqs queue url for '#{default_queue_name}'." if queue_url.blank?
         queue_url
       end
     end
   end
 
 end; end
-  

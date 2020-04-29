@@ -1,5 +1,5 @@
 module OpenChain; module CustomHandler; module LandsEnd; class LeCanadaPlusProcessor
-   
+
   def self.process_from_s3 bucket, key
     OpenChain::S3.download_to_tempfile(bucket, key) do |tempfile|
       process_zip tempfile

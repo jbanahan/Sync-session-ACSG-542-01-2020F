@@ -8,7 +8,7 @@ describe Api::V1::ProductVendorAssignmentsController do
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
-      expect(j['results'].collect{|r| r['id']}).to eq [pva.id]
+      expect(j['results'].collect {|r| r['id']}).to eq [pva.id]
 
       # foreign keys are manually added in the API
       expect(j['results'][0]['product_id']).to eq pva.product_id
@@ -31,11 +31,11 @@ describe Api::V1::ProductVendorAssignmentsController do
     it 'should update record' do
       allow_any_instance_of(User).to receive(:view_product_vendor_assignments?).and_return(true)
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return(true)
-      cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
+      cd = Factory(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
       pva = Factory(:product_vendor_assignment)
       u = Factory(:master_user)
       allow_api_access u
-      h = {'id'=>pva.id,"*cf_#{cd.id}"=>'hello'}
+      h = {'id'=>pva.id, "*cf_#{cd.id}"=>'hello'}
       put :update, id: pva.id.to_s, product_vendor_assignment:h
       expect(response).to be_success
       pva.reload
@@ -58,32 +58,32 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return true
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
-      cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
+      cd = Factory(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
 
-      v1 = Factory(:company,vendor:true)
-      v2 = Factory(:company,vendor:true)
+      v1 = Factory(:company, vendor:true)
+      v2 = Factory(:company, vendor:true)
 
       p1 = Factory(:product)
       p2 = Factory(:product)
 
       request_hash = {
-        product_ids:[p1.id,p2.id],
-        vendor_ids:[v1.id,v2.id],
+        product_ids:[p1.id, p2.id],
+        vendor_ids:[v1.id, v2.id],
         product_vendor_assignment:{cd.model_field_uid=>'Hello'}
       }
 
-      expect{post :bulk_create, request_hash}.to change(ProductVendorAssignment,:count).from(0).to(4)
+      expect {post :bulk_create, request_hash}.to change(ProductVendorAssignment, :count).from(0).to(4)
       expect(response).to be_success
       expect(JSON.parse(response.body)['messages']).to eq ['4 product / vendor assignments created.']
 
       expect_to_find = [
-        [v1.id,p1.id],
-        [v1.id,p2.id],
-        [v2.id,p1.id],
-        [v2.id,p2.id]
+        [v1.id, p1.id],
+        [v1.id, p2.id],
+        [v2.id, p1.id],
+        [v2.id, p2.id]
       ]
       ProductVendorAssignment.all.each do |pva|
-        expect_to_find.delete [pva.vendor_id,pva.product_id]
+        expect_to_find.delete [pva.vendor_id, pva.product_id]
         expect(pva.get_custom_value(cd).value).to eq 'Hello'
       end
       expect(expect_to_find).to be_empty
@@ -92,32 +92,32 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Company).to receive(:can_edit?).and_return true
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
-      cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
+      cd = Factory(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
 
-      v1 = Factory(:company,vendor:true,system_code:'X')
-      v2 = Factory(:company,vendor:true,system_code:'Y')
+      v1 = Factory(:company, vendor:true, system_code:'X')
+      v2 = Factory(:company, vendor:true, system_code:'Y')
 
       p1 = Factory(:product)
       p2 = Factory(:product)
 
       request_hash = {
-        prod_uids:[p1.unique_identifier,p2.unique_identifier],
-        cmp_sys_codes:[v1.system_code,v2.system_code],
+        prod_uids:[p1.unique_identifier, p2.unique_identifier],
+        cmp_sys_codes:[v1.system_code, v2.system_code],
         product_vendor_assignment:{cd.model_field_uid=>'Hello'}
       }
 
       expect_to_find = [
-        [v1.id,p1.id],
-        [v1.id,p2.id],
-        [v2.id,p1.id],
-        [v2.id,p2.id]
+        [v1.id, p1.id],
+        [v1.id, p2.id],
+        [v2.id, p1.id],
+        [v2.id, p2.id]
       ]
-      expect{post :bulk_create, request_hash}.to change(ProductVendorAssignment,:count).from(0).to(4)
+      expect {post :bulk_create, request_hash}.to change(ProductVendorAssignment, :count).from(0).to(4)
       expect(response).to be_success
       expect(JSON.parse(response.body)['messages']).to eq ['4 product / vendor assignments created.']
 
       ProductVendorAssignment.all.each do |pva|
-        expect_to_find.delete [pva.vendor_id,pva.product_id]
+        expect_to_find.delete [pva.vendor_id, pva.product_id]
         expect(pva.get_custom_value(cd).value).to eq 'Hello'
       end
       expect(expect_to_find).to be_empty
@@ -127,7 +127,7 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return false
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = Factory(:company,vendor:true,system_code:'X')
+      v1 = Factory(:company, vendor:true, system_code:'X')
 
       p1 = Factory(:product)
 
@@ -136,7 +136,7 @@ describe Api::V1::ProductVendorAssignmentsController do
         cmp_sys_codes:[v1.system_code]
       }
 
-      expect{post :bulk_create, request_hash}.to_not change(ProductVendorAssignment,:count)
+      expect {post :bulk_create, request_hash}.to_not change(ProductVendorAssignment, :count)
       expect(response).to_not be_success
     end
     it "should not create if user cannot edit vendor" do
@@ -144,7 +144,7 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = Factory(:company,vendor:true,system_code:'X')
+      v1 = Factory(:company, vendor:true, system_code:'X')
 
       p1 = Factory(:product)
 
@@ -153,7 +153,7 @@ describe Api::V1::ProductVendorAssignmentsController do
         cmp_sys_codes:[v1.system_code]
       }
 
-      expect{post :bulk_create, request_hash}.to_not change(ProductVendorAssignment,:count)
+      expect {post :bulk_create, request_hash}.to_not change(ProductVendorAssignment, :count)
       expect(response).to_not be_success
     end
     it "should report records not found but should not fail" do
@@ -161,16 +161,16 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = Factory(:company,vendor:true,system_code:'X')
+      v1 = Factory(:company, vendor:true, system_code:'X')
 
       p1 = Factory(:product)
 
       request_hash = {
-        prod_uids:[p1.unique_identifier,'otherproduct'],
+        prod_uids:[p1.unique_identifier, 'otherproduct'],
         cmp_sys_codes:[v1.system_code]
       }
 
-      expect{post :bulk_create, request_hash}.to change(ProductVendorAssignment,:count).from(0).to(1)
+      expect {post :bulk_create, request_hash}.to change(ProductVendorAssignment, :count).from(0).to(1)
       expect(response).to be_success
 
       expect(JSON.parse(response.body)['messages']).to eq [
@@ -183,20 +183,20 @@ describe Api::V1::ProductVendorAssignmentsController do
       allow_any_instance_of(Product).to receive(:can_edit?).and_return true
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
 
-      v1 = Factory(:company,vendor:true,system_code:'X')
+      v1 = Factory(:company, vendor:true, system_code:'X')
 
       p1 = Factory(:product)
 
-      product_uids = Array.new(11,'x')
+      product_uids = Array.new(11, 'x')
       product_uids << p1.unique_identifier
-      cmp_codes = Array.new(11,'y')
+      cmp_codes = Array.new(11, 'y')
       cmp_codes << v1.system_code
       request_hash = {
         prod_uids:product_uids,
         cmp_sys_codes:cmp_codes
       }
 
-      expect{post :bulk_create, request_hash}.to_not change(ProductVendorAssignment,:count)
+      expect {post :bulk_create, request_hash}.to_not change(ProductVendorAssignment, :count)
       expect(response).to_not be_success
     end
   end
@@ -212,14 +212,14 @@ describe Api::V1::ProductVendorAssignmentsController do
       u = Factory(:master_user)
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return true
       allow_api_access u
-      cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
+      cd = Factory(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
       uid = cd.model_field_uid
       pva1 = Factory(:product_vendor_assignment)
       pva2 = Factory(:product_vendor_assignment)
 
       put_json = {product_vendor_assignments:[
-        {uid=>'hello','id'=>pva1.id},
-        {uid=>'world','id'=>pva2.id}
+        {uid=>'hello', 'id'=>pva1.id},
+        {uid=>'world', 'id'=>pva2.id}
       ]}
 
       put :bulk_update, put_json
@@ -232,12 +232,12 @@ describe Api::V1::ProductVendorAssignmentsController do
       u = Factory(:master_user)
       allow_any_instance_of(ProductVendorAssignment).to receive(:can_edit?).and_return false
       allow_api_access u
-      cd = Factory(:custom_definition,module_type:'ProductVendorAssignment',data_type:'string')
+      cd = Factory(:custom_definition, module_type:'ProductVendorAssignment', data_type:'string')
       uid = cd.model_field_uid
       pva1 = Factory(:product_vendor_assignment)
 
       put_json = {product_vendor_assignments:[
-        {uid=>'hello','id'=>pva1.id}
+        {uid=>'hello', 'id'=>pva1.id}
       ]}
 
       put :bulk_update, put_json

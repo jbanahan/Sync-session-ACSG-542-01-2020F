@@ -56,30 +56,30 @@ module OpenChain; module Report; class PumaDivisionQuarterBreakdown
       # CGOLF
       wb.add_body_row sheet, ["CGOLF"], styles:[:bold]
       wb.add_body_row sheet, make_us_headers, styles: Array.new(8, :default_header)
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1,1]], 1), styles: us_row_styles
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1,2]], 2), styles: us_row_styles
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1,3]], 3), styles: us_row_styles
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1,4]], 4), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1, 1]], 1), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1, 2]], 2), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1, 3]], 3), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[1, 4]], 4), styles: us_row_styles
       wb.add_body_row sheet, make_us_totals_row(1, division_quarter_hash), styles: us_totals_row_styles
       wb.add_body_row sheet, []
 
       # PUMA USA
       wb.add_body_row sheet, ["PUMA USA"], styles:[:bold]
       wb.add_body_row sheet, make_us_headers, styles: Array.new(8, :default_header)
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2,1]], 1), styles: us_row_styles
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2,2]], 2), styles: us_row_styles
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2,3]], 3), styles: us_row_styles
-      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2,4]], 4), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2, 1]], 1), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2, 2]], 2), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2, 3]], 3), styles: us_row_styles
+      wb.add_body_row sheet, make_us_row_for_division_quarter(division_quarter_hash[[2, 4]], 4), styles: us_row_styles
       wb.add_body_row sheet, make_us_totals_row(2, division_quarter_hash), styles: us_totals_row_styles
       wb.add_body_row sheet, []
 
       # PUMA CA
       wb.add_body_row sheet, ["PUMA CA"], styles:[:bold]
       wb.add_body_row sheet, make_ca_headers, styles: Array.new(6, :default_header)
-      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3,1]], 1), styles: ca_row_styles
-      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3,2]], 2), styles: ca_row_styles
-      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3,3]], 3), styles: ca_row_styles
-      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3,4]], 4), styles: ca_row_styles
+      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3, 1]], 1), styles: ca_row_styles
+      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3, 2]], 2), styles: ca_row_styles
+      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3, 3]], 3), styles: ca_row_styles
+      wb.add_body_row sheet, make_ca_row_for_division_quarter(division_quarter_hash[[3, 4]], 4), styles: ca_row_styles
       wb.add_body_row sheet, make_ca_totals_row(3, division_quarter_hash), styles: ca_totals_row_styles
 
       wb.set_column_widths sheet, *(Array.new(3, 20) + Array.new(6, 14))
@@ -129,11 +129,11 @@ module OpenChain; module Report; class PumaDivisionQuarterBreakdown
     end
 
     def make_us_headers
-      ["", "Total Entered Value","Total Invoice Value","Total Duty","Cotton Fee","HMF","MPF","Entry Count"]
+      ["", "Total Entered Value", "Total Invoice Value", "Total Duty", "Cotton Fee", "HMF", "MPF", "Entry Count"]
     end
 
     def make_ca_headers
-      ["", "Total Entered Value","Total Invoice Value","Total Duty","Total GST","Entry Count"]
+      ["", "Total Entered Value", "Total Invoice Value", "Total Duty", "Total GST", "Entry Count"]
     end
 
     def make_us_totals_row division, division_quarter_hash
@@ -160,14 +160,14 @@ module OpenChain; module Report; class PumaDivisionQuarterBreakdown
 
     def make_query year
       qry = <<-SQL
-          SELECT 
+          SELECT
             (
               CASE sys_id.code
                 WHEN 'CGOLF' THEN 1
                 WHEN 'PUMA' THEN 2
                 WHEN '892892654RM0001' THEN 3
               END
-            ) AS importer_sort_order, 
+            ) AS importer_sort_order,
             QUARTER(ent.release_date) AS quarter,
             IFNULL(SUM(ent.entered_value), 0) AS total_entered_value,
             IFNULL(SUM(ent.total_invoiced_value), 0) AS total_invoice_value,
@@ -177,18 +177,18 @@ module OpenChain; module Report; class PumaDivisionQuarterBreakdown
             IFNULL(SUM(ent.mpf), 0) AS total_mpf,
             IFNULL(SUM(ent.total_gst), 0) AS total_gst,
             COUNT(DISTINCT ent.id) AS entry_count
-          FROM 
-            entries ent 
+          FROM
+            entries ent
             INNER JOIN system_identifiers sys_id ON sys_id.company_id = ent.importer_id AND sys_id.system in ('Customs Management', 'Fenix') AND sys_id.code in ('PUMA','CGOLF', '892892654RM0001')
           WHERE
-            ent.importer_id IN (?) AND 
-            ent.release_date >= ? AND 
+            ent.importer_id IN (?) AND
+            ent.release_date >= ? AND
             ent.release_date < ?
-          GROUP BY 
+          GROUP BY
             importer_sort_order,
             QUARTER(ent.release_date)
-          ORDER BY 
-            importer_sort_order, 
+          ORDER BY
+            importer_sort_order,
             quarter
       SQL
 
@@ -196,7 +196,7 @@ module OpenChain; module Report; class PumaDivisionQuarterBreakdown
     end
 
     def get_importer_ids
-      importer_ids = Company.with_identifier(['Customs Management', 'Fenix'], ['PUMA','CGOLF', '892892654RM0001']).pluck(:id)
+      importer_ids = Company.with_identifier(['Customs Management', 'Fenix'], ['PUMA', 'CGOLF', '892892654RM0001']).pluck(:id)
       importer_ids.length > 0 ? importer_ids : [-1]
     end
 

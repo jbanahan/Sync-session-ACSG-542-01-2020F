@@ -20,15 +20,15 @@ class CorrectiveActionPlan < ActiveRecord::Base
   belongs_to :created_by, :class_name => 'User'
   has_many   :comments, -> { order(created_at: :desc) }, as: :commentable, dependent: :destroy, autosave: true
   has_many   :corrective_issues, dependent: :destroy, inverse_of: :corrective_action_plan, autosave: true
-  
+
   attr_accessible :status, :created_by_id
 
   before_save :update_status
   before_destroy :dont_destroy_activated
 
-  STATUSES ||= {new:'New',active:'Active',resolved:'Resolved'}
+  STATUSES ||= {new:'New', active:'Active', resolved:'Resolved'}
 
-  STATUS_DEFINITIONS ||= {new:"The survey recipient cannot see the plan and does not get email notifications.",active:"The survey recipient is notified about the plan and can respond.",resolved:"The plan has been completed."}
+  STATUS_DEFINITIONS ||= {new:"The survey recipient cannot see the plan and does not get email notifications.", active:"The survey recipient is notified about the plan and can respond.", resolved:"The plan has been completed."}
   def log_update user
     self.survey_response.log_update(user) if self.status == STATUSES[:active]
   end
@@ -37,7 +37,7 @@ class CorrectiveActionPlan < ActiveRecord::Base
   end
 
   def can_edit? user
-    self.survey_response.can_edit?(user) 
+    self.survey_response.can_edit?(user)
   end
 
   def can_delete? user

@@ -14,7 +14,7 @@ module OpenChain
       suspended_users = []
       User.where("email like '%vandegriftinc.com' AND (disabled <> 1 OR disabled IS NULL) AND (system_user = 0 OR system_user IS NULL)").all.each do |user|
         # The regex here is stripping any characters that appear after a + character.  Gmail lets you use a + character
-        # to effectively create boundless variants of your email address - email+spamemail@gmail.com = email@gmail.com.  
+        # to effectively create boundless variants of your email address - email+spamemail@gmail.com = email@gmail.com.
         # We use this appraoch if a user NEEDS more than one VFI Track account.  Some make sure to strip anything after
         # the + before checking the account
         email = user.email.gsub(/(.*?)(\+.*?)(@.*)/, '\1\3').to_s.upcase.strip

@@ -92,14 +92,14 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     # The right side of this map isn't used, the actual codes are referenced directly in the
     # code writing the duty values.
     {
-      "1" => "NOT_A_REAL_GTN_CODE", 
+      "1" => "NOT_A_REAL_GTN_CODE",
       "2" => "NOT_A_REAL_GTN_CODE"
     }
   end
 
   def container_level_codes
     {
-      "31" => "C080", 
+      "31" => "C080",
       "14" => "C080",
       "33" => "0545",
       "255" => "0027",
@@ -132,7 +132,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     charges
   end
 
-  # Invoice date is passed in, since at some point we'll likely need to add logic to 
+  # Invoice date is passed in, since at some point we'll likely need to add logic to
   # use it to determine the federal GST rate.
   def calculate_gst_hst invoice_date, total_taxable_amount, original_gst_amount
     # We can just take the brokerage amount and multiply by 5% - that gets us the

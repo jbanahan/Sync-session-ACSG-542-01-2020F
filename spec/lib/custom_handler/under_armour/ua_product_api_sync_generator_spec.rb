@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
 
   describe "sync" do
-    before :each do 
+    before :each do
       @api_client = double("FakeProductApiClient")
       @tariff = Factory(:tariff_record, line_number: 1, hts_1: "1234567890", classification: Factory(:classification, country: Factory(:country, iso_code: "US"), product: Factory(:product, name: "Description")))
       @product = @tariff.product
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
       # Just validate the trading partner, every other aspect of the sync record data is the responsibility
       # of the parent class of the one we're testing
       expect(sr.trading_partner).to eq "vfitrack"
-      #validate that fingerprinting is not being used for these
+      # validate that fingerprinting is not being used for these
       expect(sr.fingerprint).to be_nil
     end
 
@@ -68,8 +68,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
       ca = Factory(:country, iso_code: 'CA')
       @tariff.classification.update_attributes! country: ca
 
-      expect(@api_client).to receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99","prod_imp_syscode"]).and_return({'product'=>nil})
-      
+      expect(@api_client).to receive(:find_by_uid).with("UNDAR-" + "#{@product.unique_identifier}-A", ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "*cf_99", "prod_imp_syscode"]).and_return({'product'=>nil})
+
       create_data = []
       expect(@api_client).to receive(:create).exactly(1).times do |data|
         create_data << data
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaProductApiSyncGenerator do
       @product.update_custom_value! @cdefs[:colors], "    "
       now = Time.zone.now
       Timecop.freeze(now) { @g.sync }
-      
+
       sr = @product.reload.sync_records.first
       expect(sr).not_to be_nil
       expect(sr.sent_at.to_i).to eq now.to_i

@@ -1,7 +1,7 @@
 describe OpenChain::ScheduleSupport do
   describe "run_if_needed" do
     before :each do
-      @ss = Factory(:search_schedule,:last_start_time=>1.year.ago)
+      @ss = Factory(:search_schedule, :last_start_time=>1.year.ago)
     end
     it "should run if next_run_time < Time.now.utc" do
       allow(@ss).to receive(:next_run_time).and_return 1.year.ago
@@ -78,7 +78,7 @@ describe OpenChain::ScheduleSupport do
 
   describe "needs_to_run?" do
     before :each do
-      @ss = Factory(:search_schedule,:last_start_time=>1.year.ago)
+      @ss = Factory(:search_schedule, :last_start_time=>1.year.ago)
     end
 
     it "needs to run if next run time before now" do
@@ -94,11 +94,11 @@ describe OpenChain::ScheduleSupport do
 
   describe "next_run_time" do
     before :each do
-      Timecop.freeze(Time.utc(2016,1,1,12,0,0))
+      Timecop.freeze(Time.utc(2016, 1, 1, 12, 0, 0))
       @u = User.new
-      @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u),:run_monday=>true,
-        :run_tuesday=>true,:run_wednesday=>true,:run_thursday=>true,:run_friday=>true,
-        :run_saturday=>true,:run_sunday=>true,
+      @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u), :run_monday=>true,
+        :run_tuesday=>true, :run_wednesday=>true, :run_thursday=>true, :run_friday=>true,
+        :run_saturday=>true, :run_sunday=>true,
         :last_start_time=>1.year.ago)
     end
     after :each do
@@ -110,7 +110,7 @@ describe OpenChain::ScheduleSupport do
       @ss.last_start_time = Time.now
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       now = Time.now.utc
-      expect(@ss.next_run_time).to eq(Time.utc(now.year,now.month,now.day,now.hour+1))
+      expect(@ss.next_run_time).to eq(Time.utc(now.year, now.month, now.day, now.hour+1))
     end
     it "should identify next run time with CST time zone" do
       tz_str = "Central Time (US & Canada)"
@@ -118,14 +118,14 @@ describe OpenChain::ScheduleSupport do
       @ss.last_start_time = Time.now
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       now = Time.now.utc
-      expect(@ss.next_run_time).to eq(Time.utc(now.year,now.month,now.day,now.hour+1))
+      expect(@ss.next_run_time).to eq(Time.utc(now.year, now.month, now.day, now.hour+1))
     end
     it "should default to EST if user doesn't have time zone set" do
       tz_str = "Eastern Time (US & Canada)"
       @ss.last_start_time = Time.now
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       now = Time.now.utc
-      expect(@ss.next_run_time).to eq(Time.utc(now.year,now.month,now.day,now.hour+1))
+      expect(@ss.next_run_time).to eq(Time.utc(now.year, now.month, now.day, now.hour+1))
     end
     it "should skip today's run if today isn't a run day" do
       tz_str = "Eastern Time (US & Canada)"
@@ -148,7 +148,7 @@ describe OpenChain::ScheduleSupport do
       when 6
         @ss.run_saturday = false
       end
-      expect(@ss.next_run_time).to eq(Time.utc(now.year,now.month,now.day+(now.day!=Time.now.in_time_zone(tz_str).day ? -1 : 0),now.hour+1)+1.day)
+      expect(@ss.next_run_time).to eq(Time.utc(now.year, now.month, now.day+(now.day!=Time.now.in_time_zone(tz_str).day ? -1 : 0), now.hour+1)+1.day)
     end
     it "should use created_at if last_started_at is nil" do
       tz_str = "Eastern Time (US & Canada)"
@@ -156,10 +156,10 @@ describe OpenChain::ScheduleSupport do
       @ss.created_at = Time.now
       @ss.last_start_time = nil
       now = Time.now.utc
-      expect(@ss.next_run_time).to eq(Time.utc(now.year,now.month,now.day,now.hour+1))
+      expect(@ss.next_run_time).to eq(Time.utc(now.year, now.month, now.day, now.hour+1))
     end
     it "should return nil if none of the run days or day of month are set"do
-      @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u),:last_start_time=>1.year.ago,:run_hour => 23)
+      @ss = SearchSchedule.new(:search_setup=>SearchSetup.new(:user=>@u), :last_start_time=>1.year.ago, :run_hour => 23)
       expect(@ss.next_run_time).to be_nil
     end
     it "should return nil if run hour is not set" do
@@ -174,7 +174,7 @@ describe OpenChain::ScheduleSupport do
       @ss.run_hour = Time.now.in_time_zone(tz_str).hour+1
       allow(@ss).to receive(:minute_to_run).and_return(30)
       now = Time.now.utc
-      expect(@ss.next_run_time).to eq(Time.utc(now.year,now.month,now.day,now.hour,30) + 1.hour)
+      expect(@ss.next_run_time).to eq(Time.utc(now.year, now.month, now.day, now.hour, 30) + 1.hour)
     end
 =begin
     context "day of month" do

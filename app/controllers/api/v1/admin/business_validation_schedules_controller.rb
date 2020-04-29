@@ -1,7 +1,7 @@
 module Api; module V1; module Admin; class BusinessValidationSchedulesController < Api::V1::Admin::AdminApiController
   def new
     cms = OpenChain::EntityCompare::TimedBusinessRuleComparator::CORE_MODULES.sort
-    cms.select!{ |cm| CoreModule.find_by_class_name(cm).enabled_lambda.call }
+    cms.select! { |cm| CoreModule.find_by_class_name(cm).enabled_lambda.call }
     render json: {cm_list: cms}
   end
 
@@ -18,8 +18,8 @@ module Api; module V1; module Admin; class BusinessValidationSchedulesController
   def edit
     schedule = BusinessValidationSchedule.find params[:id]
     cm = CoreModule.find_by_class_name(schedule.module_type)
-    render json: { schedule: schedule, 
-                   criteria: schedule.search_criterions.map{ |sc| sc.json(current_user) }, 
+    render json: { schedule: schedule,
+                   criteria: schedule.search_criterions.map { |sc| sc.json(current_user) },
                    criterion_model_fields: criterion_mf_hsh(cm, schedule),
                    schedule_model_fields: schedule_mf_hsh(cm, current_user) }
   end
@@ -38,10 +38,10 @@ module Api; module V1; module Admin; class BusinessValidationSchedulesController
 
   def update
     schedule = BusinessValidationSchedule.find params[:id]
-    
+
     errors = []
     errors << "Name cannot be blank." if params[:schedule][:name].blank?
-    errors << "Date must be complete." if params[:schedule][:model_field_uid].blank? || params[:schedule][:operator].blank? || params[:schedule][:num_days].blank? 
+    errors << "Date must be complete." if params[:schedule][:model_field_uid].blank? || params[:schedule][:operator].blank? || params[:schedule][:num_days].blank?
     errors << "Schedule must include search criterions." if params[:criteria].blank?
 
     if errors.empty?
@@ -67,7 +67,7 @@ module Api; module V1; module Admin; class BusinessValidationSchedulesController
 
   def criterion_mf_hsh core_module, schedule
     mfs = core_module.default_module_chain.model_fields.values
-    ModelField.sort_by_label(mfs).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
+    ModelField.sort_by_label(mfs).collect {|mf| {:mfid=>mf.uid, :label=>mf.label, :datatype=>mf.data_type}}
   end
 
   def schedule_mf_hsh core_module, user
@@ -75,7 +75,7 @@ module Api; module V1; module Admin; class BusinessValidationSchedulesController
     core_module.model_fields(user).each do |mfid, mf|
       model_fields_list << {'mfid' => mf.uid.to_s, 'label' => mf.label} if [:datetime, :date].include? mf.data_type
     end
-    model_fields_list.sort_by{ |mf_summary| mf_summary['label'] }
+    model_fields_list.sort_by { |mf_summary| mf_summary['label'] }
   end
 
 end; end; end; end

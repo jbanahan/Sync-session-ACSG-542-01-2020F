@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
   # NOTE: The self.parse method definition is defined in EdiParserSupport
 
   def business_logic_errors
-    @business_logic_errors ||= Hash.new { |h,k| h[k] = [] }
+    @business_logic_errors ||= Hash.new { |h, k| h[k] = [] }
   end
 
   def process_transaction user, transaction, last_file_bucket:, last_file_path:
@@ -47,11 +47,11 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
     message = "".html_safe
     if business_logic_errors[:missing_orders].present?
       message << "<br>Talbots orders are missing for the following Order Numbers:<br>".html_safe
-      message << business_logic_errors[:missing_orders].map{ |o| CGI.escapeHTML o }.join('<br>').html_safe
+      message << business_logic_errors[:missing_orders].map { |o| CGI.escapeHTML o }.join('<br>').html_safe
     end
     if business_logic_errors[:missing_lines].present?
       message << "<br>Talbots order lines are missing for the following Order Number / Sku pairs:<br>".html_safe
-      message << business_logic_errors[:missing_lines].map{ |ol| CGI.escapeHTML ol }.join('<br>').html_safe
+      message << business_logic_errors[:missing_lines].map { |ol| CGI.escapeHTML ol }.join('<br>').html_safe
     end
     raise EdiBusinessLogicError, message
   end
@@ -185,7 +185,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots856Parser
     line.container = container
     line.linked_order_line_id = order_line.id
     line.product = order_line.product
-    
+
     coo = find_segment_qualified_value(lin, "ZZ")
     line.find_and_set_custom_value(cdefs[:shpln_coo], coo) unless coo.blank?
 

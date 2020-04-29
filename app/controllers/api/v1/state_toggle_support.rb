@@ -1,6 +1,6 @@
 require 'open_chain/api/v1/core_module_api_json_support'
 
-#relies on implementing controller having access to find_object_by_id method
+# relies on implementing controller having access to find_object_by_id method
 module Api; module V1; module StateToggleSupport
   include OpenChain::Api::V1::CoreModuleApiJsonSupport # provides the render method
 
@@ -17,14 +17,14 @@ module Api; module V1; module StateToggleSupport
     end
 
     btn = nil
-    StateToggleButton.for_core_object_user(obj,current_user).each do |b|
+    StateToggleButton.for_core_object_user(obj, current_user).each do |b|
       if (button_id && b.id == button_id) || (button_identifier && b.identifier == button_identifier)
         btn = b
         break
       end
     end
-    raise StatusableError.new("Button not accessible at this time.",:forbidden) unless btn
-    Lock.db_lock(obj) do 
+    raise StatusableError.new("Button not accessible at this time.", :forbidden) unless btn
+    Lock.db_lock(obj) do
       btn.toggle! obj, current_user
     end
     render json: {'ok'=>'ok'}

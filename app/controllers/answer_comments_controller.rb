@@ -1,4 +1,4 @@
-class AnswerCommentsController < ApplicationController 
+class AnswerCommentsController < ApplicationController
   def create
     answer = Answer.find(params[:answer_id])
     sr = answer.survey_response
@@ -8,6 +8,6 @@ class AnswerCommentsController < ApplicationController
       :content=>params['comment']['content']
     )
     answer.log_update current_user
-    render json: ac.to_json(:include=>{:user=>{:only=>[:id],:methods=>[:full_name]}})
+    render json: ac.to_json(:include=>{:user=>{:only=>[:id], :methods=>[:full_name]}})
   end
 end

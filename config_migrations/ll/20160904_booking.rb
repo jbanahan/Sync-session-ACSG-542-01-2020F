@@ -1,7 +1,7 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 module ConfigMigrations; module LL; class Booking
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  CDEF_FIELDS = [:ord_comp_docs_posted_by,:ord_comp_docs_posted_date,:ord_planned_handover_date]
+  CDEF_FIELDS = [:ord_comp_docs_posted_by, :ord_comp_docs_posted_date, :ord_planned_handover_date]
   COMPLIANCE_DOCS_ACTIVATE_TEXT = "Set Compliance Docs Posted"
   def up
     cdefs = prep_custom_definitions
@@ -27,7 +27,7 @@ module ConfigMigrations; module LL; class Booking
     destroy_compliance_docs_posted_stb cdefs
     clear_customer_order_number
   end
-  
+
   def update_vendor_user_template
     ut = UserTemplate.where(name:'Basic Vendor').first_or_create!
     base_template = {
@@ -39,9 +39,9 @@ module ConfigMigrations; module LL; class Booking
       portal_mode:"vendor",
       tariff_subscribed:false,
       event_subscriptions:[
-        {event_type:"ORDER_CREATE",system_message:true},
-        {event_type:"ORDER_UNACCEPT",system_message:true},
-        {event_type:"ORDER_COMMENT_CREATE",system_message:true}
+        {event_type:"ORDER_CREATE", system_message:true},
+        {event_type:"ORDER_UNACCEPT", system_message:true},
+        {event_type:"ORDER_COMMENT_CREATE", system_message:true}
       ],
       groups:[
         "ORDERACCEPT"
@@ -69,11 +69,11 @@ module ConfigMigrations; module LL; class Booking
 
   def make_booking_read_only
     ActiveRecord::Base.transaction do
-      [:shp_booking_shipment_type,:shp_booking_mode,:shp_booking_received_date,
-        :shp_booking_confirmed_date,:shp_booking_cutoff_date,:shp_booking_est_arrival_date,
-        :shp_booking_est_departure_date,:shp_booking,:shp_booking_approved_date,
-        :shp_booking_carrier,:shp_booking_vessel,:shp_booking_cargo_ready_date,
-        :shp_booking_first_port_receipt_id,:shp_booking_requested_equipment
+      [:shp_booking_shipment_type, :shp_booking_mode, :shp_booking_received_date,
+        :shp_booking_confirmed_date, :shp_booking_cutoff_date, :shp_booking_est_arrival_date,
+        :shp_booking_est_departure_date, :shp_booking, :shp_booking_approved_date,
+        :shp_booking_carrier, :shp_booking_vessel, :shp_booking_cargo_ready_date,
+        :shp_booking_first_port_receipt_id, :shp_booking_requested_equipment
       ].each do |uid|
         fvr = FieldValidatorRule.where(model_field_uid:uid).first_or_create!(module_type:'Shipment')
         next if fvr.read_only?
@@ -86,8 +86,8 @@ module ConfigMigrations; module LL; class Booking
   def add_variant_business_rule
     bvt = BusinessValidationTemplate.where(module_type:'Order').first
     raise "template not found" unless bvt
-    bvr = bvt.business_validation_rules.where(type:'ValidationRuleOrderLineFieldFormat',name:'Vendor Variant Selection').first_or_create!
-    bvr.search_criterions.where(model_field_uid:'ordln_has_variants',operator:'notnull').first_or_create!
+    bvr = bvt.business_validation_rules.where(type:'ValidationRuleOrderLineFieldFormat', name:'Vendor Variant Selection').first_or_create!
+    bvr.search_criterions.where(model_field_uid:'ordln_has_variants', operator:'notnull').first_or_create!
     rule_attributes_hash = {
       "ordln_var_db_id"=>{"regex"=>"[0-9]"}
     }
@@ -101,17 +101,17 @@ module ConfigMigrations; module LL; class Booking
 
   def change_planned_handover_permissions cdefs
     fvr = FieldValidatorRule.where(model_field_uid:cdefs[:ord_planned_handover_date].model_field_uid.to_s).first_or_create!(module_type:'Order')
-    fvr.update_attributes(can_view_groups:"ALL",can_edit_groups:"ALL")
+    fvr.update_attributes(can_view_groups:"ALL", can_edit_groups:"ALL")
   end
 
   def create_expeditors
-    exp = Company.where(system_code:'expeditors').first_or_create!(forwarder:true,name:'Expeditors')
+    exp = Company.where(system_code:'expeditors').first_or_create!(forwarder:true, name:'Expeditors')
     master = Company.where(master:true).first
     master.linked_companies << exp unless master.linked_companies.include?(exp)
     exp
   end
   def create_dhl
-    dhl = Company.where(system_code:'DHL').first_or_create!(forwarder:true,name:'DHL')
+    dhl = Company.where(system_code:'DHL').first_or_create!(forwarder:true, name:'DHL')
     master = Company.where(master:true).first
     master.linked_companies << dhl unless master.linked_companies.include?(dhl)
     dhl
@@ -124,7 +124,7 @@ module ConfigMigrations; module LL; class Booking
       'shp_booking_shipment_type'=>{one_of:"CY\nCFS\nAir"},
       'shp_shipment_type'=>{one_of:"CY\nCFS\nAir"}
     }
-    rules.each do |uid,attrs|
+    rules.each do |uid, attrs|
       fvr = FieldValidatorRule.where(model_field_uid:uid).first_or_create!(module_type:'Shipment')
       fvr.update_attributes(attrs)
     end
@@ -140,7 +140,7 @@ module ConfigMigrations; module LL; class Booking
       next if v.show_business_rules?
       v.show_business_rules = true
       v.save!
-      v.create_snapshot(u,nil,"Configure vendor business rules migration.")
+      v.create_snapshot(u, nil, "Configure vendor business rules migration.")
     end
   end
 
@@ -148,7 +148,7 @@ module ConfigMigrations; module LL; class Booking
     ActiveRecord::Base.connection.execute('UPDATE orders SET customer_order_number = order_number WHERE closed_at is null')
     u = User.integration
     Order.includes(:order_lines=>:product).where(closed_at:nil).find_each(batch_size:500) do |o|
-      o.create_snapshot(u,nil,"Populate customer order number migration")
+      o.create_snapshot(u, nil, "Populate customer order number migration")
     end
   end
 
@@ -203,67 +203,67 @@ module ConfigMigrations; module LL; class Booking
   def destroy_compliance_docs_posted_stb cdefs
     StateToggleButton.where(activate_text:COMPLIANCE_DOCS_ACTIVATE_TEXT).destroy_all
   end
-  
+
   def configure_origin_ports
-    ports = [["TRALI","ALIAGA"],
-["CLARI","ARICA"],
-["THBKK","BANGKOK"],
-["COBAQ","BARRANQUILLA"],
-["BRBEL","BELEM"],
-["DEBRV","BREMERHAVEN"],
-["ARBUE","BUENOS AIRES"],
-["KRPUS","BUSAN"],
-["PECLL","CALLAO"],
-["COCTG","CARTAGENA"],
-["INMAA","CHENNAI (EX MADRAS)"],
-["CNCWN","CHIWAN"],
-["CNDLC","DALIAN"],
-["TRDNZ","DENIZLI"],
-["CNFOS","FOSHAN"],
-["CNFOC","FUZHOU"],
-["TRGEM","GEMLIK"],
-["ITGOA","GENOA"],
-["CNCAN","GUANGZHOU"],
-["CNXSA","GUANGZHOU"],
-["VNHPH","HAIPHONG"],
-["VNSGN","HO CHI MINH CITY"],
-["VNVIC","HO CHI MINH VICT"],
-["HKHKG","HONG KONG"],
-["CNHUA","HUANGPU"],
-["BRIOA","ITAPOA"],
-["TRIZM","IZMIR"],
-["IDCGK","JAKARTA"],
-["IDJKT","JAKARTA"],
-["CNJIU","JIUJIANG"],
-["CNJJG","JIUJIANG"],
-["TWKHH","KAOHSIUNG"],
-["ITSPE","LA SPEZIA"],
-["THLCH","LAEM CHABANG"],
-["PELIM","LIMA"],
-["ITLIV","LIVORNO"],
-["UYMVD","MONTEVIDEO"],
-["INBOM","MUMBAI (EX BOMBAY)"],
-["CNNKG","NANJING"],
-["CNNSA","NANSHA"],
-["BRNVT","NAVEGANTES"],
-["INNSA","NHAVA SHEVA"],
-["CNNGB","NINGBO"],
-["BRPNG","PARANAGUA"],
-["MYPKG","PORT KLANG"],
-["CNTAO","QINGDAO"],
-["BRSSZ","SANTOS"],
-["IDSRG","SEMARANG"],
-["CNSHA","SHANGHAI"],
-["SGSIN","SINGAPORE"],
-["BRSUA","SUAPE"],
-["TWTXG","TAICHUNG"],
-["BRVAL","VALENCA"],
-["BRVLC","VILA DO CONDE"],
-["BRVIC","VILA DO CONDE"],
-["CNXMN","XIAMEN"],
-["CNXGG","XINGANG"],
-["CNYTN","YANTIAN"],
-["CNZHE","ZHENJIANG"]]
+    ports = [["TRALI", "ALIAGA"],
+["CLARI", "ARICA"],
+["THBKK", "BANGKOK"],
+["COBAQ", "BARRANQUILLA"],
+["BRBEL", "BELEM"],
+["DEBRV", "BREMERHAVEN"],
+["ARBUE", "BUENOS AIRES"],
+["KRPUS", "BUSAN"],
+["PECLL", "CALLAO"],
+["COCTG", "CARTAGENA"],
+["INMAA", "CHENNAI (EX MADRAS)"],
+["CNCWN", "CHIWAN"],
+["CNDLC", "DALIAN"],
+["TRDNZ", "DENIZLI"],
+["CNFOS", "FOSHAN"],
+["CNFOC", "FUZHOU"],
+["TRGEM", "GEMLIK"],
+["ITGOA", "GENOA"],
+["CNCAN", "GUANGZHOU"],
+["CNXSA", "GUANGZHOU"],
+["VNHPH", "HAIPHONG"],
+["VNSGN", "HO CHI MINH CITY"],
+["VNVIC", "HO CHI MINH VICT"],
+["HKHKG", "HONG KONG"],
+["CNHUA", "HUANGPU"],
+["BRIOA", "ITAPOA"],
+["TRIZM", "IZMIR"],
+["IDCGK", "JAKARTA"],
+["IDJKT", "JAKARTA"],
+["CNJIU", "JIUJIANG"],
+["CNJJG", "JIUJIANG"],
+["TWKHH", "KAOHSIUNG"],
+["ITSPE", "LA SPEZIA"],
+["THLCH", "LAEM CHABANG"],
+["PELIM", "LIMA"],
+["ITLIV", "LIVORNO"],
+["UYMVD", "MONTEVIDEO"],
+["INBOM", "MUMBAI (EX BOMBAY)"],
+["CNNKG", "NANJING"],
+["CNNSA", "NANSHA"],
+["BRNVT", "NAVEGANTES"],
+["INNSA", "NHAVA SHEVA"],
+["CNNGB", "NINGBO"],
+["BRPNG", "PARANAGUA"],
+["MYPKG", "PORT KLANG"],
+["CNTAO", "QINGDAO"],
+["BRSSZ", "SANTOS"],
+["IDSRG", "SEMARANG"],
+["CNSHA", "SHANGHAI"],
+["SGSIN", "SINGAPORE"],
+["BRSUA", "SUAPE"],
+["TWTXG", "TAICHUNG"],
+["BRVAL", "VALENCA"],
+["BRVLC", "VILA DO CONDE"],
+["BRVIC", "VILA DO CONDE"],
+["CNXMN", "XIAMEN"],
+["CNXGG", "XINGANG"],
+["CNYTN", "YANTIAN"],
+["CNZHE", "ZHENJIANG"]]
     ports.each do |pdata|
       Port.where(unlocode:pdata[0]).first_or_create!(name:"#{pdata[1]} (#{pdata[0]})")
     end

@@ -5,7 +5,7 @@ describe OpenChain::BusinessRulesCopier do
     let(:cf) { double "custom file" }
     let(:file) { double "JSON file"}
     let(:template_uploader) { described_class::TemplateUploader.new cf }
-    before do 
+    before do
       allow(cf).to receive(:path).and_return "/path"
       allow(cf).to receive(:bucket).and_return "bucket"
       allow(cf).to receive(:attached_file_name).and_return "test_json.txt"
@@ -29,7 +29,7 @@ describe OpenChain::BusinessRulesCopier do
       it "notifies user of error" do
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "/path").and_raise "ERROR!"
         expect(BusinessValidationTemplate).to_not receive(:parse_copy_attributes)
-        
+
         template_uploader.process(user, nil)
         expect(user.messages.count).to eq 1
         msg = user.messages.first
@@ -44,7 +44,7 @@ describe OpenChain::BusinessRulesCopier do
     let(:file) { double "JSON file"}
     let(:rule_uploader) { described_class::RuleUploader.new cf }
     let!(:bvt) { Factory(:business_validation_template) }
-    before do 
+    before do
       allow(cf).to receive(:path).and_return "/path"
       allow(cf).to receive(:bucket).and_return "bucket"
       allow(cf).to receive(:attached_file_name).and_return "test_json.txt"
@@ -73,7 +73,7 @@ describe OpenChain::BusinessRulesCopier do
       it "notifies user of error" do
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "/path").and_raise "ERROR!"
         expect(BusinessValidationRule).to_not receive(:parse_copy_attributes)
-        
+
         rule_uploader.process(user, nil)
         expect(user.messages.count).to eq 1
         msg = user.messages.first
@@ -88,7 +88,7 @@ describe OpenChain::BusinessRulesCopier do
       bvt = Factory(:business_validation_template, name: "template")
       expect_any_instance_of(BusinessValidationTemplate).to receive(:copy_attributes).with(include_external: true).and_call_original
       described_class.copy_template user.id, bvt.id
-      
+
       new_bvt = BusinessValidationTemplate.last
       expect(new_bvt.name).to eq "template (COPY)"
       expect(new_bvt.disabled).to eq true

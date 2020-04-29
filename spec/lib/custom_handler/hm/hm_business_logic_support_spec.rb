@@ -1,12 +1,12 @@
 describe OpenChain::CustomHandler::Hm::HmBusinessLogicSupport do
 
-  subject { 
+  subject {
     Class.new {
       include OpenChain::CustomHandler::Hm::HmBusinessLogicSupport
     }.new
   }
 
-  describe "extract_style_number_from_sku" do 
+  describe "extract_style_number_from_sku" do
     it "extracts first 7 digits from a string" do
       expect(subject.extract_style_number_from_sku "1234567890").to eq "1234567"
     end

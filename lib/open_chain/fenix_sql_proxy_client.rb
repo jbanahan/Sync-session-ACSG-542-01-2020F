@@ -16,13 +16,13 @@ module OpenChain; class FenixSqlProxyClient < SqlProxyClient
   end
 
   def request_images_for_transaction_number transaction_number, s3_bucket, sqs_queue
-    return if transaction_number.to_s.blank? 
+    return if transaction_number.to_s.blank?
 
     request 'fenix_documents_for_transaction', {transaction_number: transaction_number}, {s3_bucket: s3_bucket, sqs_queue: sqs_queue}, {swallow_error: false}
   end
 
   def request_lvs_child_transactions transaction_number
-    return if transaction_number.to_s.blank? 
+    return if transaction_number.to_s.blank?
 
     request 'lvs_child_transactions', {transaction_number: transaction_number.to_s}, {}, {swallow_error: false}
   end

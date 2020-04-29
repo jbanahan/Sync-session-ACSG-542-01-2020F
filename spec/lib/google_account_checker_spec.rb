@@ -7,7 +7,7 @@ describe OpenChain::GoogleAccountChecker do
 
   describe "run_schedulable" do
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:google_user_list).and_return user_list
     end
 

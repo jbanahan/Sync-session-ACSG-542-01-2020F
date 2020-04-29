@@ -5,7 +5,7 @@ class DashboardWidgetsController < ApplicationController
   end
 
   def index
-    @no_action_bar = true #implements it's own in the dashboard index.html.erb
+    @no_action_bar = true # implements it's own in the dashboard index.html.erb
     @widgets = current_user.dashboard_widgets.by_rank
   end
 
@@ -16,11 +16,11 @@ class DashboardWidgetsController < ApplicationController
   def save
     to_save = params[:dashboard_widget]
     current_user.dashboard_widgets.destroy_all
-    to_save.each do |k,v|
+    to_save.each do |k, v|
       unless v[:search_setup_id]=="none"
         ss = SearchSetup.find(v[:search_setup_id])
         if !ss.nil? && ss.user_id == current_user.id
-          ss.dashboard_widgets.create(:rank=>v[:rank],:user_id=>current_user.id)
+          ss.dashboard_widgets.create(:rank=>v[:rank], :user_id=>current_user.id)
         end
       end
     end

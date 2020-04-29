@@ -1,14 +1,14 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
 
   before :each do
-    #UNDER ARMOUR IS DESIGNED TO RUN IN THEIR OWN DATABASE AND USES THE FIRST IMPORTER IN THE DB
-    @importer = Factory(:company,:importer=>true)
+    # UNDER ARMOUR IS DESIGNED TO RUN IN THEIR OWN DATABASE AND USES THE FIRST IMPORTER IN THE DB
+    @importer = Factory(:company, :importer=>true)
   end
   context "AAFES Exports" do
     before :each do
-      DrawbackImportLine.create!(:part_number=>"1000375-609-LG+CN",:import_date=>"2011-10-01",:quantity=>10,:product_id=>Factory(:product,:unique_identifier=>'1000375-609').id)
-      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+TW",:import_date=>"2011-10-01",:quantity=>10,:product_id=>Factory(:product,:unique_identifier=>'1000377-001').id)
-      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+MY",:import_date=>"2011-11-01",:quantity=>10,:product_id=>Product.find_by(unique_identifier: '1000377-001').id)
+      DrawbackImportLine.create!(:part_number=>"1000375-609-LG+CN", :import_date=>"2011-10-01", :quantity=>10, :product_id=>Factory(:product, :unique_identifier=>'1000375-609').id)
+      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+TW", :import_date=>"2011-10-01", :quantity=>10, :product_id=>Factory(:product, :unique_identifier=>'1000377-001').id)
+      DrawbackImportLine.create!(:part_number=>"1000377-001-XXL+MY", :import_date=>"2011-11-01", :quantity=>10, :product_id=>Product.find_by(unique_identifier: '1000377-001').id)
       @lines = [
 "Style,Color,UPC,PO Number,PO Line Number,Export Date,TCMD CONTAINER,VAN TCN,PO Received Date,Vendor,VENDOR NAME,Facility,ISO,FACNAME,Item,DESC,CRC,STYLE2,Units Received,Cost,Recd $",
 "1000375-609,LG,698611559156,0055404558,5,10/2/2011,MSKU 812950 ,HX7NNW-3903-S0622M2,11-Nov-11,60581514,UNDER ARMOUR,1375142,DE,GRAFENWOEHR MAIN STORE,470566840000001,UA MEN TOP MAROON LARGE,4947811,1000375609,20,$9.50 ,$190.00",
@@ -25,8 +25,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     end
     it "should parse multi line CSV" do
       line = DutyCalcExportFileLine.find_by(part_number: '1000375-609-LG+CN')
-      expect(line.export_date).to eq(Date.new(2011,10,2))
-      expect(line.ship_date).to eq(Date.new(2011,10,2))
+      expect(line.export_date).to eq(Date.new(2011, 10, 2))
+      expect(line.ship_date).to eq(Date.new(2011, 10, 2))
       expect(line.ref_1).to eq('0055404558')
       expect(line.ref_2).to eq('5')
       expect(line.ref_3).to eq("AAFES - NOT FOR ABI")
@@ -88,8 +88,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
     describe "parse_csv_line" do
       it "should parse a line into a DutyCalcExportFileLine" do
         d = described_class.parse_csv_line @lines[1].parse_csv, 0, @importer
-        expect(d.export_date).to eq(Date.new(2010,3,5))
-        expect(d.ship_date).to eq(Date.new(2010,3,5))
+        expect(d.export_date).to eq(Date.new(2010, 3, 5))
+        expect(d.ship_date).to eq(Date.new(2010, 3, 5))
         expect(d.part_number).to eq("1000382-001-LG+BD")
         expect(d.carrier).to be_nil
         expect(d.ref_1).to eq("85439724")
@@ -140,8 +140,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser do
         described_class.parse_fmi_csv_line @lines[1]
         expect(DutyCalcExportFileLine.count).to eq(1)
         d = DutyCalcExportFileLine.first
-        expect(d.export_date).to eq(Date.new(2010,1,7))
-        expect(d.ship_date).to eq(Date.new(2010,1,7))
+        expect(d.export_date).to eq(Date.new(2010, 1, 7))
+        expect(d.ship_date).to eq(Date.new(2010, 1, 7))
         expect(d.part_number).to eq("1211721-001-LG+CN")
         expect(d.carrier).to be_nil
         expect(d.ref_1).to eq("4500110966")

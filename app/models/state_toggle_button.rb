@@ -64,7 +64,7 @@ class StateToggleButton < ActiveRecord::Base
     raise "Object is not associated with a core module." unless cm
     active_state_toggle_buttons_for_module(cm) do |buttons|
       buttons.each do |btn|
-        r << btn if user_permission?(btn,user) && object_matches_button_criterions?(btn,obj,user)
+        r << btn if user_permission?(btn, user) && object_matches_button_criterions?(btn, obj, user)
       end
     end
     r
@@ -75,7 +75,7 @@ class StateToggleButton < ActiveRecord::Base
     user_to_write = nil
     uf = user_field
 
-    if to_be_activated?(obj) #it's not active, so the user is activating; hence we write values
+    if to_be_activated?(obj) # it's not active, so the user is activating; hence we write values
       date_to_write = Time.zone.now
       user_to_write = uf.user_id_field? ? user.id : user
     end
@@ -111,8 +111,8 @@ class StateToggleButton < ActiveRecord::Base
   def self.object_matches_button_criterions? btn, obj, user
     matches = true
     btn.search_criterions.each do |sc|
-      matches = sc.test?(obj,user)
-      break unless matches #stop processing if any test fails
+      matches = sc.test?(obj, user)
+      break unless matches # stop processing if any test fails
     end
     matches
   end
@@ -148,9 +148,9 @@ class StateToggleButton < ActiveRecord::Base
     def one_user_field
       errors.add(:base, "Button can not have both user and custom user values.") if !self.user_attribute.blank? && !self.user_custom_definition.blank?
     end
-    
+
     def validate_model_fields
-      if !self.disabled? 
+      if !self.disabled?
         errors.add(:base, "Invalid date model field utilized.") if date_field.blank?
         errors.add(:base, "Invalid user model field utilized.") if user_field.blank?
       end

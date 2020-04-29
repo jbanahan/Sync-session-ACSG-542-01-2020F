@@ -22,9 +22,9 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
   end
 
   def business_logic_errors
-    @business_logic_errors ||= Hash.new { |h,k| h[k] = [] }
+    @business_logic_errors ||= Hash.new { |h, k| h[k] = [] }
   end
-  
+
   def port port_code
     Port.where(unlocode: port_code).first
   end
@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
     last_exported_from_source = parse_dtm_date_value date_time
     raise EdiStructuralError, "Invalid BSN03 / BSN04 Date/Time formatting for value #{date_time}." unless last_exported_from_source
 
-    find_and_process_shipment(importer, imp_reference, last_exported_from_source, last_file_bucket, last_file_path) do |shipment|      
+    find_and_process_shipment(importer, imp_reference, last_exported_from_source, last_file_bucket, last_file_path) do |shipment|
       process_shipment(shipment, edi_segments)
       raise_business_logic_errors if business_logic_errors.keys.present?
       shipment.save!
@@ -58,11 +58,11 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
     message = "".html_safe
     if business_logic_errors[:missing_orders].present?
       message << "<br>Ellery orders are missing for the following Order Numbers:<br>".html_safe
-      message << business_logic_errors[:missing_orders].map{ |o| CGI.escapeHTML o }.join('<br>').html_safe
+      message << business_logic_errors[:missing_orders].map { |o| CGI.escapeHTML o }.join('<br>').html_safe
     end
     if business_logic_errors[:missing_lines].present?
       message << "<br>Ellery order lines are missing for the following Order / Part Number pairs:<br>".html_safe
-      message << business_logic_errors[:missing_lines].map{ |ol| CGI.escapeHTML ol }.join('<br>').html_safe
+      message << business_logic_errors[:missing_lines].map { |ol| CGI.escapeHTML ol }.join('<br>').html_safe
     end
     raise EdiBusinessLogicError, message
   end
@@ -75,10 +75,10 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
       shipment = s if process_file?(s, last_exported_from_source)
     end
     if shipment
-      Lock.with_lock_retry(shipment) do 
-        shipment.assign_attributes(importer_reference: imp_reference, last_exported_from_source: last_exported_from_source, 
+      Lock.with_lock_retry(shipment) do
+        shipment.assign_attributes(importer_reference: imp_reference, last_exported_from_source: last_exported_from_source,
                                    last_file_bucket: last_file_bucket, last_file_path: last_file_path, gross_weight: 0, volume: 0)
-        yield shipment 
+        yield shipment
       end
     end
   end
@@ -179,7 +179,7 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
     td1 = find_segment(container_segments, "TD1")
     td3 = find_segment(container_segments, "TD3")
     raise EdiStructuralError, "All 856 documents should contain a TD3 segment." if td3.nil?
-    
+
     shipment.gross_weight += BigDecimal(value(td1, 7))
     shipment.volume += BigDecimal(value(td1, 9))
     shipment.shipment_type = value(ref, 2) if value(ref, 1) == "XY"
@@ -202,7 +202,7 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
         business_logic_errors[:missing_orders] << order_number
         return
       end
-      
+
       h[k] = order
     end
 
@@ -213,7 +213,7 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
     lin = find_segment(item_segments, "LIN")
     raise EdiStructuralError, "All Item HL Loops must contain an LIN segment." if lin.nil?
 
-    part_num = value(lin, 3) if value(lin, 2) == "IN" 
+    part_num = value(lin, 3) if value(lin, 2) == "IN"
     if part_num
       order_line = order.order_lines.find { |line| line.product.try(:custom_value, cdefs[:prod_part_number]) == part_num }
     end
@@ -234,11 +234,11 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
   def process_item_sln line, item_segments
     find_segments(item_segments, "SLN") do |sln|
       v = value(sln, 4)
-      
+
       case value(sln, 1)
       when "Q1"
         line.quantity = v
-      when "Q2"  
+      when "Q2"
         line.carton_qty = v
       when "Q3"
         line.cbms = v
@@ -268,12 +268,12 @@ module OpenChain; module CustomHandler; module Ellery; class Ellery856Parser
   def assign_header_master_bill shipment, mbol
     if shipment.master_bill_of_lading
       mbol_set = shipment.master_bill_of_lading.split("\n ").to_set
-      shipment.master_bill_of_lading = mbol_set.add(mbol).to_a.join("\n ") 
+      shipment.master_bill_of_lading = mbol_set.add(mbol).to_a.join("\n ")
     else
       shipment.master_bill_of_lading = mbol
     end
   end
-  
+
   def process_item_dtm shipment, line, item_segments
     find_segments(item_segments, "DTM") do |dtm|
       v = value(dtm, 2)

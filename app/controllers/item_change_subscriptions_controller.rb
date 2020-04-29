@@ -6,7 +6,7 @@ class ItemChangeSubscriptionsController < ApplicationController
       format.xml  { render :xml => @orders }
     end
   end
-  
+
   def create
     ics = ItemChangeSubscription.new(params[:item_change_subscription])
     e_msg = ics.user == current_user ? can_view(ics) : "You can only subscribe for yourself, not another user."
@@ -19,7 +19,7 @@ class ItemChangeSubscriptionsController < ApplicationController
       error_redirect e_msg
     end
   end
-  
+
   def update
     ics = ItemChangeSubscription.find(params[:id])
     if current_user.id.to_s == params[:item_change_subscription][:user_id]
@@ -34,9 +34,9 @@ class ItemChangeSubscriptionsController < ApplicationController
       redirect_to request.referrer
     else
       error_redirect "You do not have permission to edit another user's subscription."
-    end    
+    end
   end
-  
+
   def destroy
     ics = ItemChangeSubscription.find(params[:id])
     if ics.user == current_user
@@ -47,18 +47,18 @@ class ItemChangeSubscriptionsController < ApplicationController
       error_redirect "You do not have permission to delete another user's subscription."
     end
   end
-  
-  private 
-  
+
+  private
+
   def can_view(ics)
     if !ics.order.nil? && !ics.order.can_view?(current_user)
       return "You do not have permission to subscribe to this order."
     end
     if !ics.shipment.nil? && !ics.shipment.can_view?(current_user)
       return "You do not have permission to subscribe to this shipment."
-    end    
+    end
     if !ics.product.nil? && !ics.product.can_view?(current_user)
       return "You do not have permission to subscribe to this product."
-    end    
+    end
   end
 end

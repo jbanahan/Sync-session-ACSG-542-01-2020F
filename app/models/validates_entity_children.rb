@@ -1,21 +1,21 @@
-# When included, this module allows you to write business logic validations directly against a 
+# When included, this module allows you to write business logic validations directly against a
 # child object of the base entity.  .ie you essentially don't have to repeat the looping
 # logic for finding child lines.
 #
-# Classes including this module must implement the following methods: 
+# Classes including this module must implement the following methods:
 
 # child_objects - returns an object responding to "each" that will enumerate all the child objects of the object passed into run_validation
 # that should be validated. EX: If you want to validate against invoice lines, child_objects should return an "each"able object containing
-# all the commercial invoice lines from the passed in entry to validate. 
+# all the commercial invoice lines from the passed in entry to validate.
 # run_child_validation - runs the actual validation check against the child level entity you're checking.  Receives and instance
 # of the contents of the object returned by child_objects.
 # module_chain - Returns an array of the core modules used in the validation, ordering should go from parent -> child.
 # module_chain_entities - Given a value from the child_objects array, it must return a hash populated with the objects that make
 # up the core module chain.
-# 
+#
 # Optional:
 # setup_validation - if defined, will be called prior to executing any child level validations.
-# 
+#
 module ValidatesEntityChildren
 
   def run_validation entity
@@ -32,7 +32,7 @@ module ValidatesEntityChildren
       if matches_all_criteria?(child, sc_hash)
         child_messages = run_child_validation(child)
         if !child_messages.blank?
-          validation_messages.push(*child_messages)  
+          validation_messages.push(*child_messages)
         end
       end
     end
@@ -86,7 +86,7 @@ module ValidatesEntityChildren
   end
 
   # Calling this method will stop the run_validation method from continuing to iterate over and validate
-  # the child entities - it will then report any existing validation messages accrewed at the time when stop is called.  
+  # the child entities - it will then report any existing validation messages accrewed at the time when stop is called.
   # Utilize this method in situations where you want to stop the validation process after finding
   # an invalid condition in the child entities.
   def stop_validation

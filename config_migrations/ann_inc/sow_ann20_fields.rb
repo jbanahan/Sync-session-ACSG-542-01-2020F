@@ -2,7 +2,7 @@
 require 'open_chain/custom_handler/ann_inc/ann_custom_definition_support'
 module ConfigMigrations; module AnnInc; class SowAnn20Fields
   include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
-  DEFS = [:ordln_ac_date, :ac_date, :ord_ac_date, :dsp_effective_date,:vend_comments,:ord_type, :dsp_type, :ordln_import_country, :mp_type, :ord_docs_required, :ord_docs_completed_by, :ord_docs_completed_date,:ord_audit_complete_by,:ord_audit_complete_date, :ord_audit_initiated_by, :ord_audit_initiated_date,:ord_cancelled,:ord_split_order]
+  DEFS = [:ordln_ac_date, :ac_date, :ord_ac_date, :dsp_effective_date, :vend_comments, :ord_type, :dsp_type, :ordln_import_country, :mp_type, :ord_docs_required, :ord_docs_completed_by, :ord_docs_completed_date, :ord_audit_complete_by, :ord_audit_complete_date, :ord_audit_initiated_by, :ord_audit_initiated_date, :ord_cancelled, :ord_split_order]
 
   def defs
     @defs ||= self.class.prep_custom_definitions DEFS
@@ -48,7 +48,7 @@ module ConfigMigrations; module AnnInc; class SowAnn20Fields
 
   def drop_custom_fields
     defs = self.class.prep_custom_definitions DEFS
-    defs.values.each do |cd|
+    defs.each_value do |cd|
       cd.custom_values.delete_all
       cd.destroy
     end
@@ -56,16 +56,16 @@ module ConfigMigrations; module AnnInc; class SowAnn20Fields
   end
 
   def drop_business_rules
-    bvt = BusinessValidationTemplate.where(name:'Order Review',module_type:'Order').first
+    bvt = BusinessValidationTemplate.where(name:'Order Review', module_type:'Order').first
     bvt.business_validation_rules.destroy_all if bvt.present?
     bvt.destroy if bvt.present?
-    bvt = BusinessValidationTemplate.where(name:'Order Validations',module_type:'Order').first
+    bvt = BusinessValidationTemplate.where(name:'Order Validations', module_type:'Order').first
     bvt.business_validation_rules.destroy_all if bvt.present?
     bvt.destroy if bvt.present?
-    bvt = BusinessValidationTemplate.where(name:"Vendor MP Type All Docs",module_type:"Order").first
+    bvt = BusinessValidationTemplate.where(name:"Vendor MP Type All Docs", module_type:"Order").first
     bvt.business_validation_rules.destroy_all if bvt.present?
     bvt.destroy if bvt.present?
-    bvt = BusinessValidationTemplate.where(name:"Vendor MP Type Upon Request",module_type:"Order").first
+    bvt = BusinessValidationTemplate.where(name:"Vendor MP Type Upon Request", module_type:"Order").first
     bvt.business_validation_rules.destroy_all if bvt.present?
     bvt.destroy if bvt.present?
     fvr = FieldValidatorRule.where(model_field_uid: 'ord_selling_agent_name', module_type: 'Order').first
@@ -73,17 +73,17 @@ module ConfigMigrations; module AnnInc; class SowAnn20Fields
   end
 
   def drop_groups
-    Group.where("system_code IN (?)", ['ANN_USERS','ANN_VENDORS']).each {|q| q.destroy}
+    Group.where("system_code IN (?)", ['ANN_USERS', 'ANN_VENDORS']).each {|q| q.destroy}
   end
 
   def drop_buttons
-    buttons = ["Docs Complete","Audit Complete", "Audit Initiated"]
+    buttons = ["Docs Complete", "Audit Complete", "Audit Initiated"]
     StateToggleButton.where(activate_text: buttons).delete_all
   end
 
   def generate_search_configs cdefs
     make_config "Issued", [
-        {field:'ord_closed_at',operator:'null'}
+        {field:'ord_closed_at', operator:'null'}
     ], cdefs
 
     make_config "Docs Not Complete", [
@@ -101,13 +101,13 @@ module ConfigMigrations; module AnnInc; class SowAnn20Fields
     ], cdefs
 
     make_config "AC Date - Next 30 Days", [
-      {field:cdefs[:ord_ac_date].model_field_uid.to_s,operator:'bdf',val:'30'},
-      {field:cdefs[:ord_ac_date].model_field_uid.to_s,operator:'adf',val:'0'}
+      {field:cdefs[:ord_ac_date].model_field_uid.to_s, operator:'bdf', val:'30'},
+      {field:cdefs[:ord_ac_date].model_field_uid.to_s, operator:'adf', val:'0'}
     ], cdefs
 
     make_config "AC Date - Next 90 Days", [
-        {field:cdefs[:ord_ac_date].model_field_uid.to_s,operator:'bdf',val:'90'},
-        {field:cdefs[:ord_ac_date].model_field_uid.to_s,operator:'adf',val:'0'}
+        {field:cdefs[:ord_ac_date].model_field_uid.to_s, operator:'bdf', val:'90'},
+        {field:cdefs[:ord_ac_date].model_field_uid.to_s, operator:'adf', val:'0'}
     ], cdefs
   end
 
@@ -141,15 +141,15 @@ module ConfigMigrations; module AnnInc; class SowAnn20Fields
   end
 
   def generate_groups
-    Group.where(system_code: 'ANN_USERS').first_or_create!(system_code:'ANN_USERS',name: 'Ann Inc Users',description: 'Ann Inc Employees.')
-    Group.where(system_code: 'ANN_VENDORS').first_or_create!(system_code:'ANN_VENDORS',name: 'Ann Inc Vendors',description: 'Ann Inc Vendors')
+    Group.where(system_code: 'ANN_USERS').first_or_create!(system_code:'ANN_USERS', name: 'Ann Inc Users', description: 'Ann Inc Employees.')
+    Group.where(system_code: 'ANN_VENDORS').first_or_create!(system_code:'ANN_VENDORS', name: 'Ann Inc Vendors', description: 'Ann Inc Vendors')
   end
 
   def generate_business_rules
     defs = self.class.prep_custom_definitions DEFS
     bvt = BusinessValidationTemplate.where(name: "Order Review", module_type: "Order").first_or_create!(description: 'All orders that have an AC Date before 120 days in docs required with no docs attached')
-    bvt.search_criterions.create!(operator:"ada",value:"120",model_field_uid:"ord_window_start") if bvt.search_criterions.empty?
-    bvt.search_criterions.create!(operator:"eq",value: 'y', model_field_uid:"#{defs[:ord_docs_required].model_field_uid}") if bvt.search_criterions.count < 2
+    bvt.search_criterions.create!(operator:"ada", value:"120", model_field_uid:"ord_window_start") if bvt.search_criterions.empty?
+    bvt.search_criterions.create!(operator:"eq", value: 'y', model_field_uid:"#{defs[:ord_docs_required].model_field_uid}") if bvt.search_criterions.count < 2
     bvt.business_validation_rules.create!(
         type:'ValidationRuleFieldFormat',
         name:'Documents Required before 120 days',
@@ -159,8 +159,8 @@ module ConfigMigrations; module AnnInc; class SowAnn20Fields
     )
 
     bvt = BusinessValidationTemplate.where(name: "Order Validations", module_type: "Order").first_or_create!(description: 'All orders that have an AC Date past 120 days must have documents attached')
-    bvt.search_criterions.create!(operator:"bda",value:"120",model_field_uid:"ord_window_start") if bvt.search_criterions.empty?
-    bvt.search_criterions.create!(operator:"eq",value: 'y', model_field_uid:"#{defs[:ord_docs_required].model_field_uid}") if bvt.search_criterions.count < 2
+    bvt.search_criterions.create!(operator:"bda", value:"120", model_field_uid:"ord_window_start") if bvt.search_criterions.empty?
+    bvt.search_criterions.create!(operator:"eq", value: 'y', model_field_uid:"#{defs[:ord_docs_required].model_field_uid}") if bvt.search_criterions.count < 2
     bvt.business_validation_rules.create!(
         type:'ValidationRuleFieldFormat',
         name:'Documents Required',
@@ -252,7 +252,7 @@ module ConfigMigrations; module AnnInc; class SowAnn20Fields
     base_sorts = [
         {field:'ord_ord_num'}
     ]
-    stc = SearchTableConfig.new(name:name,page_uid:'chain-vp-order-panel')
+    stc = SearchTableConfig.new(name:name, page_uid:'chain-vp-order-panel')
     stc.config_hash = {
         columns: base_columns,
         sorts: base_sorts,

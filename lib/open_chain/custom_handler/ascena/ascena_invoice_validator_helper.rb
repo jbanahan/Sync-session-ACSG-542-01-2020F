@@ -1,5 +1,5 @@
 module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValidatorHelper
-  
+
   # assumptions: No commercial_invoice_line on the entry has more than one commercial_invoice_tariff
   #              No hts/coo combination appears on a fenix invoice more than once
   def audit entry, style_list
@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
       errors << hts_list_diff(unrolled, fenix, fenix_by_hts_coo)
       errors << style_list_match(unrolled, style_list) if style_list
     end
-    errors.reject{ |err| err.empty? }.join("\n")
+    errors.reject { |err| err.empty? }.join("\n")
   end
 
   def invoice_list_diff unrolled, fenix
@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
     fenix.each { |row| fenix_inv_numbers.add(filter(row['invoice_number'], "BLANK")) }
     if unrolled_inv_numbers == fenix_inv_numbers
       ""
-    else 
+    else
       only_fenix = fenix_inv_numbers - unrolled_inv_numbers
       "Missing unrolled invoices: #{only_fenix.to_a.join(", ")}"
     end
@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
 
   def total_per_hts_coo_diff field, unrolled_by_hts_coo, fenix_by_hts_coo
     error = check_fenix_against_unrolled(field, unrolled_by_hts_coo, fenix_by_hts_coo)
-              .concat check_unrolled_against_fenix(field, unrolled_by_hts_coo, fenix_by_hts_coo)   
+              .concat check_unrolled_against_fenix(field, unrolled_by_hts_coo, fenix_by_hts_coo)
     error.presence ? "Total #{field.to_s} per HTS/country-of-origin:\n" << (error.join("\n") + "\n") : ""
   end
 
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
   end
 
   # collects only missing hts/coo combinations from fenix
-  def check_unrolled_against_fenix field, unrolled_by_hts_coo, fenix_by_hts_coo 
+  def check_unrolled_against_fenix field, unrolled_by_hts_coo, fenix_by_hts_coo
     error = []
     unrolled_by_hts_coo.each do |hts, outer|
       outer.each do |coo, inner|
@@ -95,26 +95,26 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
     error << ("Unrolled Invoices missing HTS code(s) on B3: " << unexpected_hts_errors.join(", ")) if unexpected_hts_errors.presence
     error.presence ? error.join("\n") + "\n" : ""
   end
-  
+
   def style_list_match unrolled, style_list
     flagged = get_style_list(unrolled) & style_list
     flagged.empty? ? "" : "Unrolled Invoices include flagged style(s): #{flagged.to_a.join(', ')}\n"
   end
-  
+
   def arrange_by_hts_coo fenix
     converted = Hash.new { |h, k| h[k] = {} }
     fenix.each do |row|
       hts = filter(row["hts_code"], "BLANK")
       coo = filter(row["country_origin_code"], "BLANK")
-      converted[hts][coo] = {invoice_number: filter(row["invoice_number"], "BLANK"), quantity: filter(row["quantity"], 0), 
-                             value: filter(row["value"], 0), subheader_number: filter(row["subheader_number"], "BLANK"), 
+      converted[hts][coo] = {invoice_number: filter(row["invoice_number"], "BLANK"), quantity: filter(row["quantity"], 0),
+                             value: filter(row["value"], 0), subheader_number: filter(row["subheader_number"], "BLANK"),
                              customs_line_number: filter(row["customs_line_number"], "BLANK")}
     end
     converted
   end
 
   def sum_per_hts_coo unrolled
-    result = Hash.new do |h, k| 
+    result = Hash.new do |h, k|
       h[k] = Hash.new { |h2, k2| h2[k2] = {quantity: 0, value: 0} }
     end
     unrolled.each do |row|
@@ -125,7 +125,6 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
     end
     result
   end
-  
 
   private
 
@@ -138,7 +137,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
   end
 
   def total field, results
-    results.inject(0){ |acc, row| acc + filter(row[field.to_s], 0) }
+    results.inject(0) { |acc, row| acc + filter(row[field.to_s], 0) }
   end
 
   def get_style_list results
@@ -159,7 +158,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaInvoiceValida
             "  INNER JOIN commercial_invoice_lines AS cil ON ci.id = cil.commercial_invoice_id " \
             "  INNER JOIN commercial_invoice_tariffs AS cit ON cil.id = cit.commercial_invoice_line_id " \
             "WHERE ci.entry_id IS NULL AND ci.importer_id = ? AND ci.invoice_number IN (?)"
-  
+
     ActiveRecord::Base.connection.exec_query(ActiveRecord::Base.sanitize_sql_array([query, importer_id, invoice_numbers]))
   end
 

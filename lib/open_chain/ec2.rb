@@ -15,13 +15,13 @@ module OpenChain; class Ec2
     inst ? Ec2Instance.new(inst) : nil
   end
 
-  # 
+  #
   # Given a ec2_instance (either an EC2Instance object or an instance_id string), generates
   # a snapshot for every volume associated with the instance (or just the volumes specified
-  # by the volume_ids param).  
+  # by the volume_ids param).
   #
   # Any hash key / value strings provided in the tags parameter will be set on the snapshots as well.
-  # 
+  #
   def self.create_snapshots_for_instance ec2_instance, snapshot_description, tags: {}, volume_ids: []
     if !ec2_instance.is_a?(Ec2Instance)
       inst = find_instance(ec2_instance.to_s)
@@ -74,10 +74,10 @@ module OpenChain; class Ec2
   end
 
   def self.create_resource_tags client, resource_ids, tags
-    iterations = 0  
+    iterations = 0
     begin
       # Just keep attempting to add tags until we are finally able to...I tried waiting on the snapshot instance being
-      # available to the API by waiting till find_snapshot returned a non-nil value, but that didn't seem to work.  
+      # available to the API by waiting till find_snapshot returned a non-nil value, but that didn't seem to work.
       # .ie the Snapshot was visible to the API, but not available to add tags to the snapshot.
       resource_ids = resource_ids.find_all do |id|
         tags_created = false
@@ -163,7 +163,7 @@ module OpenChain; class Ec2
   end
   private_class_method :ec2_client_region
 
-  # This class mostly exists so that we're not directly dealing with any specific types returned by the AWS lib, 
+  # This class mostly exists so that we're not directly dealing with any specific types returned by the AWS lib,
   # this allows us to insulate changes to the aws lib to only needing to be made here if we need to update the lib
   # it also gives us a very specific oversight of what touchpoints we utilize in the EC2 lib.
   class Ec2Instance
@@ -187,11 +187,11 @@ module OpenChain; class Ec2
 
     def volumes
       @volumes ||= begin
-        # There's no way we'll use an instance with more than 1000 volumes, so this is a way to ensure that 
+        # There's no way we'll use an instance with more than 1000 volumes, so this is a way to ensure that
         # we'll always pull volume information for every volume attached to an instance.
         @instance.volumes(max_results: 1000).map {|v| Ec2Volume.new v }
       end
-      
+
       @volumes
     end
 

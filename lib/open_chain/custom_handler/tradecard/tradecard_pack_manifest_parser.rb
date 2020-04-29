@@ -3,12 +3,12 @@ require 'open_chain/custom_handler/shipment_parser_support'
 
 module OpenChain; module CustomHandler; module Tradecard; class TradecardPackManifestParser
   include OpenChain::CustomHandler::ShipmentParserSupport
-  
+
   def self.process_attachment shipment, attachment, user, opts = {}
     parse shipment, attachment.attached.path, user, opts[:manufacturer_address_id], opts[:enable_warnings]
   end
   def self.parse shipment, path, user, manufacturer_address_id=nil, enable_warnings=nil
-    self.new.run(shipment,OpenChain::XLClient.new(path),user, manufacturer_address_id, enable_warnings)
+    self.new.run(shipment, OpenChain::XLClient.new(path), user, manufacturer_address_id, enable_warnings)
   end
 
   def run shipment, xl_client, user, manufacturer_address_id=nil, enable_warnings=nil
@@ -35,13 +35,13 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   end
 
   def mode rows
-    rows.collect { |row| 
+    rows.collect { |row|
       (row.size >= 8 && row[4] == 'Method') ? row[11] : nil
     }.compact.first
   end
 
   def add_containers shipment, rows
-    equipment_header_row = header_row_index(rows,'EQUIPMENT SUMMARY')
+    equipment_header_row = header_row_index(rows, 'EQUIPMENT SUMMARY')
     return unless equipment_header_row
     cursor = equipment_header_row+2
     while cursor < rows.size
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   def add_lines user, shipment, rows, manufacturer_address_id, enable_warnings
     max_line_number = 0
     shipment.shipment_lines.each {|sl| max_line_number = sl.line_number if sl.line_number && sl.line_number > max_line_number }
-    carton_detail_header_row = header_row_index(rows,'CARTON DETAIL', 'PACKAGE DETAIL')
+    carton_detail_header_row = header_row_index(rows, 'CARTON DETAIL', 'PACKAGE DETAIL')
 
     return unless carton_detail_header_row
     cursor = carton_detail_header_row+2
@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     sku = OpenChain::XLClient.string_value row[20]
     qty = clean_number(row[29])
     ol = find_order_line shipment, po, sku
-    sl = shipment.shipment_lines.build(product:ol.product,quantity:qty, manufacturer_address_id:manufacturer_address_id)
+    sl = shipment.shipment_lines.build(product:ol.product, quantity:qty, manufacturer_address_id:manufacturer_address_id)
     sl.gross_kgs = BigDecimal("0")
     sl.carton_qty = 0
     sl.cbms = BigDecimal("0")
@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
 
   def clean_number num
     return nil if num.blank?
-    num.to_s.gsub(',','').strip
+    num.to_s.gsub(',', '').strip
   end
 
   def convert_number num, conversion
@@ -126,7 +126,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
   def find_order_line shipment, po, sku
     ord = order_cache[po]
     if ord.nil?
-      ord = Order.where(customer_order_number:po,importer_id:shipment.importer_id).includes(:order_lines).first
+      ord = Order.where(customer_order_number:po, importer_id:shipment.importer_id).includes(:order_lines).first
       raise_error("Order Number #{po} not found.") unless ord
       order_cache[po] = ord
     end
@@ -162,7 +162,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
 
     weight_factor = (row[48].to_s.strip == 'LB') ? BigDecimal("0.453592") : 1
     dim_factor = dimension_coversion_factor(row[55].to_s.strip)
-    
+
     cs.carton_qty = clean_number row[37]
     cs.net_net_kgs = convert_number row[42], weight_factor
     cs.net_kgs = convert_number row[45], weight_factor
@@ -217,7 +217,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
 
       carton_sets << cs
     end
-    
+
     shipment.volume = (shipment.volume.presence || BigDecimal(0)) + volume
     shipment.gross_weight = (shipment.gross_weight.presence || BigDecimal(0)) + gross_weight
     # Only add packages to total if the uom is blank or cartons
@@ -242,7 +242,6 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
     carton_sets.each_pair do |cs, lines|
       total_cartons = (cs.carton_qty.presence || 0)
       total_weight = cs.total_gross_kgs(4)
-      
 
       if lines.length == 1
         line = lines[0]
@@ -271,7 +270,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
           lines.first.cbms ||= BigDecimal("0")
           lines.first.cbms += (cbms - total)
         end
-        
+
         prorate_carton(total_cartons, lines)
       end
     end
@@ -297,7 +296,7 @@ module OpenChain; module CustomHandler; module Tradecard; class TradecardPackMan
 
     begin
       shipment_lines.each do |line|
-        # TODO Figure out prorations of very small values without 
+        # TODO Figure out prorations of very small values without
         if remainder < BigDecimal("0.0099")
           val = line.attributes[attribute.to_s]
           line.assign_attributes({attribute => (val + remainder)})

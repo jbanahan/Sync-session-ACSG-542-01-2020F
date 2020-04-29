@@ -1,5 +1,5 @@
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOrderBooking
-  
+
   def self.can_book? order, user
     return false unless user.edit_shipments?
     return false unless user.company == order.vendor
@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     first_port_of_receipt = shipment.first_port_receipt
     return false unless first_port_of_receipt
 
-    # If the shipment's first port of receipt does not match any booked order's fob point, then 
+    # If the shipment's first port of receipt does not match any booked order's fob point, then
     # we'll want to add an error notification that indicates as much (screen will take care of displaying this)
      # FOB point should never be blank (it's required for LL vendors to accept the order)
     fob_points = Set.new(Order.where(id: shipment.booking_lines.select(:order_id)).pluck(:fob_point).map {|l| l.to_s.upcase.strip} )
@@ -120,11 +120,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.request_booking_hook shipment, user
-    booking_hook(shipment,user)
+    booking_hook(shipment, user)
   end
 
   def self.revise_booking_hook shipment, user
-    booking_hook(shipment,user)
+    booking_hook(shipment, user)
   end
 
   def self.base_booking_permissions shipment, user

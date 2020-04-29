@@ -3,11 +3,11 @@
 # and to insulate from any shifting of the GPG implementation we may need to do.
 module OpenChain; class GPG
 
-  # This method provides abstractions to be able to utilize GPG to decrypted an encrypted 
+  # This method provides abstractions to be able to utilize GPG to decrypted an encrypted
   # IO object. Because this decryption scheme involves utilize the gpg command line program
   # and feeding file paths to it, the abstraction utilizes tempfiles for the data (unless given
   # File IO objects), thus the process is not particularly performant.
-  # 
+  #
   # It relies on drawing all data about the GPG private key from a key value that points to a key
   # below a primary 'gpg' key in the secrets.yml file.  A valid set up would look like this.
   # public_key_path is only needed for encryption (not decryption).
@@ -17,19 +17,19 @@ module OpenChain; class GPG
   #      private_key_path: config/some_key.asc
   #      passphrase: jklasdfj1u9012jay8123l
   #      public_key: config/some_public_key.asc
-  # 
   #
-  # NOTE: 
+  #
+  # NOTE:
   # It looks like it's possible to utilize stdin / stdout with the gpg binary (which should allow for
-  # piping those directly from / to the given IO objects), but doing so would involve heavy 
+  # piping those directly from / to the given IO objects), but doing so would involve heavy
   # refactoring of the internals of this class which is out of scope at the moment, though probably
   # a fun little project to consider in the future.
-  # 
+  #
   def self.decrypt_io encrypted_input, decrypted_output, gpg_secrets_key
     key_data = get_key_data(gpg_secrets_key, private_key_required: true)
-    
+
     gpg = self.new(nil, key_data['private_key_path'])
-    
+
     input_buffer = nil
     output_buffer = nil
     begin
@@ -65,7 +65,7 @@ module OpenChain; class GPG
   # IO object. Because this decryption scheme involves utilize the gpg command line program
   # and feeding file paths to it, the abstraction utilizes tempfiles for the data (unless given
   # File IO objects), thus the process is not particularly performant.
-  # 
+  #
   # It relies on drawing all data about the GPG private key from a key value that points to a key
   # below a primary 'gpg' key in the secrets.yml file.  A valid set up would look like this.
   # public_key_path is only needed for encryption (not decryption).
@@ -73,14 +73,14 @@ module OpenChain; class GPG
   #  gpg:
   #    some_key:
   #      public_key_path: config/some_key.asc
-  # 
   #
-  # NOTE: 
+  #
+  # NOTE:
   # It looks like it's possible to utilize stdin / stdout with the gpg binary (which should allow for
-  # piping those directly from / to the given IO objects), but doing so would involve heavy 
+  # piping those directly from / to the given IO objects), but doing so would involve heavy
   # refactoring of the internals of this class which is out of scope at the moment, though probably
   # a fun little project to consider in the future.
-  # 
+  #
   def self.encrypt_io plaintext_input, encrypted_output, gpg_secrets_key
     key_data = get_key_data(gpg_secrets_key, public_key_required: true)
     gpg = self.new(key_data['public_key_path'], nil)
@@ -116,7 +116,7 @@ module OpenChain; class GPG
     nil
   end
 
-  # Gets the key data for the given 
+  # Gets the key data for the given
   def self.get_key_data gpg_secrets_key, private_key_required: false, public_key_required: false
     key_data = MasterSetup.secrets["gpg"].try(:[], gpg_secrets_key.to_s)
     raise ArgumentError, "Missing gpg configuration for '#{gpg_secrets_key}'" if key_data.nil?
@@ -179,14 +179,14 @@ module OpenChain; class GPG
     end
 
     # The following class was pretty much lifted straight from the rgpg gem.  That gem has some issues that have been corrected
-    # here - since it's not maintained, I copied the code rather than PR'ing a fix.  
+    # here - since it's not maintained, I copied the code rather than PR'ing a fix.
     #
     # The nice thing about this class is that every invocation of it creates a 1 time use keychain/secret keychain.  You then don't
     # have to worry about the state of your gpg chain at any time, it's always rebuilt every invocation.  Since we don't encrypt/decrypt
     # files THAT often, the extra work is not that big of a deal.
     #
     # It does not allow setting the gpg binary name, nor does it function with gpg V2.  gpg v2.1 has it's own issues,
-    # mainly that you can't really pass the password on the commandline to it, because they require user interaction via 
+    # mainly that you can't really pass the password on the commandline to it, because they require user interaction via
     # an gpg-agent.  Hence, we need to make sure on older gpg v1 is available to use instead, at least for now.
     class GpgHelper
 
@@ -210,7 +210,7 @@ module OpenChain; class GPG
         def self.encrypt_file(public_key_file_name, input_file_name, output_file_name)
           raise ArgumentError.new("Public key file \"#{public_key_file_name}\" does not exist") unless File.exist?(public_key_file_name)
           raise ArgumentError.new("Input file \"#{input_file_name}\" does not exist") unless File.exist?(input_file_name)
-          
+
           with_temp_home_dir do |home_dir|
             recipient = get_recipient(home_dir, public_key_file_name)
             with_temporary_encrypt_keyring(home_dir, public_key_file_name) do |keyring_file_name|
@@ -233,7 +233,7 @@ module OpenChain; class GPG
          raise ArgumentError.new("Private key file \"#{private_key_file_name}\" does not exist") unless File.exist?(private_key_file_name)
           raise ArgumentError.new("Input file \"#{input_file_name}\" does not exist") unless File.exist?(input_file_name)
 
-          
+
           with_temp_home_dir do |home_dir|
             recipient = get_recipient(home_dir, private_key_file_name)
             with_temporary_decrypt_keyrings(home_dir, private_key_file_name, passphrase) do |keyring_file_name, secret_keyring_file_name|
@@ -251,7 +251,6 @@ module OpenChain; class GPG
               args.push *['--output', output_file_name, input_file_name]
               run_gpg_capture(home_dir, *args)
             end
-          
           end
         end
 
@@ -288,8 +287,8 @@ module OpenChain; class GPG
 
             result = system("#{command_line} > #{Shellwords.escape(output_file.path)} 2>&1")
 
-            #The easiest way to retrieve data written to a file outside of ruby is just to 
-            #open another file descriptor
+            # The easiest way to retrieve data written to a file outside of ruby is just to
+            # open another file descriptor
             output = IO.read(output_file.path)
             raise RuntimeError.new("gpg failed: #{output}") unless result
           end
@@ -347,7 +346,7 @@ module OpenChain; class GPG
                 '--secret-keyring', secret_keyring_file_name,
                 '--import', private_key_file_name
               ]
-              
+
 
               run_gpg_capture(home_dir, *args)
               yield keyring_file_name, secret_keyring_file_name
@@ -359,8 +358,8 @@ module OpenChain; class GPG
           Tempfile.open("gpg-key-ring") do |keyring_file|
             keyring_file_name = keyring_file.path
             begin
-              #keyring_file.close
-              #keyring_file.unlink
+              # keyring_file.close
+              # keyring_file.unlink
               yield keyring_file_name
             ensure
               # Apparently gpg makes a backup of the keyring file, this should be cleared too.

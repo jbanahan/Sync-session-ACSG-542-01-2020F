@@ -82,12 +82,12 @@ class InstantClassificationsController < ApplicationController
     }
   end
 
-  def update_rank 
+  def update_rank
     admin_secure {
-      params[:sort_order].each_with_index do |ic_id,index|
+      params[:sort_order].each_with_index do |ic_id, index|
         InstantClassification.find(ic_id).update_attributes(:rank=>index)
       end
-      render html: "" #effectively noop
+      render html: "" # effectively noop
     }
   end
 
@@ -99,7 +99,7 @@ class InstantClassificationsController < ApplicationController
       end
       errors_to_flash ic, :now=>true
       @instant_classification = ic
-      render :action=> :edit 
+      render :action=> :edit
     end
 
     def update_instant_classification ic

@@ -15,18 +15,18 @@ describe Api::V1::Admin::StateToggleButtonsController do
       user_cdefs = [{cdef_id: 1, label: "QA Hold By"}]
       date_cdefs = [{cdef_id: 2, label: "QA Hold Date"}]
       stb.search_criterions << Factory(:search_criterion)
-      
+
       expect_any_instance_of(described_class).to receive(:get_sc_mfs).with(stb).and_return sc_mfs
       expect_any_instance_of(described_class).to receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
       expect_any_instance_of(described_class).to receive(:get_user_and_date_cdefs).with(stb).and_return [user_cdefs, date_cdefs]
-      
+
       get :edit, id: stb.id, :format => "json"
-      output = {button: stb, 
-                criteria: stb.search_criterions.map{ |sc| sc.json(user) }, 
+      output = {button: stb,
+                criteria: stb.search_criterions.map { |sc| sc.json(user) },
                 sc_mfs: sc_mfs,
-                user_mfs: user_mfs, 
-                user_cdefs: user_cdefs, 
-                date_mfs: date_mfs, 
+                user_mfs: user_mfs,
+                user_cdefs: user_cdefs,
+                date_mfs: date_mfs,
                 date_cdefs: date_cdefs}
       expect(response.body).to eq(output.to_json)
     end
@@ -51,7 +51,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
         @stb.reload
         criteria = @stb.search_criterions
         new_criterion = (criteria.first.json user).to_json
-        
+
         expect(criteria.count).to eq 1
         expect(new_criterion).to eq (@stb_new_criteria.first).to_json
         expect(JSON.parse(response.body)["ok"]).to eq "ok"
@@ -68,17 +68,17 @@ describe Api::V1::Admin::StateToggleButtonsController do
       end
     end
     context "standard fields" do
-      let(:stb) do 
+      let(:stb) do
         Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by',
-                                      permission_group_system_codes: "CODE", 
+                                      permission_group_system_codes: "CODE",
                                       activate_text: "activate!",
                                       activate_confirmation_text: "activate sure?",
                                       deactivate_text: "deactivate!",
                                       deactivate_confirmation_text: "deactivate sure?" )
       end
       let(:new_params) do
-        {module_type: "Product", 
-         permission_group_system_codes: "CODE UPDATED", 
+        {module_type: "Product",
+         permission_group_system_codes: "CODE UPDATED",
          activate_text: "activate! updated",
          activate_confirmation_text: "activate sure? updated",
          deactivate_text: "deactivate! updated",
@@ -88,7 +88,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       it "replaces other fields for admins, except module_type" do
         put :update, id: stb.id, stb: new_params, criteria: {}
         stb.reload
-        
+
         expect(stb.module_type).to eq "Shipment"
         expect(stb.activate_text).to eq "activate! updated"
         expect(stb.activate_confirmation_text).to eq "activate sure? updated"
@@ -100,7 +100,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
         allow_api_access Factory(:user)
         put :update, id: stb.id, stb: new_params, criteria: {}
         stb.reload
-        
+
         expect(stb.activate_text).to eq "activate!"
         expect(stb.activate_confirmation_text).to eq "activate sure?"
         expect(stb.deactivate_text).to eq "deactivate!"
@@ -189,7 +189,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       user_cdefs = double ("user_cdefs")
       date_mfs = double ("date_mfs")
       date_cdefs = double ("date_cdefs")
-      
+
       expect(ctrl).to receive(:get_sc_mfs).with(stb).and_return sc_mfs
       expect(ctrl).to receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
       expect(ctrl).to receive(:get_user_and_date_cdefs).with(stb).and_return [user_cdefs, date_cdefs]
@@ -218,7 +218,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
     it "takes the model fields associated with a button's module returning only the mfid, label, and datatype fields" do
       stb = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
       mfs = described_class.new.get_sc_mfs stb
-      expect(mfs.find{|mf| mf[:mfid] == :shp_ref}).to eq({:mfid => :shp_ref, label: "Reference Number", :datatype => :string })
+      expect(mfs.find {|mf| mf[:mfid] == :shp_ref}).to eq({:mfid => :shp_ref, label: "Reference Number", :datatype => :string })
     end
   end
 

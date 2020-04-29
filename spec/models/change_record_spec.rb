@@ -4,7 +4,7 @@ describe ChangeRecord do
       cr = ChangeRecord.new
       cr.add_message "x"
       cr.add_message "y"
-      expect(cr.messages.to_a).to eq(["x","y"])
+      expect(cr.messages.to_a).to eq(["x", "y"])
     end
     it 'should return empty but not nil' do
       expect(ChangeRecord.new.messages).to eq([])

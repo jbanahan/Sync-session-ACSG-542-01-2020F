@@ -18,7 +18,7 @@ module OpenChain; module Api; module V1; module ApiJsonSupport
     jsonizer.entity_to_hash(user, obj, field_list.map {|f| f.to_s})
   end
 
-  #render field for json
+  # render field for json
   def export_field model_field_uid, obj, user: current_user
     jsonizer.export_field user, obj, ModelField.find_by_uid(model_field_uid)
   end

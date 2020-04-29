@@ -47,8 +47,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
     xrefs[code.to_s.strip.upcase]
   end
 
-  private 
-  
+  private
+
     def generate_and_send_invoice entry_snapshot, invoice_data, entry
       broker_invoice_snapshot = invoice_data[:snapshot]
       invoice_number = mf(broker_invoice_snapshot, "bi_invoice_number")
@@ -170,7 +170,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       amount = mf(broker_invoice_line, "bi_line_charge_amount")
       # Whoever is billing this is supposed to be keying the PO Number that the corrected duty amount belongs to on the charge description
       # This is really the only way we can actually determine the PO that is having it's duty amounts adjusted.
-      # Also, do some fuzzy matching because the likelihood that the PO number is miskeyed at some point is high and we 
+      # Also, do some fuzzy matching because the likelihood that the PO number is miskeyed at some point is high and we
       # just want to get an actual PO number on here
       po = best_match_po_number(mf(broker_invoice_line, "bi_line_charge_description"), po_org_codes)
 
@@ -191,7 +191,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
 
     def invoice_line_brokerage_fields broker_invoice_snapshot, broker_invoice_line, next_line_number, po_org_codes
       # Every brokerage charge needs to be "prorated" across all the PO #'s on the entry.
-      # This is done solely based the # of PO's on the entry...ergo, each billing line (b) exploads into 
+      # This is done solely based the # of PO's on the entry...ergo, each billing line (b) exploads into
       # b * (# PO numbers) line.
       po_numbers = mf(broker_invoice_snapshot, "bi_ent_po_numbers").to_s.split(/\n\s*/)
       # If there were no PO numbers, add a blank so we make sure we bill the line
@@ -211,7 +211,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         # after everything has been calculated out at the end (rather than having to figure out if we need to add/subtract for
         # each calculation based on the charge being a debit/credit)
         negative_charge = charge_amount < 0
-        
+
         total_remaining = BigDecimal(charge_amount).abs
 
         po_numbers.each do |po|
@@ -236,7 +236,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
             prorations[k] = v * -1
           end
         end
-        
+
         if !valid_charge_amount?(prorations, charge_amount)
           raise "Invalid Ascena proration calculation for Invoice # '#{invoice_number}'. Should have billed $#{charge_amount}, actually billed $#{prorations.values.sum}."
         end
@@ -304,7 +304,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         when duty_codes
           duty_lines << invoice_line
         when skip_codes
-          #skip these lines
+          # skip these lines
         when post_summary_duty_codes
           # This is a special charge code to indicate a duty adjustment owed on a file that's had a post summary correction issued.
           # We have to handle this specially because what's billed is not the full duty amount owed, rather the difference
@@ -353,7 +353,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
         sync_record = invoice.sync_records.where(trading_partner: DUTY_SYNC).where("ftp_session_id IS NOT NULL").first
         break if sync_record
       end
-      
+
       return [] unless sync_record
 
       lines = nil
@@ -397,7 +397,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
           if split_lines[sync].length > 0
             sr = broker_invoice.sync_records.find {|s| s.trading_partner == sync }
             if sr.nil? || sr.sent_at.nil?
-              invoice_data[:invoice_lines][sync] = split_lines[sync] 
+              invoice_data[:invoice_lines][sync] = split_lines[sync]
               data_present = true
             end
           end
@@ -428,7 +428,6 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaBillingInvoic
       po_numbers = {}
       invoice_lines = json_child_entities entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine"
 
-      
       invoice_lines.each do |line|
         po_number = mf(line, "cil_po_number")
         brand_code = po_organization_code(mf(line, "cil_product_line"))

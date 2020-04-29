@@ -1,10 +1,10 @@
 describe OpenChain::DailyStatementAttachmentZipper do
-  
+
   let!(:user) { Factory(:user, email: "st-hubbins@hellhole.co.uk") }
   let!(:statement) { Factory(:daily_statement, statement_number: "123456") }
-  
+
   let(:ent_1) { Factory(:entry, entry_number: "ent_num_1")}
-  
+
   let(:file_1) { File.open("spec/fixtures/files/blank_report_1.csv") }
   let(:file_2) { File.open("spec/fixtures/files/blank_report_1.xls") }
   let(:file_3) { File.open("spec/fixtures/files/blank_report_2.csv") }
@@ -22,19 +22,19 @@ describe OpenChain::DailyStatementAttachmentZipper do
   let!(:statement_line_2) {Factory(:daily_statement_entry, daily_statement: statement, entry: ent_2)}
 
   before { stub_paperclip; stub_master_setup }
-  after { [file_1, file_2, file_3, file_4, file_5].each{ |f| f.close }  }
+  after { [file_1, file_2, file_3, file_4, file_5].each { |f| f.close }  }
 
   def stub_get_data
     allow(OpenChain::S3).to receive(:get_data) do |bucket, key, io|
         expect(bucket).to eq "chain-io"
-        
+
         case File.basename(key)
         when "blank_report_1.csv"
           data = "att_1_1 test data"
         when "blank_report_1.xls"
           data = "att_1_2 test data"
         when "blank_report_2.csv"
-          data = "att_1_3 test data" 
+          data = "att_1_3 test data"
         when "blank_report_2.xls"
           data = "att_2_1 test data"
         when "burlington_850_prepack.edi"
@@ -47,19 +47,19 @@ describe OpenChain::DailyStatementAttachmentZipper do
 
   describe "zip_and_email" do
     it "sends email with specified attachments using email_opts" do
-      stub_get_data  
-    
-      described_class.zip_and_email user.id, statement.id, ["ENTRY PACKET", "ENTRY SUMMARY PACK"], {'email' => 'tufnel@stonehenge.biz', 
-                                                                                                    'subject' => 'classic album', 
+      stub_get_data
+
+      described_class.zip_and_email user.id, statement.id, ["ENTRY PACKET", "ENTRY SUMMARY PACK"], {'email' => 'tufnel@stonehenge.biz',
+                                                                                                    'subject' => 'classic album',
                                                                                                     'body' => "Smell the Glove"}
       mail = ActionMailer::Base.deliveries.pop
-      
+
       expect(mail.to).to eq ["tufnel@stonehenge.biz"]
       expect(mail.subject).to eq 'classic album'
       expect(mail.body).to match /Smell the Glove/
       expect(mail.attachments.count).to eq 1
       att = mail.attachments["Attachments for Statement 123456.zip"]
-      
+
       Tempfile.open('temp') do |t|
         t.binmode
         t << att.read
@@ -77,11 +77,11 @@ describe OpenChain::DailyStatementAttachmentZipper do
     it "sends email with attachments using defaults" do
       stub_get_data
 
-      described_class.zip_and_email user.id, statement.id, ["ENTRY PACKET", "ENTRY SUMMARY PACK"], {'email' => '', 
-                                                                                                    'subject' => '', 
+      described_class.zip_and_email user.id, statement.id, ["ENTRY PACKET", "ENTRY SUMMARY PACK"], {'email' => '',
+                                                                                                    'subject' => '',
                                                                                                     'body' => ''}
       mail = ActionMailer::Base.deliveries.pop
-      
+
       expect(mail.to).to eq ["st-hubbins@hellhole.co.uk"]
       expect(mail.subject).to eq "Attachments for Statement 123456"
       expect(mail.body).to match /Please find attached your files for Statement 123456/
@@ -94,7 +94,7 @@ describe OpenChain::DailyStatementAttachmentZipper do
       stub_get_data
 
       att_1_1.update! attached_file_size: 10_485_760
-      expect{ described_class.zip_and_email user.id, statement.id, ["ENTRY PACKET" ], {} }.to raise_error "Total attachment size greater than 10485760 bytes"
+      expect { described_class.zip_and_email user.id, statement.id, ["ENTRY PACKET" ], {} }.to raise_error "Total attachment size greater than 10485760 bytes"
     end
   end
 

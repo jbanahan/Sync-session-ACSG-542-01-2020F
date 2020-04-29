@@ -1,8 +1,8 @@
 describe ScheduledReportsController do
 
   let! (:ms) { stub_master_setup }
-  let! (:user) { 
-    u = Factory(:master_user,:email=>'a@example.com') 
+  let! (:user) {
+    u = Factory(:master_user, :email=>'a@example.com')
     sign_in_as(u)
     u
   }
@@ -88,7 +88,7 @@ describe ScheduledReportsController do
 
     let (:another_user) { Factory(:user) }
     let (:search_setup) { Factory(:search_setup, :module_type=> "BrokerInvoice", :user => user, :name => "A") }
-    let (:custom_report) { 
+    let (:custom_report) {
       custom_report = CustomReport.new :user => user, :name => "A Custom Report"
       custom_report.search_criterions.build model_field_uid: "bi_brok_ref", operator: "eq", value: "1"
       custom_report.search_schedules.build :email_addresses => "me@there.com"

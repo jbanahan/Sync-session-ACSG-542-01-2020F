@@ -32,11 +32,11 @@ RSpec.describe Calendar, :type => :model do
 
     it "should not find calendar events from other companies" do
       comp = Factory(:company, name: "NOTACME")
-      c1 = Factory(:calendar,calendar_type: k84.key, company_id: comp.id, year: 2019)
+      c1 = Factory(:calendar, calendar_type: k84.key, company_id: comp.id, year: 2019)
       event1 = Factory(:calendar_event, event_date: Date.parse('2019-05-18'), calendar_id: c1.id)
 
       comp1 = Factory(:company, name: "ACME")
-      c2 = Factory(:calendar,calendar_type: k84.key, company_id: comp1.id, year: 2019)
+      c2 = Factory(:calendar, calendar_type: k84.key, company_id: comp1.id, year: 2019)
       event2 = Factory(:calendar_event, event_date: Date.parse('2019-05-19'), calendar_id: c2.id)
 
       expect(Calendar.find_all_events_in_calendar_month(2019, 5, k84.key, company_id: comp.id)).to eq [event1]

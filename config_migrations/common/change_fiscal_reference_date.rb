@@ -21,7 +21,7 @@ module ConfigMigrations; module Common; class ChangeFiscalReferenceDate
     company.update_attributes! fiscal_reference: fiscal_reference_date
 
     find_entries(company, file_logged_date_start).find_each do |entry|
-      Lock.with_lock_retry(entry) do 
+      Lock.with_lock_retry(entry) do
         OpenChain::FiscalMonthAssigner.assign entry
 
         if changed? entry

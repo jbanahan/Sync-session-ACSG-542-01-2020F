@@ -9,7 +9,7 @@ describe Api::V1::BusinessRulesController do
       ord = Factory(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return true
-      expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u,ord).and_return h
+      expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u, ord).and_return h
 
       get :for_module, module_type: 'Order', id: ord.id.to_s
 
@@ -39,7 +39,7 @@ describe Api::V1::BusinessRulesController do
       ord = Factory(:order)
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return false
-      expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u,ord).and_return h
+      expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u, ord).and_return h
 
       get :for_module, module_type: 'Order', id: ord.id.to_s
 
@@ -54,7 +54,7 @@ describe Api::V1::BusinessRulesController do
       allow_any_instance_of(Order).to receive(:can_view?).and_return true
       allow_any_instance_of(User).to receive(:view_business_validation_results?).and_return true
       expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with(ord)
-      expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u,ord).and_return h
+      expect_any_instance_of(described_class).to receive(:results_to_hsh).with(@u, ord).and_return h
 
       post :refresh, module_type: 'Order', id: ord.id.to_s
 

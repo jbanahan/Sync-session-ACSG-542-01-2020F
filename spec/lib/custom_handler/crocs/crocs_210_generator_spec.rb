@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
         expect(described_class.new.accepts?(:save, line.broker_invoice.entry)).to be_falsey
       end
     end
-   
+
     it "does not accept when not vfitrack system" do
       line = Factory(:broker_invoice_line,
         broker_invoice: Factory(:broker_invoice,
@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
   describe "ftp_credentials" do
     it "uses ftp2 credentials with crocs ftp path" do
       g = described_class.new
-      expect(g).to receive(:ftp2_vandegrift_inc).with("to_ecs/Crocs/210") {}
+      expect(g).to receive(:ftp2_vandegrift_inc).with("to_ecs/Crocs/210"){}
       g.ftp_credentials
     end
   end
@@ -82,7 +82,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       line3 = Factory(:broker_invoice_line, charge_type: "C", charge_amount: 20, charge_description: "Charge", charge_code: "1234", broker_invoice: line.broker_invoice)
 
       @invoice = line.broker_invoice
-      @invoice.entry.importer.addresses.create! name: "210", line_1: "123 Fake St", city: "City", state: "St", postal_code: "123456"      
+      @invoice.entry.importer.addresses.create! name: "210", line_1: "123 Fake St", city: "City", state: "St", postal_code: "123456"
     end
 
     it "generates xml for invoices" do
@@ -131,7 +131,7 @@ describe OpenChain::CustomHandler::Crocs::Crocs210Generator do
       expect(REXML::XPath.match(x, "/Crocs210/Invoice/Charge/Description")[2].text).to eq "Charge"
       expect(REXML::XPath.match(x, "/Crocs210/Invoice/Charge/Amount")[2].text).to eq "20.00"
 
-      # Make sure the charge children are ordered internally according to our "spec", 
+      # Make sure the charge children are ordered internally according to our "spec",
       # for some reason it causes EDI translation problems if they're not in this exact order.
       charge = REXML::XPath.first(x, "/Crocs210/Invoice/Charge")
       expect(charge.elements.size).to eq(4)

@@ -11,13 +11,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMultiShipmentEntryXmlGenera
 
   describe "find_generate_and_send" do
 
-    let! (:unsynced_shipment) { 
+    let! (:unsynced_shipment) {
       shipment = Factory(:shipment, importer: importer, master_bill_of_lading: "MBOL", importer_reference: "REF2", country_import: us)
       shipment.update_custom_value! cdefs[:shp_entry_prepared_date], Time.zone.now
       shipment
     }
 
-    let! (:synced_shipment) { 
+    let! (:synced_shipment) {
       shipment = Factory(:shipment, importer: importer, master_bill_of_lading: "MBOL", importer_reference: "REF1", country_import: us)
       shipment.update_custom_value! cdefs[:shp_entry_prepared_date], Time.zone.now
       shipment.sync_records.create! trading_partner: "Kewill Entry", sent_at: (Time.zone.now - 1.day)
@@ -58,12 +58,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillMultiShipmentEntryXmlGenera
         expect(sync_records[:sync_records].first.syncable_id).to eq unsynced_shipment.id
       end
 
-      expect(subject).to receive(:poll).and_yield((Time.zone.now - 1.hour), Time.zone.now)      
+      expect(subject).to receive(:poll).and_yield((Time.zone.now - 1.hour), Time.zone.now)
       subject.find_generate_and_send(run_opts)
     end
 
     context "with no shipment sent" do
-      after :each do 
+      after :each do
         expect(subject).to receive(:poll).and_yield((Time.zone.now - 1.hour), Time.zone.now)
         expect(subject).not_to receive(:generate_and_send)
         subject.find_generate_and_send(run_opts)

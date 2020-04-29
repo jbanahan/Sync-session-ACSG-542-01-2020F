@@ -63,10 +63,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
     it "generates commercial invoice object" do
       now = Time.zone.parse("2017-02-06 02:00")
       inv = nil
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         inv = subject.generate_invoice shipment
       end
-      
+
       expect(inv.invoice_number).to eq "REF"
       expect(inv.invoice_date).to eq Date.new(2017, 2, 5)
       expect(inv.importer).to eq importer
@@ -109,7 +109,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
     end
 
     context "with rollable lines" do
-      before :each do 
+      before :each do
         line = shipment.shipment_lines.second
         line.product = copy_product
         line.variant = copy_product.variants.first

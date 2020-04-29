@@ -1,9 +1,9 @@
 describe OpenChain::EntityCompare::MultiClassComparator do
   subject do
-    Class.new { extend OpenChain::EntityCompare::MultiClassComparator.includes("Entry", "Order") }    
+    Class.new { extend OpenChain::EntityCompare::MultiClassComparator.includes("Entry", "Order") }
   end
 
-  describe "accept?" do 
+  describe "accept?" do
     let(:snapshot) { Factory(:entity_snapshot) }
 
     it "accepts Entry, Order, Product, Shipment snapshots" do

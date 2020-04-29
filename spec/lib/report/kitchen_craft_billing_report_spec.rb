@@ -6,12 +6,12 @@ describe OpenChain::Report::KitchenCraftBillingReport do
         :carrier_code=>'SCAC', :master_bills_of_lading=>"abc\n123", :container_numbers=>"1\n2", :total_invoiced_value=>100)
       @invoices = []
       @charges = []
-      ['Invoice1', 'Invoice2'].each do |inv_num| 
+      ['Invoice1', 'Invoice2'].each do |inv_num|
         invoice = Factory(:broker_invoice, :entry_id=>@entry.id, :invoice_total => 100, :invoice_number => inv_num)
         @invoices << invoice
 
         ['0001', '0009', '0008', '0220', '0007', '0162', '0198', '0022', '0221', '0222'].each do |code|
-          #Create 2 charges for each invoice, just so we know we're summing the data correctly
+          # Create 2 charges for each invoice, just so we know we're summing the data correctly
           @charges << Factory(:broker_invoice_line, :broker_invoice_id=>invoice.id, :charge_code=> code, :charge_amount=>25.50)
           @charges << Factory(:broker_invoice_line, :broker_invoice_id=>invoice.id, :charge_code=> code, :charge_amount=>20)
         end
@@ -29,14 +29,14 @@ describe OpenChain::Report::KitchenCraftBillingReport do
     end
 
     it 'should handle different user timezones in input and output' do
-      # The DB dates are UTC, so make sure we're translating the start date / end date value 
+      # The DB dates are UTC, so make sure we're translating the start date / end date value
       # to the correct UTC equiv
 
       # Update the release date to a time we know will be 1 day in the future in UTC vs. local timezone
       release_date = Time.new(2013, 4, 1, 5, 0, 0, "+00:00")
       @entry.update_attributes :release_date => release_date
       sheet = nil
-      
+
       Time.use_zone(ActiveSupport::TimeZone['Hawaii']) do
         tmp = OpenChain::Report::KitchenCraftBillingReport.run_report nil, {'start_date' => '2013-03-31', 'end_date'=>'2013-04-01'}
         wb = Spreadsheet.open tmp

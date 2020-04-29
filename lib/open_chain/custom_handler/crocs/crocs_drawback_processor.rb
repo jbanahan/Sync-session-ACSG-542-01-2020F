@@ -7,8 +7,8 @@ module OpenChain; module CustomHandler; module Crocs
 
     def self.process_entries_by_arrival_date start_date, end_date
       process_entries Entry.
-        where('arrival_date >= ?',start_date.to_date).
-        where('arrival_date <= ?',end_date.to_date).
+        where('arrival_date >= ?', start_date.to_date).
+        where('arrival_date <= ?', end_date.to_date).
         where('importer_id = ?', crocs_id)
     end
 
@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Crocs
         INNER JOIN products p on shipment_lines.product_id = p.id AND p.unique_identifier = ?
         INNER JOIN custom_values po on po.custom_definition_id = #{@defs[:shpln_po].id.to_i} AND po.customizable_id = shipment_lines.id AND po.string_value REGEXP ?
         INNER JOIN custom_values rec on rec.custom_definition_id = #{@defs[:shpln_received_date].id.to_i} and rec.customizable_id = shipment_lines.id AND rec.date_value >= ? AND rec.date_value < ADDDATE(?,61)
-        INNER JOIN custom_values coo on coo.custom_definition_id = #{@defs[:shpln_coo].id.to_i} AND coo.customizable_id = shipment_lines.id AND coo.string_value = ? 
+        INNER JOIN custom_values coo on coo.custom_definition_id = #{@defs[:shpln_coo].id.to_i} AND coo.customizable_id = shipment_lines.id AND coo.string_value = ?
       ", self.class.crocs_id.to_i, "CROCS-#{ci_line.part_number.strip}", "^0#{clean_po}", imp_date_str, imp_date_str, ci_line.country_origin_code])
 
       ShipmentLine.select('shipment_lines.*').joins(joins_query)
@@ -44,14 +44,16 @@ module OpenChain; module CustomHandler; module Crocs
       prep_custom_defs
       s_line.get_custom_value(@defs[:shpln_received_date]).value
     end
-  
-    #find the 7 digit base PO number fromt the commercial invoice PO number
+
+    # find the 7 digit base PO number fromt the commercial invoice PO number
     def format_po_number base_po
       return base_po if base_po.match /^[[:digit:]]{7}$/
-      po = base_po.strip.gsub(/[^a-zA-Z0-9]/,'') #clear non alphanumerics
-      return po[3,7] if po.match /^[a-zA-Z]{3}[0-9]{7}$/ #country prefix format
+      po = base_po.strip.gsub(/[^a-zA-Z0-9]/, '') # clear non alphanumerics
+      if po.match /^[a-zA-Z]{3}[0-9]{7}$/
+        return po[3, 7]
+      end # country prefix format
       o_idx = po.index('O')
-      return po[o_idx-7,7] if o_idx && o_idx>=7 #warehouse formats
+      return po[o_idx-7, 7] if o_idx && o_idx>=7 # warehouse formats
       nil
     end
 
@@ -61,7 +63,7 @@ module OpenChain; module CustomHandler; module Crocs
 
     private
     def prep_custom_defs
-      @defs ||= self.class.prep_custom_definitions [:shpln_po,:shpln_received_date,:shpln_coo,:shpln_sku]
+      @defs ||= self.class.prep_custom_definitions [:shpln_po, :shpln_received_date, :shpln_coo, :shpln_sku]
     end
 
     def crocs_id

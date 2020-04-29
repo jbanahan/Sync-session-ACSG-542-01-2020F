@@ -21,7 +21,7 @@
 
 class ChangeRecord < ActiveRecord::Base
   attr_accessible :bulk_process_log_id, :failed, :file_import_result_id,
-    :record_sequence_number, :recordable_id, :recordable, :recordable_type, 
+    :record_sequence_number, :recordable_id, :recordable, :recordable_type,
     :unique_identifier, :entity_snapshot
 
   belongs_to :file_import_result
@@ -39,6 +39,6 @@ class ChangeRecord < ActiveRecord::Base
 
   # Return collection of all message bodies
   def messages
-    self.change_record_messages.collect {|m| m.message} 
+    self.change_record_messages.collect {|m| m.message}
   end
 end

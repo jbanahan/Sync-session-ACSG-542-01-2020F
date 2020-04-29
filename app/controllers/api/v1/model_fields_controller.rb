@@ -31,7 +31,7 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
       API_MODULES.each do |cm|
         next unless cm.view?(cu)
         cm_class_name = cm.class_name
-        h['recordTypes'] << {'uid'=>cm_class_name,label:cm.label}
+        h['recordTypes'] << {'uid'=>cm_class_name, label:cm.label}
         ModelField.find_by_core_module(cm).each do |mf|
           next if !mf.can_view?(cu)
           mf_h = {'uid'=>mf.uid, 'label'=>mf.label(false), 'data_type'=>mf.data_type, 'record_type_uid'=>cm_class_name, 'read_only' => mf.read_only?}
@@ -44,9 +44,9 @@ module Api; module V1; class ModelFieldsController < Api::V1::ApiController
             mf_h['remote_validate'] = fvr.requires_remote_validation?
             select_options = fvr.one_of_array
             if Array.wrap(select_options).length > 0
-              #clobber the hard coded options with the customer configured ones if they both exist.
-              #This is on purpose - BSG 2015-09-16
-              mf_h['select_options'] = select_options.map {|a| [a,a]} #api expects 2 dimensional array
+              # clobber the hard coded options with the customer configured ones if they both exist.
+              # This is on purpose - BSG 2015-09-16
+              mf_h['select_options'] = select_options.map {|a| [a, a]} # api expects 2 dimensional array
             end
           end
           if mf.custom?

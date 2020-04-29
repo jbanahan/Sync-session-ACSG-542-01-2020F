@@ -3,21 +3,21 @@ require 'open_chain/url_support'
 class XlsMaker
   require 'spreadsheet'
   include OpenChain::UrlSupport
-  
+
   HEADER_FORMAT = Spreadsheet::Format.new weight: :bold, color: :black,  pattern_fg_color: :xls_color_41, pattern: 1, horizontal_align: :center
   DATE_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD'
   DATE_TIME_FORMAT = Spreadsheet::Format.new :number_format=>'YYYY-MM-DD HH:MM'
 
   attr_accessor :include_links, :include_rule_links
-  attr_accessor :no_time #hide timestamps on output
+  attr_accessor :no_time # hide timestamps on output
 
   def initialize opts={}
-    inner_opts = {:include_links=>false,:include_rule_links=>false,:no_time=>false}.merge(opts)
+    inner_opts = {:include_links=>false, :include_rule_links=>false, :no_time=>false}.merge(opts)
     @include_links = inner_opts[:include_links]
     @include_rule_links = inner_opts[:include_rule_links]
     @no_time = inner_opts[:no_time]
   end
-  
+
   def make_from_search_query search_query, search_query_opts = {}
     @column_widths = {}
     ss = search_query.search_setup
@@ -32,7 +32,7 @@ class XlsMaker
     base_objects = {}
     search_query_opts[:raise_max_results_error] = true
     search_query.execute(search_query_opts) do |row_hash|
-      #it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
+      # it's ok to fill with nil objects if we're not including links because it'll save a lot of DB calls
       key = row_hash[:row_key]
       base_objects[key] ||= ((@include_links || @include_rule_links) ? ss.core_module.find(key) : nil)
       process_row sheet, row_number, row_hash[:result], base_objects[key]
@@ -54,19 +54,19 @@ class XlsMaker
     end
   end
 
-  #delay job friendly version of make_from_search_query
+  # delay job friendly version of make_from_search_query
   def make_from_search_query_by_search_id_and_user_id search_id, user_id
-    sq = SearchQuery.new(SearchSetup.find(search_id),User.find(user_id))
+    sq = SearchQuery.new(SearchSetup.find(search_id), User.find(user_id))
     make_from_search_query sq
   end
 
-  #deprecated
+  # deprecated
   def make_from_results results, columns, module_chain, user, search_criterions=[]
     @column_widths = {}
     wb = prep_workbook columns, user
     sheet = wb.worksheet 0
     row_number = 1
-    GridMaker.new(results,columns,search_criterions,module_chain,user).go do |row,obj|
+    GridMaker.new(results, columns, search_criterions, module_chain, user).go do |row, obj|
       process_row sheet, row_number, row, obj
       row_number += 1
     end
@@ -82,16 +82,16 @@ class XlsMaker
     else
       request_host = MasterSetup.get.request_host
     end
-    
+
     raise "Cannot generate view_url because MasterSetup.request_host not set." unless request_host
-    
+
     if Rails.env.production?
       "https://#{request_host + relative_url}"
     else
       "http://#{request_host + relative_url}"
     end
   end
-  
+
   def self.add_body_row sheet, row_number, row_data, column_widths = [], no_time = false, options = {}
     make_body_row sheet, row_number, 0, row_data, column_widths, {:no_time => no_time}.merge(options)
   end
@@ -110,11 +110,11 @@ class XlsMaker
     if cell_base.nil?
       cell = ""
     elsif cell_base.is_a?(BigDecimal)
-      cell = cell_base.to_s.to_f #fix BigDecimal bad decimal points bug #629
+      cell = cell_base.to_s.to_f # fix BigDecimal bad decimal points bug #629
     else
       cell = cell_base
     end
-    
+
     if options[:insert] == true
       sheet.row(row_number).insert(column_number, cell)
     else
@@ -131,9 +131,9 @@ class XlsMaker
     if cell.respond_to?(:strftime)
       if (cell.is_a?(Date) && !cell.is_a?(DateTime)) || options[:no_time] == true
         width = 13
-        sheet.row(row_number).set_format(column_number,DATE_FORMAT) unless options[:format]
+        sheet.row(row_number).set_format(column_number, DATE_FORMAT) unless options[:format]
       else
-        sheet.row(row_number).set_format(column_number,DATE_TIME_FORMAT) unless options[:format]
+        sheet.row(row_number).set_format(column_number, DATE_TIME_FORMAT) unless options[:format]
       end
     end
     width = 23 if width > 23
@@ -146,7 +146,7 @@ class XlsMaker
   private_class_method :set_cell_value
 
   def self.make_body_row sheet, row_number, starting_column_number, row_data, column_widths = [], options = {}
-    row_data.each_with_index do |cell_base, col| 
+    row_data.each_with_index do |cell_base, col|
       abs_col = starting_column_number + col
       set_cell_value sheet, row_number, abs_col, cell_base, column_widths, options
       if options[:formats]
@@ -169,7 +169,7 @@ class XlsMaker
   end
 
   def self.add_vfi_color_to_workbook wb
-    # This is kind of a hacky way to remap our company color to a numeric color, but it's the only way I 
+    # This is kind of a hacky way to remap our company color to a numeric color, but it's the only way I
     # saw that we can actually use custom colors in the spreadsheet gem.
     # RGB(98, 187, 243) -> Hex 0x62BBF3
     # First 41 param means we're mapping this to xl_color_41 in spreadsheet gem
@@ -207,7 +207,7 @@ class XlsMaker
     [wb, create_sheet(wb, sheet_name, headers)]
   end
 
-  def self.new_workbook 
+  def self.new_workbook
     Spreadsheet::Workbook.new
   end
 
@@ -231,14 +231,14 @@ class XlsMaker
   def self.open_workbook path
     Spreadsheet.open path
   end
-  
+
   private
 
   def prep_workbook cols, user
     wb = XlsMaker.create_workbook "Results"
     sheet = wb.worksheet "Results"
     headers = []
-    cols.each_with_index do |c,i|
+    cols.each_with_index do |c, i|
       mf = ModelField.find_by_uid c.model_field_uid
       headers << (mf.can_view?(user) ? mf.label : ModelField.disabled_label)
     end
@@ -251,8 +251,8 @@ class XlsMaker
 
   def process_row sheet, row_number, row_data, base_object
     XlsMaker.add_body_row sheet, row_number, row_data, @column_widths, @no_time
-    sheet.row(row_number).push(self.class.create_link_cell(base_object.excel_url)) if self.include_links 
-    sheet.row(row_number).push(self.class.create_link_cell(validation_results_url obj: base_object)) if self.include_rule_links 
+    sheet.row(row_number).push(self.class.create_link_cell(base_object.excel_url)) if self.include_links
+    sheet.row(row_number).push(self.class.create_link_cell(validation_results_url obj: base_object)) if self.include_rule_links
   end
 
 end

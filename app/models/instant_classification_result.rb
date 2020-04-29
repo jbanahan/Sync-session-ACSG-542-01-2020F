@@ -16,7 +16,7 @@
 
 class InstantClassificationResult < ActiveRecord::Base
   attr_accessible :finished_at, :run_at, :run_by_id
-  
+
   belongs_to :run_by, :class_name=>"User"
   has_many :instant_classification_result_records
 end

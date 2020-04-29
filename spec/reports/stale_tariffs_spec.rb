@@ -7,10 +7,10 @@ describe OpenChain::Report::StaleTariffs do
     @fresh_classification = Factory(:classification, :country_id=>official_tariff.country_id)
     @fresh_tariff_record = Factory(:tariff_record, :hts_1=>official_tariff.hts_code, :classification_id=>@fresh_classification.id)
   end
-  
+
   describe 'permission' do
     before { allow(@u).to receive(:view_products?).and_return true }
-    
+
     it "allows master users who can view products" do
       expect(described_class.permission? @u).to eq true
     end
@@ -35,15 +35,15 @@ describe OpenChain::Report::StaleTariffs do
   context 'run_report with stale tariffs' do
 
     let (:importer) { Factory(:importer, system_code: "ACME") }
-    
+
     before(:each) do
       @stale_classification = Factory(:classification, :country_id=>@fresh_classification.country_id)
       @stale_classification.product.update_attributes! importer_id: importer
 
       @stale_tariff_record = Factory(:tariff_record, :classification_id=>@stale_classification.id)
       @stale_tariff_record.classification.product.update_attributes! importer_id: importer.id
-      empty_tariff_record = Factory(:tariff_record, :hts_1=>'', :classification_id=>Factory(:classification).id) #should not be on reports
-      classification_with_no_tariffs = Factory(:classification) #should not be on reports
+      empty_tariff_record = Factory(:tariff_record, :hts_1=>'', :classification_id=>Factory(:classification).id) # should not be on reports
+      classification_with_no_tariffs = Factory(:classification) # should not be on reports
     end
 
     it 'should show missing tariffs in hts_1' do
@@ -75,7 +75,7 @@ describe OpenChain::Report::StaleTariffs do
       reader = XlsxTestReader.new(OpenChain::Report::StaleTariffs.run_report @u).raw_workbook_data
       expect(reader.keys[2]).to eq "Stale Tariffs HTS #3"
       sheet = reader[reader.keys[2]]
-      expect(sheet.length).to eq(2) #2 total rows
+      expect(sheet.length).to eq(2) # 2 total rows
       expect(sheet[1]).to eq([importer.name,
                               @stale_classification.product.unique_identifier,
                               @stale_classification.country.name,
@@ -88,7 +88,7 @@ describe OpenChain::Report::StaleTariffs do
       sheet = reader[reader.keys[0]]
       expect(sheet[0][1]).to eql('abc')
     end
-    
+
     context "with customer_numbers" do
       before do
         @stale_tariff_record.update_attributes(:hts_1=>'999999')
@@ -120,7 +120,7 @@ describe OpenChain::Report::StaleTariffs do
 
   context "run_schedulable" do
     it "runs and emails report" do
-      Timecop.freeze(DateTime.new(2018,1,15)){ described_class.run_schedulable("email" => "tufnel@stonehenge.biz") }
+      Timecop.freeze(DateTime.new(2018, 1, 15)) { described_class.run_schedulable("email" => "tufnel@stonehenge.biz") }
 
       expect(ActionMailer::Base.deliveries.length).to eq 1
       mail = ActionMailer::Base.deliveries.pop
@@ -145,7 +145,7 @@ describe OpenChain::Report::StaleTariffs do
     end
 
     it "handles array" do
-      expect(report.ids_from_customer_numbers ["ACME","KONVENIENTZ"]).to eq [@acme.id, @konvenientz.id]
+      expect(report.ids_from_customer_numbers ["ACME", "KONVENIENTZ"]).to eq [@acme.id, @konvenientz.id]
     end
 
     it "handles null" do

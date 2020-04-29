@@ -9,13 +9,13 @@ describe SearchColumn do
   end
 
   describe "model_field" do
-    let(:sc) { Factory(:search_column, search_setup: Factory(:search_setup, module_type: "Product"), 
+    let(:sc) { Factory(:search_column, search_setup: Factory(:search_setup, module_type: "Product"),
                                        model_field_uid: 'prod_uid', constant_field_name: nil, constant_field_value: nil)  }
-    
+
     it "returns MF based on constant field if model_field_uid begins with '_const'" do
       sc.update_attributes! model_field_uid: "_const", constant_field_name: "Whose fault?", constant_field_value: "Vandegrift's"
       mf = sc.model_field
-      
+
       expect(mf.read_only?).to eq true
       expect(mf.label).to eq "Whose fault?"
       expect(mf.qualified_field_name).to eq "(SELECT 'Vandegrift\\'s')"

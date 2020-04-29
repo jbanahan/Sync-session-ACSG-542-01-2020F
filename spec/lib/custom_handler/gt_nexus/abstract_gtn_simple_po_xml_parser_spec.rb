@@ -1,4 +1,4 @@
-describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do 
+describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
   include OpenChain::CustomHandler::NokogiriXmlHelper
 
   class MockGtnSimpleOrderXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser
@@ -70,13 +70,13 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
   subject { MockGtnSimpleOrderXmlParser.new }
 
   describe "process_order" do
-    let! (:ms) { 
+    let! (:ms) {
       ms = stub_master_setup
       allow(ms).to receive(:custom_feature?).with("WWW").and_return true
       ms
     }
 
-    before :each do 
+    before :each do
       us
       india
       allow(subject).to receive(:inbound_file).and_return inbound_file
@@ -210,7 +210,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
     context "with existing data" do
 
-      before :each do 
+      before :each do
         order
       end
 
@@ -284,7 +284,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
           factory.reload
           expect(factory.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
           expect(factory.entity_snapshots.length).to eq 1
-        
+
           vendor.reload
           expect(vendor.name).to eq "FWS_VIVSUN EXPORT"
           expect(vendor.entity_snapshots.length).to eq 1
@@ -299,7 +299,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
           factory.reload
           expect(factory.addresses.first.line_1).to eq "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1"
           expect(factory.entity_snapshots.length).to eq 1
-        
+
           vendor.reload
           expect(vendor.addresses.first.line_1).to eq "23/47 LINI RD INDUSTRIAL AREA"
           expect(vendor.entity_snapshots.length).to eq 1
@@ -330,7 +330,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
 
   describe "parse_file" do
-    let (:user) { 
+    let (:user) {
       u = User.new
       allow(User).to receive(:integration).and_return u
       u
@@ -340,7 +340,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnSimpleOrderXmlParser do
 
     it "parses xml data and processes it" do
       expect_any_instance_of(subject).to receive(:process_order).with(instance_of(Nokogiri::XML::Document), user, "bucket", "key")
-      
+
       subject.parse_file xml_data, InboundFile.new, {bucket: "bucket", key: "key"}
     end
   end

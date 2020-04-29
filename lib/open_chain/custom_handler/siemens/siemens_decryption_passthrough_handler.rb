@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionP
     filetype = get_filetype(remote_path, opts[:original_filename])
     if !filetype.nil?
       return super
-    else 
+    else
       return nil
     end
   end
@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensDecryptionP
     "vfi_canada"
   end
 
-  private 
+  private
     def self.get_filetype remote_path, original_filename = nil
       filename = File.basename(original_filename.presence || remote_path).to_s.upcase
 

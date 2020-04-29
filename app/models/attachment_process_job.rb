@@ -27,10 +27,10 @@ require 'open_chain/custom_handler/generic_booking_parser'
 require 'open_chain/custom_handler/generic_shipment_manifest_parser'
 
 class AttachmentProcessJob < ActiveRecord::Base
-  attr_accessible :attachable_id, :attachable, :attachable_type, :attachment_id, 
-    :attachment, :error_message, :finish_at, :job_name, :manufacturer_address_id, 
+  attr_accessible :attachable_id, :attachable, :attachable_type, :attachment_id,
+    :attachment, :error_message, :finish_at, :job_name, :manufacturer_address_id,
     :start_at, :user_id, :user
-  
+
   JOB_TYPES ||= {
       'Tradecard Pack Manifest'=>"OpenChain::CustomHandler::Tradecard::TradecardPackManifestParser",
       'Booking Worksheet'=>"OpenChain::CustomHandler::GenericBookingParser",
@@ -60,11 +60,11 @@ class AttachmentProcessJob < ActiveRecord::Base
     JOB_TYPES[self.job_name].constantize
   end
 
-  def write_user_message 
+  def write_user_message
     cm = CoreModule.find_by_class_name self.attachable_type
     sub = "#{self.job_name} complete for #{cm.label}"
     sub << " WITH ERROR" unless self.error_message.blank?
     bod = "#{self.job_name} complete for #{cm.label}<br /><br /><a href='#{self.attachable.relative_url}'>Click Here</a> to view the #{cm.label}."
-    self.user.messages.create!(subject:sub,body:bod)
+    self.user.messages.create!(subject:sub, body:bod)
   end
 end

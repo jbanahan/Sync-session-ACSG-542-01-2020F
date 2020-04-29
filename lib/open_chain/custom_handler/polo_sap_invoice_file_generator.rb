@@ -16,18 +16,18 @@ module OpenChain
         :rl_canada => {name: "RL Canada", tax_id: '806167003RM0001', start_date: Date.new(2013, 6, 01), email_to: ["sap_billing"],
           unallocated_profit_center: "19999999", company_code: "1017", filename_prefix: "RL", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
           deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
-        }, 
+        },
         :club_monaco => {name: "Club Monaco", tax_id: '866806458RM0001', start_date: Date.new(2014, 5, 23), email_to: ["sap_billing_2"],
           unallocated_profit_center: "20399999", company_code: "1710", filename_prefix: "CM", brokerage_gl_account: "52111300", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", invoice_total_profit_center: "49999999",
           deployed_brand_gl_account: "52111200", non_deployed_brand_gl_account: "23101900", duty_gl_account: "23109000", business_area: nil
         },
-        :factory_stores => {name: "Polo Factory Stores", tax_id: '806167003RM0002', start_date: Date.new(2016,3,25), email_to: ["sap_billing_3"],
+        :factory_stores => {name: "Polo Factory Stores", tax_id: '806167003RM0002', start_date: Date.new(2016, 3, 25), email_to: ["sap_billing_3"],
           unallocated_profit_center: "20299699", company_code: "1540", filename_prefix: "PFS", brokerage_gl_account: "50960180", gst_hst_gl_account: "14311000", invoice_total_gl_account: "100023825", nvoice_total_profit_center: nil,
           deployed_brand_gl_account: "", non_deployed_brand_gl_account: "", duty_gl_account: "", business_area: "1115"
         }
       }
 
-      
+
 
       def initialize env = :prod, custom_where = nil
         # you can use a non-:prod env to prevent the documents from being emailed / ftp'ed and then use the export job attachments created
@@ -45,7 +45,7 @@ module OpenChain
         PoloSapInvoiceFileGenerator.new.find_generate_and_send_invoices
       end
 
-      def find_generate_and_send_invoices 
+      def find_generate_and_send_invoices
         Time.use_zone("Eastern Time (US & Canada)") do
           RL_INVOICE_CONFIGS.each_pair do |rl_company, conf|
             start_time = Time.zone.now
@@ -81,7 +81,7 @@ module OpenChain
                     # will grow slower and slower over time due to the list returned by the subselect growing weekly - and the method we use to exclude failing
                     # business rules won't work because there's going to be multiple records per invoice in the linker table due to tracking of failed send attempts.
 
-                    # This method should just be a function of the size of the outer list of invoices (still growing), but no memory used to create a temp in list 
+                    # This method should just be a function of the size of the outer list of invoices (still growing), but no memory used to create a temp in list
                     # and joins all done via primary keys.
                     where("(IFNULL((SELECT ej.successful FROM export_jobs ej INNER JOIN export_job_links ejl ON ej.id = ejl.export_job_id AND ejl.exportable_type = 'BrokerInvoice' AND ej.export_type IN ('#{ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE}', '#{ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE}') WHERE broker_invoices.id = ejl.exportable_id ORDER BY ej.successful DESC LIMIT 1), false) <> true)").
                     # We need to also exclude everything that is in a Fail or Review Business Rule state
@@ -93,7 +93,7 @@ module OpenChain
       end
 
       def generate_and_send_invoices rl_company, start_time, broker_invoices
-       # Send them 
+       # Send them
         if broker_invoices.length > 0
           files = {}
           begin
@@ -136,8 +136,8 @@ module OpenChain
                 export_job.save
               end
             end
-          ensure 
-            # remove the tempfiles 
+          ensure
+            # remove the tempfiles
             files.values.flatten.each do |f|
               f.close!
             end
@@ -160,7 +160,7 @@ module OpenChain
 
         if !found
           # Make sure we haven't previously invoiced a portion of this entry weeks ago.
-          
+
           # The hand coded SQL is needed due to the polymorphic association
           # on the export job linker table
           completed_jobs = ExportJob.where(:successful=>true, :export_type => [ExportJob::EXPORT_TYPE_RL_CA_MM_INVOICE, ExportJob::EXPORT_TYPE_RL_CA_FFI_INVOICE]).
@@ -169,7 +169,7 @@ module OpenChain
                           where(:broker_invoices => {:entry_id => entry.id}).
 
                           uniq
-          found = completed_jobs.length > 0 
+          found = completed_jobs.length > 0
         end
 
         return found
@@ -201,7 +201,7 @@ module OpenChain
             brand = DataCrossReference.find_rl_brand_by_po po_number
             break unless brand.nil?
           end
-        else 
+        else
           brand = brand_line.part_number[0, 3]
         end
 
@@ -217,7 +217,7 @@ module OpenChain
 
         is_set = @set_product_cache[part_number]
         return is_set unless is_set.nil?
-      
+
         response = api_client.find_by_uid part_number, ['class_cntry_iso', '*cf_131']
         if response && response['product']
           is_set = false
@@ -230,7 +230,7 @@ module OpenChain
 
           @set_product_cache[part_number] = is_set
         end
-        
+
         is_set
       rescue => e
         # Don't bother logging the 404 not found error raised by the client since we'll end up reporting on it anyway, we do want to log any other error though.
@@ -242,18 +242,18 @@ module OpenChain
 
       class PoloMmglInvoiceWriter
         include OpenChain::XmlBuilder
-       
+
        def initialize generator, rl_company, config
           @inv_generator = generator
           @rl_company = rl_company
           @config = config
 
           @starting_row = 1
-          @workbook = XlsMaker.create_workbook 'MMGL', ['Indicator_Post_invoice_or_credit_memo','Document_date_of_incoming_invoice',
-            'Reference_document_number','Company_code','Different_invoicing_party','Currency_key','Gross_invoice_amount_in_document_currency','Payee',
-            'Terms_of_payment_key','Baseline_date_for_due_date_calculation','Document_header_text','Lot_Number','Invoice_line_number','Purchase_order_number',
-            'Material_Number','Amount_in_document_currency','Quantity','Condition_Type','Item_text','Invoice_line_number','GL_Account','Amount',
-            'Debit_credit_indicator','Company_code','GL_Line_Item_Text','Profit_Center']
+          @workbook = XlsMaker.create_workbook 'MMGL', ['Indicator_Post_invoice_or_credit_memo', 'Document_date_of_incoming_invoice',
+            'Reference_document_number', 'Company_code', 'Different_invoicing_party', 'Currency_key', 'Gross_invoice_amount_in_document_currency', 'Payee',
+            'Terms_of_payment_key', 'Baseline_date_for_due_date_calculation', 'Document_header_text', 'Lot_Number', 'Invoice_line_number', 'Purchase_order_number',
+            'Material_Number', 'Amount_in_document_currency', 'Quantity', 'Condition_Type', 'Item_text', 'Invoice_line_number', 'GL_Account', 'Amount',
+            'Debit_credit_indicator', 'Company_code', 'GL_Line_Item_Text', 'Profit_Center']
           @sheet = @workbook.worksheet(0)
 
           @document, @root = build_xml_document "Invoices"
@@ -286,7 +286,7 @@ module OpenChain
           end
 
           # Commercial and broker invoice data is highly likely to have
-          # a different number of rows for each so we need to update the row counter 
+          # a different number of rows for each so we need to update the row counter
           # so the next set of invoice data is put into the row directly after the invoice data.
           @starting_row = @starting_row + [1, commercial_invoice_info.length, broker_invoice_info.length].max
           nil
@@ -371,7 +371,7 @@ module OpenChain
           Attachment.add_original_filename_method xml_file
           xml_file.original_filename = "#{filename}.xml"
           output_files[:ftp] = [xml_file]
-          
+
           # Blank these variables, just to prevent weirdness if the writer is attempted to be re-used...they're incapable
           # of being re-used so I want this to fail hard.
           @starting_row = nil
@@ -380,11 +380,11 @@ module OpenChain
           @document = nil
           @root = nil
           @errors = nil
-         
+
           output_files
         end
 
-        private 
+        private
           def get_header_information broker_invoice, commercial_invoices
             charge_total = get_total_invoice_sum broker_invoice, commercial_invoices
             line = []
@@ -417,13 +417,12 @@ module OpenChain
           end
 
           def get_commercial_invoice_information commercial_invoices
-            
-            # For each line, we need to find the corresponding Tradecard 810 line 
+            # For each line, we need to find the corresponding Tradecard 810 line
             # and use the quantity value (IT102) found on there for all lines (except non-prepack / non-set lines).
 
             # For any Tradecard 810 lines that have IT103 == "AS" (unit of measure) we'll need to combine
-            # all lines together that have the same SAP PO / Line numbers, sum'ing the 
-            # duty amounts for the single line sent.  These are prepacks that have been split 
+            # all lines together that have the same SAP PO / Line numbers, sum'ing the
+            # duty amounts for the single line sent.  These are prepacks that have been split
             # onto multiple invoice lines and need to be recombined.
 
             # For Tradecard 810 lines that have IT103 != "AS". Look up the product
@@ -437,7 +436,7 @@ module OpenChain
               tradecard_invoice = find_tradecard_invoice inv.invoice_number
 
               inv.commercial_invoice_lines.each do |line|
-                # Don't report commerical invoice lines having zero duty 
+                # Don't report commerical invoice lines having zero duty
                 next unless line.commercial_invoice_tariffs.inject(BigDecimal.new("0")) {|sum, line| sum += line.duty_amount.to_i} > 0
 
                 # First things first, lets make sure we have a po_number and an SAP line number
@@ -452,18 +451,18 @@ module OpenChain
                 prepack = nil
 
                 # Rollup any lines that are sets or are prepacks by their po / part number
-                # Prepacks are supposed to all be on Tradecard lines...it's possible we could also 
+                # Prepacks are supposed to all be on Tradecard lines...it's possible we could also
                 # find if the style is a prepack by looking to the Order as well.
                 if tradecard_line && @inv_generator.prepack_indicator?(tradecard_line.unit_of_measure)
                   po_number, sap_line_number = @inv_generator.split_sap_po_line_number line.po_number
                   prepack = true
                   set_product = false
                 else
-                  # Only look up the product if a Tradecard invoice exists...there's no point 
+                  # Only look up the product if a Tradecard invoice exists...there's no point
                   # to looking it up if it doesn't exist since there's no quantity to pull from
                   # and the call is rather expensive to make (since it's an http request to another system)
                   if tradecard_invoice
-                    set_product = @inv_generator.set_product? line.part_number                    
+                    set_product = @inv_generator.set_product? line.part_number
                   else
                     set_product = false
                   end
@@ -503,7 +502,7 @@ module OpenChain
               # nil indicates a lookup failure, if the lookup worked then we expect a true/false value instead
               if !values[:prepack] && values[:set_product].nil?
                 @errors << create_errors_line(values, :missing_product)
-              elsif (values[:set_product] || values[:prepack]) && values[:tradecard_line].nil? 
+              elsif (values[:set_product] || values[:prepack]) && values[:tradecard_line].nil?
                 # We need the tradecard invoice for sets, otherwise we may not have the correct quantity
                 @errors << create_errors_line(values, :missing_810)
               end
@@ -531,7 +530,7 @@ module OpenChain
             if inv_po_line_number.blank?
               inv_po_line_number = get_sap_line_from_order importer_tax_id, invoice_line.po_number, invoice_line.part_number
             end
-            
+
             [inv_po, inv_po_line_number]
           end
 
@@ -555,7 +554,7 @@ module OpenChain
           end
 
           def create_mmgl_line counter, quantity, po_number, sap_line_number, invoice_lines
-            total_duty = invoice_lines.collect{|l| l.commercial_invoice_tariffs}.flatten.inject(BigDecimal.new("0.00")) {|sum, t| sum + t.duty_amount}
+            total_duty = invoice_lines.collect {|l| l.commercial_invoice_tariffs}.flatten.inject(BigDecimal.new("0.00")) {|sum, t| sum + t.duty_amount}
 
             line = invoice_lines.first
 
@@ -572,7 +571,7 @@ module OpenChain
           end
 
           def get_sap_line_from_order importer_tax_id, po_number, style
-            # We're just pulling the first PO line that has the same Style.  If this ends up being an issue we may have to 
+            # We're just pulling the first PO line that has the same Style.  If this ends up being an issue we may have to
             # add additional heuristics from the PO into the mix.
             order_line = OrderLine.
                           joins(:order, :product).
@@ -587,7 +586,6 @@ module OpenChain
             else
               nil
             end
-            
           end
 
           def get_broker_invoice_information broker_invoice
@@ -607,19 +605,19 @@ module OpenChain
               gst_row << "GST"
               gst_row << @config[:unallocated_profit_center]
             end
-            
+
             profit_center = @inv_generator.find_profit_center(broker_invoice.entry, @rl_company)
-            
+
             broker_invoice.broker_invoice_lines.each do |line|
               next if line.duty_charge_type?
               hst_line = line.hst_gst_charge_code?
 
               gl_account = (
-                if hst_line 
+                if hst_line
                   "14311000"
                 elsif line.charge_code == "22"
                   # 22 is the Brokerage charge code.  RL stated they only wanted us to send this account for the $55 brokerage
-                  # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that 
+                  # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that
                   # will probably change at some point in the future, I'm using the code.
                   "52111300"
                 else
@@ -687,7 +685,7 @@ module OpenChain
               add_element gl_el, "PROFITCENTER", line[24]
             end
           end
-          
+
           nil
         end
 
@@ -738,7 +736,7 @@ module OpenChain
           output_files
         end
 
-        private 
+        private
 
           def get_invoice_information broker_invoice
             rows = []
@@ -763,7 +761,7 @@ module OpenChain
                 gl_account = @config[:gst_hst_gl_account]
               elsif line.charge_code == "22"
                 # 22 is the Brokerage charge code.  RL stated they only wanted us to send this account for the $55 brokerage
-                # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that 
+                # fee - which is all we currently bill for under the 22 code. So rather than tie the code to a billing amount that
                 # will probably change at some point in the future, I'm using the code.
                 gl_account = @config[:brokerage_gl_account]
               else
@@ -776,7 +774,7 @@ module OpenChain
                   # Deployed brands (ie. we have a profit center for the entry/po) use a different G/L account than non-deployed brands
                   gl_account = raw_profit_center.blank? ? @config[:non_deployed_brand_gl_account] : @config[:deployed_brand_gl_account]
                 end
-                
+
               end
 
               local_profit_center = (line.hst_gst_charge_code? ? @config[:unallocated_profit_center] : profit_center)
@@ -833,7 +831,7 @@ module OpenChain
             row << profit_center
             row << business_area
             row << entry_number
-            row << (description.blank?  ? nil : description[0,50]) #Only allows 50 chars max (blank/nil is just to make output between xls and txt easier to test)
+            row << (description.blank?  ? nil : description[0, 50]) # Only allows 50 chars max (blank/nil is just to make output between xls and txt easier to test)
 
             row
           end
@@ -859,11 +857,11 @@ module OpenChain
           workbook ||= XlsMaker.create_workbook 'Exceptions', ["Invoice Number", "Error", "Backtrace"]
           sheet ||= workbook.worksheet(0)
           starting_row = 0
-          @broker_invoice_data.each do |data| 
+          @broker_invoice_data.each do |data|
 
             XlsMaker.add_body_row sheet, (starting_row += 1), [data[:number], data[:error].message, data[:error].backtrace.join("\n")]
           end
-          
+
           file = Tempfile.new(["#{@config[:name].gsub(" ", "_")}_Invoice_Exceptions_#{Time.zone.now.strftime("%Y%m%d")}_", ".xls"])
           file.binmode
           workbook.write file
@@ -872,7 +870,7 @@ module OpenChain
           # this issue now is just to raise and log an exception
           begin
             raise "Failed to generate #{@broker_invoice_data.length} #{@config[:name]} invoices."
-          rescue 
+          rescue
             $!.log_me ["See attached spreadsheet for full list of invoice numbers that could not be generated."], [file.path]
           end
           @broker_invoice_data = nil
@@ -880,7 +878,7 @@ module OpenChain
         end
       end
 
-      private 
+      private
         def email_body rl_company_name, broker_invoices, start_time
           # This can include HTML if we want.
           "An MM and/or FFI invoice file is attached for #{rl_company_name} for #{broker_invoices.length} #{"invoice".pluralize(broker_invoices.length)} as of #{start_time.strftime("%m/%d/%Y")}."
@@ -924,7 +922,7 @@ module OpenChain
               writer.add_invoice broker_invoice, e
 
             end
-           
+
           end
 
           invoice_output = {}
@@ -940,19 +938,19 @@ module OpenChain
                   attachment.attached = file
                 end
               end
-            
+
               export_job.save!
             end
 
             # We technically could destroy the tempfile here and then
             # look up the output data again via the export job attachments,
-            # but it's much more efficient (though slightly clumsier) to 
+            # but it's much more efficient (though slightly clumsier) to
             # pass the file back and send it directly
             invoice_output[format] = {:export_job => export_job, :files=>output_files} if log_job?(format)
           end
 
           @output_writers = nil
-         
+
           invoice_output
         end
 
@@ -964,7 +962,7 @@ module OpenChain
           output_format = nil
           entry = broker_invoice.entry
 
-          # Because RL can't consistently supply us with PO data for stock transfers between 
+          # Because RL can't consistently supply us with PO data for stock transfers between
           # US and Canada we're going to force all their invoices to use the ffi format.
           # We're only invoicing the brokerage for factory stores, so they should only ever get the FF format
           if rl_company == :factory_stores || (rl_company == :rl_canada && entry.vendor_names.to_s.strip =~ /^Ralph Lauren/i)
@@ -979,7 +977,7 @@ module OpenChain
               profit_center = find_profit_center entry, rl_company
 
               if profit_center
-                # We can't handle multiple MM invoices for the same entry because we 
+                # We can't handle multiple MM invoices for the same entry because we
                 # send all the po/commercial invoice information for an entry on the first transmission
                 # of the first broker invoice.  The MM interface requires PO information for all invoices
                 # and we can't resend the full invoice line set again (otherwise the duty will get added twice in RL's system).
@@ -1060,7 +1058,7 @@ module OpenChain
               @importer_ids[rl_company] = id
             end
           end
-          
+
           id
         end
     end

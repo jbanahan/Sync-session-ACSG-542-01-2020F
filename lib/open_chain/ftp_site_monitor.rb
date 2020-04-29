@@ -19,7 +19,7 @@ module OpenChain; class FtpSiteMonitor
     if opts[:mailing_list]
       list = MailingList.where(system_code: opts[:mailing_list]).first
       raise "No Mailing List found with system code '#{opts[:mailing_list]}'." if list.nil?
-      opts[:email_to] = list      
+      opts[:email_to] = list
     end
 
     opts
@@ -38,7 +38,7 @@ module OpenChain; class FtpSiteMonitor
   def send_email report_files, ftp_data, email_to, email_subject, additional_email_message, max_age_minutes
     body = "<p>#{report_files.length} #{"file".pluralize(report_files.length)} were found in the #{ftp_data[:directory]} directory on #{ftp_data[:hostname]} there were over #{max_age_minutes} minutes old.</p>"
     oldest_file = report_files.sort_by {|f| f.mtime }.first
-    body += "<p>The oldest file is #{time_ago_in_words oldest_file.mtime} old.</p>" 
+    body += "<p>The oldest file is #{time_ago_in_words oldest_file.mtime} old.</p>"
     if !additional_email_message.blank?
       body += "<p>#{additional_email_message}</p>"
     end

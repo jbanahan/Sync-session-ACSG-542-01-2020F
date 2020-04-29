@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
     end
 
     context "with air shipment" do
-      before :each do 
+      before :each do
         entry.update_attributes! transport_mode_code: "40", house_bills_of_lading: "HBOL987654321"
         shipment.update_attributes! mode: "AIR"
         shipment.containers.first.update_attributes! container_number: "HBOL987654321"
@@ -107,7 +107,7 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
     end
 
     context "with truck shipment" do
-      before :each do 
+      before :each do
         entry.update_attributes! transport_mode_code: "30"
         shipment.update_attributes! mode: "TRUCK"
         shipment.containers.first.update_attributes! container_number: "MBOL1234567890"

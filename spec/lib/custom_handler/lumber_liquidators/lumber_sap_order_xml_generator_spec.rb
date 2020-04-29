@@ -15,9 +15,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
       tf = instance_double('tempfile')
       expect(tf).to receive(:write).with(xml)
       expect(tf).to receive(:flush)
-      expect(Tempfile).to receive(:open).with(["po_PONUM_",'.xml']).and_yield tf
+      expect(Tempfile).to receive(:open).with(["po_PONUM_", '.xml']).and_yield tf
       expect(subject).to receive(:ftp_sync_file).with(tf, instance_of(SyncRecord))
-      expect(subject).to receive(:generate).with(u,order).and_return [xml, "fingerprint"]
+      expect(subject).to receive(:generate).with(u, order).and_return [xml, "fingerprint"]
       now = Time.zone.parse "2017-02-02 12:00"
       Timecop.freeze(now) { subject.send_order(order) }
 
@@ -60,10 +60,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator
       f = double('field_list')
       x = instance_double(OpenChain::Api::ApiEntityXmlizer)
       expect(OpenChain::Api::ApiEntityXmlizer).to receive(:new).and_return(x)
-      expect(x).to receive(:entity_to_xml).with(u,order,f).and_return 'xml'
+      expect(x).to receive(:entity_to_xml).with(u, order, f).and_return 'xml'
       expect(x).to receive(:xml_fingerprint).with("xml").and_return "fingerprint"
       expect(subject).to receive(:build_field_list).with(u).and_return f
-      expect(subject.generate(u,order)).to eq ['xml', 'fingerprint']
+      expect(subject.generate(u, order)).to eq ['xml', 'fingerprint']
     end
   end
 

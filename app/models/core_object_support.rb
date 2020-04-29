@@ -37,7 +37,7 @@ module CoreObjectSupport
       has_many :item_change_subscriptions, dependent: :destroy
     end
 
-    scope :need_sync, -> (trading_partner) { joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause()) }    
+    scope :need_sync, -> (trading_partner) { joins(need_sync_join_clause(trading_partner)).where(need_sync_where_clause()) }
   end
 
   def core_module
@@ -78,7 +78,7 @@ module CoreObjectSupport
       joins(:business_validation_template).
       joins(business_validation_rule_results: [:business_validation_rule]).
       where(business_validation_rule_results: {state: state})
-    
+
     if !include_private
       results = results.where({business_validation_templates: {private: [nil, false]}})
     end
@@ -148,7 +148,7 @@ module CoreObjectSupport
     r = []
     r += self.attachments.to_a
     self.linkable_attachments.each {|linkable| r << linkable.attachment}
-    r.sort do |a,b|
+    r.sort do |a, b|
       v = 0
       v = a.attachment_type <=> b.attachment_type if a.attachment_type && b.attachment_type
       v = a.attached_file_name <=> b.attached_file_name if v==0
@@ -160,12 +160,12 @@ module CoreObjectSupport
   def clear_attributes exceptions
     skip = ([:id, :created_at, :updated_at] + exceptions).map(&:to_s)
     attrs_to_erase = {}
-    self.attributes.keys.each { |att| attrs_to_erase[att] = nil unless att.match(/_id$/) || (skip.member? att) }
+    self.attributes.each_key { |att| attrs_to_erase[att] = nil unless att.match(/_id$/) || (skip.member? att) }
     self.assign_attributes(attrs_to_erase, :without_protection => true)
   end
 
   def process_linked_attachments
-    LinkedAttachment.delay(:priority=>600).create_from_attachable_by_class_and_id(self.class,self.id) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
+    LinkedAttachment.delay(:priority=>600).create_from_attachable_by_class_and_id(self.class, self.id) if !self.dont_process_linked_attachments && LinkableAttachmentImportRule.exists_for_class?(self.class)
   end
 
   # return link back url for this object (yes, this is a violation of MVC, but we need it for downloaded file links)
@@ -173,12 +173,12 @@ module CoreObjectSupport
     self.class.excel_url self.id
   end
 
-  #return the relative url to the view page for the object
+  # return the relative url to the view page for the object
   def relative_url
     self.class.relative_url self.id
   end
 
-  #return an excel friendly link to the object that handles Excel session bugs
+  # return an excel friendly link to the object that handles Excel session bugs
   def excel_url
     self.class.excel_url self.id
   end
@@ -198,7 +198,7 @@ module CoreObjectSupport
 
   module ClassMethods
     def find_by_custom_value custom_definition, value
-      self.joins(:custom_values).where('custom_values.custom_definition_id = ?',custom_definition.id).where("custom_values.#{custom_definition.data_column} = ?",value).first
+      self.joins(:custom_values).where('custom_values.custom_definition_id = ?', custom_definition.id).where("custom_values.#{custom_definition.data_column} = ?", value).first
     end
 
     def has_never_been_synced_where_clause

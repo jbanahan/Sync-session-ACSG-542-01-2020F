@@ -70,7 +70,7 @@ class BusinessValidationTemplatesController < ApplicationController
   end
 
   def destroy
-    admin_secure{
+    admin_secure {
       @bv_template = BusinessValidationTemplate.find params[:id]
       @bv_template.update_attribute(:delete_pending, true)
       @bv_template.business_validation_rules.update_all(delete_pending: true)

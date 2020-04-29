@@ -7,7 +7,7 @@ describe ProjectUpdatesController do
   }
 
   before :each do
-    @u = Factory(:master_user,project_view:true,project_edit:true)
+    @u = Factory(:master_user, project_view:true, project_edit:true)
     sign_in_as @u
   end
   describe "create" do
@@ -40,16 +40,16 @@ describe ProjectUpdatesController do
   end
   describe "update" do
     it "should reject if user is not created_by" do
-      pu = Factory(:project_update,created_by:Factory(:user),body:'x')
-      put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id,body:'y'}
+      pu = Factory(:project_update, created_by:Factory(:user), body:'x')
+      put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id, body:'y'}
       expect(response.status).to eq 401
       expect(JSON.parse(response.body)['error']).to eq "You cannot edit updates unless you created them."
       pu.reload
       expect(pu.body).to eq 'x'
     end
     it "should update if user is created_by" do
-      pu = Factory(:project_update,created_by:@u,body:'x')
-      put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id,body:'y'}
+      pu = Factory(:project_update, created_by:@u, body:'x')
+      put :update, project_id:pu.project_id, id:pu.id, project_update:{id:pu.id, body:'y'}
       pu.reload
       expect(pu.body).to eq 'y'
       expect(response).to be_success

@@ -2,12 +2,12 @@ require 'open_chain/custom_handler/product_generator'
 require 'open_chain/custom_handler/under_armour/ua_sites_subs_helper'
 
 module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProductGenerator < OpenChain::CustomHandler::ProductGenerator
-  include OpenChain::CustomHandler::UnderArmour::UaSitesSubsHelper 
-  
+  include OpenChain::CustomHandler::UnderArmour::UaSitesSubsHelper
+
   def sync_code
     "ua_sites"
   end
-  
+
   def query
     qry = <<-SQL
       SELECT DISTINCT p.id as 'ID', p.unique_identifier as 'Article', sites.text_value as 'Site Code', '' as 'Classification'
@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProduct
       qry += " " + Product.need_sync_join_clause(sync_code, 'p')
       qry += " WHERE " + Product.need_sync_where_clause('p')
       qry += " AND LENGTH(t.hts_1) > 0"
-      qry += %Q( AND sites.text_value <> "" AND (co.iso_code IN (#{site_countries.map{|s| '"'+s+'"' }.join(',')})))
+      qry += %Q( AND sites.text_value <> "" AND (co.iso_code IN (#{site_countries.map {|s| '"'+s+'"' }.join(',')})))
     else
       qry += custom_where
     end
@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProduct
       co = get_site_country site
       next if co.blank?
 
-      classification = prod.classifications.find{ |cl| cl.country.iso_code == co }
+      classification = prod.classifications.find { |cl| cl.country.iso_code == co }
       next unless classification
 
       hts = classification.tariff_records.first.try(:hts_1)
@@ -62,5 +62,4 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaSitesProduct
     @sites[site]
   end
 end
-  
 end; end; end;

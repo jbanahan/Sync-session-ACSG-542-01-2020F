@@ -1,6 +1,5 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSystemInit do
   describe '#init' do
-    
     before :each do
       allow(OpenChain::CustomHandler::CustomViewSelector).to receive(:register_handler)
       allow(OpenChain::EntityCompare::ComparatorRegistry).to receive(:register)

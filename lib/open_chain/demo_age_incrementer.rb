@@ -28,7 +28,7 @@ module OpenChain; class DemoAgeIncrementer
     @modules.each do |klass|
       klass = klass.constantize
 
-      fields = klass.columns.select { |column| column.sql_type == "datetime" || column.sql_type == "date" }.map{ |column| column.name }
+      fields = klass.columns.select { |column| column.sql_type == "datetime" || column.sql_type == "date" }.map { |column| column.name }
 
       klass.all.find_each do |record|
         begin

@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhEntryBillingCompara
     if "PVHCANADA" == customer_number
       return false unless MasterSetup.get.custom_feature?("PVH Canada GTN Billing")
     elsif "PVH" == customer_number
-      # PVH has two other account codes, PVHCA and PVHNE.  
+      # PVH has two other account codes, PVHCA and PVHNE.
       # PVHCA is used for some sort of special freight that is not in GTN, so no invoices from that account should be sent to PVH.
       # PVHNE is neckwear, which is also apparently not in GTN, so this billing data should not be sent for these either.
       return false unless MasterSetup.get.custom_feature?("PVH US GTN Billing")

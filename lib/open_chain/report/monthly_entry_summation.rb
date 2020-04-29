@@ -58,10 +58,10 @@ QRY
         first_of_month = timezone.parse("#{year_month}-01")
         end_of_month = first_of_month + 1.month
         qry = <<QRY
-SELECT SUM(charge_amount) 
-FROM broker_invoices 
-INNER JOIN broker_invoice_lines ON broker_invoice_id = broker_invoices.id 
-INNER JOIN entries ON broker_invoices.entry_id = entries.id 
+SELECT SUM(charge_amount)
+FROM broker_invoices
+INNER JOIN broker_invoice_lines ON broker_invoice_id = broker_invoices.id
+INNER JOIN entries ON broker_invoices.entry_id = entries.id
 WHERE entries.release_date >= ? AND entries.release_date < ? AND entries.customer_number = ?
 AND broker_invoice_lines.charge_type #{not_in ? "NOT IN" : "IN"} (?)
 AND broker_invoices.invoice_date >= ? AND broker_invoices.invoice_date < ? AND broker_invoices.customer_number = ?

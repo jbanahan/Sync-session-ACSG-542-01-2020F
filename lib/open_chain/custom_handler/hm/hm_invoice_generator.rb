@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   include OpenChain::InvoiceGeneratorSupport
 
   UNIT_PRICE = 2.00
-  
+
   def self.run_schedulable settings
     generator = self.new
     billables = inv = nil
@@ -31,15 +31,15 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
 
   def get_new_billables
     events = all_new_billables
-    
-    #Filter in three passes:
-    #only invoice online orders (products with at least one PO beginning with 1)
+
+    # Filter in three passes:
+    # only invoice online orders (products with at least one PO beginning with 1)
     online_orders, offline_orders = partition_by_order_type events
-    
-    #only invoice one classification per product
+
+    # only invoice one classification per product
     with_unique_product, with_non_unique_product = partition_with_unique_product(online_orders)
-    
-    #only invoice classifications for products that haven't already been invoiced
+
+    # only invoice classifications for products that haven't already been invoiced
     with_uninvoiced_product, with_invoiced_product = partition_with_uninvoiced_product(with_unique_product)
     {to_be_invoiced: with_uninvoiced_product, to_be_skipped: (offline_orders + with_non_unique_product + with_invoiced_product)}
   end
@@ -53,10 +53,10 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   end
 
   def partition_with_unique_product billables
-    product_billable = Hash.new{|k,v| k[v] = []}
+    product_billable = Hash.new {|k, v| k[v] = []}
     billables.each { |b| product_billable[b.billable_eventable.product] << b }
     unique = []; to_be_skipped = []
-    product_billable.values.each do |v|
+    product_billable.each_value do |v|
       unique.concat v.take(1)
       to_be_skipped.concat v.drop(1)
     end
@@ -64,9 +64,9 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   end
 
   def partition_with_uninvoiced_product billables
-    product_ids = billables.map{ |b| b.billable_eventable.product.id }
+    product_ids = billables.map { |b| b.billable_eventable.product.id }
     r = ActiveRecord::Base.connection.execute uninvoiced_billable_qry(product_ids)
-    already_billed_ids = r.map{|r| r[0] }
+    already_billed_ids = r.map {|r| r[0] }
     uninvoiced, to_be_skipped = billables.partition { |b| !already_billed_ids.include? b.billable_eventable.product.id }
     [uninvoiced, to_be_skipped]
   end
@@ -112,11 +112,11 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
   class ReportGenerator
     include OpenChain::Report::ReportHelper
     attr_accessor :cdefs
-    
+
     def initialize cdefs=nil
       @cdefs = cdefs
     end
-    
+
     def create_report_for_invoice billables, invoice
       file_name = "products_for_#{invoice.invoice_number}.xls"
       att = invoice.attachments.new(attached_file_name: file_name, attachment_type: "VFI Invoice Support")
@@ -125,13 +125,13 @@ module OpenChain; module CustomHandler; module Hm; class HmInvoiceGenerator
       att.update_attributes! attached: detail_tmp
       detail_tmp
     end
-    
+
     def create_workbook billables, invoice_number
       wb = XlsMaker.create_workbook invoice_number
       table_from_query wb.worksheet(0), query(billables.map(&:id))
       wb
     end
-    
+
     private
 
     def query billable_ids

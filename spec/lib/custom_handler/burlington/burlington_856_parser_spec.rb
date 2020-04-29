@@ -5,7 +5,6 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
     let (:importer) { Factory(:importer, system_code: "BURLI") }
     let (:cdefs) { subject.cdefs }
     let (:user) { Factory(:user) }
-    
 
     context "standard_order" do
       let (:edi_data) { IO.read 'spec/fixtures/files/burlington_856.edi' }
@@ -17,7 +16,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
         o
       }
-      
+
       let! (:order_2) {
         o = Factory(:order, order_number: "BURLI-364985401", importer: importer)
         ol = o.order_lines.create! product: product, quantity: 100
@@ -170,7 +169,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
         o
       }
-      
+
       let (:product_1) {
         p = Factory(:product, unique_identifier: "BURLI-PART1")
       }
@@ -237,7 +236,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "13347531"
         o
       }
-      
+
       let (:product_1) {
         p = Factory(:product, unique_identifier: "BURLI-PART1")
       }
@@ -285,7 +284,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
         ol.update_custom_value! cdefs[:ord_line_buyer_item_number], "16150203"
         o
       }
-      
+
       let (:product_1) {
         p = Factory(:product, unique_identifier: "BURLI-PART1")
       }
@@ -343,7 +342,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
         o
       }
-      
+
       let (:product_1) {
         p = Factory(:product, unique_identifier: "BURLI-PART1")
         p.update_custom_value! cdefs[:prod_part_number], "16150180"
@@ -412,7 +411,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington856Parser do
 
   describe "integration_folder" do
     subject { described_class }
-    
+
     it "uses correct integration folder path" do
       expect(subject.integration_folder).to eq ["www-vfitrack-net/_burlington_856", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_burlington_856"]
     end

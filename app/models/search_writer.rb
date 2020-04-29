@@ -1,7 +1,7 @@
 require 'open_chain/random_audit_generator'
 require 'open_chain/url_support'
 
-# This class takes a search setup, runs the search and then outputs it 
+# This class takes a search setup, runs the search and then outputs it
 # in the desired format (by default, the format specified in the search_setup itself).
 class SearchWriter
   include OpenChain::UrlSupport
@@ -58,7 +58,7 @@ class SearchWriter
         IO.copy_stream tempfile, t
         t.flush
         Attachment.add_original_filename_method(t, tempfile.original_filename)
-        RandomAudit.create! attached: t, search_setup: ss, module_type: ss.module_type, 
+        RandomAudit.create! attached: t, search_setup: ss, module_type: ss.module_type,
                             report_name: t.original_filename, report_date: Time.zone.now, user_id: user_id
       end
     end
@@ -68,7 +68,7 @@ class SearchWriter
         audit_results = OpenChain::RandomAuditGenerator.run(results, audit['percent'], audit['record_type'])
         create_sheet_from_collection audit_results, "Audit", builder, search_setup, user
         # CSV (for obvious reasons) can't have results added as another tab
-        if builder.output_format != :csv 
+        if builder.output_format != :csv
           create_sheet_from_collection results, "Results", builder, search_setup, user
         end
       else
@@ -78,14 +78,14 @@ class SearchWriter
       if builder.output_format != :csv
         generate_criteria_tab builder, @search_setup, audit, @user
       end
-    end    
+    end
 
     def create_sheet_from_collection collection, title, builder, search_setup, user
       result_class = search_setup.core_module.klass
       column_model_fields = build_column_model_fields search_setup
       column_styles = build_column_styles search_setup, column_model_fields
       sheet = initialize_sheet(title, builder, search_setup, column_model_fields, user)
-      collection.each{ |c| write_result_row builder, sheet, @search_setup, result_class, c, column_styles }
+      collection.each { |c| write_result_row builder, sheet, @search_setup, result_class, c, column_styles }
       builder.freeze_horizontal_rows sheet, 1
       builder.apply_min_max_width_to_columns sheet
     end
@@ -150,7 +150,7 @@ class SearchWriter
         :default_date
       when :datetime
         search_setup.no_time? ? :default_date : :default_datetime
-      else 
+      else
         nil
       end
     end
@@ -171,7 +171,7 @@ class SearchWriter
       end
 
       builder.apply_min_max_width_to_columns sheet
-      
+
       nil
     end
 

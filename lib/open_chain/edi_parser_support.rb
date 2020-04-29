@@ -9,7 +9,7 @@ module OpenChain; module EdiParserSupport
   # If any other errors are raised while parsing, the parse will be retried at least a couple times before bailing and
   # sending an email to edisupport.
 
-  # Your parser can utilize this error for cases where business logic has been violated, such as 
+  # Your parser can utilize this error for cases where business logic has been violated, such as
   # an 856 referencing a PO that doesn't not exist in the system.
   class EdiBusinessLogicError < StandardError; end
   # Your parser should raise this error if the EDI itself is malformed...dates are sent wrong, segments are missing,
@@ -40,7 +40,7 @@ module OpenChain; module EdiParserSupport
 
 
   # Finds all segments that have the given qualfier value in the coordinate specified.
-  # 
+  #
   # Example: to find all REF segments with a REF01 qualifier of "MB" -> find_segments_by_qualifier(segments, "REF01", "BM")
   def find_segments_by_qualifier segments, edi_position, qualifier_value
     segment_type, segment_position = *parse_edi_coordinate(edi_position)
@@ -54,10 +54,10 @@ module OpenChain; module EdiParserSupport
 
   # Finds the value element that have the given qualfier value in the coordinate specified.
   # If value_index is left unspecified, it is assumed to be 1 index higher than the qualifier's index.
-  # 
+  #
   # Example: to find the element values for REF01 segments with a qualifier of "MB" -
   #            -> find_values_by_qualifier(segments, "REF01", "BM")
-  # 
+  #
   def find_values_by_qualifier segments, qualifier_coordinate, qualifier_value, value_index: nil
     # qualifier is going to be the text representation of the field...so REF01 generally
     qualifier_data = parse_edi_coordinate(qualifier_coordinate)
@@ -137,7 +137,7 @@ module OpenChain; module EdiParserSupport
   #
   # DTM can optionally specify a date format in DTM03, this method WILL NOT consult that format.
   # If a format that ActiveRecord::TimeZone cannot parse is used, you must supply a date_format
-  # that matches the specified EDI format.  Even if a date_format is utilized, this method will 
+  # that matches the specified EDI format.  Even if a date_format is utilized, this method will
   # still return a TimeWithZone object relative to the time_zone specified.
   def find_date_values segments, qualifier, time_zone: nil, date_format: nil
     segment_type, segment_position = *parse_edi_coordinate("DTM01")
@@ -151,7 +151,7 @@ module OpenChain; module EdiParserSupport
     # We're going to see if the format already has the timezone mentioned in it, otherwise we'll
     # append our own so that we can get actual TimeWithZone objects back.
     append_offset = false
-    if date_format 
+    if date_format
       if (date_format =~ /%z/i).nil?
         append_offset = true
         date_format += " %z"
@@ -170,10 +170,10 @@ module OpenChain; module EdiParserSupport
       end
     end
 
-    values 
+    values
   end
 
-  # Simple helper method that returns the first date value returned by 
+  # Simple helper method that returns the first date value returned by
   # using the same parameters to find_date_values
   def find_date_value segments, qualifier, time_zone: nil, date_format: nil
     find_date_values(segments, qualifier, time_zone: time_zone, date_format: date_format).first
@@ -183,7 +183,7 @@ module OpenChain; module EdiParserSupport
     return nil if date_value.to_s.blank?
 
     append_offset = false
-    if date_format 
+    if date_format
       if (date_format =~ /%z/i).nil?
         append_offset = true
         date_format += " %z"
@@ -241,9 +241,9 @@ module OpenChain; module EdiParserSupport
     found
   end
 
-  # Returns all segments up to (but not including) the given terminator segment type...generally this 
+  # Returns all segments up to (but not including) the given terminator segment type...generally this
   # something you'll probably use to extract all "header" level type segments.
-  # So, for an 850, you'd call the following to get only header level data: 
+  # So, for an 850, you'd call the following to get only header level data:
   # all_segments_up_to all_segments, "PO1"
   #
   def all_segments_up_to segments, stop_segment
@@ -264,7 +264,7 @@ module OpenChain; module EdiParserSupport
     raise ArgumentError, "At least one loop sub-element must be passed." if sub_element_list.length == 0
 
     loop_start = sub_element_list[0]
-    sub_elements = sub_element_list.length > 1 ? Set.new(sub_element_list[1..-1]) : Set.new 
+    sub_elements = sub_element_list.length > 1 ? Set.new(sub_element_list[1..-1]) : Set.new
 
     stop_segments = Set.new(Array.wrap(stop_segments))
 
@@ -333,7 +333,7 @@ module OpenChain; module EdiParserSupport
     end
 
 
-    # The best way to do this is work backwards through the entity key list and then add the entity 
+    # The best way to do this is work backwards through the entity key list and then add the entity
     # to its parent's children list.
     top_level = nil
 
@@ -391,7 +391,7 @@ module OpenChain; module EdiParserSupport
     find_segments(n1_loop, "N2").each do |n2|
       v = value(n2, 1)
       data[:names] << v unless v.blank?
-      v = value(n2, 2) 
+      v = value(n2, 2)
       data[:names] << v unless v.blank?
     end
 
@@ -421,7 +421,7 @@ module OpenChain; module EdiParserSupport
   # system_code_prefix - if present, the system code will be prefixed with this value.  In general, it should be the system code of the company
   # this new company is being linked to.
   # other_attributes - this can be a hash of any company attributes that should be set when creating the company.  -> {mid: "123ABASD1231"}
-  # 
+  #
   def find_or_create_company_from_n1_data data, company_type_hash: , link_to_company: nil, system_code_prefix: nil, other_attributes: {}
     c = nil
     system_code = system_code_prefix.blank? ? data[:id_code] : "#{system_code_prefix}-#{data[:id_code]}"
@@ -451,12 +451,12 @@ module OpenChain; module EdiParserSupport
   # this method is basically a database lookup.
   #
   # data - hash data returned from extract_n1_entity_data
-  # company - the company to link the 
+  # company - the company to link the
   # link_to_company - if present and a company object is created, the new company will be linked to the company passed in this param
   # system_code_prefix - if present, the system code will be prefixed with this value.  In general, it should be the system code of the company
   # this new company is being linked to.
   # other_attributes - this can be a hash of any company attributes that should be set when creating the company.  -> {mid: "123ABASD1231"}
-  # 
+  #
   def find_or_create_address_from_n1_data data, company
     a = nil
     Lock.acquire("Address-#{data[:id_code]}", yield_in_transaction: false) do
@@ -485,7 +485,7 @@ module OpenChain; module EdiParserSupport
     end
 
     def send_error_email transaction, error, parser_name, filename, to_address: "edisupport@vandegriftinc.com", include_backtrace: true
-      Tempfile.create(["EDI-#{isa_code(transaction)}-",'.edi']) do |f|
+      Tempfile.create(["EDI-#{isa_code(transaction)}-", '.edi']) do |f|
         write_transaction transaction, f
         f.rewind
         Attachment.add_original_filename_method(f, filename) unless filename.blank?
@@ -502,7 +502,7 @@ module OpenChain; module EdiParserSupport
       end
     end
 
-    # This method exists mostly for error reporting reaons, it takes an REX12::Transaction and 
+    # This method exists mostly for error reporting reaons, it takes an REX12::Transaction and
     # generates (pseudo) EDI from it.
     def write_transaction transaction, io
       isa_segment = transaction.isa_segment

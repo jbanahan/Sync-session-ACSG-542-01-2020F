@@ -1,7 +1,7 @@
 describe OpenChain::FiscalMonthReminder do
-  let(:now) { Date.new 2016,02,15 } 
+  let(:now) { Date.new 2016, 02, 15 }
   let(:co) { Factory(:company, name: "ACME", system_code: "ac", fiscal_reference: "release_date") }
-  
+
   describe "fiscal_months_remaining" do
     let!(:fm_fut_1) { Factory(:fiscal_month, company: co, start_date: '20160301', end_date: "20160331") }
     let!(:fm_fut_2) { Factory(:fiscal_month, company: co, start_date: '20160401', end_date: "20160430") }

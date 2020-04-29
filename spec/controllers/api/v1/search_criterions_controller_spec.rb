@@ -8,7 +8,6 @@ describe Api::V1::SearchCriterionsController do
   end
 
   describe "create" do
-    
 
     it "creates a new search_criterion" do
       post :create, {search_criterion: {linked_object_type: "SearchSetup", linked_object_id: search_setup.id, operator: "eq", value: "1", model_field_uid: "prod_uid"}}

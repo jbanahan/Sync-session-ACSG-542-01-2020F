@@ -10,7 +10,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
     ascena = Company.importers.with_customs_management_number(CUSTOMER_NUMBER).first
     return false unless ascena
 
-    MasterSetup.get.custom_feature?("WWW VFI Track Reports") && 
+    MasterSetup.get.custom_feature?("WWW VFI Track Reports") &&
     (user.view_entries? && (user.company.master? || ascena.can_view?(user)))
   end
 
@@ -25,7 +25,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
   def self.get_mid_vendors
     DataCrossReference.get_all_pairs("asce_mid").keys
   end
-  
+
   def run run_by, settings
     wb = create_workbook run_by.time_zone
     workbook_to_tempfile wb, 'DailyFirstSaleException-', file_name: "Daily First Sale Exception Report.xls"
@@ -56,12 +56,12 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
 
   def query mid_list, cdefs
     query = <<-SQL
-      SELECT e.entry_number AS "Entry#", 
-             e.release_date AS "Release Date", 
+      SELECT e.entry_number AS "Entry#",
+             e.release_date AS "Release Date",
              e.entry_filed_date AS "Entry Filed Date",
-             e.duty_due_date AS "Duty Due Date", 
-             e.master_bills_of_lading AS "Master Bills", 
-             e.house_bills_of_lading AS "House Bills", 
+             e.duty_due_date AS "Duty Due Date",
+             e.master_bills_of_lading AS "Master Bills",
+             e.house_bills_of_lading AS "House Bills",
              cil.po_number AS "PO#",
              cil.product_line AS 'Brand',
              cil.part_number AS 'Item#',
@@ -85,8 +85,8 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
              cil.unit_price AS 'Price to Brand',
              IF(ord_type.string_value = "NONAGS", 0, (SELECT ordln.price_per_unit
                                                       FROM order_lines ordln
-                                                        INNER JOIN products prod ON prod.id = ordln.product_id                                                                                    
-                                                      WHERE ordln.order_id = o.id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number) 
+                                                        INNER JOIN products prod ON prod.id = ordln.product_id
+                                                      WHERE ordln.order_id = o.id AND prod.unique_identifier = CONCAT("ASCENA-", cil.part_number)
                                                       LIMIT 1)) AS 'Vendor Price to AGS',
              IF((ord_type.string_value = "NONAGS" OR cil.contract_amount <= 0), 0, cit.entered_value / cil.quantity) AS 'First Sale Price'
       FROM entries e
@@ -113,7 +113,7 @@ module OpenChain; module Report; class DailyFirstSaleExceptionReport
   private
 
   def format_mids mid_list
-    mids = mid_list.map{|m| ActiveRecord::Base.sanitize m}.join(",")
+    mids = mid_list.map {|m| ActiveRecord::Base.sanitize m}.join(",")
     mids.blank? ? "''" : mids
   end
 

@@ -1,14 +1,14 @@
   module OpenChain; module ModelFieldGenerator; module DivisionGenerator
-  def make_division_arrays(rank_start,uid_prefix,table_name)
+  def make_division_arrays(rank_start, uid_prefix, table_name)
     # The id field is created pretty much solely so the screens can make select boxes using the id as the value parameter
     # and reference the field like prod_imp_id.
     r = [
-      [rank_start,"#{uid_prefix}_div_id".to_sym,:division_id,"Division ID",{
+      [rank_start, "#{uid_prefix}_div_id".to_sym, :division_id, "Division ID", {
         :history_ignore=>true, user_accessible: false
       }]
     ]
-    n = [rank_start+1,"#{uid_prefix}_div_name".to_sym, :name,"Division Name",{
-      :import_lambda => lambda {|obj,data|
+    n = [rank_start+1, "#{uid_prefix}_div_name".to_sym, :name, "Division Name", {
+      :import_lambda => lambda {|obj, data|
         d = Division.where(:name => data).first
         obj.division = d
         unless d.nil?

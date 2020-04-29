@@ -32,11 +32,11 @@ class ProductsController < ApplicationController
     end
     p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
     freeze_custom_values p
-    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
+    action_secure(p.can_view?(current_user), p, {:verb => "view", :module_name=>"product", :lock_check=>false}) {
       @product = p
       @state_button_path = 'products'
       @state_button_object_id = @product.id
-      p.load_custom_values #caches all custom values
+      p.load_custom_values # caches all custom values
       @json_product = json_product_for_classification @product
       respond_to do |format|
           format.html # show.html.erb
@@ -54,11 +54,11 @@ class ProductsController < ApplicationController
     end
     p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
     freeze_custom_values p
-    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"product",:lock_check=>false}) {
+    action_secure(p.can_view?(current_user), p, {:verb => "view", :module_name=>"product", :lock_check=>false}) {
       @product = p
       @state_button_path = 'products'
       @state_button_object_id = @product.id
-      p.load_custom_values #caches all custom values
+      p.load_custom_values # caches all custom values
       @json_product = json_product_for_classification @product
     }
   end
@@ -67,7 +67,7 @@ class ProductsController < ApplicationController
   # GET /products/new.xml
   def new
     p = Product.new
-    action_secure(current_user.add_products?,p,{:verb => "create",:module_name=>"product",:lock_check=>false}) {
+    action_secure(current_user.add_products?, p, {:verb => "create", :module_name=>"product", :lock_check=>false}) {
       @product = p
       respond_to do |format|
           format.html # new.html.erb
@@ -80,7 +80,7 @@ class ProductsController < ApplicationController
   def edit
     p = Product.includes([:custom_values, :classifications=>[:custom_values, :tariff_records=>[:custom_values]]]).find(params[:id])
     freeze_custom_values p
-    action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)),p,{:verb => "edit",:module_name=>"product"}) {
+    action_secure((p.can_edit?(current_user) || p.can_classify?(current_user)), p, {:verb => "edit", :module_name=>"product"}) {
       used_countries = p.classifications.collect {|cls| cls.country_id}
       Country.import_locations.sort_classification_rank.each do |c|
         p.classifications.build(:country => c) unless used_countries.include?(c.id)
@@ -96,14 +96,14 @@ class ProductsController < ApplicationController
     prod = Product.new
     prod.assign_model_field_attributes params[:product], no_validation: true
 
-    action_secure(current_user.add_products?,prod,{:verb => "create",:module_name=>"product"}) {
+    action_secure(current_user.add_products?, prod, {:verb => "create", :module_name=>"product"}) {
       succeed = lambda { |p|
         respond_to do |format|
           add_flash :notices, "Product created successfully."
           format.html { redirect_to p }
         end
       }
-      failure = lambda { |p,e|
+      failure = lambda { |p, e|
         respond_to do |format|
           @product = Product.new
           @product.assign_model_field_attributes params[:product], no_validation: true
@@ -120,7 +120,7 @@ class ProductsController < ApplicationController
           raise OpenChain::ValidationLogicError
         end
       }
-      validate_and_save_module(Product.new,params[:product],succeed, failure, before_validate: before_validate, exclude_blank_values: true)
+      validate_and_save_module(Product.new, params[:product], succeed, failure, before_validate: before_validate, exclude_blank_values: true)
     }
   end
 
@@ -129,12 +129,12 @@ class ProductsController < ApplicationController
   def update
     prod = Product.find(params[:id])
     importer_id = prod.importer_id
-    action_secure((prod.can_edit?(current_user) || prod.can_classify?(current_user)),prod,{:verb => "edit",:module_name=>"product"}) {
+    action_secure((prod.can_edit?(current_user) || prod.can_classify?(current_user)), prod, {:verb => "edit", :module_name=>"product"}) {
       succeed = lambda {|p|
         add_flash :notices, "Product was saved successfully."
         redirect_to p
       }
-      failure = lambda {|p,errors|
+      failure = lambda {|p, errors|
         errors_to_flash p
         error_redirect
       }
@@ -146,8 +146,8 @@ class ProductsController < ApplicationController
           raise OpenChain::ValidationLogicError
         end
       }
-      #Don't ignore blank values on individual updates
-      validate_and_save_module(prod,params[:product],succeed, failure,:before_validate=>before_validate, exclude_blank_values: false)
+      # Don't ignore blank values on individual updates
+      validate_and_save_module(prod, params[:product], succeed, failure, :before_validate=>before_validate, exclude_blank_values: false)
     }
   end
 
@@ -155,7 +155,7 @@ class ProductsController < ApplicationController
   # DELETE /products/1.xml
   def destroy
     p = Product.find(params[:id])
-    action_secure(current_user.company.master,p,{:verb => "delete",:module_name=>"product"}) {
+    action_secure(current_user.company.master, p, {:verb => "delete", :module_name=>"product"}) {
       @product = p
       @product.destroy
       errors_to_flash @product
@@ -175,14 +175,14 @@ class ProductsController < ApplicationController
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
     @base_product = Product.new
-    json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
+    json_product_for_classification(@base_product) # do this outside of the render block because it also preps the empty classifications
   end
 
   def bulk_update
-    action_secure((current_user.edit_products? || current_user.edit_classifications?),Product.new,{:verb => "edit",:module_name=>module_label.downcase.pluralize}) {
-      [:unique_identifier,:id].each {|f| params[:product].delete f} #delete fields from hash that shouldn't be bulk updated
-      params[:product].each {|k,v| params[:product].delete k if v.blank?}
-      params[:product_cf].each {|k,v| params[:product_cf].delete k if v.blank?} if params[:product_cf]
+    action_secure((current_user.edit_products? || current_user.edit_classifications?), Product.new, {:verb => "edit", :module_name=>module_label.downcase.pluralize}) {
+      [:unique_identifier, :id].each {|f| params[:product].delete f} # delete fields from hash that shouldn't be bulk updated
+      params[:product].each {|k, v| params[:product].delete k if v.blank?}
+      params[:product_cf].each {|k, v| params[:product_cf].delete k if v.blank?} if params[:product_cf]
       params.delete :utf8
       if run_delayed params
         if current_user.edit_products? || current_user.edit_classifications?
@@ -208,11 +208,11 @@ class ProductsController < ApplicationController
     @base_product = Product.new
     @back_to = request.referrer
     OpenChain::BulkUpdateClassification.build_common_classifications (@search_run ? @search_run : @pks), @base_product
-    render :json=> json_product_for_classification(@base_product) #do this outside of the render block because it also preps the empty classifications
+    render :json=> json_product_for_classification(@base_product) # do this outside of the render block because it also preps the empty classifications
   end
 
   def bulk_update_classifications
-    action_secure(current_user.edit_classifications?,Product.new,{:verb=>"classify",:module_name=>module_label.downcase.pluralize}) {
+    action_secure(current_user.edit_classifications?, Product.new, {:verb=>"classify", :module_name=>module_label.downcase.pluralize}) {
       if run_delayed params
         OpenChain::BulkUpdateClassification.delayed_quick_classify params, current_user
         add_flash :notices, "These products will be updated in the background.  You will receive a system message when they're ready."
@@ -226,42 +226,42 @@ class ProductsController < ApplicationController
       # redo the search if we're reloading the first search page after a search was run
       # so we're stripping the force_search param from the redirect uri
       if !params['back_to'].blank?
-        redirect_to validate_redirect(strip_uri_params(params['back_to'],'force_search'))
+        redirect_to validate_redirect(strip_uri_params(params['back_to'], 'force_search'))
       else
         redirect_to products_path
       end
     }
   end
 
-  #instant classify the given objects
+  # instant classify the given objects
   def bulk_instant_classify
-    action_secure(current_user.edit_classifications?,Product.new,{:verb=>"instant classify",:module_name=>module_label.downcase.pluralize}) {
+    action_secure(current_user.edit_classifications?, Product.new, {:verb=>"instant classify", :module_name=>module_label.downcase.pluralize}) {
       OpenChain::BulkInstantClassify.delayed_instant_classify params, current_user
       add_flash :notices, "These products will be instant classified in the background.  You will receive a system message when they're ready."
       redirect_to products_path
     }
   end
 
-  #render html block for instant classification preview on a single product
-  def show_bulk_instant_classify   
+  # render html block for instant classification preview on a single product
+  def show_bulk_instant_classify
     @pks = params[:pk]
     @search_run = params[:sr_id] ? SearchRun.find(params[:sr_id]) : nil
-    @preview_product = @pks.blank? ? Product.find(@search_run.parent.result_keys(:page=>1,:per_page=>1).first) : Product.find(@pks.values.first)
+    @preview_product = @pks.blank? ? Product.find(@search_run.parent.result_keys(:page=>1, :per_page=>1).first) : Product.find(@pks.values.first)
     @preview_instant_classification = InstantClassification.find_by_product(@preview_product, current_user)
   end
 
-  #render html for quick-classification modal
+  # render html for quick-classification modal
   def show_region_modal
     if current_user.edit_classifications?
-      @regions = Hash.new{ |h,k| h[k] = {} }
+      @regions = Hash.new { |h, k| h[k] = {} }
       regions = Region.includes(:countries)
       country_ids = params[:country_ids].split(",").map(&:to_i)
       # order hashes to match country_ids array
       @countries = Country.where(id: country_ids)
-                          .map{ |c| {id: c.id, name: c.name} }
-                          .sort{ |a,b| country_ids.index(a[:id]) <=> country_ids.index(b[:id]) }
-                          
-      regions.each do |r| 
+                          .map { |c| {id: c.id, name: c.name} }
+                          .sort { |a, b| country_ids.index(a[:id]) <=> country_ids.index(b[:id]) }
+
+      regions.each do |r|
         ids = country_ids & r.countries.map(&:id)
         if ids.present?
           @regions[r.id][:country_ids] = ids
@@ -286,11 +286,11 @@ class ProductsController < ApplicationController
   end
 
   def json_product_for_classification p
-    pre_loaded_countries = p.classifications.collect {|c| c.country_id} #don't use pluck here because bulk action does everything in memory
+    pre_loaded_countries = p.classifications.collect {|c| c.country_id} # don't use pluck here because bulk action does everything in memory
     Country.import_locations.sort_classification_rank.each do |c|
       p.classifications.build(:country=>c).tariff_records.build unless pre_loaded_countries.include? c.id
     end
-    p.to_json(:include=>{:classifications=>{:include=>[:country,:tariff_records]}})
+    p.to_json(:include=>{:classifications=>{:include=>[:country, :tariff_records]}})
   end
 
   def run_delayed params

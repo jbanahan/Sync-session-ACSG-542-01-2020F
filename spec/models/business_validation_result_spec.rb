@@ -1,6 +1,6 @@
 describe BusinessValidationResult do
   let(:bvr) { Factory(:business_validation_result) }
-  
+
   describe "can_view" do
     it "should allow users who can view results" do
       u = Factory(:master_user)
@@ -56,7 +56,7 @@ describe BusinessValidationResult do
 
       bvr.validatable = o
 
-      [rr1,rr2,rr3,rr4].each do |x|
+      [rr1, rr2, rr3, rr4].each do |x|
         bvr.business_validation_rule_results << x
         expect(x).to receive(:run_validation).with(o)
       end
@@ -74,7 +74,7 @@ describe BusinessValidationResult do
 
       bvr.validatable = o
 
-      [rr1,rr2].each do |x|
+      [rr1, rr2].each do |x|
         bvr.business_validation_rule_results << x
         expect(x).to receive(:run_validation).with(o)
       end
@@ -115,14 +115,14 @@ describe BusinessValidationResult do
 
   describe "run_validation_with_state_tracking" do
     let (:order) { Factory(:order, order_number: "ajklsdfajl") }
-    let (:rule) { ValidationRuleFieldFormat.create! type:'ValidationRuleFieldFormat', name: "Name", description: "Description", rule_attributes_json:{model_field_uid:'ord_ord_num',regex:'12345'}.to_json}
-    let (:rule_result) { 
+    let (:rule) { ValidationRuleFieldFormat.create! type:'ValidationRuleFieldFormat', name: "Name", description: "Description", rule_attributes_json:{model_field_uid:'ord_ord_num', regex:'12345'}.to_json}
+    let (:rule_result) {
       rr = BusinessValidationRuleResult.new
-      rr.business_validation_rule = rule 
+      rr.business_validation_rule = rule
       rr.save!
       rr
     }
-    let (:business_validation_result) { 
+    let (:business_validation_result) {
       r = BusinessValidationResult.create! validatable: order, state: "Failed"
       r.business_validation_rule_results << rule_result
       r
@@ -142,11 +142,10 @@ describe BusinessValidationResult do
         expect(BusinessValidationResult.new(state: "something else").send("#{method_name}?".to_sym)).to eq false
       end
 
-      it "validates #{state.downcase}_state?" do 
+      it "validates #{state.downcase}_state?" do
         expect(described_class.send("#{state.downcase}_state?".to_sym, state)).to eq true
         expect(described_class.send("#{state.downcase}_state?".to_sym, "something else")).to eq false
       end
     end
   end
-  
 end

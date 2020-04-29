@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
     let (:cdefs) { subject.new.cdefs }
     let (:existing_order) { Factory(:order, importer: burlington, order_number: "BURLI-364225101")}
     let (:existing_product) { Factory(:product, importer: burlington, unique_identifier: "BURLI-9050-E", name: "PARIS CRIB N CHANGER")}
-    let (:existing_prepack_product) { 
+    let (:existing_prepack_product) {
       p = Factory(:product, importer: burlington, unique_identifier: "BURLI-10708", name: "BEADOS S4 4 COLOR PEN")
       c = p.classifications.create! country: us
       c.tariff_records.create! hts_1: "9503000073"
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(existing_product.classifications.first.tariff_records.length).to eq 1
       t.reload
       expect(t.hts_1).to eq "9403509041"
-      
+
       expect {t2.reload}.to raise_error ActiveRecord::RecordNotFound
     end
 
@@ -222,14 +222,14 @@ describe OpenChain::CustomHandler::Burlington::Burlington850Parser do
       expect(line.custom_value(cdefs[:ord_line_buyer_item_number])).to eq "14734003"
       expect(line.custom_value(cdefs[:ord_line_outer_pack_identifier])).to eq "PO3636924LN10"
 
-      # I copy/pasted a second line into the EDI...so everything (except color) will be literally the 
+      # I copy/pasted a second line into the EDI...so everything (except color) will be literally the
       # same values...so just check that the line numbers are as expected
       line = order.order_lines.second
       expect(line.line_number).to eq 1002
       expect(line.sku).to eq "987654"
       expect(line.custom_value(cdefs[:ord_line_color])).to eq "RED"
 
-      # Now, make sure the product was created 
+      # Now, make sure the product was created
       p = line.product
       expect(p.entity_snapshots.length).to eq 1
     end

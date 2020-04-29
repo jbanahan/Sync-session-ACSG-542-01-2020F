@@ -1,7 +1,7 @@
 describe ModuleChain do
   describe "model_fields" do
     it "returns all model fields for the chain" do
-      subject.add_array([CoreModule::PRODUCT,CoreModule::CLASSIFICATION,CoreModule::TARIFF])
+      subject.add_array([CoreModule::PRODUCT, CoreModule::CLASSIFICATION, CoreModule::TARIFF])
 
       # first, confirm that the setup for Product includes children outside the chain
       expect(CoreModule::PRODUCT.model_fields_including_children.values.find { |mf| mf.core_module==CoreModule::VARIANT}).to_not be_nil

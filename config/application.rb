@@ -35,7 +35,7 @@ module OpenChain
 
     if Rails.env.production?
       config.middleware.use(ExceptionNotification::Rack,
-        ignore_if: lambda { |env, exception| exception.is_a?(ActionController::InvalidAuthenticityToken) || exception.is_a?(UnreportedError) || MasterSetup.get.custom_feature?("Suppress Exception Emails") }, 
+        ignore_if: lambda { |env, exception| exception.is_a?(ActionController::InvalidAuthenticityToken) || exception.is_a?(UnreportedError) || MasterSetup.get.custom_feature?("Suppress Exception Emails") },
         email: {
           email_prefix: "[VFI Track Exception]",
           sender_address: %{"Exception Notifier" <bug@vandegriftinc.com>},
@@ -44,8 +44,8 @@ module OpenChain
       )
     end
 
-    # The following config pretty much completely disables strong_parameters.  When we start to use them and eliminate 
-    # the protected_attributes, this can be removed.  We can do a hybrid of the two by removing the following config 
+    # The following config pretty much completely disables strong_parameters.  When we start to use them and eliminate
+    # the protected_attributes, this can be removed.  We can do a hybrid of the two by removing the following config
     # and adding `before_action { params.permit! }` for any controllers we know are still protected by attr_accessible.
     config.action_controller.permit_all_parameters = true
     config.active_record.schema_format = :sql
@@ -53,7 +53,7 @@ module OpenChain
     config.action_mailer.delivery_method = :postmark
     config.active_record.include_root_in_json = true
     ActiveSupport::JSON::Encoding.time_precision = 0
-    
+
     if Rails.env.test?
       initializer :after => :initialize_dependency_mechanism do
         ActiveSupport::Dependencies.mechanism = :load
@@ -75,7 +75,7 @@ module OpenChain
 
     if !Rails.env.test?
       raise "Postmark email settings must be configured under the 'postmark' key in config/secrets.yml." if Rails.application.secrets["postmark"].blank? || Rails.application.secrets["postmark"].try(:[], "postmark_api_key").blank?
-      config.action_mailer.postmark_settings = { api_token: Rails.application.secrets["postmark"]["postmark_api_key"] }  
+      config.action_mailer.postmark_settings = { api_token: Rails.application.secrets["postmark"]["postmark_api_key"] }
     end
 
     aws = Rails.application.secrets["aws"]&.with_indifferent_access

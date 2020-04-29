@@ -5,7 +5,7 @@ describe DutyCalcImportFilesController do
     sign_in_as @user
   end
   describe "create" do
-    before :each do 
+    before :each do
       @c = Factory(:company)
     end
     it "should fail if user cannot edit drawback" do
@@ -15,9 +15,9 @@ describe DutyCalcImportFilesController do
     end
     it "should delay creation" do
       f = double('impfileclass')
-      expect(f).to receive(:generate_for_importer).with(@c.id.to_s,@user)
+      expect(f).to receive(:generate_for_importer).with(@c.id.to_s, @user)
       allow_any_instance_of(User).to receive(:edit_drawback?).and_return(true)
-      expect(DutyCalcImportFile).to receive(:delay).and_return f 
+      expect(DutyCalcImportFile).to receive(:delay).and_return f
       post :create, importer_id: @c.id.to_s
       expect(response).to redirect_to drawback_upload_files_path
     end

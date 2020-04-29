@@ -1,6 +1,6 @@
-describe ValidationRuleEntryDutyTaxesMatchSummary do 
+describe ValidationRuleEntryDutyTaxesMatchSummary do
 
-  describe "run_validation" do 
+  describe "run_validation" do
     let (:entry) {
       e = Factory(:entry, total_duty: 150.1, mpf: 25.5, hmf: 10.49, cotton_fee: 0.99)
     }
@@ -20,7 +20,7 @@ describe ValidationRuleEntryDutyTaxesMatchSummary do
     let! (:invoice_line_2) {
       line = commercial_invoice.commercial_invoice_lines.create! prorated_mpf: BigDecimal("0.5"), cotton_fee: BigDecimal("0.49")
       line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("25.1")
-      
+
       line
     }
 
@@ -68,7 +68,7 @@ describe ValidationRuleEntryDutyTaxesMatchSummary do
       entry = Factory(:entry)
       entry.commercial_invoices.create! invoice_number: "INVOICE"
       line = commercial_invoice.commercial_invoice_lines.create!
-      tariff = line.commercial_invoice_tariffs.create! 
+      tariff = line.commercial_invoice_tariffs.create!
 
       expect(subject.run_validation entry).to be_blank
     end

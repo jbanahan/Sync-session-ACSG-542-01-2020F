@@ -6,7 +6,7 @@ module FieldValidationHelper
        if rule_attribute('model_field_uid')
          attrs = {}
          @expressions[ModelField.find_by_uid(rule_attribute('model_field_uid'))] = attrs
-         args.each{ |arg| attrs[arg] = rule_attribute arg }
+         args.each { |arg| attrs[arg] = rule_attribute arg }
 
          # Now that we have all the args, let's grab the secondary_model_field, assuming it exists
          if attrs['secondary_model_field_uid']
@@ -26,15 +26,15 @@ module FieldValidationHelper
            mf = ModelField.find_by_uid(uid)
            # If model field is blank, we likely have a flag attribute set for the expression...so just skip it
            next if mf.blank?
- 
+
            @expressions[mf] = attrs
- 
+
            conditions = attrs.delete 'if'
            Array.wrap(conditions).each do |condition|
              attrs['if_criterions'] ||= []
              attrs['if_criterions'] << condition_criterion(condition)
            end
- 
+
            conditions = attrs.delete 'unless'
            Array.wrap(conditions).each do |condition|
              attrs['unless_criterions'] ||= []
@@ -43,7 +43,7 @@ module FieldValidationHelper
          end
        end
      end
- 
+
      # Dupe the hash so that if the caller modifies it, we don't end up having information clobbered that we need to return later
      # Deep dup ends up screwing with the model field, so we can't use it
      @expressions.dup

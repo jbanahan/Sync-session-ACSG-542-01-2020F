@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap do
   describe 'act' do
     before :each do
       @ord = Factory(:order)
-      @user = Factory(:master_user,order_view:true)
+      @user = Factory(:master_user, order_view:true)
       @cdefs = described_class.prep_custom_definitions [:ord_manual_send_to_sap_date]
     end
     it "should FTP file to SAP" do
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap do
       expect(snapshots.first.context).to eq "Manual SAP Send"
     end
     it "handles bad order control numbers" do
-      expect{ described_class.act @user, -500, nil, nil, nil }.to raise_error(ActiveRecord::RecordNotFound)
+      expect { described_class.act @user, -500, nil, nil, nil }.to raise_error(ActiveRecord::RecordNotFound)
     end
     it "handles permission errors" do
       @user.order_view = false

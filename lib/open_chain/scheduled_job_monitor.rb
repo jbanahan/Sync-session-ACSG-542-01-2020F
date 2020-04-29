@@ -2,7 +2,6 @@ module OpenChain; class ScheduledJobMonitor
 
   def self.run_schedulable opts = {}
     jobs = long_running_jobs.map {|j| j.run_class}
-    #byebug
     if jobs.length > 0
       job_list = jobs.map {|job| "<li>#{job}</li>"}.join(" ")
       body = ("<p>The following Scheduled #{"Job".pluralize(job_list.length)} on the #{MasterSetup.get.system_code} instance #{"has".pluralize(job_list.length)} been running for more than an hour:<br><ul>#{job_list}</ul></p>" +

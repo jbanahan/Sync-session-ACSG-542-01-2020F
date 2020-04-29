@@ -4,8 +4,8 @@ describe DrawbackClaimAudit do
       d1 = DrawbackClaimAudit.new(
         export_part_number:'123',
         export_ref_1:'ER1',
-        export_date:Date.new(2014,7,5),
-        import_date:Date.new(2014,7,4),
+        export_date:Date.new(2014, 7, 5),
+        import_date:Date.new(2014, 7, 4),
         import_entry_number:'ENT123',
         import_part_number:'ABC',
         import_ref_1:'IR1',
@@ -15,15 +15,15 @@ describe DrawbackClaimAudit do
       d2 = DrawbackClaimAudit.new(
         export_part_number:'124',
         export_ref_1:'ER2',
-        export_date:Date.new(2014,7,6),
-        import_date:Date.new(2014,7,3),
+        export_date:Date.new(2014, 7, 6),
+        import_date:Date.new(2014, 7, 3),
         import_entry_number:'ENT124',
         import_part_number:'ABCD',
         import_ref_1:'IR2',
         quantity:11,
         drawback_claim_id: 2
       )
-      DrawbackClaimAudit.bulk_insert [d1,d2]
+      DrawbackClaimAudit.bulk_insert [d1, d2]
       f1 = DrawbackClaimAudit.first
       expect(f1.export_part_number).to eq d1.export_part_number
       expect(f1.export_ref_1).to eq d1.export_ref_1

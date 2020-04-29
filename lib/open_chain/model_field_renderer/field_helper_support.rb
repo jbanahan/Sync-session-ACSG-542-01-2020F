@@ -32,7 +32,7 @@ module OpenChain; module ModelFieldRenderer; module FieldHelperSupport
     else
       core_object = object_or_form
     end
-    [core_object,form_object]
+    [core_object, form_object]
   end
 
   # yield all model fields
@@ -58,10 +58,10 @@ module OpenChain; module ModelFieldRenderer; module FieldHelperSupport
         if label.is_a? Symbol
           label = get_model_field(label)
         end
-        
+
         mf = [label, value]
       else
-        mf = get_model_field(mf_uid)  
+        mf = get_model_field(mf_uid)
       end
 
       yield mf unless mf.nil?
@@ -82,8 +82,8 @@ module OpenChain; module ModelFieldRenderer; module FieldHelperSupport
 
   def skip_field? mf, user, hidden_field_override, read_only_override
     return false if hidden_field_override
-    return true if !mf.can_view?(user) #skip fields the user cannot view
+    return true if !mf.can_view?(user) # skip fields the user cannot view
     return true if (!read_only_override && (mf.read_only? || !mf.can_edit?(user)))
-    return false #default behavior is to show field
+    return false # default behavior is to show field
   end
 end; end; end

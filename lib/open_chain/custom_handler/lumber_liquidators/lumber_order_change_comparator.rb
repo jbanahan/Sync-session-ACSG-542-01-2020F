@@ -15,14 +15,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type=='Order'
-    old_data = build_order_data(old_bucket,old_path,old_version)
-    new_data = build_order_data(new_bucket,new_path,new_version)
-    execute_business_logic(id,old_data,new_data)
+    old_data = build_order_data(old_bucket, old_path, old_version)
+    new_data = build_order_data(new_bucket, new_path, new_version)
+    execute_business_logic(id, old_data, new_data)
   end
 
   def self.build_order_data bucket, path, version
     return nil if bucket.blank?
-    h = get_json_hash(bucket,path,version)
+    h = get_json_hash(bucket, path, version)
     OrderData.build_from_hash(h)
   end
 
@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   def self.execute_business_logic id, old_data, new_data, logic_steps = nil
     ord = find_order(id)
     return unless ord
-    Lock.with_lock_retry(ord) do 
+    Lock.with_lock_retry(ord) do
       logic_steps = all_logic_steps if logic_steps.blank?
       updated_by = []
       field_updates = false
@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       # over the course of several snapshots.  This also caused the history to get VERY hard to read
       # AND caused multiple XML files to get generated out.
 
-      # By putting them all in a single discreet ordered series, we can ensure that this all runs 
+      # By putting them all in a single discreet ordered series, we can ensure that this all runs
       # in a predefined order and a single snapshot, xml send and pdf generation results from the logic.
       Array.wrap(logic_steps).each do |step|
         updated = false
@@ -82,10 +82,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
           updated = record_po_created_data(ord, old_data, new_data)
         when :update_change_log
           logic_name = "Change Log"
-          updated = update_change_log(ord,old_data,new_data)
+          updated = update_change_log(ord, old_data, new_data)
         when :generate_ll_xml
           # Generating XML won't set any order values, so we don't have to do the update handling in here
-          generate_ll_xml(ord,old_data,new_data)
+          generate_ll_xml(ord, old_data, new_data)
         else
           raise "Unexpected logic step of '#{step}' received."
         end
@@ -98,7 +98,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
 
       if field_updates
-        create_pdf(ord,old_data,new_data)
+        create_pdf(ord, old_data, new_data)
         create_snapshot(ord, User.integration, updated_by)
       end
     end
@@ -114,20 +114,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.set_price_revised_dates ord, old_data, new_data
-    line_ids = OrderData.lines_with_changed_price(old_data,new_data)
+    line_ids = OrderData.lines_with_changed_price(old_data, new_data)
     r_val = false
     sap_extract_date = new_data.sap_extract_date
-    cdefs = self.prep_custom_definitions([:ord_sap_extract,:ord_price_revised_date,:ordln_price_revised_date])
+    cdefs = self.prep_custom_definitions([:ord_sap_extract, :ord_price_revised_date, :ordln_price_revised_date])
     line_ids.each do |line_id|
       ol = ord.order_lines.find {|order_line| order_line.line_number==line_id}
       next unless ol
-      ol.update_custom_value!(cdefs[:ordln_price_revised_date],sap_extract_date)
+      ol.update_custom_value!(cdefs[:ordln_price_revised_date], sap_extract_date)
       r_val = true
     end
     if r_val
       header_revised_date = ord.custom_value(cdefs[:ord_price_revised_date])
       if !header_revised_date || header_revised_date.to_i < sap_extract_date.to_i
-        ord.update_custom_value!(cdefs[:ord_price_revised_date],sap_extract_date)
+        ord.update_custom_value!(cdefs[:ord_price_revised_date], sap_extract_date)
       end
     end
     return r_val
@@ -137,46 +137,46 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     cdefs = self.prep_custom_definitions [:ord_planned_handover_date]
     return false unless ord.custom_value(cdefs[:ord_planned_handover_date])
     if old_data.ship_window_start!=new_data.ship_window_start || old_data.ship_window_end!=new_data.ship_window_end
-      ord.update_custom_value!(cdefs[:ord_planned_handover_date],nil)
+      ord.update_custom_value!(cdefs[:ord_planned_handover_date], nil)
       return true
     end
     return false
   end
 
   def self.set_forecasted_handover_date ord
-    cdefs = self.prep_custom_definitions [:ord_planned_handover_date,:ord_forecasted_handover_date,:ord_forecasted_ship_window_start]
+    cdefs = self.prep_custom_definitions [:ord_planned_handover_date, :ord_forecasted_handover_date, :ord_forecasted_ship_window_start]
     current_forecasted_handover_date = ord.custom_value(cdefs[:ord_forecasted_handover_date])
     planned_handover_date = ord.custom_value(cdefs[:ord_planned_handover_date])
     if planned_handover_date && planned_handover_date!=current_forecasted_handover_date
-      ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],planned_handover_date)
-      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],planned_handover_date)
+      ord.update_custom_value!(cdefs[:ord_forecasted_handover_date], planned_handover_date)
+      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start], planned_handover_date)
       return true
     end
     if !planned_handover_date && ord.ship_window_end && ord.ship_window_end!=current_forecasted_handover_date
-      ord.update_custom_value!(cdefs[:ord_forecasted_handover_date],ord.ship_window_end)
-      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start],ord.ship_window_end)
+      ord.update_custom_value!(cdefs[:ord_forecasted_handover_date], ord.ship_window_end)
+      ord.update_custom_value!(cdefs[:ord_forecasted_ship_window_start], ord.ship_window_end)
       return true
     end
     return false
   end
 
   def self.generate_ll_xml order, old_data, new_data
-    # SOW # 1182 - Filtering XML sends based on Order Type 
+    # SOW # 1182 - Filtering XML sends based on Order Type
     return unless ["NB", "ZMSP"].include? new_data.order_type.to_s.upcase
 
     # Before sending the order, update the business rules because it's very likely that some of the other logic
-    # in this comparator has updated some states.  If this happens, we'll want to send out the current 
+    # in this comparator has updated some states.  If this happens, we'll want to send out the current
     # business rule state.
     BusinessValidationTemplate.create_results_for_object! order, snapshot_entity: false
-    if OrderData.send_sap_update?(order, old_data,new_data)
-      # The reason we're delaying the send by a couple minutes is because we have a fairly complex web of logic run for the LL 
-      # comparators that ends up resulting in a series of passes over the order data.  It seems to end up resulting in rules 
+    if OrderData.send_sap_update?(order, old_data, new_data)
+      # The reason we're delaying the send by a couple minutes is because we have a fairly complex web of logic run for the LL
+      # comparators that ends up resulting in a series of passes over the order data.  It seems to end up resulting in rules
       # getting flipped from approved to unapproved back to approved quite quickly.  Which then, due to the way we compress
-      # snapshot processing together, can result in changes not getting picked up by this logic (Snapshot A starts as approved, 
-      # Snapshot B changes to unapproved, Snapshot C goes back to approved - if they're all processed together the system doesn't 
+      # snapshot processing together, can result in changes not getting picked up by this logic (Snapshot A starts as approved,
+      # Snapshot B changes to unapproved, Snapshot C goes back to approved - if they're all processed together the system doesn't
       # see the changes to the approval flag, since it started at appoved and went back to approved).
 
-      # This is more of a bandaid. I think the real fix might be to actually run comparators over every single snapshot (at least for 
+      # This is more of a bandaid. I think the real fix might be to actually run comparators over every single snapshot (at least for
       # Lumber due to their web of comparator logic), rather than diffing the range of snapshots that are present at the current time the
       # entity_comparator code runs.  However, doing something like that will have other consequences that I can't deal with at the moment.
       # This should get us past the specific issue we're dealing with.
@@ -204,16 +204,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   end
 
   def self.reset_product_compliance_approvals ord, old_data, new_data
-    cdefs = prep_custom_definitions([:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive])
+    cdefs = prep_custom_definitions([:ordln_pc_approved_by, :ordln_pc_approved_date, :ordln_pc_approved_by_executive, :ordln_pc_approved_date_executive])
     header_cdef = prep_custom_definitions([:ord_pc_approval_recommendation])[:ord_pc_approval_recommendation]
     values_changed = false
-    lines_to_check = OrderData.lines_needing_pc_approval_reset(old_data,new_data)
+    lines_to_check = OrderData.lines_needing_pc_approval_reset(old_data, new_data)
     lines_to_check.each do |line_number|
       ol = ord.order_lines.find_by_line_number(line_number)
       next unless ol
-      cdefs.values.each do |cd|
+      cdefs.each_value do |cd|
         if !ol.custom_value(cd).blank?
-          ol.update_custom_value!(cd,nil)
+          ol.update_custom_value!(cd, nil)
           values_changed = true
         end
       end
@@ -223,13 +223,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     values_changed = true if ord.custom_value(header_cdef).present? && OrderData.line_pc_unapproved?(old_data, new_data)
 
     if values_changed
-      ord.update_custom_value!(header_cdef,'')
+      ord.update_custom_value!(header_cdef, '')
     end
     return values_changed
   end
 
   def self.create_pdf ord, old_data, new_data
-    if OrderData.vendor_visible_fields_changed?(old_data,new_data)
+    if OrderData.vendor_visible_fields_changed?(old_data, new_data)
       OpenChain::CustomHandler::LumberLiquidators::LumberOrderPdfGenerator.create!(ord, User.integration)
       return true
     end
@@ -238,12 +238,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.update_change_log ord, old_data, new_data
     updated_change_log = false
-    #don't make change log for first entry
-    if old_data && OrderData.vendor_visible_fields_changed?(old_data,new_data)
+    # don't make change log for first entry
+    if old_data && OrderData.vendor_visible_fields_changed?(old_data, new_data)
       change_log_entries = []
       old_fph = old_data.fingerprint_hash
       new_fph = new_data.fingerprint_hash
-      old_fph.each do |uid,old_val|
+      old_fph.each do |uid, old_val|
         next if uid.to_s == 'lines'
         new_val = new_fph[uid]
         if new_val != old_val
@@ -252,10 +252,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       end
       old_lines = old_fph['lines']
       new_lines = new_fph['lines']
-      change_log_entries.push(*make_lines_added_messages(old_lines,new_lines))
-      change_log_entries.push(*make_lines_removed_messages(old_lines,new_lines))
-      change_log_entries.push(*make_lines_changed_messages(old_lines,new_lines))
-      updated_change_log = append_change_log(ord,change_log_entries)
+      change_log_entries.push(*make_lines_added_messages(old_lines, new_lines))
+      change_log_entries.push(*make_lines_removed_messages(old_lines, new_lines))
+      change_log_entries.push(*make_lines_changed_messages(old_lines, new_lines))
+      updated_change_log = append_change_log(ord, change_log_entries)
     end
     updated_change_log
   end
@@ -267,11 +267,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   def self.append_change_log ord, new_log_entries
     return false if new_log_entries.blank?
 
-    new_log_entries.each {|nle| nle.prepend("\t")} #indent lines
+    new_log_entries.each {|nle| nle.prepend("\t")} # indent lines
     cd = self.prep_custom_definitions([:ord_change_log])[:ord_change_log]
     new_log_entries.unshift(0.seconds.ago.utc.strftime('%Y-%m-%d %H:%M (UTC):'))
     current_log = ord.custom_value(cd) || ''
-    ord.update_custom_value!(cd,"#{new_log_entries.join("\n")}\n\n#{current_log}")
+    ord.update_custom_value!(cd, "#{new_log_entries.join("\n")}\n\n#{current_log}")
     true
   end
   private_class_method :append_change_log
@@ -288,11 +288,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
   def self.make_lines_changed_messages old_lines, new_lines
     line_changed_messages = []
-    old_lines.each do |k,old_line|
+    old_lines.each do |k, old_line|
       line_entries = []
       new_line = new_lines[k]
       next unless new_line
-      old_line.each do |uid,old_val|
+      old_line.each do |uid, old_val|
         new_val = new_line[uid]
         if new_val != old_val
           line_entries << "#{ModelField.find_by_uid(uid).label} changed from \"#{old_val}\" to \"#{new_val}\""
@@ -341,7 +341,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     attr_reader :fingerprint, :fingerprint_hash, :snapshot
     attr_accessor :ship_from_address, :planned_handover_date, :variant_map,
       :ship_window_start, :ship_window_end, :price_map, :sap_extract_date,
-      :approval_status, :business_rule_state, :country_of_origin, :order_type, 
+      :approval_status, :business_rule_state, :country_of_origin, :order_type,
       :booking_confirmed_date, :booking_requested_date, :has_pc_approved_date_map
 
     def initialize fp_hash, snapshot
@@ -447,7 +447,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     def self.prep_class_cust_defs
       if PLANNED_HANDOVER_DATE_UID.empty?
-        cdefs = prep_custom_definitions([:ord_country_of_origin,:ord_planned_handover_date,:ord_sap_extract, :ord_type, :ord_shipment_booking_confirmed_date, :ord_shipment_booking_requested_date, :ordln_pc_approved_date, :ordln_pc_approved_date_executive])
+        cdefs = prep_custom_definitions([:ord_country_of_origin, :ord_planned_handover_date, :ord_sap_extract, :ord_type, :ord_shipment_booking_confirmed_date, :ord_shipment_booking_requested_date, :ordln_pc_approved_date, :ordln_pc_approved_date_executive])
         PLANNED_HANDOVER_DATE_UID << cdefs[:ord_planned_handover_date].model_field_uid
         SAP_EXTRACT_DATE_UID << cdefs[:ord_sap_extract].model_field_uid
         COUNTRY_ORIGIN_UID << cdefs[:ord_country_of_origin].model_field_uid
@@ -460,7 +460,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     end
 
     def has_blank_defaults?
-      return true if ['ord_terms','ord_fob_point'].find {|fld| @fingerprint_hash[fld].blank? }
+      return true if ['ord_terms', 'ord_fob_point'].find {|fld| @fingerprint_hash[fld].blank? }
       return true if self.country_of_origin.blank?
       return false
     end
@@ -477,17 +477,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       new_hash = new_data.fingerprint_hash['lines']
 
       # if the ship from changed, then all lines need to be re-approved
-      return new_hash.keys if ship_from_changed?(old_data,new_data)
+      return new_hash.keys if ship_from_changed?(old_data, new_data)
 
       lines_to_check = new_hash.keys & old_hash.keys
-      need_reset = lines_to_check.reject do |line_number| 
+      need_reset = lines_to_check.reject do |line_number|
         # only the following fields should be considered as pc approval resets - [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu]
         [:ordln_line_number, :ordln_puid, :ordln_ordered_qty, :ordln_unit_of_measure, :ordln_ppu].all? do |uid|
           old_hash[line_number][uid] == new_hash[line_number][uid]
         end
       end
 
-      new_data.variant_map.each do |k,v|
+      new_data.variant_map.each do |k, v|
         need_reset << k if old_data.variant_map[k] != v
       end
       need_reset.uniq.compact
@@ -498,7 +498,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       return false unless old_data
 
       # What we're looking for is if any line's PC Approval or PC Approval Exec flipped from Approved to Not Approved
-      old_data.has_pc_approved_date_map.each_pair do |line_number, old_approvals| 
+      old_data.has_pc_approved_date_map.each_pair do |line_number, old_approvals|
         new_approvals = new_data.has_pc_approved_date_map[line_number]
 
         # This is the case where the line was deleted and was previously approved.
@@ -526,14 +526,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     def self.vendor_visible_fields_changed? old_data, new_data
       return true if old_data.nil?
-      return (old_data.fingerprint != new_data.fingerprint) || ship_from_changed?(old_data,new_data)
+      return (old_data.fingerprint != new_data.fingerprint) || ship_from_changed?(old_data, new_data)
     end
 
     def self.lines_with_changed_price old_data, new_data
       nh = new_data.price_map
       oh = old_data ? old_data.price_map : {}
       r_val = []
-      nh.each do |k,v|
+      nh.each do |k, v|
         r_val << k unless v == oh[k]
       end
       return r_val
@@ -562,7 +562,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
         current_value = SnapshotWriter.new.field_value(o, ModelField.find_by_uid(model_field), json_string: true)
         updated = current_value != new_value
       end
-      
+
       updated
     end
   end

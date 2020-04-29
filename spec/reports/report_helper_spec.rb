@@ -87,19 +87,19 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should write results to the given sheet" do
-      e1 = Factory(:entry,:entry_number=>'12345')
-      e2 = Factory(:entry,:entry_number=>'65432')
+      e1 = Factory(:entry, :entry_number=>'12345')
+      e2 = Factory(:entry, :entry_number=>'65432')
       results = ActiveRecord::Base.connection.execute "SELECT entry_number as 'EN', id as 'IDENT' FROM entries order by entry_number ASC"
       # Start at row 5 just to make sure the return value is actually giving us the # of rows written and not the ending line number
       expect(subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 5).to eq 2
 
-      expect(@sheet.row(5)).to eq(['12345',e1.id])
-      expect(@sheet.row(6)).to eq(['65432',e2.id])
+      expect(@sheet.row(5)).to eq(['12345', e1.id])
+      expect(@sheet.row(6)).to eq(['65432', e2.id])
     end
 
     it "should handle timezone conversion for datetime columns" do
       release_date = 0.seconds.ago
-      e1 = Factory(:entry,:entry_number=>'12345', :release_date => release_date)
+      e1 = Factory(:entry, :entry_number=>'12345', :release_date => release_date)
       results = ActiveRecord::Base.connection.execute "SELECT release_date 'REL1', date(release_date) as 'Rel2' FROM entries order by entry_number ASC"
       Time.use_zone("Hawaii") do
         subject.write_result_set_to_sheet results, @sheet, ["EN", "IDENT"], 0
@@ -121,18 +121,18 @@ describe OpenChain::Report::ReportHelper do
         expect(val).to eq("A")
         "Col1"
       }
-      conversions[1] = lambda{|row, val|
+      conversions[1] = lambda {|row, val|
         expect(row).to eq(['A', 'B', 'C'])
         expect(val).to eq("B")
         "Col2"
       }
-      conversions[:col_3] = lambda{|row, val|
+      conversions[:col_3] = lambda {|row, val|
         expect(row).to eq(['A', 'B', 'C'])
         expect(val).to eq("C")
         "Col3"
       }
       # Add a lambda by name and symbol for the 3rd column, proves name/symbol takes precedence
-      conversions[2] = lambda{|row, val|
+      conversions[2] = lambda {|row, val|
         raise "Shouldn't use this conversion."
       }
 
@@ -256,7 +256,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should error on invalid strings" do
-      expect{subject.sanitize_date_string "notadate"}.to raise_error(/date/)
+      expect {subject.sanitize_date_string "notadate"}.to raise_error(/date/)
     end
 
     it "should convert date to UTC date time string" do
@@ -265,7 +265,7 @@ describe OpenChain::Report::ReportHelper do
     end
 
     it "should accept a date object" do
-      s = subject.sanitize_date_string Date.new(2013,1,1), "Hawaii"
+      s = subject.sanitize_date_string Date.new(2013, 1, 1), "Hawaii"
       expect(s).to eq("2013-01-01 10:00:00")
     end
   end
@@ -308,12 +308,12 @@ describe OpenChain::Report::ReportHelper do
   describe "RowWrapper" do
     it "correctly initializes, reads, assigns, unwraps" do
       r = described_class::RowWrapper.new ["good morning", "good evening"], {foo: 0, bar: 1}
-      
+
       expect(r.field_map).to eq({foo: 0, bar: 1})
       expect(r[:bar]).to eq "good evening"
-      
+
       r[:bar] = "good night"
-      
+
       expect(r[:bar]).to eq "good night"
       expect(r.to_a).to eq ["good morning", "good night"]
     end

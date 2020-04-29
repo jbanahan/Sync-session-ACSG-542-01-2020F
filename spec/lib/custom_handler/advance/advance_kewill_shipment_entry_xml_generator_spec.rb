@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Advance::AdvanceKewillShipmentEntryXmlGenerat
       expect(data.customer).to eq "ADVAN"
       expect(data.consignee_code).to eq "ADVAN"
       expect(data.ultimate_consignee_code).to eq "ADVAN"
-      
+
       # The only difference here between the primary generator and the ADVAN specific one is that this one
       # doesn't generate bol records and sets an Edi Identifier
       expect(data.edi_identifier).not_to be_nil

@@ -32,10 +32,10 @@ class HttpClient
         if block_given?
           yield http, request
         end
-        
+
         http.request request
       end
-      
+
       status = response.code
 
       # This method will modify the character encoding of the response so that it matches the headers
@@ -75,7 +75,7 @@ class HttpClient
     response.body
   end
 
-  private 
+  private
     def update_response_body_encoding response
       # This is a fix for the absolutely moronic implementation detail of Net::HTTP not setting the response body
       # charset based on the server's content-type response header.

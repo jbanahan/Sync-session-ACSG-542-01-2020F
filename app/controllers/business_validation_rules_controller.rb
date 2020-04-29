@@ -53,16 +53,16 @@ class BusinessValidationRulesController < ApplicationController
     end
   end
 
-  def edit #used for adding a criterion to a rule
+  def edit # used for adding a criterion to a rule
     @no_action_bar = true
-    admin_secure{
+    admin_secure {
       @new_criterion = SearchCriterion.new
       @bvr = BusinessValidationRule.find(params[:id])
     }
   end
 
   def update
-    admin_secure{
+    admin_secure {
       @bvr = BusinessValidationRule.find(params[:id])
       @bvr.search_criterions = []
       unless valid_json(params[:business_validation_rule][:rule_attributes_json])
@@ -195,7 +195,7 @@ class BusinessValidationRulesController < ApplicationController
           :label => model_field.label, :datatype => model_field.data_type.to_s
           }
     end
-    model_fields_list.sort { |a,b| a[:label].downcase <=> b[:label].downcase }
+    model_fields_list.sort { |a, b| a[:label].downcase <=> b[:label].downcase }
   end
 
 end

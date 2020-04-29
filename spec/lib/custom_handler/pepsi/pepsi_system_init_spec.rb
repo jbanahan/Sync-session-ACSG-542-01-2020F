@@ -2,7 +2,7 @@ describe OpenChain::CustomHandler::Pepsi::PepsiSystemInit do
   subject { described_class }
 
   describe 'init' do
-    let! (:ms) { 
+    let! (:ms) {
       ms = stub_master_setup
       allow(ms).to receive(:custom_feature?).with("Pepsi").and_return false
       ms
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Pepsi::PepsiSystemInit do
     end
 
     context 'with custom feature' do
-      let! (:ms) { 
+      let! (:ms) {
         ms = stub_master_setup
         allow(ms).to receive(:custom_feature?).with("Pepsi").and_return true
         ms

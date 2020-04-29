@@ -7,7 +7,7 @@ module OpenChain; module Api; module V1; class AttachmentApiJsonGenerator
     super(core_module: CoreModule::ATTACHMENT, jsonizer: jsonizer)
   end
 
-  #needed for index
+  # needed for index
   def obj_to_json_hash attachment
     fields = all_requested_model_field_uids(CoreModule::ATTACHMENT)
     h = to_entity_hash(attachment, fields, user: current_user)

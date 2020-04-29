@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
     isf
   }
 
-  describe "generate_entry_data" do  
+  describe "generate_entry_data" do
 
     let (:cdefs) {
       self.class.prep_custom_definitions([:prod_part_number, :shpln_coo, :shpln_invoice_number])
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
         e = subject.generate_entry_data isf
         expect(e).not_to be_nil
 
-        #Easiest way to determine that there was a shipment match is to check that there are cartons listed
+        # Easiest way to determine that there was a shipment match is to check that there are cartons listed
         expect(e.invoices.length).to eq 1
 
         i = e.invoices.first
@@ -263,7 +263,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator d
       expect(subject.drive_path isf).to eq "CUST CI Load/MBOL.xls"
     end
 
-    it "falls back to house bill if master bill is blank" do 
+    it "falls back to house bill if master bill is blank" do
       isf.master_bill_of_lading = ""
       isf.house_bills_of_lading = "HBOL"
       expect(subject.drive_path isf).to eq "CUST CI Load/HBOL.xls"

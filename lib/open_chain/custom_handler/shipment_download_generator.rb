@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
       preload_shipment(shipment, lines_through_containers: true)
 
       # This grouping stuff is because user's can make multiple container records with the same container number.
-      # If we don't handle this then because we use the container number as the tab name, the excel file builder 
+      # If we don't handle this then because we use the container number as the tab name, the excel file builder
       # blows up due to duplicate sheets named that.
       container_groups(shipment.containers).each_pair do |container_number, containers|
         sheet = new_sheet(builder, container_number)
@@ -224,7 +224,7 @@ module OpenChain; module CustomHandler; class ShipmentDownloadGenerator
     field.respond_to?(:model_field) ? field.model_field : ModelField.find_by_uid(field)
   end
 
-  def cdefs 
+  def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:prod_part_number]
   end
 

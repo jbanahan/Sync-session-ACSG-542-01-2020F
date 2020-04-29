@@ -1,14 +1,14 @@
 module OpenChain; module CustomHandler; class EcellerateShipmentActivityParser
-  #required to support CustomFile
+  # required to support CustomFile
   def initialize attachable
     @attachable = attachable
   end
-  
+
   def self.can_view? user
     user.edit_shipments? && user.company.master? && MasterSetup.get.custom_feature?("ecellerate")
   end
 
-  #required to support CustomFile
+  # required to support CustomFile
   def can_view? user
     self.class.can_view? user
   end
@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; class EcellerateShipmentActivityParser
       importer = get_importer r[5]
       next unless importer
       s = shipment_cache[hbol]
-      s = Shipment.includes(:shipment_lines).where(house_bill_of_lading:hbol,importer_id:importer.id).first unless s
+      s = Shipment.includes(:shipment_lines).where(house_bill_of_lading:hbol, importer_id:importer.id).first unless s
       if s
         shipment_cache[hbol] = s
         s.est_departure_date = r[33]
@@ -45,14 +45,14 @@ module OpenChain; module CustomHandler; class EcellerateShipmentActivityParser
         missing_house_bills << hbol
       end
     end
-    shipment_cache.values.each {|s| s.save!}
+    shipment_cache.each_value {|s| s.save!}
     if !missing_house_bills.empty?
       msg = <<MSG
 The following House Bills are on the shpment activity report but haven't had their XML pushed from ECellerate:
 
 #{missing_house_bills.join("\r\n")}
 MSG
-      OpenMailer.send_simple_text('ecellerate@vandegriftinc.com','ECellerate Missing HBOLs',msg).deliver_now
+      OpenMailer.send_simple_text('ecellerate@vandegriftinc.com', 'ECellerate Missing HBOLs', msg).deliver_now
     end
   end
 

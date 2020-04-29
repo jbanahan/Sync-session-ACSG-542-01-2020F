@@ -27,12 +27,12 @@
 #
 
 class TariffClassification < ActiveRecord::Base
-  attr_accessible :antidumping_duty, :base_rate_indicator, :blocked_record, 
-    :countervailing_duty, :country_id, :duty_computation, :effective_date_end, 
-    :effective_date_start, :last_exported_from_source, 
-    :number_of_reporting_units, :tariff_description, :tariff_number, 
+  attr_accessible :antidumping_duty, :base_rate_indicator, :blocked_record,
+    :countervailing_duty, :country_id, :duty_computation, :effective_date_end,
+    :effective_date_start, :last_exported_from_source,
+    :number_of_reporting_units, :tariff_description, :tariff_number,
     :unit_of_measure_1, :unit_of_measure_2, :unit_of_measure_3
-  
+
   has_many :tariff_classification_rates, inverse_of: :tariff_classification, dependent: :destroy, autosave: true
   belongs_to :country
 
@@ -40,7 +40,7 @@ class TariffClassification < ActiveRecord::Base
     query = TariffClassification.where(tariff_number: tariff_number.to_s.strip.gsub(".", ""))
     query = add_effective_date_parameters(query, effective_date)
     query = add_country_parameter(query, country)
-    
+
     if include_rates
       query = query.includes(:tariff_classification_rates)
     end
@@ -69,7 +69,7 @@ class TariffClassification < ActiveRecord::Base
   # This method pulls all the rate information needed about a tariff record from the classification data / rates.
   # It returns a hash with the following keys: advalorem_rate, specific_rate, specific_rate_uom, additional_rate,
   # additional_rate_uom.
-  # 
+  #
   # country_origin - the iso code of the country of origin for the product being imported (can be nil).
   # spi - any SPI code being claimed for the product being imported (can be nil)
   #
@@ -92,8 +92,8 @@ class TariffClassification < ActiveRecord::Base
     # Note: We're expecting if a specific or additional rate isn't utilized that the value will
     # be nil in the rate object.
     rate_data = {
-      advalorem_rate: BigDecimal("0"), 
-      specific_rate: BigDecimal("0"), specific_rate_uom: nil, 
+      advalorem_rate: BigDecimal("0"),
+      specific_rate: BigDecimal("0"), specific_rate_uom: nil,
       additional_rate: BigDecimal("0"), additional_rate_uom: nil
     }
 

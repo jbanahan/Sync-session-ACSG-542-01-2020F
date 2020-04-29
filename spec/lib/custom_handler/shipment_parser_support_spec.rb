@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
-  
+
   subject { described_class }
 
   let(:prod1) { Factory(:product) }
@@ -10,13 +10,13 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
   let(:ord2) { Factory(:order, order_number: "ORD2", customer_order_number: "CUSTORD2", mode: "Ocean", approval_status: "Accepted") }
   let(:ordln_1) { Factory(:order_line, order: ord1, product: prod1)}
   let(:ordln_2) { Factory(:order_line, order: ord2, product: prod2)}
-  
+
   context "errors" do
     describe "flag_unaccepted" do
       it "raises exception if any order has 'unaccepted' status" do
         ord2
         ord1.update_attributes! approval_status: nil
-        expect{ subject.flag_unaccepted ["ORD1", "ORD2"] }.to raise_error 'This file cannot be processed because the following orders are in an "unaccepted" state: CUSTORD1'
+        expect { subject.flag_unaccepted ["ORD1", "ORD2"] }.to raise_error 'This file cannot be processed because the following orders are in an "unaccepted" state: CUSTORD1'
       end
     end
   end
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
         ord1.update_attributes importer: imp
         ord2.update_attributes importer: imp
         Factory(:order, importer: imp, order_number: "ORD3", customer_order_number: "CUSTORD3", mode: "Air")
-        
+
         results = subject.orders_with_mismatched_transport_mode ["ORD1", "ORD2", "ORD3"], ship1
         expect(results).to eq(["CUSTORD1", "CUSTORD3"])
       end
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
       let!(:ps_1) { PieceSet.create! quantity: 1, order_line: ordln_1, shipment_line: shipln_1 }
       let!(:ps_2) { PieceSet.create! quantity: 1, order_line: ordln_2, shipment_line: shipln_2 }
 
-      describe "orders_on_multi_manifests" do  
+      describe "orders_on_multi_manifests" do
         it "returns customer-order numbers with matched shipment references" do
           results = subject.orders_on_multi_manifests ["ORD1", "ORD2"], "not included"
           expect(results).to eq({"CUSTORD1" => ["REF1"], "CUSTORD2" => ["REF2"]})
@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
           expect(subject).to receive(:orders_on_multi_manifests).with(["CUSTORD1"], "REF1").and_return multi_manifest_output
           expect(subject).to receive(:orders_with_mismatched_transport_mode).with(["CUSTORD1"], s).and_return mismatched_mode_output
 
-          expect{ subject.warn_for_manifest(["CUSTORD1"], s) }.to raise_error "The following purchase orders are assigned to other shipments: CUSTORD1 (REF2, REF3) *** The following purchase orders have a mode of transport that doesn't match the assigned shipment: CUSTORD1"
+          expect { subject.warn_for_manifest(["CUSTORD1"], s) }.to raise_error "The following purchase orders are assigned to other shipments: CUSTORD1 (REF2, REF3) *** The following purchase orders have a mode of transport that doesn't match the assigned shipment: CUSTORD1"
         end
 
         it "return nil if both checks pass" do
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::ShipmentParserSupport::OrdersChecker do
           expect(subject).to receive(:orders_on_multi_bookings).with(["CUSTORD1"], "REF1").and_return multi_bookings_output
           expect(subject).to receive(:orders_with_mismatched_transport_mode).with(["CUSTORD1"], s).and_return mismatched_mode_output
 
-          expect{ subject.warn_for_bookings(["CUSTORD1"], s) }.to raise_error "The following purchase orders are assigned to other shipments: CUSTORD1 (REF2, REF3) *** The following purchase orders have a mode of transport that doesn't match the assigned shipment: CUSTORD1"
+          expect { subject.warn_for_bookings(["CUSTORD1"], s) }.to raise_error "The following purchase orders are assigned to other shipments: CUSTORD1 (REF2, REF3) *** The following purchase orders have a mode of transport that doesn't match the assigned shipment: CUSTORD1"
         end
 
         it "return nil if both checks pass" do

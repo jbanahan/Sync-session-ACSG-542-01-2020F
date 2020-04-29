@@ -43,17 +43,17 @@ require "open_chain/git"
 require 'open_chain/database_utils'
 
 class MasterSetup < ActiveRecord::Base
-  attr_accessible :broker_invoice_enabled, :classification_enabled, 
-    :custom_features, :customs_statements_enabled, :delivery_enabled, 
-    :drawback_enabled, :entry_enabled, :friendly_name, :ftp_polling_active, 
-    :invoices_enabled, :last_delayed_job_error_sent, :logo_image, 
-    :migration_host, :order_enabled, :project_enabled, :request_host, 
-    :sales_order_enabled, :security_filing_enabled, 
-    :send_test_files_to_instance, :shipment_enabled, :stats_api_key, 
-    :suppress_email, :suppress_ftp, :system_code, :system_message, 
-    :target_version, :trade_lane_enabled, :uuid, :variant_enabled, 
+  attr_accessible :broker_invoice_enabled, :classification_enabled,
+    :custom_features, :customs_statements_enabled, :delivery_enabled,
+    :drawback_enabled, :entry_enabled, :friendly_name, :ftp_polling_active,
+    :invoices_enabled, :last_delayed_job_error_sent, :logo_image,
+    :migration_host, :order_enabled, :project_enabled, :request_host,
+    :sales_order_enabled, :security_filing_enabled,
+    :send_test_files_to_instance, :shipment_enabled, :stats_api_key,
+    :suppress_email, :suppress_ftp, :system_code, :system_message,
+    :target_version, :trade_lane_enabled, :uuid, :variant_enabled,
     :vendor_management_enabled, :vfi_invoice_enabled
-  
+
   cattr_accessor :current
 
   CACHE_KEY = "MasterSetup:setup"
@@ -99,9 +99,9 @@ class MasterSetup < ActiveRecord::Base
     rails_config.send(key.to_s)
   end
 
-  # This method exists as a straight forward way to mock out 
+  # This method exists as a straight forward way to mock out
   # the rails environment setting for test cases where functionality
-  # may rely on which Rails.env it's running in.  You code can 
+  # may rely on which Rails.env it's running in.  You code can
   # call MasterSetup.rails_env (or see the simple abstraction methods above)
   # and then you can easily set an expectation
   # on MasterSetup.rails_env to change the environment without affecting
@@ -109,7 +109,7 @@ class MasterSetup < ActiveRecord::Base
   def self.rails_env
     Rails.env
   end
-  
+
   def self.current_repository_version
     # Allow fudging the branch name as a tag name on dev machines, but not production.
     # Production should ALWAYS be running against a tag.
@@ -126,7 +126,7 @@ class MasterSetup < ActiveRecord::Base
     CURRENT_VERSION
   end
 
-  #get the master setup for this instance, first trying the cache, then trying the DB, then creating and returning a new one
+  # get the master setup for this instance, first trying the cache, then trying the DB, then creating and returning a new one
   def self.get use_in_memory_version=true
     m = (use_in_memory_version ? MasterSetup.current : nil)
 
@@ -137,7 +137,7 @@ class MasterSetup < ActiveRecord::Base
       end
 
       if m.nil? || !m.is_a?(MasterSetup)
-        # The `after_find :update_cache` above will actually handle setting the cache in this case, so 
+        # The `after_find :update_cache` above will actually handle setting the cache in this case, so
         # we don't have to do it again here.
         m = MasterSetup.first
       end
@@ -170,7 +170,7 @@ class MasterSetup < ActiveRecord::Base
 
       return found_host==h
     ensure
-      MasterSetup.first #makes sure the after_find callback is called to update the cache
+      MasterSetup.first # makes sure the after_find callback is called to update the cache
     end
   end
 
@@ -192,7 +192,7 @@ class MasterSetup < ActiveRecord::Base
         ms.update_column(:migration_host, nil) if force_release || ms.migration_host == h
       end
     ensure
-      MasterSetup.first #makes sure the after_find callback is called to update the cache
+      MasterSetup.first # makes sure the after_find callback is called to update the cache
     end
   end
 
@@ -286,7 +286,7 @@ class MasterSetup < ActiveRecord::Base
     if data.respond_to? 'join'
       d = data.join($/)
     elsif data.respond_to? "gsub"
-      d = data.gsub("\r\n",$/).gsub("\r",$/).gsub("\n",$/)
+      d = data.gsub("\r\n", $/).gsub("\r", $/).gsub("\n", $/)
     end
     self.custom_features = d
   end
@@ -307,7 +307,7 @@ class MasterSetup < ActiveRecord::Base
     trim_to = -1
     if machine_name_only
       trim_to = host.index(".")
-      if trim_to 
+      if trim_to
         trim_to -= 1
       else
         trim_to = -1
@@ -335,7 +335,7 @@ class MasterSetup < ActiveRecord::Base
     @@root
   end
 
-  def self.config_true?(settings_key) 
+  def self.config_true?(settings_key)
     result = vfitrack_config[settings_key].to_s == "true"
 
     if block_given?
@@ -366,7 +366,7 @@ class MasterSetup < ActiveRecord::Base
   def self.upgrades_allowed?
     if self.config_true?(:prevent_upgrades)
       return false
-    elsif self.get.custom_feature?("Prevent Upgrades") 
+    elsif self.get.custom_feature?("Prevent Upgrades")
       return false
     else
       return true

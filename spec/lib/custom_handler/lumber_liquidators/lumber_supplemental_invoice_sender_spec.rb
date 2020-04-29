@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSupplementalInvoiceS
 
     let (:invoice) { Factory(:broker_invoice, entry: synced_entry, customer_number: "LUMBER", source_system: "Alliance", invoice_number:"123456A", suffix: "A", invoice_date: Date.new(2016, 3, 21)) }
     let (:first_invoice) { Factory(:broker_invoice, entry: synced_entry, customer_number: "LUMBER", invoice_number:"123456", invoice_date: Date.new(2016, 3, 21)) }
-    let (:synced_invoice) { 
+    let (:synced_invoice) {
       i = Factory(:broker_invoice, entry: synced_entry, customer_number: "LUMBER", invoice_number:"123456B", suffix: "B", invoice_date: Date.new(2016, 3, 21))
       i.sync_records.create! trading_partner: "LL SUPPLEMENTAL", sent_at: Time.zone.now
       i

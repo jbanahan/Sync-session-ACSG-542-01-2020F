@@ -3,20 +3,20 @@ describe Plant do
     it "should find plant only where user can find company" do
       plant = Factory(:plant)
       plant_not_to_find = Factory(:plant)
-      user = Factory(:user,company:plant.company)
+      user = Factory(:user, company:plant.company)
       expect(Plant.where(Plant.search_where(user)).to_a).to eq [plant]
     end
   end
   describe "can_view?" do
     it "should allow if user can view company as vendor" do
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return true
-      allow_any_instance_of(Company).to receive(:can_view?).and_return false #to make sure we're not testing the wrong thing
+      allow_any_instance_of(Company).to receive(:can_view?).and_return false # to make sure we're not testing the wrong thing
       u = double(:user)
       expect(Factory(:plant).can_view?(u)).to be_truthy
     end
     it "should allow if user can view company" do
       allow_any_instance_of(Company).to receive(:can_view?).and_return true
-      allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return false #to make sure we're not testing the wrong thing
+      allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return false # to make sure we're not testing the wrong thing
       u = double(:user)
       expect(Factory(:plant).can_view?(u)).to be_truthy
     end
@@ -59,12 +59,12 @@ describe Plant do
     it "should not allow delete if in_use?" do
       plant = Factory(:plant)
       allow(plant).to receive(:in_use?).and_return(true)
-      expect{plant.destroy}.to_not change(Plant,:count)
+      expect {plant.destroy}.to_not change(Plant, :count)
     end
     it "should allow delete if not in_use?" do
       plant = Factory(:plant)
       allow(plant).to receive(:in_use?).and_return(false)
-      expect{plant.destroy}.to change(Plant,:count).from(1).to(0)
+      expect {plant.destroy}.to change(Plant, :count).from(1).to(0)
     end
   end
 

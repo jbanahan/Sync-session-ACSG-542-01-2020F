@@ -6,8 +6,8 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
   include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
   include OpenChain::IntegrationClientParser
 
-  SAP_REVISED_PRODUCT_FIELDS = [:origin,:import,:related_styles,:cost]
-  
+  SAP_REVISED_PRODUCT_FIELDS = [:origin, :import, :related_styles, :cost]
+
   def self.parse_file file_content, log, opts = {}
     self.new.process file_content, User.integration, log, opts
   end
@@ -18,10 +18,10 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
       style_hash = {}
       # \007 turns the bell character into the quote char, which essentially turns off csv
       # quoting, but also enables the file to have "s in the file without turning on ruby's
-      # csv quote handling and throwing errors.  Having | be the column separator and 
-      # quote character causes issues when you try and test with a blank string as the column 
+      # csv quote handling and throwing errors.  Having | be the column separator and
+      # quote character causes issues when you try and test with a blank string as the column
       # value.
-      CSV.parse(file_content,{:quote_char=>"\007",:col_sep=>'|'}) do |row|
+      CSV.parse(file_content, {:quote_char=>"\007", :col_sep=>'|'}) do |row|
         next if row.blank? || row[1].blank?
         style = row[1].strip
         style_hash[style] ||= []
@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
       generate_products(style_hash, run_by, log) unless MasterSetup.get.custom_feature?("Ann Skip SAP Product Parsing")
       generate_orders(style_hash, run_by, log, opts) unless MasterSetup.get.custom_feature?("Ann Skip SAP Order Parsing")
     rescue
-      tmp = Tempfile.new(['AnnFileError','.csv'])
+      tmp = Tempfile.new(['AnnFileError', '.csv'])
       tmp << file_content
       tmp.flush
       $!.log_me ["Error processing Ann Inc SAP file"], [tmp.path]
@@ -128,7 +128,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
               ol.find_and_set_custom_value(cdefs[:ordln_ac_date], parsed_date(row[6]))
               ship_window_start = parsed_date(row[6])
               o.ship_window_start = ship_window_start
-              o.find_and_set_custom_value(cdefs[:ord_docs_required], docs_required?(vendor, row, ship_window_start)) 
+              o.find_and_set_custom_value(cdefs[:ord_docs_required], docs_required?(vendor, row, ship_window_start))
               ol.save!
               o.save!
               o.create_snapshot run_by, nil, opts[:key]
@@ -145,7 +145,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
     # Docs are never required unless the PO order type is MP
     return false if row[19] != 'MP'
 
-    # If order type is MP, then docs are required IFF Vendor's MP Type is 'All Docs'  && the Order's Ship window start is on 
+    # If order type is MP, then docs are required IFF Vendor's MP Type is 'All Docs'  && the Order's Ship window start is on
     # or after Vendor's effective date
     if vendor[:company].custom_value(cdefs[:mp_type]) == "All Docs"
       effective_date = vendor[:company].custom_value(cdefs[:dsp_effective_date])
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
   end
 
   def find_or_create_vendor system_code, name, master_company, dsp_type, opts
-    
+
     if system_code.present? && name.present?
       # All Ann System Codes should be 10 digits, sometimes if a file needs to be reprocessed we might edit it
       # in Excel, which may strip the leading zeros if we're not very careful.  That's why we're always padding to 10 digits.
@@ -173,7 +173,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
 
       co = nil
       new_record = false
-      Lock.acquire("Company-#{system_code}") do 
+      Lock.acquire("Company-#{system_code}") do
         co = Company.where(system_code: system_code).first_or_initialize(vendor: true, name: name)
         new_record = co.new_record?
 
@@ -189,7 +189,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
 
         if new_record
           master_company.linked_companies << co
-          co.create_snapshot(User.integration, nil, opts[:key])  
+          co.create_snapshot(User.integration, nil, opts[:key])
         end
 
       end
@@ -213,16 +213,16 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
   end
 
   def generate_products(style_hash, run_by, log)
-    style_hash.each do |style,rows|
+    style_hash.each do |style, rows|
       begin
         ActiveRecord::Base.transaction do
-          #using the first row as the basis for all non-aggregated values
+          # using the first row as the basis for all non-aggregated values
           base_row = rows.first
 
           related = extract_related_styles base_row
           p = OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager.get_style(base_style: style, missy: related[:missy], petite: related[:petite], tall: related[:tall], short: related[:short], plus: related[:plus])
 
-          base_values = {} #values that could trigger the sap_revised date
+          base_values = {} # values that could trigger the sap_revised date
           update_sap_revised_date = false
           SAP_REVISED_PRODUCT_FIELDS.each do |f|
             base_values[f] = p.custom_value(cdefs[f])
@@ -255,16 +255,16 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
             approved_long.save!
           end
 
-          #don't fill values for the same import country twice
+          # don't fill values for the same import country twice
           used_countries = []
           rows.each do |row|
             iso = clean_string(row[4])
             next if used_countries.include? iso
             used_countries << iso
             country = get_country iso
-            next unless country #don't write classification for country that isn't setup or isn't an import location
+            next unless country # don't write classification for country that isn't setup or isn't an import location
 
-            #build the classfiication
+            # build the classfiication
             hts = clean_string(row[9])
             cls = get_or_create_classification p, country
             # Classification may be nil if the iso code isn't enabled as an import country
@@ -274,7 +274,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
               unless hts.blank?
                 tr = cls.tariff_records.first
                 tr = cls.tariff_records.build unless tr
-                tr.hts_1 = hts.gsub(/[^0-9]/,'') if tr.hts_1.blank? && hts_valid?(row[9],country)
+                tr.hts_1 = hts.gsub(/[^0-9]/, '') if tr.hts_1.blank? && hts_valid?(row[9], country)
               end
               cls.save!
 
@@ -288,7 +288,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
           end
 
           agg = aggregate_values rows
-          [:po,:origin,:import,:cost,:dept_num,:dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost, (s==:dept_name ? ", " : "\n")}
+          [:po, :origin, :import, :cost, :dept_num, :dept_name].each {|s| write_aggregate_value agg, p, s, s==:cost, (s==:dept_name ? ", " : "\n")}
           set_min_max_cost_values(p, agg[:min_max_per_country]) if agg[:min_max_per_country]
 
           SAP_REVISED_PRODUCT_FIELDS.each do |f|
@@ -299,36 +299,36 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
           p.create_snapshot run_by
         end
       rescue
-        tmp = Tempfile.new(['AnnFileError','.csv'])
+        tmp = Tempfile.new(['AnnFileError', '.csv'])
         rows.each {|r| tmp << r.to_csv}
         tmp.flush
-        $!.log_me ["Error processing Ann Inc SAP rows.","NOTE: Original rows converted to CSV from pipe delimited."], [tmp.path]
+        $!.log_me ["Error processing Ann Inc SAP rows.", "NOTE: Original rows converted to CSV from pipe delimited."], [tmp.path]
         tmp.unlink
         raise $! unless Rails.env=='production'
       end
     end
   end
 
-  def cdefs 
-    @cdefs ||= self.class.prep_custom_definitions [:po,:origin,:import,:cost,
-      :ac_date,:ordln_ac_date,:ord_ac_date,:dept_num,:dept_name,:prop_hts,:prop_long,:oga_flag,:imp_flag,
-      :inco_terms,:related_styles,:season,:article,:approved_long,
-      :first_sap_date,:last_sap_date,:sap_revised_date, :minimum_cost, :maximum_cost, :mp_type,
-      :ord_docs_required, :ordln_import_country,:dsp_effective_date,:dsp_type,:ord_type,:ord_cancelled
+  def cdefs
+    @cdefs ||= self.class.prep_custom_definitions [:po, :origin, :import, :cost,
+      :ac_date, :ordln_ac_date, :ord_ac_date, :dept_num, :dept_name, :prop_hts, :prop_long, :oga_flag, :imp_flag,
+      :inco_terms, :related_styles, :season, :article, :approved_long,
+      :first_sap_date, :last_sap_date, :sap_revised_date, :minimum_cost, :maximum_cost, :mp_type,
+      :ord_docs_required, :ordln_import_country, :dsp_effective_date, :dsp_type, :ord_type, :ord_cancelled
     ]
   end
 
   private
-  
+
   def clean_string x
     return nil if x.blank?
     x.strip
   end
-  
+
   def hts_valid? hts_number, country
-    !OfficialTariff.where(hts_code: hts_number.gsub(/[^0-9]/,''), country_id: country.id).first.nil?
+    !OfficialTariff.where(hts_code: hts_number.gsub(/[^0-9]/, ''), country_id: country.id).first.nil?
   end
-  
+
   def write_aggregate_value aggregate_vals, product, symbol, reverse, delimiter
     # Append the aggregate values into the existing custom value
     vals = aggregate_vals[symbol]
@@ -342,9 +342,9 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
     field.value = a_vals.join(delimiter)
     field.save!
   end
-  
+
   def aggregate_values rows
-    r = {:po=>[],:origin=>[],:import=>[],:cost=>[],:dept_num=>[],
+    r = {:po=>[], :origin=>[], :import=>[], :cost=>[], :dept_num=>[],
       :dept_name=>[]}
 
     min_max_per_country = {}
@@ -383,7 +383,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
       r[:dept_num] << clean_string(row[7])
       r[:dept_name] << clean_string(row[8])
     end
-    r.each {|k,v| v.uniq!}
+    r.each {|k, v| v.uniq!}
     r[:min_max_per_country] = min_max_per_country if min_max_per_country.size > 0
     r
   end
@@ -395,7 +395,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
       ac_date = Date.strptime row[6], "%m/%d/%Y"
       r = ac_date if r.nil? || ac_date < r
     end
-    
+
     ac_date_field.value = r
     ac_date_field.save!
   end
@@ -418,7 +418,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
 
   def get_or_create_classification product, country
     if country.is_a? String
-      #This should be the country ISO code
+      # This should be the country ISO code
       country = get_country country
     end
 
@@ -439,7 +439,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnSapProductHandle
       next unless min_max[:min] || min_max[:max]
 
       classification = get_or_create_classification product, iso
-     
+
       if classification
         if min_max[:min]
           field = classification.get_custom_value(cdefs[:minimum_cost])

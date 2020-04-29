@@ -16,7 +16,7 @@ module OpenChain; module Report; class UsBillingSummary
       wb = XlsxBuilder.new
       sheet = wb.create_sheet("Billing Summary")
       # Translate the release, arrival date into Eastern Timezone before trimming the time portion off
-      # Moved out of the query because if done in the query we're converting the UTC time to a date and potentially 
+      # Moved out of the query because if done in the query we're converting the UTC time to a date and potentially
       # reporting the wrong date if the release is done between 8-12PM EDT.
       dt_lambda = datetime_translation_lambda("Eastern Time (US & Canada)", true)
       conversions = {"Release" => dt_lambda, "Arrival" => dt_lambda}
@@ -36,40 +36,40 @@ module OpenChain; module Report; class UsBillingSummary
 
     def query cust_num, start_date, end_date
       <<-SQL
-        SELECT 
-          ent.entry_number AS "Entry Number", 
-          ent.arrival_date AS "Arrival", 
-          ent.release_date AS "Release", 
-          ent.entry_port_code AS "Entry Port", 
-          ent.broker_reference AS "File Number", 
-          ent.customer_name AS "Customer Name", 
-          ent.export_date AS "Export Date", 
-          ent.master_bills_of_lading AS "MBOLs", 
-          ent.house_bills_of_lading AS "HBOLs", 
-          ci.mfid AS "MID", 
-          ci.vendor_name AS "Vendor", 
-          cil.line_number AS "Invoice Line", 
-          ci.invoice_number AS "Commercial Invoice Number", 
-          cit.tariff_description AS "Item Description", 
-          cit.hts_code AS "HTS Code", 
+        SELECT
+          ent.entry_number AS "Entry Number",
+          ent.arrival_date AS "Arrival",
+          ent.release_date AS "Release",
+          ent.entry_port_code AS "Entry Port",
+          ent.broker_reference AS "File Number",
+          ent.customer_name AS "Customer Name",
+          ent.export_date AS "Export Date",
+          ent.master_bills_of_lading AS "MBOLs",
+          ent.house_bills_of_lading AS "HBOLs",
+          ci.mfid AS "MID",
+          ci.vendor_name AS "Vendor",
+          cil.line_number AS "Invoice Line",
+          ci.invoice_number AS "Commercial Invoice Number",
+          cit.tariff_description AS "Item Description",
+          cit.hts_code AS "HTS Code",
           cit.gross_weight AS "Gross Weight",
-          cil.quantity AS "Invoice Quantity", 
-          cil.unit_of_measure AS "Invoice UOM", 
-          cit.classification_qty_1 AS "Tariff Quantity", 
-          cit.classification_uom_1 AS "Tariff UOM", 
-          cit.entered_value AS "Entered Value", 
-          cil.value AS "Invoice Value", 
-          cit.duty_amount AS "Duty Amount", 
-          cit.duty_rate AS "Duty Rate", 
-          cil.cotton_fee AS "Cotton Fee", 
-          cil.hmf AS "HMF", 
-          cil.mpf AS "MPF", 
-          cil.department AS "Department", 
-          cil.po_number AS "PO Number", 
-          cil.part_number AS "Style", 
-          CONCAT(ent.broker_reference, bi.suffix) AS "Invoice Number", 
-          bi.invoice_total AS "Invoice Total", 
-          ((bi.invoice_total/ent.total_units)*cil.quantity) AS "Entry Fee Per Line", 
+          cil.quantity AS "Invoice Quantity",
+          cil.unit_of_measure AS "Invoice UOM",
+          cit.classification_qty_1 AS "Tariff Quantity",
+          cit.classification_uom_1 AS "Tariff UOM",
+          cit.entered_value AS "Entered Value",
+          cil.value AS "Invoice Value",
+          cit.duty_amount AS "Duty Amount",
+          cit.duty_rate AS "Duty Rate",
+          cil.cotton_fee AS "Cotton Fee",
+          cil.hmf AS "HMF",
+          cil.mpf AS "MPF",
+          cil.department AS "Department",
+          cil.po_number AS "PO Number",
+          cil.part_number AS "Style",
+          CONCAT(ent.broker_reference, bi.suffix) AS "Invoice Number",
+          bi.invoice_total AS "Invoice Total",
+          ((bi.invoice_total/ent.total_units)*cil.quantity) AS "Entry Fee Per Line",
           ent.total_packages AS "Total Packages",
           ent.container_numbers AS "Containers"
         FROM broker_invoices bi

@@ -88,7 +88,7 @@ module OpenChain; module UserSupport; module UserPermissions
     return false
   end
 
-  #permissions
+  # permissions
   def view_business_validation_results?
     self.company.show_business_rules?
   end

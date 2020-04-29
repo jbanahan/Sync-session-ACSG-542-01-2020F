@@ -145,7 +145,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
 
     # I'm not entirely sure why, but I keep getting duplicate products when I'm creating products inside the find_order transaction/lock.
     # I'm guessing it has to do w/ multiple distinct transactions running and then being merged at the same time, each distinct transaction
-    # having its own newly created product (which wouldn't happen if we had a unique index).  
+    # having its own newly created product (which wouldn't happen if we had a unique index).
     # By running the product lookups outside of a containing transaction, this should prevent that from happening.
 
     products = find_all_products data[:items]
@@ -199,7 +199,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
 
       # If we don't mark the order as accepted, they will not be able to be selected on the shipment screen.
       # As S4C doesn't have an acceptance step, we're safe to accept everything coming through here.
-      # We're also bypassing the standard accept because we don't want to kick out acceptance comments to 
+      # We're also bypassing the standard accept because we don't want to kick out acceptance comments to
       # everyone for these, since, again, there's no acceptance step
       order.mark_order_as_accepted
       order.save!
@@ -208,7 +208,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
     return [update_status, po]
   end
 
-  private 
+  private
 
     def get_order_number data
       order_number = data[:order_number]
@@ -231,7 +231,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
         matched = false
         if search_expression.respond_to?(:match)
           matched = search_expression.match(col_val.to_s)
-        else 
+        else
           matched = col_val == search_expression
         end
 
@@ -322,7 +322,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
     end
 
     def has_item_data? row
-      # Column 5 is the UPC code, which should never be blank except on the pointless prepack lines they have on the 
+      # Column 5 is the UPC code, which should never be blank except on the pointless prepack lines they have on the
       row && !row[5].blank?
     end
 
@@ -371,12 +371,12 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
     def find_order order_number
       order = nil
       existing = true
-      Lock.acquire("Order-SHOES-"+order_number) do 
+      Lock.acquire("Order-SHOES-"+order_number) do
         order = Order.where(order_number: "#{SHOES_SYSTEM_CODE}-#{order_number}", importer_id: importer.id).first_or_create! {|order| existing = false }
       end
 
       if order
-        Lock.with_lock_retry(order) do 
+        Lock.with_lock_retry(order) do
           yield existing, order
         end
       end
@@ -416,11 +416,11 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
       unique_identifier = "#{SHOES_SYSTEM_CODE}-#{item[:item_code]}"
       product = nil
 
-      Lock.acquire("#{importer.id}-#{unique_identifier}") do 
+      Lock.acquire("#{importer.id}-#{unique_identifier}") do
         product = Product.where(importer_id: importer.id, unique_identifier: "#{SHOES_SYSTEM_CODE}-#{item[:item_code]}").first_or_create!
       end
-      
-      Lock.with_lock_retry(product) do 
+
+      Lock.with_lock_retry(product) do
         part_cv = product.find_and_set_custom_value @cdefs[:prod_part_number], item[:item_code]
         product.name = item[:model]
         product.unit_of_measure = item[:case_uom]
@@ -431,7 +431,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
           product.create_snapshot user
         end
       end
-      
+
       product
     end
 
@@ -448,7 +448,7 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
     def fingerprint_handling po, user
       fingerprint = order_fingerprint po, user
       xref = DataCrossReference.find_po_fingerprint po
-      if xref.nil? 
+      if xref.nil?
         xref = DataCrossReference.create_po_fingerprint(po, fingerprint) if xref.nil?
         yield if block_given?
       elsif xref.value != fingerprint

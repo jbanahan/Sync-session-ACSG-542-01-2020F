@@ -38,7 +38,7 @@ class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   belongs_to :group
   belongs_to :mailing_list
-  attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type, 
+  attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type,
                   :notification_recipients, :suppress_pass_notice, :suppress_review_fail_notice, :suppress_skipped_notice, :subject_pass, :subject_review_fail, :subject_skipped,
                   :message_pass, :message_review_fail, :message_skipped, :mailing_list_id, :cc_notification_recipients, :bcc_notification_recipients
 
@@ -57,7 +57,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleFieldFormat: {label:"Field Format"},
                 ValidationRuleManual: {label:"Manual"},
                 'OpenChain::CustomHandler::Polo::PoloValidationRuleEntryInvoiceLineMatchesPoLine'.to_sym=>
-                  {label:"Polo Entry Invoice Line Matches PO Line", 
+                  {label:"Polo Entry Invoice Line Matches PO Line",
                     enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }},
                 ValidationRuleEntryInvoiceLineTariffFieldFormat: {label:"Entry Invoice Tariff Field Format"},
                 ValidationRuleEntryInvoiceFieldFormat: {label:"Entry Invoice Field Format"},
@@ -78,7 +78,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleBrokerInvoiceLineFieldFormat: {label: 'Broker Invoice Line Field Format'},
                 ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
                 ValidationRuleEntryTariffsMustIncludeAllTariffsOnProduct: { label: "Entry Tariffs Include all Product Tariffs" },
-                #DEPRECATED - doesn't appear in menu
+                # DEPRECATED - doesn't appear in menu
                 ValidationRuleFieldComparison: {label: "Field Comparison", enabled_lambda: lambda { nil } },
                 'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
                   {
@@ -157,17 +157,17 @@ class BusinessValidationRule < ActiveRecord::Base
                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentsAddTo100'.to_sym =>
                  {
                     label: 'Ann Product Tariff Percentages Add To 100',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" } 
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
                  },
                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffKeyDescriptionSet'.to_sym =>
                  {
                     label: 'Ann Product Tariff Key Description Set',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" } 
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
                  },
                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductOneTariff'.to_sym =>
                  {
                     label: 'Ann Product Has One Tariff',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" } 
+                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
                  },
                  'OpenChain::CustomHandler::Vandegrift::SpiClaimEntryValidationRule'.to_sym =>
                  {
@@ -186,7 +186,7 @@ class BusinessValidationRule < ActiveRecord::Base
   end
 
   def self.parse_copy_attributes rule_hsh
-    rule = BusinessValidationRule.new(rule_hsh["business_validation_rule"].reject{ |k,v| ["search_criterions"].include? k })
+    rule = BusinessValidationRule.new(rule_hsh["business_validation_rule"].reject { |k, v| ["search_criterions"].include? k })
     rule_hsh["business_validation_rule"]["search_criterions"].each do |sc_hsh|
       rule.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"])
     end
@@ -212,11 +212,11 @@ class BusinessValidationRule < ActiveRecord::Base
   end
 
   def self.subclasses_array
-    r = SUBCLASSES.collect {|k,v|
+    r = SUBCLASSES.collect {|k, v|
       v[:enabled_lambda] && !v[:enabled_lambda].call ? nil : [v[:label], k.to_s]
     }
     r.compact!
-    r.sort! {|pair1,pair2| pair1[0] <=> pair2[0]}
+    r.sort! {|pair1, pair2| pair1[0] <=> pair2[0]}
   end
 
   def active?
@@ -239,7 +239,7 @@ class BusinessValidationRule < ActiveRecord::Base
     self.search_criterions.each do |sc|
       sc_mf = sc.model_field
       next if sc_mf.blank?
-      
+
       sc_cm = sc_mf.core_module
       raise "Invalid object expected #{sc_cm.klass.name} got #{obj.class.name}" unless sc_cm == CoreModule.find_by_object(obj)
       return true unless sc.test? obj

@@ -22,14 +22,14 @@ module OpenChain; module EntityCompare; module ComparatorHelper
   end
 
 
-  # This is a simple way to walk down a snapshot heirarchy and grab all the 
-  # children / grandchildren that you want to work with.  
+  # This is a simple way to walk down a snapshot heirarchy and grab all the
+  # children / grandchildren that you want to work with.
   #
   # For instance, if you want to work with all the commercial invoice lines
   # from a snapshot of an Entry: json_child_entities entry_json, "CommercialInvoice", "CommercialInvoiceLine"
   #
   # Note, you WILL ONLY receive the entities of the lowest level specified
-  # 
+  #
   # This is basically akin to doing an xpath expression like /root/child/grandchild
   def json_child_entities json, *entity_chain
     return [] if json.nil?
@@ -41,7 +41,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
 
     children = []
 
-    Array.wrap(child_entities).each do |child| 
+    Array.wrap(child_entities).each do |child|
       children << child['entity'] if child['entity']['core_module'] == entity_chain.first
     end
 
@@ -56,7 +56,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
       found = entity_children.flatten
     end
 
-    if block_given? 
+    if block_given?
       found.each {|f| yield f }
     end
 
@@ -162,7 +162,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     changes = {}
     Array.wrap(fields).each do |field|
       new_value = mf(new_hash, field)
-      if mf(old_hash, field) != new_value 
+      if mf(old_hash, field) != new_value
         changes[field] = new_value
       end
     end
@@ -183,7 +183,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     unwrap_entity(hash)["record_id"]
   end
 
-  # Returns true if any of the model fields given in model_field_uids are different between 
+  # Returns true if any of the model fields given in model_field_uids are different between
   # the old and new snapshot entities given.
   def any_value_changed? old_json_entity, new_json_entity, model_field_uids
     Array.wrap(model_field_uids).each do |uid|

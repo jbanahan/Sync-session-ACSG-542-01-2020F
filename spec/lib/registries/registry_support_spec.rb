@@ -1,7 +1,7 @@
 describe OpenChain::Registries::RegistrySupport do
 
   subject {
-    Class.new do 
+    Class.new do
       include OpenChain::Registries::RegistrySupport
 
       def registered
@@ -16,7 +16,7 @@ describe OpenChain::Registries::RegistrySupport do
     end
 
     it "rejects classes that do not implement all methods" do
-      expect{ subject.check_registration_validity String, "StringRegistry", [:to_s, :wut, :lol] }.to raise_error "String must respond to the following methods to be registered as a StringRegistry: wut, lol."
+      expect { subject.check_registration_validity String, "StringRegistry", [:to_s, :wut, :lol] }.to raise_error "String must respond to the following methods to be registered as a StringRegistry: wut, lol."
     end
   end
 

@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
     ActiveRecord::Base.transaction do
       inv = create_invoice
       under_limit = get_new_billables(ENTRY_LIMIT)
-      bill_monthly_charge(under_limit ,inv)
+      bill_monthly_charge(under_limit , inv)
       over_limit = get_new_billables
       bill_new_entries(over_limit, inv)
     end
@@ -64,7 +64,7 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
 
   class ReportGenerator
     include OpenChain::Report::ReportHelper
-    
+
     def create_report_for_invoice entry_ids, invoice
       file_name = "entries_for_#{invoice.invoice_number}.xls"
       att = invoice.attachments.new(attached_file_name: file_name, attachment_type: "VFI Invoice Support")
@@ -73,13 +73,13 @@ module OpenChain; module CustomHandler; module Masterbrand; class MasterbrandInv
       att.update_attributes! attached: detail_tmp
       detail_tmp
     end
-    
+
     def create_workbook entry_ids, invoice_number
       wb = XlsMaker.create_workbook invoice_number
       table_from_query wb.worksheet(0), query(entry_ids)
       wb
     end
-    
+
     private
 
     def query entry_ids

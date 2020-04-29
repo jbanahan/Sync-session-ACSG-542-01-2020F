@@ -1,9 +1,9 @@
 class LinesController < ApplicationController
 
-  #if you want to use this don't forget to add "post :create_multiple, :on => :collection" to the appropriate resource route
+  # if you want to use this don't forget to add "post :create_multiple, :on => :collection" to the appropriate resource route
   def create_multiple
     o = find_parent
-    action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>module_name}) {
+    action_secure(o.can_edit?(current_user), o, {:verb=>"create lines for", :module_name=>module_name}) {
       line = nil
       begin
         params[:lines].each do |p|
@@ -13,7 +13,7 @@ class LinesController < ApplicationController
           line.save if before_save(line, p[1])
           OpenChain::FieldLogicValidator.validate! line
 
-          line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>p[1][:milestone_plan_id]) if p[1][:milestone_plan_id]
+          line.piece_sets.create(:quantity=>line.quantity, :milestone_plan_id=>p[1][:milestone_plan_id]) if p[1][:milestone_plan_id]
           line.piece_sets.each {|p| p.create_forecasts}
         end
 
@@ -27,7 +27,7 @@ class LinesController < ApplicationController
 
 	def create
 		o = find_parent
-		action_secure(o.can_edit?(current_user),o,{:verb=>"create lines for",:module_name=>module_name}) {
+		action_secure(o.can_edit?(current_user), o, {:verb=>"create lines for", :module_name=>module_name}) {
       begin
         line = child_objects(o).build
         valid = line.assign_model_field_attributes params[update_symbol], exclude_blank_values: true
@@ -35,7 +35,7 @@ class LinesController < ApplicationController
         if before_save(line, params[update_symbol])
           line.save!
           OpenChain::FieldLogicValidator.validate! line
-          line.piece_sets.create(:quantity=>line.quantity,:milestone_plan_id=>params[:milestone_plan_id]) if params[:milestone_plan_id]
+          line.piece_sets.create(:quantity=>line.quantity, :milestone_plan_id=>params[:milestone_plan_id]) if params[:milestone_plan_id]
           line.piece_sets.each {|p| p.create_forecasts}
         end
 
@@ -47,59 +47,59 @@ class LinesController < ApplicationController
 		  redirect_to o
 		}
 	end
-	
+
 	def destroy
 		o = find_parent
-		action_secure(o.can_edit?(current_user),o,{:verb=>"delete lines for",:module_name=>module_name}) {
-      set_parent_variable o		  
+		action_secure(o.can_edit?(current_user), o, {:verb=>"delete lines for", :module_name=>module_name}) {
+      set_parent_variable o
   		@line = find_line
   		@line.destroy
   		errors_to_flash @line
       o.create_async_snapshot if o.respond_to?('create_snapshot')
-  		redirect_to o 
+  		redirect_to o
 		}
 	end
-	
+
 	def edit
 		o = find_parent
-	  action_secure(o.can_edit?(current_user),o,{:verb=>"edit lines for",:module_name=>module_name}) {
+	  action_secure(o.can_edit?(current_user), o, {:verb=>"edit lines for", :module_name=>module_name}) {
 	    set_parent_variable o
       @line = find_line
   		@products = set_products_variable o
   		render render_parent_path
     }
 	end
-	
+
 	def update
 		o = find_parent
-		action_secure(o.can_edit?(current_user),o,{:verb=>"edit lines for",:module_name=>module_name}) {
+		action_secure(o.can_edit?(current_user), o, {:verb=>"edit lines for", :module_name=>module_name}) {
 		  set_parent_variable o
       good = false
       line = find_line
       begin
         valid = line.assign_model_field_attributes params[update_symbol]
         raise OpenChain::ValidationLogicError unless valid
-        if before_save(line, params[update_symbol]) 
+        if before_save(line, params[update_symbol])
           line.save!
           after_update line
           OpenChain::FieldLogicValidator.validate! line
           line.piece_sets.each {|p| p.create_forecasts}
-          
+
           add_flash :notices, "Line updated sucessfully."
           good = true
         end
         o.create_async_snapshot if o.respond_to?('create_snapshot')
-      rescue OpenChain::ValidationLogicError 
+      rescue OpenChain::ValidationLogicError
         errors_to_flash line
       end
 
-      good ? redirect_to(o) : redirect_to(edit_line_path(o,line))
+      good ? redirect_to(o) : redirect_to(edit_line_path(o, line))
 		}
 	end
 
-#callbacks
+# callbacks
   def after_update line
-    #empty - holder for callbacks in subclasses
+    # empty - holder for callbacks in subclasses
   end
 
   def before_save line, line_params

@@ -6,7 +6,7 @@ describe History do
     it "removes anything older than given date" do
       history = nil
       Timecop.freeze(Time.zone.now - 1.second) { history = History.create! history_type: "test"}
-      
+
       subject.purge Time.zone.now
 
       expect {history.reload}.to raise_error ActiveRecord::RecordNotFound
@@ -16,7 +16,7 @@ describe History do
       history = nil
       now = Time.zone.now
       Timecop.freeze(now + 1.second) { history = History.create! history_type: "test" }
-      
+
       subject.purge now
 
       expect {history.reload}.not_to raise_error

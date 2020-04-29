@@ -22,7 +22,7 @@ module ConfigMigration; module LL; class SOW312
   end
 
   def update_orders cdefs
-    f = File.new('tmp/sow312.csv','w')
+    f = File.new('tmp/sow312.csv', 'w')
     begin
       u = User.integration
       all_orders = Order.
@@ -30,7 +30,7 @@ module ConfigMigration; module LL; class SOW312
         where('orders.id IN (select order_id from order_lines where unit_of_measure IN ("FTK","FOT"))').
         includes(:order_lines)
       all_orders.find_each do |o|
-        write_accepted_record(o,f,cdefs)
+        write_accepted_record(o, f, cdefs)
         o.order_lines.each {|ol| ol.unit_of_measure = convert_uom(ol.unit_of_measure); ol.save!}
         o.create_snapshot u
       end
@@ -45,7 +45,7 @@ module ConfigMigration; module LL; class SOW312
     CSV.foreach('tmp/sow312.csv') do |row|
       rows_by_order[row[0]] << row
     end
-    rows_by_order.each do |order_id,rows|
+    rows_by_order.each do |order_id, rows|
       row = rows.first
       o = Order.find row[0]
       o.approval_status = row[1]
@@ -55,11 +55,11 @@ module ConfigMigration; module LL; class SOW312
       end
       rows.each do |r|
         ol = o.order_lines.find {|line| line.id.to_s == r[4]}
-        DEFS.each_with_index do |d,idx|
+        DEFS.each_with_index do |d, idx|
           v = r[idx+5]
           next if v.blank?
           v = DateTime.iso8601(v) if cdefs[d].data_type=='datetime'
-          ol.update_custom_value!(cdefs[d],v)
+          ol.update_custom_value!(cdefs[d], v)
         end
       end
       o.save!
@@ -85,7 +85,7 @@ module ConfigMigration; module LL; class SOW312
   def write_accepted_record o, f, cdefs
     o.order_lines.each do |ol|
       accepted_at = o.accepted_at ? o.accepted_at.iso8601 : ''
-      row = [o.id,o.approval_status,o.accepted_by_id,accepted_at,ol.id]
+      row = [o.id, o.approval_status, o.accepted_by_id, accepted_at, ol.id]
       DEFS.each do |d|
         cd = cdefs[d]
         v = ol.custom_value(cd)
@@ -100,7 +100,7 @@ module ConfigMigration; module LL; class SOW312
   end
 
   def convert_uom str
-    vals = {'FTK'=>'FT2','FOT'=>'FT'}
+    vals = {'FTK'=>'FT2', 'FOT'=>'FT'}
     new_str = vals[str]
     new_str.blank? ? str : new_str
   end

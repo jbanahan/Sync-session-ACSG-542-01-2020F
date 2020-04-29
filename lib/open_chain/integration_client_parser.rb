@@ -2,13 +2,13 @@ require 'open_chain/s3'
 
 # This class is the primary integration point between the OpenChain::IntegrationClient class (which is where all notifications
 # of inbound files are processed) and the actual parser implementions that process those files.
-# 
+#
 # In general, your parser should extend this module (thus making the methods class level) and then create a class level entry
-# point method named parse that takes the raw file bytes as the first param (really a string) and then a hash that will have the 
+# point method named parse that takes the raw file bytes as the first param (really a string) and then a hash that will have the
 # keys :bucket, and :key which define the S3 location of the file the data came from.
 #
 # You should also define a class method named integration_folder that returns the key path in the integration bucket that the
-# files will be stored in (in general, you'll strip the date components at the front of the path and the actual filename to arrive 
+# files will be stored in (in general, you'll strip the date components at the front of the path and the actual filename to arrive
 # at this value).  Defining this method allows you to use the process_day and process_past_days methods for your parser.
 #
 module OpenChain; module IntegrationClientParser
@@ -23,7 +23,7 @@ module OpenChain; module IntegrationClientParser
 
   module ClassMethods
 
-    # This is the PRIMARY external means of processing a file.  The IntegrationClient will 
+    # This is the PRIMARY external means of processing a file.  The IntegrationClient will
     # execute it for any file received.
     def process_from_s3 bucket, key, opts={}
       handle_processing(bucket, key, opts) do
@@ -35,9 +35,9 @@ module OpenChain; module IntegrationClientParser
       OpenChain::S3.get_data(bucket, key)
     end
 
-    # Process, from the integration bucket, all the files that were received going 
+    # Process, from the integration bucket, all the files that were received going
     # back X number of days.
-    def process_past_days number_of_days, opts={:imaging=>false,:skip_delay=>false}
+    def process_past_days number_of_days, opts={:imaging=>false, :skip_delay=>false}
       # Make the processing order from oldest to newest to help avoid situations where old data overwrites newer data
       number_of_days.times.reverse_each do |i|
         if opts[:skip_delay]
@@ -50,7 +50,7 @@ module OpenChain; module IntegrationClientParser
 
     # Process all files in the archive for a given date.  Use this to reprocess old files. By default it skips the call to the imaging server
     def process_day date, opts={:imaging=>false}
-      OpenChain::S3.integration_keys(date,self.integration_folder) do |key|
+      OpenChain::S3.integration_keys(date, self.integration_folder) do |key|
         process_from_s3 OpenChain::S3.integration_bucket_name, key, opts
       end
     end
@@ -60,9 +60,9 @@ module OpenChain; module IntegrationClientParser
       # Plus, we don't want to try and use the same log object for all the chunks of the file.
       if original_parse_opts && original_parse_opts[:log].is_a?(InboundFile)
         original_parse_opts = original_parse_opts.deep_dup
-        original_parse_opts.delete :log 
+        original_parse_opts.delete :log
       end
-      
+
       full_path = "#{MasterSetup.get.system_code}/#{parser_class_name}/#{Time.zone.now.to_f}-#{File.basename(filename)}"
       result = OpenChain::S3.upload_data "chain-io-integration-temp", full_path, chunk_io
       self.delay.process_file_chunk_from_s3(result.bucket, result.key, original_parse_opts, delete_from_s3: delete_from_s3, parse_method: parse_method)
@@ -244,7 +244,7 @@ module OpenChain; module IntegrationClientParser
         # The YYYY-MM/DD value is added to make the files easy to retrieve from the archive and is simply prepended
         # to the actual path of the file on the ftp system.  So to get the original path, all we need to do is strip the
         # YYYY-MM/DD if it's there.
-        
+
         # The easiest way to do this is to just deconstruct the path and strip the filename leading YYYY-MM/DD elements
         location = s3_key.to_s
         if location =~ /^\d{4}-\d{2}([\/\\])\d{2}[\/\\]/

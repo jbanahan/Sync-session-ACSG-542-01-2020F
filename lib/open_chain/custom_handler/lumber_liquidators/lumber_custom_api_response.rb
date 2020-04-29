@@ -12,8 +12,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCu
 
   def self.customize_shipment_response shipment, user, shipment_hash, params
     custom = set_custom_attributes(shipment_hash)
-    
-    # If there's no delivery location, then don't bother marking it as invalid for the screen...user won't be able to 
+
+    # If there's no delivery location, then don't bother marking it as invalid for the screen...user won't be able to
     # book anyway, and we don't want to trip the error display until they actually select something
     if shipment.first_port_receipt_id.nil?
       custom["valid_delivery_location"] = true

@@ -2,10 +2,10 @@ describe FiscalMonth do
   let(:user) { Factory(:sys_admin_user) }
   let(:fm) { Factory(:fiscal_month)}
   let(:co) { Factory(:company) }
-  let(:date1) { Date.new(2014,3,15) }
-  let(:date2) { Date.new(2014,3,16) }
-  let(:date3) { Date.new(2015,4,15) }
-  let(:date4) { Date.new(2015,4,16) }
+  let(:date1) { Date.new(2014, 3, 15) }
+  let(:date2) { Date.new(2014, 3, 16) }
+  let(:date3) { Date.new(2015, 4, 15) }
+  let(:date4) { Date.new(2015, 4, 16) }
 
   describe "can_view?" do
     it "allows sys-admins" do
@@ -35,7 +35,7 @@ describe FiscalMonth do
     let!(:fm_2) { Factory(:fiscal_month, company: co, month_number: 12, year: 2016, start_date: "2016-12-01", end_date: "2016-12-31") }
     let!(:fm_3) { Factory(:fiscal_month, company: co, month_number: 1, year: 2017, start_date: "2017-01-01", end_date: "2017-01-31") }
     let!(:fm_4) { Factory(:fiscal_month, company: co, month_number: 2, year: 2017, start_date: "2017-02-01", end_date: "2017-02-28") }
-    
+
     describe "forward" do
       it "returns the nth future fiscal month" do
         expect(fm_1.forward 2).to eq fm_3
@@ -54,13 +54,13 @@ describe FiscalMonth do
   describe "get" do
     let!(:co) { Factory(:company) }
     let!(:fm) { Factory(:fiscal_month, company: co, year: 2017, month_number: 3, start_date: "2017-03-01", end_date: "2017-03-30") }
-    
-    it "returns fiscal month containing a given date. Also takes a company" do  
-      expect(described_class.get(co, Date.new(2017,3,12))).to eq fm
+
+    it "returns fiscal month containing a given date. Also takes a company" do
+      expect(described_class.get(co, Date.new(2017, 3, 12))).to eq fm
     end
 
     it "returns fiscal month containing a given date. Also take a company id" do
-      expect(described_class.get(co.id, Date.new(2017,3,12))).to eq fm
+      expect(described_class.get(co.id, Date.new(2017, 3, 12))).to eq fm
     end
   end
 

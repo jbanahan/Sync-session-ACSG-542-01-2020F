@@ -22,7 +22,7 @@ class MailingList < ActiveRecord::Base
   # This is so we can give a warning on save.
   attr_accessor :non_vfi_email_addresses
 
-  attr_accessible :company_id, :company, :email_addresses, :hidden, :name, 
+  attr_accessible :company_id, :company, :email_addresses, :hidden, :name,
     :non_vfi_addresses, :system_code, :user_id, :user
 
   belongs_to :company
@@ -53,7 +53,7 @@ class MailingList < ActiveRecord::Base
   end
 
   def extract_invalid_emails
-    self.split_emails.map{ |e| e.strip}.reject{ |e| EmailValidator.valid? e }
+    self.split_emails.map { |e| e.strip}.reject { |e| EmailValidator.valid? e }
   end
 
   def validate_email_addresses

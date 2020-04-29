@@ -46,7 +46,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
       update_data_hash h, row
     end
     process_data_hash h, user
-    user.messages.create(subject:'Style/Color/Region Parser Complete',body:'Your processing job has completed.')
+    user.messages.create(subject:'Style/Color/Region Parser Complete', body:'Your processing job has completed.')
     return true
   end
 
@@ -57,14 +57,14 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
   def update_data_hash h, row
     row.pop while row.last.nil? && row.size > 0
     return unless row.length == 7
-    style = row[0].to_s.gsub(/\.0$/,'') #clean up numbers for style string
+    style = row[0].to_s.gsub(/\.0$/, '') # clean up numbers for style string
     return if style=='Style'
     raise "Style (#{style}) must be a 7 digit number." unless style.match(/^[0-9]{7}$/)
     import_country = REGION_MAP[row[6].upcase]
     raise "Region (#{row[6].upcase}) not found." if import_country.blank?
     style_hash = h[style]
     if style_hash.nil?
-      h[style] = {colors:{},seasons:[]}
+      h[style] = {colors:{}, seasons:[]}
       style_hash = h[style]
     end
     style_hash[:style] = style
@@ -85,24 +85,24 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
   end
 
   def process_data_hash h, user
-    h.each {|k,v| update_product(v, user)}
+    h.each {|k, v| update_product(v, user)}
   end
 
   def update_product h, user
-    @cdefs ||= self.class.prep_custom_definitions [:colors,:prod_import_countries,:prod_seasons,:var_import_countries]
+    @cdefs ||= self.class.prep_custom_definitions [:colors, :prod_import_countries, :prod_seasons, :var_import_countries]
     ActiveRecord::Base.transaction do
       p = Product.where(unique_identifier:h[:style]).first_or_create!
       p.name = h[:name]
       p.division_id = get_division_id(h[:division])
       cv_seasons = p.get_custom_value(@cdefs[:prod_seasons])
-      cv_seasons.value = merge_custom_value(cv_seasons,h[:seasons])
+      cv_seasons.value = merge_custom_value(cv_seasons, h[:seasons])
       cv_colors = p.get_custom_value(@cdefs[:colors])
-      cv_colors.value = merge_custom_value(cv_colors,h[:colors].keys)
+      cv_colors.value = merge_custom_value(cv_colors, h[:colors].keys)
       cv_countries = p.get_custom_value(@cdefs[:prod_import_countries])
-      cv_countries.value = merge_custom_value(cv_countries,h[:colors].values.flatten)
+      cv_countries.value = merge_custom_value(cv_countries, h[:colors].values.flatten)
       raise "You cannot edit product #{p.unique_identifier}." unless p.can_edit?(user)
       p.save!
-      update_variants(p,h,user)
+      update_variants(p, h, user)
       p.create_snapshot user
     end
   end
@@ -113,10 +113,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
   #####
 
   def update_variants p, h, user
-    h[:colors].each do |color,countries|
+    h[:colors].each do |color, countries|
       v = p.variants.where(variant_identifier:color).first_or_create!
       cv_countries = v.get_custom_value(@cdefs[:var_import_countries])
-      cv_countries.value = merge_custom_value(cv_countries,countries)
+      cv_countries.value = merge_custom_value(cv_countries, countries)
       raise "You cannot edit variant #{v.variant_identifier} for product #{p.unique_identifier}." unless v.can_edit?(user)
       v.save!
     end
@@ -133,7 +133,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaStyleColorRe
 
   def get_division_id name
     return nil if name.blank?
-    
+
     @division_cache ||= {}
     d = @division_cache[name.upcase]
     if d.nil?

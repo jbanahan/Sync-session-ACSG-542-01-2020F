@@ -1,9 +1,9 @@
 describe ProductsController do
   before :each do
 
-    @user = Factory(:importer_user,:product_edit=>true,:product_view=>true,:classification_edit=>true)
-    @other_importer = Factory(:company,:importer=>true)
-    @linked_importer = Factory(:company,:importer=>true)
+    @user = Factory(:importer_user, :product_edit=>true, :product_view=>true, :classification_edit=>true)
+    @other_importer = Factory(:company, :importer=>true)
+    @linked_importer = Factory(:company, :importer=>true)
     @user.company.linked_companies << @linked_importer
     sign_in_as @user
   end
@@ -11,15 +11,15 @@ describe ProductsController do
     it "should go to next item" do
       p = Factory(:product)
       expect_any_instance_of(ResultCache).to receive(:next).with(99).and_return(p.id)
-      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
-      ss.touch #makes underlying search run
+      ss = Factory(:search_setup, :user=>@user, :module_type=>"Product")
+      ss.touch # makes underlying search run
       get :next_item, :id=>"99"
       expect(response).to redirect_to "/products/#{p.id}"
     end
     it "should redirect to referrer and show error if result cache return nil" do
       expect_any_instance_of(ResultCache).to receive(:next).with(99).and_return(nil)
-      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
-      ss.touch #makes underlying search run
+      ss = Factory(:search_setup, :user=>@user, :module_type=>"Product")
+      ss.touch # makes underlying search run
       get :next_item, :id=>"99"
       expect(response).to redirect_to request.referrer
       expect(flash[:errors].first).to eq "Next object could not be found."
@@ -29,15 +29,15 @@ describe ProductsController do
     it "should go to the previous item" do
       p = Factory(:product)
       expect_any_instance_of(ResultCache).to receive(:previous).with(99).and_return(p.id)
-      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
-      ss.touch #makes underlying search run
+      ss = Factory(:search_setup, :user=>@user, :module_type=>"Product")
+      ss.touch # makes underlying search run
       get :previous_item, :id=>"99"
       expect(response).to redirect_to "/products/#{p.id}"
     end
     it "should redirect to referrer and show error if result cache return nil" do
       expect_any_instance_of(ResultCache).to receive(:previous).with(99).and_return(nil)
-      ss = Factory(:search_setup,:user=>@user,:module_type=>"Product")
-      ss.touch #makes underlying search run
+      ss = Factory(:search_setup, :user=>@user, :module_type=>"Product")
+      ss.touch # makes underlying search run
       get :previous_item, :id=>"99"
       expect(response).to redirect_to request.referrer
       expect(flash[:errors].first).to eq "Previous object could not be found."
@@ -45,17 +45,17 @@ describe ProductsController do
   end
   describe "create" do
     it "should fail if not master and importer_id is not current company or linked company" do
-      post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@other_importer.id}
+      post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate', 'prod_imp_id'=>@other_importer.id}
       expect(flash[:errors].first).to eq("You do not have permission to set Importer Name to company #{@other_importer.name}")
     end
     it "should pass if importer_id is current company" do
-      post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@user.company.id}
+      post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate', 'prod_imp_id'=>@user.company.id}
       p = Product.first
       expect(p.unique_identifier).to eq "abc123455_pccreate"
       expect(p.importer).to eq @user.company
     end
     it "should pass if importer_id is linked company" do
-      post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@linked_importer.id}
+      post :create, 'product'=>{'prod_uid'=>'abc123455_pccreate', 'prod_imp_id'=>@linked_importer.id}
       p = Product.first
       expect(p.unique_identifier).to eq "abc123455_pccreate"
       expect(p.importer).to eq @linked_importer
@@ -63,30 +63,30 @@ describe ProductsController do
   end
   describe "update" do
     before :each do
-      @product = Factory(:product,:importer=>@user.company)
+      @product = Factory(:product, :importer=>@user.company)
     end
     it "should fail if not master and importer_id is not current company or linked company" do
-      put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@other_importer.id}
+      put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate', 'prod_imp_id'=>@other_importer.id}
       expect(flash[:errors]).to include "You do not have permission to set Importer Name to company #{@other_importer.name}"
     end
     it "should pass if importer_id is linked company" do
-      put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@linked_importer.id}
+      put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate', 'prod_imp_id'=>@linked_importer.id}
       p = Product.find @product.id
       expect(p.unique_identifier).to eq "abc123455_pccreate"
       expect(p.importer).to eq @linked_importer
     end
     it "should pass if importer_id is current company" do
-      put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate','prod_imp_id'=>@user.company.id}
+      put :update, 'id'=>@product.id, 'product'=>{'prod_uid'=>'abc123455_pccreate', 'prod_imp_id'=>@user.company.id}
       p = Product.find @product.id
       expect(p.unique_identifier).to eq "abc123455_pccreate"
       expect(p.importer).to eq @user.company
     end
     it "should clear custom value at classification level" do
       cntry = Factory(:country)
-      cls = Factory(:classification,product:@product,country:cntry)
-      cd = Factory(:custom_definition,module_type:'Classification',data_type:'string')
-      cls.update_custom_value!(cd,'abc')
-      put :update, id:@product.id, 'product'=>{'prod_uid'=>'1234','classifications_attributes'=>{'0'=>{'id'=>cls.id.to_s, 'class_cntry_id' => cntry.id.to_s, cd.model_field_uid.to_s => ''}}}
+      cls = Factory(:classification, product:@product, country:cntry)
+      cd = Factory(:custom_definition, module_type:'Classification', data_type:'string')
+      cls.update_custom_value!(cd, 'abc')
+      put :update, id:@product.id, 'product'=>{'prod_uid'=>'1234', 'classifications_attributes'=>{'0'=>{'id'=>cls.id.to_s, 'class_cntry_id' => cntry.id.to_s, cd.model_field_uid.to_s => ''}}}
       p = Product.find @product.id
       expect(p.classifications.first.get_custom_value(cd).value).to be_blank
     end

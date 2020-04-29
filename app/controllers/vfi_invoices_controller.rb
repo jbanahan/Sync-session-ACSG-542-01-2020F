@@ -11,7 +11,7 @@ class VfiInvoicesController < ApplicationController
   def show
     if current_user.view_vfi_invoices?
       inv = VfiInvoice.find params[:id]
-      action_secure(inv.can_view?(current_user), inv, {:lock_check=>false,:verb=>"view",:module_name=>"invoice"}) {
+      action_secure(inv.can_view?(current_user), inv, {:lock_check=>false, :verb=>"view", :module_name=>"invoice"}) {
         @vfi_invoice = inv
       }
     else

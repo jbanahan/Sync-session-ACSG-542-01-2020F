@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
   subject {
     s = described_class.new
     # The following allows us to mock a method that doesn't exist on the abstract class under test
-    def s.sync_code 
+    def s.sync_code
       raise "Mock Me!"
     end
     allow(s).to receive(:sync_code).and_return "abstract_code"
@@ -26,7 +26,7 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
       ensure
         f.close! unless f.nil? || f.closed?
       end
-      
+
     end
 
     it "does not find products that are already synced" do
@@ -38,11 +38,11 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
   end
 
   describe "write_row_to_xml" do
-    before :all do 
+    before :all do
       described_class.new.cdefs
     end
 
-    after :all do 
+    after :all do
       CustomDefinition.destroy_all
     end
 
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
     let (:xml) { REXML::Element.new "root" }
     let (:us) { Factory(:country, iso_code: "US") }
     let (:ca) { Factory(:country, iso_code: "CA") }
-    let (:product) { 
+    let (:product) {
       p = Factory(:product, unique_identifier: "uid", name: "Long Description")
       [us, ca].each do |co|
         c = p.classifications.create! country_id: co.id
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
     end
 
     context "with all values set" do
-      before :each do 
+      before :each do
         populate_custom_values(product, cdefs)
         populate_custom_values(product.classifications.first, cdefs)
       end
@@ -117,13 +117,13 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
         xp(p, "FDAIndic", "prod_fda_indicator")
         xp(p, "FDAProdCode", "class_fda_product_code")
         xp(p, "SetType", "class_set_type")
-        
+
         xp(p, "StitchCountWeight/TwocmVert", "prod_stitch_count_vertical")
         xp(p, "StitchCountWeight/TwocmHori", "prod_stitch_count_horizontal")
         xp(p, "StitchCountWeight/GmSquM", "prod_grams_square_meter")
         xp(p, "StitchCountWeight/OzSqYd", "#{cdefs[:ounces_sq_yd].id.to_f}")
         xp(p, "StitchCountWeight/WeightFabric", "prod_weight_of_fabric")
-        
+
         xp(p, "Sleepwear/FormLooseFit", "prod_form_fitting_or_loose_fitting")
         xp(p, "Sleepwear/FlyOpenPlacket", "Y")
         xp(p, "Sleepwear/EmbellishOrnament", "Y")
@@ -199,7 +199,7 @@ describe OpenChain::CustomHandler::Polo::PoloAbstractProductXmlGenerator do
       expect_any_instance_of(subject).to receive(:sync_xml).and_return tempfile
       expect_any_instance_of(subject).to receive(:sync_xml).and_return nil
       expect_any_instance_of(subject).to receive(:ftp_file).with(tempfile).exactly(2).times
-      
+
       subject.run_schedulable
     end
   end

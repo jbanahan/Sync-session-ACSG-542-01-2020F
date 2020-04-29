@@ -53,8 +53,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericIs
 
           add_order_line_to_invoice_line(cil, order_line)
         end
-        
-        add_shipment_lines_to_invoice_line(cil, shipment_lines) 
+
+        add_shipment_lines_to_invoice_line(cil, shipment_lines)
       end
 
       finalize_invoice_line(entry, invoice, cil)
@@ -194,7 +194,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericIs
 
     def add_order_line_to_invoice_line cil, ol
       if cil.country_of_origin.blank?
-        cil.country_of_origin = ol.country_of_origin unless ol.country_of_origin.blank?  
+        cil.country_of_origin = ol.country_of_origin unless ol.country_of_origin.blank?
       end
 
       if cil.mid.blank?
@@ -227,7 +227,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericIs
     def create_config customer_number
       # Even though we collect some pieces of data from shipments/orders we may not be able to use them
       # (for instance if the piece count is inaccurate).  We'll use a json config to determine what can be output.
-      @config ||= begin 
+      @config ||= begin
         json = KeyJsonItem.isf_config(customer_number).first
         default_config.merge(json ? json.data.with_indifferent_access : {})
       end

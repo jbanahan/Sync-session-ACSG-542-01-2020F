@@ -187,7 +187,7 @@ module OpenChain; module Report; class HmDrawbackImportReport
       row << (invoice_tariff && invoice_tariff.duty_amount && invoice_line && invoice_line.quantity && invoice_line.quantity > 0 ? (invoice_tariff.duty_amount / invoice_line.quantity) : nil)
       row << "7"
       row << nil
-      row << (['10','11'].include?(entry.try(:transport_mode_code)) ? "Y" : nil)
+      row << (['10', '11'].include?(entry.try(:transport_mode_code)) ? "Y" : nil)
       row << invoice_line.try(:customs_line_number)
       row << invoice_tariff.try(:duty_amount)
       row << invoice_tariff.try(:entered_value)
@@ -206,14 +206,14 @@ module OpenChain; module Report; class HmDrawbackImportReport
     end
 
   def column_names
-    ["IMPORT #","IMPORT DATE","RECEIVED DATE","MFG DATE","PORT","TOTAL DUTY","TOTAL DUTY, TAXES, FEES & PENALTIES",
-     "LIQUIDATION DATE","TOTAL ENTERED VALUE","MPF","CONVERSION","CUSTOMER NUMBER","REF 1 - INVOICE NUMBER",
-     "REF 2 - ORDER NUMBER","REF 3 - DEPT NO","INVOICE LINE - COUNTRY ORIGIN CODE","INVOICE LINE - COUNTRY EXPORT CODE",
-     "CD","SKU","STYLE","COLOR","SIZE","EXTERNAL PART","HTS","DESCRIPTION","UNITS","YIELD","RECEIPT QTY","QTY",
-     "AVAILABLE QTY","QTY 2","DUTY VALUE 1","DUTY VALUE 2","DUTY VALUE 3","DUTY VALUE 4","RATE 1","RATE 2",
-     "RATE 3","RATE 4","DUTY EACH","COMPUTE CODE","STATUS","OCEAN INDICATOR","INVOICE LINE - CUSTOMS LINE NUMBER",
-     "HTS DUTY","HTS ENTERED VALUE","HTS QTY","HTS VALUE","UNITS 2","HTS2","HTS3","HTS4","TOTAL TAXES",
-     "INVOICE TARIFF - SPI - PRIMARY","ENTRY SUMMARY LINE COUNT","MULTIPLE TARIFF?"]
+    ["IMPORT #", "IMPORT DATE", "RECEIVED DATE", "MFG DATE", "PORT", "TOTAL DUTY", "TOTAL DUTY, TAXES, FEES & PENALTIES",
+     "LIQUIDATION DATE", "TOTAL ENTERED VALUE", "MPF", "CONVERSION", "CUSTOMER NUMBER", "REF 1 - INVOICE NUMBER",
+     "REF 2 - ORDER NUMBER", "REF 3 - DEPT NO", "INVOICE LINE - COUNTRY ORIGIN CODE", "INVOICE LINE - COUNTRY EXPORT CODE",
+     "CD", "SKU", "STYLE", "COLOR", "SIZE", "EXTERNAL PART", "HTS", "DESCRIPTION", "UNITS", "YIELD", "RECEIPT QTY", "QTY",
+     "AVAILABLE QTY", "QTY 2", "DUTY VALUE 1", "DUTY VALUE 2", "DUTY VALUE 3", "DUTY VALUE 4", "RATE 1", "RATE 2",
+     "RATE 3", "RATE 4", "DUTY EACH", "COMPUTE CODE", "STATUS", "OCEAN INDICATOR", "INVOICE LINE - CUSTOMS LINE NUMBER",
+     "HTS DUTY", "HTS ENTERED VALUE", "HTS QTY", "HTS VALUE", "UNITS 2", "HTS2", "HTS3", "HTS4", "TOTAL TAXES",
+     "INVOICE TARIFF - SPI - PRIMARY", "ENTRY SUMMARY LINE COUNT", "MULTIPLE TARIFF?"]
   end
 
 end; end; end

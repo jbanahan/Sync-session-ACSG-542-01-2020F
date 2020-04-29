@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
 
       it "processes a file, saves orders and products" do
         expect(subject).to receive(:foreach).with(custom_file).and_yield(file_contents[0], 0).and_yield(file_contents[1], 1).and_yield(file_contents[2], 2).and_yield(file_contents[3], 3)
-        subject.process user 
+        subject.process user
 
         expect(user.messages.length).to eq 1
         m = user.messages.first
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
       end
 
       context "with different part number hyphenation" do
-        before :each do 
+        before :each do
           product1.update_attributes! unique_identifier: "CQ-PART-1"
           product1.update_custom_value! custom_defintions[:prod_part_number], "PART-1"
 
@@ -109,7 +109,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
           prod.update_custom_value! custom_defintions[:prod_sku_number], "20671583"
           prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1X"
 
-          subject.process user 
+          subject.process user
 
           order = Order.where(order_number: "CQ-MON4951").first
           expect(order).not_to be_nil
@@ -130,7 +130,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePoOriginReportParser do
           prod.update_custom_value! custom_defintions[:prod_short_description], "YH145726"
           prod.update_custom_value! custom_defintions[:prod_part_number], "PART-1X"
 
-          subject.process user 
+          subject.process user
 
           order = Order.where(order_number: "CQ-MON4951").first
           expect(order).not_to be_nil

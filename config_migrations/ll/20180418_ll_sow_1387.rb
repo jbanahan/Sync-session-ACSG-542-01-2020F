@@ -1,7 +1,7 @@
 module ConfigMigrations; module LL; class Sow1387
 
   def up
-    fl = FieldLabel.create!(model_field_uid:'shp_departure_last_foreign_port_date',label:'Depart From Transship Port')
+    fl = FieldLabel.create!(model_field_uid:'shp_departure_last_foreign_port_date', label:'Depart From Transship Port')
   end
 
   def down

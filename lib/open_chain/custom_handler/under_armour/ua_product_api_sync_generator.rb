@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
   def process_query_result row, opts
      @previous_products ||= {products: [], id: nil}
 
-    # UA stores their data at the style level, but UA's unique product identifier (from an entry standpoint) 
+    # UA stores their data at the style level, but UA's unique product identifier (from an entry standpoint)
     # is Style + Color.  So, split out the color value and send every style + color combo to VFI Track.
     colors = row[5].to_s.split(/\s*\r?\n\s*/)
 
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
       tariff['hts_hts_1'] = row[4]
     end
 
-    # If there's no records to send, then we want to make sure that we still log a sync record against this product 
+    # If there's no records to send, then we want to make sure that we still log a sync record against this product
     # otherwise we'll get a pile-up of records indicating they need syncing but no sync records being built for them.
     if color_count == 0
       sr = SyncRecord.where(syncable_id: row[0], syncable_type: syncable_type, trading_partner: sync_code).first_or_create!
@@ -86,7 +86,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaProductApiSy
 
   def query_row_map
     # Even though we're handling our own query parsing, rather than use the parent class', the parent
-    # does also use the query map's keys for determining which fields need to be queried from VFI Track while 
+    # does also use the query map's keys for determining which fields need to be queried from VFI Track while
     # syncing.
     {
       product_id: nil,
@@ -124,7 +124,7 @@ QRY
 
   def local_data_fingerprint local_data
     # Disable the localized data fingerprinting...because we have 1 + n records to sync to VFI Track
-    # per product, there's little point in trying to utilize a single fingerprint in the sync record 
+    # per product, there's little point in trying to utilize a single fingerprint in the sync record
     # across multiple remote products.
     nil
   end

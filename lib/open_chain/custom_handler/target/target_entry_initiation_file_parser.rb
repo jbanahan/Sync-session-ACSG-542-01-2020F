@@ -37,7 +37,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
         process_02(shipment, line)
       elsif rtype == "03"
         # Each shipment 01-04 data set is only ever going to have a single invoice on it
-        invoice ||= begin 
+        invoice ||= begin
           i = new_commercial_invoice(shipment)
           shipment.invoices << i
           i
@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
   end
 
   def process_01 shipment, line
-    #TODO - Figure out if this is the correct customer number
+    # TODO - Figure out if this is the correct customer number
     shipment.customer = "TARGET"
     bill_number = extract_string(line, (5..34))
     master_bill_number = extract_string(line, (35..64))
@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
         bol.master_bill = master_bill_number
       end
     end
-    
+
     shipment.vessel = extract_string(line, (67..101))
     shipment.voyage = extract_string(line, (102..106))
     shipment.country_of_export = extract_string(line, (107..109))
@@ -151,7 +151,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
   end
 
   def add_special_tariffs? entry, invoice, line
-    # Don't add 301 tariffs to the feed...I'm presuming that Target will have 
+    # Don't add 301 tariffs to the feed...I'm presuming that Target will have
     # them already in the parts data.
     false
   end
@@ -171,7 +171,7 @@ module OpenChain; module CustomHandler; module Target; class TargetEntryInitiati
       extract_string(line, (1..2))
     end
 
-    # The following methods are protected to allow for potential extending classes to 
+    # The following methods are protected to allow for potential extending classes to
     # override/extend them for potential customer specific handling (if needed)
     def new_shipment
       s = CiLoadEntry.new

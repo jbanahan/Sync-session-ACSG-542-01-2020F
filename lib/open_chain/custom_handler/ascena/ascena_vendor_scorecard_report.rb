@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
   CENTER_FORMAT ||= XlsMaker.create_format "Centered", :horizontal_align => :center
 
   def self.cust_info
-    CUST_INFO.select{ |ci| [ASCENA_CUST_NUM, MAURICES_CUST_NUM].include? ci[:cust_num] }
+    CUST_INFO.select { |ci| [ASCENA_CUST_NUM, MAURICES_CUST_NUM].include? ci[:cust_num] }
   end
 
   def self.run_report run_by, settings
@@ -295,48 +295,48 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
 
   def make_query date_start, date_end, range_field, cust_nums
     qry = <<-SQL
-              SELECT 
-                vendor.name AS 'vendor_name', 
-                ord.vendor_id, 
-                factory.name AS 'factory_name', 
-                ord.factory_id, 
-                ent.entry_number, 
-                first_sale_xref.value AS 'first_sale_eligible_date', 
-                ent.first_release_date, 
+              SELECT
+                vendor.name AS 'vendor_name',
+                ord.vendor_id,
+                factory.name AS 'factory_name',
+                ord.factory_id,
+                ent.entry_number,
+                first_sale_xref.value AS 'first_sale_eligible_date',
+                ent.first_release_date,
                 ci.invoice_number,
-                cil.value AS 'invoice_line_value', 
-                cil.product_line, 
-                cil.po_number, 
-                cil.part_number, 
-                cil.contract_amount, 
+                cil.value AS 'invoice_line_value',
+                cil.product_line,
+                cil.po_number,
+                cil.part_number,
+                cil.contract_amount,
                 #{invoice_value_contract('cil')} AS 'invoice_value_contract',
-                #{duty_savings_first_sale('cil')} AS 'duty_savings_first_sale' 
+                #{duty_savings_first_sale('cil')} AS 'duty_savings_first_sale'
               FROM
                 commercial_invoices AS ci
-                INNER JOIN commercial_invoice_lines cil ON 
+                INNER JOIN commercial_invoice_lines cil ON
                   ci.id = cil.commercial_invoice_id
-                INNER JOIN entries AS ent ON 
-                  ci.entry_id = ent.id 
-                INNER JOIN orders AS ord ON 
+                INNER JOIN entries AS ent ON
+                  ci.entry_id = ent.id
+                INNER JOIN orders AS ord ON
                   ord.order_number = IF(ent.customer_number = 'ASCE', CONCAT('ASCENA-', cil.product_line, '-', cil.po_number), CONCAT('ASCENA-MAU-', cil.po_number))
-                INNER JOIN companies AS vendor ON 
+                INNER JOIN companies AS vendor ON
                   ord.vendor_id = vendor.id
-                INNER JOIN companies AS factory ON 
+                INNER JOIN companies AS factory ON
                   ord.factory_id = factory.id
-                LEFT OUTER JOIN data_cross_references AS first_sale_xref ON 
-                  cil.mid = SUBSTRING_INDEX(first_sale_xref.key, '-', 1) AND 
-                  vendor.system_code = SUBSTRING_INDEX(first_sale_xref.key, '-', -1) AND 
+                LEFT OUTER JOIN data_cross_references AS first_sale_xref ON
+                  cil.mid = SUBSTRING_INDEX(first_sale_xref.key, '-', 1) AND
+                  vendor.system_code = SUBSTRING_INDEX(first_sale_xref.key, '-', -1) AND
                   first_sale_xref.cross_reference_type = 'asce_mid'
               WHERE
                 ent.customer_number IN (?) AND
-                ent.#{range_field} IS NOT NULL AND 
-                ent.#{range_field} >= ? AND 
+                ent.#{range_field} IS NOT NULL AND
+                ent.#{range_field} >= ? AND
                 ent.#{range_field} < ?
-              ORDER BY 
-                vendor.name, 
-                factory.name, 
-                ent.entry_number, 
-                ci.invoice_number, 
+              ORDER BY
+                vendor.name,
+                factory.name,
+                ent.entry_number,
+                ci.invoice_number,
                 cil.product_line
           SQL
     ActiveRecord::Base.sanitize_sql_array([qry, cust_nums, date_start, date_end])

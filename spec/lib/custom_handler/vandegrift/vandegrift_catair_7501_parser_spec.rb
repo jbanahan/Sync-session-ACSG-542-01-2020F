@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
 
   let (:data) { IO.read 'spec/fixtures/files/catair_7501.txt' }
-  let! (:inbound_file) { 
+  let! (:inbound_file) {
     file = InboundFile.new
     allow(subject).to receive(:inbound_file).and_return file
     file
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
     subject { described_class }
     let (:shipment) { described_class::CiLoadEntry.new }
 
-    before :each do 
+    before :each do
       allow_any_instance_of(subject).to receive(:inbound_file).and_return inbound_file
     end
 

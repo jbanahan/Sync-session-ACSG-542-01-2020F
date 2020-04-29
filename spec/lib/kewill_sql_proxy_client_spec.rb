@@ -12,7 +12,7 @@ describe OpenChain::KewillSqlProxyClient do
       request_context = {'content' => 'context'}
       request_body = {'job_params' => {:file_number=>123, :suffix=>"suffix"}, 'context' => request_context}
       expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/invoice_details", request_body, {}, @proxy_config['auth_token'])
-      
+
       @c.request_alliance_invoice_details "123", "suffix     ", request_context
     end
 
@@ -32,7 +32,7 @@ describe OpenChain::KewillSqlProxyClient do
 
     it "raises error on errored post" do
       expect(@http_client).to receive(:post).and_raise "Error"
-      expect{@c.request_alliance_invoice_details "123", "A"}.to raise_error "Error"
+      expect {@c.request_alliance_invoice_details "123", "A"}.to raise_error "Error"
     end
   end
 
@@ -41,7 +41,7 @@ describe OpenChain::KewillSqlProxyClient do
       request_body = {'job_params' => {:invoice_date=>20140101}}
       expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/find_invoices", request_body, {}, @proxy_config['auth_token'])
 
-      @c.request_alliance_invoice_numbers_since Date.new(2014,1,1)
+      @c.request_alliance_invoice_numbers_since Date.new(2014, 1, 1)
     end
   end
 
@@ -55,7 +55,7 @@ describe OpenChain::KewillSqlProxyClient do
 
     it "raises error on failed json post" do
       expect(@http_client).to receive(:post).and_raise "Error"
-      expect{@c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("123")}.to raise_error "Error"
+      expect {@c.request_check_details "123", "456", Date.new(2014, 11, 1), "10", BigDecimal.new("123")}.to raise_error "Error"
     end
   end
 
@@ -96,14 +96,14 @@ describe OpenChain::KewillSqlProxyClient do
 
       request_body = {'job_params' => {start_date: start.strftime("%Y%m%d%H%M"), end_date: end_t.strftime("%Y%m%d%H%M")}}
       expect(@http_client).to receive(:post).with("#{@proxy_config['url']}/job/updated_entries", request_body, {}, @proxy_config['auth_token']).and_raise "Error"
-      
+
       expect {@c.request_updated_entry_numbers start, end_t, ""}.to raise_error "Error"
     end
   end
 
   describe "bulk_request_entry_data" do
     before :each do
-      @entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
+      @entry = Factory(:entry, :source_system=>'Alliance', :broker_reference=>'123456')
     end
 
     it "uses primary key values to request entry data" do
@@ -155,7 +155,7 @@ describe OpenChain::KewillSqlProxyClient do
   end
 
   describe "request_updated_statements" do
-    it 'sends a request for updated statements' do 
+    it 'sends a request for updated statements' do
       my_params = nil
       my_context = nil
       expect(subject).to receive(:request) do |path, params, context, opts|
@@ -180,7 +180,7 @@ describe OpenChain::KewillSqlProxyClient do
       expect(my_context[:sqs_queue]).to eq "queue"
     end
 
-    it "sends a request for updated statements with customer numbers" do 
+    it "sends a request for updated statements with customer numbers" do
       my_params = nil
       expect(subject).to receive(:request) do |path, params, context, opts|
         my_params = params
@@ -249,7 +249,7 @@ describe OpenChain::KewillSqlProxyClient do
         nil
       end
 
-      subject.request_monthly_statements_between Date.new(2017,12,1), Date.new(2017, 12, 2), "bucket", "path", "queue"
+      subject.request_monthly_statements_between Date.new(2017, 12, 1), Date.new(2017, 12, 2), "bucket", "path", "queue"
 
       expect(my_context[:s3_bucket]).to eq "bucket"
       expect(my_context[:s3_path]).to eq "path"
@@ -266,7 +266,7 @@ describe OpenChain::KewillSqlProxyClient do
         nil
       end
 
-      subject.request_monthly_statements_between Date.new(2017,12,1), Date.new(2017, 12, 2), "bucket", "path", "queue", customer_numbers: ["1", "2", "3"]
+      subject.request_monthly_statements_between Date.new(2017, 12, 1), Date.new(2017, 12, 2), "bucket", "path", "queue", customer_numbers: ["1", "2", "3"]
       expect(my_params[:customer_numbers]).to eq "1,2,3"
     end
   end

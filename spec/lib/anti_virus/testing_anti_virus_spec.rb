@@ -24,7 +24,7 @@ describe OpenChain::AntiVirus::TestingAntiVirus do
       end
     end
 
-    before :each do 
+    before :each do
       OpenChain::AntiVirus::TestingAntiVirus.scan_value = "safe"
     end
 

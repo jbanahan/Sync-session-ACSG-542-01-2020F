@@ -17,7 +17,7 @@ class ProductGroup < ActiveRecord::Base
 
   before_destroy :validate_in_use
 
-  #linked to another object?
+  # linked to another object?
   def in_use?
     return false
   end

@@ -1,8 +1,8 @@
-module OpenChain; module CustomHandler; module Pepsi   
+module OpenChain; module CustomHandler; module Pepsi
   class QuakerValidationRulePoNumberUnique < BusinessValidationRule
 
     def run_validation entry
-      to_be_checked = entry.commercial_invoice_lines.map{ |cil| cil.po_number if cil.po_number =~ /^C\d{6}$/ }.compact
+      to_be_checked = entry.commercial_invoice_lines.map { |cil| cil.po_number if cil.po_number =~ /^C\d{6}$/ }.compact
       matches = find_other_entry_matches(entry.id, to_be_checked) if to_be_checked.presence
       message = ""
       if matches.presence

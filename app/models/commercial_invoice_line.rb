@@ -79,20 +79,20 @@
 #
 
 class CommercialInvoiceLine < ActiveRecord::Base
-  attr_accessible :add_bond, :add_case_number, :add_case_percent, 
-    :add_case_value, :add_duty_amount, :add_to_make_amount, :adjustments_amount, 
-    :agriculture_license_number, :cash_discount, :charges, :commercial_invoice_id, 
+  attr_accessible :add_bond, :add_case_number, :add_case_percent,
+    :add_case_value, :add_duty_amount, :add_to_make_amount, :adjustments_amount,
+    :agriculture_license_number, :cash_discount, :charges, :commercial_invoice_id,
     :computed_adjustments, :computed_net_value, :computed_value, :container_id,
-    :container, :contract_amount, :cotton_fee, :country_export_code, :country_origin_code, 
-    :currency, :customer_reference, :customs_line_number, :cvd_bond, 
-    :cvd_case_number, :cvd_case_percent, :cvd_case_value, :cvd_duty_amount, 
-    :department, :drawback_qty, :entered_value_7501, :fda_hold_date, :fda_release_date, 
-    :fda_review_date, :first_sale, :freight_amount, :hmf, :line_number, :mid, 
-    :miscellaneous_discount, :mpf, :non_dutiable_amount, :other_amount, 
-    :other_fees, :part_number, :po_number, :product_line, :prorated_mpf, 
-    :psc_date, :psc_reason_code, :quantity, :related_parties, :state_export_code, 
-    :state_origin_code, :store_name, :subheader_number, :unit_of_measure, 
-    :unit_price, :value, :value_appraisal_method, :value_foreign, :vendor_name, 
+    :container, :contract_amount, :cotton_fee, :country_export_code, :country_origin_code,
+    :currency, :customer_reference, :customs_line_number, :cvd_bond,
+    :cvd_case_number, :cvd_case_percent, :cvd_case_value, :cvd_duty_amount,
+    :department, :drawback_qty, :entered_value_7501, :fda_hold_date, :fda_release_date,
+    :fda_review_date, :first_sale, :freight_amount, :hmf, :line_number, :mid,
+    :miscellaneous_discount, :mpf, :non_dutiable_amount, :other_amount,
+    :other_fees, :part_number, :po_number, :product_line, :prorated_mpf,
+    :psc_date, :psc_reason_code, :quantity, :related_parties, :state_export_code,
+    :state_origin_code, :store_name, :subheader_number, :unit_of_measure,
+    :unit_price, :value, :value_appraisal_method, :value_foreign, :vendor_name,
     :visa_number, :visa_quantity, :visa_uom, :volume, :commercial_invoice_tariffs
 
   belongs_to :commercial_invoice, inverse_of: :commercial_invoice_lines
@@ -100,7 +100,7 @@ class CommercialInvoiceLine < ActiveRecord::Base
   has_many :commercial_invoice_tariffs, :dependent=>:destroy, :autosave=>true
   has_many :change_records, :as => :recordable
   belongs_to :container
-  
+
   include CustomFieldSupport
   include LinesSupport
 

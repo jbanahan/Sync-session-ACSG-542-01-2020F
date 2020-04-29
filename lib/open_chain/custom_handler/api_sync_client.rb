@@ -2,20 +2,20 @@ require 'open_chain/json_http_client'
 require 'digest/md5'
 
 # The whole purpose of this class is to provide a simple means of syncing
-# object information via the VFI Track API from one source system to another 
+# object information via the VFI Track API from one source system to another
 # on a schedulable basis.
 #
-# The intent is that the system this code is running on is the 'master' data 
-# source and the destination is merely a 'slave' or remote copy of all or a portion of the data. 
+# The intent is that the system this code is running on is the 'master' data
+# source and the destination is merely a 'slave' or remote copy of all or a portion of the data.
 #
 # You should extend this class and implement the following instance methods:
-# 
-# retrieve_remote_data - Using whatever API call you want, retrieve the remote data you want to sync.  The 
+#
+# retrieve_remote_data - Using whatever API call you want, retrieve the remote data you want to sync.  The
 # default expectation is that this data has a to_json method on it - you may work around this expectation
 # by providing your own implementation of #remote_data_fingerprint (which may return nil to disable remote fingerprinting)
 #
 # merge_remote_data_with_local - Write a process to merge the data returned by your retrieve_remote_data implementation
-# with the ApiSyncObject#local_data returned from your local sync implementation (.ie the data returned by 
+# with the ApiSyncObject#local_data returned from your local sync implementation (.ie the data returned by
 # 'process_query_result' or 'process_object_result')
 #
 # send_remote_data - Using whatever API call you want, push the merged data to the remote service.  The sync
@@ -29,7 +29,7 @@ require 'digest/md5'
 # passed to the  method to determine if any more result rows will be passed to this method.
 #
 # If you intend to retrieve sync data via an ActiveRecord base query, implement the following 2 methods:
-# 
+#
 # objects_to_sync - Return an ActiveRecord::Relation that will return all the product data that should be synced.
 # NOTE: the relation will have a limit applied to it and multiple passes over the data will be made until no results remain.
 #
@@ -56,12 +56,12 @@ module OpenChain; module CustomHandler; class ApiSyncClient
     end
   end
 
-  protected 
+  protected
     def sync_via_query
       results = nil
       loop_count = 0
-      # Just keep trying to sync while there are results remaining (and we acutally sent 
-      # at least one valid result), this way the query can define a limit or not and we 
+      # Just keep trying to sync while there are results remaining (and we acutally sent
+      # at least one valid result), this way the query can define a limit or not and we
       # don't care about it either way.
       begin
         results = ActiveRecord::Base.connection.execute query
@@ -80,7 +80,6 @@ module OpenChain; module CustomHandler; class ApiSyncClient
         loop_count += 1
 
       end while results.size > 0 && had_valid_result_data?(result_ids) && continue_looping?(loop_count)
-      
     end
 
     def sync_via_objects
@@ -129,7 +128,7 @@ module OpenChain; module CustomHandler; class ApiSyncClient
         # At this point, we need to request the remote data, then merge it with the localized data and then send it back to the remote server
         remote_data = retrieve_remote_data(local_data)
 
-        # Another optimization..we can fingerprint the remote data as we've received it and then compare it to the data we get back from 
+        # Another optimization..we can fingerprint the remote data as we've received it and then compare it to the data we get back from
         # the merge call.  If it's the same, then we don't have to bother with the save/update call.
         remote_fingerprint = remote_data_fingerprint(remote_data) unless remote_data.nil?
 
@@ -155,8 +154,8 @@ module OpenChain; module CustomHandler; class ApiSyncClient
     end
 
     def local_data_fingerprint local_data
-      # The simplest and most consistent way to get a fingerprint of the local data is to just 
-      # jsonize it and md5 it.  This only works when the local data consists solely of json'izable 
+      # The simplest and most consistent way to get a fingerprint of the local data is to just
+      # jsonize it and md5 it.  This only works when the local data consists solely of json'izable
       # types..primatives + hash + array.  If the local data isn't one of those, extending classes
       # will need to provide their own implementation of local_data_fingerprint...which could
       # just be returning nil and doing away w/ this optimization all-together

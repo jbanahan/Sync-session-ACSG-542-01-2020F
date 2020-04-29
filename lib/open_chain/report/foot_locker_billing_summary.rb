@@ -13,5 +13,5 @@ module OpenChain; module Report; class FootLockerBillingSummary < UsBillingSumma
     super run_by, settings.merge('customer_number' => 'FOOLO')
   end
 
-end; end; end      
-  
+end; end; end
+

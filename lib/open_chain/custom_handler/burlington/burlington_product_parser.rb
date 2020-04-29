@@ -119,7 +119,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonProdu
       updater.set prod, first_row[8], cdef: cdefs[:prod_long_description]
       updater.set prod, product_type, cdef: cdefs[:prod_type]
       hts = first_row[9].gsub('.', '')
-      classi = prod.classifications.find{ |cl| cl.country_id = us.id } || prod.classifications.build(country: us)
+      classi = prod.classifications.find { |cl| cl.country_id = us.id } || prod.classifications.build(country: us)
       if classi.tariff_records.length > 1
         classi.tariff_records.destroy_all
         updater.set_changed
@@ -132,7 +132,7 @@ module OpenChain; module CustomHandler; module Burlington; class BurlingtonProdu
         updater.set_changed
       end
 
-      tariff = prod.classifications.find{ |cl| cl.country_id == us.id }
+      tariff = prod.classifications.find { |cl| cl.country_id == us.id }
       classification_notes = build_classification_notes(tariff, header_row, first_row)
 
       if classification_notes.present?

@@ -1,12 +1,12 @@
-describe OpenChain::SurveyExpirationProcessor, type: :mailer do 
+describe OpenChain::SurveyExpirationProcessor, type: :mailer do
 
   let!(:master_setup) { stub_master_setup }
 
 	before :each do
 		# Set up the 'ecosystem' for the test:
 		# Set up six users who will be our subscribers.
-		#	Create two surveys, and subscribe three users to each. 
-		#	Create some survey responses and set back the email_sent_date on them 
+		#	Create two surveys, and subscribe three users to each.
+		#	Create some survey responses and set back the email_sent_date on them
 		#	such that they are seen as expired.
 		@survey_1_sub1 = Factory(:user, email: "survey_1_sub1@example.com")
 		@survey_1_sub2 = Factory(:user, email: "survey_1_sub2@example.com")
@@ -14,8 +14,8 @@ describe OpenChain::SurveyExpirationProcessor, type: :mailer do
 		@survey_2_sub1 = Factory(:user, email: "survey_2_sub1@example.com")
 		@survey_2_sub2 = Factory(:user, email: "survey_2_sub2@example.com")
 		@survey_2_sub3 = Factory(:user, email: "survey_2_sub3@example.com")
-		@survey_1 = Factory(:survey,:name=>"survey_1",:email_subject=>"survey_1_subject",:email_body=>"survey_1_body",:ratings_list=>"survey_1_rating", expiration_days: 1)
-		@survey_2 = Factory(:survey,:name=>"survey_2",:email_subject=>"survey_2_subject",:email_body=>"survey_2_body",:ratings_list=>"survey_2_rating", expiration_days: 1)
+		@survey_1 = Factory(:survey, :name=>"survey_1", :email_subject=>"survey_1_subject", :email_body=>"survey_1_body", :ratings_list=>"survey_1_rating", expiration_days: 1)
+		@survey_2 = Factory(:survey, :name=>"survey_2", :email_subject=>"survey_2_subject", :email_body=>"survey_2_body", :ratings_list=>"survey_2_rating", expiration_days: 1)
 		SurveySubscription.create!(:survey_id => @survey_1.id, :user_id => @survey_1_sub1.id)
 		SurveySubscription.create!(:survey_id => @survey_1.id, :user_id => @survey_1_sub2.id)
 		SurveySubscription.create!(:survey_id => @survey_1.id, :user_id => @survey_1_sub3.id)
@@ -37,10 +37,10 @@ describe OpenChain::SurveyExpirationProcessor, type: :mailer do
 		it 'sends emails to subscribers if survey is expiring' do
       # Combining all the checks into a single example to save runtime
 			expect(OpenMailer.deliveries.length).to equal(6)
-      expect(OpenMailer.deliveries.collect {|m| m.to}.flatten).to eq ["survey_1_sub1@example.com", "survey_1_sub2@example.com", 
+      expect(OpenMailer.deliveries.collect {|m| m.to}.flatten).to eq ["survey_1_sub1@example.com", "survey_1_sub2@example.com",
           "survey_1_sub3@example.com", "survey_2_sub1@example.com", "survey_2_sub2@example.com", "survey_2_sub3@example.com"]
-      expect(OpenMailer.deliveries.collect {|m| m.subject}).to eq ['Survey "survey_1" has 3 expired survey(s).', 'Survey "survey_1" has 3 expired survey(s).', 
-        'Survey "survey_1" has 3 expired survey(s).', 'Survey "survey_2" has 3 expired survey(s).', 
+      expect(OpenMailer.deliveries.collect {|m| m.subject}).to eq ['Survey "survey_1" has 3 expired survey(s).', 'Survey "survey_1" has 3 expired survey(s).',
+        'Survey "survey_1" has 3 expired survey(s).', 'Survey "survey_2" has 3 expired survey(s).',
         'Survey "survey_2" has 3 expired survey(s).', 'Survey "survey_2" has 3 expired survey(s).']
 
       SurveyResponse.all.each do |sr|

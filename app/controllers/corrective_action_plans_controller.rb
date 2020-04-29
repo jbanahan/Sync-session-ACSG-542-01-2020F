@@ -1,14 +1,14 @@
 class CorrectiveActionPlansController < ApplicationController
   include SurveyResponsesControllerSupport
 
-  def show 
+  def show
     cap = SurveyResponse.find(params[:survey_response_id]).corrective_action_plan
     do_show cap
   end
   def update
     cap = CorrectiveActionPlan.find params[:id]
     unless params[:comment].blank? || !cap.can_view?(current_user)
-      cap.comments.create!(body:params[:comment],user:current_user)
+      cap.comments.create!(body:params[:comment], user:current_user)
       cap.log_update current_user
     end
     do_show(cap)
@@ -20,13 +20,13 @@ class CorrectiveActionPlansController < ApplicationController
       return
     end
     cap = sr.corrective_action_plan.nil? ? sr.create_corrective_action_plan!(created_by_id:current_user.id) : sr.corrective_action_plan
-    redirect_to [sr,cap]
+    redirect_to [sr, cap]
   end
   def activate
     update_status :active, :activate, :activated
   end
   def resolve
-    update_status :resolved, :resolve, :resolved  
+    update_status :resolved, :resolve, :resolved
   end
   def destroy
     cap = CorrectiveActionPlan.find(params[:id])
@@ -54,7 +54,7 @@ class CorrectiveActionPlansController < ApplicationController
     end
     c = cap.comments.create! user: current_user, body: params[:comment]
     cap.log_update current_user
-    render json: c.to_json(methods:[:html_body],include:{user:{methods:[:full_name],only:[:email]}})
+    render json: c.to_json(methods:[:html_body], include:{user:{methods:[:full_name], only:[:email]}})
   end
 
   private
@@ -66,13 +66,13 @@ class CorrectiveActionPlansController < ApplicationController
       return
     end
     if !cap.can_edit? current_user
-      error_redirect "You cannot #{verb_present} this plan." 
+      error_redirect "You cannot #{verb_present} this plan."
       return
     end
     cap.update_attributes(status: CorrectiveActionPlan::STATUSES[status])
     add_flash :notices, "Plan #{verb_past}."
     cap.log_update current_user
-    redirect_to [sr,cap]
+    redirect_to [sr, cap]
   end
   def do_show cap
     if !cap.can_view? current_user

@@ -1,5 +1,5 @@
 describe CompaniesController do
-  let (:company) { Factory(:company,:master=>true) }
+  let (:company) { Factory(:company, :master=>true) }
   let (:user) { Factory(:user, admin: true, company: company)}
   before :each do
     sign_in_as user
@@ -7,7 +7,7 @@ describe CompaniesController do
 
   describe "create" do
     it "should trigger snapshot" do
-      expect{post :create, {'company'=>{'cmp_name'=>'mycompany'}}}.to change(Company,:count).by(1)
+      expect {post :create, {'company'=>{'cmp_name'=>'mycompany'}}}.to change(Company, :count).by(1)
       c = Company.last
       expect(c.entity_snapshots.count).to eq 1
     end
@@ -69,13 +69,13 @@ describe CompaniesController do
       # nil -> "" shouldn't trigger warning
       put :update, {'id'=>company.id, 'company'=>{'cmp_fiscal_reference'=>''}}
       expect(flash[:notices]).to_not include("FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!")
-      
+
       put :update, {'id'=>company.id, 'company'=>{'cmp_fiscal_reference'=>'release_date'}}
       expect(flash[:notices]).to include("FISCAL REFERENCE UPDATED. ENTRIES MUST BE RELOADED!")
     end
   end
   describe "attachment_archive_enabled" do
-    let!(:start_date) { Date.new(2010,4,18) }
+    let!(:start_date) { Date.new(2010, 4, 18) }
     before :each do
       company.create_attachment_archive_setup :start_date=>start_date
     end
@@ -122,13 +122,13 @@ describe CompaniesController do
     it "should reject if user isn't admin" do
       user.admin = false
       user.save!
-      post :update_children, { :id=>company.id, :selected=>{"1"=>"50","2"=>"100"} }
+      post :update_children, { :id=>company.id, :selected=>{"1"=>"50", "2"=>"100"} }
       expect(response).to redirect_to root_path
       expect(flash[:errors].size).to eq(1)
     end
     it "should reject if user isn't in master company" do
       user.company.update_attributes(:master=>false)
-      post :update_children, { :id=>company.id, :selected=>{"1"=>"50","2"=>"100"} }
+      post :update_children, { :id=>company.id, :selected=>{"1"=>"50", "2"=>"100"} }
       expect(response).to redirect_to root_path
       expect(flash[:errors].size).to eq(1)
     end
@@ -137,9 +137,9 @@ describe CompaniesController do
       c2 = Factory(:company)
       c3 = Factory(:company)
       company.linked_companies << c1
-      post :update_children, { :id=>company.id, :selected=>{"1"=>c2.id.to_s,"2"=>c3.id.to_s} }
+      post :update_children, { :id=>company.id, :selected=>{"1"=>c2.id.to_s, "2"=>c3.id.to_s} }
       expect(response).to redirect_to show_children_company_path company
-      expect(Company.find(company.id).linked_companies.to_a).to eq([c2,c3])
+      expect(Company.find(company.id).linked_companies.to_a).to eq([c2, c3])
     end
     it "should allow user to unlink all companies" do
       c1 = Factory(:company); c2 = Factory(:company); c3 = Factory(:company)
@@ -156,14 +156,13 @@ describe CompaniesController do
       ms
     }
 
-    before :each do 
+    before :each do
       with_customs_management_id(company, "ACNUM")
       user.admin = true
       user.save!
     end
 
     context "with custom feature enabled" do
-      
       before :each do
         allow(ms).to receive(:custom_feature?).with("Kewill Product Push").and_return true
       end
@@ -184,7 +183,7 @@ describe CompaniesController do
         company.system_identifiers.destroy_all
         expect(OpenChain::CustomHandler::Vandegrift::KewillProductGenerator).not_to receive(:delay)
         post :push_alliance_products, :id=>company.id
-        expect(flash[:errors].first).to eq("Cannot push file because company doesn't have an alliance customer number.") 
+        expect(flash[:errors].first).to eq("Cannot push file because company doesn't have an alliance customer number.")
       end
 
       it "should reject if user isn't admin" do
@@ -192,7 +191,7 @@ describe CompaniesController do
         user.save!
         expect(OpenChain::CustomHandler::Vandegrift::KewillProductGenerator).not_to receive(:delay)
         post :push_alliance_products, :id=>company.id
-        expect(response).to be_redirect 
+        expect(response).to be_redirect
         expect(flash[:errors].size).to eq(1)
       end
     end
@@ -203,7 +202,7 @@ describe CompaniesController do
       end
 
       it "should reject if alliance custom feature isn't enabled" do
-        expect{post :push_alliance_products, :id=>company.id}.to raise_error ActionController::RoutingError
+        expect {post :push_alliance_products, :id=>company.id}.to raise_error ActionController::RoutingError
       end
     end
   end

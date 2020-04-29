@@ -12,6 +12,6 @@
 
 class HistoryDetail < ActiveRecord::Base
   attr_accessible :history_id, :source_key, :value
-  
+
   belongs_to :history
 end

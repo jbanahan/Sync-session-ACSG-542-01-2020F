@@ -22,7 +22,7 @@ describe OpenChain::Registries::OrderBookingRegistry do
         def self.can_edit_booking?(ord, user); true; end
       end
 
-      expect{described_class.register c}.to raise_error(/can_book/)
+      expect {described_class.register c}.to raise_error(/can_book/)
       expect(described_class.registered.to_a).to be_empty
     end
 
@@ -33,7 +33,7 @@ describe OpenChain::Registries::OrderBookingRegistry do
         def self.can_edit_booking?(ord, user); true; end
       end
 
-      expect{described_class.register c}.to raise_error(/can_request_book/)
+      expect {described_class.register c}.to raise_error(/can_request_book/)
       expect(described_class.registered.to_a).to be_empty
     end
 
@@ -44,7 +44,7 @@ describe OpenChain::Registries::OrderBookingRegistry do
         def self.can_edit_booking?(ord, user); true; end
       end
 
-      expect{described_class.register c}.to raise_error(/can_revise_book/)
+      expect {described_class.register c}.to raise_error(/can_revise_book/)
       expect(described_class.registered.to_a).to be_empty
     end
 
@@ -55,7 +55,7 @@ describe OpenChain::Registries::OrderBookingRegistry do
         def self.can_revise_booking?(ord, user); true; end
       end
 
-      expect{described_class.register c}.to raise_error(/can_edit_book/)
+      expect {described_class.register c}.to raise_error(/can_edit_book/)
       expect(described_class.registered.to_a).to be_empty
     end
   end

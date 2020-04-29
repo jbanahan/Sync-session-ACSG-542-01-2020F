@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
     cache = []
     current_style_nbr = nil
     foreach(custom_file, skip_headers: true) do |r|
-      row = r.map{ |cell| cell.to_s.encode("UTF-8", :invalid => :replace, :undef => :replace, replace: "?") }
+      row = r.map { |cell| cell.to_s.encode("UTF-8", :invalid => :replace, :undef => :replace, replace: "?") }
       if row[2] != current_style_nbr && current_style_nbr.present?
         process_part cache, user
         cache = [row]
@@ -74,23 +74,23 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
 
   def process_part cache, user
     @updater.reset
-    multi_tariff = cache.map{ |row| row[10] }.uniq.count > 1
+    multi_tariff = cache.map { |row| row[10] }.uniq.count > 1
     first_row = cache.first
     importer_style = first_row[0].to_i.to_s
     part_no = first_row[2].to_i.to_s
     uid = "LANDS1-#{part_no}"
     new_tariff = first_row[10]
-    
+
     find_or_create_product(uid) do |prod|
       updater.set prod, part_no, cdef: cdefs[:prod_part_number]
       updater.set prod, importer_style, cdef: cdefs[:prod_importer_style]
       updater.set prod, first_row[1], cdef: cdefs[:prod_short_description]
-      classi = prod.classifications.find{ |cl| cl.country_id == us.id } || prod.classifications.build(country: us)
+      classi = prod.classifications.find { |cl| cl.country_id == us.id } || prod.classifications.build(country: us)
       # If there are any manually-added tariffs then start over
       if classi.tariff_records.length > 1
         classi.tariff_records.destroy_all
         updater.set_changed
-      end      
+      end
       tariff = classi.tariff_records.first
       # If there's more than one, don't record any of them
       if multi_tariff
@@ -109,7 +109,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
 
       # We need to check set type and this is the first point that a tariff is guaranteed to exist
       # assuming one is going to exist.
-      tariff = prod.classifications.find{ |cl| cl.country_id == us.id }
+      tariff = prod.classifications.find { |cl| cl.country_id == us.id }
       updater.set tariff, first_row[8], cdef: cdefs[:class_set_type] if (tariff.present? && first_row[8] == "XVV")
 
       if updater.changed?
@@ -121,7 +121,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
 
   def find_or_create_product uid
     product = nil
-    Lock.acquire("Product-#{uid}") do 
+    Lock.acquire("Product-#{uid}") do
       product = Product.where(importer_id: importer.id, unique_identifier: uid).first_or_initialize
       unless product.persisted?
         updater.set_changed
@@ -129,7 +129,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LeProductParser
       end
     end
 
-    Lock.with_lock_retry(product) do 
+    Lock.with_lock_retry(product) do
       yield product
     end
   end

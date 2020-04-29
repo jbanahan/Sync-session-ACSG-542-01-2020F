@@ -15,9 +15,9 @@ describe UpdateModelFieldsSupport do
 
   describe "update_model_field_attributes" do
     before :each do
-      @prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
-      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord',:data_type=>:date)
+      @prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
+      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:date)
       @country = Factory(:country)
     end
 
@@ -178,7 +178,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "does not raise an error on model field import validation errors" do
-      result = ProcessImportResult.new "fail" 
+      result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -191,7 +191,7 @@ describe UpdateModelFieldsSupport do
       existing = Factory(:product)
       p = Product.new
 
-      result = ProcessImportResult.new "fail" 
+      result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -202,14 +202,14 @@ describe UpdateModelFieldsSupport do
     end
 
     it "skips fields that user cannot edit" do
-      p = Factory(:product,name:'XYZ')
+      p = Factory(:product, name:'XYZ')
       mf = ModelField.find_by_uid(:prod_name)
       u = Factory(:user)
       allow(mf).to receive(:can_edit?).with(u).and_return false
 
       attrs = { prod_name: 'ABC'}
-      opts = {user:u,skip_not_editable:true}
-      expect(p.update_model_field_attributes(attrs,opts))
+      opts = {user:u, skip_not_editable:true}
+      expect(p.update_model_field_attributes(attrs, opts))
       expect(p.errors.blank?).to be_truthy
       p.reload
       expect(p.name).to eq 'XYZ'
@@ -218,9 +218,9 @@ describe UpdateModelFieldsSupport do
 
   describe "update_model_field_attributes!" do
     before :each do
-      @prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
-      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord',:data_type=>:date)
+      @prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
+      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:date)
       @country = Factory(:country)
     end
 
@@ -325,7 +325,7 @@ describe UpdateModelFieldsSupport do
     end
 
     it "raises an error on model field import validation errors" do
-      result = ProcessImportResult.new "fail" 
+      result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -342,7 +342,7 @@ describe UpdateModelFieldsSupport do
       existing = Factory(:product)
       p = Product.new
 
-      result = ProcessImportResult.new "fail" 
+      result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       expect_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -476,9 +476,9 @@ describe UpdateModelFieldsSupport do
 
   describe "assign_model_field_attributes" do
     before :each do
-      @prod_cd = Factory(:custom_definition, :module_type=>'Product',:data_type=>:string)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
-      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord',:data_type=>:date)
+      @prod_cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>:string)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
+      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:date)
       @country = Factory(:country)
     end
 
@@ -513,7 +513,7 @@ describe UpdateModelFieldsSupport do
 
     it "runs validations on assigned object" do
       existing = Factory(:product, unique_identifier: 'unique_id')
-      result = ProcessImportResult.new "fail" 
+      result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       allow_any_instance_of(ModelField).to receive(:process_import).and_return result
 
@@ -539,7 +539,7 @@ describe UpdateModelFieldsSupport do
 
     it "does not run validations on assigned object if instructed not to" do
       existing = Factory(:product, unique_identifier: 'unique_id')
-      result = ProcessImportResult.new "fail" 
+      result = ProcessImportResult.new "fail"
       allow(result).to receive(:error?).and_return true
       allow(ModelField.find_by_uid(:prod_uid)).to receive(:process_import).and_return result
 

@@ -41,7 +41,7 @@ class CustomReportEntryTariffBreakdown < CustomReport
       entries = entries.limit(row_limit > 1000 ? 1000 : row_limit)
       entries = entries.order(:file_logged_date)
 
-      # This might look weird but in order to eager load the invoices / tariffs we can't add the includes on the search query (some 
+      # This might look weird but in order to eager load the invoices / tariffs we can't add the includes on the search query (some
       # activerecord weirdness happens with the criterions that are added above that results in bad joins).
       # Therefore, we're running the query and then "piping" the ids into a plain active record where clause.
       entry_ids = entries.pluck("entries.id")
@@ -66,7 +66,6 @@ class CustomReportEntryTariffBreakdown < CustomReport
         entries.each do |ent|
           ent.commercial_invoices.each do |inv|
             inv.commercial_invoice_lines.each do |inv_line|
-            
               user_selected_cols = []
               self.search_columns.each do |col|
                 mf = col.model_field
@@ -92,7 +91,7 @@ class CustomReportEntryTariffBreakdown < CustomReport
     end
 
     def get_max_standard_hts_count entry_ids
-      # We're going to employ a query to determine the max number of standard HTS codes that are utilized over the 
+      # We're going to employ a query to determine the max number of standard HTS codes that are utilized over the
       # full range of entries that are on the report, this should be much faster and less memory intensive than
       # loading all the entries into memory that will appear on the report and parsing through them to count the tariffs utilized
       query = <<-QRY
@@ -175,7 +174,7 @@ QRY
       # Since we're exploding out the tariff data horizontally, some invoice lines won't have 2, 3, 4, etc lines..for those just push nil values
       (hts_group_count - tariffs_added).times { row_content.push nil, nil, nil }
 
-      # Now we need to estimate the classification duty by taking the common rates we've seen so far, multiplying each rate by the total entered value, 
+      # Now we need to estimate the classification duty by taking the common rates we've seen so far, multiplying each rate by the total entered value,
       # and then summing it all together.
       est_underlying_classification_duty = common_rates.map {|r| (total_entered_value * r).round(2) }.compact.sum
 

@@ -9,7 +9,7 @@ module OpenChain; module Api; class ApiEntityXmlizer
 
   # This method generates XML from the given entity and list of model field uids.
   def entity_to_xml user, entity, model_field_uids
-    entity_hash = @jsonizer.entity_to_hash(user,entity,model_field_uids)
+    entity_hash = @jsonizer.entity_to_hash(user, entity, model_field_uids)
     entity_hash['xml-generated-time'] = Time.now.utc.strftime("%Y-%m-%dT%l:%M:%S:%L%z")
     make_xml entity, entity_hash
   end
@@ -32,14 +32,14 @@ module OpenChain; module Api; class ApiEntityXmlizer
       ignore_paths = ["/*/xml-generated-time"]
     end
 
-    # Basically, we're just going to go through and delete all the paths that should 
-    # be ignored for fingerprinting purposes.  This is generally going to be timestamp-like 
+    # Basically, we're just going to go through and delete all the paths that should
+    # be ignored for fingerprinting purposes.  This is generally going to be timestamp-like
     # fields that are meta-data that will be distinct every single time the xml is generated.
     Array.wrap(ignore_paths).each do |xpath|
       xml.elements.delete xpath
     end
 
-    # Now just use the most compact REXML output style, generate it to a string and then 
+    # Now just use the most compact REXML output style, generate it to a string and then
     # get a sha256 hash of that string.
     out = StringIO.new
     REXML::Formatters::Default.new.write(xml, out)
@@ -48,7 +48,7 @@ module OpenChain; module Api; class ApiEntityXmlizer
   end
 
   def replace_tag_names hash
-    hash.keys.each do |uid|
+    hash.keys.each do |uid| # rubocop:disable Style/HashEachMethods
       mf = ModelField.find_by_uid uid
       val = hash[uid]
       if !mf.blank?

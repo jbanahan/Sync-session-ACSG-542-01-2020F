@@ -25,7 +25,7 @@ class ProductRateOverride < ActiveRecord::Base
   include CoreObjectSupport
   include OpenChain::ActiveDatesSupport
 
-  attr_accessible :destination_country_id, :end_date, :notes, :origin_country_id, 
+  attr_accessible :destination_country_id, :end_date, :notes, :origin_country_id,
     :product_id, :product, :rate, :start_date
 
   belongs_to :product, touch: true, inverse_of: :product_rate_overrides

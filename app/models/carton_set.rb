@@ -22,7 +22,7 @@
 
 class CartonSet < ActiveRecord::Base
   attr_accessible :carton_qty, :gross_kgs, :height_cm, :length_cm, :net_kgs, :net_net_kgs, :shipment_id, :starting_carton, :width_cm
-  
+
   belongs_to :shipment, inverse_of: :carton_sets
   has_many :shipment_lines, inverse_of: :carton_set
 
@@ -45,7 +45,7 @@ class CartonSet < ActiveRecord::Base
     total
   end
 
-  def total_volume_cubic_centimeters 
+  def total_volume_cubic_centimeters
     total = BigDecimal(0)
     if self.length_cm && self.width_cm && self.height_cm
       volume = (self.length_cm * self.width_cm * self.height_cm)

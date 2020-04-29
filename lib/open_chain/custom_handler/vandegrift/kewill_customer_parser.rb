@@ -63,7 +63,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCustomerP
         address = company.addresses.build system_code: address_number
       end
 
-      address.assign_attributes(name: address_data["name"], line_1: address_data["address_1"], line_2: address_data["address_2"], city: address_data["city"], 
+      address.assign_attributes(name: address_data["name"], line_1: address_data["address_1"], line_2: address_data["address_2"], city: address_data["city"],
                       state: address_data["state_province"], postal_code: address_data["zip"], country_id: countries[address_data["country"]])
 
       address.changed?
@@ -87,7 +87,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCustomerP
 
     def parse_amazon_notes company, note
       if note["note_cust"].to_s =~ /IOR-([A-Z0-9]+)/i
-        SystemIdentifier.where(system: "Amazon Reference", code: $1, company_id: company.id).first_or_create! 
+        SystemIdentifier.where(system: "Amazon Reference", code: $1, company_id: company.id).first_or_create!
       end
     end
 

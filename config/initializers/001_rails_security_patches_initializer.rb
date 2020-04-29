@@ -2,9 +2,9 @@
 # Which not being backported to 4.2 series.  It fixes a potential XSS vulnerability.
 
 # Releases 5.2.5.2 and 6.0.2.2 have the fixes deployed..so the monkey patch is not required for them.
-if Rails::VERSION::MAJOR == 4 || 
-    (Rails::VERSION::MAJOR == 5 && Rails::VERSION::MINOR <= 2 && Rails::VERSION::TINY <= 4 && Rails::VERSION::PRE.to_i < 2) || 
-    (Rails::VERSION::MAJOR == 6 && Rails::VERSION::MINOR <= 0 && Rails::VERSION::TINY <= 2 && Rails::VERSION::PRE.to_i < 2) 
+if Rails::VERSION::MAJOR == 4 ||
+    (Rails::VERSION::MAJOR == 5 && Rails::VERSION::MINOR <= 2 && Rails::VERSION::TINY <= 4 && Rails::VERSION::PRE.to_i < 2) ||
+    (Rails::VERSION::MAJOR == 6 && Rails::VERSION::MINOR <= 0 && Rails::VERSION::TINY <= 2 && Rails::VERSION::PRE.to_i < 2)
 
   ActionView::Helpers::JavaScriptHelper::JS_ESCAPE_MAP.merge!(
     {

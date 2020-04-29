@@ -20,8 +20,8 @@
 class TradePreferenceProgram < ActiveRecord::Base
   include CoreObjectSupport
 
-  attr_accessible :created_at, :destination_country_id, :destination_country, :name, 
-    :origin_country_id, :origin_country, :tariff_adjustment_percentage, 
+  attr_accessible :created_at, :destination_country_id, :destination_country, :name,
+    :origin_country_id, :origin_country, :tariff_adjustment_percentage,
     :tariff_identifier, :updated_at
 
   belongs_to :origin_country, class_name: 'Country', inverse_of: :trade_lanes_as_origin

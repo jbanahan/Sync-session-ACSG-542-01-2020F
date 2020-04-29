@@ -21,13 +21,13 @@
 #
 
 class Question < ActiveRecord::Base
-  attr_accessible :attachment_required_for_choices, :choices, 
-    :comment_required_for_choices, :content, :rank, :require_attachment, 
+  attr_accessible :attachment_required_for_choices, :choices,
+    :comment_required_for_choices, :content, :rank, :require_attachment,
     :require_comment, :survey_id, :warning
-  
+
   belongs_to :survey, touch: true, inverse_of: :questions
   has_many :attachments, :as=>:attachable, :dependent=>:destroy
-  
+
   validates_presence_of :survey
   validates :content, :length=>{:minimum=>10}
   validate :parent_lock

@@ -8,7 +8,6 @@ describe Api::V1::GroupsController do
   end
 
   describe "index" do
-    
     before :each do
       group.users << user
     end
@@ -36,7 +35,7 @@ describe Api::V1::GroupsController do
   end
 
   describe "show" do
-    before :each do 
+    before :each do
       group.users << user
     end
 
@@ -98,7 +97,7 @@ describe Api::V1::GroupsController do
       json = JSON.parse(response.body)
       excl_users = json['excluded_users']
       expect(excl_users.length).to eq 2
-      
+
       expect(excl_users.first['id']).to eq user.id
       company2 = excl_users.first['company']
       expect(company2["name"]).to eq "ACME"
@@ -111,11 +110,9 @@ describe Api::V1::GroupsController do
       expect(company2["system_code"]).to eq "KZ"
       expect(company2["id"]).to eq user2.company.id
     end
-    
   end
 
   describe "add_to_object" do
-    
     it "adds group to specified object" do
       post :add_to_object, base_object_type: "users", base_object_id: user.id, id: group.id
       expect(response).to be_success

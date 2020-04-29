@@ -15,7 +15,7 @@ describe Group do
     it "should show user groups other users from same company are in" do
       u = Factory(:user)
       g2 = Factory(:group)
-      g2.users << Factory(:user,company:u.company)
+      g2.users << Factory(:user, company:u.company)
       expect(Group.visible_to_user(u).to_a).to eq [g2]
     end
     it "should show user groups other users from linked company are in" do
@@ -77,13 +77,13 @@ describe Group do
 
   describe "user_emails" do
     let (:group) { Group.use_system_group "TEST", name: "Test" }
-    let! (:user_1) { 
+    let! (:user_1) {
       u = Factory(:user, email: "me@there.com")
       group.users << u
       u
     }
 
-    let! (:user_2) { 
+    let! (:user_2) {
       u = Factory(:user, email: "you@there.com")
       group.users << u
       u
@@ -99,7 +99,7 @@ describe Group do
     it "does not return any blank emails" do
       user_1.update_attributes! email: ""
       emails = group.user_emails
-      
+
       expect(emails.length).to eq 1
       expect(emails).to include "you@there.com"
     end

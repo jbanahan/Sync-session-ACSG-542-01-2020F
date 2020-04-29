@@ -68,7 +68,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
       stop_processing = false
       if check_results[:errors].present?
-        handle_check_errors(users.map(&:email), check_results[:errors]) 
+        handle_check_errors(users.map(&:email), check_results[:errors])
         stop_processing = true
       end
 
@@ -86,12 +86,12 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       end
 
       if invoice_results[:errors].present?
-        handle_invoice_errors(users.map(&:email), invoice_results[:errors]) 
+        handle_invoice_errors(users.map(&:email), invoice_results[:errors])
         stop_processing = true
       end
 
       return if stop_processing
-      
+
       wait_for_export_updates users, check_results[:exports] + invoice_results[:exports]
       wait_for_dimension_uploads
 
@@ -137,7 +137,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       check_info = parser.extract_check_info io
     end
 
-    # This method checks the internal state of the data extracted from the report..making sure the numbers given to us by 
+    # This method checks the internal state of the data extracted from the report..making sure the numbers given to us by
     # Alliance are internally consistent (.ie the totals for bank match what was given for the bank, the number of checks
     # matches totals, etc)
     errors = parser.validate_check_info check_info
@@ -145,7 +145,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     # This method clears out any checks that are represented on the same file multiple times (users may have printed the check multiple times on accident)
     # It then does some additional validations to ensure the same check wasn't used for different files.  If so, that needs to be fixed manually.
     errors.push *parser.validate_and_remove_duplicate_check_references(check_info)
-    
+
     [errors, check_info]
   end
 
@@ -160,7 +160,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     # Strip the ar/ap grand total keys (don't want them any longer)
     invoice_info.delete :ar_grand_total
     invoice_info.delete :ap_grand_total
-    
+
     [errors, invoice_info]
   end
 
@@ -194,7 +194,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     check_info[:checks].each do |bank_no, bank_check_info|
       bank_check_info[:checks].each do |info|
         check, errors = check_parser.create_and_request_check info, sql_proxy_client
-        
+
         if check
           exports << check.intacct_alliance_export
         end
@@ -226,10 +226,10 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   end
 
   def wait_for_dimension_uploads sleep_time = 1, max_wait_time = 900
-    # We need to make sure all dimension uploads clear before kicking off 
+    # We need to make sure all dimension uploads clear before kicking off
     # the actual intacct uploads, otherwise, there's a distinct chance of an upload
     # failing because the file number isn't in Intacct yet.
-    
+
     # Give the data at most an hour to come across...it shouldn't take anywhere near this amount of time, but be generous.
     max_loop_count = max_wait_time / sleep_time
     count = 0
@@ -242,7 +242,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
   def all_dimension_uploads_finished?
     return true if Rails.env.development?
-    
+
     Delayed::Job.where("handler like ? ", "%method_name: :#{OpenChain::CustomHandler::Intacct::IntacctClient.method(:async_send_dimension).name}%").count == 0
   end
 
@@ -344,15 +344,15 @@ QRY
       # The bit in the middle w/ the VFI/LMD stuff is excluding any receivables for the LMD company that
       # represent the internal billing process we do for Freight Shipments.
       qry = <<-QRY
-SELECT IFNULL(SUM(CASE 
+SELECT IFNULL(SUM(CASE
 WHEN r.receivable_type like ?  THEN l.amount * -1
 ELSE l.amount
-END),0) FROM intacct_alliance_exports e 
+END),0) FROM intacct_alliance_exports e
 INNER JOIN intacct_receivables r on r.intacct_alliance_export_id = e.id AND (r.company = ? OR (r.company = ? and r.customer_number <> ?))
 INNER JOIN intacct_receivable_lines l on r.id = l.intacct_receivable_id
 WHERE e.export_type = ? AND e.data_received_date >= ? and r.intacct_upload_date IS NULL
 QRY
-      qry = ActiveRecord::Base.sanitize_sql_array([qry, "%#{IntacctReceivable::CREDIT_INVOICE_TYPE}%", OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE, 
+      qry = ActiveRecord::Base.sanitize_sql_array([qry, "%#{IntacctReceivable::CREDIT_INVOICE_TYPE}%", OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::VFI_COMPANY_CODE,
                                                     OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_COMPANY_CODE, OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser::LMD_VFI_CUSTOMER_CODE,
                                                     IntacctAllianceExport::EXPORT_TYPE_INVOICE, db_start_time])
       amount = ActiveRecord::Base::connection.execute(qry).first[0]

@@ -67,7 +67,7 @@ FILE
     it "raises an error when file is not of the expected format" do
       # Just change the date format as if it had been updated...this should force a failure
       file = "\n\n\nAPMRGREG-D0-06/22/14\n\n\n"
-      expect{check_info = subject.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
+      expect {check_info = subject.extract_check_info StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Check Register file that is not the correct format. Expected to find 'APMRGREG-D0-06/22/09' on the first non-blank line of the file."
     end
 
     it "handles blank files" do
@@ -107,11 +107,11 @@ FILE
     end
 
     it "raises an error if total count is missing" do
-      expect{subject.validate_check_info({})}.to raise_error "No Check Register Record Count found."
+      expect {subject.validate_check_info({})}.to raise_error "No Check Register Record Count found."
     end
 
     it "raises an error if total check amount is missing" do
-      expect{subject.validate_check_info({total_check_count: 1})}.to raise_error "No Check Register Grand Total amount found."
+      expect {subject.validate_check_info({total_check_count: 1})}.to raise_error "No Check Register Grand Total amount found."
     end
 
     it "returns errors when check info is not internally consistent" do
@@ -240,7 +240,7 @@ FILE
     it "creates a single check when multiple rows reference the same check number with different file number" do
       # This is testing that an error condition is handled correctly by re-using the same check object (and not creating two distinct ones)
       existing_check = IntacctCheck.create! file_number: check_info[:invoice_number], suffix: check_info[:invoice_suffix], check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], amount: check_info[:check_amount], voided: false
-      
+
       check_info[:invoice_number] = "987654"
       check_info[:suffix] = "A"
       check_info[:check_amount] = BigDecimal.new("200")
@@ -260,7 +260,7 @@ FILE
       # This is another error case..the only information that differed across lines in the registry for these
       # were the vendor reference.  This should still only create a single reference.
       existing_check = IntacctCheck.create! file_number: check_info[:invoice_number], suffix: check_info[:invoice_suffix], check_number: check_info[:check_number], check_date: check_info[:check_date], bank_number: check_info[:bank_number], amount: check_info[:check_amount], voided: false
-      
+
       check_info[:vendor_reference] = "DIFFERENT REFERENCE"
 
 
@@ -276,7 +276,7 @@ FILE
     it "no-ops if same check has been previously sent to intacct" do
       # Note that the check is created with a different check date than the report data..
       existing_check = IntacctCheck.create!(bank_number: check_info[:bank_number], check_number: check_info[:check_number], amount: check_info[:check_amount], voided: false,
-                                            file_number: check_info[:file_number], suffix: nil, customer_number: check_info[:customer_number], 
+                                            file_number: check_info[:file_number], suffix: nil, customer_number: check_info[:customer_number],
                                             vendor_number: check_info[:vendor_number], check_date: Time.zone.now.to_date, intacct_upload_date: Time.zone.now)
 
       check, errors = subject.create_and_request_check check_info, sql_proxy_client
@@ -379,7 +379,7 @@ FILE
       dj = Delayed::Job.new
       dj.handler = "OpenChain::CustomHandler::Intacct::AllianceDayEndHandler--process_delayed"
       dj.save!
-      
+
       expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
       expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
 
@@ -393,7 +393,7 @@ FILE
   describe "validate_and_remove_duplicate_check_references" do
     let (:check_data) {
       {
-        bank_number: "1", check_number: "12345", check_date: Date.new(2018, 12, 12), 
+        bank_number: "1", check_number: "12345", check_date: Date.new(2018, 12, 12),
         check_amount: BigDecimal("100"), customer_number: "CUST", invoice_number: "INV", invoice_suffix: "A", vendor_number: "VEN"
       }
     }
@@ -405,7 +405,7 @@ FILE
             checks: [
               check_data
             ]
-          }  
+          }
         }
       }
     }
@@ -448,7 +448,7 @@ FILE
       expect(data[:check_total]).to eq 0
       expect(data[:check_count]).to eq 2
     end
-    
+
     it "handles missing check data on blank check files" do
       errors = subject.validate_and_remove_duplicate_check_references({})
       expect(errors).to be_blank

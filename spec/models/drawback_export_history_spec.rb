@@ -3,7 +3,7 @@ describe DrawbackExportHistory do
     it "should insert multiple records" do
       d1 = DrawbackExportHistory.new(part_number:'123',
         export_ref_1:'ER1',
-        export_date:Date.new(2014,7,5),
+        export_date:Date.new(2014, 7, 5),
         quantity:10,
         claim_amount_per_unit:1.25,
         claim_amount: 12.50,
@@ -11,13 +11,13 @@ describe DrawbackExportHistory do
       )
       d2 = DrawbackExportHistory.new(part_number:'1234',
         export_ref_1:'ER2',
-        export_date:Date.new(2014,7,6),
+        export_date:Date.new(2014, 7, 6),
         quantity:100,
         claim_amount_per_unit:1.24,
         claim_amount: 124.00,
         drawback_claim_id: 2
       )
-      DrawbackExportHistory.bulk_insert [d1,d2]
+      DrawbackExportHistory.bulk_insert [d1, d2]
       f1 = DrawbackExportHistory.first
       expect(f1.part_number).to eq d1.part_number
       expect(f1.export_ref_1).to eq d1.export_ref_1

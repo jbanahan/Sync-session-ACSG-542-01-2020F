@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; class GenericShipmentManifestParser
     shipment.lcl = (shipment.shipment_type == 'CFS/CFS')
     mode = value_from_named_location :mode, rows
     if mode.to_s.upcase == "OCEAN"
-      # Careful w/ these values....they need to match the values the front-end is 
+      # Careful w/ these values....they need to match the values the front-end is
       # displaying w/ it's dropdowns.
       shipment.mode = case shipment.shipment_type.to_s.upcase
                       when "CY/CY", "CY/CFS"

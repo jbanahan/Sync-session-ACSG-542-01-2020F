@@ -2,7 +2,7 @@ module EntitySnapshotSupport
   extend ActiveSupport::Concern
 
   included do
-    #not doing dependent => destroy so we'll still have snapshots for deleted items until the destroy_snapshots callback completes
+    # not doing dependent => destroy so we'll still have snapshots for deleted items until the destroy_snapshots callback completes
     has_many :entity_snapshots, :as => :recordable, inverse_of: :recordable
     has_many :business_rule_snapshots, as: :recordable, inverse_of: :recordable
 
@@ -29,7 +29,7 @@ module EntitySnapshotSupport
 
   def create_async_snapshot user=User.current, imported_file=nil, context=nil
     # As of March 27, 2017 disabling async functionality because it was creating bad snapshots
-    # due to the snapshot running in a separate DB transaction (.ie thread aquires new connection, thus 
+    # due to the snapshot running in a separate DB transaction (.ie thread aquires new connection, thus
     # causing data contexts to be different and potentially skipping changes a user made)
     # Rails has no way to do distributed transactions (from what I can tell), so this functionality
     # is a total no-go.
@@ -78,7 +78,7 @@ module EntitySnapshotSupport
 
         if copied
           # This might look weird but we're relying on the delayed jobs retry to make sure all snapshots are copied across.
-          # So, if anything in here raises (like if s3 has an issue), the job will try again, and if we mark this particular 
+          # So, if anything in here raises (like if s3 has an issue), the job will try again, and if we mark this particular
           # snapshot as being copied (by blanking all the paths), then it won't get copied again on the retry.
           # This is a good spot for update_columns when we go to Rails 4 to avoid updating the timestamps for no reason
           snapshot.doc_path = nil

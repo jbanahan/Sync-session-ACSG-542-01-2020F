@@ -18,7 +18,7 @@
 
 class RandomAudit < ActiveRecord::Base
   attr_accessible :attached_content_type, :attached_file_name, :attached,
-    :attached_file_size, :attached_updated_at, :module_type, :report_date, 
+    :attached_file_size, :attached_updated_at, :module_type, :report_date,
     :report_name, :search_setup_id, :search_setup, :user_id, :user
 
   has_attached_file :attached, :path => ":master_setup_uuid/random_audit/:id/:filename"

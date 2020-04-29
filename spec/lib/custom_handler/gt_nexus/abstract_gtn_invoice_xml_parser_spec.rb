@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
   subject { MockGtnInvoiceXmlParser.new }
 
   describe "process_invoice" do
-    before :each do 
+    before :each do
       india
       ca
       importer
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
       expect(a.address_type).to eq "Vendor"
       expect(a.name).to eq "EASTMAN EXPORTS GLOBAL-"
       expect(a.line_1).to eq "5/591 SRI LAKSHMI NAGAR"
-      expect(a.line_2).to eq "PITCHAMPALAYAM PUDUR, TIRUPUR" 
+      expect(a.line_2).to eq "PITCHAMPALAYAM PUDUR, TIRUPUR"
       expect(a.city).to eq "TAMILNADU"
       expect(a.postal_code).to eq "641603"
       expect(a.country).to eq india
@@ -123,13 +123,12 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
       expect(l.value_foreign).to eq BigDecimal("1681.92")
       expect(l.country_origin).to eq india
 
-      # This is all nil on purpose (xml has it matching to order line 2), 
+      # This is all nil on purpose (xml has it matching to order line 2),
       # testing that we can have missing order lines
       expect(l.order_line).to be_nil
       expect(l.order).to be_nil
       expect(l.product).to be_nil
       expect(l.variant).to be_nil
-      
 
       l = i.invoice_lines.second
       expect(l.line_number).to eq 2
@@ -154,7 +153,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
       }
 
       let! (:invoice_line) {
-        # We don't need any info, this is just to confirm that the lines get destroyed before 
+        # We don't need any info, this is just to confirm that the lines get destroyed before
         # reloading
         invoice.invoice_lines.create! line_number: 1
       }
@@ -214,7 +213,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
     it "does not add system code prefixes if option is set to false" do
       p = MockGtnInvoiceXmlParser.new(prefix_identifiers_with_system_codes: false)
       allow(p).to receive(:inbound_file).and_return inbound_file
-      i = p.process_invoice invoice_xml, user, "bucket", "key" 
+      i = p.process_invoice invoice_xml, user, "bucket", "key"
 
       expect(i.vendor).to have_system_identifier("GTN Vendor", "vendor-code")
       expect(i.factory).to have_system_identifier("GTN Factory", "factory-code")
@@ -263,9 +262,9 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnInvoiceXmlParser do
   describe "translate_ship_mode" do
     [
       ["A", "Air"], ["AE", "Air"], ["AF", "Air"], ["SE", "Air"],
-      ["S", "Ocean"], ["VE", "Ocean"], 
+      ["S", "Ocean"], ["VE", "Ocean"],
       ["T", "Truck"],
-      ["R", "Rail"], 
+      ["R", "Rail"],
       ["Something else", nil], [nil, nil]
     ].each do |params|
 

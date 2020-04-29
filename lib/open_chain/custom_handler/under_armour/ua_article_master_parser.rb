@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
       customs_description = first_text(art, "ArticleAttr[Code[@Type='CommImpCode']]/Description")
       p = create_or_update_product! art, changed
       next if p.blank?
-      
+
       Lock.with_lock_retry(p) do
         create_or_update_variants! p, art, changed, error_log
         var_hts_codes = pluck_unique_hts_values(p)
@@ -224,7 +224,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UaArticleMaste
   end
 
   def create_or_update_classi! prod, customs_descr, var_hts_codes, changed
-    ca_class = prod.classifications.select{ |cl| cl.country_id == ca.id }.first || prod.classifications.new(country_id: ca.id)
+    ca_class = prod.classifications.select { |cl| cl.country_id == ca.id }.first || prod.classifications.new(country_id: ca.id)
     if ca_class.persisted?
       unless ca_class.get_custom_value(cdefs[:class_customs_description]).value == customs_descr
         ca_class.update_custom_value!(cdefs[:class_customs_description], customs_descr)

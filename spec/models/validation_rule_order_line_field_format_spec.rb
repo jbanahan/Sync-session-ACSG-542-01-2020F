@@ -1,6 +1,6 @@
 describe ValidationRuleOrderLineFieldFormat do
   before :each do
-    @rule = described_class.new(rule_attributes_json:{model_field_uid:'ordln_hts',regex:'ABC'}.to_json)
+    @rule = described_class.new(rule_attributes_json:{model_field_uid:'ordln_hts', regex:'ABC'}.to_json)
     @ol = Factory(:order_line, hts: 'ABC')
     @o = Factory(:order, order_lines: [@ol])
   end
@@ -17,13 +17,13 @@ describe ValidationRuleOrderLineFieldFormat do
 
   it 'does not stop validation if validate_all flag is used' do
     @ol.update_attributes(hts: 'xyz')
-    @rule.rule_attributes_json = {model_field_uid:'ordln_hts',regex:'ABC', validate_all: true}.to_json
+    @rule.rule_attributes_json = {model_field_uid:'ordln_hts', regex:'ABC', validate_all: true}.to_json
     expect(@rule).not_to receive(:stop_validation)
     expect(@rule.run_validation(@ol.order)).to eq("All Order Line - HTS Code values do not match 'ABC' format.")
   end
 
   context "fail_if_matches" do
-    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:'ordln_hts',regex:'ABC', fail_if_matches: true}.to_json) }
+    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:'ordln_hts', regex:'ABC', fail_if_matches: true}.to_json) }
 
     it "passes if all lines are valid" do
       @ol.update_attributes(hts: "foo")
@@ -41,7 +41,7 @@ describe ValidationRuleOrderLineFieldFormat do
   end
 
   it 'should allow blanks when allow_blank is true' do
-    @rule.rule_attributes_json = {allow_blank:true, model_field_uid: 'ordln_hts',regex:'ABC'}.to_json
+    @rule.rule_attributes_json = {allow_blank:true, model_field_uid: 'ordln_hts', regex:'ABC'}.to_json
     @ol.update_attributes(hts: '')
     expect(@rule.run_validation(@ol.order)).to be_nil
   end
@@ -57,13 +57,13 @@ describe ValidationRuleOrderLineFieldFormat do
 
     it "should skip on order validation level" do
       @ol.order.update_attributes(order_number:'1234321')
-      @rule.search_criterions.build(model_field_uid:'ord_ord_num',operator:'eq',value:'99')
+      @rule.search_criterions.build(model_field_uid:'ord_ord_num', operator:'eq', value:'99')
       expect(@rule.should_skip?(@ol.order)).to be_truthy
     end
 
     it "should skip on order line level validation" do
       @ol.update_attributes(hts:'XYZ')
-      @rule.search_criterions.build(model_field_uid:'ordln_hts',operator:'eq',value:'99')
+      @rule.search_criterions.build(model_field_uid:'ordln_hts', operator:'eq', value:'99')
       expect(@rule.should_skip?(@ol.order)).to be_truthy
     end
 
@@ -71,8 +71,8 @@ describe ValidationRuleOrderLineFieldFormat do
       @ol.order.update_attributes(order_number:'1234321')
       @ol.update_attributes(hts:'ABCDE')
       @ol.reload
-      @rule.search_criterions.build(model_field_uid:'ord_ord_num',operator:'eq',value:'1234321')
-      @rule.search_criterions.build(model_field_uid:'ordln_hts',operator:'eq',value:'ABCDE')
+      @rule.search_criterions.build(model_field_uid:'ord_ord_num', operator:'eq', value:'1234321')
+      @rule.search_criterions.build(model_field_uid:'ordln_hts', operator:'eq', value:'ABCDE')
       expect(@rule.should_skip?(@ol.order)).to be_falsey
     end
   end

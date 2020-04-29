@@ -27,8 +27,8 @@ describe BusinessValidationTemplatesController do
       expect(assigns(:bv_templates).count).to eq 1
     end
   end
-  describe "show" do 
-    before :each do 
+  describe "show" do
+    before :each do
       @t = Factory(:business_validation_template)
     end
     it "should require admin" do
@@ -76,7 +76,7 @@ describe BusinessValidationTemplatesController do
     it "should require admin" do
       u = Factory(:user)
       sign_in_as u
-      expect{ post :create, business_validation_template: { module_type: "Entry"} }.to_not change(BusinessValidationTemplate, :count)
+      expect { post :create, business_validation_template: { module_type: "Entry"} }.to_not change(BusinessValidationTemplate, :count)
       expect(response).to be_redirect
       expect(assigns(:bv_template)).to be_nil
     end
@@ -84,14 +84,14 @@ describe BusinessValidationTemplatesController do
     it "should create the correct template" do
       u = Factory(:admin_user)
       sign_in_as u
-      expect{ post :create, business_validation_template: { module_type: "Entry"} }.to change(BusinessValidationTemplate, :count).from(0).to(1)
+      expect { post :create, business_validation_template: { module_type: "Entry"} }.to change(BusinessValidationTemplate, :count).from(0).to(1)
       expect(response).to be_redirect
     end
 
     it "errors if validation fails" do
       u = Factory(:admin_user)
       sign_in_as u
-      expect{ post :create, business_validation_template: { module_type: nil } }.to_not change(BusinessValidationTemplate, :count)
+      expect { post :create, business_validation_template: { module_type: nil } }.to_not change(BusinessValidationTemplate, :count)
       expect(response).to be_redirect
       expect(flash[:errors]).to eq ["Module type can't be blank"]
     end
@@ -118,9 +118,9 @@ describe BusinessValidationTemplatesController do
       post :update,
           id: @t.id,
           search_criterions_only: false,
-          business_validation_template: {module_type: "Entry", description: "description", disabled: true, 
+          business_validation_template: {module_type: "Entry", description: "description", disabled: true,
                                          name: "name", private: true, system_code: "SYS CODE",
-                                         search_criterions: [{"mfid" => "ent_cust_name", "datatype" => "string", "label" => "Customer Name", 
+                                         search_criterions: [{"mfid" => "ent_cust_name", "datatype" => "string", "label" => "Customer Name",
                                                               "operator" => "eq", "value" => "Nigel Tufnel"}]}
       expect(@t.reload.search_criterions.length).to eq(0)
       expect(@t.module_type).to eq "Entry"
@@ -137,8 +137,8 @@ describe BusinessValidationTemplatesController do
       post :update,
           id: @t.id,
           search_criterions_only: true,
-          business_validation_template: {module_type: "Entry", search_criterions: [{"mfid" => "ent_cust_name", 
-              "datatype" => "string", "label" => "Customer Name", 
+          business_validation_template: {module_type: "Entry", search_criterions: [{"mfid" => "ent_cust_name",
+              "datatype" => "string", "label" => "Customer Name",
               "operator" => "eq", "value" => "Nigel Tufnel"}]}
       expect(@t.reload.search_criterions.length).to eq(1)
       expect(@t.search_criterions.first.value).to eq("Nigel Tufnel")
@@ -151,8 +151,8 @@ describe BusinessValidationTemplatesController do
       post :update,
           id: @t.id,
           search_criterions_only: false,
-          business_validation_template: {module_type: nil, search_criterions: [{"mfid" => "ent_cust_name", 
-              "datatype" => "string", "label" => "Customer Name", 
+          business_validation_template: {module_type: nil, search_criterions: [{"mfid" => "ent_cust_name",
+              "datatype" => "string", "label" => "Customer Name",
               "operator" => "eq", "value" => "Nigel Tufnel"}]}
       expect(@t.reload.search_criterions.length).to eq(0)
       expect(flash[:errors]).to eq ["Module type can't be blank"]

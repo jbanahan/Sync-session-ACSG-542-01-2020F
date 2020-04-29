@@ -30,7 +30,7 @@ describe OpenChain::DataCrossReferenceUploader do
       expect(DataCrossReference).to receive(:xref_edit_hash).with(user).and_return({"xref" => {key_label: "key", value_label: "value"}})
       expect(handler).to receive(:foreach).with(cf, {skip_blank_lines: true}).and_yield(row_0, 0).and_yield(row_1, 1)
       expect(DataCrossReference).to receive(:preprocess_and_add_xref!).with('xref', 'k1', 'v1', nil).and_return true
-      
+
       handler.process user, cross_reference_type: 'xref'
     end
 
@@ -41,7 +41,7 @@ describe OpenChain::DataCrossReferenceUploader do
       expect(handler).to receive(:foreach).with(cf, {skip_blank_lines: true}).and_yield(row_0, 0).and_yield(row_1, 1).and_yield(row_2, 2)
       expect(DataCrossReference).to receive(:preprocess_and_add_xref!).with('xref', 'k1', 'v1', co.id).and_return true
       expect(DataCrossReference).to receive(:preprocess_and_add_xref!).with('xref', '', 'v2', co.id).and_return false
-     
+
       handler.process user, cross_reference_type: 'xref', company_id: co.system_code
       msg = user.messages.first
       expect(msg.subject).to eq 'File Processing Complete With Errors'

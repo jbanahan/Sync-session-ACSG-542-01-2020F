@@ -1,7 +1,7 @@
 describe MonthlyStatementsController do
   let (:user) { Factory(:master_user) }
 
-  before :each do 
+  before :each do
     sign_in_as user
   end
 
@@ -12,7 +12,7 @@ describe MonthlyStatementsController do
       expect(response.location).to match "advanced_search"
     end
 
-    it "redirects to error if user can't view statements" do 
+    it "redirects to error if user can't view statements" do
       expect_any_instance_of(User).to receive(:view_statements?).and_return false
       get :index
       expect(response).to redirect_to "/"
@@ -23,7 +23,7 @@ describe MonthlyStatementsController do
   describe "show" do
     let (:statement) { MonthlyStatement.create! statement_number: "STATEMENT"}
 
-    it "redirects to error if user can't view statements" do 
+    it "redirects to error if user can't view statements" do
       expect_any_instance_of(User).to receive(:view_statements?).and_return false
       get :show, id: statement.id
       expect(response).to redirect_to "/"

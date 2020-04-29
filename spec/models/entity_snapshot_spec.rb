@@ -30,17 +30,17 @@ describe EntitySnapshot, :snapshot do
       o.update_attributes(order_number:new_order_number)
       s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
-      
-      expect(diff.model_fields_changed['ord_ord_num']).to eq [old_order_number,new_order_number]
+
+      expect(diff.model_fields_changed['ord_ord_num']).to eq [old_order_number, new_order_number]
     end
     it "should reflect added child" do
       o = Factory(:order)
       s = EntitySnapshot.create_from_entity o, user
-      ol = Factory(:order_line,order:o)
+      ol = Factory(:order_line, order:o)
       o.reload
       s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
-      
+
       expect(diff.children_added.size).to eq 1
       ca = diff.children_added.first
       expect(ca.record_id).to eq ol.id
@@ -70,33 +70,33 @@ describe EntitySnapshot, :snapshot do
       o.reload
       s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
-      
+
       expect(diff.children_in_both.size).to eq 1
       cib = diff.children_in_both.first
-      expect(cib.model_fields_changed['ordln_line_number']).to eq [old_line_number,new_line_number]
+      expect(cib.model_fields_changed['ordln_line_number']).to eq [old_line_number, new_line_number]
     end
     it "should reflect child with new id and same logical key as update not add/delete" do
-      ol = Factory(:order_line,hts:'123456')
+      ol = Factory(:order_line, hts:'123456')
       line_number = ol.line_number
       o = ol.order
       s = EntitySnapshot.create_from_entity o, user
       ol.destroy
-      ol = Factory(:order_line,order:o,line_number:line_number,hts:'654321')
+      ol = Factory(:order_line, order:o, line_number:line_number, hts:'654321')
       o.reload
       s2 = EntitySnapshot.create_from_entity o, user
       diff = s2.diff s
-      
+
       expect(diff.children_in_both.size).to eq 1
       cib = diff.children_in_both.first
-      expect(cib.model_fields_changed['ordln_hts']).to eq ['123456'.hts_format,'654321'.hts_format]
+      expect(cib.model_fields_changed['ordln_hts']).to eq ['123456'.hts_format, '654321'.hts_format]
     end
 
-    it "returns datetimes as date time objects (not strings)" do 
+    it "returns datetimes as date time objects (not strings)" do
       e = Entry.new release_date: Time.zone.parse("2017-04-01 12:00")
       s1 = EntitySnapshot.create_from_entity e, user
 
       e.release_date = Time.zone.parse("2017-04-01 16:00")
-      s2 = EntitySnapshot.create_from_entity e, user      
+      s2 = EntitySnapshot.create_from_entity e, user
 
       diff = s2.diff s1
       expect(diff.model_fields_changed["ent_release_date"]).to eq [Time.zone.parse("2017-04-01 12:00"), Time.zone.parse("2017-04-01 16:00") ]
@@ -113,15 +113,15 @@ describe EntitySnapshot, :snapshot do
       expect(diff.model_fields_changed.size).to eq 0
     end
   end
-  
+
   describe "restore" do
-    before :each do 
+    before :each do
       ModelField.reload
-      #not worrying about permissions
+      # not worrying about permissions
       allow_any_instance_of(Product).to receive(:can_edit?).and_return(true)
-      
-      @p = Factory(:product,:name=>'nm',:unique_identifier=>'uid')
-      @tr = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:product=>@p))
+
+      @p = Factory(:product, :name=>'nm', :unique_identifier=>'uid')
+      @tr = Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :product=>@p))
       @first_snapshot = @p.create_snapshot user
     end
     it "should replace base object properties" do
@@ -165,9 +165,9 @@ describe EntitySnapshot, :snapshot do
 
     context "custom_values" do
       context "with standard custom field" do
-        
-        before :each do 
-          @cd = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
+
+        before :each do
+          @cd = Factory(:custom_definition, :module_type=>'Product', :data_type=>'string')
           ModelField.reload
           @p.update_custom_value! @cd, 'x'
           @first_snapshot = @p.create_snapshot user
@@ -179,13 +179,13 @@ describe EntitySnapshot, :snapshot do
           expect(restored.get_custom_value(@cd).value).to eq('x')
         end
         it "should erase custom fields that have been added" do
-          cd2 = Factory(:custom_definition,:module_type=>'Product',:data_type=>'string')
+          cd2 = Factory(:custom_definition, :module_type=>'Product', :data_type=>'string')
           @p.update_custom_value! cd2, 'y'
           restored = @first_snapshot.restore(user)
           expect(restored.get_custom_value(cd2).value).to be_blank
         end
         it "should insert custom fields that have been removed" do
-           @p.get_custom_value(@cd).destroy 
+           @p.get_custom_value(@cd).destroy
           restored = @first_snapshot.restore(user)
           expect(restored.get_custom_value(@cd).value).to eq('x')
         end
@@ -194,7 +194,7 @@ describe EntitySnapshot, :snapshot do
           expect(restored.get_custom_value(@cd).value).to eq('x')
         end
       end
-      
+
       context "with special custom fields" do
         it "handles user custom value fields" do
           user_def = Factory(:custom_definition, label: "Tested By", module_type: "Product", data_type: 'integer', is_user: true)
@@ -224,7 +224,7 @@ describe EntitySnapshot, :snapshot do
           expect(@p.custom_value(addr_def)).to eq address.id
         end
       end
-      
+
     end
 
     context "children" do
@@ -236,7 +236,7 @@ describe EntitySnapshot, :snapshot do
       it "should remove children that didn't exist" do
         p = Factory(:product)
         es = p.create_snapshot user
-        Factory(:tariff_record,:classification=>(Factory(:classification,:product=>p)))
+        Factory(:tariff_record, :classification=>(Factory(:classification, :product=>p)))
         p.reload
         expect(p.classifications.first.tariff_records.first).not_to be_nil
         es.restore user
@@ -249,7 +249,7 @@ describe EntitySnapshot, :snapshot do
         expect(TariffRecord.find(@tr.id).hts_1).to eq('1234567890')
       end
       it "should replace custom values for children that changed" do
-        cd = Factory(:custom_definition,:module_type=>"Classification",:data_type=>"string")
+        cd = Factory(:custom_definition, :module_type=>"Classification", :data_type=>"string")
         @tr.classification.update_custom_value! cd, 'x'
         @first_snapshot = @p.create_snapshot user
         @tr.classification.update_custom_value! cd, 'y'
@@ -289,7 +289,7 @@ describe EntitySnapshot, :snapshot do
     end
     it "should raise error if longer than 63 characters (AWS limit)" do
       allow(master_setup).to receive(:system_code).and_return '123456789012345678901234567890123456789012345678901234567890'
-      expect{EntitySnapshot.bucket_name}.to raise_error(/Bucket name too long/)
+      expect {EntitySnapshot.bucket_name}.to raise_error(/Bucket name too long/)
     end
   end
   describe "create_bucket_if_needed" do
@@ -304,7 +304,7 @@ describe EntitySnapshot, :snapshot do
     end
     it "should create bucket with versioning turned on" do
       expect(OpenChain::S3).to receive(:bucket_exists?).with(@bn).and_return false
-      expect(OpenChain::S3).to receive(:create_bucket!).with(@bn,versioning: true)
+      expect(OpenChain::S3).to receive(:create_bucket!).with(@bn, versioning: true)
       described_class.create_bucket_if_needed!
     end
   end
@@ -320,7 +320,7 @@ describe EntitySnapshot, :snapshot do
       allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
       expect(described_class).to receive(:write_to_s3).with(expected_json, ent).and_return({bucket: expected_bucket, key: expected_path, version: expected_version})
 
-      es = EntitySnapshot.create_from_entity(ent,u)
+      es = EntitySnapshot.create_from_entity(ent, u)
       expect(es.bucket).to eq expected_bucket
       expect(es.doc_path).to eq expected_path
       expect(es.version).to eq expected_version
@@ -341,8 +341,8 @@ describe EntitySnapshot, :snapshot do
       cont = '21st Century Capitalism'
       allow(CoreModule::ENTRY).to receive(:entity_json).and_return(expected_json)
       expect(described_class).to receive(:write_to_s3).with(expected_json, ent).and_return({bucket: expected_bucket, key: expected_path, version: expected_version})
-      
-      es = EntitySnapshot.create_from_entity(ent,u,imp,cont)
+
+      es = EntitySnapshot.create_from_entity(ent, u, imp, cont)
       expect(es.bucket).to eq expected_bucket
       expect(es.doc_path).to eq expected_path
       expect(es.version).to eq expected_version
@@ -358,19 +358,19 @@ describe EntitySnapshot, :snapshot do
 
       ent = Factory(:entry)
       u = Factory(:user)
-      es = EntitySnapshot.create_from_entity(ent,u)
+      es = EntitySnapshot.create_from_entity(ent, u)
     end
 
     context "with business validations" do
-      let! (:bvt) { 
-        bvt = Factory(:business_validation_template, module_type: "Entry") 
-        bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:'12345')
-        bvt.business_validation_rules.create!( name: "Name", description: "Description", type:'ValidationRuleFieldFormat',rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
+      let! (:bvt) {
+        bvt = Factory(:business_validation_template, module_type: "Entry")
+        bvt.search_criterions.create!(model_field_uid:'ent_cust_num', operator:'eq', value:'12345')
+        bvt.business_validation_rules.create!( name: "Name", description: "Description", type:'ValidationRuleFieldFormat', rule_attributes_json:{model_field_uid:'ent_entry_num', regex:'X'}.to_json)
         bvt.reload
       }
       let (:entry) { Factory(:entry, customer_number: "12345") }
       let (:user) { Factory(:user) }
-      
+
       it "runs business validations" do
         EntitySnapshot.create_from_entity entry, user
         expect(entry.business_rules("Fail").length).to eq 1
@@ -385,7 +385,7 @@ describe EntitySnapshot, :snapshot do
 
       ent = Factory(:entry)
       u = Factory(:user)
-      es = EntitySnapshot.create_from_entity(ent,u)
+      es = EntitySnapshot.create_from_entity(ent, u)
 
       failure = EntitySnapshotFailure.where(snapshot_id: es.id, snapshot_type: "EntitySnapshot").first
       expect(failure.snapshot_json).to eq described_class.snapshot_writer.entity_json(ent)
@@ -401,7 +401,7 @@ describe EntitySnapshot, :snapshot do
     end
   end
 
-  describe "retrieve_snapshot_data_from_s3" do 
+  describe "retrieve_snapshot_data_from_s3" do
     let (:snapshot) {
       EntitySnapshot.new bucket: "bucket", doc_path: "test/doc-1.json", version: "1"
     }
@@ -514,7 +514,7 @@ describe EntitySnapshot, :snapshot do
   describe "delete_from_s3" do
     subject { EntitySnapshot.new bucket: "bucket", doc_path: "key", version: "version" }
 
-    before :each do 
+    before :each do
       allow(subject.class).to receive(:bucket_name).and_return "bucket"
     end
 
@@ -570,7 +570,7 @@ describe EntitySnapshot, :snapshot do
 
     subject { EntitySnapshot::ESDiff.new }
 
-    before :each do 
+    before :each do
       subject.record_id = product.id
       subject.core_module = CoreModule::PRODUCT.class_name
     end

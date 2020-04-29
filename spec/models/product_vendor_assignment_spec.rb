@@ -35,11 +35,11 @@ describe ProductVendorAssignment do
   describe '#search_secure' do
     it "should allow if pva linked to vendor user can view" do
       v = Factory(:vendor)
-      u = Factory(:user,company:v)
-      pva = Factory(:product_vendor_assignment,vendor:v)
-      Factory(:product_vendor_assignment) #don't find this one
+      u = Factory(:user, company:v)
+      pva = Factory(:product_vendor_assignment, vendor:v)
+      Factory(:product_vendor_assignment) # don't find this one
 
-      expect(described_class.search_secure(u,described_class).to_a).to eq [pva]
+      expect(described_class.search_secure(u, described_class).to_a).to eq [pva]
     end
   end
 end

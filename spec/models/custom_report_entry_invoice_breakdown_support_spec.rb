@@ -20,11 +20,11 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     }
 
     let! (:invoice_line_1) {
-      Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>100.12)
+      Factory(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>100.12)
     }
 
     let! (:invoice_line_2) {
-      Factory(:broker_invoice_line,:broker_invoice=>invoice_line_1.broker_invoice,:charge_description=>"CD2",:charge_amount=>55)
+      Factory(:broker_invoice_line, :broker_invoice=>invoice_line_1.broker_invoice, :charge_description=>"CD2", :charge_amount=>55)
     }
 
     it "should break down a single entry by charge description" do
@@ -40,9 +40,9 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       expect(row[1]).to eq("CD2")
     end
     it "should group the same charge for multiple entries into the same column" do
-      second_cd1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>22)
+      second_cd1 = Factory(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>22)
       r = subject.to_arrays master_user
-      expect([r[1][0], r[2][0]]).to eq([100.12,22]) #ordering isn't guaranteed
+      expect([r[1][0], r[2][0]]).to eq([100.12, 22]) # ordering isn't guaranteed
     end
     it "should add 2 charges with the same charge code on the same entry" do
       invoice_line_2.update!(:charge_description=>"CD1")
@@ -51,7 +51,7 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       expect(r[1]).to be_nil
     end
     it "should limit rows" do
-      second_cd1 = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>22)
+      second_cd1 = Factory(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>22)
       expect(subject.to_arrays(master_user).size).to eq(3)
       r = subject.to_arrays(master_user, row_limit: 1)
       expect(r.size).to eq(2)
@@ -59,9 +59,9 @@ describe CustomReportEntryInvoiceBreakdownSupport do
     context "entry_fields" do
       before :each do
         rpt = Cr.create!
-        rpt.search_columns.create!(:model_field_uid=>:bi_entry_num,:rank=>1)
-        rpt.search_columns.create!(:model_field_uid=>:bi_brok_ref,:rank=>1)
-        invoice_line_1.broker_invoice.entry.update!(:entry_number=>"31612345678",:broker_reference=>"1234567")
+        rpt.search_columns.create!(:model_field_uid=>:bi_entry_num, :rank=>1)
+        rpt.search_columns.create!(:model_field_uid=>:bi_brok_ref, :rank=>1)
+        invoice_line_1.broker_invoice.entry.update!(:entry_number=>"31612345678", :broker_reference=>"1234567")
         @sheet = rpt.to_arrays master_user
       end
       it "should write entry field headings" do
@@ -83,11 +83,11 @@ describe CustomReportEntryInvoiceBreakdownSupport do
           def run run_by, row_limit = nil; process run_by, row_limit, true end
         end
         broker_invoice_2 = Factory(:broker_invoice, entry: invoice_line_1.broker_invoice.entry)
-        Factory(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3",:charge_amount=>50.02)
-        Factory(:broker_invoice_line,:broker_invoice=> broker_invoice_2, :charge_description=>"CD4",:charge_amount=>26.40)
+        Factory(:broker_invoice_line, :broker_invoice => broker_invoice_2, :charge_description=>"CD3", :charge_amount=>50.02)
+        Factory(:broker_invoice_line, :broker_invoice=> broker_invoice_2, :charge_description=>"CD4", :charge_amount=>26.40)
         rpt = Cr.create!
-        rpt.search_columns.create!(:model_field_uid=>:bi_entry_num,:rank=>1)
-        rpt.search_columns.create!(:model_field_uid=>:bi_brok_ref,:rank=>1)
+        rpt.search_columns.create!(:model_field_uid=>:bi_entry_num, :rank=>1)
+        rpt.search_columns.create!(:model_field_uid=>:bi_brok_ref, :rank=>1)
         rows = rpt.to_arrays master_user
 
         expect(rows[1][0]).to eq "31612345678"
@@ -105,11 +105,11 @@ describe CustomReportEntryInvoiceBreakdownSupport do
       expect(rows[1][1]).to eq "http://localhost:3000/entries/#{invoice_line_1.broker_invoice.entry.id }/validation_results"
     end
     it "should trim by search criteria" do
-      bi2_line = Factory(:broker_invoice_line,:charge_description=>"CD1",:charge_amount=>222)
+      bi2_line = Factory(:broker_invoice_line, :charge_description=>"CD1", :charge_amount=>222)
       bi2_line.broker_invoice.entry.update!(:broker_reference=>"abc")
       invoice_line_1.broker_invoice.entry.update!(:broker_reference=>"def")
       rpt = Cr.create!(:name=>"SC")
-      rpt.search_criterions.create!(:model_field_uid=>:bi_brok_ref,:operator=>"eq",:value=>"def")
+      rpt.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>"def")
       sheet = rpt.to_arrays master_user
       expect(sheet[1][0]).to eq(100.12)
       expect(sheet.size).to eq(2)
@@ -118,14 +118,14 @@ describe CustomReportEntryInvoiceBreakdownSupport do
 
     context "isf" do
       it "should truncate ISF charges" do
-        invoice_line_1.update!(:charge_description=>"ISF FILI SF#123455677755",:charge_amount=>6)
+        invoice_line_1.update!(:charge_description=>"ISF FILI SF#123455677755", :charge_amount=>6)
         invoice_line_2.destroy
-        bi = Factory(:broker_invoice_line,:charge_description=>"ISF FILING",:charge_amount=>8)
+        bi = Factory(:broker_invoice_line, :charge_description=>"ISF FILING", :charge_amount=>8)
         r = subject.to_arrays master_user
-        expect([r[1][0],r[2][0]]).to eq([6,8])
+        expect([r[1][0], r[2][0]]).to eq([6, 8])
       end
       it "should truncate ISF heading" do
-        invoice_line_1.update!(:charge_description=>"ISF FILI SF#123455677755",:charge_amount=>6)
+        invoice_line_1.update!(:charge_description=>"ISF FILI SF#123455677755", :charge_amount=>6)
         invoice_line_2.destroy
         r = subject.to_arrays master_user
         expect(r[0][0]).to eq("ISF")

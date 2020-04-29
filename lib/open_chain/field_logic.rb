@@ -39,9 +39,9 @@ module OpenChain
     end
     private_class_method :find_and_lock_object
 
-    #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
-    #this method will automatically save custom fields and will rollback if the validation fails
-    #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
+    # save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
+    # this method will automatically save custom fields and will rollback if the validation fails
+    # if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
     def self.validate_and_save_module all_params, base_object, object_parameters, user, succeed_lambda, fail_lambda, opts={}
       inner_opts = {:before_validate=>lambda {|obj|}, :parse_custom_fields=>true}
       inner_opts.merge! opts
@@ -54,11 +54,11 @@ module OpenChain
 
           if !base_object.respond_to?(:inactive) || !base_object.inactive
             raise OpenChain::ValidationLogicError unless CoreModule.find_by_object(base_object).validate_business_logic base_object
-            OpenChain::FieldLogicValidator.validate!(base_object) 
+            OpenChain::FieldLogicValidator.validate!(base_object)
           end
 
           base_object.piece_sets.each {|p| p.create_forecasts} if base_object.respond_to?('piece_sets')
-          
+
           base_object.update_attributes(:last_updated_by_id=>user.id) if base_object.respond_to?(:last_updated_by_id)
           snapshot = base_object.class.find(base_object.id).create_snapshot if base_object.respond_to?('create_snapshot')
 
@@ -80,11 +80,11 @@ module OpenChain
       end
     end
 
-    #loads the custom values into the parent object without saving
+    # loads the custom values into the parent object without saving
     def self.set_custom_fields customizable_parent, cpp, user, &block
       pass = true
       unless cpp.nil?
-        cpp.each do |k,v|
+        cpp.each do |k, v|
           custom_def = CustomDefinition.cached_find(k.to_s)
           model_field  = custom_def.model_field
           next if model_field.blank? || model_field.read_only?
@@ -99,14 +99,14 @@ module OpenChain
 
           if !cv.errors.empty?
             pass = false
-            cv.errors.full_messages.each {|m| customizable_parent.errors[:base] << m} 
+            cv.errors.full_messages.each {|m| customizable_parent.errors[:base] << m}
           end
         end
       end
       pass
     end
 
-    def self.update_custom_fields customizable_parent, customizable_parent_params, user 
+    def self.update_custom_fields customizable_parent, customizable_parent_params, user
       set_custom_fields(customizable_parent, customizable_parent_params, user) {|cv| cv.save!}
     end
 
@@ -131,11 +131,11 @@ module OpenChain
     private_class_method :lock_name
   end
 
-  class FieldLogicValidator 
+  class FieldLogicValidator
     def self.validate record, nested=false, skip_read_only=false
       passed = true
       cm = CoreModule.find_by_class_name record.class.to_s
-      #need more info on why we got records in here without appropriate core modules
+      # need more info on why we got records in here without appropriate core modules
       if cm.nil?
         begin
           raise "Core Module Not Found for class #{record.class.to_s}"
@@ -159,7 +159,7 @@ module OpenChain
       cm.children.each do |child_module|
         child_records = cm.child_objects child_module, record
         child_records.each do |cr|
-          if !validate(cr,true)
+          if !validate(cr, true)
             cr.errors[:base].each {|m| record.errors[:base] << m}
             passed = false
           end

@@ -45,9 +45,9 @@ module OpenChain; module Report; class AscenaEntryAuditReport
   end
 
   def conversions time_zone
-    {"First Release Date" => datetime_translation_lambda(time_zone), 
-     "First Summary Sent Date" => datetime_translation_lambda(time_zone), 
-     "Entry Filed Date" => datetime_translation_lambda(time_zone), 
+    {"First Release Date" => datetime_translation_lambda(time_zone),
+     "First Summary Sent Date" => datetime_translation_lambda(time_zone),
+     "Entry Filed Date" => datetime_translation_lambda(time_zone),
      "Release Date" => datetime_translation_lambda(time_zone) }
   end
 
@@ -65,9 +65,9 @@ module OpenChain; module Report; class AscenaEntryAuditReport
                    e.transport_mode_code AS 'Mode of Transport',
                    e.master_bills_of_lading AS 'Master Bills',
                    e.house_bills_of_lading AS 'House Bills',
-                   e.unlading_port_code AS 'Port of Unlading Code', 
-                   (CASE e.source_system WHEN 'Fenix' 
-                      THEN (SELECT name FROM ports WHERE ports.cbsa_port = e.entry_port_code) 
+                   e.unlading_port_code AS 'Port of Unlading Code',
+                   (CASE e.source_system WHEN 'Fenix'
+                      THEN (SELECT name FROM ports WHERE ports.cbsa_port = e.entry_port_code)
                       ELSE (SELECT name FROM ports WHERE ports.schedule_d_code = e.entry_port_code) END) AS 'Port of Entry Name',
                    e.lading_port_code AS 'Port of Lading Code',
                    (SELECT COUNT(*) FROM containers WHERE containers.entry_id = e.id) AS 'Container Count',
@@ -103,19 +103,19 @@ module OpenChain; module Report; class AscenaEntryAuditReport
                    #{invoice_value_contract('cil')} AS 'Invoice Value - Contract',
                    cit.entered_value AS 'Entered Value',
                    cit.entered_value_7501 AS 'Rounded Entered Value',
-                   (SELECT IFNULL(SUM(total_duty_t.duty_amount), 0) 
+                   (SELECT IFNULL(SUM(total_duty_t.duty_amount), 0)
                     FROM commercial_invoice_tariffs total_duty_t
                     WHERE total_duty_t.commercial_invoice_line_id = cil.id) AS 'Total Duty',
                    cil.prorated_mpf AS 'MPF - Prorated',
                    cil.mpf AS 'MPF - Full',
                    cil.hmf AS 'HMF',
-                   (SELECT IFNULL(total_fees_l.prorated_mpf, 0) + IFNULL(total_fees_l.hmf, 0) + IFNULL(total_fees_l.cotton_fee, 0) 
+                   (SELECT IFNULL(total_fees_l.prorated_mpf, 0) + IFNULL(total_fees_l.hmf, 0) + IFNULL(total_fees_l.cotton_fee, 0)
                     FROM commercial_invoice_lines total_fees_l
                     WHERE total_fees_l.id = cil.id) AS 'Total Fees',
                    cil.add_case_value AS 'ADD Value',
                    cil.cvd_case_value AS 'CVD Value',
                    cit.excise_amount AS 'Excise Amount',
-                   cil.cotton_fee AS 'Cotton Fee',          
+                   cil.cotton_fee AS 'Cotton Fee',
                    (SELECT IFNULL(total_duty_fees_l.prorated_mpf, 0) + IFNULL(total_duty_fees_l.hmf, 0) + IFNULL(total_duty_fees_l.cotton_fee, 0) +
                       (SELECT IFNULL(SUM(total_duty_fees_t.duty_amount), 0)
                        FROM commercial_invoice_tariffs total_duty_fees_t
@@ -130,13 +130,13 @@ module OpenChain; module Report; class AscenaEntryAuditReport
                    #{unit_price_7501('cil')} AS 'Unit Price - 7501',
                    (SELECT IF((SUM(t.entered_value) = 0) OR ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2)< 1,0,ROUND((SUM(t.duty_amount)/SUM(t.entered_value))*(l.value - SUM(t.entered_value)),2))
                     FROM commercial_invoice_lines l
-                    INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id 
+                    INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id
                     WHERE l.id = cil.id) AS 'Duty Savings - NDC',
                    #{duty_savings_first_sale('cil')} AS 'Duty Savings - First Sale',
                    IF(cil.contract_amount > 0, 'Y', 'N') AS 'First Sale Flag',
-                   IF(cil.related_parties, 'Y', 'N') AS 'Related Parties', 
-                   e.fiscal_month AS 'Fiscal Month', 
-                   e.fiscal_year AS 'Fiscal Year',  
+                   IF(cil.related_parties, 'Y', 'N') AS 'Related Parties',
+                   e.fiscal_month AS 'Fiscal Month',
+                   e.fiscal_year AS 'Fiscal Year',
                    e.vessel AS 'Vessel/Airline',
                    e.voyage AS 'Voyage/Flight',
                    e.id AS 'Web Link'

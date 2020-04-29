@@ -2,7 +2,7 @@ describe LinkableAttachmentImportRulesController do
   before(:each) do
 
     @rule = Factory(:linkable_attachment_import_rule)
-    @admin_user = Factory(:user,:admin=>true)
+    @admin_user = Factory(:user, :admin=>true)
   end
   describe 'security' do
     context 'admins' do
@@ -13,7 +13,7 @@ describe LinkableAttachmentImportRulesController do
         get :index
         expect(response).to be_success
       end
-      it 'should redirect show' do 
+      it 'should redirect show' do
         get :show, :id=>@rule.id
         expect(response).to redirect_to "/linkable_attachment_import_rules/#{@rule.id}/edit"
       end
@@ -50,7 +50,7 @@ describe LinkableAttachmentImportRulesController do
       it "shouldn't allow new" do
         get :new
         expect(response).to be_an_admin_redirect
-      end 
+      end
       it "shouldn't allow edit" do
         get :edit, :id=>1
         expect(response).to be_an_admin_redirect
@@ -101,7 +101,7 @@ describe LinkableAttachmentImportRulesController do
       put :create, :linkable_attachment_import_rule => {:model_field_uid=>'ord_ord_num', :path=>'/some/path'}
       expect(flash[:notices].first).to eq("Rule created successfully.")
       r = LinkableAttachmentImportRule.all
-      expect(r.size).to eq(2) #the one in the test setup and the one that was created
+      expect(r.size).to eq(2) # the one in the test setup and the one that was created
       expect(r.last.model_field_uid).to eq('ord_ord_num')
       expect(r.last.path).to eq('/some/path')
     end

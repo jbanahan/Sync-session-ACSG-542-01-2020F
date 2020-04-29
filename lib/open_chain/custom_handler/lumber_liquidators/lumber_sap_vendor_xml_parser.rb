@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def initialize opts={}
-    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company,:cmp_po_blocked,:cmp_sap_blocked_status]
+    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company, :cmp_po_blocked, :cmp_sap_blocked_status]
     @user = User.integration
   end
 
@@ -31,10 +31,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     log.company = Company.where(system_code: "LUMBER").first
 
-    base = REXML::XPath.first(root,'//E1LFA1M')
-    sap_code = et(base,'LIFNR')
+    base = REXML::XPath.first(root, '//E1LFA1M')
+    sap_code = et(base, 'LIFNR')
     log.reject_and_raise "Missing SAP Number. All vendors must have SAP Number at XPATH //E1LFA1M/LIFNR" if sap_code.blank?
-    name = et(base,'NAME1')
+    name = et(base, 'NAME1')
 
     c = nil
     changed = MutableBoolean.new false
@@ -76,7 +76,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   private
 
   def lock_or_unlock_vendor company, el, changed
-    lock_code = et(el,'SPERM')
+    lock_code = et(el, 'SPERM')
     is_locked = lock_code=='X'
 
     # we always write the SAP value to the SAP Blocked Status field for tracking purposes
@@ -97,14 +97,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     add = company.addresses.where(system_code:add_sys_code).first_or_initialize(name:'Corporate')
     changed.value = true unless add.persisted?
 
-    country_iso = et(el,'LAND1')
+    country_iso = et(el, 'LAND1')
     country = Country.find_by_iso_code country_iso
     log.reject_and_raise "Invalid country code #{country_iso}." unless country
 
-    add.line_1 = et(el,'STRAS')
-    add.city = et(el,'ORT01')
-    add.state = et(el,'REGIO')
-    add.postal_code = et(el,'PSTLZ')
+    add.line_1 = et(el, 'STRAS')
+    add.city = et(el, 'ORT01')
+    add.state = et(el, 'REGIO')
+    add.postal_code = et(el, 'PSTLZ')
     add.country_id = country.id
 
     if add.changed?

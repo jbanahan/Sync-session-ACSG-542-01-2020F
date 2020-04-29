@@ -16,18 +16,18 @@ module OpenChain; module EntityCompare; class EntityComparator
     return unless process_snapshot?(snapshot)
 
     self.delay(delay_options).process_by_id(snapshot.class.to_s, snapshot.id) if registry(snapshot)
-    
+
     nil
   end
 
   def self.registry snapshot
-    REGISTRIES.find{ |r| r.registered_for(snapshot).length > 0 }
+    REGISTRIES.find { |r| r.registered_for(snapshot).length > 0 }
   end
 
   def self.process_snapshot? snapshot
     return true if test?
 
-    # Check to see if we're disabling all comparators for a particular module - which is true in the case of some systems where 
+    # Check to see if we're disabling all comparators for a particular module - which is true in the case of some systems where
     # we know we have no comparators set up for say a Product or something like that and the customer loads a lot of Products
     return false if MasterSetup.get.custom_feature?("Disable #{snapshot.recordable_type} Snapshot Comparators")
 
@@ -62,12 +62,12 @@ module OpenChain; module EntityCompare; class EntityComparator
     # to process.  For instance, entries can be purged / cancelled.
     return if rec.nil?
 
-    # By applying a database lock on the recordable, we ensure that no other comparators for this recordable are being run for the 
+    # By applying a database lock on the recordable, we ensure that no other comparators for this recordable are being run for the
     # same object while this one is (in fact, nothing else should be able to be updating the record across the system either)
     # The db lock also opens a transaction, so we're safe from that vantage point too.
     Lock.db_lock(rec) do
-      snapshots = retrieve_snapshots(snapshot, rec) 
-      #get all unprocessed items, newest to oldest
+      snapshots = retrieve_snapshots(snapshot, rec)
+      # get all unprocessed items, newest to oldest
       all_unprocessed = snapshots[:unprocessed]
       newest_unprocessed = all_unprocessed.first
 
@@ -89,7 +89,7 @@ module OpenChain; module EntityCompare; class EntityComparator
       if r
         log = nil
         r.registered_for(snapshot).each do |comp|
-          # Log all the parameters being passed to the comparators so we can help debug any issues with them 
+          # Log all the parameters being passed to the comparators so we can help debug any issues with them
           # potentially not firing correctly.
           log = create_log(snapshot, last_processed, newest_unprocessed) unless log
 

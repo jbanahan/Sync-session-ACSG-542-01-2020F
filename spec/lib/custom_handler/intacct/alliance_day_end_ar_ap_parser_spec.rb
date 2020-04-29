@@ -32,7 +32,7 @@ FILE
       invoice_info = described_class.new.extract_invoices StringIO.new(file)
       # This just shows the totals are parsed from the actual totals line in the file,
       # not summing the invoices
-      
+
       expect(invoice_info[:ar_grand_total]).to eq BigDecimal.new("987654.32")
       expect(invoice_info[:ap_grand_total]).to eq BigDecimal.new("123456.78")
 
@@ -90,7 +90,7 @@ FILE
 
     it "fails if the file does not have the expected format indicator" do
       file = "\n\n\nDOEDTLS1-D0-09/06/14\n\n\n"
-      expect{check_info = described_class.new.extract_invoices StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Daily Billing List file that is not the correct format. Expected to find 'DOEDTLS1-D0-09/06/03' on the first line, but did not."
+      expect {check_info = described_class.new.extract_invoices StringIO.new(file)}.to raise_error "Attempted to parse an Alliance Daily Billing List file that is not the correct format. Expected to find 'DOEDTLS1-D0-09/06/03' on the first line, but did not."
     end
   end
 
@@ -100,7 +100,7 @@ FILE
       @client = double("OpenChain::KewillSqlProxyClient")
       allow(@client).to receive(:delay).and_return @client
       @invoice_data = inv_data = {
-        ar_total: BigDecimal.new("123.45"), 
+        ar_total: BigDecimal.new("123.45"),
         ap_total: BigDecimal.new("987.65"),
         lines: [
           {invoice_number: "123", suffix: "", division: "DIV", invoice_date: Date.new(2014, 11, 1), customer_number: "CUST"}
@@ -182,7 +182,7 @@ FILE
     it "confirms each invoice matches given ap/ar totals and sum of invoices matches expected grand totals" do
       inv_data = {
         "123" => {
-          ar_total: BigDecimal.new("123.45"), 
+          ar_total: BigDecimal.new("123.45"),
           ap_total: BigDecimal.new("987.65"),
           lines: [
             {invoice_number: "123", suffix: "", division: "DIV", invoice_date: Date.new(2014, 11, 1), customer_number: "CUST", a_r: "Y", a_p: "N", amount: BigDecimal.new("100.00")},
@@ -191,7 +191,7 @@ FILE
           ]
         },
         "456A" => {
-          ar_total: BigDecimal.new("10.00"), 
+          ar_total: BigDecimal.new("10.00"),
           ap_total: BigDecimal.new("10.00"),
           lines: [
             {invoice_number: "456", suffix: "A", division: "DIV", invoice_date: Date.new(2014, 11, 1), customer_number: "CUST", a_r: "Y", a_p: "Y", amount: BigDecimal.new("10.00")}
@@ -206,7 +206,7 @@ FILE
     it "errors on invalid invoice sums" do
       inv_data = {
         "123" => {
-          ar_total: BigDecimal.new("123.45"), 
+          ar_total: BigDecimal.new("123.45"),
           ap_total: BigDecimal.new("987.65"),
           lines: [
             {invoice_number: "123", suffix: "", division: "DIV", invoice_date: Date.new(2014, 11, 1), customer_number: "CUST", a_r: "Y", a_p: "Y", amount: BigDecimal.new(1)}
@@ -227,7 +227,7 @@ FILE
 
   describe "process_from_s3" do
     before :each do
-      @tempfile = Tempfile.new ["araparser",".rpt"]
+      @tempfile = Tempfile.new ["araparser", ".rpt"]
       @tempfile << "Testing"
       @tempfile.flush
       @bucket = "bucket"

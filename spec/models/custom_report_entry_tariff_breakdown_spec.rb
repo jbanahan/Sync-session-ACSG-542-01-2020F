@@ -18,7 +18,7 @@ describe CustomReportEntryTariffBreakdown do
 
   describe "can_view?" do
     subject { described_class }
-    
+
     it "should allow users who can view entries" do
       allow(user).to receive(:view_entries?).and_return true
       expect(subject.can_view?(user)).to be_truthy
@@ -61,9 +61,9 @@ describe CustomReportEntryTariffBreakdown do
       line_b = Factory(:commercial_invoice_line, commercial_invoice:invoice_b, line_number: 1, part_number:"A")
       Factory(:commercial_invoice_tariff, commercial_invoice_line:line_b, hts_code:"1234567891", entered_value:300, duty_amount:45)
 
-      subject.search_columns.build(:rank=>0,:model_field_uid=>:ent_brok_ref)
-      subject.search_columns.build(:rank=>1,:model_field_uid=>:ci_invoice_number)
-      subject.search_columns.build(:rank=>2,:model_field_uid=>:cil_part_number)
+      subject.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
+      subject.search_columns.build(:rank=>1, :model_field_uid=>:ci_invoice_number)
+      subject.search_columns.build(:rank=>2, :model_field_uid=>:cil_part_number)
       rows = subject.to_arrays user
       expect(rows.size).to eq(5)
       expect(rows[0]).to eq ["Broker Reference", "Invoice - Invoice Number", "Invoice Line - Part Number",
@@ -74,7 +74,7 @@ describe CustomReportEntryTariffBreakdown do
                              "MTB Classification Duty", "301 Classification", "301 Classification Rate",
                              "301 Classification Duty", "Tariff Entered Value", "Total Duty Paid", "MTB Savings"]
       # This row corresponds to line_1_1
-      expect(rows[1]).to eq ["ABC", "DEF", "X", "1234.56.7890", BigDecimal("0.10"), BigDecimal("0"), "", "", "", BigDecimal("10"), "9902.12.3456", BigDecimal("0.01"), BigDecimal("1"), "9903.12.3456", BigDecimal("0.25"), BigDecimal("25"), BigDecimal("100"), BigDecimal("26"), BigDecimal("9")]  
+      expect(rows[1]).to eq ["ABC", "DEF", "X", "1234.56.7890", BigDecimal("0.10"), BigDecimal("0"), "", "", "", BigDecimal("10"), "9902.12.3456", BigDecimal("0.01"), BigDecimal("1"), "9903.12.3456", BigDecimal("0.25"), BigDecimal("25"), BigDecimal("100"), BigDecimal("26"), BigDecimal("9")]
       # This row corresponds to line_1_2
       expect(rows[2]).to eq ["ABC", "DEF", "Y", "1234.56.7890", BigDecimal("0.10"), BigDecimal("0"), "1234.56.7891", BigDecimal("0.15"), BigDecimal("0"), BigDecimal("25"), "", "", "", "9903.12.3456", BigDecimal("0.25"), BigDecimal("25"), BigDecimal("100"), BigDecimal("25"), 0]
       # This row corresponds to line_2
@@ -86,7 +86,7 @@ describe CustomReportEntryTariffBreakdown do
     it "should limit rows" do
       OfficialTariff.create!(country_id:country_us.id, hts_code:"1234567890", general_rate:"10%")
       OfficialTariff.create!(country_id:country_us.id, hts_code:"9902123456", general_rate:"1%") # MTB is generally free, but lets make it 1% to make sure the calculation is correct
-      
+
       ent = Factory(:entry, broker_reference:"ABC")
       invoice = Factory(:commercial_invoice, entry:ent, invoice_number:"DEF")
       line_1 = Factory(:commercial_invoice_line, commercial_invoice:invoice, line_number: 1, part_number:"X")
@@ -101,7 +101,7 @@ describe CustomReportEntryTariffBreakdown do
       line_2 = Factory(:commercial_invoice_line, commercial_invoice:invoice_2, line_number: 2)
       Factory(:commercial_invoice_tariff, commercial_invoice_line:line_2, hts_code:"1234567890", entered_value:30, duty_amount:57.68)
 
-      subject.search_columns.build(:rank=>0,:model_field_uid=>:ent_brok_ref)
+      subject.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
       rows = subject.to_arrays user, row_limit: 1
       expect(rows.size).to eq(2)
       expect(rows[0]).to eq ["Broker Reference", "Underlying Classification", "Underlying Classification Rate",
@@ -114,7 +114,7 @@ describe CustomReportEntryTariffBreakdown do
 
     it "raises an error when country not found" do
       country_us.destroy
-      subject.search_columns.build(:rank=>0,:model_field_uid=>:ent_brok_ref)
+      subject.search_columns.build(:rank=>0, :model_field_uid=>:ent_brok_ref)
       expect { subject.send(:country_us) }.to raise_error "US country record not found."
     end
   end

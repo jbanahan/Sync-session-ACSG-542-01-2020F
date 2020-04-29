@@ -19,11 +19,11 @@
 class BusinessValidationResult < ActiveRecord::Base
   attr_accessible :business_validation_template_id, :state, :validatable_id,
     :validatable, :validatable_type, :updated_at
-  
+
   belongs_to :business_validation_template
   belongs_to :validatable, polymorphic: true
   has_many :business_validation_rule_results, dependent: :destroy, inverse_of: :business_validation_result, autosave: true
-  
+
   scope :public_rule, -> { joins(:business_validation_template).where(business_validation_templates: {private: [nil, false]}) }
 
 
@@ -60,7 +60,7 @@ class BusinessValidationResult < ActiveRecord::Base
     run_validation_internal
   end
 
-  def run_validation_internal 
+  def run_validation_internal
     original_state = self.state
     base_state = 'Skipped'
     results = self.business_validation_rule_results
@@ -79,7 +79,7 @@ class BusinessValidationResult < ActiveRecord::Base
   private :run_validation_internal
 
   def self.worst_state s1, s2
-    r = [s1,s2].sort do |a,b|
+    r = [s1, s2].sort do |a, b|
       return a if fail_state?(a)
       return b if fail_state?(b)
       return a if review_state?(a)

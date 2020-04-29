@@ -5,11 +5,11 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
 
   def edit
     alert = OneTimeAlert.find params[:id]
-    
+
     if alert.can_edit? current_user
       mf_digest = get_mf_digest alert
-      mailing_lists = MailingList.mailing_lists_for_user(current_user).map{ |ml| {id: ml.id, label: ml.name} }.unshift({id: nil, label: ""})
-      render json: { alert: alert, mailing_lists: mailing_lists, criteria: alert.search_criterions.map{ |sc| sc.json(current_user) }, model_fields: mf_digest }
+      mailing_lists = MailingList.mailing_lists_for_user(current_user).map { |ml| {id: ml.id, label: ml.name} }.unshift({id: nil, label: ""})
+      render json: { alert: alert, mailing_lists: mailing_lists, criteria: alert.search_criterions.map { |sc| sc.json(current_user) }, model_fields: mf_digest }
     else
       render_forbidden
     end
@@ -18,13 +18,13 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
   def update
     # ensure these fields can't be changed
     alert_params = params[:alert]
-    alert_params.delete(:module_type) 
+    alert_params.delete(:module_type)
     alert_params.delete(:user_id)
-    
+
     alert = OneTimeAlert.find params[:id]
 
     if alert.can_edit? current_user
-      
+
       if alert_params[:name].blank?
         render json: {error: "You must include a name."}, status: 500
         return
@@ -36,7 +36,7 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
         render json: {error: "Could not save due to missing or invalid email."}, status: 500
         return
       end
-      
+
       alert_params.merge!(expire_date_last_updated_by: current_user) unless alert.expire_date == (Date.parse alert_params[:expire_date] rescue nil)
       alert.assign_attributes(alert_params)
       new_criterions = params[:criteria] || []
@@ -51,7 +51,7 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
       render_forbidden
     end
   end
-  
+
   def update_reference_fields
     if current_user.admin?
       fields = {}
@@ -68,7 +68,7 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
 
   def destroy
     alert = OneTimeAlert.find params[:id]
-    
+
     if alert.can_edit? current_user
       alert.destroy
       render json: {ok: 'ok'}
@@ -81,7 +81,7 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
 
   def get_mf_digest alert
     fields = DataCrossReference.hash_ota_reference_fields[alert.module_type]
-    fields.map do |f| 
+    fields.map do |f|
       mf = ModelField.find_by_uid f
       {mfid: mf.uid, label: mf.label, datatype: mf.data_type}
     end

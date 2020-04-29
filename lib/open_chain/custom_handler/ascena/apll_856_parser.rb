@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
       errors << $!
     ensure
       if !errors.empty?
-        Tempfile.create(["APLLEDI-#{isa}",'.txt']) do |f|
+        Tempfile.create(["APLLEDI-#{isa}", '.txt']) do |f|
           f << data
           f.flush
           body = "<p>There was a problem processing the attached APLL ASN EDI for Ascena Global. An IT ticket has been opened about the issue, and the EDI is attached.</p><p>Errors:<br><ul>"
@@ -47,8 +47,8 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
 
     shipment = nil
     ActiveRecord::Base.transaction do
-      hbol = find_ref_value(shipment_segments,'BM')
-      booking_number = find_ref_value(shipment_segments,'CR')
+      hbol = find_ref_value(shipment_segments, 'BM')
+      booking_number = find_ref_value(shipment_segments, 'CR')
       hbol_and_booking = "#{hbol}-#{booking_number}"
       reference = "ASCENA-#{hbol_and_booking}"
       Lock.acquire(reference) do
@@ -60,22 +60,22 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
           return
         end
 
-        est_arrival_port_date = get_date(shipment_segments,'056')
-        est_arrival_port_date = get_date(shipment_segments,'AA2') unless est_arrival_port_date
-        equipments = find_subloop(shipment_segments,'E')
-        shipment_type = equipments.empty? ? nil : find_ref_value(equipments.first,'XY')
+        est_arrival_port_date = get_date(shipment_segments, '056')
+        est_arrival_port_date = get_date(shipment_segments, 'AA2') unless est_arrival_port_date
+        equipments = find_subloop(shipment_segments, 'E')
+        shipment_type = equipments.empty? ? nil : find_ref_value(equipments.first, 'XY')
         shp = Shipment.new(
           reference:reference,
           booking_number:booking_number,
-          est_departure_date:get_date(shipment_segments,'369'),
-          departure_date:get_date(shipment_segments,'370'),
+          est_departure_date:get_date(shipment_segments, '369'),
+          departure_date:get_date(shipment_segments, '370'),
           est_arrival_port_date:est_arrival_port_date,
-          vessel:find_element_value(shipment_segments,'V102'),
-          voyage:find_element_value(shipment_segments,'V104'),
-          vessel_carrier_scac:find_element_value(shipment_segments,'V105'),
+          vessel:find_element_value(shipment_segments, 'V102'),
+          voyage:find_element_value(shipment_segments, 'V104'),
+          vessel_carrier_scac:find_element_value(shipment_segments, 'V105'),
           mode:find_mode(shipment_segments),
-          lading_port:find_port(shipment_segments,'L'),
-          unlading_port:find_port(shipment_segments,'D'),
+          lading_port:find_port(shipment_segments, 'L'),
+          unlading_port:find_port(shipment_segments, 'D'),
           shipment_type:shipment_type,
           importer_id: importer.id,
           last_file_bucket: last_file_bucket,
@@ -87,8 +87,8 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
         log.add_info_message "Shipment #{hbol_and_booking} created."
 
         errors = []
-        equipments.each do |eq| 
-          equip_errors = process_equipment(shp,eq, log)
+        equipments.each do |eq|
+          equip_errors = process_equipment(shp, eq, log)
           errors.push *equip_errors
         end
 
@@ -104,16 +104,16 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def process_equipment shp, e_segs, log
-    container_scac = find_element_value(e_segs,'TD302')
-    container_num = find_element_value(e_segs,'TD303')
+    container_scac = find_element_value(e_segs, 'TD302')
+    container_num = find_element_value(e_segs, 'TD303')
     con = shp.containers.build(
       container_number:"#{container_scac}#{container_num}",
-      seal_number:find_element_value(e_segs,'TD309')
+      seal_number:find_element_value(e_segs, 'TD309')
     )
     con.save!
     errors = []
-    find_subloop(e_segs,'O').each do |o_segs| 
-      order_errors = process_order(shp,con,o_segs, log)
+    find_subloop(e_segs, 'O').each do |o_segs|
+      order_errors = process_order(shp, con, o_segs, log)
       errors.push *order_errors
     end
 
@@ -121,11 +121,11 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def process_order shp, con, o_segs, log
-    ord_num = find_element_value(o_segs,'PRF01')
+    ord_num = find_element_value(o_segs, 'PRF01')
     errors = []
-    find_subloop(o_segs,'I').each do |i_segs| 
+    find_subloop(o_segs, 'I').each do |i_segs|
       begin
-        process_item(shp,con,ord_num,i_segs, log)
+        process_item(shp, con, ord_num, i_segs, log)
       rescue OrderMissingError => e
         errors << e.message
       end
@@ -139,7 +139,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def process_item shp, con, order_number, i_segs, log
-    style = find_element_value(i_segs,'LIN03')
+    style = find_element_value(i_segs, 'LIN03')
     log.reject_and_raise "Style number is required in LIN segment position 4." if style.blank?
     ol = find_order_line(order_number, style)
     log.reject_and_raise("Order Line not found for order Ascena Order # #{order_number}, style #{style}", error_class:OrderMissingError) if ol.nil?
@@ -173,7 +173,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
 
   def find_subloop parent_segments, loop_type
     # This method is now outdated and left alone purely for time constraint purposes...
-    
+
     # Don't utilize this sort of processing any longer...see the extract_hl_loops method in edi_parser_support
     # for a much superior means of handling HL loops in an 856
 
@@ -203,7 +203,7 @@ module OpenChain; module CustomHandler; module Ascena; class Apll856Parser
   end
 
   def find_mode segments
-    case find_element_values(segments,'V109').first
+    case find_element_values(segments, 'V109').first
     when 'O'
       'Ocean'
     when 'A'

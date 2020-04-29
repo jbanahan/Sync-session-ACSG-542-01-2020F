@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
 
     subject { described_class.new(custom_file) }
 
-    before :each do 
+    before :each do
       allow(custom_file).to receive(:attached_file_name).and_return "file.xls"
       allow(custom_file).to receive(:attached).and_return attachment
       allow(Attachment).to receive(:bucket).and_return "test-bucket"
@@ -445,10 +445,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016,9,4))
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-1', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016, 9, 4))
       invoice = Factory(:broker_invoice, entry:entry)
 
-      Timecop.freeze(DateTime.new(2017,3,6)) do
+      Timecop.freeze(DateTime.new(2017, 3, 6)) do
         subject.process user
       end
 
@@ -470,10 +470,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberAllportBillingFilePa
       yield_standard_header(expect(file_reader).to receive(:foreach)).
           and_yield(row_1)
 
-      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016,9,4))
+      entry = Factory(:entry, broker_reference:'BR12345', master_bills_of_lading:'BOL-X', container_numbers:'CON-1', customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM, release_date:DateTime.new(2016, 9, 4))
       invoice = Factory(:broker_invoice, entry:entry)
 
-      Timecop.freeze(DateTime.new(2017,3,6)) do
+      Timecop.freeze(DateTime.new(2017, 3, 6)) do
         subject.process user
       end
 

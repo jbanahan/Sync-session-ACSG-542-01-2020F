@@ -1,8 +1,8 @@
 describe Api::V1::TradeLanesController do
   let :prep_countries do
-    us = Factory(:country,iso_code:'US')
-    ca = Factory(:country,iso_code:'CA')
-    [us,ca]
+    us = Factory(:country, iso_code:'US')
+    ca = Factory(:country, iso_code:'CA')
+    [us, ca]
   end
   before :each do
     @u = Factory(:user)
@@ -13,8 +13,8 @@ describe Api::V1::TradeLanesController do
   describe '#index' do
     it 'should find trade lanes' do
       us, ca = prep_countries
-      Factory(:trade_lane,origin_country:us,destination_country:ca)
-      Factory(:trade_lane,origin_country:ca,destination_country:us)
+      Factory(:trade_lane, origin_country:us, destination_country:ca)
+      Factory(:trade_lane, origin_country:ca, destination_country:us)
 
       get :index
 
@@ -66,7 +66,7 @@ describe Api::V1::TradeLanesController do
     it 'should create trade lane' do
       us, ca = prep_countries
 
-      expect{post :create, make_hash}.to change(TradeLane,:count).from(0).to(1)
+      expect {post :create, make_hash}.to change(TradeLane, :count).from(0).to(1)
 
       expect(response).to be_success
 
@@ -81,7 +81,7 @@ describe Api::V1::TradeLanesController do
 
       prep_countries
 
-      expect{post :create, make_hash}.to_not change(TradeLane,:count)
+      expect {post :create, make_hash}.to_not change(TradeLane, :count)
 
       expect(response).to_not be_success
     end
@@ -102,7 +102,7 @@ describe Api::V1::TradeLanesController do
           'lane_destination_cntry_iso'=>'us'
         }
       }
-      [tl,h]
+      [tl, h]
     end
     it 'should update trade lane' do
       lane, hash = data_prep

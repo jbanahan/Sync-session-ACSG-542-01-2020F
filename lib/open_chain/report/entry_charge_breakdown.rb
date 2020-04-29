@@ -10,7 +10,7 @@ module OpenChain
 
         row_cursor = 1
         bill_columns = []
-        broker_invoices = BrokerInvoice.joins(:entry).where("entries.customer_number IN (?)",customer_numbers).where("broker_invoices.invoice_date BETWEEN ? AND ?",start_at,end_at)
+        broker_invoices = BrokerInvoice.joins(:entry).where("entries.customer_number IN (?)", customer_numbers).where("broker_invoices.invoice_date BETWEEN ? AND ?", start_at, end_at)
         broker_invoices.each do |bi|
           e = bi.entry
           charge_totals = {}
@@ -25,29 +25,29 @@ module OpenChain
           end
 
           row = sheet.row(row_cursor)
-          row.push val(e,:ent_entry_num,run_by)
+          row.push val(e, :ent_entry_num, run_by)
           row.push "#{e.broker_reference}#{bi.suffix}"
-          row.push val(bi,:bi_invoice_date,run_by)
-          row.push bi.invoice_total.nil? ? BigDecimal("0.00").to_s.to_f : BigDecimal(bi.invoice_total,2).to_s.to_f
-          row.push val(e,:ent_carrier_code,run_by)
-          row.push val(e,:ent_export_date,run_by)
-          row.push val(e,:ent_transport_mode_code,run_by)
-          row.push val(e,:ent_mbols,run_by)
-          row.push val(e,:ent_container_nums,run_by)
-          row.push val(e,:ent_vendor_names,run_by)
-          row.push val(e,:ent_lading_port_name,run_by)
-          row.push val(e,:ent_ult_con_name,run_by)
-          row.push "#{val(e,:ent_consignee_address_1,run_by)} #{val(e,:ent_consignee_address_2,run_by)}"
-          row.push val(e,:ent_consignee_city,run_by)
-          row.push val(e,:ent_consignee_state,run_by)
-          row.push val(e,:ent_unlading_port_name,run_by)
-          row.push val(e,:ent_destination_state,run_by)
-          row.push val(e,:ent_gross_weight,run_by)
-          row.push val(e,:ent_container_sizes,run_by)
-          row.push val(e,:ent_total_duty,run_by)
-          row.push val(e,:ent_total_hmf,run_by)
-          row.push val(e,:ent_total_mpf,run_by)
-          row.push val(e,:ent_cotton_fee,run_by)
+          row.push val(bi, :bi_invoice_date, run_by)
+          row.push bi.invoice_total.nil? ? BigDecimal("0.00").to_s.to_f : BigDecimal(bi.invoice_total, 2).to_s.to_f
+          row.push val(e, :ent_carrier_code, run_by)
+          row.push val(e, :ent_export_date, run_by)
+          row.push val(e, :ent_transport_mode_code, run_by)
+          row.push val(e, :ent_mbols, run_by)
+          row.push val(e, :ent_container_nums, run_by)
+          row.push val(e, :ent_vendor_names, run_by)
+          row.push val(e, :ent_lading_port_name, run_by)
+          row.push val(e, :ent_ult_con_name, run_by)
+          row.push "#{val(e, :ent_consignee_address_1, run_by)} #{val(e, :ent_consignee_address_2, run_by)}"
+          row.push val(e, :ent_consignee_city, run_by)
+          row.push val(e, :ent_consignee_state, run_by)
+          row.push val(e, :ent_unlading_port_name, run_by)
+          row.push val(e, :ent_destination_state, run_by)
+          row.push val(e, :ent_gross_weight, run_by)
+          row.push val(e, :ent_container_sizes, run_by)
+          row.push val(e, :ent_total_duty, run_by)
+          row.push val(e, :ent_total_hmf, run_by)
+          row.push val(e, :ent_total_mpf, run_by)
+          row.push val(e, :ent_cotton_fee, run_by)
           bill_columns.each do |cd|
             if charge_totals[cd]
               row.push << charge_totals[cd].to_s.to_f
@@ -85,7 +85,7 @@ module OpenChain
         row.push "Cotton Fees"
         bill_columns.each {|cd| row.push cd}
 
-        t = Tempfile.new(['entry_charge_breakdown','.xls'])
+        t = Tempfile.new(['entry_charge_breakdown', '.xls'])
         wb.write t.path
         t
 

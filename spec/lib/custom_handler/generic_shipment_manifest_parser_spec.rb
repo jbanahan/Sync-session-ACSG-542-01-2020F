@@ -46,14 +46,14 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       o
     }
 
-    before :each do 
+    before :each do
       allow(shipment).to receive(:can_edit?).with(user).and_return true
       allow(shipment).to receive(:create_async_snapshot)
     end
 
     it "throws exception if data contains unmatched order" do
       order.update_attributes! customer_order_number: "foo"
-      expect{subject.process_rows shipment, rows, user}.to raise_error "Order Number CustOrdNum not found."
+      expect {subject.process_rows shipment, rows, user}.to raise_error "Order Number CustOrdNum not found."
       expect(shipment.shipment_lines.length).to eq 0
     end
 
@@ -151,7 +151,7 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: product)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
-      expect{described_class.new(enable_warnings: true).process_rows shipment, rows, user}.to raise_error 'The following purchase orders are assigned to other shipments: CustOrdNum (REF2)'
+      expect {described_class.new(enable_warnings: true).process_rows shipment, rows, user}.to raise_error 'The following purchase orders are assigned to other shipments: CustOrdNum (REF2)'
     end
 
     it "assigns warning_overridden attribs when enable_warnings is absent" do
@@ -159,14 +159,14 @@ describe OpenChain::CustomHandler::GenericShipmentManifestParser do
       sl = Factory(:shipment_line, shipment: Factory(:shipment, reference: "REF2"), product: product)
       PieceSet.create! order_line: ol, shipment_line: sl, quantity: 1
 
-      Timecop.freeze(DateTime.new(2018,1,1)) { described_class.new(enable_warnings: false).process_rows shipment, rows, user }
+      Timecop.freeze(DateTime.new(2018, 1, 1)) { described_class.new(enable_warnings: false).process_rows shipment, rows, user }
       expect(shipment.warning_overridden_by).to eq user
-      expect(shipment.warning_overridden_at).to eq DateTime.new(2018,1,1)
+      expect(shipment.warning_overridden_at).to eq DateTime.new(2018, 1, 1)
     end
 
     it "errors if an order is 'unaccepted'" do
       order.update_attributes! approval_status: nil
-      expect{ subject.process_rows shipment, rows, user }.to raise_error 'This file cannot be processed because the following orders are in an "unaccepted" state: CustOrdNum'
+      expect { subject.process_rows shipment, rows, user }.to raise_error 'This file cannot be processed because the following orders are in an "unaccepted" state: CustOrdNum'
     end
   end
 end

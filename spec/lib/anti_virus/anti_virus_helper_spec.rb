@@ -1,7 +1,7 @@
-describe OpenChain::AntiVirus::AntiVirusHelper do 
+describe OpenChain::AntiVirus::AntiVirusHelper do
 
-  subject { 
-    Class.new do 
+  subject {
+    Class.new do
       extend OpenChain::AntiVirus::AntiVirusHelper
     end
   }
@@ -28,7 +28,7 @@ describe OpenChain::AntiVirus::AntiVirusHelper do
       File.open(__FILE__, "r")
     }
 
-    after :each do 
+    after :each do
       file.close unless file.closed?
     end
 

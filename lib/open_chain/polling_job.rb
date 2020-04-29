@@ -7,7 +7,7 @@ module OpenChain; module PollingJob
   # This method yields a start and an end time.  The start time is relative to
   # the last time this job ran (which is internally tracked by this method).
   # The end time is the current time.
-  # 
+  #
   # The block this method yields to MUST run to completion for the last run
   # time to be updated.  If the block raises, the next call to poll will
   # return the same start time as the previous call that raised.
@@ -21,7 +21,7 @@ module OpenChain; module PollingJob
     key = KeyJsonItem.polling_job(job_name).first_or_create! json_data: "{}"
     data = key.data
     last_run = data['last_run']
-    
+
     tz = ActiveSupport::TimeZone[timezone]
     raise "'#{timezone}' is not a valid TimeZone." if tz.nil?
 

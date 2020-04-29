@@ -35,7 +35,7 @@ module OpenChain
         poas = PowerOfAttorney.includes(:company).where(["expiration_date <= ?", poa_expiration_date]).order("companies.name ASC, expiration_date DESC").select do |poa|
           poa unless expire_later.include?(poa.company_id)
         end.uniq_by {|poa| poa.company_id}
-        
+
         poas.each_with_index do |poa, idx|
           row = exp_sheet.row(idx + 1)
           row.push poa.company.name

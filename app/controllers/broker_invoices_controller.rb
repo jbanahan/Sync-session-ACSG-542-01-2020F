@@ -10,7 +10,7 @@ class BrokerInvoicesController < ApplicationController
   end
   def show
     i = BrokerInvoice.find params[:id]
-    action_secure(i.can_view?(current_user),i,{:lock_check=>false,:verb=>"view",:module_name=>"invoice"}) {
+    action_secure(i.can_view?(current_user), i, {:lock_check=>false, :verb=>"view", :module_name=>"invoice"}) {
       @invoice = i
     }
   end
@@ -24,7 +24,7 @@ class BrokerInvoicesController < ApplicationController
     else
       @back_url = url_for(@base_object)
     end
-    
+
     render template: "shared/sync_records"
   end
 

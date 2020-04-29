@@ -2,9 +2,9 @@ require 'rex12'
 require 'open_chain/integration_client_parser'
 require 'open_chain/edi_parser_support'
 
-# This class is meant to be extended for all 850 parsers that fit a fairly standard 
+# This class is meant to be extended for all 850 parsers that fit a fairly standard
 # parsing structure used to create an Order
-# 
+#
 # The parser handles most of the nitty gritty of dealing w/ grouping EDI segments together
 # based on header detail level and which lines they belong to.
 #
@@ -14,17 +14,17 @@ require 'open_chain/edi_parser_support'
 #
 # =============================================================================================
 # MANDATORY METHODS TO IMPLEMENT WHEN EXTENDING THIS CLASS:
-# 
+#
 # prep_importer - Create / Find the importer company that will be associated with the order
 # This method MUST return an importer Company record
 #
 # line_level_segment_list - This is a full list of every segment that can appear at the Line level (PO1) loop.  You MUST list every segment, and the first segment
 # in the returned array MUST be the first segment that appears in the Line level EDI loop (which is almost always a "PO1" segment)
-# 
-# - standard_style(po1_segment, all_line_segments) - This method must return the style (Product.unique_identifier - minus the importer system code) value to use 
+#
+# - standard_style(po1_segment, all_line_segments) - This method must return the style (Product.unique_identifier - minus the importer system code) value to use
 # for a specific OrderLine.  It is used both for creating products and for determing which product is linked to a specific PO1 line.
 # This method must return the String value to use as the style/part number for the line
-# 
+#
 # - update_standard_product(product, all_edi_segments, po1_segment, all_line_segments) - This method is used to populate / update any
 # data required for a Product tied to a specific OrderLine.  The product WILL exist in the database already, if you are building variants you will need
 # to build them inside this methods.
@@ -36,15 +36,15 @@ require 'open_chain/edi_parser_support'
 # - process_standard_line(order, po1_segment, all_line_segments, product) - Creates / Updates data for the specific PO1 line loop provided.  The
 # Product that is linked to the PO1 data is passed into the method, you do not need to find or update it at this point.
 # No return value is expected.
-# 
+#
 # =============================================================================================
 # The following method is required if you are building variants:
 # - standard_variant_identifier(po1_segment, all_line_segments) - Returns the string value to use as the variant identifier (generally will be the SKU)
 #
-# ============================================================================================= 
+# =============================================================================================
 # The following methods are required ONLY if the 850 document has SLN (prepack) segments in it and the :explode_prepack configuration options is set to true:
 #
-# - prepack_style(po1_segment, all_line_segments, sln_segment, all_sln_segments) - This method must return the style (Product.unique_identifier - minus the importer system code) value to use 
+# - prepack_style(po1_segment, all_line_segments, sln_segment, all_sln_segments) - This method must return the style (Product.unique_identifier - minus the importer system code) value to use
 # for a specific OrderLine that represents a prepack line (.ie a SLN segment).  It is used both for creating products and for determing which product is linked to a specific PO1 line.
 # This method is required if the 850 has SLN segments in it.
 #
@@ -56,18 +56,18 @@ require 'open_chain/edi_parser_support'
 # Product that is linked to the PO1 data is passed into the method, you do not need to find or update it at this point.
 # No return value is expected.
 #
-# ============================================================================================= 
+# =============================================================================================
 # The following methods are required ONLY if the 850 document has SLN (prepack) segments in it and you are building variants:
-# 
+#
 # - prepack_variant_identifier(po1_segment, line_segments, sln_segment, sln_segments) - Returns the string value to use as the variant identifier (generally will be the prepack item sku)
-# 
+#
 # =============================================================================================
 # OPTIONAL METHDOS TO IMPLEMENT
 #
 # - process_order_header_date(order, dtm_qualifier, date) - Set the date value (which is an ActiveSupport::TimeWithZone object) into the correct
 # order header field.
 # No return value is expected.
-# 
+#
 # - process_order_header_party(order, n1_party_data) - Set the provided N1 party data into the order.  The data is already preparsed from the N1-N4 loop into a hash
 # that is described below. No return value is expected.  A helper method named find_or_create_company_from_n1_data exists to turn this data hash into a Company object,
 # another helper method named find_or_create_address_from_n1_data turns it into an Address object.
@@ -90,12 +90,12 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     # If set to true, the system will not reject updates to orders that are shipping
     @allow_updates_to_shipping_orders = configuration[:allow_updates_to_shipping_orders].nil? ? false : configuration[:allow_updates_to_shipping_orders]
     # In the general case, we're not exploding prepacks onto the PO, we're going to be just handling the lines
-    # as they are sent.  If this is set to true, then prepack methods listed above must be implemented and 
+    # as they are sent.  If this is set to true, then prepack methods listed above must be implemented and
     # each SLN is expected to be its own OrderLine
     @explode_prepacks = configuration[:explode_prepacks].nil? ? false : configuration[:explode_prepacks]
 
-    # Valid values handled by the framework are [:isa_date, :revision] 
-    #- revision requires custom definition usage and the BEG04 segment to be used properly 
+    # Valid values handled by the framework are [:isa_date, :revision]
+    #- revision requires custom definition usage and the BEG04 segment to be used properly
     # (incrementing version numbers are sent by the EDI sender)
     @track_order_by = configuration[:track_order_by].presence || :isa_date
 
@@ -109,7 +109,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     beg_segment = find_segment(edi_segments, "BEG")
 
     purpose = order_purpose(beg_segment)
-    
+
     if purpose != :cancel
       # It's a waste of time to lookup and create products on cancelled orders, so don't
       order_line_segment_loops = extract_loop(edi_segments, line_level_segment_list())
@@ -156,7 +156,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
 
 
   def handle_order_header user, order, edi_segments
-    #If the order is currently closed, re-open it
+    # If the order is currently closed, re-open it
     if order.closed?
       order.reopen_logic user
     end
@@ -178,7 +178,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     extract_n1_loops(header_segments).each do |n1|
       process_order_header_n1(order, n1)
     end
-    
+
     find_segments(header_segments, "DTM").each do |dtm_segment|
       process_order_header_dtm(order, dtm_segment)
     end
@@ -313,7 +313,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
 
     order = nil
     edi_segments = transaction.segments
-    Lock.acquire("Order-#{order_number}") do 
+    Lock.acquire("Order-#{order_number}") do
       o = Order.where(order_number: order_number, importer_id: importer.id).first_or_create! customer_order_number: cust_order_number
       order = o if process_file?(o, beg_segment, edi_segments, transaction)
     end
@@ -414,7 +414,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
       products_to_snapshot[product.unique_identifier] = product if product
     end
 
-    products_to_snapshot.values.each {|product| product.create_snapshot user, nil, filename }
+    products_to_snapshot.each_value {|product| product.create_snapshot user, nil, filename }
 
     # We don't need the variants in the cache any longer, it's only there to prevent sending the product / variant combination through
     # to the update_*_product methods if nothing changed.  When building the order lines, the implementing class should reference
@@ -430,7 +430,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
           extract_loop(line_segments, prepack_segment_list).each do |subline_segments|
             sln = find_segment(subline_segments, "SLN")
             yield po1, line_segments, sln, subline_segments
-          end 
+          end
         else
           yield po1, line_segments, nil, nil
         end
@@ -481,7 +481,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     # If we've already seen both the product and the variant (or just the product if we're not dealing w/ variants)
     # then we can skip the update calls below...and return nil, indicating nothing was updated and we shouldn't later snapshot the product
     return nil if (variant_identifier.nil? && !product.nil?) || (!variant.nil? && !product.nil?)
-    
+
     product = find_or_create_product(style)
 
     Lock.with_lock_retry(product) do
@@ -497,7 +497,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
       variant = product.variants.find {|v| v.variant_identifier == variant_identifier }
       cache[:variants][variant_cache_key(style, variant_identifier)] = variant if variant
     end
-    
+
     product
   end
 
@@ -506,7 +506,7 @@ module OpenChain; module CustomHandler; class Generic850ParserFramework
     # we'll rely on the callback we issue after locking the product row to update all other information
     product = nil
     unique_identifier = prefix_value(importer, style)
-    Lock.acquire("Product-#{unique_identifier}") do 
+    Lock.acquire("Product-#{unique_identifier}") do
       product = Product.where(unique_identifier: unique_identifier, importer_id: importer.id).first_or_initialize
 
       unless product.persisted?

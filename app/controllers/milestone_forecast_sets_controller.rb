@@ -6,14 +6,14 @@ class MilestoneForecastSetsController < ApplicationController
       mfs.milestone_forecasts.destroy_all
       mfs.piece_set.create_forecasts
       mfs.reload
-      render :json => mfs 
+      render :json => mfs
     }
   end
 
-  def change_plan 
+  def change_plan
     mfs = MilestoneForecastSet.find params[:id]
     ps = mfs.piece_set
-    action_secure(ps.change_milestone_plan?(current_user),nil,{:lock_check=>false,:verb=>"change plan for",:module_name=>"item"}) {
+    action_secure(ps.change_milestone_plan?(current_user), nil, {:lock_check=>false, :verb=>"change plan for", :module_name=>"item"}) {
       mfs.milestone_forecasts.destroy_all
       ps.update_attributes(:milestone_plan_id=>params[:plan_id])
       ps.create_forecasts
@@ -23,11 +23,11 @@ class MilestoneForecastSetsController < ApplicationController
   end
 
   def show
-    #not worrying about security here because milestones have no valuable info without surrounding context
+    # not worrying about security here because milestones have no valuable info without surrounding context
     render :json => MilestoneForecastSet.find(params[:id])
   end
 
   def show_by_order_line_id
-    render :json => MilestoneForecastSet.joins(:piece_set).where("piece_sets.order_line_id = ?",params[:line_id]).all
+    render :json => MilestoneForecastSet.joins(:piece_set).where("piece_sets.order_line_id = ?", params[:line_id]).all
   end
 end

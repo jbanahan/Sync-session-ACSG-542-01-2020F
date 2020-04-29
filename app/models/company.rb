@@ -51,12 +51,12 @@
 class Company < ActiveRecord::Base
   include CoreObjectSupport
 
-  attr_accessible :agent, :alliance_customer_number, :broker, :carrier, 
-    :consignee, :customer, :drawback, :ecellerate_customer_number, 
-    :enabled_booking_types, :factory, :fenix_customer_number, 
-    :fiscal_reference, :forwarder, :importer, :irs_number, 
-    :last_alliance_product_push_at, :locked, :master, :mid, :name, :name_2, 
-    :selling_agent, :show_business_rules, :slack_channel, :system_code, 
+  attr_accessible :agent, :alliance_customer_number, :broker, :carrier,
+    :consignee, :customer, :drawback, :ecellerate_customer_number,
+    :enabled_booking_types, :factory, :fenix_customer_number,
+    :fiscal_reference, :forwarder, :importer, :irs_number,
+    :last_alliance_product_push_at, :locked, :master, :mid, :name, :name_2,
+    :selling_agent, :show_business_rules, :slack_channel, :system_code,
     :ticketing_system_code, :vendor, :linked_companies, :addresses
 
   validates  :name,  :presence => true
@@ -112,9 +112,9 @@ class Company < ActiveRecord::Base
   scope :agents, -> { where(:agent=>true) }
   scope :by_name, -> { order("companies.name ASC") }
   scope :active_importers, -> { where("companies.id in (select importer_id from products where products.created_at > '2011') or companies.id in (select importer_id from entries where entries.file_logged_date > '2011')") }
-  #find all companies that have attachment_archive_setups that include a start date
+  # find all companies that have attachment_archive_setups that include a start date
   scope :attachment_archive_enabled, -> { joins("LEFT OUTER JOIN attachment_archive_setups on companies.id = attachment_archive_setups.company_id").where("attachment_archive_setups.start_date is not null") }
-  scope :has_slack_channel, -> { where('slack_channel IS NOT NULL AND slack_channel <> ""') } 
+  scope :has_slack_channel, -> { where('slack_channel IS NOT NULL AND slack_channel <> ""') }
   scope :with_customs_management_number, ->(code) { joins(:system_identifiers).where(system_identifiers: {system: "Customs Management", code: code}) }
   scope :with_cargowise_number, ->(code) { joins(:system_identifiers).where(system_identifiers: {system: "Cargowise", code: code}) }
   scope :with_fenix_number, ->(code) { joins(:system_identifiers).where(system_identifiers: {system: "Fenix", code: code}) }
@@ -134,11 +134,11 @@ class Company < ActiveRecord::Base
   end
 
   def has_vfi_invoice?
-    ([self] + linked_companies).map{ |co| co.vfi_invoices.count != 0 }.any?
+    ([self] + linked_companies).map { |co| co.vfi_invoices.count != 0 }.any?
   end
 
   def plants_user_can_view user
-    self.plants.reject{|plant| !plant.can_view?(user)}
+    self.plants.reject {|plant| !plant.can_view?(user)}
   end
 
   def self.search_secure user, base_search
@@ -160,7 +160,7 @@ class Company < ActiveRecord::Base
 
   # find all companies that aren't children of this one through the linked_companies relationship
   def unlinked_companies select: "distinct companies.*"
-    c = Company.joins("LEFT OUTER JOIN (select child_id as cid FROM linked_companies where parent_id = #{self.id}) as lk on companies.id = lk.cid").where("lk.cid IS NULL").where("NOT companies.id = ?",self.id)
+    c = Company.joins("LEFT OUTER JOIN (select child_id as cid FROM linked_companies where parent_id = #{self.id}) as lk on companies.id = lk.cid").where("lk.cid IS NULL").where("NOT companies.id = ?", self.id)
     c = c.select(select) if select.present?
     c
   end
@@ -198,25 +198,25 @@ class Company < ActiveRecord::Base
     return false
   end
 
-  #migrate all users and surveys to the target company
+  # migrate all users and surveys to the target company
   def migrate_accounts target_company
-    self.users.update_all(company_id:target_company.id,updated_at:Time.now)
-    self.surveys.update_all(company_id:target_company.id,updated_at:Time.now)
+    self.users.update_all(company_id:target_company.id, updated_at:Time.now)
+    self.surveys.update_all(company_id:target_company.id, updated_at:Time.now)
   end
 
   def self.not_locked
-    Company.where("locked = ? OR locked is null",false)
+    Company.where("locked = ? OR locked is null", false)
   end
 
   def self.find_master
-    Company.first_or_create(:master => true,name:'Master Company')
+    Company.first_or_create(:master => true, name:'Master Company')
   end
 
   def visible_companies
     if self.master?
       Company.all
     else
-      Company.where("companies.id = ? OR companies.master = ? OR companies.id IN (select child_id from linked_companies where parent_id = ?)",self.id,true,self.id)
+      Company.where("companies.id = ? OR companies.master = ? OR companies.id IN (select child_id from linked_companies where parent_id = ?)", self.id, true, self.id)
     end
   end
 
@@ -224,11 +224,11 @@ class Company < ActiveRecord::Base
     visible_companies.where('companies.id IN (SELECT DISTINCT company_id FROM users)')
   end
 
-  def parent_system_code 
+  def parent_system_code
     @parent_system_code ||= self.parent_companies.where("system_code IS NOT NULL").order(id: :asc).first&.system_code
   end
 
-  #permissions
+  # permissions
   def view_security_filings?
     master_setup.security_filing_enabled? && (self.master? || self.broker? || self.importer?)
   end
@@ -485,7 +485,7 @@ class Company < ActiveRecord::Base
     # the pluck method calls unique on the values passed to it, which means if we get something like (:name, :code, :code)
     # the select statement executed only has name, code in it (.ie only 2 columns).  This is annoying AF, since we want all 3 columns.
     # Construct a string instead to specify the full set of actual values we always want returned
-    pluck = ["name", code_attribute, value_attribute].map do |v| 
+    pluck = ["name", code_attribute, value_attribute].map do |v|
       v = Array.wrap(v)
       table_name = nil
       column_name = nil
@@ -501,10 +501,9 @@ class Company < ActiveRecord::Base
       else
         "#{ActiveRecord::Base.connection.quote_table_name(table_name)}.#{ActiveRecord::Base.connection.quote_column_name(column_name)}"
       end
-      
     end.join(", ")
 
-    c.pluck(pluck).map do |r| 
+    c.pluck(pluck).map do |r|
       label = r[0]
       label += " (#{r[1]})" unless r[1].blank?
       [label, r[2]]

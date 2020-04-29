@@ -18,20 +18,20 @@ module OpenChain
         eddied = wb.create_sheet "CA K84 Detail - Eddie LLC"
         ebecomms = wb.create_sheet "CA K84 Summary - Eddie eComm"
         ebecommd = wb.create_sheet "CA K84 Detail - Eddie eCommerce"
-        
+
         fill_sheets(user, wb, settings['date'], eddiebrs, eddiebrd, "EDDIEBR")
         fill_sheets(user, wb, settings['date'], ebsupplys, ebsupplyd, "EBSUPPLY")
         fill_sheets(user, wb, settings['date'], eddies, eddied, "EDDIE")
         fill_sheets(user, wb, settings['date'], ebecomms, ebecommd, "EBECOMM")
-        
+
         write_builder_to_tempfile wb, "EddieBauerCaK84-"
       end
 
       def fill_sheets(user, workbook, date, summary_sheet, detail_sheet, customer_number)
         safe_date = sanitize_date_string date
-        write_query_to_builder workbook, summary_sheet, po_query(user, customer_number, safe_date), 
-          data_conversions: {"Duty" => currency_format_lambda, "Fees" => currency_format_lambda, "SIMA and Excise" => currency_format_lambda, "Total Duty/Fee" => currency_format_lambda, "Entered Value" => currency_format_lambda, "Avg Duty 18%" => currency_format_lambda, "+/- Duty" => currency_format_lambda} 
-        write_query_to_builder workbook, detail_sheet, detail_query(user, customer_number, safe_date), 
+        write_query_to_builder workbook, summary_sheet, po_query(user, customer_number, safe_date),
+          data_conversions: {"Duty" => currency_format_lambda, "Fees" => currency_format_lambda, "SIMA and Excise" => currency_format_lambda, "Total Duty/Fee" => currency_format_lambda, "Entered Value" => currency_format_lambda, "Avg Duty 18%" => currency_format_lambda, "+/- Duty" => currency_format_lambda}
+        write_query_to_builder workbook, detail_sheet, detail_query(user, customer_number, safe_date),
           data_conversions: {"Invoice Tariff - Entered Value" => currency_format_lambda, "Invoice Tariff - Duty" => currency_format_lambda, "Invoice Tariff - Fees" => currency_format_lambda, "Invoice Tariff - SIMA" => currency_format_lambda, "Invoice Tariff - Excise" => currency_format_lambda, "Due Crown" => currency_format_lambda, "Web Links" => weblink_translation_lambda(workbook, Entry)}
       end
 
@@ -95,7 +95,6 @@ module OpenChain
       def self.run_report(user, settings = {})
         self.new.run(user, settings)
       end
-    
     end
   end
 end

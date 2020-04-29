@@ -1,7 +1,7 @@
 describe CorrectiveActionPlan do
   before :each do
     @cap = Factory(:corrective_action_plan)
-    @u = Factory(:user) 
+    @u = Factory(:user)
   end
   describe "log_update" do
     it "should log against survey_response if cap is active" do
@@ -37,7 +37,7 @@ describe CorrectiveActionPlan do
       sr.user = @u
       sr.save!
       allow(@cap.survey_response).to receive(:can_view?).and_return true
-      allow(@cap.survey_response).to receive(:can_edit?).and_return false 
+      allow(@cap.survey_response).to receive(:can_edit?).and_return false
       expect(@cap.can_view?(@u)).to be_falsey
     end
     it "should not allow if you can't view the survey response" do
@@ -84,7 +84,7 @@ describe CorrectiveActionPlan do
       expect(@cap).to be_destroyed
     end
     it "should allow destroy if status.blank?" do
-      @cap.status = nil 
+      @cap.status = nil
       @cap.destroy
       expect(@cap).to be_destroyed
     end

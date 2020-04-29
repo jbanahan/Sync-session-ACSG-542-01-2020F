@@ -8,10 +8,10 @@ module OpenChain
       include OpenChain::IntegrationClientParser
 
       SYSTEM_NAME = "Kewill"
-      NO_NOTES_EVENTS = [10,19,20,21]
+      NO_NOTES_EVENTS = [10, 19, 20, 21]
       STATUS_XREF ||= {"ACCNOMATCH" => "Accepted No Bill Match", "DEL_ACCEPT" => "Delete Accepted", "ACCMATCH" => "Accepted And Matched",
                         "REPLACE" => "Replaced", "ACCEPTED" => "Accepted", "ACCWARNING" => "Accepted With Warnings", "DELETED" => "Deleted"}
-  
+
       def self.integration_folder
         ["www-vfitrack-net/_kewill_isf", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_kewill_isf"]
       end
@@ -35,7 +35,7 @@ module OpenChain
 
         # sf may be nil here if we're skipping this file (if data is out of date, for example)
         sf = find_security_filing SYSTEM_NAME, host_system_file_number, last_event_time, log
-        
+
         if sf
           Lock.with_lock_retry(sf) do
             log.set_identifier_module_info InboundFileIdentifier::TYPE_ISF_NUMBER, SecurityFiling.to_s, sf.id
@@ -62,17 +62,17 @@ module OpenChain
       end
 
       def parse_dom dom, sf, s3_bucket = nil, s3_key = nil
-        @po_numbers = Set.new 
+        @po_numbers = Set.new
         @countries_of_origin = Set.new
         @used_line_numbers = []
         @dom = dom
         @sf = sf
         r = @dom.root
-        
+
         tx_num = et r, 'ISF_TX_NBR'
         @sf.last_file_bucket = s3_bucket
         @sf.last_file_path = s3_key
-        @sf.transaction_number = tx_num.gsub('-','') unless tx_num.nil?
+        @sf.transaction_number = tx_num.gsub('-', '') unless tx_num.nil?
         @sf.importer_account_code = et r, 'IMPORTER_ACCT_CD'
         @sf.broker_customer_number = et r, 'IMPORTER_BROKERAGE_ACCT_CD'
         @sf.importer_tax_id = et r, 'IRS_NBR'
@@ -87,7 +87,7 @@ module OpenChain
         previous_status = sf.status_code
         @sf.status_code = et r, 'STATUS_CD'
         # If the ISF status has changed, I'm going to assume that the last event date listed is going to be the most
-        # accurate way of determinng the time to record the change as - since the last event listed is going to be the 
+        # accurate way of determinng the time to record the change as - since the last event listed is going to be the
         # one that caused the status change or at the very least will be more accurate than using the current time in the parser
         if previous_status != @sf.status_code
           if @sf.ams_match_date.nil? && @sf.status_code == "ACCMATCH"
@@ -118,7 +118,7 @@ module OpenChain
           @notes = (@sf.notes.blank? ? [] : @sf.notes.split("\n"))
           process_only_event_8_events r
         end
-        
+
         @sf.notes = @notes.join("\n")
         @sf.manufacturer_names = process_manufacturer_names r
 
@@ -129,10 +129,10 @@ module OpenChain
         @sf
       end
 
-      private 
+      private
 
       def full_isf_document? root
-        # If we receive ISF docs with only an 8 event type, those don't include the filing lines so 
+        # If we receive ISF docs with only an 8 event type, those don't include the filing lines so
         # we don't want to destroy lines from our existing ISFs either or overwrite existing attributes with
         # blank data in those cases
         event_numbers = REXML::XPath.each(root, "events/EVENT_NBR").map {|el| el.text}.uniq.compact
@@ -141,7 +141,7 @@ module OpenChain
 
       def process_lines parent
         parent.each_element('lines') do |el|
-          line_number = et(el,'ISF_LINE_NBR').to_i
+          line_number = et(el, 'ISF_LINE_NBR').to_i
           ln = @sf.security_filing_lines.find {|ln| ln.line_number == line_number}
           ln = @sf.security_filing_lines.build(:line_number=>line_number) unless ln
           @used_line_numbers << ln.line_number
@@ -152,14 +152,14 @@ module OpenChain
           ln.quantity = 0
           ln.hts_code = et(el, 'TARIFF_NBR')
           ln.commercial_invoice_number = et(el, 'CI_NBR')
-          ln.mid = et(el,'MID')
+          ln.mid = et(el, 'MID')
           ln.country_of_origin_code = et(el, 'COUNTRY_ORIGIN_CD')
           @countries_of_origin << ln.country_of_origin_code
 
           unless ln.mid.nil? || ln.mid.strip.length == 0
             name = REXML::XPath.first(parent, "entities[MID=$mid]/PARTY_NAME", nil, {"mid" => ln.mid})
             ln.manufacturer_name = name.text unless name.nil?
-          end 
+          end
         end
       end
       def process_bills_of_lading parent
@@ -193,7 +193,7 @@ module OpenChain
         # for determining the moment in time when the ISF XML file was generated.
         REXML::XPath.each(root, "events[EVENT_NBR = '21' or EVENT_NBR = '8' or EVENT_NBR = '20']") do |el|
           time_stamp = ed el, 'EVENT_DATE'
-          r = pick_date(r,time_stamp,true)
+          r = pick_date(r, time_stamp, true)
         end
 
         if r.nil?
@@ -203,7 +203,7 @@ module OpenChain
 
           log.reject_and_raise "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
         end
-        
+
         r
       end
 
@@ -224,11 +224,11 @@ module OpenChain
           when '1'
             @sf.file_logged_date = time_stamp
           when '3'
-            first_sent_date = pick_date(first_sent_date,time_stamp,false)
-            last_sent_date = pick_date(last_sent_date,time_stamp,true)
+            first_sent_date = pick_date(first_sent_date, time_stamp, false)
+            last_sent_date = pick_date(last_sent_date, time_stamp, true)
           when '4'
-            first_accepted_date = pick_date(first_accepted_date,time_stamp,false)
-            last_accepted_date = pick_date(last_accepted_date,time_stamp,true)
+            first_accepted_date = pick_date(first_accepted_date, time_stamp, false)
+            last_accepted_date = pick_date(last_accepted_date, time_stamp, true)
           when '8'
             # Events 8-12 we want to capture the last event element listed in the file based on the element ordering of the file, not necessarily
             # by the actual event time.
@@ -241,8 +241,8 @@ module OpenChain
             @sf.estimated_vessel_arrival_date = time_stamp
           end
           unless NO_NOTES_EVENTS.include?(number.to_i)
-            notes = get_notes_from_event(el,time_stamp)
-            @notes += notes unless notes.empty? 
+            notes = get_notes_from_event(el, time_stamp)
+            @notes += notes unless notes.empty?
           end
         end
         @sf.first_sent_date = first_sent_date
@@ -260,7 +260,7 @@ module OpenChain
           # by the actual event time.
           @sf.cbp_updated_at = time_stamp
 
-          notes = get_notes_from_event(el,time_stamp)
+          notes = get_notes_from_event(el, time_stamp)
           local_notes += notes unless notes.blank?
         end
 
@@ -271,11 +271,11 @@ module OpenChain
 
         @notes.push *local_notes
       end
-      
+
       def get_notes_from_event evt, time_stamp
         notes = []
         evt.each_element("notes") do |nt|
-          s = et(nt,'NOTE')
+          s = et(nt, 'NOTE')
           notes << "#{est_time_str time_stamp}: #{s.strip}" unless s.blank?
         end
         if notes.empty?
@@ -297,11 +297,11 @@ module OpenChain
         original
       end
 
-      #get element text 
+      # get element text
       def et parent, element_name
         parent.text(element_name)
       end
-      #get date from element
+      # get date from element
       def ed parent, element_name
         txt = et parent, element_name
         txt.blank? ? nil : Time.iso8601(txt)
@@ -328,7 +328,7 @@ module OpenChain
           end
         end
 
-        sf        
+        sf
       end
 
       def parse_file? sf, last_event_time

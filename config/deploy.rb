@@ -1,7 +1,7 @@
 set :application, "demo.chain.io"
 set :user, "ubuntu"
 set :repository, "."
-#set :repository,  "git@github.com:bglick/OpenChain.git"
+# set :repository,  "git@github.com:bglick/OpenChain.git"
 
 set :scm, :git # Or: `accurev`, `bzr`, `cvs`, `darcs`, `git`, `mercurial`, `perforce`, `subversion` or `none`
 set :scm_username, user
@@ -22,7 +22,7 @@ set :rds_endpoint, "aspectinstance.cznbgfbl22bb.us-east-1.rds.amazonaws.com"
 role :web, ec2_endpoint                          # Your HTTP server, Apache/etc
 role :app, ec2_endpoint                          # This may be the same as your `Web` server
 role :db,  rds_endpoint, :primary => true # This is where Rails migrations will run
-#role :db,  rds_endpoint
+# role :db,  rds_endpoint
 
 # If you are using Passenger mod_rails uncomment this:
 # if you're still using the script/reapear helper you will need

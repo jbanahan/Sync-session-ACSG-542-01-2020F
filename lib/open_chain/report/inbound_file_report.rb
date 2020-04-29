@@ -30,9 +30,8 @@ module OpenChain; module Report; class InboundFileReport
   def query start_date, end_date, company_ids, parser_statuses, parser_names
     query = "SELECT f.id as 'Web View', f.parser_name as 'Parser', f.file_name as 'File Name', c.name as 'Company Name', f.process_start_date as 'Start Time', f.process_end_date as 'End Time', f.process_status as 'Status'" +
             " FROM inbound_files f" +
-            " LEFT OUTER JOIN companies c ON c.id = f.company_id " + 
+            " LEFT OUTER JOIN companies c ON c.id = f.company_id " +
             " WHERE f.process_end_date > '#{start_date.to_s(:db)}' AND f.process_end_date < '#{end_date.to_s(:db)}'"
-            
 
     if parser_statuses.present?
       query += " AND f.process_status IN (" + sanitize_string_in_list(parser_statuses) + ")"
@@ -58,8 +57,8 @@ module OpenChain; module Report; class InboundFileReport
   def job_params settings, last_run, current_run
     time_zone = settings["time_zone"].presence || "America/New_York"
 
-    {time_zone: time_zone, start_time: last_run.in_time_zone(time_zone), end_time: current_run.in_time_zone, 
-      email_to: email_to(settings), company_ids: company_ids(settings), parser_names: settings["parsers"], statuses: file_statuses(settings), 
+    {time_zone: time_zone, start_time: last_run.in_time_zone(time_zone), end_time: current_run.in_time_zone,
+      email_to: email_to(settings), company_ids: company_ids(settings), parser_names: settings["parsers"], statuses: file_statuses(settings),
       output_format: output_format(settings)
     }
   end
@@ -87,7 +86,5 @@ module OpenChain; module Report; class InboundFileReport
   def output_format settings
     settings["output_format"].presence || "xlsx"
   end
-
-  
 
 end; end; end

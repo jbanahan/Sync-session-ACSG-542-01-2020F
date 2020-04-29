@@ -20,11 +20,11 @@
 #
 
 class OneTimeAlert < ActiveRecord::Base
-  attr_accessible :blind_copy_me, :email_addresses, :email_body, :email_subject, 
-    :enabled_date, :expire_date, :expire_date_last_updated_by_id, 
-    :expire_date_last_updated_by, :inactive, :mailing_list_id, :mailing_list, 
+  attr_accessible :blind_copy_me, :email_addresses, :email_body, :email_subject,
+    :enabled_date, :expire_date, :expire_date_last_updated_by_id,
+    :expire_date_last_updated_by, :inactive, :mailing_list_id, :mailing_list,
     :module_type, :name, :user_id, :user
-  
+
   belongs_to :user
   belongs_to :expire_date_last_updated_by, class_name: "User"
   belongs_to :mailing_list
@@ -57,11 +57,11 @@ class OneTimeAlert < ActiveRecord::Base
     end
     result
   end
-  
+
   # obj needs to be saved afterwards
   def trigger obj
     now = Time.zone.now
-    obj.sync_records.build(trading_partner: "one_time_alert", sent_at: now, confirmed_at: now + 1.minute, fingerprint: self.id)    
+    obj.sync_records.build(trading_partner: "one_time_alert", sent_at: now, confirmed_at: now + 1.minute, fingerprint: self.id)
     send_email obj
     log obj, now
   end

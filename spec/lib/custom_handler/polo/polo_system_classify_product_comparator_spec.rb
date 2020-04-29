@@ -154,7 +154,7 @@ describe OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator do
 
       ['CTS', 'SPE', 'BJT', 'NCT', 'WOD', 'STW', 'FUR'].each do |inner|
         it "returns #{OpenChain::CustomHandler::Polo::PoloSystemClassifyProductComparator.new.rules_table[outer][inner]} when given an array of [#{outer}, #{inner}]" do
-          expect(subject.new.calculate_classification([outer,inner])).to eql(subject.new.rules_table[outer][inner])
+          expect(subject.new.calculate_classification([outer, inner])).to eql(subject.new.rules_table[outer][inner])
         end
       end
     end

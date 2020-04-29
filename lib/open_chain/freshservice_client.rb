@@ -15,7 +15,7 @@ module OpenChain; class FreshserviceClient
   def note_url
     "https://vandegrift.freshservice.com/itil/changes/#{change_id}/notes.json"
   end
-  
+
   def create_change! instance, new_version, server_name
     if token.blank?
       raise "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
@@ -38,7 +38,7 @@ module OpenChain; class FreshserviceClient
     elsif change_id.blank?
       raise "FreshserviceClient failed: No change_id set."
     end
-    
+
     return if request_complete
 
     response = execute_request(note_url, note_request(message))
@@ -65,11 +65,11 @@ module OpenChain; class FreshserviceClient
   def execute_request url, payload
     retry_count = 0
     begin
-      response = RestClient::Request.execute({user: token, 
-                                              password: "password", 
-                                              method: :post, 
-                                              headers: {content_type: :json}, 
-                                              url: url, 
+      response = RestClient::Request.execute({user: token,
+                                              password: "password",
+                                              method: :post,
+                                              headers: {content_type: :json},
+                                              url: url,
                                               payload: payload.to_json})
     rescue => e
       retry if (retry_count += 1) < 4

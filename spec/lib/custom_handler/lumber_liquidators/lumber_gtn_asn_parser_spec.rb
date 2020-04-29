@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
 
     it 'should fail on wrong root element' do
       test_data = "<OtherRoot><Child>Hey!</Child></OtherRoot>"
-      expect{described_class.parse_file(test_data, log)}.to raise_error('Bad root element name "OtherRoot". Expecting ASNMessage.')
+      expect {described_class.parse_file(test_data, log)}.to raise_error('Bad root element name "OtherRoot". Expecting ASNMessage.')
       expect(ActionMailer::Base.deliveries.length).to eq 0
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq 'Bad root element name "OtherRoot". Expecting ASNMessage.'
     end
@@ -245,7 +245,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     end
 
     it 'should update shipment with no existing lines or containers, missing ports, xrefs and BOL' do
-      @test_data.gsub!(/EGLV142657648711/,'')
+      @test_data.gsub!(/EGLV142657648711/, '')
 
       shp = Factory(:shipment, reference:'201611221551', master_bill_of_lading:'old-BOL')
 
@@ -337,7 +337,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
     end
 
     it 'should error when missing PO Number, but still update shipment' do
-      @test_data.gsub!(/4500173883/,'')
+      @test_data.gsub!(/4500173883/, '')
 
       shp = Factory(:shipment, reference:'201611221551')
 
@@ -378,7 +378,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       # The container should be there and there should be a snapshot
       expect(shp.entity_snapshots.length).to eq 1
       expect(shp.containers.find { |c| c.container_number == "TEMU3877030"}).not_to be_nil
-      
+
       # The orders should also be updated
       expect(@ord.entity_snapshots.length).to eq 1
     end
@@ -387,13 +387,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberGtnAsnParser do
       shp = Factory(:shipment, reference:'201611221551', last_exported_from_source: "2019-01-01 12:00")
       Factory(:container, shipment: shp, container_number: "TEMU3877030", last_exported_from_source: "2019-01-01 12:00")
       Factory(:container, shipment: shp, container_number: "TEMU3877031", last_exported_from_source: "2019-01-01 12:00")
-      
+
       subject.parse_dom REXML::Document.new(@test_data), log, 's3_key_12345'
 
       shp.reload
       # The container should be there and there should be a snapshot
       expect(shp.entity_snapshots.length).to eq 0
-      
+
       # The orders should also be updated
       expect(@ord.entity_snapshots.length).to eq 0
       expect(@ord_2.entity_snapshots.length).to eq 0

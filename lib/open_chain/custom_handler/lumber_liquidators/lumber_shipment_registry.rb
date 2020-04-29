@@ -14,12 +14,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
     # Lumber shipments need to have all booking lines destroyed upon cancellation.
     shipment.booking_lines.destroy_all
   end
-  
+
   def self.can_cancel_as_agent? shipment, user
     qry = agent_qry(shipment.id)
     return false unless qry && user.company.agent?
     agent_results = ActiveRecord::Base.connection.execute qry
-    agent_results.each{ |ar| return false unless !ar[0].blank? && ar[0].upcase == user.company.system_code.to_s.upcase  }
+    agent_results.each { |ar| return false unless !ar[0].blank? && ar[0].upcase == user.company.system_code.to_s.upcase  }
     true
   end
   private_class_method :can_cancel_as_agent?
@@ -44,7 +44,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
         INNER JOIN order_lines ol ON ol.id = bl.order_line_id
         INNER JOIN orders o ON o.id = ol.order_id
         LEFT OUTER JOIN custom_values agents ON o.id = agents.customizable_id AND agents.customizable_type = "ORDER" AND agents.custom_definition_id = #{cdef.id}
-      WHERE s.id = #{shipment_id}        
+      WHERE s.id = #{shipment_id}
     SQL
   end
   private_class_method :agent_qry

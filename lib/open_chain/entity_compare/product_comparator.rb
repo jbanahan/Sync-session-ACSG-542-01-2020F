@@ -5,4 +5,4 @@ module OpenChain; module EntityCompare; module ProductComparator
     return snapshot.recordable_type == "Product"
   end
 
-end; end; end   
+end; end; end

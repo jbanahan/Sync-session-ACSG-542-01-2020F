@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
 
   def self.parse data, opts = {}
     data.force_encoding("Windows-1252")
-    
+
     file_header = nil
     header = nil
     lines = []
@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
   def process_invoice shipment_header, invoice_header, lines
     entry = CiLoadEntry.new
     importer_code = amer_codes(val(shipment_header[74..83]))
-    
+
     # According to Joe H, we're not going to use this process for Precor files, so just ignore them
     # rather than generate them and junk up the output folder.
     return if importer_code == "PRECOR"
@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
     cartons = parse_decimal(invoice_header[539..550])
 
     line_count = 0
-    
+
     lines.each do |line|
       line_count += 1
 
@@ -94,7 +94,7 @@ module OpenChain; module CustomHandler; module AmerSports; class AmerSports856Ci
 
       cil.foreign_value = parse_decimal(line[439..451], implied_decimals: 2)
 
-      # Since MOL only sends us carton count and gross weight at the invoice header level, 
+      # Since MOL only sends us carton count and gross weight at the invoice header level,
       # only include it on the first line of the spreadsheet we're creating.
       if line_count == 1
         cil.cartons = cartons

@@ -11,9 +11,9 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
   describe "find_entries" do
     context "with siemens tax ids" do
-      before :each do 
-        @tax_ids = ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001", 
-        "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001", 
+      before :each do
+        @tax_ids = ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001",
+        "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001",
         "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
         "761672690RM0001", "768899288RM0001", "858557895RM0001", "772310736RM0001", "772310736RM0002"]
 
@@ -92,14 +92,14 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
   end
 
   context "with entry data" do
-    before :each do 
-      @entry = Entry.new entry_port_code: "1234", entry_number: "1234567890", broker_reference: "123456", release_date: Time.zone.parse("2015-04-01 00:00"), cargo_control_number: "CCN# 98765", transport_mode_code: "1", direct_shipment_date: Date.new(2015, 5, 1), 
+    before :each do
+      @entry = Entry.new entry_port_code: "1234", entry_number: "1234567890", broker_reference: "123456", release_date: Time.zone.parse("2015-04-01 00:00"), cargo_control_number: "CCN# 98765", transport_mode_code: "1", direct_shipment_date: Date.new(2015, 5, 1),
                 us_exit_port_code: "4567", k84_receive_date: Date.new(2015, 6, 1), importer_tax_id: "TAXID", customer_number: "CUSTNO", customer_name: "NAME", entry_type: "AB"
       @inv = CommercialInvoice.new vendor_name: "VENDOR", mfid: "12345", currency: "USD", exchange_rate: BigDecimal("1.2345")
       @entry.commercial_invoices << @inv
       @line = CommercialInvoiceLine.new line_number: "2", customs_line_number: "1", po_number: "PO123", part_number: "PART2", quantity: BigDecimal("1"), value: BigDecimal("2"),
                                           country_origin_code: "CN", country_export_code: "VN", subheader_number: "0"
-      @inv.commercial_invoice_lines << @line                                          
+      @inv.commercial_invoice_lines << @line
       @tariff = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "TraversÃ©",
                                              sima_code: "1", value_for_duty_code: "11", sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM", gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
                                              excise_amount: BigDecimal("9.45")
@@ -108,7 +108,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       # Puposely use the same customs line number so that we ensure the data roll-up for duty value is done correctly.
       @line2 = CommercialInvoiceLine.new line_number: "1", customs_line_number: "1", po_number: "PO123", part_number: "PART1", quantity: BigDecimal("1"), value: BigDecimal("2"),
                                           country_origin_code: "US", country_export_code: "US", state_origin_code: "PA", state_export_code: "IL", subheader_number: "0"
-      @inv.commercial_invoice_lines << @line2                                        
+      @inv.commercial_invoice_lines << @line2
       @tariff2 = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "Bad Char א",
                                              sima_code: "1", value_for_duty_code: "11", sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM", gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
                                              excise_amount: BigDecimal("9.45")
@@ -226,7 +226,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
     end
 
     describe "write_entry_data" do
-      before :each do 
+      before :each do
         @ed = subject.generate_entry_data @entry
       end
 
@@ -274,7 +274,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l[365..369]).to eq "    0"
         expect(l[370..380]).to eq "1.50".rjust(11)
         expect(l[381..388]).to eq "20150501"
-        expect(l[389..392]).to eq "4567" 
+        expect(l[389..392]).to eq "4567"
         expect(l[393..395]).to eq "UOM"
         expect(l[396..403]).to eq "20150601"
         expect(l[404..418]).to eq "TAXID".ljust(15)
@@ -386,7 +386,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           group = Group.use_system_group("canada-accounting")
           group.users << @user
         end
-        
+
         it "writes entry data to a file and sends it" do
           encrypted_file = nil
           filename = nil
@@ -431,19 +431,19 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         end
 
         it "sends an email if the ftp file couldn't be sent" do
-          # This is a hack to get around the transactional handling of this test case in rspec.  We intercept 
+          # This is a hack to get around the transactional handling of this test case in rspec.  We intercept
           # the call to Entry.transaction and then run the passed block inside of a new database savepoint.  That
-          # way, when the transaction is rolled back in the code we're testing, the database state is rolled back to 
-          # this savepoint created inside the expectation below and then we can test that no data was retained during the 
+          # way, when the transaction is rolled back in the code we're testing, the database state is rolled back to
+          # this savepoint created inside the expectation below and then we can test that no data was retained during the
           # test.
-          expect(Entry).to receive(:transaction) do |&block| 
-            ActiveRecord::Base.transaction(requires_new: true) do 
+          expect(Entry).to receive(:transaction) do |&block|
+            ActiveRecord::Base.transaction(requires_new: true) do
               block.call
             end
           end
 
           expect(subject).to receive(:ftp_sync_file).and_raise "Error!"
-          expect{ subject.generate_and_send [@entry]}.to raise_error "Error!"
+          expect { subject.generate_and_send [@entry]}.to raise_error "Error!"
 
           expect(@entry.reload.sync_records.length).to eq 0
           expect(@counter.reload.data).to eq({"counter" => 0})

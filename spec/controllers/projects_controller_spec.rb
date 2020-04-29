@@ -7,7 +7,7 @@ describe ProjectsController do
   }
 
   before :each do
-    @u = Factory(:master_user,project_view:true,project_edit:true)
+    @u = Factory(:master_user, project_view:true, project_edit:true)
     sign_in_as @u
   end
   describe "index" do
@@ -42,18 +42,18 @@ describe ProjectsController do
   end
   describe "update" do
     it "should error if user cannot edit project" do
-      p = Factory(:project,name:'old')
+      p = Factory(:project, name:'old')
       allow_any_instance_of(Project).to receive(:can_edit?).and_return false
-      put :update, 'id'=>p.id.to_s, 'project'=>{'id'=>p.id,:name=>'my name'}
+      put :update, 'id'=>p.id.to_s, 'project'=>{'id'=>p.id, :name=>'my name'}
       expect(response.status).to eq 401
       expect(JSON.parse(response.body)['error']).to eq "You do not have permission to edit this project."
       p.reload
       expect(p.name).to eq 'old'
     end
     it "should return json of updated project" do
-      p = Factory(:project,name:'old')
+      p = Factory(:project, name:'old')
       allow_any_instance_of(Project).to receive(:can_edit?).and_return true
-      put :update, 'id'=>p.id.to_s, 'project'=>{'id'=>p.id,:name=>'my name'}
+      put :update, 'id'=>p.id.to_s, 'project'=>{'id'=>p.id, :name=>'my name'}
       p.reload
       expect(p.name).to eq 'my name'
       expect(response).to be_success

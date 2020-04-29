@@ -10,8 +10,8 @@ module ConfigMigrations; module LL; class VendorMaintSearches
 
   def create_search_table_configs config_hashes
     config_hashes.each do |ch|
-      stc = SearchTableConfig.where(page_uid:ch[:page_uid],name:ch[:name]).first
-      stc = SearchTableConfig.new(page_uid:ch[:page_uid],name:ch[:name]) unless stc
+      stc = SearchTableConfig.where(page_uid:ch[:page_uid], name:ch[:name]).first
+      stc = SearchTableConfig.new(page_uid:ch[:page_uid], name:ch[:name]) unless stc
       stc.config_hash = ch[:config_hash]
       stc.save!
     end
@@ -19,7 +19,7 @@ module ConfigMigrations; module LL; class VendorMaintSearches
 
   def delete_search_table_configs config_hashes
     config_hashes.each do |ch|
-      SearchTableConfig.where(page_uid:ch[:page_uid],name:ch[:name]).destroy_all
+      SearchTableConfig.where(page_uid:ch[:page_uid], name:ch[:name]).destroy_all
     end
   end
 
@@ -29,13 +29,13 @@ module ConfigMigrations; module LL; class VendorMaintSearches
     ]
     ship_conf_uid = defs[:ord_ship_confirmation_date].model_field_uid.to_s
     ph_uid = defs[:ord_planned_handover_date].model_field_uid.to_s
-    ord_columns = ['ord_ord_num','ord_ord_date','ord_rule_state','ord_window_end',ph_uid,'ord_approval_status']
+    ord_columns = ['ord_ord_num', 'ord_ord_date', 'ord_rule_state', 'ord_window_end', ph_uid, 'ord_approval_status']
     r = [
-      make_prodven_risk('Risk: All',nil,defs),
-      make_prodven_risk('Risk: Low','Low',defs),
-      make_prodven_risk('Risk: Medium','Medium',defs),
-      make_prodven_risk('Risk: High','High',defs),
-      make_prodven_risk('Risk: None','',defs)
+      make_prodven_risk('Risk: All', nil, defs),
+      make_prodven_risk('Risk: Low', 'Low', defs),
+      make_prodven_risk('Risk: Medium', 'Medium', defs),
+      make_prodven_risk('Risk: High', 'High', defs),
+      make_prodven_risk('Risk: None', '', defs)
     ]
     h = {
       page_uid: 'vendor-order',
@@ -43,7 +43,7 @@ module ConfigMigrations; module LL; class VendorMaintSearches
       config_hash: {
         columns: ord_columns,
         sorts: [
-          {field:'ord_ord_date',order:'A'}
+          {field:'ord_ord_date', order:'A'}
         ]
       }
     }
@@ -54,10 +54,10 @@ module ConfigMigrations; module LL; class VendorMaintSearches
       config_hash: {
         columns: ord_columns,
         sorts: [
-          {field:'ord_ord_date',order:'A'}
+          {field:'ord_ord_date', order:'A'}
         ],
         criteria: [
-          {field:'ord_closed_at',operator:'null'}
+          {field:'ord_closed_at', operator:'null'}
         ]
       }
     }
@@ -68,11 +68,11 @@ module ConfigMigrations; module LL; class VendorMaintSearches
       config_hash: {
         columns: ord_columns,
         sorts: [
-          {field:'ord_ord_date',order:'A'}
+          {field:'ord_ord_date', order:'A'}
         ],
         criteria: [
-          {field:'ord_closed_at',operator:'null'},
-          {field:ship_conf_uid,operator:'notnull'}
+          {field:'ord_closed_at', operator:'null'},
+          {field:ship_conf_uid, operator:'notnull'}
         ]
       }
     }
@@ -83,11 +83,11 @@ module ConfigMigrations; module LL; class VendorMaintSearches
       config_hash: {
         columns: ord_columns,
         sorts: [
-          {field:'ord_ord_date',order:'A'}
+          {field:'ord_ord_date', order:'A'}
         ],
         criteria: [
-          {field:'ord_closed_at',operator:'null'},
-          {field:ship_conf_uid,operator:'null'}
+          {field:'ord_closed_at', operator:'null'},
+          {field:ship_conf_uid, operator:'null'}
         ]
       }
     }
@@ -110,15 +110,15 @@ module ConfigMigrations; module LL; class VendorMaintSearches
       page_uid: 'vendor-product',
       name: label,
       config_hash: {
-        columns: ['prodven_puid','prodven_pname',"#{defs[:prod_merch_cat_desc].model_field_uid}_product_vendor_assignment",pvr_uid],
+        columns: ['prodven_puid', 'prodven_pname', "#{defs[:prod_merch_cat_desc].model_field_uid}_product_vendor_assignment", pvr_uid],
         criteria: [
         ],
         sorts: [
-          {field:'prodven_puid',order:'A'}
+          {field:'prodven_puid', order:'A'}
         ]
       },
     }
-    r[:config_hash][:criteria] << {field:pvr_uid,operator:'eq',val:level} unless level.nil?
+    r[:config_hash][:criteria] << {field:pvr_uid, operator:'eq', val:level} unless level.nil?
     r
   end
 

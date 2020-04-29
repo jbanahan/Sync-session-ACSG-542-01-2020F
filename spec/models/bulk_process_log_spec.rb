@@ -32,13 +32,13 @@ describe BulkProcessLog do
       expect(BulkProcessLog.count).to eq 0
       user = Factory(:user)
       outer_log = nil
-      BulkProcessLog.with_log(user,'My Thing') do |log|
-        outer_log = log #tracking outside loop to do checks on activities when loop closes
+      BulkProcessLog.with_log(user, 'My Thing') do |log|
+        outer_log = log # tracking outside loop to do checks on activities when loop closes
         expect(BulkProcessLog.first).to eq log
         expect(outer_log.started_at).to_not be_nil
         expect(log.user).to eq user
         expect(log.bulk_type).to eq 'My Thing'
-        log.change_records.create!(recordable:Factory(:order),record_sequence_number:1)
+        log.change_records.create!(recordable:Factory(:order), record_sequence_number:1)
         expect(user.messages.count).to eq 0
         expect(outer_log).to receive(:notify_user!)
       end
@@ -53,7 +53,7 @@ describe BulkProcessLog do
       req_host = 'test.vfitrack.net'
       expect_any_instance_of(MasterSetup).to receive(:request_host).and_return req_host
       user = Factory(:user)
-      bpl = BulkProcessLog.create!(user:user,changed_object_count:10,bulk_type:'My Thing')
+      bpl = BulkProcessLog.create!(user:user, changed_object_count:10, bulk_type:'My Thing')
       url = "https://#{req_host}/bulk_process_logs/#{bpl.id}"
       m = bpl.notify_user!
       expect(m.user).to eq user
@@ -62,8 +62,8 @@ describe BulkProcessLog do
     end
     it 'should write user message with errrors' do
       user = Factory(:user)
-      bpl = BulkProcessLog.create!(user:user,changed_object_count:10,bulk_type:'My Thing')
-      bpl.change_records.create!(recordable:Factory(:order),record_sequence_number:1,failed:true)
+      bpl = BulkProcessLog.create!(user:user, changed_object_count:10, bulk_type:'My Thing')
+      bpl.change_records.create!(recordable:Factory(:order), record_sequence_number:1, failed:true)
       m = bpl.notify_user!
       expect(m.subject).to eq "My Thing Job Complete (1 error)"
     end

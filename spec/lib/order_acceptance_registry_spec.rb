@@ -1,7 +1,7 @@
 describe OpenChain::Registries::OrderAcceptanceRegistry do
 
   subject { described_class }
-  
+
   let (:service) {
     Class.new do
       def self.can_be_accepted? ord
@@ -23,7 +23,7 @@ describe OpenChain::Registries::OrderAcceptanceRegistry do
       c = Class.new do
       end
 
-      expect{subject.register c}.to raise_error(/accept/)
+      expect {subject.register c}.to raise_error(/accept/)
       expect(subject.registered.to_a).to be_empty
     end
   end

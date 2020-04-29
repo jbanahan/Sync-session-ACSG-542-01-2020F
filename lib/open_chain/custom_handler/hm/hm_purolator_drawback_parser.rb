@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Hm; class HmPurolatorDrawbackPars
   private
     # Lines that don't have one of these event codes are supposed to be ignored for the purposes of this parser.
     def receipt_event_code? event_code
-      ['0100','0104','0105','0170'].include? event_code
+      ['0100', '0104', '0105', '0170'].include? event_code
     end
 
     def write_file_content_to_temp_file missing_tracking_numbers, file_content

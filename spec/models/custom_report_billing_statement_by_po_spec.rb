@@ -32,7 +32,7 @@ describe CustomReportBillingStatementByPo do
     before :each do
       @user = Factory(:master_user)
       allow(@user).to receive(:view_broker_invoices?).and_return(true)
-      @invoice = Factory(:broker_invoice, :suffix=>"Test", :invoice_total=>"100", :invoice_date=>Date.parse("2013-01-01"),:invoice_number=>'ZZZ')
+      @invoice = Factory(:broker_invoice, :suffix=>"Test", :invoice_total=>"100", :invoice_date=>Date.parse("2013-01-01"), :invoice_number=>'ZZZ')
       @invoice.entry.update_attributes(:broker_reference=>"Entry", :po_numbers=>"1\n 2\n 3")
       @invoice.broker_invoice_lines.create!(:charge_description => "A", :charge_amount=>1)
       @invoice.broker_invoice_lines.create!(:charge_description => "B", :charge_amount=>2)
@@ -43,10 +43,10 @@ describe CustomReportBillingStatementByPo do
     it "should split the invoice into 3 po lines and prorate the invoice amount across each line" do
       @report.search_columns.create!(:model_field_uid=>:bi_brok_ref, :rank=>1)
       @report.search_columns.create!(:model_field_uid=>:bi_ent_po_numbers, :rank=>2)
-      @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>@entry.broker_reference) 
+      @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>@entry.broker_reference)
 
       r = @report.to_arrays @user
-      #4 rows..1 header, 3 PO lines
+      # 4 rows..1 header, 3 PO lines
       expect(r.length).to eq(4)
       row = r[0]
       expect(row).to eq(["Invoice Number", "Invoice Date", "Invoice Total", "PO Number", ModelField.find_by_uid(:bi_brok_ref).label, ModelField.find_by_uid(:bi_ent_po_numbers).label])
@@ -68,10 +68,10 @@ describe CustomReportBillingStatementByPo do
       @invoice.entry.update_attributes(:broker_reference=>"Entry", :po_numbers=>"1\n 2")
       @report.search_columns.create!(:model_field_uid=>:bi_brok_ref, :rank=>1)
       @report.search_columns.create!(:model_field_uid=>:bi_ent_po_numbers, :rank=>2)
-      @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>@entry.broker_reference) 
+      @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>@entry.broker_reference)
 
       r = @report.to_arrays @user
-      #4 rows..1 header, 2 PO lines
+      # 4 rows..1 header, 2 PO lines
       expect(r.length).to eq(3)
       row = r[0]
       expect(row).to eq(["Invoice Number", "Invoice Date", "Invoice Total", "PO Number", ModelField.find_by_uid(:bi_brok_ref).label, ModelField.find_by_uid(:bi_ent_po_numbers).label])
@@ -87,7 +87,7 @@ describe CustomReportBillingStatementByPo do
       @report.search_criterions.create!(:model_field_uid=>:bi_brok_ref, :operator=>"eq", :value=>"FAIL")
 
       r = @report.to_arrays @user
-      
+
       expect(r.length).to eq(2)
       row = r[0]
       expect(row).to eq(["Invoice Number", "Invoice Date", "Invoice Total", "PO Number"])
@@ -120,7 +120,7 @@ describe CustomReportBillingStatementByPo do
       unpriv_user = Factory(:user)
       allow(unpriv_user).to receive(:view_broker_invoices?).and_return(false)
 
-      expect{@report.to_arrays unpriv_user}.to raise_error {|e|
+      expect {@report.to_arrays unpriv_user}.to raise_error {|e|
         expect(e.message).to eq("User #{unpriv_user.email} does not have permission to view invoices and cannot run the #{CustomReportBillingStatementByPo.template_name} report.")
       }
     end

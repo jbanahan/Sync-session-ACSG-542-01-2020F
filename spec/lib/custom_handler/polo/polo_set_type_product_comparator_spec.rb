@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator do
 
   describe "accept?" do
     let(:snap) { Factory(:entity_snapshot) }
-    
+
     it "returns 'true' for products" do
       snap.update! recordable: prod
       expect(described_class.accept? snap).to eq true
@@ -17,18 +17,18 @@ describe OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator do
 
   describe "compare" do
     let(:cdef) { described_class.prep_custom_definitions([:set_type])[:set_type] }
-    let(:class_1) do 
+    let(:class_1) do
       cl = Factory(:classification, product: prod, country: Factory(:country, iso_code: "US"))
       cl.update_custom_value! cdef, "RL"
       cl
     end
-    let(:class_2) do 
+    let(:class_2) do
       cl = Factory(:classification, product: prod, country: Factory(:country, iso_code: "CA"), tariff_records: [Factory(:tariff_record, line_number: 1), Factory(:tariff_record, line_number: 2)])
       cl.update_custom_value! cdef, "CTS"
       cl
     end
     let(:class_3) { Factory(:classification, product: prod, country: Factory(:country, iso_code: "CN"), tariff_records: [Factory(:tariff_record, line_number: 1), Factory(:tariff_record, line_number: 2)]) }
-    let(:class_4) do 
+    let(:class_4) do
       cl = Factory(:classification, product: prod, country: Factory(:country, iso_code: "PK"), tariff_records: [Factory(:tariff_record)])
       cl.update_custom_value! cdef, "CTS"
       cl
@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::Polo::PoloSetTypeProductComparator do
     let(:snap) do
       JSON.parse CoreModule::PRODUCT.entity_json(prod)
     end
-    
+
     before { class_1; class_2; class_3; class_4 }
 
     it "updates classification set types to match that of US classification if there are multiple tariffs" do

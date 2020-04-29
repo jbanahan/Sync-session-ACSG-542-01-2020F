@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductDocume
       attachment = find_existing_document(product, meta_data, checksum)
 
       if attachment.nil?
-        # The easiest thing to do here is to write out the file data to a tempfile and then 
+        # The easiest thing to do here is to write out the file data to a tempfile and then
         # save off the product (letting paperclip do its thing - which includes virus scanning)
         Tempfile.open([File.basename(meta_data[:filename], ".*"), File.extname(meta_data[:filename])]) do |tempfile|
           tempfile.binmode
@@ -45,12 +45,12 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductDocume
     # The filename of the document will tell us the Importer, the Part Number, the PGA document type
     # and the actual document name.
 
-    # The filename also at this point will have the timestamp value injected into it by our ftp process.  We'll 
+    # The filename also at this point will have the timestamp value injected into it by our ftp process.  We'll
     # want to remove that.
     filename = self.class.get_s3_key_without_timestamp(File.basename(filename))
     if filename =~ /\A[^_]+_([^_]+)_([^_]+)_[^_]+_PGA_([^_]+)_(.*)/
       return {ior_id: $1, sku: $2, oga: $3, filename: $4}
-    else 
+    else
       inbound_file.reject_and_raise("File name '#{filename}' does not appear to match the expected format for Amazon PGA documents.")
     end
   end

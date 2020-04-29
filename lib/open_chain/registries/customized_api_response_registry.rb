@@ -1,10 +1,10 @@
 require 'open_chain/service_locator'
 require 'open_chain/registries/registry_support'
 
-# The idea here is to be able to register custom classes that can mutate the standard API response hash 
+# The idea here is to be able to register custom classes that can mutate the standard API response hash
 # on a custom basis and to easily provide custom API variants.
 #
-# This can be useful for providing custom flags on custom views or other custom fields needed for custom 
+# This can be useful for providing custom flags on custom views or other custom fields needed for custom
 # display logic.
 module OpenChain; module Registries; class CustomizedApiResponseRegistry
   extend OpenChain::ServiceLocator

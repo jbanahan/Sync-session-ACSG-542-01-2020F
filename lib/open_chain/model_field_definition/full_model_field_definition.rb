@@ -1,4 +1,4 @@
-Dir[__dir__ + '/*'].each {|file| require file } #Require all files in this directory
+Dir[__dir__ + '/*'].each {|file| require file } # Require all files in this directory
 
 module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::AddressFieldDefinition

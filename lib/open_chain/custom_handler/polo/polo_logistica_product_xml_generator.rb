@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloLogisticaProductX
   def ftp_credentials
     folder = "to_ecs/rl_logistica_product"
     folder += "_test" unless MasterSetup.get.production?
-    
+
     connect_vfitrack_net folder
   end
 

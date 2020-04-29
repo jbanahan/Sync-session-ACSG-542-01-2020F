@@ -1,12 +1,12 @@
 describe OpenChain::CustomHandler::Isf315Generator do
 
   describe "accepts?" do
-    
+
     let(:isf) { SecurityFiling.new host_system_file_number: "ref", importer_account_code: "cust" }
     let(:mnc) { MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "SecurityFiling" }
 
     context "with 'ISF 315' custom feature" do
-      before :each do 
+      before :each do
         ms = double("MasterSetup")
         allow(MasterSetup).to receive(:get).and_return ms
         allow(ms).to receive(:custom_feature?).with("ISF 315").and_return true
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Isf315Generator do
 
       it "does not isf with missing importer account code" do
         isf.importer_account_code = ""
-        mnc.save! 
+        mnc.save!
 
         expect(subject.accepts? :save, isf).to be_falsey
       end
@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::Isf315Generator do
         expect(subject.accepts? :save, isf).to be_falsey
       end
 
-      context "with linked importer company" do 
+      context "with linked importer company" do
 
         let (:importer) { Factory(:importer) }
 
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Isf315Generator do
   describe "receive" do
     let(:isf) { SecurityFiling.create! host_system_file_number: "ref", importer_account_code: "cust", transaction_number: "trans",  transport_mode_code: "10", scac: "SCAC", vessel: "VES",
                                    voyage: "VOY", entry_port_code: "ENT", lading_port_code: "LAD", master_bill_of_lading: "M\nB", house_bills_of_lading: "H\nB", container_numbers: "C\nN", po_numbers: "P\nO", first_accepted_date: "2015-03-01 08:00"}
-    let(:mnc) do 
+    let(:mnc) do
       mnc = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "SecurityFiling"
       mnc.setup_json = [
         {model_field_uid: "sf_first_accepted_date"}
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::Isf315Generator do
       mnc.save!
       mnc
     end
-    
+
     it "sends ISF data" do
       # all we care about at this point is that generate_and_send_xml_document was called w/ the correct data, and when yielded
       # a value from nthat method, that an xref is created for it.
@@ -219,7 +219,7 @@ describe OpenChain::CustomHandler::Isf315Generator do
         cap.push *data
       end
       subject.generate_and_send_315s config, isf, [OpenChain::CustomHandler::Isf315Generator::MilestoneUpdate.new("code", Time.zone.now)], false
- 
+
       expect(cap.size).to eq 4
       expect(cap[0].master_bills).to eq ["M"]
       expect(cap[0].container_numbers).to eq ["C"]
@@ -242,4 +242,4 @@ describe OpenChain::CustomHandler::Isf315Generator do
       expect(cap[1].event_code).to eq "code2"
     end
   end
-end 
+end

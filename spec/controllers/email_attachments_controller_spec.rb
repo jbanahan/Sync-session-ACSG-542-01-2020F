@@ -2,7 +2,7 @@ describe EmailAttachmentsController do
   before :each do
     @ea = Factory(:email_attachment)
   end
-  
+
   describe "GET 'show'" do
     it "should be successful" do
       get 'show', :id => @ea.id

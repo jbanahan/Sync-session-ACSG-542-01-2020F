@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesSubsProductGenerator do
       sites_generator = OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator
       subs_generator = OpenChain::CustomHandler::UnderArmour::UaSubsProductGenerator
 
-      Timecop.freeze(DateTime.new(2017,05,01)) do
+      Timecop.freeze(DateTime.new(2017, 05, 01)) do
         Tempfile.open("") do |sites_csv|
           Tempfile.open("") do |subs_csv|
             sites_csv << "test"

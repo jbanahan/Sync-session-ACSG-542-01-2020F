@@ -17,7 +17,7 @@ module OpenChain; module Api; module V1; class ProductVendorAssignmentApiJsonGen
     ] + custom_field_keys(core_module))
 
     # add product level custom field uids
-    CoreModule::PRODUCT_VENDOR_ASSIGNMENT.model_fields.keys.each do |uid|
+    CoreModule::PRODUCT_VENDOR_ASSIGNMENT.model_fields.each_key do |uid|
       headers_to_render << uid if uid.to_s.match(/^\*cf.*product_vendor_assignment/)
     end
 
@@ -29,11 +29,10 @@ module OpenChain; module Api; module V1; class ProductVendorAssignmentApiJsonGen
   end
 
   def render_permissions obj
-    cu = current_user #current_user is method, so saving as variable to prevent multiple calls
+    cu = current_user # current_user is method, so saving as variable to prevent multiple calls
     {
       can_view: obj.can_view?(cu),
       can_edit: obj.can_edit?(cu)
     }
   end
-  
 end; end; end; end;

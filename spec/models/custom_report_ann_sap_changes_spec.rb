@@ -35,9 +35,9 @@ describe CustomReportAnnSapChanges do
     end
     before :each do
       @rc = described_class.new
-      @rc.search_columns.build(:model_field_uid=>:prod_uid,:rank=>1)
-      @rc.search_columns.build(:model_field_uid=>:class_cntry_iso,:rank=>2)
-      @cdefs = described_class.prep_custom_definitions OpenChain::CustomHandler::AnnInc::AnnSapProductHandler::SAP_REVISED_PRODUCT_FIELDS + [:sap_revised_date,:approved_date]
+      @rc.search_columns.build(:model_field_uid=>:prod_uid, :rank=>1)
+      @rc.search_columns.build(:model_field_uid=>:class_cntry_iso, :rank=>2)
+      @cdefs = described_class.prep_custom_definitions OpenChain::CustomHandler::AnnInc::AnnSapProductHandler::SAP_REVISED_PRODUCT_FIELDS + [:sap_revised_date, :approved_date]
       @appr = @cdefs[:approved_date]
       @sap = @cdefs[:sap_revised_date]
     end
@@ -54,7 +54,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should write difference columns", :snapshot do
       p = make_eligible_product
-      diffs = [:origin,:import,:related_styles,:cost]
+      diffs = [:origin, :import, :related_styles, :cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "OLD-#{d}" }
       es = p.create_snapshot @u
       es.update_attributes(created_at:3.days.ago)
@@ -62,7 +62,7 @@ describe CustomReportAnnSapChanges do
       arrays = @rc.to_arrays @u
       expect(arrays.size).to eq(2)
       row = arrays[1]
-      diffs.each_with_index do |d,i|
+      diffs.each_with_index do |d, i|
         new_val = row[3+(i*2)]
         expect(new_val).to eq("NEW-#{d}")
 
@@ -81,7 +81,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should not include classification with approval after sap revised date even if another classification is before" do
       p = make_eligible_product
-      cls = Factory(:classification,product:p)
+      cls = Factory(:classification, product:p)
       cls.update_custom_value! @appr, 0.days.ago
       arrays = @rc.to_arrays @u
       expect(arrays.size).to eq(2)
@@ -90,7 +90,7 @@ describe CustomReportAnnSapChanges do
     it "should filter on extra parameters" do
       find_me = make_eligible_product
       dont_find_me = make_eligible_product
-      @rc.search_criterions.build(model_field_uid:'prod_uid',operator:'eq',value:find_me.unique_identifier)
+      @rc.search_criterions.build(model_field_uid:'prod_uid', operator:'eq', value:find_me.unique_identifier)
       arrays = @rc.to_arrays @u
       expect(arrays.size).to eq(2)
       expect(arrays[1][0]).to eq(find_me.unique_identifier)
@@ -103,7 +103,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should handle records with no snapshots before approved date", :snapshot do
       p = make_eligible_product
-      diffs = [:origin,:import,:related_styles,:cost]
+      diffs = [:origin, :import, :related_styles, :cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "OLD-#{d}" }
       es = p.create_snapshot @u
       diffs.each {|d| p.update_custom_value! @cdefs[d], "NEW-#{d}" }
@@ -113,7 +113,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should use most recent snapshot before approved date", :snapshot do
       p = make_eligible_product
-      diffs = [:origin,:import,:related_styles,:cost]
+      diffs = [:origin, :import, :related_styles, :cost]
       diffs.each {|d| p.update_custom_value! @cdefs[d], "REALYOLD-#{d}" }
       es = p.create_snapshot @u
       es.update_attributes(created_at:1.year.ago)
@@ -131,7 +131,7 @@ describe CustomReportAnnSapChanges do
     end
     it "should write headings" do
       p = make_eligible_product
-      expected = [ModelField.find_by_uid(:prod_uid).label,ModelField.find_by_uid(:class_cntry_iso).label]
+      expected = [ModelField.find_by_uid(:prod_uid).label, ModelField.find_by_uid(:class_cntry_iso).label]
       OpenChain::CustomHandler::AnnInc::AnnSapProductHandler::SAP_REVISED_PRODUCT_FIELDS.each do |d|
         expected << "Old #{@cdefs[d].model_field.label}"
         expected << "New #{@cdefs[d].model_field.label}"

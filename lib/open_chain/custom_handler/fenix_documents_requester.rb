@@ -17,8 +17,8 @@ module OpenChain; module CustomHandler; class FenixDocumentsRequester
   end
   private_class_method :sql_proxy_client
 
-  def self.imaging_config 
-    # Even though this says "kewill_imaging" this is really just the AWS S3 / SQS data to relay to the service to utilize 
+  def self.imaging_config
+    # Even though this says "kewill_imaging" this is really just the AWS S3 / SQS data to relay to the service to utilize
     # when sending the documents back
     MasterSetup.secrets["kewill_imaging"].with_indifferent_access
   end

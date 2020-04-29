@@ -2,19 +2,19 @@ module TestExtensions
   class MockCache
 
     def set key, obj
-      #stub
+      # stub
     end
 
     def get key
-      #nil
+      # nil
     end
 
     def reset
-      #stub
+      # stub
     end
 
     def delete key
-      #nil
+      # nil
     end
 
   end

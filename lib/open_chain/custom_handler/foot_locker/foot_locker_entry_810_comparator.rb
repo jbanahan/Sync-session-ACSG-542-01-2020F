@@ -44,7 +44,7 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
 
     return unless entry
 
-    Lock.db_lock(entry) do 
+    Lock.db_lock(entry) do
       invoices_to_send = []
       entry.broker_invoices.each do |invoice|
         # Create the sync records here, so that below when ftping them we know they'll always be present
@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
         invoices_to_send << invoice if sr.try(:sent_at).nil?
       end
 
-      self.new.generate_and_send(entry) if invoices_to_send.length > 0 
+      self.new.generate_and_send(entry) if invoices_to_send.length > 0
     end
   end
 
@@ -67,7 +67,7 @@ module OpenChain; module CustomHandler; module FootLocker; class FootLockerEntry
 
       # XML might be blank if the invoices have no charges that should be transmitted
       if !xml.blank?
-        Tempfile.open(["Foolo810-#{invoice.invoice_number.strip}-",'.xml']) do |t|
+        Tempfile.open(["Foolo810-#{invoice.invoice_number.strip}-", '.xml']) do |t|
           write_xml(xml, t)
           t.flush
           t.rewind

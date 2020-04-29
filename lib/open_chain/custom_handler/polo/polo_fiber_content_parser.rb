@@ -71,7 +71,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
   end
 
   def self.parse_and_set_fiber_content product, instance = self.new
-    #Allow passing in the product id, so we can use via delayed_job without having to serialize the whole product.
+    # Allow passing in the product id, so we can use via delayed_job without having to serialize the whole product.
     if product.is_a? Numeric
       product = Product.where(id: product).first
     end
@@ -95,7 +95,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       failed = false
       status_message = "Passed"
     rescue FiberParseError => e
-      # If there's an actual fiber error, we can get the bad results 
+      # If there's an actual fiber error, we can get the bad results
       # and set them into the fiber fields so the user can see how the data was
       # badly parsed.
       result = e.parse_results
@@ -118,7 +118,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
   def parse_fiber_content fiber, force_clean_fiber: false
     fiber = preprocess_fiber fiber
-    
+
     footwear = footwear? fiber
 
     if force_clean_fiber && !footwear
@@ -150,7 +150,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
 
       # A lot of descriptions have no spaces, add spaces between any numeric percentages and text descriptions
       add_spaces = fiber.clone
-      loop do 
+      loop do
         break if (add_spaces.gsub! /(\d+(?:\.\d+)?%)(\S+)/, ' \1 \2 ').nil?
       end
       fiber = add_spaces.strip
@@ -196,7 +196,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       # look for if we need to not parse across lines later on (.ie when parsing single fiber components out of a longer list)
       fiber = fiber.split(/\r?\n/).select {|l| !l.blank?}.join(30.chr)
 
-      # Check if there is any colons (indicating multiple fiber components) in the 
+      # Check if there is any colons (indicating multiple fiber components) in the
       # description and split the fabric apart based on it
       split_fiber = fiber.split /\s*\w+\s*[:]\s*/
 
@@ -215,7 +215,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           end
         end
       end
-      
+
       results ? {algorithm: "single_non_footwear", results: [results]} : nil
     end
 
@@ -280,7 +280,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     def single_line_nonfootwear fiber
       # What we're looking for here is essentially one or more of the following
       # X% Fabric
-      # or 
+      # or
       # X% Fabric Y% Fabric
       # or
       # Fabric
@@ -311,7 +311,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       end
 
       results
-    end 
+    end
 
     def footwear_leading_components fiber
       # This should handle cases like the following
@@ -338,7 +338,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       elsif (found = fiber.scan /((?:(?:\d{1,2}\.\d+)|(?:\d{1,3}))\s*%?\s*)([^0-9%\x1E,:;]+)/).size > 0
         # The \x1E used above is the non-printing char we added above to represent newlines
 
-        # If any of the numeric groups included a percent, we want to skip any numeric grouping that 
+        # If any of the numeric groups included a percent, we want to skip any numeric grouping that
         # then doesn't have one.
         require_percent = found.map {|v| v[0]}.select {|v| v.include? "%"}.size > 0
         counter = (starting_index - 1)
@@ -380,7 +380,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
     end
 
     def parse_numeric_fiber_split fiber, results, starting_index, component_type
-      # This determines if we have a fiber that looks like 
+      # This determines if we have a fiber that looks like
       # 90%/10 Fiber1 / Fiber 2
 
       split_fiber = fiber.split("/")
@@ -394,7 +394,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         # If we found a what we think is a fabric component, then don't bother
         # to even look for numeric components since they need to all trail numerics
 
-        # This basically just matches the start of the line having an int or double 
+        # This basically just matches the start of the line having an int or double
         # either pro/pre-ceeded by a %
         if fabrics.length == 0 && f.strip =~ /^*%?\s*((?:\d{1,2}\.\d+)|(?:\d{1,3}))\s*%?\s*/
           # Store off the numeric value
@@ -406,7 +406,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           post_match =  $~.post_match
           fabrics << post_match if post_match =~ /[a-zA-Z]/
         elsif fabrics.length > 0 && !f.blank?
-          # Just consider every piece once we're past the numerics as 
+          # Just consider every piece once we're past the numerics as
           # fabric content
           fabrics << f.strip
         end
@@ -461,7 +461,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
       fiber = strip_punctuation fiber
       xref = xref_value fiber
       return xref unless xref.blank?
-  
+
       xref = xref_value fiber
       xref.blank? ? fiber : xref
     end
@@ -494,7 +494,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
         # 2) The percentage of each type of fiber adds up to 100 (or a mulitiple of 100, since
         # in certain cases we'll parse out multiples of 100% but then only return the first 100%)
         percentages = {}
-        
+
         (1..15).each do |x|
           fiber, type, percent = all_fiber_fields results, x
 
@@ -511,7 +511,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           percentages[type] << p
         end
 
-        percentages.keys.each do |key|
+        percentages.each_key do |key|
           total = percentages[key].inject(:+)
           raise error("Fabric percentages for all components must add up to 100%.  Found #{total}%", results_container) if (total % 100) > 0
         end
@@ -617,7 +617,6 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           clean_fiber = "#{result[:component]}: #{clean_fiber}" if result[:component]
           clean_fiber_components << clean_fiber
         end
-        
       end
 
       clean_fiber_components.join(" / ")
@@ -639,7 +638,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloFiberContentParse
           product.find_and_set_custom_value cd, value
           changed.value = true
         end
-        
+
       end
       nil
     end

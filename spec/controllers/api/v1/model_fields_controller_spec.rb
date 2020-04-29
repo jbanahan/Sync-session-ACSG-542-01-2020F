@@ -63,7 +63,7 @@ describe Api::V1::ModelFieldsController do
       expect(get :index).to be_success
       h = JSON.parse(response.body)
       div_name = h['fields'].find {|fld| fld['uid']=='prod_div_name'}
-      expected_auto_complete = {'url'=>'/api/v1/divisions/autocomplete?n=','field'=>'val'}
+      expected_auto_complete = {'url'=>'/api/v1/divisions/autocomplete?n=', 'field'=>'val'}
       expect(div_name['autocomplete']).to eq expected_auto_complete
     end
 
@@ -112,16 +112,16 @@ describe Api::V1::ModelFieldsController do
       expect(h['cache_key']).to eq expected_cache
     end
     it "should get select_options" do
-      EntityType.create!(module_type:'Product',name:'PT')
+      EntityType.create!(module_type:'Product', name:'PT')
 
       expect(get :index).to be_success
 
       h = JSON.parse(response.body)
       fld = h['fields'].find {|f| f['uid']=='prod_ent_type'}
-      expect(fld['select_options']).to eq [['PT','PT']]
+      expect(fld['select_options']).to eq [['PT', 'PT']]
     end
     it "should get cdef_uid" do
-      cd = Factory(:custom_definition,module_type:'Product',cdef_uid:'xyz')
+      cd = Factory(:custom_definition, module_type:'Product', cdef_uid:'xyz')
       ModelField.reload
       expect(get :index).to be_success
 

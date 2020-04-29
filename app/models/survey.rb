@@ -25,11 +25,11 @@
 #
 
 class Survey < ActiveRecord::Base
-  attr_accessible :archived, :company_id, :created_by_id, :email_body, 
-    :email_subject, :expiration_days, :name, :ratings_list, :require_contact, 
+  attr_accessible :archived, :company_id, :created_by_id, :email_body,
+    :email_subject, :expiration_days, :name, :ratings_list, :require_contact,
     :system_code, :trade_preference_program_id, :user, :questions_attributes,
     :updated_at
-  
+
   belongs_to :created_by, :class_name=>"User"
   belongs_to :company
   belongs_to :trade_preference_program
@@ -44,12 +44,12 @@ class Survey < ActiveRecord::Base
   accepts_nested_attributes_for :questions, :allow_destroy => true,
     :reject_if => lambda {|q| q[:content].blank? && q[:_destroy].blank?}
 
-  #copies and saves a new survey
-  #only copies survey & questions; not subscribers, assigned users, or responses
+  # copies and saves a new survey
+  # only copies survey & questions; not subscribers, assigned users, or responses
   def copy!
-    s = Survey.create!(:company_id=>self.company_id,:name=>self.name,:email_subject=>self.email_subject,:email_body=>self.email_body,:ratings_list=>self.ratings_list)
+    s = Survey.create!(:company_id=>self.company_id, :name=>self.name, :email_subject=>self.email_subject, :email_body=>self.email_body, :ratings_list=>self.ratings_list)
     self.questions.each do |q|
-      s.questions.create!(:rank=>q.rank,:content=>q.content,:choices=>q.choices,:warning=>q.warning)
+      s.questions.create!(:rank=>q.rank, :content=>q.content, :choices=>q.choices, :warning=>q.warning)
     end
     s
   end
@@ -74,7 +74,7 @@ class Survey < ActiveRecord::Base
 
   # generates a survey response in the target_user's account
   def generate_response! target_user, subtitle=nil, base_object=nil
-    sr = self.survey_responses.create!(:user=>target_user,:subtitle=>subtitle,:base_object=>base_object)
+    sr = self.survey_responses.create!(:user=>target_user, :subtitle=>subtitle, :base_object=>base_object)
     self.questions.each do |q|
       sr.answers.create!(:question=>q)
     end
@@ -83,7 +83,7 @@ class Survey < ActiveRecord::Base
   end
 
   def generate_group_response! target_group, subtitle = nil, base_object=nil
-    sr = self.survey_responses.create!(:group=>target_group,:subtitle=>subtitle,:base_object=>base_object)
+    sr = self.survey_responses.create!(:group=>target_group, :subtitle=>subtitle, :base_object=>base_object)
     self.questions.each do |q|
       sr.answers.create!(:question=>q)
     end

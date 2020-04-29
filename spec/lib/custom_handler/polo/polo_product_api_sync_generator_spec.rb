@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Polo::PoloProductApiSyncGenerator do
       # the work involved and is thoroughly tested already.
 
       # We're going to mock out the data for the remote calls
-      expect(@api_client).to receive(:find_by_uid).with("RLMASTER-" + @product.unique_identifier,["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
+      expect(@api_client).to receive(:find_by_uid).with("RLMASTER-" + @product.unique_identifier, ["prod_uid", "*cf_43", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
 
       # Capture and analyze the remote data later
       remote_data = nil

@@ -31,7 +31,7 @@ class SpecialTariffCrossReference < ActiveRecord::Base
   # Finds all special tariffs applicable for the parameters given.
   # The method returns a SpecialTariffHashResult object, which has basically a single method named tariff_for(country, hts) which is
   # used to find all the applicable special tariff objects for the given country of origin / hts combination.
-  # 
+  #
   # import_country_iso - the country the goods are being imported into - .ie the country enacting the tariffs
   # is_parts_feed - If true, any tariffs that should not be auto added to feeds to external systems will be ignored.
   # reference_date - The date to base the effective date calculations off of, defaults to the current time
@@ -82,7 +82,7 @@ class SpecialTariffCrossReference < ActiveRecord::Base
       coo = row[4].to_s.strip.presence || nil
       effective_date_start = Time.zone.parse(row[5]).to_date
       effective_date_end = Time.zone.parse(row[6]).to_date rescue nil
-      
+
       # Use float parse, since there's no reason not to support someone putting "1.0" which'll make the Integer constructor puke
       priority = Float(row[7].to_s.strip).to_i rescue nil
       suppress_from_feeds = ["Y", "TRUE", "1"].include?(row[8].to_s.strip.upcase)
@@ -175,11 +175,11 @@ class SpecialTariffCrossReference < ActiveRecord::Base
         # We can't mutate the hts_number, otherwise we invalidate the number for other iterations through
         # the each_pair loop
         local_hts = hts_number
-      
+
         # What we're going to do is take the full number given and then work our way back through the hash such that we find the "best matching"
         # tariff (.ie the one with the most consecutive matching digits)
         found = false
-        begin 
+        begin
           val = tariffs[local_hts]
           if !val.blank?
             values.push *val
@@ -187,24 +187,23 @@ class SpecialTariffCrossReference < ActiveRecord::Base
           end
         end while !found && (local_hts = local_hts[0..-2]).try(:length).to_i > 2
       end
-      
+
       return values.blank? ? nil : values
     end
 
     def size
       @hash.values.map {|h| h.values.map(&:size).sum }.sum
     end
-      
   end
 
     private
       def clean_hts
         if !self.hts_number.blank?
-          self.hts_number = self.hts_number.to_s.gsub(/[^0-9A-Za-z]/,'')
+          self.hts_number = self.hts_number.to_s.gsub(/[^0-9A-Za-z]/, '')
         end
 
         if !self.special_hts_number.blank?
-          self.special_hts_number = self.special_hts_number.to_s.gsub(/[^0-9A-Za-z]/,'')
+          self.special_hts_number = self.special_hts_number.to_s.gsub(/[^0-9A-Za-z]/, '')
         end
 
         true

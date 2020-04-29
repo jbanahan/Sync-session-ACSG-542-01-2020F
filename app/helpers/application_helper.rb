@@ -7,9 +7,9 @@ module ApplicationHelper
   ICON_SHEET = "icon_sheet.png"
   ICON_PRESENT = "icon_present.png"
   ICON_PDF = "icon_pdf.png"
-  ICONS = {:doc=>ICON_WRITE,:docx=>ICON_WRITE,:docm=>ICON_WRITE,:odt=>ICON_WRITE,
-    :xls=>ICON_SHEET,:xlsx=>ICON_SHEET,:xlsm=>ICON_SHEET,:ods=>ICON_SHEET,
-    :ppt=>ICON_PRESENT,:pptx=>ICON_PRESENT,:pptm=>ICON_PRESENT,:odp=>ICON_PRESENT,
+  ICONS = {:doc=>ICON_WRITE, :docx=>ICON_WRITE, :docm=>ICON_WRITE, :odt=>ICON_WRITE,
+    :xls=>ICON_SHEET, :xlsx=>ICON_SHEET, :xlsm=>ICON_SHEET, :ods=>ICON_SHEET,
+    :ppt=>ICON_PRESENT, :pptx=>ICON_PRESENT, :pptm=>ICON_PRESENT, :odp=>ICON_PRESENT,
     :pdf=>ICON_PDF
   }
 
@@ -20,13 +20,13 @@ module ApplicationHelper
       icon_opts = {class: "fa fa-medkit"}
 
       if BusinessValidationResult.fail_state?(state)
-        icon_opts[:class] += " text-danger" 
+        icon_opts[:class] += " text-danger"
       elsif BusinessValidationResult.review_state?(state)
         icon_opts[:class] += " text-warning"
       end
 
-      return content_tag(:button,class: 'btn_link', id:'business_rules_link_button', link_to: path, title:'Business Rules') do
-        content_tag(:i,'', icon_opts)
+      return content_tag(:button, class: 'btn_link', id:'business_rules_link_button', link_to: path, title:'Business Rules') do
+        content_tag(:i, '', icon_opts)
       end
     else
       return ''
@@ -34,7 +34,7 @@ module ApplicationHelper
 
   end
 
-  #create a visual
+  # create a visual
   def section_box title, html_options={}, &block
     inner_opts = {}.merge html_options
     if inner_opts[:class]
@@ -43,8 +43,8 @@ module ApplicationHelper
       inner_opts[:class] = "section_box"
     end
     content_tag('div', inner_opts) do
-      content_tag('div',title,:class=>'section_head') +
-      content_tag('div',:class=>'section_body') do
+      content_tag('div', title, :class=>'section_head') +
+      content_tag('div', :class=>'section_body') do
         yield
       end
     end
@@ -73,15 +73,15 @@ module ApplicationHelper
     end
   end
 
-  #render view of field in table row form
+  # render view of field in table row form
   def field_view_row object, model_field_uid, show_prefix=nil
-    l = lambda {|label,field,never_hide,model_field| field_row(label,field,never_hide,model_field)}
+    l = lambda {|label, field, never_hide, model_field| field_row(label, field, never_hide, model_field)}
     field_view_generic object, model_field_uid, show_prefix, l
   end
 
   # render field in bootstrap friendly view mode
   def field_view_bootstrap object, model_field_uid, show_prefix=nil
-    l = lambda {|b,f,n,m| field_bootstrap b,f,n,m}
+    l = lambda {|b, f, n, m| field_bootstrap b, f, n, m}
     field_view_generic object, model_field_uid, show_prefix, l
   end
 
@@ -101,7 +101,7 @@ module ApplicationHelper
         when :usd
           val = number_to_currency val
         else
-          val = number_to_currency val, {:format=>"%n",:negative_format=>"-%n"}
+          val = number_to_currency val, {:format=>"%n", :negative_format=>"-%n"}
         end
       elsif model_field.data_type == :decimal
         # Using precision 5 since that'll cover pretty much every decimal field in the system.
@@ -117,8 +117,8 @@ module ApplicationHelper
     html_escape val
   end
 
-  #build a select box with all model_fields grouped by module.
-  def select_model_fields_tag(name,selected,opts={})
+  # build a select box with all model_fields grouped by module.
+  def select_model_fields_tag(name, selected, opts={})
     opts[:class] ||= ''
     opts[:class] << ' form-control'
 
@@ -139,7 +139,7 @@ module ApplicationHelper
       inner_opts.delete :size
       inner_opts.delete "size"
       # What we have now is in one_of_arry is an array like ["Option 1", "Option 2"]
-      # ...this introduces alphabetical casing issues when value goes to match the option that's selected.  
+      # ...this introduces alphabetical casing issues when value goes to match the option that's selected.
       # We explicitly allow for case-mismatch for the values in the field validator rule check for the 'One Of' field validation
 
       # So, rather than rely on the rails options_for_select to do the selected option detection, we can do it ourselves here
@@ -158,15 +158,15 @@ module ApplicationHelper
         end
       end
 
-      select_tag(field_name,options_for_select(options_array),inner_opts)
+      select_tag(field_name, options_for_select(options_array), inner_opts)
     else
-      text_field_tag(field_name,value,inner_opts)
+      text_field_tag(field_name, value, inner_opts)
     end
   end
 
   def model_text_area_tag field_name, model_field_uid, value, opts={}
     inner_opts = opts_for_model_text_field model_field_uid, opts
-    text_area_tag(field_name,value,inner_opts);
+    text_area_tag(field_name, value, inner_opts);
   end
 
   def model_select_field_tag field_name, model_field_uid, value, opts = {}
@@ -199,12 +199,12 @@ module ApplicationHelper
     title += "<br>Uploaded by: " + att.uploaded_by.full_name if att.uploaded_by && !att.uploaded_by.full_name.blank?
     title += "<br>Archive Title: " + att.attachment_archives.first.name unless att.try(:attachment_archives).try(:first).try(:name).blank?
 
-    opts = {:class=>"attachment_icon",:alt=>att.attached_file_name,:width=>"48px",
+    opts = {:class=>"attachment_icon", :alt=>att.attached_file_name, :width=>"48px",
             "data-container" => "body", "data-toggle" => "popover", "data-placement" => "top",
             "data-content" => title, "data-trigger" => "hover", "data-delay" => '{"show":"500"}' }
     link_opts = {}
     fn = att.attached_file_name
-    icon = image_tag("icon_other.png",opts)
+    icon = image_tag("icon_other.png", opts)
     if att.web_preview?
       opts[:width]="75px"
       opts[:style]="border:1px solid #d7d7d7;"
@@ -212,12 +212,12 @@ module ApplicationHelper
       icon = image_tag(download_attachment_path(att), opts.merge(img_opts_override))
     elsif !fn.blank?
       ext = fn.split('.').last.downcase.to_sym
-      icon = image_tag(ICONS[ext],opts.merge(img_opts_override)) unless ICONS[ext].nil?
+      icon = image_tag(ICONS[ext], opts.merge(img_opts_override)) unless ICONS[ext].nil?
     end
     link_to icon, download_attachment_path(att), link_opts
   end
 
-  #show the label for the field.  show_prefix options: nil=default core module behavior, true=always show prefix, false=never show prefix
+  # show the label for the field.  show_prefix options: nil=default core module behavior, true=always show prefix, false=never show prefix
   def field_label model_field, show_prefix=nil
     mf = get_model_field(model_field)
     return "" if mf.blank? || !mf.can_view?(User.current)
@@ -225,12 +225,12 @@ module ApplicationHelper
     render_field_label(mf, show_prefix)
   end
 
-  def help_link(text,page_name=nil)
+  def help_link(text, page_name=nil)
     "<a href='/help#{page_name.blank? ? "" : "?page="+page_name}' target='chainio_help'>#{text}</a>".html_safe
   end
 
   def help_image(file_name)
-    image_tag("help/#{file_name}",:class=>'help_pic')
+    image_tag("help/#{file_name}", :class=>'help_pic')
   end
 
   def bool_txt(bool)
@@ -263,7 +263,7 @@ module ApplicationHelper
     custom_fields = cm.model_fields(User.current) {|mf| mf.custom?}.values
     custom_fields = CustomValue.sort_by_rank_and_label(custom_fields) unless custom_fields.blank?
 
-    #don't show extra address fields
+    # don't show extra address fields
     custom_fields.delete_if {|cf| cf.uid.to_s.match(/\^*af_/)}
 
     # skip fields
@@ -289,16 +289,16 @@ module ApplicationHelper
     # OR if we're not showing read only fields, don't show any fields the user also can't edit
     html_attributes = create_field_html_attributes mf, opts
 
-    add_tooltip_to_html_options(mf,html_attributes)
+    add_tooltip_to_html_options(mf, html_attributes)
 
     hidden = html_attributes[:hidden] === true || opts[:hidden]
-    return "" if skip_field?(mf,user,hidden,opts[:display_read_only])
+    return "" if skip_field?(mf, user, hidden, opts[:display_read_only])
     html_attributes[:hidden] = hidden if html_attributes[:hidden].nil?
 
     editor = nil
     wrapper = html_attributes.delete :wrap_with
 
-    form_field_name = get_form_field_name(opts[:parent_name],opts[:form],mf)
+    form_field_name = get_form_field_name(opts[:parent_name], opts[:form], mf)
     if hidden || (opts[:form] && !mf.read_only? && mf.can_edit?(user))
       if !hidden && block_given?
         editor = yield mf, form_field_name, mf.process_export(core_object, user), html_attributes
@@ -325,7 +325,7 @@ module ApplicationHelper
     if opts[:editor_only] || hidden
       if opts[:table]
         attrs = {}
-        attrs[:class] = "has_numeric" if [:decimal,:integer].include?(mf.data_type)
+        attrs[:class] = "has_numeric" if [:decimal, :integer].include?(mf.data_type)
         output << content_tag(:td, editor, attrs)
       else
         output << editor
@@ -413,12 +413,12 @@ module ApplicationHelper
     case model_field.data_type
     when :boolean
       # The cv_chkbx tag is monitored by a jquery expression and copies the state of the check into the hidden field (which is what is read on form submission)
-      # DO NOT change this output without making sure you've handled all legacy cases that utilize this in open_chain.js and the bulk update 
+      # DO NOT change this output without making sure you've handled all legacy cases that utilize this in open_chain.js and the bulk update
       # cases from bulk_actions.js.coffee
       html_attributes[:class] << "cv_chkbx"
       chb_field_name = form_field_name.gsub(/[\[\]*]/, '_')
       html_attributes[:id] = "cbx_"+chb_field_name
-      field = hidden_field_tag(form_field_name,c_val, id: ("hdn_"+chb_field_name), class: "hdn_cv_chkbx") + check_box_tag('ignore_me', "1", c_val, html_attributes)
+      field = hidden_field_tag(form_field_name, c_val, id: ("hdn_"+chb_field_name), class: "hdn_cv_chkbx") + check_box_tag('ignore_me', "1", c_val, html_attributes)
     when :text
       html_attributes[:rows] = 5 unless html_attributes[:rows]
       field = model_text_area_tag(form_field_name, model_field, c_val, html_attributes)
@@ -426,7 +426,7 @@ module ApplicationHelper
       if model_field.custom_definition && model_field.custom_definition.is_address?
         available_addresses = model_field.core_module.available_addresses(core_object)
         selected_value = core_object.get_custom_value(model_field.custom_definition).value
-        field = select_tag(form_field_name,options_from_collection_for_select(available_addresses,"id","full_address",selected_value),include_blank: true, class:'form-control')
+        field = select_tag(form_field_name, options_from_collection_for_select(available_addresses, "id", "full_address", selected_value), include_blank: true, class:'form-control')
       end
     end
 
@@ -470,7 +470,7 @@ module ApplicationHelper
   def field_row(label, field, never_hide=false, model_field=nil)
     model_field = get_model_field(model_field)
     td_label = content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')
-    is_numeric = model_field && [:decimal,:integer].include?(model_field.data_type) && field && !field.to_s.match(/[a-zA-Z\s]/)
+    is_numeric = model_field && [:decimal, :integer].include?(model_field.data_type) && field && !field.to_s.match(/[a-zA-Z\s]/)
     td_content = content_tag(:td, field, :style=>"#{is_numeric ? "text-align:right;" : ""}")
     content_tag(:tr, td_label+td_content, :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
@@ -482,14 +482,14 @@ module ApplicationHelper
     model_field = get_model_field(model_field)
     if model_field && model_field.data_type==:text
       field = field.gsub(/(:?\r\n)|(:?\r)|(:?\n)/, "<br>").html_safe
-      field_content = content_tag(:span,field,:class=>'pre-ish')
+      field_content = content_tag(:span, field, :class=>'pre-ish')
     end
     content_tag(:div,
       content_tag(:div,
         label.blank? ? '' : label,
         :class=>'col-md-4', :style=>'font-weight:bold;'
       ) +
-      content_tag(:div,field_content,:class=>'col-md-8'),
+      content_tag(:div, field_content, :class=>'col-md-8'),
       :class=>'row bootstrap-hover'
     )
   end
@@ -499,17 +499,17 @@ module ApplicationHelper
     (always_view || mf.can_view?(User.current)) ? mf.label : ""
   end
 
-  #takes the values added to the array passed into the block and creates a comma separated list
+  # takes the values added to the array passed into the block and creates a comma separated list
   def comma_list &block
     base = []
     yield base
-    CSV.generate_line base, {:row_sep=>"",:col_sep=>", "}
+    CSV.generate_line base, {:row_sep=>"", :col_sep=>", "}
   end
 
   def show_schedule_b schedule_b_number, with_popup_link=true
     return "" if schedule_b_number.blank?
     if with_popup_link
-      return link_to schedule_b_number.hts_format, "#", {:class=>'lnk_schedb_popup',:schedb=>schedule_b_number}
+      return link_to schedule_b_number.hts_format, "#", {:class=>'lnk_schedb_popup', :schedb=>schedule_b_number}
     else
       return schedule_b_number.hts_format
     end
@@ -519,7 +519,7 @@ module ApplicationHelper
     return "" if hts_number.blank?
 
     if with_popup_link
-      content_tag :span, (hts_number.hts_format + " " + tariff_more_info(hts_number,country_id)).html_safe
+      content_tag :span, (hts_number.hts_format + " " + tariff_more_info(hts_number, country_id)).html_safe
     else
       return hts_number.hts_format
     end
@@ -530,7 +530,7 @@ module ApplicationHelper
     return "" if value.blank?
 
     if with_popup_link
-      content_tag :span, (value + " " + tariff_more_info(value,country_id).html_safe)
+      content_tag :span, (value + " " + tariff_more_info(value, country_id).html_safe)
     else
       value
     end
@@ -548,11 +548,11 @@ module ApplicationHelper
   end
 
   def tariff_more_info hts_number, country_id
-    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_tariff_popup btn btn-sm btn-link',:hts=>hts_number,:country=>country_id}
+    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_tariff_popup btn btn-sm btn-link', :hts=>hts_number, :country=>country_id}
   end
 
   def schedule_b_more_info hts_number
-    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_schedb_popup btn btn-sm btn-link',:schedb=>hts_number}
+    link_to "<i class='fa fa-external-link'></i>".html_safe, "#", {:class=>'lnk_schedb_popup btn btn-sm btn-link', :schedb=>hts_number}
   end
 
   private
@@ -568,7 +568,7 @@ module ApplicationHelper
       show_field = false if !e_id.nil? && !ids.include?(e_id)
     end
 
-    show_field ? render_lambda.call(field_label(mf,show_prefix),  field_value(object,mf),false,mf) : ""
+    show_field ? render_lambda.call(field_label(mf, show_prefix),  field_value(object, mf), false, mf) : ""
   end
 
   def opts_for_model_text_field model_field_uid, opts
@@ -586,7 +586,7 @@ module ApplicationHelper
 
   def val_class model_field_uid
     mf = get_model_field(model_field_uid)
-    #returns the string "rvalidate" if the field needs remote validation
+    # returns the string "rvalidate" if the field needs remote validation
     r = []
     r << "rvalidate" unless mf.field_validator_rule.nil?
 
@@ -674,7 +674,7 @@ module ApplicationHelper
   end
 
   def state_toggle_buttons obj, user, button_class: 'btn btn-secondary'
-    buttons = StateToggleButton.for_core_object_user(obj,user).collect do |b|
+    buttons = StateToggleButton.for_core_object_user(obj, user).collect do |b|
       path = CoreModule.find_by_object(obj).class_name.tableize
       show_activate = b.to_be_activated?(obj)
       btn_text = show_activate ? b.activate_text : b.deactivate_text
@@ -693,7 +693,7 @@ module ApplicationHelper
     name = MasterSetup.get.friendly_name
     title = "#{name.blank? ? "" : "#{name} - "}#{page_title}"
   end
-  
+
   def body_tag master_setup, current_user, run_as_user
     if (run_as_user || !master_setup.production?)
       concat('<body class="run-as">'.html_safe)
@@ -745,9 +745,9 @@ module ApplicationHelper
         else
           milestone_enabled = value <= reference_date.to_date
         end
-        
+
         value = value.strftime(date_format).html_safe
-        
+
       else
         value = nil
       end

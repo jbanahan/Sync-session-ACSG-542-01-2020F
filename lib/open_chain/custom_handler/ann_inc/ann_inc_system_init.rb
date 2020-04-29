@@ -1,7 +1,7 @@
 module OpenChain; module CustomHandler; module AnnInc; class AnnIncSystemInit
   def self.init
     return unless MasterSetup.get.custom_feature?("Ann Inc")
-    
+
     register_change_comparators
   end
 
@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnIncSystemInit
     require 'open_chain/custom_handler/ann_inc/ann_classification_default_comparator'
 
     OpenChain::CustomHandler::CustomViewSelector.register_handler OpenChain::CustomHandler::AnnInc::AnnIncViewSelector
-    
+
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::AnnInc::AnnAuditComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::AnnInc::AnnAcDateComparator
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::AnnInc::AnnClassificationDefaultComparator

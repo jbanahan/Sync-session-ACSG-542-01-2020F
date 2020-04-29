@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator do
-  
+
   describe "generate_xml_and_send" do
 
     let (:entry_data) {
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
     }
 
     let (:cn) {
-     Factory(:country, iso_code: "CN") 
+     Factory(:country, iso_code: "CN")
     }
 
     let (:cdefs) {
@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
     }
 
     let (:shipment) {
-      s = Shipment.create! reference: "REF", master_bill_of_lading: "CARR123456", house_bill_of_lading: "HBOL", vessel: "VESSEL", voyage: "VOYAGE", vessel_carrier_scac: "CARR", mode: "Ocean", 
+      s = Shipment.create! reference: "REF", master_bill_of_lading: "CARR123456", house_bill_of_lading: "HBOL", vessel: "VESSEL", voyage: "VOYAGE", vessel_carrier_scac: "CARR", mode: "Ocean",
         est_arrival_port_date: Date.new(2018, 4, 1), departure_date: Date.new(2018, 3, 1), est_departure_date: Date.new(2018, 3, 3), importer_id: importer.id,
         country_origin: cn, country_export: us, description_of_goods: "GOODS DESCRIPTION"
 
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       expect(line.unit_price).to eq 10
       expect(line.unit_price_uom).to eq "PCS"
       expect(line.po_number).to eq "ORDER"
-      expect(line.foreign_value).to eq 300 
+      expect(line.foreign_value).to eq 300
       expect(line.country_of_origin).to eq "VN"
       expect(line.mid).to eq "MID1"
 
@@ -164,7 +164,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       expect(line.unit_price).to eq 10
       expect(line.unit_price_uom).to eq "PCS"
       expect(line.po_number).to eq "ORDER"
-      expect(line.foreign_value).to eq 600 
+      expect(line.foreign_value).to eq 600
       expect(line.mid).to eq "MID2"
     end
 

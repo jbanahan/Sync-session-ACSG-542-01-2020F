@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductDocumentsParser do
   describe "process_document" do
     let (:file_data) { IO.read 'spec/fixtures/files/attorney.png' }
     let (:filename) { "US_IOR-12345789_EE908U_Ion#Enterprises_PGA_RAD_RadiationCertificate.20191203171954407.png" }
-    let! (:importer) { 
+    let! (:importer) {
       add_system_identifier(with_customs_management_id(Factory(:importer), "CMID"), "Amazon Reference", "12345789")
     }
     let (:user) { Factory(:user) }
@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductDocumentsParser do
     }
 
     it "creates product and saves attachment" do
-      expect { subject.process_document user, file_data, filename }.to change{ Product.count }.from(0).to(1)
+      expect { subject.process_document user, file_data, filename }.to change { Product.count }.from(0).to(1)
       p = Product.last
 
       expect(p.unique_identifier).to eq "CMID-EE908U"
@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductDocumentsParser do
 
   describe "parse" do
     subject { described_class }
-    
+
     it "calls process_document" do
       expect_any_instance_of(subject).to receive(:process_document).with(User.integration, "data", "file.png")
       subject.parse "data", key: "file.png"

@@ -17,7 +17,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
 
         it "should accept a J JILL entry with a Broker Invoice containing a charge code of '0600'" do
           expect(described_class.new.accepts?(nil, @entry)).to be_truthy
-        end 
+        end
 
         it "should not accept non-JJILL entries with 0600 code" do
           @entry.update_attributes :customer_number => "Blargh!!"
@@ -42,7 +42,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
     end
   end
 
-  context "using_checksum" do 
+  context "using_checksum" do
     before :each do
       @landed_cost_data = {
         entries: [
@@ -57,12 +57,12 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
                     part_number: "Part #1",
                     quantity: BigDecimal.new(1),
                     per_unit: {
-                      entered_value: BigDecimal.new("1.20"), 
-                      duty: BigDecimal.new("3.20"), 
+                      entered_value: BigDecimal.new("1.20"),
+                      duty: BigDecimal.new("3.20"),
                       fee: BigDecimal.new("4.20"),
-                      international_freight: BigDecimal.new("5.20"), 
-                      inland_freight: BigDecimal.new("6.20"), 
-                      brokerage: BigDecimal.new("7.20"), 
+                      international_freight: BigDecimal.new("5.20"),
+                      inland_freight: BigDecimal.new("6.20"),
+                      brokerage: BigDecimal.new("7.20"),
                       other: BigDecimal.new("8.20")
                     }
                   },
@@ -71,12 +71,12 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
                     part_number: "Part #2",
                     quantity: BigDecimal.new(2),
                     per_unit: {
-                      entered_value: BigDecimal.new("1.20"), 
-                      duty: BigDecimal.new("3.20"), 
+                      entered_value: BigDecimal.new("1.20"),
+                      duty: BigDecimal.new("3.20"),
                       fee: BigDecimal.new("4.20"),
-                      international_freight: BigDecimal.new("5.20"), 
-                      inland_freight: BigDecimal.new("6.20"), 
-                      brokerage: BigDecimal.new("7.20"), 
+                      international_freight: BigDecimal.new("5.20"),
+                      inland_freight: BigDecimal.new("6.20"),
+                      brokerage: BigDecimal.new("7.20"),
                       other: BigDecimal.new("8.20")
                     }
                   }
@@ -90,12 +90,12 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
                     part_number: "Part #3",
                     quantity: BigDecimal.new(3),
                     per_unit: {
-                      entered_value: BigDecimal.new("1.20"), 
-                      duty: BigDecimal.new("3.20"), 
+                      entered_value: BigDecimal.new("1.20"),
+                      duty: BigDecimal.new("3.20"),
                       fee: BigDecimal.new("4.20"),
-                      international_freight: BigDecimal.new("5.20"), 
-                      inland_freight: BigDecimal.new("6.20"), 
-                      brokerage: BigDecimal.new("7.20"), 
+                      international_freight: BigDecimal.new("5.20"),
+                      inland_freight: BigDecimal.new("6.20"),
+                      brokerage: BigDecimal.new("7.20"),
                       other: BigDecimal.new("8.20")
                     }
                   },
@@ -104,12 +104,12 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
                     part_number: "Part #4",
                     quantity: BigDecimal.new(4),
                     per_unit: {
-                      entered_value: BigDecimal.new("1.20"), 
-                      duty: BigDecimal.new("3.20"), 
+                      entered_value: BigDecimal.new("1.20"),
+                      duty: BigDecimal.new("3.20"),
                       fee: BigDecimal.new("4.20"),
-                      international_freight: BigDecimal.new("5.20"), 
-                      inland_freight: BigDecimal.new("6.20"), 
-                      brokerage: BigDecimal.new("7.20"), 
+                      international_freight: BigDecimal.new("5.20"),
+                      inland_freight: BigDecimal.new("6.20"),
+                      brokerage: BigDecimal.new("7.20"),
                       other: BigDecimal.new("8.20")
                     }
                   }
@@ -120,7 +120,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         ]
       }
     end
-    
+
     describe "receive" do
       before :each do
         @e = Factory(:entry, file_logged_date: '2016-02-01')
@@ -154,7 +154,7 @@ describe OpenChain::Events::EntryEvents::LandedCostReportAttacherListener do
         attachment = double("attachment")
         expect(Attachment).to receive(:delay).and_return attachment
         expect(attachment).to receive(:push_to_google_drive).with "JJill Landed Cost", kind_of(Numeric)
-        
+
         entry = described_class.new.receive nil, @e
         expect(entry.id).to eq(@e.id)
 

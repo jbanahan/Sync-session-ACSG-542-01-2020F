@@ -2,11 +2,11 @@
 
 describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
-  def make_address 
+  def make_address
     Address.new :line_1 => "123 Fake St.", :line_2 => "Suite 123", :city => "Fakesville", :state => "PA", :postal_code => "12345"
   end
 
-  let (:importer) { 
+  let (:importer) {
     with_fenix_id(Factory(:importer, :name=>"Importer", :name_2=>"Division of Importer, Inc.", :addresses=>[make_address]), "TAXID")
   }
 
@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
     # Use a full datetime so that we're sure it's getting trim'ed back to just a date in the output
     Factory(:commercial_invoice, :invoice_number=>"Inv. Number", :invoice_date=>Time.zone.parse("2018-12-15 12:00"), :country_origin_code => "US",
                       :currency => "CAD", :total_quantity => 10, :total_quantity_uom => "CTNS", :gross_weight => 100, :invoice_value=>100.10,
-                      :importer => importer, :vendor => vendor, :consignee => consignee, master_bills_of_lading: "SCAC1234567890")    
+                      :importer => importer, :vendor => vendor, :consignee => consignee, master_bills_of_lading: "SCAC1234567890")
   }
 
   let! (:invoice_line_1) {
@@ -160,7 +160,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       expect(contents.length).to eq(3)
       h = contents[0]
 
-      # Invoice value 
+      # Invoice value
       expect(h[105..119]).to eq("0.00".ljust(15))
       # Units
       expect(h[90..104]).to eq("0.00".ljust(15))
@@ -174,7 +174,7 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       expect(contents.length).to eq(3)
       h = contents[0]
 
-      # Invoice value 
+      # Invoice value
       expect(h[105..119]).to eq("0.00".ljust(15))
     end
 
@@ -194,8 +194,8 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
 
     it "should error if more than 999 lines are on the invoice" do
       998.times {|x| l = invoice.commercial_invoice_lines.build(:part_number=>"#{x}"); l.commercial_invoice_tariffs.build(:hts_code=>"#{x}")}
-      
-      expect{generate}.to raise_error "Invoice # #{invoice.invoice_number} generated a Fenix invoice file containing 1000 lines.  Invoice's over 999 lines are not supported and must have detail lines consolidated or the invoice must be split into multiple pieces."
+
+      expect {generate}.to raise_error "Invoice # #{invoice.invoice_number} generated a Fenix invoice file containing 1000 lines.  Invoice's over 999 lines are not supported and must have detail lines consolidated or the invoice must be split into multiple pieces."
     end
 
     it "should transliterate non-ASCII encoding values" do
@@ -228,8 +228,8 @@ describe OpenChain::CustomHandler::FenixNdInvoiceGenerator do
       expect(h[1..25]).to eq("1234567890123456789012345")
     end
 
-    it "should convert nil hts codes to 0 for output" do 
-      # I can't figure out why if I just change a tariff record and save the tariff model directly that the 
+    it "should convert nil hts codes to 0 for output" do
+      # I can't figure out why if I just change a tariff record and save the tariff model directly that the
       # database value isn't updated..that's the sole reason for destroying and recreating the invoice in the test
       invoice.commercial_invoice_lines.destroy_all
 

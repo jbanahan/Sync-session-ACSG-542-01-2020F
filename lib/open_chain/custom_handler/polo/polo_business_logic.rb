@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module Polo
       po_number =~ /^\s*47/
     end
 
-    # Splits an SAP PO / Line number combination into a correctly formatted 
+    # Splits an SAP PO / Line number combination into a correctly formatted
     def split_sap_po_line_number po_number
       if po_number =~ /^(.+)-(\d+)$/
         po = $1
@@ -28,6 +28,6 @@ module OpenChain; module CustomHandler; module Polo
     def prepack_indicator? value
       value.respond_to?(:upcase) && "AS" == value.upcase.strip
     end
-    
+
   end
 end; end; end

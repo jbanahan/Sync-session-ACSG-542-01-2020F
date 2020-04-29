@@ -110,7 +110,7 @@ module OpenChain; module CustomHandler; module Hm; class HmParsPdfGenerator
   ensure
     # Cleanup any barcode temp files...
     if barcode_files.try(:size) > 0
-      barcode_files.values.each {|f| f.close! unless f.closed? }
+      barcode_files.each_value {|f| f.close! unless f.closed? }
     end
   end
 

@@ -31,7 +31,7 @@ describe FiscalMonthsController do
       get :index, company_id: co.id
       expect(response).to be_redirect
       expect(flash[:errors]).to eq ["Only system admins can do this."]
-    end 
+    end
   end
 
   describe "new" do
@@ -70,16 +70,16 @@ describe FiscalMonthsController do
   end
 
   describe "create" do
-    let(:start_date) { DateTime.new(2016,3,15) }
-    let(:end_date) { DateTime.new(2016,3,16) }
+    let(:start_date) { DateTime.new(2016, 3, 15) }
+    let(:end_date) { DateTime.new(2016, 3, 16) }
     let(:fm_params) do
       { company_id: co.id, year: 2016, month_number: 1, start_date: start_date, end_date: end_date }
     end
 
     it "creates" do
-      start_date = DateTime.new(2016,3,15)
-      end_date = DateTime.new(2016,3,16)
-      expect{ post :create, company_id: co.id, fiscal_month: fm_params}.to change(FiscalMonth, :count).from(0).to(1)
+      start_date = DateTime.new(2016, 3, 15)
+      end_date = DateTime.new(2016, 3, 16)
+      expect { post :create, company_id: co.id, fiscal_month: fm_params}.to change(FiscalMonth, :count).from(0).to(1)
 
       expect(response).to redirect_to company_fiscal_months_path(co.id)
       fm = FiscalMonth.first
@@ -92,17 +92,17 @@ describe FiscalMonthsController do
 
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
-      start_date = DateTime.new(2016,3,15)
-      end_date = DateTime.new(2016,3,16)
-      expect{ post :create, company_id: co.id, fiscal_month: fm_params}.to_not change(FiscalMonth, :count)
+      start_date = DateTime.new(2016, 3, 15)
+      end_date = DateTime.new(2016, 3, 16)
+      expect { post :create, company_id: co.id, fiscal_month: fm_params}.to_not change(FiscalMonth, :count)
       expect(response).to be_redirect
       expect(flash[:errors]).to eq ["Only system admins can do this."]
     end
   end
 
   describe "update" do
-    let(:start_date) { DateTime.new(2016,3,15) }
-    let(:end_date) { DateTime.new(2016,3,16) }
+    let(:start_date) { DateTime.new(2016, 3, 15) }
+    let(:end_date) { DateTime.new(2016, 3, 16) }
     let(:fm_params) do
       { company_id: fm_1.company.id, year: 2016,  month_number: 1,  start_date: start_date, end_date: end_date }
     end
@@ -120,8 +120,8 @@ describe FiscalMonthsController do
 
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
-      start_date = DateTime.new(2016,3,15)
-      end_date = DateTime.new(2016,3,16)
+      start_date = DateTime.new(2016, 3, 15)
+      end_date = DateTime.new(2016, 3, 16)
       put :update, id: fm_1.id, company_id: co.id, fiscal_month: fm_params
       expect(flash[:errors]).to eq ["Only system admins can do this."]
 
@@ -135,16 +135,16 @@ describe FiscalMonthsController do
 
   describe "destroy" do
     before { fm_1 }
-    
+
     it "destroys" do
-      expect{post :destroy, company_id: co.id, id: fm_1.id}.to change(FiscalMonth, :count).from(1).to(0)
+      expect {post :destroy, company_id: co.id, id: fm_1.id}.to change(FiscalMonth, :count).from(1).to(0)
       expect(response).to redirect_to company_fiscal_months_path(co.id)
       expect(flash[:notices]).to eq ["Fiscal month deleted."]
     end
 
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
-      expect{post :destroy, company_id: co.id, id: fm_1.id}.to_not change(FiscalMonth, :count)
+      expect {post :destroy, company_id: co.id, id: fm_1.id}.to_not change(FiscalMonth, :count)
       expect(response).to be_redirect
       expect(flash[:errors]).to eq ["Only system admins can do this."]
     end
@@ -152,7 +152,7 @@ describe FiscalMonthsController do
 
   describe "download" do
     before do
-      date = Date.new(2016,01,01)
+      date = Date.new(2016, 01, 01)
       fm_1.update_attributes(company: co, year: 2015, month_number: 2, start_date: date, end_date: date)
       fm_2.update_attributes(company: co, year: 2015, month_number: 1, start_date: date, end_date: date)
     end
@@ -170,7 +170,7 @@ describe FiscalMonthsController do
       expect(flash[:errors]).to eq ["Only system admins can do this."]
     end
   end
-  
+
   describe "upload" do
     it "uploads" do
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
@@ -188,7 +188,7 @@ describe FiscalMonthsController do
       expect(response).to redirect_to company_fiscal_months_path(co.id)
       expect(flash[:errors]).to eq ["You must select a file to upload."]
     end
-    
+
     it "rejects wrong file type" do
       file = fixture_file_upload('/files/test_sheet_4.txt', 'text/plain')
       expect(CustomFile).to_not receive(:create!)

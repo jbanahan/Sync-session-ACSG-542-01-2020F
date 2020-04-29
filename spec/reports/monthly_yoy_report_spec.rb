@@ -1,8 +1,7 @@
 describe OpenChain::Report::MonthlyYoyReport do
-  
   let(:co1) { Factory(:country, iso_code: "CA") }
   let(:co2) { Factory(:country, iso_code: "US") }
-  let(:today) { Date.new(2016,5,15) }
+  let(:today) { Date.new(2016, 5, 15) }
   let(:month_ago) { today - 1.month }
   let(:two_months_ago) { month_ago - 1.month }
   let!(:e1) { Factory(:entry, file_logged_date: two_months_ago, division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co1) }
@@ -10,7 +9,7 @@ describe OpenChain::Report::MonthlyYoyReport do
   let!(:e3) { Factory(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '3', transport_mode_code: '10', import_country: co1) }
   let!(:e4) { Factory(:entry, file_logged_date: month_ago, division_number: '1', customer_number: '2', transport_mode_code: '40', import_country: co1) }
   # Ensures we are including the final day of the previous month.
-  let!(:e5) { Factory(:entry, file_logged_date: Date.new(2016,4,30), division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co2) }
+  let!(:e5) { Factory(:entry, file_logged_date: Date.new(2016, 4, 30), division_number: '1', customer_number: '2', transport_mode_code: '10', import_country: co2) }
 
   describe "run_schedulable" do
     it "sends email with attached xls" do
@@ -26,7 +25,7 @@ describe OpenChain::Report::MonthlyYoyReport do
         t.flush
         wb = Spreadsheet.open t.path
         sheet = wb.worksheet(0)
-        
+
         expect(sheet.count).to eq 6
         expect(sheet.row(0)).to eq ["Period", "Year", "Month", "Country", "Division Number", "Customer Number", "Mode", "File Count"]
       end

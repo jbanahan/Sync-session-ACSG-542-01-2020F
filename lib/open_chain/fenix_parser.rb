@@ -9,11 +9,11 @@ module OpenChain; class FenixParser
 
   SOURCE_CODE ||= Entry::FENIX_SOURCE_SYSTEM
 
-  # You can easily add new simple date mappings from the SD records by adding a 
+  # You can easily add new simple date mappings from the SD records by adding a
   # Activity # -> method name symbol in the entry.
-  # ie. 'ABC' => :abc_date 
+  # ie. 'ABC' => :abc_date
   ACTIVITY_DATE_MAP ||= {
-    # Because there's special handling associated with these fields, some of these 
+    # Because there's special handling associated with these fields, some of these
     # mapped values intentially use symbols that don't map to actual entry property setter methods
     '180' => :do_issued_date_first,
     '490' => :docs_received_date_first,
@@ -96,7 +96,7 @@ module OpenChain; class FenixParser
           next
         end
 
-        # The "supporting" lines in the new format all have less than 10 file positions 
+        # The "supporting" lines in the new format all have less than 10 file positions
         # So, don't skip the line if we're proc'ing one of those.
         supporting_line_type = SUPPORTING_LINE_TYPES.include?(line[0])
 
@@ -113,7 +113,7 @@ module OpenChain; class FenixParser
           # depend on the value to a unique way to identify new lines, even across new vs. old line styles.
           file_number = line[1]
           if !entry_lines.empty? && file_number!=current_file_number
-            FenixParser.new.parse_entry entry_lines, opts 
+            FenixParser.new.parse_entry entry_lines, opts
             entry_lines = []
           end
           current_file_number = file_number
@@ -128,7 +128,7 @@ module OpenChain; class FenixParser
       # later and reprocessed
       raise $! if Rails.env != 'production' || Lock.lock_wait_timeout?($!)
 
-      tmp = Tempfile.new(['fenix_error_','.txt'])
+      tmp = Tempfile.new(['fenix_error_', '.txt'])
       tmp << file_content
       tmp.flush
       $!.log_me ["Fenix parser failure."], [tmp.path]
@@ -242,9 +242,9 @@ module OpenChain; class FenixParser
         end
 
         @entry.save!
-        #match up any broker invoices that might have already been loaded
+        # match up any broker invoices that might have already been loaded
         @entry.link_broker_invoices
-        #write time to process without reprocessing hooks
+        # write time to process without reprocessing hooks
         @entry.update_column(:time_to_process, ((Time.now-start_time) * 1000).to_i)
 
         # F type entries are LVS Summaries...when we get one of these we then want to request a full listing of any of the "child" LVS
@@ -284,7 +284,7 @@ module OpenChain; class FenixParser
 
   class HoldReleaseSetter
     attr_accessor :entry
-    
+
     def initialize ent
       @entry = ent
     end
@@ -292,7 +292,7 @@ module OpenChain; class FenixParser
     def set_on_hold
       entry.on_hold = entry.hold_date && !entry.hold_release_date ? true : false
     end
-    
+
     def set_hold_date
       entry.hold_date = entry.exam_ordered_date
     end
@@ -341,29 +341,29 @@ module OpenChain; class FenixParser
     entry.carrier_code = str_val(line[6])
     entry.carrier_name = str_val line[97]
     entry.voyage = str_val(line[7])
-    entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4,'0')}
+    entry.us_exit_port_code = str_val(line[9]) {|us_exit| us_exit.blank? ? us_exit : us_exit.rjust(4, '0')}
     entry.entry_type = str_val(line[10])
     entry.duty_due_date = parse_date(line[56])
     entry.entry_filed_date = entry.across_sent_date = parse_date_time(line, 57)
-    entry.first_release_date = entry.pars_ack_date = parse_date_time(line,59)
-    entry.pars_reject_date = parse_date_time(line,61)
+    entry.first_release_date = entry.pars_ack_date = parse_date_time(line, 59)
+    entry.pars_reject_date = parse_date_time(line, 61)
 
     # We get 3 date values via a separate LVS file feed from Fenix for low-value entries
     # These are K84 Receive Date, Release Date, and Cadex Accept.
-    # A b3 file generally follows the LVS file, but it likely doesn't have any of these 
+    # A b3 file generally follows the LVS file, but it likely doesn't have any of these
     # date values, so we don't want to blank them out if the LVS came through.
     # If the K84 Receive date has been set, then we've received the LVS file for an entry,
-    # In these cases the release date and cadex date should only update the entry if they 
+    # In these cases the release date and cadex date should only update the entry if they
     # have a value in them
 
     if entry.k84_receive_date.nil?
-      entry.release_date = parse_date_time(line,65)
-      entry.cadex_accept_date = parse_date_time(line,67)
-      entry.cadex_sent_date = parse_date_time(line,69)
+      entry.release_date = parse_date_time(line, 65)
+      entry.cadex_accept_date = parse_date_time(line, 67)
+      entry.cadex_sent_date = parse_date_time(line, 69)
     else
-      entry.release_date = ((dt = parse_date_time(line,65)).blank? ? entry.release_date : dt)
-      entry.cadex_accept_date = ((dt = parse_date_time(line,67)).blank? ? entry.cadex_accept_date : dt)
-      entry.cadex_sent_date = ((dt = parse_date_time(line,69)).blank? ? entry.cadex_sent_date : dt)
+      entry.release_date = ((dt = parse_date_time(line, 65)).blank? ? entry.release_date : dt)
+      entry.cadex_accept_date = ((dt = parse_date_time(line, 67)).blank? ? entry.cadex_accept_date : dt)
+      entry.cadex_sent_date = ((dt = parse_date_time(line, 69)).blank? ? entry.cadex_sent_date : dt)
     end
 
     entry.release_type = str_val(line[89])
@@ -371,7 +371,7 @@ module OpenChain; class FenixParser
     entry.po_numbers = str_val(line[14])
     file_logged_str = str_val(line[94])
     if file_logged_str && file_logged_str.length==10
-      entry.file_logged_date = parse_date_time([file_logged_str,"12:00am"],0)
+      entry.file_logged_date = parse_date_time([file_logged_str, "12:00am"], 0)
     end
     entry.customer_name = info[:importer_name]
     entry.customer_number = str_val line[107]
@@ -414,7 +414,7 @@ module OpenChain; class FenixParser
 
   def process_invoice_line line, fenix_nd = true
     inv = @commercial_invoices[line[15]]
-    #inv will be blank if there was no invoice information on the line
+    # inv will be blank if there was no invoice information on the line
     return if inv.nil?
 
     inv_ln = inv.commercial_invoice_lines.build
@@ -429,7 +429,7 @@ module OpenChain; class FenixParser
     inv_ln.unit_of_measure = str_val(line[38])
     inv_ln.value = dec_val(line[40])
     unless inv_ln.value.nil?
-      @ci_invoice_val[line[15]] += inv_ln.value 
+      @ci_invoice_val[line[15]] += inv_ln.value
       @total_invoice_val ||= BigDecimal('0.00')
       @total_invoice_val += inv_ln.value
     end
@@ -464,7 +464,7 @@ module OpenChain; class FenixParser
       if total_value_with_adjustments
         adjustments_per_piece = dec_val(line[113])
         total_value_with_adjustments += adjustments_per_piece if adjustments_per_piece
-        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0")) 
+        inv_ln.adjustments_amount = total_value_with_adjustments - (inv_ln.value ? inv_ln.value : BigDecimal.new("0"))
       end
     end
 
@@ -476,21 +476,21 @@ module OpenChain; class FenixParser
 
     t.tariff_provision = str_val(line[30])
     t.classification_qty_1 = dec_val(line[31])
-    t.classification_uom_1 = str_val(line[32]) 
+    t.classification_uom_1 = str_val(line[32])
     t.value_for_duty_code = str_val(line[33])
     t.special_authority = str_val(line[34])
     t.entered_value = dec_val(line[45])
     @total_entered_value += t.entered_value if t.entered_value
     # For duty rate, we'll either get the specific duty rate (ie. 1.45 / KG) OR
     # the advalorem rate (ie. 5% of Entered Value).  Ad Val rate is the overwhelming
-    # majority case.  However, Fenix sends us ad val rates as whole number values 
-    # (5.55% instead of .0555) and specific rates as the plain rates....we want ad val rates to be stored 
+    # majority case.  However, Fenix sends us ad val rates as whole number values
+    # (5.55% instead of .0555) and specific rates as the plain rates....we want ad val rates to be stored
     # as decimal quantities so the rates are equivalent to how alliance is storing the data.
-    # So, we'll use the quantity * duty rate and value * (duty rate / 100) and see which 
+    # So, we'll use the quantity * duty rate and value * (duty rate / 100) and see which
     # amount is closer to the actual value sent before setting the value.  Ad Val wins if
     # there's any ambiguity.
     # I ruled out looking up the tariff record and seeing what it says for calculating the duty
-    # because we'd run into possible issues when re-running older entry data files and rates have been 
+    # because we'd run into possible issues when re-running older entry data files and rates have been
     # changed.
 
     t.duty_amount = dec_val(line[47])
@@ -504,7 +504,7 @@ module OpenChain; class FenixParser
         ad_val = t.entered_value * adjusted_duty_rate
         specific_duty = t.classification_qty_1 * duty_rate
 
-        # Just figure out whatever is closest to the actual reported duty amount, which will tell us 
+        # Just figure out whatever is closest to the actual reported duty amount, which will tell us
         # whether we need to use the adjusted amount or not
         vals = [(t.duty_amount - ad_val).abs, (t.duty_amount - specific_duty).abs]
 
@@ -512,7 +512,7 @@ module OpenChain; class FenixParser
         # in calculating the duty amount that the specific calculation MAY be more exact by a fraction of a cent
         # - even when the adval rate is the effective rate.
         # If this is the case, prefer the adval rate, since it's the overwhelmingly used scenario.
-        
+
         if ad_val.nonzero? && (vals.min == vals[0] || ((vals[0] - vals[1]).abs <= BigDecimal("0.01")))
           t.duty_rate = adjusted_duty_rate
         else
@@ -594,8 +594,8 @@ module OpenChain; class FenixParser
     accumulate_string(:master_bills_of_lading, line[2]) unless line[2].blank?
   end
 
-  def retrieve_valid_bills_of_lading 
-    # For some reason, RL needs to use abnormally long master bill numbers that are 
+  def retrieve_valid_bills_of_lading
+    # For some reason, RL needs to use abnormally long master bill numbers that are
     # too long for Fenix to handle.  These numbers are going to come through at the "header"
     # level but will be truncated versions of the real values that will be coming through
     # at the BL line level.
@@ -606,7 +606,7 @@ module OpenChain; class FenixParser
     master_bills = master_bills.find_all {|bol| bol.length < 15 || !master_bills.any? {|super_bol| bol != super_bol && super_bol.start_with?(bol)}}
     master_bills.join("\n ")
   end
-  
+
   def dec_val val
     BigDecimal(val) unless val.blank?
   end
@@ -614,13 +614,13 @@ module OpenChain; class FenixParser
     val.strip.to_i unless val.blank?
   end
 
-  # Evaluates and returns any given block if the value passed in is 
+  # Evaluates and returns any given block if the value passed in is
   # not blank or nill.
   def str_val val
     return nil if val.nil? || val.blank?
     if val.match /^[ 0]*$/
       val = ""
-    else 
+    else
       val = val.strip
     end
     val = yield val if block_given?
@@ -628,14 +628,14 @@ module OpenChain; class FenixParser
   end
 
   def parse_date d
-    return nil if d.blank? 
+    return nil if d.blank?
     Date.strptime(d.strip, '%m/%d/%Y') rescue return nil
   end
 
   def parse_date_time line, start_pos
     dt = nil
     if !line[start_pos].blank?
-      # If the time component is missing, just set the time to midnight 
+      # If the time component is missing, just set the time to midnight
       # (Fenix omits time for some entry type / date field combinations and sends it for others)
       time = (line[start_pos+1].blank? ? "12:00am" : line[start_pos+1])
       dt = time_zone.parse_us_base_format("#{line[start_pos]} #{time}") rescue nil
@@ -652,8 +652,8 @@ module OpenChain; class FenixParser
   end
 
   def country_state str
-    return ["US",str[1,2]] if str && str.length==3 && str[0]="U"
-    return [str,nil]
+    return ["US", str[1, 2]] if str && str.length==3 && str[0]="U"
+    return [str, nil]
   end
 
   def accumulate_string string_code, value
@@ -675,7 +675,7 @@ module OpenChain; class FenixParser
     # only the last date value into the entry here.
     accumulated_dates.each do |date_setter, date_array|
       if entry.respond_to?(date_setter) && date_array.length > 0
-        entry.send(date_setter, date_array.last)  
+        entry.send(date_setter, date_array.last)
       end
     end
 
@@ -686,7 +686,7 @@ module OpenChain; class FenixParser
 
     # For F type entries (which are the "parent" entries of the LV (low value) entries), CA customs doesn't issue
     # a traditional release date for them.  At least one customer is bothered that these entries
-    # never show release, so to appease them we're going to take the Cadex Accept (which is filled in) and set that as 
+    # never show release, so to appease them we're going to take the Cadex Accept (which is filled in) and set that as
     # the release date.
     if summary_entry_type? entry
       entry.release_date = entry.cadex_accept_date
@@ -705,7 +705,7 @@ module OpenChain; class FenixParser
 
   def importer tax_id, importer_name
     importer_name = tax_id if importer_name.blank?
-    
+
     c = Company.find_or_create_company!("Fenix", tax_id, {name: importer_name, importer: true, fenix_customer_number: tax_id})
 
     # Change the importer account's name to be the actual name if it's currently the tax id.
@@ -719,23 +719,23 @@ module OpenChain; class FenixParser
   end
 
   def find_and_process_entry file_number, entry_number, tax_id, importer_name, source_system_export_date, fenix_nd_entry = false
-    # Make sure we aquire a cross process lock to prevent multiple job queues from executing this 
+    # Make sure we aquire a cross process lock to prevent multiple job queues from executing this
     # at the same time (prevents duplicate entries from being created).
     entry = nil
     importer = nil
     shell_entry = nil
-    Lock.acquire("Entry-#{SOURCE_CODE}-#{file_number}") do 
+    Lock.acquire("Entry-#{SOURCE_CODE}-#{file_number}") do
       break if Entry.purged? SOURCE_CODE, file_number, source_system_export_date
 
       entry = Entry.find_by_broker_reference_and_source_system file_number, SOURCE_CODE
 
       # Because the Fenix shell records created by the imaging client only have an entry number in them,
-      # we also have to double check if this file data matches to one of those shell records before 
+      # we also have to double check if this file data matches to one of those shell records before
       # creating a new Entry record.
       if entry.nil?
-        entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE 
+        entry = Entry.find_by_entry_number_and_source_system entry_number, SOURCE_CODE
       else
-        # See if there's a related "shell" entry in the system.  These are left behind and missed by the entry number/source system 
+        # See if there's a related "shell" entry in the system.  These are left behind and missed by the entry number/source system
         # query above if the b3 from Fenix comes over initially w/ a blank entry number (seems to be fairly common).
         # If left alone we then end up w/ duplicate entries..one regular one, and one shell one.
         shell_entry = Entry.where(broker_reference: nil, source_system: SOURCE_CODE, entry_number: entry_number).first
@@ -743,11 +743,11 @@ module OpenChain; class FenixParser
 
       # This call may create new importers, so we want it inside our parser lock block
       importer = importer(tax_id, importer_name)
-      
+
       if entry.nil?
         # Create a shell entry right now to help prevent concurrent job queues from tripping over eachother and
         # creating duplicate records.  We should probably implement a locking structure to make this bullet proof though.
-        entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE,:importer_id=>importer.id, :last_exported_from_source=>source_system_export_date) 
+        entry = Entry.create!(:broker_reference=>file_number, :entry_number=> entry_number, :source_system=>SOURCE_CODE, :importer_id=>importer.id, :last_exported_from_source=>source_system_export_date)
       end
 
       if fenix_nd_entry
@@ -759,12 +759,12 @@ module OpenChain; class FenixParser
       end
     end
 
-    # The is a bit of an optimization..there's no point waiting on the 
+    # The is a bit of an optimization..there's no point waiting on the
     # lock if we're just going to abort because we're looking at old data
     if shell_entry || (entry && process_file?(entry, source_system_export_date))
 
       # Once we've got the entry we're looking for we'll lock it for updates so we don't have
-      # a really course grained lock in place while we're updating some values in the entry to prep 
+      # a really course grained lock in place while we're updating some values in the entry to prep
       # it for replacement.  By locking the entry here, we can ensure that only a single instance
       # of the parser will run the updates in here at a single time.
 
@@ -773,7 +773,7 @@ module OpenChain; class FenixParser
       # lock may have resulting in a more updated version of the entry coming in.
       Lock.with_lock_retry(entry) do
         if source_system_export_date
-          # Make sure we also update the source system export date while locked too so we prevent other processes from 
+          # Make sure we also update the source system export date while locked too so we prevent other processes from
           # processing the same entry with stale data.
 
           # We want to utilize the last exported from source date to determine if the
@@ -797,7 +797,7 @@ module OpenChain; class FenixParser
 
         if shell_entry
           begin
-            Lock.with_lock_retry(shell_entry) do 
+            Lock.with_lock_retry(shell_entry) do
               # Our new entry will always have an id set at this point, so we can just go ahead and set all attachments to it (avoid n+1 situation)
               shell_entry.attachments.update_all attachable_id: entry.id
               # If we don't reload the attachments after moving them to the other entry, then the destroy call below will
@@ -814,14 +814,14 @@ module OpenChain; class FenixParser
 
         # Destroy invoices since the file we get is a full replacement of the invoice values, not an update.
         # Large entries with lots of invoices can take quite a while to delete (upwards of a minute), which may result in other processes
-        # timing out with a lock wait error - hence the lock_rety.  Even if there's some timeouts, at least the 
+        # timing out with a lock wait error - hence the lock_rety.  Even if there's some timeouts, at least the
         # files will get reparsed via delayed job retries.
         entry.commercial_invoices.destroy_all
 
         yield entry
       end
 
-      # Broadcast the save event outside the locks.  No need for any business logic running to generate 
+      # Broadcast the save event outside the locks.  No need for any business logic running to generate
       # stuff from the file to contribute to the transaction length here.  Most logic should be delayed
       # out to a background queue anyway.
       entry.broadcast_event :save
@@ -840,7 +840,7 @@ module OpenChain; class FenixParser
     lines.each do |line|
       accumulated_entry_dates[line[2]] ||= {}
       date_key = ACTIVITY_DATE_MAP[line[3]]
-      if date_key 
+      if date_key
         accumulated_entry_dates[line[2]][date_key] ||= []
         # parse date time above expects times in MM/dd/yyyy format
         accumulated_entry_dates[line[2]][date_key] << time_zone.parse(line[4])
@@ -849,7 +849,7 @@ module OpenChain; class FenixParser
 
     accumulated_entry_dates.each do |entry_number, dates|
       entry = nil
-      Lock.acquire("Entry-#{SOURCE_CODE}-#{entry_number}") do 
+      Lock.acquire("Entry-#{SOURCE_CODE}-#{entry_number}") do
         # Individual B3 lines will come through for these entries, at that point, they'll set the importer and other information
         entry = Entry.where(:entry_number => entry_number, :source_system => SOURCE_CODE).first_or_create! :import_country => canada
       end
@@ -871,11 +871,11 @@ module OpenChain; class FenixParser
     export_time = nil
     file_name = File.basename(file_path)
 
-    # The b3 filenames are expected to be like b3_detail_acc_111468_201305221506.1369249786.csv, 
+    # The b3 filenames are expected to be like b3_detail_acc_111468_201305221506.1369249786.csv,
     # or b3_detail_rns_109757_201305241527.1369423822.csv.  We're looking to extract the
     # file timestamp value after the last underscore and prior to the .
 
-    # The actual timestamp values are a little funky...they're the date followed by the # of seconds 
+    # The actual timestamp values are a little funky...they're the date followed by the # of seconds
     # since midnight of the date (.ie 2013052939266 -> Date = 2013-05-29 Seconds => 39266)
     if file_name =~ /^.+_.+_.+_.+_(\d{8})(\d*)\..+\..+$/
       export_time = time_zone.parse $1
@@ -941,10 +941,10 @@ module OpenChain; class FenixParser
         end
       end
     end
-  end  
+  end
 
   def timestamp_csv timestamp
-    time = timestamp.in_time_zone(time_zone) 
+    time = timestamp.in_time_zone(time_zone)
     ["T", time.strftime("%Y%m%d"), time.strftime("%H%M%S")]
   end
 

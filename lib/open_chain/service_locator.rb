@@ -6,7 +6,7 @@ module OpenChain; module ServiceLocator
     # implementations of check_validity should raise exceptions if
     # not valid
     registries.each {|r| check_validity(r) } if self.respond_to?(:check_validity)
-    
+
     add_to_internal_registry registries
     # Use the 'registered' callback to notify the class it has been registered
     Array.wrap(registries).each { |o| o.registered if o.respond_to?(:registered) }

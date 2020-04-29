@@ -11,7 +11,7 @@ describe OpenChain::Api::V1::ApiJsonSupport do
         super(jsonizer: jsonize)
       end
 
-      def params 
+      def params
         raise "Mock me"
       end
 

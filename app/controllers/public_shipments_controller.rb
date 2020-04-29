@@ -11,7 +11,7 @@ class PublicShipmentsController < ApplicationController
         error_redirect "The specified field is not searchable."
       else
         ss = SearchSetup.new(:module_type=>field_to_search.core_module.class_name)
-        ss.search_criterions.build(:model_field_uid=>field_to_search.uid,:operator=>"co",:value=>params[:v])
+        ss.search_criterions.build(:model_field_uid=>field_to_search.uid, :operator=>"co", :value=>params[:v])
         @value = params[:v]
         @field = field_to_search.uid
         @result = ss.public_search.limit(6)

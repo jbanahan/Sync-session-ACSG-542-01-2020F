@@ -6,7 +6,7 @@ module OpenChain
 
       def self.run_schedulable opts_hash={}
         vfi_cust_no = "KITCHEN"
-        
+
         self.new.send_email('vfi_cust_no' => vfi_cust_no, 'email' => opts_hash['email'])
       end
 
@@ -29,7 +29,7 @@ module OpenChain
       def create_workbook(vfi_cust_no)
         wb = XlsMaker.create_workbook "Masterbrand"
         start_date_time, end_date_time = query_time
-        table_from_query wb.worksheet(0), query(vfi_cust_no, start_date_time, end_date_time), {6 => date_conversion_lambda, 7 => date_conversion_lambda} 
+        table_from_query wb.worksheet(0), query(vfi_cust_no, start_date_time, end_date_time), {6 => date_conversion_lambda, 7 => date_conversion_lambda}
         wb
       end
 
@@ -39,7 +39,7 @@ module OpenChain
 
       def send_email(settings)
         wb = create_workbook(settings['vfi_cust_no'])
-        
+
         workbook_to_tempfile wb, 'Masterbrand-' do |t|
           start_date, end_date = formatted_local_time
           subject = "Masterbrand/KitchenCraft Report for the Period #{start_date} to #{end_date}"
@@ -67,8 +67,8 @@ module OpenChain
                     e.special_program_indicators AS 'SPI(s)',
                     e.recon_flags AS 'Recon Flags'
             FROM entries AS e INNER JOIN ports AS p ON e.entry_port_code = p.schedule_d_code
-            WHERE e.customer_number = '#{sanitize vfi_cust_no}' AND 
-                  e.release_date > '#{start_date_time}' AND 
+            WHERE e.customer_number = '#{sanitize vfi_cust_no}' AND
+                  e.release_date > '#{start_date_time}' AND
                   e.release_date < '#{end_date_time}'
             ORDER BY e.release_date
         SQL

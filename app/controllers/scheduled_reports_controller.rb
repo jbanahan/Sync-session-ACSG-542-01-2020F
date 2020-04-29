@@ -7,19 +7,19 @@ class ScheduledReportsController < ApplicationController
       custom_reports = CustomReport.for_user(@user).order("name ASC")
 
       if searches.blank? && custom_reports.blank?
-        error_redirect "#{@user.username} does not have any reports." 
+        error_redirect "#{@user.username} does not have any reports."
       else
 
         # Turn our list of reports into an object suitable to pass to grouped_options_for_select, sort the modules to preserve order
-        modules = searches.collect{|r| r.module_type}.uniq.sort
-        
+        modules = searches.collect {|r| r.module_type}.uniq.sort
+
         module_hash = {}
-        modules.each{|m| module_hash[m] = []}
+        modules.each {|m| module_hash[m] = []}
 
         # What's happening below with the sr/cr delimited values is that we're inserting an indicator in the select's value to indicate if the value
         # is a search or a custom report.  This allows us to handle both types of items directly in the same controller
 
-        searches.sort{|a,b| a.name.upcase <=> b.name.upcase}.each do |r|
+        searches.sort {|a, b| a.name.upcase <=> b.name.upcase}.each do |r|
           module_hash[r.module_type] << [make_search_select_label(r), "sr~#{r.id}"]
         end
 
@@ -31,7 +31,7 @@ class ScheduledReportsController < ApplicationController
 
         @reports = []
         module_hash.each_pair do |k, v|
-          module_name = (k == custom_report_title) ? custom_report_title :  CoreModule.find_by_class_name(k).label 
+          module_name = (k == custom_report_title) ? custom_report_title :  CoreModule.find_by_class_name(k).label
           @reports << [module_name, v] if module_name
         end
 
@@ -43,7 +43,7 @@ class ScheduledReportsController < ApplicationController
     end
   end
 
-  def give_reports 
+  def give_reports
     @user = User.find_by_id params[:user_id]
     action_secure(!@user.nil? && (current_user.admin? || current_user.id == @user.id), @user, {:verb=>"give", :module_name => "Scheduled Report List"}) do
       # search_setup_id -> searches / custom report ids
@@ -65,13 +65,13 @@ class ScheduledReportsController < ApplicationController
           end
         end
       end
-      
+
       add_flash :notices, "#{count} reports copied."
       redirect_to user_scheduled_reports_path(@user)
     end
   end
 
-  private 
+  private
     def make_search_select_label report
       # The label should be the (*) name + last run date
       access = report.last_accessed

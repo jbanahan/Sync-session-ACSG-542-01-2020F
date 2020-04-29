@@ -15,7 +15,7 @@ describe OpenChain::FreshserviceClient do
         }
       }
     }
-    
+
     it "retrieves token from default location" do
       expect(MasterSetup).to receive(:secrets).and_return secrets
       expect(described_class.new.token).to eq 'abc'
@@ -23,9 +23,9 @@ describe OpenChain::FreshserviceClient do
   end
 
   describe "create_change!" do
-    let(:planned_start_date) { ActiveSupport::TimeZone["UTC"].local(2016,1,15) }
+    let(:planned_start_date) { ActiveSupport::TimeZone["UTC"].local(2016, 1, 15) }
     let(:planned_end_date) { planned_start_date + 3.minutes }
-    
+
     let(:request) do
       {itil_change:{
         :subject => "VFI Track Upgrade - www - 2.0 - host_name",
@@ -36,7 +36,7 @@ describe OpenChain::FreshserviceClient do
         :change_type => 2,
         :group_id => 4000156520,
         :planned_start_date => "#{planned_start_date.iso8601}",
-        :planned_end_date => "#{planned_end_date.iso8601}"} 
+        :planned_end_date => "#{planned_end_date.iso8601}"}
       }
     end
 
@@ -45,11 +45,11 @@ describe OpenChain::FreshserviceClient do
     }
 
     it "sends data to FS" do
-      expect(RestClient::Request).to receive(:execute).with({user: fs_token, 
-                                                             password: "password", 
-                                                             method: :post, 
-                                                             headers:{content_type: :json}, 
-                                                             url: "https://vandegrift.freshservice.com/itil/changes.json", 
+      expect(RestClient::Request).to receive(:execute).with({user: fs_token,
+                                                             password: "password",
+                                                             method: :post,
+                                                             headers:{content_type: :json},
+                                                             url: "https://vandegrift.freshservice.com/itil/changes.json",
                                                              payload: request.to_json})
                                                       .and_return(rest_response)
 
@@ -59,12 +59,12 @@ describe OpenChain::FreshserviceClient do
 
     it "raises exception if token is missing" do
       fs_client.token = nil
-      expect{ fs_client.create_change! "www", "2.0", "host_name" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
+      expect { fs_client.create_change! "www", "2.0", "host_name" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
     end
 
     it "raises exception if request_complete" do
       fs_client.request_complete = true
-      expect{ fs_client.create_change! "www", "2.0", "host_name" }.to raise_error "FreshserviceClient failed: This change request has already been sent!"
+      expect { fs_client.create_change! "www", "2.0", "host_name" }.to raise_error "FreshserviceClient failed: This change request has already been sent!"
     end
 
     it "logs error if FS call fails" do
@@ -77,7 +77,7 @@ describe OpenChain::FreshserviceClient do
   end
 
   describe "add_note_with_log!" do
-    let(:now) { DateTime.new(2016,1,15)}
+    let(:now) { DateTime.new(2016, 1, 15)}
     let(:upgrade_log) { UpgradeLog.create!(from_version: "0", to_version: "1.0", started_at: now, finished_at: now + 3.minutes, log: "here's what happened") }
     let(:request) do
         {
@@ -93,11 +93,11 @@ describe OpenChain::FreshserviceClient do
 
     it "sends data to FS" do
       fs_client.change_id = 1
-      expect(RestClient::Request).to receive(:execute).with({user: fs_token, 
-                                                             password: "password", 
-                                                             method: :post, 
-                                                             headers:{content_type: :json}, 
-                                                             url: "https://vandegrift.freshservice.com/itil/changes/1/notes.json", 
+      expect(RestClient::Request).to receive(:execute).with({user: fs_token,
+                                                             password: "password",
+                                                             method: :post,
+                                                             headers:{content_type: :json},
+                                                             url: "https://vandegrift.freshservice.com/itil/changes/1/notes.json",
                                                              payload: request.to_json}).and_return rest_response
       fs_client.add_note_with_log! upgrade_log
       expect(fs_client.request_complete).to eq true
@@ -105,7 +105,7 @@ describe OpenChain::FreshserviceClient do
   end
 
   describe "add_note!" do
-    let(:now) { DateTime.new(2016,1,15)}
+    let(:now) { DateTime.new(2016, 1, 15)}
     let(:message) { "message" }
     let(:request) do
         {
@@ -121,11 +121,11 @@ describe OpenChain::FreshserviceClient do
 
     it "sends data to FS" do
       fs_client.change_id = 1
-      expect(RestClient::Request).to receive(:execute).with({user: fs_token, 
-                                                             password: "password", 
-                                                             method: :post, 
-                                                             headers:{content_type: :json}, 
-                                                             url: "https://vandegrift.freshservice.com/itil/changes/1/notes.json", 
+      expect(RestClient::Request).to receive(:execute).with({user: fs_token,
+                                                             password: "password",
+                                                             method: :post,
+                                                             headers:{content_type: :json},
+                                                             url: "https://vandegrift.freshservice.com/itil/changes/1/notes.json",
                                                              payload: request.to_json}).and_return rest_response
       fs_client.add_note! "message"
       expect(fs_client.request_complete).to eq true
@@ -140,13 +140,13 @@ describe OpenChain::FreshserviceClient do
 
     it "raises exception if token is missing" do
       fs_client.token = nil
-      expect{ fs_client.add_note! "message" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
+      expect { fs_client.add_note! "message" }.to raise_error "FreshserviceClient failed: No fs_token set. (Try setting up the fresh_service key in secrets.yml)"
       expect(fs_client.request_complete).to eq false
     end
 
     it "raises exception if change_id is missing" do
       fs_client.change_id = nil
-      expect{ fs_client.add_note! "message" }.to raise_error "FreshserviceClient failed: No change_id set."
+      expect { fs_client.add_note! "message" }.to raise_error "FreshserviceClient failed: No change_id set."
       expect(fs_client.request_complete).to eq false
     end
 

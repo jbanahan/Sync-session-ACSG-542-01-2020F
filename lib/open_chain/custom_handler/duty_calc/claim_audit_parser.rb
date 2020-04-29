@@ -7,14 +7,14 @@ module OpenChain; module CustomHandler; module DutyCalc
     def self.process_from_attachment attachment_id, user_id
       attachment_name = "UNKNOWN"
       msg = ""
-      has_error = false  
+      has_error = false
       u = User.find user_id
       begin
         att = Attachment.find attachment_id
         attachment_name = att.attached_file_name
         claim = att.attachable
 
-        raise "Invalid file format for #{attachment_name}." unless (attachment_name.downcase.match(/xlsx$/) || attachment_name.downcase.match(/csv$/)) 
+        raise "Invalid file format for #{attachment_name}." unless (attachment_name.downcase.match(/xlsx$/) || attachment_name.downcase.match(/csv$/))
 
         raise "Attachment with ID #{att.id} is not attached to a DrawbackClaim." unless claim.is_a?(DrawbackClaim)
 
@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module DutyCalc
         $!.log_me
         msg = "Error processing claim audit file (#{attachment_name}): #{$!.message}"
       ensure
-        u.messages.create!(subject:"Drawback Claim Audit Complete #{has_error ? 'WITH ERRORS' : ''}",body:msg)
+        u.messages.create!(subject:"Drawback Claim Audit Complete #{has_error ? 'WITH ERRORS' : ''}", body:msg)
       end
       return has_error
     end
@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module DutyCalc
           end
         end
       end
-      self.parse(rp.new(xl_client),claim)
+      self.parse(rp.new(xl_client), claim)
     end
 
     def parse_csv_from_attachment attachment, claim
@@ -64,7 +64,7 @@ module OpenChain; module CustomHandler; module DutyCalc
     end
 
     def parse_csv data, claim
-      rp = Class.new do 
+      rp = Class.new do
         def initialize d
           @data = d
         end
@@ -74,17 +74,17 @@ module OpenChain; module CustomHandler; module DutyCalc
           end
         end
       end
-      self.parse(rp.new(data),claim)
+      self.parse(rp.new(data), claim)
     end
 
     def parse row_parser, claim
-      ActiveRecord::Base.transaction do 
+      ActiveRecord::Base.transaction do
         rows = []
         row = 0
         row_parser.parse do |r|
           row += 1
-          #manually skipping first row so we don't get the ruby built in header mapping
-          #which makes the row sizes all report 11 even if columns are blank
+          # manually skipping first row so we don't get the ruby built in header mapping
+          # which makes the row sizes all report 11 even if columns are blank
           next if row == 1
           next unless r.size == 11 && !r[10].blank?
           if rows.size == @inner_opts[:group_size]
@@ -93,17 +93,17 @@ module OpenChain; module CustomHandler; module DutyCalc
           end
           rows << r
         end
-        process_rows(rows,claim) if rows.size > 0
+        process_rows(rows, claim) if rows.size > 0
       end
     end
 
-    private 
+    private
     def process_rows rows, claim
       audits = rows.collect do |r|
         DrawbackClaimAudit.new(
           drawback_claim_id:claim.id,
-          export_date:make_date(r,0,"export date"),
-          import_date:make_date(r,5,"import date"),
+          export_date:make_date(r, 0, "export date"),
+          import_date:make_date(r, 5, "import date"),
           import_part_number:r[2],
           export_part_number:r[3],
           import_entry_number:r[4],
@@ -119,7 +119,7 @@ module OpenChain; module CustomHandler; module DutyCalc
       raise "Can't handle blank #{desc} for row #{r}" if s.nil?
       return s if s.respond_to?(:acts_like_date?) || s.respond_to?(:acts_like_time?)
       sd = s.split('/')
-      Date.new(sd.last.to_i,sd.first.to_i,sd[1].to_i)
+      Date.new(sd.last.to_i, sd.first.to_i, sd[1].to_i)
     end
   end
 end; end; end

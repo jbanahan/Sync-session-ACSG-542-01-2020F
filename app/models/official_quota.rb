@@ -18,18 +18,18 @@
 #
 
 class OfficialQuota < ActiveRecord::Base
-  attr_accessible :category, :country_id, :hts_code, 
-    :official_tariff_id, :square_meter_equivalent_factor, 
+  attr_accessible :category, :country_id, :hts_code,
+    :official_tariff_id, :square_meter_equivalent_factor,
     :unit_of_measure
-  
+
   belongs_to :country
   belongs_to :official_tariff
   self.table_name = :official_quotas
 
-  #test and rebuild link to tariff (need to run this after rebuilding tariff table)
+  # test and rebuild link to tariff (need to run this after rebuilding tariff table)
   def link
     if self.official_tariff_id.nil? || OfficialTariff.where(:id=>self.official_tariff_id).first.nil?
-      self.official_tariff = OfficialTariff.where(:country_id=>self.country_id,:hts_code=>self.hts_code).first
+      self.official_tariff = OfficialTariff.where(:country_id=>self.country_id, :hts_code=>self.hts_code).first
     end
   end
 

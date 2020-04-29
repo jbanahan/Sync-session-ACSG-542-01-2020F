@@ -1,17 +1,17 @@
 describe Attachment do
   describe "attachments_as_json" do
     it "should create json" do
-      u = Factory(:user,first_name:'Jim',last_name:'Kirk')
+      u = Factory(:user, first_name:'Jim', last_name:'Kirk')
       o = Factory(:order)
-      a1 = o.attachments.create!(attached_file_name:'1.txt',attached_file_size:200,attachment_type:'mytype',uploaded_by_id:u.id)
-      a2 = o.attachments.create!(attached_file_name:'2.txt',attached_file_size:1000000,attachment_type:'2type',uploaded_by_id:u.id)
+      a1 = o.attachments.create!(attached_file_name:'1.txt', attached_file_size:200, attachment_type:'mytype', uploaded_by_id:u.id)
+      a2 = o.attachments.create!(attached_file_name:'2.txt', attached_file_size:1000000, attachment_type:'2type', uploaded_by_id:u.id)
       h = Attachment.attachments_as_json o
       expect(h[:attachable][:id]).to eq(o.id)
       expect(h[:attachable][:type]).to eq("Order")
       ha = h[:attachments]
       expect(ha.size).to eq(2)
       ha1 = ha.first
-      {a1=>ha[0],a2=>ha[1]}.each do |k,v|
+      {a1=>ha[0], a2=>ha[1]}.each do |k, v|
         expect(v[:name]).to eq(k.attached_file_name)
         expect(v[:size]).to eq(ActionController::Base.helpers.number_to_human_size(k.attached_file_size))
         expect(v[:type]).to eq(k.attachment_type)
@@ -27,7 +27,7 @@ describe Attachment do
       expect(a.unique_file_name).to eq("#{a.id}-a.txt")
 
       a.update_attributes(:attachment_type=>"type")
-      expect(a.unique_file_name).to eq("type-#{a.id}-a.txt")      
+      expect(a.unique_file_name).to eq("type-#{a.id}-a.txt")
     end
     it 'should sanitize the filename' do
       a = Attachment.create(:attached_file_name=>"a.txt", :attachment_type => "Doc / Type")
@@ -197,7 +197,7 @@ describe Attachment do
         @x = Tempfile.new("temp-a.txt")
         @y = Tempfile.new("temp-b.txt")
         @z = Tempfile.new("temp-c.txt")
-        [@x,@y,@z].each {|f| f << 'hello world'; f.flush}
+        [@x, @y, @z].each {|f| f << 'hello world'; f.flush}
         OpenMailer.deliveries.clear
       end
 
@@ -217,9 +217,9 @@ describe Attachment do
         allow(@x).to receive(:size).and_return 4200000
         allow(@y).to receive(:size).and_return 4300000
         allow(@z).to receive(:size).and_return 4400000
-        #@x.should_receive(:size).exactly(6).times.and_return 4200000
-        #@y.should_receive(:size).exactly(5).times.and_return 4300000
-        #@z.should_receive(:size).exactly(3).times.and_return 4400000
+        # @x.should_receive(:size).exactly(6).times.and_return 4200000
+        # @y.should_receive(:size).exactly(5).times.and_return 4300000
+        # @z.should_receive(:size).exactly(3).times.and_return 4400000
 
         Attachment.email_attachments(param_hash)
         expect(OpenMailer.deliveries.length).to eq(2)
@@ -251,12 +251,12 @@ describe Attachment do
       end
     end
 
-    describe "small attachments" do 
+    describe "small attachments" do
       before :each do
         @x = Tempfile.new("temp-a.txt")
         @y = Tempfile.new("temp-b.txt")
         @z = Tempfile.new("temp-c.txt")
-        [@x,@y,@z].each {|f| f << 'hello world'; f.flush}
+        [@x, @y, @z].each {|f| f << 'hello world'; f.flush}
       end
 
       after :each do

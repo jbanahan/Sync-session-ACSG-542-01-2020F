@@ -86,7 +86,7 @@ module OpenChain; module CustomHandler; class BookingSpreadsheetGenerator
       if shipment_lines.length > 2
         (shipment_lines.length - 2).times { xl.copy_row(0, starting_row - 1, starting_row) }
       end
-    
+
       shipment_lines.each_with_index do |line, x|
         generate_line(user, shipment, line, starting_row + x)
       end
@@ -133,7 +133,7 @@ module OpenChain; module CustomHandler; class BookingSpreadsheetGenerator
       if address
         address_data.push *address.full_address_array(skip_name: true)
       end
-      
+
       address_data.each_with_index do |v, x|
         # There's only 5 rows allotted for address, so don't let it overflow
         break if x > 4
@@ -168,7 +168,7 @@ module OpenChain; module CustomHandler; class BookingSpreadsheetGenerator
       # Pull out any lines that are just blank lines
       marks = value.split("\n").reject {|l| l.strip.blank? }
 
-      # If we need more than 5 M&N rows, then there's probably room on the template 
+      # If we need more than 5 M&N rows, then there's probably room on the template
       # to create another cell at G14 for them to continue at.  For now, we'll just leave this as is.
       starting_row = 15
       marks.each_with_index do |mark, x|

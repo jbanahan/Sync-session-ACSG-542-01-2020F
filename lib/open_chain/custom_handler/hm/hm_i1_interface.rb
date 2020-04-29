@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI1Interface
   def update_product product, row
     self.class.add_custom_methods product
     part_number, * = get_part_number_and_uid(row[3])
-    
+
     product.update_attr_with_flag :importer_id, @cust.id
     product.update_field_with_flag @cdefs[:prod_part_number], part_number
     cv_concat product, @cdefs[:prod_po_numbers], row[0]
@@ -58,10 +58,10 @@ module OpenChain; module CustomHandler; module Hm; class HmI1Interface
 
   def assign_earlier product, cdef, date_str
     old_date = product.custom_value cdef
-    parsed_date = Date.strptime(date_str,'%m/%d/%Y')
+    parsed_date = Date.strptime(date_str, '%m/%d/%Y')
     product.update_field_with_flag cdef, parsed_date if old_date.nil? || parsed_date < old_date
     product
-  end   
+  end
 
   private
 
@@ -101,5 +101,4 @@ module OpenChain; module CustomHandler; module Hm; class HmI1Interface
       @changed_by_i1 == true
     end
   end
-  
 end; end; end; end

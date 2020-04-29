@@ -5,7 +5,7 @@ module OpenChain; class DatabaseUtils
     # indicator for a deadlock
     return true if error.is_a?(ActiveRecord::TransactionIsolationConflict)
 
-    # Stupid ActiveRecord returns basically every single error from your database as a StatementInvalid error, 
+    # Stupid ActiveRecord returns basically every single error from your database as a StatementInvalid error,
     # you can get at the underlying error through the Exception#cause method.  Extract that if there is one.
     if error.is_a?(ActiveRecord::StatementInvalid)
       error = error.cause unless error.cause.nil?
@@ -36,23 +36,23 @@ module OpenChain; class DatabaseUtils
     end
   end
 
-  # This method can be used to run code inside a completely separate database 
-  # connection.  This can be useful if you need to "drop out" of 
+  # This method can be used to run code inside a completely separate database
+  # connection.  This can be useful if you need to "drop out" of
   # an existing transaction for any reason and query the "live" data set.
   def self.run_in_separate_connection wait_for_completion: true
     raise "A block must be given to utilize this method." unless block_given?
 
     result = nil
-  
+
     # The new thread is needed because ActiveRecord uses a thread local to cache the current connection.
-    # Since we want to ensure a "clean" connection is establish, we're using a 
+    # Since we want to ensure a "clean" connection is establish, we're using a
     # new, distinct Thread.
     #
-    # I think this could be managed directly with direct calls to ActiveRecord::Base.connection_pool.checkout / checkin 
-    # but then I'd have to do all the exception handling as well..this just seems simpler. 
+    # I think this could be managed directly with direct calls to ActiveRecord::Base.connection_pool.checkout / checkin
+    # but then I'd have to do all the exception handling as well..this just seems simpler.
     Thread.new do
       ActiveRecord::Base.connection_pool.with_connection do
-        result = yield 
+        result = yield
       end
     end.join
 

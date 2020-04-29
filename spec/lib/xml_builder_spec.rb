@@ -8,7 +8,7 @@ describe OpenChain::XmlBuilder do
       doc, root = @builder.build_xml_document "root"
       expect(root.name).to eq "root"
       expect(doc).to be_a REXML::Document
-      #Not entirely sure how to test if the xml version is there or not based on Document, printing works fine
+      # Not entirely sure how to test if the xml version is there or not based on Document, printing works fine
       expect(doc.to_s).to eq "<?xml version='1.0' encoding='UTF-8'?><root/>"
     end
 

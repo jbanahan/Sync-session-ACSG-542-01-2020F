@@ -68,7 +68,7 @@ class SchedulableJobsController < ApplicationController
 
       sj.run_if_needed force_run: true
       add_flash :notices, "#{class_name} is running."
-      
+
       redirect_to schedulable_jobs_path
     end
   end
@@ -80,7 +80,7 @@ class SchedulableJobsController < ApplicationController
       sj.save!
 
       add_flash :notices, "#{sj.run_class_name} has been marked as not running."
-      
+
       redirect_to schedulable_jobs_path
     end
   end

@@ -6,7 +6,7 @@ describe DebugRecord do
     it "removes anything older than given date" do
       debug_record = nil
       Timecop.freeze(Time.zone.now - 1.second) { debug_record = DebugRecord.create! user: Factory(:user)}
-      
+
       subject.purge Time.zone.now
 
       expect {debug_record.reload}.to raise_error ActiveRecord::RecordNotFound
@@ -16,7 +16,7 @@ describe DebugRecord do
       debug_record = nil
       now = Time.zone.now
       Timecop.freeze(now + 1.second) { debug_record = DebugRecord.create! user: Factory(:user) }
-      
+
       subject.purge now
 
       expect {debug_record.reload}.not_to raise_error

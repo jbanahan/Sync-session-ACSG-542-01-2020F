@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler
         errors = parse @custom_file
       rescue
         errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
-        raise 
+        raise
       ensure
         body = "Fenix Invoice File '#{@custom_file.attached_file_name}' has finished processing."
         subject = "Fenix Invoice File Processing Completed"
@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler
           body += "\n\n#{errors.join("\n")}"
           subject += " With Errors"
         end
-       
+
         user.messages.create(:subject=>subject, :body=>body)
       end
       nil
@@ -67,7 +67,7 @@ module OpenChain; module CustomHandler
       invoice.invoice_date = date_value row[2]
       invoice.country_origin_code = text_value row[3]
       invoice.currency = 'CAD'
-      
+
       invoice
     end
 
@@ -97,7 +97,7 @@ module OpenChain; module CustomHandler
       end
     end
 
-    protected 
+    protected
 
       def extract_invoices custom_file
         invoice_data = {}
@@ -109,16 +109,16 @@ module OpenChain; module CustomHandler
         current_invoice_rows = []
         row_number = 0
         foreach(custom_file) do |row|
-          #skip the first line if it's the column headings
+          # skip the first line if it's the column headings
           next if (row_number +=1) == 1 && has_header_line?
 
           blank = blank_row? row
           invoice_number = parse_invoice_number_from_row row
 
           # If we hit a blank row and we have accumulated invoice data
-          # Or if we have a new invoice number we'll store off the existing data and 
+          # Or if we have a new invoice number we'll store off the existing data and
           # shift to a new one
-          if (blank && current_invoice_rows.length > 0) || (!previous_invoice_number.nil? && previous_invoice_number != invoice_number) 
+          if (blank && current_invoice_rows.length > 0) || (!previous_invoice_number.nil? && previous_invoice_number != invoice_number)
             invoice_data[previous_invoice_number] = current_invoice_rows
             current_invoice_rows = []
             previous_invoice_number = (blank ? nil : invoice_number)

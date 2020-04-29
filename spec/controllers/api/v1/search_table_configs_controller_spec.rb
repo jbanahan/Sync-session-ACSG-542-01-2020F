@@ -6,7 +6,7 @@ describe Api::V1::SearchTableConfigsController do
   describe '#for_page' do
     it "should render all for page" do
       config_hash = {'a'=>'b'}
-      stc = Factory(:search_table_config,page_uid:'pid',config_json:config_hash.to_json)
+      stc = Factory(:search_table_config, page_uid:'pid', config_json:config_hash.to_json)
       get :for_page, page_uid: 'pid'
       expect(response).to be_success
       expected = {

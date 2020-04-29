@@ -89,7 +89,7 @@ describe IntegrationParserSupport do
       expect(ms).to receive(:custom_feature?).with("Admins View Integration Files").and_return true
       expect(object.can_view_integration_link? user).to eq true
     end
-    
+
     it "does not allow admins to view if custom feature is not enabled" do
       user = User.new
       user.admin = true

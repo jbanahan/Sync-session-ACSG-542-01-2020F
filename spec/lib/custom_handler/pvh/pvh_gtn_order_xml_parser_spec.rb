@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
   let (:us) { Factory(:country, iso_code: "US")}
 
   describe "process_order_update" do
-    before :each do 
+    before :each do
       us
       india
       allow(subject).to receive(:inbound_file).and_return inbound_file
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnOrderXmlParser do
       expect(a.state).to eq "07"
       expect(a.postal_code).to eq "122505"
       expect(a.country).to eq india
-      
+
       f = o.factory
       expect(f).not_to be_nil
       expect(f).to have_system_identifier("PVH-GTN Factory", "21410002")

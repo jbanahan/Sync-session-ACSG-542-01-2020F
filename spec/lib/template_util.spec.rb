@@ -12,15 +12,15 @@ describe OpenChain::TemplateUtil do
     end
 
     it "raises an exception if there is syntax problem" do
-      expect{subject.interpolate_liquid_string('hi {{name', {'name' => 'tobi'})}.to raise_error(Liquid::SyntaxError)
+      expect {subject.interpolate_liquid_string('hi {{name', {'name' => 'tobi'})}.to raise_error(Liquid::SyntaxError)
     end
 
     it "raises an exception if there is a missing variable" do
-      expect{subject.interpolate_liquid_string('hi {{nope}}', {'name' => 'tobi'})}.to raise_error(Liquid::UndefinedVariable)
+      expect {subject.interpolate_liquid_string('hi {{nope}}', {'name' => 'tobi'})}.to raise_error(Liquid::UndefinedVariable)
     end
 
     it "raises an exception if there is a missing filter" do
-      expect{subject.interpolate_liquid_string('hi {{name | nope}}', {'name' => 'tobi'})}.to raise_error(Liquid::UndefinedFilter)
+      expect {subject.interpolate_liquid_string('hi {{name | nope}}', {'name' => 'tobi'})}.to raise_error(Liquid::UndefinedFilter)
     end
   end
 end

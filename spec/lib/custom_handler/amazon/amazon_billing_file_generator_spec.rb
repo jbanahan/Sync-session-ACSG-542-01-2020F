@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
 
   let (:broker_invoice) {
     i = entry.broker_invoices.create!(invoice_number: "12345", invoice_date: Date.new(2019, 8, 1), invoice_total: BigDecimal("500"), currency: "USD",
-      customer_number: "AMZN", bill_to_name: "Bill Me", bill_to_address_1: "100 IOU Ave", bill_to_address_2: "STE 100", bill_to_city: "Billsville", 
+      customer_number: "AMZN", bill_to_name: "Bill Me", bill_to_address_1: "100 IOU Ave", bill_to_address_2: "STE 100", bill_to_city: "Billsville",
       bill_to_state: "PA", bill_to_zip: "09876", bill_to_country_id: us.id
     )
     i.broker_invoice_lines.create! charge_code: "0001", charge_amount: BigDecimal("175"), charge_description: "DUTY"
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
       expect(m).to have_xpath_value("CurrencyCode", "USD")
       expect(m).to have_xpath_value("accountNumber", "USMAEUGIFTDUTOCE")
       expect(m).to have_xpath_value("CarrierNumber", "USMAEUGIFTDUTOCE")
-      
+
       expect(m).to have_xpath_value("CarrierName", "Vandegrift, Inc.")
       expect(m).to have_xpath_value("CarrierAddress1", "100 Walnut Ave")
       expect(m).to have_xpath_value("CarrierAddress2", "Suite 600")
@@ -96,7 +96,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
       expect(m).to have_xpath_value("CarrierStateOrProvinceCode", "NJ")
       expect(m).to have_xpath_value("CarrierPostalCode", "07066")
       expect(m).to have_xpath_value("CarrierCountryCode", "US")
-      
+
       expect(m).to have_xpath_value("BillToName", "Bill Me")
       expect(m).to have_xpath_value("BillToAddress1", "100 IOU Ave")
       expect(m).to have_xpath_value("BillToAddress2", "STE 100")
@@ -191,7 +191,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
       expect(m).to have_xpath_value("CurrencyCode", "USD")
       expect(m).to have_xpath_value("accountNumber", "USMAEUGIFTCUBROCECYFCL")
       expect(m).to have_xpath_value("CarrierNumber", "USMAEUGIFTCUBROCECYFCL")
-      
+
       expect(m).to have_xpath_value("CarrierName", "Vandegrift, Inc.")
       expect(m).to have_xpath_value("CarrierAddress1", "100 Walnut Ave")
       expect(m).to have_xpath_value("CarrierAddress2", "Suite 600")
@@ -199,7 +199,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
       expect(m).to have_xpath_value("CarrierStateOrProvinceCode", "NJ")
       expect(m).to have_xpath_value("CarrierPostalCode", "07066")
       expect(m).to have_xpath_value("CarrierCountryCode", "US")
-      
+
       expect(m).to have_xpath_value("BillToName", "Bill Me")
       expect(m).to have_xpath_value("BillToAddress1", "100 IOU Ave")
       expect(m).to have_xpath_value("BillToAddress2", "STE 100")
@@ -386,10 +386,10 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
       expect(sr.failure_message).to be_nil
     end
 
-    it "handles errors when sending an invoice" do 
+    it "handles errors when sending an invoice" do
       expect(subject).to receive(:generate_and_send_invoice_xml).with(entry_snapshot, invoice_snapshot, broker_invoice, :duty).and_raise(StandardError, "Error!")
       expect_any_instance_of(StandardError).to receive(:log_me).with(["Failed to generate duty invoice for Broker Invoice # 12345."])
-      
+
       subject.generate_and_send_invoice_files entry_snapshot, invoice_snapshot, broker_invoice
 
       expect(broker_invoice.sync_records.length).to eq 1
@@ -445,7 +445,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
   end
 
   describe "generate_and_send" do
-    before :each do 
+    before :each do
       broker_invoice
       entry
     end
@@ -460,7 +460,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
     it "skips any invoices that are not billed to 'AMZN'" do
       broker_invoice.update! customer_number: "AMZN-98765"
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      subject.generate_and_send(entry_snapshot)      
+      subject.generate_and_send(entry_snapshot)
     end
 
     it "skips invoices already marked as sent" do
@@ -481,11 +481,11 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
     context "data validations" do
       let! (:ms) { stub_master_setup }
 
-      before :each do 
+      before :each do
         allow(ms).to receive(:production?).and_return true
       end
 
-      after :each do 
+      after :each do
         expect(subject).not_to receive(:generate_and_send_invoice_files)
         subject.generate_and_send(entry_snapshot)
       end
@@ -503,13 +503,13 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
           end
         end
 
-        it "skips entries without Amazon Bill of Lading" do 
+        it "skips entries without Amazon Bill of Lading" do
           entry.update! customer_references: "REF"
         end
       end
 
       context "with air entry" do
-        before :each do 
+        before :each do
           entry.update! transport_mode_code: "40"
         end
 

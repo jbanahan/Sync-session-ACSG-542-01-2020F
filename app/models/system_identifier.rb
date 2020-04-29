@@ -17,13 +17,13 @@
 
 # This class exists as a means of having multiple identifiers for external feeds
 # as a way to uniquely identify a single company entity.
-# 
-# For instance, we may get 315 data for an importer.  The 315 may reference that 
+#
+# For instance, we may get 315 data for an importer.  The 315 may reference that
 # importer using "Code A", while another feed like an 856 from another carrier might
 # reference that importer using "Code B"
 class SystemIdentifier < ActiveRecord::Base
   attr_accessible :code, :company_id, :system, :company
-  
+
   belongs_to :company, inverse_of: :system_identifiers
 
   validates_presence_of :system, :code

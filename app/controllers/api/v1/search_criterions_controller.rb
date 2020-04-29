@@ -39,20 +39,20 @@ module Api; module V1; class SearchCriterionsController < ApiController
     end
   end
 
-  def index 
+  def index
     validate_access(params[:search_criterion], current_user) do |linked_object|
       render json: plural_json(linked_object.search_criterions, current_user)
     end
   end
 
-  private 
+  private
 
     def validate_access crit_params, user
       if crit_params
         obj = polymorphic_find(crit_params[:linked_object_type], crit_params[:linked_object_id])
         if !obj.respond_to?(:can_view?) || obj.can_view?(user)
           yield obj
-        else 
+        else
           raise ActiveRecord::RecordNotFound
         end
       end

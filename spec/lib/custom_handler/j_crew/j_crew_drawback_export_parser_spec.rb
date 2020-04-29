@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser do
     end
     it "should create line" do
       vals = default_vals
-      d = described_class.parse_csv_line(make_row,1,@imp)
+      d = described_class.parse_csv_line(make_row, 1, @imp)
       expect(d.class).to eq DutyCalcExportFileLine
       expect(d.export_date.strftime("%m/%d/%Y")).to eq vals[:export_date]
       expect(d.ship_date.strftime("%m/%d/%Y")).to eq vals[:ship_date]

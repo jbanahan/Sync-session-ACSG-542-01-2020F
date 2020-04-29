@@ -24,14 +24,14 @@ describe Product do
     let(:imp) { Factory(:company, system_code: "ACME") }
     let(:entry) { Factory(:entry, importer: imp) }
     let(:invoice_1) { Factory(:commercial_invoice, entry: entry, invoice_number: "123456")}
-    let!(:line_1) { Factory(:commercial_invoice_line, commercial_invoice: invoice_1, 
+    let!(:line_1) { Factory(:commercial_invoice_line, commercial_invoice: invoice_1,
       line_number: 1, part_number: "attr_part_1") }
     let(:invoice_2) { Factory(:commercial_invoice, entry: entry, invoice_number: "654321") }
-    let!(:line_2) { Factory(:commercial_invoice_line, commercial_invoice: invoice_2, 
+    let!(:line_2) { Factory(:commercial_invoice_line, commercial_invoice: invoice_2,
       line_number: 1, part_number: "attr_part_2") }
-    let!(:line_2_2) { Factory(:commercial_invoice_line, 
+    let!(:line_2_2) { Factory(:commercial_invoice_line,
       commercial_invoice: invoice_2, line_number: 2, part_number: "attr_part_3") }
-    
+
     let!(:product_1) { Factory(:product, importer: imp, unique_identifier: "attr_part_1")}
     let!(:product_2) { Factory(:product, importer: imp, unique_identifier: "attr_part_2")}
     let!(:product_3) { Factory(:product, importer: imp, unique_identifier: "attr_part_3")}
@@ -47,13 +47,13 @@ describe Product do
 
         line_data = entry.commercial_invoices
                          .flat_map(&:commercial_invoice_lines)
-                         .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number, 
-                                      line_num: cil.line_number, 
+                         .map { |cil| {inv_num: cil.commercial_invoice.invoice_number,
+                                      line_num: cil.line_number,
                                       part_num: cil.part_number} }
-        expect(Product.create_prod_part_hsh(imp.id, 
-          line_data.map{ |l| l[:part_num] }, @cdefs)).to include(
-            product_1.id=>"attr_part_1", 
-            product_2.id=>"attr_part_2", 
+        expect(Product.create_prod_part_hsh(imp.id,
+          line_data.map { |l| l[:part_num] }, @cdefs)).to include(
+            product_1.id=>"attr_part_1",
+            product_2.id=>"attr_part_2",
             product_3.id=>"attr_part_3")
       end
     end
@@ -66,11 +66,11 @@ describe Product do
         cdefs = double "cdefs"
         line_data = entry.commercial_invoices
                          .flat_map(&:commercial_invoice_lines)
-                         .map{ |cil| {inv_num: cil.commercial_invoice.invoice_number,
+                         .map { |cil| {inv_num: cil.commercial_invoice.invoice_number,
                                       line_num: cil.line_number,
                                       part_num: cil.part_number} }
         expect(Product.create_prod_part_hsh(imp.id,
-          line_data.map{ |l| l[:part_num] }, cdefs)).to include(
+          line_data.map { |l| l[:part_num] }, cdefs)).to include(
             product_1.id=>"attr_part_1",
             product_2.id=>"attr_part_2",
             product_3.id=>"attr_part_3")
@@ -104,7 +104,7 @@ describe Product do
       country_1 = Factory(:country)
       country_2 = Factory(:country)
 
-      expected_array = [country_1,country_2].collect do |cntry|
+      expected_array = [country_1, country_2].collect do |cntry|
         cls = @product.classifications.build
         cls.country = cntry
         cls
@@ -120,7 +120,7 @@ describe Product do
 
       country = Factory(:country)
 
-      [region_1,region_2].each {|r| r.countries << country}
+      [region_1, region_2].each {|r| r.countries << country}
 
       cls = @product.classifications.build
       cls.country = country
@@ -149,7 +149,7 @@ describe Product do
   describe "wto6_changed_after?", :snapshot do
     before :each do
       @u = Factory(:user)
-      @tr = Factory(:tariff_record,hts_1:'1234567890',hts_2:'9876543210',hts_3:'5555550000')
+      @tr = Factory(:tariff_record, hts_1:'1234567890', hts_2:'9876543210', hts_3:'5555550000')
       @p = @tr.product
       @snapshot = @p.create_snapshot(@u)
       @snapshot.update!(created_at:1.month.ago)
@@ -160,12 +160,12 @@ describe Product do
       expect(@p.wto6_changed_after?(1.day.ago)).to be_truthy
     end
     it "should return true if record added with new wto6" do
-      Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
+      Factory(:tariff_record, hts_1:'6666660000', classification:Factory(:classification, product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_truthy
     end
     it "should return false if record added with same wto6" do
-      Factory(:tariff_record,hts_1:'1234560000',classification:Factory(:classification,product:@p))
+      Factory(:tariff_record, hts_1:'1234560000', classification:Factory(:classification, product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(1.day.ago)).to be_falsey
     end
@@ -184,7 +184,7 @@ describe Product do
     end
     it "should return true if change happened in same day" do
       @snapshot.update!(created_at:5.minutes.ago)
-      Factory(:tariff_record,hts_1:'6666660000',classification:Factory(:classification,product:@p))
+      Factory(:tariff_record, hts_1:'6666660000', classification:Factory(:classification, product:@p))
       @p.reload
       expect(@p.wto6_changed_after?(3.minutes.ago)).to be_truthy
     end
@@ -221,7 +221,7 @@ describe Product do
       expect(@p.saved_classifications_exist?).to be_falsey
     end
     it "should return true for mix" do
-      Factory(:classification,:product=>@p)
+      Factory(:classification, :product=>@p)
       @p.classifications.build
       expect(@p.saved_classifications_exist?).to be_truthy
     end
@@ -232,7 +232,7 @@ describe Product do
         before :each do
           @parent = Factory(:product)
           @child = Factory(:product)
-          @parent.bill_of_materials_children.create!(:child_product_id=>@child.id,:quantity=>3)
+          @parent.bill_of_materials_children.create!(:child_product_id=>@child.id, :quantity=>3)
         end
         it "should be true if parent" do
           expect(@parent).to be_on_bill_of_materials
@@ -255,18 +255,18 @@ describe Product do
     }
 
     before :each do
-      @master_user = Factory(:master_user,:product_view=>true,:product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
-      @importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
-        @other_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
-      @linked_importer_user = Factory(:importer_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
+      @master_user = Factory(:master_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+      @importer_user = Factory(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+        @other_importer_user = Factory(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
+      @linked_importer_user = Factory(:importer_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
       @importer_user.company.linked_companies << @linked_importer_user.company
       @unassociated_product = Factory(:product)
-      @importer_product = Factory(:product,:importer=>@importer_user.company)
-      @linked_product = Factory(:product,:importer=>@linked_importer_user.company)
+      @importer_product = Factory(:product, :importer=>@importer_user.company)
+      @linked_product = Factory(:product, :importer=>@linked_importer_user.company)
     end
     describe "item permissions" do
       it "should allow master company to handle any product" do
-        [@unassociated_product,@importer_product,@linked_product].each do |p|
+        [@unassociated_product, @importer_product, @linked_product].each do |p|
           expect(p.can_view?(@master_user)).to be_truthy
           expect(p.can_edit?(@master_user)).to be_truthy
           expect(p.can_classify?(@master_user)).to be_truthy
@@ -309,17 +309,17 @@ describe Product do
       end
       context "vendor" do
         before :each do
-          @vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
+          @vendor_user = Factory(:vendor_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
           @vendor_user.company.linked_companies << @linked_importer_user.company
           @vendor_product = Factory(:product)
           @vendor_product.vendors << @vendor_user.company
-          @linked_vendor_user = Factory(:vendor_user,:product_view=>true, :product_edit=>true, :classification_edit=>true,:product_comment=>true,:product_attach=>true,:variant_edit=>true)
+          @linked_vendor_user = Factory(:vendor_user, :product_view=>true, :product_edit=>true, :classification_edit=>true, :product_comment=>true, :product_attach=>true, :variant_edit=>true)
           @linked_vendor_user.company.linked_companies << @vendor_user.company
         end
 
         it "should allow a vendor to handle own products" do
           expect(@vendor_product.can_view?(@vendor_user)).to be_truthy
-          #Vendors can't edit products - only master and importer types
+          # Vendors can't edit products - only master and importer types
           expect(@vendor_product.can_edit?(@vendor_user)).to be_falsey
           expect(@vendor_product.can_classify?(@vendor_user)).to be_falsey
           expect(@vendor_product.can_comment?(@vendor_user)).to be_truthy
@@ -366,13 +366,13 @@ describe Product do
     end
     describe "search_secure" do
       it "should find all for master" do
-        expect(Product.search_secure(@master_user, Product.where("1=1")).sort {|a,b| a.id<=>b.id}).to eq([@linked_product,@importer_product,@unassociated_product].sort {|a,b| a.id<=>b.id})
+        expect(Product.search_secure(@master_user, Product.where("1=1")).sort {|a, b| a.id<=>b.id}).to eq([@linked_product, @importer_product, @unassociated_product].sort {|a, b| a.id<=>b.id})
       end
       it "should find importer's products" do
-        expect(Product.search_secure(@importer_user, Product.where("1=1")).sort {|a,b| a.id<=>b.id}).to eq([@linked_product,@importer_product].sort {|a,b| a.id<=>b.id})
+        expect(Product.search_secure(@importer_user, Product.where("1=1")).sort {|a, b| a.id<=>b.id}).to eq([@linked_product, @importer_product].sort {|a, b| a.id<=>b.id})
       end
       it "should not find other importer's products" do
-        expect(Product.search_secure(@other_importer_user,Product.where("1=1"))).to be_empty
+        expect(Product.search_secure(@other_importer_user, Product.where("1=1"))).to be_empty
       end
     end
   end
@@ -380,8 +380,8 @@ describe Product do
 
     it 'should have linkable attachments' do
       product = Factory(:product)
-      linkable = Factory(:linkable_attachment,:model_field_uid=>'prod',:value=>'ordn')
-      LinkedAttachment.create(:linkable_attachment_id=>linkable.id,:attachable=>product)
+      linkable = Factory(:linkable_attachment, :model_field_uid=>'prod', :value=>'ordn')
+      LinkedAttachment.create(:linkable_attachment_id=>linkable.id, :attachable=>product)
       product.reload
       expect(product.linkable_attachments.first).to eq(linkable)
     end
@@ -390,7 +390,7 @@ describe Product do
   describe "missing_classification_country?" do
     it "should reject making classification records without a country of some sort" do
       p = Factory(:product)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
 
       params = {
         'id' => p.id,
@@ -409,7 +409,7 @@ describe Product do
     it "should not reject if updating an existing classification" do
       c = Factory(:classification)
       p = c.product
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'prod_uid' => "unique_identifier123",
@@ -428,7 +428,7 @@ describe Product do
     it "should allow creating classification if country id used" do
       country = Factory(:country)
       p = Factory(:product)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'classifications_attributes' => [
@@ -445,7 +445,7 @@ describe Product do
     it "should allow creating classification if country iso used" do
       country = Factory(:country)
       p = Factory(:product)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'classifications_attributes' => [
@@ -462,7 +462,7 @@ describe Product do
     it "should allow creating classification if country name used" do
       country = Factory(:country)
       p = Factory(:product)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:string)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:string)
 
       params = {
         'classifications_attributes' => [

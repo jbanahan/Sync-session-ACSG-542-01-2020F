@@ -4,7 +4,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
 
   describe "permission?" do
     let!(:user) { Factory(:user) }
-    
+
     it "allows master users only" do
       expect_any_instance_of(Company).to receive(:master?).and_return true
       expect(described_class.permission? user).to be_truthy
@@ -26,7 +26,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
 
   describe "run_schedulable" do
     it "runs/emails the report" do
-      now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017,3,15)
+      now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017, 3, 15)
       Timecop.freeze(now) do
         Tempfile.open(["file", ".csv"]) do |t|
           t.binmode
@@ -69,11 +69,11 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
       @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
 
-      expect(sheet.row(0)).to eq ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "Country of Origin", "LINK"]
-      expect(sheet.row(1)).to eq [nil, nil, @entry.entry_number, "ABC", "123", @commercial_invoice.invoice_number, 
-        50.0, 15.0, 6.0, 5.0, nil, nil, nil, "#{@entry.entry_number}/#{50.0}/#{@commercial_invoice.invoice_number}", "CN", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
-      expect(sheet.row(2)).to eq [nil, nil, @entry.entry_number, "DEF", "456", @commercial_invoice.invoice_number, 
-        25.0, 45.0, 15.0, 0, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", "CA", Spreadsheet::Link.new(@entry.view_url,'Web Link')]
+      expect(sheet.row(0)).to eq ["Statement #", "ACH #", "Entry #", "PO", "Business", "Invoice", "Duty Rate", "Duty", "Taxes / Fees", "Fees", "ACH Date", "Statement Date", "Release Date", "Unique ID", "Country of Origin", "LINK"]
+      expect(sheet.row(1)).to eq [nil, nil, @entry.entry_number, "ABC", "123", @commercial_invoice.invoice_number,
+        50.0, 15.0, 6.0, 5.0, nil, nil, nil, "#{@entry.entry_number}/#{50.0}/#{@commercial_invoice.invoice_number}", "CN", Spreadsheet::Link.new(@entry.view_url, 'Web Link')]
+      expect(sheet.row(2)).to eq [nil, nil, @entry.entry_number, "DEF", "456", @commercial_invoice.invoice_number,
+        25.0, 45.0, 15.0, 0, nil, nil, nil, "#{@entry.entry_number}/#{25.0}/#{@commercial_invoice.invoice_number}", "CA", Spreadsheet::Link.new(@entry.view_url, 'Web Link')]
     end
 
     it "prevents users who do not have access to the entry from seeing them" do
@@ -88,7 +88,7 @@ describe OpenChain::Report::EddieBauerCaStatementSummary do
 
       @t = described_class.new.run Factory(:master_user, time_zone: "Eastern Time (US & Canada)"), start_date: '2014-02-28', end_date: '2014-03-02'
       sheet = Spreadsheet.open(@t.path).worksheet 0
-      
+
       sheet = Spreadsheet.open(@t.path).worksheet 0
       expect(sheet.row(1)[9]).to eq 5.0
       expect(sheet.row(2)[9]).to eq 0

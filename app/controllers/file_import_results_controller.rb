@@ -2,7 +2,7 @@ class FileImportResultsController < ApplicationController
 
   def show
     secure {
-      @change_records = @file_import_result.change_records.paginate(:per_page=>50,:page=>params[:page])
+      @change_records = @file_import_result.change_records.paginate(:per_page=>50, :page=>params[:page])
     }
   end
 
@@ -15,8 +15,8 @@ class FileImportResultsController < ApplicationController
   end
 
   def download_failed
-    #Note on the name: this means the user wants to download change records that failed, not that some download method has actually failed
-    secure{
+    # Note on the name: this means the user wants to download change records that failed, not that some download method has actually failed
+    secure {
       @fir = FileImportResult.find(params[:id])
       if @fir.change_records.length > 200
         FileImportResult.delay.download_results(false, current_user.id, @fir.id, true)
@@ -24,7 +24,7 @@ class FileImportResultsController < ApplicationController
         redirect_to :back
       else
         FileImportResult.download_results(false, current_user.id, @fir) do |t|
-          name = @fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}.xls" : "Log for " + File.basename(@fir.imported_file.attached_file_name,File.extname(@fir.imported_file.attached_file_name)) + " - Results.xls" 
+          name = @fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}.xls" : "Log for " + File.basename(@fir.imported_file.attached_file_name, File.extname(@fir.imported_file.attached_file_name)) + " - Results.xls"
           send_file t, {filename: name}
         end
       end
@@ -32,7 +32,7 @@ class FileImportResultsController < ApplicationController
   end
 
   def download_all
-    secure{
+    secure {
       @fir = FileImportResult.find(params[:id])
       if @fir.change_records.length > 200
         FileImportResult.delay.download_results(true, current_user.id, @fir.id, true)
@@ -40,7 +40,7 @@ class FileImportResultsController < ApplicationController
         redirect_to :back
       else
         FileImportResult.download_results(true, current_user.id, @fir) do |t|
-          name = @fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}.xls" : "Log for " + File.basename(@fir.imported_file.attached_file_name,File.extname(@fir.imported_file.attached_file_name)) + " - Results.xls" 
+          name = @fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}.xls" : "Log for " + File.basename(@fir.imported_file.attached_file_name, File.extname(@fir.imported_file.attached_file_name)) + " - Results.xls"
           send_file t, {filename: name}
         end
       end
@@ -51,7 +51,7 @@ class FileImportResultsController < ApplicationController
   def secure &block
     fr = FileImportResult.find params[:id]
     imp_file = fr.imported_file
-    action_secure(imp_file.can_view?(current_user),fr,{:lock_check=>false,:verb=>"view",:module_name=>"Log"}) {
+    action_secure(imp_file.can_view?(current_user), fr, {:lock_check=>false, :verb=>"view", :module_name=>"Log"}) {
       @imported_file = imp_file
       @file_import_result = fr
       yield

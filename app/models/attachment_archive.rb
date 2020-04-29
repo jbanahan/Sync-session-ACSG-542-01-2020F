@@ -22,8 +22,8 @@ class AttachmentArchive < ActiveRecord::Base
   has_many :attachments, :through=>:attachment_archives_attachments
   belongs_to :company
 
-  #JSON of archive and its attachments
-  def attachment_list_json 
+  # JSON of archive and its attachments
+  def attachment_list_json
     self.to_json(:include=>{:attachment_archives_attachments=>{:include=>:attachment, :methods=>:output_path}})
   end
 

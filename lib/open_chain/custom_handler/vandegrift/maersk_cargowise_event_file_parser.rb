@@ -29,7 +29,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     inbound_file.add_identifier :broker_reference, broker_reference
 
     entry = nil
-    
+
     Lock.acquire("Entry-#{broker_reference}") do
       entry = Entry.where(broker_reference:broker_reference, source_system:Entry::CARGOWISE_SOURCE_SYSTEM).first_or_create! do |ent|
         inbound_file.add_info_message "Cargowise-sourced entry matching Broker Reference '#{broker_reference}' was not found, so a new entry was created."
@@ -89,7 +89,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
     def event_description event_type, event_reference
       # Including the event_reference for some event types because it's used in conditional logic there.
-      "#{event_type}#{event_reference && ['MSC','CES','MRJ'].include?(event_type) ? " | #{event_reference}" : ""}"
+      "#{event_type}#{event_reference && ['MSC', 'CES', 'MRJ'].include?(event_type) ? " | #{event_reference}" : ""}"
     end
 
     def parse_datetime date_str
@@ -108,7 +108,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def set_event_info entry, event_date, event_type, event_reference
       date_set = true
 
-      # We're not processing events for DDA - Documents Attached...the document handler 
+      # We're not processing events for DDA - Documents Attached...the document handler
       # will deal with this.
       return false if event_type == 'DDA'
 
@@ -258,7 +258,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       # with the filename and attachment type if have already received the document or not.
       checksum = document_checksum(document_bytes)
       attachment_type = document_attachment_type(element)
-      filename = document_filename element      
+      filename = document_filename element
 
       inbound_file.add_identifier :attachment_name, filename
 
@@ -270,12 +270,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       attachment = entry.attachments.build checksum: checksum, attachment_type: attachment_type
       attachment.source_system_timestamp = document_timestamp(element)
       attachment.is_private = document_private?(element)
-      
+
       io = StringIOAttachment.new(document_bytes)
       io.original_filename = filename
 
       attachment.attached = io
-      
+
       attachment.save!
 
       if remove_previous_documents_for_type?(attachment_type)

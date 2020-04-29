@@ -8,7 +8,7 @@ class ValidationRuleEntrySpecialTariffsClaimed < BusinessValidationRule
   include ValidationRuleEntrySpecialTariffsSupport
 
   def run_child_validation invoice_line
-    # We need to be looking up the special tariffs, so make sure the special tariff hash is keyed according to the 
+    # We need to be looking up the special tariffs, so make sure the special tariff hash is keyed according to the
     @special_tariffs_hash ||= special_tariffs(invoice_line.commercial_invoice.entry, use_special_hts_number: true)
     validate_special_tariff_claimed(invoice_line.commercial_invoice, invoice_line, @special_tariffs_hash)
   end
@@ -16,7 +16,7 @@ class ValidationRuleEntrySpecialTariffsClaimed < BusinessValidationRule
   def validate_special_tariff_claimed invoice, invoice_line, special_tariffs_hash
     errors = []
     tariffs_used = invoice_line.commercial_invoice_tariffs.map &:hts_code
-    
+
     tariffs_used.each do |hts_number|
       # If the tariff number is a special tariff, then determine what the corresponding "standard" tariffs are for that number
       # and make sure one of those was also used here.
@@ -31,7 +31,7 @@ class ValidationRuleEntrySpecialTariffsClaimed < BusinessValidationRule
     if errors.length > 0
       errors.insert(0, "Please review the following lines to ensure the special tariffs were applied correctly:")
     end
-    
+
     errors
   end
 
@@ -46,7 +46,7 @@ class ValidationRuleEntrySpecialTariffsClaimed < BusinessValidationRule
       special_tariffs.find_all { |t| !tariff_exceptions.include? t.hts_number }
     end
   end
-  
+
   def filter_tariff_inclusions special_tariffs
     if tariff_inclusions.size == 0
       return special_tariffs
@@ -54,5 +54,4 @@ class ValidationRuleEntrySpecialTariffsClaimed < BusinessValidationRule
       special_tariffs.find_all { |t| tariff_inclusions.include? t.hts_number }
     end
   end
-  
 end

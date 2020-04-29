@@ -5,18 +5,18 @@ describe OpenChain::CustomHandler::Amazon::AmazonLaceyProductParser do
 
   describe "process_part_lines" do
     let (:user) { Factory(:user) }
-    let! (:importer) { 
+    let! (:importer) {
       add_system_identifier(with_customs_management_id(Factory(:importer), "CMID"), "Amazon Reference", "X76YHUR3GKHXS")
     }
     let (:cdefs) { subject.cdefs }
     let (:inbound_file) { InboundFile.new }
     let (:csv_rows) { [csv_data[1]] }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:inbound_file).and_return inbound_file
     end
 
-    it "creates product and sets Lacey data" do 
+    it "creates product and sets Lacey data" do
       expect { subject.process_part_lines(user, "US_PGA_ALG_data.csv", csv_rows) }.to change { Product.count }.from(0).to(1)
 
       p = Product.first

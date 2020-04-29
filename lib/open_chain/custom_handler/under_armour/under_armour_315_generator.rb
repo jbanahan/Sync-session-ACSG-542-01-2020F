@@ -24,23 +24,23 @@ module OpenChain; module CustomHandler; module UnderArmour
           milestone = DataCrossReference.find_ua_315_milestone shipment_identifier, event_code
           date_string = xml_date_value(date)
           if milestone.nil? || milestone != date_string
-            DataCrossReference.transaction do 
+            DataCrossReference.transaction do
               DataCrossReference.add_xref! DataCrossReference::UA_315_MILESTONE_EVENT,  DataCrossReference.make_compound_key(shipment_identifier, event_code), date_string
               self.delay.generate_and_send event_code: event_code, shipment_identifier: shipment_identifier, date: date
             end
           end
         end
       end
-      
+
       entry
     end
 
     def generate_and_send data
-     generate_file(data) {|f| ftp_file f, {keep_local:true}}     
+     generate_file(data) {|f| ftp_file f, {keep_local:true}}
     end
 
     # Generates data to a tempfile, yielding the file to any
-    # given block.  Returns the closed tempfile.  
+    # given block.  Returns the closed tempfile.
     # (you can read from the closed file via IO.read(f.path) if you need the data).
     def generate_file data
       # Create a hash of the data values to send as the unique event id
@@ -87,10 +87,10 @@ XML
       {server: 'connect.vfitrack.net', username: 'underarmour', password: 'xkcoeit', folder: folder, protocol: "sftp"}
     end
 
-    private 
+    private
 
       def extract_underarmour_shipment_identifiers entry
-        shipment_id = Set.new 
+        shipment_id = Set.new
         entry.commercial_invoices.each do |inv|
           inv.commercial_invoice_lines.each do |line|
             next if line.customer_reference.blank?
@@ -99,7 +99,7 @@ XML
             shipment_id << ((id =~ /\A([^-]+)-.+\z/) ? $1 : id)
           end
         end
-        
+
         shipment_id
       end
 
@@ -114,7 +114,7 @@ XML
 
       def xml_date_value date
         # UA wants the dates sent in GMT sans timezone indicator, so we shall obligue
-        # Technically, this is ISO8601 format, but there's no way in rails, short of substringing the 
+        # Technically, this is ISO8601 format, but there's no way in rails, short of substringing the
         # iso8601 date method's string value of making a date like this.
         date.in_time_zone("GMT").strftime("%Y-%m-%dT%H:%M:%S")
       end

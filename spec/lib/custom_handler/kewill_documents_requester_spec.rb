@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::KewillDocumentsRequester do
 
     let(:config) { {'s3_bucket' => "bucket", 'sqs_receive_queue' => "receive_queue"}.with_indifferent_access }
 
-    before :each do 
+    before :each do
       allow(described_class).to receive(:imaging_config).and_return config
     end
 

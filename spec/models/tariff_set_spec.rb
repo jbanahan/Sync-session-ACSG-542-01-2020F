@@ -1,12 +1,11 @@
 describe TariffSet do
-  
   describe 'activate' do
     before :each do
       @c1 = Factory(:country)
       @c2 = Factory(:country)
     end
 
-    it "replaces official tariff" do      
+    it "replaces official tariff" do
       should_be_gone = OfficialTariff.create!(:country_id => @c1.id, :hts_code => "1234567890", :full_description => "FD1")
       should_be_changed = OfficialTariff.create!(:country_id => @c1.id, :hts_code => "1234555555", :full_description => "FD3")
       should_stay = OfficialTariff.create!(:country_id => @c2.id, :hts_code => should_be_gone.hts_code, :full_description => "FD2")
@@ -32,8 +31,8 @@ describe TariffSet do
       expect(OfficialTariff.where(:country_id => @c1.id, :hts_code => "9999999999").first).not_to be_nil
       expect(OfficialTariff.where(:country_id => @c2.id, :hts_code => should_stay.hts_code).first).not_to be_nil
       expect(OfficialTariff.where(:country_id => @c1.id, :hts_code => should_be_gone.hts_code).first).to be_nil
-      expect(TariffSet.find(old_ts.id)).not_to be_active #should have deactivated old tariff set for same country
-      expect(TariffSet.find(ts.id)).to be_active #should have activated this tariff set
+      expect(TariffSet.find(old_ts.id)).not_to be_active # should have deactivated old tariff set for same country
+      expect(TariffSet.find(ts.id)).to be_active # should have activated this tariff set
     end
 
     it 'queues jobs to notify users of update' do
@@ -51,22 +50,22 @@ describe TariffSet do
 
   describe 'compare' do
     it "returns array of results" do
-      c = Factory(:country,:iso_code=>'US')
+      c = Factory(:country, :iso_code=>'US')
       old = TariffSet.create!(:country_id => c.id, :label => "old")
       new_ts = TariffSet.create!(:country_id => c.id, :label => "new")
 
-      #will be removed
+      # will be removed
       old.tariff_set_records.create!(:hts_code => "123", :country_id => old.country_id)
-      #will be changed
+      # will be changed
       old.tariff_set_records.create!(:hts_code => "345", :full_description => "abc", :country_id => old.country_id)
-      #will stay the same
+      # will stay the same
       old.tariff_set_records.create!(:hts_code => "901", :full_description => "xyz", :country_id => old.country_id)
 
-      #changed
+      # changed
       new_ts.tariff_set_records.create!(:hts_code => "345", :full_description => "def", :country_id => new_ts.country_id)
-      #added
+      # added
       new_ts.tariff_set_records.create!(:hts_code => "567", :country_id => new_ts.country_id)
-      #stayed the same
+      # stayed the same
       new_ts.tariff_set_records.create!(:hts_code => "901", :full_description => "xyz", :country_id => new_ts.country_id)
 
       added, removed, changed = new_ts.compare old

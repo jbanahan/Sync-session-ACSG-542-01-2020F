@@ -10,8 +10,8 @@ module OpenChain; module Report; class DutySavingsReport
   def self.run_report run_by, settings={}
     self.new.run run_by, settings
   end
-  
-  #requires 'email', 'customer_numbers' array, and EITHER 'previous_n_days' OR 'previous_n_months'
+
+  # requires 'email', 'customer_numbers' array, and EITHER 'previous_n_days' OR 'previous_n_months'
   def self.run_schedulable settings={}
     start_date = calculate_start_date(settings['previous_n_days'], settings['previous_n_months'])
     end_date = calculate_end_date(settings['previous_n_days'], settings['previous_n_months'])
@@ -35,14 +35,14 @@ module OpenChain; module Report; class DutySavingsReport
       today.beginning_of_month
     end
   end
-  
+
   def run run_by, settings
     start_date = sanitize_date_string settings['start_date'], run_by.time_zone
     end_date = sanitize_date_string settings['end_date'], run_by.time_zone
     wb = create_workbook(start_date, end_date, settings['customer_numbers'])
     workbook_to_tempfile wb, 'DutySavings-', file_name: "Duty Savings Report.xls"
   end
-  
+
   def send_email email, start_date, end_date, customer_numbers
     wb = create_workbook(start_date, end_date, customer_numbers)
     workbook_to_tempfile wb, 'DutySavings-', file_name: "Duty Savings Report.xls" do |t|
@@ -51,7 +51,7 @@ module OpenChain; module Report; class DutySavingsReport
       OpenMailer.send_simple_html(email, subject, body, t).deliver_now
     end
   end
-  
+
   def create_workbook start_date, end_date, customer_numbers
     wb, sheet = XlsMaker.create_workbook_and_sheet "Duty Savings Report"
     table_from_query sheet, query(start_date, end_date, customer_numbers)
@@ -59,9 +59,9 @@ module OpenChain; module Report; class DutySavingsReport
   end
 
   def query(start_date, end_date, customer_numbers)
-    qry = 
+    qry =
        <<-SQL
-         SELECT 
+         SELECT
            ent.broker_reference AS 'Broker Ref#',
            ent.arrival_date AS 'Arrival Date',
            ent.release_date AS 'Release Date',

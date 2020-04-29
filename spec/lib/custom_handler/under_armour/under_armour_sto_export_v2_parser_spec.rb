@@ -2,20 +2,20 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser do
   describe "parse" do
     before :each do
       @imp = Company.where(master:true).first_or_create!(name:'ua')
-      Factory(:country,iso_code:'CA')
+      Factory(:country, iso_code:'CA')
       @a1_value = '05/01/2015'
       @a2_value = 'REFNUM'
-      @a3_value = 'CA' #export country
+      @a3_value = 'CA' # export country
       @body_rows = [
-        ['1235484 - 001 - 3XL','ID',10,'UA StormFront Jacket-BLK//STO'],
-        ['1230364 - 100 - XL','KH',72,'The Original 6 BoxerJock-WHT//RED']
+        ['1235484 - 001 - 3XL', 'ID', 10, 'UA StormFront Jacket-BLK//STO'],
+        ['1230364 - 100 - XL', 'KH', 72, 'The Original 6 BoxerJock-WHT//RED']
       ]
       @prep_xl_client = lambda { |path|
         xlc = double('xlclient')
         expect(OpenChain::XLClient).to receive(:new).with(path).and_return xlc
-        allow(xlc).to receive(:get_cell).with(0,0,0).and_return @a1_value
-        allow(xlc).to receive(:get_cell).with(0,1,0).and_return @a2_value
-        allow(xlc).to receive(:get_cell).with(0,2,0).and_return @a3_value
+        allow(xlc).to receive(:get_cell).with(0, 0, 0).and_return @a1_value
+        allow(xlc).to receive(:get_cell).with(0, 1, 0).and_return @a2_value
+        allow(xlc).to receive(:get_cell).with(0, 2, 0).and_return @a3_value
         body_yield = allow(xlc).to receive(:all_row_values).with(starting_row_number: 3)
         @body_rows.each {|br| body_yield = body_yield.and_yield(br)}
       }
@@ -24,44 +24,44 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser do
     it "should validate that cell A1 is the export date" do
       @a1_value = ''
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to raise_error(/export date/)
+      expect {described_class.parse(@base_path)}.to raise_error(/export date/)
     end
     it "should validate that cell A2 is a reference number" do
       @a2_value = ''
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to raise_error(/reference number/)
+      expect {described_class.parse(@base_path)}.to raise_error(/reference number/)
     end
     it "should validate that cell A3 is the country of export" do
       @a3_value = ''
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to raise_error(/country of origin/)
+      expect {described_class.parse(@base_path)}.to raise_error(/country of origin/)
     end
     it "should validate that cell A3 is the country of export" do
       @a3_value = ''
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to raise_error(/country of origin/)
+      expect {described_class.parse(@base_path)}.to raise_error(/country of origin/)
     end
     it "should validate that cell A3 is a valid ISO code" do
       @a3_value = 'ZZ'
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to raise_error(/country of origin/)
+      expect {described_class.parse(@base_path)}.to raise_error(/country of origin/)
     end
     it "should validate that remaining lines are 4 cells" do
       @body_rows.first << 'otherdata'
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to raise_error(/must be 4 columns/)
+      expect {described_class.parse(@base_path)}.to raise_error(/must be 4 columns/)
     end
     it "should validate that column C is a number" do
       @body_rows.first[2] = 'x'
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to raise_error(/must be a number/)
+      expect {described_class.parse(@base_path)}.to raise_error(/must be a number/)
     end
     it "should create records" do
       @prep_xl_client.call(@base_path)
-      expect{described_class.parse(@base_path)}.to change(DutyCalcExportFileLine,:count).from(0).to(2)
+      expect {described_class.parse(@base_path)}.to change(DutyCalcExportFileLine, :count).from(0).to(2)
       d = DutyCalcExportFileLine.first
-      expect(d.export_date).to eq  Date.new(2015,5,1)
-      expect(d.ship_date).to eq  Date.new(2015,5,1)
+      expect(d.export_date).to eq  Date.new(2015, 5, 1)
+      expect(d.ship_date).to eq  Date.new(2015, 5, 1)
       expect(d.carrier).to eq  'FedEx'
       expect(d.ref_1).to eq  @a2_value
       expect(d.ref_2).to eq  "abc - 4"

@@ -1,7 +1,7 @@
 require 'spreadsheet'
 
 # This module provides simple row by row parsing of CSV or Excel files.
-# The including class must implement a method named file_reader with a 
+# The including class must implement a method named file_reader with a
 # method signature of "file_reader(file)" and return any object that
 # responds to foreach by yielding "row" objects from the file.
 #
@@ -9,7 +9,7 @@ require 'spreadsheet'
 # via the excel_reader and csv_reader methods.
 #
 # A simple implementation of "file_reader(file)" my look like this:
-# 
+#
 #  def file_reader file
 #     csv_reader(file)
 #  end
@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; module CsvExcelParser
     if value.is_a? String
 
       if date_format.nil?
-        #Convert any / to a hypehn
+        # Convert any / to a hypehn
         value = value.gsub('/', '-').strip
         # Try yyyy-mm-dd then mm-dd-yyyy then mm-dd-yy
         date = parse_and_validate_date(value, "%Y-%m-%d")
@@ -120,9 +120,9 @@ module OpenChain; module CustomHandler; module CsvExcelParser
   def boolean_value value
     if !value.nil? && value.to_s.length > 0
       dstr = value.to_s.downcase.strip
-      if ["y", "yes","true", "1"].include?(dstr)
+      if ["y", "yes", "true", "1"].include?(dstr)
         return true
-      elsif ["n", "no","false", "0"].include?(dstr)
+      elsif ["n", "no", "false", "0"].include?(dstr)
         return false
       end
     end
@@ -162,11 +162,10 @@ module OpenChain; module CustomHandler; module CsvExcelParser
           yield row
         end
       end
-      
+
       nil
     end
   end
-  
 
   class LocalExcelReader
 
@@ -177,7 +176,7 @@ module OpenChain; module CustomHandler; module CsvExcelParser
       @reader_options = reader_options
     end
 
-    def foreach 
+    def foreach
       sheet_number = @reader_options.delete :sheet_number
       sheet_number = 0 unless sheet_number
 

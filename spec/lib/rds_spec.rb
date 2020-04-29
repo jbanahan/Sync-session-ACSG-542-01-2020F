@@ -96,7 +96,7 @@ describe OpenChain::Rds do
   }
 
   describe "find_db_instance" do
-    context "with non-cluster db" do 
+    context "with non-cluster db" do
       it "returns an RdsDbInstance method" do
         expect(client).to receive(:describe_db_instances).with(db_instance_identifier: "id").and_return instance_response
 
@@ -123,7 +123,7 @@ describe OpenChain::Rds do
       end
     end
 
-    context "with cluster db" do 
+    context "with cluster db" do
       it "returns an RdsDbInstance method" do
         expect(client).to receive(:describe_db_clusters).with(db_cluster_identifier: "id").and_return cluster_response
 
@@ -186,7 +186,7 @@ describe OpenChain::Rds do
         expect(client).to receive(:create_db_cluster_snapshot).with(db_cluster_snapshot_identifier: "my-identifier", db_cluster_identifier: "cluster-identifier", tags: [{key: "Test", value: "Value"}]).and_return cluster_snapshot_response
 
         instance = OpenChain::Rds::RdsDbInstance.new(db_cluster_instance, "us-whatever-1")
-        snapshot = subject.create_snapshot_for_instance(instance, "my-identifier",tags: {Test: "Value"})
+        snapshot = subject.create_snapshot_for_instance(instance, "my-identifier", tags: {Test: "Value"})
       end
     end
   end
@@ -313,20 +313,20 @@ describe OpenChain::Rds do
   end
 
   describe "delete_snapshot" do
-    context "with non-cluster database" do 
+    context "with non-cluster database" do
       it "deletes a snapshot" do
         expect(alternate_region_client).to receive(:delete_db_snapshot).with(db_snapshot_identifier: "snapshot-identifier")
         expect(subject.delete_snapshot OpenChain::Rds::RdsSnapshot.new(db_snapshot, "us-alternate-region-1")).to be_truthy
       end
     end
 
-    context "with cluster database" do 
+    context "with cluster database" do
       it "deletes a snapshot" do
         expect(alternate_region_client).to receive(:delete_db_cluster_snapshot).with(db_cluster_snapshot_identifier: "snapshot-identifier")
         expect(subject.delete_snapshot OpenChain::Rds::RdsSnapshot.new(db_cluster_snapshot, "us-alternate-region-1")).to be_truthy
       end
     end
-    
+
   end
 
   describe "list_tags_for_resource" do

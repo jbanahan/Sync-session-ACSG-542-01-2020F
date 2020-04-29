@@ -13,14 +13,13 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
     CustomDefinition.destroy_all
   }
 
-  describe "parse", :disable_delayed_jobs do 
-    
+  describe "parse", :disable_delayed_jobs do
     let! (:ai) { Factory(:country, iso_code: "AI")}
     let! (:cn) { Factory(:country, iso_code: "CN")}
 
     subject { described_class }
 
-    it "creates an order from standard order type" do 
+    it "creates an order from standard order type" do
       subject.parse standard_data, bucket: "bucket", key: "talbots.edi"
       order = Order.where(order_number: "TALBO-5086819").first
 
@@ -110,7 +109,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
       expect(variant2.custom_value(cdefs[:var_hts_code])).to eq "6204624011"
       expect(variant2.custom_value(cdefs[:var_color])).to eq "3-DUSK WASH-HVY SUPE"
       expect(variant2.custom_value(cdefs[:var_size])).to eq "060"
-      
+
       expect(product.entity_snapshots.length).to eq 1
       s = product.entity_snapshots.first
       expect(s.context).to eq "talbots.edi"
@@ -147,7 +146,7 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
       expect(line.quantity).to eq BigDecimal("11")
     end
 
-    it "creates an order from prepack order type" do 
+    it "creates an order from prepack order type" do
       subject.parse prepack_data, bucket: "bucket", key: "talbots.edi"
       order = Order.where(order_number: "TALBO-5086819").first
 
@@ -279,12 +278,12 @@ describe OpenChain::CustomHandler::Talbots::Talbots850Parser do
 
   describe "find_message_value" do
     subject { described_class.new }
-    
+
     it "returns first message with specified identifier" do
       segs = create_edi_segments("MSG*THEME Season")
       expect(subject.find_message_value segs, "THEME").to eq "Season"
     end
-    
+
     it "finds first occurrence" do
       segs = create_edi_segments("MSG*SCREAM Boo!\nMSG*THEME Season\nMSG*THEME Reason")
       expect(subject.find_message_value segs, "THEME").to eq "Season"

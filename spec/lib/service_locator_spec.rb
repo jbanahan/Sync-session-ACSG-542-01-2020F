@@ -29,7 +29,7 @@ describe OpenChain::ServiceLocator do
     end
     it "should raise error if has validator that raises error" do
       def subject.check_validity obj; raise "something"; end
-      expect{subject.register(service)}.to raise_error "something"
+      expect {subject.register(service)}.to raise_error "something"
       expect(subject.registered).to be_empty
     end
 
@@ -80,7 +80,7 @@ describe OpenChain::ServiceLocator do
       expect(subject.registered.to_a).to eq []
     end
   end
-  
+
   describe "clear" do
     it "should remove items" do
       subject.register(service)

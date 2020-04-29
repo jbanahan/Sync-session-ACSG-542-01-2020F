@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::ProductGenerator do
 
   class FakeProductGenerator < OpenChain::CustomHandler::ProductGenerator
-    def ftp_credentials 
-      {:server=>'svr',:username=>'u',:password=>'p',:folder=>'f',:remote_file_name=>'r'}
+    def ftp_credentials
+      {:server=>'svr', :username=>'u', :password=>'p', :folder=>'f', :remote_file_name=>'r'}
     end
 
     def query
@@ -14,8 +14,8 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
   describe "sync" do
 
-    before :each do 
-      @p1 = Factory(:product,:name=>'x')
+    before :each do
+      @p1 = Factory(:product, :name=>'x')
     end
 
     it "resets synced product ids" do
@@ -30,38 +30,38 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
 
     context "row_count" do
-      
+
       it "should report rows written" do
-        subject.sync {|r| nil} #don't need to do anything with the rows
+        subject.sync {|r| nil} # don't need to do anything with the rows
         expect(subject.row_count).to eq(2)
       end
       it "should count exploded rows" do
         s = subject
 
-        def s.preprocess_row r, opts={}; [r,r]; end
-        s.sync {|r| nil} #don't need to do anything with the rows
+        def s.preprocess_row r, opts={}; [r, r]; end
+        s.sync {|r| nil} # don't need to do anything with the rows
         expect(subject.row_count).to eq(3)
       end
     end
     context "preprocess_row" do
-      
+
       it "should default to not doing anything" do
         r = []
         subject.sync do |row|
           r << row
         end
-        expect(r).to eq([{0=>'UID',1=>'NM'},{0=>@p1.unique_identifier,1=>'x'}])
+        expect(r).to eq([{0=>'UID', 1=>'NM'}, {0=>@p1.unique_identifier, 1=>'x'}])
       end
       it "should allow override to create new rows" do
         s = subject
         def s.preprocess_row row, opts={}
-          [row,row] #double it
+          [row, row] # double it
         end
         r = []
         s.sync do |row|
           r << row
         end
-        expect(r).to eq([{0=>'UID',1=>'NM'},{0=>@p1.unique_identifier,1=>'x'},{0=>@p1.unique_identifier,1=>'x'}])
+        expect(r).to eq([{0=>'UID', 1=>'NM'}, {0=>@p1.unique_identifier, 1=>'x'}, {0=>@p1.unique_identifier, 1=>'x'}])
       end
 
       it "should skip preprocess rows that return nil" do
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
           throw :mark_synced
         end
 
-        def subject.sync_code 
+        def subject.sync_code
           "code"
         end
 
@@ -122,7 +122,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
         subject.sync do |row|
           r << row
         end
-        expect(r.first).to eq({0=>'UID',1=>'NM'})
+        expect(r.first).to eq({0=>'UID', 1=>'NM'})
       end
 
       it "allows overriding with custom transform" do
@@ -147,7 +147,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
         subject.sync do |row|
           r << row
         end
-        expect(r.first).to eq({0=>@p1.unique_identifier,1=>'x'})
+        expect(r.first).to eq({0=>@p1.unique_identifier, 1=>'x'})
       end
 
       it "allows adding multiple header rows" do
@@ -174,7 +174,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
         expect(r.first).to eq ({0=>@p1.unique_identifier, 1=>@p1.name})
       end
     end
-    
+
     context "sync_records" do
       context "implments_sync_code" do
         before :each do
@@ -209,8 +209,8 @@ describe OpenChain::CustomHandler::ProductGenerator do
 
   describe "sync_csv" do
     before :each do
-      @p1 = Factory(:product,:name=>'x')
-      @p2 = Factory(:product,:name=>'y')
+      @p1 = Factory(:product, :name=>'x')
+      @p2 = Factory(:product, :name=>'y')
     end
     after :each do
       @tmp.unlink if @tmp
@@ -221,7 +221,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
       a = CSV.parse IO.read @tmp
       expect(a[0][0]).to eq("UID")
       expect(a[0][1]).to eq("NM")
-      [@p1,@p2].each_with_index do |p,i|
+      [@p1, @p2].each_with_index do |p, i|
         expect(a[i+1][0]).to eq(p.unique_identifier)
         expect(a[i+1][1]).to eq(p.name)
       end
@@ -229,7 +229,7 @@ describe OpenChain::CustomHandler::ProductGenerator do
     it "should create csv without headers" do
       @tmp = subject.sync_csv include_headers: false
       a = CSV.parse IO.read @tmp
-      [@p1,@p2].each_with_index do |p,i|
+      [@p1, @p2].each_with_index do |p, i|
         expect(a[i][0]).to eq(p.unique_identifier)
         expect(a[i][1]).to eq(p.name)
       end
@@ -262,20 +262,20 @@ describe OpenChain::CustomHandler::ProductGenerator do
   end
 
   describe "sync_fixed_position" do
-    before :each do 
-      @t = 0.seconds.ago 
-      @p1 = Factory(:product,:name=>'ABCDEFG',:created_at=>@t)
+    before :each do
+      @t = 0.seconds.ago
+      @p1 = Factory(:product, :name=>'ABCDEFG', :created_at=>@t)
       @b = subject
       def @b.query
         'select id, name, created_at, 5 from products'
       end
     end
-    after :each do 
+    after :each do
       @tmp.unlink if @tmp
     end
     it "should create fixed position file from results" do
       def @b.fixed_position_map
-        [{:len=>3},{:len=>8,:to_s=>lambda {|o| o.strftime("%Y%m%d")}},{:len=>4}]
+        [{:len=>3}, {:len=>8, :to_s=>lambda {|o| o.strftime("%Y%m%d")}}, {:len=>4}]
       end
       @tmp = @b.sync_fixed_position
       r = IO.read @tmp
@@ -283,17 +283,17 @@ describe OpenChain::CustomHandler::ProductGenerator do
     end
   end
   describe "sync_xls" do
-    before :each do 
-      @p1 = Factory(:product,:name=>'x')
+    before :each do
+      @p1 = Factory(:product, :name=>'x')
     end
     after :each do
       @tmp.unlink if @tmp
     end
     it "should create workbook from results" do
-      p2 = Factory(:product,:name=>'y')
+      p2 = Factory(:product, :name=>'y')
       @tmp = subject.sync_xls
       sheet = Spreadsheet.open(@tmp).worksheet(0)
-      [@p1,p2].each_with_index do |p,i|
+      [@p1, p2].each_with_index do |p, i|
         r = sheet.row(i+1)
         expect(r[0]).to eq(p.unique_identifier)
         expect(r[1]).to eq(p.name)
@@ -367,12 +367,12 @@ describe OpenChain::CustomHandler::ProductGenerator do
       SyncRecord.create!(syncable: prod_3, trading_partner: inst.sync_code, fingerprint: "finger_3_old", created_at: DateTime.now-2.day)
       allow(inst).to receive(:trim_fingerprint)
       allow(inst).to receive(:autoconfirm).and_return(true)
-      
-      inst.write_sync_records({prod_1.id => "finger_1_new", prod_2.id => "finger_2_new"}) #replaces 2 out of 3
+
+      inst.write_sync_records({prod_1.id => "finger_1_new", prod_2.id => "finger_2_new"}) # replaces 2 out of 3
       sync_1 = SyncRecord.where(syncable_id: prod_1.id).first
       sync_2 = SyncRecord.where(syncable_id: prod_2.id).first
       sync_3 = SyncRecord.where(syncable_id: prod_3.id).first
-      
+
       expect(sync_1).not_to be_nil
       expect(sync_1.fingerprint).to eq "finger_1_new"
       expect(sync_1.trading_partner).to eq inst.sync_code
@@ -401,11 +401,11 @@ describe OpenChain::CustomHandler::ProductGenerator do
     let (:ftp_session) { FtpSession.create! }
     let (:file) { Tempfile.open(["file", ".txt"])}
 
-    after :each do 
+    after :each do
       file.close! unless file.nil? || file.closed?
     end
 
-    it "calls super ftp_file implementation and passes the yielded session to sync products method" do 
+    it "calls super ftp_file implementation and passes the yielded session to sync products method" do
       expect(FtpSender).to receive(:send_file).and_return ftp_session
       expect(subject).to receive(:set_ftp_session_for_synced_products).with ftp_session
       subject.ftp_file file
@@ -413,8 +413,8 @@ describe OpenChain::CustomHandler::ProductGenerator do
   end
 
   describe "set_ftp_session_for_synced_products" do
-    let (:product) { 
-      p = Factory(:product) 
+    let (:product) {
+      p = Factory(:product)
       p.sync_records.create! trading_partner: "TEST"
       p
     }

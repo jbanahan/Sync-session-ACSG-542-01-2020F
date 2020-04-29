@@ -55,7 +55,7 @@ class SnapshotDescriptor
             else
               children << SnapshotDescriptor.new(values[:type], parent_association: parent_association)
             end
-            
+
           end
         end
       end

@@ -49,7 +49,7 @@ module OpenChain
         result_set.each do |result_set_row|
           result_set_row.each_with_index do |raw_column_value, column_number|
             # Extract and translate the raw value from the database
-            # Don't use the offset here, since the translation is generally going to reach into the actual returned query result row and we want to 
+            # Don't use the offset here, since the translation is generally going to reach into the actual returned query result row and we want to
             # provide the actual column from the result set we're parsing (as opposed to the intended output column number for the value)
             value = translate_raw_result_set_value(result_set_row, raw_column_value, column_number, column_names[column_number], data_conversions)
 
@@ -103,7 +103,7 @@ module OpenChain
               t.original_filename = opts[:file_name]
             end
             obj.respond_to?(:write) ? (obj.write t) : (obj.render t)
-            # Rewind to beginning to IO stream so the tempfile can be read 
+            # Rewind to beginning to IO stream so the tempfile can be read
             # from the start
             t.flush
             t.rewind

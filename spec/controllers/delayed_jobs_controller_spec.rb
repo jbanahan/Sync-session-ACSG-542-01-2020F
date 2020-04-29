@@ -5,12 +5,12 @@ describe DelayedJobsController do
   end
 
   describe "run_now" do
-    let(:now) { DateTime.new(2019,3,16,12) }
-    let(:yesterday) { DateTime.new(2019,3,15,12) }
+    let(:now) { DateTime.new(2019, 3, 16, 12) }
+    let(:yesterday) { DateTime.new(2019, 3, 15, 12) }
     let(:dj) { Delayed::Job.create!(priority: 10, run_at: yesterday) }
 
     it "sets run_at and priority" do
-      now = DateTime.new(2019,3,16,12)
+      now = DateTime.new(2019, 3, 16, 12)
       Timecop.freeze(now) { post :run_now, id: dj.id }
       dj.reload
       expect(dj.priority).to eq(-1000)
@@ -29,7 +29,7 @@ describe DelayedJobsController do
     end
   end
 
-  describe "destroy" do  
+  describe "destroy" do
     before(:each) { @dj = Delayed::Job.create! }
 
     it "should be successful" do

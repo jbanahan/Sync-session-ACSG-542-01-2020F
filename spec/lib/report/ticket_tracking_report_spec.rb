@@ -1,7 +1,7 @@
 describe OpenChain::Report::TicketTrackingReport do
   let!(:us) { Factory(:country, iso_code: "US")}
   let!(:report) { described_class.new }
-  let(:now) { ActiveSupport::TimeZone["UTC"].local(2016,05,15) }
+  let(:now) { ActiveSupport::TimeZone["UTC"].local(2016, 05, 15) }
   let(:tomorrow) { now + 1.day }
   let(:day_after_tomorrow) { tomorrow + 1.day }
 
@@ -66,7 +66,7 @@ describe OpenChain::Report::TicketTrackingReport do
       adjusted_start = "2016-01-01 05:00:00"
       adjusted_end = "2016-02-01 05:00:00"
       expect_any_instance_of(described_class).to receive(:run_queries).with(["CODE"], adjusted_start, adjusted_end).and_return combined_result
-      expect_any_instance_of(described_class).to receive(:comments_lambda).and_return(lambda { |a,b| "comments" })
+      expect_any_instance_of(described_class).to receive(:comments_lambda).and_return(lambda { |a, b| "comments" })
       @temp = described_class.run_report(u, {'start_date' => '2016-01-01', 'end_date' => '2016-02-01', 'project_keys' => ['CODE']})
       wb = XlsxTestReader.new(@temp.path).raw_workbook_data
       expect(wb.length).to eq 1
@@ -109,7 +109,7 @@ describe OpenChain::Report::TicketTrackingReport do
     end
 
     it "throws exception with names of unauthorized codes if there are any" do
-      expect{report.validate_ticketing_sys_codes u, ["FOO", "BAZ", "QUUX"]}.to raise_error("User isn't authorized to view project key(s) BAZ, QUUX")
+      expect {report.validate_ticketing_sys_codes u, ["FOO", "BAZ", "QUUX"]}.to raise_error("User isn't authorized to view project key(s) BAZ, QUUX")
     end
   end
 

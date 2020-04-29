@@ -24,7 +24,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonLaceyProductP
 
     find_or_create_product(line) do |product|
       changed = MutableBoolean.new false
-      
+
       standard_parsing product, changed, line
 
       if changed.value

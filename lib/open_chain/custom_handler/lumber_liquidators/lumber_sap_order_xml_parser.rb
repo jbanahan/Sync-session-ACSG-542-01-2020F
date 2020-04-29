@@ -11,9 +11,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   class OnShipmentError < StandardError; end
 
   VALID_ROOT_ELEMENTS ||= [
-    '_-LUMBERL_-3PL_ORDERS05_EXT', #after June 2016
-    'ORDERS05' #before June 2016
-  ]  
+    '_-LUMBERL_-3PL_ORDERS05_EXT', # after June 2016
+    'ORDERS05' # before June 2016
+  ]
 
   def self.parse_file data, log, opts={}
     self.new.parse_dom REXML::Document.new(data), opts
@@ -27,15 +27,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     root = dom.root
     inbound_file.error_and_raise "Incorrect root element #{root.name}, expecting '#{VALID_ROOT_ELEMENTS.join(', ')}'." unless VALID_ROOT_ELEMENTS.include?(root.name)
 
-    base = REXML::XPath.first(root,'IDOC')
+    base = REXML::XPath.first(root, 'IDOC')
 
     # order header info
-    order_header = REXML::XPath.first(base,'E1EDK01')
-    order_number = et(order_header,'BELNR')
-    vendor_system_code = et(order_header,'RECIPNT_NO')
+    order_header = REXML::XPath.first(base, 'E1EDK01')
+    order_number = et(order_header, 'BELNR')
+    vendor_system_code = et(order_header, 'RECIPNT_NO')
 
     # envelope info
-    envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
+    envelope = REXML::XPath.first(root, '//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
 
     inbound_file.company = importer
@@ -55,21 +55,21 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         o.customer_order_number = o.order_number
         o.vendor = vend
         o.order_date = order_date(base)
-        o.currency = et(order_header,'CURCY')
+        o.currency = et(order_header, 'CURCY')
         # The method for calculating payment terms was much more complicated prior to proj. 1230.  Per 1230
         # requirements, it was supposed to be retained "for possible future use in calculating the payment date".
         # Should that ever be the case, it's in the repository in revisions of this file older than 06/2017.
-        #o.terms_of_payment = REXML::XPath.first(base, './E1EDK01/_-LUMBERL_-ZTERM_DESCRIPTION/ZTERM_TXT').try(:text)
+        # o.terms_of_payment = REXML::XPath.first(base, './E1EDK01/_-LUMBERL_-ZTERM_DESCRIPTION/ZTERM_TXT').try(:text)
         o.terms_of_payment = payment_terms_description(base)
         terms_of_sale = ship_terms(base)
         o.terms_of_sale = terms_of_sale unless terms_of_sale.blank?
-        o.order_from_address = order_from_address(base,vend)
+        o.order_from_address = order_from_address(base, vend)
         o.fob_point = fob_point base
 
-        header_ship_to = ship_to_address(base,importer)
+        header_ship_to = ship_to_address(base, importer)
 
         order_lines_processed = []
-        REXML::XPath.each(base,'./E1EDP01') {|el| order_lines_processed << process_line(o, el, importer, header_ship_to).line_number.to_i}
+        REXML::XPath.each(base, './E1EDP01') {|el| order_lines_processed << process_line(o, el, importer, header_ship_to).line_number.to_i}
         # Look for existing order lines that are not present in the current XML and deal with them.
         o.order_lines.each {|ol|
           if !order_lines_processed.include?(ol.line_number.to_i)
@@ -86,16 +86,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         }
 
         o.save!
-        o.update_custom_value!(cdefs[:ord_assigned_agent],assigned_agent(o))
-        o.update_custom_value!(cdefs[:ord_type],et(order_header,'BSART'))
-        o.update_custom_value!(cdefs[:ord_sap_extract],ext_time)
+        o.update_custom_value!(cdefs[:ord_assigned_agent], assigned_agent(o))
+        o.update_custom_value!(cdefs[:ord_type], et(order_header, 'BSART'))
+        o.update_custom_value!(cdefs[:ord_sap_extract], ext_time)
         buyer_name, buyer_phone = buyer_info(base)
-        o.update_custom_value!(cdefs[:ord_buyer_name],buyer_name)
-        o.update_custom_value!(cdefs[:ord_buyer_phone],buyer_phone)
+        o.update_custom_value!(cdefs[:ord_buyer_name], buyer_name)
+        o.update_custom_value!(cdefs[:ord_buyer_phone], buyer_phone)
         o.associate_vendor_and_products! user
 
         set_header_totals_from_lines o
-        set_header_dates_from_lines(base,o)
+        set_header_dates_from_lines(base, o)
 
         o.save!
 
@@ -117,14 +117,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     vend = nil
     Lock.acquire("Vendor-#{vendor_system_code}") do
       # creating the vendor shell record if needed and putting the SAP code as the name since we don't have anything better to use
-      vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true,name:vendor_system_code)
+      vend = Company.where(system_code:vendor_system_code).first_or_create!(vendor:true, name:vendor_system_code)
       importer.linked_companies << vend unless importer.linked_companies.include?(vend)
     end
     vend
   end
 
   def send_on_shipment_error dom, order_number, message
-    Tempfile.open(["ll_sap_order-#{order_number}",'.xml']) do |f|
+    Tempfile.open(["ll_sap_order-#{order_number}", '.xml']) do |f|
       f << dom.to_s
       f.flush
       subject = "Order #{order_number} XML rejected."
@@ -137,8 +137,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       end
 
       to << Group.use_system_group("ORDER_REJECTED_EMAIL", name: "Order Rejected Email")
-      
-      OpenMailer.send_simple_html(to,subject,body,[f]).deliver_now
+
+      OpenMailer.send_simple_html(to, subject, body, [f]).deliver_now
     end
   end
 
@@ -157,8 +157,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def assigned_agent order
-    linked_system_codes = Company.where("companies.id IN (SELECT parent_id FROM linked_companies WHERE child_id = ?)",order.vendor_id).pluck(:system_code)
-    agent_codes = ['GELOWELL','RO','GS-EU','GS-US','GS-CA'] & linked_system_codes
+    linked_system_codes = Company.where("companies.id IN (SELECT parent_id FROM linked_companies WHERE child_id = ?)", order.vendor_id).pluck(:system_code)
+    agent_codes = ['GELOWELL', 'RO', 'GS-EU', 'GS-US', 'GS-CA'] & linked_system_codes
     agent_codes.sort.join("/")
   end
 
@@ -178,11 +178,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   def set_header_dates_from_lines base, order
     avail_to_promise_dates = []
-    REXML::XPath.each(base,'./E1EDP01/E1EDP20/EDATU') do |el|
+    REXML::XPath.each(base, './E1EDP01/E1EDP20/EDATU') do |el|
       avail_to_promise_dates << el.text unless el.text.blank?
     end
     avail_to_promise = avail_to_promise_dates.sort.first
-    order.update_custom_value!(cdefs[:ord_avail_to_prom_date],avail_to_promise)
+    order.update_custom_value!(cdefs[:ord_avail_to_prom_date], avail_to_promise)
 
     mapping = {
       'VN_EXPEC_DLVD' => [],
@@ -192,7 +192,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       'ACT_SHIP_DATE' => [],
       'VN_HNDDTE' => []
     }
-    date_elements = REXML::XPath.match(base,'./E1EDP01/E1EDP20/_-LUMBERL_-PO_SHIP_WINDOW')
+    date_elements = REXML::XPath.match(base, './E1EDP01/E1EDP20/_-LUMBERL_-PO_SHIP_WINDOW')
 
     if !date_elements.blank? && has_a_valid_date?(date_elements)
       date_elements.each do |el|
@@ -204,7 +204,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         end
       end
       # update mapping to get the earliest for each date or nil if the date wasn't sent
-      mapping.each {|k,v| mapping[k] = mapping[k].sort.first}
+      mapping.each {|k, v| mapping[k] = mapping[k].sort.first}
 
       # set legacy dates if we didn't get a VN_EXPEC_DLVD
       if mapping['VN_EXPEC_DLVD'].blank?
@@ -222,9 +222,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       end
       order.ship_window_start = mapping['VN_SHIPBEGIN']
       order.ship_window_end = mapping['VN_SHIPEND']
-      order.update_custom_value!(cdefs[:ord_planned_expected_delivery_date],mapping['VN_EXPEC_DLVD'])
-      order.update_custom_value!(cdefs[:ord_ship_confirmation_date],mapping['ACT_SHIP_DATE'])
-      order.update_custom_value!(cdefs[:ord_sap_vendor_handover_date],mapping['VN_HNDDTE'])
+      order.update_custom_value!(cdefs[:ord_planned_expected_delivery_date], mapping['VN_EXPEC_DLVD'])
+      order.update_custom_value!(cdefs[:ord_ship_confirmation_date], mapping['ACT_SHIP_DATE'])
+      order.update_custom_value!(cdefs[:ord_sap_vendor_handover_date], mapping['VN_HNDDTE'])
     else # legacy PO before June 2016 date logic change
       set_ship_window(order)
     end
@@ -249,155 +249,155 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       '9445' => 2
     }
     ship_window_matrix = {
-      '100003' => [40,40,38,7],
-      '100006' => [24,24,17,7],
-      '100013' => [40,40,38,7],
-      '100021' => [27,27,26,7],
-      '100024' => [27,27,26,7],
-      '100032' => [24,24,38,7],
-      '100037' => [41,41,27,7],
-      '100038' => [24,24,52,7],
-      '100045' => [27,27,26,7],
-      '100049' => [27,27,26,7],
-      '100066' => [16,16,3,7],
-      '100113' => [41,41,19,7],
-      '100116' => [41,41,19,7],
-      '100121' => [41,41,19,7],
-      '100127' => [41,41,19,7],
-      '100128' => [41,41,19,7],
-      '100129' => [41,41,19,7],
-      '100130' => [41,41,19,7],
-      '100131' => [41,41,19,7],
-      '100132' => [40,40,25,7],
-      '100133' => [41,41,19,7],
-      '100134' => [45,45,24,7],
-      '100135' => [41,41,19,7],
-      '100136' => [41,41,19,7],
-      '100137' => [40,40,25,7],
-      '100139' => [40,40,18,7],
-      '100140' => [37,37,21,7],
-      '100141' => [37,37,21,7],
-      '100142' => [48,48,31,7],
-      '100143' => [41,41,19,7],
-      '100144' => [37,37,21,7],
-      '100146' => [48,48,31,7],
-      '100156' => [41,41,19,7],
-      '100161' => [0,0,0,0],
-      '100166' => [41,41,19,7],
-      '100167' => [41,41,19,7],
-      '100168' => [41,41,19,7],
-      '100169' => [41,41,19,7],
-      '100170' => [37,37,18,7],
-      '100171' => [41,41,19,7],
-      '100173' => [41,41,19,7],
-      '100176' => [41,41,19,7],
-      '100182' => [37,37,18,7],
-      '100186' => [37,37,22,7],
-      '100196' => [41,41,19,7],
-      '100197' => [41,41,19,7],
-      '100198' => [41,41,19,7],
-      '100199' => [41,41,19,7],
-      '100201' => [41,41,19,7],
-      '100202' => [41,41,19,7],
-      '100205' => [24,24,38,7],
-      '100206' => [27,27,26,7],
-      '100211' => [24,24,17,7],
-      '100216' => [24,24,38,7],
-      '100217' => [27,27,26,7],
-      '100221' => [27,27,26,7],
-      '100222' => [41,41,19,7],
-      '100226' => [31,31,27,7],
-      '100227' => [24,24,17,7],
-      '100228' => [24,24,38,7],
-      '100231' => [31,31,27,7],
-      '100232' => [41,41,19,7],
-      '100236' => [0,0,0,0],
-      '100237' => [24,24,17,7],
-      '100238' => [24,24,17,7],
-      '100239' => [37,37,21,7],
-      '100241' => [27,27,26,7],
-      '100242' => [42,42,30,7],
-      '100243' => [41,41,19,7],
-      '100244' => [40,40,38,7],
-      '100245' => [0,0,0,0],
-      '100246' => [37,37,21,7],
-      '100251' => [24,24,17,7],
-      '100252' => [41,41,19,7],
-      '100256' => [41,41,19,7],
-      '100261' => [41,41,19,7],
-      '100266' => [45,45,26,7],
-      '100267' => [31,31,27,7],
-      '100268' => [41,41,19,7],
-      '100271' => [41,41,19,7],
-      '100276' => [41,41,19,7],
-      '100277' => [41,41,19,7],
-      '100278' => [40,40,20,7],
-      '100281' => [31,31,27,7],
-      '100286' => [41,41,19,7],
-      '100291' => [27,27,26,7],
-      '100292' => [27,27,26,7],
-      '100293' => [24,24,52,7],
-      '100296' => [34,34,30,7],
-      '100301' => [27,27,26,7],
-      '100302' => [41,41,19,7],
-      '100306' => [41,41,19,7],
-      '100311' => [38,38,31,7],
-      '100316' => [41,41,20,7],
-      '100317' => [34,34,30,7],
-      '100321' => [0,0,0,0],
-      '203260' => [0,0,0,0],
-      '203938' => [41,41,19,7],
-      '205300' => [0,0,0,0],
-      '205938' => [24,24,38,7],
-      '206811' => [37,37,21,7],
-      '206816' => [37,37,18,7],
-      '206850' => [41,41,19,7],
-      '206916' => [37,37,18,7],
-      '300007' => [41,41,19,7],
-      '300010' => [0,0,0,0],
-      '300016' => [37,37,22,7],
-      '300025' => [41,41,19,7],
-      '300026' => [45,45,26,7],
-      '300035' => [41,41,19,7],
-      '300040' => [27,27,41,7],
-      '300051' => [37,37,18,7],
-      '300053' => [41,41,19,7],
-      '300075' => [37,37,22,7],
-      '300076' => [41,41,19,7],
-      '300078' => [46,46,19,7],
-      '300079' => [37,37,21,7],
-      '300080' => [41,41,19,7],
-      '300081' => [48,48,31,7],
-      '300085' => [39,39,17,7],
-      '300086' => [41,41,19,7],
-      '300088' => [40,40,25,7],
-      '300089' => [41,41,19,7],
-      '300090' => [41,41,19,7],
-      '300093' => [41,41,19,7],
-      '300094' => [40,40,25,7],
-      '300095' => [40,40,25,7],
-      '300100' => [43,43,33,7],
-      '300106' => [24,24,38,7],
-      '300108' => [40,40,25,7],
-      '300111' => [40,40,25,7],
-      '300112' => [0,0,0,0],
-      '300115' => [0,0,0,0],
-      '300116' => [48,48,31,7],
-      '300118' => [18,18,36,7],
-      '300119' => [22,22,34,7],
-      '300121' => [16,16,36,7],
-      '300131' => [29,29,33,7],
-      '300142' => [43,43,33,7],
-      '300143' => [24,24,25,7],
-      '300144' => [40,40,18,7],
-      '300165' => [41,41,19,7],
-      '300168' => [29,29,33,7],
-      '300175' => [41,41,19,7],
-      '300180' => [0,0,0,0],
-      '300190' => [43,43,33,7],
-      '800472' => [0,0,0,0]
+      '100003' => [40, 40, 38, 7],
+      '100006' => [24, 24, 17, 7],
+      '100013' => [40, 40, 38, 7],
+      '100021' => [27, 27, 26, 7],
+      '100024' => [27, 27, 26, 7],
+      '100032' => [24, 24, 38, 7],
+      '100037' => [41, 41, 27, 7],
+      '100038' => [24, 24, 52, 7],
+      '100045' => [27, 27, 26, 7],
+      '100049' => [27, 27, 26, 7],
+      '100066' => [16, 16, 3, 7],
+      '100113' => [41, 41, 19, 7],
+      '100116' => [41, 41, 19, 7],
+      '100121' => [41, 41, 19, 7],
+      '100127' => [41, 41, 19, 7],
+      '100128' => [41, 41, 19, 7],
+      '100129' => [41, 41, 19, 7],
+      '100130' => [41, 41, 19, 7],
+      '100131' => [41, 41, 19, 7],
+      '100132' => [40, 40, 25, 7],
+      '100133' => [41, 41, 19, 7],
+      '100134' => [45, 45, 24, 7],
+      '100135' => [41, 41, 19, 7],
+      '100136' => [41, 41, 19, 7],
+      '100137' => [40, 40, 25, 7],
+      '100139' => [40, 40, 18, 7],
+      '100140' => [37, 37, 21, 7],
+      '100141' => [37, 37, 21, 7],
+      '100142' => [48, 48, 31, 7],
+      '100143' => [41, 41, 19, 7],
+      '100144' => [37, 37, 21, 7],
+      '100146' => [48, 48, 31, 7],
+      '100156' => [41, 41, 19, 7],
+      '100161' => [0, 0, 0, 0],
+      '100166' => [41, 41, 19, 7],
+      '100167' => [41, 41, 19, 7],
+      '100168' => [41, 41, 19, 7],
+      '100169' => [41, 41, 19, 7],
+      '100170' => [37, 37, 18, 7],
+      '100171' => [41, 41, 19, 7],
+      '100173' => [41, 41, 19, 7],
+      '100176' => [41, 41, 19, 7],
+      '100182' => [37, 37, 18, 7],
+      '100186' => [37, 37, 22, 7],
+      '100196' => [41, 41, 19, 7],
+      '100197' => [41, 41, 19, 7],
+      '100198' => [41, 41, 19, 7],
+      '100199' => [41, 41, 19, 7],
+      '100201' => [41, 41, 19, 7],
+      '100202' => [41, 41, 19, 7],
+      '100205' => [24, 24, 38, 7],
+      '100206' => [27, 27, 26, 7],
+      '100211' => [24, 24, 17, 7],
+      '100216' => [24, 24, 38, 7],
+      '100217' => [27, 27, 26, 7],
+      '100221' => [27, 27, 26, 7],
+      '100222' => [41, 41, 19, 7],
+      '100226' => [31, 31, 27, 7],
+      '100227' => [24, 24, 17, 7],
+      '100228' => [24, 24, 38, 7],
+      '100231' => [31, 31, 27, 7],
+      '100232' => [41, 41, 19, 7],
+      '100236' => [0, 0, 0, 0],
+      '100237' => [24, 24, 17, 7],
+      '100238' => [24, 24, 17, 7],
+      '100239' => [37, 37, 21, 7],
+      '100241' => [27, 27, 26, 7],
+      '100242' => [42, 42, 30, 7],
+      '100243' => [41, 41, 19, 7],
+      '100244' => [40, 40, 38, 7],
+      '100245' => [0, 0, 0, 0],
+      '100246' => [37, 37, 21, 7],
+      '100251' => [24, 24, 17, 7],
+      '100252' => [41, 41, 19, 7],
+      '100256' => [41, 41, 19, 7],
+      '100261' => [41, 41, 19, 7],
+      '100266' => [45, 45, 26, 7],
+      '100267' => [31, 31, 27, 7],
+      '100268' => [41, 41, 19, 7],
+      '100271' => [41, 41, 19, 7],
+      '100276' => [41, 41, 19, 7],
+      '100277' => [41, 41, 19, 7],
+      '100278' => [40, 40, 20, 7],
+      '100281' => [31, 31, 27, 7],
+      '100286' => [41, 41, 19, 7],
+      '100291' => [27, 27, 26, 7],
+      '100292' => [27, 27, 26, 7],
+      '100293' => [24, 24, 52, 7],
+      '100296' => [34, 34, 30, 7],
+      '100301' => [27, 27, 26, 7],
+      '100302' => [41, 41, 19, 7],
+      '100306' => [41, 41, 19, 7],
+      '100311' => [38, 38, 31, 7],
+      '100316' => [41, 41, 20, 7],
+      '100317' => [34, 34, 30, 7],
+      '100321' => [0, 0, 0, 0],
+      '203260' => [0, 0, 0, 0],
+      '203938' => [41, 41, 19, 7],
+      '205300' => [0, 0, 0, 0],
+      '205938' => [24, 24, 38, 7],
+      '206811' => [37, 37, 21, 7],
+      '206816' => [37, 37, 18, 7],
+      '206850' => [41, 41, 19, 7],
+      '206916' => [37, 37, 18, 7],
+      '300007' => [41, 41, 19, 7],
+      '300010' => [0, 0, 0, 0],
+      '300016' => [37, 37, 22, 7],
+      '300025' => [41, 41, 19, 7],
+      '300026' => [45, 45, 26, 7],
+      '300035' => [41, 41, 19, 7],
+      '300040' => [27, 27, 41, 7],
+      '300051' => [37, 37, 18, 7],
+      '300053' => [41, 41, 19, 7],
+      '300075' => [37, 37, 22, 7],
+      '300076' => [41, 41, 19, 7],
+      '300078' => [46, 46, 19, 7],
+      '300079' => [37, 37, 21, 7],
+      '300080' => [41, 41, 19, 7],
+      '300081' => [48, 48, 31, 7],
+      '300085' => [39, 39, 17, 7],
+      '300086' => [41, 41, 19, 7],
+      '300088' => [40, 40, 25, 7],
+      '300089' => [41, 41, 19, 7],
+      '300090' => [41, 41, 19, 7],
+      '300093' => [41, 41, 19, 7],
+      '300094' => [40, 40, 25, 7],
+      '300095' => [40, 40, 25, 7],
+      '300100' => [43, 43, 33, 7],
+      '300106' => [24, 24, 38, 7],
+      '300108' => [40, 40, 25, 7],
+      '300111' => [40, 40, 25, 7],
+      '300112' => [0, 0, 0, 0],
+      '300115' => [0, 0, 0, 0],
+      '300116' => [48, 48, 31, 7],
+      '300118' => [18, 18, 36, 7],
+      '300119' => [22, 22, 34, 7],
+      '300121' => [16, 16, 36, 7],
+      '300131' => [29, 29, 33, 7],
+      '300142' => [43, 43, 33, 7],
+      '300143' => [24, 24, 25, 7],
+      '300144' => [40, 40, 18, 7],
+      '300165' => [41, 41, 19, 7],
+      '300168' => [29, 29, 33, 7],
+      '300175' => [41, 41, 19, 7],
+      '300180' => [0, 0, 0, 0],
+      '300190' => [43, 43, 33, 7],
+      '800472' => [0, 0, 0, 0]
     }
-    vendor_code = order.vendor.system_code[4,6]
+    vendor_code = order.vendor.system_code[4, 6]
     ship_to_codes = order.order_lines.collect {|ol| ol.ship_to ? ol.ship_to.system_code : nil}.compact.uniq
     use_defaults = true
     if ship_to_codes.length == 1
@@ -446,28 +446,28 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def validate_line_totals order, base_el
-      expected_el = REXML::XPath.first(base_el,'E1EDS01/SUMME')
+      expected_el = REXML::XPath.first(base_el, 'E1EDS01/SUMME')
       return true if expected_el.nil?
       expected = BigDecimal(expected_el.text)
-      actual = order.order_lines.inject(BigDecimal('0.00')) {|mem,ln| mem + BigDecimal(ln.quantity * (ln.price_per_unit.blank? ? 0 : ln.price_per_unit)).round(2)}
+      actual = order.order_lines.inject(BigDecimal('0.00')) {|mem, ln| mem + BigDecimal(ln.quantity * (ln.price_per_unit.blank? ? 0 : ln.price_per_unit)).round(2)}
       inbound_file.reject_and_raise "Unexpected order total. Got #{actual.to_s}, expected #{expected.to_s}" unless expected == actual
     end
 
     def process_line order, line_el, importer, header_ship_to
-      line_number = et(line_el,'POSEX').to_i
+      line_number = et(line_el, 'POSEX').to_i
 
       ol = order.order_lines.find {|ord_line| ord_line.line_number==line_number}
       if !ol
-        ol = order.order_lines.build(line_number:line_number,total_cost_digits:2)
+        ol = order.order_lines.build(line_number:line_number, total_cost_digits:2)
       end
 
       product = find_product(line_el)
-      qty = BigDecimal(et(line_el,'MENGE'),4)
-      uom = convert_uom(et(line_el,'MENEE'))
+      qty = BigDecimal(et(line_el, 'MENGE'), 4)
+      uom = convert_uom(et(line_el, 'MENEE'))
 
       validate_line_not_changed(ol, product) if (!ol.booking_lines.empty? || !ol.shipment_lines.empty?)
 
-      ol.price_per_unit = BigDecimal(et(line_el,'VPREI').to_s,4)
+      ol.price_per_unit = BigDecimal(et(line_el, 'VPREI').to_s, 4)
       ol.product = product
       ol.quantity = qty
       ol.unit_of_measure = uom
@@ -488,7 +488,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         @first_expected_delivery_date = exp_del
       end
 
-      ol.ship_to = ship_to_address(line_el,importer)
+      ol.ship_to = ship_to_address(line_el, importer)
 
       ol.ship_to = header_ship_to if ol.ship_to.nil?
 
@@ -566,31 +566,31 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def find_product order_line_el
-      product_base = REXML::XPath.first(order_line_el,'E1EDP19')
-      prod_uid = et(product_base,'IDTNR')
+      product_base = REXML::XPath.first(order_line_el, 'E1EDP19')
+      prod_uid = et(product_base, 'IDTNR')
       return Product.where(unique_identifier:prod_uid).first_or_create!(
         importer:importer,
-        name:et(product_base,'KTEXT')
+        name:et(product_base, 'KTEXT')
       )
     end
 
     def ship_terms base
-      el = REXML::XPath.first(base,"./E1EDK17[QUALF = '001']")
+      el = REXML::XPath.first(base, "./E1EDK17[QUALF = '001']")
       return nil unless el
-      str = et(el,'LKOND')
+      str = et(el, 'LKOND')
       return str.blank? ? nil : str
     end
 
     def buyer_info base
-      el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'AG']")
-      return [nil,nil] unless el
-      return [et(el,'BNAME'),et(el,'TELF1')]
+      el = REXML::XPath.first(base, "./E1EDKA1[PARVW = 'AG']")
+      return [nil, nil] unless el
+      return [et(el, 'BNAME'), et(el, 'TELF1')]
     end
 
     def order_date base
-      el = REXML::XPath.first(base,"./E1EDK03[IDDAT = '012']")
+      el = REXML::XPath.first(base, "./E1EDK03[IDDAT = '012']")
       return nil unless el
-      str = et(el,'DATUM')
+      str = et(el, 'DATUM')
       return nil if str.blank?
       parse_date(str)
     end
@@ -600,9 +600,9 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
 
     def ship_to_address base, importer
-      el = REXML::XPath.first(base,"./E1EDPA1[PARVW = 'WE']")
-      el = REXML::XPath.first(base,"./E1EDKA1[PARVW = 'WE']") unless el
-      return address(el,importer)
+      el = REXML::XPath.first(base, "./E1EDPA1[PARVW = 'WE']")
+      el = REXML::XPath.first(base, "./E1EDKA1[PARVW = 'WE']") unless el
+      return address(el, importer)
     end
 
     def address el, company
@@ -610,20 +610,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       my_addr = Address.new
       my_addr.company_id = company.id
 
-      name1 = et(el,'NAME1')
-      name2 = et(el,'NAME2')
+      name1 = et(el, 'NAME1')
+      name2 = et(el, 'NAME2')
       my_addr.name = name1.blank? ? name2 : name1
 
-      my_addr.line_1 = et(el,'STRAS')
-      my_addr.line_2 = et(el,'STRS2')
-      my_addr.city = et(el,'ORT01')
-      my_addr.state = et(el,'REGIO')
-      my_addr.postal_code = et(el,'PSTLZ')
+      my_addr.line_1 = et(el, 'STRAS')
+      my_addr.line_2 = et(el, 'STRS2')
+      my_addr.city = et(el, 'ORT01')
+      my_addr.state = et(el, 'REGIO')
+      my_addr.postal_code = et(el, 'PSTLZ')
 
-      country_iso = et(el,'LAND1')
+      country_iso = et(el, 'LAND1')
       my_addr.country = Country.find_by_iso_code(country_iso) unless country_iso.blank?
 
-      my_addr.system_code = et(el,'LIFNR')
+      my_addr.system_code = et(el, 'LIFNR')
 
       hk = Address.make_hash_key my_addr
 
@@ -640,11 +640,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     # if the CURR_ARRVD is populated, use that, otherwise use EDATU
     def expected_delivery_date base
       str = nil
-      outer_el = REXML::XPath.first(base,"./E1EDP20")
+      outer_el = REXML::XPath.first(base, "./E1EDP20")
       return nil unless outer_el
-      el = REXML::XPath.first(outer_el,"./_-LUMBERL_-PO_SHIP_WINDOW")
-      str = et(el,'CURR_ARRVD') if el
-      str = et(outer_el,'EDATU') if str.blank? || str.match(/^0*$/)
+      el = REXML::XPath.first(outer_el, "./_-LUMBERL_-PO_SHIP_WINDOW")
+      str = et(el, 'CURR_ARRVD') if el
+      str = et(outer_el, 'EDATU') if str.blank? || str.match(/^0*$/)
       return nil if str.blank?
       parse_date(str)
     end
@@ -659,7 +659,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       elsif zterm.to_s =~ /^tt(\d+)$/i
         "T/T Net #{$1}"
       else
-        elements = REXML::XPath.match(base,"./E1EDK18")
+        elements = REXML::XPath.match(base, "./E1EDK18")
 
         # According to the doc from LL, If no E1DK18 is present, then order is due immediately.
         return "Due Immediately" unless elements.try(:size) > 0
@@ -692,7 +692,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
         "TT00" => "T/T At Sight",
         "LC60" => "Letter of Credit 60 Days",
         "D001" => "T/T .5% 15 Days, Net 15",
-        "D002" => "T/T 1% 15 Days, Net 15", 
+        "D002" => "T/T 1% 15 Days, Net 15",
         "D003" => "T/T .5% 15 Days, Net 60",
         "D004" => "T/T 1% 15 Days, Net 60",
         "D005" => "T/T .5% 15 Days, Net 45",
@@ -710,21 +710,21 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     def parse_date str
       return nil if str.match(/^0*$/)
-      return Date.new(str[0,4].to_i,str[4,2].to_i,str[6,2].to_i)
+      return Date.new(str[0, 4].to_i, str[4, 2].to_i, str[6, 2].to_i)
     end
 
     def extract_time envelope_element
-      date_part = et(envelope_element,'CREDAT')
-      time_part = et(envelope_element,'CRETIM')
+      date_part = et(envelope_element, 'CREDAT')
+      time_part = et(envelope_element, 'CRETIM')
 
       # match ActiveSupport::TimeZone.parse
-      formatted_date = "#{date_part[0,4]}-#{date_part[4,2]}-#{date_part[6,2]} #{time_part[0,2]}:#{time_part[2,2]}:#{time_part[4,2]}"
+      formatted_date = "#{date_part[0, 4]}-#{date_part[4, 2]}-#{date_part[6, 2]} #{time_part[0, 2]}:#{time_part[2, 2]}:#{time_part[4, 2]}"
 
       ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
     end
 
     def convert_uom str
-      vals = {'FTK'=>'FT2','FOT'=>'FT'}
+      vals = {'FTK'=>'FT2', 'FOT'=>'FT'}
       new_str = vals[str]
       new_str.blank? ? str : new_str
     end

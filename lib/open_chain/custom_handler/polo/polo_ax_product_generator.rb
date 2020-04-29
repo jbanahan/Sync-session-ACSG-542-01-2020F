@@ -180,18 +180,18 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
         data[:hts_1] = hts.try(:hts_1).try(:hts_format)
         data[:hts_2] = hts.try(:hts_2).try(:hts_format)
         data[:hts_3] = hts.try(:hts_3).try(:hts_format)
-      end  
+      end
     end
     data
   end
 
   def handle_footwear_upper_fabric_type product, index
     # For products that had fiber analysis run on them prior to this project going live, RL
-    # required that we change the fabric_type on the Upper portion of the footwear from "Upper" to "Outer" 
-    # for footwear due to some weirdness in MSL+.  
+    # required that we change the fabric_type on the Upper portion of the footwear from "Upper" to "Outer"
+    # for footwear due to some weirdness in MSL+.
     # We need to now retain "Upper", which is what the fiber content parser is doing,
     # however, we also need to deal with legacy products.  To do that, we're going to change "Outer" to "Upper"
-    # if (and only if) there's another fabric_type_x value that is "Sole" (since all footwear that had 
+    # if (and only if) there's another fabric_type_x value that is "Sole" (since all footwear that had
     # Upper changed to Outer will have a "Sole" fabric type).
     fabric_type = product.custom_value(cdefs["fabric_type_#{index}".to_sym])
     if fabric_type.to_s.upcase == "OUTER"
@@ -214,7 +214,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
   end
 
   def dimensions_data product
-    # The product will have either cms or inches...AX only accepts cms, so we need to convert inches to cms if 
+    # The product will have either cms or inches...AX only accepts cms, so we need to convert inches to cms if
     # the product has in.  Product will only have one or the other, not both.
     data = {length: nil, width: nil, height: nil}
 
@@ -250,12 +250,12 @@ module OpenChain; module CustomHandler; module Polo; class PoloAxProductGenerato
 
   def query
     # We're just going to look up the products individually during the preprocess row phase...there's so many custom definitions involved
-    # that the query to include them all will be a nightmare.  Plus, the MSL feed, which this is replacing was already 
+    # that the query to include them all will be a nightmare.  Plus, the MSL feed, which this is replacing was already
     # handling the products 1 by 1 so this shouldn't be any more load than that was causing.
-    q = <<-SQL 
+    q = <<-SQL
           SELECT DISTINCT products.id
           FROM products
-            LEFT OUTER JOIN classifications c on c.product_id = products.id 
+            LEFT OUTER JOIN classifications c on c.product_id = products.id
             LEFT OUTER JOIN tariff_records t on t.classification_id = c.id AND t.hts_1 <> ''
             INNER JOIN custom_values msl_gcc_desc on msl_gcc_desc.customizable_id = products.id AND msl_gcc_desc.customizable_type = 'Product' AND msl_gcc_desc.custom_definition_id = #{cdefs[:msl_gcc_desc].id} AND msl_gcc_desc.string_value <> ''
             LEFT OUTER JOIN custom_values ax_export ON ax_export.customizable_id = products.id AND ax_export.customizable_type = 'Product' AND ax_export.custom_definition_id = #{cdefs[:ax_export_status].id}
@@ -272,7 +272,7 @@ WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 24
 
     q << " AND (ax_export.string_value = 'Exported' OR ax_export_manual.string_value = 'Exported')"
     if self.custom_where.blank?
-      # For updated_without_change results, ignore sync records 
+      # For updated_without_change results, ignore sync records
       q << " OR (ax_updated_without_change.boolean_value = true AND (ax_export.string_value = 'Exported' OR ax_export_manual.string_value = 'Exported'))"
     end
     q << " ORDER BY products.id ASC LIMIT #{max_results}"
@@ -283,12 +283,12 @@ WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 24
     @cdefs ||= self.class.prep_custom_definitions([
       :msl_gcc_desc, :gcc_description_2, :gcc_description_3, :depth_cm, :bottom_width_cm, :height_cm, :depth_in, :width_bottom_in, :height_in,
       :fabric_1, :fabric_2, :fabric_3, :fabric_4, :fabric_5, :fabric_6, :fabric_7, :fabric_8, :fabric_9, :fabric_10, :fabric_11, :fabric_12,
-      :fabric_13, :fabric_14, :fabric_15, :fabric_type_1, :fabric_type_2, :fabric_type_3, :fabric_type_4, :fabric_type_5, :fabric_type_6, 
-      :fabric_type_7, :fabric_type_8, :fabric_type_9, :fabric_type_10, :fabric_type_11, :fabric_type_12, :fabric_type_13, :fabric_type_14, 
-      :fabric_type_15, :fabric_percent_1, :fabric_percent_2, :fabric_percent_3, :fabric_percent_4, :fabric_percent_5, :fabric_percent_6, 
-      :fabric_percent_7, :fabric_percent_8, :fabric_percent_9, :fabric_percent_10, :fabric_percent_11, :fabric_percent_12, :fabric_percent_13, 
+      :fabric_13, :fabric_14, :fabric_15, :fabric_type_1, :fabric_type_2, :fabric_type_3, :fabric_type_4, :fabric_type_5, :fabric_type_6,
+      :fabric_type_7, :fabric_type_8, :fabric_type_9, :fabric_type_10, :fabric_type_11, :fabric_type_12, :fabric_type_13, :fabric_type_14,
+      :fabric_type_15, :fabric_percent_1, :fabric_percent_2, :fabric_percent_3, :fabric_percent_4, :fabric_percent_5, :fabric_percent_6,
+      :fabric_percent_7, :fabric_percent_8, :fabric_percent_9, :fabric_percent_10, :fabric_percent_11, :fabric_percent_12, :fabric_percent_13,
       :fabric_percent_14, :fabric_percent_15, :knit_woven, :fiber_content, :common_name_1, :common_name_2, :common_name_3, :scientific_name_1,
-      :scientific_name_2, :scientific_name_3, :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3, 
+      :scientific_name_2, :scientific_name_3, :fish_wildlife_origin_1, :fish_wildlife_origin_2, :fish_wildlife_origin_3,
       :fish_wildlife_source_1, :fish_wildlife_source_2, :fish_wildlife_source_3, :origin_wildlife, :semi_precious, :semi_precious_type,
       :cites, :fish_wildlife, :meets_down_requirments, :non_textile, :set_type, :ax_export_status, :ax_export_status_manual, :ax_updated_without_change
     ])
@@ -296,84 +296,84 @@ WHERE #{Product.where_clause_for_need_sync(sent_at_or_before: Time.zone.now - 24
 
   def preprocess_header_row row
     header_fields = [
-      "GFE+ Material Number", 
-      "Country", 
-      "MP1 Flag", 
-      "HTS Number 1", 
-      "HTS Number 2", 
-      "HTS Number 3", 
-      "Length CM", 
-      "Width CM", 
-      "Height CM", 
-      "Fabric Type 1", 
-      "Fabric 1", 
-      "Fabric 1%", 
-      "Fabric Type 2", 
-      "Fabric 2", 
-      "Fabric 2%", 
-      "Fabric Type 3", 
-      "Fabric 3", 
-      "Fabric 3%", 
-      "Fabric Type 4", 
-      "Fabric 4", 
-      "Fabric 4%", 
-      "Fabric Type 5", 
-      "Fabric 5", 
-      "Fabric 5%", 
-      "Fabric Type 6", 
-      "Fabric 6", 
-      "Fabric 6%", 
-      "Fabric Type 7", 
-      "Fabric 7", 
-      "Fabric 7%", 
-      "Fabric Type 8", 
-      "Fabric 8", 
-      "Fabric 8%", 
-      "Fabric Type 9", 
-      "Fabric 9", 
-      "Fabric 9%", 
-      "Fabric Type 10", 
-      "Fabric 10", 
-      "Fabric 10%", 
-      "Fabric Type 11", 
-      "Fabric 11", 
-      "Fabric 11%", 
-      "Fabric Type12", 
-      "Fabric 12", 
-      "Fabric 12%", 
-      "Fabric Type 13", 
-      "Fabric 13", 
-      "Fabric 13%", 
-      "Fabric Type 4", 
-      "Fabric 14", 
-      "Fabric 14%", 
-      "Fabric Type 15", 
-      "Fabric 15", 
-      "Fabric 15%", 
-      "Knit Woven", 
-      "Fiber Content", 
-      "Common Name 1", 
-      "Common Name 2", 
-      "Common Name 3", 
-      "Scientific Name 1", 
-      "Scientific Name 2", 
-      "Scientific Name 3", 
-      "F&W Origin 1", 
-      "F&W Origin 2", 
-      "F&W Origin 3", 
-      "F&W Source 1", 
-      "F&W Source 2", 
-      "F&W Source 3", 
-      "Origin of Wildlife", 
-      "Semi Precious", 
-      "Semi Precious Type", 
-      "Cites Flag", 
-      "Fish & Wildlife Flag", 
-      "GCC Description", 
-      "GCC Description 2", 
-      "GCC Description 3", 
-      "Non-Textile Flag", 
-      "Down Indicator Flag", 
+      "GFE+ Material Number",
+      "Country",
+      "MP1 Flag",
+      "HTS Number 1",
+      "HTS Number 2",
+      "HTS Number 3",
+      "Length CM",
+      "Width CM",
+      "Height CM",
+      "Fabric Type 1",
+      "Fabric 1",
+      "Fabric 1%",
+      "Fabric Type 2",
+      "Fabric 2",
+      "Fabric 2%",
+      "Fabric Type 3",
+      "Fabric 3",
+      "Fabric 3%",
+      "Fabric Type 4",
+      "Fabric 4",
+      "Fabric 4%",
+      "Fabric Type 5",
+      "Fabric 5",
+      "Fabric 5%",
+      "Fabric Type 6",
+      "Fabric 6",
+      "Fabric 6%",
+      "Fabric Type 7",
+      "Fabric 7",
+      "Fabric 7%",
+      "Fabric Type 8",
+      "Fabric 8",
+      "Fabric 8%",
+      "Fabric Type 9",
+      "Fabric 9",
+      "Fabric 9%",
+      "Fabric Type 10",
+      "Fabric 10",
+      "Fabric 10%",
+      "Fabric Type 11",
+      "Fabric 11",
+      "Fabric 11%",
+      "Fabric Type12",
+      "Fabric 12",
+      "Fabric 12%",
+      "Fabric Type 13",
+      "Fabric 13",
+      "Fabric 13%",
+      "Fabric Type 4",
+      "Fabric 14",
+      "Fabric 14%",
+      "Fabric Type 15",
+      "Fabric 15",
+      "Fabric 15%",
+      "Knit Woven",
+      "Fiber Content",
+      "Common Name 1",
+      "Common Name 2",
+      "Common Name 3",
+      "Scientific Name 1",
+      "Scientific Name 2",
+      "Scientific Name 3",
+      "F&W Origin 1",
+      "F&W Origin 2",
+      "F&W Origin 3",
+      "F&W Source 1",
+      "F&W Source 2",
+      "F&W Source 3",
+      "Origin of Wildlife",
+      "Semi Precious",
+      "Semi Precious Type",
+      "Cites Flag",
+      "Fish & Wildlife Flag",
+      "GCC Description",
+      "GCC Description 2",
+      "GCC Description 3",
+      "Non-Textile Flag",
+      "Down Indicator Flag",
       "Set Item Indicator Flag"
     ]
 

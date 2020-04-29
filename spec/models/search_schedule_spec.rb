@@ -1,11 +1,11 @@
 describe SearchSchedule do
-  
+
   describe "run_search" do
 
-    let(:now) { ActiveSupport::TimeZone["Hawaii"].local(2001,2,3,4,5,6) }
+    let(:now) { ActiveSupport::TimeZone["Hawaii"].local(2001, 2, 3, 4, 5, 6) }
     let(:user) { Factory(:user, time_zone: "Hawaii", email: "tufnel@stonehenge.biz") }
-    let(:search_setup) { 
-      # use a name that needs to be sanitized -> -test.txt    
+    let(:search_setup) {
+      # use a name that needs to be sanitized -> -test.txt
       SearchSetup.new module_type: "Product", user: user, name: 'test/-#t!e~s)t .^t&x@t'
     }
     let(:report) { CustomReport.new user: user, name: "test/t!st.txt"}
@@ -17,7 +17,7 @@ describe SearchSchedule do
     end
 
     context "with search schedule" do
-      before :each do 
+      before :each do
         search_schedule.custom_report = nil
       end
 
@@ -26,7 +26,7 @@ describe SearchSchedule do
       it "runs a search as csv and no custom report" do
         expect(User).to receive(:run_with_user_settings).with(user).and_call_original
 
-        # Use the block version here so we can also verify that User.current and Time.zone is set to the 
+        # Use the block version here so we can also verify that User.current and Time.zone is set to the
         # search setup's user in the context of the write_csv call
         expect_any_instance_of(SearchWriter).to receive(:write_search) do |search_writer, tempfile|
           expect(search_writer.output_format).to eq "csv"
@@ -38,9 +38,9 @@ describe SearchSchedule do
 
         expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv', user)
         expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.csv')
-        
+
         Timecop.freeze(now) { subject.run }
-         
+
         expect(subject.last_finish_time).to eq now
         expect(subject.report_failure_count).to eq 0
       end
@@ -55,7 +55,7 @@ describe SearchSchedule do
 
         expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xls', user)
         expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xls')
-        
+
         Timecop.freeze(now) { subject.run }
       end
 
@@ -69,7 +69,7 @@ describe SearchSchedule do
 
         expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xlsx', user)
         expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t_20010203040506000.xlsx')
-        
+
         Timecop.freeze(now) { subject.run }
       end
 
@@ -78,13 +78,13 @@ describe SearchSchedule do
         expect_any_instance_of(SearchWriter).to receive(:write_search).and_return 1
         expect(subject).to receive(:send_email).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv', user)
         expect(subject).to receive(:send_ftp).with(search_setup.name, instance_of(Tempfile), '-_t_e_s_t_._t_x_t.csv')
-        
+
         Timecop.freeze(now) { subject.run }
       end
 
       it "handles max results error" do
         expect_any_instance_of(SearchWriter).to receive(:write_search).and_raise SearchExceedsMaxResultsError
-        
+
         expect(subject).to receive(:send_excessive_size_failure_email).with(user, false)
 
         subject.run
@@ -97,7 +97,7 @@ describe SearchSchedule do
       it "handles max results error failing more than 5 times" do
         subject.report_failure_count = 4
         expect_any_instance_of(SearchWriter).to receive(:write_search).and_raise SearchExceedsMaxResultsError
-        
+
         expect(subject).to receive(:send_excessive_size_failure_email).with(user, true)
 
         subject.run
@@ -113,7 +113,7 @@ describe SearchSchedule do
 
         expect(error).to receive(:log_me)
         expect(subject).to receive(:send_error_to_user).with user, "Testing"
-                
+
         subject.run
       end
 
@@ -126,7 +126,7 @@ describe SearchSchedule do
         subject.run
       end
 
-      it "sends blank file if instructed" do 
+      it "sends blank file if instructed" do
         subject.send_if_empty = true
 
         expect_any_instance_of(SearchWriter).to receive(:write_search).and_return 0
@@ -138,7 +138,7 @@ describe SearchSchedule do
     end
 
     context "with custom report" do
-      before :each do 
+      before :each do
         search_schedule.search_setup = nil
       end
 
@@ -317,7 +317,7 @@ describe SearchSchedule do
           expect(mail.attachments.size).to eq 0
         end
     end
-    
+
     it "returns immediately if the schedule doesn't have email addresses" do
       allow_any_instance_of(OpenMailer).to receive(:blank_attachment?).and_return false
       sched.update_attributes(email_addresses: nil)
@@ -339,10 +339,10 @@ describe SearchSchedule do
 
     it "generates a timestamp into filename" do
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         expect(subject.report_name(search_setup, "xls", include_timestamp: true)).to eq "search_#{now.strftime "%Y%m%d%H%M%S%L"}.xls"
       end
-      
+
     end
   end
 

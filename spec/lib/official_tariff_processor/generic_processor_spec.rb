@@ -55,7 +55,7 @@ describe OpenChain::OfficialTariffProcessor::GenericProcessor do
   end
 
   describe "parse_spi" do
-    let(:parse_data) { {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2'],[/.*/, :upcase]], exceptions: [/^\s*Free\s*$/,/^$/], skip_spi: [/[YZ]/], replaces:{/DUMB PREFIX:\s*\+\d+\s*/=>''}} }
+    let(:parse_data) { {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2'], [/.*/, :upcase]], exceptions: [/^\s*Free\s*$/, /^$/], skip_spi: [/[YZ]/], replaces:{/DUMB PREFIX:\s*\+\d+\s*/=>''}} }
 
     it "parses SPI string" do
       expect(described_class.parse_spi parse_data, "Free (A,Z,Y,b)").to eq [{:program_code=>"A", :amount=>0, :text=>"Free"}, {:program_code=>"B", :amount=>0, :text=>"Free"}]

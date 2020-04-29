@@ -1,21 +1,21 @@
 class AddressesController < ApplicationController
   include ActiveSupport
   before_filter :require_user
-	
+
 	def root_class
 		Address
 	end
-	
+
 	def create
 		@address = Address.new(params[:address])
 		@company = @address.company
-		action_secure(@company.can_edit?(current_user),@company,{:verb=>"create",:module_name=>"address"}) {
+		action_secure(@company.can_edit?(current_user), @company, {:verb=>"create", :module_name=>"address"}) {
 		  @address.save
   		errors_to_flash @address
   		redirect_to request.referrer
     }
 	end
-	
+
 	def render_partial
 		@ad = Address.find(params[:id])
 		respond_to do |format|
@@ -23,11 +23,11 @@ class AddressesController < ApplicationController
 		  format.json {render :json => @ad.to_json(:include =>{:country => {:only => :name}})}
 	  end
 	end
-	
+
 	def destroy
 		@ad = Address.find(params[:id])
     @company = @ad.company
-    action_secure(@company.can_edit?(current_user),@company,{:verb=>"delete",:module_name=>"address"}) {
+    action_secure(@company.can_edit?(current_user), @company, {:verb=>"delete", :module_name=>"address"}) {
       @ad.destroy
       errors_to_flash @ad
       redirect_to request.referrer
@@ -38,26 +38,26 @@ class AddressesController < ApplicationController
     @countries = Country.all
     a = Address.find(params[:id])
     @company = a.company
-    action_secure(@company.can_view?(current_user),@company,{:verb=>"view",:module_name=>"address",:lock_check=>false}) {
+    action_secure(@company.can_view?(current_user), @company, {:verb=>"view", :module_name=>"address", :lock_check=>false}) {
       @address = a
       render 'companies/show'
     }
   end
-	
+
 	def edit
 		@countries = Country.all
 		a = Address.find(params[:id])
 		@company = a.company
-    action_secure(@company.can_edit?(current_user),@company,{:verb=>"edit",:module_name=>"address"}) {
+    action_secure(@company.can_edit?(current_user), @company, {:verb=>"edit", :module_name=>"address"}) {
 		  @address = a
   		render 'companies/show'
 		}
 	end
-	
+
 	def update
     @address = Address.find(params[:id])
 		@company = @address.company
-    action_secure(@company.can_edit?(current_user),@company,{:verb=>"edit",:module_name=>"address"}) {
+    action_secure(@company.can_edit?(current_user), @company, {:verb=>"edit", :module_name=>"address"}) {
       respond_to do |format|
         if @address.update_attributes(params[:address])
           add_flash :notices, "Address updated successfully."
@@ -65,7 +65,7 @@ class AddressesController < ApplicationController
           format.xml  { head :ok }
         else
           errors_to_flash @address
-          format.html { redirect_to edit_company_address_path(@company,@address) }
+          format.html { redirect_to edit_company_address_path(@company, @address) }
           format.xml  { render :xml => @address.errors, :status => :unprocessable_entity }
         end
       end

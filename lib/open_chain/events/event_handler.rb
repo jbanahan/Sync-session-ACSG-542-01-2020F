@@ -5,12 +5,12 @@
 #
 # Listeners objects must implement the following methods:
 #
-# - "accepts?" - will be passed the event and the corresponding object the event occurred on. 
+# - "accepts?" - will be passed the event and the corresponding object the event occurred on.
 # This method must return a truthy value to indicate that the listener's 'receive' should be called.
 #
-# - "receive" - will be passed the event and the corresponding object the event occurred on. 
+# - "receive" - will be passed the event and the corresponding object the event occurred on.
 # Any action / process that should occur when the event executes should be carried out here.  Because
-# multiple listeners are chained together, you may modify the object and return it and the returned 
+# multiple listeners are chained together, you may modify the object and return it and the returned
 # object will be utilized for any listeners run after the current one.
 #
 module OpenChain; module Events
@@ -26,7 +26,7 @@ module OpenChain; module Events
       nil
     end
 
-    # Find the actual object that this event relates to. 
+    # Find the actual object that this event relates to.
     def find event
       # constantize handles namespaced classes, const_get doesn't
       klass = event.object_class.constantize
@@ -52,7 +52,7 @@ module OpenChain; module Events
     def run_listeners listeners, event, module_object
       listeners.each do |listener|
 
-        # Listeners can modify the object passed to them and return it so 
+        # Listeners can modify the object passed to them and return it so
         # it can be used further down the call chain.
         obj = process_listener listener, event, module_object
 
@@ -70,7 +70,7 @@ module OpenChain; module Events
       # return an object from the listener that's not the expected module type.
       if obj && obj.class == module_object.class
         obj
-      else 
+      else
         nil
       end
     end

@@ -1,6 +1,6 @@
 describe ValidationRuleEntryInvoiceFieldFormat do
   before :each do
-    @rule = described_class.new(rule_attributes_json:{model_field_uid:'ci_issue_codes',regex:'ABC'}.to_json)
+    @rule = described_class.new(rule_attributes_json:{model_field_uid:'ci_issue_codes', regex:'ABC'}.to_json)
     @ci = Factory(:commercial_invoice, issue_codes: 'ABC', invoice_number:'DEFGH')
     @e = Factory(:entry, commercial_invoices: [@ci])
   end
@@ -20,7 +20,7 @@ describe ValidationRuleEntryInvoiceFieldFormat do
   end
 
   it 'should allow blanks when allow_blank is true' do
-    @rule.rule_attributes_json = {allow_blank:true, model_field_uid: 'ci_issue_codes',regex:'ABC'}.to_json
+    @rule.rule_attributes_json = {allow_blank:true, model_field_uid: 'ci_issue_codes', regex:'ABC'}.to_json
     @ci.update_attributes(issue_codes: '')
     expect(@rule.run_validation(@ci.entry)).to be_nil
   end
@@ -34,14 +34,14 @@ describe ValidationRuleEntryInvoiceFieldFormat do
 
   it "evaluates all invoices if instructed" do
     expect(@rule).not_to receive(:stop_validation)
-    @rule.rule_attributes_json = {model_field_uid:'ci_issue_codes',regex:'ABC', validate_all: "true"}.to_json
+    @rule.rule_attributes_json = {model_field_uid:'ci_issue_codes', regex:'ABC', validate_all: "true"}.to_json
     @ci.update_attributes(issue_codes: 'xyz')
     expect(@rule.run_validation(@ci.entry)).to eq("Invoice DEFGH Invoice - Issue Tracking Codes value 'xyz' does not match 'ABC' format.")
   end
 
   context "fail_if_matches" do
-    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:'ci_issue_codes',regex:'ABC', fail_if_matches: true}.to_json) }
-    
+    let(:rule) { described_class.new(rule_attributes_json:{model_field_uid:'ci_issue_codes', regex:'ABC', fail_if_matches: true}.to_json) }
+
     it 'passes if all lines are valid' do
       @ci.update_attributes(issue_codes: 'foo')
       expect(rule.run_validation(@ci.entry)).to be_nil
@@ -56,13 +56,13 @@ describe ValidationRuleEntryInvoiceFieldFormat do
 
     it "should skip on entry validation level" do
       @ci.entry.update_attributes(entry_number:'1234321')
-      @rule.search_criterions.build(model_field_uid:'ent_entry_num',operator:'eq',value:'99')
+      @rule.search_criterions.build(model_field_uid:'ent_entry_num', operator:'eq', value:'99')
       expect(@rule.should_skip?(@ci.entry)).to be_truthy
     end
 
     it "should skip on commercial invoice level validation" do
       @ci.update_attributes(issue_codes:'XYZ')
-      @rule.search_criterions.build(model_field_uid:'ci_issue_codes',operator:'eq',value:'99')
+      @rule.search_criterions.build(model_field_uid:'ci_issue_codes', operator:'eq', value:'99')
       expect(@rule.should_skip?(@ci.entry)).to be_truthy
     end
 
@@ -70,8 +70,8 @@ describe ValidationRuleEntryInvoiceFieldFormat do
       @ci.entry.update_attributes(entry_number:'1234321')
       @ci.update_attributes(issue_codes:'ABCDE')
       @ci.reload
-      @rule.search_criterions.build(model_field_uid:'ent_entry_num',operator:'eq',value:'1234321')
-      @rule.search_criterions.build(model_field_uid:'ci_issue_codes',operator:'eq',value:'ABCDE')
+      @rule.search_criterions.build(model_field_uid:'ent_entry_num', operator:'eq', value:'1234321')
+      @rule.search_criterions.build(model_field_uid:'ci_issue_codes', operator:'eq', value:'ABCDE')
       expect(@rule.should_skip?(@ci.entry)).to be_falsey
     end
   end

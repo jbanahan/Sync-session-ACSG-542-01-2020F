@@ -2,7 +2,7 @@ describe OpenChain::Ssm do
 
   subject { described_class }
 
-  let! (:ssm_client) do 
+  let! (:ssm_client) do
     ssm = instance_double(::Aws::SSM::Client)
     allow(subject).to receive(:ssm_client).and_return ssm
     ssm
@@ -19,7 +19,7 @@ describe OpenChain::Ssm do
     allow(InstanceInformation).to receive(:deployment_group).and_return "Customer"
   end
 
-  describe "send_clear_upgrade_errors_command" do 
+  describe "send_clear_upgrade_errors_command" do
 
     it "sends comand to run clear_upgrade_errors script" do
       expect(ssm_client).to receive(:send_command).with(

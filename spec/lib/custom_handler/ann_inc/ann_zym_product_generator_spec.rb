@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
   def run_to_array generator=described_class.new
     @tmp = generator.sync_csv
-    CSV.read @tmp.path, col_sep:'|' #these are pipe delimited files
+    CSV.read @tmp.path, col_sep:'|' # these are pipe delimited files
   end
-  after :each do 
+  after :each do
     @tmp.unlink if @tmp
   end
   before :all do
-    @cdefs = described_class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override,:origin,:article, :related_styles]
+    @cdefs = described_class.prep_custom_definitions [:approved_date, :approved_long, :long_desc_override, :origin, :article, :related_styles]
   end
   after :all do
     CustomDefinition.where('1=1').destroy_all
@@ -15,22 +15,22 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
 
   describe "generate" do
     it "should call FTP whenever row_count > 500" do
-      allow_any_instance_of(described_class).to receive(:row_count).and_return(501,501,200)
+      allow_any_instance_of(described_class).to receive(:row_count).and_return(501, 501, 200)
       expect_any_instance_of(described_class).to receive(:ftp_file).exactly(3).times
       described_class.generate
     end
   end
   describe "sync_csv" do
     it "should clean newlines and tabs from long description" do
-      content_row = {0=>'213',1=>'US',2=>"My Long\nDescription\t",3=>'CA',4=>'9876543210',5=>''}
+      content_row = {0=>'213', 1=>'US', 2=>"My Long\nDescription\t", 3=>'CA', 4=>'9876543210', 5=>''}
       gen = described_class.new
       expect(gen).to receive(:sync).with(include_headers: false).and_yield(content_row)
       r = run_to_array gen
       expect(r.size).to eq(1)
-      expect(r.first).to eq(['213','US','My Long Description ','CA','9876543210'])
+      expect(r.first).to eq(['213', 'US', 'My Long Description ', 'CA', '9876543210'])
     end
     it "should not quote empty fields" do
-      content_row = {0=>'213',1=>'US',2=>"",3=>'',4=>'9876543210',5=>''}
+      content_row = {0=>'213', 1=>'US', 2=>"", 3=>'', 4=>'9876543210', 5=>''}
       gen = described_class.new
       expect(gen).to receive(:sync).and_yield(content_row)
       @tmp = gen.sync_csv
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
   end
   describe "query" do
     before :each do
-      @us = Factory(:country,:iso_code=>'US')
+      @us = Factory(:country, :iso_code=>'US')
     end
     it "should split mulitple countries of origin into separate rows" do
       p = Factory(:product)
@@ -52,8 +52,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
       expect(r.size).to eq(2)
-      expect(r.first).to eq([p.unique_identifier,'US','LD','MX','1234567890']) 
-      expect(r.last).to eq([p.unique_identifier,'US','LD','CN','1234567890'])
+      expect(r.first).to eq([p.unique_identifier, 'US', 'LD', 'MX', '1234567890'])
+      expect(r.last).to eq([p.unique_identifier, 'US', 'LD', 'CN', '1234567890'])
     end
     it "should only return one hts" do
       p = Factory(:product)
@@ -61,12 +61,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       p.update_custom_value! @cdefs[:origin], "MX"
       p.update_custom_value! @cdefs[:approved_long], 'LD'
       cls = p.classifications.create!(:country_id=>@us.id)
-      cls.tariff_records.create!(:hts_1=>"1234567890",line_number:1)
-      cls.tariff_records.create!(:hts_1=>"0987654321",line_number:2)
+      cls.tariff_records.create!(:hts_1=>"1234567890", line_number:1)
+      cls.tariff_records.create!(:hts_1=>"0987654321", line_number:2)
       cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       r = run_to_array
       expect(r.size).to eq(1)
-      expect(r.first).to eq([p.unique_identifier,'US','LD','MX','1234567890']) 
+      expect(r.first).to eq([p.unique_identifier, 'US', 'LD', 'MX', '1234567890'])
     end
     it "should not output style without ZSCR article type" do
       p = Factory(:product)
@@ -92,14 +92,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       p.update_custom_value! @cdefs[:origin], 'MX'
       p.update_custom_value! @cdefs[:approved_long], 'LD'
-      [@us,Factory(:country,:iso_code=>'CN')].each do |c|
+      [@us, Factory(:country, :iso_code=>'CN')].each do |c|
         cls = p.classifications.create!(:country_id=>c.id)
         cls.tariff_records.create!(:hts_1=>'1234567890')
         cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
       end
       r = run_to_array
       expect(r.size).to eq(1)
-      expect(r.first).to eq([p.unique_identifier,'US','LD','MX','1234567890']) 
+      expect(r.first).to eq([p.unique_identifier, 'US', 'LD', 'MX', '1234567890'])
     end
     it "should only output records that need sync" do
       p = Factory(:product)
@@ -111,8 +111,8 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       d_cls = dont_include.classifications.create!(:country_id=>@us.id)
       d_cls.tariff_records.create!(:hts_1=>"1234567890")
       d_cls.update_custom_value! @cdefs[:approved_date], 1.day.ago
-      dont_include.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.day.ago,:confirmed_at=>1.minute.ago)
-      #reset updated at so that dont_include won't need sync
+      dont_include.sync_records.create!(:trading_partner=>described_class::SYNC_CODE, :sent_at=>1.day.ago, :confirmed_at=>1.minute.ago)
+      # reset updated at so that dont_include won't need sync
       ActiveRecord::Base.connection.execute("UPDATE products SET updated_at = '2010-01-01'")
       r = run_to_array
       expect(r.size).to eq(1)
@@ -145,7 +145,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
 
     it "should handle sending multiple lines for related styles" do
-      p = Factory(:product,unique_identifier:'M-Style')
+      p = Factory(:product, unique_identifier:'M-Style')
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       cls = p.classifications.create!(:country_id=>@us.id)
       cls.tariff_records.create!(:hts_1=>"1234567890")
@@ -161,7 +161,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
     end
 
     it "should handle sending multiple lines for related styles and countries" do
-      p = Factory(:product,unique_identifier:'M-Style')
+      p = Factory(:product, unique_identifier:'M-Style')
       p.update_custom_value! @cdefs[:article], 'ZSCR'
       # Use the country split as well so we make sure both line explosions are working together
       p.update_custom_value! @cdefs[:origin], "MX\nCN"
@@ -197,15 +197,15 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
       r = run_to_array
       expect(r.size).to eq(2)
 
-      p.update_attributes(updated_at:1.day.from_now) #shouldn't matter because hash doesn't change
-      cls2.tariff_records.first.update_attributes(hts_1:'987654321') #should change hash forcing new record
+      p.update_attributes(updated_at:1.day.from_now) # shouldn't matter because hash doesn't change
+      cls2.tariff_records.first.update_attributes(hts_1:'987654321') # should change hash forcing new record
 
       r = run_to_array
       expect(r.size).to eq(1)
       expect(r[0][0]).to eq(p2.unique_identifier)
     end
   end
-  
+
   describe "sync_code" do
     it "should have sync code" do
       expect(described_class.new.sync_code).to eq('ANN-ZYM')
@@ -214,7 +214,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnZymProductGenerator do
 
   describe "ftp_credentials" do
     it "should send proper credentials" do
-      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com',:username=>'VFITRACK',:password=>'RL2VFftp',:folder=>'to_ecs/Ann/ZYM', :protocol=>"sftp"})
+      expect(described_class.new.ftp_credentials).to eq({:server=>'ftp2.vandegriftinc.com', :username=>'VFITRACK', :password=>'RL2VFftp', :folder=>'to_ecs/Ann/ZYM', :protocol=>"sftp"})
     end
 
     it "uses qa folder if instructed" do

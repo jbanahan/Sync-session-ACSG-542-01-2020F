@@ -52,9 +52,9 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
     after { @temp.close if @temp }
 
     it "generates spreadsheet" do
-      fiscal_month = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:1, start_date:Date.new(2018,12,15), end_date:Date.new(2019,1,14))
+      fiscal_month = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:1, start_date:Date.new(2018, 12, 15), end_date:Date.new(2019, 1, 14))
 
-      entry_1 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2018,12,15), master_bills_of_lading:"A\nB", house_bills_of_lading:"C\nD", fcl_lcl:'LCL', release_date:Date.new(2018,12,25))
+      entry_1 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2018, 12, 15), master_bills_of_lading:"A\nB", house_bills_of_lading:"C\nD", fcl_lcl:'LCL', release_date:Date.new(2018, 12, 25))
       inv_1 = entry_1.commercial_invoices.create! invoice_number:"inv-1", master_bills_of_lading:"mbol-1"
       cont_1 = Container.create! container_number: "cont-1"
       inv_1_line_1 = inv_1.commercial_invoice_lines.create! vendor_name:"Vendco", po_number:"PO-A", quantity:10, country_origin_code:"CN", contract_amount:BigDecimal.new("40.20"), part_number:"part-A", container:cont_1, first_sale:true
@@ -73,7 +73,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       ord_1_line_2 = ord_1.order_lines.create! line_number:3, product_id:Factory(:product, importer_id:pvh.id).id, price_per_unit:BigDecimal.new("6.78")
 
       shipments = double("shipments")
-      expect_any_instance_of(described_class).to receive(:find_shipments).with("10", ["A","B"], ["C","D"], force_lookup:true).and_return(shipments)
+      expect_any_instance_of(described_class).to receive(:find_shipments).with("10", ["A", "B"], ["C", "D"], force_lookup:true).and_return(shipments)
       expect_any_instance_of(described_class).to receive(:ocean_lcl_entry?).twice.with("10", "LCL").and_return(true)
       shipment_line_1 = double("shipment_line_1")
       expect_any_instance_of(described_class).to receive(:find_shipment_line).with(shipments, "cont-1", "PO-A", "part-A", 10, invoice_number:"inv-1").and_return(shipment_line_1)
@@ -82,7 +82,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect_any_instance_of(described_class).to receive(:find_shipment_line).with(shipments, "cont-1", "PO-A", "part-B", 11, invoice_number:"inv-1").and_return(shipment_line_2)
       expect(shipment_line_2).to receive(:order_line).and_return(ord_1_line_2)
 
-      entry_2 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-2", transport_mode_code:"40", fiscal_date:Date.new(2019,1,14), master_bills_of_lading:'C', house_bills_of_lading:'D', fcl_lcl:'FCL', release_date:Date.new(2019,1,15))
+      entry_2 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-2", transport_mode_code:"40", fiscal_date:Date.new(2019, 1, 14), master_bills_of_lading:'C', house_bills_of_lading:'D', fcl_lcl:'FCL', release_date:Date.new(2019, 1, 15))
       inv_2 = entry_2.commercial_invoices.create! invoice_number:"inv-2", master_bills_of_lading:"mbol-2"
       cont_2 = Container.create! container_number: "cont-2"
       inv_2_line = inv_2.commercial_invoice_lines.create! vendor_name:"Vendco-2", po_number:"PO-C", quantity:12, country_origin_code:"IN", contract_amount:BigDecimal.new("72.22"), part_number:"part-C", container:cont_2, first_sale:true
@@ -100,11 +100,11 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect(shipment_line_3).to receive(:order_line).and_return(ord_2_line)
 
       # These should be excluded.
-      entry_not_pvh = Factory(:entry, customer_number:"NOT PVH", entry_number:"entry-3", fiscal_date:Date.new(2018,12,25))
-      entry_too_old = Factory(:entry, customer_number:"PVH", entry_number:"entry-4", fiscal_date:Date.new(2018,12,14))
-      entry_too_new = Factory(:entry, customer_number:"PVH", entry_number:"entry-5", fiscal_date:Date.new(2019,1,15))
+      entry_not_pvh = Factory(:entry, customer_number:"NOT PVH", entry_number:"entry-3", fiscal_date:Date.new(2018, 12, 25))
+      entry_too_old = Factory(:entry, customer_number:"PVH", entry_number:"entry-4", fiscal_date:Date.new(2018, 12, 14))
+      entry_too_new = Factory(:entry, customer_number:"PVH", entry_number:"entry-5", fiscal_date:Date.new(2019, 1, 15))
 
-      Timecop.freeze(make_eastern_date(2019,9,30)) do
+      Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         @temp = described_class.run_report(u, {'fiscal_month'=>'2019-01'})
       end
       expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-01_2019-09-30.xlsx"
@@ -116,12 +116,12 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect(detail_sheet).to_not be_nil
       expect(detail_sheet.length).to eq 7
       expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "Factory Name", "PO Number", "PO Line Number", "Shipment", "Unit Cost (PO)", "Units Shipped", "Origin", "Invoice Number", "HTS Code", "Duty Rate PCT", "Vendor Invoice Value", "Customs Value", "Difference", "Savings", "% Difference"]
-      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679012", 33.3, 40.2, 33, 7.2, 2.4, 17.91]
-      expect(detail_sheet[2]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679015", 2.0, 0.0, 0.0, 0.0, 0.14, 0.0]
-      expect(detail_sheet[3]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "990279014", 10.00, 0.0, 0.0, 0.0, 0.72, 0.0]
-      expect(detail_sheet[4]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "990379013", 25.0, 0.0, 0.0, 0.0, 1.8, 0.0]
-      expect(detail_sheet[5]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", "factory-1", "PO-A", 3, "cont-1", 6.78, 11.0, "CN", "inv-1", "356790123", 66.7, 51.21, 44, 7.21, 4.81, 14.08]
-      expect(detail_sheet[6]).to eq ["entry-2", Date.new(2019,1,15), "Vendco-2", "factory-2", "PO-C", 5, "C", 7.89, 12.0, "IN", "inv-2", "567901234", 50.0, 72.22, 35, 37.22, 18.61, 51.54]
+      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679012", 33.3, 40.2, 33, 7.2, 2.4, 17.91]
+      expect(detail_sheet[2]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679015", 2.0, 0.0, 0.0, 0.0, 0.14, 0.0]
+      expect(detail_sheet[3]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "990279014", 10.00, 0.0, 0.0, 0.0, 0.72, 0.0]
+      expect(detail_sheet[4]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "990379013", 25.0, 0.0, 0.0, 0.0, 1.8, 0.0]
+      expect(detail_sheet[5]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 3, "cont-1", 6.78, 11.0, "CN", "inv-1", "356790123", 66.7, 51.21, 44, 7.21, 4.81, 14.08]
+      expect(detail_sheet[6]).to eq ["entry-2", Date.new(2019, 1, 15), "Vendco-2", "factory-2", "PO-C", 5, "C", 7.89, 12.0, "IN", "inv-2", "567901234", 50.0, 72.22, 35, 37.22, 18.61, 51.54]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
@@ -142,10 +142,10 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
     end
 
     it "defaults years when not provided" do
-      fiscal_month_previous = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:9, start_date:Date.new(2019,8,15), end_date:Date.new(2019,9,14))
-      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019,9,15), end_date:Date.new(2019,10,14))
+      fiscal_month_previous = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:9, start_date:Date.new(2019, 8, 15), end_date:Date.new(2019, 9, 14))
+      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019, 9, 15), end_date:Date.new(2019, 10, 14))
 
-      entry = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2019,8,22), release_date:Date.new(2018,12,25))
+      entry = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2019, 8, 22), release_date:Date.new(2018, 12, 25))
       inv = entry.commercial_invoices.create! invoice_number:"inv-1", master_bills_of_lading:"mbol-1"
       cont = Container.create! container_number: "cont-1"
       inv_line = inv.commercial_invoice_lines.create! vendor_name:"Vendco", po_number:"PO-A", quantity:10, country_origin_code:"CN", contract_amount:BigDecimal.new("20.20"), part_number:"part-A", container:cont, first_sale:true
@@ -157,10 +157,10 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect_any_instance_of(described_class).to receive(:get_po_line_values).and_return([14, BigDecimal.new("5.67")])
 
       # These should be excluded.
-      entry_too_old = Factory(:entry, customer_number:"PVH", entry_number:"entry-4", fiscal_date:Date.new(2019,8,14))
-      entry_too_new = Factory(:entry, customer_number:"PVH", entry_number:"entry-5", fiscal_date:Date.new(2019,9,15))
+      entry_too_old = Factory(:entry, customer_number:"PVH", entry_number:"entry-4", fiscal_date:Date.new(2019, 8, 14))
+      entry_too_new = Factory(:entry, customer_number:"PVH", entry_number:"entry-5", fiscal_date:Date.new(2019, 9, 15))
 
-      Timecop.freeze(make_eastern_date(2019,9,30)) do
+      Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         @temp = described_class.run_report(u, {})
       end
       expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-09_2019-09-30.xlsx"
@@ -172,7 +172,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect(detail_sheet).to_not be_nil
       expect(detail_sheet.length).to eq 2
       expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "Factory Name", "PO Number", "PO Line Number", "Shipment", "Unit Cost (PO)", "Units Shipped", "Origin", "Invoice Number", "HTS Code", "Duty Rate PCT", "Vendor Invoice Value", "Customs Value", "Difference", "Savings", "% Difference"]
-      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", "factory-1", "PO-A", 14, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679012", 33.3, 20.2, 33, -12.8, -4.26, -63.37]
+      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 14, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679012", 33.3, 20.2, 33, -12.8, -4.26, -63.37]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
@@ -182,12 +182,12 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
     end
 
     it "generates spreadsheet for the current fiscal quarter" do
-      fiscal_month_previous_1 = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:7, start_date:Date.new(2019,6,15), end_date:Date.new(2019,7,14))
-      fiscal_month_previous_2 = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:8, start_date:Date.new(2019,7,15), end_date:Date.new(2019,8,14))
-      fiscal_month_previous_3 = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:9, start_date:Date.new(2019,8,15), end_date:Date.new(2019,9,14))
-      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019,9,15), end_date:Date.new(2019,10,14))
+      fiscal_month_previous_1 = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:7, start_date:Date.new(2019, 6, 15), end_date:Date.new(2019, 7, 14))
+      fiscal_month_previous_2 = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:8, start_date:Date.new(2019, 7, 15), end_date:Date.new(2019, 8, 14))
+      fiscal_month_previous_3 = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:9, start_date:Date.new(2019, 8, 15), end_date:Date.new(2019, 9, 14))
+      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019, 9, 15), end_date:Date.new(2019, 10, 14))
 
-      entry_1 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2019,6,16), master_bills_of_lading:"A\nB", house_bills_of_lading:"C\nD", fcl_lcl:'LCL', release_date:Date.new(2018,12,25))
+      entry_1 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2019, 6, 16), master_bills_of_lading:"A\nB", house_bills_of_lading:"C\nD", fcl_lcl:'LCL', release_date:Date.new(2018, 12, 25))
       inv_1 = entry_1.commercial_invoices.create! invoice_number:"inv-1", master_bills_of_lading:"mbol-1"
       cont_1 = Container.create! container_number: "cont-1"
       inv_1_line = inv_1.commercial_invoice_lines.create! vendor_name:"Vendco", po_number:"PO-A", quantity:10, country_origin_code:"CN", contract_amount:BigDecimal.new("40.20"), part_number:"part-A", container:cont_1, first_sale:true
@@ -198,13 +198,13 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       ord_1_line = ord_1.order_lines.create! line_number:1, product_id:Factory(:product, importer_id:pvh.id).id, price_per_unit:BigDecimal.new("5.67")
 
       shipments = double("shipments")
-      expect_any_instance_of(described_class).to receive(:find_shipments).with("10", ["A","B"], ["C","D"], force_lookup:true).and_return(shipments)
+      expect_any_instance_of(described_class).to receive(:find_shipments).with("10", ["A", "B"], ["C", "D"], force_lookup:true).and_return(shipments)
       expect_any_instance_of(described_class).to receive(:ocean_lcl_entry?).with("10", "LCL").and_return(true)
       shipment_line_1 = double("shipment_line_1")
       expect_any_instance_of(described_class).to receive(:find_shipment_line).with(shipments, "cont-1", "PO-A", "part-A", 10, invoice_number:"inv-1").and_return(shipment_line_1)
       expect(shipment_line_1).to receive(:order_line).and_return(ord_1_line)
 
-      entry_2 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-2", transport_mode_code:"40", fiscal_date:Date.new(2019,9,13), master_bills_of_lading:'C', house_bills_of_lading:'D', fcl_lcl:'FCL', release_date:Date.new(2019,1,15))
+      entry_2 = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-2", transport_mode_code:"40", fiscal_date:Date.new(2019, 9, 13), master_bills_of_lading:'C', house_bills_of_lading:'D', fcl_lcl:'FCL', release_date:Date.new(2019, 1, 15))
       inv_2 = entry_2.commercial_invoices.create! invoice_number:"inv-2", master_bills_of_lading:"mbol-2"
       cont_2 = Container.create! container_number: "cont-2"
       inv_2_line = inv_2.commercial_invoice_lines.create! vendor_name:"Vendco-2", po_number:"PO-C", quantity:12, country_origin_code:"IN", contract_amount:BigDecimal.new("72.22"), part_number:"part-C", container:cont_2, first_sale:true
@@ -222,10 +222,10 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect(shipment_line_3).to receive(:order_line).and_return(ord_2_line)
 
       # These should be excluded.
-      entry_too_old = Factory(:entry, customer_number:"PVH", entry_number:"entry-3", fiscal_date:Date.new(2019,6,13))
-      entry_too_new = Factory(:entry, customer_number:"PVH", entry_number:"entry-4", fiscal_date:Date.new(2019,9,15))
+      entry_too_old = Factory(:entry, customer_number:"PVH", entry_number:"entry-3", fiscal_date:Date.new(2019, 6, 13))
+      entry_too_new = Factory(:entry, customer_number:"PVH", entry_number:"entry-4", fiscal_date:Date.new(2019, 9, 15))
 
-      Timecop.freeze(make_eastern_date(2019,9,30)) do
+      Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         @temp = described_class.run_report(u, {'quarterly'=>'true'})
       end
       expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-Quarter-3_2019-09-30.xlsx"
@@ -237,8 +237,8 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect(detail_sheet).to_not be_nil
       expect(detail_sheet.length).to eq 3
       expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "Factory Name", "PO Number", "PO Line Number", "Shipment", "Unit Cost (PO)", "Units Shipped", "Origin", "Invoice Number", "HTS Code", "Duty Rate PCT", "Vendor Invoice Value", "Customs Value", "Difference", "Savings", "% Difference"]
-      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679012", 33.3, 40.2, 9.0, 31.2, 10.39, 77.61]
-      expect(detail_sheet[2]).to eq ["entry-2", Date.new(2019,1,15),  "Vendco-2", "factory-2", "PO-C", 5, "C", 7.89, 12.0, "IN", "inv-2", "567901234", 50.0, 72.22, 35, 37.22, 18.61, 51.54]
+      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", "factory-1", "PO-A", 1, "cont-1", 5.67, 10.0, "CN", "inv-1", "235679012", 33.3, 40.2, 9.0, 31.2, 10.39, 77.61]
+      expect(detail_sheet[2]).to eq ["entry-2", Date.new(2019, 1, 15),  "Vendco-2", "factory-2", "PO-C", 5, "C", 7.89, 12.0, "IN", "inv-2", "567901234", 50.0, 72.22, 35, 37.22, 18.61, 51.54]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil
@@ -257,10 +257,10 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
     end
 
     it "errors when defaulting fiscal month and the previous month cannot be found" do
-      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019,9,15), end_date:Date.new(2019,10,14))
+      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019, 9, 15), end_date:Date.new(2019, 10, 14))
 
       expect do
-        Timecop.freeze(make_eastern_date(2019,9,30)) do
+        Timecop.freeze(make_eastern_date(2019, 9, 30)) do
           described_class.run_report(u, {})
         end
       end.to raise_error("Fiscal month to use could not be determined.")
@@ -268,7 +268,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
 
     it "errors when defaulting fiscal month and the current month cannot be found" do
       expect do
-        Timecop.freeze(make_eastern_date(2019,9,30)) do
+        Timecop.freeze(make_eastern_date(2019, 9, 30)) do
           described_class.run_report(u, {})
         end
       end.to raise_error("Fiscal month to use could not be determined.")
@@ -276,11 +276,11 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
 
     it "errors when quarterly and previous quarter cannot be determined" do
       # There is a month 3 of the previous quarter, but no month 1.
-      fiscal_month_previous_final = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:9, start_date:Date.new(2019,8,15), end_date:Date.new(2019,9,14))
-      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019,9,15), end_date:Date.new(2019,10,14))
+      fiscal_month_previous_final = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:9, start_date:Date.new(2019, 8, 15), end_date:Date.new(2019, 9, 14))
+      fiscal_month_current = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:10, start_date:Date.new(2019, 9, 15), end_date:Date.new(2019, 10, 14))
 
       expect do
-        Timecop.freeze(make_eastern_date(2019,9,30)) do
+        Timecop.freeze(make_eastern_date(2019, 9, 30)) do
           described_class.run_report(u, {'quarterly'=>'true'})
         end
       end.to raise_error("Quarter boundaries could not be determined.")
@@ -293,17 +293,17 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
     end
 
     it "appropriately handles null number values and absent order/factory content" do
-      fiscal_month = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:1, start_date:Date.new(2018,12,15), end_date:Date.new(2019,1,14))
+      fiscal_month = FiscalMonth.create!(company_id:pvh.id, year:2019, month_number:1, start_date:Date.new(2018, 12, 15), end_date:Date.new(2019, 1, 14))
 
-      entry = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2018,12,22), release_date:Date.new(2018,12,25))
+      entry = Factory(:entry, importer_id:pvh.id, customer_number:"PVH", entry_number:"entry-1", transport_mode_code:"10", fiscal_date:Date.new(2018, 12, 22), release_date:Date.new(2018, 12, 25))
       inv = entry.commercial_invoices.create! invoice_number:"inv-1", master_bills_of_lading:"mbol-1"
       cont = Container.create! container_number: "cont-1"
       inv_line = inv.commercial_invoice_lines.create! vendor_name:"Vendco", po_number:"PO-A", quantity:nil, country_origin_code:"CN", contract_amount:nil, part_number:"part-A", container:cont, first_sale:true
       inv_line_tar = inv_line.commercial_invoice_tariffs.create! hts_code:"235679012", duty_rate:nil, entered_value_7501:nil
 
-      expect_any_instance_of(described_class).to receive(:get_po_line_values).and_return([nil,nil])
+      expect_any_instance_of(described_class).to receive(:get_po_line_values).and_return([nil, nil])
 
-      Timecop.freeze(make_eastern_date(2019,9,30)) do
+      Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         @temp = described_class.run_report(u, {'fiscal_month'=>'2019-01'})
       end
       expect(@temp.original_filename).to eq "PVH_First_Cost_Savings_for_Fiscal_2019-01_2019-09-30.xlsx"
@@ -315,7 +315,7 @@ describe OpenChain::Report::PvhFirstCostSavingsReport do
       expect(detail_sheet).to_not be_nil
       expect(detail_sheet.length).to eq 2
       expect(detail_sheet[0]).to eq ["Entry Number", "Customs Entry Date", "Vendor Name", "Factory Name", "PO Number", "PO Line Number", "Shipment", "Unit Cost (PO)", "Units Shipped", "Origin", "Invoice Number", "HTS Code", "Duty Rate PCT", "Vendor Invoice Value", "Customs Value", "Difference", "Savings", "% Difference"]
-      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018,12,25), "Vendco", nil, "PO-A", nil, "cont-1", nil, nil, "CN", "inv-1", "235679012", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      expect(detail_sheet[1]).to eq ["entry-1", Date.new(2018, 12, 25), "Vendco", nil, "PO-A", nil, "cont-1", nil, nil, "CN", "inv-1", "235679012", 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
       summary_sheet = reader["Summary"]
       expect(summary_sheet).to_not be_nil

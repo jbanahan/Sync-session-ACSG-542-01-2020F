@@ -113,7 +113,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourSapProductGenerator d
       end
 
       described_class.run_schedulable
-      #Make sure we're sending Windows newlines
+      # Make sure we're sending Windows newlines
       expect(StringIO.new(out).gets[-2, 2]).to eq "\r\n"
       csv = []
       CSV.parse(out) {|row| csv << row}

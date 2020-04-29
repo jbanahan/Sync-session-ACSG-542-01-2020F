@@ -33,9 +33,9 @@ require 'open_chain/entity_compare/entity_comparator'
 class EntitySnapshot < ActiveRecord::Base
   include SnapshotS3Support
 
-  attr_accessible :bucket, :bulk_process_log_id, :change_record_id, 
-    :compared_at, :context, :doc_path, :imported_file_id, :imported_file, 
-    :recordable_id, :recordable_type, :snapshot, :user_id, :user, :version, 
+  attr_accessible :bucket, :bulk_process_log_id, :change_record_id,
+    :compared_at, :context, :doc_path, :imported_file_id, :imported_file,
+    :recordable_id, :recordable_type, :snapshot, :user_id, :user, :version,
     :recordable, :created_at
 
   cattr_accessor :snapshot_writer_impl
@@ -57,10 +57,10 @@ class EntitySnapshot < ActiveRecord::Base
       # we're always going to run business rules prior to generating the snapshot.  This ensures
       # that ALL snapshots always contain the current business rule states in them and the comparators
       # can operate under the assumption that the rule states in the snapshot they're processing
-      # are current to the snapshot state.  
+      # are current to the snapshot state.
 
       # In essense, what this ensure is that there's not a moment in time where the actual data for the snapshot
-      # may be failing business rules, but because the business rules haven't been run yet by an asynchronous process, 
+      # may be failing business rules, but because the business rules haven't been run yet by an asynchronous process,
       # the state of the rules aren't correctly reflected in the snapshot.
       run_business_rules(entity)
 
@@ -88,7 +88,7 @@ class EntitySnapshot < ActiveRecord::Base
   # This is the main method for creating snapshots
   def self.create_from_entity entity, user=User.current, imported_file=nil, context=nil
     json = snapshot_writer.entity_json(entity)
-    es = EntitySnapshot.create!(:recordable=>entity,:user=>user,:imported_file=>imported_file,:context=>context)
+    es = EntitySnapshot.create!(:recordable=>entity, :user=>user, :imported_file=>imported_file, :context=>context)
 
     # If storing the snapshot failed, then we shouldn't be trying to process it...this will be handled
     # later when the snapshot is restored.
@@ -96,10 +96,10 @@ class EntitySnapshot < ActiveRecord::Base
       OpenChain::EntityCompare::EntityComparator.handle_snapshot es
     end
 
-    MasterSetup.config_true?(:write_snapshot_caller) do 
+    MasterSetup.config_true?(:write_snapshot_caller) do
       write_snapshot_caller(es)
     end
-    
+
     es
   end
 
@@ -110,7 +110,7 @@ class EntitySnapshot < ActiveRecord::Base
       es.save!
       success = true
     rescue Exception => e
-      # If we fail to write the snapshot to S3, buffer the data in the database and then 
+      # If we fail to write the snapshot to S3, buffer the data in the database and then
       # another service will come along and process it, push it to s3 and then relink the s3 data to the
       # snapshot.
       EntitySnapshotFailure.create!(snapshot: es, snapshot_json: json) if record_failure
@@ -122,7 +122,7 @@ class EntitySnapshot < ActiveRecord::Base
   def self.write_snapshot_caller es
     bucket_name = "#{Rails.env}.#{MasterSetup.get.system_code}.snapshot_callers.vfitrack.net"
     OpenChain::S3.create_bucket!(bucket_name, versioning: false) unless OpenChain::S3.bucket_exists?(bucket_name)
-    OpenChain::S3.upload_data(bucket_name,"#{es.recordable_type}/#{es.id}.txt",caller.join("\n"))
+    OpenChain::S3.upload_data(bucket_name, "#{es.recordable_type}/#{es.id}.txt", caller.join("\n"))
   rescue Exception => e
     e.log_me
   end
@@ -152,13 +152,13 @@ class EntitySnapshot < ActiveRecord::Base
     o
   end
 
-  #finds the previous snapshot for the same recordable object
+  # finds the previous snapshot for the same recordable object
   def previous
-    EntitySnapshot.where(:recordable_type=>self.recordable.class,:recordable_id=>self.recordable).where("entity_snapshots.id < ?",self.id).order("entity_snapshots.id DESC").first
+    EntitySnapshot.where(:recordable_type=>self.recordable.class, :recordable_id=>self.recordable).where("entity_snapshots.id < ?", self.id).order("entity_snapshots.id DESC").first
   end
 
-  #returns the diff between this snapshot and the one immediately previous to it for the same recordable object
-  #if this is the first snapshot, then it runs a diff vs an empty snapshot
+  # returns the diff between this snapshot and the one immediately previous to it for the same recordable object
+  # if this is the first snapshot, then it runs a diff vs an empty snapshot
   def diff_vs_previous
     p = self.previous
     p = EntitySnapshot.new(:recordable=>self.recordable) if p.nil?
@@ -238,16 +238,16 @@ class EntitySnapshot < ActiveRecord::Base
           mf.process_import obj, v, user, bypass_user_check: true
         end
       end
-      obj_hash['model_fields'].each do |mfuid,val|
-        #this loop writes the values in the hash again.
-        #this prevents an empty value not in the hash from blanking something
-        #that is in the hash like a missing Country ISO blanking an included Country Name
+      obj_hash['model_fields'].each do |mfuid, val|
+        # this loop writes the values in the hash again.
+        # this prevents an empty value not in the hash from blanking something
+        # that is in the hash like a missing Country ISO blanking an included Country Name
         mf = ModelField.find_by_uid mfuid
         mf.process_import(obj, val, user, bypass_user_check: true) unless mf.blank? || mf.custom?
       end
       obj.last_updated_by_id=user.id if obj.respond_to?(:last_updated_by_id=)
 
-      #first we clear out any children that shouldn't be there so we don't have validation conflicts
+      # first we clear out any children that shouldn't be there so we don't have validation conflicts
       good_children = {}
       if obj_hash['children']
         obj_hash['children'].each do |c|
@@ -260,7 +260,7 @@ class EntitySnapshot < ActiveRecord::Base
           good_children[child_core_module] << c_hash['record_id']
         end
       end
-      default_child = core_module.default_module_chain.child(core_module) #make we get the default child if it wasn't found in the hash
+      default_child = core_module.default_module_chain.child(core_module) # make we get the default child if it wasn't found in the hash
       if default_child
         if default_child.length == 1
           good_children[default_child[0]] ||= [0]
@@ -269,9 +269,9 @@ class EntitySnapshot < ActiveRecord::Base
         end
       end
 
-      good_children.each do |cm,good_ids|
+      good_children.each do |cm, good_ids|
         l = core_module.child_lambdas[cm]
-        l.call(obj).where("NOT #{cm.table_name}.id IN (?)",good_ids).destroy_all if l
+        l.call(obj).where("NOT #{cm.table_name}.id IN (?)", good_ids).destroy_all if l
       end
 
       # Then we create/update children based on hash
@@ -298,7 +298,7 @@ class EntitySnapshot < ActiveRecord::Base
     d.record_id = new_json.nil? ? old_json['entity']['record_id'] : new_json['entity']['record_id']
     d.core_module = new_json.nil? ? old_json['entity']['core_module'] : new_json['entity']['core_module']
     cm = CoreModule.find_by_class_name d.core_module
-    d.model_fields_changed = model_field_diff(old_json,new_json)
+    d.model_fields_changed = model_field_diff(old_json, new_json)
 
     new_children = Array.wrap(new_json.try(:[], 'entity').try(:[], 'children'))
     old_children = Array.wrap(old_json.try(:[], 'entity').try(:[], 'children'))
@@ -319,7 +319,7 @@ class EntitySnapshot < ActiveRecord::Base
       new_child = find_matching_child(new_children, oc)
       # If the old child wasn't found in the list of new children, then we have a case where the child object was deleted
       if new_child.nil?
-        d.children_deleted << diff_json(oc,nil)
+        d.children_deleted << diff_json(oc, nil)
       end
     end
 
@@ -348,7 +348,7 @@ class EntitySnapshot < ActiveRecord::Base
     r = {}
     new_mf = new_json.nil? ? {} : new_json['entity']['model_fields']
     old_mf = old_json.nil? ? {} : old_json['entity']['model_fields']
-    
+
     parse_diff_datetimes(new_mf)
     parse_diff_datetimes(old_mf)
 
@@ -359,7 +359,7 @@ class EntitySnapshot < ActiveRecord::Base
       # This is because the diff screen itself skips over any field where they're both blank...so if we don't do this here,
       # the screen sees there are fields in diff's model_fields_changed attribute and shows that the object changed, but
       # then doesn't show any actual changes...so it's confusing to the user.
-      r[mf_uid] = [old_mf[mf_uid],new_mf[mf_uid]] unless old_mf[mf_uid].blank? && new_mf[mf_uid].blank?
+      r[mf_uid] = [old_mf[mf_uid], new_mf[mf_uid]] unless old_mf[mf_uid].blank? && new_mf[mf_uid].blank?
     end
     r
   end
@@ -370,7 +370,7 @@ class EntitySnapshot < ActiveRecord::Base
   end
 
   def parse_diff_datetimes model_field_hash
-    # Times are stored as iso 8601 strings in the database, so before we diff the values we want to parse all 
+    # Times are stored as iso 8601 strings in the database, so before we diff the values we want to parse all
     # times as actual time objects, this will allow the diff to display to the user in their timezone.
     #
     # This also resolves a previous bug in snapshots where the snapshot data was written using the value in Time.zone
@@ -379,7 +379,7 @@ class EntitySnapshot < ActiveRecord::Base
     # not flag a field as being changed (as happened when we still evaluated the datetime as a string for the diff)
     date_time_regex = /\A\d{4}-\d{1,2}-\d{1,2}T\d{1,2}:\d{1,2}:\d{1,2}/
     model_field_hash.each_pair do |k, v|
-      # Do a quicker upfront approach to determine if we MAY or may not have a date time value (regex is infinitely faster 
+      # Do a quicker upfront approach to determine if we MAY or may not have a date time value (regex is infinitely faster
       # than looking up the uid).
       if v.is_a?(String) && v =~ date_time_regex
         mf = ModelField.find_by_uid k

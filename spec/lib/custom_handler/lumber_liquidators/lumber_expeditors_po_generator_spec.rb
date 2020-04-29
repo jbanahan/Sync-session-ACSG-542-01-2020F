@@ -1,16 +1,16 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerator do
   before do
     co = Factory(:company, system_code: "sys code")
-    @ord = Factory(:order, order_number: "order num", order_date: Date.new(2016,1,1), vendor: co, 
-                 ship_window_start: Date.new(2016,1,2), ship_window_end: Date.new(2016,1,3), 
+    @ord = Factory(:order, order_number: "order num", order_date: Date.new(2016, 1, 1), vendor: co,
+                 ship_window_start: Date.new(2016, 1, 2), ship_window_end: Date.new(2016, 1, 3),
                  terms_of_sale: "FOB", currency: "USD")
     country = Factory(:country)
-    
+
     addr = Factory(:address, country: country, system_code: "addr sys code")
     classi = Factory(:classification, country: country, tariff_records: [Factory(:tariff_record, hts_1: "HTS")])
     prod = Factory(:product, unique_identifier: "unique id", classifications: [classi], name: "product name")
     ordln = Factory(:order_line, order: @ord, product: prod, line_number: 1, quantity: 2, unit_of_measure: "FT2", price_per_unit: 3, ship_to: addr)
-    
+
     addr2 = Factory(:address, country: country, system_code: "addr sys code 2")
     classi2 = Factory(:classification, country: country, tariff_records: [Factory(:tariff_record, hts_1: "HTS2")])
     prod2 = Factory(:product, unique_identifier: "unique id 2", classifications: [classi2], name: "product name 2")
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerato
     prod2.update_custom_value! cdefs[:prod_merch_cat_desc], "merch cat descr 2"
     ordln.update_custom_value! cdefs[:ordln_old_art_number], "old article num"
     ordln2.update_custom_value! cdefs[:ordln_old_art_number], "old article num 2"
-    
+
     @header = "orderNumber\torderIssueDate\tvendorNumber\tconsigneeName\tbuyerName\torderDepartment\torderDivision\torderWarehouse\torderEarlyShipDate\torderLateShipDate\torderRequiredDeliveryDate\torderMode\torderIncoterms\torderCountryOfOrigin\torderPortOfDestination\torderReference1\torderReference2\torderReference3\torderReference4\titemSkuNumber\titemLineNumber\titemQuantity\titemQuantityUom\titemOuterPackQuantity\titemPackQuantityUom\titemPrice\titemCurrencyCode\titemHtsNumber\titemDescription\titemColor\titemSize\titemDepartment\titemDivision\titemWarehouse\titemEarlyShipDate\titemLateShipDate\titemRequiredDeliveryDate\titemReference1\titemReference2\titemReference3"
     @tsv_maker = described_class.new
   end
@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerato
     it "creates tab-delimited string" do
       tsv_header, tsv, tsv2 = @tsv_maker.generate_tsv([@ord]).split("\n")
       expect(tsv_header).to eq @header
-      
+
       tsv = tsv.split("\t")
       expect(tsv[0]).to eq "order num"
       expect(tsv[1]).to eq "20160101"
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerato
       expect(tsv[19]).to eq "unique id"
       expect(tsv[20]).to eq "1"
       expect(tsv[21]).to eq "2.0"
-      expect(tsv[22]).to eq "SFT" #uses units cross-reference
+      expect(tsv[22]).to eq "SFT" # uses units cross-reference
       expect(tsv[23]).to eq ""
       expect(tsv[24]).to eq "CTN"
       expect(tsv[25]).to eq "3.0"
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerato
       expect(tsv2[19]).to eq "unique id 2"
       expect(tsv2[20]).to eq "2"
       expect(tsv2[21]).to eq "4.0"
-      expect(tsv2[22]).to eq "FT" #uses units cross-reference
+      expect(tsv2[22]).to eq "FT" # uses units cross-reference
       expect(tsv2[23]).to eq ""
       expect(tsv2[24]).to eq "CTN"
       expect(tsv2[25]).to eq "5.0"
@@ -128,17 +128,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsPoGenerato
 
     it "errors if a mandatory field is missing" do
       @ord.update_attributes(order_number: nil)
-      expect{@tsv_maker.generate_tsv([@ord])}.to raise_error "Missing mandatory field on line 2: orderNumber"
+      expect {@tsv_maker.generate_tsv([@ord])}.to raise_error "Missing mandatory field on line 2: orderNumber"
     end
 
     it "errors if a field is over-length" do
       @ord.order_lines.last.update_attributes(quantity: 123456789)
-      expect{@tsv_maker.generate_tsv([@ord])}.to raise_error "Field exceeding length limit on line 3: itemQuantity"
+      expect {@tsv_maker.generate_tsv([@ord])}.to raise_error "Field exceeding length limit on line 3: itemQuantity"
     end
-  
+
     it "errors if a cross-reference input isn't found" do
       @ord.order_lines.first.update_attributes(unit_of_measure: 'z')
-      expect{@tsv_maker.generate_tsv([@ord])}.to raise_error "Field value not found in cross-reference table on line 2: itemQuantityUom"
+      expect {@tsv_maker.generate_tsv([@ord])}.to raise_error "Field value not found in cross-reference table on line 2: itemQuantityUom"
     end
 
   end

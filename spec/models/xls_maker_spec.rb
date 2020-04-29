@@ -2,19 +2,19 @@ describe XlsMaker do
 
   describe "make_from_search_query" do
     before :each do
-      @u = Factory(:master_user,:entry_view=>true)
+      @u = Factory(:master_user, :entry_view=>true)
       @c = Factory(:company, system_code: 'TEST')
       @c.users << @u
-      @search = SearchSetup.create!(:name=>'t',:user=>@u,:module_type=>'Entry')
-      @search.search_columns.create!(:model_field_uid=>'ent_brok_ref',:rank=>1)
-      @search.search_columns.create!(:model_field_uid=>'ent_entry_num',:rank=>2)
-      @search.search_columns.create!(:model_field_uid=>'ent_first_it_date',:rank=>3)
-      @search.search_columns.create!(:model_field_uid=>'ent_file_logged_date',:rank=>4)
+      @search = SearchSetup.create!(:name=>'t', :user=>@u, :module_type=>'Entry')
+      @search.search_columns.create!(:model_field_uid=>'ent_brok_ref', :rank=>1)
+      @search.search_columns.create!(:model_field_uid=>'ent_entry_num', :rank=>2)
+      @search.search_columns.create!(:model_field_uid=>'ent_first_it_date', :rank=>3)
+      @search.search_columns.create!(:model_field_uid=>'ent_file_logged_date', :rank=>4)
       @search.search_criterions.create! model_field_uid: 'ent_brok_ref', operator: "eq", value: "x"
       @sq = SearchQuery.new @search, @u
       allow(@sq).to receive(:execute).with(hash_including(raise_max_results_error:true)).
-        and_yield({:row_key=>1,:result=>['a','b',Date.new(2013,4,30),Time.now]}).
-        and_yield({:row_key=>2,:result=>['c','d',Date.new(2013,4,30),Time.now]})
+        and_yield({:row_key=>1, :result=>['a', 'b', Date.new(2013, 4, 30), Time.now]}).
+        and_yield({:row_key=>2, :result=>['c', 'd', Date.new(2013, 4, 30), Time.now]})
     end
 
     it "should add a second worksheet with general information on the search." do
@@ -59,7 +59,7 @@ describe XlsMaker do
     end
     it "should format date_time with DATE_TIME_FORMAT" do
       wb, * = XlsMaker.new.make_from_search_query @sq
-      expect(wb.worksheet(0).row(1).format(3)).to eq(XlsMaker::DATE_TIME_FORMAT) 
+      expect(wb.worksheet(0).row(1).format(3)).to eq(XlsMaker::DATE_TIME_FORMAT)
     end
     it "should format date_time with DATE_FORMAT if no_time option is set" do
       wb, * = XlsMaker.new(:no_time=>true).make_from_search_query @sq
@@ -90,7 +90,7 @@ describe XlsMaker do
       sq = double('sq')
       expect(SearchSetup).to receive(:find).with(1).and_return(ss)
       expect(User).to receive(:find).with(2).and_return(u)
-      expect(SearchQuery).to receive(:new).with(ss,u).and_return(sq)
+      expect(SearchQuery).to receive(:new).with(ss, u).and_return(sq)
       xm = XlsMaker.new
       expect(xm).to receive(:make_from_search_query).with(sq).and_return('x')
       r = xm.make_from_search_query_by_search_id_and_user_id 1, 2
@@ -105,28 +105,28 @@ describe XlsMaker do
     end
 
     it "should add a header row using HEADER FORMAT" do
-      # Make sure we use the col_widths for a specific column if it's set, and don't 
+      # Make sure we use the col_widths for a specific column if it's set, and don't
       # just overwrite it
       col_widths = [nil, 15]
-      
+
       XlsMaker.add_header_row @sheet, 1, ['Header', 'Header 2'], col_widths
 
       expect(@sheet.row(1)[0]).to eq("Header")
       expect(@sheet.row(1)[1]).to eq("Header 2")
       expect(@sheet.row(1).default_format).to eq(XlsMaker::HEADER_FORMAT)
       # 23 is the max width for header (by default 3 is added to the lenght if it's less than 23)
-      expect(col_widths[0]).to eq(9) 
+      expect(col_widths[0]).to eq(9)
       expect(col_widths[1]).to eq(15)
     end
 
     it "should limit the header width to 23" do
-      col_widths = [] 
+      col_widths = []
       XlsMaker.add_header_row @sheet, 1, ['This is really long text that will be longer than 23 chars'], col_widths
       expect(col_widths[0]).to eq(23)
     end
 
     it "handles headers that are not string values" do
-      XlsMaker.add_header_row @sheet, 1, [1, Date.new(2016,1,1)], []
+      XlsMaker.add_header_row @sheet, 1, [1, Date.new(2016, 1, 1)], []
       expect(@sheet.row(1)[0]).to eq "1"
       expect(@sheet.row(1)[1]).to eq "2016-01-01"
       expect(@sheet.row(1).default_format).to eq XlsMaker::HEADER_FORMAT
@@ -158,7 +158,7 @@ describe XlsMaker do
       expect(@sheet.row(1).formats[2]).to eq(XlsMaker::DATE_TIME_FORMAT)
     end
 
-    it "should force date format for datetimes" do 
+    it "should force date format for datetimes" do
       col_widths = []
       XlsMaker.add_body_row @sheet, 1, [Time.now], col_widths, true
       expect(col_widths[0]).to eq(13)
@@ -186,7 +186,7 @@ describe XlsMaker do
       @sheet = @wb.create_worksheet :name => "Sheet"
     end
 
-    it "should insert a row starting at the column specified" do 
+    it "should insert a row starting at the column specified" do
       col_widths = []
       date = DateTime.now.to_date
       datetime = Time.now
@@ -206,7 +206,7 @@ describe XlsMaker do
       expect(@sheet.row(1).formats[3]).to eq(XlsMaker::DATE_TIME_FORMAT)
     end
 
-    it "should insert a row starting at the column specified and push back existing columns" do 
+    it "should insert a row starting at the column specified and push back existing columns" do
       col_widths = []
       date = DateTime.now.to_date
       datetime = Time.now
@@ -222,7 +222,7 @@ describe XlsMaker do
       expect(@sheet.row(1)[4]).to eq("E")
     end
 
-    it "should force date format for datetimes" do 
+    it "should force date format for datetimes" do
       col_widths = []
       XlsMaker.insert_body_row @sheet, 1, 0, [Time.now], col_widths, true
       expect(col_widths[0]).to eq(13)
@@ -287,7 +287,7 @@ describe XlsMaker do
       expect(@sheet.row(0).formats[0].number_format).to eq "YYYY-MM-DD HH:MM"
     end
 
-    it "respects the no_time option" do 
+    it "respects the no_time option" do
       XlsMaker.insert_cell_value @sheet, 0, 0, Time.new(2014, 01, 01), [], {no_time: true}
       expect(@sheet.row(0)[0].to_s).to eq Time.new(2014, 01, 01).to_s
       expect(@sheet.row(0).formats[0].number_format).to eq "YYYY-MM-DD"

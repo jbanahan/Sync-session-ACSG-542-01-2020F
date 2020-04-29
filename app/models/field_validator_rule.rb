@@ -44,15 +44,15 @@
 class FieldValidatorRule < ActiveRecord::Base
   include HoldsCustomDefinition
 
-  attr_accessible :allow_everyone_to_view, :can_edit_groups, 
-    :can_mass_edit_groups, :can_view_groups, :comment, :contains, 
-    :custom_definition_id, :custom_message, :disabled, :ends_with, 
-    :greater_than, :greater_than_date, :less_than, :less_than_date, 
-    :less_than_from_now, :less_than_from_now_uom, :mass_edit, 
-    :maximum_length, :minimum_length, :model_field_uid, :module_type, 
-    :more_than_ago, :more_than_ago_uom, :one_of, :read_only, :regex, 
+  attr_accessible :allow_everyone_to_view, :can_edit_groups,
+    :can_mass_edit_groups, :can_view_groups, :comment, :contains,
+    :custom_definition_id, :custom_message, :disabled, :ends_with,
+    :greater_than, :greater_than_date, :less_than, :less_than_date,
+    :less_than_from_now, :less_than_from_now_uom, :mass_edit,
+    :maximum_length, :minimum_length, :model_field_uid, :module_type,
+    :more_than_ago, :more_than_ago_uom, :one_of, :read_only, :regex,
     :required, :starts_with, :xml_tag_name
-  
+
   before_validation :set_module_type, on: :create
   if Rails.env.test?
     # needs to fire on save to make test cases work because they run inside transactions
@@ -63,14 +63,14 @@ class FieldValidatorRule < ActiveRecord::Base
   validates :model_field_uid, :presence=>true, :uniqueness => true
   validates :module_type, :presence=>true
 
-  #finds all rules for the given core_module, using the cache if loaded
+  # finds all rules for the given core_module, using the cache if loaded
   def self.find_cached_by_core_module core_module
     r = CACHE.get "FieldValidatorRule:module:#{core_module.class_name}"
     r = write_module_cache core_module if r.nil?
     r.nil? ? [] : r
   end
 
-  #finds all rules for the given model_field_uid, using the cache if loaded
+  # finds all rules for the given model_field_uid, using the cache if loaded
   def self.find_cached_by_model_field_uid model_field_uid
     r = CACHE.get "FieldValidatorRule:field:#{model_field_uid}"
     r = write_field_cache model_field_uid if r.nil?
@@ -78,23 +78,23 @@ class FieldValidatorRule < ActiveRecord::Base
   end
 
   def requires_remote_validation?
-    [required?, greater_than, less_than, more_than_ago, less_than_from_now, greater_than_date, 
+    [required?, greater_than, less_than, more_than_ago, less_than_from_now, greater_than_date,
       less_than_date, regex, starts_with, ends_with, contains, one_of, minimum_length, maximum_length].any? {|v| !v.blank? }
   end
 
-  #validates the given base object based on the rules defined in the FieldValidatorRule instance.
-  #The base_object should be an instance of the class backing the CoreModule set in the field validator
-  #For example, if the FieldValidator's module_type is Product, then you should pass in a Product object
-  #Method returns empty array if validation passes, else, a message indicating the reason for failure
-  #Passing nested=true will prepend the error messages with the CoreModule name
-  def validate_field(base_object,nested=false)
+  # validates the given base object based on the rules defined in the FieldValidatorRule instance.
+  # The base_object should be an instance of the class backing the CoreModule set in the field validator
+  # For example, if the FieldValidator's module_type is Product, then you should pass in a Product object
+  # Method returns empty array if validation passes, else, a message indicating the reason for failure
+  # Passing nested=true will prepend the error messages with the CoreModule name
+  def validate_field(base_object, nested=false)
     return [] if self.disabled?
     mf = model_field
     raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if mf.blank?
     _validate_input(mf, mf.process_export(base_object, nil, true), nested)
   end
 
-  def validate_input(input,nested=false)
+  def validate_input(input, nested=false)
     return [] if self.disabled?
     mf = model_field
     raise "Validation Error: Model field not set for FieldValidatorRule #{self.id}." if mf.blank?
@@ -104,9 +104,9 @@ class FieldValidatorRule < ActiveRecord::Base
   def _validate_input(model_field, input, nested)
     r = []
     if self.required? && input.blank?
-      r << error_message(model_field,nested,"#{model_field.label} is required.")
+      r << error_message(model_field, nested, "#{model_field.label} is required.")
     end
-    if !input.blank? #put all checks here
+    if !input.blank? # put all checks here
       r += validate_regex input, model_field, nested
       r += validate_greater_than input, model_field, nested
       r += validate_less_than input, model_field, nested
@@ -124,7 +124,7 @@ class FieldValidatorRule < ActiveRecord::Base
     Set.new(r).to_a
   end
 
-  #returns the value of the one_of field as an array
+  # returns the value of the one_of field as an array
   def one_of_array
     return [] if self.one_of.blank?
     r = self.one_of.split("\n")
@@ -153,7 +153,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def view_groups
     # Need to do this because rules are loaded via migrations (which may be running to add the group)
     if respond_to?(:can_view_groups)
-      can_view_groups.to_s.lines.collect{|ln| ln.strip}.sort
+      can_view_groups.to_s.lines.collect {|ln| ln.strip}.sort
     else
       []
     end
@@ -162,7 +162,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def edit_groups
     # Need to do this because rules are loaded via migrations (which may be running to add the group)
     if respond_to?(:can_edit_groups)
-      can_edit_groups.to_s.lines.collect{|ln| ln.strip}.sort
+      can_edit_groups.to_s.lines.collect {|ln| ln.strip}.sort
     else
       []
     end
@@ -178,7 +178,7 @@ class FieldValidatorRule < ActiveRecord::Base
 
   def string_hsh
     out = {}
-    #general
+    # general
     out[:comment] = "Comment: #{comment}" unless comment.blank?
     out[:custom_message] = "Custom Error Message: #{custom_message}" unless custom_message.blank?
     out[:xml_tag_name] = "Custom XML Tag: #{xml_tag_name}" unless xml_tag_name.blank?
@@ -189,15 +189,15 @@ class FieldValidatorRule < ActiveRecord::Base
     out[:can_view_groups] = "Groups That Can View Field: #{can_view_groups.gsub(/\n/, ", ")}" unless can_view_groups.blank?
     out[:can_edit_groups] = "Groups That Can Edit Field: #{can_edit_groups.gsub(/\n/, ", ")}" unless can_edit_groups.blank?
     out[:can_mass_edit_groups] = "Groups That Can Mass Edit Field: #{can_mass_edit_groups.gsub(/\n/, ", ")}" unless can_mass_edit_groups.blank?
-    #decimal/integer
+    # decimal/integer
     out[:greater_than] = "Greater Than #{greater_than}" unless greater_than.blank?
     out[:less_than] = "Less Than #{less_than}" unless less_than.blank?
-    #date/datetime
+    # date/datetime
     out[:more_than_ago] = "More Than #{more_than_ago} #{more_than_ago != 1 ? more_than_ago_uom.pluralize : more_than_ago_uom} ago" unless more_than_ago.blank?
     out[:less_than_from_now] = "Less Than #{less_than_from_now} #{less_than_from_now != 1 ? less_than_from_now_uom.pluralize : less_than_from_now_uom} from now" unless less_than_from_now.blank?
     out[:greater_than_date] = "After #{greater_than_date.to_s}" unless greater_than_date.blank?
     out[:less_than_date] = "Before #{less_than_date.to_s}" unless less_than_date.blank?
-    #string/text
+    # string/text
     out[:minimum_length] = "Minimum Length: #{minimum_length}" unless minimum_length.blank?
     out[:maximum_length] = "Maximum Length: #{maximum_length}" unless maximum_length.blank?
     out[:starts_with] = "Starts With '#{starts_with}'" unless starts_with.blank?
@@ -216,7 +216,7 @@ class FieldValidatorRule < ActiveRecord::Base
     reset_model_fields
   end
   def validate_regex val, model_field, nested
-    generic_validate model_field, nested, val, self.regex,"#{model_field.label} must match expression #{self.regex}.", lambda {val.to_s.match(self.regex)}
+    generic_validate model_field, nested, val, self.regex, "#{model_field.label} must match expression #{self.regex}.", lambda {val.to_s.match(self.regex)}
   end
   def validate_greater_than val, model_field, nested
     generic_validate model_field, nested, val, self.greater_than, "#{model_field.label} must be greater than #{self.greater_than}.", lambda {val>self.greater_than}
@@ -254,7 +254,7 @@ class FieldValidatorRule < ActiveRecord::Base
   def validate_one_of val, model_field, nested
     return [] if self.one_of.blank?
     good_vals = self.one_of_array
-    test_vals = good_vals.collect {|v| v.downcase} #remove whitespace and make lowercase
+    test_vals = good_vals.collect {|v| v.downcase} # remove whitespace and make lowercase
     return [error_message(model_field, nested, "#{model_field.label} must be one of: #{good_vals.join(", ")}.")] unless test_vals.include? val.to_s.strip.downcase
     return []
   end
@@ -273,8 +273,8 @@ class FieldValidatorRule < ActiveRecord::Base
     end
   end
 
-  #generates the appropriate error message for the validation failure.
-  #this will return the message you pass in unless the user has set a custom message
+  # generates the appropriate error message for the validation failure.
+  # this will return the message you pass in unless the user has set a custom message
   def error_message model_field, nested, base_message
     m = self.custom_message.blank? ? base_message : self.custom_message
     m = "#{model_field.core_module.label}: #{m}" if nested
@@ -282,6 +282,6 @@ class FieldValidatorRule < ActiveRecord::Base
   end
 
   def reset_model_fields
-    ModelField.reload true #true resets cache
+    ModelField.reload true # true resets cache
   end
 end

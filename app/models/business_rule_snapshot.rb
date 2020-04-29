@@ -59,7 +59,7 @@ class BusinessRuleSnapshot < ActiveRecord::Base
   end
 
   def self.create_rule_data template_data, rule_data
-    # Just stuff the template name into the rule_data hash for now...if we need to 
+    # Just stuff the template name into the rule_data hash for now...if we need to
     # we can create a more formalized data object as a Struct or somethign later, for now
     # this is good enough
     data = rule_data.deep_dup
@@ -81,10 +81,10 @@ class BusinessRuleSnapshot < ActiveRecord::Base
     snapshot = BusinessRuleSnapshot.create! recordable: entity
     begin
       s3_data = write_to_s3 snapshot_json, entity, path_prefix: "business_rule"
-      snapshot.update_attributes! bucket: s3_data[:bucket], version: s3_data[:version], doc_path: s3_data[:key] 
+      snapshot.update_attributes! bucket: s3_data[:bucket], version: s3_data[:version], doc_path: s3_data[:key]
       OpenChain::EntityCompare::EntityComparator.handle_snapshot snapshot
     rescue Exception => e
-      # If we fail to write the snapshot to S3, buffer the data in the database and then 
+      # If we fail to write the snapshot to S3, buffer the data in the database and then
       # another service will come along and process it, push it to s3 and then relink the s3 data to the
       # snapshot.
       EntitySnapshotFailure.create! snapshot: snapshot, snapshot_json: snapshot_json

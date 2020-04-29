@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::PoloCsmProductGenerator do
   describe "remote_file_name" do
-    #ChainYYYYMMDDHHSS.csv
+    # ChainYYYYMMDDHHSS.csv
     it "should return datestamp naming convention" do
       expect(subject.remote_file_name).to match /Chain[0-9]{14}\.csv/
     end
@@ -9,14 +9,14 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     it "should send credentials" do
       c = subject
       allow(c).to receive(:remote_file_name).and_return("x.csv")
-      expect(c.ftp_credentials).to eq({:username=>'polo',:password=>'pZZ117',:server=>'connect.vfitrack.net',:folder=>'/_to_csm',:remote_file_name=>'x.csv'})
+      expect(c.ftp_credentials).to eq({:username=>'polo', :password=>'pZZ117', :server=>'connect.vfitrack.net', :folder=>'/_to_csm', :remote_file_name=>'x.csv'})
     end
   end
 
-  let (:csm_def) { Factory(:custom_definition,:module_type=>"Product",:label=>"CSM Number",:data_type=>:text) }
-  let (:italy) { Factory(:country,:iso_code=>'IT') }
+  let (:csm_def) { Factory(:custom_definition, :module_type=>"Product", :label=>"CSM Number", :data_type=>:text) }
+  let (:italy) { Factory(:country, :iso_code=>'IT') }
   let (:product) {
-    tr = Factory(:tariff_record,:hts_1=>'1234567890', :hts_2=>'123455555', :hts_3=>'0987654321', :classification=>Factory(:classification,:country=>italy))
+    tr = Factory(:tariff_record, :hts_1=>'1234567890', :hts_2=>'123455555', :hts_3=>'0987654321', :classification=>Factory(:classification, :country=>italy))
     prod = tr.classification.product
     prod.update_custom_value! csm_def, 'CSMVAL'
     prod
@@ -80,7 +80,7 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
       expect(r.count).to eq(0)
     end
     it "should not find product already synced" do
-      product.sync_records.create!(:trading_partner=>subject.sync_code,:sent_at=>10.minutes.ago,:confirmed_at=>5.minutes.ago)
+      product.sync_records.create!(:trading_partner=>subject.sync_code, :sent_at=>10.minutes.ago, :confirmed_at=>5.minutes.ago)
       product.update_attributes(:updated_at=>1.day.ago)
       r = Product.connection.execute subject.query
       expect(r.count).to eq(0)
@@ -106,7 +106,7 @@ describe OpenChain::CustomHandler::PoloCsmProductGenerator do
     end
 
     it "repeatedly generates and autoconfirms products until all pending products are drained" do
-      tr = Factory(:tariff_record, hts_1: '1234567890',classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
+      tr = Factory(:tariff_record, hts_1: '1234567890', classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
       p2 = tr.classification.product
       p2.update_custom_value! csm_def, 'CSM2'
 

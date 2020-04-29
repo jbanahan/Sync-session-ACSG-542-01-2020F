@@ -16,7 +16,7 @@ describe ShipmentLine do
     it "should lock if on commercial invoice" do
       s_line = Factory(:shipment_line)
       c_line = Factory(:commercial_invoice_line)
-      PieceSet.create!(:shipment_line_id=>s_line.id,:commercial_invoice_line_id=>c_line.id,:quantity=>1)
+      PieceSet.create!(:shipment_line_id=>s_line.id, :commercial_invoice_line_id=>c_line.id, :quantity=>1)
       s_line.reload
       expect(s_line).to be_locked
     end
@@ -27,11 +27,11 @@ describe ShipmentLine do
   describe "merge_piece_sets" do
     it "should merge piece sets on destroy" do
       ol = Factory(:order_line)
-      sl = Factory(:shipment_line,product:ol.product)
-      ps1 = PieceSet.create!(order_line_id:ol.id,quantity:7)
-      ps2 = PieceSet.create!(order_line_id:ol.id,quantity:3,shipment_line_id:sl.id)
+      sl = Factory(:shipment_line, product:ol.product)
+      ps1 = PieceSet.create!(order_line_id:ol.id, quantity:7)
+      ps2 = PieceSet.create!(order_line_id:ol.id, quantity:3, shipment_line_id:sl.id)
       sl.reload
-      expect {sl.destroy}.to change(PieceSet,:count).from(2).to(1)
+      expect {sl.destroy}.to change(PieceSet, :count).from(2).to(1)
       new_ps = PieceSet.first
       expect(new_ps.quantity).to eq 10
       expect(new_ps.order_line_id).to eq ol.id
@@ -76,13 +76,13 @@ describe ShipmentLine do
       expect(subject.dimensional_weight).to eq BigDecimal("166.67")
     end
 
-    it "handles nil volume" do 
+    it "handles nil volume" do
       subject.cbms = nil
       expect(subject.dimensional_weight).to eq nil
     end
   end
 
-  describe "chargeable_weight" do 
+  describe "chargeable_weight" do
 
     subject { ShipmentLine.new cbms: BigDecimal("1"), gross_kgs: BigDecimal("160") }
 
@@ -95,7 +95,7 @@ describe ShipmentLine do
       expect(subject.chargeable_weight).to eq BigDecimal("166.68")
     end
 
-    it "handles nil dimensional_weight" do 
+    it "handles nil dimensional_weight" do
       subject.cbms = nil
       expect(subject.chargeable_weight).to eq BigDecimal("160")
     end
@@ -112,4 +112,3 @@ describe ShipmentLine do
     end
   end
 end
- 

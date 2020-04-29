@@ -4,7 +4,7 @@ describe 'time zone parse_us_base_format' do
   end
   it 'should parse an AM time' do
     date = @zone.parse_us_base_format '12/28/2008 04:25am'
-    expect(date).to eq(DateTime.new(2008, 12, 28, 9, 25)) #9:25 UTC
+    expect(date).to eq(DateTime.new(2008, 12, 28, 9, 25)) # 9:25 UTC
   end
   it 'should parse a PM time' do
     date = @zone.parse_us_base_format '12/28/2008 02:22pm'
@@ -20,11 +20,11 @@ describe 'time zone parse_us_base_format' do
   end
   it 'should parse a daylight savings time' do
     date = @zone.parse_us_base_format '07/28/2008 04:25am'
-    expect(date).to eq(DateTime.new(2008, 7, 28, 8, 25)) #8:25 UTC
+    expect(date).to eq(DateTime.new(2008, 7, 28, 8, 25)) # 8:25 UTC
   end
   it 'should parse a non-daylight savings time' do
     date = @zone.parse_us_base_format '12/28/2008 04:25am'
-    expect(date).to eq(DateTime.new(2008, 12, 28, 9, 25)) #9:25 UTC
+    expect(date).to eq(DateTime.new(2008, 12, 28, 9, 25)) # 9:25 UTC
   end
   context 'formatting errors' do
     it 'should fail on 1 digit month' do
@@ -80,7 +80,7 @@ describe "strip_all_whitespace" do
   it "removes a more comprehensive list of whitespace characters than String#strip" do
     # unicode spaces http://jkorpela.fi/chars/spaces.html
     sp = ["\u0020", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004", "\u2005", "\u2006", "\u2007", "\u2008", "\u2009", "\u200A", "\u202F", "\u205F", "\u3000"]
-    
+
     expect("\n\r#{sp.join('')}some string#{sp.join('')}\n\r".strip_all_whitespace).to eq "some string"
   end
 end
@@ -89,7 +89,7 @@ describe "log_me" do
 
   it "delays an email send if log_me call has no attachments" do
     m = double("OpenMailer")
-    expect(OpenMailer).to receive(:send_generic_exception) do |exception, messages, message, backtrace| 
+    expect(OpenMailer).to receive(:send_generic_exception) do |exception, messages, message, backtrace|
       expect(exception).to eq "StandardError"
       expect(messages.first).to eq "Testing"
       expect(messages.second).to match "Error Database ID: "
@@ -108,7 +108,7 @@ describe "log_me" do
 
   it "immediately sends exception if attachment paths has a value" do
     mail = double("mail")
-    expect(OpenMailer).to receive(:send_generic_exception) do |exception, messages, message, backtrace, files| 
+    expect(OpenMailer).to receive(:send_generic_exception) do |exception, messages, message, backtrace, files|
       expect(exception).to eq "StandardError"
       expect(messages.first).to eq "Testing"
       expect(messages.second).to match "Error Database ID: "

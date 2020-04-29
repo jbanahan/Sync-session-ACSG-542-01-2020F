@@ -1,4 +1,4 @@
-describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do 
+describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
 
   class MockGtnOrderXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser
 
@@ -78,7 +78,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
   subject { MockGtnOrderXmlParser }
 
   describe "process_order" do
-    before :each do 
+    before :each do
       us
       india
       allow(subject).to receive(:inbound_file).and_return inbound_file
@@ -132,7 +132,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
       expect(a.state).to eq "07"
       expect(a.postal_code).to eq "122505"
       expect(a.country).to eq india
-      
+
       f = o.factory
       expect(f).not_to be_nil
       expect(f).to have_system_identifier("SYSTEM_CODE-GTN Factory", "factory-code")
@@ -193,7 +193,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
 
     context "with existing data" do
 
-      before :each do 
+      before :each do
         order
       end
 
@@ -267,7 +267,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
           factory.reload
           expect(factory.name).to eq "GUPTA EXIM (INDIA) PVT. LTD."
           expect(factory.entity_snapshots.length).to eq 1
-        
+
           vendor.reload
           expect(vendor.name).to eq "GUPTA EXIM(INDIA) PVT LTD"
           expect(vendor.entity_snapshots.length).to eq 1
@@ -282,7 +282,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnOrderXmlParser do
           factory.reload
           expect(factory.addresses.first.line_1).to eq "(PLANT II)|103 DLF INDUSTRIAL AREA PHASE1"
           expect(factory.entity_snapshots.length).to eq 1
-        
+
           vendor.reload
           expect(vendor.addresses.first.line_1).to eq "144 DLF INDUSTRIAL AREA"
           expect(vendor.entity_snapshots.length).to eq 1

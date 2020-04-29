@@ -2,15 +2,15 @@ describe OpenChain::Api::ApiClient do
   before :all do
     WebMock.enable!
   end
-  
+
   before :each do
     @c = OpenChain::Api::ApiClient.new 'test', 'user', 'token'
   end
-  
+
   describe "initialize" do
     it "ensures valid endpoints are used" do
       expect(OpenChain::Api::ApiClient.new 'polo', 'test', 'test').to_not be_nil
-      expect(OpenChain::Api::ApiClient.new 'vfitrack','test', 'test').to_not be_nil
+      expect(OpenChain::Api::ApiClient.new 'vfitrack', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'ann', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'underarmour', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'jcrew', 'test', 'test').to_not be_nil
@@ -20,7 +20,7 @@ describe OpenChain::Api::ApiClient do
       expect(OpenChain::Api::ApiClient.new 'dev', 'test', 'test').to_not be_nil
       expect(OpenChain::Api::ApiClient.new 'test', 'test', 'test').to_not be_nil
 
-      expect{OpenChain::Api::ApiClient.new 'Invalid', 'test', 'test'}.to raise_error ArgumentError, "Invalid is not a valid API endpoint."
+      expect {OpenChain::Api::ApiClient.new 'Invalid', 'test', 'test'}.to raise_error ArgumentError, "Invalid is not a valid API endpoint."
     end
 
     it "uses config file to load default user / authtoken information if not given in constructor" do
@@ -88,7 +88,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
+        expect {@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
         expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").times(3)
     end
 
@@ -109,7 +109,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
+        expect {@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "Error Response"
         expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
@@ -130,7 +130,7 @@ describe OpenChain::Api::ApiClient do
             'Content-Type' => "application/json; charset=utf-8"
           }
         )
-        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiAuthenticationError, "Authentication to #{@c.endpoint} failed for user '#{@c.username}' and api token '#{@c.authtoken}'. Error: Error Response"
+        expect {@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiAuthenticationError, "Authentication to #{@c.endpoint} failed for user '#{@c.username}' and api token '#{@c.authtoken}'. Error: Error Response"
         expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3").once
     end
 
@@ -154,7 +154,7 @@ describe OpenChain::Api::ApiClient do
           }
         )
 
-        expect{@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "API Request failed with error: invalid byte sequence in US-ASCII"
+        expect {@c.get "/path/file.json", {"mf_uids" => "1,2,3"}}.to raise_error OpenChain::Api::ApiClient::ApiError, "API Request failed with error: invalid byte sequence in US-ASCII"
         expect(WebMock).to have_requested(:get, "http://www.notadomain.com/api/v1/path/file.json?mf_uids=1,2,3")
     end
 

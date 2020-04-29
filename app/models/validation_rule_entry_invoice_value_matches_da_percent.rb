@@ -1,14 +1,13 @@
 # -*- SkipSchemaAnnotations
 
 class ValidationRuleEntryInvoiceValueMatchesDaPercent < BusinessValidationRule
-  
   include ValidatesCommercialInvoice
 
   def run_child_validation invoice
-    da_total = invoice.commercial_invoice_lines.inject(0) do |acc, nxt| 
+    da_total = invoice.commercial_invoice_lines.inject(0) do |acc, nxt|
       adj = nxt.adjustments_amount
       adj ? acc + adj : acc
-    end    
+    end
     target_rate = rule_attributes["adjustment_rate"]
     calc_rate = (BigDecimal(100) * da_total) / invoice.invoice_value_foreign
     unless (target_rate - calc_rate).abs < 0.01

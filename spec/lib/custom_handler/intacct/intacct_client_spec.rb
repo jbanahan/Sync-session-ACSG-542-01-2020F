@@ -397,7 +397,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         conf
       }
 
-      before :each do 
+      before :each do
         allow(subject).to receive(:production?).and_return true
 
         allow(subject).to receive(:http_request) do |uri, post|
@@ -475,14 +475,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         expect(subject).to receive(:http_request).and_return error_response
 
         error_message = "Intacct API call failed with errors:\nError No: #{error_no}\nDescription: #{description}\nDescription 2: #{description2}\nCorrection: #{correction}"
-        expect{subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+        expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
       end
 
       it "transparently handles responses with non-success statuses" do
         error_response = REXML::Document.new "<result><controlid>id</controlid><status>error</status><function>func</function></result>"
         expect(subject).to receive(:http_request).and_return error_response
         error_message = "Intacct API Function call func failed with status error."
-        expect{subject.post_xml nil, false, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+        expect {subject.post_xml nil, false, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
       end
 
       it "raises retry error for errors with correction values of 'Check the transaction for errors or inconsistencies, then try again.'" do
@@ -494,7 +494,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         expect(subject).to receive(:http_request).and_return error_response
         error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: Check the transaction for errors or inconsistencies, then try again.\nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
 
-        expect{subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, error_message
+        expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, error_message
       end
 
       it "does not raise retry error when other BL01001973 errors are present" do
@@ -512,7 +512,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         expect(subject).to receive(:http_request).and_return error_response
         error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Other Error\nCorrection: \nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: "
 
-        expect{subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
+        expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
       end
 
       it "raises dimension error for errors with descriptions indicating missing dimensions" do
@@ -524,11 +524,11 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         expect(subject).to receive(:http_request).and_return error_response
         error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Invalid Brokerage File '2399341' specified.\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Could not create sodocument record!\nCorrection: "
 
-        expect{subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new(error_message, "Broker File", "2399341")
+        expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new(error_message, "Broker File", "2399341")
       end
 
       context "with overriden unique flag" do
-        let! (:starting_force_non_unique_intacct_request) { 
+        let! (:starting_force_non_unique_intacct_request) {
           Thread.current.thread_variable_get(:force_non_unique_intacct_request)
         }
         after :each do
@@ -563,7 +563,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         ms
       }
 
-      before :each do 
+      before :each do
         allow(subject).to receive(:production?).and_return false
 
         allow(subject).to receive(:http_request) do |uri, post|
@@ -575,17 +575,17 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       end
 
       it "errors if attempting to post non-readonly request to non-sandbox" do
-        expect{ subject.post_xml "location", true, true, "<content>function</content>", "controlid"}.to raise_error "Cannot post to Intacct in development mode"
+        expect { subject.post_xml "location", true, true, "<content>function</content>", "controlid"}.to raise_error "Cannot post to Intacct in development mode"
       end
 
       it "allows readonly request to production system" do
-        expect{ subject.post_xml "location", true, true, "<content>function</content>", "controlid", read_only: true }.not_to raise_error
+        expect { subject.post_xml "location", true, true, "<content>function</content>", "controlid", read_only: true }.not_to raise_error
       end
 
-      
+
     end
 
-    context "development environment" do 
+    context "development environment" do
       let! (:config) {
         conf = {
           sender_id: "vfi",
@@ -597,14 +597,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         allow(described_class).to receive(:intacct_config).and_return conf
         conf
       }
-      
+
       let! (:master_setup) {
         ms = stub_master_setup
         allow(ms).to receive(:production?).and_return false
         ms
       }
 
-      before :each do 
+      before :each do
         allow(subject).to receive(:production?).and_return false
 
         allow(subject).to receive(:http_request) do |uri, post|
@@ -616,7 +616,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       end
 
       it "allows post to sandbox" do
-        expect{ subject.post_xml "location", true, true, "<content>function</content>", "controlid" }.not_to raise_error
+        expect { subject.post_xml "location", true, true, "<content>function</content>", "controlid" }.not_to raise_error
         expect(@post).not_to be_nil
         expect(@post.body).to include "vfi-sandbox"
       end
@@ -638,7 +638,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
   describe "intacct_config" do
     subject { described_class }
 
-    after :each do 
+    after :each do
       subject.remove_instance_variable :@intacct_config
     end
 
@@ -723,7 +723,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(result[1].to_s).to eq "<object><value>value2</value></object>"
     end
 
-    it "passes through fields to request" do 
+    it "passes through fields to request" do
       expect(xml_gen).to receive(:generate_read_query).with('object', 'key', fields: ["field1", "field2"]).and_return ["control_id", "<read>object</read>"]
       response = generate_intacct_read_response({control_id: "control_id", object_type: "object", value: "value"})
       expect(subject).to receive(:post_xml).with("location", false, false, "<read>object</read>", ["control_id"], request_options: {api_version: "3.0"}, read_only:true).and_return response
@@ -771,7 +771,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       expect(subject).to receive(:post_xml).with("location", false, false, "<read>object</read>", "control_id", request_options: {api_version: "3.0"}, read_only:true).and_return response
 
       response2 = generate_intacct_read_response({control_id: "control_id2", object_type: "object", value: "value2"})
-      expect(subject).to receive(:post_xml).with("location", false, false, "<readMore>resultId</readMore>", "control_id2", request_options: {api_version: "3.0"}, read_only:true).and_return response2    
+      expect(subject).to receive(:post_xml).with("location", false, false, "<readMore>resultId</readMore>", "control_id2", request_options: {api_version: "3.0"}, read_only:true).and_return response2
 
       result = subject.list_objects 'location', 'object', 'query'
       expect(result).to be_a Array

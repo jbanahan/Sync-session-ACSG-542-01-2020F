@@ -1,7 +1,7 @@
 describe OpenChain::FenixParser do
 
   before :each do
-    Factory(:country,:iso_code=>'CA')
+    Factory(:country, :iso_code=>'CA')
     @mdy = '%m/%d/%Y'
     @est = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     @barcode = '11981000774460'
@@ -71,36 +71,36 @@ describe OpenChain::FenixParser do
     @additional_container_numbers = ['456', '789']
     @additional_cargo_control_numbers = ['asdf', 'sdfa']
     @activities = {
-      '180' => [Time.new(2013,4,1,10,0), Time.new(2013,4,1,18,0)],
-      '490' => [Time.new(2013,4,2,10,0), Time.new(2013,4,2,18,0)],
-      '10' => [Date.new(2013,4,2), Date.new(2013,4,3)],
-      '1276' => [Time.new(2013,4,4,10,0), Time.new(2013,4,4,18,0)],
-      '5' => [Time.new(2013,4,4,10,0)],
-      '105' => [Time.new(2014,9,3,12,2), Time.new(2014,9,3,7,57)]
+      '180' => [Time.new(2013, 4, 1, 10, 0), Time.new(2013, 4, 1, 18, 0)],
+      '490' => [Time.new(2013, 4, 2, 10, 0), Time.new(2013, 4, 2, 18, 0)],
+      '10' => [Date.new(2013, 4, 2), Date.new(2013, 4, 3)],
+      '1276' => [Time.new(2013, 4, 4, 10, 0), Time.new(2013, 4, 4, 18, 0)],
+      '5' => [Time.new(2013, 4, 4, 10, 0)],
+      '105' => [Time.new(2014, 9, 3, 12, 2), Time.new(2014, 9, 3, 7, 57)]
     }
     # Note the values stored as dates are sent in such a manner that if they're improperly handled
     # in the parser will show the incorrect date value (.ie they'll be rolled forward a day when they shouldn't)
     @new_activities = {
-      'DOGIVEN' => [Time.new(2015,4,1,10,0), Time.new(2015,4,1,18,0)],
-      'DOCREQ' => [Time.new(2015,4,2,23,0), Time.new(2015,4,2,23,0)],
-      'ETA' => [Date.new(2015,4,2), Date.new(2015,4,3)],
-      'RNSCUSREL' => [Time.new(2015,9,8,12,2), Time.new(2015,9,9,12,2)],
-      'CADXTRAN' => [Time.new(2015,9,10,12,2), Time.new(2015,9,11,12,2)],
-      'CADXACCP' => [Time.new(2015,9,12,12,2), Time.new(2015,9,13,12,2)],
-      'ACSREFF' => [Time.new(2015,4,4,10,0), Time.new(2015,4,4,18,0)],
-      'CADK84REC' => [Time.new(2015,4,4,23,59)],
-      'B3P' => [Time.new(2015,9,3,12,2), Time.new(2015,9,3,7,57)],
-      'KPIDOC' => [Time.new(2017,7,7,12,2), Time.new(2017,7,7,7,57)],
-      'KPIPO' => [Time.new(2017,7,8,12,2), Time.new(2017,7,8,7,57)],
-      'KPIHTS' => [Time.new(2017,7,9,12,2), Time.new(2017,7,9,7,57)],
-      'KPIOGD' => [Time.new(2017,7,10,12,2), Time.new(2017,7,10,7,57)],
-      'KPIVAL' => [Time.new(2017,7,11,12,2), Time.new(2017,7,11,7,57)],
-      'KPIPART' => [Time.new(2017,7,12,12,2), Time.new(2017,7,12,7,57)],
-      'KPIIOR' => [Time.new(2017,7,13,12,2), Time.new(2017,7,13,7,57)],
-      'KPIETA' => [Time.new(2017,7,16,12,2), Time.new(2017,7,16,7,57)],
-      "MANINFREC" => [Time.new(2017,7,14,12,2), Time.new(2017,7,14,7,57)],
-      "SPLITSHPT" => [Time.new(2017,7,15,12,2), Time.new(2017,7,15,7,57)],
-      "ACSDECACCP" => [Time.new(2017,7,14,12,2), Time.new(2017,7,14,7,57)]
+      'DOGIVEN' => [Time.new(2015, 4, 1, 10, 0), Time.new(2015, 4, 1, 18, 0)],
+      'DOCREQ' => [Time.new(2015, 4, 2, 23, 0), Time.new(2015, 4, 2, 23, 0)],
+      'ETA' => [Date.new(2015, 4, 2), Date.new(2015, 4, 3)],
+      'RNSCUSREL' => [Time.new(2015, 9, 8, 12, 2), Time.new(2015, 9, 9, 12, 2)],
+      'CADXTRAN' => [Time.new(2015, 9, 10, 12, 2), Time.new(2015, 9, 11, 12, 2)],
+      'CADXACCP' => [Time.new(2015, 9, 12, 12, 2), Time.new(2015, 9, 13, 12, 2)],
+      'ACSREFF' => [Time.new(2015, 4, 4, 10, 0), Time.new(2015, 4, 4, 18, 0)],
+      'CADK84REC' => [Time.new(2015, 4, 4, 23, 59)],
+      'B3P' => [Time.new(2015, 9, 3, 12, 2), Time.new(2015, 9, 3, 7, 57)],
+      'KPIDOC' => [Time.new(2017, 7, 7, 12, 2), Time.new(2017, 7, 7, 7, 57)],
+      'KPIPO' => [Time.new(2017, 7, 8, 12, 2), Time.new(2017, 7, 8, 7, 57)],
+      'KPIHTS' => [Time.new(2017, 7, 9, 12, 2), Time.new(2017, 7, 9, 7, 57)],
+      'KPIOGD' => [Time.new(2017, 7, 10, 12, 2), Time.new(2017, 7, 10, 7, 57)],
+      'KPIVAL' => [Time.new(2017, 7, 11, 12, 2), Time.new(2017, 7, 11, 7, 57)],
+      'KPIPART' => [Time.new(2017, 7, 12, 12, 2), Time.new(2017, 7, 12, 7, 57)],
+      'KPIIOR' => [Time.new(2017, 7, 13, 12, 2), Time.new(2017, 7, 13, 7, 57)],
+      'KPIETA' => [Time.new(2017, 7, 16, 12, 2), Time.new(2017, 7, 16, 7, 57)],
+      "MANINFREC" => [Time.new(2017, 7, 14, 12, 2), Time.new(2017, 7, 14, 7, 57)],
+      "SPLITSHPT" => [Time.new(2017, 7, 15, 12, 2), Time.new(2017, 7, 15, 7, 57)],
+      "ACSDECACCP" => [Time.new(2017, 7, 14, 12, 2), Time.new(2017, 7, 14, 7, 57)]
     }
     @use_new_activities = false
     @additional_bols = ["123456", "9876542321"]
@@ -179,14 +179,14 @@ describe OpenChain::FenixParser do
     expect(ent.us_exit_port_code).to eq(@exit_port_code)
     expect(ent.entry_type).to eq(@entry_type)
     expect(ent.duty_due_date).to eq(Date.strptime(@duty_due_date, @mdy))
-    expect(ent.across_sent_date).to eq(@est.parse_us_base_format(@across_sent_date.gsub(',',' ')))
+    expect(ent.across_sent_date).to eq(@est.parse_us_base_format(@across_sent_date.gsub(',', ' ')))
     expect(ent.entry_filed_date).to eq(ent.across_sent_date)
-    expect(ent.pars_ack_date).to eq(@est.parse_us_base_format(@pars_ack_date.gsub(',',' ')))
+    expect(ent.pars_ack_date).to eq(@est.parse_us_base_format(@pars_ack_date.gsub(',', ' ')))
     expect(ent.first_release_date).to eq(ent.pars_ack_date)
-    expect(ent.pars_reject_date).to eq(@est.parse_us_base_format(@pars_rej_date.gsub(',',' ')))
-    expect(ent.release_date).to eq(@est.parse_us_base_format(@release_date.gsub(',',' ')))
-    expect(ent.cadex_sent_date).to eq(@est.parse_us_base_format(@cadex_sent_date.gsub(',',' ')))
-    expect(ent.cadex_accept_date).to eq(@est.parse_us_base_format(@cadex_accept_date.gsub(',',' ')))
+    expect(ent.pars_reject_date).to eq(@est.parse_us_base_format(@pars_rej_date.gsub(',', ' ')))
+    expect(ent.release_date).to eq(@est.parse_us_base_format(@release_date.gsub(',', ' ')))
+    expect(ent.cadex_sent_date).to eq(@est.parse_us_base_format(@cadex_sent_date.gsub(',', ' ')))
+    expect(ent.cadex_accept_date).to eq(@est.parse_us_base_format(@cadex_accept_date.gsub(',', ' ')))
     expect(ent.k84_month).to eq(1)
     expect(ent.origin_country_codes).to eq(@country_origin_code)
     expect(ent.export_country_codes).to eq(@country_export_code)
@@ -196,7 +196,7 @@ describe OpenChain::FenixParser do
     expect(ent.customer_number).to eq(@importer_number)
     expect(ent.customer_name).to eq(@importer_name)
     expect(ent.customer_references).to eq(@customer_reference)
-    expect(ent.arrival_date).to eq(@est.parse_us_base_format(@release_date.gsub(',',' ')))
+    expect(ent.arrival_date).to eq(@est.parse_us_base_format(@release_date.gsub(',', ' ')))
 
     expect(ent.vendor_names).to eq(@vendor_name)
     expect(ent.total_invoiced_value).to eq(@line_value)
@@ -211,11 +211,11 @@ describe OpenChain::FenixParser do
     expect(ent.ult_consignee_name).to eq(@consignee_name)
     expect(ent.summary_line_count).to eq 25
 
-    #commercial invoice header
+    # commercial invoice header
     expect(ent.commercial_invoices.size).to eq(1)
     ci = ent.commercial_invoices.first
     expect(ci.invoice_number).to eq(@invoice_number)
-    expect(ci.invoice_date).to eq(Date.strptime(@invoice_date,@mdy))
+    expect(ci.invoice_date).to eq(Date.strptime(@invoice_date, @mdy))
     expect(ci.vendor_name).to eq(@vendor_name)
     expect(ci.mfid).to eq(@vendor_number)
     expect(ci.currency).to eq(@currency)
@@ -388,18 +388,18 @@ describe OpenChain::FenixParser do
   end
   it 'should find exit port in schedule d' do
     @exit_port_code = '1234'
-    port = Factory(:port,:schedule_d_code=>@exit_port_code)
+    port = Factory(:port, :schedule_d_code=>@exit_port_code)
     OpenChain::FenixParser.parse @entry_lambda.call
     ent = Entry.find_by(broker_reference: @file_number)
     expect(ent.us_exit_port).to eq(port)
   end
   it 'should only update entries with Fenix as source code' do
-    Factory(:entry,:broker_reference=>@file_number) #not source code
+    Factory(:entry, :broker_reference=>@file_number) # not source code
     OpenChain::FenixParser.parse @entry_lambda.call
     expect(Entry.where(:broker_reference=>@file_number).entries.size).to eq(2)
   end
   it 'should update if fenix is source code' do
-    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE) #not source code
+    Factory(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE) # not source code
     OpenChain::FenixParser.parse @entry_lambda.call
     expect(Entry.where(:broker_reference=>@file_number).entries.size).to eq(1)
   end
@@ -426,7 +426,7 @@ describe OpenChain::FenixParser do
   end
 
   it 'should parse files with almost no information in them' do
-    #extra commas added to pass the line length check
+    # extra commas added to pass the line length check
     entry_data = lambda {
       data = '"1234567890",12345,"My Company",TAXID,,,,,,,,'
       data
@@ -458,9 +458,9 @@ describe OpenChain::FenixParser do
   end
 
   it 'should fall back to using entry number and source system lookup to find imaging shell records' do
-    existing_entry = Factory(:entry,:entry_number=>@barcode, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    existing_entry = Factory(:entry, :entry_number=>@barcode, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
 
-    #extra commas added to pass the line length check
+    # extra commas added to pass the line length check
     entry_data = lambda {
       data = "\"#{@barcode}\",12345,\"My Company\",TAXID,,,,,,,,"
       data
@@ -480,7 +480,7 @@ describe OpenChain::FenixParser do
   it "should skip files with older system export times than current entry" do
     export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
 
-    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    Factory(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
     # Add a second to the time and make sure the entry has a value to match (.ie it was updated)
     @timestamp[2] = (@timestamp[2].to_i + 1).to_s
     OpenChain::FenixParser.parse @entry_lambda.call
@@ -494,7 +494,7 @@ describe OpenChain::FenixParser do
     # We want to make sure we do reprocess entries with the same export dates, this allows us to run larger
     # reprocess processes to get older data, but then only reprocess the most up to date file.
     export_date = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(@timestamp[1] + @timestamp[2])
-    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
+    entry = Factory(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, :last_exported_from_source=>export_date)
 
     OpenChain::FenixParser.parse @entry_lambda.call
     entries = Entry.where(:broker_reference=>@file_number)
@@ -506,7 +506,7 @@ describe OpenChain::FenixParser do
   end
 
   it "should process files missing export date only if entry is missing export date" do
-    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE)
+    entry = Factory(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE)
 
     OpenChain::FenixParser.parse @entry_lambda.call
     entries = Entry.where(:broker_reference=>@file_number)
@@ -553,7 +553,7 @@ describe OpenChain::FenixParser do
     @release_date = "01/09/2012,"
     OpenChain::FenixParser.parse @entry_lambda.call
     ent = Entry.find_by(broker_reference: @file_number)
-    expect(ent.release_date).to eq(@est.parse_us_base_format(@release_date.gsub(',',' 12:00am')))
+    expect(ent.release_date).to eq(@est.parse_us_base_format(@release_date.gsub(',', ' 12:00am')))
   end
 
   it "should handle date time values with invalid date times" do
@@ -635,7 +635,7 @@ describe OpenChain::FenixParser do
   end
 
   it "does not blank out release date or cadex accept date if LVS file has been received" do
-    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
+    entry = Factory(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
     @release_date = ','
     @cadex_accept_date = ','
     @cadex_sent_date = ','
@@ -648,7 +648,7 @@ describe OpenChain::FenixParser do
   end
 
   it "allows updates (but not blanks) to release date / cadex accept if LVS file has been received" do
-    entry = Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
+    entry = Factory(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, k84_receive_date: Time.zone.now, cadex_accept_date: Time.zone.now, release_date: Time.zone.now, cadex_sent_date: Time.zone.now)
 
     OpenChain::FenixParser.parse @entry_lambda.call
     ent = Entry.find_by(broker_reference: @file_number)
@@ -684,7 +684,7 @@ describe OpenChain::FenixParser do
     tz = ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
     expect(e.first_do_issued_date).to eq tz.parse(@new_activities['DOGIVEN'][0].to_s).in_time_zone(Time.zone)
     expect(e.docs_received_date).to eq tz.parse(@new_activities['DOCREQ'][0].to_s).to_date
-    expect(e.eta_date).to eq Date.new(2015,4,3)
+    expect(e.eta_date).to eq Date.new(2015, 4, 3)
     expect(e.release_date).to eq tz.parse(@new_activities['RNSCUSREL'][1].to_s).in_time_zone(Time.zone)
     expect(e.cadex_sent_date).to eq tz.parse(@new_activities['CADXTRAN'][1].to_s).in_time_zone(Time.zone)
     expect(e.cadex_accept_date).to eq tz.parse(@new_activities['CADXACCP'][1].to_s).in_time_zone(Time.zone)
@@ -750,7 +750,7 @@ describe OpenChain::FenixParser do
   it "assigns fiscal month to entry" do
     imp = Factory(:company, fenix_customer_number: "833764202RM0001", fiscal_reference: "ent_release_date")
     imp.system_identifiers.create! system: "Fenix", code: "833764202RM0001"
-    fm = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015,9,1), end_date: Date.new(2015,9,30))
+    fm = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015, 9, 1), end_date: Date.new(2015, 9, 30))
     OpenChain::FenixParser.parse @entry_lambda.call
     e = Entry.find_by(broker_reference: @file_number)
     expect(e.fiscal_date).to eq fm.start_date
@@ -776,7 +776,7 @@ describe OpenChain::FenixParser do
 
     it "raises an error if Fenix ND entry attempts to update an old entry" do
       user
-      entry = Factory(:entry,:entry_number=>@barcode, broker_reference: "REFERENCE", :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
+      entry = Factory(:entry, :entry_number=>@barcode, broker_reference: "REFERENCE", :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-17 23:59"))
       OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)
       # verify the entry wasn't updated
       entry.reload
@@ -789,8 +789,8 @@ describe OpenChain::FenixParser do
   end
 
   it "doesn't raise an error if Fenix ND entry attempts to update an entry released after 9/18" do
-    Factory(:entry,:broker_reference=>@file_number,:source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-18 00:01"))
-    expect{OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.not_to raise_error
+    Factory(:entry, :broker_reference=>@file_number, :source_system=>OpenChain::FenixParser::SOURCE_CODE, release_date: ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("2015-09-18 00:01"))
+    expect {OpenChain::FenixParser.parse @entry_lambda.call(true, false, true)}.not_to raise_error
   end
 
   it "parses old style assists" do
@@ -812,7 +812,7 @@ describe OpenChain::FenixParser do
     end
     it "should link to existing importer" do
       # Make sure we're not updating importer names that aren't tax ids
-      imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>"Test")
+      imp = Factory(:company, :fenix_customer_number=>@importer_tax_id, :importer=>true, :name=>"Test")
       imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by(broker_reference: @file_number)
@@ -820,7 +820,7 @@ describe OpenChain::FenixParser do
       expect(imp.name).to eq("Test")
     end
     it "should update an existing importer's name if the name is the tax id" do
-      imp = Factory(:company,:fenix_customer_number=>@importer_tax_id,:importer=>true, :name=>@importer_tax_id)
+      imp = Factory(:company, :fenix_customer_number=>@importer_tax_id, :importer=>true, :name=>@importer_tax_id)
       imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       OpenChain::FenixParser.parse @entry_lambda.call
       ent = Entry.find_by(broker_reference: @file_number)
@@ -829,7 +829,7 @@ describe OpenChain::FenixParser do
     end
     it "should change the entry's importer id on an update if the importer changed" do
       imp = Factory(:company, fenix_customer_number: "ABC", importer: true)
-      updated_imp = Factory(:company, fenix_customer_number: @importer_tax_id,importer: true)
+      updated_imp = Factory(:company, fenix_customer_number: @importer_tax_id, importer: true)
       updated_imp.system_identifiers.create! system: "Fenix", code: @importer_tax_id
       ent = Factory(:entry, broker_reference: @file_number, source_system: "Fenix", importer: imp)
 
@@ -841,8 +841,8 @@ describe OpenChain::FenixParser do
   context 'multi line' do
     before :each do
       @invoices = [
-        {:seq=>1,:inv_num => '12345', :b3_line_number => 25},
-        {:seq=>2,:inv_num => '5555555', :b3_line_number => 26}
+        {:seq=>1, :inv_num => '12345', :b3_line_number => 25},
+        {:seq=>2, :inv_num => '5555555', :b3_line_number => 26}
       ]
       @multi_line_lambda = lambda {
         data = ""
@@ -894,7 +894,7 @@ describe OpenChain::FenixParser do
       expect(entries.first.summary_line_count).to eq 26
     end
     it 'should save multiple invoice lines for the same invoice' do
-      @invoices[1][:seq]=1 #make both invoices part of same sequence
+      @invoices[1][:seq]=1 # make both invoices part of same sequence
       OpenChain::FenixParser.parse @multi_line_lambda.call
       entries = Entry.where(:broker_reference=>@file_number)
       expect(entries.entries.size).to eq(1)
@@ -917,15 +917,15 @@ describe OpenChain::FenixParser do
     end
     context 'accumulate fields' do
       it 'invoice value - different invoices' do
-        ['19.10','20.03'].each_with_index {|b,i| @invoices[i][:line_val]=b}
+        ['19.10', '20.03'].each_with_index {|b, i| @invoices[i][:line_val]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         ent = Entry.find_by(broker_reference: @file_number)
         expect(ent.total_invoiced_value).to eq(BigDecimal('39.13'))
         invoice_vals = ent.commercial_invoices.collect {|i| i.invoice_value}
-        expect(invoice_vals).to eq([BigDecimal('19.29'),BigDecimal('20.23')])
+        expect(invoice_vals).to eq([BigDecimal('19.29'), BigDecimal('20.23')])
       end
       it 'invoice value - same invoices' do
-        ['19.10','20.03'].each_with_index {|b,i|
+        ['19.10', '20.03'].each_with_index {|b, i|
           @invoices[i][:line_val]=b
           @invoices[i][:seq]=1
         }
@@ -936,49 +936,49 @@ describe OpenChain::FenixParser do
         expect(ent.commercial_invoices.first.invoice_value).to eq(BigDecimal('39.52'))
       end
       it 'duty amount' do
-        ['9.10','10.10'].each_with_index {|b,i| @invoices[i][:duty]=b}
+        ['9.10', '10.10'].each_with_index {|b, i| @invoices[i][:duty]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).total_duty).to eq(BigDecimal('19.20'))
       end
       it 'units' do
-        ['50.12','18.15'].each_with_index {|b,i| @invoices[i][:cq]=b}
+        ['50.12', '18.15'].each_with_index {|b, i| @invoices[i][:cq]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).total_units).to eq(BigDecimal('68.27'))
       end
       it 'bills of lading' do
         # Disable the additional BL lines
         @additional_bols = []
-        ['x','y'].each_with_index {|b,i| @invoices[i][:bol]=b}
+        ['x', 'y'].each_with_index {|b, i| @invoices[i][:bol]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).master_bills_of_lading).to eq("x\n y")
       end
       it 'vendor names' do
-        ['x','y'].each_with_index {|b,i| @invoices[i][:vend]=b}
+        ['x', 'y'].each_with_index {|b, i| @invoices[i][:vend]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).vendor_names).to eq("x\n y")
       end
       it 'origin country codes' do
-        ['CN','UIN'].each_with_index {|b,i| @invoices[i][:org]=b}
+        ['CN', 'UIN'].each_with_index {|b, i| @invoices[i][:org]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).origin_country_codes).to eq("CN\n US")
       end
       it 'export country codes' do
-        ['PR','UNJ'].each_with_index {|b,i| @invoices[i][:exp]=b}
+        ['PR', 'UNJ'].each_with_index {|b, i| @invoices[i][:exp]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).export_country_codes).to eq("PR\n US")
       end
       it 'origin state codes' do
-        ['CN','UIN'].each_with_index {|b,i| @invoices[i][:org]=b}
+        ['CN', 'UIN'].each_with_index {|b, i| @invoices[i][:org]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).origin_state_codes).to eq("IN")
       end
       it 'export state codes' do
-        ['UNV','UIN'].each_with_index {|b,i| @invoices[i][:exp]=b}
+        ['UNV', 'UIN'].each_with_index {|b, i| @invoices[i][:exp]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).export_state_codes).to eq("NV\n IN")
       end
       it 'container numbers' do
-        ['x','y'].each_with_index {|b,i| @invoices[i][:cont]=b}
+        ['x', 'y'].each_with_index {|b, i| @invoices[i][:cont]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         containers = Entry.find_by(broker_reference: @file_number).container_numbers.split("\n ")
         # Make sure we're accounting for the container numbers pulled from the CON records
@@ -989,7 +989,7 @@ describe OpenChain::FenixParser do
         end
       end
       it "part numbers" do
-        ['x','y'].each_with_index {|b,i| @invoices[i][:part_number]=b}
+        ['x', 'y'].each_with_index {|b, i| @invoices[i][:part_number]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         expect(Entry.find_by(broker_reference: @file_number).part_numbers).to eq("x\n y")
       end
@@ -1004,7 +1004,7 @@ describe OpenChain::FenixParser do
         # the field is keyed into the standard header level field.  We don't want that value to show
         # in the system (since it's essentially a nonsense number at this point).
         @additional_bols = ["abcd", "1234567890123456789"]
-        ["123456789012345",'y'].each_with_index {|b,i| @invoices[i][:bol]=b}
+        ["123456789012345", 'y'].each_with_index {|b, i| @invoices[i][:bol]=b}
         OpenChain::FenixParser.parse @multi_line_lambda.call
         entry = Entry.find_by(broker_reference: @file_number)
         bols = entry.master_bills_of_lading.split("\n ")
@@ -1069,11 +1069,11 @@ describe OpenChain::FenixParser do
   describe 'process_day' do
     it 'should process all files from the given day' do
       d = Date.new
-      expect(OpenChain::S3).to receive(:integration_keys).with(d,["www-vfitrack-net/_fenix", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_fenix"]).and_yield("a").and_yield("b")
-      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"a").and_return("x")
-      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name,"b").and_return("y")
-      expect(OpenChain::FenixParser).to receive(:parse).with("x",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"a",:imaging=>false,:log=>instance_of(InboundFile)})
-      expect(OpenChain::FenixParser).to receive(:parse).with("y",{:bucket=>OpenChain::S3.integration_bucket_name,:key=>"b",:imaging=>false,:log=>instance_of(InboundFile)})
+      expect(OpenChain::S3).to receive(:integration_keys).with(d, ["www-vfitrack-net/_fenix", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_fenix"]).and_yield("a").and_yield("b")
+      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name, "a").and_return("x")
+      expect(OpenChain::S3).to receive(:get_data).with(OpenChain::S3.integration_bucket_name, "b").and_return("y")
+      expect(OpenChain::FenixParser).to receive(:parse).with("x", {:bucket=>OpenChain::S3.integration_bucket_name, :key=>"a", :imaging=>false, :log=>instance_of(InboundFile)})
+      expect(OpenChain::FenixParser).to receive(:parse).with("y", {:bucket=>OpenChain::S3.integration_bucket_name, :key=>"b", :imaging=>false, :log=>instance_of(InboundFile)})
       OpenChain::FenixParser.process_day d
     end
   end
@@ -1220,14 +1220,14 @@ describe OpenChain::FenixParser do
   end
 
   describe OpenChain::FenixParser::HoldReleaseSetter do
-    let(:date) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017,1,12)}
+    let(:date) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"].local(2017, 1, 12)}
     let(:e) { Factory(:entry) }
     let(:setter) { described_class.new e}
 
     describe "set_hold_date" do
       it "assigns hold_date to the exam_ordered_date" do
         e.update_attributes! exam_ordered_date: date, hold_date: nil
-        expect{setter.set_hold_date}.to change(e, :hold_date).from(nil).to(date)
+        expect {setter.set_hold_date}.to change(e, :hold_date).from(nil).to(date)
       end
     end
 
@@ -1243,7 +1243,7 @@ describe OpenChain::FenixParser do
     describe "set_on_hold" do
       it "assigns 'true' to on_hold if hold_date is populated but hold_release_date is not" do
         e.update_attributes! hold_date: date, on_hold: nil, hold_release_date: nil
-        expect{setter.set_on_hold}.to change(e, :on_hold).from(nil).to true 
+        expect {setter.set_on_hold}.to change(e, :on_hold).from(nil).to true
       end
     end
   end

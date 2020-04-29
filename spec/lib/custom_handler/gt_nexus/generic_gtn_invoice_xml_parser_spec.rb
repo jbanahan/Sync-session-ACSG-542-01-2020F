@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser do
   let (:invoice_xml) { REXML::XPath.first(xml, "/Invoice/invoiceDetail") }
   let! (:india) { Factory(:country, iso_code: "IN") }
   let! (:ca) { Factory(:country, iso_code: "CA") }
-  let! (:importer) { 
+  let! (:importer) {
     i = Factory(:importer, system_code: "SYSTEM_CODE")
     i.system_identifiers.create! system: "GT Nexus Invoice Consignee", code: "63480155069"
     i
@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser do
   let (:inbound_file) { InboundFile.new }
 
   describe "process_invoice" do
-    before :each do 
+    before :each do
       allow(subject).to receive(:inbound_file).and_return inbound_file
     end
 
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser do
       expect(a.address_type).to eq "Vendor"
       expect(a.name).to eq "EASTMAN EXPORTS GLOBAL-"
       expect(a.line_1).to eq "5/591 SRI LAKSHMI NAGAR"
-      expect(a.line_2).to eq "PITCHAMPALAYAM PUDUR, TIRUPUR" 
+      expect(a.line_2).to eq "PITCHAMPALAYAM PUDUR, TIRUPUR"
       expect(a.city).to eq "TAMILNADU"
       expect(a.postal_code).to eq "641603"
       expect(a.country).to eq india
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::GtNexus::GenericGtnInvoiceXmlParser do
       }
 
       let! (:invoice_line) {
-        # We don't need any info, this is just to confirm that the lines get destroyed before 
+        # We don't need any info, this is just to confirm that the lines get destroyed before
         # reloading
         invoice.invoice_lines.create! line_number: 1
       }

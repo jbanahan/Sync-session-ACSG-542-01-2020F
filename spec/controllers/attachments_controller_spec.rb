@@ -15,7 +15,7 @@ describe AttachmentsController do
       answer = Factory(:answer)
       expect_any_instance_of(Answer).to receive(:log_update).with(user)
       expect_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
-      
+
       post :create, attachment: {attached: file, attachable_id: answer.id, attachable_type: "Answer"}
       expect(response).to redirect_to answer
       answer.reload
@@ -29,7 +29,7 @@ describe AttachmentsController do
       answer = Factory(:answer)
       expect_any_instance_of(Answer).to receive(:attachment_added).with(instance_of(Attachment))
       expect_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
-      
+
       post :create, attachment: {attached: file, attachable_id: answer.id, attachable_type: "Answer"}
       expect(response).to redirect_to answer
     end
@@ -134,18 +134,18 @@ describe AttachmentsController do
     it "checks that there is at least one email" do
       expect(Attachment).not_to receive(:delay)
       post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "", email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1','2','3'], full_name: @u.full_name, email: @u.email
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)['error']).to eq "Please enter an email address."
     end
 
     it "checks that there are no more than 10 emails" do
       too_many_emails = []
-      11.times{ |n| too_many_emails << "address#{n}@abc.com" }
+      11.times { |n| too_many_emails << "address#{n}@abc.com" }
 
       expect(Attachment).not_to receive(:delay)
       post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: too_many_emails.join(','), email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1','2','3'], full_name: @u.full_name, email: @u.email
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)['error']).to eq "Cannot accept more than 10 email addresses."
     end
@@ -153,7 +153,7 @@ describe AttachmentsController do
     it "validates email addresses before sending" do
       expect(Attachment).not_to receive(:delay)
       post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "john@abc.com, sue@abccom", email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1','2','3'], full_name: @u.full_name, email: @u.email
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)['error']).to eq "Please ensure all email addresses are valid."
     end
@@ -172,10 +172,10 @@ describe AttachmentsController do
       d = double("delay")
       expect(Attachment).to receive(:delay).and_return d
       expect(d).to receive(:email_attachments).with(to_address: "john@abc.com, sue@abc.com", email_subject: "test message", email_body: "This is a test.",
-                                                ids_to_include: ['1','2','3'], full_name: "Nigel Tufnel", email: "nigel@stonehenge.biz")
+                                                ids_to_include: ['1', '2', '3'], full_name: "Nigel Tufnel", email: "nigel@stonehenge.biz")
 
       post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "john@abc.com, sue@abc.com", email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1','2','3'], full_name: @u.full_name, email: @u.email
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
       expect(response.status).to eq 200
       expect(response.body).to eq({ok: "OK"}.to_json)
     end

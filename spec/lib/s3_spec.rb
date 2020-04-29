@@ -6,7 +6,7 @@ describe OpenChain::S3, s3: true do
   let (:uploaded_files) { [] }
 
   def test_bucket
-    OpenChain::S3.bucket_name 'test' 
+    OpenChain::S3.bucket_name 'test'
   end
 
   def upload_tempfile options: {}, content: nil, key: nil
@@ -284,7 +284,7 @@ describe OpenChain::S3, s3: true do
           begin
             OpenChain::S3.delete bucket, new_key
           ensure
-            new_tempfile.close! if new_tempfile && !new_tempfile.closed?  
+            new_tempfile.close! if new_tempfile && !new_tempfile.closed?
           end
         end
       end
@@ -298,7 +298,7 @@ describe OpenChain::S3, s3: true do
         expect(original_filename).to eq "file.txt"
       end
     end
-    
+
     it 'should ensure the tempfile is unlinked if an error occurs while downloading' do
       # Need to do this with mocks, since there's no external references made to the tempfile
       # created while the download is ocurring
@@ -320,7 +320,7 @@ describe OpenChain::S3, s3: true do
         expect(OpenChain::S3.exists?(bucket, key)).to be_truthy
       end
       it 'should return false when key does not exist' do
-        expect(OpenChain::S3.exists?( bucket,"#{key}not")).to be_falsey
+        expect(OpenChain::S3.exists?( bucket, "#{key}not")).to be_falsey
       end
     end
   end
@@ -337,14 +337,14 @@ describe OpenChain::S3, s3: true do
         expect(OpenChain::S3.exists?(bucket, key)).to be_falsey
       end
     end
-    
+
   end
 
   describe 'integration keys' do
     let (:test_tempfile) { Tempfile.new('abc') }
 
     context "with single subfolder" do
-      let(:keys) { ["2011-12/26/subfolder/2/a.txt","2011-12/26/subfolder/2/b.txt"] }
+      let(:keys) { ["2011-12/26/subfolder/2/a.txt", "2011-12/26/subfolder/2/b.txt"] }
 
       before :each do
         keys.each {|my_key| OpenChain::S3.upload_file bucket, my_key, test_tempfile}
@@ -356,7 +356,7 @@ describe OpenChain::S3, s3: true do
         retry_expect {
           expect(OpenChain::S3).to receive(:integration_bucket_name).at_least(2).times.and_return(bucket)
           found_keys = []
-          OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
+          OpenChain::S3.integration_keys(Date.new(2011, 12, 26), "subfolder/2") {|key| found_keys << key }
           expect(found_keys).to eq keys
         }
 
@@ -371,7 +371,7 @@ describe OpenChain::S3, s3: true do
             # and doesn't actually send the data if it didn't change
             OpenChain::S3.upload_file bucket, keys[0], f
             found_keys = []
-            OpenChain::S3.integration_keys(Date.new(2011,12,26), "subfolder/2") {|key| found_keys << key }
+            OpenChain::S3.integration_keys(Date.new(2011, 12, 26), "subfolder/2") {|key| found_keys << key }
             expect(found_keys).to eq [keys[1], keys[0]]
           end
         }
@@ -380,13 +380,13 @@ describe OpenChain::S3, s3: true do
       it 'strips leading slashes from subfolder name' do
         expect(OpenChain::S3).to receive(:integration_bucket_name).and_return(bucket)
         found_keys = []
-        OpenChain::S3.integration_keys(Date.new(2011,12,26), "/subfolder/2") {|key| found_keys << key }
+        OpenChain::S3.integration_keys(Date.new(2011, 12, 26), "/subfolder/2") {|key| found_keys << key }
         expect(found_keys).to eq keys
       end
     end
 
     context "with different subfolders" do
-      let(:keys) { ["2011-12/26/subfolder/1/a.txt","2011-12/26/subfolder/2/b.txt"] }
+      let(:keys) { ["2011-12/26/subfolder/1/a.txt", "2011-12/26/subfolder/2/b.txt"] }
 
       before :each do
         keys.each {|my_key| OpenChain::S3.upload_file bucket, my_key, test_tempfile}
@@ -399,19 +399,19 @@ describe OpenChain::S3, s3: true do
         retry_expect {
           allow(OpenChain::S3).to receive(:integration_bucket_name).and_return(bucket)
           found_keys = []
-          OpenChain::S3.integration_keys(Date.new(2011,12,26), ["/subfolder/2", "/subfolder/1"]) {|key| found_keys << key }
+          OpenChain::S3.integration_keys(Date.new(2011, 12, 26), ["/subfolder/2", "/subfolder/1"]) {|key| found_keys << key }
           expect(found_keys).to eq [keys[1], keys[0]]
         }
       end
     end
   end
 
-  describe "integration_subfolder_path" do 
+  describe "integration_subfolder_path" do
     subject { described_class }
 
     let (:date) { Time.zone.parse "2017-11-28 12:00" }
 
-    it "appends the date to the given folder" do 
+    it "appends the date to the given folder" do
       expect(subject.integration_subfolder_path("path/to/file.txt", date)).to eq "2017-11/28/path/to/file.txt"
     end
 
@@ -457,7 +457,7 @@ describe OpenChain::S3, s3: true do
 
     it "handles missing object" do
       expect(OpenChain::S3::Client).to receive(:s3_versioned_object).with("bucket", "path/to/file.txt").and_return nil
-      
+
       expect(described_class.url_for "bucket", "path/to/file.txt", 1.minute, version: "version").to eq ""
     end
   end
@@ -565,7 +565,7 @@ describe OpenChain::S3, s3: true do
       upload_tempfile key: key
     end
 
-    after :each do 
+    after :each do
       OpenChain::S3.delete bucket, "copy/#{key}"
     end
 

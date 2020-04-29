@@ -24,8 +24,8 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
     start_date = params[:start_date].to_date
     end_date = params[:end_date].to_date
 
-    wb = XlsMaker.create_workbook "Billing Summary #{start_date} - #{end_date}", 
-      ["Statement #","ACH #","Entry #","PO","Business","Invoice","Duty Rate","Duty","Taxes / Fees","Fees","ACH Date","Statement Date","Release Date","Unique ID", "Country of Origin", "LINK"]
+    wb = XlsMaker.create_workbook "Billing Summary #{start_date} - #{end_date}",
+      ["Statement #", "ACH #", "Entry #", "PO", "Business", "Invoice", "Duty Rate", "Duty", "Taxes / Fees", "Fees", "ACH Date", "Statement Date", "Release Date", "Unique ID", "Country of Origin", "LINK"]
     sheet = wb.worksheet 0
     cursor = 0
     column_widths = []
@@ -67,14 +67,14 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
           row << ent.release_date
           row <<  "#{ent.entry_number}/#{duty_rate}/#{ci.invoice_number}"
           row << cil.country_origin_code
-          row << Spreadsheet::Link.new(ent.view_url,'Web Link')
+          row << Spreadsheet::Link.new(ent.view_url, 'Web Link')
 
           XlsMaker.add_body_row sheet, (cursor+=1), row, column_widths
         end
       end
     end
 
-    t = Tempfile.new(["EddieBauerCaStatementSummary-",".xls"])
+    t = Tempfile.new(["EddieBauerCaStatementSummary-", ".xls"])
     wb.write t
     t
   end
@@ -91,7 +91,7 @@ module OpenChain; module Report; class EddieBauerCaStatementSummary
     end
 
     def brokerage_fees enum
-      enum.collect { |bil| bil.duty_charge_type? ? BigDecimal.new("0") : bil.charge_amount }.sum       
+      enum.collect { |bil| bil.duty_charge_type? ? BigDecimal.new("0") : bil.charge_amount }.sum
     end
 
     def has_duty? enum

@@ -7,7 +7,7 @@ module OpenChain; module DelayedJobExtensions
   end
 
   def group_jobs
-    by_class = Hash.new {|k,v| k[v] = []}
+    by_class = Hash.new {|k, v| k[v] = []}
     error_jobs = Delayed::Job.where("last_error IS NOT NULL AND locked_at IS NULL")
     error_jobs.each do |job|
       klass = get_class job

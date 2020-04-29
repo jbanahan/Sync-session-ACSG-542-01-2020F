@@ -12,22 +12,22 @@ class ImportedFilesController < ApplicationController
   def legacy_javascripts?
     false
   end
-  
+
   def index
     @imported_files = ImportedFile.where(:user_id=>current_user.id).order("created_at DESC").paginate(:page=>params[:page])
   end
 
   def new
     ss = SearchSetup.find(params[:search_setup_id])
-    action_secure(ss.user==current_user,ss,{:lock_check=>false, :verb=>"upload",:module_name=>"search"}) {
+    action_secure(ss.user==current_user, ss, {:lock_check=>false, :verb=>"upload", :module_name=>"search"}) {
       @search_setup = ss
-      @imported_file = @search_setup.imported_files.build 
+      @imported_file = @search_setup.imported_files.build
     }
   end
 
   def create
     ss = SearchSetup.find(params[:search_setup_id])
-    action_secure(ss.user==current_user,ss,{:lock_check=>false,:verb=>"upload",:module_name=>"search"}) {
+    action_secure(ss.user==current_user, ss, {:lock_check=>false, :verb=>"upload", :module_name=>"search"}) {
       @imported_file = ss.imported_files.build(params[:imported_file])
       @imported_file.module_type = ss.module_type
       @imported_file.user = current_user
@@ -36,7 +36,7 @@ class ImportedFilesController < ApplicationController
         redirect_to request.referrer
       else
         if @imported_file.save
-          redirect_to [ss,@imported_file]
+          redirect_to [ss, @imported_file]
         else
           errors_to_flash @imported_file
           redirect_to request.referrer
@@ -44,9 +44,9 @@ class ImportedFilesController < ApplicationController
       end
     }
   end
-  
+
   def show_angular
-    @no_action_bar = true #implements it's own via templates/search_results.html
+    @no_action_bar = true # implements it's own via templates/search_results.html
   end
 
   def show
@@ -70,14 +70,14 @@ class ImportedFilesController < ApplicationController
           :last_processed=>(fir && fir.finished_at ? fir.finished_at.strftime("%Y-%m-%d %H:%M") : ''),
           :time_to_process=>(fir ? fir.time_to_process : ''),
           :processing_error_count=>(fir ? fir.error_count : ''),
-          :current_user=>{'id'=>current_user.id,'full_name'=>current_user.full_name,'email'=>current_user.email},
-          :search_criterions=>f.search_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:operator=>c.operator,:value=>c.value,:datatype=>c.model_field.data_type,:include_empty=>c.include_empty?}},
+          :current_user=>{'id'=>current_user.id, 'full_name'=>current_user.full_name, 'email'=>current_user.email},
+          :search_criterions=>f.search_criterions.collect {|c| {:mfid=>c.model_field_uid, :label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label), :operator=>c.operator, :value=>c.value, :datatype=>c.model_field.data_type, :include_empty=>c.include_empty?}},
           :search_setup_name=>f.search_setup.try(:name),
-          :model_fields => ModelField.sort_by_label(f.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}},
+          :model_fields => ModelField.sort_by_label(f.core_module.model_fields_including_children(current_user) {|mf| mf.user_accessible?}.values).collect {|mf| {:mfid=>mf.uid, :label=>mf.label, :datatype=>mf.data_type}},
           :file_import_result => {}
         }
         r[:file_import_result][:id] = fir.id if fir
-        r[:available_countries] = Country.import_locations.sort_classification_rank.collect {|c| {:id=>c.id,:iso_code=>c.iso_code,:name=>c.name}}
+        r[:available_countries] = Country.import_locations.sort_classification_rank.collect {|c| {:id=>c.id, :iso_code=>c.iso_code, :name=>c.name}}
         render :json=>r
       }
     end
@@ -86,9 +86,9 @@ class ImportedFilesController < ApplicationController
   def total_objects
     f = ImportedFile.find params[:id]
     raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
-    render json: total_object_count_hash(SearchQuery.new(f,current_user,:extra_from=>f.result_keys_from))
+    render json: total_object_count_hash(SearchQuery.new(f, current_user, :extra_from=>f.result_keys_from))
   end
-  
+
   def results
     f = ImportedFile.find params[:id]
     raise ActionController::RoutingError.new('Not Found') unless f.can_view?(current_user)
@@ -98,14 +98,14 @@ class ImportedFilesController < ApplicationController
     # rows (plus, we want to encourage people to upgrade).
     per_page = (old_ie_version? ? 10 : 100)
 
-    sr = f.search_runs.where(:user_id=>current_user.id).first 
+    sr = f.search_runs.where(:user_id=>current_user.id).first
     sr = f.search_runs.build unless sr
     sr.last_accessed=Time.now
     sr.page = page
     sr.per_page = per_page
     sr.save!
-    def f.name; self.attached_file_name; end #duck typing to search setup
-    query_hash = execute_query_to_hash(SearchQuery.new(f,current_user,:extra_from=>f.result_keys_from),current_user,page,per_page) 
+    def f.name; self.attached_file_name; end # duck typing to search setup
+    query_hash = execute_query_to_hash(SearchQuery.new(f, current_user, :extra_from=>f.result_keys_from), current_user, page, per_page)
     query_hash[:search_run_id] = sr.id
     render json: query_hash
   end
@@ -113,9 +113,9 @@ class ImportedFilesController < ApplicationController
   # email the updated current data for an imported_file
   def email_file
     f = ImportedFile.find params[:id]
-    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"email",:module_name=>"uploaded file"}) {
+    action_secure(f.can_view?(current_user), f, {:lock_check=>false, :verb=>"email", :module_name=>"uploaded file"}) {
       if params[:to].blank?
-        error_redirect "You must include a \"To\" address." 
+        error_redirect "You must include a \"To\" address."
         return
       end
       subject = params[:subject].blank? ? "[VFI Track] #{@file.core_module.label} data." : params[:subject]
@@ -130,10 +130,10 @@ class ImportedFilesController < ApplicationController
       end
     }
   end
-  
+
   def download
     f = ImportedFile.find(params[:id])
-    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"download",:module_name=>"uploaded file"}) {
+    action_secure(f.can_view?(current_user), f, {:lock_check=>false, :verb=>"download", :module_name=>"uploaded file"}) {
       @imported_file = f
       respond_to do |format|
         format.html {
@@ -141,18 +141,18 @@ class ImportedFilesController < ApplicationController
             add_flash :errors, "File could not be found."
             redirect_to request.referrer
           else
-            send_data @imported_file.attachment_data, 
+            send_data @imported_file.attachment_data,
                 :filename => @imported_file.attached_file_name,
                 :type => @imported_file.attached_content_type,
-                :disposition => 'attachment'  
+                :disposition => 'attachment'
           end
         }
         format.json {
-          cookies[:fileDownload] = {:value=>'true', :path=>'/'} #jQuery support http://johnculviner.com/post/2012/03/22/Ajax-like-feature-rich-file-downloads-with-jQuery-File-Download.aspx
-          send_data @imported_file.attachment_data, 
+          cookies[:fileDownload] = {:value=>'true', :path=>'/'} # jQuery support http://johnculviner.com/post/2012/03/22/Ajax-like-feature-rich-file-downloads-with-jQuery-File-Download.aspx
+          send_data @imported_file.attachment_data,
               :filename => @imported_file.attached_file_name,
               :type => @imported_file.attached_content_type,
-              :disposition => 'attachment'  
+              :disposition => 'attachment'
         }
       end
     }
@@ -160,13 +160,13 @@ class ImportedFilesController < ApplicationController
 
   def download_items
     f = ImportedFile.find(params[:id])
-    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"download",:module_name=>"uploaded file"}) {
+    action_secure(f.can_view?(current_user), f, {:lock_check=>false, :verb=>"download", :module_name=>"uploaded file"}) {
       criterions = []
-      #is there a filter?
+      # is there a filter?
       if params[:search_setup]
-        #right now the UI only allows one filter, but this loop future proofs it
-        params[:search_setup]['search_criterions_attributes'].values.each do |sc_hash|
-          criterions << SearchCriterion.new(sc_hash) 
+        # right now the UI only allows one filter, but this loop future proofs it
+        params[:search_setup]['search_criterions_attributes'].each_value do |sc_hash|
+          criterions << SearchCriterion.new(sc_hash)
         end
       end
       if f.nil?
@@ -187,26 +187,26 @@ class ImportedFilesController < ApplicationController
 
   def process_file
     f = ImportedFile.find(params[:id])
-    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"process",:module_name=>"uploaded file"}) {
+    action_secure(f.can_view?(current_user), f, {:lock_check=>false, :verb=>"process", :module_name=>"uploaded file"}) {
       f.process current_user, {:defer=>true}
       add_flash :notices, "Your file is being processed.  You will receive a message when it has completed."
       if f.search_setup
-        redirect_by_core_module(f.search_setup.core_module,true)
+        redirect_by_core_module(f.search_setup.core_module, true)
       else
         redirect_to root_path
       end
     }
-  end  
-  
+  end
+
   def preview
     f = ImportedFile.find(params[:id])
-    action_secure(f.can_view?(current_user),f,{:lock_check=>false,:verb=>"view",:module_name=>"uploaded file"}) {
+    action_secure(f.can_view?(current_user), f, {:lock_check=>false, :verb=>"view", :module_name=>"uploaded file"}) {
       respond_to do |format|
-        format.json { 
+        format.json {
           begin
-            render :json=>f.preview(current_user) 
+            render :json=>f.preview(current_user)
           rescue
-            $!.log_me ["Imported File Preview Failed","Imported File ID: #{f.id}","Rails Root: #{Rails.root.to_s}","Username: #{current_user.username}"]
+            $!.log_me ["Imported File Preview Failed", "Imported File ID: #{f.id}", "Rails Root: #{Rails.root.to_s}", "Username: #{current_user.username}"]
             render :json=>{:error=>$!.message}
           end
         }
@@ -223,7 +223,7 @@ class ImportedFilesController < ApplicationController
     unless criterion_params.blank?
       criterion_params.each do |cp|
         next unless ModelField.find_by_uid(cp[:mfid]).can_view?(current_user)
-        f.search_criterions.build(:model_field_uid=>cp[:mfid],:operator=>cp[:operator],:value=>cp[:value],:include_empty=>cp[:include_empty])
+        f.search_criterions.build(:model_field_uid=>cp[:mfid], :operator=>cp[:operator], :value=>cp[:value], :include_empty=>cp[:include_empty])
       end
       f.save!
     end
@@ -232,7 +232,7 @@ class ImportedFilesController < ApplicationController
 
   def destroy
     f = ImportedFile.find(params[:id])
-    action_secure(f.can_delete?(current_user),f,{:lock_check=>false,:verb=>"delete",:module_name=>"uploaded file"}) {
+    action_secure(f.can_delete?(current_user), f, {:lock_check=>false, :verb=>"delete", :module_name=>"uploaded file"}) {
       if f.file_import_results.blank?
         f.destroy
         add_flash :notices, "File successfully deleted."

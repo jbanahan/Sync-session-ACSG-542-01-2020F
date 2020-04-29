@@ -45,9 +45,8 @@ module OpenChain; module AntiVirus; class ClambyAntiVirus
 
   def self.safe? file
     file = validate_file(file)
-    # Use error logger just to see the log messages to track down why the system is saying all files uploaded via 
+    # Use error logger just to see the log messages to track down why the system is saying all files uploaded via
     # screen are viruses
     Clamby.safe? file
   end
-  
 end; end; end

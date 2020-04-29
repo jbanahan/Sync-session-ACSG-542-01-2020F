@@ -33,18 +33,18 @@ describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
       grp = Factory(:group, system_code: "TALBOTS LC REPORT")
       Factory(:user, email: "tufnel@stonehenge.biz", groups: [grp])
     end
-    
+
     it "does nothing if entry not present" do
       ent.destroy
       expect_any_instance_of(OpenChain::Report::LandedCostReport).to_not receive(:create_report)
       subject.compare "Entry", 1, "old_bucket", "old_path", "old ver", "new bucket", "new path", "new ver"
     end
 
-    context "landed cost has changed" do 
+    context "landed cost has changed" do
       before { expect_any_instance_of(OpenChain::Report::LandedCostDataGenerator).to receive(:landed_cost_data_for_entry).with(ent).and_return lc_hsh }
-      let(:now) { DateTime.new(2017,3,15,15,30) }
+      let(:now) { DateTime.new(2017, 3, 15, 15, 30) }
 
-      it "adds attachment to entry and sends email" do 
+      it "adds attachment to entry and sends email" do
         # old and new attachments have same checksum but different types
         att.update_attributes! attachment_type: "Foo type"
         expect_any_instance_of(OpenChain::Events::EntryEvents::LandedCostReportAttacherListener).to receive(:calculate_landed_cost_checksum_v3).with(lc_hsh).and_return "checksum FOO"
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
         expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "Talbots Landed Cost Comparator")
 
         Timecop.freeze(now) { subject.compare "Entry", ent.id, "old_bucket", "old_path", "old ver", "new bucket", "new path", "new ver" }
-        
+
         expect(ent.attachments.length).to eq 2
         att2 = ent.attachments.last
         expect(att2.checksum).to eq "checksum FOO"
@@ -68,13 +68,13 @@ describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
         expect(mail.attachments["Talbots_Landed_Cost_Report_ENTNUM.xls"]).not_to be_nil
       end
 
-      it "adds revision number if necessary, delete previous version" do 
+      it "adds revision number if necessary, delete previous version" do
         expect_any_instance_of(OpenChain::Events::EntryEvents::LandedCostReportAttacherListener).to receive(:calculate_landed_cost_checksum_v3).with(lc_hsh).and_return "checksum BAR"
         expect_any_instance_of(OpenChain::Report::LandedCostReport).to receive(:create_report).with(entry_hashes: lc_hsh).and_return wb
         expect_any_instance_of(Entry).to receive(:create_snapshot).with(User.integration, nil, "Talbots Landed Cost Comparator")
 
         Timecop.freeze(now) { subject.compare "Entry", ent.id, "old_bucket", "old_path", "old ver", "new bucket", "new path", "new ver" }
-        
+
         expect(ent.attachments.length).to eq 1
         att2 = ent.attachments.first
         expect(att2.checksum).to eq "checksum BAR"
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::Talbots::TalbotsLandedCostComparator do
         expect_any_instance_of(Entry).to_not receive(:create_snapshot).with(User.integration, nil, "Talbots Landed Cost Comparator")
 
         subject.compare "Entry", ent.id, "old_bucket", "old_path", "old ver", "new bucket", "new path", "new ver"
-        
+
         expect(ent.attachments.length).to eq 1
         expect(ActionMailer::Base.deliveries.pop).to be_nil
       end

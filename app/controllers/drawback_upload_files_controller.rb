@@ -1,6 +1,6 @@
 require 'open_chain/j_crew_drawback_processor'
 class DrawbackUploadFilesController < ApplicationController
-  def index 
+  def index
     if current_user.view_drawback?
       exports = DutyCalcExportFileLine.select("importer_id, count(*) as 'total_lines'").where("duty_calc_export_file_id IS NULL").group('importer_id')
       @export_lines_not_in_duty_calc = {}
@@ -39,7 +39,7 @@ class DrawbackUploadFilesController < ApplicationController
     else
       add_flash :errors, "You cannot upload files because you do not have permission to edit Drawback."
     end
-    redirect_to drawback_upload_files_path 
+    redirect_to drawback_upload_files_path
   end
   def process_j_crew_entries
     if current_user.edit_drawback?
@@ -52,6 +52,6 @@ class DrawbackUploadFilesController < ApplicationController
     else
       error_redirect "You do not have permission to process drawback."
     end
-    redirect_to drawback_upload_files_path 
+    redirect_to drawback_upload_files_path
   end
 end

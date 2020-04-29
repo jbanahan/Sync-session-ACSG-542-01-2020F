@@ -46,7 +46,7 @@ gem 'rubyzip', '2.0'
 
 gem 'newrelic_rpm', '~> 6.0.0'
 
-#text processing/encoding stuff
+# text processing/encoding stuff
 gem 'RedCloth', '4.3.2'
 
 # PDF Generator
@@ -59,8 +59,8 @@ gem 'barby', '~> 0.6'
 # Required for generating Barcodes as PNG images
 gem 'chunky_png', '~> 1.3.10'
 
-#javascript environment, we will compile assets during deployment
-#so we need these on the production servers as well
+# javascript environment, we will compile assets during deployment
+# so we need these on the production servers as well
 gem 'execjs', '2.7.0'
 gem 'mini_racer', '0.2.4'
 gem 'browser', '2.5.3'
@@ -132,7 +132,7 @@ gem 'nonschema_migrations', '1.0.1'
 
 gem 'nokogiri', '1.10.9'
 
-group :development,:test do
+group :development, :test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.
   # axlsx, while being a FAR more complete and better gem for writing xlsx files, cannot
@@ -140,6 +140,9 @@ group :development,:test do
   gem 'rubyXL', '3.4.6'
   gem 'jasmine'
   gem 'brakeman'
+  gem 'rubocop', require: false
+  gem 'rubocop-rails', require: false
+  gem 'rubocop-rspec', require: false
 end
 
 group :development do
@@ -153,7 +156,7 @@ group :test do
   gem 'rspec-rails', '3.8.2'
   # gem 'rspec-prof', git: 'https://github.com/sinisterchipmunk/rspec-prof.git'
   gem 'factory_girl', '2.5.2'
-  gem 'rspec_junit_formatter', '~> 0.2.3' #circle-ci formatting
+  gem 'rspec_junit_formatter', '~> 0.2.3' # circle-ci formatting
   gem 'test-unit'
   gem 'webmock'
   gem 'timecop', '~> 0.8.0'

@@ -9,11 +9,11 @@ describe SpecialTariffCrossReference do
     end
   end
 
-  describe SpecialTariffCrossReference::SpecialTariffHash do 
+  describe SpecialTariffCrossReference::SpecialTariffHash do
 
-    before :each do 
+    before :each do
       subject.insert SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "0987654321", created_at: Time.zone.now)
-      subject.insert SpecialTariffCrossReference.new(hts_number: "1234567", special_hts_number: "987654", created_at: (Time.zone.now + 1.minute)) 
+      subject.insert SpecialTariffCrossReference.new(hts_number: "1234567", special_hts_number: "987654", created_at: (Time.zone.now + 1.minute))
     end
 
     describe "[]" do
@@ -38,12 +38,12 @@ describe SpecialTariffCrossReference do
     end
   end
 
-  describe SpecialTariffCrossReference::SpecialTariffHashResult do 
+  describe SpecialTariffCrossReference::SpecialTariffHashResult do
 
     let (:tariff_1) { SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "0987654321", created_at: Time.zone.now, country_origin_iso: "CN") }
     let (:tariff_2) { SpecialTariffCrossReference.new(hts_number: "1234567", special_hts_number: "987654", created_at: (Time.zone.now + 1.minute), priority: 1) }
 
-    before :each do 
+    before :each do
       subject.insert tariff_1
       subject.insert tariff_2
     end

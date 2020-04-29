@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::XmlHelper do
 
   subject {
-    Class.new do 
+    Class.new do
       include OpenChain::CustomHandler::XmlHelper
     end.new
   }
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::XmlHelper do
     let (:xml) { REXML::Document.new("<upper><lower>B</lower><lower>A</lower><lower>   </lower><lower>B</lower><lower>a</lower></upper>") }
 
     it "gets unique values" do
-      expect(subject.unique_values xml, "upper/lower").to eq ["B","A","a"]
+      expect(subject.unique_values xml, "upper/lower").to eq ["B", "A", "a"]
     end
 
     it "returns empty array for no xpath match" do
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::XmlHelper do
     end
 
     it "returns empty string in results when configured" do
-      expect(subject.unique_values xml, "upper/lower", skip_blank_values:false).to eq ["B","A","   ","a"]
+      expect(subject.unique_values xml, "upper/lower", skip_blank_values:false).to eq ["B", "A", "   ", "a"]
     end
 
     it "returns results as CSV when configured" do

@@ -1,14 +1,14 @@
 describe SecurityFiling do
   context "validations" do
     it "should fail on non-unique host_system_file_number for same host_system" do
-      SecurityFiling.create!(:host_system=>'ABC',:host_system_file_number=>"DEF")
-      should_fail = SecurityFiling.new(:host_system=>'ABC',:host_system_file_number=>"DEF")
+      SecurityFiling.create!(:host_system=>'ABC', :host_system_file_number=>"DEF")
+      should_fail = SecurityFiling.new(:host_system=>'ABC', :host_system_file_number=>"DEF")
       expect(should_fail.save).to be_falsey
       expect(should_fail.errors[:host_system_file_number].size).to eq(1)
     end
     it "should pass on repeated host_system_file_number for diffferent host_systems" do
-      SecurityFiling.create!(:host_system=>'ABC',:host_system_file_number=>"DEF")
-      expect(SecurityFiling.new(:host_system=>'XYX',:host_system_file_number=>'DEF').save).to be_truthy
+      SecurityFiling.create!(:host_system=>'ABC', :host_system_file_number=>"DEF")
+      expect(SecurityFiling.new(:host_system=>'XYX', :host_system_file_number=>'DEF').save).to be_truthy
     end
     it "should pass on nil host_system_file_number for same host system" do
       SecurityFiling.create!(:host_system=>'ABC')
@@ -23,17 +23,17 @@ describe SecurityFiling do
         @sf3 = Factory(:security_filing)
       end
       it "should limit importers to their own items" do
-        r = SecurityFiling.search_secure(Factory(:importer_user,:company=>@sf.importer),SecurityFiling)
+        r = SecurityFiling.search_secure(Factory(:importer_user, :company=>@sf.importer), SecurityFiling)
         expect(r.to_a).to eq([@sf])
       end
       it "should show linked importers" do
         @sf.importer.linked_companies << @sf2.importer
-        r = SecurityFiling.search_secure(Factory(:importer_user,:company=>@sf.importer),SecurityFiling)
-        expect(r.to_a).to eq([@sf,@sf2])
+        r = SecurityFiling.search_secure(Factory(:importer_user, :company=>@sf.importer), SecurityFiling)
+        expect(r.to_a).to eq([@sf, @sf2])
       end
       it "should allow all for master" do
-        r = SecurityFiling.search_secure(Factory(:master_user),SecurityFiling)
-        expect(r.to_a).to eq([@sf,@sf2,@sf3])
+        r = SecurityFiling.search_secure(Factory(:master_user), SecurityFiling)
+        expect(r.to_a).to eq([@sf, @sf2, @sf3])
       end
     end
   end
@@ -54,7 +54,7 @@ describe SecurityFiling do
         allow_any_instance_of(User).to receive(:comment_security_filings?).and_return(true)
         allow_any_instance_of(User).to receive(:attach_security_filings?).and_return(true)
         u = Factory(:importer_user)
-        sf = Factory(:security_filing,:importer=>u.company)
+        sf = Factory(:security_filing, :importer=>u.company)
         expect(sf.can_edit?(u)).to be_falsey
         expect(sf.can_attach?(u)).to be_falsey
         expect(sf.can_comment?(u)).to be_falsey
@@ -70,7 +70,7 @@ describe SecurityFiling do
         end
         it "should allow if importer = current user" do
           sf = Factory(:security_filing)
-          expect(sf.can_view?(Factory(:user,:company=>sf.importer))).to be_truthy
+          expect(sf.can_view?(Factory(:user, :company=>sf.importer))).to be_truthy
         end
         it "should allow if importer linked to current_user company" do
           u = Factory(:importer_user)

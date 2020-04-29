@@ -1,16 +1,16 @@
 describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
 
-  before :all do 
+  before :all do
     described_class.new.cdefs
   end
 
-  after :all do 
+  after :all do
     CustomDefinition.destroy_all
   end
 
   let (:cdefs) { subject.cdefs }
   let (:product) { Factory(:product, unique_identifier: "uid") }
-  let (:exported_product) { 
+  let (:exported_product) {
     product.update_column(:updated_at, Time.zone.now - 7.days)
     c = product.classifications.create! country_id: Factory(:country, iso_code: "US").id
     c.tariff_records.create hts_1: "9999999999"
@@ -359,8 +359,8 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
 
       let (:taiwan) { Factory(:country, iso_code: "TW") }
       let! (:official_tariff) { OfficialTariff.create! hts_code: "123456789012", import_regulations: "A B MP1 C", country_id: taiwan.id }
-      
-      before :each do 
+
+      before :each do
         c = full_product.classifications.first
         c.update_attributes! country_id: taiwan.id
         c.tariff_records.first.update_attributes! hts_1: "123456789012"
@@ -387,7 +387,7 @@ describe OpenChain::CustomHandler::Polo::PoloAxProductGenerator do
         expect(r[2]).to eq "0"
       end
     end
-    
+
   end
 
   describe "ftp_credentials" do

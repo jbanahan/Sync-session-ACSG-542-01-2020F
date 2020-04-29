@@ -169,7 +169,7 @@ module OpenChain; class BrilloHelper
       customer_hash[customer] = Faker::Company.name
     end
 
-    customer_hash.keys.each do |key|
+    customer_hash.each_key do |key|
       ciphered_name = OpenChain::BrilloHelper.ceaser_cipher(key, 5)
       customer_hash[ciphered_name.join] = customer_hash[key]
     end

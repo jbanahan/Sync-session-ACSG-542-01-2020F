@@ -18,7 +18,7 @@ class SnapshotHistoryDiff
       end
       r["Fields Changed"].blank? ? nil : r
     end.compact
-    
+
     mapped
   end
 end

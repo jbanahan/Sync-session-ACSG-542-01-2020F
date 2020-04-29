@@ -10,7 +10,7 @@ describe SyncRecord do
       expect(SyncRecord.new(:sent_at=>55.minutes.ago)).not_to be_problem
     end
     it 'should not be a problem if confirmed after sent' do
-      expect(SyncRecord.new(:sent_at=>2.hours.ago,:confirmed_at=>1.hour.ago)).not_to be_problem
+      expect(SyncRecord.new(:sent_at=>2.hours.ago, :confirmed_at=>1.hour.ago)).not_to be_problem
     end
   end
 
@@ -19,20 +19,20 @@ describe SyncRecord do
       @p = Factory(:product)
     end
     it 'should be a problem if sent more than 1 hour ago and not confirmed after sent time' do
-      sr = @p.sync_records.create!(:trading_partner=>'MSLE',:sent_at=>2.hours.ago)
+      sr = @p.sync_records.create!(:trading_partner=>'MSLE', :sent_at=>2.hours.ago)
       probs = SyncRecord.problems
       expect(probs.first).to eq(sr)
     end
     it 'should be a problem if has failure message' do
-      sr = @p.sync_records.create!(:trading_partner=>'MSLE',:failure_message=>'a')
+      sr = @p.sync_records.create!(:trading_partner=>'MSLE', :failure_message=>'a')
       expect(SyncRecord.problems.first).to eq(sr)
     end
     it 'should not be a problem if sent less than 1 hour ago and not confirmed' do
-      sr = @p.sync_records.create!(:trading_partner=>'MSLE',:sent_at=>55.minutes.ago)
+      sr = @p.sync_records.create!(:trading_partner=>'MSLE', :sent_at=>55.minutes.ago)
       expect(SyncRecord.problems).to be_empty
     end
     it 'should not be a problem if confirmed after sent' do
-      sr = @p.sync_records.create!(:trading_partner=>'MSLE',:sent_at=>2.hours.ago,:confirmed_at=>1.hour.ago)
+      sr = @p.sync_records.create!(:trading_partner=>'MSLE', :sent_at=>2.hours.ago, :confirmed_at=>1.hour.ago)
       expect(SyncRecord.problems).to be_empty
     end
   end

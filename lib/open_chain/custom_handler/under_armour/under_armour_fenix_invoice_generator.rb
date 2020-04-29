@@ -28,7 +28,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
 
     inv.total_quantity = 0
     inv.gross_weight = BigDecimal.new("0")
-    
+
     shipment.shipment_lines.each do |line|
       inv.total_quantity += line.carton_qty.presence || 0
       inv.gross_weight += line.gross_kgs.presence || 0
@@ -67,7 +67,6 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
 
           rollups[key] = cil
         end
-
       end
 
       rollups.values
@@ -80,8 +79,9 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
     end
 
     def line_data shipment_line
+      data = []
       # If the product on the shipment line is a prepack, we need to "explode" it out
-      # and add a shipment line for every variant listed on the product...which we'll then 
+      # and add a shipment line for every variant listed on the product...which we'll then
       # roll up
       product = shipment_line.product
       variants = []
@@ -122,7 +122,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
       datum
     end
 
-    def ca 
+    def ca
       @ca ||= Country.where(iso_code: "CA").first
       raise "Missing Canada country" if @ca.nil?
       @ca

@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser
     # The unique identifier for the products has to be the first 4 columns of the file
     id = unique_identifier @importer.system_code, row
     prod = Product.where(unique_identifier: id, importer_id: @importer.id).first_or_create!
-    Lock.with_lock_retry(prod) do 
+    Lock.with_lock_retry(prod) do
       us_classification = prod.classifications.where(country_id: @us.id).first_or_create!
       tariff = us_classification.tariff_records.first_or_create!
       tariff.hts_1 = row[14]
@@ -53,7 +53,7 @@ module OpenChain; module CustomHandler; module LandsEnd; class LePartsParser
       prod.update_custom_value! @cdefs[:prod_comments], [row[15], row[16]].select {|v| !v.blank? }.join(" | ")
 
       factory = Address.where(company_id: @importer.id, system_code: row[4]).first_or_create!(
-        name: row[5], line_1: row[6], line_2: row[7], line_3: row[8], city: row[9], 
+        name: row[5], line_1: row[6], line_2: row[7], line_3: row[8], city: row[9],
         country: Country.where(iso_code: row[12]).first
       )
 

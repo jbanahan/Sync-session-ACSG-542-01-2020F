@@ -31,13 +31,13 @@ describe RequestLoggingSupport, type: :model do
       end
     }.new
   }
-  
+
   describe "log_request" do
     let (:user) {
         User.new
       }
 
-    it "logs request if user has debug active" do 
+    it "logs request if user has debug active" do
       expect(subject).to receive(:current_user).at_least(1).times.and_return user
       expect(user).to receive(:debug_active?).and_return true
       expect(subject).to receive(:params).and_return parameters
@@ -67,7 +67,7 @@ describe RequestLoggingSupport, type: :model do
     let (:run_as) { Factory(:user, username: "run_as") }
     let (:user) { Factory(:user, username: "user", run_as: run_as) }
 
-    it "logs the run as request" do 
+    it "logs the run as request" do
       expect(subject).to receive(:current_user).at_least(1).times.and_return run_as
       expect(subject).to receive(:run_as_user).at_least(1).times.and_return user
 
@@ -77,7 +77,7 @@ describe RequestLoggingSupport, type: :model do
 
       now = Time.zone.parse "2017-01-01 12:00"
       Timecop.freeze(now) { subject.log_run_as_request }
-      
+
       session = RunAsSession.current_session(user).first
       expect(session).not_to be_nil
       expect(session.user_id).to eq user.id
@@ -98,7 +98,7 @@ describe RequestLoggingSupport, type: :model do
       expect(RequestLog).to receive(:build_log_from_request).with(user, fake_request, parameters).and_return RequestLog.new
 
       subject.log_run_as_request
-      
+
       session.reload
       expect(session.request_logs.length).to eq 1
     end

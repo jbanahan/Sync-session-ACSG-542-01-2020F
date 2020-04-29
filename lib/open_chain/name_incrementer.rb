@@ -1,15 +1,15 @@
 # Takes a name with an array of names and adds a unique "(COPY n)" suffix if the first name matches any member of the array.
 
 module OpenChain; module NameIncrementer
-  
+
   def self.increment old_name, existing_names
     old_base_name = strip_suffix(old_name)
-    num = existing_names.map{ |name| {full_name: name, base_name: strip_suffix(name)} }
-                        .select{ |hsh| old_base_name == hsh[:base_name] }
-                        .map{ |hsh| 
+    num = existing_names.map { |name| {full_name: name, base_name: strip_suffix(name)} }
+                        .select { |hsh| old_base_name == hsh[:base_name] }
+                        .map { |hsh|
                           suffix = hsh[:full_name].slice(/ \(COPY.*\)/)
                           if suffix
-                            (suffix.match(/\d+/)[0]).to_i rescue 1 
+                            (suffix.match(/\d+/)[0]).to_i rescue 1
                           else
                             0
                           end

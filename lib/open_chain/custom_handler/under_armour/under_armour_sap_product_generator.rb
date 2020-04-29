@@ -25,13 +25,13 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourSap
     [out]
   end
 
-  def query 
+  def query
     qry = <<-QRY
 SELECT products.id, co.iso_code as 'Country of Destination', products.unique_identifier as 'Style', t.hts_1 as 'HTS Code', cv.decimal_value as 'Duty Rate', d.value as 'Tariff Override Ride', ot.common_rate as 'Tariff Duty Rate'
 FROM products products
 INNER JOIN classifications c on products.id = c.product_id
 INNER JOIN countries co on c.country_id = co.id
-INNER JOIN tariff_records t on t.classification_id = c.id 
+INNER JOIN tariff_records t on t.classification_id = c.id
 LEFT OUTER JOIN custom_values cv on c.id = cv.customizable_id and cv.customizable_type = 'Classification' and cv.custom_definition_id = #{@cdefs[:expected_duty_rate].id}
 LEFT OUTER JOIN official_tariffs ot on ot.country_id = c.country_id and ot.hts_code = t.hts_1
 LEFT OUTER JOIN data_cross_references d on concat(co.iso_code, '#{DataCrossReference.compound_key_token}', t.hts_1) = d.`key` AND d.cross_reference_type = '#{DataCrossReference::UA_DUTY_RATE}'

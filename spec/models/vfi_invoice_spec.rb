@@ -8,7 +8,7 @@ describe VfiInvoice do
 
     context "user has permission to view invoices" do
       before(:each) { allow(@u).to receive(:view_vfi_invoices?).and_return true }
-      
+
       it "returns true if user belongs to master company" do
         co = @u.company
         co.update_attributes(master: true)
@@ -48,10 +48,10 @@ describe VfiInvoice do
     let!(:unassociated_invoice) { Factory(:vfi_invoice) }
 
     it "finds all for master" do
-      expect(VfiInvoice.search_secure(master_user, VfiInvoice.where("1=1")).sort {|a,b| a.id<=>b.id}).to eq([linked_invoice,customer_invoice,unassociated_invoice].sort {|a,b| a.id<=>b.id})
+      expect(VfiInvoice.search_secure(master_user, VfiInvoice.where("1=1")).sort {|a, b| a.id<=>b.id}).to eq([linked_invoice, customer_invoice, unassociated_invoice].sort {|a, b| a.id<=>b.id})
     end
     it "finds customer's invoices" do
-      expect(VfiInvoice.search_secure(customer_user, VfiInvoice.where("1=1")).sort {|a,b| a.id<=>b.id}).to eq([linked_invoice,customer_invoice].sort {|a,b| a.id<=>b.id})
+      expect(VfiInvoice.search_secure(customer_user, VfiInvoice.where("1=1")).sort {|a, b| a.id<=>b.id}).to eq([linked_invoice, customer_invoice].sort {|a, b| a.id<=>b.id})
     end
     it "doesn't find other customer's invoices" do
       expect(VfiInvoice.search_secure(other_customer_user, VfiInvoice.where("1=1"))).to be_empty

@@ -4,7 +4,7 @@ describe OpenChain::Ec2 do
 
   let (:client_config) { {'region' => "us-notaregion-1"} }
 
-  let (:ec2_resource) { 
+  let (:ec2_resource) {
     resource = instance_double(Aws::EC2::Resource)
     client = instance_double(Aws::EC2::Client)
     allow(subject).to receive(:ec2_resource).and_return resource
@@ -35,7 +35,7 @@ describe OpenChain::Ec2 do
       instance = instance_double("Aws::EC2::Types::Instance")
       allow(instance).to receive(:instance_id).and_return "instance-id"
       expect(ec2_resource).to receive(:instances).with(filters: [{name: "tag:Key", values: ["value"]}, {name: "tag:Key2", values: ["1", "2"]}]).and_return [instance]
-      
+
       instances = subject.find_tagged_instances({"Key" => "value", "Key2"=>["1", "2"]})
 
       expect(instances.first.instance_id).to eq "instance-id"
@@ -163,7 +163,7 @@ describe OpenChain::Ec2 do
       allow(snapshot1).to receive(:snapshot_id).and_return "snapshot-1"
 
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
-      
+
       snapshots = subject.create_snapshots_for_instance instance, "Snapshot Description"
       expect(snapshots.size).to eq 1
       expect(snapshots["volume-1"].snapshot_id).to eq "snapshot-1"
@@ -189,7 +189,7 @@ describe OpenChain::Ec2 do
 
       expect(client).to receive(:create_snapshot).with(description: "Snapshot Description", volume_id: "volume-1").and_return snapshot1
       expect(subject).to receive(:find_snapshot).with("snapshot-1", region: "us-notaregion-1").and_return snapshot1
-      
+
       times = 0
       # Raise the expected error the first time the method is called, then don't raise the next time...
       expect(client).to receive(:create_tags).exactly(2).times do |opts|
@@ -207,8 +207,8 @@ describe OpenChain::Ec2 do
 
   describe "copy_snapshot_to_region" do
     let(:destination_region) { "not-a-dest-region-1" }
-    let (:client) { 
-      client = instance_double(Aws::EC2::Client) 
+    let (:client) {
+      client = instance_double(Aws::EC2::Client)
       allow(client).to receive(:config).and_return(client_config)
       client
     }

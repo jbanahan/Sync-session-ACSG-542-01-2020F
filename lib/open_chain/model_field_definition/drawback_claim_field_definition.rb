@@ -1,7 +1,7 @@
 module OpenChain; module ModelFieldDefinition; module DrawbackClaimFieldDefinition
   def add_drawback_claim_fields
     add_fields CoreModule::DRAWBACK_CLAIM, [
-      [1, :dc_name, :name, "Name",{data_type: :string}],
+      [1, :dc_name, :name, "Name", {data_type: :string}],
       [2, :dc_exports_start_date, :exports_start_date, "Exports Start", {data_type: :date}],
       [3, :dc_exports_end_date, :exports_end_date, "Exports End", {data_type: :date}],
       [4, :dc_entry_number, :entry_number, "Claim Number", {data_type: :string}],
@@ -22,8 +22,8 @@ module OpenChain; module ModelFieldDefinition; module DrawbackClaimFieldDefiniti
       [19, :dc_hmf_mpf_check_amount, :hmf_mpf_check_amount, "HMF/MPF Check Amount", {data_type: :currency}],
       [20, :dc_hmf_mpf_check_received_date, :hmf_mpf_check_received_date, "HMF/MPF Check Received", {data_type: :date}],
       [21, :dc_duty_claimed, :duty_claimed, "Duty Claimed", {data_type: :currency}],
-      [22, :dc_rule_state,:rule_state,"Business Rule State",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
+      [22, :dc_rule_state, :rule_state, "Business Rule State", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Business Rule State ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules_state },
         :qualified_field_name=> "(select state
           from business_validation_results bvr

@@ -30,7 +30,7 @@ describe Api::V1::SchedulableJobsController do
       end
 
       it "does not run jobs that are not ready to run" do
-        sj = SchedulableJob.create! 
+        sj = SchedulableJob.create!
         ss = Factory(:search_schedule)
 
         post "run_jobs", {}

@@ -2,12 +2,12 @@ describe OpenChain::BulkAction::BulkOrderUpdate do
   describe "#act" do
     before :each do
       @ord = Factory(:order)
-      @u = Factory(:master_user,order_edit:true,order_view:true)
+      @u = Factory(:master_user, order_edit:true, order_view:true)
       @bpl = Factory(:bulk_process_log)
       field_names = [:ord_ord_date, :ord_revised_date, :ord_window_start, :ord_window_end, :ord_first_exp_del]
-      @mf_list = CoreModule::ORDER.model_fields(@u){ |mf| field_names.include? mf.uid}
-      @date = Array.new(5){ |i| Date.new(2016, 1, i + 1)}
-      @opts = {'ord_ord_date' => @date[0], 'ord_revised_date' => @date[1], 'ord_window_start' => @date[2], 
+      @mf_list = CoreModule::ORDER.model_fields(@u) { |mf| field_names.include? mf.uid}
+      @date = Array.new(5) { |i| Date.new(2016, 1, i + 1)}
+      @opts = {'ord_ord_date' => @date[0], 'ord_revised_date' => @date[1], 'ord_window_start' => @date[2],
               'ord_window_end' => @date[3], 'ord_first_exp_del' => @date[4]}
     end
 
@@ -34,6 +34,5 @@ describe OpenChain::BulkAction::BulkOrderUpdate do
       cr = @bpl.change_records.first
       expect(cr).to be_failed
     end
-  
   end
 end

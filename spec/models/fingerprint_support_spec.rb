@@ -82,7 +82,7 @@ describe FingerprintSupport do
       product.classifications.first.mark_for_destruction
       updated_fingerprint = product.generate_fingerprint fingerprint_definition, user
 
-      expect(fingerprint).not_to eq updated_fingerprint      
+      expect(fingerprint).not_to eq updated_fingerprint
     end
   end
 

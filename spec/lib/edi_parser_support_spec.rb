@@ -1,6 +1,6 @@
 describe OpenChain::EdiParserSupport do
   subject {
-    Class.new { include OpenChain::EdiParserSupport 
+    Class.new { include OpenChain::EdiParserSupport
       def self.user
         raise "Mock this."
       end
@@ -28,7 +28,7 @@ describe OpenChain::EdiParserSupport do
       expect(segs.length).to eq 9
     end
 
-    it "yields nothing if no values are found" do 
+    it "yields nothing if no values are found" do
       segs = []
       subject.with_qualified_segments(segments, "ST", 1, "850") { |s| segs << s}
       expect(segs.length).to eq 0
@@ -145,7 +145,7 @@ describe OpenChain::EdiParserSupport do
       expect(dates.first).to eq ActiveSupport::TimeZone["UTC"].parse("2016-11-18")
     end
 
-    it "finds and parses DTM segments using given date format and given timezone" do 
+    it "finds and parses DTM segments using given date format and given timezone" do
       dates = subject.find_date_values(segments, "311", date_format: "%Y%m%d", time_zone: "America/New_York")
       expect(dates.first).to eq ActiveSupport::TimeZone["America/New_York"].parse("2016-11-18")
     end
@@ -164,7 +164,7 @@ describe OpenChain::EdiParserSupport do
       expect(subject.find_date_value(segments, "311", date_format: "%Y%m%d")).to eq ActiveSupport::TimeZone["UTC"].parse("2016-11-18")
     end
 
-    it "finds and parses DTM segment using given date format and given timezone" do 
+    it "finds and parses DTM segment using given date format and given timezone" do
       expect(subject.find_date_value(segments, "311", date_format: "%Y%m%d", time_zone: "America/New_York")).to eq ActiveSupport::TimeZone["America/New_York"].parse("2016-11-18")
     end
   end
@@ -237,7 +237,7 @@ describe OpenChain::EdiParserSupport do
     end
 
     it "uses the stop element to break processing when a specific segment is seen" do
-      # Only extract the non-n1 level segments 
+      # Only extract the non-n1 level segments
       loops = subject.extract_loop segments, ["PER"], stop_segments: "FOB"
 
       expect(loops.size).to eq 2
@@ -245,8 +245,8 @@ describe OpenChain::EdiParserSupport do
       expect(loops[1][0][1]).to eq "AA"
     end
 
-    it "allows for multiple stop segments" do 
-      # Only extract the "header" level segments 
+    it "allows for multiple stop segments" do
+      # Only extract the "header" level segments
       loops = subject.extract_loop segments, ["PER"], stop_segments: ["PO1", "FOB"]
 
       expect(loops.size).to eq 2
@@ -338,7 +338,7 @@ describe OpenChain::EdiParserSupport do
   end
 
   describe "send_error_email" do
-    let (:error) { 
+    let (:error) {
       e = StandardError.new "Error"
       e.set_backtrace Kernel.caller
       e
@@ -367,7 +367,7 @@ describe OpenChain::EdiParserSupport do
 
       m = ActionMailer::Base.deliveries.first
 
-      expect(m.body.raw_source).not_to include ERB::Util.html_escape(error.backtrace.first)      
+      expect(m.body.raw_source).not_to include ERB::Util.html_escape(error.backtrace.first)
     end
 
     it "handles blank filenames" do
@@ -431,7 +431,7 @@ describe OpenChain::EdiParserSupport do
     end
   end
 
-  describe "value" do 
+  describe "value" do
     let (:segment) { segments.first }
 
     it "returns given element index's value" do
@@ -462,12 +462,12 @@ describe OpenChain::EdiParserSupport do
       expect(segments.map {|s| s.segment_type}).to eq ["ST", "BSN", "HL"]
     end
 
-    it "returns all segments if no stop-segment is encountered" do 
+    it "returns all segments if no stop-segment is encountered" do
       expect(subject.all_segments_up_to(first_transaction.segments, "BLAH").length).to eq 48
     end
   end
 
-  describe "parse" do 
+  describe "parse" do
 
     let (:edi_data) {
       "ISA^00^          ^00^          ^ZZ^INSD           ^01^014492501      ^170725^1040^U^00401^000001357^0^P^>\n" +
@@ -488,17 +488,17 @@ describe OpenChain::EdiParserSupport do
 
     let (:transaction_1) {
       "ST^856^13560001\n" +
-      "BSN^00^BCVA17000324^20170725^1040^0003^SH\n" + 
+      "BSN^00^BCVA17000324^20170725^1040^0003^SH\n" +
       "SE^38^13560001\n"
     }
 
     let (:transaction_2) {
       "ST^856^13560002\n" +
-      "BSN^00^BCVA17000324^20170725^1040^0003^SH\n" + 
+      "BSN^00^BCVA17000324^20170725^1040^0003^SH\n" +
       "SE^38^13560002\n"
     }
 
-    it "parses edi data into multiple transactions and delays processing each transaction" do 
+    it "parses edi data into multiple transactions and delays processing each transaction" do
       expect(subject.class).to receive(:delay).exactly(2).times.and_return subject.class
 
       transactions = []
@@ -546,7 +546,7 @@ describe OpenChain::EdiParserSupport do
     let (:user) { User.new }
     let (:opts) { {bucket: "bucket", key: "path"} }
 
-    before :each do 
+    before :each do
       allow(subject.class).to receive(:new).and_return parser
     end
 
@@ -567,11 +567,11 @@ describe OpenChain::EdiParserSupport do
           subject.class.process_transaction(transaction, opts)
         end
       end
-      
+
     end
 
     context "with errors" do
-      before :each do 
+      before :each do
         allow(subject.class).to receive(:user).and_return user
       end
 
@@ -581,7 +581,7 @@ describe OpenChain::EdiParserSupport do
       end
 
       context "not in test environment" do
-        before :each do 
+        before :each do
           allow(subject.class).to receive(:test?).and_return false
         end
 
@@ -722,7 +722,7 @@ describe OpenChain::EdiParserSupport do
     it "links to given company" do
       importer = Factory(:importer)
       company = subject.find_or_create_company_from_n1_data n1_data, company_type_hash: {factory: true}, link_to_company: importer
-      expect(importer.linked_companies).to include company      
+      expect(importer.linked_companies).to include company
     end
   end
 

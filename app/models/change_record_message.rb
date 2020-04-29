@@ -15,6 +15,6 @@
 
 class ChangeRecordMessage < ActiveRecord::Base
   attr_accessible :change_record_id, :message
-  
+
   belongs_to :change_record
 end

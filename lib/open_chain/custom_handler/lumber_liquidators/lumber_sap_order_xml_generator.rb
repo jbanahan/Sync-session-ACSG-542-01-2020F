@@ -9,11 +9,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   end
 
   def self.send_order order, force_send: false
-    Lock.with_lock_retry(order) do 
-      xml, fingerprint = generate(User.integration,order)
+    Lock.with_lock_retry(order) do
+      xml, fingerprint = generate(User.integration, order)
       sr = order.sync_records.first_or_initialize trading_partner: "SAP PO"
       if sr.fingerprint != fingerprint || force_send
-        Tempfile.open(["po_#{order.order_number}_",'.xml']) do |tf|
+        Tempfile.open(["po_#{order.order_number}_", '.xml']) do |tf|
           tf.write xml
           tf.flush
           ftp_sync_file tf, sr
@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   def self.generate user, order
     f = build_field_list(user)
     xmlizer = OpenChain::Api::ApiEntityXmlizer.new
-    xml = xmlizer.entity_to_xml(user,order,f)
+    xml = xmlizer.entity_to_xml(user, order, f)
     fingerprint = xmlizer.xml_fingerprint xml
     [xml, fingerprint]
   end
@@ -77,7 +77,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       :ordln_total_cost,
       :ordln_ship_to_full_address
     ]
-    [CoreModule::ORDER,CoreModule::ORDER_LINE].each do |cm|
+    [CoreModule::ORDER, CoreModule::ORDER_LINE].each do |cm|
       f += cm.model_fields(current_user) {|mf| mf.custom? }.keys
     end
     f

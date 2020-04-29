@@ -1,6 +1,5 @@
 module OpenChain; module ModelFieldGenerator; module RegionGenerator
-  
-  #Get the unique ID to be used for a given region and model field type
+  # Get the unique ID to be used for a given region and model field type
   def uid_for_region region, type
     "*r_#{region.id}_#{type}"
   end
@@ -13,7 +12,7 @@ module OpenChain; module ModelFieldGenerator; module RegionGenerator
         CoreModule::PRODUCT,
         "*r_#{r.id}_class_count".to_sym, {
           :label_override => "Classification Count - #{r.name}",
-          :import_lambda => lambda {|p,d| "Classification count ignored."},
+          :import_lambda => lambda {|p, d| "Classification count ignored."},
           :export_lambda => lambda {|p|
             good_country_ids = Region.find(r.id).countries.collect {|c| c.id}
             cnt = 0

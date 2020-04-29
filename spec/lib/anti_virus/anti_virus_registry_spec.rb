@@ -1,6 +1,6 @@
 describe OpenChain::AntiVirus::AntiVirusRegistry do
 
-  class FakeAntiVirus 
+  class FakeAntiVirus
     def self.safe? file
       false
     end
@@ -34,7 +34,7 @@ describe OpenChain::AntiVirus::AntiVirusRegistry do
       end
     end
 
-    before :each do 
+    before :each do
       subject.register FakeAntiVirus
     end
 

@@ -15,15 +15,15 @@ module OpenChain
       @@upgraded
     end
 
-    #Upgrades the current instance to the target git tag, specifying whether the upgrade is running from a delayed job queue or not.
-    #returns the absolute path to the upgrade log file
-    #raises an OpenChain::UpgradeFailure if there are any problems
+    # Upgrades the current instance to the target git tag, specifying whether the upgrade is running from a delayed job queue or not.
+    # returns the absolute path to the upgrade log file
+    # raises an OpenChain::UpgradeFailure if there are any problems
     def self.upgrade target, upgrade_delelayed_job = false, callbacks = {}
       Upgrade.new(target).go upgrade_delelayed_job, callbacks
     end
 
     # Check the MasterSetup to see if this instance needs to be upgrade to another version and do so if needed
-    #raises an OpenChain::UpgradeFailure if there are any problems
+    # raises an OpenChain::UpgradeFailure if there are any problems
     def self.upgrade_if_needed callbacks = {}
       result = false
       if MasterSetup.need_upgrade?
@@ -74,13 +74,13 @@ module OpenChain
       self.class.current_upgraded_version == @target
     end
 
-    #do not initialize this method directly, use the static #upgrade method instead
+    # do not initialize this method directly, use the static #upgrade method instead
     def initialize target
       @target = target
       @log_path = MasterSetup.instance_directory.join("log").join("#{Time.zone.now.strftime("%Y_%m_%d_%H_%M")}_#{target}.log")
     end
 
-    #do not call this directly, use the static #upgrade method instead
+    # do not call this directly, use the static #upgrade method instead
     def go delayed_job_upgrade, callbacks = {}
       # Make sure only a single process is checking for and creating the upgrade file at a time
       # to avoid multiple upgrades running on the same host/customer instance at a time.
@@ -98,8 +98,8 @@ module OpenChain
 
       return false unless @log
 
-      Lock.acquire("Upgrade-#{MasterSetup.hostname}-#{@target}", yield_in_transaction: false) do 
-        # There's some (albeit really small) possibility that the upgrade could already have been done in another process 
+      Lock.acquire("Upgrade-#{MasterSetup.hostname}-#{@target}", yield_in_transaction: false) do
+        # There's some (albeit really small) possibility that the upgrade could already have been done in another process
         # while waiting on this lock, just check the already_upgraded? and return if it has already been
         return false if self.already_upgraded?
 
@@ -117,12 +117,12 @@ module OpenChain
         execute_callback(callbacks, :fs_running, MasterSetup.get.system_code, @upgrade_log.to_version)
         get_source
         apply_upgrade
-        #upgrade_running.txt will stick around if one of the previous methods blew an exception
-        #this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
+        # upgrade_running.txt will stick around if one of the previous methods blew an exception
+        # this is on purpose, so upgrades won't kick off if we're in an indeterminent failed state
         capture_and_log "rm #{Upgrade.upgrade_file_path}"
         # Remove the upgrade error file if it is present
         capture_and_log("rm #{Upgrade.upgrade_error_file_path}") if delayed_job_upgrade && File.exist?(Upgrade.upgrade_error_file_path)
-        
+
         @@upgraded = true
         restart_app_server
         upgrade_completed = true
@@ -131,8 +131,8 @@ module OpenChain
         # to start again, however, if we do that the dj_monitor.sh script may actually restart delayed job queues prior to the environment being ready for that.
         # Therefore, use the presence of another upgrade_error.txt flag file to tell it not to start the queue.
         capture_and_log "touch #{Upgrade.upgrade_error_file_path}" if delayed_job_upgrade
-        # There's not a lot of point to logging an error on an upgrade, since the notification queue will, in all likelihood 
-        # not be running (since it's updating too, and if it fails will likely be due to the same thing that failed this instance).  
+        # There's not a lot of point to logging an error on an upgrade, since the notification queue will, in all likelihood
+        # not be running (since it's updating too, and if it fails will likely be due to the same thing that failed this instance).
         # Send via slack.
         ms = MasterSetup.get
         send_slack_failure(ms, e) if MasterSetup.production_env?
@@ -149,12 +149,12 @@ module OpenChain
     def freshservice_callbacks
       fs_client = freshservice_client
       fs_running = lambda do |instance, new_version|
-        err_logger { 
+        err_logger {
           fs_client.create_change! instance, new_version, MasterSetup.hostname
         }
       end
 
-      # If the change_id is blank below, it means the API call for create_change! failed, so 
+      # If the change_id is blank below, it means the API call for create_change! failed, so
       # there's no change record to associate notes with.  Therefore, skip the notes calls.
       fs_finished = lambda do |upgrade_log|
         err_logger { fs_client.add_note_with_log!(upgrade_log) unless fs_client.change_id.blank? }
@@ -181,9 +181,9 @@ module OpenChain
 
     # private
     def finish_upgrade_log
-      @upgrade_log.update(:finished_at=>0.seconds.ago,:log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exist?(@log_path)
+      @upgrade_log.update(:finished_at=>0.seconds.ago, :log=>IO.read(@log_path)) if !@upgrade_log.nil? && File.exist?(@log_path)
     end
-    
+
     def get_source
       log_me "Fetching source"
       capture_and_log 'git fetch'
@@ -223,13 +223,13 @@ module OpenChain
     end
 
     def init_schedulable_jobs
-      load 'app/models/schedulable_job.rb' #get latest code
+      load 'app/models/schedulable_job.rb' # get latest code
       SchedulableJob.create_default_jobs!
     end
 
     def migrate
       c = 0
-      begin 
+      begin
         # Since we have the ability to clear the migration lock wait if we need to, I'm just going to set this to a long wait time
         # of an hour.  We do have migrations on large tables that can take 20+ minutes, so I don't really want to fail on those.
         while !MasterSetup.get_migration_lock && c < 3600
@@ -258,7 +258,7 @@ module OpenChain
       log_me stderr unless stderr.blank?
       raise UpgradeFailure.new("#{command} failed: #{stderr}") unless status.success?
     end
-    
+
     def precompile
       log_me "Precompiling assets"
       command = "rake assets:precompile"
@@ -303,9 +303,9 @@ module OpenChain
     def send_slack_failure master_setup, error=nil
       begin
         msg = error_message master_setup, error
-        slack_client.send_message('it-dev-notifications',msg,{icon_emoji:':loudspeaker:'})
+        slack_client.send_message('it-dev-notifications', msg, {icon_emoji:':loudspeaker:'})
       rescue => e
-        #don't interrupt, just log
+        # don't interrupt, just log
         e.log_me
       end
     end
@@ -326,7 +326,7 @@ module OpenChain
 
     def execute_callback callback_hash, event, *event_params
       callbacks = Array.wrap(callback_hash.try(:[], event))
-      callbacks.each do |cb| 
+      callbacks.each do |cb|
         if cb.arity.zero?
           cb.call
         else
@@ -337,6 +337,6 @@ module OpenChain
     end
 
   end
-  
+
   class UpgradeFailure < StandardError; end
 end

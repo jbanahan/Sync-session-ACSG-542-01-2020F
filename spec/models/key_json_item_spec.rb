@@ -1,19 +1,19 @@
 describe KeyJsonItem do
   context 'validations' do
     it "should require key_scope" do
-      k = KeyJsonItem.new(logical_key:'abc',json_data:{a:'b'}.to_json)
+      k = KeyJsonItem.new(logical_key:'abc', json_data:{a:'b'}.to_json)
       k.save
       expect(k.errors[:key_scope].first).to eq("can't be blank")
     end
-    
+
     it "should require logical_key" do
-      k = KeyJsonItem.new(key_scope:'abc',json_data:{a:'b'}.to_json)
+      k = KeyJsonItem.new(key_scope:'abc', json_data:{a:'b'}.to_json)
       k.save
       expect(k.errors[:logical_key].first).to eq("can't be blank")
     end
-    
+
     it "should require json_data" do
-      k = KeyJsonItem.new(logical_key:'abc',key_scope:'def')
+      k = KeyJsonItem.new(logical_key:'abc', key_scope:'def')
       k.save
       expect(k.errors[:json_data].first).to eq("can't be blank")
     end

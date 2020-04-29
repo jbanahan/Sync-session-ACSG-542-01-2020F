@@ -83,7 +83,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
     end
 
     row << 1 # Row Number
-    
+
     row
   end
 
@@ -116,7 +116,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
     text_value(article_num).to_s.strip.rjust(18, '0')
   end
 
-  def lumber_system_code 
+  def lumber_system_code
     @lumber ||= Company.where(master: true).first
     raise "A system code must be associated with the Lumber Liquidators master company account." if @lumber.try(:system_code).blank?
 
@@ -153,5 +153,4 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
 
     imported_file
   end
-  
 end; end; end; end

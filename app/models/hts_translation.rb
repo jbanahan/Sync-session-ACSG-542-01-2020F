@@ -17,7 +17,7 @@
 
 class HtsTranslation < ActiveRecord::Base
   attr_accessible :company_id, :country_id, :hts_number, :translated_hts_numbe
-  
+
   belongs_to :company
   belongs_to :country
 
@@ -27,12 +27,12 @@ class HtsTranslation < ActiveRecord::Base
             .joins(:country)
             .where("countries.iso_code" => country_iso_code)
 
-    # For cases where we have 1 company per system (polo, ann, etc) we don't really 
+    # For cases where we have 1 company per system (polo, ann, etc) we don't really
     # need the company id to do this translation.  For other systems, like vfitrack that
     # share product libraries, we do (the company id will end up being the importer_id)
     if company
       assoc = assoc.joins(:company).where("companies.id" => company.id)
-    else 
+    else
       assoc = where(:company_id => nil)
     end
 

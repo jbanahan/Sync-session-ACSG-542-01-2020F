@@ -20,10 +20,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
   # What we're going to do here is take the uploaded file - which contains 1 line per product.
   # We'll then expload that out into multiple lines (1 for ADVAN and one for CQ) and then map
   # this new file BACK into an imported file and process it.
-  # 
+  #
   # We're doing this so that the user gets the benefits of the imported file logs / screen / error reporting
   # with the flexibility of a custom upload.
-  def process user 
+  def process user
     @cdefs = self.class.prep_custom_definitions [:prod_part_number, :prod_short_description, :prod_units_per_set, :class_customs_description, :prod_sku_number]
     begin
       process_file @custom_file, user, skip_headers: true
@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
     if !line[0].blank?
       advan = []
       advan << "ADVAN" # Importer Syscode
-      advan << "ADVAN-#{text_value(line[0])}" #Unique Identifier
+      advan << "ADVAN-#{text_value(line[0])}" # Unique Identifier
       advan << text_value(line[0]) # Part Number
       advan << "" # Sku Number
       advan << text_value(line[1]) # Short Description
@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
       advan << text_value(line[9]) # First HTS 1 (US)
       advan << text_value(line[11]) # First HTS 1 (CA)
       advan << boolean_value(line[15]) # Part Inactive
-      
+
       lines << advan
     end
 
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
     if !line[3].blank?
       cq = []
       cq << "CQ" # Importer Syscode
-      cq << "CQ-#{text_value(line[3])}" #Unique Identifier
+      cq << "CQ-#{text_value(line[3])}" # Unique Identifier
       cq << text_value(line[3]) # Part Number
       cq << text_value(line[0]) # Sku Number
       cq << text_value(line[1]) # Short Description
@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePartsUpload
       cq << text_value(line[9]) # First HTS 1 (US)
       cq << text_value(line[11]) # First HTS 1 (CA)
       cq << boolean_value(line[15]) # Part Inactive
-      
+
       lines << cq
     end
 

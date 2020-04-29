@@ -3,7 +3,7 @@ class UserManualsController < ApplicationController
   include UserManualHelper
 
   skip_before_filter :portal_redirect, only: [:download]
-  around_filter :admin_secure, except: [:download,:for_referer]
+  around_filter :admin_secure, except: [:download, :for_referer]
   def set_page_title
     @page_title = 'Tools'
   end
@@ -58,7 +58,7 @@ class UserManualsController < ApplicationController
   def for_referer
     ref = request.referer
     ref = '' if request.referer.blank?
-    @manuals = UserManual.for_user_and_page(current_user,ref).sort {|a,b| a.name.downcase <=> b.name.downcase}
+    @manuals = UserManual.for_user_and_page(current_user, ref).sort {|a, b| a.name.downcase <=> b.name.downcase}
     render layout: false
   end
 

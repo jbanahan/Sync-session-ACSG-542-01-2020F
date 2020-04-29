@@ -11,8 +11,8 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
       r['companies'] = companies_as_json!(ary)
     else
       requested_roles = params[:roles].split(',')
-      ['master','vendor','customer','importer','broker','carrier'].each { |role|
-        add_role_if_requested(requested_roles,r,role, params[:linked_with])
+      ['master', 'vendor', 'customer', 'importer', 'broker', 'carrier'].each { |role|
+        add_role_if_requested(requested_roles, r, role, params[:linked_with])
       }
     end
     render json: r
@@ -22,11 +22,11 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
     CoreModule::COMPANY
   end
 
-  def validate 
+  def validate
     co = Company.find params[:id]
     run_validations co
   end
-    
+
   private
   def query_base linked_with = nil
     r = (current_user.company.master? ? Company : current_user.company.linked_companies).where("length(trim(system_code)) > 0")
@@ -38,7 +38,7 @@ module Api; module V1; class CompaniesController < Api::V1::ApiCoreModuleControl
 
   def companies_as_json! c_list
     c_list.sort_by! {|c| c.name}
-    c_list.as_json(root:false,only:[:id,:name,:master,:vendor,:customer,:importer,:broker,:system_code])
+    c_list.as_json(root:false, only:[:id, :name, :master, :vendor, :customer, :importer, :broker, :system_code])
   end
 
   def add_role_if_requested requested_roles, return_hash, role, linked_with = nil

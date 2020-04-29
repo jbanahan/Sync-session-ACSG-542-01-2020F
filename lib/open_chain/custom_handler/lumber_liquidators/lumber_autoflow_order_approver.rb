@@ -2,15 +2,15 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAutoflowOrderApprover
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  
+
   def self.process order, entity_snapshot: true
     u = find_or_create_autoflow_user
 
-    cdefs = self.prep_custom_definitions([:prodven_risk,:ordln_pc_approved_by,:ordln_pc_approved_date,:ordln_pc_approved_by_executive,:ordln_pc_approved_date_executive,:ord_assigned_agent,:ordln_qa_approved_by,:ordln_qa_approved_date, :ord_inspector_assigned])
+    cdefs = self.prep_custom_definitions([:prodven_risk, :ordln_pc_approved_by, :ordln_pc_approved_date, :ordln_pc_approved_by_executive, :ordln_pc_approved_date_executive, :ord_assigned_agent, :ordln_qa_approved_by, :ordln_qa_approved_date, :ord_inspector_assigned])
     has_changes = false
 
     order.order_lines.each do |ol|
-      line_changed = process_line(ol,cdefs,u)
+      line_changed = process_line(ol, cdefs, u)
       has_changes = true if line_changed
     end
 
@@ -43,8 +43,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
 
   def self.process_line ol, cdefs, autoflow_user
     changed = false
-    changed = true if process_line_product_compliance(ol,cdefs, autoflow_user)
-    changed = true if process_line_qa(ol,cdefs, autoflow_user)
+    changed = true if process_line_product_compliance(ol, cdefs, autoflow_user)
+    changed = true if process_line_qa(ol, cdefs, autoflow_user)
     return changed
   end
 
@@ -53,8 +53,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
     should_be_autoflow = assigned_agent.blank? || assigned_agent.match(/GS-(EU|US|CA)/)
     is_approved = !ol.custom_value(cdefs[:ordln_qa_approved_date]).blank?
     if !is_approved && should_be_autoflow
-      ol.update_custom_value!(cdefs[:ordln_qa_approved_by],autoflow_user.id)
-      ol.update_custom_value!(cdefs[:ordln_qa_approved_date],0.seconds.ago)
+      ol.update_custom_value!(cdefs[:ordln_qa_approved_by], autoflow_user.id)
+      ol.update_custom_value!(cdefs[:ordln_qa_approved_date], 0.seconds.ago)
     end
     return false
   end
@@ -67,20 +67,20 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAu
 
     return changed if approved_by && approved_by != autoflow_user.id
 
-    risk_level = get_line_risk(ol,cdefs)
+    risk_level = get_line_risk(ol, cdefs)
     # if it has auto-flow as it's risk
     if !risk_level.blank? && risk_level.match(/Auto-Flow/)
       # if it is not approved, then approve with auto-flow user
       if approved_by.blank?
-        ol.update_custom_value!(cdefs[:ordln_pc_approved_by],autoflow_user.id)
-        ol.update_custom_value!(cdefs[:ordln_pc_approved_date],0.seconds.ago)
+        ol.update_custom_value!(cdefs[:ordln_pc_approved_by], autoflow_user.id)
+        ol.update_custom_value!(cdefs[:ordln_pc_approved_date], 0.seconds.ago)
         changed = true
       end
     else # if it does not have auto-flow as it's risk
       # if it is approved by auto-flow, then clear it
       if approved_by == autoflow_user.id
-        ol.update_custom_value!(cdefs[:ordln_pc_approved_by],nil)
-        ol.update_custom_value!(cdefs[:ordln_pc_approved_date],nil)
+        ol.update_custom_value!(cdefs[:ordln_pc_approved_by], nil)
+        ol.update_custom_value!(cdefs[:ordln_pc_approved_date], nil)
         changed = true
       end
     end

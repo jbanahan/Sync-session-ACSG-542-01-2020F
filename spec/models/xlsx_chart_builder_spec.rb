@@ -67,10 +67,10 @@ describe XlsxChartBuilder do
   describe "add_data" do
     it "adds data to a chart" do
       raw_chart = double("raw_chart")
-      expect(raw_chart).to receive(:add_series).with :data => [1,2,3], :title => "2018 Data", :color => "FF0000", :labels => ["A", "B", "C"]
+      expect(raw_chart).to receive(:add_series).with :data => [1, 2, 3], :title => "2018 Data", :color => "FF0000", :labels => ["A", "B", "C"]
 
       chart = XlsxChartBuilder::XlsxChart.new(raw_chart, ["A", "B", "C"])
-      chart.add_data([1,2,3], "2018 Data", "FF0000")
+      chart.add_data([1, 2, 3], "2018 Data", "FF0000")
     end
   end
 

@@ -1,7 +1,7 @@
 describe OpenChain::DrawbackExportParser do
 
   describe "parse_zip_file" do
-    
+
     it "should extract files from zip" do
       file_names = []
       allow(described_class).to receive(:parse_file) do |f, importer|
@@ -26,7 +26,7 @@ describe OpenChain::DrawbackExportParser do
   describe "parse_file" do
 
     it "should delegate to parse_local_xls for an xls or xlsx" do
-      
+
       File.open("spec/fixtures/files/test_sheet_1.xls", "r") do |xls_file|
         expect(described_class).to receive(:parse_local_xls).with(xls_file, "importer")
         described_class.parse_file(xls_file, "importer")
@@ -37,7 +37,7 @@ describe OpenChain::DrawbackExportParser do
         described_class.parse_file(xlsx_file, "importer")
       end
     end
-    
+
     it "should delegate to parse_zip_file for a zip" do
       File.open("spec/fixtures/files/test_sheets.zip", "r") do |zip_file|
         expect(described_class).to receive(:parse_zip_file).with(zip_file, "importer")
@@ -46,7 +46,7 @@ describe OpenChain::DrawbackExportParser do
     end
 
     it "should delegate to parse_csv_file for a csv or txt" do
-            
+
       File.open("spec/fixtures/files/test_sheet_3.csv", "r") do |csv_file|
         expect(described_class).to receive(:parse_csv_file).with(csv_file.path, "importer")
         described_class.parse_file(csv_file, "importer")
@@ -61,7 +61,7 @@ describe OpenChain::DrawbackExportParser do
 
     it "should raise exception for an unrecognized file type" do
       File.open("spec/fixtures/files/test_sheet_5.foo", "r") do |foo_file|
-        expect{ described_class.parse_file(foo_file, "importer") }.to raise_error(ArgumentError, "File extension not recognized")
+        expect { described_class.parse_file(foo_file, "importer") }.to raise_error(ArgumentError, "File extension not recognized")
       end
     end
   end

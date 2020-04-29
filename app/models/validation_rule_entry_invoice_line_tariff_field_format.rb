@@ -1,6 +1,6 @@
 # -*- SkipSchemaAnnotations
 
-#run a field format validation on every invoice tariff on the entry and fail if ANY tariff fails the test
+# run a field format validation on every invoice tariff on the entry and fail if ANY tariff fails the test
 # All business rule setup (search criterion etc) is run against the Invoice Line NOT!!! against the Tariff.
 class ValidationRuleEntryInvoiceLineTariffFieldFormat < BusinessValidationRule
   include ValidatesCommercialInvoiceLine

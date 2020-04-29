@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
 
   before :each do
-    @line = "1600,113-4873420-0,85075306,1200739-001,7,285,ID,6402992760,892.05,26.7615,0.03,0,0,UA LOCKER SLIDE - BLK/SLV" 
+    @line = "1600,113-4873420-0,85075306,1200739-001,7,285,ID,6402992760,892.05,26.7615,0.03,0,0,UA LOCKER SLIDE - BLK/SLV"
     @port_code = "1303"
     @box_37 = 100
     @box_40 = 101
@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
   end
 
   it "should match to existing export line and create import line" do
-    exp = Factory(:duty_calc_export_file_line,:ref_1=>'85075306')
+    exp = Factory(:duty_calc_export_file_line, :ref_1=>'85075306')
     t = Tempfile.new("ftz")
     t << @line
     t.flush
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFtzParser do
     expect(d.duty_per_unit).to eq(0.0939)
   end
   it "should not create import lines if they already exist" do
-    exp = Factory(:duty_calc_export_file_line,:ref_1=>'85075306')
+    exp = Factory(:duty_calc_export_file_line, :ref_1=>'85075306')
     t = Tempfile.new("ftz")
     t << @line
     t.flush

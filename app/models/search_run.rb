@@ -39,14 +39,14 @@ class SearchRun < ActiveRecord::Base
       joins("LEFT OUTER JOIN search_setups ON search_runs.search_setup_id = search_setups.id").
       joins("LEFT OUTER JOIN imported_files ON search_runs.imported_file_id = imported_files.id").
       joins("LEFT OUTER JOIN custom_files ON search_runs.custom_file_id = custom_files.id").
-      where("search_setups.module_type = :core_module OR imported_files.module_type = :core_module OR custom_files.module_type = :core_module",:core_module=>core_module.class_name).
+      where("search_setups.module_type = :core_module OR imported_files.module_type = :core_module OR custom_files.module_type = :core_module", :core_module=>core_module.class_name).
       where(:user_id=>user.id).
       order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
-      readonly(false). #http://stackoverflow.com/questions/639171/what-is-causing-this-activerecordreadonlyrecord-error/3445029#3445029
+      readonly(false). # http://stackoverflow.com/questions/639171/what-is-causing-this-activerecordreadonlyrecord-error/3445029#3445029
       first
   end
 
-  #get the parent object (either search_run, imported_file, or custom_file)
+  # get the parent object (either search_run, imported_file, or custom_file)
   def parent
     return self.search_setup unless self.search_setup.blank?
     return self.imported_file unless self.imported_file.blank?
@@ -65,11 +65,11 @@ class SearchRun < ActiveRecord::Base
         if !self.search_setup.nil?
           query = SearchQuery.new self.search_setup, self.user
         else
-          # make sure we utilize the imported file's search aspect since we don't actually want to 
+          # make sure we utilize the imported file's search aspect since we don't actually want to
           # return every single result from the imported file if the user created a search over the imported result set
           query = SearchQuery.new self.imported_file, self.user, :extra_from=>self.imported_file.result_keys_from
         end
-        
+
         @object_keys = query.result_keys
       elsif !self.custom_file.nil?
         # Avoid the linear key load from looping over the cf.custom_file_record's association also avoid pointless full object load
@@ -84,7 +84,7 @@ class SearchRun < ActiveRecord::Base
     end
   end
 
-  private 
+  private
   def set_user
     return unless self.user_id.blank? && self.user.blank?
     p = self.parent

@@ -1,8 +1,8 @@
-describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do 
+describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
 
   subject { described_class }
 
-  describe "customize_order_response" do 
+  describe "customize_order_response" do
     let (:order) { Order.new }
     let (:user) { User.new }
     let (:hash) { {id: nil} }
@@ -24,8 +24,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
 
 
   describe "customize_shipment_response" do
-    let (:shipment) { 
-      s = Shipment.new 
+    let (:shipment) {
+      s = Shipment.new
       s.containers.build container_number: "12345"
       s
     }
@@ -71,7 +71,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
       expect(hash["custom"]["valid_delivery_location"]).to eq true
     end
 
-    it "adds invalid_delivery_location" do 
+    it "adds invalid_delivery_location" do
       shipment.first_port_receipt_id = 1
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking).to receive(:valid_delivery_location?).with(shipment).and_return false
       subject.customize_shipment_response(shipment, user, hash, params)
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     end
 
     context "with missing fields" do
-      after :each do 
+      after :each do
         expect(subject.can_send_factory_pack? shipment, false).to eq false
       end
 
@@ -184,7 +184,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
 
     let (:shipment) {
       # by default, make a shipment that can be sent...
-      s = Shipment.new booking_number: "BOOK", vessel: "VESS", voyage: "VOY", master_bill_of_lading: "MBOL", est_departure_date: Time.zone.now, 
+      s = Shipment.new booking_number: "BOOK", vessel: "VESS", voyage: "VOY", master_bill_of_lading: "MBOL", est_departure_date: Time.zone.now,
                         seller_address_id: 1, ship_to_address_id: 1, ship_from_id: 1, consolidator_address_id: 1, container_stuffing_address_id: 1, country_origin_id: 1
       s.shipment_lines.build quantity: 1, carton_qty: 2, cbms: 3, gross_kgs: 4
       s
@@ -195,7 +195,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     end
 
     context "with missing fields" do
-      after :each do 
+      after :each do
         expect(subject.can_send_isf? shipment, false).to eq false
       end
 
@@ -284,7 +284,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
       s
     }
 
-    before :each do 
+    before :each do
       container
     end
 
@@ -293,7 +293,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     end
 
     context "with missing fields" do
-      after :each do 
+      after :each do
         expect(subject.can_send_vgm? shipment, false, cdefs).to eq false
       end
 
@@ -329,7 +329,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
         shipment.containers = []
       end
 
-      context "with weighing method == 2" do 
+      context "with weighing method == 2" do
         before(:each) { container.find_and_set_custom_value(cdefs[:con_weighing_method], 2) }
 
         it "returns false if cargo weight is missing" do
@@ -349,7 +349,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     context "with weighing method == 1" do
       before(:each) { container.find_and_set_custom_value(cdefs[:con_weighing_method], 1) }
 
-      after :each do 
+      after :each do
         expect(subject.can_send_vgm? shipment, false, cdefs).to eq true
       end
 
@@ -374,6 +374,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCustomApiResponse do
     it "it disallows resend if not already sent" do
       expect(subject.can_send_vgm? shipment, true, cdefs).to eq false
     end
-    
+
   end
 end

@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnAuditComparator
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:ord_audit_initiated_by,:ord_audit_initiated_date,:ord_docs_required])
+    @cdefs ||= self.class.prep_custom_definitions([:ord_audit_initiated_by, :ord_audit_initiated_date, :ord_docs_required])
   end
 
   def compare(id)

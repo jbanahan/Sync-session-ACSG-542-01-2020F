@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
   extend ActiveSupport::Concern
 
   # Extracts and parses the address information below a party element
-  # For GTN, it's assumed were just going to have a single address for the company, as such 
+  # For GTN, it's assumed were just going to have a single address for the company, as such
   # the company's system code is used as well for the address' system code.
   def parse_address_info company, party_xml, party_address_type, address_system_code: nil
     address_system_code = company.system_code if address_system_code.nil?
@@ -73,7 +73,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
     end
   end
 
-  # By default, we'll want to prefix system codes, this method can be overridden to 
+  # By default, we'll want to prefix system codes, this method can be overridden to
   # determine if codes are not needed.
   def prefix_identifiers_with_system_codes?
     true
@@ -81,7 +81,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
 
   # Parses and finds/creates all the party references returned by the party_map method's mapping.
   def parse_parties xml, user, filename
-    # Create the vendor / factory prior to doing the order, otherwise we can run into duplicate key issues trying to 
+    # Create the vendor / factory prior to doing the order, otherwise we can run into duplicate key issues trying to
     # create them inside the full order transaction.
     parties = {}
     party_map.each_pair do |party_type, xpath|
@@ -95,7 +95,6 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
         company = find_or_create_company(party_xml, user, filename, party_type)
         parties[party_type] = company unless company.nil?
       end
-      
     end
 
     parties
@@ -127,7 +126,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
     end
   end
 
-  def _nokogiri? 
+  def _nokogiri?
     self.class < OpenChain::CustomHandler::NokogiriXmlHelper
   end
 
@@ -150,7 +149,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
 
       system_identifier = SystemIdentifier.where(system: system_id, code: system_code).first_or_create!
       company = system_identifier.company
-      
+
       if company.nil?
         created = true
         company = Company.create!({party_type => true, name: name})
@@ -174,7 +173,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
       end
 
       set_additional_party_information(company, party_xml, party_type)
-      
+
       if company.changed? || address.changed?
         address.save! if address.changed?
         company.save! if company.changed?
@@ -273,11 +272,11 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
     prefix_identifiers_with_system_codes? ? "#{company.system_code}-#{value}" : value
   end
 
-  # Sets a custom value into the given object.  
+  # Sets a custom value into the given object.
   # obj - the object to update
   # value - the value to set
   # uid - either a CustomDefinition object or the setup cdef_uid value for the custom field
-  # changed - if supplied, a MutableBoolean object that will be set to true if the value of the 
+  # changed - if supplied, a MutableBoolean object that will be set to true if the value of the
   # custom value was modified.
   # skip_nil_values - results in the mehtod being a no-op if the value is nil
   def set_custom_value obj, value, uid, changed: nil, skip_nil_values: false
@@ -307,7 +306,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
       inbound_file.error_and_raise("No importer found with system code '#{@importer_system_code}'.") if imp.nil?
       imp
     end
-  
+
     @imp
   end
 
@@ -319,7 +318,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
   # the method cdef_uids and return an array of cusotm definition setup uids to utilize.
   def cdefs
     @cdefs ||= begin
-      defs = Set.new 
+      defs = Set.new
       if self.respond_to?(:generic_cdef_uids)
         self.generic_cdef_uids.each {|c| defs << c}
       end

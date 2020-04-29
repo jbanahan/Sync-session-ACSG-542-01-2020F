@@ -35,7 +35,7 @@ describe OpenChain::DelayedJobExtensions do
       dj_locked.locked_at = DateTime.now
       [dj_1, dj_2, dj_3, dj_no_error, dj_locked].each(&:save!)
 
-      expect(subject.group_jobs).to eq({dj_1.id => [dj_1.id, dj_3.id], 
+      expect(subject.group_jobs).to eq({dj_1.id => [dj_1.id, dj_3.id],
                                           dj_2.id => [dj_2.id],
                                           dj_3.id => [dj_1.id, dj_3.id]
                                           })
@@ -52,7 +52,7 @@ describe OpenChain::DelayedJobExtensions do
       OpenChain::AllianceImagingClient.delay.run_schedulable
       expect(subject.queued_jobs_for_method(OpenChain::AllianceImagingClient, :run_schedulable, true)).to eq 0
     end
-    
+
   end
 
   describe "currently_running_as_delayed_job" do

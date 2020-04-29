@@ -32,8 +32,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
         generate_and_send_315s setup, entry, milestones, setup.testing?
       end
     end
-    
-    
+
     entry
   end
 
@@ -58,17 +57,17 @@ module OpenChain; module CustomHandler; class Generic315Generator
         d.port_of_entry = v(:ent_entry_port_code, entry)
         d.port_of_entry_location = entry.us_entry_port
       end
-      
+
       d.port_of_lading = v(:ent_lading_port_code, entry)
       d.port_of_lading_location = entry.lading_port
       d.port_of_unlading = v(:ent_unlading_port_code, entry)
       d.port_of_unlading_location = entry.unlading_port
-      
+
       # Technically, we'd like to put the cargo control number in a collection element (see generate_315_support#write_315_xml)
       # like the master bills etc.
       # However, since this was added a long time after original development, there's a lot of production edi mappings
       # that rely on it being in a a single element.
-      # The join here is in keeping with the existing style of handling the cargo control number...in cases where the 
+      # The join here is in keeping with the existing style of handling the cargo control number...in cases where the
       # document is split on the CCN value, each data object received here will have a single one and it won't be any issue parsing it out
       # for ecs
       d.cargo_control_number = data[:cargo_control_numbers].join("\n ") if data[:cargo_control_numbers]
@@ -84,7 +83,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       d
     end
 
-  private 
+  private
 
     def split_entry_data_identifiers output_style, entry
       # We need to send distinct combinations of the broker reference / container / master bill
@@ -114,7 +113,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
       end
       values
     end
-  
+
     def setup_315 entry
       @configs ||= begin
         # Since we can now potentially have multiple configs per customer (since you can have different statuses on the setups),

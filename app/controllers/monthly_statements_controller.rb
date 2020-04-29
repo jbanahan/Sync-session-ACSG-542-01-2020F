@@ -18,7 +18,7 @@ class MonthlyStatementsController < ApplicationController
   def show
     if current_user.view_statements?
       statement = MonthlyStatement.find params[:id]
-      action_secure(statement.can_view?(current_user), statement, {:lock_check=>false,:verb=>"view",:module_name=>"statement"}) {
+      action_secure(statement.can_view?(current_user), statement, {:lock_check=>false, :verb=>"view", :module_name=>"statement"}) {
         @statement = statement
       }
     else
@@ -32,7 +32,7 @@ class MonthlyStatementsController < ApplicationController
       OpenChain::CustomHandler::Vandegrift::KewillStatementRequester.delay.request_monthly_statements [statement.statement_number]
       add_flash :notices, "Updated statement has been requested.  Please allow 10 minutes for it to appear."
     end
-    
+
     redirect_to statement
   end
 end

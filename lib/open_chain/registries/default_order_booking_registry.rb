@@ -41,7 +41,7 @@ module OpenChain; module Registries; class DefaultOrderBookingRegistry
   end
 
   def self.can_book_order_to_shipment? order, shipment
-    # By default we'll allow any order to be booked to the shipment...note this is called after actual permissions handling is 
+    # By default we'll allow any order to be booked to the shipment...note this is called after actual permissions handling is
     # done to prevent vendors, etc from booking things they can't actually see. This is only adding on extra permissions.
     true
   end

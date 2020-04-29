@@ -4,11 +4,11 @@ module Helpers
 
   # Use this method when you need to evaluate a full excel row as an array
   # There's some underlying comparison that fails when comparing arrays
-  # and using an excel date 
+  # and using an excel date
   #
   # ie. sheet.row(0) == [excel_date(Date.new(2013, 1, 1))]
   def excel_date date
-    #Excel internally stores date values as days since Jan 1, 1900
+    # Excel internally stores date values as days since Jan 1, 1900
     excel_start_date = Date.new(1899, 12, 30).jd
     (date.jd - excel_start_date).to_f
   end
@@ -49,7 +49,7 @@ module Helpers
 
   class MockS3
     class AwsErrors < StandardError; end
-    class NoSuchKeyError < AwsErrors; end 
+    class NoSuchKeyError < AwsErrors; end
 
     class UploadResult
 
@@ -66,7 +66,7 @@ module Helpers
       # We're expecting the path to be like "/bucket/path/to/file.pdf"
       # The first path segment of the file is the bucket, everything after that is the path to the actual file
       split_path = path.split("/")
-      
+
       # If the path started with a / the first index is blank
       split_path.shift if split_path[0].strip.length == 0
 
@@ -89,7 +89,7 @@ module Helpers
     def self.url_for bucket, key, expires_in=1.minute, options = {}
       "http://#{bucket}.s3.com/#{key}?expires_in=#{expires_in.to_i}"
     end
-    
+
     def self.upload_data bucket_name, path, data, options = {}
       # Handle a couple different valid data objects
       local_data = nil
@@ -106,7 +106,7 @@ module Helpers
       if options[:content_encoding] == "gzip"
         local_data = ActiveSupport::Gzip.decompress local_data
       end
-      
+
       @datastore[key(bucket_name, path, @version_id)] = local_data
 
       UploadResult.new bucket_name, path, @version_id.to_s
@@ -204,16 +204,16 @@ module Helpers
 
   # Stub out the S3 methods
   def stub_s3
-    #hold the old S3 class for later
+    # hold the old S3 class for later
     @old_stub_s3_class = OpenChain::S3
-    
+
     # First, completely undefine the class
-    OpenChain.send(:remove_const,:S3)
-  
+    OpenChain.send(:remove_const, :S3)
+
     MockS3.reset
 
     # set the new constant in the module
-    OpenChain.const_set(:S3,MockS3)
+    OpenChain.const_set(:S3, MockS3)
   end
 
   def stub_email_logging
@@ -223,10 +223,10 @@ module Helpers
   def unstub_s3
     MockS3.reset
 
-    OpenChain.send(:remove_const,:S3)
-    OpenChain.const_set(:S3,@old_stub_s3_class)
+    OpenChain.send(:remove_const, :S3)
+    OpenChain.const_set(:S3, @old_stub_s3_class)
   end
-  
+
   def allow_api_access user
     use_json
     allow_api_user user
@@ -341,7 +341,7 @@ module Helpers
 
       if block_given?
         yield sheet
-      else 
+      else
         return sheet
       end
       nil
@@ -364,7 +364,7 @@ module Helpers
 
     def merged_cell_ranges sheet
       self.sheet(sheet) do |ws|
-        return ws.merged_cells.map{ |mc| {row: mc.ref.row_range.first, cols: mc.ref.col_range } }
+        return ws.merged_cells.map { |mc| {row: mc.ref.row_range.first, cols: mc.ref.col_range } }
       end
     end
 
@@ -383,7 +383,7 @@ module Helpers
             v = cell.try(:value)
             if v.is_a?(DateTime)
               # DateTimes suck - Also note that since the DateTime has no timzone (nor does Excel carry any
-              # semblance of one), the TimeWithZone you get back is going to reflect the raw time in the 
+              # semblance of one), the TimeWithZone you get back is going to reflect the raw time in the
               # default timezone (not necessarily the offset you might expect)
               v = Time.zone.parse(v.iso8601)
             elsif cell.try(:formula)
@@ -413,7 +413,7 @@ module Helpers
 
   def populate_custom_values object, custom_definitions
     # Most specs that utilize cdefs reference the custom definitions of the class under test,
-    # that method returns a hash of identifiers to the custom definitions, that's what we're 
+    # that method returns a hash of identifiers to the custom definitions, that's what we're
     # possible expecting and handling here.
     if custom_definitions.is_a?(Hash)
       custom_definitions = custom_definitions.values
@@ -446,7 +446,7 @@ module Helpers
     d = XlsxTestReader.new spreadsheet_data
     sheet_name.blank? ? d.raw_workbook_data : d.raw_data(sheet_name)
   end
-  
+
   def add_system_identifier(company, system, code)
     company.system_identifiers.create! system: system, code: code
     company

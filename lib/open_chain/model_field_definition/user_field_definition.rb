@@ -76,6 +76,6 @@ module OpenChain; module ModelFieldDefinition; module UserFieldDefinition
         [73, :usr_password_locked, :password_locked, "Password Locked", {data_type: :boolean}],
         [74, :usr_password_reset, :password_reset, "Password Reset", {data_type: :boolean}]
     ]
-    add_fields CoreModule::USER, make_company_arrays(100,'usr','users','comp','Company','company')
+    add_fields CoreModule::USER, make_company_arrays(100, 'usr', 'users', 'comp', 'Company', 'company')
   end
 end; end; end

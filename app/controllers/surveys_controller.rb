@@ -48,15 +48,15 @@ class SurveysController < ApplicationController
           log ? -log.updated_at.to_i : 0
         end
       }
-      format.xls do 
+      format.xls do
         send_excel_workbook @survey.to_xls, (@survey.name.blank? ? "survey" : @survey.name) + ".xls"
       end
     end
   end
   def new
     if current_user.edit_surveys?
-      @survey = Survey.new(:company=>current_user.company,:email_subject=>"Email Subject",:email_body=>"h1. Survey Introduction Email\n\nSample Body",:ratings_list=>"Pass\nFail")
-    else 
+      @survey = Survey.new(:company=>current_user.company, :email_subject=>"Email Subject", :email_body=>"h1. Survey Introduction Email\n\nSample Body", :ratings_list=>"Pass\nFail")
+    else
       error_redirect "You do not have permission to edit surveys."
     end
   end
@@ -81,7 +81,7 @@ class SurveysController < ApplicationController
   end
   def update
     begin
-      #inject false warnings where not submitted
+      # inject false warnings where not submitted
       s = Survey.find params[:id]
       if !s.can_edit? current_user
         add_flash :errors, "You cannot edit this survey."
@@ -201,8 +201,8 @@ class SurveysController < ApplicationController
 
     cnt = 0
     if !users.blank?
-      users.values.each do |uid|
-        s.generate_response!(User.find(uid),params[:subtitle],bo).delay.invite_user!
+      users.each_value do |uid|
+        s.generate_response!(User.find(uid), params[:subtitle], bo).delay.invite_user!
         cnt += 1
       end
       if cnt > 0
@@ -213,7 +213,7 @@ class SurveysController < ApplicationController
     cnt = 0
     if !groups.blank?
       groups.each do |g_id|
-        s.generate_group_response!(Group.find(g_id), params[:subtitle],base_object).delay.invite_user!
+        s.generate_group_response!(Group.find(g_id), params[:subtitle], base_object).delay.invite_user!
         cnt += 1
       end
 
@@ -221,7 +221,7 @@ class SurveysController < ApplicationController
         add_flash :notices, "#{cnt} #{"group".pluralize(cnt)} assigned."
       end
     end
-    
+
     redirect_to redirect_location(s)
   end
   def toggle_subscription
@@ -239,31 +239,31 @@ class SurveysController < ApplicationController
 
   def archive
     s = Survey.find params[:id]
-    action_secure(s.can_edit?(current_user), s, module_name: "Survey", verb: "archive", lock_check: false) do 
+    action_secure(s.can_edit?(current_user), s, module_name: "Survey", verb: "archive", lock_check: false) do
       s.archived = true
       if s.save
         add_flash :notices, "Survey archived."
       else
         errors_to_flash s
-      end 
+      end
       redirect_to survey_path s
     end
   end
 
   def restore
     s = Survey.find params[:id]
-    action_secure(s.can_edit?(current_user), s, module_name: "Survey", verb: "restore", lock_check: false) do 
+    action_secure(s.can_edit?(current_user), s, module_name: "Survey", verb: "restore", lock_check: false) do
       s.archived = false
       if s.save
         add_flash :notices, "Survey restored."
       else
         errors_to_flash s
-      end 
+      end
       redirect_to survey_path s
     end
   end
 
-  private 
+  private
   def redirect_location s
     params[:redirect_to].blank? ? s : params[:redirect_to]
   end

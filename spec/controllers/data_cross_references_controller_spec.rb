@@ -1,6 +1,6 @@
 describe DataCrossReferencesController do
 
-  #no two lambdas share the same identity so this simplifies the tests
+  # no two lambdas share the same identity so this simplifies the tests
   def strip_preproc hsh
     hsh.delete(:preprocessor)
     hsh
@@ -136,7 +136,7 @@ describe DataCrossReferencesController do
     it "errors if missing required company" do
       allow(DataCrossReference).to receive(:can_view?).and_return true
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::US_HTS_TO_CA, key: "KEY", value: "VALUE"
-      
+
       post :update, id: xref.id, data_cross_reference: {key: "KEY", value: "VALUE2", cross_reference_type: xref.cross_reference_type}
       expect(response).to be_success
       expect(flash[:errors]).to include "You must assign a company."
@@ -188,7 +188,7 @@ describe DataCrossReferencesController do
 
     it "rejects user without access" do
       xref = DataCrossReference.create! cross_reference_type: "not an xref", key: "KEY", value: "VALUE"
-      
+
       post :destroy, id: xref.id
       expect(response).to redirect_to request.referer
       expect(flash[:errors]).to include "You do not have permission to delete this cross reference."
@@ -252,7 +252,7 @@ describe DataCrossReferencesController do
       @user.sys_admin = false; @user.save!
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
       expect_any_instance_of(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
-      
+
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
     end
 
@@ -262,16 +262,16 @@ describe DataCrossReferencesController do
     it "returns an array of importers with products, sorted by name" do
       co_1 = Factory(:company)
       prod_1 = Factory(:product, importer: co_1)
-      
+
       co_2 = Factory(:importer, name: "Substandard Ltd.", system_code: 'SUBST')
       prod_2 = Factory(:product, importer: co_2)
-      
+
       co_3 = Factory(:importer, name: "ACME", system_code: 'ACME')
       prod_3 = Factory(:product, importer: co_3)
       prod_4 = Factory(:product, importer: co_3)
 
       co_4 = Factory(:importer, name: "Nothing-to-See")
-      
+
       results = described_class.new.get_importers_for(@user)
       expect(results.count).to eq 2
       expect(results[0]).to eq co_3

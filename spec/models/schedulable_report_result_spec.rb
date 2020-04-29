@@ -37,7 +37,7 @@ describe SchedulableReportResult do
       valid_options['friendly_settings'] = ["Testing", "Friendly Settings"]
 
       expect(FakeSchedulableReportResult).to receive(:permission?).with(user).and_return true
-      report_settings = {settings: {"test1" => "test",'test'=>'testing'}, friendly_settings: ["Testing", "Testing 2"]}
+      report_settings = {settings: {"test1" => "test", 'test'=>'testing'}, friendly_settings: ["Testing", "Testing 2"]}
       expect(FakeSchedulableReportResult).to receive(:schedulable_settings).with(user, "Testing", valid_options).and_return report_settings
 
       expected_hash = valid_options.clone
@@ -80,15 +80,15 @@ describe SchedulableReportResult do
     end
 
     it "raises an error if report_class implements can_view? and returns false" do
-      # This is needed so we can mock the can_view? without having to implement it above...it's a little hacky, but it 
+      # This is needed so we can mock the can_view? without having to implement it above...it's a little hacky, but it
       # prevents us from having to do add another fake class implementation
-      without_partial_double_verification do 
+      without_partial_double_verification do
         expect(FakeSchedulableReportResult).to receive(:schedulable_settings).with(user, "Testing", valid_options).and_return({})
         expect(FakeSchedulableReportResult).to receive(:permission?).with(user).and_return true
         expect(FakeSchedulableReportResult).to receive(:can_view?).with(user).and_return false
 
         expect { described_class.run_schedulable valid_options }.to raise_error "User #{user.username} does not have permission to run this scheduled report."
-      end      
+      end
     end
 
     it "raises an error if report_class does not respond to run_report" do

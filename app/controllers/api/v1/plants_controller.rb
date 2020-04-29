@@ -3,5 +3,5 @@ module Api; module V1; class PlantsController < Api::V1::ApiCoreModuleController
     CoreModule::PLANT
   end
 
-  #currently just here for state button support, delete this comment if you add methods
+  # currently just here for state button support, delete this comment if you add methods
 end; end; end

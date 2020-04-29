@@ -20,24 +20,24 @@
 #
 
 class Message < ActiveRecord::Base
-  attr_accessible :body, :folder, :link_name, :link_path, :subject, 
+  attr_accessible :body, :folder, :link_name, :link_path, :subject,
     :user_id, :viewed, :created_at
-  
+
   belongs_to  :user
 
   has_many :attachments, as: :attachable, dependent: :destroy
-  
+
   validates   :user, :presence => true
 
   after_create :email_to_user
-  
+
   def can_view? u
     u.sys_admin? || u.id == self.user_id
   end
 
-  #purge messages older than the give date (defaults to 30 days ago)
+  # purge messages older than the give date (defaults to 30 days ago)
   def self.purge_messages older_than=30.days.ago
-    Message.where("created_at < ?",older_than).destroy_all
+    Message.where("created_at < ?", older_than).destroy_all
   end
 
   # Emails message to user is user has checked corresponding option
@@ -50,7 +50,7 @@ class Message < ActiveRecord::Base
 
   # efficent method to get unread message count with just a user_id
   def self.unread_message_count user_id
-    Message.where(:user_id=>user_id).where("viewed is null OR viewed = ?",false).count
+    Message.where(:user_id=>user_id).where("viewed is null OR viewed = ?", false).count
   end
 
   def self.run_schedulable

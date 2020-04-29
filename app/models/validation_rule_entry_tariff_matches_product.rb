@@ -10,7 +10,7 @@ class ValidationRuleEntryTariffMatchesProduct < BusinessValidationRule
   include ValidatesCommercialInvoiceLine
 
   def run_child_validation invoice_line
-    #collect all part/hts combinations
+    # collect all part/hts combinations
     part = invoice_line.part_number
     if part.blank?
       return error "Part number is empty for commercial invoice line."
@@ -20,16 +20,16 @@ class ValidationRuleEntryTariffMatchesProduct < BusinessValidationRule
     country_id = entry.import_country_id
     importer_id = get_importer_id(entry)
     good_hts_vals = TariffRecord.joins(:classification=>:product).
-      where("products.importer_id = ?",importer_id).
-      where("classifications.country_id = ?",country_id).
-      where("products.unique_identifier = ?",unique_identifier).
+      where("products.importer_id = ?", importer_id).
+      where("classifications.country_id = ?", country_id).
+      where("products.unique_identifier = ?", unique_identifier).
       pluck(:hts_1)
     invoice_line.commercial_invoice_tariffs.each do |ct|
       hts = ct.hts_code
       if hts.blank?
         return error("HTS code is blank for line.")
       end
-      if !good_hts_vals.include?(hts.gsub(/\./,'').strip)
+      if !good_hts_vals.include?(hts.gsub(/\./, '').strip)
         return error("Invalid HTS #{ct.hts_code} for part #{part}")
       end
     end
@@ -45,7 +45,7 @@ class ValidationRuleEntryTariffMatchesProduct < BusinessValidationRule
   def get_uid part_number
     mask = rule_attributes['part_number_mask']
     return part_number if mask.blank?
-    return mask.gsub(/\?/,part_number)
+    return mask.gsub(/\?/, part_number)
   end
   def get_importer_id entry
     id = entry.importer_id

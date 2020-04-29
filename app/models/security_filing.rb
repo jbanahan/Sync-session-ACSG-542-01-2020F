@@ -68,27 +68,27 @@
 #
 
 class SecurityFiling < ActiveRecord::Base
-  include CoreObjectSupport 
+  include CoreObjectSupport
   include IntegrationParserSupport
 
-  attr_accessible :ams_match_date, :booking_number, :broker_customer_number, 
-    :cbp_updated_at, :container_numbers, :countries_of_origin, 
-    :delete_accepted_date, :entry_numbers, :entry_port_code, 
-    :entry_reference_numbers, :estimated_vessel_arrival_date, 
-    :estimated_vessel_load_date, :estimated_vessel_sailing_date, 
-    :file_logged_date, :first_accepted_date, :first_sent_date, :host_system, 
-    :host_system_file_number, :house_bills_of_lading, :importer_account_code, 
-    :importer_id, :importer_tax_id, :lading_port_code, :last_accepted_date, 
-    :last_event, :last_file_bucket, :last_file_path, :last_sent_date, 
-    :late_filing, :manufacturer_names, :master_bill_of_lading, :notes, 
-    :po_numbers, :scac, :status_code, :status_description, :time_to_process, 
-    :transaction_number, :transport_mode_code, :unlading_port_code, 
+  attr_accessible :ams_match_date, :booking_number, :broker_customer_number,
+    :cbp_updated_at, :container_numbers, :countries_of_origin,
+    :delete_accepted_date, :entry_numbers, :entry_port_code,
+    :entry_reference_numbers, :estimated_vessel_arrival_date,
+    :estimated_vessel_load_date, :estimated_vessel_sailing_date,
+    :file_logged_date, :first_accepted_date, :first_sent_date, :host_system,
+    :host_system_file_number, :house_bills_of_lading, :importer_account_code,
+    :importer_id, :importer_tax_id, :lading_port_code, :last_accepted_date,
+    :last_event, :last_file_bucket, :last_file_path, :last_sent_date,
+    :late_filing, :manufacturer_names, :master_bill_of_lading, :notes,
+    :po_numbers, :scac, :status_code, :status_description, :time_to_process,
+    :transaction_number, :transport_mode_code, :unlading_port_code,
     :us_customs_first_file_date, :vessel, :vessel_departure_date, :voyage
-  
+
   belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'
   belongs_to :unlading_port, :class_name=>'Port', :foreign_key=>'unlading_port_code', :primary_key=>'schedule_d_code'
   belongs_to :entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'schedule_d_code'
-  
+
   belongs_to :importer, :class_name=>'Company'
   has_many :security_filing_lines, -> { order(:line_number) }, dependent: :destroy, autosave: true
   has_many :piece_sets, :through=>:security_filing_lines
@@ -97,7 +97,7 @@ class SecurityFiling < ActiveRecord::Base
   scope :not_matched, -> { where(:status_code=>"ACCNOMATCH") }
 
   def can_view? user
-    user.view_security_filings? && company_permission?(user) 
+    user.view_security_filings? && company_permission?(user)
   end
 
   def can_edit? user
@@ -124,7 +124,7 @@ class SecurityFiling < ActiveRecord::Base
   def self.search_where user
     user.company.master? ?  "1=1" : "security_filings.importer_id = #{user.company_id} or security_filings.importer_id IN (select child_id from linked_companies where parent_id = #{user.company_id})"
   end
-  
+
   private
   def company_permission? user
     self.importer_id==user.company_id || user.company.master? || user.company.linked_companies.include?(self.importer)

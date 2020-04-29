@@ -17,7 +17,7 @@ module OpenChain; module ActiveDatesSupport
     # when building search queries
     def active_where_clause for_date=Date.current
       tn = table_name
-      "#{tn}.start_date <= ':effective_date' AND #{tn}.end_date >= ':effective_date'".gsub(/:effective_date/,for_date.to_formatted_s(:db))
+      "#{tn}.start_date <= ':effective_date' AND #{tn}.end_date >= ':effective_date'".gsub(/:effective_date/, for_date.to_formatted_s(:db))
     end
   end
 end; end

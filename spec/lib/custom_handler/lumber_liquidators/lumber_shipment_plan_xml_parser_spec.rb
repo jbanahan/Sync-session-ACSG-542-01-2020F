@@ -1,30 +1,30 @@
 require 'rexml/document'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentPlanXmlParser do
-  
+
   let (:test_data) { IO.read('spec/fixtures/files/ll_shipment_plan.xml') }
   let (:log) { InboundFile.new }
 
-  describe "parse_dom" do  
-  
+  describe "parse_dom" do
+
     it "should fail on bad root element" do
-      test_data.gsub!(/ShipmentPlanMessage/,'BADROOT')
+      test_data.gsub!(/ShipmentPlanMessage/, 'BADROOT')
       doc = REXML::Document.new(test_data)
-      expect{subject.parse_dom(doc, log)}.to raise_error("Incorrect root element, 'BADROOT'.  Expecting 'ShipmentPlanMessage'.")
+      expect {subject.parse_dom(doc, log)}.to raise_error("Incorrect root element, 'BADROOT'.  Expecting 'ShipmentPlanMessage'.")
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Incorrect root element, 'BADROOT'.  Expecting 'ShipmentPlanMessage'."
     end
 
     it "should fail if shipment ref is missing" do
-      test_data.gsub!(/2010371040/,'')
+      test_data.gsub!(/2010371040/, '')
       doc = REXML::Document.new(test_data)
-      expect{subject.parse_dom(doc, log)}.to raise_error("XML must have Shipment Reference Number at /ShipmentPlanList/ShipmentPlan/ShipmentPlanItemList/ShipmentPlanItem/SellerId.")
+      expect {subject.parse_dom(doc, log)}.to raise_error("XML must have Shipment Reference Number at /ShipmentPlanList/ShipmentPlan/ShipmentPlanItemList/ShipmentPlanItem/SellerId.")
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "XML must have Shipment Reference Number at /ShipmentPlanList/ShipmentPlan/ShipmentPlanItemList/ShipmentPlanItem/SellerId."
     end
 
     it "should fail if shipment plan name is missing" do
-      test_data.gsub!(/730/,'')
+      test_data.gsub!(/730/, '')
       doc = REXML::Document.new(test_data)
-      expect{subject.parse_dom(doc, log)}.to raise_error("XML must have Shipment Plan Name at /ShipmentPlanList/ShipmentPlan/ShipmentPlanHeader/ShipmentPlanName.")
+      expect {subject.parse_dom(doc, log)}.to raise_error("XML must have Shipment Plan Name at /ShipmentPlanList/ShipmentPlan/ShipmentPlanHeader/ShipmentPlanName.")
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "XML must have Shipment Plan Name at /ShipmentPlanList/ShipmentPlan/ShipmentPlanHeader/ShipmentPlanName."
 
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].value).to eq "2010371040"

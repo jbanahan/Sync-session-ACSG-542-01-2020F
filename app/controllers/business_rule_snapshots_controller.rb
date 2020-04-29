@@ -13,7 +13,7 @@ class BusinessRuleSnapshotsController < ApplicationController
     end
   end
 
-  private 
+  private
     def find_object params, user
       obj = polymorphic_find(params[:recordable_type], params[:recordable_id])
       if obj.can_view?(user) && user.view_business_validation_results?

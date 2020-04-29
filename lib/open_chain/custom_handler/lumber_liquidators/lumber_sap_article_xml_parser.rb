@@ -28,12 +28,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
   def parse_dom dom, log, opts={}
     root = dom.root
     log.error_and_raise "Incorrect root element #{root.name}, expecting '_-LUMBERL_-VFI_ARTMAS01'." unless root.name == '_-LUMBERL_-VFI_ARTMAS01'
-    prod_el = REXML::XPath.first(root,'//IDOC/E1BPE1MAKTRT')
-    uid = et(prod_el,'MATERIAL')
+    prod_el = REXML::XPath.first(root, '//IDOC/E1BPE1MAKTRT')
+    uid = et(prod_el, 'MATERIAL')
     log.reject_and_raise "XML must have Material number at /_-LUMBERL_-VFI_ARTMAS01/IDOC/E1BPE1MAKTRT/MATERIAL" if uid.blank?
-    name = et(prod_el,'MATL_DESC')
+    name = et(prod_el, 'MATL_DESC')
 
-    envelope = REXML::XPath.first(root,'//IDOC/EDI_DC40')
+    envelope = REXML::XPath.first(root, '//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
 
     importer = Company.where(master: true).first
@@ -60,11 +60,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       p.last_file_bucket = opts[:bucket]
       p.last_file_path = opts[:key]
       p.find_and_set_custom_value(@cdefs[:prod_sap_extract], ext_time)
-      p.find_and_set_custom_value(@cdefs[:prod_old_article], et(REXML::XPath.first(root,'//IDOC/E1BPE1MARART'),'OLD_MAT_NO'))
-      p.find_and_set_custom_value(@cdefs[:prod_merch_cat], et(REXML::XPath.first(root,'//IDOC/E1BPE1MATHEAD'),'MATL_GROUP'))
-      p.find_and_set_custom_value(@cdefs[:prod_merch_cat_desc], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_EXT'),'MERCH_CAT_DESC'))
-      p.find_and_set_custom_value(@cdefs[:prod_overall_thickness], et(REXML::XPath.first(root,'//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_CHAR[ATNAM="OVERALL_THICKNESS"]'),'ATWTB'))
-      p.find_and_set_custom_value(@cdefs[:prod_country_of_origin], et(REXML::XPath.first(root,'//IDOC/E1BPE1MAW1RT'),'COUNTRYORI_ISO'))
+      p.find_and_set_custom_value(@cdefs[:prod_old_article], et(REXML::XPath.first(root, '//IDOC/E1BPE1MARART'), 'OLD_MAT_NO'))
+      p.find_and_set_custom_value(@cdefs[:prod_merch_cat], et(REXML::XPath.first(root, '//IDOC/E1BPE1MATHEAD'), 'MATL_GROUP'))
+      p.find_and_set_custom_value(@cdefs[:prod_merch_cat_desc], et(REXML::XPath.first(root, '//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_EXT'), 'MERCH_CAT_DESC'))
+      p.find_and_set_custom_value(@cdefs[:prod_overall_thickness], et(REXML::XPath.first(root, '//IDOC/_-LUMBERL_-Z1JDA_ARTMAS_CHAR[ATNAM="OVERALL_THICKNESS"]'), 'ATWTB'))
+      p.find_and_set_custom_value(@cdefs[:prod_country_of_origin], et(REXML::XPath.first(root, '//IDOC/E1BPE1MAW1RT'), 'COUNTRYORI_ISO'))
 
       if is_new
         orders_updated = {}
@@ -93,11 +93,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
   private
     def extract_time envelope_element
-      date_part = et(envelope_element,'CREDAT')
-      time_part = et(envelope_element,'CRETIM')
+      date_part = et(envelope_element, 'CREDAT')
+      time_part = et(envelope_element, 'CRETIM')
 
       # match ActiveSupport::TimeZone.parse
-      formatted_date = "#{date_part[0,4]}-#{date_part[4,2]}-#{date_part[6,2]} #{time_part[0,2]}:#{time_part[2,2]}:#{time_part[4,2]}"
+      formatted_date = "#{date_part[0, 4]}-#{date_part[4, 2]}-#{date_part[6, 2]} #{time_part[0, 2]}:#{time_part[2, 2]}:#{time_part[4, 2]}"
 
       ActiveSupport::TimeZone['Eastern Time (US & Canada)'].parse(formatted_date)
     end

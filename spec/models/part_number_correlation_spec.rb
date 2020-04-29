@@ -14,12 +14,12 @@ describe PartNumberCorrelation do
     it "should update xls files with three additional columns" do
       tf = OpenChain::TariffFinder.new(@usa, [])
       expect(OpenChain::TariffFinder).to receive(:new).and_return(tf)
-      expect_any_instance_of(OpenChain::XLClient).to receive(:get_row).and_return([1,2,3,4])
-      expect_any_instance_of(OpenChain::XLClient).to receive(:all_row_values).and_yield(["UID","1234-XLS-AB12","OK","ABC"])
+      expect_any_instance_of(OpenChain::XLClient).to receive(:get_row).and_return([1, 2, 3, 4])
+      expect_any_instance_of(OpenChain::XLClient).to receive(:all_row_values).and_yield(["UID", "1234-XLS-AB12", "OK", "ABC"])
       expect_any_instance_of(OpenChain::XLClient).to receive(:get_cell).and_return("1234-XLS-AB12")
 
-      s = Struct.new(:part_number,:country_origin_code,:mid,:hts_code)
-      r = s.new("1234-XLS-AB12","US","MFID","12345")
+      s = Struct.new(:part_number, :country_origin_code, :mid, :hts_code)
+      r = s.new("1234-XLS-AB12", "US", "MFID", "12345")
 
       expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with("1234-XLS-AB12").and_return(r)
 
@@ -29,7 +29,7 @@ describe PartNumberCorrelation do
 
       expect(@pnc).to receive(:finished_time=)
       expect(@pnc).to receive(:save!)
-      
+
       @pnc.process([1, 2])
 
       expect(@user.messages.length).to eq(1)
@@ -37,7 +37,7 @@ describe PartNumberCorrelation do
     end
 
     it "should send an error message on exception" do
-      @pnc.process([1,2])
+      @pnc.process([1, 2])
       expect(@user.messages.length).to eq(1)
       expect(@user.messages.last.subject).to eq("ERROR: Part Number Correlation Report")
     end

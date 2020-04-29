@@ -19,7 +19,7 @@ class SummaryStatementsController < ApplicationController
       @summary_statement = SummaryStatement.where(id: params[:id]).includes(:broker_invoices).first
       @us_invoices, @ca_invoices = separate_invoices(@summary_statement)
       respond_to do |format|
-        format.html {}
+        format.html{}
         format.xls { send_excel_workbook render_summary_xls(@summary_statement), "#{@summary_statement.statement_number}.xls" }
       end
     else
@@ -36,10 +36,10 @@ class SummaryStatementsController < ApplicationController
 
   def create
     unless current_user.edit_summary_statements?
-      error_redirect "You do not have permission to create summary statements." 
+      error_redirect "You do not have permission to create summary statements."
       return
     end
-    
+
     co = Company.find(params[:company])
     unless co.importer?
       error_redirect "This company cannot be assigned summary statements."
@@ -49,7 +49,7 @@ class SummaryStatementsController < ApplicationController
     if ss.save
       redirect_to edit_summary_statement_path(ss)
       return
-    else 
+    else
       errors_to_flash ss
       redirect_to request.referrer
     end
@@ -66,7 +66,7 @@ class SummaryStatementsController < ApplicationController
 
   def update
     unless current_user.edit_summary_statements? && params[:selected]
-      redirect_to request.referrer 
+      redirect_to request.referrer
       return
     end
     ss = SummaryStatement.find(params[:id])
@@ -76,9 +76,9 @@ class SummaryStatementsController < ApplicationController
     to_add = check_invoices(to_add.split(' ')) if to_add
     begin
       BrokerInvoice.transaction do
-        to_remove.each{ |id| ss.remove! id.to_i } if to_remove
-        if to_add  
-          to_add[:invoice_ids].each{ |id| ss.add! id.to_i } if to_add[:invoice_ids]
+        to_remove.each { |id| ss.remove! id.to_i } if to_remove
+        if to_add
+          to_add[:invoice_ids].each { |id| ss.add! id.to_i } if to_add[:invoice_ids]
           raise "Invoice #{to_add[:bad_invoice_num]} does not exist." if to_add[:bad_invoice_num]
         end
       end
@@ -94,10 +94,10 @@ class SummaryStatementsController < ApplicationController
 
   def check_invoices invoice_number_arr
     valid = []
-    invoice_number_arr.each do |num| 
+    invoice_number_arr.each do |num|
       bi = BrokerInvoice.where("invoice_number = ?", num).first
       if bi
-        valid << bi.id 
+        valid << bi.id
       else
         return {bad_invoice_num: num}
       end
@@ -107,7 +107,7 @@ class SummaryStatementsController < ApplicationController
 
   def separate_invoices summary_statement
     us_invoices, ca_invoices = [], []
-    summary_statement.broker_invoices.each{ |bi| (bi.entry.canadian? ? ca_invoices : us_invoices) << bi }
+    summary_statement.broker_invoices.each { |bi| (bi.entry.canadian? ? ca_invoices : us_invoices) << bi }
     [us_invoices, ca_invoices]
   end
 

@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::CustomerInvoiceHandler do
   let!(:cf) { instance_double("CustomFile") }
   let!(:parser) { described_class.new cf }
-  
+
   describe "can_view" do
     let(:u) { Factory(:master_user) }
     let!(:ms) do
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::CustomerInvoiceHandler do
       expect(line.trade_discount).to eq 4.25
       expect(line.part_number).to eq "part num 1"
       expect(line.part_description).to eq "part descr 1"
-      expect(inv.invoice_date).to eq Date.new(2018,1,1)
+      expect(inv.invoice_date).to eq Date.new(2018, 1, 1)
       expect(inv.customer_reference_number).to eq "cust ref 1"
       expect(inv.description_of_goods).to eq "goods descr 1"
       expect(inv.invoice_total_domestic).to eq 51.10
@@ -120,7 +120,7 @@ describe OpenChain::CustomHandler::CustomerInvoiceHandler do
       expect(inv.invoice_lines.count).to eq 1
       line = inv.invoice_lines.first
       expect(line.po_number).to be_nil
-      
+
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.subject).to eq "Custom invoice upload incomplete"
       expect(mail.to).to eq ["tufnel@stonehenge.biz"]

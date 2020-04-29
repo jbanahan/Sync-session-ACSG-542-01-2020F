@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 require 'open_chain/entity_compare/uncancelled_shipment_comparator'
 
 # Extracts the data from the snapshot that LL wants to store off as "milestone snapshot" data, as a point
-# in time reference to what these values were when the order was booked (if the order is re-booked, the 
+# in time reference to what these values were when the order was booked (if the order is re-booked, the
 # the values will get updated).
 #
 # We're actually going to refer to "created" as when the line itself was booked.
@@ -105,7 +105,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     def cdefs
       @cdefs ||= self.class.prep_custom_definitions [
         :ord_country_of_origin,
-        :ordln_po_booked_article, :ordln_po_booked_quantity, :ordln_po_booked_hts, 
+        :ordln_po_booked_article, :ordln_po_booked_quantity, :ordln_po_booked_hts,
         :ordln_po_booked_price_per_unit, :ordln_po_booked_total_price, :ordln_po_booked_country_origin]
     end
 

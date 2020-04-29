@@ -13,14 +13,14 @@ module OpenChain
       class AnnAscenaProductGenerator < OpenChain::CustomHandler::ProductGenerator
         include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
         include OpenChain::CustomHandler::AnnInc::AnnRelatedStylesSupport
-        
+
         SYNC_CODE ||= 'ANN-ASCENA'
 
-        #SchedulableJob compatibility
+        # SchedulableJob compatibility
         def self.run_schedulable opts={}
           self.generate opts
         end
-        
+
         def self.generate opts={}
           g = self.new(opts)
           file = g.sync_csv
@@ -29,13 +29,13 @@ module OpenChain
 
         def initialize(opts={})
           super(opts)
-          @cdefs = self.class.prep_custom_definitions [:approved_date,:approved_long,:long_desc_override, :related_styles]
+          @cdefs = self.class.prep_custom_definitions [:approved_date, :approved_long, :long_desc_override, :related_styles]
           @used_part_countries = []
           @row_buffer = []
           @qa = opts[:env] == :qa
         end
 
-        #superclass requires this method
+        # superclass requires this method
         def sync_code
           SYNC_CODE
         end
@@ -46,12 +46,12 @@ module OpenChain
         end
 
         def sync_csv
-          super(include_headers: false) #no headers
+          super(include_headers: false) # no headers
         end
 
         def preprocess_row outer_row, opts = {}
           # What we're doing here is buffering the outer_row values
-          # until we see a new product id (or we're processing the last line).  
+          # until we see a new product id (or we're processing the last line).
           # This allows us to make sure we keep all the country values for
           # the same style number on consecutive rows while still exploding the related styles.
           rows = nil
@@ -70,8 +70,8 @@ module OpenChain
                 local_row = [row]
                 if @used_part_countries.include? pc_key
                   local_row = []
-                else 
-                  @used_part_countries << pc_key  
+                else
+                  @used_part_countries << pc_key
                 end
 
                 exploded_rows[row[0]] << local_row unless local_row.blank?
@@ -84,27 +84,27 @@ module OpenChain
             # Now put the new record in the buffer
             @row_buffer << outer_row unless opts[:last_result]
           else
-            # Because we're buffering the output in preprocess row, this causes a bit of issue with the sync method since no 
+            # Because we're buffering the output in preprocess row, this causes a bit of issue with the sync method since no
             # output is returned sometimes.  This ends up confusing it and it doesn't mark the product as having been synced.
-            # Even though rows for it will get pushed on a further iteration.  Throwing this symbol we can tell it to always 
+            # Even though rows for it will get pushed on a further iteration.  Throwing this symbol we can tell it to always
             # mark the record as synced even if no preprocess output is given
             throw :mark_synced
           end
 
-          rows          
+          rows
         end
-        
+
         def before_csv_write cursor, vals
           clean_string_values vals
 
-          #ISO code must be uppercase
+          # ISO code must be uppercase
           vals[4].upcase!
 
-          #replace the long description with the override value from the classification
-          #unless the override is blank
+          # replace the long description with the override value from the classification
+          # unless the override is blank
           vals[1] = vals[5] unless vals[5].blank?
 
-          #remove the long description override value
+          # remove the long description override value
           vals.pop
 
           vals
@@ -123,8 +123,8 @@ module OpenChain
           ]
           r = "SELECT #{fields.join(', ')}
 FROM products
-INNER JOIN (SELECT classifications.id, classifications.product_id, countries.iso_code 
-  FROM classifications 
+INNER JOIN (SELECT classifications.id, classifications.product_id, countries.iso_code
+  FROM classifications
   INNER JOIN countries ON classifications.country_id = countries.id AND countries.iso_code IN (\"US\",\"CA\")
 ) as classifications on classifications.product_id = products.id
 INNER JOIN tariff_records on tariff_records.classification_id = classifications.id and length(tariff_records.hts_1) > 0
@@ -137,7 +137,7 @@ INNER JOIN custom_values AS a_date ON a_date.custom_definition_id = #{@cdefs[:ap
             r << @custom_where
           end
 
-          #US must be in file before Canada per OHL spec
+          # US must be in file before Canada per OHL spec
           r << " ORDER BY products.id, classifications.iso_code DESC, tariff_records.line_number"
           r
         end

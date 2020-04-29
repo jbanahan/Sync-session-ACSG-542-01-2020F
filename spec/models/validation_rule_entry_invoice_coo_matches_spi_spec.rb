@@ -1,14 +1,14 @@
 describe ValidationRuleEntryInvoiceCooMatchesSpi do
   before :each do
     @rule = described_class.new(rule_attributes_json:{"BD" => "8", "IL" => "13"}.to_json)
-    
+
     @e = Factory(:entry)
     ci = Factory(:commercial_invoice, entry: @e, invoice_number: "12345")
     @cil_1 = Factory(:commercial_invoice_line, commercial_invoice: ci, part_number: "111", country_origin_code: "BD")
     @cil_2 = Factory(:commercial_invoice_line, commercial_invoice: ci, part_number: "222", country_origin_code: "IL")
     Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil_1, spi_primary: "8")
     Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil_2, spi_primary: "13")
-  end 
+  end
 
   describe "run_validation" do
     it "passes if every invoice line has a country-origin code that matches the primary spi on its tariffs" do

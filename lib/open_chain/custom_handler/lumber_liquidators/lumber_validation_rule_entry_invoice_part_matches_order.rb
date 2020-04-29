@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators
 
       entry.commercial_invoice_lines.each do |line|
         tag = {number: line.commercial_invoice.invoice_number, po: line.po_number, part: line.part_number}
-        match_errors(line, order_cache, skip_rule_state_validation).each{ |err| bad_invoices[err] << tag }
+        match_errors(line, order_cache, skip_rule_state_validation).each { |err| bad_invoices[err] << tag }
       end
       create_error_msg bad_invoices
     end
@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators
         check_part cil, order, errors
       else
         errors << :missing_po
-      end 
+      end
       errors
     end
 
@@ -35,10 +35,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators
     end
 
     def check_part cil, order, errors
-      if cil.part_number.presence    
+      if cil.part_number.presence
           part_matched = false
           if order["order"]["order_lines"]
-            order["order"]["order_lines"].each do |line| 
+            order["order"]["order_lines"].each do |line|
               product_uid = line["ordln_puid"].gsub(/^0+/, "")
               part_matched = true if cil.part_number == product_uid
             end
@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators
         if bad_invoices[error[:type]].presence
           errors << error[:msg]
           segments = []
-          bad_invoices[error[:type]].each do |err| 
+          bad_invoices[error[:type]].each do |err|
             data_str = "#{err[:number]}"
             data_str << " PO #{err[:po]}" if err[:po].presence
             data_str << " part #{err[:part]}" if err[:part].presence
@@ -71,12 +71,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators
       [
         {:type => :mismatched_part, :msg => "The following invoices have POs that don't match their part numbers: "},
         {:type => :missing_po, :msg => "The part number for the following invoices do not have a matching PO: " },
-        {:type => :missing_part_no, :msg => "The following invoices are missing a part number: " }, 
+        {:type => :missing_part_no, :msg => "The following invoices are missing a part number: " },
         {:type => :failed_rule, :msg => "Purchase orders associated with the following invoices have a failing business rule: "}
       ]
     end
 
-    private 
+    private
       def api_client
         OpenChain::Api::OrderApiClient.new("ll")
       end

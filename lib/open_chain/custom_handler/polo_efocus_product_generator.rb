@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; class PoloEfocusProductGenerator < Produ
     super(opts)
   end
 
-  #Superclass requires this method
+  # Superclass requires this method
   def sync_code
     SYNC_CODE
   end

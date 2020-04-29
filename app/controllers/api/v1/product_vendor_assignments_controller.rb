@@ -1,7 +1,7 @@
 require 'open_chain/api/v1/product_vendor_assignments_api_json_generator'
 
 module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCoreModuleControllerBase
-  
+
   def core_module
     CoreModule::PRODUCT_VENDOR_ASSIGNMENT
   end
@@ -27,10 +27,10 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
     ActiveRecord::Base.transaction do
       product_ids = params[:product_ids]
       prod_uids = params[:prod_uids]
-      product_count = [product_ids,prod_uids].inject(0) {|int,mem| int + (mem.blank? ? 0 : mem.size)}
+      product_count = [product_ids, prod_uids].inject(0) {|int, mem| int + (mem.blank? ? 0 : mem.size)}
       vendor_ids = params[:vendor_ids]
       vendor_system_codes = params[:cmp_sys_codes]
-      vendor_count = [vendor_ids,vendor_system_codes].inject(0) {|int,mem| int + (mem.blank? ? 0 : mem.size)}
+      vendor_count = [vendor_ids, vendor_system_codes].inject(0) {|int, mem| int + (mem.blank? ? 0 : mem.size)}
       raise StatusableError.new("Request failed, you may only request up to 100 assignments at a time.") if (product_count*vendor_count) > 100
 
 
@@ -42,13 +42,13 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
       missing_product_ids = []
       if !product_ids.blank?
         product_ids = product_ids.collect {|id| id.to_s}
-        products_by_id = Product.where("products.id IN (?)",product_ids)
+        products_by_id = Product.where("products.id IN (?)", product_ids)
         products_to_assign += products_by_id
 
         # figure out what wasn't found so we can tell the user
         product_ids_found = []
         products_by_id.each do |p|
-          raise StatusableError.new("You do not have permission to edit all products found.",400) unless p.can_edit?(u)
+          raise StatusableError.new("You do not have permission to edit all products found.", 400) unless p.can_edit?(u)
           product_ids_found << p.id.to_s
         end
         missing_product_ids = product_ids - product_ids_found
@@ -57,13 +57,13 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
       # find products by unique identifier
       missing_prod_uids = []
       if !prod_uids.blank?
-        products_by_uid = Product.where("products.unique_identifier IN (?)",prod_uids)
+        products_by_uid = Product.where("products.unique_identifier IN (?)", prod_uids)
         products_to_assign += products_by_uid
 
         # figure out what wasn't foudn so we can tell the user
         prod_uids_found = []
         products_by_uid.each do |p|
-          raise StatusableError.new("You do not have permission to edit all products found.",400) unless p.can_edit?(u)
+          raise StatusableError.new("You do not have permission to edit all products found.", 400) unless p.can_edit?(u)
           prod_uids_found << p.unique_identifier
         end
         missing_prod_uids = prod_uids - prod_uids_found
@@ -73,13 +73,13 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
       missing_vendor_ids = []
       if !vendor_ids.blank?
         vendor_ids = vendor_ids.collect {|id| id.to_s}
-        vendors_by_id = Company.where("companies.id IN (?)",vendor_ids)
+        vendors_by_id = Company.where("companies.id IN (?)", vendor_ids)
         vendors_to_assign += vendors_by_id
 
         # figure out what wasn't found so we can tell the user
         vendor_ids_found = []
         vendors_by_id.each do |v|
-          raise StatusableError.new("You do not have permission to edit all vendors found.",400) unless v.can_edit?(u)
+          raise StatusableError.new("You do not have permission to edit all vendors found.", 400) unless v.can_edit?(u)
           vendor_ids_found << v.id.to_s
         end
         missing_vendor_ids = vendor_ids - vendor_ids_found
@@ -88,13 +88,13 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
       # find vendors by system_code
       missing_vendor_system_codes = []
       if !vendor_system_codes.blank?
-        vendors_by_system_code = Company.where("companies.system_code IN (?)",vendor_system_codes)
+        vendors_by_system_code = Company.where("companies.system_code IN (?)", vendor_system_codes)
         vendors_to_assign += vendors_by_system_code
 
         # figure out what wasn't found so we can tell the user
         vendor_system_codes_found = []
         vendors_by_system_code.each do |v|
-          raise StatusableError.new("You do not have permission to edit all vendors found.",400) unless v.can_edit?(u)
+          raise StatusableError.new("You do not have permission to edit all vendors found.", 400) unless v.can_edit?(u)
           vendor_system_codes_found << v.system_code.to_s
         end
         missing_vendor_system_codes = vendor_system_codes - vendor_system_codes_found
@@ -103,11 +103,11 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
       # do assignments
       products_to_assign.each do |p|
         vendors_to_assign.each do |v|
-          pva = ProductVendorAssignment.where(vendor_id:v.id,product_id:p.id).first_or_create!
+          pva = ProductVendorAssignment.where(vendor_id:v.id, product_id:p.id).first_or_create!
           if !params[:product_vendor_assignment].blank?
             obj_hash = params[:product_vendor_assignment].clone
             obj_hash['id'] = pva.id
-            generic_save_existing_object(pva,obj_hash)
+            generic_save_existing_object(pva, obj_hash)
           end
           pva.create_async_snapshot if pva.respond_to?('create_async_snapshot')
         end
@@ -130,11 +130,11 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
     ActiveRecord::Base.transaction do
       assignment_array = params[:product_vendor_assignments]
       if assignment_array.blank? || !assignment_array.is_a?(Array)
-        raise StatusableError.new("Product vendor assignments should be in JSON array under element 'product_vendor_assignments'.",400)
+        raise StatusableError.new("Product vendor assignments should be in JSON array under element 'product_vendor_assignments'.", 400)
       end
       assignment_array.each do |pva_hash|
         id = pva_hash['id']
-        raise StatusableError.new("Each record must provide an id element.",400) if id.blank?
+        raise StatusableError.new("Each record must provide an id element.", 400) if id.blank?
         pva = generic_save_object pva_hash
         if pva.errors.full_messages.blank?
           pva.create_async_snapshot if pva.respond_to?('create_async_snapshot')
@@ -152,13 +152,13 @@ module Api; module V1; class ProductVendorAssignmentsController < Api::V1::ApiCo
     pva = h['id'].blank? ? ProductVendorAssignment.new : ProductVendorAssignment.includes([
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
-    raise StatusableError.new("Object with id #{h['id']} not found.",404) if pva.nil?
+    raise StatusableError.new("Object with id #{h['id']} not found.", 404) if pva.nil?
     import_fields h, pva, CoreModule::PRODUCT_VENDOR_ASSIGNMENT
-    raise StatusableError.new("You do not have permission to save this.",:forbidden) unless pva.can_edit?(current_user)
+    raise StatusableError.new("You do not have permission to save this.", :forbidden) unless pva.can_edit?(current_user)
     pva.save if pva.errors.full_messages.blank?
     pva
   end
-  
+
   def json_generator
     OpenChain::Api::V1::ProductVendorAssignmentApiJsonGenerator.new
   end

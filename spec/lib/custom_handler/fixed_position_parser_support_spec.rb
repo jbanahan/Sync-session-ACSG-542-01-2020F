@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::FixedPositionParserSupport do
 
-  subject { 
+  subject {
     Class.new {
       include OpenChain::CustomHandler::FixedPositionParserSupport
     }.new
@@ -138,6 +138,6 @@ describe OpenChain::CustomHandler::FixedPositionParserSupport do
     it "returns nil if string is blank and blank_string_returns_nil is set to true" do
       expect(subject.extract_boolean "   ", (1..2), blank_string_returns_nil: true).to be_nil
     end
-    
+
   end
 end

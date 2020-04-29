@@ -3,7 +3,7 @@ describe PortsController do
     u = Factory(:admin_user)
     sign_in_as u
   }
-  
+
   describe "index" do
     it "should only allow admins" do
       user.admin = false
@@ -32,7 +32,7 @@ describe PortsController do
       }
     }
 
-    let (:port_with_address) do 
+    let (:port_with_address) do
       port[:port][:address] = {
         line_1: "Address 1",
         line_2: "Address 2",
@@ -113,7 +113,7 @@ describe PortsController do
       }
     }
 
-    let (:port_param_with_address) do 
+    let (:port_param_with_address) do
       port_param[:port][:address] = {
         line_1: "Address 1",
         line_2: "Address 2",

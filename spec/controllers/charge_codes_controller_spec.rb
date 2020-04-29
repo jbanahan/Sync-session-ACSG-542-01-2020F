@@ -1,6 +1,6 @@
 describe ChargeCodesController do
   before :each do
-    @u = Factory(:user,:admin=>true,:company=>Factory(:company,:master=>true))
+    @u = Factory(:user, :admin=>true, :company=>Factory(:company, :master=>true))
 
     sign_in_as @u
   end
@@ -25,13 +25,13 @@ describe ChargeCodesController do
     it "should only allow admins" do
       @u.admin = false
       @u.save!
-      post :create, {'charge_code'=> {'code'=>"x",'description'=>"y"} }
+      post :create, {'charge_code'=> {'code'=>"x", 'description'=>"y"} }
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
       expect(ChargeCode.all).to be_empty
     end
     it "should create charge code" do
-      post :create, {'charge_code'=> {'code'=>"x",'description'=>"y"} }
+      post :create, {'charge_code'=> {'code'=>"x", 'description'=>"y"} }
       expect(response).to redirect_to charge_codes_path
       c = ChargeCode.first
       expect(c.code).to eq("x")
@@ -65,13 +65,13 @@ describe ChargeCodesController do
     it "should only allow admins" do
       @u.admin = false
       @u.save!
-      put :update, { :id=>@c.id, 'charge_code'=>{'code'=>'b','description'=>'xyz'} }
+      put :update, { :id=>@c.id, 'charge_code'=>{'code'=>'b', 'description'=>'xyz'} }
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
       expect(ChargeCode.find(@c.id).code).to eq("a")
     end
     it "should update charge code" do
-      put :update, { :id=>@c.id, 'charge_code'=>{'code'=>'b','description'=>'xyz'} }
+      put :update, { :id=>@c.id, 'charge_code'=>{'code'=>'b', 'description'=>'xyz'} }
       expect(response).to be_redirect
       expect(flash[:notices].size).to eq(1)
       expect(ChargeCode.find(@c.id).code).to eq("b")

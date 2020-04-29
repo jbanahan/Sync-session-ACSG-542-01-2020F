@@ -14,7 +14,7 @@ module OpenChain; class NewRelicSetupMiddleware
     if defined? NewRelic::Agent && !@@custom_attributes.blank?
       NewRelic::Agent.add_custom_attributes @@custom_attributes
     end
-    
+
     status, headers, response = @app.call(env)
     return [status, headers, response]
   end

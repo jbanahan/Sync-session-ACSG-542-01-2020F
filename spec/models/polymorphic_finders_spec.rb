@@ -43,14 +43,14 @@ describe PolymorphicFinders do
   end
 
   describe "validate_polymorphic_class" do
-    subject { 
-      Class.new do 
+    subject {
+      Class.new do
         include PolymorphicFinders
 
         def validate_polymorphic_class model_class
           model_class == Entry
         end
-      end.new 
+      end.new
     }
 
     it "allows overriding validate_polymorphic_class to change class usage limitation" do

@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
             kewill_filename = "I_IE_#{file_info[:entry_number]}__#{file_info[:document_code]}_#{suffix}_N_#{Time.zone.now.to_f.to_s.gsub(".", "-")}.#{file_info[:extension]}"
             ftp_file file, connect_vfitrack_net("to_ecs/kewill_imaging", kewill_filename)
           end
-          
+
         else
           # Use custom metadata sent by the imaging client to identify the email address of the file's owner.
           email_to = OpenChain::S3.metadata("owner", bucket, key, version)
@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
   def self.validate_file file_path, file
     path = Pathname.new file_path
     filename = File.basename file_path
-    file_info = validate_filename filename 
+    file_info = validate_filename filename
     attachment_type = path.parent.basename.to_s
     file_info[:attachment_type] = attachment_type
     file_info[:attachment_type_obj] = document_type(attachment_type)
@@ -102,11 +102,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
       if customer_number =~ /([^.]+)\./
         customer_number = $1
       end
-      
+
       value[:customer_number] = customer_number
       value[:extension] = matches[2].to_s.strip
 
-      if !["pdf", "tif"].include? value[:extension].to_s.downcase 
+      if !["pdf", "tif"].include? value[:extension].to_s.downcase
         value[:errors] << "Kewill Imaging does not accept '#{value[:extension]}' file types."
       end
 

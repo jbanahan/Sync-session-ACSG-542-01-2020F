@@ -1,11 +1,11 @@
 module OpenChain; module ModelFieldGenerator; module PortGenerator
-  def make_port_arrays(rank_start,uid_prefix,table_name,join_field,name_prefix,port_selector:nil)
+  def make_port_arrays(rank_start, uid_prefix, table_name, join_field, name_prefix, port_selector:nil)
     r_count = rank_start
     r = []
     id_hash = {
       data_type: :integer,
       history_ignore: true,
-      user_accessible: false, 
+      user_accessible: false,
       import_lambda: lambda {|obj, data|
         p = Port.where(id: data).first
         if p
@@ -20,8 +20,8 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
     if port_selector
       id_hash[:select_options_lambda] = port_selector
     end
-    r << [r_count,"#{uid_prefix}_id".to_sym, "#{join_field}_id".to_sym, "#{name_prefix}",id_hash]
-    r << [r_count+1,"#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name",{
+    r << [r_count, "#{uid_prefix}_id".to_sym, "#{join_field}_id".to_sym, "#{name_prefix}", id_hash]
+    r << [r_count+1, "#{uid_prefix}_name".to_sym, :name, "#{name_prefix} Name", {
         export_lambda: lambda {|obj|
           val = obj.public_send(join_field)
           val.nil? ? '' : val.name.to_s
@@ -30,7 +30,7 @@ module OpenChain; module ModelFieldGenerator; module PortGenerator
         data_type: :string,
         read_only: true
       }]
-    r << [r_count+1, "#{uid_prefix}_code".to_sym, :code, "#{name_prefix} Code",{
+    r << [r_count+1, "#{uid_prefix}_code".to_sym, :code, "#{name_prefix} Code", {
         export_lambda: lambda {|obj|
           port = obj.public_send(join_field)
 

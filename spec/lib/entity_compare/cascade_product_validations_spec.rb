@@ -9,12 +9,12 @@ describe OpenChain::EntityCompare::CascadeProductValidations do
     end
 
     context "orders" do
-      
+
       it "should call BusinessValidationTemplate.create_results_for_object! for linked orders" do
         p = Factory(:product)
-        ol = Factory(:order_line,product:p)
-        ol_duplicate = Factory(:order_line,product:p,order:ol.order)
-        ol2 = Factory(:order_line,product:p)
+        ol = Factory(:order_line, product:p)
+        ol_duplicate = Factory(:order_line, product:p, order:ol.order)
+        ol2 = Factory(:order_line, product:p)
         ol_ignore = Factory(:order_line)
 
         expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with ol.order
@@ -32,7 +32,7 @@ describe OpenChain::EntityCompare::CascadeProductValidations do
 
       it "does not validate closed orders" do
         p = Factory(:product)
-        ol = Factory(:order_line,product:p)
+        ol = Factory(:order_line, product:p)
         ol.order.update_attributes! closed_at: Time.zone.now
 
         expect(BusinessValidationTemplate).not_to receive(:create_results_for_object!)
@@ -41,12 +41,12 @@ describe OpenChain::EntityCompare::CascadeProductValidations do
     end
 
     context "shipments" do
-      
+
       it "should call BusinessValidationTemplate.create_results_for_object! for linked shipments" do
         p = Factory(:product)
-        l = Factory(:shipment_line,product:p)
-        l_duplicate = Factory(:shipment_line,product:p,shipment:l.shipment)
-        l2 = Factory(:shipment_line,product:p)
+        l = Factory(:shipment_line, product:p)
+        l_duplicate = Factory(:shipment_line, product:p, shipment:l.shipment)
+        l2 = Factory(:shipment_line, product:p)
         l_ignore = Factory(:shipment_line)
 
         expect(BusinessValidationTemplate).to receive(:create_results_for_object!).with l.shipment
@@ -64,7 +64,7 @@ describe OpenChain::EntityCompare::CascadeProductValidations do
 
       it "does not validate canceled shipments" do
         p = Factory(:product)
-        l = Factory(:shipment_line,product:p)
+        l = Factory(:shipment_line, product:p)
         l.shipment.update_attributes! canceled_date: Time.zone.now
 
         expect(BusinessValidationTemplate).not_to receive(:create_results_for_object!)

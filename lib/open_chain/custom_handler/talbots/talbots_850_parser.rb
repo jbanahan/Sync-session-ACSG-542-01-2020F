@@ -103,13 +103,13 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
 
   def process_order_header_party order, party_data
     if party_data[:entity_type] == "SU"
-      #SU = Factory
+      # SU = Factory
       order.factory = find_or_create_company_from_n1_data(party_data, company_type_hash: {factory: true}, other_attributes: {mid: party_data[:id_code]})
     elsif party_data[:entity_type] == "ST"
-      #ST = Ship To
+      # ST = Ship To
       order.ship_to = find_or_create_address_from_n1_data(party_data, importer)
     elsif party_data[:entity_type] == "VN"
-      #VN = Vendor - We have use a REF value to identify the vendor system code (for some reason they can't send it on the N1)
+      # VN = Vendor - We have use a REF value to identify the vendor system code (for some reason they can't send it on the N1)
       raise "Cannot set vendor data without a 'VN' REf segment present." if @vendor_system_code.blank?
 
       party_data[:id_code] = @vendor_system_code
@@ -125,12 +125,12 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
   def process_standard_line order, po1, all_line_segments, product
     # So what's happening here is this:
     # 1) For Eaches and Prepacks, Talbots uses the same line number across multiple PO1 segments (WTF #1)
-    # 2) Talbots doesn't use SLN (sublines) to represent prepacks.  (WTF #2) When they have a prepack, they 
+    # 2) Talbots doesn't use SLN (sublines) to represent prepacks.  (WTF #2) When they have a prepack, they
     #    send a PO1 for each item in the pack and then a PO4 indicating the pack number (sorta like a line number)
     #    and the total # of packs.
     # 3) Talbots sends the same SKU on multiple different PO1 lines frequently.
     # 4) The 856 references items from the PO by SKU.  Along w/ #3, this means that if we did put every PO1 on its own line
-    #    when the 856 comes in we won't know which line they're shipping (shipper doesn't care), so we can just link the 
+    #    when the 856 comes in we won't know which line they're shipping (shipper doesn't care), so we can just link the
     #    856 against some random line (which will probably end up showing an overshipment), or we can roll up the PO1 line
     #    data based on SKU and then the 856 has a single line to choose from and the shipment counts etc are all accurate.
     variant_identifier = standard_variant_identifier(po1, all_line_segments)
@@ -149,7 +149,7 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
       line.find_and_set_custom_value(cdefs[:ord_line_color], find_segment_qualified_value(po1, "VE"))
       line.find_and_set_custom_value(cdefs[:ord_line_size], find_segment_qualified_value(po1, "ZZ"))
       line.find_and_set_custom_value(cdefs[:ord_line_size_description], find_segment_qualified_value(po1, "SD"))
-      
+
       variant = product.variants.find {|v| v.variant_identifier == variant_identifier}
       line.variant = variant if variant
       line.quantity = BigDecimal("0")

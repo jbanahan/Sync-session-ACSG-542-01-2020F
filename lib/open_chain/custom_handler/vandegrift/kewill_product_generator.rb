@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     add_options(opts, :include_linked_importer_products, :strip_leading_zeros, :use_unique_identifier, :disable_importer_check,
                       :allow_blank_tariffs, :allow_multiple_tariffs, :disable_special_tariff_lookup, :allow_style_truncation,
                       :suppress_fda_data)
-    # We can allow for multiple customer numbers so that we can just have a single scheduled job for all the simple 
+    # We can allow for multiple customer numbers so that we can just have a single scheduled job for all the simple
     # generators that share the same setup (just with different customer numbers)
     if opts[:customer_numbers]
       @customer_numbers = Array.wrap(opts[:customer_numbers])
@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   class ProductData
-    attr_accessor :customer_number, :part_number, :effective_date, :expiration_date, :description, :country_of_origin, :mid, :product_line, :exclusion_301_tariff, 
+    attr_accessor :customer_number, :part_number, :effective_date, :expiration_date, :description, :country_of_origin, :mid, :product_line, :exclusion_301_tariff,
                   :tariff_data, :fda_data, :penalty_data
   end
 
@@ -98,10 +98,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def custom_defs
-    @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom, 
-                :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length, 
+    @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom,
+                :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length,
                 :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance, :prod_fda_affirmation_compliance_value, :prod_brand,
-                :prod_301_exclusion_tariff, :prod_fda_accession_number, :prod_cvd_case, :prod_add_case, :class_special_program_indicator, :prod_lacey_component_of_article, :prod_lacey_genus_1, :prod_lacey_species_1, :prod_lacey_genus_2, 
+                :prod_301_exclusion_tariff, :prod_fda_accession_number, :prod_cvd_case, :prod_add_case, :class_special_program_indicator, :prod_lacey_component_of_article, :prod_lacey_genus_1, :prod_lacey_species_1, :prod_lacey_genus_2,
                 :prod_lacey_species_2, :prod_lacey_country_of_harvest, :prod_lacey_quantity, :prod_lacey_quantity_uom, :prod_lacey_percent_recycled, :prod_lacey_preparer_name, :prod_lacey_preparer_email, :prod_lacey_preparer_phone]
     @cdefs
   end
@@ -264,10 +264,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     d
   end
 
-  # This method provides the mapping for the base product header mapping that pretty much any 
+  # This method provides the mapping for the base product header mapping that pretty much any
   # generator that extends this class almost certainly should be utilizing.
   def base_product_header_mapping d, row
-    # The query should be pulling the Customs Management cust_no from the system identifiers table now, it's possible on some customer 
+    # The query should be pulling the Customs Management cust_no from the system identifiers table now, it's possible on some customer
     # systems that this won't be present, so just fall back to using the customer number set up from the constructor.
     d.customer_number = customer_number(row).presence || self.alliance_customer_number
     d.part_number = part_number(row)
@@ -287,7 +287,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     d.mid = validate_mid(row)
     d.product_line = row[4]
     d.exclusion_301_tariff = exclusion_301_tariff(row)
-    
+
     nil
   end
 
@@ -307,7 +307,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     tariff_data
   end
 
-  # Because some field values may have to be applied across multiple tariffs that may have dynmically 
+  # Because some field values may have to be applied across multiple tariffs that may have dynmically
   # been added, this method exists to make this easier to do
   def set_value_in_tariff_data tariffs, field_name, value, primary_tariff_only: true, skip_special_tariffs: true
     tariffs.each do |tariff|
@@ -408,7 +408,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       c.quantity = row[33]
       c.quantity_uom = row[34]
       c.percent_recycled = row[35]
-      
+
       c.scientific_names = []
 
       if row[36].present? && row[37].present?
@@ -423,7 +423,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         s = LaceyScientificNames.new
         s.genus = row[38]
         s.species = row[39]
-        
+
         c.scientific_names << s
       end
 
@@ -439,8 +439,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     write_data(part, "countryOrigin", data.country_of_origin, 2)
     write_data(part, "manufacturerId", data.mid, 15)
     write_data(part, "productLine", data.product_line, 30)
-    write_data(part, "dateExpiration", date_format(data.expiration_date), 8, error_on_trim: true) 
-    
+    write_data(part, "dateExpiration", date_format(data.expiration_date), 8, error_on_trim: true)
+
     nil
   end
 
@@ -514,7 +514,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     write_data(parent, "scientificGenusName", scientific_name.genus, 22)
     write_data(parent, "scientificSpeciesName", scientific_name.species, 22)
   end
-  
+
   def xml_document_and_root_element
     doc, kc_data = create_document category: "Parts", subAction: "CreateUpdate"
     parts = add_element(kc_data, "parts")
@@ -583,18 +583,18 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     SQL
     if has_option?(:allow_multiple_tariffs)
       qry += <<-SQL
-        (SELECT GROUP_CONCAT(CONCAT_WS('***', hts_1, hts_2, hts_3) ORDER BY line_number SEPARATOR '*~*') 
-         FROM tariff_records tar 
+        (SELECT GROUP_CONCAT(CONCAT_WS('***', hts_1, hts_2, hts_3) ORDER BY line_number SEPARATOR '*~*')
+         FROM tariff_records tar
          WHERE tar.classification_id = classifications.id AND LENGTH(tar.hts_1) >= 8),
       SQL
     else
       qry += <<-SQL
         (SELECT CONCAT_WS('***', hts_1, hts_2, hts_3)
-         FROM tariff_records tar 
+         FROM tariff_records tar
          WHERE tar.classification_id = classifications.id AND LENGTH(tar.hts_1) >= 8 AND tar.line_number = 1),
       SQL
     end
-    qry += <<-SQL 
+    qry += <<-SQL
         IF(LENGTH(#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true})=2,#{cd_s custom_defs[:prod_country_of_origin].id, suppress_alias: true},""),
         #{cd_s custom_defs[:prod_brand].id},
         #{cd_s(custom_defs[:prod_fda_product].id, boolean_y_n: true)},
@@ -615,10 +615,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         #{cd_s custom_defs[:prod_fda_temperature].id},
         #{cd_s custom_defs[:prod_fda_accession_number]},
         #{cd_s custom_defs[:prod_301_exclusion_tariff]},
-        (SELECT mid.system_code 
-         FROM addresses mid 
-           INNER JOIN product_factories pf ON pf.address_id = mid.id 
-         WHERE pf.product_id = products.id 
+        (SELECT mid.system_code
+         FROM addresses mid
+           INNER JOIN product_factories pf ON pf.address_id = mid.id
+         WHERE pf.product_id = products.id
          ORDER BY mid.created_at LIMIT 1),
         sys_id.code,
         #{cd_s custom_defs[:prod_cvd_case]},
@@ -639,30 +639,30 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       FROM products
         LEFT OUTER JOIN companies ON companies.id = products.importer_id
         LEFT OUTER JOIN system_identifiers sys_id ON sys_id.company_id = companies.id AND sys_id.system = 'Customs Management'
-        INNER JOIN classifications on classifications.country_id = (SELECT id 
-                                                                    FROM countries 
+        INNER JOIN classifications on classifications.country_id = (SELECT id
+                                                                    FROM countries
                                                                     WHERE iso_code = "US") AND classifications.product_id = products.id
     SQL
 
     # custom_where attr_reader method is defined in parent class
     if self.custom_where.blank?
       qry += "#{Product.need_sync_join_clause(sync_code)} WHERE #{Product.need_sync_where_clause()} "
-    else 
+    else
       qry += "WHERE #{self.custom_where} "
     end
-    
+
     qry += " AND (products.inactive IS NULL OR products.inactive = 0)"
     qry += " AND LENGTH(#{cd_s custom_defs[:prod_part_number].id, suppress_alias: true})>0" unless has_option?(:use_unique_identifier)
     qry += importer_id_query_clause
 
     unless has_option?(:allow_blank_tariffs)
       qry += <<-SQL
-        AND LENGTH((SELECT GROUP_CONCAT(hts_1 ORDER BY line_number SEPARATOR '#{line_separator}') 
-                    FROM tariff_records tar 
+        AND LENGTH((SELECT GROUP_CONCAT(hts_1 ORDER BY line_number SEPARATOR '#{line_separator}')
+                    FROM tariff_records tar
                     WHERE tar.classification_id = classifications.id AND LENGTH(tar.hts_1) >= 8)) >= 0
       SQL
     end
-    
+
     if self.custom_where.blank?
       # Now that we're using XML, documents get really big, really quickly...so limit to X at a time per file
       qry += " LIMIT #{max_products_per_file}"
@@ -703,16 +703,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # We're concat'ing all the product's US tariffs into a single field in the SQL query and then splitting them out
     # here into individual classification fields. Since only the first line tariff fields (hts 1-3) are subject to
     # supplemental tariff handling/sorting, we separate them from the rest at the outset.
-    
+
     first_line_tariffs, remaining_tariffs = Array.wrap(tariff_numbers(row).to_s.split(line_separator))
-    first_line_tariffs = first_line_tariffs&.split("***")&.select{ |t| t.present? } || []
+    first_line_tariffs = first_line_tariffs&.split("***")&.select { |t| t.present? } || []
     remaining_tariffs = remaining_tariffs&.split("***")
-                                         &.select{ |t| t.present? }
-                                         &.map{ |t| TariffData.new(t, nil, nil, nil, nil) } || []
+                                         &.select { |t| t.present? }
+                                         &.map { |t| TariffData.new(t, nil, nil, nil, nil) } || []
 
     all_tariffs = []
     # By starting at zero, any special tariff with a blank priority will get prioritized in front of the primary
-    # tariff (as the first HTS 1 will have a priority of -0.01).  This is what we want.  
+    # tariff (as the first HTS 1 will have a priority of -0.01).  This is what we want.
     # We're assuming that special tariffs in their default state (.ie without priorities)
     # should be sent to CMUS (aka Kewill) prior to the primary tariff numbers keyed on the part
     priority = 0.00
@@ -720,7 +720,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       td = TariffData.new(t, (priority -= 0.01), secondary_priority(t), (index == 0), false)
 
       # Check if any of the keyed tariffs are considered special tariffs, if so, use the priority
-      # from the special tariff record so we can potentially reorder them below according to the 
+      # from the special tariff record so we can potentially reorder them below according to the
       # special tariff xref's priority
       # We do this because we don't automatically add some special tariffs to the feed (like the MTB tariffs)
       # because they're not actually applicable to every part that has a matching tariff number.  For instance,
@@ -731,9 +731,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       # In other words, in order for MTB numbers to get sent to CMUS, they need to be keyed into the tariff fields.
       # If it is keyed, we need to make sure we utilize the special priority.
       # In the case of MTB tariffs, they need to be sent to CMUS prior to the primary tariff.
-      
+
       special_tariff_priority = keyed_special_tariff_priority(country_of_origin(row), t)
-      
+
       if !special_tariff_priority.nil?
         td.special_tariff = true
         # By default (with no actual priorities set), the special tariffs will appear before the standard
@@ -763,7 +763,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         all_tariffs << TariffData.new(special_tariff.special_hts_number, special_tariff.priority.to_f, secondary_priority(special_tariff.special_hts_number), false, true)
       end
     end
-    
+
     all_tariffs.sort_by {|t| [t.priority, t.secondary_priority] }.reverse.concat remaining_tariffs
   end
 
@@ -797,7 +797,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # We also want to key the hash by the special number, not the standard number.
     @special_tariff_numbers_hash ||= SpecialTariffCrossReference.find_special_tariff_hash("US", false, reference_date: Time.zone.now.to_date, use_special_number_as_key: true)
   end
-    
+
   def exclusion_301_tariff row
     row[22]
   end
@@ -886,7 +886,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     row[24]
   end
 
-  def supports_fda_data? 
+  def supports_fda_data?
     false
   end
 

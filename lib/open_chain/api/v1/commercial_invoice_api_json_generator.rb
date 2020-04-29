@@ -8,7 +8,7 @@ module OpenChain; module Api; module V1; class CommercialInvoiceApiJsonGenerator
     super(core_module: CoreModule::COMMERCIAL_INVOICE, jsonizer: jsonizer)
   end
 
-  #needed for index
+  # needed for index
   def obj_to_json_hash ci
     headers_to_render = limit_fields([:ci_invoice_number,
       :ci_invoice_date,
@@ -30,10 +30,10 @@ module OpenChain; module Api; module V1; class CommercialInvoiceApiJsonGenerator
       :ci_destination_code,
       :ci_updated_at
     ])
-    line_fields_to_render = limit_fields([:cil_line_number,:cil_po_number,:cil_part_number,
-      :cil_units,:cil_value,:ent_unit_price,:cil_uom,
-      :cil_country_origin_code,:cil_country_export_code,
-      :cil_value_foreign,:cil_currency
+    line_fields_to_render = limit_fields([:cil_line_number, :cil_po_number, :cil_part_number,
+      :cil_units, :cil_value, :ent_unit_price, :cil_uom,
+      :cil_country_origin_code, :cil_country_export_code,
+      :cil_value_foreign, :cil_currency
     ])
     tariff_fields_to_render = limit_fields([
       :cit_hts_code,

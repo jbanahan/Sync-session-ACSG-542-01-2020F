@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonEntryBillingComparator do
   subject { described_class }
 
   describe "accept?" do
-    let (:entry) { 
+    let (:entry) {
       e = Factory(:entry, customer_number: "AMZN-1234", source_system: "Alliance")
       e.broker_invoices << Factory(:broker_invoice)
       e
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonEntryBillingComparator do
       expect(subject.accept? entry_snapshot).to eq false
     end
 
-    it "does not accept non-AMZN entries" do 
+    it "does not accept non-AMZN entries" do
       entry.update! customer_number: "XXX"
       expect(subject.accept? entry_snapshot).to eq false
     end

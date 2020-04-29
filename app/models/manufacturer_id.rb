@@ -36,7 +36,7 @@ class ManufacturerId < ActiveRecord::Base
       mid.country = row[6].try(:strip)
       mid.active = row[7].to_s.strip != "N"
 
-      mid.save! 
+      mid.save!
     end
   end
 end

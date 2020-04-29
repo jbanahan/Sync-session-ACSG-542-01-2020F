@@ -6,7 +6,7 @@ module Api; module V1; module Admin; class UsersController < Api::V1::Admin::Adm
     User.transaction do
       u = User.find params[:id]
       count = 0
-      SearchTemplate.where('id IN (?)',params[:template_ids]).each do |st|
+      SearchTemplate.where('id IN (?)', params[:template_ids]).each do |st|
         st.add_to_user! u
         count += 1
       end
@@ -20,7 +20,7 @@ module Api; module V1; module Admin; class UsersController < Api::V1::Admin::Adm
   def change_user_password
     user = User.where(id: params[:id]).first
     valid = false
-    if user 
+    if user
       valid = user.update_user_password params[:password], params[:password]
     end
 
@@ -32,7 +32,7 @@ module Api; module V1; module Admin; class UsersController < Api::V1::Admin::Adm
       else
         render_error "Failed to update password."
       end
-      
+
     end
   end
 end; end; end; end

@@ -12,11 +12,11 @@ describe Customer::LumberLiquidatorsController do
     }
 
     before :each do
-      @vendor = Factory(:company,vendor:true)
+      @vendor = Factory(:company, vendor:true)
       allow_any_instance_of(Company).to receive(:can_view_as_vendor?).and_return(true)
     end
     it "should 404 if no 'Lumber SAP' custom feature" do
-      expect{get :sap_vendor_setup_form, vendor_id: @vendor.id}.to raise_error ActionController::RoutingError
+      expect {get :sap_vendor_setup_form, vendor_id: @vendor.id}.to raise_error ActionController::RoutingError
     end
     it "should render if 'Lumber SAP' custom feature" do
       expect(master_setup).to receive(:custom_feature?).with('Lumber SAP').and_return true

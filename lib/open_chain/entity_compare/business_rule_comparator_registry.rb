@@ -2,7 +2,7 @@ require 'open_chain/entity_compare/comparator_registry_helper'
 
 module OpenChain; module EntityCompare; class BusinessRuleComparatorRegistry
   extend OpenChain::EntityCompare::ComparatorRegistryHelper
-  
+
   # get an Enumerable of all comparators that will accept the given snapshot
   #
   # Intended usage is `OpenChain::EntityCompare::ComparatorRegistry.registered_for(snapshot) {|c| c.compare ...}`

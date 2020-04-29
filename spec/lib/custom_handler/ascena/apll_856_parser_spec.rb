@@ -49,18 +49,18 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
 
   describe '#process_shipment' do
     let :ascena do
-      Factory(:company,system_code:'ASCENA')
+      Factory(:company, system_code:'ASCENA')
     end
     let :product do
-      Factory(:product,unique_identifier:'ASCENA-415012')
+      Factory(:product, unique_identifier:'ASCENA-415012')
     end
     let :order do
-      Factory(:order_line,line_number:1,product:product,quantity:8771,order:Factory(:order,importer:ascena,order_number:'ASCENA-BRAND-6225694', customer_order_number: "6225694")).order
+      Factory(:order_line, line_number:1, product:product, quantity:8771, order:Factory(:order, importer:ascena, order_number:'ASCENA-BRAND-6225694', customer_order_number: "6225694")).order
     end
     let :ports do
       {
-        cnxmn:Factory(:port,unlocode:'CNXMN',schedule_k_code:'12345'),
-        uslgb:Factory(:port,unlocode:'USLGB',schedule_d_code:'4601')
+        cnxmn:Factory(:port, unlocode:'CNXMN', schedule_k_code:'12345'),
+        uslgb:Factory(:port, unlocode:'USLGB', schedule_d_code:'4601')
       }
     end
     before :each do
@@ -69,19 +69,19 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
     end
     it "should create shipment" do
       expected_reference = 'ASCENA-XM1007980-HK956641'
-      order #prep order data
-      ports #prep port data
+      order # prep order data
+      ports # prep port data
       expect_any_instance_of(Shipment).to receive(:create_snapshot).with(User.integration, nil, "path")
       expect(Lock).to receive(:acquire).with(expected_reference).and_yield
-      expect {subject.process_shipment(first_shipment_array, log, last_file_bucket:"bucket", last_file_path: "path")}.to change(Shipment,:count).from(0).to(1)
+      expect {subject.process_shipment(first_shipment_array, log, last_file_bucket:"bucket", last_file_path: "path")}.to change(Shipment, :count).from(0).to(1)
       s = Shipment.first
       expect(s.reference).to eq expected_reference
       expect(s.importer).to eq ascena
       expect(s.master_bill_of_lading).to eq 'KKLUXM1007980'
       expect(s.booking_number).to eq 'HK956641'
-      expect(s.est_departure_date).to eq Date.new(2016,11,22)
-      expect(s.est_arrival_port_date).to eq Date.new(2016,12,5)
-      expect(s.departure_date).to eq Date.new(2016,11,22)
+      expect(s.est_departure_date).to eq Date.new(2016, 11, 22)
+      expect(s.est_arrival_port_date).to eq Date.new(2016, 12, 5)
+      expect(s.departure_date).to eq Date.new(2016, 11, 22)
       expect(s.vessel).to eq 'HAMBURG BRIDGE'
       expect(s.voyage).to eq '040E'
       expect(s.vessel_carrier_scac).to eq 'KKLU'
@@ -116,12 +116,12 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
       expect(log).to have_info_message("Shipment XM1007980-HK956641 created.")
     end
     it "should not fail on unknown LOCODE" do
-      order #prep order data
-      expect {subject.process_shipment(first_shipment_array, log)}.to change(Shipment,:count).from(0).to(1)
+      order # prep order data
+      expect {subject.process_shipment(first_shipment_array, log)}.to change(Shipment, :count).from(0).to(1)
     end
     it "should not update existing shipments" do
       ascena
-      s = Factory(:shipment,reference:'ASCENA-XM1007980-HK956641')
+      s = Factory(:shipment, reference:'ASCENA-XM1007980-HK956641')
       expect(subject.process_shipment(first_shipment_array, log)).to be_nil
 
       expect(log.company).to eq ascena
@@ -135,16 +135,16 @@ describe OpenChain::CustomHandler::Ascena::Apll856Parser do
     end
     it "should fail if style not on order" do
       order
-      base_data.gsub!('415012','999999')
+      base_data.gsub!('415012', '999999')
       shipment = subject.process_shipment(first_shipment_array, log)
       expect(shipment.marks_and_numbers).to eq "* Order Line not found for order Ascena Order # 6225694, style 999999"
       expect(log).to have_reject_message "Order Line not found for order Ascena Order # 6225694, style 999999"
     end
     it "should fail if style is blank" do
       order
-      base_data.gsub!('415012','      ')
+      base_data.gsub!('415012', '      ')
 
-      expect{subject.process_shipment(first_shipment_array, log)}.to raise_error "Style number is required in LIN segment position 4."
+      expect {subject.process_shipment(first_shipment_array, log)}.to raise_error "Style number is required in LIN segment position 4."
       expect(log).to have_reject_message "Style number is required in LIN segment position 4."
     end
   end

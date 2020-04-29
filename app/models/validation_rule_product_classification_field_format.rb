@@ -1,6 +1,6 @@
 # -*- SkipSchemaAnnotations
 
-#run a field format validation on every invoice line on the entry and fail if ANY line fails the test
+# run a field format validation on every invoice line on the entry and fail if ANY line fails the test
 class ValidationRuleProductClassificationFieldFormat < BusinessValidationRule
   include ValidatesClassification
   include ValidatesFieldFormat

@@ -41,19 +41,19 @@ class SentEmailsController < ApplicationController
     }
   end
 
-  def body 
+  def body
     # In order to actually render the email's content on the page we're using an iframe to render it
     # with it's src pointing to this method
     admin_secure {
       email = SentEmail.find(params[:id])
-      # While the following is called out by brakeman as an XSS, the source of the data is not from user input and the 
-      # data returned here is viewed on the page in an iframe.  I'm marking this as safe since I do not see a path to exploitation 
+      # While the following is called out by brakeman as an XSS, the source of the data is not from user input and the
+      # data returned here is viewed on the page in an iframe.  I'm marking this as safe since I do not see a path to exploitation
       # via this action.
       render :inline => email.email_body.to_s
     }
   end
-  
-  private 
+
+  private
 
   def secure
     SentEmail.find_can_view(current_user)

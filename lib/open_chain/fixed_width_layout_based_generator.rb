@@ -72,7 +72,7 @@ module OpenChain; module FixedWidthLayoutBasedGenerator
 
   def output_date value, length, format_hash
     format_hash = {max_length: length}.merge format_hash
-    #This is not a typo...we're intentionally calling the datetime method directly
+    # This is not a typo...we're intentionally calling the datetime method directly
     return generator.datetime(value, **format_hash)
   end
 
@@ -111,13 +111,13 @@ module OpenChain; module FixedWidthLayoutBasedGenerator
         if args && args.length > 0
           value = args[0].public_send lamda_or_method_name
         end
-        
+
       else
         # We'll assume anything else returned from the mapping is a "constant" value
         value = lamda_or_method_name
       end
     end
-    value 
+    value
   end
 
   def generator

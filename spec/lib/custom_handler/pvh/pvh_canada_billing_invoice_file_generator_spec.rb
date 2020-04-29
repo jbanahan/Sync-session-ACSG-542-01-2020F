@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
 
   let (:captured_xml) { [] }
 
-  before :each do 
+  before :each do
     allow(subject).to receive(:ftp_sync_file) do |temp, sync_record|
       captured_xml << temp.read
     end
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
     expect(x).to have_xpath_value("TransactionInfo/File/XMLFile/CreateTime/Time", "07:00:00")
     expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/@Type", "Broker Invoice")
     expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/Purpose", "Create")
-    
+
     nil
   end
 
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       i
     }
 
-    before :each do 
+    before :each do
       entry
       broker_invoice_duty
       shipment
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
 
       x = REXML::Document.new(captured_xml.first).root
       validate_invoice_header(x, "1198001123-DUTY")
-      
+
       inv = REXML::XPath.first(x, "GenericInvoices/GenericInvoice")
       h = REXML::XPath.first(x, "GenericInvoices/GenericInvoice/InvoiceHeader")
       expect(h).to have_xpath_value("InvoiceNumber", "1198001123")
@@ -256,7 +256,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       # Add a second container to the entry and the shipment
       entry.update_attributes! container_numbers: (entry.container_numbers + "\n CONT1234567890")
       line_2 = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("5"), value: BigDecimal("100")
-    
+
       c = shipment.containers.create! container_number: "CONT1234567890"
       shipment.shipment_lines.first.update_attributes! container_id: c.id
 
@@ -334,7 +334,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(REXML::Document.new(captured_xml.first).root).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']/ContainerNumber", "ABCD1234567890")
     end
 
-    it "uses house bill for LCL ocean modes" do 
+    it "uses house bill for LCL ocean modes" do
       c = shipment.containers.first
       c.fcl_lcl = "LCL"
       c.save!

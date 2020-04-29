@@ -4,17 +4,17 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
   CUSTOM_DEFINITION_INSTRUCTIONS = {
     shp_revision: {label: "Revision", data_type: :integer, module_type: "Shipment", cdef_uid: "shp_revision"},
     shp_invoice_prepared_date: {label: "Invoice Prepared Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_invoice_prepared_date"},
-    shp_entry_prepared_date: {label: "Entry Prepared Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_entry_pepared"}, 
+    shp_entry_prepared_date: {label: "Entry Prepared Date", data_type: :datetime, module_type: "Shipment", cdef_uid: "shp_entry_pepared"},
     shp_delivery_date: {label: "Delivery Date", data_type: :date, module_type: "Shipment", cdef_uid: "shp_delivery_date"},
     shpln_priority: {label: "Priority", data_type: :string, module_type: "ShipmentLine", cdef_uid: "shpln_priority"},
-    shpln_po: {label:'PO Number',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_po"},
-    shpln_sku: {label:'SKU',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_sku"},
-    shpln_coo: {label:'Country of Origin ISO',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_coo"},
-    shpln_color: {label:'Color',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_color"},
-    shpln_desc: {label:'Description',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_desc"},
-    shpln_received_date: {label:'Received Date',data_type: :date, module_type: 'ShipmentLine', cdef_uid: "shpln_received_date"},
-    shpln_uom: {label:'UOM',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_uom"},
-    shpln_size: {label:'Size',data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_size"},
+    shpln_po: {label:'PO Number', data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_po"},
+    shpln_sku: {label:'SKU', data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_sku"},
+    shpln_coo: {label:'Country of Origin ISO', data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_coo"},
+    shpln_color: {label:'Color', data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_color"},
+    shpln_desc: {label:'Description', data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_desc"},
+    shpln_received_date: {label:'Received Date', data_type: :date, module_type: 'ShipmentLine', cdef_uid: "shpln_received_date"},
+    shpln_uom: {label:'UOM', data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_uom"},
+    shpln_size: {label:'Size', data_type: :string, module_type: 'ShipmentLine', cdef_uid: "shpln_size"},
     shpln_invoice_number: {label: "Invoice #", data_type: :string, module_type: "ShipmentLine", cdef_uid: "shpln_invoice_number"},
     prod_part_number: {label: 'Part Number', data_type: :string, module_type: 'Product', cdef_uid: "prod_part_number"},
     prod_country_of_origin: {label: "Country of Origin", data_type: :string, module_type: "Product", cdef_uid: "prod_country_of_origin"},
@@ -86,12 +86,12 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     prod_exception_code: {label: "Exception Code", data_type: :string, module_type: 'Product', cdef_uid: "prod_exception_code"},
     prod_suffix: {label: "Suffix", data_type: :string, module_type: 'Product', cdef_uid: "prod_suffix"},
     prod_comments: {label: "Comments", data_type: :text, module_type: 'Product', cdef_uid: "prod_comments"},
-    prod_department_name:{label:'Department Name',data_type: :string, module_type:'Product', cdef_uid: "prod_department_name"},
-    prod_pattern: {label:'Pattern',data_type: :string, module_type:'Product', cdef_uid: "prod_pattern"},
-    prod_buyer_name: {label:'Buyer Name',data_type: :string, module_type:'Product', cdef_uid: "prod_buyer_name"},
+    prod_department_name:{label:'Department Name', data_type: :string, module_type:'Product', cdef_uid: "prod_department_name"},
+    prod_pattern: {label:'Pattern', data_type: :string, module_type:'Product', cdef_uid: "prod_pattern"},
+    prod_buyer_name: {label:'Buyer Name', data_type: :string, module_type:'Product', cdef_uid: "prod_buyer_name"},
     prod_class: {label: "Class", data_type: :string, module_type: "Product", cdef_uid: "prod_class"},
     prod_type: {label: "Product Type", data_type: :string, module_type: "Product", cdef_uid: "prod_type"},
-    prod_301_exclusion_tariff: {label: "301 Exclusion Tariff #", data_type: :string, module_type: "Product", cdef_uid: "prod_301_exclusion_tariff"}, 
+    prod_301_exclusion_tariff: {label: "301 Exclusion Tariff #", data_type: :string, module_type: "Product", cdef_uid: "prod_301_exclusion_tariff"},
     prod_add_case: {label: "ADD Case Number", data_type: :string, module_type: "Product", cdef_uid: "prod_add_case"},
     prod_add_case_2: {label: "ADD Case Number 2", data_type: :string, module_type: "Product", cdef_uid: "prod_add_case_2"},
     prod_add_disclaimed: {label: "ADD Dislaimed?", data_type: :boolean, module_type: "Product", cdef_uid: "prod_add_disclaimed"},
@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_assigned_agent: {label: "Assigned Agent", data_type: :string, module_type: "Order", cdef_uid: "ord_assigned_agent"},
     ord_buyer: {label: "Buyer", data_type: :string, module_type: "Order", cdef_uid: "ord_buyer"},
     ord_buyer_order_number: {label: "Buyer Order Number", data_type: :string, module_type: "Order", cdef_uid: "ord_buyer_order_number"},
-    ord_buyer_email: {label:'Buyer Email',data_type: :string, module_type:'Order', cdef_uid: "ord_buyer_email"},
+    ord_buyer_email: {label:'Buyer Email', data_type: :string, module_type:'Order', cdef_uid: "ord_buyer_email"},
     ord_invoicing_system: {label: "Invoicing System", data_type: :string, module_type: "Order", cdef_uid: "ord_invoicing_system"},
     ord_invoiced: {label: "Invoice Received?", data_type: :boolean, module_type: "Order", cdef_uid: "ord_invoiced"},
     ord_division: {label: "Division", data_type: :string, module_type: "Order", cdef_uid: "ord_division"},
@@ -129,7 +129,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_entry_port_name: {label:'Entry Port Name', data_type: :string, module_type: 'Order', cdef_uid: "ord_entry_port_name"},
     ord_ship_type: {label:'Ship Mode Type', data_type: :string, module_type:'Order', cdef_uid: "ord_ship_type"},
     ord_original_gac_date: {label:'Original GAC Date', data_type: :date, module_type:'Order', cdef_uid: "ord_original_gac_date"},
-    ord_destination_code: {label:'Final Destination',data_type: :string,module_type:'Order', cdef_uid: "ord_destination_code"},
+    ord_destination_code: {label:'Final Destination', data_type: :string, module_type:'Order', cdef_uid: "ord_destination_code"},
     ord_factory_code: {label:'Factory Code', data_type: :string, module_type:'Order', cdef_uid: "ord_factory_code"},
     ord_customer_code: {label:"Customer Code", data_type: :string, module_type: "Order", cdef_uid: "ord_customer_code"},
     ord_destination_codes: {label: "Destination Codes", data_type: :string, module_type: 'Order', cdef_uid: "ord_destination_codes"},
@@ -152,7 +152,7 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     ord_line_design_fee: {label: "Design Fee", data_type: :decimal, module_type: "OrderLine", cdef_uid: "ord_line_design_fee"},
     ord_line_planned_available_date: {label: "Planned Available Date", data_type: :date, module_type: "OrderLine", cdef_uid: "ord_line_planned_available_date"},
     ord_line_planned_dc_date: {label: "Planned Arrival DC Date", data_type: :date, module_type: "OrderLine", cdef_uid: "ord_line_planned_dc_date"},
-    ord_line_note: {label:'Note',data_type: :string, module_type:'OrderLine', cdef_uid: "ord_line_note"},
+    ord_line_note: {label:'Note', data_type: :string, module_type:'OrderLine', cdef_uid: "ord_line_note"},
     var_upc: {label: "UPC", data_type: "string", module_type: "Variant", cdef_uid: "var_upc"},
     var_article_number: {label: "Article Number", data_type: :string, module_type: "Variant", cdef_uid: "var_article_number"},
     var_description: {label: "Description", data_type: :string, module_type: "Variant", cdef_uid: "var_description"},
@@ -161,11 +161,11 @@ module OpenChain; module CustomHandler; module VfitrackCustomDefinitionSupport
     var_color: {label: "Color", data_type: :string, module_type: "Variant", cdef_uid: "var_color"},
     var_size: {label: "Size", data_type: :string, module_type: "Variant", cdef_uid: "var_size"}
   }
-  
+
   def self.included(base)
     base.extend(::OpenChain::CustomHandler::CustomDefinitionSupport)
     base.extend(ClassMethods)
-  end 
+  end
 
   module ClassMethods
     def prep_custom_definitions fields

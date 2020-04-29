@@ -64,19 +64,19 @@ describe HtsController do
       get :subscribed_countries
       expect(response).to be_success
       countries = JSON.parse(response.body)["countries"]
-      expect(countries).to eq([{"iso"=>"US", "name"=>"United States","view"=>true}, {"iso"=>"CA", "name"=>"Canada","view"=>true}, {"iso"=>"VN", "name"=>"Vietnam","view"=>true}])
+      expect(countries).to eq([{"iso"=>"US", "name"=>"United States", "view"=>true}, {"iso"=>"CA", "name"=>"Canada", "view"=>true}, {"iso"=>"VN", "name"=>"Vietnam", "view"=>true}])
     end
 
     it "should return all countries available when logged out" do
       get :subscribed_countries
       expect(response).to be_success
       countries = JSON.parse(response.body)["countries"]
-      expect(countries).to eq( 
+      expect(countries).to eq(
         [
-          {"iso"=>'US',"name"=>'United States',"view"=>true},{"iso"=>'CA',"name"=>'Canada',"view"=>true},{"iso"=>'AU',"name"=>'Australia'},{"iso"=>'CL',"name"=>'Chile'},{"iso"=>'CN',"name"=>'China'},{"iso"=>'HK',"name"=>'Hong Kong'},
-          {"iso"=>'ID',"name"=>'Indonesia'},{"iso"=>'IT',"name"=>'Italy'},{"iso"=>'JP',"name"=>'Japan'},{"iso"=>'KR',"name"=>'Korea, Republic of'},{"iso"=>'MO',"name"=>'Macao'},{"iso"=>'MY',"name"=>'Malaysia'},
-          {"iso"=>'MX',"name"=>'Mexico'},{"iso"=>'NZ',"name"=>'New Zealand'},{"iso"=>'NO',"name"=>'Norway'},{"iso"=>'PE',"name"=>'Peru'},{"iso"=>'PH',"name"=>'Philippines'},{"iso"=>'RU',"name"=>'Russian Federation'},
-          {"iso"=>'SG',"name"=>'Singapore'},{"iso"=>'TW',"name"=>'Taiwan'},{"iso"=>'TH',"name"=>'Thailand'},{"iso"=>'TR',"name"=>'Turkey'},{"iso"=>'VN',"name"=>'Vietnam'}
+          {"iso"=>'US', "name"=>'United States', "view"=>true}, {"iso"=>'CA', "name"=>'Canada', "view"=>true}, {"iso"=>'AU', "name"=>'Australia'}, {"iso"=>'CL', "name"=>'Chile'}, {"iso"=>'CN', "name"=>'China'}, {"iso"=>'HK', "name"=>'Hong Kong'},
+          {"iso"=>'ID', "name"=>'Indonesia'}, {"iso"=>'IT', "name"=>'Italy'}, {"iso"=>'JP', "name"=>'Japan'}, {"iso"=>'KR', "name"=>'Korea, Republic of'}, {"iso"=>'MO', "name"=>'Macao'}, {"iso"=>'MY', "name"=>'Malaysia'},
+          {"iso"=>'MX', "name"=>'Mexico'}, {"iso"=>'NZ', "name"=>'New Zealand'}, {"iso"=>'NO', "name"=>'Norway'}, {"iso"=>'PE', "name"=>'Peru'}, {"iso"=>'PH', "name"=>'Philippines'}, {"iso"=>'RU', "name"=>'Russian Federation'},
+          {"iso"=>'SG', "name"=>'Singapore'}, {"iso"=>'TW', "name"=>'Taiwan'}, {"iso"=>'TH', "name"=>'Thailand'}, {"iso"=>'TR', "name"=>'Turkey'}, {"iso"=>'VN', "name"=>'Vietnam'}
         ]
       )
     end

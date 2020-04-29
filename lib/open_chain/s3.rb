@@ -42,7 +42,7 @@ module OpenChain; class S3
     true
   end
 
-  # Uploads the given local_file to a temp location in S3 
+  # Uploads the given local_file to a temp location in S3
   def self.with_s3_tempfile local_file, bucket: 'chainio-temp', tmp_s3_path: "#{MasterSetup.get.uuid}/temp"
     upload_response = nil
     begin
@@ -79,26 +79,26 @@ module OpenChain; class S3
     if io.nil?
       return uncompress_s3_data_if_needed(object_data)
     else
-      return object_data  
+      return object_data
     end
   end
 
   # Retrieves the data specified by the bucket/key descriptor.
   # If the IO parameter is defined, the object is expected to be an IO-like object
-  # (answering to write, flush and rewind) and all data is streamed directly to 
+  # (answering to write, flush and rewind) and all data is streamed directly to
   # this object and nothing is returned.
-  # When an IO object is passed, this method returns a metatdata object containing 
+  # When an IO object is passed, this method returns a metatdata object containing
   # data about the s3 object (headers, etc)
   #
   # If no io object is provided, the full file content is returned.
   # If the data is compressed, it will be transaparently decompressed (only if no IO is passed)
-  # 
+  #
   def self.get_data bucket, key, io = nil
     object_data = Client.get_versioned_data bucket, key, io: io
     if io.nil?
       return uncompress_s3_data_if_needed(object_data)
     else
-      return object_data  
+      return object_data
     end
   end
 
@@ -135,14 +135,14 @@ module OpenChain; class S3
     objects.each {|o| yield o[:key], o[:version] }
     nil
   end
-  
+
   # Downloads the AWS S3 data specified by the bucket and key (and optional version).  The tempfile
   # created will attempt to use the key as a template for naming the tempfile created.
   # Meaning, at a minimum, the file name name should retain the same file extension that
   # it currently has on the S3 file system.  If you wish to get the actual filename,
-  # utilize the original_filename option and a original_filename method will get added to the 
+  # utilize the original_filename option and a original_filename method will get added to the
   # tempfile.
-  # 
+  #
   # To retrieve versioned data, pass the file version with the version option
   #
   # If a block is passed, the tempfile is yielded to the block as the sole argument and cleanup
@@ -172,7 +172,7 @@ module OpenChain; class S3
       # to our ensure clause to tell it there was an error and to clean up the tempfile.
       e = true
       raise $!
-    ensure 
+    ensure
       # We want to make sure we destroy the tempfile if we yield to a block or
       # if something was raised inside the above block
       t.close! if t && (e || block_given?)
@@ -186,7 +186,7 @@ module OpenChain; class S3
   private_class_method :create_tempfile
 
   def self.delete bucket, key, version = nil
-    # There is no indicator from the s3 lib when a file doesn't exist and delete is called on it, so 
+    # There is no indicator from the s3 lib when a file doesn't exist and delete is called on it, so
     # there's not much of a point in differentiating a true/false return value here...always return true.
     # NOTE: If the bucket doesn't exist a Aws::S3::Errors::NoSuchBucket error is raised.  We'll allow this
     # to raise, since if that's happening, then it's likely you've got some bad code that needs to get taken care of.
@@ -195,12 +195,12 @@ module OpenChain; class S3
   end
 
   def self.bucket_name environment = MasterSetup.rails_env
-    BUCKETS[environment.to_sym]      
+    BUCKETS[environment.to_sym]
   end
 
   def self.integration_bucket_name
     # Really, we should be pointing to test in anything other than prod...however, there's a ton of unit tests that
-    # will fail if I change this now and don't fix them, and as I'm primarily guarding against trying to send 
+    # will fail if I change this now and don't fix them, and as I'm primarily guarding against trying to send
     # data that a developer might be loading to prod, I'm ok for now just guarding against the dev case using prod.
     MasterSetup.development_env? ? 'chain-io-integration-test' : 'chain-io-integration'
   end
@@ -216,7 +216,7 @@ module OpenChain; class S3
     # for files to process.  This ammounts primarily just to a single extra HTTP call per subfolder listed.
     Array.wrap(subfolders).each do |subfolder|
       prefix = integration_subfolder_path(subfolder, upload_date)
-      
+
       # The sort call here is to make sure we're processing all the files nearest to the order they were received
       # in using the last modified date.  This is the only "standard" metadata date we get on all objects, so technically
       # it's not going to be 100% reliable if we update a file ever, but I'm not sure if that'll ever really happen anyway
@@ -232,7 +232,7 @@ module OpenChain; class S3
 
   def self.integration_subfolder_path folder, upload_date
     # Strip any leading slash from the subfolder since we add one below...this allows us to use the actual
-    # absolute path to the integration directory in the parsers, vs. what looks like a relative path.  
+    # absolute path to the integration directory in the parsers, vs. what looks like a relative path.
     folder = folder[1..-1] if folder.start_with? "/"
     "#{upload_date.strftime("%Y-%m/%d")}/#{folder}"
   end
@@ -254,7 +254,7 @@ module OpenChain; class S3
 
   class S3ObjectData
     attr_reader :bucket, :key, :version, :content_encoding, :content_disposition, :content_length, :content_type, :last_modified, :etag, :metadata, :body
-    
+
     def initialize bucket, key, version, response, body
       @bucket = bucket
       @key = key
@@ -269,7 +269,7 @@ module OpenChain; class S3
         @last_modified = response.last_modified
         @etag = response.etag
         @metadata = {}
-        response.metadata.keys.each do |k|
+        response.metadata.each_key do |k|
           @metadata[k] = response.metadata[k]
         end
       end
@@ -300,7 +300,7 @@ module OpenChain; class S3
     # returns S3Object, ObjectVersion
     def self.s3_upload_io bucket, key, data, write_options = {}
       # Everything passed into this method SHOULD respond to rewind
-      retry_lambda = lambda { data.rewind } 
+      retry_lambda = lambda { data.rewind }
       s3_action_with_retries(retry_lambda: retry_lambda) do
         # This initiates an upload in a single request...this functionally limits the size of the upload to < 5GB...which is fine for
         # our current use cases.
@@ -312,7 +312,7 @@ module OpenChain; class S3
     def self.copy_object from_bucket, from_path, to_bucket, to_path, from_version: nil
       copy_source = "#{from_bucket}/#{Seahorse::Util.uri_path_escape(from_path)}"
       copy_source += "?versionId=#{Seahorse::Util.uri_escape(from_version)}" unless from_version.blank?
-      
+
       s3_client.copy_object({bucket: to_bucket, copy_source: copy_source, key: to_path})
       true
     end
@@ -332,7 +332,7 @@ module OpenChain; class S3
       if opts[:versioning]
         b.versioning.enable
       end
-      
+
       true
     end
 
@@ -355,7 +355,7 @@ module OpenChain; class S3
         if io
           response = s3_client.get_object(opts) {|chunk| io.write chunk }
 
-          # Flush the data and reset the read/write pointer to the beginning of the IO object 
+          # Flush the data and reset the read/write pointer to the beginning of the IO object
           # so the caller can then actually read from the file.
           io.flush
           io.rewind
@@ -371,7 +371,7 @@ module OpenChain; class S3
       raise err
     end
 
-    # You can use this method to front any handling of s3 data that is used for versioning where both 
+    # You can use this method to front any handling of s3 data that is used for versioning where both
     # S3:S3Object and S3::ObjectVersion share methods (like #key, #metadata, #read, #delete, #bucket, #url_for)
     def self.s3_versioned_object bucket, key, version = nil
       s3_obj = s3_file(bucket, key)
@@ -388,7 +388,7 @@ module OpenChain; class S3
       if version
         vo = s3_versioned_object(bucket, key, version)
         head = vo.head rescue nil
-        val = !head.nil? 
+        val = !head.nil?
       else
         val = s3_file(bucket, key).exists?
       end
@@ -420,7 +420,7 @@ module OpenChain; class S3
         end
         continue_listing = objects.length < max_files && resp.is_truncated
       end while continue_listing
-      
+
       # Now sort all the objects by last_modified_date
       objects.sort_by {|k| k[:last_modified] }
     end
@@ -428,7 +428,7 @@ module OpenChain; class S3
     def self.s3_action_with_retries total_attempts: 3, retry_lambda: nil
       begin
         return yield
-      rescue 
+      rescue
         total_attempts -= 1
         if total_attempts > 0
           sleep 0.25

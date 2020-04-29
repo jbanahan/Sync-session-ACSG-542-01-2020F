@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   describe "process_entry" do
     let! (:us) { Factory(:country, iso_code: "US")}
 
-    let! (:tariff_classification) { 
+    let! (:tariff_classification) {
       # Use a duty computation that includes all the rate types
       c = Factory(:tariff_classification, country: us, tariff_number: "1234567890", effective_date_start: Date.new(2001, 1, 1), unit_of_measure_1: "CM", unit_of_measure_2: "KG", duty_computation: "6")
       rate_1 = Factory(:tariff_classification_rate, tariff_classification: c, rate_advalorem: BigDecimal("0.50"), rate_specific: BigDecimal("1.25"), rate_additional: BigDecimal("3.55"), special_program_indicator: "JO")
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     }
 
     before :each do
-      
+
       @e = {
         'cust_no' => 'TEST',
         'irs_no' => "12-23456789",
@@ -133,8 +133,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>99696, 'date'=>201701031800},
           {'date_no'=>90036, 'date'=>201701031900},
           {'date_no'=>90037, 'date'=>201701032000},
-          {'date_no'=>90054, 'date'=>201701032100}, #multi
-          {'date_no'=>90055, 'date'=>201701032200}, #multi
+          {'date_no'=>90054, 'date'=>201701032100}, # multi
+          {'date_no'=>90055, 'date'=>201701032200}, # multi
           {'date_no'=>99638, 'date'=>201701032300},
           {'date_no'=>99640, 'date'=>201701040000},
           {'date_no'=>99689, 'date'=>201701040100},
@@ -150,10 +150,10 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>5053, 'date'=>201701041100},
           {'date_no'=>5056, 'date'=>201701041200},
           {'date_no'=>91065, 'date'=>201701041300},
-          {'date_no'=>99851, 'date'=>201701041400}, #multi
-          {'date_no'=>99846, 'date'=>201701041500},          
+          {'date_no'=>99851, 'date'=>201701041400}, # multi
+          {'date_no'=>99846, 'date'=>201701041500},
           {'date_no'=>99844, 'date'=>201701041600},
-          
+
           {'date_no'=>92033, 'date'=>201712181400},
 
           # milestone exceptions
@@ -412,7 +412,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           }
         ],
         'post_summary_corrections' => [
-          { 'lines' => [ 
+          { 'lines' => [
                          {
                           'ci_no' => 'INV1',
                           'ci_line_no' => 10,
@@ -420,7 +420,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                          }
 
              ],
-            'sent_date' => 201803151200 
+            'sent_date' => 201803151200
           }
         ]
       }
@@ -484,7 +484,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.other_fees).to eq BigDecimal.new("15")
       expect(entry.daily_statement_number).to eq "bstatement"
       expect(entry.monthly_statement_number).to eq "astatement"
-      expect(entry.monthly_statement_due_date).to eq Date.new(2015,3,15)
+      expect(entry.monthly_statement_due_date).to eq Date.new(2015, 3, 15)
 
       # This is the only field different than the value above, since it's testing
       # that we handle date times w/ 60 as a minute value correctly
@@ -519,36 +519,36 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.bol_received_date).to eq tz.parse "201604271130"
       expect(entry.arrival_notice_receipt_date).to eq tz.parse "201701031200"
 
-      #hold/release dates
-      expect(entry.ams_hold_date).to eq tz.parse "201701031300" 
-      expect(entry.ams_hold_release_date).to eq tz.parse "201701031400" 
-      expect(entry.aphis_hold_date).to eq tz.parse "201701031500" 
-      expect(entry.aphis_hold_release_date).to eq tz.parse "201701031600" 
-      expect(entry.atf_hold_date).to eq tz.parse "201701031700" 
-      expect(entry.atf_hold_release_date).to eq tz.parse "201701031800" 
-      expect(entry.cargo_manifest_hold_date).to eq tz.parse "201701031900" 
-      expect(entry.cargo_manifest_hold_release_date).to eq tz.parse "201701032000" 
-      expect(entry.cbp_hold_date).to eq tz.parse "201701032100" 
-      expect(entry.cbp_hold_release_date).to eq tz.parse "201701032200" 
-      expect(entry.cbp_intensive_hold_date).to eq tz.parse "201701032100" 
-      expect(entry.cbp_intensive_hold_release_date).to eq tz.parse "201701032200" 
-      expect(entry.ddtc_hold_date).to eq tz.parse "201701032300" 
-      expect(entry.ddtc_hold_release_date).to eq tz.parse "201701040000" 
-      expect(entry.fda_hold_date).to eq tz.parse "201701040100" 
-      expect(entry.fda_hold_release_date).to eq tz.parse "201701040200" 
-      expect(entry.fsis_hold_date).to eq tz.parse "201701040300" 
-      expect(entry.fsis_hold_release_date).to eq tz.parse "201701040400" 
-      expect(entry.nhtsa_hold_date).to eq tz.parse "201701040500" 
-      expect(entry.nhtsa_hold_release_date).to eq tz.parse "201701040600" 
-      expect(entry.nmfs_hold_date).to eq tz.parse "201701040700" 
-      expect(entry.nmfs_hold_release_date).to eq tz.parse "201701040800" 
-      expect(entry.usda_hold_date).to eq tz.parse "201701040900" 
-      expect(entry.usda_hold_release_date).to eq tz.parse "201701041000" 
-      expect(entry.other_agency_hold_date).to eq tz.parse "201701041100" 
+      # hold/release dates
+      expect(entry.ams_hold_date).to eq tz.parse "201701031300"
+      expect(entry.ams_hold_release_date).to eq tz.parse "201701031400"
+      expect(entry.aphis_hold_date).to eq tz.parse "201701031500"
+      expect(entry.aphis_hold_release_date).to eq tz.parse "201701031600"
+      expect(entry.atf_hold_date).to eq tz.parse "201701031700"
+      expect(entry.atf_hold_release_date).to eq tz.parse "201701031800"
+      expect(entry.cargo_manifest_hold_date).to eq tz.parse "201701031900"
+      expect(entry.cargo_manifest_hold_release_date).to eq tz.parse "201701032000"
+      expect(entry.cbp_hold_date).to eq tz.parse "201701032100"
+      expect(entry.cbp_hold_release_date).to eq tz.parse "201701032200"
+      expect(entry.cbp_intensive_hold_date).to eq tz.parse "201701032100"
+      expect(entry.cbp_intensive_hold_release_date).to eq tz.parse "201701032200"
+      expect(entry.ddtc_hold_date).to eq tz.parse "201701032300"
+      expect(entry.ddtc_hold_release_date).to eq tz.parse "201701040000"
+      expect(entry.fda_hold_date).to eq tz.parse "201701040100"
+      expect(entry.fda_hold_release_date).to eq tz.parse "201701040200"
+      expect(entry.fsis_hold_date).to eq tz.parse "201701040300"
+      expect(entry.fsis_hold_release_date).to eq tz.parse "201701040400"
+      expect(entry.nhtsa_hold_date).to eq tz.parse "201701040500"
+      expect(entry.nhtsa_hold_release_date).to eq tz.parse "201701040600"
+      expect(entry.nmfs_hold_date).to eq tz.parse "201701040700"
+      expect(entry.nmfs_hold_release_date).to eq tz.parse "201701040800"
+      expect(entry.usda_hold_date).to eq tz.parse "201701040900"
+      expect(entry.usda_hold_release_date).to eq tz.parse "201701041000"
+      expect(entry.other_agency_hold_date).to eq tz.parse "201701041100"
       expect(entry.other_agency_hold_release_date).to eq tz.parse "201701041200"
       expect(entry.one_usg_date).to eq tz.parse "201701041300"
       expect(entry.hold_date).to eq tz.parse "201701031300"
-      expect(entry.hold_release_date).to eq tz.parse "201701041500" 
+      expect(entry.hold_release_date).to eq tz.parse "201701041500"
       expect(entry.fish_and_wildlife_hold_date).to eq tz.parse "201701041400"
       expect(entry.fish_and_wildlife_hold_release_date).to eq tz.parse "201701041500"
 
@@ -567,7 +567,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.additional_duty_confirmation_date).to eq tz.parse("201701160000").to_date
       expect(entry.pga_docs_missing_date).to eq tz.parse("201701170000").to_date
       expect(entry.pga_docs_incomplete_date).to eq tz.parse("201701180000").to_date
-      
+
       expect(entry.fish_and_wildlife_transmitted_date).to eq tz.parse "201701041600"
       expect(entry.fish_and_wildlife_secure_facility_date).to eq tz.parse "201701041400"
       expect(entry.first_7501_print).to eq tz.parse "201503191930"
@@ -684,7 +684,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(ci.country_origin_code).to eq "CN"
       expect(ci.gross_weight).to eq 123
       expect(ci.total_charges).to eq 12.00
-      expect(ci.invoice_date).to eq Date.new(2015,4,2)
+      expect(ci.invoice_date).to eq Date.new(2015, 4, 2)
       expect(ci.invoice_value).to eq (BigDecimal.new("0.123456") * 123.45).round(2)
       expect(ci.total_quantity).to eq 99
       expect(ci.total_quantity_uom).to eq 'PCS'
@@ -872,7 +872,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       entry = subject.process_entry @e
       entry.reload
 
-      expect(entry.liquidation_date).to eq DateTime.new(2015,1,1,17,30)
+      expect(entry.liquidation_date).to eq DateTime.new(2015, 1, 1, 17, 30)
       expect(entry.liquidation_type_code).to eq "liq_type"
       expect(entry.liquidation_type).to eq "liq type desc"
       expect(entry.liquidation_action_code).to eq "action_liquidation"
@@ -967,7 +967,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.commercial_invoices.first.invoice_number).to eq "INV1"
       expect(entry.entry_comments.size).to eq 4
       expect(entry.containers.size).to eq 2
-      expect(entry.containers.map{|c| c.container_number}).to include("CONT1")
+      expect(entry.containers.map {|c| c.container_number}).to include("CONT1")
     end
 
     it "copies sync records from existing broker invoice to newly created one" do
@@ -1028,13 +1028,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "logs an error message if periodic monthly data is missing" do
       @e['pms_year'] = 2016
-      expect {subject.process_entry @e}.to change(ErrorLogEntry,:count).by(1)
+      expect {subject.process_entry @e}.to change(ErrorLogEntry, :count).by(1)
     end
 
     it "does not log an error if periodic data is missing and the entry does not have a filed date value" do
       @e['dates'].reject! {|v| v['date_no'] == 16 }
 
-      expect {subject.process_entry @e}.to_not change(ErrorLogEntry,:count)
+      expect {subject.process_entry @e}.to_not change(ErrorLogEntry, :count)
     end
 
     it "skips purged entries" do
@@ -1252,8 +1252,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     it "assigns fiscal month to entry and broker invoice" do
       imp = with_customs_management_id(Factory(:company, fiscal_reference: "ent_release_date"), "TEST")
-      fm_1 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015,3,1), end_date: Date.new(2015,3,31))
-      fm_2 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 2, start_date: Date.new(2015,4,1), end_date: Date.new(2015,4,30))
+      fm_1 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 1, start_date: Date.new(2015, 3, 1), end_date: Date.new(2015, 3, 31))
+      fm_2 = Factory(:fiscal_month, company: imp, year: 2015, month_number: 2, start_date: Date.new(2015, 4, 1), end_date: Date.new(2015, 4, 30))
 
       entry = subject.process_entry @e
       expect(entry.fiscal_date).to eq fm_1.start_date
@@ -1303,21 +1303,21 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.summary_rejected).to eq false
     end
 
-    it "does not set summary rejected if data rjected note was followed by summary replacement message" do 
+    it "does not set summary rejected if data rjected note was followed by summary replacement message" do
       @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191930, 'confidential' => "Y"}
       @e['notes'] << {'note' => "SUMMARY HAS BEEN REPLACED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191931, 'confidential' => "Y"}
       entry = subject.process_entry @e
       expect(entry.summary_rejected).to eq false
     end
 
-    it "does not set summary rejected if data rjected note was followed by summary add message" do 
+    it "does not set summary rejected if data rjected note was followed by summary add message" do
       @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191930, 'confidential' => "Y"}
       @e['notes'] << {'note' => "SUMMARY HAS BEEN ADDED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191931, 'confidential' => "Y"}
       entry = subject.process_entry @e
       expect(entry.summary_rejected).to eq false
     end
 
-    it "does sets summary rejected if data rjected note was followed by summary add message by a person" do 
+    it "does sets summary rejected if data rjected note was followed by summary add message by a person" do
       @e['notes'] << {'note' => "TRANSACTION DATA REJECTED", 'modified_by'=>"CUSTOMS", 'date_updated' => 201603191930, 'confidential' => "Y"}
       @e['notes'] << {'note' => "SUMMARY HAS BEEN ADDED", 'modified_by'=>"APERSON", 'date_updated' => 201603191931, 'confidential' => "Y"}
       entry = subject.process_entry @e
@@ -1336,7 +1336,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     end
 
     it "clears entry level field accumulations when new json does not have values" do
-      entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", customer_references: "0", commercial_invoice_numbers: "1", mfids: "2", export_country_codes: "3", origin_country_codes: "4", 
+      entry = Factory(:entry, broker_reference: "12345", source_system: "Alliance", customer_references: "0", commercial_invoice_numbers: "1", mfids: "2", export_country_codes: "3", origin_country_codes: "4",
         vendor_names: "5", total_units_uoms: "6", special_program_indicators: "7", po_numbers: "8", part_numbers: "9", container_numbers: "10", container_sizes: "11",
         charge_codes: "12", departments: "13", store_names: "14", fcl_lcl: "15", product_lines: "16",
         total_invoiced_value: 17, broker_invoice_total: 18, total_units: 19, total_cvd: 20, total_add: 21, total_non_dutiable_amount: 22, other_fees: 23)
@@ -1523,7 +1523,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
   describe "parse" do
     subject { described_class }
 
-    let! (:master_setup) { 
+    let! (:master_setup) {
       ms = stub_master_setup
       allow(ms).to receive(:custom_feature?).with("Kewill Imaging").and_return true
       ms
@@ -1589,11 +1589,11 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
   describe OpenChain::CustomHandler::KewillEntryParser::HoldReleaseSetter do
     let(:ent) { Factory(:entry, aphis_hold_date: nil, aphis_hold_release_date: nil) }
-    let(:date1) { DateTime.new(2017,3,15) }
-    let(:date2) { DateTime.new(2017,3,16)}
-    let(:date3) { DateTime.new(2017,3,17)}
+    let(:date1) { DateTime.new(2017, 3, 15) }
+    let(:date2) { DateTime.new(2017, 3, 16)}
+    let(:date3) { DateTime.new(2017, 3, 17)}
     let(:setter) { described_class.new ent }
-    
+
     describe "set_any_hold_date" do
       let(:attribute) { :aphis_hold_date }
 
@@ -1601,7 +1601,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         setter.set_any_hold_date date1, attribute
         expect(ent.aphis_hold_date).to eq date1
       end
-      
+
       it "also sets corresponding release date to nil (along w/ 'updated' hashes) if hold is already populated" do
         ent.update_attributes!(aphis_hold_date: date2, aphis_hold_release_date: date2)
         setter.updated_before_one_usg = { aphis_hold_release_date: date2 }
@@ -1645,7 +1645,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
     describe "set_any_hold_release_date" do
       let(:attribute) { :aphis_hold_release_date }
-    
+
       it "sets release date" do
         ent.update_attributes!(aphis_hold_date: date1)
         setter.set_any_hold_release_date date1, attribute
@@ -1675,9 +1675,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         setter.set_any_hold_release_date nil, attribute
         expect(setter.updated_after_one_usg).to be_empty
       end
-    
+
       context "one_usg_date" do
-        let(:attribute) { :one_usg_date }    
+        let(:attribute) { :one_usg_date }
 
         it "sets One USG date" do
           setter.set_any_hold_release_date date1, attribute
@@ -1719,7 +1719,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       it "assigns the earliest hold date" do
         ent.update_attributes! aphis_hold_date: date1, cbp_hold_date: date2, nmfs_hold_date: date3, hold_date: nil
         setter.entry = ent
-        expect{setter.set_summary_hold_date}.to change(ent, :hold_date).from(nil).to date1
+        expect {setter.set_summary_hold_date}.to change(ent, :hold_date).from(nil).to date1
       end
     end
 
@@ -1753,7 +1753,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         setter.set_summary_hold_release_date
         expect(ent.hold_release_date).to eq date3
       end
-      
+
       it "assigns nil if 'One USG date' exists and there are no holds" do
         ent.update_attributes! one_usg_date: date3
         expect(ent).to receive(:on_hold?).and_return false
@@ -1765,17 +1765,17 @@ describe OpenChain::CustomHandler::KewillEntryParser do
     describe "set_on_hold" do
       it "returns 'true' if any of the customs hold dates are assigned without a corresponding release date" do
         ent.update_attributes!(aphis_hold_date: date1, on_hold: nil)
-        expect{setter.set_on_hold}.to change(ent, :on_hold).from(nil).to true
+        expect {setter.set_on_hold}.to change(ent, :on_hold).from(nil).to true
       end
 
       it "returns 'false' if no customs hold dates are assigned" do
         ent.update_attributes!(on_hold: true)
-        expect{setter.set_on_hold}.to change(ent, :on_hold).from(true).to false
+        expect {setter.set_on_hold}.to change(ent, :on_hold).from(true).to false
       end
 
       it "returns 'false' if a customs hold date is assigned with a corresponding release date" do
         ent.update_attributes!(on_hold: true, aphis_hold_date: date1, aphis_hold_release_date: date2)
-        expect{setter.set_on_hold}.to change(ent, :on_hold).from(true).to false
+        expect {setter.set_on_hold}.to change(ent, :on_hold).from(true).to false
       end
     end
   end

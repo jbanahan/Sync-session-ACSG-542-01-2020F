@@ -30,7 +30,7 @@ describe OpenChain::FixedWidthLayoutBasedGenerator do
         date_field: lambda {|o| o.date_field },
         datetime_field: lambda {|o| o.datetime_field },
         decimal_field: lambda {|o| o.decimal_field },
-        integer_field: lambda {|o| o.integer_field }, 
+        integer_field: lambda {|o| o.integer_field },
         object_field: lambda {|o| o }
       }
     }
@@ -186,12 +186,12 @@ describe OpenChain::FixedWidthLayoutBasedGenerator do
       end
 
       it "autodetects datetime datatype with DateTime objects" do
-        simple_object.datetime_field = DateTime.new(2018,9,1,12,34,56)
+        simple_object.datetime_field = DateTime.new(2018, 9, 1, 12, 34, 56)
         subject.write_line output, single_layout({field: :datetime_field, length: 15}), simple_object
         expect_output(" 20180901123456")
       end
     end
-    
+
     context "with multi-field line" do
       it "outputs multiple fields onto a single line" do
         layout = make_layout(:map_name, [
@@ -211,10 +211,10 @@ describe OpenChain::FixedWidthLayoutBasedGenerator do
         expect(o[30, 10]).to eq "  20180901"
         expect(o[40, 15]).to eq " 20180901123456"
       end
-      
+
       it "handles sub-formats" do
         layout = make_layout(:map_name, [
-          {field: :object_field, sub_layout: 
+          {field: :object_field, sub_layout:
             make_layout(:sub_map, [
               {field: :string_field, length: 10}
             ])

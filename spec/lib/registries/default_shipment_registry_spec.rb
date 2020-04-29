@@ -68,7 +68,7 @@ describe OpenChain::Registries::DefaultShipmentRegistry do
         let!(:sl4) { sl = Factory(:shipment_line, product: ol4.product, shipment: s); sl.update! linked_order_line_id: ol4.id; sl}
 
 
-        before do         
+        before do
           allow(s).to receive(:can_cancel_as_agent?).with(u).and_call_original
           u.company.update! agent: true
         end

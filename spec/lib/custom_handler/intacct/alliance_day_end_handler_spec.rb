@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
-  # A lot of this spec is mocked out since this is mostly like a controller class that's 
+  # A lot of this spec is mocked out since this is mostly like a controller class that's
   # just handling off datasets between different subsystems that do the heavy lifting.
 
   describe "process" do
@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(m).to be_nil
 
       expect(ActionMailer::Base.deliveries.count).to eq 1
-      
+
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["st-hubbins@hellhole.co.uk"]
       expect(mail.subject).to eq "Day End Processing Complete"
@@ -66,13 +66,13 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h.process user
 
       expect(ActionMailer::Base.deliveries.count).to eq 1
-      
+
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["st-hubbins@hellhole.co.uk", described_class::ERROR_EMAIL]
       expect(mail.subject).to eq "Error creating Intacct-Alliance check(s)"
       expect(mail.body.raw_source).to match(/The following checks have already been sent to Intacct/)
-      expect(mail.body.raw_source).to match(/Check # 1234 for \$500.00/)      
-      
+      expect(mail.body.raw_source).to match(/Check # 1234 for \$500.00/)
+
       @check_file.reload
       @invoice_file.reload
       expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
@@ -97,13 +97,13 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       @h.process user
 
       expect(ActionMailer::Base.deliveries.count).to eq 1
-      
+
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["st-hubbins@hellhole.co.uk", described_class::ERROR_EMAIL]
       expect(mail.subject).to eq "Error creating Intacct-Alliance invoice(s)"
       expect(mail.body.raw_source).to match(/The following invoices have already been sent to Intacct/)
-      expect(mail.body.raw_source).to match(/An invoice error for File # 123/)      
-      
+      expect(mail.body.raw_source).to match(/An invoice error for File # 123/)
+
       @check_file.reload
       @invoice_file.reload
       expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
@@ -182,7 +182,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
       expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({checks: ["Error", "Error"], invoices: ["Error", "Error"]})
-      
+
       @h.process user
 
       m = user.messages.first
@@ -226,7 +226,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
     it "errors if missing either invoice file" do
       h = described_class.new(@check_file)
-      expect{h.process}.to raise_error "Missing invoice file!"
+      expect {h.process}.to raise_error "Missing invoice file!"
     end
   end
 
@@ -423,7 +423,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(stopped - started).not_to be > 6
     end
 
-    it "raises an error if too much time has passed" do 
+    it "raises an error if too much time has passed" do
       h = described_class.new(nil, nil)
       allow(h).to receive(:all_dimension_uploads_finished?).and_return false
 
@@ -469,7 +469,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
   describe "process_delayed" do
     it "finds referenced custom files and user and calls process" do
-      cf1 = CustomFile.create! 
+      cf1 = CustomFile.create!
       cf2 = CustomFile.create!
       u = Factory(:user)
 
@@ -478,7 +478,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "accepts nil for user" do
-      cf1 = CustomFile.create! 
+      cf1 = CustomFile.create!
       cf2 = CustomFile.create!
 
       expect_any_instance_of(described_class).to receive(:process).with nil
@@ -499,7 +499,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       credit_receivable = IntacctReceivable.create! company: 'vfc', receivable_type: 'Credit Note', intacct_alliance_export: invoice_export
       credit_receivable_line = IntacctReceivableLine.create! amount: 20, intacct_receivable: credit_receivable
 
-      # The amount from this receivable should be skipped, since it's something that is not in the invoice report, 
+      # The amount from this receivable should be skipped, since it's something that is not in the invoice report,
       # we generate it out of thin air for an internal billing process
       lmd_receivable_from_vfi = IntacctReceivable.create! company: 'lmd', customer_number: "VANDE", intacct_alliance_export: invoice_export
       lmd_receivable_from_vfi_line = IntacctReceivableLine.create! amount: 100, intacct_receivable: lmd_receivable_from_vfi
@@ -507,7 +507,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       payable = IntacctPayable.create! company: 'lmd', intacct_alliance_export: invoice_export
       payable_line = IntacctPayableLine.create! amount: 20, intacct_payable: payable
 
-      # This payable should be skipped, since it's something that is not in the invoice report, 
+      # This payable should be skipped, since it's something that is not in the invoice report,
       # we generate it out of thin air for an internal billing process
       vfi_to_lmd_payable = IntacctPayable.create! company: 'vfc', vendor_number: "LMD", intacct_alliance_export: invoice_export
       vfi_to_lmd_payable_line = IntacctPayableLine.create! amount: 50, intacct_payable: vfi_to_lmd_payable

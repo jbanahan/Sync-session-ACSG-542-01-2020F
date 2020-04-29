@@ -17,9 +17,9 @@ module ConfigMigrations; module LL; class BookingPhase2
 
   def generate_custom_definitions
     @cdefs = self.class.prep_custom_definitions (
-      [:shp_vgm_revised_date, :shp_vgm_revised_by, :shp_factory_pack_revised_date, :shp_factory_pack_revised_by, 
+      [:shp_vgm_revised_date, :shp_vgm_revised_by, :shp_factory_pack_revised_date, :shp_factory_pack_revised_by,
         :shp_vgm_electronic_signature, :shp_vgm_signature_date, :shp_isf_revised_by, :shp_isf_revised_date,
-        :con_weighing_company, :con_weighed_date, :con_weighing_method, :con_cargo_weight, 
+        :con_weighing_company, :con_weighed_date, :con_weighing_method, :con_cargo_weight,
         :con_dunnage_weight, :con_tare_weight, :con_total_vgm_weight, :con_remarks]
     )
   end
@@ -103,7 +103,7 @@ module ConfigMigrations; module LL; class BookingPhase2
     stb.update_attributes! display_index: "2", simple_button: true, activate_text: "Resend ISF"
 
     stb = StateToggleButton.where(identifier: "shp_send_factory_pack", module_type: "Shipment").first_or_create! user_attribute: "shp_packing_list_sent_by", date_attribute: "shp_packing_list_sent_date"
-    stb.update_attributes! display_index: "3", simple_button: true, activate_text: "Send Factory Pack" 
+    stb.update_attributes! display_index: "3", simple_button: true, activate_text: "Send Factory Pack"
 
     stb = StateToggleButton.where(identifier: "shp_resend_factory_pack", module_type: "Shipment").first_or_create! user_custom_definition_id: cdefs[:shp_factory_pack_revised_by].id, date_custom_definition_id: cdefs[:shp_factory_pack_revised_date].id
     stb.update_attributes! display_index: "4", simple_button: true, activate_text: "Resend Factory Pack"
@@ -119,7 +119,7 @@ module ConfigMigrations; module LL; class BookingPhase2
 
   def generate_field_validator_rules
     fvr = FieldValidatorRule.where(model_field_uid:"con_container_size", module_type:'Container').first_or_create!
-    fvr.update_attributes!( one_of: "20STD\n40STD\n40HQ\n45STD\n53\nLCL" ) 
+    fvr.update_attributes!( one_of: "20STD\n40STD\n40HQ\n45STD\n53\nLCL" )
   end
 
   def generate_isf_addresses

@@ -1,7 +1,7 @@
 describe Api::V1::ShipmentsController do
 
-  let! (:user) { 
-    u = Factory(:admin_user) 
+  let! (:user) {
+    u = Factory(:admin_user)
     allow_api_access u
     u
   }
@@ -10,7 +10,7 @@ describe Api::V1::ShipmentsController do
   let! (:state_toggle_button) { StateToggleButton.create! date_attribute: "shp_isf_sent_at", user_attribute: "shp_isf_sent_by", identifier: "shp_isf_sent", disabled: false, module_type: "Shipment"}
 
   describe "toggle_state_button" do
-    
+
     it "should toggle state" do
       btn = instance_double(StateToggleButton)
       expect(btn).to receive(:toggle!).with(shipment, user)
@@ -20,7 +20,7 @@ describe Api::V1::ShipmentsController do
       post :toggle_state_button, id: shipment.id.to_s, button_id: '10'
       expect(response).to be_success
     end
-    
+
     it "should not toggle state if user cannot access button" do
       btn = instance_double(StateToggleButton)
       expect(btn).not_to receive(:toggle!).with(shipment, user)

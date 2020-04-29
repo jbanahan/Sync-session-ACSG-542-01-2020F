@@ -1,11 +1,11 @@
 describe OpenChain::CustomHandler::NokogiriXmlHelper do
 
-  subject { 
+  subject {
     Class.new do
       include OpenChain::CustomHandler::NokogiriXmlHelper
     end.new
   }
-  
+
   describe "est_time_str" do
     it "formats time to eastern" do
       t = ActiveSupport::TimeZone["GMT"].parse("2019-04-23 15:09:42")
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::NokogiriXmlHelper do
     let (:xml) { Nokogiri::XML("<upper><lower>B</lower><lower>A</lower><lower>   </lower><lower>B</lower><lower>a</lower></upper>") }
 
     it "gets unique values" do
-      expect(subject.unique_values xml, "upper/lower").to eq ["B","A","a"]
+      expect(subject.unique_values xml, "upper/lower").to eq ["B", "A", "a"]
     end
 
     it "returns empty array for no xpath match" do
@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::NokogiriXmlHelper do
     end
 
     it "returns empty string in results when configured" do
-      expect(subject.unique_values xml, "upper/lower", skip_blank_values:false).to eq ["B","A","   ","a"]
+      expect(subject.unique_values xml, "upper/lower", skip_blank_values:false).to eq ["B", "A", "   ", "a"]
     end
 
     it "returns results as CSV when configured" do

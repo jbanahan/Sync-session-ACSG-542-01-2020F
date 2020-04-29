@@ -14,12 +14,12 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
     }
 
     context "with accepted data" do
-      after :each do 
+      after :each do
         expect(subject.accept? snapshot).to eq true
       end
-      
+
       it "accepts FOOLO entries that have been logged and have invoices" do
-        
+
       end
 
       it "accepts FOOCA entries that have been logged and have invoices" do
@@ -46,9 +46,9 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
         entry.source_system = Entry::FENIX_SOURCE_SYSTEM
       end
     end
-    
+
     context "with unaccepted data" do
-      after :each do 
+      after :each do
         expect(subject.accept? snapshot).to eq false
       end
 
@@ -85,8 +85,8 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
   describe "compare" do
     subject { described_class }
 
-    let (:entry) { 
-      e = Factory(:entry) 
+    let (:entry) {
+      e = Factory(:entry)
       e.broker_invoices << Factory(:broker_invoice, entry: e)
       e
     }
@@ -100,13 +100,13 @@ describe OpenChain::CustomHandler::FootLocker::FootLockerEntry810Comparator do
     it "doesn't call generate and send if all broker invoices have been synced" do
       entry.broker_invoices.first.sync_records.create! trading_partner: "FOOLO 810", sent_at: Time.zone.now
       expect_any_instance_of(described_class).not_to receive(:generate_and_send)
-      
+
       subject.compare nil, entry.id, nil, nil, nil, nil, nil, nil
     end
   end
 
   describe "generate_and_send" do
-    let (:entry) { 
+    let (:entry) {
       e = Factory(:entry, customer_number:'FOOLO')
       e.broker_invoices << Factory(:broker_invoice, entry: e)
       e

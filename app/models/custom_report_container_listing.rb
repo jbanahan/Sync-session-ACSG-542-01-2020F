@@ -2,7 +2,7 @@
 
 class CustomReportContainerListing < CustomReport
   attr_accessible :include_links, :name, :no_time, :type, :user_id
-  
+
   def self.template_name
     "Container Listing"
   end
@@ -22,14 +22,14 @@ class CustomReportContainerListing < CustomReport
     row_cursor = -1
     col_cursor = 0
 
-    #HEADINGS
+    # HEADINGS
     headers = ["Container Number"] + self.search_columns
 
     write_headers (row_cursor += 1), headers, run_by
 
     entries = Entry.search_secure run_by, Entry.group("entries.id")
     self.search_criterions.each {|sc| entries = sc.apply(entries)}
-    
+
     entries.each do |ent|
       container_numbers = ent.container_numbers
       container_numbers = "N/A" if container_numbers.blank?

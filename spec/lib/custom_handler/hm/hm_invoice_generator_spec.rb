@@ -2,24 +2,24 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   let(:hm) { with_customs_management_id(Factory(:company, name: "H&M"), "HENNE") }
   let(:country) { Factory(:country, iso_code: "CA") }
   let(:cdef) { described_class.prep_custom_definitions([:prod_po_numbers])[:prod_po_numbers] }
-  let(:prod) do 
+  let(:prod) do
     p = Factory(:product, importer: hm)
     p.update_custom_value! cdef, "0123456\n 1234567"
     p
   end
-  
+
   describe "run_schedulable" do
     it "finds the new billable events, new invoiceable events, creates a VFI invoice, bills new entries" do
       billables_to_be_invoiced = double "billables to be invoiced"
       billables_to_be_skipped = double "billables to be skipped"
       detail_tmp = double "detail temp file"
       new_billables = {to_be_invoiced: billables_to_be_invoiced, to_be_skipped: billables_to_be_skipped}
-      invoice = Factory(:vfi_invoice, invoice_date: Date.new(2018,1,1), invoice_number: "inv num", currency: "USD")
+      invoice = Factory(:vfi_invoice, invoice_date: Date.new(2018, 1, 1), invoice_number: "inv num", currency: "USD")
       Factory(:vfi_invoice_line, vfi_invoice: invoice, line_number: 1, charge_description: "descr", charge_amount: 5, charge_code: "code", quantity: 2, unit: "ea", unit_price: 2.50)
       generator = instance_double(described_class)
       report_generator = instance_double(described_class::ReportGenerator)
       cdefs = double("cdefs")
-  
+
       expect(described_class).to receive(:new).and_return generator
       expect(generator).to receive(:get_new_billables).and_return new_billables
       expect(generator).to receive(:create_invoice).and_return invoice
@@ -28,28 +28,28 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       expect(described_class::ReportGenerator).to receive(:new).with(cdefs).and_return report_generator
       expect(report_generator).to receive(:create_report_for_invoice).with(billables_to_be_invoiced, invoice).and_return detail_tmp
       expect(generator).to receive(:write_non_invoiced_events).with(billables_to_be_skipped)
-      expect(generator).to receive(:email_invoice).with(invoice,'sthubbins@hellhole.co.uk', "HM autobill invoice 12-17", "HM autobill invoice 12-17", detail_tmp)
+      expect(generator).to receive(:email_invoice).with(invoice, 'sthubbins@hellhole.co.uk', "HM autobill invoice 12-17", "HM autobill invoice 12-17", detail_tmp)
 
-      Timecop.freeze(DateTime.new(2018,1,5)) { described_class.run_schedulable({'email'=>'sthubbins@hellhole.co.uk'}) }
+      Timecop.freeze(DateTime.new(2018, 1, 5)) { described_class.run_schedulable({'email'=>'sthubbins@hellhole.co.uk'}) }
     end
   end
 
-  describe "get_new_billables" do   
+  describe "get_new_billables" do
     it "returns hash separating billables to be invoiced from those to be skipped" do
       cl1 = Factory(:classification, product: prod, country: country)
       prod_2 = Factory(:product, importer: hm)
       prod_2.update_custom_value! cdef, "0123456\n 1234567"
       cl2 = Factory(:classification, product: prod_2, country: country)
-      
+
       be_invoiced = Factory(:billable_event, billable_eventable: cl1)
       Factory(:invoiced_event, billable_event: be_invoiced, invoice_generator_name: "HmInvoiceGenerator")
-      
+
       be_non_invoiced = Factory(:billable_event, billable_eventable: cl2)
       Factory(:non_invoiced_event, billable_event: be_non_invoiced, invoice_generator_name: "HmInvoiceGenerator")
-      
-      be_new_1 = Factory(:billable_event, billable_eventable: cl1) #skipped because assoc prod already invoiced
-      be_new_2 = Factory(:billable_event, billable_eventable: cl2) 
-      be_new_3 = Factory(:billable_event, billable_eventable: cl2) #skipped because invoices same prod as be_new_2
+
+      be_new_1 = Factory(:billable_event, billable_eventable: cl1) # skipped because assoc prod already invoiced
+      be_new_2 = Factory(:billable_event, billable_eventable: cl2)
+      be_new_3 = Factory(:billable_event, billable_eventable: cl2) # skipped because invoices same prod as be_new_2
 
       r = subject.get_new_billables
       expect(r[:to_be_invoiced]).to eq [be_new_2]
@@ -85,7 +85,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       Factory(:invoiced_event, billable_event: billable, invoice_generator_name: 'foo generator')
       expect(subject.all_new_billables).to eq [billable]
     end
-  
+
     it "returns no results if billable has an associated invoiced_event from this generator" do
       Factory(:invoiced_event, billable_event: billable, invoice_generator_name: 'HmInvoiceGenerator')
       expect(subject.all_new_billables).to be_empty
@@ -103,7 +103,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
   end
 
   describe "partition_by_order_type" do
-    let(:prod2) do 
+    let(:prod2) do
       p = Factory(:product, importer: hm)
       p.update_custom_value! cdef, "0123456\n 2345678"
       p
@@ -135,9 +135,9 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       billables = [{id: 1, billable_eventable_id: 2}, {id: 3, billable_eventable_id: 4}, {id: 5, billable_eventable_id: 6}]
       inv_line = double("invoice_line")
       inv_lines_relation = double("inv_lines_relation")
-      
+
       expect(invoice).to receive(:vfi_invoice_lines).and_return inv_lines_relation
-      expect(inv_lines_relation).to receive(:create!).with(charge_description: "Canadian classification", quantity: 3, 
+      expect(inv_lines_relation).to receive(:create!).with(charge_description: "Canadian classification", quantity: 3,
                                                        unit: "ea", unit_price: 2.00).and_return inv_line
       expect(subject).to receive(:write_invoiced_events).with(billables, inv_line)
 
@@ -146,7 +146,7 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
 
     it "doesn't create an invoice line if there are no invoiceable events" do
       billables = []
-      
+
       expect(invoice).not_to receive(:vfi_invoice_lines)
       expect(subject).not_to receive(:write_invoiced_events)
 
@@ -159,11 +159,11 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
       inv_line = Factory(:vfi_invoice_line)
       be_1 = Factory(:billable_event)
       be_2 = Factory(:billable_event)
-      new_billables = [{id: be_1.id},            
+      new_billables = [{id: be_1.id},
                        {id: be_2.id}]
-      
+
       subject.write_invoiced_events new_billables, inv_line
-      
+
       expect(InvoicedEvent.count).to eq 2
       ev = InvoicedEvent.all.sort.first
       expected = [be_1, inv_line, "HmInvoiceGenerator", "classification_ca"]
@@ -175,9 +175,9 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
     it "create a non-invoiced event for each new billable" do
       be_1 = Factory(:billable_event)
       be_2 = Factory(:billable_event)
-      new_billables = [{id: be_1.id},            
+      new_billables = [{id: be_1.id},
                        {id: be_2.id}]
-      
+
       subject.write_non_invoiced_events new_billables
 
       expect(NonInvoicedEvent.count).to eq 2
@@ -244,12 +244,12 @@ describe OpenChain::CustomHandler::Hm::HmInvoiceGenerator do
         p1.update_custom_value! cdef, "23456"
         cl1 = Factory(:classification, product: p1)
         be1 = Factory(:billable_event, billable_eventable: cl1)
-        
+
         p2 = Factory(:product)
         p2.update_custom_value! cdef, "12345"
         cl2 = Factory(:classification, product: p2)
         be2 = Factory(:billable_event, billable_eventable: cl2)
-        
+
         p3 = Factory(:product)
         p3.update_custom_value! cdef, "34567"
         cl3 = Factory(:classification, product: p3)

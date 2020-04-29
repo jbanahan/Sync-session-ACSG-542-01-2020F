@@ -26,9 +26,9 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
 
       let (:dates) {
         [
-          described_class::CiLoadEntryDate.new(:est_arrival_date, Date.new(2018,3,1)),
-          described_class::CiLoadEntryDate.new(:export_date, Date.new(2018,2,1)),
-          described_class::CiLoadEntryDate.new(:arrival_date, Date.new(2020,2,1)),
+          described_class::CiLoadEntryDate.new(:est_arrival_date, Date.new(2018, 3, 1)),
+          described_class::CiLoadEntryDate.new(:export_date, Date.new(2018, 2, 1)),
+          described_class::CiLoadEntryDate.new(:arrival_date, Date.new(2020, 2, 1)),
         ]
       }
 
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         now = Time.zone.now
         doc = nil
         Timecop.freeze(now) { doc = subject.generate_entry_xml entry }
-        
+
         # We're only concerned here with the data under ediShipment, the rest is tested elsewhere
         s = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment"
         expect(s).not_to be_nil
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s.text "EdiShipmentDatesList/EdiShipmentDates/houseBill").to eq "9876543210"
         expect(s.text "EdiShipmentDatesList/EdiShipmentDates/tracingDateNo").to eq "1"
         expect(s.text "EdiShipmentDatesList/EdiShipmentDates/dateTracingShipment").to eq "20180201"
-        
+
         expect(s.text "EdiContainersList/EdiContainers/masterBill").to eq "1234567890"
         expect(s.text "EdiContainersList/EdiContainers/houseBill").to eq "9876543210"
         expect(s.text "EdiContainersList/EdiContainers/noContainer").to eq "CONT_NO"
@@ -189,7 +189,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
     context "with commercial invoice data" do
       let(:entry_data) {
         e = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadEntry.new '597549', 'SALOMON', []
-        i = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new '15MSA10', Date.new(2015,11,1), []
+        i = OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator::CiLoadInvoice.new '15MSA10', Date.new(2015, 11, 1), []
         i.non_dutiable_amount = BigDecimal("5")
         i.add_to_make_amount = BigDecimal("25")
         i.charges = BigDecimal("99999999999.989")
@@ -273,7 +273,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         e
       }
 
-      let (:buyer) { 
+      let (:buyer) {
         c = with_customs_management_id(Factory(:importer), "BUY")
         c.addresses.create! system_code: "1", name: "Buyer", line_1: "Addr1", line_2: "Addr2", city: "City", state: "ST", country: Factory(:country, iso_code: "US"), postal_code: "00000"
 
@@ -514,7 +514,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         d.invoices.first.invoice_lines.first.unit_price_uom = "UUOM"
 
         doc = subject.generate_entry_xml entry_data, add_entry_info: false
-        
+
         t = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines"
         expect(t).not_to be_nil
         expect(t.text "uomCommercial").to eq "PUOM"
@@ -695,7 +695,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t[0].text "tariffNo").to eq "9903000000"
         expect(t[0].text "valueForeign").to be_nil
         expect(t[1].text "tariffNo").to eq "9902000000"
-        expect(t[1].text "valueForeign").to be_nil 
+        expect(t[1].text "valueForeign").to be_nil
         expect(t[2].text "tariffNo").to eq "1234567890"
         expect(t[2].text "valueForeign").to eq "98765"
       end

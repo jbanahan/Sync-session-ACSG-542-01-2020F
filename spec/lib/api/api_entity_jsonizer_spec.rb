@@ -137,7 +137,7 @@ describe OpenChain::Api::ApiEntityJsonizer do
     end
 
     it "raises an error if the entity doesn't have a CoreModule" do
-      expect{OpenChain::Api::ApiEntityJsonizer.new.entity_to_json @user, XlsxBuilder.new, ['prod_blah', 'class_blah', 'hts_blah']}.to raise_error "CoreModule could not be found for class XlsxBuilder."
+      expect {OpenChain::Api::ApiEntityJsonizer.new.entity_to_json @user, XlsxBuilder.new, ['prod_blah', 'class_blah', 'hts_blah']}.to raise_error "CoreModule could not be found for class XlsxBuilder."
     end
 
     context "with custom fields" do

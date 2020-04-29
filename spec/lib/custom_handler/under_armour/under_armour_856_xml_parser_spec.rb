@@ -103,7 +103,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
     context "error handling" do
       let(:errors) { [] }
 
-      after :each do 
+      after :each do
         shipment = Shipment.where(reference: "UNDAR-ASN0001045").first
         expect(shipment.entity_snapshots.length).to eq 0
       end
@@ -151,7 +151,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
     let(:error) {
       ["ERROR"]
     }
-    
+
     it "writes XML to file and emails to edi support" do
       subject.send_error_email "<xml></xml>", "file.xml", error
 
@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour856XmlParser do
       expect(m.attachments["file.xml"].read).to eq "<xml></xml>"
     end
   end
-  
+
   describe "integration_folder" do
     subject { described_class }
 

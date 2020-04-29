@@ -2,13 +2,13 @@ describe SupportTicketsController do
   describe 'index' do
     before :each do
       @requestor = Factory(:user)
-      @agent = Factory(:user,:support_agent=>true)
+      @agent = Factory(:user, :support_agent=>true)
 
     end
     it 'should show requestor tickets' do
       sign_in_as @requestor
-      2.times {|i| Factory(:support_ticket,:requestor=>@requestor)}
-      Factory(:support_ticket,:requestor=>Factory(:user)) #don't find this one
+      2.times {|i| Factory(:support_ticket, :requestor=>@requestor)}
+      Factory(:support_ticket, :requestor=>Factory(:user)) # don't find this one
       get :index
       expect(response).to be_success
       expect(assigns(:tickets).size).to eq(2)
@@ -16,7 +16,7 @@ describe SupportTicketsController do
     end
     it 'should show assigned tickets support agents' do
       sign_in_as @agent
-      2.times {|i| Factory(:support_ticket,:agent=>@agent)}
+      2.times {|i| Factory(:support_ticket, :agent=>@agent)}
       get :index
       expect(response).to be_success
       expect(assigns(:tickets)).to be_empty
@@ -24,7 +24,7 @@ describe SupportTicketsController do
     end
     it 'should show unassigned tickets for support agents' do
       sign_in_as @agent
-      2.times {|i| Factory(:support_ticket,:agent=>nil)}
+      2.times {|i| Factory(:support_ticket, :agent=>nil)}
       get :index
       expect(response).to be_success
       expect(assigns(:tickets)).to be_empty

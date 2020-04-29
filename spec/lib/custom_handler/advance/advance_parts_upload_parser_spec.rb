@@ -18,7 +18,6 @@ describe OpenChain::CustomHandler::Advance::AdvancePartsUploadParser do
   let (:countries) { [Factory(:country, iso_code: "US", import_location: true), Factory(:country, iso_code: "CA", import_location: true)]}
 
   subject {described_class.new custom_file }
-  
 
   describe "process" do
     before :each do

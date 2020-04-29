@@ -1,11 +1,11 @@
 module Api; module V1; module Admin; class StateToggleButtonsController < Api::V1::Admin::AdminApiController
   before_filter :require_admin
-  
+
   def edit
     button = StateToggleButton.find params[:id]
     mf_digest = get_mf_digest button
-    render json: { button: button, 
-                   criteria: button.search_criterions.map{ |sc| sc.json(current_user) }, 
+    render json: { button: button,
+                   criteria: button.search_criterions.map { |sc| sc.json(current_user) },
                    sc_mfs: mf_digest[:sc_mfs],
                    user_mfs: mf_digest[:user_mfs],
                    user_cdefs: mf_digest[:user_cdefs],
@@ -44,13 +44,13 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
 
   def get_sc_mfs stb
     mfs = CoreModule.find_by_class_name(stb.module_type).default_module_chain.model_fields.values
-    ModelField.sort_by_label(mfs).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
+    ModelField.sort_by_label(mfs).collect {|mf| {:mfid=>mf.uid, :label=>mf.label, :datatype=>mf.data_type}}
   end
 
   def get_user_and_date_mfs stb
     user_list, date_list = [], []
     cm = CoreModule.find_by_class_name(stb.module_type)
-    cm.every_model_field { |mf| !mf.custom? }.each do |uid, mf| 
+    cm.every_model_field { |mf| !mf.custom? }.each do |uid, mf|
       user_list << {mfid: uid.to_s, label: mf.label} if mf.user_id_field?
       date_list << {mfid: uid.to_s, label: mf.label} if mf.date?
     end
@@ -67,7 +67,7 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
     [user_list, date_list]
   end
 
-  #ensure setting an mf sets cdef to nil and vice versa
+  # ensure setting an mf sets cdef to nil and vice versa
   def toggle_field stb, stb_hsh
     if stb.user_attribute && stb_hsh[:user_custom_definition_id]
       stb_hsh[:user_attribute] = nil

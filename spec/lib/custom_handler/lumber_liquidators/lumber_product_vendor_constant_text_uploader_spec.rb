@@ -7,7 +7,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorConstan
      [
       ["VENDOR", "PRODUCT", "CODE", "2018-01-01"],
       ["VENDOR", "PRODUCT", "CODE2", "2018-02-01"]
-     ] 
+     ]
     }
 
     let! (:xref_code) { DataCrossReference.create! key: "CODE", value: "TEXT", cross_reference_type: "XREF TYPE"}
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorConstan
 
     subject { described_class.new nil }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:custom_file).and_return custom_file
       allow(subject).to receive(:cross_reference_type).and_return "XREF TYPE"
       allow(subject).to receive(:cross_reference_description).and_return "XREF DESC"
@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductVendorConstan
     end
 
     it "updates existing texts" do
-      # This makes sure the texts are updated based on the code from the file, 
+      # This makes sure the texts are updated based on the code from the file,
       product_vendor_assignment.constant_texts.create! text_type: "TEXT TYPE", constant_text: "CODE - TEXT BLAH", effective_date_start: Date.new(2018, 3, 1)
       product_vendor_assignment.constant_texts.create! text_type: "TEXT TYPE", constant_text: "CODE2 - TEXT2 BLAH", effective_date_start: Date.new(2018, 4, 1)
 

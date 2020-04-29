@@ -11,17 +11,17 @@ describe OpenChain::Report::MonthlyUserAuditReport do
 
     OpenChain::Report::MonthlyUserAuditReport.run_schedulable
     mail = ActionMailer::Base.deliveries.pop
-    
+
     expect(mail.to).to eq [ "soldier@vandegriftinc.com", "rich_man@vandegriftinc.com" ]
     expect(mail.subject).to eq "#{month} VFI Track User Audit Report for test"
     expect(mail.attachments.count).to eq 1
-    
+
     Tempfile.open('attachment') do |t|
       t.binmode
       t << mail.attachments.first.read
       wb = Spreadsheet.open t.path
       sheet = wb.worksheet(0)
-      
+
       expect(sheet.row(0).count).to eq 66
       expect(sheet.count).to eq 7
       expect(sheet.row(1)[7]).to eq "Soldier"

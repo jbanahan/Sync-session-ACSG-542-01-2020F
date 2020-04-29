@@ -15,7 +15,7 @@ describe OpenChain::Registries::ShipmentRegistry do
         def self.can_uncancel?(shipment, user); true; end
       end
 
-      expect{described_class.register c}.to raise_error(/can_cancel/)
+      expect {described_class.register c}.to raise_error(/can_cancel/)
       expect(described_class.registered.to_a).to be_empty
     end
 
@@ -24,7 +24,7 @@ describe OpenChain::Registries::ShipmentRegistry do
         def self.can_cancel?(shipment, user); true; end
       end
 
-      expect{described_class.register c}.to raise_error(/can_uncancel/)
+      expect {described_class.register c}.to raise_error(/can_uncancel/)
       expect(described_class.registered.to_a).to be_empty
     end
   end

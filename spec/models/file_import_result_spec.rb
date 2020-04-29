@@ -1,7 +1,7 @@
 describe FileImportResult do
 
   before :each do
-    @user = Factory(:master_user,:email=>'a@example.com')
+    @user = Factory(:master_user, :email=>'a@example.com')
   end
 
   describe "collected_messages" do
@@ -78,7 +78,7 @@ describe FileImportResult do
     end
 
     it "should create a new attachment when delayed" do
-      expect{FileImportResult.download_results(true, @user.id, @fir, true)}.to change(Attachment,:count).from(0).to(1)
+      expect {FileImportResult.download_results(true, @user.id, @fir, true)}.to change(Attachment, :count).from(0).to(1)
       a = Attachment.last
       expect(a.attached_file_name).to eq("Log for file name - Results.xls")
       expect(a.attachable_type).to eq("FileImportResult")
@@ -117,16 +117,16 @@ describe FileImportResult do
       expect(FileImportResult.new(:started_at=>0.seconds.ago).time_to_process).to be_nil
     end
     it "should return minutes" do
-      expect(FileImportResult.new(:started_at=>3.minutes.ago,:finished_at=>0.minutes.ago).time_to_process).to eq(3)
+      expect(FileImportResult.new(:started_at=>3.minutes.ago, :finished_at=>0.minutes.ago).time_to_process).to eq(3)
     end
     it "should return 1 minute even if rounding to zero" do
-      expect(FileImportResult.new(:started_at=>2.seconds.ago,:finished_at=>0.seconds.ago).time_to_process).to eq(1)
+      expect(FileImportResult.new(:started_at=>2.seconds.ago, :finished_at=>0.seconds.ago).time_to_process).to eq(1)
     end
   end
   it 'should only find unique changed objects' do
-    i_file = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
+    i_file = ImportedFile.create!(:module_type=>"Product", :update_mode=>'any')
     fir = i_file.file_import_results.create!
-    3.times do |i| #add 3 products twice for 6 total change records
+    3.times do |i| # add 3 products twice for 6 total change records
       p = Product.create!(:unique_identifier=>"#{i}pid")
       2.times { |z| fir.change_records.create!(:recordable=>p) }
     end
@@ -137,19 +137,19 @@ describe FileImportResult do
     end
   end
   it 'should allow additional filters on changed_objects' do
-    i_file = ImportedFile.create!(:module_type=>"Product",:update_mode=>'any')
+    i_file = ImportedFile.create!(:module_type=>"Product", :update_mode=>'any')
     fir = i_file.file_import_results.create!
-    3.times do |i| #add 3 products twice for 6 total change records
+    3.times do |i| # add 3 products twice for 6 total change records
       p = Product.create!(:unique_identifier=>"#{i}pid")
       2.times { |z| fir.change_records.create!(:recordable=>p) }
     end
-    co = fir.changed_objects [SearchCriterion.new(:model_field_uid=>"prod_uid",:operator=>"eq",:value=>"1pid")]
+    co = fir.changed_objects [SearchCriterion.new(:model_field_uid=>"prod_uid", :operator=>"eq", :value=>"1pid")]
     expect(co.size).to eq(1)
     expect(co.first).to eq(Product.where(:unique_identifier=>"1pid").first)
   end
   it 'should set changed_object_count on save' do
     file_import_result = Factory(:file_import_result)
-    3.times do |i| 
+    3.times do |i|
       p = Factory(:product)
       file_import_result.change_records.create!(:recordable => p)
     end

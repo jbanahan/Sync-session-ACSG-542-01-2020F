@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
 
   let(:validator) { described_class.new }
-  
+
   describe "audit" do
     it "executes #gather_unrolled and :gather_entry" do
       ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789\n 987654321")
@@ -37,10 +37,10 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
       expect(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return ""
 
-      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list)
       expect(error).to eq ""
     end
-    
+
     it "returns error if any of the seven tests fails" do
       expect(validator).to receive(:invoice_list_diff).with(@unrolled, @fenix).and_return ""
       expect(validator).to receive(:total_per_hts_coo_diff).with(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo).and_return "ERROR: total value per hts/coo"
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
       expect(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return ""
 
-      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list)
       expect(error).to eq "ERROR: total value per hts/coo"
     end
 
@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
       expect(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
 
-      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list)
       expect(error).to eq "ERROR: total value per hts/coo\nERROR: total value\nERROR: style set"
     end
 
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       allow(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
       allow(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return "ERROR: style set"
 
-      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list) 
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo, @style_list)
       expect(error).to eq "ERROR: missing unrolled invoices"
     end
 
@@ -87,11 +87,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       expect(validator).to receive(:total_diff).with(:value, @unrolled, @fenix).and_return ""
       expect(validator).to receive(:total_diff).with(:quantity, @unrolled, @fenix).and_return ""
       expect(validator).to receive(:hts_list_diff).with(@unrolled, @fenix, @fenix_by_hts_coo).and_return ""
-      
-      #workaround for Rspec 2.12 bug affecting #should_not_receive (https://github.com/rspec/rspec-mocks/issues/228)
+
+      # workaround for Rspec 2.12 bug affecting #should_not_receive (https://github.com/rspec/rspec-mocks/issues/228)
       allow(validator).to receive(:style_list_match).with(@unrolled, @style_list).and_return "This method should not have been called!"
 
-      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo) 
+      error = validator.run_tests(@unrolled, @fenix, @unrolled_by_hts_coo, @fenix_by_hts_coo)
       expect(error).to eq ""
     end
   end
@@ -99,11 +99,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
   describe "invoice_list_diff" do
     before do
       @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
-      
-      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)  
+
+      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
       fenix_cil = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci)
       Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
-      
+
       unrolled_ci = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
       unrolled_cil = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci)
       Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
@@ -117,7 +117,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     end
 
     it "returns list of missing unrolled invoices" do
-      ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '111111111', importer_id: 1137)  
+      ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '111111111', importer_id: 1137)
       cil = Factory(:commercial_invoice_line, commercial_invoice: ci)
       Factory(:commercial_invoice_tariff, commercial_invoice_line: cil)
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
@@ -147,7 +147,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       error = validator.total_per_hts_coo_diff(:value, @unrolled_by_hts_coo, @fenix_by_hts_coo)
 
       expect(error).to eq ""
-    end 
+    end
   end
 
   describe "check_fenix_against_unrolled" do
@@ -161,16 +161,16 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     end
 
     it "returns error string if fenix hash contains one or more hts/coo pairs missing from unrolled hash" do
-      fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, 
+      fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}},
                        "1206200010" => {"US" => {quantity: 10, value: 20, subheader_number: 1, customs_line_number: 2}}}
-      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has $20.00 value for 1206.20.0010 / US. Unrolled Invoice has $0.00."]  
+      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has $20.00 value for 1206.20.0010 / US. Unrolled Invoice has $0.00."]
     end
 
     it "returns error string if there is a mismatch between corresponding hts/coo pairs" do
-      fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}}, 
+      fenix_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}},
                        "1206200010" => {"CN" => {quantity: 10, value: 25, subheader_number: 1, customs_line_number: 2}}}
 
-      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has $25.00 value for 1206.20.0010 / CN. Unrolled Invoice has $20.00."]                      
+      expect(validator.check_fenix_against_unrolled(:value, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 Sub Hdr # 1 / B3 Line # 2 has $25.00 value for 1206.20.0010 / CN. Unrolled Invoice has $20.00."]
     end
   end
 
@@ -185,7 +185,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     end
 
     it "returns error string if unrolled hash contains one or more hts/coo pairs missing from fenix hash" do
-      unrolled_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}, "CN" => {quantity: 1, value: 2}}, 
+      unrolled_hts_coo = {"6106200010" => {"US" => {quantity: 7, value: 5}, "CN" => {quantity: 1, value: 2}},
                           "1206200010" => {"CN" => {quantity: 10, value: 20}}}
       expect(validator.check_unrolled_against_fenix(:quantity, unrolled_hts_coo, fenix_hts_coo)).to eq ["B3 has 0 quantity for 6106.20.0010 / CN. Unrolled Invoice has 1."]
     end
@@ -195,7 +195,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     before do
       @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
 
-      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)  
+      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
       fenix_cil = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci, value: 10)
       Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil)
 
@@ -205,8 +205,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       @unrolled_cil_2 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci, value: 3)
       Factory(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
     end
-  
-    it "returns empty if the summed field of the unrolled invoices matches that of the corresponding Fenix entry" do 
+
+    it "returns empty if the summed field of the unrolled invoices matches that of the corresponding Fenix entry" do
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
       fenix = validator.send(:gather_entry, @ent)
 
@@ -214,31 +214,31 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
     end
 
     it "compares the summed fields if the summed field of the unrolled invoices doesn't match that of the corresponding Fenix entry" do
-      @unrolled_cil_2.update_attributes(value: 5) 
+      @unrolled_cil_2.update_attributes(value: 5)
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
       fenix = validator.send(:gather_entry, @ent)
-      
+
       expect(validator.total_diff(:value, unrolled, fenix)).to eq "B3 has total value of $10.00. Unrolled Invoices have $12.00.\n"
     end
   end
 
   describe "hts_list_diff" do
-    before do 
+    before do
       @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: '123456789')
-      
-      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)  
+
+      fenix_ci = Factory(:commercial_invoice, entry: @ent, invoice_number: '123456789', importer_id: 1137)
       fenix_cil = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "CA", subheader_number: 2, customs_line_number: 1)
       @fenix_cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil, hts_code: '6106200010' )
 
       fenix_cil_2 = Factory(:commercial_invoice_line, commercial_invoice: fenix_ci, country_origin_code: "US", subheader_number: 2, customs_line_number: 2)
       @fenix_cit_2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: fenix_cil_2, hts_code: '6106200010' )
-      
+
       unrolled_ci = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
       unrolled_cil = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci)
       @unrolled_cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil, hts_code: '6106200010')
     end
-    
-    it "returns empty if the unrolled invoices contain the same HTS numbers as the corresponding Fenix entry" do 
+
+    it "returns empty if the unrolled invoices contain the same HTS numbers as the corresponding Fenix entry" do
       fenix = validator.send(:gather_entry, @ent)
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
       fenix_by_hts_coo = validator.arrange_by_hts_coo(fenix)
@@ -254,7 +254,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
       fenix = validator.send(:gather_entry, @ent)
       fenix_by_hts_coo = validator.arrange_by_hts_coo(fenix)
       unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
-      
+
       expect(validator.hts_list_diff(unrolled, fenix, fenix_by_hts_coo)).to eq "B3 missing HTS code(s) on Unrolled Invoices: 1111.11.1111\nUnrolled Invoices missing HTS code(s) on B3: 2222.22.2222 (B3 Sub Hdr # 2 / B3 Line # 1; B3 Sub Hdr # 2 / B3 Line # 2)\n"
     end
   end
@@ -262,22 +262,22 @@ describe OpenChain::CustomHandler::Ascena::AscenaInvoiceValidatorHelper do
   describe "style_set_match" do
     before do
       @ent = Factory(:entry, importer_id: 1137, commercial_invoice_numbers: "123456789")
-      
+
       unrolled_ci = Factory(:commercial_invoice, entry: nil, invoice_number: '123456789', importer_id: 1137)
       unrolled_cil = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '1278-603-494')
       Factory(:commercial_invoice_tariff, commercial_invoice_line: unrolled_cil)
       @unrolled_cil_2 = Factory(:commercial_invoice_line, commercial_invoice: unrolled_ci, part_number: '5847-603-494')
       Factory(:commercial_invoice_tariff, commercial_invoice_line: @unrolled_cil_2)
-    
+
       @unrolled = validator.send(:gather_unrolled, "123456789", @ent.importer_id)
     end
 
-    it "returns empty if the unrolled invoices don't contain any of the specified styles" do 
+    it "returns empty if the unrolled invoices don't contain any of the specified styles" do
       style_list = ['1111']
       expect(validator.style_list_match(@unrolled, style_list)).to eq ""
     end
 
-    it "returns list of if the unrolled invoices contain any of the specified styles" do 
+    it "returns list of if the unrolled invoices contain any of the specified styles" do
       style_list = ['1278', '5847']
       expect(validator.style_list_match(@unrolled, style_list)).to eq "Unrolled Invoices include flagged style(s): 1278, 5847\n"
     end

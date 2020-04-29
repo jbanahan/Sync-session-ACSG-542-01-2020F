@@ -2,7 +2,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
   let (:user) { Factory(:admin_user) }
 
-  before :each do 
+  before :each do
     allow_api_access user
   end
 
@@ -21,7 +21,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
     it "returns a config" do
       config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", enabled: true, module_type: "Entry", setup: {milestone_fields: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}], fingerprint_fields: ["ent_brok_ref", "ent_release_date"]}.to_json
-      
+
       config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false
 
       get :show, id: config.id
@@ -34,7 +34,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c['config']['milestone_notification_config']).to eq({
         id: config.id,
         customer_number: "CUST",
-        parent_system_code: nil, 
+        parent_system_code: nil,
         enabled: true,
         output_style: "standard",
         testing: nil,
@@ -67,7 +67,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c["output_styles"]).to eq MilestoneNotificationConfig::OUTPUT_STYLES
 
       timezones = c["timezones"]
-      # Plus one is because we're inserting a blank value 
+      # Plus one is because we're inserting a blank value
       expect(timezones.size).to eq ActiveSupport::TimeZone.all.size + 1
       expect(timezones.first['name']).to be_a String
       expect(timezones.first['label']).to be_a String
@@ -88,7 +88,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c['config']['milestone_notification_config']).to eq({
         id: config.id,
         customer_number: "CUST",
-        parent_system_code: nil, 
+        parent_system_code: nil,
         enabled: true,
         output_style: "standard",
         testing: nil,
@@ -115,7 +115,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
   end
 
   describe "create" do
-    let (:config) { 
+    let (:config) {
       {
         milestone_notification_config: {
           customer_number: "CUST",
@@ -151,7 +151,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
         [{"model_field_uid" => "ent_brok_ref", "timezone" => "timezone", "no_time" => true}]
       )
       expect(config.fingerprint_fields).to eq ["ent_brok_ref", "ent_release_date"]
-      
+
       expect(config.search_criterions.first.model_field_uid).to eq "ent_brok_ref"
       expect(config.search_criterions.first.operator).to eq "eq"
       expect(config.search_criterions.first.value).to eq "val"
@@ -302,7 +302,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     it "lists all configs" do
       config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", testing: false, gtn_time_modifier: false, module_type:"Entry", setup: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}].to_json
       config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "eq", value: "val", include_empty: false
-      config2 = MilestoneNotificationConfig.create! customer_number: "ABC",output_style: "standard", testing: true, gtn_time_modifier: true, module_type: "Entry"
+      config2 = MilestoneNotificationConfig.create! customer_number: "ABC", output_style: "standard", testing: true, gtn_time_modifier: true, module_type: "Entry"
 
       get :index
 
@@ -315,7 +315,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
           milestone_notification_config: {
             id: config2.id,
             customer_number: "ABC",
-            parent_system_code: nil, 
+            parent_system_code: nil,
             enabled: nil,
             output_style: 'standard',
             module_type: "Entry",
@@ -331,7 +331,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
           milestone_notification_config: {
             id: config.id,
             customer_number: "CUST",
-            parent_system_code: nil, 
+            parent_system_code: nil,
             enabled: nil,
             output_style: 'standard',
             testing: false,
@@ -373,7 +373,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c['config']['milestone_notification_config']).to eq({
         id: nil,
         customer_number: nil,
-        parent_system_code: nil, 
+        parent_system_code: nil,
         enabled: nil,
         output_style: nil,
         module_type: nil,
@@ -394,7 +394,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(c["output_styles"]).to eq MilestoneNotificationConfig::OUTPUT_STYLES
 
       timezones = c["timezones"]
-      # Plus one is because we're inserting a blank value 
+      # Plus one is because we're inserting a blank value
       expect(timezones.size).to eq ActiveSupport::TimeZone.all.size + 1
       expect(timezones.first['name']).to be_a String
       expect(timezones.first['label']).to be_a String

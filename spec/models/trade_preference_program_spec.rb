@@ -2,17 +2,17 @@ describe TradePreferenceProgram do
   context 'validations' do
     it 'should require origin country' do
       t = nil
-      expect{t = TradePreferenceProgram.create(name:'TPP',destination_country_id:Factory(:country).id)}.to_not change(TradePreferenceProgram,:count)
+      expect {t = TradePreferenceProgram.create(name:'TPP', destination_country_id:Factory(:country).id)}.to_not change(TradePreferenceProgram, :count)
       expect(t.errors[:origin_country_id].size).to eq(1)
     end
     it 'should require destination country' do
       t = nil
-      expect{t = TradePreferenceProgram.create(name:'TPP',origin_country_id:Factory(:country).id)}.to_not change(TradePreferenceProgram,:count)
+      expect {t = TradePreferenceProgram.create(name:'TPP', origin_country_id:Factory(:country).id)}.to_not change(TradePreferenceProgram, :count)
       expect(t.errors[:destination_country_id].size).to eq(1)
     end
     it 'should require name' do
       t = nil
-      expect{t = TradePreferenceProgram.create(origin_country_id:Factory(:country).id,destination_country_id:Factory(:country).id)}.to_not change(TradePreferenceProgram,:count)
+      expect {t = TradePreferenceProgram.create(origin_country_id:Factory(:country).id, destination_country_id:Factory(:country).id)}.to_not change(TradePreferenceProgram, :count)
       expect(t.errors[:name].size).to eq(1)
     end
   end
@@ -27,7 +27,7 @@ describe TradePreferenceProgram do
       lane = prep_lane
       tpp = TradePreferenceProgram.new
       allow(tpp).to receive(:trade_lane).and_return lane
-      [tpp,lane]
+      [tpp, lane]
     end
     describe '#can_view?' do
       it 'should allow if can view associated trade lane' do
@@ -59,28 +59,28 @@ describe TradePreferenceProgram do
       Factory(:trade_preference_program)
       u = double(:user)
       allow(u).to receive(:view_trade_preference_programs?).and_return false
-      expect(described_class.search_secure(u,described_class).to_a).to eq []
+      expect(described_class.search_secure(u, described_class).to_a).to eq []
     end
     it 'should be open if user can view trade lanes' do
       tpp = Factory(:trade_preference_program)
       u = double(:user)
       allow(u).to receive(:view_trade_preference_programs?).and_return true
-      expect(described_class.search_secure(u,described_class).to_a).to eq [tpp]
+      expect(described_class.search_secure(u, described_class).to_a).to eq [tpp]
     end
   end
   describe '#trade_lane' do
     it 'should return associated trade lane' do
       lane = Factory(:trade_lane)
-      tpp = Factory(:trade_preference_program,origin_country:lane.origin_country,destination_country:lane.destination_country)
+      tpp = Factory(:trade_preference_program, origin_country:lane.origin_country, destination_country:lane.destination_country)
 
       expect(tpp.trade_lane).to eq lane
     end
   end
   describe '#long_name' do
     it "should return name and countries" do
-      ca = Factory(:country,iso_code:'CA')
-      us = Factory(:country,iso_code:'US')
-      tpp = TradePreferenceProgram.new(name:'hello',origin_country:ca,destination_country:us)
+      ca = Factory(:country, iso_code:'CA')
+      us = Factory(:country, iso_code:'US')
+      tpp = TradePreferenceProgram.new(name:'hello', origin_country:ca, destination_country:us)
       expect(tpp.long_name).to eq 'CA > US: hello'
     end
   end

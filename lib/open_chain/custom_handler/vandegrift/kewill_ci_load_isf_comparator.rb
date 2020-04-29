@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadIsf
       return OpenChain::CustomHandler::Vandegrift::KewillGenericIsfCiLoadGenerator.new
     else
       # This assumes the generator class has already been required...it should always be by virtue
-      # of the snapshot comparator always running in a delayed job queue (which loads every class/file 
+      # of the snapshot comparator always running in a delayed job queue (which loads every class/file
       # in lib)
       return generator_string.constantize.new
     end
@@ -58,5 +58,4 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillCiLoadIsf
   def self.ci_load_data
     DataCrossReference.get_all_pairs(DataCrossReference::ISF_CI_LOAD_CUSTOMERS)
   end
- 
 end; end; end; end;

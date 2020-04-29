@@ -1,6 +1,6 @@
 describe OpenChain::CreateZipSupport do
   subject {
-    Class.new do 
+    Class.new do
       include OpenChain::CreateZipSupport
     end.new
   }

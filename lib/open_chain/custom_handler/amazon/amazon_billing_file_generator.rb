@@ -86,10 +86,10 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
     def extract_billable_invoices entry_snapshot_json
       # The only invoices we should be billing are those where 'AMZN' is the bill to customer.
       # For most accounts, operations should be billing everything to Amazon (AMZN) but for about
-      # 25% of the amazon accounts we're going to be billing duty directly to the account and NOT to 
+      # 25% of the amazon accounts we're going to be billing duty directly to the account and NOT to
       # Amazon. Operations should then be billing any brokerage to AMZN and then in a separate
       # invoice billing the duty to the individual account (.ie NOT Amazon).
-      # The billing for the individual accounts is done manually as this feed is SOLELY for 
+      # The billing for the individual accounts is done manually as this feed is SOLELY for
       # billing directly to Amazon.  Account Receivable will handle the individual billing,
       # ergo, we're only going to extract invoices where AMZN is the bill to.
       invoices = []
@@ -111,7 +111,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
         required_fields << :ent_hbols
       end
 
-      # Entry Filed date is set by the system to be based on a customs response date, but since we can't sumbit test files to customs, then 
+      # Entry Filed date is set by the system to be based on a customs response date, but since we can't sumbit test files to customs, then
       # the filed date will remain blank.
       # Ergo, for test files, filed date is always going to be blank, so don't validate it when testing.
       if MasterSetup.get.production?
@@ -152,7 +152,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
 
     def send_invoice_xml broker_invoice, invoice_type, xml
       now = Time.zone.now
-      # Since the invoice number AND the current time are part of the prefix, the likelihood we actually hit a collision 
+      # Since the invoice number AND the current time are part of the prefix, the likelihood we actually hit a collision
       # is extremely low, so we don't have to add too many digits to the sha hash below to make it unique
       prefix = "Invoice_DMCQ_#{broker_invoice.invoice_number}_#{now.strftime("%Y%m%d%H%M%S")}"
 
@@ -284,7 +284,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
           add_element(cost, "ExtraCostDefinition", mapped_code)
           total_billed += charge_amount
         else
-          # In the absence of a catchall charge code...we're going to have to raise an error if an unexpected charge code 
+          # In the absence of a catchall charge code...we're going to have to raise an error if an unexpected charge code
           # is utilized.
 
           # This is really a backup, there should be a business rule preventing the invoice from being billed if the charge
@@ -333,7 +333,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
           manufacturer = ManufacturerId.where(mid: mid).first
           if manufacturer.present?
             address = manufacturer
-            break  
+            break
           end
         end
         address
@@ -364,11 +364,11 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
 
       if a.nil?
         c = Company.where(master: true).first
-        Lock.db_lock(c) do 
+        Lock.db_lock(c) do
           a = c.addresses.where(system_code: "Accounts Receivable").first
           if a.nil?
             a = Address.new(system_code: "Accounts Receivable", name: "Vandegrift, Inc.", line_1: "100 Walnut Ave", line_2: "Suite 600", city: "Clark", state: "NJ", postal_code: "07066", country_id: Country.where(iso_code: "US").first&.id)
-            c.addresses << a          
+            c.addresses << a
           end
         end
       end
@@ -450,7 +450,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
 
     def tender_id entry_snapshot, meta_data
       tender = "#{meta_data.duty_type? ? "DCD" : "DCB"}_DMCQ"
-      
+
       if meta_data.air?
         tender += mf(entry_snapshot, :ent_hbols, split_values: true).first
       else
@@ -465,13 +465,13 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
     end
 
     # My understanding of this control number thing is that it's supposed to be a unique sequential
-    # value for all documents sent by the carrier (us).  In other words, it's the equivalent of 
+    # value for all documents sent by the carrier (us).  In other words, it's the equivalent of
     # and EDI ISA13 control number.  We're just going to try and use the current timestamp
     # at the finest granularity possible and then introduce a locking block to prevent any
     # other process from possibly using the same value.
     def transmission_control_number
       number = nil
-      Lock.acquire("AmazonTransmissionControl", yield_in_transaction: false) do 
+      Lock.acquire("AmazonTransmissionControl", yield_in_transaction: false) do
 
         sleep(0.01)
         number = Time.zone.now.to_f.to_s.gsub(".", "")
@@ -527,7 +527,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
       value.strftime(format)
     end
 
-    def default_timezone 
+    def default_timezone
       @tz ||= ActiveSupport::TimeZone["America/New_York"]
     end
 

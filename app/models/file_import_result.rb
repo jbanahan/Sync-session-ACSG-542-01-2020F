@@ -19,9 +19,9 @@
 #
 
 class FileImportResult < ActiveRecord::Base
-  attr_accessible :changed_object_count, :expected_rows, :finished_at, 
+  attr_accessible :changed_object_count, :expected_rows, :finished_at,
     :imported_file_id, :imported_file, :rows_processed, :run_by_id, :run_by, :started_at
-  
+
   belongs_to :imported_file
   belongs_to :run_by, :class_name => "User"
   has_many :change_records, -> { order([{failed: :desc}, :record_sequence_number]) }
@@ -34,8 +34,8 @@ class FileImportResult < ActiveRecord::Base
 
   def self.download_results(include_all, user_id, fir, delayed = false)
     fir = fir.is_a?(Numeric) ? FileImportResult.find(fir) : fir
-    name = fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}" : "Log for " + File.basename(fir.imported_file.attached_file_name,File.extname(fir.imported_file.attached_file_name)) + " - Results"
-    
+    name = fir.imported_file.try(:attached_file_name).nil? ? "Log for File Import Results #{Time.now.to_date.to_s}" : "Log for " + File.basename(fir.imported_file.attached_file_name, File.extname(fir.imported_file.attached_file_name)) + " - Results"
+
     wb = fir.create_excel_report(include_all, name)
 
     Tempfile.open([name, '.xls']) do |t|
@@ -49,7 +49,7 @@ class FileImportResult < ActiveRecord::Base
         u.messages.create!(subject: "File Import Result Prepared for Download", body: "The file import result report that you requested is finished.  To download the file directly, <a href='/attachments/#{a.id}/download'>click here</a>.")
       end
     end
-  end 
+  end
 
   def create_excel_report(include_all, name)
     file_import_cm_uid = imported_file.core_module.unique_id_field.label
@@ -88,13 +88,13 @@ class FileImportResult < ActiveRecord::Base
     end
     [combined_messages.chop, message_count]
   end
-  
+
   def changed_objects search_criterions=[]
     cm = self.imported_file.core_module
     k = Kernel.const_get cm.class_name
-    r = k.select("DISTINCT `#{cm.table_name}`.*").joins(:change_records).where('change_records.file_import_result_id = ?',self.id)
+    r = k.select("DISTINCT `#{cm.table_name}`.*").joins(:change_records).where('change_records.file_import_result_id = ?', self.id)
     search_criterions.each do |sc|
-      r = sc.apply r 
+      r = sc.apply r
     end
     r.to_a
   end
@@ -112,7 +112,7 @@ class FileImportResult < ActiveRecord::Base
   end
 
   def update_changed_object_count
-    if @changed_count_updated #keeps the query from being run on the second save
+    if @changed_count_updated # keeps the query from being run on the second save
       @changed_count_updated = false
     end
     changed_count = self.changed_objects.count

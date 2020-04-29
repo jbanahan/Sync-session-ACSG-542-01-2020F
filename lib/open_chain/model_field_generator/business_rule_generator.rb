@@ -1,10 +1,10 @@
 module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
-  def make_business_rule_arrays(rank_start,uid_prefix,table_name,module_type)
+  def make_business_rule_arrays(rank_start, uid_prefix, table_name, module_type)
     return [
-      [rank_start,"#{uid_prefix}_rule_state",:rule_state,"Internal Business Rule State",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Internal Business Rule State ignored. (read only)"},
+      [rank_start, "#{uid_prefix}_rule_state", :rule_state, "Internal Business Rule State", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Internal Business Rule State ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules_state },
-        :qualified_field_name=> <<-SQL, 
+        :qualified_field_name=> <<-SQL,
            (SELECT state
             FROM business_validation_results bvr
             WHERE bvr.validatable_type = '#{module_type}' AND bvr.validatable_id = #{table_name}.id
@@ -21,8 +21,8 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_all_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+1,"#{uid_prefix}_public_rule_state",:public_rule_state,"Business Rule State",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Business Rule State ignored. (read only)"},
+      [rank_start+1, "#{uid_prefix}_public_rule_state", :public_rule_state, "Business Rule State", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Business Rule State ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules_state(include_private: false) },
         :qualified_field_name=> <<-SQL,
            (SELECT state
@@ -43,9 +43,9 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+2,"#{uid_prefix}_failed_business_rules",:failed_business_rules,"Internal Failed Business Rule Names",{:data_type=>:string,
+      [rank_start+2, "#{uid_prefix}_failed_business_rules", :failed_business_rules, "Internal Failed Business Rule Names", {:data_type=>:string,
 
-        :import_lambda=>lambda {|o,d| "Internal Failed Business Rule Names ignored. (read only)"},
+        :import_lambda=>lambda {|o, d| "Internal Failed Business Rule Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules("Fail").join("\n ") },
         :qualified_field_name=> <<-SQL,
             (SELECT GROUP_CONCAT(failed_rule.name ORDER BY failed_rule.name SEPARATOR '\n ')
@@ -58,8 +58,8 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_all_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+3,"#{uid_prefix}_public_failed_business_rules",:public_failed_business_rules,"Failed Business Rule Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Failed Business Rule Names ignored. (read only)"},
+      [rank_start+3, "#{uid_prefix}_public_failed_business_rules", :public_failed_business_rules, "Failed Business Rule Names", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Failed Business Rule Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules("Fail", include_private: false).join("\n ") },
         :qualified_field_name=> <<-SQL,
             (SELECT GROUP_CONCAT(failed_rule.name ORDER BY failed_rule.name SEPARATOR '\n ')
@@ -74,8 +74,8 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+4,"#{uid_prefix}_review_business_rules",:review_business_rules,"Internal Review Business Rule Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Internal Review Business Rule Names ignored. (read only)"},
+      [rank_start+4, "#{uid_prefix}_review_business_rules", :review_business_rules, "Internal Review Business Rule Names", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Internal Review Business Rule Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules("Review").join("\n ") },
         :qualified_field_name=> <<-SQL,
             (SELECT GROUP_CONCAT(review_rule.name ORDER BY review_rule.name SEPARATOR '\n ')
@@ -88,8 +88,8 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_all_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+5,"#{uid_prefix}_public_review_business_rules",:public_review_business_rules,"Review Business Rule Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Review Business Rule Names ignored. (read only)"},
+      [rank_start+5, "#{uid_prefix}_public_review_business_rules", :public_review_business_rules, "Review Business Rule Names", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Review Business Rule Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules("Review", include_private: false).join("\n ") },
         :qualified_field_name=> <<-SQL,
             (SELECT GROUP_CONCAT(review_rule.name ORDER BY review_rule.name SEPARATOR '\n ')
@@ -104,36 +104,36 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+6,"#{uid_prefix}_failed_business_rule_templates",:failed_business_rule_templates,"Internal Failed Business Rule Template Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Internal Failed Business Rule Template Names ignored. (read only)"},
+      [rank_start+6, "#{uid_prefix}_failed_business_rule_templates", :failed_business_rule_templates, "Internal Failed Business Rule Template Names", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Internal Failed Business Rule Template Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rule_templates("Fail").join("\n ") },
         :qualified_field_name=> business_rule_templates_qry(table_name, module_type, "Fail"),
         :can_view_lambda=>lambda {|u| u ? u.view_all_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+7,"#{uid_prefix}_public_failed_business_rule_templates",:public_failed_business_rule_templates,"Failed Business Rule Template Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Failed Business Rule Template Names ignored. (read only)"},
+      [rank_start+7, "#{uid_prefix}_public_failed_business_rule_templates", :public_failed_business_rule_templates, "Failed Business Rule Template Names", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Failed Business Rule Template Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rule_templates("Fail", include_private: false).join("\n ") },
         :qualified_field_name=> public_business_rule_templates_qry(table_name, module_type, "Fail"),
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+8,"#{uid_prefix}_review_business_rule_templates",:review_business_rule_templates,"Internal Review Business Rule Template Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Internal Review Business Rule Template Names ignored. (read only)"},
+      [rank_start+8, "#{uid_prefix}_review_business_rule_templates", :review_business_rule_templates, "Internal Review Business Rule Template Names", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Internal Review Business Rule Template Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rule_templates("Review").join("\n ") },
         :qualified_field_name=> business_rule_templates_qry(table_name, module_type, "Review"),
         :can_view_lambda=>lambda {|u| u ? u.view_all_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+9,"#{uid_prefix}_public_review_business_rule_templates",:public_review_business_rule_templates,"Review Business Rule Template Names",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Failed Business Rule Template Names ignored. (read only)"},
+      [rank_start+9, "#{uid_prefix}_public_review_business_rule_templates", :public_review_business_rule_templates, "Review Business Rule Template Names", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Failed Business Rule Template Names ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rule_templates("Review", include_private: false).join("\n ") },
         :qualified_field_name=> public_business_rule_templates_qry(table_name, module_type, "Review"),
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+10,"#{uid_prefix}_public_failed_business_rule_messages",:public_failed_business_rule_messages,"Failed Business Rule Messages",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Failed Business Rule Messages ignored. (read only)"},
+      [rank_start+10, "#{uid_prefix}_public_failed_business_rule_messages", :public_failed_business_rule_messages, "Failed Business Rule Messages", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Failed Business Rule Messages ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules("Fail", include_private: false).join("\n ") },
         :qualified_field_name=> <<-SQL,
             (SELECT GROUP_CONCAT(failed_bvrr.message ORDER BY failed_rule.name SEPARATOR '\n ')
@@ -148,8 +148,8 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+11,"#{uid_prefix}_review_business_rule_messages",:review_business_rule_messages,"Internal Review Business Rule Messages",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Internal Review Business Rule Messages ignored. (read only)"},
+      [rank_start+11, "#{uid_prefix}_review_business_rule_messages", :review_business_rule_messages, "Internal Review Business Rule Messages", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Internal Review Business Rule Messages ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules("Review").join("\n ") },
         :qualified_field_name=> <<-SQL,
             (SELECT GROUP_CONCAT(review_bvrr.message ORDER BY review_rule.name SEPARATOR '\n ')
@@ -162,8 +162,8 @@ module OpenChain; module ModelFieldGenerator; module BusinessRuleGenerator
         :can_view_lambda=>lambda {|u| u ? u.view_all_business_validation_results? : false},
         :read_only=>true
       }],
-      [rank_start+12,"#{uid_prefix}_public_review_business_rule_messages",:public_review_business_rule_messages,"Review Business Rule Messages",{:data_type=>:string,
-        :import_lambda=>lambda {|o,d| "Review Business Rule Messages ignored. (read only)"},
+      [rank_start+12, "#{uid_prefix}_public_review_business_rule_messages", :public_review_business_rule_messages, "Review Business Rule Messages", {:data_type=>:string,
+        :import_lambda=>lambda {|o, d| "Review Business Rule Messages ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.business_rules("Review", include_private: false).join("\n ") },
         :qualified_field_name=> <<-SQL,
             (SELECT GROUP_CONCAT(review_bvrr.message ORDER BY review_rule.name SEPARATOR '\n ')

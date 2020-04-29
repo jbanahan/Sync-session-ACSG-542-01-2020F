@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
   describe "parse" do
 
-    before :each do 
+    before :each do
       advance_importer
       cn
       us
@@ -108,7 +108,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
       expect(s.containers.length).to eq 1
       c = s.containers.first
-      
+
       expect(c.container_number).to eq "ZIMU1269903"
       expect(c.container_size).to eq "D20"
       expect(c.fcl_lcl).to eq "FCL"
@@ -118,8 +118,8 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       expect(lines.length).to eq 2
 
       # It's not obvious, but this is also testing that the line items are being
-      # sorted based on their PO and Line Item Numbers across multiple ASN elements.  
-      # The ordering of the XML is not the order the data is loaded - 
+      # sorted based on their PO and Line Item Numbers across multiple ASN elements.
+      # The ordering of the XML is not the order the data is loaded -
       # the spec xml has line 9 before line 8.
       l = lines.first
       expect(l.container).to eq c
@@ -199,7 +199,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
     end
 
     context "with Carquest importer" do
-      let(:product) { 
+      let(:product) {
         p = Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11402124"
         p.update_custom_value! cdefs[:prod_part_number], "11402124"
         p
@@ -218,10 +218,10 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
         order
       }
 
-      before :each do 
+      before :each do
         # Carquest PO's should already be in the system...and the code should link to the product by style, not line number
         xml_data.gsub! "<Name>Advance Stores Company Inc.</Name>", "<Name>CARQUEST</Name>"
-        carquest_importer  
+        carquest_importer
       end
 
       it "handles Carquest" do

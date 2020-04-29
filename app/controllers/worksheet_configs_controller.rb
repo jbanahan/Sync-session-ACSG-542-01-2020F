@@ -4,7 +4,7 @@ class WorksheetConfigsController < ApplicationController
   end
   def index
     admin_secure {
-      @worksheet_configs = WorksheetConfig.all    
+      @worksheet_configs = WorksheetConfig.all
       render 'index', :layout => 'one_col'
     }
   end
@@ -25,7 +25,7 @@ class WorksheetConfigsController < ApplicationController
     }
   end
 
-  def create 
+  def create
     admin_secure {
       w = WorksheetConfig.create(params[:worksheet_config])
       errors_to_flash w

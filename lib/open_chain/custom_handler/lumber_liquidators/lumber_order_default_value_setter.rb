@@ -4,7 +4,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
   def self.set_defaults ord, entity_snapshot: true
-    cdefs = prep_custom_definitions([:cmp_default_inco_term,:cmp_default_handover_port,:cmp_default_country_of_origin,:ord_country_of_origin])
+    cdefs = prep_custom_definitions([:cmp_default_inco_term, :cmp_default_handover_port, :cmp_default_country_of_origin, :ord_country_of_origin])
     v = ord.vendor
     return if v.nil?
     run_snapshot = false
@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     if current_coo.blank?
       vendor_coo = v.custom_value(cdefs[:cmp_default_country_of_origin])
       if !vendor_coo.blank?
-        ord.update_custom_value!(cdefs[:ord_country_of_origin],vendor_coo)
+        ord.update_custom_value!(cdefs[:ord_country_of_origin], vendor_coo)
         run_snapshot = true
       end
     end

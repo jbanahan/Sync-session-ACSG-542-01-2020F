@@ -60,7 +60,7 @@ module ConfigMigrations; module LL; class Sow1522
     return if cdef.nil?
 
     rule = ensure_rule(cdef)
-    
+
     rule.read_only = true
     rule.disabled = true
     rule.save!
@@ -78,7 +78,7 @@ module ConfigMigrations; module LL; class Sow1522
 
   def migrate_searches_to_new_carb_patent_fields
     cdefs = self.class.prep_custom_definitions([:prodven_carb, :prodven_patent, :ordln_carb_statement, :ordln_patent_statement])
-    
+
     [[cdefs[:prodven_carb], cdefs[:ordln_carb_statement]], [cdefs[:prodven_patent], cdefs[:ordln_patent_statement]]].each do |fields|
       old_id = fields[0].id
       new_id = fields[1].id
@@ -169,7 +169,5 @@ module ConfigMigrations; module LL; class Sow1522
       DataCrossReference.where(key: key, cross_reference_type: type).first_or_create! value: value
     end
   end
-
-  
 
 end; end; end

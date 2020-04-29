@@ -4,7 +4,7 @@ module SummaryStatementsHelper
     wb = XlsMaker.create_workbook "Statement"
     sheet = wb.worksheet 0
     add_statement_header sheet, ss, 0
-    
+
     header_type = :us
     if ss
       unless ss.broker_invoices.empty?
@@ -12,7 +12,7 @@ module SummaryStatementsHelper
       end
     end
 
-    add_chart sheet, ss, header_type, 4   
+    add_chart sheet, ss, header_type, 4
     wb
   end
 
@@ -30,11 +30,11 @@ module SummaryStatementsHelper
       XlsMaker.add_header_row sheet, row, chart_header(header_type)
       if statement.broker_invoices.length > 0
         statement.broker_invoices.each do |bi|
-          XlsMaker.add_body_row sheet, (row+=1), [bi.invoice_number, 
-                                                  bi.invoice_date, 
-                                                  bi.invoice_total, 
-                                                  bi.entry.importer.name, 
-                                                  bi.entry.entry_number, 
+          XlsMaker.add_body_row sheet, (row+=1), [bi.invoice_number,
+                                                  bi.invoice_date,
+                                                  bi.invoice_total,
+                                                  bi.entry.importer.name,
+                                                  bi.entry.entry_number,
                                                   bi.bill_to_name,
                                                   header_type == :ca ? bi.entry.k84_month : bi.entry.release_date,
                                                   header_type == :ca ? bi.entry.cadex_accept_date : bi.entry.monthly_statement_due_date,

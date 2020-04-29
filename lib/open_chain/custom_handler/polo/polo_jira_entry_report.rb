@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloJiraEntryReport
     workbook_to_tempfile wb, 'RlJira-', file_name: "#{filename}.xls"
   end
 
-  def comments_lambda 
+  def comments_lambda
     lambda do |result_set_row, raw_column_value|
       qry = "SELECT actionbody FROM jiradb.jiraaction WHERE issueid = #{raw_column_value.to_i} AND actiontype = 'comment' ORDER BY created"
       execute_query(qry) do |results|
@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloJiraEntryReport
     # Just baseline the logged date to 6 months prior to the start date (this is primarily there to speed up the cross system join)
     logged_date_start = start_date - 6.months
     query = <<-SQL
-      select v.STRINGVALUE as 'Shipment ID', t.pname as 'Issue Type', concat('RL-', i.issuenum) as 'Issue Number', i.SUMMARY as 'Summary', i.DESCRIPTION as 'Description', i.id as 'Comments' , i.CREATED as 'Issue Create Date', i.RESOLUTIONDATE as 'Resolved Date', s.pname as 'Current Status', 
+      select v.STRINGVALUE as 'Shipment ID', t.pname as 'Issue Type', concat('RL-', i.issuenum) as 'Issue Number', i.SUMMARY as 'Summary', i.DESCRIPTION as 'Description', i.id as 'Comments' , i.CREATED as 'Issue Create Date', i.RESOLUTIONDATE as 'Resolved Date', s.pname as 'Current Status',
       e.importer_tax_id as 'Importer Tax Id', e.vendor_names as 'Shipper Names', e.eta_date as 'ETA Date', e.po_numbers as 'PO #', e.part_numbers as 'Styles', e.commercial_invoice_numbers as 'Invoice #', '' as 'URL', substring(e.part_numbers, 1, 3) as 'Brand', e.entry_type as 'Entry Type'
       from jiradb.jiraissue i
       left outer join jiradb.issuetype t on t.ID = i.issuetype
@@ -70,4 +70,4 @@ module OpenChain; module CustomHandler; module Polo; class PoloJiraEntryReport
 
   end
 
-end; end; end; end; 
+end; end; end; end;

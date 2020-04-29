@@ -21,7 +21,7 @@ describe OpenChain::Upgrade do
 
   describe "in_progress?" do
     context "file_present" do
-      before :each do 
+      before :each do
         FileUtils.touch 'tmp/upgrade_running.txt'
       end
 
@@ -29,11 +29,11 @@ describe OpenChain::Upgrade do
         FileUtils.rm 'tmp/upgrade_running.txt' if File.exist? 'tmp/upgrade_running.txt'
       end
 
-      it "should report upgrade in progress if tmp/upgrade_running.txt file is present" do  
+      it "should report upgrade in progress if tmp/upgrade_running.txt file is present" do
         expect(OpenChain::Upgrade.in_progress?).to be_truthy
-      end  
+      end
     end
-    
+
     it "should report no upgrade in progress if upgrade file is missing" do
       expect(OpenChain::Upgrade.in_progress?).to be_falsey
     end
@@ -52,7 +52,6 @@ describe OpenChain::Upgrade do
     it "should not report upgrade errors if the file is not present" do
       expect(OpenChain::Upgrade.errored?).to be_falsey
     end
-    
   end
 
   describe "send_slack_failure" do
@@ -63,7 +62,7 @@ describe OpenChain::Upgrade do
     it "forwards error message to slack" do
       expect(subject).to receive(:slack_client).and_return slack
       expect(slack).to receive(:send_message).with('it-dev-notifications', "<!group>: Upgrade failed for server: #{`hostname`.strip}, instance: #{master_setup.system_code}, error: Error Message", {icon_emoji:':loudspeaker:'})
-      
+
       subject.send_slack_failure master_setup, error
     end
   end
@@ -71,7 +70,7 @@ describe OpenChain::Upgrade do
   context "freshservice callbacks" do
     let(:freshservice) { instance_double(OpenChain::FreshserviceClient) }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:freshservice_client).and_return freshservice
     end
 
@@ -106,7 +105,7 @@ describe OpenChain::Upgrade do
       it "rescues, logs errors" do
         e = StandardError.new "ERROR!!"
         expect(e).to receive(:log_me)
-        expect{subject.err_logger { raise e }}.not_to raise_exception
+        expect {subject.err_logger { raise e }}.not_to raise_exception
       end
     end
   end

@@ -33,7 +33,7 @@ module ISFSupport
       address = self.send(address_symbol)
       required_fields = required_address_fields
       if address
-        missing_fields = required_fields.keys.select{ |field| address[field].blank? }.map {|field| required_fields[field]}
+        missing_fields = required_fields.keys.select { |field| address[field].blank? }.map {|field| required_fields[field]}
         errors[address_symbol] << "is missing required fields: #{missing_fields.join(', ')}" if missing_fields.any?
       else
         errors[address_symbol] << "must be present"
@@ -63,7 +63,7 @@ module ISFSupport
     shipment_lines.each do |line|
       address = line.manufacturer_address
       if address
-        missing_fields = required_fields.keys.select{ |field| address[field].blank? }.map {|field| required_fields[field]}
+        missing_fields = required_fields.keys.select { |field| address[field].blank? }.map {|field| required_fields[field]}
         errors[:base] << "Shipment Line #{line.line_number} Manufacturer address is missing required fields: #{missing_fields.join(', ')}"  if missing_fields.any?
       else
         errors[:base] << "Shipment Line #{line.line_number} Manufacturer address is missing"

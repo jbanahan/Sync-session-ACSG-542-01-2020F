@@ -1,8 +1,8 @@
-describe ValidationRuleEntryInvoiceLineMatchesPoLine do 
+describe ValidationRuleEntryInvoiceLineMatchesPoLine do
 
   describe "run_child_validation" do
 
-    before :each do 
+    before :each do
       @part_no_cd = subject.custom_definitions[:prod_part_number]
       @line = Factory(:commercial_invoice_line, po_number: "PONUMBER", part_number: "PARTNUMBER")
       @line.entry.importer = Factory(:company, importer: true)
@@ -35,7 +35,7 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
       po.order_lines.create! product_id: product.id, quantity: 10
       @line.update_attributes(quantity:11)
 
-      h = {match_fields:[{invoice_line_field:'cil_units',order_line_field:'ordln_ordered_qty',operator:'gt'}]}
+      h = {match_fields:[{invoice_line_field:'cil_units', order_line_field:'ordln_ordered_qty', operator:'gt'}]}
       expect(described_class.new(rule_attributes_json:h.to_json).run_child_validation @line).to eq "No matching order for PO # #{@line.po_number} and Part # #{@line.part_number} where #{ModelField.find_by_uid(:ordln_ordered_qty).label(false)} Greater Than #{ModelField.find_by_uid(:cil_units).label(false)} (11.0)"
     end
 
@@ -47,8 +47,8 @@ describe ValidationRuleEntryInvoiceLineMatchesPoLine do
       po.order_lines.create! product_id: product.id, quantity: 10
       @line.update_attributes(quantity:11)
 
-      h = {match_fields:[{invoice_line_field:'cil_units',order_line_field:'ordln_ordered_qty',operator:'lt'}]}
-      expect(described_class.new(rule_attributes_json:h.to_json).run_child_validation @line).to be_nil 
+      h = {match_fields:[{invoice_line_field:'cil_units', order_line_field:'ordln_ordered_qty', operator:'lt'}]}
+      expect(described_class.new(rule_attributes_json:h.to_json).run_child_validation @line).to be_nil
     end
   end
 end

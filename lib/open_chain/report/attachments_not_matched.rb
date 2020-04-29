@@ -1,8 +1,8 @@
 module OpenChain
   module Report
     class AttachmentsNotMatched
-      #run the report
-      #no settings needed
+      # run the report
+      # no settings needed
       def self.run_report run_by, settings={}
         records = LinkableAttachment.joins("LEFT OUTER JOIN linked_attachments ON linkable_attachments.id = linked_attachments.linkable_attachment_id").
           where("linked_attachments.id is null")
@@ -31,7 +31,7 @@ module OpenChain
             row_cursor += 1
           end
         end
-        t = Tempfile.new(['attachments_not_matched','.xls'])
+        t = Tempfile.new(['attachments_not_matched', '.xls'])
         wb.write t.path
         t
       end

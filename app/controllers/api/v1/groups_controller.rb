@@ -71,9 +71,9 @@ module Api; module V1; class GroupsController < Api::V1::ApiCoreModuleController
                                  .where("m.id IS NULL")
                                  .non_system_user
                                  .enabled
-                                 .map{ |u| u.api_hash(include_permissions: false)}
+                                 .map { |u| u.api_hash(include_permissions: false)}
       else
-        hash['excl_users'] = User.where(system_user: [false, nil]).enabled.map{ |u| u.api_hash(include_permissions: false)}
+        hash['excl_users'] = User.where(system_user: [false, nil]).enabled.map { |u| u.api_hash(include_permissions: false)}
       end
       json_generator.add_companies(hash['excl_users'])
     end

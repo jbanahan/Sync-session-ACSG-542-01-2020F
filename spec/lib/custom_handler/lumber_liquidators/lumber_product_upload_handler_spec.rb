@@ -54,7 +54,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
           expect(line).to eq ["LUMBER", "000000000010039527", "2KO-KC", "US", "4418904605", nil, 1]
         end
       end
-      
+
     end
 
     context "with ca lines" do
@@ -96,7 +96,6 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
 
   describe "process" do
     let (:user) { Factory(:user) }
-   
 
     before :each do
       lumber_master
@@ -163,7 +162,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberProductUploadHandler
         expect(f.starting_row).to eq 1
         expect(f.module_type).to eq "Product"
         expect(f.user).to eq user
-        
+
         ss = f.search_setup
         expect(ss).not_to be_nil
         expect(ss.name).to eq "CA Parts Upload (Do Not Delete or Modify)"

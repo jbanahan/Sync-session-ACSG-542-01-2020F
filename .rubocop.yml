@@ -1,0 +1,62 @@
+inherit_from:
+  - .rubocop_strict.yml
+  - .rubocop_missing_cops_todo.yml
+
+
+
+inherit_mode:
+  merge:
+    - Exclude
+
+require:
+  - rubocop-rails
+  - rubocop-rspec
+
+AllCops:
+  Exclude:
+    - 'db/**/*'
+
+Naming/MethodName:
+  Exclude:
+    - 'lib/open_chain/custom_handler/kewill_export_shipment_parser.rb'
+    - 'lib/open_chain/custom_handler/vandegrift/vandegrift_catair_3461_parser.rb'
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Layout/LineLength:
+  Max: 120
+
+# This Cop does not play nice with our module declaration style.
+Layout/EndAlignment:
+  Enabled: false
+
+# I'm disabling the Metric cops. These metrics are useless and would be better if ran through CodeClimate which better
+# explains what's going on rather than just spitting out files that fail the checks.
+# While I could glob disable, I am going to disable one by one in case we choose to add one in later.
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/BlockLength:
+  Enabled: false
+
+Metrics/BlockNesting:
+  Enabled: false
+
+Metrics/ClassLength:
+  Enabled: false
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/ModuleLength:
+  Enabled: false
+
+Metrics/ParameterLists:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false

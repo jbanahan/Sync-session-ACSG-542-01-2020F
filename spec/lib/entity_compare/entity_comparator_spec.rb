@@ -41,8 +41,8 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       subject.process(es)
 
-      #should pass nil for the old items and the values for the new
-      expect(comparator.compared).to eq [['Order',order.id,nil,nil,nil,'b','d','v']]
+      # should pass nil for the old items and the values for the new
+      expect(comparator.compared).to eq [['Order', order.id, nil, nil, nil, 'b', 'd', 'v']]
 
       log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
       expect(log).not_to be_nil
@@ -60,10 +60,10 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       subject.process(es)
 
-      #should pass nil for the old items and the values for the new
-      expect(comparator.compared).to eq [['Order',order.id,nil,nil,nil,'b','d','v']]
+      # should pass nil for the old items and the values for the new
+      expect(comparator.compared).to eq [['Order', order.id, nil, nil, nil, 'b', 'd', 'v']]
 
-      #all objects should be flagged as compared
+      # all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to be_empty
 
       log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
@@ -84,10 +84,10 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       subject.process(es)
 
-      #should pass nil for the old items and the values for the new
-      expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv','b','d','v']]
+      # should pass nil for the old items and the values for the new
+      expect(comparator.compared).to eq [['Order', order.id, 'cb', 'cd', 'cv', 'b', 'd', 'v']]
 
-      #all objects should be flagged as compared
+      # all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to be_empty
 
       log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
@@ -106,7 +106,7 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       subject.process(old_es)
 
-      #should pass nil for the old items and the values for the new
+      # should pass nil for the old items and the values for the new
       expect(comparator.compared).to eq []
 
       expect(EntitySnapshot.where('compared_at is null').to_a).to eq [old_es]
@@ -119,8 +119,8 @@ describe OpenChain::EntityCompare::EntityComparator do
       EntitySnapshot.create!(created_at: create_time, recordable: order, user:user, bucket: 'ob2', doc_path: 'od2', version: 'ov2')
       subject.process(first_es)
 
-      #should pass nil for the old items and the values for the new
-      expect(comparator.compared).to eq [['Order',order.id,nil, nil, nil,'ob2','od2','ov2']]
+      # should pass nil for the old items and the values for the new
+      expect(comparator.compared).to eq [['Order', order.id, nil, nil, nil, 'ob2', 'od2', 'ov2']]
 
       expect(EntitySnapshot.where('compared_at is null').to_a).to eq []
       log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
@@ -141,7 +141,7 @@ describe OpenChain::EntityCompare::EntityComparator do
       EntitySnapshot.create!(compared_at: old_time, created_at: old_time, recordable: order, user:user, bucket: 'cb', doc_path: 'cd', version: 'cv2')
       to_process = EntitySnapshot.create!(created_at: Time.now, recordable: order, user:user, bucket: 'ob2', doc_path: 'od2', version: 'ov2')
       subject.process(to_process)
-      expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv2','ob2','od2','ov2']]
+      expect(comparator.compared).to eq [['Order', order.id, 'cb', 'cd', 'cv2', 'ob2', 'od2', 'ov2']]
 
       log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
       expect(log).not_to be_nil
@@ -160,10 +160,10 @@ describe OpenChain::EntityCompare::EntityComparator do
 
       subject.process(es)
 
-      #Normally, we'd be expecting the es snapshot to process, but since it doesn't have a bucket or doc path, it shouldn't get picked up yet.
-      expect(comparator.compared).to eq [['Order',order.id,'cb','cd','cv','ob','od','ov']]
+      # Normally, we'd be expecting the es snapshot to process, but since it doesn't have a bucket or doc path, it shouldn't get picked up yet.
+      expect(comparator.compared).to eq [['Order', order.id, 'cb', 'cd', 'cv', 'ob', 'od', 'ov']]
 
-      #all objects should be flagged as compared
+      # all objects should be flagged as compared
       expect(EntitySnapshot.where('compared_at is null')).to include es
 
       log = EntityComparatorLog.where(recordable_type: "Order", recordable_id: order.id).first
@@ -282,7 +282,7 @@ describe OpenChain::EntityCompare::EntityComparator do
     end
   end
 
-  describe "delay_options" do 
+  describe "delay_options" do
     it "returns default options" do
       expect(subject.delay_options).to eq({priority: 10})
     end

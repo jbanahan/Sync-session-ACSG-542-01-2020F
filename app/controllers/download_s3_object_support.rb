@@ -35,7 +35,7 @@ module DownloadS3ObjectSupport
       disposition = "inline" if disposition.blank?
       url_opts = {response_content_disposition: disposition}
       url_opts[:response_content_type] = content_type unless content_type.blank?
-      
+
       redirect_to OpenChain::S3.url_for(bucket, path, expires_in, url_opts)
     end
   end

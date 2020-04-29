@@ -21,11 +21,11 @@ class SortCriterion < ActiveRecord::Base
   include JoinSupport
 
   attr_accessible :custom_definition_id, :descending, :model_field_uid, :rank, :search_setup_id
-  
+
   belongs_to :search_setup
-  
+
   validates :model_field_uid, :presence => true
- 
+
   def apply(p, module_chain=nil)
     p = p.where("1=1") if p.class.to_s == "Class"
     if module_chain.nil?

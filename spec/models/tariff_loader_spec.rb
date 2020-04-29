@@ -6,7 +6,7 @@ describe TariffLoader do
     it 'processes a file' do
       country = Factory(:country, iso_code:"AU")
 
-      now = Date.new(2017,8,9)
+      now = Date.new(2017, 8, 9)
 
       loader = double("loader")
       expect(described_class).to receive(:new).with(country, "some_folder/au_simple_20170707.zip", "AU-2017-08-09").and_return loader
@@ -129,34 +129,34 @@ describe TariffLoader do
   describe "valid_header_row?" do
     it "returns false if too short" do
       # Only 9 columns: 1 short of the required amount.
-      expect(described_class.valid_header_row?(["HSCODE","FULL_DESC","SPC_RATES","SR1","UNITCODE","UOM","UOM1","GENERAL","GENERAL_RATE"])).to eq false
+      expect(described_class.valid_header_row?(["HSCODE", "FULL_DESC", "SPC_RATES", "SR1", "UNITCODE", "UOM", "UOM1", "GENERAL", "GENERAL_RATE"])).to eq false
     end
 
     it "returns false if no expected columns are contained in the row" do
-      expect(described_class.valid_header_row?(["A","B","C","D","E","F","G","H","I","J"])).to eq false
+      expect(described_class.valid_header_row?(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"])).to eq false
     end
 
     it "returns true if acceptably long and containing expected columns" do
-      expect(described_class.valid_header_row?(["HSCODE","FULL_DESC","SPC_RATES","SR1","UNITCODE","UOM","UOM1","GENERAL","GENERAL_RATE", "Not a real column but doesn't matter"])).to eq true
+      expect(described_class.valid_header_row?(["HSCODE", "FULL_DESC", "SPC_RATES", "SR1", "UNITCODE", "UOM", "UOM1", "GENERAL", "GENERAL_RATE", "Not a real column but doesn't matter"])).to eq true
     end
   end
 
   describe "valid_row?" do
     it "returns false if too short" do
       # Only 9 columns: 1 short of the required amount.
-      expect(described_class.valid_row?(["A","B","C","D","E","F","G","H","I"])).to eq false
+      expect(described_class.valid_row?(["A", "B", "C", "D", "E", "F", "G", "H", "I"])).to eq false
     end
 
     it "returns false if all values are blank" do
-      expect(described_class.valid_row?([nil,"","",nil,"","","","",nil,""])).to eq false
+      expect(described_class.valid_row?([nil, "", "", nil, "", "", "", "", nil, ""])).to eq false
     end
 
     it "returns true if acceptably long and at least one value provided" do
-      expect(described_class.valid_row?([nil,"","",nil,"Hey, there's one value in here","","","",nil,""])).to eq true
+      expect(described_class.valid_row?([nil, "", "", nil, "Hey, there's one value in here", "", "", "", nil, ""])).to eq true
     end
 
     it "returns true if acceptably long and at least one numeric value provided" do
-      expect(described_class.valid_row?([nil,"","",nil,42,"","","","",nil,""])).to eq true
+      expect(described_class.valid_row?([nil, "", "", nil, 42, "", "", "", "", nil, ""])).to eq true
     end
   end
 

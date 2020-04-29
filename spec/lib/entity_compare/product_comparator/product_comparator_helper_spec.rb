@@ -5,9 +5,9 @@ describe OpenChain::EntityCompare::ProductComparator::ProductComparatorHelper do
 
   describe "get_hts" do
     let!(:cl_hsh) do
-      {"entity"=>{"core_module"=>"Classification", 
-                  "model_fields"=>{"class_cntry_iso"=>"US"}, 
-                  "children"=>[{"entity"=>{"core_module"=>"TariffRecord", 
+      {"entity"=>{"core_module"=>"Classification",
+                  "model_fields"=>{"class_cntry_iso"=>"US"},
+                  "children"=>[{"entity"=>{"core_module"=>"TariffRecord",
                                            "model_fields"=>{"hts_hts_1"=>"1111.11.1111"}}}]}}
     end
 
@@ -29,12 +29,12 @@ describe OpenChain::EntityCompare::ProductComparator::ProductComparatorHelper do
 
   describe "get_all_hts" do
     let (:classification_snapshot) {
-      {"entity"=>{"core_module"=>"Classification", 
-                  "model_fields"=>{"class_cntry_iso"=>"US"}, 
-                  "children"=>[{"entity"=>{"core_module"=>"TariffRecord", 
+      {"entity"=>{"core_module"=>"Classification",
+                  "model_fields"=>{"class_cntry_iso"=>"US"},
+                  "children"=>[{"entity"=>{"core_module"=>"TariffRecord",
                                            "model_fields"=>{"hts_hts_1"=>"1111.11.1111"}}},
 
-                                {"entity"=>{"core_module"=>"TariffRecord", 
+                                {"entity"=>{"core_module"=>"TariffRecord",
                                            "model_fields"=>{"hts_hts_1"=>"2222.22.2222"}}}
                               ]
 
@@ -65,20 +65,20 @@ describe OpenChain::EntityCompare::ProductComparator::ProductComparatorHelper do
           "children" => [
             {
               "entity"=>{
-                "core_module"=>"Classification", 
+                "core_module"=>"Classification",
                 "model_fields"=> {
                   "class_cntry_iso"=>"US"
-                }, 
+                },
                 "children"=> [
                   {
                     "entity"=>{
-                      "core_module"=>"TariffRecord", 
+                      "core_module"=>"TariffRecord",
                       "model_fields"=>{"hts_hts_1"=>"1111.11.1111"}
                     }
                   },
                   {
                     "entity"=>{
-                      "core_module"=>"TariffRecord", 
+                      "core_module"=>"TariffRecord",
                       "model_fields"=>{
                         "hts_hts_1"=>"2222.22.2222"
                       }

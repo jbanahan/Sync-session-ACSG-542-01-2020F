@@ -10,13 +10,13 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
     end
     return nil unless entry.entry_filed_date
 
-    # What we need to do here is ensure that every single invoice line on the entry that has an MID-VendorID that 
-    # matches one of the MID-VendorIDs in their list (xref'ed type) and has a filed date after the FS start date in 
+    # What we need to do here is ensure that every single invoice line on the entry that has an MID-VendorID that
+    # matches one of the MID-VendorIDs in their list (xref'ed type) and has a filed date after the FS start date in
     # the corresponding xref has first sale data.
 
     xref = upcase_hash_keys DataCrossReference.hash_for_type(DataCrossReference::ASCE_MID)
     inv_line_data = results_by_inv_ln(ActiveRecord::Base.connection.exec_query query(entry.id, entry.customer_number))
-    
+
     errors = []
     air = entry.transport_mode_code.to_s == "40"
 
@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
       i.commercial_invoice_lines.each do |l|
         # Skip if air entry and line has non-dutiable charges
         next if air && l.non_dutiable_amount.to_f > 0
- 
+
         # query join will only skip lines with a bad PO#
         if inv_line_data[l.id].nil?
           errors << "Invoice # #{i.invoice_number} / Line # #{l.line_number} has an invalid PO number."
@@ -37,12 +37,12 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
         if inv_line_data[l.id][:ord_mid].present? && (inv_line_data[l.id][:inv_mid] != inv_line_data[l.id][:ord_mid])
           errors << "Invoice # #{i.invoice_number} / Line # #{l.line_number} must have an MID that matches to the PO. Invoice MID is '#{inv_line_data[l.id][:inv_mid]}' / PO MID is '#{inv_line_data[l.id][:ord_mid]}'"
         end
-        
+
         if filed_after_fs_start?(entry.entry_filed_date, l.id, xref, inv_line_data) && invalid_first_sale_data?(l)
           errors << "Invoice # #{i.invoice_number} / Line # #{l.line_number} must have Value Appraisal Method and Contract Amount set."
           next
         end
-        
+
         if l.contract_amount.to_f > 0
           first_sale_checks i, l, errors, xref, inv_line_data
         elsif xref.keys.include? inv_line_data[l.id][:mid_vend]
@@ -83,11 +83,11 @@ module OpenChain; module CustomHandler; module Ascena; class ValidationRuleAscen
   end
 
   def results_by_inv_ln qry_results
-    qry_results.map{ |r| [r['id'], {mid_vend: "#{r['inv_mid']}-#{r['vendor']}", inv_mid: r['inv_mid'], ord_mid: r['ord_mid']}] }.to_h
+    qry_results.map { |r| [r['id'], {mid_vend: "#{r['inv_mid']}-#{r['vendor']}", inv_mid: r['inv_mid'], ord_mid: r['ord_mid']}] }.to_h
   end
 
   def upcase_hash_keys hsh
-    hsh.map { |k, v| [k.upcase, v] }.to_h
+    hsh.transform_keys(&:upcase)
   end
 
   def filed_after_fs_start? filed_date, line_id, xref_hsh, qry_results

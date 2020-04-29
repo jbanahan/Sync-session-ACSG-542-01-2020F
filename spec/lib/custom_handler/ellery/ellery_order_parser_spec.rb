@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       parser.send(:cdefs)
     }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:parser_instance).and_return parser
     end
 
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       expect(l.custom_value(cdefs[:ord_line_color])).to eq "MARBLE"
       expect(l.custom_value(cdefs[:ord_line_division])).to eq "WINDOW"
       expect(l.custom_value(cdefs[:ord_line_units_per_inner_pack])).to eq BigDecimal("2")
-      expect(l.custom_value(cdefs[:ord_line_planned_available_date])).to eq Date.new(2016,7,13)
+      expect(l.custom_value(cdefs[:ord_line_planned_available_date])).to eq Date.new(2016, 7, 13)
 
       p = l.product
       expect(p).not_to be_nil
@@ -201,7 +201,7 @@ describe OpenChain::CustomHandler::Ellery::ElleryOrderParser do
       vendor = Factory(:vendor, system_code: "ELLHOL-BE1220", name: "Existing Vendor")
       subject.parse_file po_csv, log, bucket: "bucket", key: "path/to/file.csv"
 
-      vendor.reload 
+      vendor.reload
       expect(vendor.name).to eq "Existing Vendor"
       expect(vendor.addresses.length).to eq 0
     end

@@ -1,7 +1,7 @@
 describe OpenChain::GPG do
 
   # There's little point in testing decrypt without encrypt
-  
+
   # The public / private keys are in spec/fixtures/files
   # There's two sets...one w/ a passphrase and one without.
   describe "decrypt_file" do
@@ -128,7 +128,7 @@ describe OpenChain::GPG do
 
     let (:encrypted_io) { StringIO.new encrypted_data }
 
-    let (:secrets) { 
+    let (:secrets) {
       s = {
         'gpg' => {
           'gpg_key' => {
@@ -144,7 +144,7 @@ describe OpenChain::GPG do
       plaintext_file.close!
     end
 
-    it "decrypts data from an IO-like object to another IO-like object" do 
+    it "decrypts data from an IO-like object to another IO-like object" do
       expect(MasterSetup).to receive(:secrets).and_return secrets
       output = StringIO.new
       subject.decrypt_io encrypted_io, output, 'gpg_key'
@@ -152,7 +152,7 @@ describe OpenChain::GPG do
       expect(output.read).to eq "encrypted\n"
     end
 
-    it "decrypts data from an IO-like object to another IO-like object, using a passphrase" do 
+    it "decrypts data from an IO-like object to another IO-like object, using a passphrase" do
       secrets["gpg"]["gpg_key"]["passphrase"] = "Open Sesame"
       expect(MasterSetup).to receive(:secrets).and_return secrets
 
@@ -185,7 +185,7 @@ describe OpenChain::GPG do
         output.rewind
         expect(output.read).to eq "encrypted\n"
       end
-      
+
     end
 
     it "raises an error if private key path is not present in secrets" do
@@ -199,7 +199,7 @@ describe OpenChain::GPG do
   describe "encrypt_io" do
     subject { described_class }
 
-    let (:secrets) { 
+    let (:secrets) {
       s = {
         'gpg' => {
           'gpg_key' => {
@@ -217,7 +217,7 @@ describe OpenChain::GPG do
 
       encrypted = StringIO.new
 
-      subject.encrypt_io data, encrypted, 'gpg_key' 
+      subject.encrypt_io data, encrypted, 'gpg_key'
 
       expect(encrypted.pos).to be > 0
       encrypted.rewind
@@ -238,7 +238,7 @@ describe OpenChain::GPG do
         in_file.rewind
 
         Tempfile.open(["output", "out"]) do |out_file|
-          subject.encrypt_io in_file, out_file, "gpg_key"  
+          subject.encrypt_io in_file, out_file, "gpg_key"
 
           out_file.rewind
           encrypted_data = out_file.read

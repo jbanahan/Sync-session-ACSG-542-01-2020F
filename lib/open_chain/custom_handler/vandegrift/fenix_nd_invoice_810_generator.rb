@@ -12,15 +12,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class FenixNdInvoice8
 
         Tempfile.open([Attachment.get_sanitized_filename("fenix_invoice_#{invoice_number(invoice)}_"), ".txt"]) do |file|
           write_invoice_810(file, invoice)
-          
-          ftp_sync_file file, sync_record, ftp_connection_info  
+
+          ftp_sync_file file, sync_record, ftp_connection_info
         end
       rescue => e
         e.log_me
         send_invalid_invoice_email(invoice, e.message)
       end
     end
-    
+
     nil
   end
 
@@ -44,13 +44,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class FenixNdInvoice8
     nil
   end
 
-  # The invoice_header_map, invoice_detail_map, and invoice_party_map methods should all return a mapping of the fields utilized 
+  # The invoice_header_map, invoice_detail_map, and invoice_party_map methods should all return a mapping of the fields utilized
   # to seinvoice data to a lambda, method name, or a constant object.
   # lambdas will be called using instance_exec giving access to local methods and objects returned will be
   # used directly as an output value.
   #
   # Shipper, Consignee and Importer are expected to return company records
-  # 
+  #
   # You can override this method and use the hash returned as a merge point for any customer specific data points.
   def invoice_header_map
     {
@@ -71,7 +71,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class FenixNdInvoice8
       :mode_of_transportation => lambda { |i| mode_of_transportation(i) },
       # We should be sending just "GENERIC" as the importer name in the default case
       # which then will force the ops people to associate the importer account manually as they pull them
-      # into the system.  This partially needs to be done based on the way edi in feninx handling is done on a 
+      # into the system.  This partially needs to be done based on the way edi in feninx handling is done on a
       # per file directory basis.  This avoids extra setup when we just want to pull a generic invoice into the system.
       :importer => lambda { |i| Company.new name: "GENERIC" },
       :reference_identifier => lambda {|i| i.customer_reference_number },
@@ -88,7 +88,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class FenixNdInvoice8
       :country_origin_code => lambda {|i, line| line.country_origin.try(:iso_code) },
       # Operations asked us to send a value that would easily let them know the HTS value was
       # invalid for cases where there's no HTS number we could find in the value.  Randy
-      # suggested that a value of 0 would always trip any validations and it would 
+      # suggested that a value of 0 would always trip any validations and it would
       # force them to address each invalid line if we did this.
       :hts_code => lambda {|i, line| line.hts_number.presence || "0" },
       :tariff_description => lambda {|i, line| line.part_description },
@@ -120,7 +120,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class FenixNdInvoice8
     invoice.invoice_lines
   end
 
-  # This is just to use the mapping data to extract the invoice number that will be used in the 810, which may 
+  # This is just to use the mapping data to extract the invoice number that will be used in the 810, which may
   # not always come from the invoice's invoice_number field.
   def invoice_number invoice
     mapped_field_value(:invoice_number, invoice_header_map, invoice)
@@ -161,5 +161,4 @@ module OpenChain; module CustomHandler; module Vandegrift; class FenixNdInvoice8
       return "2"
     end
   end
-  
 end; end; end; end

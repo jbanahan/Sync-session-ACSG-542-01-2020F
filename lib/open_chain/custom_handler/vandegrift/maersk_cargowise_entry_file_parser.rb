@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         # line number order.  We have to sort them ourselves.  The dupe line removal logic below relies upon
         # them being ordered sequentially.
         line_elems = xpath elem_inv, "CommercialInvoiceLineCollection/CommercialInvoiceLine"
-        line_elems = line_elems.sort { |a,b| parse_integer(et(a, "LineNo")) <=> parse_integer(et(b, "LineNo")) }
+        line_elems = line_elems.sort { |a, b| parse_integer(et(a, "LineNo")) <=> parse_integer(et(b, "LineNo")) }
         line_elems.each do |elem_line|
           parent_line_number = et elem_line, "ParentLineNo"
           condensed_line = false
@@ -301,7 +301,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       xpath(xml, bol_base_xpath) do |elem_bol|
         bol = et(elem_bol, bill_field_name).to_s.strip
         next if bol.blank?
-        
+
         bol_prefix = first_text(elem_bol, "AddInfoCollection/AddInfo[Key='#{scac_key}']/Value").to_s.strip
         # Checking for existing SCAC prefix before appending SCAC.  This prevents hideous, double-SCAC'ed
         # monstrosities like "ABCDABCD12345678".

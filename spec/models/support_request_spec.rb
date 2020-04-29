@@ -6,7 +6,7 @@ describe SupportRequest do
     r = SupportRequest.new user: user, created_at: Time.zone.parse("2015-12-29 15:00"), referrer_url: "http://www.vfitrack.net", body: "Help!", severity: "OMG!!!", ticket_number: "Ticket", external_link: "Link"
   }
 
-  before :each do 
+  before :each do
     allow(described_class).to receive(:test_env?).and_return false
   end
 
@@ -62,7 +62,7 @@ describe SupportRequest do
       expect { described_class.request_sender }.to raise_error "Unexpected Support Request ticket sender encountered: invalid."
     end
 
-    it "raises an error when no config file is present" do 
+    it "raises an error when no config file is present" do
       expect(described_class).to receive(:support_request_config).and_return nil
       expect { described_class.request_sender }.to raise_error "No ticket sender configured."
     end

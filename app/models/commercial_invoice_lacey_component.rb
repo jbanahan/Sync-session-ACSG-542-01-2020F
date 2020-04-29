@@ -23,6 +23,6 @@
 
 class CommercialInvoiceLaceyComponent < ActiveRecord::Base
   attr_accessible :commercial_invoice_tariff_id, :container_numbers, :detailed_description, :genus, :harvested_from_country, :line_number, :name, :percent_recycled_material, :quantity, :species, :unit_of_measure, :value
-  
+
   belongs_to :commercial_invoice_tariff, inverse_of: :commercial_invoice_lacey_components
 end

@@ -3,7 +3,7 @@
 # believe this is the only way to accomplish that.
 module OpenChain; class FakeKewillShipmentEntryXmlGenerator < OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator
 
-  def generate_xml_and_send shipments, sync_records: 
+  def generate_xml_and_send shipments, sync_records:
 
   end
 
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator
 
       it "generates and sends an entry if the shipment is entry prepared and does not have a sent date" do
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator).to receive(:generate_xml_and_send).with(shipment, sync_records: instance_of(SyncRecord))
- 
+
         now = Time.zone.now
         Timecop.freeze { subject.compare shipment, nil, nil, nil, nil, nil, nil }
 
@@ -68,7 +68,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator
       it "uses an alternate generator" do
         cross_reference.update_attributes! value: "OpenChain::FakeKewillShipmentEntryXmlGenerator"
         expect_any_instance_of(OpenChain::FakeKewillShipmentEntryXmlGenerator).to receive(:generate_xml_and_send).with(shipment, sync_records: instance_of(SyncRecord))
- 
+
         subject.compare shipment, nil, nil, nil, nil, nil, nil
 
         shipment.reload

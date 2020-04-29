@@ -9,7 +9,7 @@
 #  updated_at :datetime         not null
 #
 
-#The definition of a test and resulting classification that could be applied to a product using the Instant Classification feature
+# The definition of a test and resulting classification that could be applied to a product using the Instant Classification feature
 class InstantClassification < ActiveRecord::Base
   include UpdateModelFieldsSupport
 
@@ -20,12 +20,12 @@ class InstantClassification < ActiveRecord::Base
 
   validates_presence_of :name
 
-  accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
-    :reject_if => lambda { |a| 
+  accepts_nested_attributes_for :search_criterions, :allow_destroy => true,
+    :reject_if => lambda { |a|
       r_val = false
-      [:model_field_uid,:operator].each { |f|
+      [:model_field_uid, :operator].each { |f|
         r_val = true if a[f].blank?
-      } 
+      }
       r_val
     }
   accepts_nested_attributes_for :classifications, :allow_destroy => true
@@ -33,7 +33,7 @@ class InstantClassification < ActiveRecord::Base
   scope :ranked, -> { order("rank ASC").includes(:search_criterions) }
 
   # Find the InstantClassification that matches the given Product
-  # 
+  #
   # If you pass a collection if InstantClassifications in, it will be used, otherwise the database will be queried.
   # Pass in the collection if you are going to be using this method in a bulk loop to avoid the N+1 lookup
   def self.find_by_product product, user, instant_classification_collection=nil
@@ -47,7 +47,7 @@ class InstantClassification < ActiveRecord::Base
   end
   # does the given product match the search_criterions?
   def test? product, user
-    search_criterions.each {|sc| return false unless sc.test?(product,user)}
+    search_criterions.each {|sc| return false unless sc.test?(product, user)}
     true
   end
 

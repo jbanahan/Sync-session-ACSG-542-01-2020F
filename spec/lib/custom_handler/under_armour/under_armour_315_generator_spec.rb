@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
 
     it "should accept a UA entry with invoice lines" do
       entry = Entry.new importer_tax_id: "874548506RM0001"
-      entry.commercial_invoice_lines.build 
+      entry.commercial_invoice_lines.build
 
       expect(described_class.new.accepts?(nil, entry)).to be_truthy
     end
@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
 
     it "should not accept non-UA entry" do
       entry = Entry.new customer_number: "NOT UNDERARMOUR'S TAX ID"
-      entry.commercial_invoice_lines.build 
+      entry.commercial_invoice_lines.build
 
       expect(described_class.new.accepts?(nil, entry)).to be_falsey
     end
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
     let! (:inv_line_2) { Factory(:commercial_invoice_line, customer_reference: "ABC", commercial_invoice: invoice) }
     let! (:inv_line_3) { Factory(:commercial_invoice_line, customer_reference: "DEF", commercial_invoice: invoice) }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:delay).and_return subject
     end
 
@@ -96,7 +96,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
 
       entry.cadex_sent_date = entry.cadex_sent_date + 1.day
       subject.receive nil, entry
-      
+
       expect(DataCrossReference.find_ua_315_milestone("ABC", "2315")).to eq xml_date(entry.cadex_sent_date)
     end
 
@@ -123,7 +123,6 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
     it "generates xml and ftp it" do
       now = Time.zone.now
       Timecop.freeze(now) {subject.generate_and_send entry_data }
-      
 
       sha = Digest::SHA1.hexdigest("#{entry_data[:shipment_identifier]}#{entry_data[:event_code]}#{entry_data[:date]}")
 
@@ -164,5 +163,5 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator do
       expect(REXML::XPath.first(doc, "/tXML/Message/MANH_TPM_Shipment_IBD/@Id").value).to eq entry_data[:shipment_identifier]
     end
   end
-  
+
 end

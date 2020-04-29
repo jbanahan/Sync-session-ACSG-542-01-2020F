@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
       now = Time.zone.now
       shipments = nil
       Timecop.freeze(now) { shipments = subject.process_file file_data }
-      
+
       expect(shipments.length).to eq 1
 
       s = shipments.first
@@ -80,8 +80,8 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
 
   describe "process_01" do
     let (:line) { "0112YMLUW490360331                YMLUW490360331                11YM UNISON                          084E-VN 5520630022019120320191219        1.234YMLU000013270.520001" }
-    let (:shipment) { 
-      s = described_class::CiLoadEntry.new 
+    let (:shipment) {
+      s = described_class::CiLoadEntry.new
       s.bills_of_lading = []
       s.dates = []
       s
@@ -122,8 +122,8 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
   end
 
   describe "process_02" do
-    let (:shipment) { 
-      s = described_class::CiLoadEntry.new 
+    let (:shipment) {
+      s = described_class::CiLoadEntry.new
       s.containers = []
       s
     }
@@ -137,8 +137,8 @@ describe OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser do
   end
 
   describe "process_04" do
-    let (:shipment) { 
-      s = described_class::CiLoadEntry.new 
+    let (:shipment) {
+      s = described_class::CiLoadEntry.new
       s.invoices = []
       i = described_class::CiLoadInvoice.new
       i.invoice_lines = []

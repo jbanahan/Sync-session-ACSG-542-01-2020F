@@ -13,7 +13,7 @@ describe XlsBuilder do
   end
 
   describe "create_sheet" do
-    it "creates a new worksheet" do 
+    it "creates a new worksheet" do
       sheet = subject.create_sheet "Test"
       expect(sheet).to be_a XlsBuilder::XlsSheet
       expect(sheet.name).to eq "Test"
@@ -79,7 +79,7 @@ describe XlsBuilder do
         expect(format_at(sheet, 0, 0).name).to eq "default_datetime"
       end
 
-      it "applies default style to ActiveSupport::TimeWithZone" do 
+      it "applies default style to ActiveSupport::TimeWithZone" do
         subject.add_body_row sheet, [Time.zone.parse("2018-07-13 12:23")]
         expect(format_at(sheet, 0, 0).name).to eq "default_datetime"
       end
@@ -95,7 +95,7 @@ describe XlsBuilder do
         expect(format_at(sheet, 0, 0).name).to eq "default_currency"
       end
     end
-  
+
     context "with merged cell ranges" do
       it "applies combined styles" do
         subject.create_style(:bold, {weight: :bold})
@@ -125,7 +125,7 @@ describe XlsBuilder do
   end
 
   describe "write" do
-    let! (:sheet) { 
+    let! (:sheet) {
       subject.create_sheet "Sheet", headers: ["Testing"]
     }
 
@@ -146,12 +146,12 @@ describe XlsBuilder do
         file.rewind
         # If this method passes without raising, then we're ok..it means the workbook was written to the
         # IO object and could be read
-        Spreadsheet.open(file) 
+        Spreadsheet.open(file)
       end
     end
   end
 
-  describe "create_style" do 
+  describe "create_style" do
     let (:sheet) {
       subject.create_sheet "Sheet"
     }
@@ -169,7 +169,7 @@ describe XlsBuilder do
       subject.create_sheet "Sheet"
     }
 
-    it "creates a link cell" do 
+    it "creates a link cell" do
       link = subject.create_link_cell "www.google.com"
       expect(link.url).to eq "www.google.com"
       expect(link).to eq "Web View"
@@ -224,7 +224,7 @@ describe XlsBuilder do
       sheet
     }
 
-    it "applies min/max widths using defaults" do 
+    it "applies min/max widths using defaults" do
       subject.apply_min_max_width_to_columns sheet
 
       expect(sheet.raw_sheet.column(0).width).to eq 50
@@ -232,7 +232,7 @@ describe XlsBuilder do
       expect(sheet.raw_sheet.column(2).width).to eq 12
     end
 
-    it "applies min/max widths using given values" do 
+    it "applies min/max widths using given values" do
       subject.apply_min_max_width_to_columns sheet, min_width: 5, max_width: 10
 
       expect(sheet.raw_sheet.column(0).width).to eq 10

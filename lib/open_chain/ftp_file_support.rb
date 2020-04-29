@@ -12,14 +12,14 @@ module OpenChain
         begin
           opts = ftp_information(option_overrides)
           delete_local = !opts[:keep_local]
-          session = FtpSender.send_file(opts[:server],opts[:username],opts[:password],file,opts)
+          session = FtpSender.send_file(opts[:server], opts[:username], opts[:password], file, opts)
           if block_given?
             yield session
           end
 
           # The reason we also return true from this is because of how we transparently handle file
-          # resends should the initial send fail.  Ergo, just because the send fails on the first attempt, 
-          # doesn't mean the file needs to be regenerated, so we always return true if the call to 
+          # resends should the initial send fail.  Ergo, just because the send fails on the first attempt,
+          # doesn't mean the file needs to be regenerated, so we always return true if the call to
           # FtpSender.send_file completes.  The retry handling built into FtpSender will notify
           # if the file truly can't be sent.
           send_status = true

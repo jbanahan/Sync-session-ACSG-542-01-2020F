@@ -12,12 +12,12 @@ module OpenChain
         (Rails.env=='development' || MasterSetup.get.system_code=='www-vfitrack-net') && user.company.master?
       end
 
-      def run 
+      def run
         start_date, end_date = parse_date_parameters
         sql = <<-SQL
-          SELECT e.broker_reference as 'FILE NO', substr(e.entry_number, 1, 3) as 'FILER CODE', substr(e.entry_number, 4) as 'Entry NO', replace(e.po_numbers, '\n', ', ') as 'CUST. REF', 
-          e.carrier_code as 'SCAC', replace(e.master_bills_of_lading, '\n', ', ') as 'MASTER BILLS', replace(e.container_numbers, '\n', ', ') as 'CONTAINER NOs', 
-          e.release_date as 'RELEASE DATE', e.total_invoiced_value as 'VALUE ENTERED', 
+          SELECT e.broker_reference as 'FILE NO', substr(e.entry_number, 1, 3) as 'FILER CODE', substr(e.entry_number, 4) as 'Entry NO', replace(e.po_numbers, '\n', ', ') as 'CUST. REF',
+          e.carrier_code as 'SCAC', replace(e.master_bills_of_lading, '\n', ', ') as 'MASTER BILLS', replace(e.container_numbers, '\n', ', ') as 'CONTAINER NOs',
+          e.release_date as 'RELEASE DATE', e.total_invoiced_value as 'VALUE ENTERED',
           (SELECT ifnull(sum(charge_amount), 0) FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = e.id AND charge_code = '0001') as 'DUTY',
           (SELECT ifnull(sum(charge_amount), 0) FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = e.id AND charge_code = '0009') as 'ADDITIONAL CLASSIFICATIONS',
           (SELECT ifnull(sum(charge_amount), 0) FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = e.id AND charge_code = '0008') as 'ADDITIONAL INVOICES',
@@ -29,7 +29,7 @@ module OpenChain
           (SELECT ifnull(sum(charge_amount), 0) FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = e.id AND charge_code = '0221') as 'OBTAIN IRS NO.',
           (SELECT ifnull(sum(charge_amount), 0) FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = e.id AND charge_code = '0222') as 'OBTAIN IRS NO. CF FROM 5106',
           (SELECT ifnull(sum(invoice_total), 0) FROM broker_invoices WHERE broker_invoices.entry_id = e.id) as 'BILLED TO-DATE'
-          FROM entries e 
+          FROM entries e
           WHERE
           e.customer_number = 'KITCHEN'
           AND e.release_date > '#{start_date.utc.to_s(:db)}'
@@ -38,7 +38,7 @@ module OpenChain
           ORDER BY e.release_date ASC
         SQL
 
-        conversions = {"RELEASE DATE" => lambda{|row, value| value.nil? ? "" : value.in_time_zone(Time.zone).to_date}}
+        conversions = {"RELEASE DATE" => lambda {|row, value| value.nil? ? "" : value.in_time_zone(Time.zone).to_date}}
         wb = Spreadsheet::Workbook.new
         sheet = wb.create_worksheet :name=>"KitchenCraft"
         table_from_query sheet, sql, conversions

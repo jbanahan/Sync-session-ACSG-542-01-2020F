@@ -1,40 +1,40 @@
 describe InstantClassification do
   describe "find by product" do
     before :each do
-      @first_ic = InstantClassification.create!(:name=>'bulk test',:rank=>1)
-      @first_ic.search_criterions.create!(:model_field_uid=>'prod_uid',:operator=>'sw',:value=>'bulk')
-      @second_ic = InstantClassification.create!(:name=>'bulk test 2',:rank=>2) #should match this one
-      @second_ic.search_criterions.create!(:model_field_uid=>'prod_uid',:operator=>'eq',:value=>'findme')
-      @third_ic = InstantClassification.create!(:name=>'bulk test 3',:rank=>3) #this one would match, but we shouldn't hit it because second_ic will match first
-      @third_ic.search_criterions.create!(:model_field_uid=>'prod_uid',:operator=>'ew',:value=>'me')
+      @first_ic = InstantClassification.create!(:name=>'bulk test', :rank=>1)
+      @first_ic.search_criterions.create!(:model_field_uid=>'prod_uid', :operator=>'sw', :value=>'bulk')
+      @second_ic = InstantClassification.create!(:name=>'bulk test 2', :rank=>2) # should match this one
+      @second_ic.search_criterions.create!(:model_field_uid=>'prod_uid', :operator=>'eq', :value=>'findme')
+      @third_ic = InstantClassification.create!(:name=>'bulk test 3', :rank=>3) # this one would match, but we shouldn't hit it because second_ic will match first
+      @third_ic.search_criterions.create!(:model_field_uid=>'prod_uid', :operator=>'ew', :value=>'me')
     end
     it "should find a match" do
-      p = Factory(:product,:unique_identifier=>'findme')
-      expect(InstantClassification.find_by_product(p,Factory(:user))).to eq(@second_ic)
+      p = Factory(:product, :unique_identifier=>'findme')
+      expect(InstantClassification.find_by_product(p, Factory(:user))).to eq(@second_ic)
     end
     it "should not find a match" do
-      p = Factory(:product,:unique_identifier=>'dont')
-      expect(InstantClassification.find_by_product(p,Factory(:user))).to be_nil
+      p = Factory(:product, :unique_identifier=>'dont')
+      expect(InstantClassification.find_by_product(p, Factory(:user))).to be_nil
     end
   end
   describe "test" do
     before :each do
       @ic = InstantClassification.create!(:name=>"ic1")
-      @ic.search_criterions.create!(:model_field_uid=>'prod_uid',:operator=>'eq',:value=>'puidict')
+      @ic.search_criterions.create!(:model_field_uid=>'prod_uid', :operator=>'eq', :value=>'puidict')
     end
     it "should match" do
-      expect(@ic.test?(Factory(:product,:unique_identifier=>'puidict'),Factory(:user))).to be_truthy 
+      expect(@ic.test?(Factory(:product, :unique_identifier=>'puidict'), Factory(:user))).to be_truthy
     end
     it "shouldn't match" do
-      expect(@ic.test?(Factory(:product,:unique_identifier=>'not puidict'),Factory(:user))).to be_falsey 
+      expect(@ic.test?(Factory(:product, :unique_identifier=>'not puidict'), Factory(:user))).to be_falsey
     end
   end
 
   describe "update_model_field_attributes" do
     before :each do
       @country = Factory(:country)
-      @class_cd = Factory(:custom_definition, :module_type=>'Classification',:data_type=>:decimal)
-      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord',:data_type=>:date)
+      @class_cd = Factory(:custom_definition, :module_type=>'Classification', :data_type=>:decimal)
+      @tariff_cd = Factory(:custom_definition, :module_type=>'TariffRecord', :data_type=>:date)
     end
 
     it "creates child classification / tariff records from params" do

@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
     beg_segment = find_segment(edi_segments, "BEG")
     cancelled = value(beg_segment, 1).to_i == 3
 
-    # We need to FIRST generate all the products referenced by this PO, this is done outside the main 
+    # We need to FIRST generate all the products referenced by this PO, this is done outside the main
     # order transaction because of transactional race-conditions that occur when trying to create products
     # inside the order transaction, resulting in the very real potential to create duplicate products.
     if !cancelled
@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
 
     vendor = find_vendor(extract_n1_loops(edi_segments, qualifier: "VN", stop_segments: "PO1").first)
     factory = find_factory(vendor, extract_n1_loops(edi_segments, qualifier: "MP", stop_segments: "PO1").first)
-    
+
     find_or_create_order(transaction, beg_segment, last_file_bucket, last_file_path) do |order|
       if cancelled
         process_cancelled_order(order, user, last_file_path)
@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
     file_sent = isa_sent_time(transaction.isa_segment)
     order_number = "#{ann_importer.system_code}-#{cust_order_number}"
     order = nil
-    Lock.acquire("Order-#{order_number}") do 
+    Lock.acquire("Order-#{order_number}") do
       o = Order.where(order_number: order_number, importer_id: ann_importer.id).first_or_create! customer_order_number: cust_order_number, last_exported_from_source: file_sent
       order = o if process_file?(o, file_sent)
     end
@@ -112,7 +112,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
     order.find_and_set_custom_value(cdefs[:ord_type], program_type(edi_segments))
     order.find_and_set_custom_value(cdefs[:ord_division], find_ref_value(edi_segments, "19"))
     order.find_and_set_custom_value(cdefs[:ord_department], find_ref_value(edi_segments, "DP"))
-    
+
     order
   end
 
@@ -154,20 +154,20 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
     style = value(po1_segment, 15)
 
     order_line.product = products[style]
-    # This should never really happen, if it does something's screwed up w/ the parser since we're creating 
+    # This should never really happen, if it does something's screwed up w/ the parser since we're creating
     # parts on the fly for this.
     raise "Failed to find product '#{style}' for Order # '#{order.customer_order_number}'" if order_line.product.nil?
 
     # Quantity should always be the total number of units ordered
     order_line.sku = value(po1_segment, 7)
-    
+
     order_line.unit_of_measure = value(po1_segment, 3)
     order_line.find_and_set_custom_value(cdefs[:ord_line_color], value(po1_segment, 9))
     order_line.find_and_set_custom_value(cdefs[:ord_line_color_description], value(po1_segment, 19))
     if (prf = BigDecimal(find_elements_by_qualifier(line_segments, "PO3", "PRF", 3, 4).first.to_s)).nonzero?
       order_line.find_and_set_custom_value(cdefs[:ord_line_design_fee], prf)
     end
-    
+
     order_line.find_and_set_custom_value(cdefs[:ord_line_ex_factory_date], find_date_value(line_segments, "371"))
     order_line.find_and_set_custom_value(cdefs[:ord_line_planned_available_date], find_date_value(line_segments, "169"))
     order_line.find_and_set_custom_value(cdefs[:ord_line_planned_dc_date], find_date_value(line_segments, "017"))
@@ -207,7 +207,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
   def create_products user, filename, po1_segments, brand
     products = {}
 
-    # Ann prepacks are just different sizes of the same garment or just multiple of the same garment inside of 
+    # Ann prepacks are just different sizes of the same garment or just multiple of the same garment inside of
     # inner packs...so we don't need to bother with them when making products
     po1_segments.each do |segment|
       style = value(segment, 15)
@@ -232,7 +232,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
         product.find_and_set_custom_value(cdefs[:prod_part_number], style)
       end
 
-      # Don't blank out the style description if the PO doesn't have it..looks like it's always there, but 
+      # Don't blank out the style description if the PO doesn't have it..looks like it's always there, but
       # don't eliminate it if it's not.
       product.name = style_description unless style_description.blank?
 
@@ -257,7 +257,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
   end
 
   def cdefs
-    @cd ||= self.class.prep_custom_definitions([:ord_type, :ord_division, :ord_department, :ord_line_color, :ord_line_color_description, :ord_line_design_fee, 
+    @cd ||= self.class.prep_custom_definitions([:ord_type, :ord_division, :ord_department, :ord_line_color, :ord_line_color_description, :ord_line_design_fee,
       :ord_line_ex_factory_date, :ord_line_planned_available_date, :ord_line_planned_dc_date, :ord_line_prepacks_ordered, :ord_line_units_per_inner_pack,
       :ord_line_size, :prod_part_number, :prod_brand])
   end
@@ -301,7 +301,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnOrder850Parser
     if !factory.nil?
       # The only thing we're ever going to update for a factory is its MID.
       if !mid.blank? && mid != factory.mid
-        Lock.with_lock_retry(factory) do 
+        Lock.with_lock_retry(factory) do
           factory.update_attributes! mid: mid
         end
       end

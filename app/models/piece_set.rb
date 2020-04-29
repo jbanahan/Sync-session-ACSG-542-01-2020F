@@ -28,7 +28,7 @@
 #
 
 class PieceSet < ActiveRecord::Base
-  #PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
+  # PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
   attr_accessible :adjustment_type, :booking_line_id, :commercial_invoice_line_id,
     :commercial_invoice_line, :delivery_line_id, :delivery_line, :drawback_import_line_id, :drawback_import_line,
     :milestone_plan_id, :order_line_id, :order_line, :quantity, :sales_order_line_id, :sales_order_line,
@@ -68,7 +68,7 @@ class PieceSet < ActiveRecord::Base
     }
   end
 
-  #merge all piece sets together that have the same linked keys and set the quantity to the sum of all records
+  # merge all piece sets together that have the same linked keys and set the quantity to the sum of all records
   def self.merge_duplicates! base
     # If the base piece set passed in has no links to anything any longer, then this whole method is a no-op
     # and we can avoid doing a potentially large query.
@@ -98,7 +98,7 @@ class PieceSet < ActiveRecord::Base
     end
   end
 
-  #destroy this piece set if it only has one foriegn key
+  # destroy this piece set if it only has one foriegn key
   def destroy_if_one_key
     if foreign_key_count() <= 1
       return self.destroy
@@ -131,19 +131,19 @@ class PieceSet < ActiveRecord::Base
   def identifiers user = User.current
     r = {}
     ord_num_field = ModelField.find_by_uid(:ord_ord_num)
-    r[:order] = {:label=>ord_num_field.label,:value=>ord_num_field.process_export(self.order_line.order, user)} if self.order_line && ord_num_field.can_view?(user)
+    r[:order] = {:label=>ord_num_field.label, :value=>ord_num_field.process_export(self.order_line.order, user)} if self.order_line && ord_num_field.can_view?(user)
     ship_ref_field = ModelField.find_by_uid(:shp_ref)
-    r[:shipment] = {:label=>ship_ref_field.label,:value=>ship_ref_field.process_export(self.shipment_line.shipment, user)} if self.shipment_line && ship_ref_field.can_view?(user)
+    r[:shipment] = {:label=>ship_ref_field.label, :value=>ship_ref_field.process_export(self.shipment_line.shipment, user)} if self.shipment_line && ship_ref_field.can_view?(user)
     sales_order_field = ModelField.find_by_uid(:sale_order_number)
-    r[:sales_order] = {:label=>sales_order_field.label,:value=>sales_order_field.process_export(self.sales_order_line.sales_order, user)} if self.sales_order_line && sales_order_field.can_view?(user)
+    r[:sales_order] = {:label=>sales_order_field.label, :value=>sales_order_field.process_export(self.sales_order_line.sales_order, user)} if self.sales_order_line && sales_order_field.can_view?(user)
     deliver_field = ModelField.find_by_uid(:del_ref)
-    r[:delivery] = {:label=>deliver_field.label,:value=>deliver_field.process_export(self.delivery_line.delivery, user)} if self.delivery_line && deliver_field.can_view?(user)
+    r[:delivery] = {:label=>deliver_field.label, :value=>deliver_field.process_export(self.delivery_line.delivery, user)} if self.delivery_line && deliver_field.can_view?(user)
     r
   end
 
   private
     def validate_product_integrity
-      #all linked objects must have the same product
+      # all linked objects must have the same product
       base_product = nil
 
       # What we're doing here is not even attempting to load the relations unless there's an id.

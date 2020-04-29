@@ -10,7 +10,7 @@ module OpenChain; module ModelFieldDefinition; module MonthlyStatementFieldDefin
       [6, :cms_paid_date, :paid_date, "Paid Date", {data_type: :date}],
       [7, :cms_pay_type, :pay_type, "Pay Type", {data_type: :string}],
       [8, :cms_pay_type_description, :pay_type_description, "Pay Type Description", {data_type: :string,
-        history_ignore: true, 
+        history_ignore: true,
         read_only: true,
         export_lambda: lambda {|s| s.pay_type_description },
         qualified_field_name: "(CASE pay_type WHEN '1' THEN 'Direct Payment' WHEN '2' THEN 'Broker Daily Statement' WHEN '3' THEN 'Importer Daily Statement' WHEN '6' THEN 'Broker Daily Statement' WHEN '7' THEN 'Importer Daily Statement' ELSE '' END)"
@@ -30,7 +30,7 @@ module OpenChain; module ModelFieldDefinition; module MonthlyStatementFieldDefin
       [21, :cms_preliminary_interest_amount, :preliminary_interest_amount, "Preliminary Interest Amount", {data_type: :decimal, currency: :usd}],
       [22, :cms_fee_amount, :fee_amount, "Fee Amount", {data_type: :decimal, currency: :usd}],
       [23, :cms_preliminary_fee_amount, :preliminary_fee_amount, "Preliminary Fee Amount", {data_type: :decimal, currency: :usd}],
-      [24, :cms_port_name, :port_name,"Port Name",{data_type: :string, read_only: true, history_ignore: true,
+      [24, :cms_port_name, :port_name, "Port Name", {data_type: :string, read_only: true, history_ignore: true,
         :export_lambda => lambda {|s| s.port.try(:name).to_s },
         :qualified_field_name => "(SELECT name FROM ports WHERE ports.schedule_d_code = monthly_statements.port_code)"
       }],
@@ -39,8 +39,8 @@ module OpenChain; module ModelFieldDefinition; module MonthlyStatementFieldDefin
         qualified_field_name: "(SELECT name FROM companies importer_name WHERE importer_name.id = monthly_statements.importer_id)"
       }],
       [26, :cms_customer_number, :customer_number, "Customer Number", {data_type: :string}],
-      [27, :cms_status_description, :status_description, "Status Description", {data_type: :string, 
-        history_ignore: true, 
+      [27, :cms_status_description, :status_description, "Status Description", {data_type: :string,
+        history_ignore: true,
         read_only: true,
         export_lambda: lambda {|s| s.status_description },
         qualified_field_name: "(CASE pay_type WHEN 'P' THEN 'Preliminary' WHEN 'F' THEN 'Final' ELSE '' END)"

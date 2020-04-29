@@ -34,7 +34,7 @@ FROM intacct_checks c
 WHERE intacct_errors IS NOT NULL and intacct_key IS NULL AND company IN (?)
 SQL
     check_query = ActiveRecord::Base.sanitize_sql_array([check_query, companies])
-    
+
     total_rows = 0
     wb = builder
     execute_query(receivable_query) do |result_set|
@@ -78,13 +78,13 @@ SQL
       }
     end
 
-    def receivable_suggested_fix_lambda 
+    def receivable_suggested_fix_lambda
       lambda { |result_set_row, raw_column_value|
         IntacctReceivable.suggested_fix raw_column_value
       }
     end
 
-    def payable_suggested_fix_lambda 
+    def payable_suggested_fix_lambda
       lambda { |result_set_row, raw_column_value|
         IntacctPayable.suggested_fix raw_column_value
       }

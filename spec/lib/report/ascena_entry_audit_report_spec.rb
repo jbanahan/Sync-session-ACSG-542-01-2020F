@@ -2,27 +2,27 @@ describe OpenChain::Report::AscenaEntryAuditReport do
 
   let(:report) { described_class.new }
   let(:co) { with_customs_management_id Factory(:importer, name: "Ascena", system_code: "ASCENA"), "ASCE" }
-  let(:date_1) { DateTime.new(2016,03,15) }
-  let(:date_2) { DateTime.new(2016,03,16) }
-  let(:date_3) { DateTime.new(2016,03,17) }
-  let(:date_4) { DateTime.new(2016,03,18) }
-  let(:date_5) { DateTime.new(2016,03,19) }
+  let(:date_1) { DateTime.new(2016, 03, 15) }
+  let(:date_2) { DateTime.new(2016, 03, 16) }
+  let(:date_3) { DateTime.new(2016, 03, 17) }
+  let(:date_4) { DateTime.new(2016, 03, 18) }
+  let(:date_5) { DateTime.new(2016, 03, 19) }
   let(:cdefs) { described_class.prep_custom_definitions [:ord_selling_agent, :ord_type, :ord_line_wholesale_unit_price, :prod_reference_number] }
-  
+
   let(:header) { ['Broker Reference', 'Entry Number', 'Entry Type', 'First Release Date', 'First Summary Sent Date', 'Entry Filed Date', 'Final Statement Date', 'Release Date', 'Duty Due Date', 'Mode of Transport', 'Master Bills', 'House Bills', 'Port of Unlading Code', 'Port of Entry Name', 'Port of Lading Code', 'Container Count', 'PO Number', 'Product Line', 'Part Number', 'Importer Tax ID', 'Customer Name', 'Invoice Number', 'Country Origin Code', 'Country Export Code', 'Department', 'HTS Code', 'Duty Rate', 'MID', 'MID Supplier Name', 'Vendor Name', 'Vendor Number', 'AGS Office', 'Subheader Number', 'Line Number', 'Customs Line Number', 'Units', 'UOM', 'SPI - Primary', 'Quantity 1', 'Quantity 2', 'UOM 1', 'UOM 2', 'ADD Case Number', 'Invoice Value - Brand', 'Invoice Value - 7501', 'Invoice Value - Contract', 'Entered Value', 'Rounded Entered Value', 'Total Duty', 'MPF - Prorated', 'MPF - Full', 'HMF', 'Total Fees', 'ADD Value', 'CVD Value', 'Excise Amount', 'Cotton Fee', 'Total Duty + Fees', 'Inv Non-Dutiable Amount', 'Inv Ln Non-Dutiable Amount', 'Total Non-Dutiable Amount', 'Unit Price - Brand', 'Unit Price - PO', 'Unit Price - 7501', 'Duty Savings - NDC', 'Duty Savings - First Sale', 'First Sale Flag', 'Related Parties', 'Fiscal Month', 'Fiscal Year', 'Vessel/Airline', 'Voyage/Flight', 'Web Link'] }
 
   def create_data
     vend = Factory(:company, name: "vend name", system_code: "vend sys code")
     fact = Factory(:company, name: "fact name", system_code: "fact sys code")
-    @ent = Factory(:entry, customer_number: 'ASCE', broker_reference: 'brok ref', entry_number: 'ent num', entry_type: 'ent type', first_release_date: date_1, 
-                   first_entry_sent_date: date_2, entry_filed_date: date_3, final_statement_date: date_4, release_date: date_5, duty_due_date: date_5, transport_mode_code: 'transport mode', 
-                   master_bills_of_lading: 'mbols', house_bills_of_lading: 'hbols', unlading_port_code: 'unlading', lading_port_code: 'lading', importer_tax_id: 'imp tax', 
+    @ent = Factory(:entry, customer_number: 'ASCE', broker_reference: 'brok ref', entry_number: 'ent num', entry_type: 'ent type', first_release_date: date_1,
+                   first_entry_sent_date: date_2, entry_filed_date: date_3, final_statement_date: date_4, release_date: date_5, duty_due_date: date_5, transport_mode_code: 'transport mode',
+                   master_bills_of_lading: 'mbols', house_bills_of_lading: 'hbols', unlading_port_code: 'unlading', lading_port_code: 'lading', importer_tax_id: 'imp tax',
                    customer_name: 'cust name', total_non_dutiable_amount: 1, source_system: 'Alliance', entry_port_code: '0123', fiscal_month: 9, fiscal_year: 2017,
                    vessel: "HMS Pinafore", voyage: "Silk Road")
     ci = Factory(:commercial_invoice, entry: @ent, invoice_number: 'inv num', invoice_value: 1, non_dutiable_amount: 2)
-    @cil = Factory(:commercial_invoice_line, commercial_invoice: ci, po_number: 'po num', part_number: "part num", product_line: 'prod line', country_origin_code: 'coo', 
+    @cil = Factory(:commercial_invoice_line, commercial_invoice: ci, po_number: 'po num', part_number: "part num", product_line: 'prod line', country_origin_code: 'coo',
                    country_export_code: 'export code', department: 'dept', mid: 'mid', subheader_number: 1, line_number: 2,
-                   customs_line_number: 3, quantity: 1, unit_of_measure: 'uom', add_case_number: 'add case', value: 18, prorated_mpf: 3, mpf: 4, hmf: 5, 
+                   customs_line_number: 3, quantity: 1, unit_of_measure: 'uom', add_case_number: 'add case', value: 18, prorated_mpf: 3, mpf: 4, hmf: 5,
                    add_case_value: 6, cvd_case_value: 7, cotton_fee: 8, non_dutiable_amount: 9, unit_price: 10, contract_amount: 20, related_parties: true)
     @cit = Factory(:commercial_invoice_tariff, commercial_invoice_line: @cil, hts_code: 'hts', duty_rate: 1, spi_primary: 'spi', classification_qty_1: 2,
                     classification_qty_2: 3, classification_uom_1: 'class uom 1', classification_uom_2: 'class uom 2', entered_value: 4, entered_value_7501:4,
@@ -58,8 +58,8 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       m
     end
 
-    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
-                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}, 
+    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"},
+                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"},
                                {cust_num: "MAUR", sys_code: "MAUR", name: "MAURICES", short_name: "Maurices"}]}
 
     it "returns empty if 'Ascena Reports' custom feature absent" do
@@ -95,7 +95,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
 
     it "omits info for missing company" do
       maurices.destroy
-      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+      expect(subject.permissions user).to eq([{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"},
                                               {cust_num: "ATAYLOR", sys_code: "ATAYLOR", name: "ANN TAYLOR INC", short_name: "Ann"}])
     end
   end
@@ -110,7 +110,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       @temp = described_class.run_report(u, {'start_release_date' => '2016-03-14', 'end_release_date' => '2016-03-20', 'range_field' => 'first_release_date', 'cust_number' => 'ASCE'})
       wb = Spreadsheet.open @temp.path
       sheet = wb.worksheets[0]
-      
+
       expect(sheet.name).to eq "Ascena Entry Audit Report"
       expect(sheet.rows.count).to eq 3
       expect(sheet.row(0)).to eq header
@@ -119,7 +119,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       expect(sheet.row(1)[5]).to eq(date_3.in_time_zone(u.time_zone).to_s)
       expect(sheet.row(1)[7]).to eq(date_5.in_time_zone(u.time_zone).to_s)
     end
-  
+
     it "generates spreadsheet based on fiscal_date" do
       create_data
       @ent.update_attributes(fiscal_date: '2016-12-11', release_date: nil)
@@ -154,45 +154,45 @@ describe OpenChain::Report::AscenaEntryAuditReport do
 
   describe "query" do
     before { create_data }
-    
+
     it "produces expected results for Ascena" do
       result = ActiveRecord::Base.connection.exec_query(report.query '2016-03-14', '2016-03-20', 'release_date', 'ASCENA', cdefs)
       expect(result.columns).to eq header
       expect(result.count).to eq 2
       rows = []
       result.each { |r| rows << r }
-      
+
       expect(rows[0]).to eq(
-        {'Broker Reference'=>'brok ref', 'Entry Number'=>'ent num', 'Entry Type'=>'ent type', 'First Release Date'=>date_1, 
-         'First Summary Sent Date'=>date_2, 'Entry Filed Date'=>date_3, 'Final Statement Date'=>date_4, 
-         'Release Date'=>date_5, 'Duty Due Date' => date_5, 'Mode of Transport'=>'transport mode', 'Master Bills'=>'mbols', 'House Bills'=>'hbols', 
-         'Port of Unlading Code'=>'unlading', 'Port of Entry Name'=>'alliance port', 'Port of Lading Code'=>'lading', 'Container Count' => 1, 'PO Number'=>'po num', 
-         'Product Line'=>'prod line', 'Part Number'=>'part num', 'Importer Tax ID'=>'imp tax', 'Customer Name'=>'cust name', 'Invoice Number'=>'inv num', 
-         'Country Origin Code'=>'coo', 'Country Export Code'=>'export code', 'Department'=>'dept', 'HTS Code'=>'hts', 'Duty Rate'=>1, 'MID'=>'mid', 
-         'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1, 
-         'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi', 'Quantity 1'=>2, 'Quantity 2'=>3, 'UOM 1'=>'class uom 1', 
-         'UOM 2'=>'class uom 2', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18, 'Invoice Value - Contract'=>20, 
+        {'Broker Reference'=>'brok ref', 'Entry Number'=>'ent num', 'Entry Type'=>'ent type', 'First Release Date'=>date_1,
+         'First Summary Sent Date'=>date_2, 'Entry Filed Date'=>date_3, 'Final Statement Date'=>date_4,
+         'Release Date'=>date_5, 'Duty Due Date' => date_5, 'Mode of Transport'=>'transport mode', 'Master Bills'=>'mbols', 'House Bills'=>'hbols',
+         'Port of Unlading Code'=>'unlading', 'Port of Entry Name'=>'alliance port', 'Port of Lading Code'=>'lading', 'Container Count' => 1, 'PO Number'=>'po num',
+         'Product Line'=>'prod line', 'Part Number'=>'part num', 'Importer Tax ID'=>'imp tax', 'Customer Name'=>'cust name', 'Invoice Number'=>'inv num',
+         'Country Origin Code'=>'coo', 'Country Export Code'=>'export code', 'Department'=>'dept', 'HTS Code'=>'hts', 'Duty Rate'=>1, 'MID'=>'mid',
+         'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1,
+         'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi', 'Quantity 1'=>2, 'Quantity 2'=>3, 'UOM 1'=>'class uom 1',
+         'UOM 2'=>'class uom 2', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18, 'Invoice Value - Contract'=>20,
          'Entered Value'=>4, 'Rounded Entered Value'=>4, 'Total Duty'=>13, 'MPF - Prorated'=>3, 'MPF - Full'=>4, 'HMF'=>5, 'Total Fees'=>16, 'ADD Value'=>6,
-         'CVD Value'=>7, 'Excise Amount'=>5, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 'Inv Ln Non-Dutiable Amount'=>9, 
-         'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
-         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore', 
+         'CVD Value'=>7, 'Excise Amount'=>5, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 'Inv Ln Non-Dutiable Amount'=>9,
+         'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13,
+         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore',
          'Voyage/Flight' => 'Silk Road', 'Web Link'=>@ent.id})
 
       expect(rows[1]).to eq(
-        {'Broker Reference'=>'brok ref', 'Entry Number'=>'ent num', 'Entry Type'=>'ent type', 'First Release Date'=>date_1, 'First Summary Sent Date'=>date_2, 
-         'Entry Filed Date'=>date_3, 'Final Statement Date'=>date_4, 'Release Date'=>date_5, 'Duty Due Date'=>date_5,'Mode of Transport'=>'transport mode', 'Master Bills'=>'mbols', 
-         'House Bills'=>'hbols', 'Port of Unlading Code'=>'unlading', 'Port of Entry Name'=>'alliance port', 'Port of Lading Code'=>'lading', 'Container Count' => 1, 
-         'PO Number'=>'po num', 'Product Line'=>'prod line', 'Part Number'=>'part num', 'Importer Tax ID'=>'imp tax', 'Customer Name'=>'cust name', 'Invoice Number'=>'inv num', 
-         'Country Origin Code'=>'coo', 'Country Export Code'=>'export code', 'Department'=>'dept', 'HTS Code'=>'hts2', 'Duty Rate'=>2, 'MID'=>'mid', 
-         'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1, 
-         'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi2', 'Quantity 1'=>3, 'Quantity 2'=>4, 
-         'UOM 1'=>'class uom 1(2)', 'UOM 2'=>'class uom 2(2)', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18, 
+        {'Broker Reference'=>'brok ref', 'Entry Number'=>'ent num', 'Entry Type'=>'ent type', 'First Release Date'=>date_1, 'First Summary Sent Date'=>date_2,
+         'Entry Filed Date'=>date_3, 'Final Statement Date'=>date_4, 'Release Date'=>date_5, 'Duty Due Date'=>date_5, 'Mode of Transport'=>'transport mode', 'Master Bills'=>'mbols',
+         'House Bills'=>'hbols', 'Port of Unlading Code'=>'unlading', 'Port of Entry Name'=>'alliance port', 'Port of Lading Code'=>'lading', 'Container Count' => 1,
+         'PO Number'=>'po num', 'Product Line'=>'prod line', 'Part Number'=>'part num', 'Importer Tax ID'=>'imp tax', 'Customer Name'=>'cust name', 'Invoice Number'=>'inv num',
+         'Country Origin Code'=>'coo', 'Country Export Code'=>'export code', 'Department'=>'dept', 'HTS Code'=>'hts2', 'Duty Rate'=>2, 'MID'=>'mid',
+         'MID Supplier Name' => 'fact name', 'Vendor Name'=>'vend name', 'Vendor Number'=>'vend sys code', 'AGS Office'=>'agent', 'Subheader Number'=>1,
+         'Line Number'=>2, 'Customs Line Number'=>3, 'Units'=>1, 'UOM'=>'uom', 'SPI - Primary'=>'spi2', 'Quantity 1'=>3, 'Quantity 2'=>4,
+         'UOM 1'=>'class uom 1(2)', 'UOM 2'=>'class uom 2(2)', 'ADD Case Number'=>'add case', 'Invoice Value - Brand'=>2, 'Invoice Value - 7501'=>18,
          'Invoice Value - Contract'=>20, 'Entered Value'=>5, 'Rounded Entered Value'=>5, 'Total Duty'=>13, 'MPF - Prorated'=>3.0, 'MPF - Full'=>4, 'HMF'=>5,
-         'Total Fees'=>16, 'ADD Value'=>6, 'CVD Value'=>7, 'Excise Amount'=>6, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2, 
-         'Inv Ln Non-Dutiable Amount'=>9, 'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13, 
-         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore', 
+         'Total Fees'=>16, 'ADD Value'=>6, 'CVD Value'=>7, 'Excise Amount'=>6, 'Cotton Fee'=>8, 'Total Duty + Fees'=>29, 'Inv Non-Dutiable Amount'=>2,
+         'Inv Ln Non-Dutiable Amount'=>9, 'Total Non-Dutiable Amount'=>1, 'Unit Price - Brand'=>2, 'Unit Price - PO'=>1, 'Unit Price - 7501'=>18, 'Duty Savings - NDC'=>13,
+         'Duty Savings - First Sale' => 3, 'First Sale Flag'=>'Y', 'Related Parties'=>'Y', 'Fiscal Month'=>9, 'Fiscal Year'=>2017, 'Vessel/Airline' => 'HMS Pinafore',
          'Voyage/Flight' => 'Silk Road', 'Web Link'=>@ent.id}
-        )      
+        )
     end
 
     it "produces expected results for Ann Inc" do
@@ -215,7 +215,7 @@ describe OpenChain::Report::AscenaEntryAuditReport do
       result = ActiveRecord::Base.connection.exec_query(report.query '2016-03-14', '2016-03-20', 'release_date', 'MAUR', cdefs)
       expect(result.columns).to eq header
       expect(result.count).to eq 2
-      
+
       # helper fields with MAUR-specific behavior
       expect(result.first['Unit Price - Brand']).to eq 2
       expect(result.first['Unit Price - PO']).to eq 1

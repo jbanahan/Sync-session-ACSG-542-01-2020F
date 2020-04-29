@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberKe
 SELECT products.id,
 products.unique_identifier,
 products.name,
-tariff_records.hts_1, 
+tariff_records.hts_1,
 #{cd_s custom_defs[:prod_country_of_origin].id},
 #{cd_s custom_defs[:prod_301_exclusion_tariff]},
 #{cd_s custom_defs[:prod_cvd_case]},
@@ -37,10 +37,10 @@ INNER JOIN classifications on classifications.country_id = (SELECT id FROM count
 INNER JOIN tariff_records on length(tariff_records.hts_1) >= 8 AND tariff_records.classification_id = classifications.id
 QRY
     if self.custom_where.blank?
-      qry += "#{Product.need_sync_join_clause(sync_code)} 
-WHERE 
+      qry += "#{Product.need_sync_join_clause(sync_code)}
+WHERE
 #{Product.need_sync_where_clause()} "
-    else 
+    else
       qry += "WHERE #{self.custom_where} "
     end
   end
@@ -51,7 +51,7 @@ WHERE
     d.description = row[1].to_s.upcase
     d.country_of_origin = row[3]
     d.exclusion_301_tariff = row[4]
-    
+
     nil
   end
 

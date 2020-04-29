@@ -51,7 +51,7 @@ class DutyCalcExportFileLine < ActiveRecord::Base
                   :nafta_duty_rate, :nafta_us_equiv_duty, :part_number, :quantity, :ref_1, :ref_2, :ref_3,
                   :ref_4, :schedule_b_code, :ship_date, :status, :uom, :color_description, :size_description,
                   :style, :ref_5, :ref_6
-  
+
   belongs_to :importer, :class_name=>"Company"
   belongs_to :duty_calc_export_file, :inverse_of=>:duty_calc_export_file_lines
   has_many :drawback_allocations, inverse_of: :duty_calc_export_file_line, dependent: :destroy
@@ -66,12 +66,12 @@ class DutyCalcExportFileLine < ActiveRecord::Base
     inner_opts = {lifo:false}.merge(opts)
     r = []
     self.class.transaction do
-      imp_lines = DrawbackImportLine.unallocated.where(importer_id:self.importer_id,part_number:self.part_number).where("import_date <= ?",self.export_date).order("import_date #{inner_opts[:lifo] ? "DESC" : "ASC"}")
+      imp_lines = DrawbackImportLine.unallocated.where(importer_id:self.importer_id, part_number:self.part_number).where("import_date <= ?", self.export_date).order("import_date #{inner_opts[:lifo] ? "DESC" : "ASC"}")
       remaining_to_allocate = self.unallocated_quantity
       imp_lines.each do |il|
         imp_unallocated = il.unallocated_quantity
         to_allocate = imp_unallocated >= remaining_to_allocate ? remaining_to_allocate : imp_unallocated
-        r << self.drawback_allocations.create!(drawback_import_line_id:il.id,quantity:to_allocate)
+        r << self.drawback_allocations.create!(drawback_import_line_id:il.id, quantity:to_allocate)
         remaining_to_allocate += -to_allocate
         break if remaining_to_allocate == 0
       end
@@ -97,7 +97,7 @@ class DutyCalcExportFileLine < ActiveRecord::Base
     r
   end
 
-  private 
+  private
     def val v
       return "" if v.blank?
       return v.strftime("%m/%d/%Y") if v.respond_to?(:strftime)
@@ -109,9 +109,9 @@ class DutyCalcExportFileLine < ActiveRecord::Base
     end
 
     def get_legacy_format_fields
-      [:export_date,:ship_date,:part_number,:carrier,:ref_1,:ref_2,:ref_3,
-       :ref_4,:destination_country,:quantity,:schedule_b_code,:description,
-       :uom,:exporter,:status,:action_code,:nafta_duty,:nafta_us_equiv_duty,:nafta_duty_rate
+      [:export_date, :ship_date, :part_number, :carrier, :ref_1, :ref_2, :ref_3,
+       :ref_4, :destination_country, :quantity, :schedule_b_code, :description,
+       :uom, :exporter, :status, :action_code, :nafta_duty, :nafta_us_equiv_duty, :nafta_duty_rate
       ]
     end
 

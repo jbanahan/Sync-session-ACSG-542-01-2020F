@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     described_class.new(nil).send(:cdefs)
   end
 
-  after :all do 
+  after :all do
     CustomDefinition.destroy_all
   end
 
@@ -38,14 +38,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         p = Factory(:product)
         p.update_custom_value! cdefs[:csm_season], 'someval'
         expect(@xlc).to receive(:last_row_number).and_return(1)
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-          0=>{'value'=>'seas','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+          0=>{'value'=>'seas', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         u = Factory(:user)
         @h.process u
@@ -57,14 +57,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
 
       it "should set CSM Season for new product" do
         expect(@xlc).to receive(:last_row_number).and_return(1)
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-          0=>{'value'=>'seas','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>'newproduid','datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+          0=>{'value'=>'seas', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>'newproduid', 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         @h.process Factory(:user)
         p = Product.find_by unique_identifier: 'newproduid'
@@ -74,23 +74,23 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       it "should accumulate CSM Seasons" do
         p = Factory(:product)
         expect(@xlc).to receive(:last_row_number).and_return(2)
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-          0=>{'value'=>'seas','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+          0=>{'value'=>'seas', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,2).and_return(
-          0=>{'value'=>'aaa','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 2).and_return(
+          0=>{'value'=>'aaa', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         @h.process Factory(:user)
         expect(p.custom_value(cdefs[:csm_season])).to eq("aaa\nseas")
@@ -103,76 +103,76 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
     it "should set CSM numbers for existing product with no CSM custom value" do
       p = Factory(:product)
       expect(@xlc).to receive(:last_row_number).and_return(2)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,2).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'ZZZ','datatype'=>'string'},
-        3=>{'value'=>'PQRST','datatype'=>'string'},
-        4=>{'value'=>'UVWXY','datatype'=>'string'},
-        5=>{'value'=>'Z1234','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 2).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'ZZZ', 'datatype'=>'string'},
+        3=>{'value'=>'PQRST', 'datatype'=>'string'},
+        4=>{'value'=>'UVWXY', 'datatype'=>'string'},
+        5=>{'value'=>'Z1234', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
       @h.process Factory(:user)
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO\nZZZPQRSTUVWXYZ1234")
     end
-    
+
     it "should include non-contiguous CSM numbers for a product" do
       p = Factory(:product)
       expect(@xlc).to receive(:last_row_number).and_return(3)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
 
       )
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,2).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>'something else','datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 2).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>'something else', 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
 
       )
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,3).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'ZZZ','datatype'=>'string'},
-        3=>{'value'=>'PQRST','datatype'=>'string'},
-        4=>{'value'=>'UVWXY','datatype'=>'string'},
-        5=>{'value'=>'Z1234','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 3).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'ZZZ', 'datatype'=>'string'},
+        3=>{'value'=>'PQRST', 'datatype'=>'string'},
+        4=>{'value'=>'UVWXY', 'datatype'=>'string'},
+        5=>{'value'=>'Z1234', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
 
       )
       @h.process Factory(:user)
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO\nZZZPQRSTUVWXYZ1234")
       expect(Product.where(unique_identifier: 'something else').first.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO")
     end
-    
+
     it "should create new CSM number for new product" do
       expect(@xlc).to receive(:last_row_number).and_return(1)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>'something else','datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>'something else', 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
 
       )
       @h.process Factory(:user)
@@ -180,36 +180,36 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO")
       expect(p.custom_value(cdefs[:csm_department])).to eq('CSMDEPT')
     end
-    
+
     it "should drop existing CSM numbers not in file" do
       p = Factory(:product)
-      p.update_custom_value!(cdefs[:csm_numbers],'XZY')
+      p.update_custom_value!(cdefs[:csm_numbers], 'XZY')
       expect(@xlc).to receive(:last_row_number).and_return(1)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
       @h.process Factory(:user)
       p = Product.find p.id
       expect(p.custom_value(cdefs[:csm_numbers])).to eq("140ABCDEFGHIJKLMNO")
     end
-    
+
     it "should fail if CSM number is not 18 digits" do
       p = Factory(:product)
       expect(@xlc).to receive(:last_row_number).and_return(1)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140XX','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140XX', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
       u = Factory(:user)
       @h.process u
@@ -217,11 +217,11 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       expect(u.messages.size).to eq(1)
       expect(u.messages[0].body).to include("File failed: CSM Number at row 2 was not 18 digits \"140XXABCDEFGHIJKLMNO\"")
     end
-    
+
     it "should not fail for empty lines" do
       expect(@xlc).to receive(:last_row_number).and_return(1)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return({})
-      expect{@h.process Factory(:user)}.to_not change(ErrorLogEntry,:count)
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return({})
+      expect {@h.process Factory(:user)}.to_not change(ErrorLogEntry, :count)
     end
 
     it "should fail if user cannot edit products" do
@@ -229,14 +229,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       p = Factory(:product)
 
       expect(@xlc).to receive(:last_row_number).and_return(1)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
       u = Factory(:user)
       @h.process u
@@ -249,14 +249,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       p = Factory(:product)
       rule = FieldValidatorRule.create! model_field_uid: :prod_uid, module_type: 'Product', starts_with: 'ABC'
       expect(@xlc).to receive(:last_row_number).and_return(1)
-      expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-        0=>{'value'=>'seas','datatype'=>'string'},
-        2=>{'value'=>'140','datatype'=>'string'},
-        3=>{'value'=>'ABCDE','datatype'=>'string'},
-        4=>{'value'=>'FGHIJ','datatype'=>'string'},
-        5=>{'value'=>'KLMNO','datatype'=>'string'},
-        8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-        13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+      expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+        0=>{'value'=>'seas', 'datatype'=>'string'},
+        2=>{'value'=>'140', 'datatype'=>'string'},
+        3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+        4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+        5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+        8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+        13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
       )
       u = Factory(:user)
       @h.process u
@@ -272,14 +272,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       it "should set first/last csm received dates" do
         p = Factory(:product)
         expect(@xlc).to receive(:last_row_number).and_return(1)
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-          0=>{'value'=>'seas','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+          0=>{'value'=>'seas', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         @h.process Factory(:user)
         expect(p.custom_value(cdefs[:csm_received_date_first]).strftime("%y%m%d")).to eq(0.seconds.ago.strftime("%y%m%d"))
@@ -290,14 +290,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         p = Factory(:product)
         p.update_custom_value! cdefs[:csm_received_date_first], 1.day.ago
         expect(@xlc).to receive(:last_row_number).and_return(1)
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-          0=>{'value'=>'seas','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+          0=>{'value'=>'seas', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         @h.process Factory(:user)
         expect(p.custom_value(cdefs[:csm_received_date_first]).strftime("%y%m%d")).to eq(1.day.ago.strftime("%y%m%d"))
@@ -306,14 +306,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
         p = Factory(:product)
         p.update_custom_value! cdefs[:csm_received_date_last], 1.day.from_now
         expect(@xlc).to receive(:last_row_number).and_return(1)
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-          0=>{'value'=>'seas','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+          0=>{'value'=>'seas', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         @h.process Factory(:user)
         expect(p.custom_value(cdefs[:csm_received_date_last]).strftime("%y%m%d")).to eq(1.day.from_now.strftime("%y%m%d"))
@@ -321,14 +321,14 @@ describe OpenChain::CustomHandler::PoloCsmSyncHandler do
       it "should respect override for file received date" do
         p = Factory(:product)
         expect(@xlc).to receive(:last_row_number).and_return(1)
-        expect(@xlc).to receive(:get_row_as_column_hash).with(0,1).and_return(
-          0=>{'value'=>'seas','datatype'=>'string'},
-          2=>{'value'=>'140','datatype'=>'string'},
-          3=>{'value'=>'ABCDE','datatype'=>'string'},
-          4=>{'value'=>'FGHIJ','datatype'=>'string'},
-          5=>{'value'=>'KLMNO','datatype'=>'string'},
-          8=>{'value'=>p.unique_identifier,'datatype'=>'string'},
-          13=>{'value'=>'CSMDEPT','datatype'=>'string'}
+        expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
+          0=>{'value'=>'seas', 'datatype'=>'string'},
+          2=>{'value'=>'140', 'datatype'=>'string'},
+          3=>{'value'=>'ABCDE', 'datatype'=>'string'},
+          4=>{'value'=>'FGHIJ', 'datatype'=>'string'},
+          5=>{'value'=>'KLMNO', 'datatype'=>'string'},
+          8=>{'value'=>p.unique_identifier, 'datatype'=>'string'},
+          13=>{'value'=>'CSMDEPT', 'datatype'=>'string'}
         )
         @h = described_class.new @cf, 1.day.from_now
         @h.process Factory(:user)

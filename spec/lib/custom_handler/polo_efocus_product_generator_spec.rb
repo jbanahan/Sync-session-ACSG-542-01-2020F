@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
 
   describe "ftp_credentials" do
     it "should send credentials" do
-      expect(subject.ftp_credentials).to eq({:username=>'VFITRACK',:password=>'RL2VFftp',:server=>'ftp2.vandegriftinc.com',:folder=>'to_ecs/Ralph_Lauren/efocus_products', :protocol=>"sftp"})
+      expect(subject.ftp_credentials).to eq({:username=>'VFITRACK', :password=>'RL2VFftp', :server=>'ftp2.vandegriftinc.com', :folder=>'to_ecs/Ralph_Lauren/efocus_products', :protocol=>"sftp"})
     end
   end
   describe "auto_confirm?" do
@@ -35,7 +35,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
 
     describe "clean fiber handling" do
       before :each do
-        @us = Factory(:country,:iso_code=>'US')
+        @us = Factory(:country, :iso_code=>'US')
         @classification = Factory(:classification, :country_id=>@us.id)
         @tariff_record = Factory(:tariff_record, :classification => @classification, :hts_1 => '12345')
         @match_product = @classification.product
@@ -81,7 +81,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
 
     describe "query" do
       before :each do
-        @us = Factory(:country,:iso_code=>'US')
+        @us = Factory(:country, :iso_code=>'US')
       end
       it "should use custom where clause" do
         c = described_class.new(:where=>'WHERE 1=2')
@@ -108,15 +108,15 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
           expect(r.first[6]).to eq @match_product.unique_identifier
         end
         it 'should not return multiple rows for multiple country classifications' do
-          other_country_class = Factory(:classification,:product=>@match_product)
+          other_country_class = Factory(:classification, :product=>@match_product)
           r = Product.connection.execute subject.query
           expect(r.count).to eq 1
           expect(r.first[6]).to eq @match_product.unique_identifier
         end
         it "should not return products that don't need sync" do
-          dont_find = Factory(:classification,:country_id=>@us.id).product
+          dont_find = Factory(:classification, :country_id=>@us.id).product
           dont_find.update_custom_value! @barthco_cust, '100'
-          dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE,:sent_at=>1.minute.ago,:confirmed_at=>1.second.ago)
+          dont_find.sync_records.create!(:trading_partner=>described_class::SYNC_CODE, :sent_at=>1.minute.ago, :confirmed_at=>1.second.ago)
           dont_find.update_attributes(:updated_at=>1.day.ago)
           r = Product.connection.execute subject.query
           expect(r.count).to eq 1
@@ -163,7 +163,7 @@ describe OpenChain::CustomHandler::PoloEfocusProductGenerator do
       it "runs repeatedly until all products are synced" do
         # New call creates the custom fields (easiest way to do this)
         described_class.new
-        us = Factory(:country,:iso_code=>'US')
+        us = Factory(:country, :iso_code=>'US')
         barthco_cust = CustomDefinition.where(label: "Barthco Customer ID").first
 
         product = Factory(:tariff_record, hts_1: "12345", classification: Factory(:classification, country_id: us.id)).product

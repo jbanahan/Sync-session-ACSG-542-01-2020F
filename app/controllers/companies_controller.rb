@@ -21,11 +21,11 @@ class CompaniesController < ApplicationController
     'c_identifier' => {field: "(SELECT code FROM system_identifiers WHERE company_id = companies.id ORDER BY created_at LIMIT 1)", label: "Company Identifier"},
     'c_identifier_type' => {field: "(SELECT system FROM system_identifiers WHERE company_id = companies.id ORDER BY created_at LIMIT 1)", label: "Company Identifier Type"}
   }
-  
+
   def root_class
     Company
   end
-  
+
   def index
     sp = SEARCH_PARAMS
     set_includes
@@ -41,7 +41,7 @@ class CompaniesController < ApplicationController
       sp = sp.clone
       sp['a_cust_c'] = {:field=>"(SELECT code FROM system_identifiers WHERE system = 'Cargowise' AND company_id = companies.id)", :label=>"Cargowise Customer Number"}
     end
-    s = build_search(sp,'c_name','c_name')
+    s = build_search(sp, 'c_name', 'c_name')
     respond_to do |format|
         format.html {
             @companies = s.paginate(:per_page => 20, :page => params[:page])
@@ -109,7 +109,7 @@ class CompaniesController < ApplicationController
     @company = Company.find(params[:id])
     unlocking = !params[:company][:locked].nil? && params[:company][:locked]=="0"
     action_secure(current_user.company.master, @company, {:lock_check => !unlocking, :module_name => "company"}) {
-      Lock.db_lock(@company) do 
+      Lock.db_lock(@company) do
         old_fiscal_ref = @company.fiscal_reference
         if @company.update_model_field_attributes(params[:company]) && update_identifiers(@company, params[:company])
           @company.create_snapshot(current_user)
@@ -130,9 +130,9 @@ class CompaniesController < ApplicationController
 
   def shipping_address_list
     c = Company.find(params[:id])
-    action_secure(c.can_view?(current_user),c,{:lock_check => false, :module_name => "company", :verb => "view addresses for"}) {
+    action_secure(c.can_view?(current_user), c, {:lock_check => false, :module_name => "company", :verb => "view addresses for"}) {
       respond_to do |format|
-        format.json { render :json => c.addresses.where(:shipping => true).to_json(:only => [:id,:name])}
+        format.json { render :json => c.addresses.where(:shipping => true).to_json(:only => [:id, :name])}
       end
     }
   end
@@ -166,7 +166,7 @@ class CompaniesController < ApplicationController
     render :json=>Company.attachment_archive_enabled.by_name.to_json(:include=>{:attachment_archive_setup=>{:methods=>:entry_attachments_available_count}})
   end
 
-  #send the generic fixed position file to Alliance for this importer
+  # send the generic fixed position file to Alliance for this importer
   def push_alliance_products
     raise ActionController::RoutingError.new('Not Found') unless MasterSetup.get.custom_feature?("Kewill Product Push")
 

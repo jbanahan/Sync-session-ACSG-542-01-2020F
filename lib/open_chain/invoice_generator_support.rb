@@ -3,10 +3,10 @@ require 'open_chain/report/report_helper'
 module OpenChain; module InvoiceGeneratorSupport
   extend ActiveSupport::Concern
   include OpenChain::Report::ReportHelper
- 
+
   def email_invoice invoice, addresses, subject, filename, detail_tempfile=nil
     invoice_tmp = create_xl_invoice invoice, filename
-    OpenMailer.send_simple_html(addresses, subject, "Attached is the #{subject}", [invoice_tmp, detail_tempfile].compact).deliver_now  
+    OpenMailer.send_simple_html(addresses, subject, "Attached is the #{subject}", [invoice_tmp, detail_tempfile].compact).deliver_now
     invoice_tmp.close
     detail_tempfile.close if detail_tempfile
   end
@@ -22,7 +22,7 @@ module OpenChain; module InvoiceGeneratorSupport
     wb, sheet = XlsMaker.create_workbook_and_sheet "invoice"
     create_header sheet, invoice
     create_lines sheet, invoice
-    XlsMaker.set_column_widths sheet, [20,40,20,20,20,20]
+    XlsMaker.set_column_widths sheet, [20, 40, 20, 20, 20, 20]
     wb
   end
 
@@ -64,6 +64,4 @@ module OpenChain; module InvoiceGeneratorSupport
                  vi_line_unit_price: ModelField.find_by_uid(:vi_line_unit_price),
                  vi_line_charge_amount: ModelField.find_by_uid(:vi_line_charge_amount) }
   end
-  
- 
 end; end

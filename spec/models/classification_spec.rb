@@ -22,12 +22,12 @@ describe Classification do
     end
     it 'should return the match when there is one' do
       c = Factory(:classification)
-      new_one = Classification.new(:product_id=>c.product_id,:country_id=>c.country_id)
+      new_one = Classification.new(:product_id=>c.product_id, :country_id=>c.country_id)
       expect(new_one.find_same).to eq(c)
     end
     it 'should ignore instant_classification children for matching purposes' do
-      c = Factory(:classification,:instant_classification_id=>1)
-      new_one = Classification.new(:product_id=>c.product_id,:country_id=>c.country_id)
+      c = Factory(:classification, :instant_classification_id=>1)
+      new_one = Classification.new(:product_id=>c.product_id, :country_id=>c.country_id)
       expect(new_one.find_same).to be_nil
     end
   end

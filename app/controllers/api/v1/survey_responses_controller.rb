@@ -33,7 +33,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
     sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
       sr.checkout current_user, params[:checkout_token]
       sr.save!
-      sr.survey_response_logs.create!(:message=>"Checked out.",:user_id=>current_user.id)
+      sr.survey_response_logs.create!(:message=>"Checked out.", :user_id=>current_user.id)
     end
 
     render json: json_survey_response(sr, current_user) if sr
@@ -43,14 +43,14 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
     sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
       sr.clear_checkout
       sr.save!
-      sr.survey_response_logs.create!(:message=>"Check out cancelled.",:user_id=>current_user.id)
+      sr.survey_response_logs.create!(:message=>"Check out cancelled.", :user_id=>current_user.id)
     end
 
     render json: json_survey_response(sr, current_user) if sr
   end
 
   def checkin
-    #TODO Figure out how to handle attachments
+    # TODO Figure out how to handle attachments
     req = params[:survey_response]
 
     sr = checkout_handling(req.try(:[], 'id'), req.try(:[], 'checkout_token'), true) do |sr|
@@ -80,28 +80,28 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       sr.clear_checkout
       sr.save!
       sr.corrective_action_plan.save! if save_cap
-      sr.survey_response_logs.create!(:message=>"Checked in.",:user_id=>current_user.id)
+      sr.survey_response_logs.create!(:message=>"Checked in.", :user_id=>current_user.id)
       sr.log_update current_user
       if save_cap
         sr.corrective_action_plan.save!
       end
-      
+
     end
-    
+
     render json: json_survey_response(sr, current_user) if sr
   end
 
   def submit
     sr = find_survey_response params[:id], current_user
 
-    # Only survey takers (.ie can_view?) can submit, raters (can_edit?) 
+    # Only survey takers (.ie can_view?) can submit, raters (can_edit?)
     # cannot submit
     if !sr.can_view?(current_user)
       render_forbidden "Survey is archived."
       return
     end
 
-    Lock.with_lock_retry(sr) do 
+    Lock.with_lock_retry(sr) do
       if submit_survey_response(sr, current_user)
         sr.save!
       else
@@ -174,7 +174,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       raise StatusableError.new("Attempted to update an answer that does not exist.", :internal_server_error) unless answer
 
       answer.choice = json[:choice]
-      
+
       comments = json[:answer_comments]
       # Only bother adding comments that do not have ids..you can't update existing comments.
       if comments && comments.respond_to?(:each)

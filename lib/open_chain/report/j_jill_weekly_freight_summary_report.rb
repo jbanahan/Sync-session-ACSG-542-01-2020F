@@ -26,7 +26,7 @@ module OpenChain; module Report; class JJillWeeklyFreightSummaryReport
     start_date = Time.zone.now.in_time_zone("GMT").to_date - 1.year
 
     sheet_setup = sheet_setups
-    sheet_setup.each {|k,v| sheet_from_query wb, k, v}
+    sheet_setup.each {|k, v| sheet_from_query wb, k, v}
     workbook_to_tempfile wb, 'JJillWeeklyFreightSummary-'
   end
 
@@ -109,12 +109,12 @@ QRY
       FROM (
         SELECT
           orders.customer_order_number AS 'PO',
-          GROUP_CONCAT(DISTINCT (select string_value 
-                                from custom_values 
-                                where custom_definition_id = (select id 
-                                                              from custom_definitions 
-                                                              where label = 'Vendor Style' 
-                                                                and module_type = 'Product') 
+          GROUP_CONCAT(DISTINCT (select string_value
+                                from custom_values
+                                where custom_definition_id = (select id
+                                                              from custom_definitions
+                                                              where label = 'Vendor Style'
+                                                                and module_type = 'Product')
                                                                 and customizable_id = order_lines.product_id) SEPARATOR ', ') as 'Vendor Style',
           (SELECT name FROM companies WHERE companies.id = orders.agent_id) as 'Agent',
           (SELECT name FROM companies WHERE companies.id = orders.vendor_id) as 'Vendor',
@@ -206,8 +206,8 @@ QRY
   (shipments.cargo_on_hand_date IS NOT NULL)
   AND
   (shipments.canceled_date IS NULL)
-  AND 
-  (shipments.departure_date IS NOT NULL) 
+  AND
+  (shipments.departure_date IS NOT NULL)
   GROUP BY shipments.id, orders.id, order_lines.price_per_unit
 QRY
     q

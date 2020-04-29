@@ -32,13 +32,13 @@ class Attachment < ActiveRecord::Base
   # There are a few corner cases where a virus scan is not required and would be detrimental to run due to large file sizes
   # The AttachmentAntiVirusValidator looks for this attribute and will skip if it's set to true
   attr_accessor :skip_virus_scan
-  
+
   attr_accessible :alliance_revision, :alliance_suffix, :attachable_id,
-    :attachable, :attachable_type, :attached_content_type, :attached_file_name, 
-    :attached_file_size, :attached_updated_at, :attachment_type, :checksum, 
-    :is_private, :source_system_timestamp, :uploaded_by_id, :uploaded_by, 
+    :attachable, :attachable_type, :attached_content_type, :attached_file_name,
+    :attached_file_size, :attached_updated_at, :attachment_type, :checksum,
+    :is_private, :source_system_timestamp, :uploaded_by_id, :uploaded_by,
     :attached, :updated_at
-  
+
   has_attached_file :attached, :path => ":master_setup_uuid/attachment/:id/:filename"
   # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
   # at all, so this disables that validation.
@@ -47,21 +47,21 @@ class Attachment < ActiveRecord::Base
   before_post_process :no_post
 
   # Needs to get prepended so it runs before the callbacks that has_attached_file (Paperclip) adds
-  before_destroy :record_filename, prepend: true 
-  
+  before_destroy :record_filename, prepend: true
+
   belongs_to :uploaded_by, :class_name => "User"
   belongs_to :attachable, polymorphic: true, touch: true
 
   has_many :attachment_archives_attachments, :dependent=>:destroy
   has_many :attachment_archives, :through=>:attachment_archives_attachments
   has_many :attachment_process_jobs
-  
+
   ARCHIVE_PACKET_ATTACHMENT_TYPE ||= "Archive Packet".freeze
 
   def web_preview?
     return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
   end
-  
+
   def secure_url(expires_in=90.seconds, s3_url_opts = {})
     OpenChain::S3.url_for bucket, attached.path, expires_in, s3_url_opts
   end
@@ -97,7 +97,7 @@ class Attachment < ActiveRecord::Base
     view
   end
 
-  #unique name suitable for putting on archive disks
+  # unique name suitable for putting on archive disks
   def unique_file_name
     # Prepend the Document Type (if it exists)
     name = "#{self.id}-#{self.attached_file_name}"
@@ -111,7 +111,7 @@ class Attachment < ActiveRecord::Base
     ActionController::Base.helpers.number_to_human_size(self.attached_file_size)
   end
 
-  def self.email_attachments params #hash
+  def self.email_attachments params # hash
     to_address = params[:to_address]
     email_subject = params[:email_subject]
     email_body = params[:email_body]
@@ -168,7 +168,7 @@ end
 
   # create a hash suitable for json rendering containing all attachments for the given attachable
   def self.attachments_as_json attachable
-    r = {attachable:{id:attachable.id,type:attachable.class.to_s},attachments:[]}
+    r = {attachable:{id:attachable.id, type:attachable.class.to_s}, attachments:[]}
     ra = r[:attachments]
     attachable.attachments.each do |att|
       ra << attachment_json(att)
@@ -179,14 +179,14 @@ end
   def self.attachment_json att
     json = {
       id: att.id,
-      name: att.attached_file_name, 
+      name: att.attached_file_name,
       size: att.attachment_file_size_human,
       type: att.attachment_type
     }
     if att.uploaded_by
       json[:user] = {
-        id: att.uploaded_by.id, 
-        username: att.uploaded_by.username, 
+        id: att.uploaded_by.id,
+        username: att.uploaded_by.username,
         full_name: att.uploaded_by.full_name
       }
     end
@@ -230,7 +230,7 @@ end
     end
 
     # Filenames (NTFS and Linux) can generally only be 255 chars (which is actually how long the DB column is too)
-    #...so if the filename is longer than that, then start trimming characters from the name (being careful to not trim from 
+    # ...so if the filename is longer than that, then start trimming characters from the name (being careful to not trim from
     # the actual file extension)
     if filename.length > max_filename_length
       file = File.basename(filename, ".*")
@@ -278,7 +278,7 @@ end
   end
 
   def stitchable_attachment?
-    # The stitching process supports any image format that ImageMagick can convert to a pdf (which is apparently a ton of formats), 
+    # The stitching process supports any image format that ImageMagick can convert to a pdf (which is apparently a ton of formats),
     # for now, we'll just support stitching the major image formats.
     filename = self.attached_file_name
     if filename.blank? && defined?(@destroyed_filename)

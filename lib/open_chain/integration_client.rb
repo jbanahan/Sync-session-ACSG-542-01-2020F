@@ -149,7 +149,7 @@ module OpenChain
       when 'shutdown'
         return {'response_type' => 'shutdown', 'message' => "Shutting Down"}
       else
-        return {'response_type'=>'error','message'=>"Unknown command: #{command}"}
+        return {'response_type'=>'error', 'message'=>"Unknown command: #{command}"}
       end
     end
 
@@ -269,7 +269,7 @@ module OpenChain
       elsif (parser_identifier == "eddie_po") && custom_features.include?("Eddie Bauer Feeds")
         OpenChain::CustomHandler::EddieBauer::EddieBauerPoParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "eb_ftz_ack") && custom_features.include?("Eddie Bauer Feeds")
-        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, {username:'eddie_ftz_notification',sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE,csv_opts:{col_sep:'|'},module_type:'Entry'}
+        OpenChain::CustomHandler::AckFileHandler.delay.process_from_s3 bucket, s3_path, {username:'eddie_ftz_notification', sync_code: OpenChain::CustomHandler::EddieBauer::EddieBauerFtzAsnGenerator::SYNC_CODE, csv_opts:{col_sep:'|'}, module_type:'Entry'}
       elsif (parser_identifier == "eddie_invoice") && custom_features.include?("Eddie Bauer Feeds")
         OpenChain::CustomHandler::EddieBauer::EddieBauerCommercialInvoiceParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "lenox_product") && custom_features.include?('Lenox')
@@ -361,7 +361,7 @@ module OpenChain
         end
       end
 
-      return {'response_type'=>response_type,(response_type=='error' ? 'message' : 'status')=>status_msg}
+      return {'response_type'=>response_type, (response_type=='error' ? 'message' : 'status')=>status_msg}
     rescue => e
       error_message = {'response_type'=>"error", "message" => e.message}
 

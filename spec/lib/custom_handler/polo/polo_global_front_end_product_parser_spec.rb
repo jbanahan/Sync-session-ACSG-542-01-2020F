@@ -1,18 +1,18 @@
 describe OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser do
 
-  before :all do 
+  before :all do
     described_class.new.cdefs
   end
 
-  after :all do 
+  after :all do
     CustomDefinition.destroy_all
   end
 
   describe "parse_line" do
-    let (:row) { 
+    let (:row) {
       [
-        "200002644189", "200", "002644", "999", "B9990X004", "LAUREN RALPH LAUREN", "W LRL APP MISSY RTW", 
-        "WOMENS", "BOTTOMS", "DENIM", "NO SUBCLASS", 'CLS BOOT 29"', 'CLS BOOT 29"', 'CLASSIC BOOTCUT (LYN) 29"', 
+        "200002644189", "200", "002644", "999", "B9990X004", "LAUREN RALPH LAUREN", "W LRL APP MISSY RTW",
+        "WOMENS", "BOTTOMS", "DENIM", "NO SUBCLASS", 'CLS BOOT 29"', 'CLS BOOT 29"', 'CLASSIC BOOTCUT (LYN) 29"',
         "STR WSTPT DNM", "HEEL", "INACTIVE", "NOT EXPORTED"
       ]
     }
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser do
     end
 
     it "does not save or snapshot if product is unchanged, but sets flag" do
-      p = Product.create! unique_identifier: "200002644189"      
+      p = Product.create! unique_identifier: "200002644189"
       p.update_custom_value! cdefs[:digit_style_6], "002644"
       p.update_custom_value! cdefs[:season], "999"
       p.update_custom_value! cdefs[:msl_board_number], "B9990X004"
@@ -107,7 +107,7 @@ describe OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser do
       FieldValidatorRule.new module_type: "Product", one_of: "Active\nInactive", model_field_uid: cdefs[:material_status].model_field_uid
     }
 
-    before :each do 
+    before :each do
       expect(subject).to receive(:field_validator_rule).with(:material_status).and_return rule
     end
 
@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::Polo::PoloGlobalFrontEndProductParser do
       FieldValidatorRule.new module_type: "Product", one_of: "Exported\nSubmitted\nNot Exported", model_field_uid: cdefs[:ax_export_status].model_field_uid
     }
 
-    before :each do 
+    before :each do
       expect(subject).to receive(:field_validator_rule).with(:ax_export_status).and_return rule
     end
 

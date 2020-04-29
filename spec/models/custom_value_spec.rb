@@ -1,11 +1,11 @@
 describe CustomValue do
   describe "batch_write!" do
     before :each do
-      @cd = Factory(:custom_definition,:module_type=>"Product",:data_type=>"string")
+      @cd = Factory(:custom_definition, :module_type=>"Product", :data_type=>"string")
       @p = Factory(:product)
     end
     it "should insert a new custom value" do
-      cv = CustomValue.new(:custom_definition=>@cd,:customizable=>@p)
+      cv = CustomValue.new(:custom_definition=>@cd, :customizable=>@p)
       cv.value = "abc"
       CustomValue.batch_write! [cv]
       found = @p.get_custom_value @cd
@@ -22,7 +22,7 @@ describe CustomValue do
       expect(found.value).to eq("abc")
     end
     it "should fail if parent object is not saved" do
-      expect {CustomValue.batch_write! [CustomValue.new(:custom_definition=>@cd,:customizable=>Product.new)]}.to raise_error(/customizable/)
+      expect {CustomValue.batch_write! [CustomValue.new(:custom_definition=>@cd, :customizable=>Product.new)]}.to raise_error(/customizable/)
     end
     it "should fail if custom definition not set" do
       expect {CustomValue.batch_write! [CustomValue.new(:customizable=>@p)]}.to raise_error(/custom_definition/)
@@ -32,18 +32,18 @@ describe CustomValue do
       cv = CustomValue.find_by(custom_definition: @cd.id)
       cv.value = 'abc'
       bad_cv = CustomValue.new(:customizable=>@p)
-      expect {CustomValue.batch_write! [cv,bad_cv]}.to raise_error(/custom_definition/)
+      expect {CustomValue.batch_write! [cv, bad_cv]}.to raise_error(/custom_definition/)
       expect(CustomValue.all.size).to eq(1)
       expect(CustomValue.first.value).to eq('xyz')
     end
     it "should insert and update values" do
-      cd2 = Factory(:custom_definition,:module_type=>"Product",:data_type=>"integer")
+      cd2 = Factory(:custom_definition, :module_type=>"Product", :data_type=>"integer")
       @p.update_custom_value! @cd, "xyz"
       cv = CustomValue.find_by(custom_definition: @cd)
       cv.value = 'abc'
-      cv2 = CustomValue.new(:customizable=>@p,:custom_definition=>cd2)
+      cv2 = CustomValue.new(:customizable=>@p, :custom_definition=>cd2)
       cv2.value = 2
-      CustomValue.batch_write! [cv,cv2]
+      CustomValue.batch_write! [cv, cv2]
       @p.reload
       expect(@p.get_custom_value(@cd).value).to eq("abc")
       expect(@p.get_custom_value(cd2).value).to eq(2)
@@ -52,7 +52,7 @@ describe CustomValue do
       ActiveRecord::Base.connection.execute "UPDATE products SET changed_at = \"2004-01-01\";"
       @p.reload
       expect(@p.changed_at).to be < 5.seconds.ago
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = 'abc'
       CustomValue.batch_write! [cv], true
       @p.reload
@@ -108,42 +108,42 @@ describe CustomValue do
       expect(@p.changed_at).to eq yesterday
     end
     it "should sanitize parameters" do
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = ';" ABC'
       CustomValue.batch_write! [cv], true
       expect(CustomValue.first.value).to eq(";\" ABC")
     end
     it "should handle string" do
       @cd.update_attributes(:data_type=>'string')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = 'abc'
       CustomValue.batch_write! [cv], true
       expect(@p.get_custom_value(@cd).value).to eq('abc')
     end
     it "should handle date" do
       @cd.update_attributes(:data_type=>'date')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
-      cv.value = Date.new(2012,4,21)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
+      cv.value = Date.new(2012, 4, 21)
       CustomValue.batch_write! [cv], true
-      expect(@p.get_custom_value(@cd).value).to eq(Date.new(2012,4,21))
+      expect(@p.get_custom_value(@cd).value).to eq(Date.new(2012, 4, 21))
     end
     it "should handle decimal" do
       @cd.update_attributes(:data_type=>'decimal')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = 12.1
       CustomValue.batch_write! [cv], true
       expect(@p.get_custom_value(@cd).value).to eq(12.1)
     end
     it "should handle integer" do
       @cd.update_attributes(:data_type=>'integer')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = 12.1
       CustomValue.batch_write! [cv], true
       expect(@p.get_custom_value(@cd).value).to eq(12)
     end
     it "should handle boolean" do
       @cd.update_attributes(:data_type=>'boolean')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = true
       CustomValue.batch_write! [cv], true
       @p = Product.find @p.id
@@ -159,16 +159,16 @@ describe CustomValue do
     end
     it "should handle text" do
       @cd.update_attributes(:data_type=>'text')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = 'aaaa'
       CustomValue.batch_write! [cv], true
       expect(@p.get_custom_value(@cd).value).to eq('aaaa')
     end
-    
+
     it "should handle datetime" do
       t = Time.zone.now
       @cd.update_attributes(data_type:'datetime')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = t
       CustomValue.batch_write! [cv], true
       expect(@p.custom_value(@cd).to_i).to eq t.to_i
@@ -176,7 +176,7 @@ describe CustomValue do
 
     it "should skip nil values" do
       @cd.update_attributes(:data_type=>'text')
-      cv = CustomValue.new(:customizable=>@p,:custom_definition=>@cd)
+      cv = CustomValue.new(:customizable=>@p, :custom_definition=>@cd)
       cv.value = nil
       CustomValue.batch_write! [cv], false
       expect(@p.get_custom_value(@cd).value).to be_nil
@@ -185,7 +185,7 @@ describe CustomValue do
 
   describe "sql_field_name" do
     it "should handle data types" do
-      {"string"=>"string_value","boolean"=>"boolean_value","text"=>"text_value","date"=>"date_value","decimal"=>"decimal_value","integer"=>"integer_value","datetime"=>"datetime_value"}.each do |k,v|
+      {"string"=>"string_value", "boolean"=>"boolean_value", "text"=>"text_value", "date"=>"date_value", "decimal"=>"decimal_value", "integer"=>"integer_value", "datetime"=>"datetime_value"}.each do |k, v|
         expect(CustomValue.new(:custom_definition=>CustomDefinition.new(:data_type=>k)).sql_field_name).to eq(v)
       end
     end
@@ -201,8 +201,8 @@ describe CustomValue do
       CustomValue.new customizable: object, custom_definition: cd
     }
     context "with boolean value" do
-      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"boolean") }
-      
+      let (:cd) { Factory(:custom_definition, :module_type=>"Product", :data_type=>"boolean") }
+
       [true, "true", "1", 1].each do |val|
         it "handles #{val} value as true" do
           subject.value = val
@@ -245,7 +245,7 @@ describe CustomValue do
     end
 
     context "with text values" do
-      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"text") }
+      let (:cd) { Factory(:custom_definition, :module_type=>"Product", :data_type=>"text") }
 
       it "saves text value" do
         subject.value = "Test"
@@ -257,7 +257,7 @@ describe CustomValue do
     end
 
     context "with string values" do
-      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"string") }
+      let (:cd) { Factory(:custom_definition, :module_type=>"Product", :data_type=>"string") }
 
       it "saves string value" do
         subject.value = "Test"
@@ -269,7 +269,7 @@ describe CustomValue do
     end
 
     context "with date values" do
-      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"date") }
+      let (:cd) { Factory(:custom_definition, :module_type=>"Product", :data_type=>"date") }
 
       it "saves date value" do
         d = Date.new(2019, 1, 1)
@@ -280,7 +280,7 @@ describe CustomValue do
         expect(subject.date_value).to eq d
       end
 
-      it "saves string date value" do 
+      it "saves string date value" do
         d = Date.new(2019, 12, 1)
         subject.value = "12/01/2019"
         expect(subject.date_value).to eq d
@@ -289,7 +289,7 @@ describe CustomValue do
         expect(subject.date_value).to eq d
       end
 
-      it "saves string date value with hyphens" do 
+      it "saves string date value with hyphens" do
         d = Date.new(2019, 12, 1)
         subject.value = "12-01-2019"
         expect(subject.date_value).to eq d
@@ -309,7 +309,7 @@ describe CustomValue do
     end
 
     context "with datetime values" do
-      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"datetime") }
+      let (:cd) { Factory(:custom_definition, :module_type=>"Product", :data_type=>"datetime") }
 
       it "saves datetime value" do
         d = Time.zone.parse("2019-01-12T12:00:00 -0500")
@@ -339,7 +339,7 @@ describe CustomValue do
     end
 
     context "with integer values" do
-      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"integer") }
+      let (:cd) { Factory(:custom_definition, :module_type=>"Product", :data_type=>"integer") }
 
       it "handles integer value" do
         subject.value = 1
@@ -375,7 +375,7 @@ describe CustomValue do
     end
 
     context "with decimal values" do
-      let (:cd) { Factory(:custom_definition,:module_type=>"Product",:data_type=>"decimal") }
+      let (:cd) { Factory(:custom_definition, :module_type=>"Product", :data_type=>"decimal") }
 
       it "handles decimal value" do
         # See how value is rounded too by passing a value that should be rounded

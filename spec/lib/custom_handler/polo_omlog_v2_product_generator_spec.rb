@@ -10,14 +10,14 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
 
   describe "ftp_credentials" do
     it "uses the correct credentials" do
-      expect(subject.ftp_credentials).to eq({:server=>'ftp.omlogasia.com',:username=>'ftp06user21',:password=>'kXynC3jm',:folder=>'chain'})
+      expect(subject.ftp_credentials).to eq({:server=>'ftp.omlogasia.com', :username=>'ftp06user21', :password=>'kXynC3jm', :folder=>'chain'})
     end
   end
 
   let (:csm_def) { CustomDefinition.where(label: "CSM Number", module_type: "Product").first }
-  let (:italy) { Factory(:country,:iso_code=>'IT') }
+  let (:italy) { Factory(:country, :iso_code=>'IT') }
   let (:product) {
-    tr = Factory(:tariff_record,:hts_1=>'1234567890', :hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>Factory(:classification,:country=>italy))
+    tr = Factory(:tariff_record, :hts_1=>'1234567890', :hts_2=>'2222222222', :hts_3=>'3333333333', :classification=>Factory(:classification, :country=>italy))
     prod = tr.classification.product
     prod.update_custom_value! csm_def, 'CSMVAL'
     prod
@@ -129,7 +129,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
       expect(r.count).to eq 1
     end
     it "should not find product already synced" do
-      product.sync_records.create!(:trading_partner=>subject.sync_code,:sent_at=>10.minutes.ago,:confirmed_at=>5.minutes.ago)
+      product.sync_records.create!(:trading_partner=>subject.sync_code, :sent_at=>10.minutes.ago, :confirmed_at=>5.minutes.ago)
       product.update_attributes(:updated_at=>1.day.ago)
       r = Product.connection.execute subject.query
       expect(r.count).to eq(0)
@@ -137,7 +137,7 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
 
     it "should utilize max results" do
       # Create a second product and confirm only a single result was returned.
-      tr = Factory(:tariff_record, hts_1: '1234567890',classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
+      tr = Factory(:tariff_record, hts_1: '1234567890', classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
 
       r = Product.connection.execute(described_class.new(max_results: 1).query)
       expect(r.count).to eq(1)
@@ -158,9 +158,9 @@ describe OpenChain::CustomHandler::PoloOmlogV2ProductGenerator do
     end
 
     it "generates a file using the max_results param" do
-      # Create a second product to validate the job is running only 2 times when working down the 
+      # Create a second product to validate the job is running only 2 times when working down the
       # max result list
-      tr = Factory(:tariff_record, hts_1: '1234567890',classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
+      tr = Factory(:tariff_record, hts_1: '1234567890', classification: Factory(:classification, country: italy, product: Factory(:product, unique_identifier: "prod2")))
 
       expect_any_instance_of(described_class).to receive(:ftp_file).exactly(2).times do |instance, file|
         file.close! unless file.nil? || file.closed?

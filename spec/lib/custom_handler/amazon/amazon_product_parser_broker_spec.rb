@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Amazon::AmazonProductParserBroker do
 
   subject { described_class }
-  let! (:inbound_file) { 
+  let! (:inbound_file) {
     f = InboundFile.new
     allow(subject).to receive(:inbound_file).and_return f
     f

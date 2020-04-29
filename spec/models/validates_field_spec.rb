@@ -1,5 +1,5 @@
 describe ValidatesField do
-  
+
   class Rule < BusinessValidationRule
     include ValidatesField
     attr_reader :rule_attributes
@@ -21,7 +21,7 @@ describe ValidatesField do
       order_line.price_per_unit = nil
       expect(rule.validate_field(order_line, &block)).to be_nil
     end
-  
+
     context "failure" do
 
       context "without fail_if_matches" do
@@ -32,7 +32,7 @@ describe ValidatesField do
         it "returns form message if yield_failures not enabled" do
           expect(rule.validate_field(order_line, {yield_failures: false})).to eq "Order Line - Price / Unit greater than '5' is required but was '4.0'."
         end
-      
+
         it "returns form message if block missing" do
           expect(rule.validate_field(order_line, yield_failures: true)).to eq "Order Line - Price / Unit greater than '5' is required but was '4.0'."
         end
@@ -41,7 +41,7 @@ describe ValidatesField do
       context "with fail_if_matches" do
         let(:rule) { Rule.new('operator' => 'gt', 'value' => 3, 'model_field_uid' => 'ordln_ppu', 'fail_if_matches' => true) }
         let(:block) { Proc.new {|mf, tested_val, op_label, value, fail_if_matches| "At least one #{mf.label} is #{op_label} #{value}."} }
-        
+
         it "returns result of block if yield_failures enabled" do
           expect(rule.validate_field(order_line, {yield_failures: true}, &block)).to eq "At least one Order Line - Price / Unit is greater than 3."
         end
@@ -49,11 +49,11 @@ describe ValidatesField do
         it "returns form message if yield_failures not enabled" do
           expect(rule.validate_field(order_line, {yield_failures: false}, &block)).to eq "Order Line - Price / Unit greater than '3' is not permitted."
         end
-        
+
         it "returns form message if block missing" do
           expect(rule.validate_field(order_line, yield_failures: true)).to eq "Order Line - Price / Unit greater than '3' is not permitted."
         end
-      end  
+      end
     end
 
     context "success" do
@@ -64,7 +64,7 @@ describe ValidatesField do
         end
 
         it "executes block if yield_matches enabled" do
-          expect{ |block| rule.validate_field(order_line, {yield_matches: true}, &block) }.to yield_with_args(instance_of(ModelField), 6, 'greater than', 5, nil)
+          expect { |block| rule.validate_field(order_line, {yield_matches: true}, &block) }.to yield_with_args(instance_of(ModelField), 6, 'greater than', 5, nil)
         end
 
         it "returns nil if yield_matches enabled" do
@@ -78,9 +78,9 @@ describe ValidatesField do
         end
 
         let (:block) { Proc.new {|mf, tested_val, op_label, value, fail_if_matches| "Found at least one #{mf.label} #{op_label} #{value}."} }
-        
+
         it "executes block if yield_matches enabled" do
-          expect{ |block| rule.validate_field(order_line, {yield_matches: true}, &block) }.to yield_with_args(instance_of(ModelField), 4, 'greater than', 5, true)
+          expect { |block| rule.validate_field(order_line, {yield_matches: true}, &block) }.to yield_with_args(instance_of(ModelField), 4, 'greater than', 5, true)
         end
 
         it "returns nil if yield_matches enabled" do

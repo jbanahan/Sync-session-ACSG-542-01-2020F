@@ -1,5 +1,4 @@
 describe OpenChain::UrlSupport do
-  
   class TestClass
     include OpenChain::UrlSupport
   end
@@ -17,12 +16,12 @@ describe OpenChain::UrlSupport do
     end
 
     it "raises exception if both object and klass args are missing" do
-      expect{ test_class.show_url }.to raise_exception "Must be called with either an object, or a class and an id."
+      expect { test_class.show_url }.to raise_exception "Must be called with either an object, or a class and an id."
     end
 
     it "raises exception if either klass or id are missing" do
-      expect{ test_class.show_url klass: Entry }.to raise_exception "Must be called with either an object, or a class and an id."
-      expect{ test_class.show_url id: ent.id  }.to raise_exception "Must be called with either an object, or a class and an id."
+      expect { test_class.show_url klass: Entry }.to raise_exception "Must be called with either an object, or a class and an id."
+      expect { test_class.show_url id: ent.id  }.to raise_exception "Must be called with either an object, or a class and an id."
     end
   end
 
@@ -36,12 +35,12 @@ describe OpenChain::UrlSupport do
     end
 
     it "raises exception if both object and klass args are missing" do
-      expect{ test_class.validation_results_url }.to raise_exception "Must be called with either an object, or a class and an id."
+      expect { test_class.validation_results_url }.to raise_exception "Must be called with either an object, or a class and an id."
     end
 
     it "raises exception if either klass or id are missing" do
-      expect{ test_class.validation_results_url klass: Entry }.to raise_exception "Must be called with either an object, or a class and an id."
-      expect{ test_class.validation_results_url id: ent.id }.to raise_exception "Must be called with either an object, or a class and an id."
+      expect { test_class.validation_results_url klass: Entry }.to raise_exception "Must be called with either an object, or a class and an id."
+      expect { test_class.validation_results_url id: ent.id }.to raise_exception "Must be called with either an object, or a class and an id."
     end
 
     it "returns blank if object type doesn't have a business-rule URL" do

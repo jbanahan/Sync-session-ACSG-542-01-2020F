@@ -1,8 +1,8 @@
 describe Api::V1::TradePreferenceProgramsController do
   let :prep_countries do
-    us = Factory(:country,iso_code:'US')
-    ca = Factory(:country,iso_code:'CA')
-    [us,ca]
+    us = Factory(:country, iso_code:'US')
+    ca = Factory(:country, iso_code:'CA')
+    [us, ca]
   end
   before :each do
     @u = Factory(:user)
@@ -17,8 +17,8 @@ describe Api::V1::TradePreferenceProgramsController do
   describe '#index' do
     it 'should find tpps' do
       us, ca = prep_countries
-      Factory(:trade_preference_program,origin_country:us,destination_country:ca)
-      Factory(:trade_preference_program,origin_country:ca,destination_country:us)
+      Factory(:trade_preference_program, origin_country:us, destination_country:ca)
+      Factory(:trade_preference_program, origin_country:ca, destination_country:us)
 
       get :index
 
@@ -70,7 +70,7 @@ describe Api::V1::TradePreferenceProgramsController do
     it 'should create tpp' do
       us, ca = prep_countries
 
-      expect{post :create, make_hash}.to change(TradePreferenceProgram,:count).from(0).to(1)
+      expect {post :create, make_hash}.to change(TradePreferenceProgram, :count).from(0).to(1)
 
       expect(response).to be_success
 
@@ -84,7 +84,7 @@ describe Api::V1::TradePreferenceProgramsController do
 
       prep_countries
 
-      expect{post :create, make_hash}.to_not change(TradePreferenceProgram,:count)
+      expect {post :create, make_hash}.to_not change(TradePreferenceProgram, :count)
 
       expect(response).to_not be_success
     end
@@ -104,7 +104,7 @@ describe Api::V1::TradePreferenceProgramsController do
           'tpp_destination_cntry_iso'=>'us'
         }
       }
-      [tpp,h]
+      [tpp, h]
     end
     it 'should update tpp' do
       tpp, hash = data_prep

@@ -10,7 +10,7 @@ module OpenChain
           exp_d = r[3].split('/')
           exp_d[2] = "20#{exp_d[2]}" if(exp_d[2].length==2)
           d = DutyCalcExportFileLine.new
-          d.export_date = Date.new(exp_d[2].to_i,exp_d[0].to_i,exp_d[1].to_i)
+          d.export_date = Date.new(exp_d[2].to_i, exp_d[0].to_i, exp_d[1].to_i)
           d.ship_date = d.export_date
           d.importer = importer
           d.part_number = "#{r[11]}-#{r[13]}"

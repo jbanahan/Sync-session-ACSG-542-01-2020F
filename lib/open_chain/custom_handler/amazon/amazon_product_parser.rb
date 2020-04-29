@@ -69,7 +69,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
 
     classification_updated, classification = set_classification_data(product, first_line)
     tariff_updated = set_tariff_data(classification, lines)
-    
+
     manufacturer_updated = set_manufacturer_data(product, first_line)
 
     product.changed? || changed.value || classification_updated || tariff_updated || manufacturer_updated
@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
 
     tariff_changed = false
     hts_numbers.each_with_index do |hts_number, index|
-      t = classification.tariff_records.find {|t| t.line_number == (index + 1) }  
+      t = classification.tariff_records.find {|t| t.line_number == (index + 1) }
       if t.nil?
         t = classification.tariff_records.build line_number: (index + 1)
       end
@@ -116,9 +116,9 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
         tariff_changed = true
       end
     end
-    
+
     classification.tariff_records.each do |t|
-      if t.line_number > hts_numbers.length 
+      if t.line_number > hts_numbers.length
         t.destroy
         tariff_changed = true
       end
@@ -143,7 +143,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
     text(row[1])
   end
 
-  def cdefs 
+  def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:prod_part_number, :prod_importer_style, :prod_country_of_origin, :prod_add_case, :prod_add_case_2, :prod_cvd_case, :prod_cvd_case_2, :class_binding_ruling_number, :class_classification_notes]
   end
 
@@ -180,7 +180,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
         manufacturer.save!
         changed = true
       end
-      
+
     end
 
     changed

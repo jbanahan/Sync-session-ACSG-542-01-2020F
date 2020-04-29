@@ -28,7 +28,7 @@ describe SearchTableConfigsController do
     it "renders for sys-admin user" do
       get :new
       expect(assigns(:config)).to be_instance_of SearchTableConfig
-      expect(assigns(:companies)).to eq [co_3, co_2, co_1] 
+      expect(assigns(:companies)).to eq [co_3, co_2, co_1]
       expect(response).to render_template :new_edit
     end
 
@@ -50,7 +50,7 @@ describe SearchTableConfigsController do
     it "renders for sys-admin user" do
       get :edit, id: stc.id
       expect(assigns(:config)).to eq stc
-      expect(assigns(:companies)).to eq [co_3, co_2, co_1] 
+      expect(assigns(:companies)).to eq [co_3, co_2, co_1]
       expect(response).to render_template :new_edit
     end
 
@@ -93,7 +93,7 @@ describe SearchTableConfigsController do
     let!(:stc) { Factory(:search_table_config, company: co_1, page_uid: "original page_uid", name: "original name", config_json: original_json) }
 
     it "updates stc for sys-admin" do
-      new_json = '{"columns: ["prodven_puid"], "criteria": [], "sorts": []}' 
+      new_json = '{"columns: ["prodven_puid"], "criteria": [], "sorts": []}'
       put :update, id: stc.id, search_table_config: {company_id: co_2.id, page_uid: "new page_uid", name: "new name", config_json: new_json}
       stc.reload
       expect(stc.company).to eq co_2
@@ -105,7 +105,7 @@ describe SearchTableConfigsController do
 
     it "doesn't allow use by non-sys-admin" do
       expect(user).to receive(:sys_admin?).and_return false
-      new_json = '{"columns: ["prodven_puid"], "criteria": [], "sorts": []}' 
+      new_json = '{"columns: ["prodven_puid"], "criteria": [], "sorts": []}'
       put :update, id: stc.id, search_table_config: {company_id: co_2.id, page_uid: "new page_uid", name: "new name", config_json: new_json}
       stc.reload
       expect(stc.company).to eq co_1
@@ -119,7 +119,7 @@ describe SearchTableConfigsController do
 
   describe "destroy" do
     let!(:stc) { Factory(:search_table_config) }
-  
+
     it "deletes stc for sys-admin" do
       delete :destroy, id: stc.id
       expect(SearchTableConfig.count).to eq 0

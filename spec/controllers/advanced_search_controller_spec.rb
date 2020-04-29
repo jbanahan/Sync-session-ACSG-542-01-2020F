@@ -1,20 +1,20 @@
 describe AdvancedSearchController do
   before :each do
-    @user = Factory(:master_user,:email=>'a@example.com')
+    @user = Factory(:master_user, :email=>'a@example.com')
 
     sign_in_as @user
   end
 
   describe "destroy" do
     it "should destroy and return id of previous search" do
-      old_search = Factory(:search_setup,:module_type=>'Product',:user=>@user)
-      new_search = Factory(:search_setup,:module_type=>'Product',:user=>@user)
+      old_search = Factory(:search_setup, :module_type=>'Product', :user=>@user)
+      new_search = Factory(:search_setup, :module_type=>'Product', :user=>@user)
       delete :destroy, :id=>new_search.id
       expect(JSON.parse(response.body)['id']).to eq(old_search.id)
       expect(SearchSetup.find_by_id(new_search.id)).to be_nil
     end
     it "should destroy and create new search if none found" do
-      ss = Factory(:search_setup,:user=>@user)
+      ss = Factory(:search_setup, :user=>@user)
       delete :destroy, :id=>ss.id
       id = JSON.parse(response.body)['id']
       new_ss = SearchSetup.find(id)
@@ -62,7 +62,7 @@ describe AdvancedSearchController do
   end
   describe "update" do
     before :each do
-      @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:include_rule_links=>true,:no_time=>false,
+      @ss = Factory(:search_setup, :name=>"X", :user=>@user, :include_links=>true, :include_rule_links=>true, :no_time=>false,
         :module_type=>"Product")
     end
     it "should 404 for wrong user" do
@@ -85,7 +85,7 @@ describe AdvancedSearchController do
     end
     it "returns error if email-address field is too long" do
       addr = "b@#{'z' * 250}.com"
-      put :update, :id=>@ss.id, :search_setup=>{:search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}],
+      put :update, :id=>@ss.id, :search_setup=>{:search_criterions=> [{:mfid=>'prod_uid', :operator=>'eq', :value=>'y'}],
                                                 :search_schedules=>[{:email_addresses=>addr}]}
       expect(response).to be_error
       expect(JSON.parse(response.body)['error']).to eq "Email address field must be no more than 255 characters!"
@@ -93,7 +93,7 @@ describe AdvancedSearchController do
       expect(@ss.search_schedules).to be_empty
     end
     it "should update name" do
-      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y',:include_links=>false,:include_rule_links=>false,:no_time=>true,:locked=>true}
+      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y', :include_links=>false, :include_rule_links=>false, :no_time=>true, :locked=>true}
       expect(response).to be_success
       @ss.reload
       expect(@ss.name).to eq("Y")
@@ -103,9 +103,9 @@ describe AdvancedSearchController do
       expect(@ss.locked?).to be_truthy
     end
     it "should recreate columns" do
-      @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
-      put :update, :id=>@ss.id, :search_setup=>{:search_columns=>[{:mfid=>'prod_uid',:label=>"UID",:rank=>2},
-        {:mfid=>'prod_name',:rank=>1,:label=>'m'},
+      @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
+      put :update, :id=>@ss.id, :search_setup=>{:search_columns=>[{:mfid=>'prod_uid', :label=>"UID", :rank=>2},
+        {:mfid=>'prod_name', :rank=>1, :label=>'m'},
         {:mfid=>'_constsomeotherjunk', :label=> 'Broker', :constant_field_value => 'Vandegrift', :rank=> 3}
       ]}
       expect(response).to be_success
@@ -118,11 +118,11 @@ describe AdvancedSearchController do
       expect(constant_field.constant_field_value).to eq "Vandegrift"
     end
     it "should recreate sorts" do
-      @ss.sort_criterions.create!(:model_field_uid=>:prod_uid,:rank=>1,:descending=>false)
+      @ss.sort_criterions.create!(:model_field_uid=>:prod_uid, :rank=>1, :descending=>false)
       put :update, :id=>@ss.id, :search_setup=>{:sort_criterions=>[
-        {:mfid=>'prod_name',:label=>'NM',:rank=>1,:descending=>true},
-        {:mfid=>'prod_uid',:label=>'UID',:rank=>2,:descending=>false}],
-        :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
+        {:mfid=>'prod_name', :label=>'NM', :rank=>1, :descending=>true},
+        {:mfid=>'prod_uid', :label=>'UID', :rank=>2, :descending=>false}],
+        :search_criterions=> [{:mfid=>'prod_uid', :operator=>'eq', :value=>'y'}]}
       expect(response).to be_success
       @ss.reload
       expect(@ss.sort_criterions.size).to eq(2)
@@ -133,11 +133,11 @@ describe AdvancedSearchController do
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return(true)
       @ss.search_schedules.create!(:email_addresses=>"a@example.com")
       put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[
-        {:email_addresses=>'b@example.com',:run_hour=>6,:day_of_month=>1,:download_format=>'xls',
-          :run_monday=>true,:run_tuesday=>false,:run_wednesday=>false,:run_thursday=>false,:run_friday=>false,:run_saturday=>false,:run_sunday=>false,
+        {:email_addresses=>'b@example.com', :run_hour=>6, :day_of_month=>1, :download_format=>'xls',
+          :run_monday=>true, :run_tuesday=>false, :run_wednesday=>false, :run_thursday=>false, :run_friday=>false, :run_saturday=>false, :run_sunday=>false,
           :exclude_file_timestamp=>true, :disabled=>true, :report_failure_count=>2 },
-        {:ftp_server=>'ftp.example.com',:ftp_username=>'user',:ftp_password=>'pass',:ftp_subfolder=>'/sub', :protocol=>"test", ftp_port: "123"}
-      ], :search_criterions=> [{:mfid=>'prod_uid',:operator=>'eq',:value=>'y'}]}
+        {:ftp_server=>'ftp.example.com', :ftp_username=>'user', :ftp_password=>'pass', :ftp_subfolder=>'/sub', :protocol=>"test", ftp_port: "123"}
+      ], :search_criterions=> [{:mfid=>'prod_uid', :operator=>'eq', :value=>'y'}]}
       expect(response).to be_success
       @ss.reload
       expect(@ss.search_schedules.size).to eq(2)
@@ -164,10 +164,10 @@ describe AdvancedSearchController do
       expect(ftp.ftp_port).to eq "123"
     end
     it "should recreate criterions" do
-      @ss.search_criterions.create!(:model_field_uid=>:prod_uid,:operator=>:sw,:value=>'X')
+      @ss.search_criterions.create!(:model_field_uid=>:prod_uid, :operator=>:sw, :value=>'X')
       put :update, :id=>@ss.id, :search_setup=>{:search_criterions=>[
-        {:mfid=>'prod_uid',:operator=>'eq',:value=>'y',:label=>'XX',:datatype=>'string',:include_empty=>true},
-        {:mfid=>'prod_name',:operator=>'ew',:value=>'q',:label=>'XX',:datatype=>'string',:include_empty=>false}
+        {:mfid=>'prod_uid', :operator=>'eq', :value=>'y', :label=>'XX', :datatype=>'string', :include_empty=>true},
+        {:mfid=>'prod_name', :operator=>'ew', :value=>'q', :label=>'XX', :datatype=>'string', :include_empty=>false}
       ]}
       expect(response).to be_success
       @ss.reload
@@ -179,16 +179,16 @@ describe AdvancedSearchController do
 
   describe "last_search_id" do
     it "should get last search based on search_run" do
-      ss_first = Factory(:search_setup,:user=>@user)
-      ss_second = Factory(:search_setup,:user=>@user)
+      ss_first = Factory(:search_setup, :user=>@user)
+      ss_second = Factory(:search_setup, :user=>@user)
       ss_first.touch
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_first.id.to_s)
     end
 
     it "should return last search updated if no search_runs" do
-      ss_first = Factory(:search_setup,:user=>@user,updated_at:1.day.ago)
-      ss_second = Factory(:search_setup,:user=>@user,updated_at:1.year.ago)
+      ss_first = Factory(:search_setup, :user=>@user, updated_at:1.day.ago)
+      ss_second = Factory(:search_setup, :user=>@user, updated_at:1.year.ago)
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_first.id.to_s)
     end
@@ -199,7 +199,7 @@ describe AdvancedSearchController do
     end
     it "should not find a search for another user" do
       ss_first = Factory(:search_setup)
-      ss_second = Factory(:search_setup,:user=>@user)
+      ss_second = Factory(:search_setup, :user=>@user)
       ss_first.touch
       get :last_search_id
       expect(JSON.parse(response.body)['id']).to eq(ss_second.id.to_s)
@@ -212,15 +212,15 @@ describe AdvancedSearchController do
       expect(response).to redirect_to '/advanced_search#!/1'
     end
     it "should write response for json" do
-      @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
-        :include_links=>true,:include_rule_links=>true,:no_time=>true,:module_type=>"Product",locked:true)
-      @ss.search_columns.create!(:rank=>1,:model_field_uid=>:prod_uid)
-      @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
-      @ss.search_columns.create!(:rank=>3,:model_field_uid=>:_const, constant_field_name: "Broker", constant_field_value: "Vandegrift")
-      @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
-      @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
+      @ss = Factory(:search_setup, :user=>@user, :name=>'MYNAME',
+        :include_links=>true, :include_rule_links=>true, :no_time=>true, :module_type=>"Product", locked:true)
+      @ss.search_columns.create!(:rank=>1, :model_field_uid=>:prod_uid)
+      @ss.search_columns.create!(:rank=>2, :model_field_uid=>:prod_name)
+      @ss.search_columns.create!(:rank=>3, :model_field_uid=>:_const, constant_field_name: "Broker", constant_field_value: "Vandegrift")
+      @ss.sort_criterions.create!(:rank=>1, :model_field_uid=>:prod_uid, :descending=>true)
+      @ss.search_criterions.create!(:model_field_uid=>:prod_name, :operator=>:eq, :value=>"123")
       # Include ftp information to make sure we're not actually including it by default for non-admin users
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com',:send_if_empty=>true,:run_monday=>true,:run_hour=>8, :exclude_file_timestamp=>true,:download_format=>:xls,:day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :disabled=>"true", :report_failure_count=>2)
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true, :run_monday=>true, :run_hour=>8, :exclude_file_timestamp=>true, :download_format=>:xls, :day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :disabled=>"true", :report_failure_count=>2)
       get :setup, :id=>@ss.id, :format=>'json'
       expect(response).to be_success
       h = JSON.parse response.body
@@ -242,20 +242,20 @@ describe AdvancedSearchController do
       expect(search_list.first['id']).to eq(@ss.id)
       expect(search_list.first['module']).to eq("Product")
       expect(h['search_columns']).to eq([
-        {"mfid"=>"prod_uid","label"=>ModelField.find_by_uid(:prod_uid).label,"rank"=>1, "constant_field_value"=>nil},
-        {"mfid"=>"prod_name","label"=>ModelField.find_by_uid(:prod_name).label,"rank"=>2, "constant_field_value"=>nil},
-        {"mfid"=>"_const","label"=>"Broker","rank"=>3, "constant_field_value"=>"Vandegrift"}
+        {"mfid"=>"prod_uid", "label"=>ModelField.find_by_uid(:prod_uid).label, "rank"=>1, "constant_field_value"=>nil},
+        {"mfid"=>"prod_name", "label"=>ModelField.find_by_uid(:prod_name).label, "rank"=>2, "constant_field_value"=>nil},
+        {"mfid"=>"_const", "label"=>"Broker", "rank"=>3, "constant_field_value"=>"Vandegrift"}
       ])
       expect(h['sort_criterions']).to eq([
-        {"mfid"=>"prod_uid","descending"=>true,"label"=>ModelField.find_by_uid(:prod_uid).label,"rank"=>1}
+        {"mfid"=>"prod_uid", "descending"=>true, "label"=>ModelField.find_by_uid(:prod_uid).label, "rank"=>1}
       ])
       expect(h['search_criterions']).to eq([
-        {"mfid"=>"prod_name","operator"=>"eq","label"=>ModelField.find_by_uid(:prod_name).label,"value"=>"123","datatype"=>"string","include_empty"=>false}
+        {"mfid"=>"prod_name", "operator"=>"eq", "label"=>ModelField.find_by_uid(:prod_name).label, "value"=>"123", "datatype"=>"string", "include_empty"=>false}
       ])
       expect(h['search_schedules']).to eq([
-        {"mailing_list_id"=>nil,"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
-          "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,
-          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2}
+        {"mailing_list_id"=>nil, "email_addresses"=>"x@example.com", "send_if_empty"=>true, "run_monday"=>true, "run_tuesday"=>false, "run_wednesday"=>false, "run_thursday"=>false,
+          "run_friday"=>false, "run_saturday"=>false, "run_sunday"=>false, "run_hour"=>8,
+          "download_format"=>"xls", "day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2}
       ])
       no_non_accessible = CoreModule::PRODUCT.default_module_chain.model_fields.values.collect {|mf| mf.user_accessible? ? mf : nil}.compact
       no_non_accessible.delete_if {|mf| !mf.can_view?(@user)}
@@ -269,13 +269,13 @@ describe AdvancedSearchController do
       expect(h['model_fields']).to eq(expected_model_fields)
     end
     it "should write response for json and include ftp information for admins" do
-      @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
-        :include_links=>true,:include_rule_links=>true,:no_time=>true,:module_type=>"Product")
-      @ss.search_columns.create!(:rank=>1,:model_field_uid=>:prod_uid)
-      @ss.search_columns.create!(:rank=>2,:model_field_uid=>:prod_name)
-      @ss.sort_criterions.create!(:rank=>1,:model_field_uid=>:prod_uid,:descending=>true)
-      @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123")
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true,:run_monday=>true,:run_hour=>8,:download_format=>:xls,:day_of_month=>11,:disabled=>"false",:report_failure_count=>2,
+      @ss = Factory(:search_setup, :user=>@user, :name=>'MYNAME',
+        :include_links=>true, :include_rule_links=>true, :no_time=>true, :module_type=>"Product")
+      @ss.search_columns.create!(:rank=>1, :model_field_uid=>:prod_uid)
+      @ss.search_columns.create!(:rank=>2, :model_field_uid=>:prod_name)
+      @ss.sort_criterions.create!(:rank=>1, :model_field_uid=>:prod_uid, :descending=>true)
+      @ss.search_criterions.create!(:model_field_uid=>:prod_name, :operator=>:eq, :value=>"123")
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true, :run_monday=>true, :run_hour=>8, :download_format=>:xls, :day_of_month=>11, :disabled=>"false", :report_failure_count=>2,
                                   :exclude_file_timestamp=>true, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :ftp_port=>"123")
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return true
 
@@ -284,16 +284,16 @@ describe AdvancedSearchController do
       h = JSON.parse response.body
       expect(h['allow_ftp']).to be_truthy
       expect(h['search_schedules']).to eq([
-        {"mailing_list_id"=>nil,"email_addresses"=>"x@example.com","send_if_empty"=>true,"run_monday"=>true,"run_tuesday"=>false,"run_wednesday"=>false,"run_thursday"=>false,
-          "run_friday"=>false,"run_saturday"=>false,"run_sunday"=>false,"run_hour"=>8,"disabled"=>false,"report_failure_count"=>2,
-          "download_format"=>"xls","day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password",
+        {"mailing_list_id"=>nil, "email_addresses"=>"x@example.com", "send_if_empty"=>true, "run_monday"=>true, "run_tuesday"=>false, "run_wednesday"=>false, "run_thursday"=>false,
+          "run_friday"=>false, "run_saturday"=>false, "run_sunday"=>false, "run_hour"=>8, "disabled"=>false, "report_failure_count"=>2,
+          "download_format"=>"xls", "day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password",
           "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123"}
       ])
     end
     it "should set include empty for criterions" do
-      @ss = Factory(:search_setup,:user=>@user,:name=>'MYNAME',
+      @ss = Factory(:search_setup, :user=>@user, :name=>'MYNAME',
         :module_type=>"Product")
-      @ss.search_criterions.create!(:model_field_uid=>:prod_name,:operator=>:eq,:value=>"123",:include_empty=>true)
+      @ss.search_criterions.create!(:model_field_uid=>:prod_name, :operator=>:eq, :value=>"123", :include_empty=>true)
       get :setup, :id=>@ss.id, :format=>'json'
       expect(response).to be_success
       h = JSON.parse response.body
@@ -313,34 +313,34 @@ describe AdvancedSearchController do
       expect {get :show, :id=>ss.id, :format=>:json}.to raise_error ActionController::RoutingError
     end
     it "should set allow ftp to true for admin" do
-      ss = Factory(:search_setup,:user=>@user)
+      ss = Factory(:search_setup, :user=>@user)
       expect_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return(true)
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       expect(h['allow_ftp']).to be_truthy
     end
     it "should return full search list for current module_type" do
-      ss = Factory(:search_setup,:user=>@user,:name=>"B",:module_type=>"Order")
-      ss2 = Factory(:search_setup,:user=>@user,:name=>"A",:module_type=>"Order")
+      ss = Factory(:search_setup, :user=>@user, :name=>"B", :module_type=>"Order")
+      ss2 = Factory(:search_setup, :user=>@user, :name=>"A", :module_type=>"Order")
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       list = h['search_list']
       expect(list.size).to eq(2)
-      expect(list.collect {|ss| ss['id']}).to eq([ss2.id,ss.id])
+      expect(list.collect {|ss| ss['id']}).to eq([ss2.id, ss.id])
     end
     it "should not return search list for different module_types" do
-      ss = Factory(:search_setup,:user=>@user,:name=>"B",:module_type=>"Order")
-      ss2 = Factory(:search_setup,:user=>@user,:name=>"A",:module_type=>"Order")
-      dont_find = Factory(:search_setup,:user=>@user,:module_type=>"Product")
+      ss = Factory(:search_setup, :user=>@user, :name=>"B", :module_type=>"Order")
+      ss2 = Factory(:search_setup, :user=>@user, :name=>"A", :module_type=>"Order")
+      dont_find = Factory(:search_setup, :user=>@user, :module_type=>"Product")
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       list = h['search_list']
       expect(list.size).to eq(2)
-      expect(list.collect {|ss| ss['id']}).to eq([ss2.id,ss.id])
+      expect(list.collect {|ss| ss['id']}).to eq([ss2.id, ss.id])
     end
     it "should not show model fields that user cannot view" do
       allow_any_instance_of(ModelField).to receive(:can_view?).with(@user).and_return false
-      ss = Factory(:search_setup,:user=>@user,:module_type=>'Entry')
+      ss = Factory(:search_setup, :user=>@user, :module_type=>'Entry')
       get :setup, :id=>ss.id, :format=>:json
       h = JSON.parse response.body
       found_duty_due = false
@@ -355,7 +355,7 @@ describe AdvancedSearchController do
       expect(response).to redirect_to '/advanced_search#!/1/1'
     end
     it "should write page and per page to search run" do
-      @ss = Factory(:search_setup,:user=>@user)
+      @ss = Factory(:search_setup, :user=>@user)
       get :show, :id=>@ss.id, :page=>'2', :per_page=>'40', :format=>'json'
       expect(response).to be_success
       @ss.reload
@@ -365,18 +365,18 @@ describe AdvancedSearchController do
     end
     context "json" do
       before :each do
-        @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
-        @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
-        @ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>2)
-        @p = Factory(:product,:name=>'mpn')
-        allow_any_instance_of(User).to receive(:edit_classifications?).and_return(true) #to allow bulk actions
+        @ss = Factory(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Product')
+        @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
+        @ss.search_columns.create!(:model_field_uid=>:prod_name, :rank=>2)
+        @p = Factory(:product, :name=>'mpn')
+        allow_any_instance_of(User).to receive(:edit_classifications?).and_return(true) # to allow bulk actions
         allow_any_instance_of(SearchQuery).to receive(:count).and_return(501)
         allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
         allow_any_instance_of(Product).to receive(:can_view?).and_return(true)
       end
       it "should render json response" do
         allow_any_instance_of(Product).to receive(:can_edit?).and_return(true)
-        allow_any_instance_of(User).to receive(:edit_classifications?).and_return(true) #to allow bulk actions
+        allow_any_instance_of(User).to receive(:edit_classifications?).and_return(true) # to allow bulk actions
         allow_any_instance_of(SearchQuery).to receive(:count).and_return(501)
         allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
         allow_any_instance_of(Product).to receive(:can_view?).and_return(true)
@@ -389,17 +389,17 @@ describe AdvancedSearchController do
         expect(r['name']).to eq(@ss.name)
         expect(r['page']).to eq(1)
         expect(r['total_pages']).to eq(11)
-        expect(r['columns']).to eq([ModelField.find_by_uid(:prod_uid).label,ModelField.find_by_uid(:prod_name).label])
+        expect(r['columns']).to eq([ModelField.find_by_uid(:prod_uid).label, ModelField.find_by_uid(:prod_name).label])
         expect(r['rows']).to eq([
           { 'id'=>@p.id,
             'links'=>
-              [ {'label'=>'View','url'=>"/products/#{@p.id}"},
-                {'label'=>'Edit','url'=>"/products/#{@p.id}/edit"}
+              [ {'label'=>'View', 'url'=>"/products/#{@p.id}"},
+                {'label'=>'Edit', 'url'=>"/products/#{@p.id}/edit"}
               ],
             'vals'=>
-              [@p.unique_identifier,@p.name]}])
+              [@p.unique_identifier, @p.name]}])
         expected_bulk_actions = []
-        CoreModule::PRODUCT.bulk_actions(@user).each do |k,v|
+        CoreModule::PRODUCT.bulk_actions(@user).each do |k, v|
           h = {"label"=>k.to_s}
           if v.is_a? String
             h["path"] = eval(v)
@@ -433,7 +433,7 @@ describe AdvancedSearchController do
         expect(r['total_pages']).to eq(51)
       end
       it 'should render second page' do
-        p2 = Factory(:product,:name=>'prod2')
+        p2 = Factory(:product, :name=>'prod2')
         get :show, :id=>@ss.id, :format=>'json', :per_page=>'1', :page=>'2'
         r = JSON.parse response.body
         expect(r['page']).to eq(2)
@@ -460,20 +460,20 @@ describe AdvancedSearchController do
     end
   end
   describe "download" do
-    let (:tempfile) { 
+    let (:tempfile) {
       Tempfile.new ["report", "test"]
     }
 
     before :each do
-      @ss = Factory(:search_setup,:user=>@user,:name=>'myname',:module_type=>'Product')
-      @ss.search_columns.create!(:model_field_uid=>:prod_uid,:rank=>1)
-      @ss.search_columns.create!(:model_field_uid=>:prod_name,:rank=>2)
-      @ss.search_criterions.create!(:model_field_uid=>:prod_uid,:operator=>:sw,:value=>'X')
-      @p = Factory(:product,:name=>'mpn')
+      @ss = Factory(:search_setup, :user=>@user, :name=>'myname', :module_type=>'Product')
+      @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
+      @ss.search_columns.create!(:model_field_uid=>:prod_name, :rank=>2)
+      @ss.search_criterions.create!(:model_field_uid=>:prod_uid, :operator=>:sw, :value=>'X')
+      @p = Factory(:product, :name=>'mpn')
       allow_any_instance_of(Product).to receive(:can_view?).and_return(true)
     end
 
-    after :each do 
+    after :each do
       tempfile.close! unless tempfile.closed?
     end
 
@@ -505,7 +505,7 @@ describe AdvancedSearchController do
         expect(JSON.parse(response.body)['ok']).to eq('ok')
       end
       it "should call delay" do
-        expect(ReportResult).to receive(:run_report!).with(@ss.name,instance_of(User),'OpenChain::Report::AsyncSearch',{:settings=>{'search_setup_id'=>@ss.id}})
+        expect(ReportResult).to receive(:run_report!).with(@ss.name, instance_of(User), 'OpenChain::Report::AsyncSearch', {:settings=>{'search_setup_id'=>@ss.id}})
         get :download, :id=>@ss.id, :format=>:json
         expect(response).to be_success
         expect(JSON.parse(response.body)['ok']).to eq('ok')
@@ -528,7 +528,7 @@ describe AdvancedSearchController do
 
   describe "send_email" do
     before(:each) do
-      @ss = Factory(:search_setup,:name=>"X",:user=>@user,:include_links=>true,:include_rule_links=>true,:no_time=>false,
+      @ss = Factory(:search_setup, :name=>"X", :user=>@user, :include_links=>true, :include_rule_links=>true, :no_time=>false,
         :module_type=>"Product")
       allow_any_instance_of(SearchSetup).to receive(:downloadable?).and_return true
     end
@@ -577,7 +577,7 @@ describe AdvancedSearchController do
     it "errors if there are more than 10 email addresses" do
       expect(OpenChain::Report::AsyncSearch).not_to receive(:delay)
 
-      email_list = Array.new(11){|i| "address#{i}@vandegriftinc.com"}.join(', ')
+      email_list = Array.new(11) {|i| "address#{i}@vandegriftinc.com"}.join(', ')
       post :send_email, :id=>@ss.id, :mail_fields=> {'to' => email_list}
       expect(JSON.parse(response.body)['error']).to eq "Cannot accept more than 10 email addresses."
     end
@@ -607,13 +607,12 @@ describe AdvancedSearchController do
 
   context "audit" do
     let(:ss) { Factory(:search_setup, user: @user, name: "search name") }
-    
+
     describe "show_audit" do
-      
       it "renders if called with search setup that belongs to user" do
-        ra1 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018,3,15)
-        ra2 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018,3,16)
-        ra3 = RandomAudit.create! user: Factory(:user), search_setup: ss, report_date: Date.new(2018,3,17)
+        ra1 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018, 3, 15)
+        ra2 = RandomAudit.create! user: @user, search_setup: ss, report_date: Date.new(2018, 3, 16)
+        ra3 = RandomAudit.create! user: Factory(:user), search_setup: ss, report_date: Date.new(2018, 3, 17)
         get :show_audit, id: ss.id
         expect(response).to render_template :show_audit
         expect(assigns(:ss_id)).to eq ss.id
@@ -629,7 +628,7 @@ describe AdvancedSearchController do
 
     describe "audit", :disable_delayed_jobs do
       before { expect_any_instance_of(SearchSetup).to receive(:downloadable?).and_return true }
-      
+
       it "runs report if search setup belongs to user and necessary fields are populated" do
         expect(ReportResult).to receive(:run_report!).with("search name (Random Audit)", @user, 'OpenChain::Report::AsyncSearch', settings: {'search_setup_id' => ss.id, 'audit' => {percent: 25, record_type: 'header'}})
         post :audit, id: ss.id, percent: 25, record_type: "header"

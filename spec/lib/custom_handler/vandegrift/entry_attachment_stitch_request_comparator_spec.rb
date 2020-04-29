@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
       expect(subject.accept? snapshot).to eq false
     end
 
-    it "does not accept snapshots when Document Stitching is not enabled" do 
+    it "does not accept snapshots when Document Stitching is not enabled" do
       expect(master_setup).to receive(:custom_feature?).with("Document Stitching").and_return false
       expect(subject.accept? snapshot).to eq false
     end
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
   end
 
   describe "compare" do
-    before :each do 
+    before :each do
       allow(subject).to receive(:sqs_queue).and_return "queue"
     end
 
@@ -160,7 +160,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     let! (:a1) { entry.attachments.create! attachment_type: "A", attached_file_name: "file.pdf" }
     let! (:a2) { entry.attachments.create! attachment_type: "B", attached_file_name: "file.pdf" }
 
-    before :each do 
+    before :each do
       stub_master_setup
     end
 
@@ -225,7 +225,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     it 'skips non image formats' do
       a2.update_attributes! attached_file_name: "file.zip"
       stitch_request = subject.generate_stitch_request_for_entry entry, archive_setup
-      
+
       expect(stitch_request['stitch_request']['source_files']).to eq [
         {'path' => "/chain-io/test-uuid/attachment/#{a1.id}/#{a1.attached_file_name}", 'service' => "s3"}
       ]
@@ -234,7 +234,7 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
     it "skips private attachments" do
       a2.update_attributes! is_private: true
       stitch_request = subject.generate_stitch_request_for_entry entry, archive_setup
-      
+
       expect(stitch_request['stitch_request']['source_files']).to eq [
         {'path' => "/chain-io/test-uuid/attachment/#{a1.id}/#{a1.attached_file_name}", 'service' => "s3"}
       ]

@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::ApiSyncClient do
 
   class FakeApiSyncClient < OpenChain::CustomHandler::ApiSyncClient
-    def syncable_type 
+    def syncable_type
       "TestObject"
     end
 
@@ -105,7 +105,7 @@ describe OpenChain::CustomHandler::ApiSyncClient do
         end
       end
 
-      before :each do 
+      before :each do
         @client = ObjectFakeApiSyncClient.new
       end
 
@@ -237,7 +237,7 @@ describe OpenChain::CustomHandler::ApiSyncClient do
     it "syncs local data with remote data" do
       @client.test_sync @sync_object
 
-      #Verify the sync record was created
+      # Verify the sync record was created
       sr = SyncRecord.where(syncable_id: 1, syncable_type: "Test", trading_partner: "test").first
       expect(sr).not_to be_nil
 

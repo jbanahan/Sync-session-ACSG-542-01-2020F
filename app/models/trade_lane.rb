@@ -30,7 +30,7 @@ class TradeLane < ActiveRecord::Base
   validates :origin_country_id, presence: true
 
   def trade_preference_programs
-    TradePreferenceProgram.where(origin_country_id:self.origin_country_id,destination_country_id:self.destination_country_id)
+    TradePreferenceProgram.where(origin_country_id:self.origin_country_id, destination_country_id:self.destination_country_id)
   end
 
   def can_view? u

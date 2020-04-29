@@ -6,12 +6,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   include OpenChain::Report::ReportHelper
 
   def initialize
-    @cdefs = self.class.prep_custom_definitions [:ordln_po_create_article,:ordln_po_booked_article,
-      :ordln_po_shipped_article,:ordln_po_create_quantity,:ordln_po_booked_quantity,:ordln_po_shipped_quantity,
-      :ordln_po_create_hts,:ordln_po_booked_hts,:ordln_po_shipped_hts,:ord_snapshot_discrepancy_comment,
-      :ordln_po_create_price_per_unit,:ordln_po_booked_price_per_unit,:ordln_po_shipped_price_per_unit,
-      :ordln_po_create_total_price,:ordln_po_booked_total_price,:ordln_po_shipped_total_price,
-      :ordln_po_create_country_origin,:ordln_po_booked_country_origin,:ordln_po_shipped_country_origin]
+    @cdefs = self.class.prep_custom_definitions [:ordln_po_create_article, :ordln_po_booked_article,
+      :ordln_po_shipped_article, :ordln_po_create_quantity, :ordln_po_booked_quantity, :ordln_po_shipped_quantity,
+      :ordln_po_create_hts, :ordln_po_booked_hts, :ordln_po_shipped_hts, :ord_snapshot_discrepancy_comment,
+      :ordln_po_create_price_per_unit, :ordln_po_booked_price_per_unit, :ordln_po_shipped_price_per_unit,
+      :ordln_po_create_total_price, :ordln_po_booked_total_price, :ordln_po_shipped_total_price,
+      :ordln_po_create_country_origin, :ordln_po_booked_country_origin, :ordln_po_shipped_country_origin]
   end
 
   def self.permission? user
@@ -173,269 +173,269 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       snapshot_range_end = sanitize_date_string(snapshot_range_end) unless snapshot_range_end.blank?
 
       <<-QRY
-        SELECT 
-          ord.id AS order_id, 
-          ord.order_number, 
-          ol.line_number, 
-          vendor.name AS vendor_name, 
-          ord.created_at AS po_create_date, 
-          shp.booking_received_date, 
-          shp.departure_date, 
-          cv_discrepancy_comments.text_value AS discrepancy_comments, 
-          cv_article_created.string_value AS article_created, 
-          cv_article_created.updated_at AS article_created_date, 
-          cv_article_booked.string_value AS article_booked, 
-          cv_article_booked.updated_at AS article_booked_date, 
+        SELECT
+          ord.id AS order_id,
+          ord.order_number,
+          ol.line_number,
+          vendor.name AS vendor_name,
+          ord.created_at AS po_create_date,
+          shp.booking_received_date,
+          shp.departure_date,
+          cv_discrepancy_comments.text_value AS discrepancy_comments,
+          cv_article_created.string_value AS article_created,
+          cv_article_created.updated_at AS article_created_date,
+          cv_article_booked.string_value AS article_booked,
+          cv_article_booked.updated_at AS article_booked_date,
           cv_article_shipped.string_value AS article_shipped,
           cv_article_shipped.updated_at AS article_shipped_date,
-          cv_quantity_created.decimal_value AS quantity_created, 
-          cv_quantity_created.updated_at AS quantity_created_date, 
-          cv_quantity_booked.decimal_value AS quantity_booked, 
-          cv_quantity_booked.updated_at AS quantity_booked_date, 
+          cv_quantity_created.decimal_value AS quantity_created,
+          cv_quantity_created.updated_at AS quantity_created_date,
+          cv_quantity_booked.decimal_value AS quantity_booked,
+          cv_quantity_booked.updated_at AS quantity_booked_date,
           cv_quantity_shipped.decimal_value AS quantity_shipped,
           cv_quantity_shipped.updated_at AS quantity_shipped_date,
-          cv_hts_created.string_value AS hts_created, 
-          cv_hts_created.updated_at AS hts_created_date, 
-          cv_hts_booked.string_value AS hts_booked, 
-          cv_hts_booked.updated_at AS hts_booked_date, 
+          cv_hts_created.string_value AS hts_created,
+          cv_hts_created.updated_at AS hts_created_date,
+          cv_hts_booked.string_value AS hts_booked,
+          cv_hts_booked.updated_at AS hts_booked_date,
           cv_hts_shipped.string_value AS hts_shipped,
           cv_hts_shipped.updated_at AS hts_shipped_date,
-          cv_unit_price_created.decimal_value AS unit_price_created, 
-          cv_unit_price_created.updated_at AS unit_price_created_date, 
-          cv_unit_price_booked.decimal_value AS unit_price_booked, 
-          cv_unit_price_booked.updated_at AS unit_price_booked_date, 
-          cv_unit_price_shipped.decimal_value AS unit_price_shipped, 
-          cv_unit_price_shipped.updated_at AS unit_price_shipped_date, 
-          cv_total_price_created.decimal_value AS total_price_created, 
-          cv_total_price_created.updated_at AS total_price_created_date, 
-          cv_total_price_booked.decimal_value AS total_price_booked, 
-          cv_total_price_booked.updated_at AS total_price_booked_date, 
-          cv_total_price_shipped.decimal_value AS total_price_shipped, 
-          cv_total_price_shipped.updated_at AS total_price_shipped_date, 
-          cv_country_origin_created.string_value AS country_origin_created, 
-          cv_country_origin_created.updated_at AS country_origin_created_date, 
-          cv_country_origin_booked.string_value AS country_origin_booked, 
-          cv_country_origin_booked.updated_at AS country_origin_booked_date, 
-          cv_country_origin_shipped.string_value AS country_origin_shipped, 
-          cv_country_origin_shipped.updated_at AS country_origin_shipped_date 
-        FROM 
-          orders AS ord 
-          INNER JOIN order_lines as ol ON 
-            ord.id = ol.order_id 
-          LEFT OUTER JOIN booking_lines AS bl ON 
-            ol.id = bl.order_line_id 
-          LEFT OUTER JOIN shipments AS shp ON 
-            bl.shipment_id = shp.id 
-          LEFT OUTER JOIN custom_values AS cv_article_created ON 
-            ol.id = cv_article_created.customizable_id AND 
-            cv_article_created.customizable_type = 'OrderLine' AND 
+          cv_unit_price_created.decimal_value AS unit_price_created,
+          cv_unit_price_created.updated_at AS unit_price_created_date,
+          cv_unit_price_booked.decimal_value AS unit_price_booked,
+          cv_unit_price_booked.updated_at AS unit_price_booked_date,
+          cv_unit_price_shipped.decimal_value AS unit_price_shipped,
+          cv_unit_price_shipped.updated_at AS unit_price_shipped_date,
+          cv_total_price_created.decimal_value AS total_price_created,
+          cv_total_price_created.updated_at AS total_price_created_date,
+          cv_total_price_booked.decimal_value AS total_price_booked,
+          cv_total_price_booked.updated_at AS total_price_booked_date,
+          cv_total_price_shipped.decimal_value AS total_price_shipped,
+          cv_total_price_shipped.updated_at AS total_price_shipped_date,
+          cv_country_origin_created.string_value AS country_origin_created,
+          cv_country_origin_created.updated_at AS country_origin_created_date,
+          cv_country_origin_booked.string_value AS country_origin_booked,
+          cv_country_origin_booked.updated_at AS country_origin_booked_date,
+          cv_country_origin_shipped.string_value AS country_origin_shipped,
+          cv_country_origin_shipped.updated_at AS country_origin_shipped_date
+        FROM
+          orders AS ord
+          INNER JOIN order_lines as ol ON
+            ord.id = ol.order_id
+          LEFT OUTER JOIN booking_lines AS bl ON
+            ol.id = bl.order_line_id
+          LEFT OUTER JOIN shipments AS shp ON
+            bl.shipment_id = shp.id
+          LEFT OUTER JOIN custom_values AS cv_article_created ON
+            ol.id = cv_article_created.customizable_id AND
+            cv_article_created.customizable_type = 'OrderLine' AND
             cv_article_created.custom_definition_id = #{@cdefs[:ordln_po_create_article].id}
-          LEFT OUTER JOIN custom_values AS cv_article_booked ON 
-            ol.id = cv_article_booked.customizable_id AND 
-            cv_article_booked.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_article_booked ON
+            ol.id = cv_article_booked.customizable_id AND
+            cv_article_booked.customizable_type = 'OrderLine' AND
             cv_article_booked.custom_definition_id = #{@cdefs[:ordln_po_booked_article].id}
-          LEFT OUTER JOIN custom_values AS cv_article_shipped ON 
-            ol.id = cv_article_shipped.customizable_id AND 
-            cv_article_shipped.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_article_shipped ON
+            ol.id = cv_article_shipped.customizable_id AND
+            cv_article_shipped.customizable_type = 'OrderLine' AND
             cv_article_shipped.custom_definition_id = #{@cdefs[:ordln_po_shipped_article].id}
-          LEFT OUTER JOIN custom_values AS cv_quantity_created ON 
-            ol.id = cv_quantity_created.customizable_id AND 
-            cv_quantity_created.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_quantity_created ON
+            ol.id = cv_quantity_created.customizable_id AND
+            cv_quantity_created.customizable_type = 'OrderLine' AND
             cv_quantity_created.custom_definition_id = #{@cdefs[:ordln_po_create_quantity].id}
-          LEFT OUTER JOIN custom_values AS cv_quantity_booked ON 
-            ol.id = cv_quantity_booked.customizable_id AND 
-            cv_quantity_booked.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_quantity_booked ON
+            ol.id = cv_quantity_booked.customizable_id AND
+            cv_quantity_booked.customizable_type = 'OrderLine' AND
             cv_quantity_booked.custom_definition_id = #{@cdefs[:ordln_po_booked_quantity].id}
-          LEFT OUTER JOIN custom_values AS cv_quantity_shipped ON 
-            ol.id = cv_quantity_shipped.customizable_id AND 
-            cv_quantity_shipped.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_quantity_shipped ON
+            ol.id = cv_quantity_shipped.customizable_id AND
+            cv_quantity_shipped.customizable_type = 'OrderLine' AND
             cv_quantity_shipped.custom_definition_id = #{@cdefs[:ordln_po_shipped_quantity].id}
-          LEFT OUTER JOIN custom_values AS cv_hts_created ON 
-            ol.id = cv_hts_created.customizable_id AND 
-            cv_hts_created.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_hts_created ON
+            ol.id = cv_hts_created.customizable_id AND
+            cv_hts_created.customizable_type = 'OrderLine' AND
             cv_hts_created.custom_definition_id = #{@cdefs[:ordln_po_create_hts].id}
-          LEFT OUTER JOIN custom_values AS cv_hts_booked ON 
-            ol.id = cv_hts_booked.customizable_id AND 
-            cv_hts_booked.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_hts_booked ON
+            ol.id = cv_hts_booked.customizable_id AND
+            cv_hts_booked.customizable_type = 'OrderLine' AND
             cv_hts_booked.custom_definition_id = #{@cdefs[:ordln_po_booked_hts].id}
-          LEFT OUTER JOIN custom_values AS cv_hts_shipped ON 
-            ol.id = cv_hts_shipped.customizable_id AND 
-            cv_hts_shipped.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_hts_shipped ON
+            ol.id = cv_hts_shipped.customizable_id AND
+            cv_hts_shipped.customizable_type = 'OrderLine' AND
             cv_hts_shipped.custom_definition_id = #{@cdefs[:ordln_po_shipped_hts].id}
-          LEFT OUTER JOIN custom_values AS cv_unit_price_created ON 
-            ol.id = cv_unit_price_created.customizable_id AND 
-            cv_unit_price_created.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_unit_price_created ON
+            ol.id = cv_unit_price_created.customizable_id AND
+            cv_unit_price_created.customizable_type = 'OrderLine' AND
             cv_unit_price_created.custom_definition_id = #{@cdefs[:ordln_po_create_price_per_unit].id}
-          LEFT OUTER JOIN custom_values AS cv_unit_price_booked ON 
-            ol.id = cv_unit_price_booked.customizable_id AND 
-            cv_unit_price_booked.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_unit_price_booked ON
+            ol.id = cv_unit_price_booked.customizable_id AND
+            cv_unit_price_booked.customizable_type = 'OrderLine' AND
             cv_unit_price_booked.custom_definition_id = #{@cdefs[:ordln_po_booked_price_per_unit].id}
-          LEFT OUTER JOIN custom_values AS cv_unit_price_shipped ON 
-            ol.id = cv_unit_price_shipped.customizable_id AND 
-            cv_unit_price_shipped.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_unit_price_shipped ON
+            ol.id = cv_unit_price_shipped.customizable_id AND
+            cv_unit_price_shipped.customizable_type = 'OrderLine' AND
             cv_unit_price_shipped.custom_definition_id = #{@cdefs[:ordln_po_shipped_price_per_unit].id}
-          LEFT OUTER JOIN custom_values AS cv_total_price_created ON 
-            ol.id = cv_total_price_created.customizable_id AND 
-            cv_total_price_created.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_total_price_created ON
+            ol.id = cv_total_price_created.customizable_id AND
+            cv_total_price_created.customizable_type = 'OrderLine' AND
             cv_total_price_created.custom_definition_id = #{@cdefs[:ordln_po_create_total_price].id}
-          LEFT OUTER JOIN custom_values AS cv_total_price_booked ON 
-            ol.id = cv_total_price_booked.customizable_id AND 
-            cv_total_price_booked.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_total_price_booked ON
+            ol.id = cv_total_price_booked.customizable_id AND
+            cv_total_price_booked.customizable_type = 'OrderLine' AND
             cv_total_price_booked.custom_definition_id = #{@cdefs[:ordln_po_booked_total_price].id}
-          LEFT OUTER JOIN custom_values AS cv_total_price_shipped ON 
-            ol.id = cv_total_price_shipped.customizable_id AND 
-            cv_total_price_shipped.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_total_price_shipped ON
+            ol.id = cv_total_price_shipped.customizable_id AND
+            cv_total_price_shipped.customizable_type = 'OrderLine' AND
             cv_total_price_shipped.custom_definition_id = #{@cdefs[:ordln_po_shipped_total_price].id}
-          LEFT OUTER JOIN custom_values AS cv_country_origin_created ON 
-            ol.id = cv_country_origin_created.customizable_id AND 
-            cv_country_origin_created.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_country_origin_created ON
+            ol.id = cv_country_origin_created.customizable_id AND
+            cv_country_origin_created.customizable_type = 'OrderLine' AND
             cv_country_origin_created.custom_definition_id = #{@cdefs[:ordln_po_create_country_origin].id}
-          LEFT OUTER JOIN custom_values AS cv_country_origin_booked ON 
-            ol.id = cv_country_origin_booked.customizable_id AND 
-            cv_country_origin_booked.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_country_origin_booked ON
+            ol.id = cv_country_origin_booked.customizable_id AND
+            cv_country_origin_booked.customizable_type = 'OrderLine' AND
             cv_country_origin_booked.custom_definition_id = #{@cdefs[:ordln_po_booked_country_origin].id}
-          LEFT OUTER JOIN custom_values AS cv_country_origin_shipped ON 
-            ol.id = cv_country_origin_shipped.customizable_id AND 
-            cv_country_origin_shipped.customizable_type = 'OrderLine' AND 
+          LEFT OUTER JOIN custom_values AS cv_country_origin_shipped ON
+            ol.id = cv_country_origin_shipped.customizable_id AND
+            cv_country_origin_shipped.customizable_type = 'OrderLine' AND
             cv_country_origin_shipped.custom_definition_id = #{@cdefs[:ordln_po_shipped_country_origin].id}
-          LEFT OUTER JOIN custom_values AS cv_discrepancy_comments ON 
-            ord.id = cv_discrepancy_comments.customizable_id AND 
-            cv_discrepancy_comments.customizable_type = 'Order' AND 
-            cv_discrepancy_comments.custom_definition_id = #{@cdefs[:ord_snapshot_discrepancy_comment].id} 
-          LEFT OUTER JOIN companies AS vendor ON 
+          LEFT OUTER JOIN custom_values AS cv_discrepancy_comments ON
+            ord.id = cv_discrepancy_comments.customizable_id AND
+            cv_discrepancy_comments.customizable_type = 'Order' AND
+            cv_discrepancy_comments.custom_definition_id = #{@cdefs[:ord_snapshot_discrepancy_comment].id}
+          LEFT OUTER JOIN companies AS vendor ON
             ord.vendor_id = vendor.id
-        WHERE 
+        WHERE
           #{open_orders_only ? "ord.closed_at IS NULL AND " : ""}
           (
             (
-              cv_article_created.id IS NOT NULL AND 
-              cv_article_booked.id IS NOT NULL AND 
-              !(cv_article_created.string_value <=> cv_article_booked.string_value) 
+              cv_article_created.id IS NOT NULL AND
+              cv_article_booked.id IS NOT NULL AND
+              !(cv_article_created.string_value <=> cv_article_booked.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_article_booked.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_article_booked.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_article_booked.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_article_created.id IS NOT NULL AND 
-              cv_article_shipped.id IS NOT NULL AND 
-              !(cv_article_created.string_value <=> cv_article_shipped.string_value)  
+              cv_article_created.id IS NOT NULL AND
+              cv_article_shipped.id IS NOT NULL AND
+              !(cv_article_created.string_value <=> cv_article_shipped.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_article_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_article_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_article_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_article_booked.id IS NOT NULL AND 
-              cv_article_shipped.id IS NOT NULL AND 
-              !(cv_article_booked.string_value <=> cv_article_shipped.string_value) 
+              cv_article_booked.id IS NOT NULL AND
+              cv_article_shipped.id IS NOT NULL AND
+              !(cv_article_booked.string_value <=> cv_article_shipped.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_article_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_article_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_article_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_quantity_created.id IS NOT NULL AND 
-              cv_quantity_booked.id IS NOT NULL AND 
-              !(cv_quantity_created.decimal_value <=> cv_quantity_booked.decimal_value) 
+              cv_quantity_created.id IS NOT NULL AND
+              cv_quantity_booked.id IS NOT NULL AND
+              !(cv_quantity_created.decimal_value <=> cv_quantity_booked.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_quantity_booked.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_quantity_booked.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_quantity_booked.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_quantity_created.id IS NOT NULL AND 
-              cv_quantity_shipped.id IS NOT NULL AND 
-              !(cv_quantity_created.decimal_value <=> cv_quantity_shipped.decimal_value) 
+              cv_quantity_created.id IS NOT NULL AND
+              cv_quantity_shipped.id IS NOT NULL AND
+              !(cv_quantity_created.decimal_value <=> cv_quantity_shipped.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_quantity_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_quantity_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_quantity_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_quantity_booked.id IS NOT NULL AND 
-              cv_quantity_shipped.id IS NOT NULL AND 
-              !(cv_quantity_booked.decimal_value <=> cv_quantity_shipped.decimal_value) 
+              cv_quantity_booked.id IS NOT NULL AND
+              cv_quantity_shipped.id IS NOT NULL AND
+              !(cv_quantity_booked.decimal_value <=> cv_quantity_shipped.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_quantity_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_quantity_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_quantity_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_hts_created.id IS NOT NULL AND 
-              cv_hts_booked.id IS NOT NULL AND 
-              !(cv_hts_created.string_value <=> cv_hts_booked.string_value) 
+              cv_hts_created.id IS NOT NULL AND
+              cv_hts_booked.id IS NOT NULL AND
+              !(cv_hts_created.string_value <=> cv_hts_booked.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_hts_booked.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_hts_booked.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_hts_booked.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_hts_created.id IS NOT NULL AND 
-              cv_hts_shipped.id IS NOT NULL AND 
-              !(cv_hts_created.string_value <=> cv_hts_shipped.string_value) 
+              cv_hts_created.id IS NOT NULL AND
+              cv_hts_shipped.id IS NOT NULL AND
+              !(cv_hts_created.string_value <=> cv_hts_shipped.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_hts_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_hts_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_hts_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_hts_booked.id IS NOT NULL AND 
-              cv_hts_shipped.id IS NOT NULL AND 
-              !(cv_hts_booked.string_value <=> cv_hts_shipped.string_value) 
+              cv_hts_booked.id IS NOT NULL AND
+              cv_hts_shipped.id IS NOT NULL AND
+              !(cv_hts_booked.string_value <=> cv_hts_shipped.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_hts_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_hts_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_hts_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_unit_price_created.id IS NOT NULL AND 
-              cv_unit_price_booked.id IS NOT NULL AND 
-              !(cv_unit_price_created.decimal_value <=> cv_unit_price_booked.decimal_value) 
+              cv_unit_price_created.id IS NOT NULL AND
+              cv_unit_price_booked.id IS NOT NULL AND
+              !(cv_unit_price_created.decimal_value <=> cv_unit_price_booked.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_unit_price_booked.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_unit_price_booked.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_unit_price_booked.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_unit_price_created.id IS NOT NULL AND 
-              cv_unit_price_shipped.id IS NOT NULL AND 
-              !(cv_unit_price_created.decimal_value <=> cv_unit_price_shipped.decimal_value) 
+              cv_unit_price_created.id IS NOT NULL AND
+              cv_unit_price_shipped.id IS NOT NULL AND
+              !(cv_unit_price_created.decimal_value <=> cv_unit_price_shipped.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_unit_price_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_unit_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_unit_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_unit_price_booked.id IS NOT NULL AND 
-              cv_unit_price_shipped.id IS NOT NULL AND 
-              !(cv_unit_price_booked.decimal_value <=> cv_unit_price_shipped.decimal_value) 
+              cv_unit_price_booked.id IS NOT NULL AND
+              cv_unit_price_shipped.id IS NOT NULL AND
+              !(cv_unit_price_booked.decimal_value <=> cv_unit_price_shipped.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_unit_price_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_unit_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_unit_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_total_price_created.id IS NOT NULL AND 
-              cv_total_price_booked.id IS NOT NULL AND 
-              !(cv_total_price_created.decimal_value <=> cv_total_price_booked.decimal_value) 
+              cv_total_price_created.id IS NOT NULL AND
+              cv_total_price_booked.id IS NOT NULL AND
+              !(cv_total_price_created.decimal_value <=> cv_total_price_booked.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_total_price_booked.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_total_price_booked.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_total_price_booked.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_total_price_created.id IS NOT NULL AND 
-              cv_total_price_shipped.id IS NOT NULL AND 
-              !(cv_total_price_created.decimal_value <=> cv_total_price_shipped.decimal_value) 
+              cv_total_price_created.id IS NOT NULL AND
+              cv_total_price_shipped.id IS NOT NULL AND
+              !(cv_total_price_created.decimal_value <=> cv_total_price_shipped.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_total_price_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_total_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_total_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_total_price_booked.id IS NOT NULL AND 
-              cv_total_price_shipped.id IS NOT NULL AND 
-              !(cv_total_price_booked.decimal_value <=> cv_total_price_shipped.decimal_value) 
+              cv_total_price_booked.id IS NOT NULL AND
+              cv_total_price_shipped.id IS NOT NULL AND
+              !(cv_total_price_booked.decimal_value <=> cv_total_price_shipped.decimal_value)
               #{has_value(snapshot_range_start) ? (" AND cv_total_price_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_total_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_total_price_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_country_origin_created.id IS NOT NULL AND 
-              cv_country_origin_booked.id IS NOT NULL AND 
-              !(cv_country_origin_created.string_value <=> cv_country_origin_booked.string_value) 
+              cv_country_origin_created.id IS NOT NULL AND
+              cv_country_origin_booked.id IS NOT NULL AND
+              !(cv_country_origin_created.string_value <=> cv_country_origin_booked.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_country_origin_booked.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_country_origin_booked.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_country_origin_booked.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_country_origin_created.id IS NOT NULL AND 
-              cv_country_origin_shipped.id IS NOT NULL AND 
-              !(cv_country_origin_created.string_value <=> cv_country_origin_shipped.string_value) 
+              cv_country_origin_created.id IS NOT NULL AND
+              cv_country_origin_shipped.id IS NOT NULL AND
+              !(cv_country_origin_created.string_value <=> cv_country_origin_shipped.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_country_origin_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_country_origin_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) OR 
+              #{has_value(snapshot_range_end) ? (" AND cv_country_origin_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            ) OR
             (
-              cv_country_origin_booked.id IS NOT NULL AND 
-              cv_country_origin_shipped.id IS NOT NULL AND 
-              !(cv_country_origin_booked.string_value <=> cv_country_origin_shipped.string_value) 
+              cv_country_origin_booked.id IS NOT NULL AND
+              cv_country_origin_shipped.id IS NOT NULL AND
+              !(cv_country_origin_booked.string_value <=> cv_country_origin_shipped.string_value)
               #{has_value(snapshot_range_start) ? (" AND cv_country_origin_shipped.updated_at >= '" + snapshot_range_start + "'") : ""}
-              #{has_value(snapshot_range_end) ? (" AND cv_country_origin_shipped.updated_at < '" + snapshot_range_end + "'") : ""} 
-            ) 
+              #{has_value(snapshot_range_end) ? (" AND cv_country_origin_shipped.updated_at < '" + snapshot_range_end + "'") : ""}
+            )
           )
-        ORDER BY 
-          ord.order_number, 
+        ORDER BY
+          ord.order_number,
           ol.line_number
       QRY
     end

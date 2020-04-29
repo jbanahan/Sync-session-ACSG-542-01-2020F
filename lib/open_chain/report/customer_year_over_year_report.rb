@@ -5,12 +5,12 @@ module OpenChain; module Report; class CustomerYearOverYearReport
 
   ENTRY_YEAR_OVER_YEAR_REPORT_USERS ||= 'entry_yoy_report'
 
-  YearOverYearData ||= Struct.new(:range_year,:range_month,:customer_number,:customer_name,:broker_reference,
-                                       :entry_line_count,:entry_type,:entered_value,:total_duty,:mpf,:hmf,:cotton_fee,
-                                       :total_taxes,:other_fees,:total_fees,:arrival_date,:release_date,
-                                       :file_logged_date,:fiscal_date,:eta_date,:total_units,:total_gst, :total_duty_gst,
-                                       :export_country_codes,:transport_mode_code,:broker_invoice_total,
-                                       :entry_type_count_hash,:entry_count,:isf_fees,:mode_of_transportation_count_hash,
+  YearOverYearData ||= Struct.new(:range_year, :range_month, :customer_number, :customer_name, :broker_reference,
+                                       :entry_line_count, :entry_type, :entered_value, :total_duty, :mpf, :hmf, :cotton_fee,
+                                       :total_taxes, :other_fees, :total_fees, :arrival_date, :release_date,
+                                       :file_logged_date, :fiscal_date, :eta_date, :total_units, :total_gst, :total_duty_gst,
+                                       :export_country_codes, :transport_mode_code, :broker_invoice_total,
+                                       :entry_type_count_hash, :entry_count, :isf_fees, :mode_of_transportation_count_hash,
                                        :entry_port_code, :mode_of_transportation_total_units_hash) do
     def initialize
       self.entry_count ||= 0
@@ -120,7 +120,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     def get_range_field settings
       range_field = settings['range_field']
       # Defaults to arrival date if bad.  This is the default value on screen.
-      ['arrival_date','eta_date','file_logged_date','fiscal_date','release_date'].include?(range_field) ? range_field : "arrival_date"
+      ['arrival_date', 'eta_date', 'file_logged_date', 'fiscal_date', 'release_date'].include?(range_field) ? range_field : "arrival_date"
     end
 
     def generate_report importer_ids, year_1, year_2, range_field, mode_of_transport_codes, opt_fields, include_port_breakdown, group_by_mode_of_transport, entry_types, include_line_graphs, sum_units_by_mode_of_transport
@@ -428,7 +428,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     def make_summary_headers first_col_val
-      [first_col_val,"January","February","March","April","May","June","July","August","September","October","November","December","Grand Totals"]
+      [first_col_val, "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December", "Grand Totals"]
     end
 
     # There is no need to condense the overall data on this tab.
@@ -437,8 +437,8 @@ module OpenChain; module Report; class CustomerYearOverYearReport
       sheet = wb.create_sheet "Data", headers: fields.keys
 
       data_arr.each do |row|
-        values = fields.values.map{ |v| row.send v[:meth] }
-        styles = fields.values.map{ |v| v[:style] }
+        values = fields.values.map { |v| row.send v[:meth] }
+        styles = fields.values.map { |v| v[:style] }
         wb.add_body_row sheet, values, styles: styles
       end
 
@@ -448,7 +448,7 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     def data_sheet_fields opt_fields
-      fields = {"Customer Number" => {meth: :customer_number, style: nil}, 
+      fields = {"Customer Number" => {meth: :customer_number, style: nil},
                 "Customer Name" => {meth: :customer_name, style: nil},
                 "Broker Reference" => {meth: :broker_reference, style: nil},
                 "Entry Summary Line Count" => {meth: :entry_line_count, style: :number},
@@ -483,71 +483,71 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     # this report replaces.
     def make_query importer_ids, year_1, year_2, range_field, mode_of_transport_codes, entry_types
       <<-SQL
-      SELECT 
-        YEAR(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) AS range_year_tz_converted, 
-        MONTH(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) AS range_month_tz_converted, 
-        YEAR(#{range_field}) AS range_year, 
-        MONTH(#{range_field}) AS range_month, 
-        customer_number, 
-        customer_name, 
-        broker_reference, 
+      SELECT
+        YEAR(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) AS range_year_tz_converted,
+        MONTH(convert_tz(#{range_field}, "UTC", "#{get_time_zone}")) AS range_month_tz_converted,
+        YEAR(#{range_field}) AS range_year,
+        MONTH(#{range_field}) AS range_month,
+        customer_number,
+        customer_name,
+        broker_reference,
         (
-          SELECT 
-            COUNT(*) 
-          FROM 
-            commercial_invoices AS ci 
-            LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
-              ci.id = cil.commercial_invoice_id 
-          WHERE 
+          SELECT
+            COUNT(*)
+          FROM
+            commercial_invoices AS ci
+            LEFT OUTER JOIN commercial_invoice_lines AS cil ON
+              ci.id = cil.commercial_invoice_id
+          WHERE
             ci.entry_id = entries.id
-        ) AS entry_line_count, 
-        entry_type, 
-        IFNULL(entered_value, 0.0) AS entered_value, 
-        IFNULL(total_duty, 0.0) AS total_duty, 
-        IFNULL(mpf, 0.0) AS mpf, 
-        IFNULL(hmf, 0.0) AS hmf, 
-        IFNULL(cotton_fee, 0.0) AS cotton_fee, 
-        IFNULL(total_taxes, 0.0) AS total_taxes, 
-        IFNULL(other_fees, 0.0) AS other_fees, 
-        IFNULL(total_fees, 0.0) AS total_fees, 
-        DATE(convert_tz(arrival_date, "UTC", "#{get_time_zone}")) AS arrival_date, 
-        DATE(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS release_date, 
-        DATE(convert_tz(file_logged_date, "UTC", "#{get_time_zone}")) AS file_logged_date, 
-        fiscal_date, 
-        eta_date, 
-        IFNULL(total_units, 0.0) AS total_units, 
+        ) AS entry_line_count,
+        entry_type,
+        IFNULL(entered_value, 0.0) AS entered_value,
+        IFNULL(total_duty, 0.0) AS total_duty,
+        IFNULL(mpf, 0.0) AS mpf,
+        IFNULL(hmf, 0.0) AS hmf,
+        IFNULL(cotton_fee, 0.0) AS cotton_fee,
+        IFNULL(total_taxes, 0.0) AS total_taxes,
+        IFNULL(other_fees, 0.0) AS other_fees,
+        IFNULL(total_fees, 0.0) AS total_fees,
+        DATE(convert_tz(arrival_date, "UTC", "#{get_time_zone}")) AS arrival_date,
+        DATE(convert_tz(release_date, "UTC", "#{get_time_zone}")) AS release_date,
+        DATE(convert_tz(file_logged_date, "UTC", "#{get_time_zone}")) AS file_logged_date,
+        fiscal_date,
+        eta_date,
+        IFNULL(total_units, 0.0) AS total_units,
         IFNULL(total_gst, 0.0) AS total_gst,
         IFNULL(total_duty_gst, 0.0) AS total_duty_gst,
-        export_country_codes, 
-        transport_mode_code, 
-        IFNULL(broker_invoice_total, 0.0) AS broker_invoice_total, 
+        export_country_codes,
+        transport_mode_code,
+        IFNULL(broker_invoice_total, 0.0) AS broker_invoice_total,
         (
-          SELECT 
-            IFNULL(SUM(charge_amount), 0.0) 
-          FROM 
-            broker_invoices AS bi 
-            LEFT OUTER JOIN broker_invoice_lines AS bil ON 
-              bi.id = bil.broker_invoice_id 
-          WHERE 
-            bi.entry_id = entries.id AND 
+          SELECT
+            IFNULL(SUM(charge_amount), 0.0)
+          FROM
+            broker_invoices AS bi
+            LEFT OUTER JOIN broker_invoice_lines AS bil ON
+              bi.id = bil.broker_invoice_id
+          WHERE
+            bi.entry_id = entries.id AND
             bil.charge_code = '0191'
-        ) AS isf_fees, 
-        entry_port_code  
-      FROM 
-        entries 
-      WHERE 
-        importer_id IN (#{sanitize_string_in_list(importer_ids)}) AND 
+        ) AS isf_fees,
+        entry_port_code
+      FROM
+        entries
+      WHERE
+        importer_id IN (#{sanitize_string_in_list(importer_ids)}) AND
         #{mode_of_transport_codes.length > 0 ? "transport_mode_code IN (" + sanitize_string_in_list(mode_of_transport_codes) + ") AND " : ""}
         #{entry_types && entry_types.length > 0 ? "entry_type IN (" + sanitize_string_in_list(entry_types) + ") AND " : ""}
         (
           (
-            #{range_field} >= '#{format_jan_1_date(year_1, range_field)}' AND 
+            #{range_field} >= '#{format_jan_1_date(year_1, range_field)}' AND
             #{range_field} < '#{format_jan_1_date(year_1 + 1, range_field)}'
           ) OR (
-            #{range_field} >= '#{format_jan_1_date(year_2, range_field)}' AND 
+            #{range_field} >= '#{format_jan_1_date(year_2, range_field)}' AND
             #{range_field} < '#{format_jan_1_date(year_2 + 1, range_field)}'
           )
-        ) AND 
+        ) AND
         #{range_field} < '#{format_first_day_of_current_month(range_field)}'
       ORDER BY
         #{range_field}
@@ -679,14 +679,14 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     end
 
     def make_port_breakdown_column_headings entry_types, opt_fields
-      column_headings = ["#{Date.today.strftime("%B %Y")} Port Breakdown","Entry Port Code","Number of Entries","Entry Summary Lines","Total Units"]
+      column_headings = ["#{Date.today.strftime("%B %Y")} Port Breakdown", "Entry Port Code", "Number of Entries", "Entry Summary Lines", "Total Units"]
 
       entry_types.each do |entry_type|
         next unless entry_type
         column_headings << "Entry Type #{entry_type}"
       end
 
-      column_headings += ["Total Entered Value","Total Duty"]
+      column_headings += ["Total Entered Value", "Total Duty"]
       column_headings << "MPF" if opt_fields['mpf']
       column_headings << "HMF" if opt_fields['hmf']
       column_headings << "Cotton Fee" if opt_fields['cotton_fee']
@@ -729,85 +729,85 @@ module OpenChain; module Report; class CustomerYearOverYearReport
     # from the same date field as the other query.
     def make_port_breakdown_query importer_ids, range_field, mode_of_transport_codes, entry_types
       <<-SQL
-        SELECT 
-          entry_port_name, 
-          entry_port_code, 
-          entry_type, 
-          COUNT(*) AS entry_count, 
-          SUM(entry_line_count) AS entry_line_count, 
-          SUM(total_units) AS total_units, 
-          SUM(entered_value) AS entered_value, 
-          SUM(total_duty) AS total_duty, 
-          SUM(mpf) AS mpf, 
-          SUM(hmf) AS hmf, 
-          SUM(cotton_fee) AS cotton_fee, 
-          SUM(total_taxes) AS total_taxes, 
-          SUM(other_fees) AS other_fees, 
-          SUM(total_fees) AS total_fees, 
+        SELECT
+          entry_port_name,
+          entry_port_code,
+          entry_type,
+          COUNT(*) AS entry_count,
+          SUM(entry_line_count) AS entry_line_count,
+          SUM(total_units) AS total_units,
+          SUM(entered_value) AS entered_value,
+          SUM(total_duty) AS total_duty,
+          SUM(mpf) AS mpf,
+          SUM(hmf) AS hmf,
+          SUM(cotton_fee) AS cotton_fee,
+          SUM(total_taxes) AS total_taxes,
+          SUM(other_fees) AS other_fees,
+          SUM(total_fees) AS total_fees,
           SUM(broker_invoice_total) AS broker_invoice_total,
           SUM(total_gst) AS total_gst,
           SUM(total_duty_GST) AS total_duty_gst,
-          SUM(isf_fees) AS isf_fees 
-        FROM 
+          SUM(isf_fees) AS isf_fees
+        FROM
           (
-            SELECT 
-              entry_port.name AS entry_port_name, 
-              entry_port_code, 
-              entry_type, 
+            SELECT
+              entry_port.name AS entry_port_name,
+              entry_port_code,
+              entry_type,
               (
-                SELECT 
-                  COUNT(*) 
-                FROM 
-                  commercial_invoices AS ci 
-                  LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
-                    ci.id = cil.commercial_invoice_id 
-                WHERE 
+                SELECT
+                  COUNT(*)
+                FROM
+                  commercial_invoices AS ci
+                  LEFT OUTER JOIN commercial_invoice_lines AS cil ON
+                    ci.id = cil.commercial_invoice_id
+                WHERE
                   ci.entry_id = entries.id
-              ) AS entry_line_count, 
-              IFNULL(total_units, 0.0) AS total_units, 
-              IFNULL(entered_value, 0.0) AS entered_value, 
-              IFNULL(total_duty, 0.0) AS total_duty, 
-              IFNULL(mpf, 0.0) AS mpf, 
-              IFNULL(hmf, 0.0) AS hmf, 
-              IFNULL(cotton_fee, 0.0) AS cotton_fee, 
-              IFNULL(total_taxes, 0.0) AS total_taxes, 
-              IFNULL(other_fees, 0.0) AS other_fees, 
-              IFNULL(total_fees, 0.0) AS total_fees, 
+              ) AS entry_line_count,
+              IFNULL(total_units, 0.0) AS total_units,
+              IFNULL(entered_value, 0.0) AS entered_value,
+              IFNULL(total_duty, 0.0) AS total_duty,
+              IFNULL(mpf, 0.0) AS mpf,
+              IFNULL(hmf, 0.0) AS hmf,
+              IFNULL(cotton_fee, 0.0) AS cotton_fee,
+              IFNULL(total_taxes, 0.0) AS total_taxes,
+              IFNULL(other_fees, 0.0) AS other_fees,
+              IFNULL(total_fees, 0.0) AS total_fees,
               IFNULL(broker_invoice_total, 0.0) AS broker_invoice_total,
               IFNULL(total_gst, 0.0) AS total_GST,
               IFNULL(total_duty_gst, 0.0) AS total_duty_gst,
               (
-                SELECT 
-                  IFNULL(SUM(charge_amount), 0.0) 
-                FROM 
-                  broker_invoices AS bi 
-                  LEFT OUTER JOIN broker_invoice_lines AS bil ON 
-                    bi.id = bil.broker_invoice_id 
-                WHERE 
-                  bi.entry_id = entries.id AND 
+                SELECT
+                  IFNULL(SUM(charge_amount), 0.0)
+                FROM
+                  broker_invoices AS bi
+                  LEFT OUTER JOIN broker_invoice_lines AS bil ON
+                    bi.id = bil.broker_invoice_id
+                WHERE
+                  bi.entry_id = entries.id AND
                   bil.charge_code = '0191'
-              ) AS isf_fees 
-            FROM 
-              entries 
-              LEFT OUTER JOIN ports AS entry_port ON 
+              ) AS isf_fees
+            FROM
+              entries
+              LEFT OUTER JOIN ports AS entry_port ON
                 (
                  (entries.entry_port_code = entry_port.schedule_d_code AND entries.import_country_id = #{Country.where(iso_code:'US').first.try(:id).to_i})
-                 OR 
+                 OR
                  (entries.entry_port_code = entry_port.cbsa_port AND entries.import_country_id = #{Country.where(iso_code:'CA').first.try(:id).to_i})
                 )
-            WHERE 
-              importer_id IN (#{sanitize_string_in_list(importer_ids)}) AND 
+            WHERE
+              importer_id IN (#{sanitize_string_in_list(importer_ids)}) AND
               #{mode_of_transport_codes.length > 0 ? "transport_mode_code IN (" + sanitize_string_in_list(mode_of_transport_codes) + ") AND " : ""}
               #{entry_types && entry_types.length > 0 ? "entry_type IN (" + sanitize_string_in_list(entry_types) + ") AND " : ""}
-              #{range_field} >= '#{format_first_day_of_month(range_field, -1)}' AND 
+              #{range_field} >= '#{format_first_day_of_month(range_field, -1)}' AND
               #{range_field} < '#{format_first_day_of_current_month(range_field)}'
-          ) AS tbl 
-        GROUP BY 
-          entry_port_name, 
-          entry_port_code, 
-          entry_type 
+          ) AS tbl
+        GROUP BY
+          entry_port_name,
+          entry_port_code,
+          entry_type
         ORDER BY
-          entry_port_name, 
+          entry_port_name,
           entry_type
       SQL
     end

@@ -19,7 +19,7 @@ describe TariffNumberSet do
       expect(subject.include? "1234567890").to eq false
     end
 
-    it "returns false if the tariff is not in the set" do 
+    it "returns false if the tariff is not in the set" do
       subject << "12"
 
       expect(subject.include? "2312121212").to eq false
@@ -43,7 +43,7 @@ describe TariffNumberSet do
       expect(subject.find "1234567890").to be_nil
     end
 
-    it "returns nil if the tariff is not in the set" do 
+    it "returns nil if the tariff is not in the set" do
       subject << "12"
 
       expect(subject.find "2312121212").to be_nil
@@ -56,7 +56,7 @@ describe TariffNumberSet do
     end
   end
 
-  describe "add" do 
+  describe "add" do
     it "adds a tariff number" do
       subject.add "12"
       expect(subject.include? "12").to eq true
@@ -84,7 +84,7 @@ describe TariffNumberSet do
 
   describe "add?" do
 
-    # Since add? utilizes the add method under the covers, this describe solely tests the 
+    # Since add? utilizes the add method under the covers, this describe solely tests the
     # specifics of the add? (that it returns self if the value was actually added)
     it "adds a tariff number" do
       expect(subject.add? "12").to eq subject

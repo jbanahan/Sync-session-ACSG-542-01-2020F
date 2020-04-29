@@ -11,7 +11,7 @@ require 'open_chain/api/v1/api_model_field_support'
 module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiController
   include Api::V1::StateToggleSupport
   include OpenChain::Api::V1::ApiModelFieldSupport
-  
+
   prepend_before_filter :allow_csv, only: [:index]
 
   def output_generator
@@ -57,7 +57,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     render_obj obj
   end
 
-  #override this to implement custom finder
+  # override this to implement custom finder
   def find_object_by_id id
     core_module.klass.find_by_id id
   end
@@ -92,7 +92,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
   def do_update core_module
     ActiveRecord::Base.transaction do
       obj_hash = object_params
-      raise StatusableError.new("Path ID #{params[:id]} does not match JSON ID #{obj_hash['id']}.",400) unless params[:id].to_s == obj_hash['id'].to_s
+      raise StatusableError.new("Path ID #{params[:id]} does not match JSON ID #{obj_hash['id']}.", 400) unless params[:id].to_s == obj_hash['id'].to_s
       obj = save_object obj_hash
       obj.update_attributes(last_updated_by: current_user) if obj.respond_to?(:last_updated_by)
       if obj.errors.full_messages.blank?
@@ -100,7 +100,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
       else
         raise StatusableError.new(obj.errors.full_messages, 400)
       end
-      #call do_render instead of using the in memory object so we can benefit from any special optimizations that the implementing classes may do
+      # call do_render instead of using the in memory object so we can benefit from any special optimizations that the implementing classes may do
       render_show core_module
     end
   end
@@ -116,11 +116,11 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     fields.each_pair do |uid, mf|
       uid = mf.uid.to_s
       # process_import handles checking if user can edit, so don't bother w/ that here
-      mf.process_import(obj,base_hash[uid], user)
+      mf.process_import(obj, base_hash[uid], user)
     end
     nil
   end
-  
+
   # Simple implementation of a save_object method, which is called by do_create and do_update
   def generic_save_object obj_hash
     # For any simple enough object structure that only grants access to the data found in the
@@ -135,7 +135,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     end
 
     unless obj
-      raise StatusableError.new("#{cm.label} Not Found" ,404)
+      raise StatusableError.new("#{cm.label} Not Found" , 404)
     else
       generic_save_existing_object obj, obj_hash
     end
@@ -164,18 +164,18 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     raise StatusableError.new("You do not have permission to view this module.", 401) unless user.view_module?(core_module)
     k = core_module.klass.all.select("DISTINCT #{core_module.table_name}.id")
 
-    #apply search criterions
+    # apply search criterions
     search_criterions.each do |sc|
       return unless validate_model_field 'Search', sc.model_field_uid, core_module, user
       k = sc.apply(k)
     end
 
-    k = core_module.klass.search_secure(user,k)
+    k = core_module.klass.search_secure(user, k)
     if(params['count_only'])
       render json:{record_count:k.count}
     else
       outer_query = core_module.klass.where("ID IN (#{k.to_sql})")
-      #apply sort criterions
+      # apply sort criterions
       sort_criterions.each do |sc|
         return unless validate_model_field 'Sort', sc.model_field_uid, core_module, user
         outer_query = outer_query.order("#{sc.model_field.qualified_field_name}#{sc.descending? ? ' desc' : ''}")
@@ -197,14 +197,14 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
     per_page = max_per_page if per_page > max_per_page
-    q = query.paginate(per_page:per_page,page:page)
+    q = query.paginate(per_page:per_page, page:page)
     r = q.to_a.collect {|obj| obj_to_json_hash(obj)}
-    render json:{results:r,page:page,per_page:per_page}
+    render json:{results:r, page:page, per_page:per_page}
   end
 
   def render_search_csv query
     u = current_user
-  
+
     fields = params['fields'].blank? ? [] : params['fields'].split(',')
     model_fields = fields.collect {|uid| ModelField.find_by_uid(uid.to_sym)}
     model_fields.delete_if {|mf| mf.blank?}
@@ -214,8 +214,8 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 1000
     per_page = 1000 if per_page > 1000
-    query.paginate(per_page:per_page,page:page).each do |row|
-      r << model_fields.collect {|mf| mf.process_export(row,u)}.to_csv(row_sep:nil)
+    query.paginate(per_page:per_page, page:page).each do |row|
+      r << model_fields.collect {|mf| mf.process_export(row, u)}.to_csv(row_sep:nil)
     end
     r << "Maximum rows (#{per_page}) reached." if r.length == (per_page + 1)
 
@@ -227,41 +227,41 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
 
   def search_criterions
     groups = {}
-    params.each do |k,v|
+    params.each do |k, v|
       kstr = k.to_s
       case kstr
       when /^sid\d+$/
-        num = kstr.sub(/sid/,'').to_i
+        num = kstr.sub(/sid/, '').to_i
         groups[num] ||= {}
         groups[num]['field_id'] = v
       when /^sop\d+$/
-        num = kstr.sub(/sop/,'').to_i
+        num = kstr.sub(/sop/, '').to_i
         groups[num] ||= {}
         groups[num]['operator'] = v
       when /^sv\d+$/
-        num = kstr.sub(/sv/,'').to_i
+        num = kstr.sub(/sv/, '').to_i
         groups[num] ||= {}
         groups[num]['value'] = v
       end
     end
     r = []
-    groups.each do |k,v|
-      r << SearchCriterion.new(model_field_uid:v['field_id'],operator:v['operator'],value:v['value'])
+    groups.each do |k, v|
+      r << SearchCriterion.new(model_field_uid:v['field_id'], operator:v['operator'], value:v['value'])
     end
     r
   end
 
   def sort_criterions
     groups = {}
-    params.each do |k,v|
+    params.each do |k, v|
       kstr = k.to_s
       case kstr
       when /^oid\d+$/
-        num = kstr.sub(/oid/,'').to_i
+        num = kstr.sub(/oid/, '').to_i
         groups[num] ||= {}
         groups[num]['field_id'] = v
       when /^oo\d+$/
-        num = kstr.sub(/oo/,'').to_i
+        num = kstr.sub(/oo/, '').to_i
         groups[num] ||= {}
         groups[num]['order'] = v
       end
@@ -269,7 +269,7 @@ module Api; module V1; class ApiCoreModuleControllerBase < Api::V1::ApiControlle
     r = []
     groups.keys.sort.each do |k|
       v = groups[k]
-      r << SortCriterion.new(model_field_uid:v['field_id'],descending:v['order']=='D')
+      r << SortCriterion.new(model_field_uid:v['field_id'], descending:v['order']=='D')
     end
     r
   end

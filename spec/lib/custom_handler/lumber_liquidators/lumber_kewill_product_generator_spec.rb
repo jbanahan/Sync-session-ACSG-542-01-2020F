@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
 
       p = penalties.second
       expect(p.text "penaltyType").to eq "ADA"
-      expect(p.text "caseNo").to eq "ADDCASE"      
+      expect(p.text "caseNo").to eq "ADDCASE"
     end
 
     it "does not sync previously synced products" do
@@ -64,7 +64,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
 
     it "includes supplemental tariffs" do
       SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "12345678", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date)
-      
+
       data = nil
       expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
         data = file.read
@@ -81,7 +81,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
 
     it "overrides 301 supplemental tariffs if an exlusion is set on the product" do
       SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "12345678", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), special_tariff_type: "301"
-      
+
       product.update_custom_value! cdefs[:prod_301_exclusion_tariff], "99038812"
       data = nil
       expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberKewillProductGenerat
   describe "write_row_to_xml" do
 
     subject { described_class.new("LUMBER", {"alliance_customer_number" => "LUMBER", "strip_leading_zeros" => true, "use_unique_identifier" => true}) }
-    
+
     let (:row) {
       # This is what a file row without FDA information will look like (description should upcase)
       ["STYLE", "description", "1234567890", "CO", nil]

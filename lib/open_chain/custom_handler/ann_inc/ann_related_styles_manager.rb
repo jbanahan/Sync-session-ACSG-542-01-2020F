@@ -3,20 +3,20 @@ module OpenChain
   module CustomHandler
     module AnnInc
       class AnnRelatedStylesManager
-        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
-        AGGREGATE_FIELDS ||= [:po,:origin,:import,:cost,:dept_num,:dept_name]
+        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
+        AGGREGATE_FIELDS ||= [:po, :origin, :import, :cost, :dept_num, :dept_name]
 
-        #expose these as readers for ease of testing
+        # expose these as readers for ease of testing
         attr_reader :related_cd, :aggregate_defs, :ac_date_cd, :approved_cd
 
-        # Pass in a style and it's related styles and get back a single clean 
+        # Pass in a style and it's related styles and get back a single clean
         # object with everything handled properly and the style / related styles
         # in the right place and persisted to the database
         def self.get_style base_style:, missy:, petite:, tall:, short:, plus:
           c = self.new base_style: base_style, missy: missy, petite: petite, tall: tall, short: short, plus: plus
           p = c.product_to_use c.find_all_styles
         end
-        
+
         # don't call. Use the static get_style method
         def initialize base_style:, missy:, petite:, tall:, short:, plus:
           @base = base_style
@@ -31,19 +31,19 @@ module OpenChain
           @approved_cd = self.class.prep_custom_definitions([:approved_date]).values.first
         end
 
-        #find all styles that could be a match
+        # find all styles that could be a match
         def find_all_styles
           Product.
             joins("LEFT OUTER JOIN custom_values on custom_values.custom_definition_id = #{@related_cd.id} and custom_values.customizable_id = products.id").
-            where("unique_identifier IN (:uid) 
-              OR custom_values.text_value LIKE :base_like 
-              OR custom_values.text_value LIKE :missy_like 
-              OR custom_values.text_value LIKE :petite_like 
+            where("unique_identifier IN (:uid)
+              OR custom_values.text_value LIKE :base_like
+              OR custom_values.text_value LIKE :missy_like
+              OR custom_values.text_value LIKE :petite_like
               OR custom_values.text_value LIKE :tall_like
               OR custom_values.text_value LIKE :short_like
               OR custom_values.text_value LIKE :plus_like",
             {
-              uid:[@base,@missy,@petite,@tall,@short,@plus].collect{|b| make_no_match b},
+              uid:[@base, @missy, @petite, @tall, @short, @plus].collect {|b| make_no_match b},
               base_like:"%#{make_no_match @base}%",
               missy_like:"%#{make_no_match @missy}%",
               petite_like:"%#{make_no_match @petite}%",
@@ -65,14 +65,14 @@ module OpenChain
           when 0
             p = Product.create!(unique_identifier:uid_to_use)
           when 1
-            p = potential_styles.first 
+            p = potential_styles.first
           else
             if !m.blank?
               p = potential_styles.find {|ps| ps.unique_identifier == m}
             end
             p = potential_styles.first unless p
           end
-          p = Product.find p.id #reload from DB to clear read only flags
+          p = Product.find p.id # reload from DB to clear read only flags
           p.update_attributes(unique_identifier:uid_to_use) unless p.unique_identifier==uid_to_use
           p.update_custom_value! @related_cd, related_value
           if potential_styles.size > 1
@@ -81,7 +81,7 @@ module OpenChain
             set_best_classifications p, potential_styles
             potential_styles.each do |ps|
               next if ps==p
-              ps.reload #reload to break links to classifications that may have been moved
+              ps.reload # reload to break links to classifications that may have been moved
               ps.destroy
             end
           end
@@ -89,7 +89,7 @@ module OpenChain
         end
 
         def set_best_classifications product_to_use, potentials
-          #RULES:
+          # RULES:
           # 1) all approved classifications must have same tariffs or throw exception
           # 2) use the one with the latest approval date
           # 3) if multiple with latest approval date, use the one linked to the given product if possible
@@ -100,11 +100,11 @@ module OpenChain
             approved_classifications = prods.collect {|p| p.classifications.find {|cls| cls.country_id == c.id && !cls.get_custom_value(@approved_cd).value.blank? ? c : nil}}.compact
             next if approved_classifications.blank?
             validate_tariffs_same! approved_classifications
-            newest_approval_date_cls = approved_classifications.sort {|a,b| a.get_custom_value(@approved_cd).value <=> b.get_custom_value(@approved_cd).value}.reverse.first
+            newest_approval_date_cls = approved_classifications.sort {|a, b| a.get_custom_value(@approved_cd).value <=> b.get_custom_value(@approved_cd).value}.reverse.first
             newest_approval_date = newest_approval_date_cls.get_custom_value(@approved_cd).value
             with_newest_approval_date = approved_classifications.collect {|cls| cls.get_custom_value(@approved_cd).value == newest_approval_date ? cls : nil}.compact
             to_use = with_newest_approval_date.find {|t| t.product == product_to_use}
-            to_use = with_newest_approval_date.sort {|a,b| a.updated_at <=> b.updated_at}.reverse.first unless to_use
+            to_use = with_newest_approval_date.sort {|a, b| a.updated_at <=> b.updated_at}.reverse.first unless to_use
             existing = product_to_use.classifications.find {|cls| cls.country_id == c.id}
             if existing!=to_use
               existing.destroy unless existing.nil?
@@ -116,15 +116,15 @@ module OpenChain
 
         end
 
-        def set_earliest_ac_date product_to_use, other_products 
+        def set_earliest_ac_date product_to_use, other_products
           prods = other_products
           prods << product_to_use
           ac_date = prods.collect {|p| p.get_custom_value(ac_date_cd).value}.compact.sort.first
           product_to_use.update_custom_value! ac_date_cd, ac_date
         end
-        
+
         def merge_aggregate_values product_to_use, other_products
-          @aggregate_defs.values.each do |cd|
+          @aggregate_defs.each_value do |cd|
             cv = product_to_use.get_custom_value(cd)
             base_val = aggregate_to_array cv.value
             other_products.each do |p|
@@ -147,7 +147,7 @@ module OpenChain
         end
 
         def related_styles_value
-          r = [@base,@missy,@petite,@tall,@short,@plus].collect {|x| x.blank? ? nil : x}.compact
+          r = [@base, @missy, @petite, @tall, @short, @plus].collect {|x| x.blank? ? nil : x}.compact
           m = missy_style
           if m
             r.delete m
@@ -158,7 +158,7 @@ module OpenChain
         end
 
         private
-        #prevent any blank strings from getting into where clauses
+        # prevent any blank strings from getting into where clauses
         def make_no_match b
           b.blank? ? 'NOMATCH' : b.strip
         end
@@ -173,7 +173,7 @@ module OpenChain
         end
 
         def make_tariff_array cls
-          cls.tariff_records.collect {|tr| {ln:blank_to_empty_string(tr.line_number),h1:blank_to_empty_string(tr.hts_1),h2:blank_to_empty_string(tr.hts_2),h3:blank_to_empty_string(tr.hts_3)}}
+          cls.tariff_records.collect {|tr| {ln:blank_to_empty_string(tr.line_number), h1:blank_to_empty_string(tr.hts_1), h2:blank_to_empty_string(tr.hts_2), h3:blank_to_empty_string(tr.hts_3)}}
         end
 
         def blank_to_empty_string str

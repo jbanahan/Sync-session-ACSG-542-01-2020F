@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module Hm; class HmReceiptFileParser
   end
 
   def self.valid_file? filename
-    ['.XLS','.XLSX', '.CSV'].include? File.extname(filename.upcase)
+    ['.XLS', '.XLSX', '.CSV'].include? File.extname(filename.upcase)
   end
 
   def can_view? user
@@ -95,7 +95,7 @@ module OpenChain; module CustomHandler; module Hm; class HmReceiptFileParser
     end
 
     def make_error_file errors
-      f = Tempfile.new(['errors','.txt'])
+      f = Tempfile.new(['errors', '.txt'])
       errors.each do |err|
         f.puts err
       end

@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator do
       c
     }
 
-    let (:shipment) { 
+    let (:shipment) {
       s = Shipment.new
       s.importer = importer
       s
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator do
       expect(subject.accept? snapshot).to eq false
     end
 
-    it "does not accept snapshots when 'UA EEM Conversion' custom feature is enabled" do 
+    it "does not accept snapshots when 'UA EEM Conversion' custom feature is enabled" do
       ms = stub_master_setup
       expect(ms).to receive(:custom_feature?).with("UA EEM Conversion").and_return true
 
@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourShipmentComparator do
       expect(generator).to receive(:generate_and_send_invoice).with(shipment)
 
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         subject.compare nil, shipment.id, nil, nil, nil, nil, nil, nil
       end
 

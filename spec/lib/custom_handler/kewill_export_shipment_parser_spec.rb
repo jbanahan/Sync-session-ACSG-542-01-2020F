@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
       it "errors if importer cannot be found" do
         @nexeo.destroy
 
-        expect{subject.parse_file IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT"), log}.to raise_error "No Importer record found with Alliance customer number of NEXEO."
+        expect {subject.parse_file IO.read("spec/fixtures/files/Kewill Export Ocean File.DAT"), log}.to raise_error "No Importer record found with Alliance customer number of NEXEO."
         expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "No Importer record found with Alliance customer number of NEXEO."
       end
     end
@@ -141,8 +141,8 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
       expect(s.booking_carrier).to eq "OOLU"
       expect(s.voyage).to eq "092W"
       expect(s.vessel).to eq "OOCL LONG BEACH"
-      expect(s.est_departure_date).to eq Date.new(2015,11,2)
-      expect(s.est_arrival_port_date).to eq Date.new(2015,12,13)
+      expect(s.est_departure_date).to eq Date.new(2015, 11, 2)
+      expect(s.est_arrival_port_date).to eq Date.new(2015, 12, 13)
       expect(s.entity_snapshots.size).to eq 1
 
       expect(log.company).to be_nil
@@ -151,7 +151,7 @@ describe OpenChain::CustomHandler::KewillExportShipmentParser do
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_SHIPMENT_NUMBER)[0].module_id).to eq s.id
     end
   end
-  
+
   describe "parse_file" do
     subject { described_class }
 

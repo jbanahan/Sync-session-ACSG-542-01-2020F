@@ -1,5 +1,5 @@
 module OpenChain; module EntityCompare; class CascadeProductValidations
-  
+
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type=='Product'
 

@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceEntryLoadSh
   end
 
   def generate_and_send shipment, sync_record
-    system = determine_entry_system(shipment) 
+    system = determine_entry_system(shipment)
     if system == :kewill
       generate_and_send_kewill(shipment, sync_record)
     elsif system == :fenix

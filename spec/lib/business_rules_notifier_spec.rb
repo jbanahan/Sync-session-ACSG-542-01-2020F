@@ -13,11 +13,11 @@ describe OpenChain::BusinessRulesNotifier do
   end
 
   it "logs all errors" do
-    imp1 = with_customs_management_id(Factory(:importer, slack_channel: 'company1'),'12345' )
+    imp1 = with_customs_management_id(Factory(:importer, slack_channel: 'company1'), '12345' )
     imp2 = with_customs_management_id(Factory(:company, slack_channel: 'company2'), '23456')
     Factory(:entry, customer_number:'12345', importer: imp1)
     Factory(:entry, customer_number:'23456', importer: imp2)
-    
+
 
     bvt1 = generate_business_rule('12345')
     bvt2 = generate_business_rule('23456')
@@ -54,8 +54,8 @@ describe OpenChain::BusinessRulesNotifier do
 
   def generate_business_rule(value)
     bvt = Factory(:business_validation_template)
-    bvt.search_criterions.create!(model_field_uid:'ent_cust_num',operator:'eq',value:value)
-    bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat', name: 'Name', description: 'Description', rule_attributes_json:{model_field_uid:'ent_entry_num',regex:'X'}.to_json)
+    bvt.search_criterions.create!(model_field_uid:'ent_cust_num', operator:'eq', value:value)
+    bvt.business_validation_rules.create!(type:'ValidationRuleFieldFormat', name: 'Name', description: 'Description', rule_attributes_json:{model_field_uid:'ent_entry_num', regex:'X'}.to_json)
     bvt.reload
     bvt
   end

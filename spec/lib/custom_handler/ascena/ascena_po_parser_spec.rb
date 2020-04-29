@@ -1,8 +1,8 @@
 describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
-  let(:header) { ["H","11142016","JUSTICE","","37109","1990","","FRANCHISE","pgroup","82","SUM 2015","","2","12082016","000256","LF PRODUCTS PTE. LTD","Smith","001423","IDSELKAU0105BEK","JIASHAN JSL CASE & BAG CO., LTD","000022","YCHOI","FCA","CHINA (MAINLAND)","OCN","01172017","01172018","HONG KONG","AGS","","","","USD","","","",""] }
-  let(:detail) { ["D","","1","","","820799","351152","CB-YING YANG IRRI 3\"","617","SILVER","1","10","","","03010848311526700486","","","10","","2.02","3.46","3.13","7.00","","","","","","","","","","","","","",""] }
-  let(:header_2) { ["H","11152016","PEACE",nil,"37109","1991",nil,"FRANCH","qgroup","83","SUM 2016","CCL","4","12092016","000257","MG PRODUCTS PTE. LTD","Jones","001424","JDSELKAU0105BEK","XIASHAN JSL CASE & BAG CO., LTD","000023","ZCHOI","GCA","TAIWAN","PCN","01182017","01182018","KING KONG","BGS",nil,nil,nil,"USD",nil,nil,nil,nil] }
-  let(:detail_2) { ["D",nil,"2",nil,nil,"820799","451152","AB-YING YANG IRRI","618","GRAY","2","11",nil,nil,"13010848311526700486",nil,nil,"2",nil,"3.02","4.46","4.13","8.00",nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil] }
+  let(:header) { ["H", "11142016", "JUSTICE", "", "37109", "1990", "", "FRANCHISE", "pgroup", "82", "SUM 2015", "", "2", "12082016", "000256", "LF PRODUCTS PTE. LTD", "Smith", "001423", "IDSELKAU0105BEK", "JIASHAN JSL CASE & BAG CO., LTD", "000022", "YCHOI", "FCA", "CHINA (MAINLAND)", "OCN", "01172017", "01172018", "HONG KONG", "AGS", "", "", "", "USD", "", "", "", ""] }
+  let(:detail) { ["D", "", "1", "", "", "820799", "351152", "CB-YING YANG IRRI 3\"", "617", "SILVER", "1", "10", "", "", "03010848311526700486", "", "", "10", "", "2.02", "3.46", "3.13", "7.00", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] }
+  let(:header_2) { ["H", "11152016", "PEACE", nil, "37109", "1991", nil, "FRANCH", "qgroup", "83", "SUM 2016", "CCL", "4", "12092016", "000257", "MG PRODUCTS PTE. LTD", "Jones", "001424", "JDSELKAU0105BEK", "XIASHAN JSL CASE & BAG CO., LTD", "000023", "ZCHOI", "GCA", "TAIWAN", "PCN", "01182017", "01182018", "KING KONG", "BGS", nil, nil, nil, "USD", nil, nil, nil, nil] }
+  let(:detail_2) { ["D", nil, "2", nil, nil, "820799", "451152", "AB-YING YANG IRRI", "618", "GRAY", "2", "11", nil, nil, "13010848311526700486", nil, nil, "2", nil, "3.02", "4.46", "4.13", "8.00", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil] }
 
   let!(:importer) { Factory(:company, system_code: "ASCENA", importer:true) }
 
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     let(:parser) { described_class.new }
 
     it "converts MMDDYYYY strings into a Date" do
-      expect(parser.date_parse "02122016").to eq Date.new(2016,2,12)
+      expect(parser.date_parse "02122016").to eq Date.new(2016, 2, 12)
     end
 
     it "rejects strings with year before 2000" do
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
     it "extracts each po from the file and saves them off individually onto a temp s3 bucket" do
       opts = {key: "s3_key.csv"}
-      
+
       expect(subject).to receive(:delay_file_chunk_to_s3) do |key, data, local_opts|
         expect(key).to eq ("s3_key.csv")
         expect(data).to eq convert_pipe_delimited([header, detail])
@@ -74,7 +74,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
   describe "parse_file_chunk" do
     subject { described_class }
 
-    let! (:cdefs) { 
+    let! (:cdefs) {
       described_class.new.send(:cdefs)
     }
 
@@ -94,20 +94,20 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "creates new orders, order lines, products matching input, product/order snapshots" do
-      expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"path")
-      expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration,nil,"path")
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration, nil, "path")
+      expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration, nil, "path")
 
       subject.parse_file_chunk convert_pipe_delimited([header, detail]), bucket: "bucket", key: "path"
       o = Order.where(customer_order_number: "37109").first
       expect(o).not_to be_nil
       expect(o.importer).to eq importer
-      expect(o.order_date).to eq Date.new(2016,11,14)
+      expect(o.order_date).to eq Date.new(2016, 11, 14)
       expect(o.customer_order_number).to eq "37109"
       expect(o.order_number).to eq "ASCENA-JST-37109"
       expect(o.custom_value(cdefs[:ord_selling_channel])).to eq "FRANCHISE"
       expect(o.custom_value(cdefs[:ord_division])).to eq "82"
       expect(o.custom_value(cdefs[:ord_revision])).to eq 2
-      expect(o.custom_value(cdefs[:ord_revision_date])).to eq Date.new(2016,12,8)
+      expect(o.custom_value(cdefs[:ord_revision_date])).to eq Date.new(2016, 12, 8)
       expect(o.vendor.system_code).to eq "000256"
       expect(o.vendor.name).to eq "LF PRODUCTS PTE. LTD"
       expect(o.vendor.vendor?).to eq true
@@ -124,8 +124,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(o.custom_value(cdefs[:ord_buyer])).to eq "YCHOI"
       expect(o.terms_of_sale).to eq "FCA"
       expect(o.mode).to eq "OCN"
-      expect(o.ship_window_start).to eq Date.new(2017,1,17)
-      expect(o.ship_window_end).to eq Date.new(2018,1,17)
+      expect(o.ship_window_start).to eq Date.new(2017, 1, 17)
+      expect(o.ship_window_end).to eq Date.new(2018, 1, 17)
       expect(o.fob_point).to eq "HONG KONG"
       expect(o.custom_value(cdefs[:ord_type])).to eq "AGS"
       expect(o.last_file_bucket).to eq "bucket"
@@ -164,19 +164,19 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       product = Factory(:product, unique_identifier: "ASCENA-820799", importer: importer)
       order_line = Factory(:order_line, order: o, line_number: 2, product: product)
 
-      expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration,nil,"path 2")
+      expect_any_instance_of(Order).to receive(:create_snapshot).with(User.integration, nil, "path 2")
       # The product shouldn't be snapshotted, we didn't update it
       expect_any_instance_of(Product).not_to receive(:create_snapshot)
 
       subject.parse_file_chunk convert_pipe_delimited([header_2, detail_2]), bucket: "bucket 2", key: "path 2"
 
       o.reload
-      expect(o.order_date).to eq Date.new(2016,11,15)
+      expect(o.order_date).to eq Date.new(2016, 11, 15)
       expect(o.custom_value(cdefs[:ord_department])).to eq("PEACE")
       expect(o.custom_value(cdefs[:ord_selling_channel])).to eq "FRANCH"
       expect(o.custom_value(cdefs[:ord_division])).to eq "83"
       expect(o.custom_value(cdefs[:ord_revision])).to eq 4
-      expect(o.custom_value(cdefs[:ord_revision_date])).to eq Date.new(2016,12,9)
+      expect(o.custom_value(cdefs[:ord_revision_date])).to eq Date.new(2016, 12, 9)
       expect(o.vendor.system_code).to eq "000257"
       expect(o.vendor.name).to eq "MG PRODUCTS PTE. LTD"
       expect(o.vendor.vendor?).to eq true
@@ -189,8 +189,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       expect(o.custom_value(cdefs[:ord_buyer])).to eq "ZCHOI"
       expect(o.terms_of_sale).to eq "GCA"
       expect(o.mode).to eq "PCN"
-      expect(o.ship_window_start).to eq Date.new(2017,1,18)
-      expect(o.ship_window_end).to eq Date.new(2018,1,18)
+      expect(o.ship_window_start).to eq Date.new(2017, 1, 18)
+      expect(o.ship_window_end).to eq Date.new(2018, 1, 18)
       expect(o.fob_point).to eq "KING KONG"
       expect(o.custom_value(cdefs[:ord_type])).to eq "BGS"
       expect(o.last_file_bucket).to eq "bucket 2"
@@ -290,7 +290,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
     end
 
     it "skips blank lines in the CSV file" do
-      # This would have raised an error previously, so we can pretty much just check that an order was saved and if 
+      # This would have raised an error previously, so we can pretty much just check that an order was saved and if
       # so, then it's all good.
       subject.parse_file_chunk convert_pipe_delimited([header_2, [], ["", ""], detail_2]), bucket: "bucket 2", key: "path 2"
 
@@ -303,7 +303,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       factory_id = factory.system_identifiers.create! system: "Ascena PO", code: "001423"
       vendor = Factory(:company, system_code: "000256")
       vendor_id = vendor.system_identifiers.create! system: "Ascena PO", code: "000256"
-      expect{subject.parse_file_chunk(convert_pipe_delimited [header, detail])}.to_not change(Company,:count)
+      expect {subject.parse_file_chunk(convert_pipe_delimited [header, detail])}.to_not change(Company, :count)
       expect(Order.first.factory.id).to eq factory.id
       expect(Order.first.vendor.id).to eq vendor.id
     end
@@ -396,7 +396,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
   context "data validation" do
     subject { described_class }
-    
+
     context "check that methods are called" do
       it "should fail on header validation issue" do
         expect_any_instance_of(subject).to receive(:validate_header).with(instance_of(Hash)).and_raise described_class::BusinessLogicError, "some error"
@@ -406,7 +406,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
 
         mail = ActionMailer::Base.deliveries.first
         expect(mail).not_to be_nil
-        expect(mail.to).to eq ["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"]
+        expect(mail.to).to eq ["ascena_us@vandegriftinc.com", "edisupport@vandegriftinc.com"]
         expect(mail.subject).to eq "Ascena PO # 37109 Errors"
         expect(mail.body).to include("An error occurred attempting to process Ascena PO # 37109 from the file file.txt.")
 
@@ -419,26 +419,26 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
         expect(rows[1]).to eq detail_2
       end
       it "should fail on detail validation issue" do
-        expect_any_instance_of(subject).to receive(:validate_detail).with(instance_of(Hash),1).and_raise  described_class::BusinessLogicError, "some error"
+        expect_any_instance_of(subject).to receive(:validate_detail).with(instance_of(Hash), 1).and_raise  described_class::BusinessLogicError, "some error"
 
         subject.parse_file_chunk(convert_pipe_delimited [header, detail])
 
         expect(Order.count).to eq 0
         mail = ActionMailer::Base.deliveries.first
         expect(mail).not_to be_nil
-        expect(mail.to).to eq ["ascena_us@vandegriftinc.com","edisupport@vandegriftinc.com"]
+        expect(mail.to).to eq ["ascena_us@vandegriftinc.com", "edisupport@vandegriftinc.com"]
         expect(mail.subject).to eq "Ascena PO # 37109 Errors"
       end
 
       it "should fail when importer not found" do
         importer.destroy
 
-        expect{subject.parse_file_chunk(convert_pipe_delimited([header, detail]))}.to raise_error "No Importer company found with system code 'ASCENA'."
+        expect {subject.parse_file_chunk(convert_pipe_delimited([header, detail]))}.to raise_error "No Importer company found with system code 'ASCENA'."
       end
     end
 
     context "check validations" do
-      
+
       let :header_map do
         subject.map_header header
       end
@@ -449,28 +449,28 @@ describe OpenChain::CustomHandler::Ascena::AscenaPoParser do
       subject { described_class.new }
       it "errors if header order number missing" do
         header[4] = ""
-        expect{subject.validate_header(header_map)}.to raise_error "Customer order number missing"
+        expect {subject.validate_header(header_map)}.to raise_error "Customer order number missing"
       end
 
       it "errors if detail part number is missing" do
         detail[5] = ""
-        expect{subject.validate_detail(detail_map, 1)}.to raise_error "Part number missing on row 1"
+        expect {subject.validate_detail(detail_map, 1)}.to raise_error "Part number missing on row 1"
       end
 
       it "errors if detail quantity is missing" do
         detail[17] = ""
-        expect{subject.validate_detail(detail_map, 1)}.to raise_error "Quantity missing on row 1"
+        expect {subject.validate_detail(detail_map, 1)}.to raise_error "Quantity missing on row 1"
       end
 
       it "errors if detail order line number is missing" do
         detail[2] = ""
-        expect{subject.validate_detail(detail_map, 1)}.to raise_error "Line number missing on row 1"
+        expect {subject.validate_detail(detail_map, 1)}.to raise_error "Line number missing on row 1"
       end
 
       it "throws no exception if detail price_per_unit is missing and order type is 'NONAGS'" do
         header[28] = "NONAGS"
         detail[19] = ""
-        expect{subject.validate_detail(detail_map, 1)}.to_not raise_error
+        expect {subject.validate_detail(detail_map, 1)}.to_not raise_error
       end
     end
   end

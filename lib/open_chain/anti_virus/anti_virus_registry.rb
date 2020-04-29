@@ -8,9 +8,8 @@ module OpenChain; module AntiVirus; class AntiVirusRegistry
   def self.check_validity reg_class
     check_registration_validity(reg_class, "AntiVirusScanner", [:safe?])
   end
- 
+
   def self.safe? file
     evaluate_registered_permission(:safe?, file)
   end
-  
 end; end; end

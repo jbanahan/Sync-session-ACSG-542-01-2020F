@@ -1,5 +1,5 @@
 describe SchedulableJobsController do
-  
+
   describe "index" do
     it "should only allow sys_admins" do
       sign_in_as Factory(:user)
@@ -37,7 +37,7 @@ describe SchedulableJobsController do
     end
   end
   describe "update" do
-    let (:schedulable_job) { Factory(:schedulable_job,opts:'{"abc": 123}') }
+    let (:schedulable_job) { Factory(:schedulable_job, opts:'{"abc": 123}') }
 
     it "should only allow sys_admins" do
       sign_in_as Factory(:user)
@@ -48,9 +48,9 @@ describe SchedulableJobsController do
       expect(schedulable_job.opts).to eq('{"abc": 123}')
     end
 
-    context "with sys admin login" do 
+    context "with sys admin login" do
 
-      before :each do 
+      before :each do
         sign_in_as Factory(:sys_admin_user)
       end
 
@@ -68,7 +68,7 @@ describe SchedulableJobsController do
       end
     end
   end
-  
+
   describe "new" do
     it "should only allow sys_admins" do
       sign_in_as Factory(:user)

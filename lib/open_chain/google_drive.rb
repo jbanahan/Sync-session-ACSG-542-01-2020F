@@ -1,10 +1,10 @@
 require 'open_chain/google_api_support'
 require 'lru_redux'
 
-# 
+#
 # For all methods in this class that accept a path, to use a team drive simply prefix the path
 # with "Team Drives/" followed by the Team Drive name -> "Team Drives/My Drive/folder/file.txt"
-# 
+#
 module OpenChain; class GoogleDrive
   extend OpenChain::GoogleApiSupport
 
@@ -39,9 +39,9 @@ module OpenChain; class GoogleDrive
       tempfile.close! if tempfile && (errored || block_given?)
     end
   end
-  
+
   # Uploads the provided file to the specified path under the user account specified.
-  # 
+  #
   # user_email - a drive email account that has already been authorized for access (.ie there's a reference to it under the google_authentication key in secrets.yml)
   # If blank/nil, the system default will be used.
   # path - a standard path like 'folder/subfolder/file.txt'.  The path may consist solely of a filename, but it MUST have a name.
@@ -56,21 +56,21 @@ module OpenChain; class GoogleDrive
   end
 
   # Perminently deletes the file object this path references.
-  # 
-  # Delete ONLY works if you are the Drive owner of the file.  In general, 
+  #
+  # Delete ONLY works if you are the Drive owner of the file.  In general,
   # if you're removing files using a service account, you'll want to utilize the
   # remove_file_from_folder method.
   def self.delete_file path, google_account_name: nil
     with_team_drive_id(path, google_account_name: google_account_name) do |client, team_drive_id, relative_path|
       client.delete_file relative_path, team_drive_id: team_drive_id
     end
-    
+
     nil
   end
 
   # Perminently deletes the folder object this path references.
   #
-  # Delete ONLY works if you are the Drive owner of the file.  In general, 
+  # Delete ONLY works if you are the Drive owner of the file.  In general,
   # if you're removing files using a service account, you'll want to utilize the
   # remove_file_from_folder method.
   #
@@ -118,7 +118,6 @@ module OpenChain; class GoogleDrive
     file = get_client(google_account_name: google_account_name).find_by_id id, file_query_fields: file_fields
     hashify_file(file)
   end
-  
 
   def self.get_client google_account_name: nil, path_cache: nil
     service = drive_service(google_account_name: google_account_name)
@@ -134,7 +133,7 @@ module OpenChain; class GoogleDrive
     # :[](String), :[]=(String, String) and :delete(String)
     # (essentially a super simple subset of a hash interface)
 
-    # The idea here is that the VAST majority of paths are totally unchanging, so 
+    # The idea here is that the VAST majority of paths are totally unchanging, so
     # we can safely cache them for long periods of time
 
     # For the moment, a cache per process is fine...perhaps at some point we'll need to do something like
@@ -230,7 +229,7 @@ module OpenChain; class GoogleDrive
         existing_file = find_file_in_folder(parent_folder_id, file_name, team_drive_id: team_drive_id)
         file_id = existing_file.id if existing_file
       end
-      
+
       if file_id.nil?
         drive_file = get_drive.create_file({name: file_name, parents: [parent_folder_id]}, fields: query_fields, upload_source: io, supports_team_drives: true)
       else
@@ -266,7 +265,7 @@ module OpenChain; class GoogleDrive
       raise e
     end
 
-    def root_alias 
+    def root_alias
       "root"
     end
 
@@ -338,7 +337,7 @@ module OpenChain; class GoogleDrive
 
     def find_folder path, file_query_fields: "id, name", create_missing_paths: false, error_if_missing: true, team_drive_id: nil
       folder_id = find_folder_id(path, error_if_missing: error_if_missing, team_drive_id: team_drive_id)
-      folder_id.nil? ? nil : find_by_id(folder_id, file_query_fields: file_query_fields) 
+      folder_id.nil? ? nil : find_by_id(folder_id, file_query_fields: file_query_fields)
     end
 
     def find_folder_id path, create_missing_paths: false, error_if_missing: true, team_drive_id: nil
@@ -349,7 +348,7 @@ module OpenChain; class GoogleDrive
       path_so_far = [team_drive_id]
       cache_key = cache_path_key(team_drive_id, path)
 
-      use_cached_folder_id(cache_key) do 
+      use_cached_folder_id(cache_key) do
         path_components = Pathname.new(path).each_filename.to_a
 
         parent_id = nil
@@ -363,7 +362,7 @@ module OpenChain; class GoogleDrive
             if create_missing_paths
               folder = create_folder(parent_id, path_segment, team_drive_id: team_drive_id)
             elsif error_if_missing
-              raise "Failed to find path '#{path_so_far.join("/")}'"  
+              raise "Failed to find path '#{path_so_far.join("/")}'"
             end
           end
 

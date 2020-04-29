@@ -36,7 +36,7 @@ describe OpenChain::SqlProxyClient do
 
     it "raises error if specified" do
       expect(json_client).to receive(:post).and_raise "Error"
-      expect{ subject.request "job_name", {}, {}, swallow_error: false }.to raise_error "Error"
+      expect { subject.request "job_name", {}, {}, swallow_error: false }.to raise_error "Error"
     end
   end
 

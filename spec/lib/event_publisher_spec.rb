@@ -1,5 +1,5 @@
 describe OpenChain::EventPublisher, :event_publisher do
-  let! (:ms) { 
+  let! (:ms) {
     stub_master_setup
   }
 
@@ -26,12 +26,12 @@ describe OpenChain::EventPublisher, :event_publisher do
         expect(b['short_message']).to match(/CORD/)
         expect(b['long_message']).to match(/CORD/)
       end
-      OpenChain::EventPublisher.publish(:order_reopen,o)
+      OpenChain::EventPublisher.publish(:order_reopen, o)
     end
     it "should write descriptive subject for comments" do
-      o = Factory(:order,order_number:'1234')
-      u = Factory(:user,first_name:'Joe',last_name:'Shmo')
-      comment = o.comments.create!(subject:'mysub',body:'mybod',user:u)
+      o = Factory(:order, order_number:'1234')
+      u = Factory(:user, first_name:'Joe', last_name:'Shmo')
+      comment = o.comments.create!(subject:'mysub', body:'mybod', user:u)
       api = double(:user)
       allow(api).to receive(:api_auth_token).and_return 'def'
       allow(api).to receive(:username).and_return 'abc'
@@ -50,7 +50,7 @@ describe OpenChain::EventPublisher, :event_publisher do
         expect(b['long_message']).to match("Comment Added\n\nmybod")
       end
 
-      OpenChain::EventPublisher.publish(:comment_create,comment)
+      OpenChain::EventPublisher.publish(:comment_create, comment)
     end
   end
 end

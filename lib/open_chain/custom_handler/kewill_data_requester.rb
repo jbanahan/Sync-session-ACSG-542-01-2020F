@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; class KewillDataRequester
     # Apply the offset window, if present, to adjust the request start/end times by X seconds.
     # This is implemented to workaround data that is being written out while the data request is being done.
     # Alliance/Kewill Customs can take quite a while to write out entry data, and if we request to pull
-    # the data while it's writing it out then we run the chance of missing pieces of it.  Thus, 
+    # the data while it's writing it out then we run the chance of missing pieces of it.  Thus,
     # our "real-time" feed should only request data that was written a couple minutes ago.
     # Clearly, they're not using database transactions in that system - or if they are, aren't wrapping
     # the full data structure update in one.
@@ -69,12 +69,12 @@ module OpenChain; module CustomHandler; class KewillDataRequester
   end
   private_class_method :sql_proxy_client
 
-  # This method requests all entry data from sql_proxy if the local entry data still shows an update time 
-  # prior to the given time.  
+  # This method requests all entry data from sql_proxy if the local entry data still shows an update time
+  # prior to the given time.
   #
   # Basically, this is the handler for the data returned by the request made in the run_schedulable method.
   def self.request_entry_data broker_reference, expected_update_time, invoice_count, sql_proxy_client = OpenChain::KewillSqlProxyClient.new
-    # Before we actual do a sql proxy request, verify that in the intervening time between this job being queued 
+    # Before we actual do a sql proxy request, verify that in the intervening time between this job being queued
     # and now that the entry hasn't been updated.
     time_zone = tz
 
@@ -93,11 +93,11 @@ module OpenChain; module CustomHandler; class KewillDataRequester
     if e.nil?
       send = true
     else
-      send = (e.expected_update_time.nil? || e.expected_update_time.in_time_zone(time_zone) < expected_update_time) && 
+      send = (e.expected_update_time.nil? || e.expected_update_time.in_time_zone(time_zone) < expected_update_time) &&
                 (e.last_exported_from_source.nil? || e.last_exported_from_source.in_time_zone(time_zone) < expected_update_time)
     end
 
-    # If the remote end shows it has more invoices than the local, then we should update the entry data, regardless of the 
+    # If the remote end shows it has more invoices than the local, then we should update the entry data, regardless of the
     # expected update time involved...if the remote end doesn't have any invoices then it's pointless doing this check.
     if !send && e && invoice_count
       send = e.invoice_count.to_i < invoice_count
@@ -109,7 +109,7 @@ module OpenChain; module CustomHandler; class KewillDataRequester
   end
 
 
-  def self.tz 
+  def self.tz
     ActiveSupport::TimeZone["Eastern Time (US & Canada)"]
   end
 

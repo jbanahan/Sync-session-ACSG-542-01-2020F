@@ -32,16 +32,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
   private
     def send_booking_request_xml shipment
       return nil if shipment.booking_received_date.nil? || shipment.booking_received_date.to_date < Date.new(2018, 6, 1)
-      
+
       sr = shipment.sync_records.where(trading_partner: 'Booking Request').first_or_initialize
-      # No updated booking requests should be sent ever...if the booking was bad, the vendor will either 
+      # No updated booking requests should be sent ever...if the booking was bad, the vendor will either
       # redo the booking after clearing it, or lumber will adjust it and notify Allport through manual channels
       # with changes / fixes.
       return nil unless sr.sent_at.nil?
 
       doc = OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator.generate_xml shipment
 
-      Tempfile.open(["booking_request_#{shipment.reference}_",'.xml']) do |tf|
+      Tempfile.open(["booking_request_#{shipment.reference}_", '.xml']) do |tf|
         doc.write tf
         tf.flush
         # Just use the current time as the as the basis for generating the timestamp and sent_at value

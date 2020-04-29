@@ -42,6 +42,6 @@ module Customer; class LumberLiquidatorsController < ApplicationController
       render layout: false
       return
     end
-    raise ActionController::RoutingError.new('Not Found') 
+    raise ActionController::RoutingError.new('Not Found')
   end
 end; end

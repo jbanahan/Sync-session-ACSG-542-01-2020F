@@ -3,11 +3,11 @@ describe PieceSet do
     before :each do
       @product = Factory(:product)
       @ps = PieceSet.new(:quantity=>1,
-        :order_line=>Factory(:order_line,:product=>@product),
-        :shipment_line=>Factory(:shipment_line,:product=>@product),
-        :sales_order_line=>Factory(:sales_order_line,:product=>@product),
-        :delivery_line=>Factory(:delivery_line,:product=>@product),
-        :drawback_import_line=>Factory(:drawback_import_line,:product=>@product)
+        :order_line=>Factory(:order_line, :product=>@product),
+        :shipment_line=>Factory(:shipment_line, :product=>@product),
+        :sales_order_line=>Factory(:sales_order_line, :product=>@product),
+        :delivery_line=>Factory(:delivery_line, :product=>@product),
+        :drawback_import_line=>Factory(:drawback_import_line, :product=>@product)
       )
     end
     it 'should pass with all products the same' do
@@ -32,7 +32,7 @@ describe PieceSet do
     it "should destroy if only has one foreign key" do
       product = Factory(:product)
       ps = PieceSet.create!(:quantity=>1,
-        :order_line=>Factory(:order_line,:product=>product)
+        :order_line=>Factory(:order_line, :product=>product)
       )
       expect(ps.destroy_if_one_key).to be_truthy
       expect(PieceSet.count).to eq 0
@@ -40,8 +40,8 @@ describe PieceSet do
     it "should not destroy if has multiple foreign_keys" do
       product = Factory(:product)
       ps = PieceSet.create!(:quantity=>1,
-        :order_line=>Factory(:order_line,:product=>product),
-        :shipment_line=>Factory(:shipment_line,:product=>product)
+        :order_line=>Factory(:order_line, :product=>product),
+        :shipment_line=>Factory(:shipment_line, :product=>product)
       )
       expect(ps.destroy_if_one_key).to be_falsey
       expect(PieceSet.count).to eq 1
@@ -52,11 +52,11 @@ describe PieceSet do
     before :each do
       @product = Factory(:product)
       @ps = PieceSet.create!(:quantity=>1,
-        :order_line=>Factory(:order_line,:product=>@product),
-        :shipment_line=>Factory(:shipment_line,:product=>@product),
-        :sales_order_line=>Factory(:sales_order_line,:product=>@product),
-        :delivery_line=>Factory(:delivery_line,:product=>@product),
-        :drawback_import_line=>Factory(:drawback_import_line,:product=>@product)
+        :order_line=>Factory(:order_line, :product=>@product),
+        :shipment_line=>Factory(:shipment_line, :product=>@product),
+        :sales_order_line=>Factory(:sales_order_line, :product=>@product),
+        :delivery_line=>Factory(:delivery_line, :product=>@product),
+        :drawback_import_line=>Factory(:drawback_import_line, :product=>@product)
       )
     end
     it "should merge two piece sets with same keys" do
@@ -67,7 +67,7 @@ describe PieceSet do
         :delivery_line=>@ps.delivery_line,
         :drawback_import_line=>@ps.drawback_import_line
       )
-      expect {PieceSet.merge_duplicates!(ps2)}.to change(PieceSet,:count).from(2).to(1)
+      expect {PieceSet.merge_duplicates!(ps2)}.to change(PieceSet, :count).from(2).to(1)
       expect(PieceSet.first.quantity).to eql(2)
     end
     it "should not merge piece sets with different keys" do
@@ -76,10 +76,10 @@ describe PieceSet do
         :shipment_line=>@ps.shipment_line,
         :delivery_line=>@ps.delivery_line,
         :drawback_import_line=>@ps.drawback_import_line
-        #this one doesn't have a sales_order_line
+        # this one doesn't have a sales_order_line
       )
-      expect {PieceSet.merge_duplicates!(ps2)}.to_not change(PieceSet,:count)
-      expect(PieceSet.all.collect {|p| p.quantity}).to eql([1,1])
+      expect {PieceSet.merge_duplicates!(ps2)}.to_not change(PieceSet, :count)
+      expect(PieceSet.all.collect {|p| p.quantity}).to eql([1, 1])
     end
 
     it "no-ops if the piece set is not linked to anything" do
@@ -92,11 +92,11 @@ describe PieceSet do
     before :each do
       @product = Factory(:product)
       @ps = PieceSet.create!(:quantity=>1,
-        :order_line=>Factory(:order_line,:product=>@product),
-        :shipment_line=>Factory(:shipment_line,:product=>@product),
-        :sales_order_line=>Factory(:sales_order_line,:product=>@product),
-        :delivery_line=>Factory(:delivery_line,:product=>@product),
-        :drawback_import_line=>Factory(:drawback_import_line,:product=>@product)
+        :order_line=>Factory(:order_line, :product=>@product),
+        :shipment_line=>Factory(:shipment_line, :product=>@product),
+        :sales_order_line=>Factory(:sales_order_line, :product=>@product),
+        :delivery_line=>Factory(:delivery_line, :product=>@product),
+        :drawback_import_line=>Factory(:drawback_import_line, :product=>@product)
       )
       @user = Factory(:user)
     end
@@ -119,8 +119,8 @@ describe PieceSet do
   end
 
   describe "foreign_key_values" do
-    subject { 
-      ps = PieceSet.new 
+    subject {
+      ps = PieceSet.new
       ps.order_line_id = 1
       ps.sales_order_line_id = 1
       ps.shipment_line_id = 1
@@ -132,10 +132,10 @@ describe PieceSet do
 
       ps
     }
-  
+
     it "returns values of all foreign key columns used for piece set linkages" do
       expect(subject.foreign_key_values).to eq({
-        order_line_id: 1, sales_order_line_id: 1, shipment_line_id: 1, delivery_line_id: 1, commercial_invoice_line_id: 1, 
+        order_line_id: 1, sales_order_line_id: 1, shipment_line_id: 1, delivery_line_id: 1, commercial_invoice_line_id: 1,
         drawback_import_line_id: 1, security_filing_line_id: 1, booking_line_id: 1
       })
     end
@@ -143,8 +143,8 @@ describe PieceSet do
 
   describe "foreign_key_count" do
 
-    subject { 
-      ps = PieceSet.new 
+    subject {
+      ps = PieceSet.new
       ps.order_line_id = 1
       ps.sales_order_line_id = 1
       ps.shipment_line_id = 1

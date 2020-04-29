@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::Pvh::PvhInvoiceComparator do
   }
 
   let (:invoice) {
-    i = Invoice.new 
+    i = Invoice.new
     i.importer = pvh
     i.consignee = consignee
     i
@@ -63,7 +63,6 @@ describe OpenChain::CustomHandler::Pvh::PvhInvoiceComparator do
       end
       now = Time.zone.parse("2018-09-01 12:00")
       Timecop.freeze(now) { subject.send_invoice invoice }
-      
 
       expect(s.sent_at).to eq now
       expect(s.confirmed_at).to eq (now + 1.minute)
@@ -82,7 +81,7 @@ describe OpenChain::CustomHandler::Pvh::PvhInvoiceComparator do
   describe "compare" do
     subject { described_class }
 
-    before :each do 
+    before :each do
       invoice.save!
     end
 

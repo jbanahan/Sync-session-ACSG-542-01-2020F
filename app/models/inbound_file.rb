@@ -24,11 +24,11 @@
 #
 
 class InboundFile < ActiveRecord::Base
-  attr_accessible :company_id, :file_name, :isa_number, 
-    :original_process_start_date, :parser_name, :process_end_date, 
-    :process_start_date, :process_status, :receipt_location, 
+  attr_accessible :company_id, :file_name, :isa_number,
+    :original_process_start_date, :parser_name, :process_end_date,
+    :process_start_date, :process_status, :receipt_location,
     :requeue_count, :s3_bucket, :s3_path
-  
+
   has_many :identifiers, dependent: :destroy, class_name: 'InboundFileIdentifier', autosave: true, inverse_of: :inbound_file
   has_many :messages, dependent: :destroy, class_name: 'InboundFileMessage', autosave: true, inverse_of: :inbound_file
   belongs_to :company
@@ -178,7 +178,7 @@ class InboundFile < ActiveRecord::Base
   # matches specifically by both type and value.
   def set_identifier_module_info identifier_type, module_type, module_id, value:nil
     identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
-    
+
     validate_identifier_module_type module_type
     get_identifiers(identifier_type, value:value).each do |ident|
       ident.module_type = module_type.to_s
@@ -191,7 +191,7 @@ class InboundFile < ActiveRecord::Base
   # to further restrict the results returned to just one specific identifier (hopefully).
   def get_identifiers identifier_type, value:nil
     identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
-    
+
     identifiers.select { |id| id.identifier_type == identifier_type && (!value || id.value == value) }
   end
 

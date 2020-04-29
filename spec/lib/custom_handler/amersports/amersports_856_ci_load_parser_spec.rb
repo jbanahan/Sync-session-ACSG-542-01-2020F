@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
 
     let (:entries) { [] }
 
-    before :each do 
+    before :each do
       expect(described_class).to receive(:delay).and_return described_class
       allow_any_instance_of(described_class).to receive(:generate_xls_to_google_drive) do |inst, path, invoice|
         entries << invoice
@@ -30,7 +30,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
     end
 
     context "with products" do
-      before :each do 
+      before :each do
         product_1
         product_2
       end
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         inv = e.invoices.first
 
         expect(inv.invoice_number).to eq "LD161214"
-        expect(inv.invoice_date).to eq Date.new(2016,12,14)
+        expect(inv.invoice_date).to eq Date.new(2016, 12, 14)
 
         expect(inv.invoice_lines.length).to eq 2
 
@@ -105,7 +105,7 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
     end
 
     context "without products" do
-      before :each do 
+      before :each do
         importer
         us
       end
@@ -135,13 +135,13 @@ describe OpenChain::CustomHandler::AmerSports::AmerSports856CiLoadParser do
         expect(line.foreign_value).to eq 7137
       end
     end
-    
+
     it "raises an error if importer is missing" do
       expect {described_class.parse data}.to raise_error "Unable to find AmerSports importer account with code 'WILSON'."
     end
 
     it "raises an error if US country isn't found" do
-      # The country is only referenced when looking up product tariff data, so it 
+      # The country is only referenced when looking up product tariff data, so it
       # the product needs to be set.
       product_1
       us.destroy

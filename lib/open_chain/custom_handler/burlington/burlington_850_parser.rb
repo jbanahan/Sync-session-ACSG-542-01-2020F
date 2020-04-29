@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     beg_segment = find_segment(edi_segments, "BEG")
     cancelled = (beg_segment[1].to_i == 1)
 
-    # We need to FIRST generate all the products referenced by this PO, this is done outside the main 
+    # We need to FIRST generate all the products referenced by this PO, this is done outside the main
     # order transaction because of transactional race-conditions that occur when trying to create products
     # inside the order transaction, resulting in the very real potential to create duplicate products.
     if !cancelled
@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       order_line_segments = extract_loop(edi_segments, ["PO1", "CTP", "PID", "PO4", "SAC", "CUR", "SDQ", "SLN", "TC2", "N1", "N2", "N3", "N4", "PER"])
       products = create_products(user, last_file_path, order_line_segments, log)
     end
-    
+
     find_or_create_order(beg_segment, last_file_bucket, last_file_path, log) do |order|
       if cancelled
         process_cancelled_order(order, user, last_file_path)
@@ -76,7 +76,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
     when "6"; "Linens"
     when "7"; "Youth"
     when "8"; "Outerwear"
-    else 
+    else
       nil
     end
   end
@@ -87,7 +87,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
 
     order_number = "BURLI-#{cust_order_number}"
     order = nil
-    Lock.acquire("Order-#{order_number}") do 
+    Lock.acquire("Order-#{order_number}") do
       o = Order.where(order_number: order_number, importer_id: importer.id).first_or_create! customer_order_number: cust_order_number
       log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, cust_order_number, module_type:Order.to_s, module_id:o.id
       if process_file?(o, revision)
@@ -112,7 +112,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   end
 
   def process_order_header user, order, edi_segments
-    #Apparently, burlington closes orders and then reopens them if they change from standard lines to prepacks.
+    # Apparently, burlington closes orders and then reopens them if they change from standard lines to prepacks.
     if order.closed?
       order.reopen_logic user
     end
@@ -126,7 +126,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       order.terms_of_payment = fob[1]
       order.terms_of_sale = fob[5]
     end
-    
+
     order.ship_window_start = find_date_value(edi_segments, "375").try(:to_date)
     order.ship_window_end = find_date_value(edi_segments, "376").try(:to_date)
     order.mode = parse_ship_mode(find_element_value(edi_segments, "TD504"))
@@ -190,7 +190,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   def process_standard_line order, product_cache, segments, department
     po1 = find_segment(segments, "PO1")
     line_number = po1[1].to_i
-    
+
     line = find_or_build_order_line order, line_number
     # Line may be nil if the line is already shipping...in that case
     # we do not update the lines
@@ -349,7 +349,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
       end
     end
 
-    Lock.with_lock_retry(product) do 
+    Lock.with_lock_retry(product) do
       # Don't set the description from the PO...the description is a marketing description and is not suitable
       # for customs usage.
       cl = nil
@@ -379,7 +379,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
             t.destroy
             tariffs_destroyed = true
           end
-        end        
+        end
       end
 
       if product.changed? || cl.try(:changed?) || tariffs.any?(&:changed?) || tariffs_destroyed
@@ -400,8 +400,8 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington850Pa
   end
 
   def cdefs
-    @cd ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_type, :ord_planned_forwarder, :ord_line_prepacks_ordered, 
-      :ord_line_retail_unit_price, :ord_line_estimated_unit_landing_cost, :ord_line_department_code, :ord_line_size, :ord_line_color, 
+    @cd ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_type, :ord_planned_forwarder, :ord_line_prepacks_ordered,
+      :ord_line_retail_unit_price, :ord_line_estimated_unit_landing_cost, :ord_line_department_code, :ord_line_size, :ord_line_color,
       :ord_line_units_per_inner_pack, :ord_line_color_description, :ord_line_buyer_item_number, :ord_line_outer_pack_identifier, :prod_part_number])
   end
 

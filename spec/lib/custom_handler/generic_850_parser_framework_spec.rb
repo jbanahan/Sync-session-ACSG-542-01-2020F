@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
       def initialize
         super(self.class.configuration)
       end
-      
+
       def prep_importer
         Company.where(importer: true, system_code: "Test", name: "Test").first_or_create!
       end
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
 
 
     context "with standard order lines" do
-      
+
       subject { FakeStandard850Parser.new }
 
       let (:transaction) { REX12.each_transaction(StringIO.new(standard_transaction_data)).first }
@@ -160,7 +160,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
       it "errors if order is already shipping" do
         expect_any_instance_of(Order).to receive(:shipping?).and_return true
 
-        expect{ subject.process_transaction(user, transaction, last_file_bucket: "bucket", last_file_path: "path")}.to raise_error "PO # '5086819' is already shipping and cannot be updated."
+        expect { subject.process_transaction(user, transaction, last_file_bucket: "bucket", last_file_path: "path")}.to raise_error "PO # '5086819' is already shipping and cannot be updated."
       end
 
       it "rejects orders that have isa dates older than existing orders" do
@@ -204,13 +204,13 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
         expect_any_instance_of(Order).not_to receive(:shipping?)
         expect(subject).to receive(:configuration).and_return({allow_updates_to_shipping_orders: true})
 
-        expect{ subject.new.process_transaction(user, transaction, last_file_bucket: "bucket", last_file_path: "path")}.not_to raise_error
+        expect { subject.new.process_transaction(user, transaction, last_file_bucket: "bucket", last_file_path: "path")}.not_to raise_error
       end
 
-      context "with revision custom values" do 
+      context "with revision custom values" do
 
         subject {
-          Class.new(FakeStandard850Parser) do 
+          Class.new(FakeStandard850Parser) do
             include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
             def cdef_uids
@@ -224,7 +224,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
           parser = subject.new
 
           t = REX12.each_transaction(StringIO.new(standard_transaction_data.gsub("BEG*07*SA*5086819**20150202", "BEG*07*SA*5086819*5*20150202"))).first
-       
+
           parser.process_transaction(user, t, last_file_bucket: "bucket", last_file_path: "path")
 
           order = Order.where(order_number: "Test-5086819").first
@@ -240,7 +240,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
           importer = parser.importer
 
           t = REX12.each_transaction(StringIO.new(standard_transaction_data.gsub("BEG*07*SA*5086819**20150202", "BEG*07*SA*5086819*5*20150202"))).first
-       
+
           order = Order.create!(importer_id: importer.id, order_number: "Test-5086819")
           order.update_custom_value! parser.cdefs[:ord_revision], 10
 
@@ -252,7 +252,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
           expect(order.custom_value(parser.cdefs[:ord_revision_date])).to be_nil
         end
       end
-    
+
     end
 
     context "with prepack order lines" do
@@ -392,7 +392,7 @@ describe OpenChain::CustomHandler::Generic850ParserFramework do
     let (:importer) { Company.where(importer: true, system_code: "Test").first }
 
     it "extracts data from an n1 segment into a hash" do
-      # This test exists due to the way we're overriding this method and proxyig calls to the super 
+      # This test exists due to the way we're overriding this method and proxyig calls to the super
       # implementation of this method...just want to make sure it stays working and consistent
       expect(Lock).to receive(:acquire).with("Company-Test-Toast-0080", yield_in_transaction: false).and_yield
 

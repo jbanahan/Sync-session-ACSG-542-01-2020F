@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSummaryInvoiceSuppor
   end
 
   describe "generate_summary" do
-    
+
     it "creates a summary page with data from each invoice" do
       now = Time.zone.now.to_date
       subject.generate_summary sheet, [broker_invoice, broker_invoice_2], now

@@ -5,7 +5,7 @@ module IntegrationParserSupport
   include OpenChain::FtpFileSupport
   extend ActiveSupport::Concern
 
-  #get the S3 path for the last file used to update this entry (if one exists)
+  # get the S3 path for the last file used to update this entry (if one exists)
   def last_file_secure_url(expires_in=60.seconds)
     return nil unless has_last_file?
     OpenChain::S3.url_for(self.last_file_bucket, self.last_file_path, expires_in)

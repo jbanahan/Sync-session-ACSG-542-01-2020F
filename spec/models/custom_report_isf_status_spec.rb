@@ -41,7 +41,7 @@ describe CustomReportIsfStatus do
   end
 
   describe "run" do
-    before :each do 
+    before :each do
       @sf = Factory(:security_filing, :transaction_number => "1234", :broker_customer_number=> "4321", :status_code => "ACCNOMATCH", :file_logged_date=>Time.now)
       @u = Factory(:importer_user, company_id: @sf.importer_id)
       allow_any_instance_of(User).to receive(:view_security_filings?).and_return true
@@ -107,7 +107,7 @@ describe CustomReportIsfStatus do
 
     it "raises an error if customer number was not utilized as a criterion" do
       @rpt.search_criterions.destroy_all
-      expect{@rpt.to_arrays @u}.to raise_error "This report must include the Customer Number parameter."
+      expect {@rpt.to_arrays @u}.to raise_error "This report must include the Customer Number parameter."
     end
 
     it "only shows first tab for preview runs" do

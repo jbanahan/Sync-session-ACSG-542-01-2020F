@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
 
   def accepts? event, entry
     # We could check that we have unsent invoice to process here, but I think it's probably just
-    # easier to check the simple things and then just no-op in the event processing step if 
+    # easier to check the simple things and then just no-op in the event processing step if
     # there are no invoices left to actually send
     ['CROCS', 'CROCSSAM'].include?(entry.customer_number) && entry.broker_invoices.length > 0 && !entry.last_billed_date.nil? &&
       MasterSetup.get.system_code == 'www-vfitrack-net'
@@ -16,7 +16,7 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
   def receive event, entry
     sync_record = entry.sync_records.where(trading_partner: "crocs 210").first_or_create(fingerprint: "")
     sent_invoices = sync_record.fingerprint.split "\n"
-    
+
     invoices_to_send = entry.broker_invoices.collect {|inv| sent_invoices.include?(inv.invoice_number) ? nil : inv}.compact
 
     unless invoices_to_send.blank?
@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
           # XML might be blank if the invoices have no charges that should be
           # transmitted to Crocs
           unless xml.blank?
-            Tempfile.open(["Crocs210-#{invoice.invoice_number.strip}-",'.xml']) do |t|
+            Tempfile.open(["Crocs210-#{invoice.invoice_number.strip}-", '.xml']) do |t|
               t << xml.to_s
               t.flush
               ftp_file t
@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; module Crocs; class Crocs210Generator
       end
     end
 
-    # It's possible that we'll end up not actually having any invoice lines that 
+    # It's possible that we'll end up not actually having any invoice lines that
     # we added to the xml, in which case, don't bother sending anything.
     total_lines > 0 ? doc : nil
   end

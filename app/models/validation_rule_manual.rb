@@ -1,6 +1,6 @@
 # -*- SkipSchemaAnnotations
 
-#indicates a manual check is needed
+# indicates a manual check is needed
 class ValidationRuleManual < BusinessValidationRule
   def run_validation obj
     "Manual review required."

@@ -1,5 +1,4 @@
 describe OpenChain::Report::BouncedEmailReport do
-  
   describe "run_schedulable" do
     it 'sends the report' do
       Timecop.freeze(Time.zone.parse("2019-12-20 01:00")) do

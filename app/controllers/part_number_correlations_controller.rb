@@ -29,7 +29,7 @@ class PartNumberCorrelationsController < ApplicationController
 
   def index
     if PartNumberCorrelation.can_view?(current_user)
-      @importer_choices = Company.importers.collect{|c| [c.name, c.id]}
+      @importer_choices = Company.importers.collect {|c| [c.name, c.id]}
     else
       add_flash :errors, "You do not have permission to use this tool."
       redirect_to :back

@@ -56,7 +56,7 @@ class ApplicationController < ActionController::Base
   end
 
   def prep_exception_notifier
-    #prep for exception notification
+    # prep for exception notification
     data = {
       server_name: InstanceInformation.server_name,
       server_role: InstanceInformation.server_role
@@ -80,12 +80,12 @@ class ApplicationController < ActionController::Base
     MasterSetup.get
   end
 
-  #controller action to display generic history page
+  # controller action to display generic history page
   def history
     p = root_class.find params[:id]
-    action_secure(p.can_view?(current_user),p,{:verb => "view",:module_name=>"item",:lock_check=>false}) {
+    action_secure(p.can_view?(current_user), p, {:verb => "view", :module_name=>"item", :lock_check=>false}) {
       @base_object = p
-      @snapshots = p.entity_snapshots.order("entity_snapshots.id DESC").paginate(:per_page=>5,:page => params[:page])
+      @snapshots = p.entity_snapshots.order("entity_snapshots.id DESC").paginate(:per_page=>5, :page => params[:page])
       render 'shared/history'
     }
   end
@@ -102,7 +102,7 @@ class ApplicationController < ActionController::Base
       http_envs.each_pair {|k, v| output += "#{k}: #{v}\n------------------------\n"}
       output += "PARAMS\n========================\n"
       out = {}
-      params.each { |k, v| 
+      params.each { |k, v|
         if v.is_a? String
           out[k] = v
         else
@@ -110,7 +110,7 @@ class ApplicationController < ActionController::Base
         end
       }
       output += out.to_s
-      
+
       render plain: output
     else
       raise ActionController::RoutingError.new('Not Found')
@@ -136,13 +136,13 @@ class ApplicationController < ActionController::Base
     }.merge(options)
 
     err_msg = "You do not have permission to #{opts[:verb]} this #{opts[:module_name]}." unless permission_check
-    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0,1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj)
+    err_msg = "You cannot #{opts[:verb]} #{"aeiou".include?(opts[:module_name].slice(0, 1)) ? "an" : "a"} #{opts[:module_name]} with a locked company." if opts[:lock_check] && opts[:lock_lambda].call(obj)
     if err_msg.present?
       opts[:json] ? (render_json_error err_msg) : (error_redirect err_msg)
     else
       # We can only db_lock active record objects and only those that are actually persisted
       if opts[:yield_in_db_lock] && (obj.is_a?(ActiveRecord::Base) && obj.persisted?)
-        Lock.db_lock(obj) do 
+        Lock.db_lock(obj) do
           yield
         end
       else
@@ -243,7 +243,7 @@ class ApplicationController < ActionController::Base
   end
 
   def validate_redirect redirect
-    # This is a simple helper method to validate that a redirect path is going back to the domain name configured 
+    # This is a simple helper method to validate that a redirect path is going back to the domain name configured
     # for this instance.
     uri_redirect = URI(redirect)
 
@@ -286,12 +286,12 @@ class ApplicationController < ActionController::Base
     visible = (params[:sf] == f_short) ? "visible" : "hidden"
 
     arrow = "<span class=\"fa #{fa}\" style=\"visibility: #{visible}; margin-right: .5em;\"></span>"
-    link = help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short,:so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a')))
+    link = help.link_to @s_params[f_short][:label], url_for(merge_params(:sf=>f_short, :so=>(@s_sort==@s_params[f_short] && @s_order=='a' ? 'd' : 'a')))
     (arrow + link).html_safe
   end
 
   def merge_params(p={})
-    params.merge(p).delete_if{|k,v| v.blank?}
+    params.merge(p).delete_if {|k, v| v.blank?}
   end
 
   def errors_to_flash(obj, options={})
@@ -312,7 +312,7 @@ class ApplicationController < ActionController::Base
     !flash[:errors].nil? && flash[:errors].length > 0
   end
 
-  def add_flash(type,message,options={})
+  def add_flash(type, message, options={})
     now = options[:now] || (request.xhr? ? true : false)
     if now
       if flash.now[type].nil?
@@ -393,13 +393,13 @@ class ApplicationController < ActionController::Base
 
   def hash_flip(src)
       dest = Hash.new
-      src.each {|k,v| dest[v] = k}
+      src.each {|k, v| dest[v] = k}
       return dest
   end
 
   def sanitize_params_for_log(p)
     r = {}
-    p.each {|k,v| r[k]=v if v.is_a?(String)}
+    p.each {|k, v| r[k]=v if v.is_a?(String)}
     r
   end
   def model_field_label(model_field_uid)

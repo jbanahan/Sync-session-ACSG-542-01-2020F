@@ -2,9 +2,9 @@ describe OpenChain::Report::HmDrawbackImportReport do
 
   describe "write_report_to_builder" do
     it "writes to builder" do
-      ent_1 = Factory(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017,3,5), customer_number:"HENNE",
-                      import_date:Date.new(2017,5,3), entry_port_code:"YYZ", total_duty:5, total_fees:6,
-                      liquidation_date:DateTime.new(2017,4,2,5,30), entered_value:7, mpf:8, merchandise_description:"Merch_X",
+      ent_1 = Factory(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE",
+                      import_date:Date.new(2017, 5, 3), entry_port_code:"YYZ", total_duty:5, total_fees:6,
+                      liquidation_date:DateTime.new(2017, 4, 2, 5, 30), entered_value:7, mpf:8, merchandise_description:"Merch_X",
                       transport_mode_code:"10", total_taxes:9, summary_line_count:5)
       inv_1 = Factory(:commercial_invoice, entry:ent_1, invoice_number:"123456", exchange_rate:1)
       # This line has a matching receipt file line and product XREF, and 2 tariffs.
@@ -17,7 +17,7 @@ describe OpenChain::Report::HmDrawbackImportReport do
       Factory(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, hts_code:"234567890", tariff_description:"tar-2",
               classification_qty_1: 66, classification_qty_2:77, duty_rate:0.45, duty_amount:5.36, entered_value:5.63,
               entered_value_7501:6.35, spi_primary:"H")
-      HmReceiptLine.create!(order_number:"123456", sku:"part-A-55555", delivery_date:Date.new(2017,4,2), quantity:3)
+      HmReceiptLine.create!(order_number:"123456", sku:"part-A-55555", delivery_date:Date.new(2017, 4, 2), quantity:3)
       HmProductXref.create!(sku:"part-A-55555", color_description:"color-desc-A", size_description:"size-desc-A")
 
       # This line has no tariffs, receipt file line match or product XREF.
@@ -33,14 +33,14 @@ describe OpenChain::Report::HmDrawbackImportReport do
       Factory(:commercial_invoice_tariff, commercial_invoice_line:inv_line_3, hts_code:"456789012", tariff_description:"tar-3",
               classification_qty_1: 77, classification_qty_2:66, duty_rate:0.35, duty_amount:5.37, entered_value:6.64,
               entered_value_7501:7.36, spi_primary:"I")
-      HmReceiptLine.create!(order_number:"123460", sku:"part-B-55555", delivery_date:Date.new(2017,4,3), quantity:4)
-      HmReceiptLine.create!(order_number:"123460", sku:"part-B-55556", delivery_date:Date.new(2017,4,4), quantity:5)
+      HmReceiptLine.create!(order_number:"123460", sku:"part-B-55555", delivery_date:Date.new(2017, 4, 3), quantity:4)
+      HmReceiptLine.create!(order_number:"123460", sku:"part-B-55556", delivery_date:Date.new(2017, 4, 4), quantity:5)
       HmProductXref.create!(sku:"part-B-55555", color_description:"color-desc-B", size_description:"size-desc-B")
       HmProductXref.create!(sku:"part-B-55556", color_description:"color-desc-C", size_description:"size-desc-C")
 
-      ent_2 = Factory(:entry, entry_number:"ent-2", entry_filed_date:Date.new(2017,3,2), customer_number:"HENNE",
-                      import_date:Date.new(2017,5,2), entry_port_code:"ZYZ", total_duty:6, total_fees:7,
-                      liquidation_date:DateTime.new(2017,4,3,6,25), entered_value:8, mpf:9, merchandise_description:"Merch_Y",
+      ent_2 = Factory(:entry, entry_number:"ent-2", entry_filed_date:Date.new(2017, 3, 2), customer_number:"HENNE",
+                      import_date:Date.new(2017, 5, 2), entry_port_code:"ZYZ", total_duty:6, total_fees:7,
+                      liquidation_date:DateTime.new(2017, 4, 3, 6, 25), entered_value:8, mpf:9, merchandise_description:"Merch_Y",
                       transport_mode_code:"11", total_taxes:9, summary_line_count:6)
       inv_3 = Factory(:commercial_invoice, entry:ent_2, invoice_number:"123457", exchange_rate:0.75)
       # This line has a matching receipt file line and product XREF, one tariff.
@@ -50,16 +50,16 @@ describe OpenChain::Report::HmDrawbackImportReport do
       Factory(:commercial_invoice_tariff, commercial_invoice_line:inv_line_4, hts_code:"123456789", tariff_description:"tar-4",
               classification_qty_1: 88, classification_qty_2:55, duty_rate:0.25, duty_amount:5.37, entered_value:7.65,
               entered_value_7501:8.37, spi_primary:"J")
-      HmReceiptLine.create!(order_number:"123457", sku:"part-C-55555", delivery_date:Date.new(2017,4,2), quantity:2)
+      HmReceiptLine.create!(order_number:"123457", sku:"part-C-55555", delivery_date:Date.new(2017, 4, 2), quantity:2)
       HmProductXref.create!(sku:"part-C-55555", color_description:"color-desc-D", size_description:"size-desc-D")
 
       # This line is ignored because it's before the date range.
-      ent_3 = Factory(:entry, entry_number:"ent-3", entry_filed_date:Date.new(2017,2,28), customer_number:"HENNE")
+      ent_3 = Factory(:entry, entry_number:"ent-3", entry_filed_date:Date.new(2017, 2, 28), customer_number:"HENNE")
       inv_4 = Factory(:commercial_invoice, entry:ent_3, invoice_number:"123458")
       Factory(:commercial_invoice_line, commercial_invoice:inv_4, po_number:"PO-D", part_number:"part-D", quantity:9)
 
       # This line is ignored because it's after the date range.
-      ent_4 = Factory(:entry, entry_number:"ent-4", entry_filed_date:Date.new(2017,4,1), customer_number:"HENNE")
+      ent_4 = Factory(:entry, entry_number:"ent-4", entry_filed_date:Date.new(2017, 4, 1), customer_number:"HENNE")
       inv_5 = Factory(:commercial_invoice, entry:ent_4, invoice_number:"123459")
       Factory(:commercial_invoice_line, commercial_invoice:inv_5, po_number:"PO-E", part_number:"part-E", quantity:10)
 
@@ -67,14 +67,14 @@ describe OpenChain::Report::HmDrawbackImportReport do
       # within our date range, and should be included at the end of the dataset.  The second two receipt lines are
       # before and after the date range, respectively, and should be ignored.  Only the first receipt line has a matching
       # product xref.
-      HmReceiptLine.create!(order_number:"551234", sku:"part-D-55555", delivery_date:Date.new(2017,3,2), quantity:42)
+      HmReceiptLine.create!(order_number:"551234", sku:"part-D-55555", delivery_date:Date.new(2017, 3, 2), quantity:42)
       HmProductXref.create!(sku:"part-D-55555", color_description:"color-desc-E", size_description:"size-desc-E")
-      HmReceiptLine.create!(order_number:"551235", sku:"part-E-55555", delivery_date:Date.new(2017,3,30), quantity:24)
-      HmReceiptLine.create!(order_number:"551236", sku:"part-F-55555", delivery_date:Date.new(2017,2,28), quantity:4)
-      HmReceiptLine.create!(order_number:"551237", sku:"part-F-55555", delivery_date:Date.new(2017,4,1), quantity:2)
+      HmReceiptLine.create!(order_number:"551235", sku:"part-E-55555", delivery_date:Date.new(2017, 3, 30), quantity:24)
+      HmReceiptLine.create!(order_number:"551236", sku:"part-F-55555", delivery_date:Date.new(2017, 2, 28), quantity:4)
+      HmReceiptLine.create!(order_number:"551237", sku:"part-F-55555", delivery_date:Date.new(2017, 4, 1), quantity:2)
 
       builder = subject.builder("csv")
-      subject.write_report_to_builder builder, Date.new(2017,3,1), Date.new(2017,3,31)
+      subject.write_report_to_builder builder, Date.new(2017, 3, 1), Date.new(2017, 3, 31)
 
       io = StringIO.new
       builder.write io
@@ -91,7 +91,7 @@ describe OpenChain::Report::HmDrawbackImportReport do
     end
 
     it "handles nils and missing values" do
-      ent_1 = Factory(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017,3,5), customer_number:"HENNE")
+      ent_1 = Factory(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE")
       inv_1 = Factory(:commercial_invoice, entry:ent_1, invoice_number:"123456")
       inv_line_1 = Factory(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A")
       Factory(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1)
@@ -99,7 +99,7 @@ describe OpenChain::Report::HmDrawbackImportReport do
       HmProductXref.create!(sku:"part-A-55555")
 
       builder = subject.builder("csv")
-      subject.write_report_to_builder builder, Date.new(2017,3,1), Date.new(2017,3,31)
+      subject.write_report_to_builder builder, Date.new(2017, 3, 1), Date.new(2017, 3, 31)
 
       io = StringIO.new
       builder.write io
@@ -112,13 +112,13 @@ describe OpenChain::Report::HmDrawbackImportReport do
     # Ensures we are preventing a divide by zero exception caused when HTS duty amount had a value and invoice line
     # quantity had a zero value.
     it "handles zero invoice line quantity" do
-      ent_1 = Factory(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017,3,5), customer_number:"HENNE")
+      ent_1 = Factory(:entry, entry_number:"ent-1", entry_filed_date:Date.new(2017, 3, 5), customer_number:"HENNE")
       inv_1 = Factory(:commercial_invoice, entry:ent_1, invoice_number:"123456")
       inv_line_1 = Factory(:commercial_invoice_line, commercial_invoice:inv_1, po_number:"PO-A", part_number:"part-A", quantity:0)
       Factory(:commercial_invoice_tariff, commercial_invoice_line:inv_line_1, duty_amount:5.55)
 
       builder = subject.builder("csv")
-      subject.write_report_to_builder builder, Date.new(2017,3,1), Date.new(2017,3,31)
+      subject.write_report_to_builder builder, Date.new(2017, 3, 1), Date.new(2017, 3, 31)
 
       io = StringIO.new
       builder.write io
@@ -131,7 +131,7 @@ describe OpenChain::Report::HmDrawbackImportReport do
 
   describe "run" do
     it "runs a report with provided dates" do
-      expect(subject).to receive(:write_report_to_builder).with(instance_of(subject.builder("csv").class), Date.new(2016,1,1).beginning_of_day, Date.new(2016,12,31).end_of_day).and_call_original
+      expect(subject).to receive(:write_report_to_builder).with(instance_of(subject.builder("csv").class), Date.new(2016, 1, 1).beginning_of_day, Date.new(2016, 12, 31).end_of_day).and_call_original
 
       subject.run({"email_to"=>["a@b.com"], "start_date"=>"2016-01-01", "end_date"=>"2016-12-31"})
 
@@ -145,9 +145,9 @@ describe OpenChain::Report::HmDrawbackImportReport do
     end
 
     it "runs a report with defaulted dates" do
-      current_date = Date.new(2018,10,15)
+      current_date = Date.new(2018, 10, 15)
 
-      expect(subject).to receive(:write_report_to_builder).with(instance_of(subject.builder("csv").class), Date.new(2018,1,1).beginning_of_day, Date.new(2018,3,31).end_of_day).and_call_original
+      expect(subject).to receive(:write_report_to_builder).with(instance_of(subject.builder("csv").class), Date.new(2018, 1, 1).beginning_of_day, Date.new(2018, 3, 31).end_of_day).and_call_original
 
       Timecop.freeze(current_date) do
         subject.run({"email_to"=>["a@b.com"]})

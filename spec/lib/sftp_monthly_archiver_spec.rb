@@ -1,24 +1,24 @@
 describe OpenChain::SftpMonthlyArchiver do
   it 'throws an exception if an Alliance customer number is not present' do
-    expect{OpenChain::SftpMonthlyArchiver.new({'ftp_folder' => 'blah'})}.to raise_error(RuntimeError, 'Alliance Customer Number Required')
+    expect {OpenChain::SftpMonthlyArchiver.new({'ftp_folder' => 'blah'})}.to raise_error(RuntimeError, 'Alliance Customer Number Required')
   end
 
   it 'throws an exception if a FTP Folder is not present' do
-    expect{OpenChain::SftpMonthlyArchiver.new({'alliance_customer_number' => 'blah'})}.to raise_error(RuntimeError, 'FTP Folder Required')
+    expect {OpenChain::SftpMonthlyArchiver.new({'alliance_customer_number' => 'blah'})}.to raise_error(RuntimeError, 'FTP Folder Required')
   end
 
   describe "run" do
     let (:opts) { {'notification_email' => 'blah@blah.com', 'ftp_folder' => 'blah', 'alliance_customer_number' => 'blah'} }
     let (:company) { with_customs_management_id(Factory(:company), "blah") }
-    let (:entry) { 
+    let (:entry) {
       e = Factory(:entry, importer: company, broker_reference: "reference")
       e.broker_invoices.create! invoice_date: 1.year.ago
       e
     }
-    let! (:attachment) { 
+    let! (:attachment) {
       entry.attachments.create! attached_file_name: "file.pdf", attachment_type: "Entry Packet", attached_file_size: 100
     }
-    let! (:archive_setup) { AttachmentArchiveSetup.create! company_id: company.id, start_date: (Time.zone.now - 1.year).to_date }    
+    let! (:archive_setup) { AttachmentArchiveSetup.create! company_id: company.id, start_date: (Time.zone.now - 1.year).to_date }
 
     context "using broker_reference_override" do
       subject { described_class.new opts }
@@ -44,7 +44,6 @@ describe OpenChain::SftpMonthlyArchiver do
         expect(archive.finish_at.to_i).to eq now.to_i
       end
     end
-    
   end
 
   describe '#send_zip' do
@@ -75,7 +74,6 @@ describe OpenChain::SftpMonthlyArchiver do
     end
 
     context 'manifest file creation' do
-    
       it 'creates a manifest file' do
         Timecop.freeze(Time.zone.now) do
           manifests_relation = double("manifests_relation")
@@ -98,7 +96,7 @@ describe OpenChain::SftpMonthlyArchiver do
       end
 
       now = Time.zone.parse "2016-01-01 00:00"
-      
+
       # The following line is needed to instantiate the archived attachment
       archived_attachment
       expect(subject).to receive(:ftp_file) do |file, opts|

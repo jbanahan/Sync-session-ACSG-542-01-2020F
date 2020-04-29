@@ -77,7 +77,7 @@ module OpenChain; module Report; class TicketTrackingReport
     r = []
     vfi_hash = hash_results_by_broker_ref(vfi_result)
     jira_result.each do |jr|
-      #move the ticketing_system_code from the jira result to the vfi result
+      # move the ticketing_system_code from the jira result to the vfi result
       jira_broker_ref = jr[13]
       if vfi_hash[jira_broker_ref]
         vfi_hash[jira_broker_ref][11] = jr.delete_at(14)
@@ -88,7 +88,7 @@ module OpenChain; module Report; class TicketTrackingReport
         r << jr + [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, jira_link]
       end
     end
-    r.sort_by{|res| res[11]}
+    r.sort_by {|res| res[11]}
   end
 
   def hash_results_by_broker_ref vfi_result

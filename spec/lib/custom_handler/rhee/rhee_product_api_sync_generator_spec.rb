@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
 
     it "syncs product requiring update to a remote VFI Track instance not having that product data" do
       # We're going to mock out the data for the remote calls
-      expect(@api_client).to receive(:find_by_uid).with("RHEE-" + @product.unique_identifier,["prod_uid", "*cf_43", "*cf_78", "*cf_77", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
+      expect(@api_client).to receive(:find_by_uid).with("RHEE-" + @product.unique_identifier, ["prod_uid", "*cf_43", "*cf_78", "*cf_77", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
 
       # Capture and analyze the remote data later
       remote_data = nil
@@ -51,7 +51,7 @@ describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
     it 'syncs products requiring update with multiple hts lines' do
       @product.classifications.first.tariff_records.create! line_number: 2, hts_1: "9876543210"
 
-      expect(@api_client).to receive(:find_by_uid).with("RHEE-" + @product.unique_identifier,["prod_uid", "*cf_43", "*cf_78", "*cf_77", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
+      expect(@api_client).to receive(:find_by_uid).with("RHEE-" + @product.unique_identifier, ["prod_uid", "*cf_43", "*cf_78", "*cf_77", "class_cntry_iso", "hts_line_number", "hts_hts_1", "prod_imp_syscode"]).and_return({'product'=>nil})
 
       # Capture and analyze the remote data later
       remote_data = nil
@@ -116,7 +116,7 @@ describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
 
     it "syncs data the already exists in vfitrack with a classification" do
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "RHEE-#{@product.unique_identifier}",
         'classifications' => [{
           'id' => 2,
@@ -154,7 +154,7 @@ describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
 
     it "syncs data the already exists in vfitrack with a tariff_record" do
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "RHEE-#{@product.unique_identifier}",
         'classifications' => [{
           'id' => 2,
@@ -197,7 +197,7 @@ describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
 
     it "destroys tariff records in VFI Track that don't exist locally" do
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "RHEE-#{@product.unique_identifier}",
         'classifications' => [{
           'id' => 2,
@@ -245,7 +245,7 @@ describe OpenChain::CustomHandler::Rhee::RheeProductApiSyncGenerator do
 
     it "ignores classifications for countries other than those listed locally" do
       existing_product = {
-        'id' => 1, 
+        'id' => 1,
         'prod_uid' => "RHEE-#{@product.unique_identifier}",
         'classifications' => [{
           'id' => 2,

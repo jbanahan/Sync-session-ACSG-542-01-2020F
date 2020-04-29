@@ -1,13 +1,13 @@
 describe OneTimeAlert do
   let(:ent) { Factory(:entry, broker_reference: "BROKREF_ABC") }
-  let(:ota) { Factory(:one_time_alert, user: Factory(:user, email: "sthubbins@hellhole.co.uk"), email_addresses: "tufnel@stonehenge.biz", 
+  let(:ota) { Factory(:one_time_alert, user: Factory(:user, email: "sthubbins@hellhole.co.uk"), email_addresses: "tufnel@stonehenge.biz",
                                        email_subject: "alert", email_body: "Watch out!", module_type: "Entry", blind_copy_me: true,
                                        search_criterions: [Factory(:search_criterion, model_field_uid: "ent_gross_weight", value: 5),
                                                            Factory(:search_criterion, model_field_uid: "ent_vessel", value: "HMS Pinafore")]) }
-  
+
   context "permissions" do
     let(:user) { Factory(:user) }
-    
+
     describe "can_edit?" do
       it "allows alert's creator" do
         ota.update_attributes! user: user
@@ -55,16 +55,16 @@ describe OneTimeAlert do
 
   describe "trigger" do
     it "creates a sync_record, sends email, and creates log entry" do
-      now = DateTime.new(2018,3,15)
+      now = DateTime.new(2018, 3, 15)
       expect(ota).to receive(:send_email).with(ent)
       Timecop.freeze(now) { ota.trigger ent }
-      
+
       sr = ent.sync_records.first
       expect(sr.trading_partner).to eq "one_time_alert"
       expect(sr.sent_at).to eq now
       expect(sr.confirmed_at).to eq(now + 1.minute)
       expect(sr.fingerprint).to eq ota.id.to_s
-      
+
       log = ota.log_entries.first
       expect(log.alertable).to eq ent
       expect(log.logged_at).to eq now
@@ -74,7 +74,7 @@ describe OneTimeAlert do
 
   describe "recipients_and_mailing_lists" do
     let(:ml) { Factory(:mailing_list, email_addresses: "sthubbins@hellhole.co.uk, smalls@sharksandwich.net")}
-    
+
     it "returns addresses in mailing list" do
       ota.update_attributes(email_addresses: nil, mailing_list: ml)
       expect(ota.recipients_and_mailing_lists).to eq "sthubbins@hellhole.co.uk, smalls@sharksandwich.net"
@@ -93,7 +93,6 @@ describe OneTimeAlert do
   describe "send_email" do
     before { ent.update_attributes! gross_weight: 5, vessel: "HMS Pinafore" }
     it "generates standard email with object argument" do
-      
       ota.send_email ent
       mail = ActionMailer::Base.deliveries.pop
       expect(mail.to).to eq ["tufnel@stonehenge.biz"]

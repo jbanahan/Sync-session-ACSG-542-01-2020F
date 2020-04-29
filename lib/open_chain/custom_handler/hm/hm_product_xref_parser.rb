@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Hm; class HmProductXrefParser
   end
 
   def self.valid_file? filename
-    ['.XLS','.XLSX', '.CSV'].include? File.extname(filename.upcase)
+    ['.XLS', '.XLSX', '.CSV'].include? File.extname(filename.upcase)
   end
 
   def can_view? user

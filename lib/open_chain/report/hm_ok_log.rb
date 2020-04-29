@@ -25,15 +25,15 @@ module OpenChain; module Report; class HmOkLog
 
   def run run_by, settings={}
     wb = Spreadsheet::Workbook.new
-    ['East','West'].each {|coast| run_coast(wb,coast)}
+    ['East', 'West'].each {|coast| run_coast(wb, coast)}
     run_unmatched wb
     workbook_to_tempfile wb, 'HmOKLog-'
   end
 
-  private 
+  private
   def run_unmatched wb
     qry = <<QRY
-select  
+select
 part_number.string_value as 'Order Number',
 shipments.importer_reference as 'Import Number',
 shipments.vessel as 'Vessel',
@@ -60,10 +60,10 @@ and shipments.est_arrival_port_date > DATE_ADD(now(),INTERVAL -45 DAY)
 order by shipments.est_arrival_port_date asc
 QRY
     sheet = wb.create_worksheet :name=>'Unmatched'
-    table_from_query sheet, qry 
+    table_from_query sheet, qry
   end
   def run_coast wb, coast
-    raise "Invalid coast." unless ['east','west'].include? coast.downcase
+    raise "Invalid coast." unless ['east', 'west'].include? coast.downcase
     tz = coast.downcase=='west' ? 'US/Pacific' : 'US/Eastern'
     qry = <<QRY
 SELECT DISTINCT

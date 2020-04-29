@@ -8,14 +8,14 @@ class ErrorLogEntriesController < ApplicationController
     }
   end
 
-  def show 
+  def show
     sys_admin_secure {
       @error_log_entry = ErrorLogEntry.find params[:id]
     }
   end
 
   def log_angular
-    StandardError.new('Angular Error').log_me [params[:exception],"REFERRER: #{request.referrer}"]
+    StandardError.new('Angular Error').log_me [params[:exception], "REFERRER: #{request.referrer}"]
     render plain: "ok"
   end
 end

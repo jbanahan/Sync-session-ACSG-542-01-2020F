@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
   end
 
   def self.valid_file? filename
-    ['.XLS','.XLSX', '.CSV'].include? File.extname(filename.upcase)
+    ['.XLS', '.XLSX', '.CSV'].include? File.extname(filename.upcase)
   end
 
   def process user
@@ -53,9 +53,9 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
       if prod_hsh[:unique_identifier] == row[0]
         load_hsh prod_hsh, row
       else
-        update_product prod_hsh unless prod_hsh[:record_count].zero?        
+        update_product prod_hsh unless prod_hsh[:record_count].zero?
         prod_hsh = init_hsh
-        load_hsh prod_hsh, row        
+        load_hsh prod_hsh, row
       end
     end
     update_product prod_hsh unless prod_hsh[:record_count].zero?
@@ -98,7 +98,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
 
   def error_string codes_hsh, filename
     start = "The following site codes in #{filename} were unrecognized: ".html_safe
-    middle = codes_hsh.map{ |row_num, code| "#{code} (row #{row_num})"}.join(", ")
+    middle = codes_hsh.map { |row_num, code| "#{code} (row #{row_num})"}.join(", ")
     ending = %Q(<br><br>Please add it to the <a href="#{url}">list</a> and try again.).html_safe
     start + middle + ending
   end
@@ -108,7 +108,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
   end
 
   def set_multi_value_field product, cdef, prod_hsh_field, changed
-    old_val = product.custom_value(cdef).try(:split,"\n ").try(:sort) || []
+    old_val = product.custom_value(cdef).try(:split, "\n ").try(:sort) || []
     new_val = (old_val + prod_hsh_field).compact.try(:sort).try(:uniq)
     if old_val != new_val
       product.find_and_set_custom_value(cdef, new_val.join("\n "))
@@ -121,7 +121,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourMis
     product.find_and_set_custom_value(cdefs[:prod_style], prod_hsh[:style])
     product.find_and_set_custom_value(cdefs[:prod_color], prod_hsh[:color])
     product.find_and_set_custom_value(cdefs[:prod_size_code], prod_hsh[:size_code])
-    product.find_and_set_custom_value(cdefs[:prod_size_description], prod_hsh[:size_description])    
+    product.find_and_set_custom_value(cdefs[:prod_size_description], prod_hsh[:size_description])
   end
 
 end; end; end; end;

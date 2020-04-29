@@ -14,7 +14,7 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
 
       base_object.add_tooltip_to_html_options mf, html_opts
 
-      expected_opts = {title:'abc',class:' fieldtip '}
+      expected_opts = {title:'abc', class:' fieldtip '}
       expect(html_opts).to eq expected_opts
     end
     it "should do nothing if model_field.tool_tip returns blank" do
@@ -34,34 +34,34 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
       allow(@mf).to receive(:uid).and_return('xx')
     end
     it "should prefix parent_name if it exists" do
-      expect(base_object.get_form_field_name('abc',nil,@mf)).to eq 'abc[xx]'
+      expect(base_object.get_form_field_name('abc', nil, @mf)).to eq 'abc[xx]'
     end
     it "should prefix parent_name instead of form_object name" do
       form_obj = double('form_object')
       allow(form_obj).to receive(:object_name).and_return('def')
-      expect(base_object.get_form_field_name('abc',form_obj,@mf)).to eq 'abc[xx]'
+      expect(base_object.get_form_field_name('abc', form_obj, @mf)).to eq 'abc[xx]'
     end
     it "should prefix form_object.object_name if it exists without parent_name" do
       form_obj = double('form_object')
       allow(form_obj).to receive(:object_name).and_return('def')
-      expect(base_object.get_form_field_name('',form_obj,@mf)).to eq 'def[xx]'
+      expect(base_object.get_form_field_name('', form_obj, @mf)).to eq 'def[xx]'
     end
     it "should just do uid if no parent_name or form_object" do
-      expect(base_object.get_form_field_name('',nil,@mf)).to eq 'xx'
+      expect(base_object.get_form_field_name('', nil, @mf)).to eq 'xx'
     end
   end
 
   describe "get_core_and_form_objects" do
     it "should return core object and return nil for form_object when core_object is passed" do
       obj = Order.new
-      expect(base_object.get_core_and_form_objects(obj)).to eq [obj,nil]
+      expect(base_object.get_core_and_form_objects(obj)).to eq [obj, nil]
     end
     it "should return core and form_objects when form_object is passed" do
       frm = double(:form)
       allow(frm).to receive(:fields_for).and_return('x')
       obj = Order.new
       allow(frm).to receive(:object).and_return(obj)
-      expect(base_object.get_core_and_form_objects(frm)).to eq [obj,frm]
+      expect(base_object.get_core_and_form_objects(frm)).to eq [obj, frm]
     end
   end
 
@@ -82,8 +82,8 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
 
   describe "for_model_fields" do
     it "should loop and yield ModelField objects for mixed array of strings, symbols, and ModelField objects" do
-      vals = [:ord_ord_num, ModelField.find_by_uid(:ord_ord_date),'ord_cust_ord_no']
-      expected = [:ord_ord_num,:ord_ord_date,:ord_cust_ord_no].collect {|uid| ModelField.find_by_uid(uid)}
+      vals = [:ord_ord_num, ModelField.find_by_uid(:ord_ord_date), 'ord_cust_ord_no']
+      expected = [:ord_ord_num, :ord_ord_date, :ord_cust_ord_no].collect {|uid| ModelField.find_by_uid(uid)}
 
       received = []
       base_object.for_model_fields(vals) {|mf| received << mf}
@@ -114,23 +114,23 @@ describe OpenChain::ModelFieldRenderer::FieldHelperSupport do
       @user = double(:user)
     end
     it "should not skip if hidden override" do
-      expect(base_object.skip_field?(@model_field,@user,true,false)).to be_falsey
+      expect(base_object.skip_field?(@model_field, @user, true, false)).to be_falsey
     end
     it "should skip if user doesn't have view permission" do
       allow(@model_field).to receive(:can_view?).and_return(false)
-      expect(base_object.skip_field?(@model_field,@user,false,false)).to be_truthy
+      expect(base_object.skip_field?(@model_field, @user, false, false)).to be_truthy
     end
     it "should skip if user does have view permission and read_only_override is false and the field is read only" do
       allow(@model_field).to receive(:read_only?).and_return(true)
-      expect(base_object.skip_field?(@model_field,@user,false,false)).to be_truthy
+      expect(base_object.skip_field?(@model_field, @user, false, false)).to be_truthy
     end
     it "should skip if user does have view permission and read_only_override is false and the field is not read only and the user cannot edit the field" do |variable|
       allow(@model_field).to receive(:read_only?).and_return(false)
       allow(@model_field).to receive(:can_edit?).and_return(false)
-      expect(base_object.skip_field?(@model_field,@user,false,false)).to be_truthy
+      expect(base_object.skip_field?(@model_field, @user, false, false)).to be_truthy
     end
     it "should not skip if user does have view permission and read_only_override is true" do
-      expect(base_object.skip_field?(@model_field,@user,false,true)).to be_falsey
+      expect(base_object.skip_field?(@model_field, @user, false, true)).to be_falsey
     end
   end
 end

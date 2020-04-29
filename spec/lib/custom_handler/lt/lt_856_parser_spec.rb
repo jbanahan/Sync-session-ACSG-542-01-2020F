@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
    # i i i i
 
   subject { described_class }
-  
+
   let!(:cdefs) { subject.new.cdefs }
   let(:data) { IO.read 'spec/fixtures/files/lt_856.edi' }
   let(:data_abridged) { IO.read 'spec/fixtures/files/lt_856_abridged.edi' }
@@ -24,7 +24,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
   let(:ord_2) { Factory(:order, importer: lt, customer_order_number: "416475") }
   let(:ord_3) { Factory(:order, importer: lt, customer_order_number: "613450") }
   let(:ord_4) { Factory(:order, importer: lt, customer_order_number: "416495") }
-  
+
   let(:ordln_1) { Factory(:order_line, order: ord_1, sku: "192399348778")}
   let(:ordln_2) { Factory(:order_line, order: ord_1, sku: "192399348761")}
   let(:ordln_3) { Factory(:order_line, order: ord_2, sku: "192399348631")}
@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
   let(:port_final_dest_1) { Factory(:port, schedule_d_code: "2710")}
   let(:port_lading_1) { Factory(:port, schedule_k_code: "55200")}
   let(:port_last_foreign_1) { Factory(:port, schedule_k_code: "12345")}
-  
+
   let(:port_receipt_2) { Factory(:port, schedule_k_code: "54201")}
   let(:port_unlading_2) { Factory(:port, schedule_d_code: "1001")}
   let(:port_final_dest_2) { Factory(:port, schedule_d_code: "1002")}
@@ -45,34 +45,34 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
 
 
   def load_all
-    vietnam; ordln_1; ordln_2; ordln_3; ordln_4; port_receipt_1; port_unlading_1; port_final_dest_1; port_lading_1; 
+    vietnam; ordln_1; ordln_2; ordln_3; ordln_4; port_receipt_1; port_unlading_1; port_final_dest_1; port_lading_1;
     port_last_foreign_1; load_for_shipment_2
   end
 
   def load_for_shipment_2
-    sri_lanka; ordln_5; port_receipt_2; port_unlading_2; port_final_dest_2; port_lading_2; 
+    sri_lanka; ordln_5; port_receipt_2; port_unlading_2; port_final_dest_2; port_lading_2;
     port_last_foreign_2;
   end
 
   describe "parse", :disable_delayed_jobs do
     it "creates a shipment" do
       load_all
-      now = DateTime.new(2018,3,15,6)
-      Timecop.freeze(DateTime.new(2018,3,15,6)) { subject.parse data, bucket: "bucket", key: "file.edi" }
-      
+      now = DateTime.new(2018, 3, 15, 6)
+      Timecop.freeze(DateTime.new(2018, 3, 15, 6)) { subject.parse data, bucket: "bucket", key: "file.edi" }
+
       shipment = Shipment.where(importer_id: lt.id, reference: "LOLLYT-20998").first
       expect(shipment).not_to be_nil
       expect(shipment.importer_reference).to eq "20998"
-      expect(shipment.last_exported_from_source).to eq DateTime.new(2018,9,17,21,6)
+      expect(shipment.last_exported_from_source).to eq DateTime.new(2018, 9, 17, 21, 6)
       expect(shipment.master_bill_of_lading).to eq "APLU715214446"
       expect(shipment.mode).to eq "Ocean"
       expect(shipment.vessel).to eq "CMA CGM THAMES"
       expect(shipment.country_origin).to eq vietnam
       expect(shipment.voyage).to eq "0TU1BE"
       expect(shipment.vessel_carrier_scac).to eq "APLU"
-      expect(shipment.est_arrival_port_date).to eq Date.new(2018,8,15)
-      expect(shipment.est_departure_date).to eq Date.new(2018,7,30)
-      
+      expect(shipment.est_arrival_port_date).to eq Date.new(2018, 8, 15)
+      expect(shipment.est_departure_date).to eq Date.new(2018, 7, 30)
+
       expect(shipment.first_port_receipt).to eq port_receipt_1
       expect(shipment.unlading_port).to eq port_unlading_1
       expect(shipment.final_dest_port).to eq port_final_dest_1
@@ -132,17 +132,17 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
 
       # without container
       shipment2 = Shipment.where(importer_id: lt.id, reference: "LOLLYT-21213").first
-      expect(shipment2).not_to be_nil 
-      expect(shipment2.last_exported_from_source).to eq DateTime.new(2018,9,18,21,7)
+      expect(shipment2).not_to be_nil
+      expect(shipment2.last_exported_from_source).to eq DateTime.new(2018, 9, 18, 21, 7)
       expect(shipment2.master_bill_of_lading).to eq "ONEYCMBU07934600"
       expect(shipment2.mode).to eq "Air"
       expect(shipment2.vessel).to eq "CRETE I"
       expect(shipment2.country_origin).to eq sri_lanka
       expect(shipment2.voyage).to eq "003E"
       expect(shipment2.vessel_carrier_scac).to eq "ONEY"
-      expect(shipment2.est_arrival_port_date).to eq Date.new(2018,9,30)
-      expect(shipment2.est_departure_date).to eq Date.new(2018,9,10)
-      
+      expect(shipment2.est_arrival_port_date).to eq Date.new(2018, 9, 30)
+      expect(shipment2.est_departure_date).to eq Date.new(2018, 9, 10)
+
       expect(shipment2.first_port_receipt).to eq port_receipt_2
       expect(shipment2.unlading_port).to eq port_unlading_2
       expect(shipment2.final_dest_port).to eq port_final_dest_2
@@ -153,7 +153,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
       expect(shipment2.shipment_lines.count).to eq 1
       sl5 = shipment2.shipment_lines.first
       expect(shipment2.custom_value(cdefs[:shp_entry_prepared_date])).to eq now
-      
+
       expect(sl5.order_lines.first.order).to eq ord_4
       expect(sl5.quantity).to eq 552
       expect(sl5.carton_qty).to eq 92
@@ -183,7 +183,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
       expect(s.shipment_lines.length).to eq 4
 
       c = s.containers.first
-      
+
       # Just check for some data from the EDI to be present
       expect(c.container_number).to eq "CMAU5209148"
       expect(c.shipment_lines.length).to eq 3
@@ -193,7 +193,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
 
     it "doesn't process outdated EDI" do
       load_for_shipment_2
-      s = Shipment.create!(importer_id: lt.id, reference: "LOLLYT-21213", last_exported_from_source: DateTime.new(2018,10,1))
+      s = Shipment.create!(importer_id: lt.id, reference: "LOLLYT-21213", last_exported_from_source: DateTime.new(2018, 10, 1))
       subject.parse data_abridged, bucket: "bucket", key: "file.edi"
       s = Shipment.where(importer_id: lt.id, reference: "LOLLYT-21213").first
 
@@ -206,7 +206,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
       port_receipt_2.destroy
       subject.parse data_abridged, bucket: "bucket", key: "file.edi"
       s = Shipment.where(importer_id: lt.id, reference: "LOLLYT-21213").first
-      
+
       expect(s.first_port_receipt).to be_nil
     end
 

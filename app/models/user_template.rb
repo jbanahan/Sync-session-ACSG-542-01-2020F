@@ -69,7 +69,7 @@ dtemp
 
       if template_hash['event_subscriptions']
         template_hash['event_subscriptions'].each do |es_h|
-          u.event_subscriptions.build(event_type:es_h['event_type'],email:es_h['email'],system_message:es_h['system_message'])
+          u.event_subscriptions.build(event_type:es_h['event_type'], email:es_h['email'], system_message:es_h['system_message'])
         end
       end
 

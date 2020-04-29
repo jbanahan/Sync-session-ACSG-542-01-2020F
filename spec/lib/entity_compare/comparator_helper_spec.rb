@@ -8,25 +8,25 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     it "should get data from S3" do
       h = {'a'=>'b'}
       json = h.to_json
-      expect(OpenChain::S3).to receive(:get_versioned_data).with('b','k','v').and_return json
-      expect(subject.get_json_hash('b','k','v')).to eq h
+      expect(OpenChain::S3).to receive(:get_versioned_data).with('b', 'k', 'v').and_return json
+      expect(subject.get_json_hash('b', 'k', 'v')).to eq h
     end
 
     it "returns blank hash if bucket is blank" do
-      expect(subject.get_json_hash('','k','v')).to eq({})
+      expect(subject.get_json_hash('', 'k', 'v')).to eq({})
     end
 
     it "returns blank hash if key is blank" do
-      expect(subject.get_json_hash('b','','v')).to eq({})
+      expect(subject.get_json_hash('b', '', 'v')).to eq({})
     end
 
     it "returns blank hash if version is blank" do
-      expect(subject.get_json_hash('b','k','')).to eq({})
+      expect(subject.get_json_hash('b', 'k', '')).to eq({})
     end
 
     it "returns blank if data is blank" do
-      expect(OpenChain::S3).to receive(:get_versioned_data).with('b','k','v').and_return "       "
-      expect(subject.get_json_hash('b','k','v')).to eq({})
+      expect(OpenChain::S3).to receive(:get_versioned_data).with('b', 'k', 'v').and_return "       "
+      expect(subject.get_json_hash('b', 'k', 'v')).to eq({})
     end
   end
 
@@ -41,7 +41,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
 
     it "returns nil if time is blank" do
       expect(subject.parse_time("   ")).to be_nil
-    end 
+    end
   end
 
 
@@ -109,7 +109,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(subject.mf({"core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}, "test")).to eq "Child-A"
     end
 
-    it "extracts a model field value from a wrapped entity hash" do 
+    it "extracts a model field value from a wrapped entity hash" do
       expect(subject.mf({"entity" => {"core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}}, "test")).to eq "Child-A"
     end
 
@@ -179,7 +179,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
 
     it "converts date time values" do
       # Make sure it handles time zone conversion too
-      Time.use_zone("America/Chicago") do 
+      Time.use_zone("America/Chicago") do
         expect(subject.coerce_model_field_value "ent_arrival_date", "2017-01-11T10:42:48Z").to eq ActiveSupport::TimeZone["America/Chicago"].parse "2017-01-11T04:42:48"
       end
     end
@@ -252,7 +252,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     }
 
     it "returns all changed values requested" do
-      fields = subject.changed_fields snapshot, changed_snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+      fields = subject.changed_fields snapshot, changed_snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number,
         :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date]
 
       expect(fields.size).to eq 2
@@ -260,7 +260,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     end
 
     it "returns blank hash if nothing changed" do
-      fields = subject.changed_fields snapshot, snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+      fields = subject.changed_fields snapshot, snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number,
         :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date]
       expect(fields).to eq({})
     end
@@ -287,17 +287,17 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     it "returns true if snapshot values changed" do
       changed = snapshot.deep_dup
       changed["entity"]["model_fields"]["shp_ref"] = "CHANGE"
-      expect(subject.any_changed_fields?(snapshot, changed, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+      expect(subject.any_changed_fields?(snapshot, changed, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number,
         :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date])).to eq true
     end
 
     it "returns false if all fields are the same" do
-      expect(subject.any_changed_fields?(snapshot, snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number, 
+      expect(subject.any_changed_fields?(snapshot, snapshot, [:shp_ref, :shp_cargo_ready_date, :shp_booking_received_date, :shp_booking_number,
         :shp_booking_approved_date, :shp_booking_confirmed_date, :shp_booking_cutoff_date])).to eq false
     end
   end
 
-  describe "json_entity_type_and_id" do 
+  describe "json_entity_type_and_id" do
     let(:snapshot) {
       {
         "entity" => {
@@ -422,7 +422,7 @@ describe OpenChain::EntityCompare::ComparatorHelper do
     end
 
     it "returns nil if no object is found" do
-      Shipment.create! reference: "7ABC2FGA", booking_number: "ANOTHERBOOKINGNUMBER"      
+      Shipment.create! reference: "7ABC2FGA", booking_number: "ANOTHERBOOKINGNUMBER"
       expect(subject.find_entity_object_by_snapshot_values(snapshot, reference: :shp_ref, booking_number: :shp_booking_number)).to be_nil
     end
   end
@@ -455,11 +455,10 @@ describe OpenChain::EntityCompare::ComparatorHelper do
 
     it "handles different core modules" do
       snapshot["entity"]["model_fields"].delete "shp_failed_business_rules"
-      
+
       snapshot["entity"]["core_module"] = "Entry"
       snapshot["entity"]["model_fields"]["ent_failed_business_rules"] = "Rule 1"
       expect(subject.failed_business_rules? snapshot).to eq true
     end
   end
-  
 end

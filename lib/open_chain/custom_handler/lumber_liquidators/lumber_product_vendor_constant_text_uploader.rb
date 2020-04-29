@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
           next
         end
       end
-      
+
       vendors[pva] ||= []
       vendors[pva] << {code: code, effective_date: effective_date, delete: delete}
     end
@@ -83,7 +83,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
 
     @product_vendors ||= Hash.new do |h, k|
       v, u = k.split "~"
-      # Because of the joins, rails sets this to a readonly query...however, they're both 1-1 joins, so we don't need to worry about the 
+      # Because of the joins, rails sets this to a readonly query...however, they're both 1-1 joins, so we don't need to worry about the
       # reason rails makes this a readonly query.
       h[k] = ProductVendorAssignment.joins(:product, :vendor).where(companies: {system_code: v}, products: {unique_identifier: u}).readonly(false).first
     end

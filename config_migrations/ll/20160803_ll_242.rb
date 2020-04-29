@@ -11,7 +11,7 @@ module ConfigMigrations; module LL; class Ll242
       defs = OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionHelper.prep_custom_definitions [
           :ord_delay_reason, :ord_delay_dispo
                                                                                                                ]
-      defs.values.each {|cd| cd.destroy}
+      defs.each_value {|cd| cd.destroy}
       CustomDefinition.last.update_attributes(updated_at:Time.now) # force ModelField reloadp
     end
   end
@@ -31,7 +31,7 @@ module ConfigMigrations; module LL; class Ll242
       FieldValidatorRule.where(
           model_field_uid:defs[:ord_delay_dispo].model_field_uid,
           module_type:'Company'
-      ).first_or_create!.update_attributes(can_edit_groups:'',can_view_groups:'') #groups TBD
+      ).first_or_create!.update_attributes(can_edit_groups:'', can_view_groups:'') # groups TBD
     end
 
     def update_defaults

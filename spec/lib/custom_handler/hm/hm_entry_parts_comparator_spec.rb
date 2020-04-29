@@ -29,8 +29,8 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
 
   describe "compare" do
     let (:importer) { Factory(:importer, system_code: "HENNE")}
-    let (:entry) { 
-      e = Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00")) 
+    let (:entry) {
+      e = Factory(:entry, customer_number: "HENNE", source_system: "Alliance", importer: importer, broker_reference: "REF", file_logged_date: Time.zone.parse("2016-11-22 00:00"))
       e.broker_invoices.create! invoice_number: "BROK", invoice_total: BigDecimal("10")
       e
     }
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
 
     context "with default snapshot" do
 
-      before :each do 
+      before :each do
         expect(subject).to receive(:get_json_hash).and_return snapshot_json
         snapshot
       end
@@ -156,7 +156,7 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
 
       context "with 'special' tariffs" do
         ["9802", "9902", "9903", "9908"].each do |tariff|
-          before :each do 
+          before :each do
             invoice_line.commercial_invoice_tariffs.create! entered_value: 10, hts_code: "1234567890", tariff_description: "Description"
             invoice_tariff.update_attributes! entered_value: 0, hts_code: tariff, tariff_description: "Special Tariff"
           end
@@ -173,10 +173,10 @@ describe OpenChain::CustomHandler::Hm::HmEntryPartsComparator do
     it "does nothing if the entry hasn't been billed" do
       entry.broker_invoices.destroy_all
       expect(subject).to receive(:get_json_hash).and_return snapshot_json
-      
+
       subject.compare nil, nil, nil, snapshot.bucket, snapshot.doc_path, snapshot.version
       entry.reload
-      expect(entry.sync_records.length).to eq 0      
+      expect(entry.sync_records.length).to eq 0
     end
 
     it "skips lines without part numbers" do

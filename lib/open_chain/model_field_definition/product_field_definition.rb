@@ -5,9 +5,9 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
   include OpenChain::ModelFieldGenerator::RegionGenerator
   def add_product_fields
     add_fields CoreModule::PRODUCT, [
-      [1,:prod_uid,:unique_identifier,"Unique Identifier",{:data_type=>:string}],
-      [2,:prod_ent_type,:name,"Product Type",{:entity_type_field=>true,
-        :import_lambda => lambda {|detail,data|
+      [1, :prod_uid, :unique_identifier, "Unique Identifier", {:data_type=>:string}],
+      [2, :prod_ent_type, :name, "Product Type", {:entity_type_field=>true,
+        :import_lambda => lambda {|detail, data|
           if data.blank?
             return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
           end
@@ -25,16 +25,16 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
           et.nil? ? "" : et.name
         },
         :select_options_lambda => lambda {
-          EntityType.where(module_type:'Product').order(:name).pluck(:name).collect {|nm| [nm,nm]}
+          EntityType.where(module_type:'Product').order(:name).pluck(:name).collect {|nm| [nm, nm]}
         },
         :qualified_field_name => "(SELECT name from entity_types where entity_types.id = products.entity_type_id)",
         :data_type=>:string
       }],
-      [3,:prod_name,:name,"Name",{:data_type=>:string}],
-      [4,:prod_uom,:unit_of_measure,"Unit of Measure",{:data_type=>:string}],
-      #5 and 6 are now created with the make_vendor_arrays method below, Don't use them.
-      [7,:prod_status_name, :name, "Status", {
-        :import_lambda => lambda {|detail,data|
+      [3, :prod_name, :name, "Name", {:data_type=>:string}],
+      [4, :prod_uom, :unit_of_measure, "Unit of Measure", {:data_type=>:string}],
+      # 5 and 6 are now created with the make_vendor_arrays method below, Don't use them.
+      [7, :prod_status_name, :name, "Status", {
+        :import_lambda => lambda {|detail, data|
           return "Statuses are ignored. They are automatically calculated."
         },
         :export_lambda => lambda {|detail| detail.status_rule.nil? ? "" : detail.status_rule.name },
@@ -42,9 +42,9 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :data_type=>:string,
         :read_only=>true
       }],
-      #9 is available to use
-      [10,:prod_class_count, :class_count, "Complete Classification Count", {
-        :import_lambda => lambda {|obj,data|
+      # 9 is available to use
+      [10, :prod_class_count, :class_count, "Complete Classification Count", {
+        :import_lambda => lambda {|obj, data|
           return "Complete Classification Count was ignored. (read only)"},
         :export_lambda => lambda {|obj|
           r = 0
@@ -58,10 +58,10 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :data_type => :integer,
         :read_only => true
       }],
-      [11,:prod_changed_at, :changed_at, "Last Changed",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
-      [13,:prod_created_at, :created_at, "Created Time",{:data_type=>:datetime,:history_ignore=>true, read_only: true}],
-      [14,:prod_first_hts, :prod_first_hts, "First HTS Number", {
-        :import_lambda => lambda {|obj,data| "First HTS Number was ignored, must be set at the tariff level."},
+      [11, :prod_changed_at, :changed_at, "Last Changed", {:data_type=>:datetime, :history_ignore=>true, read_only: true}],
+      [13, :prod_created_at, :created_at, "Created Time", {:data_type=>:datetime, :history_ignore=>true, read_only: true}],
+      [14, :prod_first_hts, :prod_first_hts, "First HTS Number", {
+        :import_lambda => lambda {|obj, data| "First HTS Number was ignored, must be set at the tariff level."},
         :export_lambda => lambda {|obj|
           r = ""
           cls = obj.classifications.sort_classification_rank.first
@@ -72,10 +72,10 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
           r.nil? ? "" : r.hts_format
         },
         :qualified_field_name => <<-SQL,
-          (SELECT hts_1 
-           FROM tariff_records fht 
+          (SELECT hts_1
+           FROM tariff_records fht
              INNER JOIN classifications fhc on fhc.id = fht.classification_id
-             INNER JOIN countries co on co.id = fhc.country_id 
+             INNER JOIN countries co on co.id = fhc.country_id
            WHERE fhc.product_id = products.id
            ORDER BY IFNULL(co.classification_rank, 9999), co.iso_code, fht.line_number ASC
            LIMIT 1)
@@ -84,18 +84,18 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :history_ignore=>true,
         :read_only => true
       }],
-      [15,:prod_bom_parents,:bom_parents,"BOM - Parents",{
+      [15, :prod_bom_parents, :bom_parents, "BOM - Parents", {
         :data_type=>:string,
-        :import_lambda => lambda {|o,d| "Bill of Materials ignored, cannot be changed by upload."},
+        :import_lambda => lambda {|o, d| "Bill of Materials ignored, cannot be changed by upload."},
         :export_lambda => lambda {|product|
           product.parent_products.pluck(:unique_identifier).uniq.sort.join(",")
         },
         :qualified_field_name => "(select group_concat(distinct unique_identifier SEPARATOR ',') FROM bill_of_materials_links INNER JOIN products par on par.id = bill_of_materials_links.parent_product_id where bill_of_materials_links.child_product_id = products.id)",
         :read_only => true
       }],
-      [16,:prod_bom_children,:bom_children,"BOM - Children",{
+      [16, :prod_bom_children, :bom_children, "BOM - Children", {
         :data_type=>:string,
-        :import_lambda => lambda {|o,d| "Bill of Materials ignored, cannot be changed by upload."},
+        :import_lambda => lambda {|o, d| "Bill of Materials ignored, cannot be changed by upload."},
         :export_lambda => lambda {|product|
           product.child_products.pluck(:unique_identifier).uniq.sort.join(",")
         },
@@ -103,14 +103,14 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :read_only => true
       }],
       [17, :prod_attachment_count, :attachment_count, "Attachment Count", {
-        :import_lambda=>lambda {|obj,data| "Attachment Count ignored. (read only)"},
+        :import_lambda=>lambda {|obj, data| "Attachment Count ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.respond_to?(:all_attachments) ? obj.all_attachments.count : obj.attachments.count},
         :qualified_field_name=>"((select count(*) from attachments where attachable_type = 'Product' and attachable_id = products.id) + (select count(*) from linked_attachments where attachable_type = 'Product' and attachable_id = products.id))",
         :data_type=>:integer,
         :read_only => true
       }],
-      [18,:prod_max_component_count,:max_component_count, 'Component Count (Max)', {
-        :import_lambda=>lambda {|o,d| "Component Count (Max) ignored. (read only)"},
+      [18, :prod_max_component_count, :max_component_count, 'Component Count (Max)', {
+        :import_lambda=>lambda {|o, d| "Component Count (Max) ignored. (read only)"},
         :export_lambda=>lambda {|o|
           max = 0
           o.classifications.each do |c|
@@ -123,8 +123,8 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :data_type=>:integer,
         :read_only => true
       }],
-      [19,:prod_ent_type_id,:entity_type_id,"Product Type",{:entity_type_field=>true, :user_accessible => false,
-        :import_lambda => lambda {|detail,data|
+      [19, :prod_ent_type_id, :entity_type_id, "Product Type", {:entity_type_field=>true, :user_accessible => false,
+        :import_lambda => lambda {|detail, data|
           if data.blank?
             return "#{ModelField.find_by_uid(:prod_ent_type).label} with name #{data} not found.  Field ignored."
           end
@@ -144,37 +144,37 @@ module OpenChain; module ModelFieldDefinition; module ProductFieldDefinition
         :data_type=>:integer
       }],
       [20, :prod_variant_count, :variant_count, "Variant Count", {
-        :import_lambda=>lambda {|obj,data| "Variant Count ignored. (read only)"},
+        :import_lambda=>lambda {|obj, data| "Variant Count ignored. (read only)"},
         :export_lambda=>lambda {|obj| obj.variants.count },
         :qualified_field_name=>"((select count(*) from variants where variants.product_id = products.id))",
         :data_type=>:integer,
         :read_only => true
       }],
       [21, :prod_order_count, :order_count, "Order Count", {
-        :import_lambda=>lambda {|obj,data| "Order Count ignored. (read only)"},
+        :import_lambda=>lambda {|obj, data| "Order Count ignored. (read only)"},
         # can't think of a way to export this without going back to the database
-        :export_lambda=>lambda {|obj| OrderLine.select('distinct order_lines.order_id').where('order_lines.product_id = ?',obj.id).count},
+        :export_lambda=>lambda {|obj| OrderLine.select('distinct order_lines.order_id').where('order_lines.product_id = ?', obj.id).count},
         :qualified_field_name=>"(select count(distinct order_lines.order_id) from order_lines where order_lines.product_id = products.id)",
         :data_type=>:integer,
         :read_only=>true,
         :history_ignore=>true
       }],
-      [22,:prod_vendor_names, :vendors, "Vendor Names", {
+      [22, :prod_vendor_names, :vendors, "Vendor Names", {
         data_type: :text,
         read_only: true,
         export_lambda: lambda {|obj| obj.vendors.collect {|v| v.name}.sort.join("\n")},
         qualified_field_name: "(SELECT GROUP_CONCAT(DISTINCT name ORDER BY name SEPARATOR '\\n') FROM companies INNER JOIN product_vendor_assignments ON companies.id = product_vendor_assignments.vendor_id WHERE product_vendor_assignments.product_id = products.id)"
       }],
-      [23,:prod_inactive,:inactive,"Inactive",{:data_type=>:boolean}]
+      [23, :prod_inactive, :inactive, "Inactive", {:data_type=>:boolean}]
     ]
-    add_fields CoreModule::PRODUCT, make_last_changed_by(12,'prod',Product)
-    add_fields CoreModule::PRODUCT, make_division_arrays(100,"prod","products")
-    add_fields CoreModule::PRODUCT, make_master_setup_array(200,"prod")
-    add_fields CoreModule::PRODUCT, make_importer_arrays(250,"prod","products")
-    add_fields CoreModule::PRODUCT, make_sync_record_arrays(300,'prod','products','Product')
-    add_fields CoreModule::PRODUCT, make_attachment_arrays(400,'prod',CoreModule::PRODUCT)
-    add_fields CoreModule::PRODUCT, make_business_rule_arrays(500,'prod','products','Product')
-    add_fields CoreModule::PRODUCT, make_comment_arrays(600,'prod','Product')
+    add_fields CoreModule::PRODUCT, make_last_changed_by(12, 'prod', Product)
+    add_fields CoreModule::PRODUCT, make_division_arrays(100, "prod", "products")
+    add_fields CoreModule::PRODUCT, make_master_setup_array(200, "prod")
+    add_fields CoreModule::PRODUCT, make_importer_arrays(250, "prod", "products")
+    add_fields CoreModule::PRODUCT, make_sync_record_arrays(300, 'prod', 'products', 'Product')
+    add_fields CoreModule::PRODUCT, make_attachment_arrays(400, 'prod', CoreModule::PRODUCT)
+    add_fields CoreModule::PRODUCT, make_business_rule_arrays(500, 'prod', 'products', 'Product')
+    add_fields CoreModule::PRODUCT, make_comment_arrays(600, 'prod', 'Product')
     add_model_fields CoreModule::PRODUCT, make_country_hts_fields(CoreModule::PRODUCT, read_only: false, model_field_suffix: "", hts_numbers: 1..3, label_prefix: "", product_lambda: -> (obj) { obj } )
     add_model_fields CoreModule::PRODUCT, make_region_fields
     # When a new system is initiallly deployed (and in test cases) a MasterSetup may not be defined..

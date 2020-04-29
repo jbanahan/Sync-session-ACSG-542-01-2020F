@@ -16,7 +16,7 @@
 
 class SupportTicketComment < ActiveRecord::Base
   attr_accessible :body, :support_ticket_id, :user_id, :attachments_attributes
-  
+
   belongs_to :support_ticket, :inverse_of=>:support_ticket_comments
   belongs_to :user
   has_many :attachments, :as=>:attachable, :dependent=>:destroy

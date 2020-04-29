@@ -4,7 +4,7 @@ module OpenChain; module ApplicationControllerLegacy
   def chainio_redirect
     if request.original_url.match(/https?:\/\/[a-zA-Z]*\.chain\.io\//)
       @original_url = request.url
-      @new_url = @original_url.sub(/chain\.io/,'vfitrack.net')
+      @new_url = @original_url.sub(/chain\.io/, 'vfitrack.net')
       @new_domain = @new_url.match(/[a-zA-Z]*\.vfitrack\.net/).to_s
       render 'shared/no_chain'
     end
@@ -59,15 +59,15 @@ module OpenChain; module ApplicationControllerLegacy
     attr_accessor :url
   end
 
-  def advanced_search(core_module,force_search=false, clear_selected_items = false)
+  def advanced_search(core_module, force_search=false, clear_selected_items = false)
     search_run = nil
     if force_search
       search_run = SearchRun.
         joins(:search_setup).
         includes(:search_setup).
-        where("search_setups.module_type = ?",core_module.class_name).
+        where("search_setups.module_type = ?", core_module.class_name).
         where(:user_id=>current_user.id).
-        where("search_setups.user_id = ?",current_user.id).
+        where("search_setups.user_id = ?", current_user.id).
         order("ifnull(search_runs.last_accessed,1900-01-01) DESC").
         first
     else
@@ -93,14 +93,14 @@ module OpenChain; module ApplicationControllerLegacy
     end
   end
 
-  #save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
-  #this method will automatically save custom fields and will rollback if the validation fails
-  #if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
+  # save and validate a base_object representing a CoreModule like a product instance or a sales_order instance
+  # this method will automatically save custom fields and will rollback if the validation fails
+  # if you set the raise_exception parameter to true then the method will throw the OpenChain::FieldLogicValidator exception (useful for wrapping in a larger transaction)
   def validate_and_save_module base_object, parameters, succeed_lambda, fail_lambda, opts={}
     OpenChain::CoreModuleProcessor.validate_and_save_module params, base_object, parameters, current_user, succeed_lambda, fail_lambda, opts
   end
 
-  #loads the custom values into the parent object without saving
+  # loads the custom values into the parent object without saving
   def set_custom_fields customizable_parent, customizable_parent_params = nil, &block
     cpp = customizable_parent_params.nil? ? params[(customizable_parent.class.to_s.downcase+"_cf").intern] : customizable_parent_params
     OpenChain::CoreModuleProcessor.set_custom_fields customizable_parent, cpp, current_user, &block
@@ -115,14 +115,14 @@ module OpenChain; module ApplicationControllerLegacy
     OpenChain::CoreModuleProcessor.update_status statusable
   end
 
-  #subclassed controller must implement method (by default, #secure) that returns searchable object.
-  #and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
-  def build_search(base_field_list,default_search,default_sort,default_sort_order='a',secure_meth=:secure)
+  # subclassed controller must implement method (by default, #secure) that returns searchable object.
+  # and if custom fields are used then a root_class method that returns the class of the core object being worked with (OrdersController would return Order)
+  def build_search(base_field_list, default_search, default_sort, default_sort_order='a', secure_meth=:secure)
     field_list = base_field_list
     begin
       field_list = self.root_class.new.respond_to?("custom_definitions") ? base_field_list.merge(custom_field_parameters(root_class.new)) : base_field_list
     rescue NoMethodError
-      #this is ok, you just won't get your custom fields
+      # this is ok, you just won't get your custom fields
     end
 
     @default_search_field = default_search
@@ -145,11 +145,11 @@ module OpenChain; module ApplicationControllerLegacy
 
     @s_sort = field_list[params[:sf]]
     @s_sort = field_list[default_sort] if @s_sort.nil?
-    @s_order = ['a','d'].include?(params[:so]) ? params[:so] : default_sort_order
+    @s_order = ['a', 'd'].include?(params[:so]) ? params[:so] : default_sort_order
     @search = add_sort_relation @search, @s_sort, @s_order
     @s_param_opts = []
-    @s_params.each do |k,f|
-      @s_param_opts << [f[:label],k]
+    @s_params.each do |k, f|
+      @s_param_opts << [f[:label], k]
     end
     return @search
   end

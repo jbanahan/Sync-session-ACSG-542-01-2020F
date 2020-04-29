@@ -35,19 +35,19 @@ describe SnapshotWriter do
       expect(h['record_id']).to eq entry.id
       expect(h['model_fields']).not_to be_nil
       expect(h['children']).to be_nil
-      
+
       mf_h = h['model_fields']
-      # Make sure we have the right number of fields -- then just test one for each 
+      # Make sure we have the right number of fields -- then just test one for each
       # datatype
       count = 0
-      CoreModule::ENTRY.model_fields {|mf| !mf.history_ignore? }.values.each do |mf|
+      CoreModule::ENTRY.model_fields {|mf| !mf.history_ignore? }.each_value do |mf|
         v = mf.process_export entry, nil, true
         next if v.nil?
         count += 1
       end
 
       expect(mf_h.keys.size).to eq count
-      
+
       expect(mf_h['ent_brok_ref']).to eq "ABC"
       expect(mf_h['ent_arrival_date']).to eq entry.arrival_date.iso8601
       expect(mf_h['ent_total_fees']).to eq "1.5"
@@ -175,7 +175,7 @@ describe SnapshotWriter do
         Factory(:user)
       }
 
-      let (:entry) { 
+      let (:entry) {
         e = Factory(:entry, broker_reference: "ABC")
         folder = e.folders.create! name: "Folder", created_by: user
         folder.comments.create! subject: "Comment", user: user
@@ -213,7 +213,7 @@ describe SnapshotWriter do
 
   shared_examples 'SnapshotWriter#field_value' do
     let (:entry) { Entry.new broker_reference: "12345", release_date: ActiveSupport::TimeZone["UTC"].parse("2017-02-24 12:00"), duty_due_date: Date.new(2017, 2, 23), master_bills_of_lading: "A\n B", total_fees: BigDecimal("10.50"), paperless_release: true, pay_type: 1}
-    
+
     {ent_brok_ref: "12345", ent_release_date: Time.zone.parse("2017-02-24 12:00"), ent_duty_due_date: Date.new(2017, 2, 23), ent_mbols: "A\n B", ent_total_fees: BigDecimal("10.50"), ent_paperless_release: true,  ent_pay_type: 1, ent_cust_num: nil}.each_pair do |k, v|
       it "returns process_export value for object and field #{k}" do
         expect(subject.field_value entry, ModelField.find_by_uid(k)).to eq v

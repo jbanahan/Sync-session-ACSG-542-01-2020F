@@ -6,8 +6,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
     it "should run_and_email" do
       d = double('class')
       expect(d).to receive(:sync_xls).and_return 'xyz'
-      expect(d).to receive(:email_file).with('xyz','j@sample.com')
-      expect(ArchivedFile).to receive(:make_from_file!).with('xyz','Winshuttle Schedule B Output',/Sent to j@sample.com at /)
+      expect(d).to receive(:email_file).with('xyz', 'j@sample.com')
+      expect(ArchivedFile).to receive(:make_from_file!).with('xyz', 'Winshuttle Schedule B Output', /Sent to j@sample.com at /)
       allow(described_class).to receive(:new).and_return d
       described_class.run_and_email('j@sample.com')
     end
@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
   end
   describe "sync" do
     def create_product
-      tr = Factory(:tariff_record,schedule_b_1:'1234567890',classification:Factory(:classification,country_id:@us.id))
+      tr = Factory(:tariff_record, schedule_b_1:'1234567890', classification:Factory(:classification, country_id:@us.id))
       tr.product.update_custom_value! @colors_cd, "001"
       tr.product
     end
@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
       rows
     end
     before :each do
-      @us = Factory(:country,iso_code:'US')
+      @us = Factory(:country, iso_code:'US')
       @colors_cd = described_class.prep_custom_definitions([:colors])[:colors]
     end
     it "should only return US schedule B" do
@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
     it "should eliminate items that don't need sync via query" do
       create_product
       expect(collect_rows.length).to eq 2
-      expect(collect_rows).to be_empty #second run should not return values since they're synchronized
+      expect(collect_rows).to be_empty # second run should not return values since they're synchronized
     end
     it "should write headers" do
       create_product
@@ -70,13 +70,13 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleScheduleBGenerator d
     end
   end
   describe "email_file" do
-    before :each do 
+    before :each do
       @f = double('file')
       @mailer = double(:mailer)
       expect(@mailer).to receive(:deliver)
     end
     it "should email result" do
-      expect(OpenMailer).to receive(:send_simple_html).with('joe@sample.com','Winshuttle Schedule B Output File','Your Winshuttle schedule b output file is attached.  For assistance, please email support@vandegriftinc.com',[@f]).and_return(@mailer)
+      expect(OpenMailer).to receive(:send_simple_html).with('joe@sample.com', 'Winshuttle Schedule B Output File', 'Your Winshuttle schedule b output file is attached.  For assistance, please email support@vandegriftinc.com', [@f]).and_return(@mailer)
       described_class.new.email_file @f, 'joe@sample.com'
     end
     it "should make original_filename method on file object" do

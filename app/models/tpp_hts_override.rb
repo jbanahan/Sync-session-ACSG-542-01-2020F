@@ -25,7 +25,7 @@ class TppHtsOverride < ActiveRecord::Base
   include OpenChain::ActiveDatesSupport
 
   attr_accessible :end_date, :hts_code, :note, :rate, :start_date, :trade_preference_program_id
-  
+
   belongs_to :trade_preference_program, inverse_of: :tpp_hts_overrides
 
   validates :start_date, presence: true

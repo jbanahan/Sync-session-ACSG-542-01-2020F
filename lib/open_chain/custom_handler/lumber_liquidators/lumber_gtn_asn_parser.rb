@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
     # confusing label, as it's meant to match to the shipment's reference number (i.e. main key field for the
     # shipment), not an order number.  Note that the shipping order number should be the same for
     # all line items.  One ASN file represents one shipment.
-    shipping_order_number = et(REXML::XPath.first(elem_asn,'Container/LineItems'), 'ShippingOrderNumber')
+    shipping_order_number = et(REXML::XPath.first(elem_asn, 'Container/LineItems'), 'ShippingOrderNumber')
     log.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, shipping_order_number
     xml_timestamp = xml_created_timestamp(root)
 
@@ -128,13 +128,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
 
       # We have to handle the containers in this funky manner, because of the way they're sent to use by GT Nexus.
       # Each container comes in a different XML file, so it's possible that while the file data for the overall file is outdated,
-      # the container information itself is not.  Because the xml file we're parsing may have come out of order from GT Nexus, 
+      # the container information itself is not.  Because the xml file we're parsing may have come out of order from GT Nexus,
       # like if there's 5 containers on the shipment and we get one into VFI Track that's got a generation time older than a previous
       # container xml for the same shipment. We'll still only use the newest xml for the shipment data (thus skipping the outdated one
       # for the shipment header), but we also then need to fill in the data for the container since we may not have gotten it yet.
       # Ergo, we're tracking last exported from source at the container AND the shipment levels.
       container_elements = update_containers shp, xml_timestamp, elem_asn, errors, log
-      
+
       shipment_error_count = errors.length
       order_snapshots = Set.new
       get_orders(container_elements, errors, log).each do |ord_num, ord_hash|
@@ -186,15 +186,15 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
 
     def xml_created_timestamp xml_root
       Time.zone.parse(xml_root.text "TransactionInfo/Created")
-    rescue 
-      # This should never really be nil, but I don't want to assume as much since it's more important 
+    rescue
+      # This should never really be nil, but I don't want to assume as much since it's more important
       # that the data in this xml is processed than the actual file timestamp is recorded.
       nil
     end
 
     def update_order ord, elem_line_element, shp
-      get_order_dates(elem_line_element).each do |cdef,val|
-        ord.update_custom_value!(cdef,val)
+      get_order_dates(elem_line_element).each do |cdef, val|
+        ord.update_custom_value!(cdef, val)
       end
 
       ord.update_custom_value!(cdefs[:ord_bill_of_lading], shp.master_bill_of_lading)
@@ -217,8 +217,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
     def get_order_dates elem_line_element
       found_dates = {}
       production = MasterSetup.get.production?
-      REXML::XPath.each(elem_line_element,'MilestoneMessage/OneReferenceMultipleMilestones/MilestoneInfo') do |el|
-        code = et(el,'MilestoneTypeCode')
+      REXML::XPath.each(elem_line_element, 'MilestoneMessage/OneReferenceMultipleMilestones/MilestoneInfo') do |el|
+        code = et(el, 'MilestoneTypeCode')
         cdef = cdefs[production ? PROD_DATE_CDEF_MAP_ORDER[code] : TEST_DATE_CDEF_MAP_ORDER[code]]
         date = parse_date(el)
         next unless cdef && date
@@ -228,7 +228,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
     end
 
     def parse_date el
-      inner_el = REXML::XPath.first(el,'MilestoneTime[@timeZone="LT"]')
+      inner_el = REXML::XPath.first(el, 'MilestoneTime[@timeZone="LT"]')
       return nil if inner_el.blank?
       date_attr = inner_el.attribute('dateTime')
       return nil if date_attr.blank?
@@ -242,14 +242,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
 
       elem_containers.each do |elem_container|
         REXML::XPath.each(elem_container, "LineItems") do |el|
-          order_number = et(el,'PONumber')
+          order_number = et(el, 'PONumber')
           if !order_number.blank?
             r[order_number] = {element:el}
           end
         end
       end
 
-      orders = Order.includes(:custom_values).where('order_number IN (?)',r.keys.to_a).to_a
+      orders = Order.includes(:custom_values).where('order_number IN (?)', r.keys.to_a).to_a
       if r.size != orders.size
         missing_order_numbers = r.keys.to_a - orders.map(&:order_number)
         msg = "ASN Failed because order(s) not found in database: #{missing_order_numbers.join(', ')}."
@@ -337,13 +337,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
 
     # Bill of Lading should be the same for all line items.  One ASN file represents one shipment.
     def get_bill_of_lading elem_asn
-      et(REXML::XPath.first(elem_asn,'Container/LineItems'), 'BLNumber')
+      et(REXML::XPath.first(elem_asn, 'Container/LineItems'), 'BLNumber')
     end
 
     def update_shipment_custom_date shp, elem_asn, date_code, cdef_key
       val = get_shipment_date elem_asn, date_code
       cdef = cdefs[cdef_key]
-      shp.update_custom_value!(cdef,val)
+      shp.update_custom_value!(cdef, val)
     end
 
     # Gets the latest date from the XML matching the provided code.  Container-level dates from the XML are stored
@@ -450,16 +450,16 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberGt
       ord_line.update_custom_value!(cdefs[:ordln_shpln_container_number], shp_line.container.try(:container_number))
     end
 
-    def cdefs 
+    def cdefs
       @cdefs ||= self.class.prep_custom_definitions [
-        :ord_asn_arrived,:ord_asn_departed,:ord_asn_discharged,:ord_asn_empty_return,:ord_asn_fcr_created,:ord_asn_gate_in,
-        :ord_asn_gate_out,:ord_asn_loaded_at_port,:ord_asn_empty_out_gate_at_origin,:ord_asn_est_arrival_discharge,
-        :ord_asn_est_departure,:ord_asn_delivered,:ord_asn_container_unloaded,:ord_asn_carrier_released,
-        :ord_asn_customs_released_carrier,:ord_asn_available_for_delivery,:ord_asn_full_ingate,
-        :ord_asn_on_rail_destination,:ord_asn_rail_arrived_destination,:ord_asn_arrive_at_transship_port,
-        :ord_asn_depart_from_transship_port,:ord_asn_barge_depart,:ord_asn_barge_arrive,:ord_bill_of_lading,:ord_bol_date,
-        :ordln_shpln_line_number,:ordln_shpln_product,:ordln_shpln_quantity,:ordln_shpln_cartons,:ordln_shpln_volume,
-        :ordln_shpln_gross_weight,:ordln_shpln_container_number
+        :ord_asn_arrived, :ord_asn_departed, :ord_asn_discharged, :ord_asn_empty_return, :ord_asn_fcr_created, :ord_asn_gate_in,
+        :ord_asn_gate_out, :ord_asn_loaded_at_port, :ord_asn_empty_out_gate_at_origin, :ord_asn_est_arrival_discharge,
+        :ord_asn_est_departure, :ord_asn_delivered, :ord_asn_container_unloaded, :ord_asn_carrier_released,
+        :ord_asn_customs_released_carrier, :ord_asn_available_for_delivery, :ord_asn_full_ingate,
+        :ord_asn_on_rail_destination, :ord_asn_rail_arrived_destination, :ord_asn_arrive_at_transship_port,
+        :ord_asn_depart_from_transship_port, :ord_asn_barge_depart, :ord_asn_barge_arrive, :ord_bill_of_lading, :ord_bol_date,
+        :ordln_shpln_line_number, :ordln_shpln_product, :ordln_shpln_quantity, :ordln_shpln_cartons, :ordln_shpln_volume,
+        :ordln_shpln_gross_weight, :ordln_shpln_container_number
       ]
     end
 

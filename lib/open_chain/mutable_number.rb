@@ -1,7 +1,7 @@
 #
 # This class exists primarily to be used as a counter object, latch
 # that can be passed around to methods.
-# 
+#
 module OpenChain; class MutableNumber
 
   def initialize(number)

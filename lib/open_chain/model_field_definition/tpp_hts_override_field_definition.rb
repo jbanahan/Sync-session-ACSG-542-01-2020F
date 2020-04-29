@@ -1,15 +1,15 @@
 module OpenChain; module ModelFieldDefinition; module TppHtsOverrideFieldDefinition
   def add_tpp_hts_override_fields
     add_fields CoreModule::TPP_HTS_OVERRIDE, [
-      [1, :tpphtso_hts_code, :hts_code, 'HTS Code', {data_type: :string, 
-        required: true, 
+      [1, :tpphtso_hts_code, :hts_code, 'HTS Code', {data_type: :string,
+        required: true,
         :search_value_preprocess_lambda=> hts_search_value_preprocess_lambda
       }],
       [2, :tpphtso_rate, :rate, 'Override Rate', {data_type: :decimal}],
       [3, :tpphtso_note, :note, 'Note', {data_type: :text}],
       [4, :tpphtso_trade_preference_program_id, :trade_preference_program_id, 'Preference Program DB ID', {
         data_type: :integer,
-        import_lambda: lambda {|obj,data|
+        import_lambda: lambda {|obj, data|
           return "Cannot clear Preference Program for an HTS Override." if data.blank? && !obj.trade_preference_program_id.blank?
           return "Preference Program not changed, update ignored." if obj.trade_preference_program_id.to_s == data.to_s
           if obj.trade_preference_program_id.blank?

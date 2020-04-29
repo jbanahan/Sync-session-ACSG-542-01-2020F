@@ -87,7 +87,7 @@ describe FakeController, :type => :controller do
   end
 end
 
-#harness for testing run_validations
+# harness for testing run_validations
 
 class FakeJsonController < Api::V1::ApiController; end
 
@@ -130,7 +130,7 @@ describe FakeJsonController, :type => :controller do
     }
 
     before :each do
-      @u = Factory(:master_user,entry_view:true)
+      @u = Factory(:master_user, entry_view:true)
       allow_api_access @u
     end
 
@@ -266,7 +266,7 @@ describe OpenChain::BusinessRuleValidationResultsSupport do
       allow_any_instance_of(BusinessValidationRule).to receive(:active?).and_return true
       allow(@u).to receive(:view_business_validation_results?).and_return true
       r = subject.results_to_hsh @u, @obj
-      expect(r.to_json).to eq @target.to_json #to_json resolves millisecond discrepancy
+      expect(r.to_json).to eq @target.to_json # to_json resolves millisecond discrepancy
     end
   end
 end

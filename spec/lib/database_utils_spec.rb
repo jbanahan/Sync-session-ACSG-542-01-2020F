@@ -1,4 +1,4 @@
-describe OpenChain::DatabaseUtils do 
+describe OpenChain::DatabaseUtils do
 
   subject { described_class }
 
@@ -52,7 +52,7 @@ describe OpenChain::DatabaseUtils do
         }
       }
 
-      before :each do 
+      before :each do
         allow(subject).to receive(:database_config).and_return database_config
       end
 
@@ -124,7 +124,7 @@ describe OpenChain::DatabaseUtils do
         }
       }
 
-      before :each do 
+      before :each do
         allow(subject).to receive(:database_config).and_return database_config
       end
 
@@ -169,7 +169,7 @@ describe OpenChain::DatabaseUtils do
       expect(subject.mysql_deadlock_error_message? "Something something Deadlock found when trying to get lock message").to eq true
     end
 
-    it "does not identify other messages" do 
+    it "does not identify other messages" do
       expect(subject.mysql_deadlock_error_message? "this is a generic error message").to eq false
     end
   end
@@ -179,7 +179,7 @@ describe OpenChain::DatabaseUtils do
       current_connection = ActiveRecord::Base.connection
       current_connection_count = ActiveRecord::Base.connection_pool.connections.length
       new_connection = nil
-      result = subject.run_in_separate_connection do 
+      result = subject.run_in_separate_connection do
         # This ensures that the call above opened up a new distinct connection
         new_connection = ActiveRecord::Base.connection
         true
@@ -194,7 +194,7 @@ describe OpenChain::DatabaseUtils do
       # executed, but it's important enough to ensure that these exact calls are used (since they
       # prevent database connection leakages from occuring) that I'm writing this test to ensure
       # they're utilized as so.
-      
+
       expect(ActiveRecord::Base.connection_pool).to receive(:with_connection).and_yield
       expect(ActiveRecord::Base).to receive(:connection_pool).times.and_call_original
 

@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Rhee; module RheeCustomDefinition
   included do |base|
     base.extend(::OpenChain::CustomHandler::CustomDefinitionSupport)
   end
-  
+
   module ClassMethods
     def prep_custom_definitions fields
       prep_custom_defs fields, CUSTOM_DEFINITION_INSTRUCTIONS

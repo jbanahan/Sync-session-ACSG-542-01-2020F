@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderShippedDataRecorderComparator do
 
-  before :all do 
+  before :all do
     described_class.new.send(:cdefs)
   end
 
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderShippedDataReco
     end
 
     it "does nothing if the last exported from source was not updated" do
-      # Add a second imaginary line to the snapshot so it looks like it's going from 1 - 2 
+      # Add a second imaginary line to the snapshot so it looks like it's going from 1 - 2
       # lines, but without the asn date updating.
       snap = new_snapshot.dup
       line = snap['entity']['children'].first.dup
@@ -132,7 +132,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderShippedDataReco
     end
   end
 
-  describe "accept?" do 
+  describe "accept?" do
 
     subject { described_class }
 

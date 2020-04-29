@@ -72,7 +72,7 @@ describe DelayedJobManager do
   end
 
   describe "report_delayed_job_error" do
-    let (:errored_job) { 
+    let (:errored_job) {
       j = Delayed::Job.new
       j.last_error = "Error!"
       j.save!
@@ -119,7 +119,7 @@ describe DelayedJobManager do
       expect(email.body.raw_source).to include "Job Error: " + m.slice(0, 500)
     end
 
-    it "respects max error count" do 
+    it "respects max error count" do
       errored_job
 
       job_2 = Delayed::Job.new

@@ -43,13 +43,13 @@
 class CommercialInvoice < ActiveRecord::Base
   include CoreObjectSupport
 
-  attr_accessible :consignee_id, :country_origin_code, :currency, 
-    :destination_code, :docs_ok_date, :docs_received_date, 
-    :entered_value_7501, :entry_id, :exchange_rate, :gross_weight, 
-    :house_bills_of_lading, :importer_id, :importer, :invoice_date, :invoice_number, 
-    :invoice_value, :invoice_value_foreign, :issue_codes, 
-    :master_bills_of_lading, :mfid, :non_dutiable_amount, :rater_comments, 
-    :total_charges, :total_quantity, :total_quantity_uom, :vendor_id, 
+  attr_accessible :consignee_id, :country_origin_code, :currency,
+    :destination_code, :docs_ok_date, :docs_received_date,
+    :entered_value_7501, :entry_id, :exchange_rate, :gross_weight,
+    :house_bills_of_lading, :importer_id, :importer, :invoice_date, :invoice_number,
+    :invoice_value, :invoice_value_foreign, :issue_codes,
+    :master_bills_of_lading, :mfid, :non_dutiable_amount, :rater_comments,
+    :total_charges, :total_quantity, :total_quantity_uom, :vendor_id,
     :vendor_name
 
   has_many :commercial_invoice_lines, dependent: :destroy, autosave: true, inverse_of: :commercial_invoice
@@ -71,7 +71,7 @@ class CommercialInvoice < ActiveRecord::Base
 
   def can_edit? user
     return false unless user.edit_entries?
-    return user.company.master? || 
+    return user.company.master? ||
       user.company == self.importer ||
       user.company == self.vendor ||
       user.company.linked_companies.find {|c| c == self.importer || c == self.vendor}
@@ -80,7 +80,7 @@ class CommercialInvoice < ActiveRecord::Base
   # This overrides the EntitySnapshotSupport's implementation because we need to destroy snapshots for
   # commercial invoices that are stand-alone, but not for those that are linked to entries.
   def destroys_snapshots?
-    # This is just to ensure if for any reason we do turn off snapshots on commercial invoices in core module definitions that 
+    # This is just to ensure if for any reason we do turn off snapshots on commercial invoices in core module definitions that
     # it takes effect here, even if we forget to delete this method
     return false unless super
 

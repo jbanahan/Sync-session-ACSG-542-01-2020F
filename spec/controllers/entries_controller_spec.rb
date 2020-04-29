@@ -7,8 +7,8 @@ describe EntriesController do
   }
 
   before :each do
-    c = Factory(:company,:master=>true,show_business_rules:true)
-    @u = Factory(:master_user,entry_view:true,:company=>c)
+    c = Factory(:company, :master=>true, show_business_rules:true)
+    @u = Factory(:master_user, entry_view:true, :company=>c)
 
     sign_in_as @u
   end
@@ -40,13 +40,13 @@ describe EntriesController do
     end
     it "should render json" do
       @bvr.business_validation_template.update_attributes(name:'myname')
-      @rule_result.business_validation_rule.update_attributes(name:'rulename',description:'ruledesc')
+      @rule_result.business_validation_rule.update_attributes(name:'rulename', description:'ruledesc')
       @rule_result.note = 'abc'
       @rule_result.state = 'Pass'
       @rule_result.overridden_by = @u
       @rule_result.overridden_at = Time.now
       @rule_result.save!
-      @rule_result.reload #fixes time issue
+      @rule_result.reload # fixes time issue
       get :validation_results, id: @ent.id, format: :json
       expect(response).to be_success
       h = JSON.parse(response.body)['business_validation_result']
@@ -72,9 +72,9 @@ describe EntriesController do
   end
   describe 'get_images' do
     it "should request images" do
-      #make sure we're not relying on the referrer
+      # make sure we're not relying on the referrer
       request.env["HTTP_REFERER"] = nil
-      entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
+      entry = Factory(:entry, :source_system=>'Alliance', :broker_reference=>'123456')
       expect(OpenChain::AllianceImagingClient).to receive(:request_images).with('123456')
       post :get_images, 'id'=>entry.id
       expect(response).to redirect_to(entry)
@@ -82,7 +82,7 @@ describe EntriesController do
       expect(flash[:notices].first).to eq("Updated images for file 123456 have been requested.  Please allow 10 minutes for them to appear.")
     end
     it "should not request images for non-alliance entries" do
-      entry = Factory(:entry,:source_system=>'Fenix',:broker_reference=>'123456')
+      entry = Factory(:entry, :source_system=>'Fenix', :broker_reference=>'123456')
       expect(OpenChain::AllianceImagingClient).not_to receive(:request_images)
       post :get_images, 'id'=>entry.id
       expect(response).to be_redirect
@@ -94,7 +94,7 @@ describe EntriesController do
 
     it "should handle bulk image requests with a referer" do
       request.env["HTTP_REFERER"] = "blah"
-      entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
+      entry = Factory(:entry, :source_system=>'Alliance', :broker_reference=>'123456')
       expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
 
@@ -105,7 +105,7 @@ describe EntriesController do
 
     it "should handle bulk image requests without a referer" do
       request.env["HTTP_REFERER"] = nil
-      entry = Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456')
+      entry = Factory(:entry, :source_system=>'Alliance', :broker_reference=>'123456')
       expect(OpenChain::AllianceImagingClient).to receive(:delayed_bulk_request_images).with('1234', '123')
       get :bulk_get_images, {'sr_id'=>'1234', 'pk'=>'123'}
 
@@ -117,16 +117,16 @@ describe EntriesController do
   end
 
   describe 'request data methods' do
-    let(:entry) { Factory(:entry,:source_system=>'Alliance',:broker_reference=>'123456',:importer=>Factory(:importer)) }
+    let(:entry) { Factory(:entry, :source_system=>'Alliance', :broker_reference=>'123456', :importer=>Factory(:importer)) }
     describe 'as a sysadmin' do
       before :each do
-        @sys_admin_user = Factory(:sys_admin_user,entry_view:true)
+        @sys_admin_user = Factory(:sys_admin_user, entry_view:true)
         sign_in_as @sys_admin_user
       end
 
       describe 'request_entry_data' do
         it "should request data" do
-          #make sure we're not relying on the referrer
+          # make sure we're not relying on the referrer
           request.env["HTTP_REFERER"] = nil
           expect(OpenChain::KewillSqlProxyClient).to receive(:delayed_bulk_entry_data).with(nil, [entry.id])
 
@@ -402,10 +402,10 @@ describe EntriesController do
 
       expect(response).to be_success
       expect(assigns(:range_descriptions)).to eq [
-        ["Released In The Last 7 Days",'1w'],
-        ["Released In The Last 28 Days",'4w'],
-        ["Filed / Not Released",'op'],
-        ["Released Year To Date",'ytd'],
+        ["Released In The Last 7 Days", '1w'],
+        ["Released In The Last 28 Days", '4w'],
+        ["Filed / Not Released", 'op'],
+        ["Released Year To Date", 'ytd'],
         ["Entries On Hold", 'holds']
       ]
 

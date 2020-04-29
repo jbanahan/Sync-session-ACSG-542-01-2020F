@@ -10,7 +10,7 @@ class SecurityFilingsController < ApplicationController
   end
   def show
     sf = SecurityFiling.find(params[:id])
-    action_secure(sf.can_view?(current_user),sf,{:verb=>'view',:module_type=>CoreModule::SECURITY_FILING.label}) {
+    action_secure(sf.can_view?(current_user), sf, {:verb=>'view', :module_type=>CoreModule::SECURITY_FILING.label}) {
       @security_filing = sf
       render :layout=>'one_col'
     }

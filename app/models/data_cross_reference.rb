@@ -109,7 +109,7 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
       xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
       xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label:"MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."),
-      xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION]),
+      xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION])
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -180,7 +180,7 @@ class DataCrossReference < ActiveRecord::Base
     end
   end
 
-  #return a hash of all key value pairs
+  # return a hash of all key value pairs
   def self.get_all_pairs cross_reference_type
     r = {}
     self.where(cross_reference_type:cross_reference_type).each do |d|
@@ -247,12 +247,12 @@ class DataCrossReference < ActiveRecord::Base
     add_xref! LENOX_ITEM_MASTER_HASH, part_number, hash
   end
 
-  #id_iso is the concatentation of a product id and a classification country's ISO
+  # id_iso is the concatentation of a product id and a classification country's ISO
   def self.find_lenox_hts_fingerprint prod_id, country_iso
     find_unique where(cross_reference_type: LENOX_HTS_FINGERPRINT, key: make_compound_key(prod_id, country_iso))
   end
 
-  #fingerprint is a hash of the HTS numbers for all tariff records under a product/classification
+  # fingerprint is a hash of the HTS numbers for all tariff records under a product/classification
   def self.create_lenox_hts_fingerprint!(prod_id, country_iso, fingerprint)
     add_xref! LENOX_HTS_FINGERPRINT, make_compound_key(prod_id, country_iso), fingerprint
   end
@@ -277,13 +277,13 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.find_intacct_customer_number data_source, customer_number
-    raise "Unkown customer number data source #{data_source}" unless ["Alliance", "Fenix"].include? data_source 
+    raise "Unkown customer number data source #{data_source}" unless ["Alliance", "Fenix"].include? data_source
 
     find_unique where(cross_reference_type: INTACCT_CUSTOMER_XREF, key: make_compound_key(data_source, customer_number))
   end
 
   def self.find_intacct_vendor_number data_source, vendor_number
-    raise "Unkown vendor number data source #{data_source}" unless ["Alliance", "Fenix"].include? data_source 
+    raise "Unkown vendor number data source #{data_source}" unless ["Alliance", "Fenix"].include? data_source
 
     find_unique where(cross_reference_type: INTACCT_VENDOR_XREF, key: make_compound_key(data_source, vendor_number))
   end
@@ -333,7 +333,7 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.find_pvh_invoice vend_name, inv_number
-    !where(cross_reference_type: PVH_INVOICES, key: make_compound_key(vend_name,inv_number)).empty?
+    !where(cross_reference_type: PVH_INVOICES, key: make_compound_key(vend_name, inv_number)).empty?
   end
 
   def self.find_and_mark_next_unused_hm_pars_number
@@ -344,7 +344,7 @@ class DataCrossReference < ActiveRecord::Base
       return nil if pars.nil?
 
       # Lock it (this will actually reload the data) and will lock the database row
-      Lock.db_lock(pars) do 
+      Lock.db_lock(pars) do
         # It's possible that this record (while waiting for the lock) has actually been used..in which case, try again
         next unless pars.value.blank?
 
@@ -371,7 +371,7 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.hash_ota_reference_fields
     fields = list_ota_reference_fields
-    out = Hash.new{ |h,k| h[k] = [] }
+    out = Hash.new { |h, k| h[k] = [] }
     fields.each do |f|
       type, f_uid = f.split("~")
       out[type] << f_uid.to_sym
@@ -381,7 +381,7 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.update_ota_reference_fields! hsh
     new_fields = []
-    hsh.keys.each do |cm_name|
+    hsh.each_key do |cm_name|
       hsh[cm_name].each { |uid| new_fields << "#{cm_name}~#{uid}" } if hsh[cm_name]
     end
     existing_fields = list_ota_reference_fields
@@ -474,11 +474,11 @@ class DataCrossReference < ActiveRecord::Base
     query.select("`key`, `value`").collect {|d| h[d.key] = d.value}
     h
   end
-  
-  #create the record in the database
+
+  # create the record in the database
   def self.add_xref! cross_reference_type, key, value, company_id = nil
     xref = self.where(:cross_reference_type => cross_reference_type, :key => key, :company_id => company_id).first
-    xref = self.new(cross_reference_type:cross_reference_type,key:key,company_id:company_id) unless xref
+    xref = self.new(cross_reference_type:cross_reference_type, key:key, company_id:company_id) unless xref
     xref.value = value
     xref.save!
     xref
@@ -520,12 +520,12 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.run_csv_query xref_type
-    qry = 
+    qry =
       <<-SQL
-        SELECT dcr.key, value, dcr.updated_at, CONCAT(c.name, IF(c.system_code IS NOT NULL && RTRIM(c.system_code) <> '', 
-                                                                CONCAT(" (",c.system_code,")"), 
+        SELECT dcr.key, value, dcr.updated_at, CONCAT(c.name, IF(c.system_code IS NOT NULL && RTRIM(c.system_code) <> '',
+                                                                CONCAT(" (",c.system_code,")"),
                                                                 '')) AS company
-        FROM data_cross_references dcr 
+        FROM data_cross_references dcr
           LEFT OUTER JOIN companies c ON c.id = dcr.company_id
         WHERE cross_reference_type = #{ActiveRecord::Base.sanitize xref_type} ORDER BY dcr.key
         LIMIT 25000

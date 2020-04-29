@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
 
   def find_port port_xml, lookup_type_order: [:schedule_d_code, :schedule_k_code, :unlocode, :iata_code]
     return nil if port_xml.nil?
-    
+
     # The port may have Locode, Schedule D or K codes..look for D, then K, then fall back to locode
     port = nil
     Array.wrap(lookup_type_order).each do |lookup_type|
@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
     iso_code = _element_text(port_xml, "CountryCode") if port_xml
 
     return nil if iso_code.blank?
-    
+
     @port ||= Hash.new do |h, k|
       h[k] = Country.where(iso_code: k).first
     end
@@ -62,10 +62,10 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnAsnPars
 
   def parse_weight xml
     return nil if xml.nil?
-    
+
     val = parse_decimal(_element_text(xml, "."))
     return nil unless val
-    
+
     code = _element_attribute(xml, "@ANSICode")
     # I'm assuming LB and KG are the only values that are going to get sent here.
     if code == "KG"

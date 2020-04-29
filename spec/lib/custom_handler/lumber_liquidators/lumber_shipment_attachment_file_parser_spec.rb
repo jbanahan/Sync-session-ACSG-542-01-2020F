@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
     let (:file) { File.open(zip_path, "rb")}
     let (:inbound_file) { InboundFile.new }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:inbound_file).and_return inbound_file
     end
 
@@ -121,7 +121,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
       subject.process_file file, 'A', 'V2OOLU2100046990.12345.zip', 1
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['a@b.com','c@d.com','e@f.com']
+      expect(mail.to).to eq ['a@b.com', 'c@d.com', 'e@f.com']
       expect(mail.subject).to eq 'Allport ODS docs not in zip file'
       expect(mail.body).to include ERB::Util.html_escape("The attached zip file for master bill 'OOLU2100046990', received on #{Time.now.strftime("%d/%m/%Y")}, is invalid or does not contain a PDF file.  Contact Lumber and Allport for resolution.")
       expect(mail.attachments.length).to eq(1)
@@ -151,7 +151,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberShipmentAttachmentFi
       subject.process_file file, 'A', 'V2OOLU2100046991.12345.zip', 1
 
       mail = ActionMailer::Base.deliveries.pop
-      expect(mail.to).to eq ['a@b.com','c@d.com','e@f.com']
+      expect(mail.to).to eq ['a@b.com', 'c@d.com', 'e@f.com']
       expect(mail.subject).to eq 'Allport ODS docs not in zip file'
       expect(mail.body).to include ERB::Util.html_escape("The attached zip file for master bill 'OOLU2100046991', received on #{Time.now.strftime("%d/%m/%Y")}, is invalid or does not contain a PDF file.  Contact Lumber and Allport for resolution.")
       expect(mail.attachments.length).to eq(1)

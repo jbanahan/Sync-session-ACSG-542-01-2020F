@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       existing_statement_entry.daily_statement_entry_fees.create! code: "499", amount: 10000, preliminary_amount: 15000
     }
 
-    before :each do 
+    before :each do
       user
       test_importer
       port
@@ -271,7 +271,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(f.preliminary_amount).to eq BigDecimal("5")
       expect(f.amount).to eq BigDecimal("10000")
 
-      #only the preliminary amounts should be updated, since the existing statement was marked as final
+      # only the preliminary amounts should be updated, since the existing statement was marked as final
       expect(s.preliminary_duty_amount).to eq BigDecimal("11")
       expect(s.preliminary_tax_amount).to eq BigDecimal("13")
       expect(s.preliminary_cvd_amount).to eq BigDecimal("15")
@@ -280,7 +280,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(s.preliminary_interest_amount).to eq BigDecimal("21")
       expect(s.preliminary_total_amount).to eq BigDecimal("96")
 
-      # Since the data was for a prelim and the statement is marked final, the amounts from the second 
+      # Since the data was for a prelim and the statement is marked final, the amounts from the second
       # statement entry will be blank - ergo only the first statement data is reflected in the sum'ed amounts
       # This is a situation that really should never happen in real life.
       expect(s.duty_amount).to eq BigDecimal("2")
@@ -334,7 +334,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(f.amount).to eq BigDecimal("5")
 
 
-      #only the final amounts should be updated, since the data from the json marks the entry as final
+      # only the final amounts should be updated, since the data from the json marks the entry as final
       expect(s.preliminary_duty_amount).to eq BigDecimal("2")
       expect(s.preliminary_tax_amount).to eq BigDecimal("4")
       expect(s.preliminary_cvd_amount).to eq BigDecimal("6")
@@ -343,7 +343,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
       expect(s.preliminary_interest_amount).to eq BigDecimal("12")
       expect(s.preliminary_total_amount).to eq BigDecimal("42")
 
-      # Since the data was for a prelim and the statement is marked final, the amounts from the second 
+      # Since the data was for a prelim and the statement is marked final, the amounts from the second
       # statement entry will be blank - ergo only the first statement data is reflected in the sum'ed amounts
       # This is a situation that really should never happen in real life.
       expect(s.duty_amount).to eq BigDecimal("11")
@@ -393,7 +393,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillStatementParser do
     let!(:daily_statement_2) { DailyStatement.create!(statement_number: "04718318A1H", preliminary_duty_amount: 1, preliminary_tax_amount: 2, preliminary_cvd_amount: 3, preliminary_add_amount: 4, preliminary_fee_amount: 5, preliminary_interest_amount: 6, preliminary_total_amount: 21,
         duty_amount: 2, tax_amount: 4, cvd_amount: 6, add_amount: 8, fee_amount: 10, interest_amount: 12, total_amount: 42, status: "P", monthly_statement_number: "0411P128031") }
 
-    before :each do 
+    before :each do
       user
       test_importer
       port

@@ -1,5 +1,5 @@
 module OpenChain; module CustomHandler; module UnderArmour
-  # Creates import lines for FTZ shipments that ALREADY HAVE existing duty_calc_export_file_lines based on the 
+  # Creates import lines for FTZ shipments that ALREADY HAVE existing duty_calc_export_file_lines based on the
   # delivery number matching reference 1 in the export line
   class UnderArmourFtzParser
     def initialize total_entered_value, mpf, entry_date, port_code, box_37_value, box_40_value
@@ -24,10 +24,10 @@ module OpenChain; module CustomHandler; module UnderArmour
       unit_price = BigDecimal(r[8]) / r[5].to_i
       duty_per_unit = BigDecimal(r[9]) / r[5].to_i
       p = Product.find_or_create_by(unique_identifier: r[3])
-      dil = DrawbackImportLine.where(entry_number: r[1].gsub('-',''), part_number: "#{r[3]}-#{r[4]}+#{r[6]}", quantity: r[5]).first
+      dil = DrawbackImportLine.where(entry_number: r[1].gsub('-', ''), part_number: "#{r[3]}-#{r[4]}+#{r[6]}", quantity: r[5]).first
       if dil.nil?
         DrawbackImportLine.create!(
-          :entry_number => r[1].gsub('-',''),
+          :entry_number => r[1].gsub('-', ''),
           :part_number => "#{r[3]}-#{r[4]}+#{r[6]}",
           :quantity => r[5],
           :product_id => p.id,

@@ -29,15 +29,15 @@ module OpenChain; module Report; class EntriesWithHoldsReport
 
   def query user, customer_numbers, start_date, end_date
     cust_nos = customer_numbers.map {|c| "#{ActiveRecord::Base.sanitize c}"}.join ","
-    #convert the start and end dates from the user's timezone into utc one
+    # convert the start and end dates from the user's timezone into utc one
     start_date = sanitize_date_string(start_date, user.time_zone)
     end_date = sanitize_date_string(end_date, user.time_zone)
 
     query = <<-SQL
       SELECT DISTINCT entries.broker_reference 'Broker Reference', entries.entry_number 'Entry Number', entries.container_numbers 'Container Numbers', entries.master_bills_of_lading 'Master Bills', entries.house_bills_of_lading 'House Bills', entries.customer_references 'Customer References', entries.po_numbers 'PO Numbers', entries.release_date 'Release Date', entries.arrival_date 'Arrival Date'
       FROM entries
-      WHERE entries.on_hold IS NOT NULL and entries.on_hold = true 
-      AND #{Entry.search_where(user)} 
+      WHERE entries.on_hold IS NOT NULL and entries.on_hold = true
+      AND #{Entry.search_where(user)}
       AND entries.customer_number IN (#{cust_nos}) AND entries.arrival_date >= '#{start_date}' AND entries.arrival_date < '#{end_date}'
     SQL
   end

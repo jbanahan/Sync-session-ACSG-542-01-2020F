@@ -11,22 +11,22 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
     end
 
     it "should raise an error if the country doesn't exist" do
-      expect{OpenChain::CustomHandler::ImportExportRegulationParser.process_file nil, 'Blargh!'}.to raise_error "Blargh! is invalid."
+      expect {OpenChain::CustomHandler::ImportExportRegulationParser.process_file nil, 'Blargh!'}.to raise_error "Blargh! is invalid."
     end
   end
 
   describe "process" do
     it "raises an error for countries that are not configured" do
       country = Factory(:country)
-      expect{OpenChain::CustomHandler::ImportExportRegulationParser.new(country).process(StringIO.new, 'file.txt')}.to raise_error "The Import/Export Regulation Parser is not capable of processing .txt files for '#{country.iso_code}'."
+      expect {OpenChain::CustomHandler::ImportExportRegulationParser.new(country).process(StringIO.new, 'file.txt')}.to raise_error "The Import/Export Regulation Parser is not capable of processing .txt files for '#{country.iso_code}'."
     end
 
     it "raises an error for country formats that are not configured" do
-      expect{OpenChain::CustomHandler::ImportExportRegulationParser.new(@country).process(StringIO.new, 'file.blah')}.to raise_error "The Import/Export Regulation Parser is not capable of processing .blah files for '#{@country.iso_code}'."
+      expect {OpenChain::CustomHandler::ImportExportRegulationParser.new(@country).process(StringIO.new, 'file.blah')}.to raise_error "The Import/Export Regulation Parser is not capable of processing .blah files for '#{@country.iso_code}'."
     end
   end
 
-  context "process TW data" do 
+  context "process TW data" do
     before :each do
       @tariff1 = Factory(:official_tariff, :country_id => @country.id, :hts_code => '01011000104', :import_regulations=> 'blah', :export_regulations => 'yada')
       @tariff2 = Factory(:official_tariff, :country_id => @country.id, :hts_code => '01011000202', :import_regulations=> 'blah', :export_regulations => 'yada')
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
         @xls.rewind
       end
 
-      after :each do 
+      after :each do
         @xls.close!
       end
 
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
 
     describe "process_s3" do
       before :each do
-        #Upload the data contents to S3
+        # Upload the data contents to S3
         @original_tempfile = Tempfile.new('abc')
         @key = "s3_io_#{Time.now.to_f}.txt"
         @original_tempfile.write @data
@@ -110,7 +110,7 @@ describe OpenChain::CustomHandler::ImportExportRegulationParser do
       after :each do
         @original_tempfile.close!
       end
-      
+
       it "should download a file from S3 and process it" do
         expect(OpenChain::S3).to receive(:download_to_tempfile).with(OpenChain::S3.bucket_name, @key).and_yield @original_tempfile
 

@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::FenixInvoiceParser do
   subject { described_class }
   let (:content) { File.read 'spec/support/bin/fenix_invoices.csv' }
-  let! (:ent) { Factory(:entry,:source_system=>'Fenix',:broker_reference=>'280952') }
-  let (:ent2) { Factory(:entry,:source_system=>'Fenix',:broker_reference=>'281350') }
+  let! (:ent) { Factory(:entry, :source_system=>'Fenix', :broker_reference=>'280952') }
+  let (:ent2) { Factory(:entry, :source_system=>'Fenix', :broker_reference=>'281350') }
 
   let(:log) { InboundFile.new }
 
   it "should set s3 info if passed" do
-    subject.parse_file content, log, {:bucket=>'bucket',:key=>'key'}
+    subject.parse_file content, log, {:bucket=>'bucket', :key=>'key'}
     b = BrokerInvoice.first
     expect(b.last_file_bucket).to eq('bucket')
     expect(b.last_file_path).to eq('key')
@@ -22,10 +22,10 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     subject.parse_file content, log
     expect(BrokerInvoice.count).to eq(2)
     bi = BrokerInvoice.find_by broker_reference: '280952', source_system: 'Fenix'
-    expect(bi.invoice_total).to eq(4574.83) #does not include GST (code 2)
+    expect(bi.invoice_total).to eq(4574.83) # does not include GST (code 2)
     expect(bi.suffix).to be_blank
     expect(bi.currency).to eq('CAD')
-    bi.invoice_date = Date.new(2013,1,14)
+    bi.invoice_date = Date.new(2013, 1, 14)
     expect(bi.invoice_number).to eq('01-0000009')
     expect(bi.customer_number).to eq("BOSSCI")
     expect(bi.suffix).to be_blank
@@ -41,13 +41,13 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     expect(bi.suffix).to eq "1"
     expect(log).to have_identifier(:invoice_number, "01-0039009-01", BrokerInvoice, bi.id)
   end
-  
+
   it "should write details" do
     subject.parse_file content, log
     bi = BrokerInvoice.find_by broker_reference: '280952', source_system: 'Fenix'
     expect(bi.broker_invoice_lines.size).to eq(3)
 
-    billing = bi.broker_invoice_lines.find_by charge_code: '55' #should truncate the text if the invoice charge code starts with a number and a space
+    billing = bi.broker_invoice_lines.find_by charge_code: '55' # should truncate the text if the invoice charge code starts with a number and a space
     expect(billing.charge_description).to eq('BILLING')
     expect(billing.charge_amount).to eq(45)
     expect(billing.charge_type).to eq('R')
@@ -63,7 +63,7 @@ describe OpenChain::CustomHandler::FenixInvoiceParser do
     expect(gst.charge_type).to eq('D')
   end
   it "should replace invoice" do
-    #going to process, then delete a line, then reprocess and line should come back
+    # going to process, then delete a line, then reprocess and line should come back
     subject.parse_file content, InboundFile.new
     bi = BrokerInvoice.find_by broker_reference: '280952', source_system: 'Fenix'
     bi.broker_invoice_lines.first.destroy
@@ -104,7 +104,7 @@ INV
     subject.parse_file content, log
     ent.reload
     expect(ent.broker_invoices.size).to eq(2)
-    expect(ent.broker_invoice_total).to eq(ent.broker_invoices.inject(BigDecimal.new("0.0")){|sum, inv| sum += inv.invoice_total})
+    expect(ent.broker_invoice_total).to eq(ent.broker_invoices.inject(BigDecimal.new("0.0")) {|sum, inv| sum += inv.invoice_total})
   end
 
   it "invoice total should not include codes 20 or 21" do
@@ -126,7 +126,7 @@ INV
       # This line fails due to missing invoice date
       ",, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,REF#,,  , 1 ,,,,,,,,\n" +
       "04/27/2013,, 1 , INV# , ,,22 BROKERAGE,BROKERAGE, 55 ,#{ent.broker_reference},,  , 1 ,,,,,,,,\n", log, {:key => "path/to/file"}
-    }.to change(ErrorLogEntry,:count).by(1)
+    }.to change(ErrorLogEntry, :count).by(1)
     bi = BrokerInvoice.find_by_invoice_number_and_source_system '01-00INV#2', 'Fenix'
     expect(bi).not_to be_nil
   end
@@ -136,7 +136,7 @@ INV
       subject.parse_file "INVOICE DATE,ACCOUNT#,BRANCH,INVOICE#,SUPP#,REFERENCE,CHARGE CODE,CHARGE DESC,AMOUNT,FILE NUMBER,INV CURR,CHARGE GL ACCT,CHARGE PROFIT CENTRE,PAYEE,DISB CODE,DISB AMT,DISB CURR,DISB GL ACCT,DISB PROFIT CENTRE,DISB REF\n" +
       # This line fails due to missing broker reference
       "04/27/2013,, 1 , INV#2 , ,,22 BROKERAGE,BROKERAGE, 55 ,,,  , 1 ,,,,,,,,", log
-    }.to change(ErrorLogEntry,:count).by(1)
+    }.to change(ErrorLogEntry, :count).by(1)
     bi = BrokerInvoice.find_by(invoice_number: '01-000INV#2', source_system:'Fenix')
     expect(bi).to be_nil
     expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Invoice # 01-00INV#2 is missing a broker reference number."
@@ -173,7 +173,7 @@ INV
   end
 
   context "with WWW instance setup" do
-    let! (:ms) { 
+    let! (:ms) {
       ms = stub_master_setup
       expect(ms).to receive(:custom_feature?).with("WWW").and_return true
       ms
@@ -330,7 +330,6 @@ INV
       expect(inv.intacct_receivable_lines.first.charge_code).to eq "001"
     end
   end
-  
 
   it "strips trailing U from customer number if billed in USD" do
     content = <<INV
@@ -360,7 +359,7 @@ INV
   it "assigns fiscal month to broker invoice" do
     imp = Factory(:company, fiscal_reference: "ent_release_date")
     ent.update_attributes(importer: imp, release_date: "20130105")
-    fm = Factory(:fiscal_month, company: imp, year: 2013, month_number: 1, start_date: Date.new(2013,1,1), end_date: Date.new(2015,1,31))
+    fm = Factory(:fiscal_month, company: imp, year: 2013, month_number: 1, start_date: Date.new(2013, 1, 1), end_date: Date.new(2015, 1, 31))
     subject.parse_file content, log
 
     brok_inv = ent.broker_invoices.first

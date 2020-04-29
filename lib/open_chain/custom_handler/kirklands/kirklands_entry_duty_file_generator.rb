@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module Kirklands; class KirklandsEntryDu
 
   private
     def send_xml entry, xml, filename
-      Lock.db_lock(entry) do 
+      Lock.db_lock(entry) do
         sr = entry.find_or_initialize_sync_record(SYNC_CODE)
 
         Tempfile.open([File.basename(filename, ".*"), ".xml"]) do |f|
@@ -74,7 +74,7 @@ module OpenChain; module CustomHandler; module Kirklands; class KirklandsEntryDu
       end
     end
 
-    def ftp_data 
+    def ftp_data
       dir = MasterSetup.get.production? ? "kirklands_customs_entry_duty" : "kirklands_customs_entry_duty_test"
       connect_vfitrack_net("to_ecs/#{dir}")
     end

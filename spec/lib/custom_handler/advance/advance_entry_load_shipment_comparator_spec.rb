@@ -1,14 +1,14 @@
 describe OpenChain::CustomHandler::Advance::AdvanceEntryLoadShipmentComparator do
 
   let (:advance) { Company.new system_code: "ADVAN" }
-  let (:us) { 
-    c = Country.new 
-    c.iso_code = "US" 
+  let (:us) {
+    c = Country.new
+    c.iso_code = "US"
     c
   }
-  let (:ca) { 
-    c = Country.new 
-    c.iso_code = "CA" 
+  let (:ca) {
+    c = Country.new
+    c.iso_code = "CA"
     c
   }
   let (:advance_shipment) { Shipment.new importer: advance, reference: "REF", country_import: us }
@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Advance::AdvanceEntryLoadShipmentComparator d
   let (:cq_shipment) { Shipment.new importer: cq, reference: "REF", country_import: ca }
 
   describe "accept?" do
-    subject { described_class }  
+    subject { described_class }
 
     it "accepts ADVAN shipments" do
       expect(subject.accept? EntitySnapshot.new(recordable: advance_shipment)).to eq true
@@ -52,10 +52,10 @@ describe OpenChain::CustomHandler::Advance::AdvanceEntryLoadShipmentComparator d
     end
   end
 
-  describe "trading_partner" do 
+  describe "trading_partner" do
     let (:shipment) { Shipment.new }
 
-    it "returns 'Kewill Entry' for kewill shipments" do 
+    it "returns 'Kewill Entry' for kewill shipments" do
       expect(subject).to receive(:determine_entry_system).with(shipment).and_return :kewill
       expect(subject.trading_partner shipment).to eq "Kewill Entry"
     end

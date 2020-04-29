@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     OpenMailer.send_simple_html(config["email"], "Ascena Entry/ISF Mismatch #{start_date.to_date} - #{end_date.to_date}", "The Entry/ISF Mismatch report for Entry Summary Sent Dates between #{start_date.to_date} - #{end_date.to_date} is attached.", [tf]).deliver_now
   end
 
-  def self.dates 
+  def self.dates
     now = Time.zone.now.in_time_zone("America/New_York").midnight
     start_date = now - 7.days
     end_date = now + 7.days
@@ -32,7 +32,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
 
       isfs.push *SecurityFiling.where(importer_id: entry.importer_id).where("entry_reference_numbers LIKE ?", "%#{entry.broker_reference}%").includes(:security_filing_lines).all
 
-      # Kewill's ISF system is terribly bad at not VFI Track updates containing the entry numbers.  So, we're going to also see if we can find 
+      # Kewill's ISF system is terribly bad at not VFI Track updates containing the entry numbers.  So, we're going to also see if we can find
       # an ISF by the master bill.
       master_bills = entry.split_master_bills_of_lading
       isfs.push *SecurityFiling.where(importer_id: entry.importer_id).where("master_bill_of_lading in (?)", master_bills).includes(:security_filing_lines).all if master_bills.length > 0
@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     write_builder_to_tempfile wb, "Entry ISF Match"
   end
 
-  def report_headers 
+  def report_headers
     ["ISF Transaction Number", "Master Bill", "House Bills", "Broker Reference", "Brand", "PO Number (Entry)", "PO Number (ISF)", "Part Number (Entry)", "Part Number (ISF)", "Country of Origin Code (Entry)", "Country of Origin Code (ISF)", "HTS Code 1 (Entry)", "", "HTS Code (ascena Verified)", "", "ascena Match?", "HTS Code 2 (Entry)", "HTS Code 3 (Entry)", "HTS Code (ISF)", "ISF Match", "PO Match", "Part Number Match", "COO Match", "HTS Match", "Exception Description", "ascena Comment", "Date"]
   end
 
@@ -99,7 +99,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     row << isf_match.try(:style)
     row << invoice_line.try(:country_origin_code)
     row << isf_match.try(:coo)
-    row << hts_numbers['primary'].to_s.hts_format #tariff_lines.try(:[], 0).try(:hts_code).to_s.hts_format
+    row << hts_numbers['primary'].to_s.hts_format # tariff_lines.try(:[], 0).try(:hts_code).to_s.hts_format
     row << blank
     row << blank
     row << blank
@@ -112,7 +112,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     row << (isf_match.try(:style_match) ? "Y" : "N")
     row << (isf_match.try(:coo_match) ? "Y" : "N")
     row << (isf_match.try(:hts_match) ? "Y" : "N")
-    
+
     row << exception_notes(entry, invoice_line, tariff_lines, isf, isf_match)
 
     wb.add_body_row sheet, row
@@ -157,11 +157,11 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
 
   def matches line, tariffs, isfs
     # basically, we're looking for a single line that as close as possible matches the invoice line / tariff...so what
-    # we'll do is evaluate all the lines to see how well each of the criteria matches...and if we find a line that 
+    # we'll do is evaluate all the lines to see how well each of the criteria matches...and if we find a line that
     # matches them all, we'll say it matches...if we don't fine one, then we'll return the best match
     matches = []
 
-    catch(:found) do 
+    catch(:found) do
       isfs.each do |isf|
         isf.security_filing_lines.each do |isf_line|
           match = IsfMatch.new isf, isf_line
@@ -194,7 +194,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
       most_matched.po = ""
       most_matched.style_match = false
     end
-    
+
 
     most_matched
   end
@@ -217,7 +217,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryIsfMisma
     end
 
     def <=> m
-      # Evaluate whatever match has the most matches as the 
+      # Evaluate whatever match has the most matches as the
       v = m.match_count <=> match_count
 
       if v == 0

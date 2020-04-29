@@ -11,5 +11,4 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillEntryCom
 
     accept
   end
-  
 end; end; end; end

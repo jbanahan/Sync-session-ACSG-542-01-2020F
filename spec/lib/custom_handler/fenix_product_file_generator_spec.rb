@@ -21,7 +21,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
   }
 
   before :each do
-    @canada = Factory(:country,:iso_code=>'CA')
+    @canada = Factory(:country, :iso_code=>'CA')
     @code = 'XYZ'
   end
 
@@ -59,12 +59,12 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     subject { OpenChain::CustomHandler::FenixProductFileGenerator.new(@code) }
 
     before :each do
-      @to_find_1 = Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@canada.id)).product
-      @to_find_2 = Factory(:tariff_record,:hts_1=>'1234567891',:classification=>Factory(:classification,:country_id=>@canada.id)).product
-      
+      @to_find_1 = Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>@canada.id)).product
+      @to_find_2 = Factory(:tariff_record, :hts_1=>'1234567891', :classification=>Factory(:classification, :country_id=>@canada.id)).product
+
     end
     it "should find products that need sync and have canadian classifications" do
-      expect(subject.find_products.to_a).to eq([@to_find_1,@to_find_2])
+      expect(subject.find_products.to_a).to eq([@to_find_1, @to_find_2])
     end
     it "should filter on importer_id if given" do
       @to_find_1.update_attributes(:importer_id => 100)
@@ -77,12 +77,12 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       expect(h.find_products.to_a).to eq([@to_find_1])
     end
     it "should not find products that don't have canada classifications but need sync" do
-      different_country_product = Factory(:tariff_record,:hts_1=>'1234567891',:classification=>Factory(:classification)).product
-      expect(subject.find_products.to_a).to eq([@to_find_1,@to_find_2])
+      different_country_product = Factory(:tariff_record, :hts_1=>'1234567891', :classification=>Factory(:classification)).product
+      expect(subject.find_products.to_a).to eq([@to_find_1, @to_find_2])
     end
     it "should not find products that have classification but don't need sync" do
       @to_find_2.update_attributes(:updated_at=>1.hour.ago)
-      @to_find_2.sync_records.create!(:trading_partner=>"fenix-#{@code}",:sent_at=>1.minute.ago,:confirmed_at=>1.minute.ago)
+      @to_find_2.sync_records.create!(:trading_partner=>"fenix-#{@code}", :sent_at=>1.minute.ago, :confirmed_at=>1.minute.ago)
       expect(subject.find_products.to_a).to eq([@to_find_1])
     end
     it "does not find products that are marked as having stale tariffs" do
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       subject.record_bad_product(@to_find_1)
       expect(subject.find_products.to_a).to eq([@to_find_2])
     end
-    it "respects max products limit" do 
+    it "respects max products limit" do
       g = OpenChain::CustomHandler::FenixProductFileGenerator.new(@code, {'max_products' => 1})
       expect(g).to receive(:max_products).and_return 1
       expect(g.find_products.to_a).to eq([@to_find_1])
@@ -141,8 +141,8 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
 
       sync_records = []
       now = Time.zone.now
-      Timecop.freeze(now) do 
-        @h.make_file([@p]) do |file, sr| 
+      Timecop.freeze(now) do
+        @h.make_file([@p]) do |file, sr|
           @t = file
           sync_records = sr
         end
@@ -303,9 +303,9 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
       @c.update_custom_value! cdefs[:class_ogd_misc_id], "M"
       @c.update_custom_value! cdefs[:class_ogd_origin], "O"
       @c.update_custom_value! cdefs[:class_sima_code], "S"
-      
+
       @h = generator(@code)
-      
+
       @h.make_file([@p]) {|f| @t = f }
       read = IO.read(@t.path)
       expect(read[0, 15]).to eq "N".ljust(15)
@@ -356,7 +356,7 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
         described_class.new(@code).make_file([@p]) {|f| @t = f}
         expect(IO.read(@t.path)).not_to be_blank
       end
-      
+
     end
   end
 
@@ -364,18 +364,18 @@ describe OpenChain::CustomHandler::FenixProductFileGenerator do
     it "should pass in all possible options when provided" do
       hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23",
           "use_part_number" => "false", "additional_where" => "5 > 3", 'suppress_country'=>true}
-      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ",hash)
+      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ", hash)
 
-      expect(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:new).with("XYZ",hash).and_return(fpfg)
+      expect(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:new).with("XYZ", hash).and_return(fpfg)
       expect_any_instance_of(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:generate)
       OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash)
     end
 
     it "should not fail on missing options" do
       hash = {"fenix_customer_code" => "XYZ", "importer_id" => "23"}
-      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ",hash)
+      fpfg = OpenChain::CustomHandler::FenixProductFileGenerator.new("XYZ", hash)
 
-      expect(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:new).with("XYZ",hash).and_return(fpfg)
+      expect(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:new).with("XYZ", hash).and_return(fpfg)
       expect_any_instance_of(OpenChain::CustomHandler::FenixProductFileGenerator).to receive(:generate)
       OpenChain::CustomHandler::FenixProductFileGenerator.run_schedulable(hash)
     end

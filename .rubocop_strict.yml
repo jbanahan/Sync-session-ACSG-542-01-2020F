@@ -1,0 +1,45 @@
+inherit_from:
+  - .rubocop_todo.yml
+
+Lint/Debugger: # don't leave binding.pry
+  Enabled: true
+  Exclude: []
+
+Lint/RaiseException:
+  Enabled: true
+  Exclude:
+    - 'spec/**/*'
+
+Lint/StructNewOverride:
+  Enabled: true
+  Exclude: []
+
+RSpec/Focus: # run ALL tests on CI
+  Enabled: true
+  Exclude: []
+
+Rails/Output: # Don't leave puts-debugging
+  Enabled: true
+  Exclude:
+    - 'lib/tasks/**/*'
+    - 'lib/open_chain/google_api_support.rb'
+
+Rails/FindEach: # each could severely affect the performance, use find_each
+  Enabled: false
+  Exclude: []
+
+Rails/UniqBeforePluck: # uniq.pluck and not pluck.uniq
+  Enabled: true
+  Exclude: []
+
+Style/HashEachMethods:
+  Enabled: true
+  Exclude: []
+
+Style/HashTransformKeys:
+  Enabled: true
+  Exclude: []
+
+Style/HashTransformValues:
+  Enabled: true
+  Exclude: []

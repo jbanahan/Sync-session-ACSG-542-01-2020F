@@ -21,7 +21,7 @@ describe PlantProductGroupAssignmentsController do
 
   describe "update" do
     before :each do
-      @cd = Factory(:custom_definition,module_type:'PlantProductGroupAssignment',data_type:'text')
+      @cd = Factory(:custom_definition, module_type:'PlantProductGroupAssignment', data_type:'text')
       @ppga = Factory(:plant_product_group_assignment)
       @h = {"*cf_#{@cd.id}"=>'myval'}
     end

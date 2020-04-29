@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
     return [] if master_bills_of_lading.blank? && house_bills_of_lading.blank?
 
     if master_bills_of_lading.length > 0 && house_bills_of_lading.length == 0
-      filings = filings.where("master_bill_of_lading IN (?)", master_bills_of_lading)  
+      filings = filings.where("master_bill_of_lading IN (?)", master_bills_of_lading)
     elsif master_bills_of_lading.length == 0 && house_bills_of_lading.length > 0
       filings = filings.where("house_bills_of_lading IN (?)", house_bills_of_lading)
     else
@@ -44,7 +44,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
       # I'm not 100% sure this is correct, but it's in keeping with how this process has functioned for over a year when it was matching solely based on the master bill
       filings = filings.where("master_bill_of_lading IN (?) OR (master_bill_of_lading = '' AND house_bills_of_lading IN (?))", master_bills_of_lading, house_bills_of_lading)
     end
-    
+
     filings
   end
 
@@ -70,7 +70,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillIsfBackfi
   end
 
   def self.ocean_transport?(entry)
-    ['10','11'].include?(entry.transport_mode_code)
+    ['10', '11'].include?(entry.transport_mode_code)
   end
 
   def self.us_country?(entry)

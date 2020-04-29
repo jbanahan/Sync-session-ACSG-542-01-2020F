@@ -1,9 +1,9 @@
 describe Message do
   let(:user) { Factory(:user) }
-  
+
   describe 'can_view?' do
     let(:msg) { Factory(:message) }
-    
+
     it "returns true for sys_admin" do
       user.sys_admin = true; user.save!
       expect(msg.can_view? user).to eq true
@@ -16,15 +16,15 @@ describe Message do
 
     it "returns false for anyone else" do
       expect(msg.can_view? user).to eq false
-    end 
+    end
   end
 
   describe 'unread_message_count' do
-    
+
     it 'should return number if unread messages exist' do
-      Factory(:message,:user=>user,:viewed=>false) #not viewed should be counted
-      Factory(:message,:user=>user) #no viewed value should be counted
-      Factory(:message,:user=>user,:viewed=>true) #viewed should not be counted
+      Factory(:message, :user=>user, :viewed=>false) # not viewed should be counted
+      Factory(:message, :user=>user) # no viewed value should be counted
+      Factory(:message, :user=>user, :viewed=>true) # viewed should not be counted
       expect(Message.unread_message_count(user.id)).to eq(2)
     end
   end

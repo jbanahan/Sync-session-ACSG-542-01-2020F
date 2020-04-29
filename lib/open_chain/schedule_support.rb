@@ -2,7 +2,7 @@ require "fugit"
 
 module OpenChain
   #
-  # Support for making an object schedulable.  
+  # Support for making an object schedulable.
   #
   # Implementing class needs to have the following accessible attributes:
   #
@@ -80,7 +80,7 @@ module OpenChain
 
       base_time = self.last_start_time.nil? ? self.created_at : self.last_start_time
       return nil unless base_time
-      
+
       tz = time_zone
       tz = ActiveSupport::TimeZone[tz.to_s] unless tz.is_a?(ActiveSupport::TimeZone)
       local_base_time = base_time.in_time_zone(tz)
@@ -103,7 +103,7 @@ module OpenChain
         return next_time_local.utc
       elsif (cron = cron_string?(interval, tz))
         next_run_time = next_rails_time(cron, local_base_time)
-        # Don't support the run days checkboxes, cron already supports them in the cron expression and trying to build 
+        # Don't support the run days checkboxes, cron already supports them in the cron expression and trying to build
         # support for our version w/ the checkboxes is a pain
         return next_run_time ? next_run_time.utc : nil
       else
@@ -117,7 +117,7 @@ module OpenChain
         next_run_time = next_rails_time(duration, local_base_time)
 
         while !run_day?(next_run_time)
-          # Advance a whole day forward to midnight of the next day, which would be the absolute earliest the interval 
+          # Advance a whole day forward to midnight of the next day, which would be the absolute earliest the interval
           # might allow us to run at if we're not allowed to run today.
           next_run_time = (next_run_time.at_midnight + 1.day)
         end
@@ -127,10 +127,10 @@ module OpenChain
 
     end
 
-    #run the job if it should be run (next scheduled time < now & not already run by another process)
+    # run the job if it should be run (next scheduled time < now & not already run by another process)
     def run_if_needed force_run: false
       need_run = false
-      begin   
+      begin
         # Make sure nothing else is trying to also check if this job should run at the exact same time
         Lock.acquire("ScheduleSupport-#{self.class}-#{self.id}", times: 3, temp_lock: true) do
 
@@ -150,7 +150,7 @@ module OpenChain
           self.run
         end
       ensure
-        # We can be reasonably sure that we won't be setting the running flag to false in cases 
+        # We can be reasonably sure that we won't be setting the running flag to false in cases
         # were it really matters (.ie disabling concurrency) since once we've set the flag above
         # in this process nothing else is going to ever flip it to running.  In cases where we're allowing
         # concurrency, there's the potential for this flag to be wrong for a few moments at a time.  Doesn't really matter.
@@ -160,7 +160,7 @@ module OpenChain
       need_run
     end
 
-    def needs_to_run? 
+    def needs_to_run?
       next_run = self.next_run_time
       !next_run.nil? && next_run < Time.now.utc
     end
@@ -172,19 +172,19 @@ module OpenChain
     def track_running?
       self.has_attribute?(:running)
     end
-    
-    #is a run day set in the file
+
+    # is a run day set in the file
     def run_day_set?
-      self.sunday_active? || 
+      self.sunday_active? ||
       self.monday_active? ||
-      self.tuesday_active? || 
+      self.tuesday_active? ||
       self.wednesday_active? ||
       self.thursday_active? ||
       self.friday_active? ||
       self.saturday_active?
     end
 
-    #is the day of week for the given time a day that we should run the schedule
+    # is the day of week for the given time a day that we should run the schedule
     def run_day? t
       if day_to_run
         return day_to_run == t.day
@@ -207,10 +207,10 @@ module OpenChain
       end
     end
 
-    private 
+    private
       def cron_string? value, time_zone
-        # Fugit::Cron uses granularity to the second, which is a pain in the butt if 
-        # you're copying / pasting cron expressions from the web since it's nonstandard. 
+        # Fugit::Cron uses granularity to the second, which is a pain in the butt if
+        # you're copying / pasting cron expressions from the web since it's nonstandard.
 	      # So, just prepend a 0 so expressions will run on the minute change.
         Fugit::Cron.parse("0 " + value + " #{time_zone.tzinfo.name}") rescue nil
       end

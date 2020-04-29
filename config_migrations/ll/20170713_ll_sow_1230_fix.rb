@@ -1,10 +1,10 @@
 module ConfigMigrations; module LL; class LLSow1230Fix
 
-  # The csv file given here is expected to be filled with orders that are already approved and we just 
+  # The csv file given here is expected to be filled with orders that are already approved and we just
   # need to adjust the terms to those given in the file and then reapprove the order.
   #
   # If an order is found to be approved when loaded, it will be skipped.
-  # 
+  #
   # A CSV file consisting of Order DB ID, Order Number, Terms of Payment is expected.
   #
   def fix_approved_terms_and_reapprove file, log_file
@@ -20,23 +20,22 @@ module ConfigMigrations; module LL; class LLSow1230Fix
   end
 
   # The csv file given here is expected to be filled with orders that are currently unapproved and we need
-  # to check if they are 
+  # to check if they are
   #
   # If an order is found to be unapproved when loaded, it will be skipped..it will also be unapproved
   # if it's found to have not been previously approved prior to the code deployment.
-  # 
+  #
   # A CSV file consisting of Order DB ID, Order Number, Terms of Payment is expected.
   #
   def validate_previously_approved_fix_terms_and_approve file, log_file
     user = User.integration
     loop_file(file, log_file) do |log_file, order, terms|
-      # We're only expected unapproved orders here, so if the order went to approved, then 
+      # We're only expected unapproved orders here, so if the order went to approved, then
       # we don't have to mess with it...we also only want to adjust the terms on orders
       # that were approved prior to the 1230 deployment.
       if order.accepted_by_id.nil? && previously_approved?(order)
         fix_terms_and_approve log_file, user, order, terms
       end
-      
     end
     nil
   end
@@ -53,7 +52,7 @@ module ConfigMigrations; module LL; class LLSow1230Fix
 
         order = Order.where(id: id).first
 
-        next if order.nil? || order.order_number != order_number 
+        next if order.nil? || order.order_number != order_number
 
         yield log_file, order, terms
       end

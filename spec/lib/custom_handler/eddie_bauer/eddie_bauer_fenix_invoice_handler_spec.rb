@@ -10,9 +10,9 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
 
   describe "prep_line_row" do
 
-    before :each do 
-      @p = Factory(:tariff_record, hts_1: "1234.56.7890", 
-        classification: Factory(:classification, 
+    before :each do
+      @p = Factory(:tariff_record, hts_1: "1234.56.7890",
+        classification: Factory(:classification,
           country: Factory(:country, :iso_code => "CA"),
           product: Factory(:product, unique_identifier: "EDDIE-12345")
         )
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
   end
 
   describe "parse" do
-    let (:custom_file) { 
+    let (:custom_file) {
       cf = double("Custom File")
       allow(cf).to receive(:attached).and_return cf
       allow(cf).to receive(:path).and_return "file.txt"
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
     let (:importer) { with_fenix_id(Factory(:importer), "855157855RM0001") }
     let (:tempfile) {
       tempfile = Tempfile.new ['temp', '.txt']
-      tempfile.binmode 
+      tempfile.binmode
       # Add a quotation mark to make sure we're disabling the quote handling
       tempfile << " |0309018      |2014-03-10| |001-5434 |BD| |MENS WVN LAMINATED POLY JKT 1\"                                         |0000010|000022.62|0309018| | | | | | | |     \n"
       tempfile.flush
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler do
       importer
     end
 
-    after :each do 
+    after :each do
       tempfile.close! if tempfile && !tempfile.closed?
     end
 

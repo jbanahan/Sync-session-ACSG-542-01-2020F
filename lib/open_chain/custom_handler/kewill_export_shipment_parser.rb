@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     shipment_headers = ["MFIH01", "MSPH01"]
     shipment_data = []
     CSV.parse(data, col_sep: "\e", quote_char: "\007") do |row|
-      # If we've hit a header row, then process anything we've already gathered because this is a 
+      # If we've hit a header row, then process anything we've already gathered because this is a
       # new shipment to record
       if shipment_headers.include? row[0].to_s.upcase
         if shipment_data.length > 0
@@ -296,7 +296,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     importer = Company.importers.with_customs_management_number(customer_code).first
     log.reject_and_raise "No Importer record found with Alliance customer number of #{customer_code}." unless importer
     log.reject_and_raise "No Importer record found with Alliance customer number of #{customer_code}." if importer.system_code.blank?
-    
+
     importer
   end
 
@@ -376,7 +376,7 @@ module OpenChain; module CustomHandler; class KewillExportShipmentParser
     return nil if importer.nil? || po_number.nil?
 
     order = Order.where(importer_id: importer.id).where(order_number: "#{importer.system_code}-#{po_number}").first_or_create! customer_order_number: po_number
-    
+
     # See if this product is on the order, if it's not, add it
     line = order.order_lines.find {|ol| ol.product == product }
     if line.nil?

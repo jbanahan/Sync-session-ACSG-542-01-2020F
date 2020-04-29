@@ -9,23 +9,23 @@ module OpenChain; module CustomHandler; module Polo; class PoloEuFiberContentGen
   def self.run_schedulable opts={}
     self.new(opts).generate
   end
-  
+
   def initialize opts={}
     super(opts)
-    @cdefs = self.class.prep_custom_definitions [:merch_division,:fiber_content,:csm_numbers,:season]
+    @cdefs = self.class.prep_custom_definitions [:merch_division, :fiber_content, :csm_numbers, :season]
   end
 
   def generate
     u = User.joins(:company).where(username:'EU Fiber Content', companies: {master: true}).first
     if u.nil?
      c = Company.where(master:true).first
-     u = c.users.build(username:'EU Fiber Content',first_name:'EU',last_name:'Fiber Content',product_view:true,email:'bug@vandegriftinc.com')
+     u = c.users.build(username:'EU Fiber Content', first_name:'EU', last_name:'Fiber Content', product_view:true, email:'bug@vandegriftinc.com')
      u.password = Random.rand(999999999).to_s
      u.save!
     end
     f = sync_xls
     if f
-      OpenMailer.send_simple_html(u.email,'VFI Track EU Fiber Content Report','Fiber content report is attached.',f).deliver_now
+      OpenMailer.send_simple_html(u.email, 'VFI Track EU Fiber Content Report', 'Fiber content report is attached.', f).deliver_now
     end
     nil
   end
@@ -35,7 +35,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloEuFiberContentGen
   end
 
   def trim_fingerprint row
-    [row[3],row]
+    [row[3], row]
   end
 
   def auto_confirm?

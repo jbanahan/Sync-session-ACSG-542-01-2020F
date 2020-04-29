@@ -30,12 +30,12 @@ require 'open_chain/report'
 require 'open_chain/report/async_search'
 
 class ReportResult < ActiveRecord::Base
-  
-  PURGE_WEEKS = 1 #purge all items older than this many weeks
+
+  PURGE_WEEKS = 1 # purge all items older than this many weeks
 
   attr_accessible :created_at, :custom_report_id, :email_to,
     :friendly_settings_json, :name, :report_class,
-    :report_data_file_size, :report_data_content_type, 
+    :report_data_file_size, :report_data_content_type,
     :report_data_file_name, :report_data_updated_at, :run_at,
     :run_by_id, :run_errors, :settings_json, :status, :updated_at
 
@@ -45,7 +45,7 @@ class ReportResult < ActiveRecord::Base
   # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
   # at all, so this disables that validation.
   do_not_validate_attachment_file_type :report_data
-  
+
   before_create :sanitize
   before_post_process :no_post
 
@@ -72,9 +72,9 @@ class ReportResult < ActiveRecord::Base
   # report_class- Class object for the report.  The underlying class needs to implement self.run_report(user,opts)
   # opts = report options hash like {:settings=>{'a'=>'b'},:friendly_settings=>['user friendly representation of the setttings hash']}
   def self.run_report! report_name, user, report_class, opts={}
-    inner_opts = {:settings=>{},:friendly_settings=>[]}.with_indifferent_access.merge(opts)
-    rr = ReportResult.create!(:name=>report_name,:run_at=>0.seconds.ago,
-      :friendly_settings_json=>inner_opts[:friendly_settings].to_json,:settings_json=>inner_opts[:settings].to_json,
+    inner_opts = {:settings=>{}, :friendly_settings=>[]}.with_indifferent_access.merge(opts)
+    rr = ReportResult.create!(:name=>report_name, :run_at=>0.seconds.ago,
+      :friendly_settings_json=>inner_opts[:friendly_settings].to_json, :settings_json=>inner_opts[:settings].to_json,
       :report_class => report_class.to_s, :status=>"Queued", :run_by_id=>user.id, :custom_report_id=>inner_opts[:custom_report_id], email_to: inner_opts[:email_to]
     )
     # The lower the priority the quicker dj picks these up from the queue - we want these done right away since they're user init'ed.
@@ -83,7 +83,6 @@ class ReportResult < ActiveRecord::Base
     else
       rr.delay(:priority=>-1).execute_report
     end
-    
   end
 
   def can_view? u
@@ -94,7 +93,7 @@ class ReportResult < ActiveRecord::Base
   def friendly_settings= settings_array
     if settings_array.nil?
       self.friendly_settings_json = nil
-    else 
+    else
       self.friendly_settings_json = settings_array.to_json
     end
   end
@@ -112,7 +111,7 @@ class ReportResult < ActiveRecord::Base
         local_file = nil
         block_utilized = false
         if self.custom_report_id.nil?
-          # Allow for the implementing class to take a block, and then yield the report tempfile...if the class doesn't take 
+          # Allow for the implementing class to take a block, and then yield the report tempfile...if the class doesn't take
           # a block, then it's expected the class returns a tempfile of the report output.
 
           # This allows for the report to use the block style tempfile handling and yield the tempfile back to us here while in the
@@ -157,8 +156,8 @@ class ReportResult < ActiveRecord::Base
         complete_report local_file
       rescue => err
         fail_report err
-      ensure 
-        file_cleanup local_file        
+      ensure
+        file_cleanup local_file
       end
     end
   end
@@ -188,7 +187,7 @@ class ReportResult < ActiveRecord::Base
     if !self.email_to.blank?
       OpenMailer.send_simple_html(self.email_to, "Report Complete: #{name}", "Attached is the completed report named #{name}.", [local_file]).deliver_now
     else
-      run_by.messages.create(:subject=>"Report Complete: #{name}",:body=>"<p>Your report has completed.</p>
+      run_by.messages.create(:subject=>"Report Complete: #{name}", :body=>"<p>Your report has completed.</p>
         <p>You can download it by clicking <a href='#{Rails.application.routes.url_helpers.download_report_result_url(host: MasterSetup.get.request_host, id: id, protocol: (Rails.env.development? ? "http" : "https"))}'>here</a>.</p>
         <p>You can view the report status page by clicking <a href='#{report_results_link}'>here</a>.</p>"
       )
@@ -196,8 +195,8 @@ class ReportResult < ActiveRecord::Base
   end
 
   def fail_report e
-    self.update_attributes(:status=>"Failed",:run_errors=>e.message)
-    run_by.messages.create(:subject=>"Report FAILED: #{name}",:body=>"<p>Your report failed to run properly.</p>
+    self.update_attributes(:status=>"Failed", :run_errors=>e.message)
+    run_by.messages.create(:subject=>"Report FAILED: #{name}", :body=>"<p>Your report failed to run properly.</p>
 <p>You can view the error on the report status page by clicking <a href='#{report_results_link}'>here</a>.</p>
 <p>If you need immediate support, please click the Help link at the top of the screen and log a new incident.</p>")
   end
@@ -220,7 +219,7 @@ class ReportResult < ActiveRecord::Base
   def no_post
     false
   end
-  
+
   def sanitize
     Attachment.sanitize_filename self, :report_data
   end

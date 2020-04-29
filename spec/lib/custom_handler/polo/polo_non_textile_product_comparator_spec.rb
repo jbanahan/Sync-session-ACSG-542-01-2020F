@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::Polo::PoloNonTextileProductComparator do
     it "sets Non Textile flag to N when knit woven field = KNIT" do
       product.update_custom_value! cdefs[:knit_woven], "KnIt"
 
-      subject.compare(nil, product.id, nil, nil, nil, nil,nil, nil)
+      subject.compare(nil, product.id, nil, nil, nil, nil, nil, nil)
 
       product.reload
       expect(product.custom_value(cdefs[:non_textile])).to eq "N"
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::Polo::PoloNonTextileProductComparator do
     it "sets Non Textile flag to N when knit woven field = KNIT" do
       product.update_custom_value! cdefs[:knit_woven], "WoVeN"
 
-      subject.compare(nil, product.id, nil, nil, nil, nil,nil, nil)
+      subject.compare(nil, product.id, nil, nil, nil, nil, nil, nil)
 
       product.reload
       expect(product.custom_value(cdefs[:non_textile])).to eq "N"
@@ -28,7 +28,7 @@ describe OpenChain::CustomHandler::Polo::PoloNonTextileProductComparator do
     it "sets the Non Textile flag to Y for any other value" do
       product.update_custom_value! cdefs[:knit_woven], ""
 
-      subject.compare(nil, product.id, nil, nil, nil, nil,nil, nil)
+      subject.compare(nil, product.id, nil, nil, nil, nil, nil, nil)
 
       product.reload
       expect(product.custom_value(cdefs[:non_textile])).to eq "Y"
@@ -39,7 +39,7 @@ describe OpenChain::CustomHandler::Polo::PoloNonTextileProductComparator do
       product.update_custom_value! cdefs[:knit_woven], "WoVeN"
       product.update_custom_value! cdefs[:non_textile], "N"
 
-      subject.compare(nil, product.id, nil, nil, nil, nil,nil, nil)
+      subject.compare(nil, product.id, nil, nil, nil, nil, nil, nil)
 
       product.reload
       expect(product).not_to have_a_snapshot

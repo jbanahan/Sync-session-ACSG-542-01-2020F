@@ -41,35 +41,35 @@ class DrawbackClaim < ActiveRecord::Base
   include CoreObjectSupport
   include UpdateModelFieldsSupport
 
-  attr_accessible :abi_accepted_date, :bill_amount, :billed_date, 
-    :duty_check_amount, :duty_check_received_date, :duty_claimed, 
-    :entry_number, :exports_end_date, :exports_start_date, :hmf_claimed, 
-    :hmf_mpf_check_amount, :hmf_mpf_check_number, 
-    :hmf_mpf_check_received_date, :importer_id, :importer, :liquidated_date, 
-    :mpf_claimed, :name, :net_claim_amount, :planned_claim_amount, 
-    :sent_to_client_date, :sent_to_customs_date, :total_claim_amount, 
-    :total_duty, :total_export_value, :total_pieces_claimed, 
+  attr_accessible :abi_accepted_date, :bill_amount, :billed_date,
+    :duty_check_amount, :duty_check_received_date, :duty_claimed,
+    :entry_number, :exports_end_date, :exports_start_date, :hmf_claimed,
+    :hmf_mpf_check_amount, :hmf_mpf_check_number,
+    :hmf_mpf_check_received_date, :importer_id, :importer, :liquidated_date,
+    :mpf_claimed, :name, :net_claim_amount, :planned_claim_amount,
+    :sent_to_client_date, :sent_to_customs_date, :total_claim_amount,
+    :total_duty, :total_export_value, :total_pieces_claimed,
     :total_pieces_exported
 
   belongs_to :importer, :class_name=>"Company"
-  
+
   validates_presence_of :importer_id
   validates_presence_of :name
 
   has_many :drawback_export_histories, inverse_of: :drawback_claim, dependent: :destroy
   has_many :drawback_claim_audits, inverse_of: :drawback_claim, dependent: :destroy
-  
+
   before_save :set_claim_totals
 
   scope :viewable, lambda {|u|
     return where("1=0") unless u.view_drawback?
     return where("1=1") if u.company.master?
-    where("importer_id = ? OR importer_id IN (SELECT child_id from linked_companies where parent_id = ?)",u.company_id,u.company_id)
+    where("importer_id = ? OR importer_id IN (SELECT child_id from linked_companies where parent_id = ?)", u.company_id, u.company_id)
   }
   # what percent of the pieces exported were claimed
   # returns 0 if either the pieces claimed or pieces exported are nil or 0
   # else returns decimal value of claimed/exported to 3 decimal places
-  # example: 
+  # example:
   # 3 pieces claimed
   # 9 pieces exported
   # return value 0.333
@@ -85,11 +85,11 @@ class DrawbackClaim < ActiveRecord::Base
   # $9 planned
   # return value 0.333
   def percent_money_claimed
-    calc_percent self.net_claim_amount, self.planned_claim_amount  
+    calc_percent self.net_claim_amount, self.planned_claim_amount
   end
-  
+
   def can_view? user
-    user.view_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer)) 
+    user.view_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer))
   end
 
   def can_comment? user
@@ -97,7 +97,7 @@ class DrawbackClaim < ActiveRecord::Base
   end
 
   def can_edit? user
-    user.edit_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer)) 
+    user.edit_drawback? && (user.company.master? || user.company_id == self.importer_id || user.company.linked_companies.to_a.include?(self.importer))
   end
 
   def can_attach?(user)
@@ -109,18 +109,18 @@ class DrawbackClaim < ActiveRecord::Base
     c.master? ? "1=1" : "(#{table_name}.importer_id = #{c.id} or #{table_name}.importer_id IN (select child_id from linked_companies where parent_id = #{c.id}))"
   end
 
-  #find all duty calc export file lines for the importer and claim date range
+  # find all duty calc export file lines for the importer and claim date range
   def exports_not_in_import
-    r = DutyCalcExportFileLine.not_in_imports.where("duty_calc_export_file_lines.importer_id = ?",self.importer_id).order("duty_calc_export_file_lines.export_date DESC")
-    r = r.where("export_date >= ?",self.exports_start_date) if self.exports_start_date
-    r = r.where("export_date <= ?",self.exports_end_date) if self.exports_end_date
+    r = DutyCalcExportFileLine.not_in_imports.where("duty_calc_export_file_lines.importer_id = ?", self.importer_id).order("duty_calc_export_file_lines.export_date DESC")
+    r = r.where("export_date >= ?", self.exports_start_date) if self.exports_start_date
+    r = r.where("export_date <= ?", self.exports_end_date) if self.exports_end_date
     r
   end
 
   private
   def calc_percent num, den
     return 0 if num.nil? || den.nil? || den==0
-    BigDecimal(BigDecimal.new(num,3) / BigDecimal.new(den)).round(3,BigDecimal::ROUND_DOWN)
+    BigDecimal(BigDecimal.new(num, 3) / BigDecimal.new(den)).round(3, BigDecimal::ROUND_DOWN)
   end
 
   def set_claim_totals

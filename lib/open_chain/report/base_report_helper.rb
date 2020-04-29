@@ -14,7 +14,7 @@ module OpenChain; module Report; module BaseReportHelper
 
     # Removes outer quotes included by AR's .sanitize
     def sanitize str
-      ActiveRecord::Base.sanitize(str).gsub(/(\A\')|(\'\z)/,"")
+      ActiveRecord::Base.sanitize(str).gsub(/(\A\')|(\'\z)/, "")
     end
 
     # Proxies protected method
@@ -70,7 +70,7 @@ module OpenChain; module Report; module BaseReportHelper
       value
     end
 
-    # Translates the value from a raw SQL datatype into a format that 
+    # Translates the value from a raw SQL datatype into a format that
     # should be able to be handled in writing to the excel file (see XlsMaker#insert_cell_value)
     def default_translate value
       if value.is_a?(Time)
@@ -91,7 +91,7 @@ module OpenChain; module Report; module BaseReportHelper
 
         translation ||= conversions[column_number]
       end
-      
+
       translation
     end
 

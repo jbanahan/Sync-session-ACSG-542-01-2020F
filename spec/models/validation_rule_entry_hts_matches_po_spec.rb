@@ -13,7 +13,7 @@ describe ValidationRuleEntryHtsMatchesPo do
       @invoice_line = tariff_line.commercial_invoice_line
       @invoice_line.entry.update_attributes! importer_id: importer.id
 
-      tariff_record = Factory(:tariff_record, hts_1: "1234567890", 
+      tariff_record = Factory(:tariff_record, hts_1: "1234567890",
         classification: Factory(:classification, country: Factory(:country, iso_code: "US"),
           product: Factory(:product, importer_id: importer.id)
         )

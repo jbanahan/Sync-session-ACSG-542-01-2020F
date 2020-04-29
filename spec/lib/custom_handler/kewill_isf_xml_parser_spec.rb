@@ -3,14 +3,14 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
   let (:xml_path) { 'spec/support/bin/isf_sample.xml' }
   let (:xml_data) { IO.read xml_path }
   let (:est) { ActiveSupport::TimeZone["Eastern Time (US & Canada)"] }
-  let! (:customer) { 
-    c = Factory(:company,:alliance_customer_number=>'EDDIE')
+  let! (:customer) {
+    c = Factory(:company, :alliance_customer_number=>'EDDIE')
     c.system_identifiers.create! system: "Customs Management", code: "EDDIE"
     c
   }
 
   let (:log) { InboundFile.new }
-  
+
   describe "parse_file" do
     subject { described_class }
 
@@ -36,19 +36,19 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_ISF_NUMBER)[0].module_id).to eq sf.id
     end
     it "should not replace entry numbers" do
-      sf = Factory(:security_filing,:entry_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      sf = Factory(:security_filing, :entry_numbers=>"123456", :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       subject.parse_file xml_data, log
       sf = SecurityFiling.first
       expect(sf.entry_numbers).to eql("123456")
     end
     it "should not replace entry reference numbers" do
-      sf = Factory(:security_filing,:entry_reference_numbers=>"123456",:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      sf = Factory(:security_filing, :entry_reference_numbers=>"123456", :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       subject.parse_file xml_data, log
       sf = SecurityFiling.first
       expect(sf.entry_reference_numbers).to eql("123456")
     end
     it "should not process files with outdated event times" do
-      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.zone.now)
+      sf = Factory(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.zone.now)
       subject.parse_file xml_data, log
       # Just pick a piece of informaiton from the file that's not in the Factory create and ensure it's not there
       sf = SecurityFiling.first
@@ -58,13 +58,13 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
     end
     it "should update existing security filing and replace lines" do
       # This also tests that we're comparing exported from source using >= by using the same export timestamp in factory and parse call (timestamp manually extracted from test file)
-      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
-      sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
+      sf = Factory(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"))
+      sf.security_filing_lines.create!(:line_number=>7, :quantity=>1)
       subject.parse_file xml_data, log
       sf.reload
       expect(sf.booking_number).to eq('BKING')
       expect(sf.security_filing_lines.size).to eq(2)
-      expect(sf.security_filing_lines.collect {|ln| ln.line_number}).to eq([1,2])
+      expect(sf.security_filing_lines.collect {|ln| ln.line_number}).to eq([1, 2])
     end
     it "should set amazon bucket & path" do
       subject.parse_file xml_data, log, :bucket=>"bucket", :key => "isf_2435412_20210914_20131118145402586.1384804944.xml"
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       dom = REXML::Document.new xml_data
       dom.root.elements['ISF_SEQ_NBR'].text=''
 
-      expect{subject.parse_file dom.to_s, log}.to raise_error "ISF_SEQ_NBR is required."
+      expect {subject.parse_file dom.to_s, log}.to raise_error "ISF_SEQ_NBR is required."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "ISF_SEQ_NBR is required."
     end
 
@@ -91,7 +91,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       dom = REXML::Document.new xml_data
       dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR='8' or EVENT_NBR='20' or EVENT_NBR='21']")
 
-      expect{subject.parse_file dom.to_s, log}.to raise_error "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
+      expect {subject.parse_file dom.to_s, log}.to raise_error "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "At least one 'events' element with an 'EVENT_DATE' child and EVENT_NBR 21 or 8 must be present in the XML."
     end
 
@@ -105,11 +105,11 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
         "2012-11-27 09:15 EST: Bill Nbr: KKLUXM02368200. Disposition Cd: S2",
         "2012-11-27 09:15 EST: NO BILL MATCH (NOT ON FILE)"
       ]
-      sf = Factory(:security_filing,:host_system=>'Kewill',:host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"), 
+      sf = Factory(:security_filing, :host_system=>'Kewill', :host_system_file_number=>'1870446', :last_event=>Time.iso8601("2012-11-27T07:20:01.565-05:00"),
         :po_numbers=>"A\nB", countries_of_origin: "C\nD", notes: notes.join("\n"))
-      sf.security_filing_lines.create!(:line_number=>7,:quantity=>1)
+      sf.security_filing_lines.create!(:line_number=>7, :quantity=>1)
 
-      expect{subject.parse_file dom.to_s, log}.not_to raise_error
+      expect {subject.parse_file dom.to_s, log}.not_to raise_error
 
       saved = SecurityFiling.first
       expect(saved).to eq sf
@@ -130,7 +130,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
 
       dom.elements.delete_all("IsfHeaderData/events[EVENT_NBR != '20']")
 
-      expect{subject.parse_file dom.to_s, log}.not_to raise_error
+      expect {subject.parse_file dom.to_s, log}.not_to raise_error
 
       saved = SecurityFiling.first
       expect(saved).not_to be_nil
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(sf.last_file_bucket).to eq("bucket")
       expect(sf.last_file_path).to eq("file.txt")
       expect(sf.transaction_number).to eq("31671445820402")
-      expect(sf.importer_account_code).to eq('EDDIEX') 
+      expect(sf.importer_account_code).to eq('EDDIEX')
       expect(sf.broker_customer_number).to eq('EDDIE')
       expect(sf.importer_tax_id).to eq('27-058606000')
       expect(sf.transport_mode_code).to eq('11')
@@ -163,13 +163,13 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(sf.master_bill_of_lading).to eq('KKLUXM02368200')
       expect(sf.house_bills_of_lading).to eq('HBSCHBL123')
       expect(sf.container_numbers).to eq('KKFU1694054')
-      expect(sf.entry_numbers).to eq('31619212983') 
+      expect(sf.entry_numbers).to eq('31619212983')
       expect(sf.entry_reference_numbers).to eq('1921298')
-      expect(sf.file_logged_date.to_i).to eq(Time.utc(2012,11,27,11,40,10).to_i)
-      expect(sf.first_sent_date.to_i).to eq(Time.utc(2012,11,27,14,13,36).to_i)
-      expect(sf.first_accepted_date.to_i).to eq(Time.utc(2012,11,27,14,14,2).to_i)
-      expect(sf.last_sent_date.to_i).to eq(Time.utc(2012,11,27,15,13,36).to_i)
-      expect(sf.last_accepted_date.to_i).to eq(Time.utc(2012,11,27,15,14,2).to_i)
+      expect(sf.file_logged_date.to_i).to eq(Time.utc(2012, 11, 27, 11, 40, 10).to_i)
+      expect(sf.first_sent_date.to_i).to eq(Time.utc(2012, 11, 27, 14, 13, 36).to_i)
+      expect(sf.first_accepted_date.to_i).to eq(Time.utc(2012, 11, 27, 14, 14, 2).to_i)
+      expect(sf.last_sent_date.to_i).to eq(Time.utc(2012, 11, 27, 15, 13, 36).to_i)
+      expect(sf.last_accepted_date.to_i).to eq(Time.utc(2012, 11, 27, 15, 14, 2).to_i)
       expect(sf.estimated_vessel_load_date).to eq Time.iso8601("2012-11-30T00:00:00-05:00").to_date
       expect(sf.estimated_vessel_sailing_date).to eq Time.iso8601("2014-06-26T00:00:00-04:00").to_date
       expect(sf.estimated_vessel_arrival_date).to eq Time.iso8601("2014-08-04T00:00:00-04:00").to_date
@@ -187,11 +187,11 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(ln.commercial_invoice_number).to eq('CIN')
       expect(ln.mid).to eq("MID")
       expect(ln.country_of_origin_code).to eq('CN')
-      expect(ln.manufacturer_name).to eq('KINGTAI INDUSTRIAL (XIAMEN) CO., LT') 
-      
+      expect(ln.manufacturer_name).to eq('KINGTAI INDUSTRIAL (XIAMEN) CO., LT')
+
     end
     it "should build notes" do
-      #skipping events 19, 20, 21
+      # skipping events 19, 20, 21
       sf = subject.parse_dom dom, security_filing
       expect(sf.notes.lines("\n").collect {|ln| ln.strip}).to eq([
         "2012-11-27 06:40 EST: EDI Received",
@@ -269,7 +269,7 @@ describe OpenChain::CustomHandler::KewillIsfXmlParser do
       expect(c).to have_system_identifier("Customs Management", "EDDIE")
     end
 
-    it "should not fail if there is no matching entity found by MID" do 
+    it "should not fail if there is no matching entity found by MID" do
       dom.root.get_elements("//IsfHeaderData/entities/MID").each do |el|
         el.text = "NONMATCHING"
       end

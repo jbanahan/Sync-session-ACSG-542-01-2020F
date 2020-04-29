@@ -74,7 +74,7 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
     file_name = "PVHCANADA_Duty_Discount_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH Duty Discount", file_name: "#{file_name}" do |temp|
-        body_msg = "Attached is the \"Duty Discount Report, #{fiscal_year.to_s}-#{fiscal_month.to_s}\" based on CADEX Acceptance Date."
+        body_msg = "Attached is the \"Duty Discount Report, #{fiscal_year}-#{fiscal_month}\" based on CADEX Acceptance Date."
         OpenMailer.send_simple_html(settings['email'], "PVH Canada Duty Discount Report", body_msg, temp).deliver_now
       end
     else
@@ -298,46 +298,46 @@ module OpenChain; module Report; class PvhCanadaDutyDiscountReport
     def make_query fiscal_date_start, fiscal_date_end
       <<-SQL
           SELECT
-            ent.entry_number, 
-            ci.invoice_number, 
-            cil.po_number, 
-            ent.release_date, 
-            ent.eta_date, 
-            ent.arrival_date, 
-            ci.currency, 
-            ci.exchange_rate, 
+            ent.entry_number,
+            ci.invoice_number,
+            cil.po_number,
+            ent.release_date,
+            ent.eta_date,
+            ent.arrival_date,
+            ci.currency,
+            ci.exchange_rate,
             cil.value,
-            cil.miscellaneous_discount, 
-            cil.add_to_make_amount, 
-            cil.adjustments_amount, 
-            cil.unit_price, 
-            cil.quantity, 
-            cil.part_number, 
-            cil.id AS commercial_invoice_line_id, 
-            ent.transport_mode_code, 
-            ent.master_bills_of_lading, 
-            ent.house_bills_of_lading, 
-            ent.fcl_lcl, 
-            tar.hts_code, 
-            tar.entered_value, 
-            tar.duty_rate  
-          FROM 
-            entries AS ent 
-            LEFT OUTER JOIN commercial_invoices AS ci ON 
-              ent.id = ci.entry_id 
-            LEFT OUTER JOIN commercial_invoice_lines AS cil ON 
-              ci.id = cil.commercial_invoice_id 
-            LEFT OUTER JOIN commercial_invoice_tariffs AS tar ON 
-              cil.id = tar.commercial_invoice_line_id 
-          WHERE 
+            cil.miscellaneous_discount,
+            cil.add_to_make_amount,
+            cil.adjustments_amount,
+            cil.unit_price,
+            cil.quantity,
+            cil.part_number,
+            cil.id AS commercial_invoice_line_id,
+            ent.transport_mode_code,
+            ent.master_bills_of_lading,
+            ent.house_bills_of_lading,
+            ent.fcl_lcl,
+            tar.hts_code,
+            tar.entered_value,
+            tar.duty_rate
+          FROM
+            entries AS ent
+            LEFT OUTER JOIN commercial_invoices AS ci ON
+              ent.id = ci.entry_id
+            LEFT OUTER JOIN commercial_invoice_lines AS cil ON
+              ci.id = cil.commercial_invoice_id
+            LEFT OUTER JOIN commercial_invoice_tariffs AS tar ON
+              cil.id = tar.commercial_invoice_line_id
+          WHERE
             ent.customer_number = 'PVHCANADA' AND
-            ent.fiscal_date >= '#{fiscal_date_start}' AND 
-            ent.fiscal_date <= '#{fiscal_date_end}' AND 
-            cil.miscellaneous_discount IS NOT NULL AND 
-            cil.miscellaneous_discount > 0 
+            ent.fiscal_date >= '#{fiscal_date_start}' AND
+            ent.fiscal_date <= '#{fiscal_date_end}' AND
+            cil.miscellaneous_discount IS NOT NULL AND
+            cil.miscellaneous_discount > 0
           ORDER BY
-            ent.entry_number, 
-            ci.invoice_number, 
+            ent.entry_number,
+            ci.invoice_number,
             cil.po_number
       SQL
     end

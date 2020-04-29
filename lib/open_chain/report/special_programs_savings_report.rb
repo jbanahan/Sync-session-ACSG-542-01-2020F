@@ -31,7 +31,7 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
     parsed_companies = split_companies(companies)
     start_date, end_date = parse_date_parameters(release_date_start, release_date_end)
     sql = <<-SQL
-      SELECT 
+      SELECT
           e.customer_number AS 'Customer Number',
           e.broker_reference AS 'Broker Reference',
           e.entry_number AS 'Entry Number',
@@ -70,8 +70,8 @@ module OpenChain; module Report; class SpecialProgramsSavingsReport
       ORDER BY c.iso_code , e.customer_number , e.release_date
     SQL
 
-    conversions = {"Release Date" => lambda{|row, value| value.nil? ? "" : value.in_time_zone(Time.zone).to_date},
-                   "Invoice Tariff - Duty" => lambda{|row, value| grand_total_hash[:invoice_tariff_duty] += parse_decimal(value); value},
+    conversions = {"Release Date" => lambda {|row, value| value.nil? ? "" : value.in_time_zone(Time.zone).to_date},
+                   "Invoice Tariff - Duty" => lambda {|row, value| grand_total_hash[:invoice_tariff_duty] += parse_decimal(value); value},
                    "SPI (Primary)" => lambda do |row, value|
                      row[16] = row[13] if value.blank?
                      value

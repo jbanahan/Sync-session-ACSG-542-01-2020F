@@ -1,12 +1,12 @@
 describe OpenChain::EntityCompare::ProductComparator do
 
-  subject { 
+  subject {
     Class.new {
       extend OpenChain::EntityCompare::ProductComparator
     }
   }
-  
-  describe "accept?" do 
+
+  describe "accept?" do
 
     let(:snapshot) { EntitySnapshot.new recordable_type: "Product"}
 

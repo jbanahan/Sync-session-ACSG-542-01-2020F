@@ -2,22 +2,22 @@ describe ApplicationHelper do
 
   describe 'field_value' do
     it "should output field's value" do
-      ent = Factory(:entry,:entry_number=>'1234565478')
+      ent = Factory(:entry, :entry_number=>'1234565478')
       User.current = Factory(:user)
-      expect(helper.field_value(ent,ModelField.find_by_uid(:ent_entry_num))).to eq(ent.entry_number)
+      expect(helper.field_value(ent, ModelField.find_by_uid(:ent_entry_num))).to eq(ent.entry_number)
     end
 
     it "should strip trailing zeros off non-currency decimal values" do
       # This value should also be rounded to 5 decimal places
       # Use .999999 which then rounds to 1.00000 and should output as 1
-      ent = Factory(:entry,:total_units => BigDecimal.new(".999999"))
+      ent = Factory(:entry, :total_units => BigDecimal.new(".999999"))
       User.current = Factory(:user)
 
       expect(helper.field_value(ent, ModelField.find_by_uid(:ent_total_units))).to eq("1")
     end
 
     it "should not strip trailing decimals from currency and round two 2 decimal places (USD)" do
-      ent = Factory(:entry,:total_fees => BigDecimal.new("999.995"))
+      ent = Factory(:entry, :total_fees => BigDecimal.new("999.995"))
       User.current = Factory(:user)
 
       # Uses $ for fields marked as US currency

@@ -2,11 +2,11 @@ class DutyCalcImportFilesController < ApplicationController
   before_filter :secure_me
 
   def download
-    d = DutyCalcImportFile.find params[:id] 
+    d = DutyCalcImportFile.find params[:id]
     if d.attachment.blank?
       error_redirect "Import file does not have an attachment."
     else
-      redirect_to download_attachment_path(d.attachment)  
+      redirect_to download_attachment_path(d.attachment)
     end
   end
 

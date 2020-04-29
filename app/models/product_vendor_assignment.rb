@@ -23,7 +23,7 @@ class ProductVendorAssignment < ActiveRecord::Base
   belongs_to :product
   belongs_to :vendor, class_name: 'Company'
 
-  dont_shallow_merge :ProductVendorAssignment, ['id','created_at','updated_at']
+  dont_shallow_merge :ProductVendorAssignment, ['id', 'created_at', 'updated_at']
 
   def can_view? user
     return false unless self.vendor

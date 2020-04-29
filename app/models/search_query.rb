@@ -1,4 +1,4 @@
-#represents a direct SQL query executed for a SearchSetup
+# represents a direct SQL query executed for a SearchSetup
 class SearchQuery
   attr_reader :search_setup
   attr_reader :user
@@ -21,7 +21,7 @@ class SearchQuery
 
   # Execute the query returning either an array of hashes or yielding to a block with a hash for each row
   #
-  # The hash for each row will look like {:row_key=>1,:result=>['a','b']} where :row_key is the primary key of the top level table in the module_chain 
+  # The hash for each row will look like {:row_key=>1,:result=>['a','b']} where :row_key is the primary key of the top level table in the module_chain
   # and result is the returned values for the query
   #
   # opts paramter takes :per_page and :page values like `will_paginate`. NOTE: Target page starts with 1 to emulate will_paginate convention
@@ -33,7 +33,7 @@ class SearchQuery
 
     rs = execute_query(to_sql(opts), use_replica: opts[:use_replica])
     rows = []
-    
+
     # This gives us the number of table.id columns prefixed onto the query that will need to get dropped
     core_module_id_aliases = ordered_core_modules(opts)
 
@@ -44,10 +44,10 @@ class SearchQuery
       # First column to remove is ALWAYS the core primary key
       core_primary_key = row[0]
       raw_result_row = row.to_a.drop(core_module_id_aliases.size)
-      
-      #scrub results through model field
+
+      # scrub results through model field
       result = []
-      sorted_columns.each_with_index {|sc,i| result << sc.model_field.process_query_result(raw_result_row[i],@user)}
+      sorted_columns.each_with_index {|sc, i| result << sc.model_field.process_query_result(raw_result_row[i], @user)}
 
       result = result.collect {|column| column.nil? ? "" : column}
 
@@ -61,22 +61,22 @@ class SearchQuery
     block_given? ? nil : rows
   end
 
-  #get distinct list of primary keys for the query
+  # get distinct list of primary keys for the query
   def result_keys opts={}
     # Using a hash to preserve insertion order (Set doesn't guarantee that while hash does)
     keys = {}
     execute(opts.merge(select_core_module_keys_only:true)) {|result| keys[result[:row_key]] = true}
     keys.keys
   end
-  
-  #get the row count for the query
+
+  # get the row count for the query
   def count use_replica: true
     # Limit count to only including the core module keys will eliminate running any subselects in the select clauses
     query = "#{to_sql(select_core_module_keys_only:true, disable_pagination: true)} LIMIT 1000"
     execute_query(query, use_replica: use_replica).count
   end
 
-  #get the count of the total number of unique primary keys for the top level module 
+  # get the count of the total number of unique primary keys for the top level module
   #
   # For example: If there are 7 entries returned with 3 commercial invoices each, this record will return 7
   # If you're looking for a return value of `21` you should use the `count` method
@@ -90,7 +90,7 @@ class SearchQuery
   #
   # opts parameter takes :per_page and :page values like `will_paginate`
   # use the 'select_parent_key_only' opt to create a query only returning the parent core object keys (ala unique_parent_count)
-  # use the 'select_core_module_keys_only' to create a query returning the parent and child core module keys, 
+  # use the 'select_core_module_keys_only' to create a query returning the parent and child core module keys,
   # when utilized the parent core module key is ALWAYS returned in the first column
   def to_sql opts={}
     # By default, only allow the maximum number of results the search setup affords
@@ -112,7 +112,7 @@ class SearchQuery
     r = "SELECT DISTINCT "
     flds = core_module_id_select_list opts
     unless opts[:select_core_module_keys_only] || opts[:select_parent_key_only]
-      sorted_columns.each_with_index do |sc,idx| 
+      sorted_columns.each_with_index do |sc, idx|
         # If the user doesn't have access to the field, just select as ''
         mf = sc.model_field
         flds << "#{mf.can_view?(@user) ? mf.qualified_field_name : "null"} AS \"#{idx}\""
@@ -125,7 +125,7 @@ class SearchQuery
   def core_module_id_select_list opts
     # We need to use a SELECT DISTINCT for cases where we have to join a child table into the query because the
     # user added a parameter or sort from it but did NOT have that table as part of the select list.  Because of this
-    # we need to make sure then that we're NOT combining results via the distinct from any of the tables the user did included 
+    # we need to make sure then that we're NOT combining results via the distinct from any of the tables the user did included
     # in the select list.  Include the table's id column for any core module table included in the select list.
 
     # .ie User queries for invoice amounts on entries with invoice line po number of 123.  If two different invoices
@@ -156,10 +156,10 @@ class SearchQuery
     # build a list of all core modules used in the query
     core_modules = Set.new
     @search_setup.search_columns.each {|sc| core_modules << sc.model_field.core_module}
-    @search_setup.search_criterions.each {|sc| 
+    @search_setup.search_criterions.each {|sc|
       core_modules << sc.model_field.core_module
       # Some search criterions can contain references to mutiple model fields, which may
-      # be at different levels.  Make sure we're adding the core modules for these 
+      # be at different levels.  Make sure we're adding the core modules for these
       # secondary fields.
       mf_two = sc.secondary_model_field
       if mf_two
@@ -194,7 +194,7 @@ class SearchQuery
   end
 
   def build_where
-    wheres = @search_setup.search_criterions.collect do |sc| 
+    wheres = @search_setup.search_criterions.collect do |sc|
       # If a search has a criterion field that has been disabled for a user (can happen if they had it and the field was later taken away),
       # then it should cause the search to return no values.
       if !sc.model_field.can_view?(@user)
@@ -212,7 +212,6 @@ class SearchQuery
         # "field IN (?)".gsub("?") {"'test\\testing', 'test'"} => "field IN ('test\\testing', 'test')" # Correct
         sc.where_clause(v).gsub("?") {v}
       end
-      
     end
     klass = @search_setup.core_module.klass
 
@@ -220,7 +219,7 @@ class SearchQuery
     wheres << @extra_where unless @extra_where.blank?
     if wheres.empty?
       return ""
-    else 
+    else
       return " WHERE (#{wheres.join(") AND (")}) "
     end
   end
@@ -228,14 +227,14 @@ class SearchQuery
   def build_order
     r = " ORDER BY "
     sorts = @search_setup.sort_criterions
-    #using this sort instead of .order so we don't make a db call when working with an unsaved SearchSetup
-    sorts.sort {|a,b|
+    # using this sort instead of .order so we don't make a db call when working with an unsaved SearchSetup
+    sorts.sort {|a, b|
       x = a.rank <=> b.rank
       x = a.model_field_uid <=> b.model_field_uid if x==0
       x
     }
-    #need to put the sorts in the right order from top of the module chain to the bottom
-    #and also inject id sorts on any parent levels that don't already have a sort
+    # need to put the sorts in the right order from top of the module chain to the bottom
+    # and also inject id sorts on any parent levels that don't already have a sort
     sort_clause_hash = {}
     module_chain_array = @search_setup.core_module.default_module_chain.to_a
     module_chain_array.each {|cm| sort_clause_hash[cm] = []}
@@ -253,12 +252,12 @@ class SearchQuery
       if need_parent_sorts && a.empty?
         a << "#{cm.table_name}.id"
       end
-      sort_clauses = a + sort_clauses #add clauses to the beginning because we're looping backwards 
+      sort_clauses = a + sort_clauses # add clauses to the beginning because we're looping backwards
     end
     sort_clauses.empty? ? "" : r << sort_clauses.join(", ")
   end
-  
-  #build pagination from the options hash or return empty string if :per_page and :page values aren't there
+
+  # build pagination from the options hash or return empty string if :per_page and :page values aren't there
   def build_pagination_from_opts opts
     target_page = (opts[:page].blank? || !opts[:page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? 1 : opts[:page].to_i
     per_page = (opts[:per_page].blank? || !opts[:per_page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? nil : opts[:per_page].to_i
@@ -274,10 +273,10 @@ class SearchQuery
     paginate += " OFFSET #{per_page*(target_page-1)} " if target_page && per_page
     paginate
   end
-  
+
   def sorted_columns
     cols = @search_setup.search_columns.to_a
-    cols.sort! {|a,b|
+    cols.sort! {|a, b|
       x = a.rank <=> b.rank
       x = a.model_field_uid <=> b.model_field_uid if x==0
       x
@@ -297,8 +296,8 @@ class SearchQuery
 
     # There's little point in doing this optimation if we're not paginating the results since the whole point of this
     # is to only do the full select subselects over the range of data we're going to be viewing.  This also means
-    # that the downloads will NOT have this optimization applied.  We could possible further optimize those cases by 
-    # taking an iterative approach to the downloads and walking through those one "page" at a time as part of the 
+    # that the downloads will NOT have this optimization applied.  We could possible further optimize those cases by
+    # taking an iterative approach to the downloads and walking through those one "page" at a time as part of the
     # download process which would allow for applying this method to downloads as well.
     unless pagination.blank?
       inner_opts = opts.merge select_core_module_keys_only: true, disable_join_optimization: true
@@ -317,8 +316,8 @@ class SearchQuery
         inner_optimization += ")"
       end
 
-      # We need to disable the pagination because the subselect optimization already determined what 
-      # set of data keys the outer query should include (thus ensuring the correct paginated range 
+      # We need to disable the pagination because the subselect optimization already determined what
+      # set of data keys the outer query should include (thus ensuring the correct paginated range
       # of data is used)
       opts[:disable_pagination] = true
     end

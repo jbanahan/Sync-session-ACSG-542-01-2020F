@@ -25,7 +25,7 @@
 
 class AwsSnapshot < ActiveRecord::Base
   attr_accessible :aws_backup_session_id, :description, :end_time, :errored, :instance_id, :purged_at, :snapshot_id, :start_time, :tags_json, :volume_id
-  
+
   belongs_to :aws_backup_session, inverse_of: :aws_snapshots
 
   def tags
@@ -37,7 +37,7 @@ class AwsSnapshot < ActiveRecord::Base
     if tags.nil?
       self.tags_json = nil
     else
-      self.tags_json = ActiveSupport::JSON.encode(tags)  
+      self.tags_json = ActiveSupport::JSON.encode(tags)
     end
   end
 end

@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
     [xml, entries]
   end
 
-  private 
+  private
 
     def send_xml xml, entries
       sync_records = generate_sync_records(entries)
@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
             ftp_sync_file file, sync_records, ftp_info
           end
         end
-        
+
         now = Time.zone.now
         confirmed = now + 1.minute
         sync_records.each do |sr|
@@ -110,11 +110,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
             add_element(item_element, "Currency", duty_data.currency)
             add_element(item_element, "ExchRate", duty_data.exchange_rate)
 
-            if duty_data.prepack
-              customer_field_element = add_element(item_element, "CustomerField")
-              customer_field_value_element = add_element(customer_field_element, "CustomerFieldValue", duty_data.part_number)
-              customer_field_value_element.add_attribute("CustomerFieldName", "PREPACK")
-            end
+            next unless duty_data.prepack
+            customer_field_element = add_element(item_element, "CustomerField")
+            customer_field_value_element = add_element(customer_field_element, "CustomerFieldValue", duty_data.part_number)
+            customer_field_value_element.add_attribute("CustomerFieldName", "PREPACK")
           end
         end
       end
@@ -143,14 +142,14 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
           next if inv.invoice_number.blank?
 
           inv.commercial_invoice_lines.each do |line|
-            next if line.po_number.blank? 
+            next if line.po_number.blank?
 
             # If we found an ASN / PO...then record the entry that was found..because we'll have to give it a sync record when the XML is finally built.
             entries << entry
 
             asn_data = po_data[line.po_number]
 
-            product = Product.where(unique_identifier:"UAPARTS-#{line.part_number}").first
+            product = Product.where(unique_identifier: "UAPARTS-#{line.part_number}").first
 
             # Roll up lines with the same PO, article and HTS code.  Duty is the only value that would change
             # between lines.  It needs to be summed in the rolled up duty_data object.
@@ -168,14 +167,14 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
                 duty_data.part_number = product&.custom_value(cdefs[:prod_part_number])
                 asn_data[inv.invoice_number][key] = duty_data
               end
-              duty_data.duty = (duty_data.duty || BigDecimal.new(0)) + tariff.duty_amount
+              duty_data.duty = (duty_data.duty || BigDecimal(0)) + tariff.duty_amount
             end
           end
         end
       end
 
       [po_data, entries]
-    end 
+    end
 
     def find_entries importer, start_date, end_date
       Entry.joins(Entry.join_clause_for_need_sync("UA DUTY")).

@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser do
   let (:inbound_file) { InboundFile.new }
 
   describe "process_invoice" do
-    before :each do 
+    before :each do
       india
       ca
       pvh
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnInvoiceXmlParser do
       expect(a.address_type).to eq "Vendor"
       expect(a.name).to eq "EASTMAN EXPORTS GLOBAL-"
       expect(a.line_1).to eq "5/591 SRI LAKSHMI NAGAR"
-      expect(a.line_2).to eq "PITCHAMPALAYAM PUDUR, TIRUPUR" 
+      expect(a.line_2).to eq "PITCHAMPALAYAM PUDUR, TIRUPUR"
       expect(a.city).to eq "TAMILNADU"
       expect(a.postal_code).to eq "641603"
       expect(a.country).to eq india

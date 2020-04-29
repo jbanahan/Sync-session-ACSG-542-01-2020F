@@ -6,7 +6,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
   extend OpenChain::EntityCompare::ComparatorHelper
 
   PASS_STATE = ['Pass', 'Skipped']
-  
+
   def self.accept? snapshot
     return false unless super
     return false unless snapshot.recordable
@@ -33,9 +33,9 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
     return unless json_hash.present?
     rules = {}
     json_hash["templates"].each do |t_key, t|
-      t["rules"].each do |r_key, r| 
-        if r["notification_type"].present? 
-          rules[r_key] = r 
+      t["rules"].each do |r_key, r|
+        if r["notification_type"].present?
+          rules[r_key] = r
           rules[r_key]["id"] = extract_id(r_key).to_i
         end
       end
@@ -58,7 +58,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
   def self.update rule_json, type, id, uid, customer_number, importer_name
     if rule_json["notification_type"] == 'Email'
       rule_obj = BusinessValidationRule.find(rule_json["id"])
-      send_email(id: id, rule: rule_obj, module_type: type, uid: uid, state: rule_json["state"], description: rule_json["description"].presence || rule_json["name"], 
+      send_email(id: id, rule: rule_obj, module_type: type, uid: uid, state: rule_json["state"], description: rule_json["description"].presence || rule_json["name"],
                  message: rule_json["message"], customer_number: customer_number, importer_name: importer_name)
     end
   end
@@ -74,7 +74,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
     body += %Q(<p>#{link id, module_type}</p>)
     OpenMailer.send_simple_html(rule.recipients_and_mailing_lists, subject, body.html_safe, [], {suppressed: suppress_email?(rule, state), bcc: rule.bcc_notification_recipients, cc: rule.cc_notification_recipients}).deliver_now
   end
-  
+
   private
 
   def self.description_override rule, state
@@ -98,7 +98,7 @@ module OpenChain; module EntityCompare; module BusinessRuleComparator; class Bus
       rule.suppress_skipped_notice?
     end
   end
-  
+
   def self.extract_obj_info id, module_type
     mod = CoreModule.find_by_class_name module_type
     obj = module_type.constantize.find(id)

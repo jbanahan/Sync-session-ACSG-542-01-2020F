@@ -76,7 +76,7 @@ class FiscalMonthsController < ApplicationController
   def company_enabled?
     if params[:company_id]
       co = Company.find params[:company_id]
-    else 
+    else
       co = Company.find(params[:fiscal_month][:company_id])
     end
     unless co.fiscal_reference.presence

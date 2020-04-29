@@ -30,7 +30,6 @@ class CustomReport < ActiveRecord::Base
   attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id, :user,
   :search_criterions_attributes, :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes
 
-  
   has_many :search_criterions, :dependent=>:destroy
   has_many :search_columns, -> { order(:rank) }, :dependent=>:destroy
   has_many :search_schedules, :dependent=>:destroy
@@ -38,23 +37,23 @@ class CustomReport < ActiveRecord::Base
   belongs_to :user, :inverse_of=>:custom_reports
 
   validate :scheduled_reports_have_parameters
-  
-  accepts_nested_attributes_for :search_criterions, :allow_destroy => true, 
-    :reject_if => lambda { |a| 
+
+  accepts_nested_attributes_for :search_criterions, :allow_destroy => true,
+    :reject_if => lambda { |a|
       r_val = false
-      [:model_field_uid,:operator].each { |f|
+      [:model_field_uid, :operator].each { |f|
         r_val = true if a[f].blank?
-      } 
+      }
       r_val
     }
   accepts_nested_attributes_for :search_columns, :allow_destroy => true,
     :reject_if => lambda { |a| a[:model_field_uid].blank? }
   accepts_nested_attributes_for :search_schedules, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:email_addresses].blank? && 
-      a[:ftp_server].blank? && 
+    :reject_if => lambda { |a| a[:email_addresses].blank? &&
+      a[:ftp_server].blank? &&
       a[:_destroy].blank?
     }
-  
+
   scope :for_user, lambda { |u| where(user: u) }
   attr_reader :preview_run
 
@@ -66,7 +65,7 @@ class CustomReport < ActiveRecord::Base
   end
 
   def column_fields_available user
-    #expects subclass to implement static version of this method
+    # expects subclass to implement static version of this method
     fields = self.class.column_fields_available user
     fields.select {|mf| mf.can_view?(user)  && mf.user_accessible?}
   end
@@ -76,7 +75,7 @@ class CustomReport < ActiveRecord::Base
     fields.select {|mf| mf.can_view?(user) && mf.user_accessible?}
   end
 
-  def xlsx_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xlsx"] )
+  def xlsx_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)), ".xlsx"] )
     @listener = XlsxListener.new self.no_time?
     run run_by, max_results(run_by, row_limit)
     workbook = @listener.build_xlsx
@@ -84,19 +83,19 @@ class CustomReport < ActiveRecord::Base
     [file, @listener.blank_file?]
   end
 
-  def xls_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".xls"] )
+  def xls_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)), ".xls"] )
     @listener = XlsListener.new self.no_time?
     run run_by, max_results(run_by, row_limit)
     @listener.workbook.write file.path
     [file, @listener.blank_file?]
   end
-  
-  #runs the resport in xls format.  This method gives duck type compatibility with the reports in open_chain/reports so ReportResult.execute_report can call htem
+
+  # runs the resport in xls format.  This method gives duck type compatibility with the reports in open_chain/reports so ReportResult.execute_report can call htem
   def run_report run_by, *p
     xlsx_file run_by
   end
 
-  def csv_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)),".csv"])
+  def csv_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)), ".csv"])
     @listener = ArraysListener.new self.no_time?
     run run_by, max_results(run_by, row_limit)
     a = @listener.arrays
@@ -115,7 +114,7 @@ class CustomReport < ActiveRecord::Base
     @listener = ArraysListener.new self.no_time?, false
     @preview_run = preview_run
     run run_by, max_results(run_by, row_limit)
-    @listener.arrays  
+    @listener.arrays
   ensure
     @preview_run = nil
   end
@@ -132,9 +131,9 @@ class CustomReport < ActiveRecord::Base
   end
 
   def write_hyperlink row, column, url, alt_text=nil
-    @listener.write_hyperlink row, column, url, alt_text 
+    @listener.write_hyperlink row, column, url, alt_text
   end
-  
+
   def heading_row row
     @listener.heading_row row
   end
@@ -188,7 +187,7 @@ class CustomReport < ActiveRecord::Base
         write_hyperlink(row, link_offset, row_object.excel_url, "Web View")
         link_offset += 1
       end
-      
+
       if self.include_rule_links?
         write_hyperlink(row, link_offset, validation_results_url(obj: row_object), "Web View")
         link_offset += 1
@@ -213,7 +212,7 @@ class CustomReport < ActiveRecord::Base
       limit.nil? ? system_max : [limit, system_max].min
     end
 
-  private 
+  private
   def model_field v
     return v if v.is_a?(ModelField)
     return v.model_field if v.respond_to?(:model_field)
@@ -221,7 +220,7 @@ class CustomReport < ActiveRecord::Base
   end
 
   def scheduled_reports_have_parameters
-    # If there are no search criterions (or there will be zero after the save completes), then we should 
+    # If there are no search criterions (or there will be zero after the save completes), then we should
     return unless self.search_criterions.find { |sc| !sc.marked_for_destruction? && !sc.destroyed? }.nil?
 
     if self.search_schedules.find { |ss| !ss.marked_for_destruction? && !ss.destroyed? }.present?
@@ -413,7 +412,7 @@ class CustomReport < ActiveRecord::Base
       if @csv_output && content.respond_to?(:strftime)
         content = content.strftime(@no_time ? "%Y-%m-%d" : "%Y-%m-%d %H:%M")
       end
-      
+
       self.data[row] ||= {}
       self.data[row][column] = content
     end
@@ -421,10 +420,10 @@ class CustomReport < ActiveRecord::Base
       write row, column, url
     end
     def heading_row row
-      #do nothing
+      # do nothing
     end
     def add_tab tab_name
-      #do nothing
+      # do nothing
     end
     def arrays
       r_val = []
@@ -467,11 +466,11 @@ class CustomReport < ActiveRecord::Base
     def write_hyperlink row, column, url, alt_text
       c = alt_text.blank? ? url : alt_text
       c = c.to_s.to_f if c.is_a?(BigDecimal)
-      XlsMaker.insert_cell_value @sheet, row, column, Spreadsheet::Link.new(url,c), @xls_options
+      XlsMaker.insert_cell_value @sheet, row, column, Spreadsheet::Link.new(url, c), @xls_options
     end
 
     def heading_row row_number
-      @sheet.row(row_number).default_format = XlsMaker::HEADER_FORMAT 
+      @sheet.row(row_number).default_format = XlsMaker::HEADER_FORMAT
     end
 
     def add_tab tab_name

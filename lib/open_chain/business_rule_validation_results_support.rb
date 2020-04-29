@@ -1,16 +1,16 @@
 module OpenChain; module BusinessRuleValidationResultsSupport
   include ValidationResultsHelper
 
-  def generic_validation_results obj  
+  def generic_validation_results obj
     cm = CoreModule.find_by_object(obj)
     respond_to do |format|
       format.html {
         action_secure(obj.can_view?(current_user) && current_user.view_business_validation_results?,
-          obj,{:lock_check=>false,:verb=>"view",:module_name=>cm.label.downcase}) { @validation_object = obj }
+          obj, {:lock_check=>false, :verb=>"view", :module_name=>cm.label.downcase}) { @validation_object = obj }
       }
       format.json {
         action_secure(obj.can_view?(current_user) && current_user.view_business_validation_results?,
-          obj,{:lock_check=>false,:verb=>"view",:module_name=>cm.label.downcase, :json=>true}) {
+          obj, {:lock_check=>false, :verb=>"view", :module_name=>cm.label.downcase, :json=>true}) {
             bvr = results_to_hsh current_user, obj, cm
             if bvr
               render json: {business_validation_result: bvr}
@@ -25,7 +25,7 @@ module OpenChain; module BusinessRuleValidationResultsSupport
   def results_to_hsh run_by, obj, core_module=nil
     core_module ||= CoreModule.find_by_object(obj)
     r = {
-          object_number:core_module.unique_id_field.process_export(obj,run_by),
+          object_number:core_module.unique_id_field.process_export(obj, run_by),
           state:obj.business_rules_state_for_user(run_by),
           object_updated_at:obj.updated_at,
           single_object: obj.class.to_s,
@@ -50,7 +50,7 @@ module OpenChain; module BusinessRuleValidationResultsSupport
   end
 
   def run_validations obj
-    action_secure(obj.can_run_validations?(current_user) && obj.can_view?(current_user), obj, 
+    action_secure(obj.can_run_validations?(current_user) && obj.can_view?(current_user), obj,
       {verb: "update validation results for"}) {
         BusinessValidationTemplate.create_results_for_object! obj
         generic_validation_results obj

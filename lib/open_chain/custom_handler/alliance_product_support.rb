@@ -9,7 +9,7 @@ module OpenChain
 
           # If the translated text then returns that we have a bell character (which really should never
           # occurr naturally in data), then we know we have an untranslatable char and we'll hard stop.
-          
+
           if val.is_a? String
             translated = ActiveSupport::Inflector.transliterate(val, "\007")
             if translated =~ /\x07/

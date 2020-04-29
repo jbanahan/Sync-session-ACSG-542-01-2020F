@@ -61,7 +61,7 @@ describe ValidationRuleFieldFormat do
   it "should skip if doesn't match search criterions" do
     json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
     vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json)
-    vr.search_criterions.build(model_field_uid:'ord_ord_num',operator:'eq',value:'XabcY')
+    vr.search_criterions.build(model_field_uid:'ord_ord_num', operator:'eq', value:'XabcY')
     expect(vr.should_skip?(Order.new(order_number:'XabcY'))).to be_falsey
     expect(vr.should_skip?(Order.new(order_number:'XabcdY'))).to be_truthy
   end

@@ -25,7 +25,7 @@ module OpenChain; class FixedPositionGenerator
     end
   end
 
-  # 
+  #
   # This method is sticking around for backwards compatability...use #string instead
   #
   def str s, len, right_justify = false, force_truncate = false
@@ -45,8 +45,8 @@ module OpenChain; class FixedPositionGenerator
       v = ''
     end
 
-    # Yes, disabling padding doesn't make sense when used strictly in a fixed width output, but this 
-    # class has enough value in truncation detection and encoding output that it can be used in other 
+    # Yes, disabling padding doesn't make sense when used strictly in a fixed width output, but this
+    # class has enough value in truncation detection and encoding output that it can be used in other
     # output scenarios (like validating xml lengths into a system we know max lengths for .ie Kewill)
     if pad_string
       v = pad(v, max_length, justification, pad_char, :pad_char)
@@ -55,7 +55,7 @@ module OpenChain; class FixedPositionGenerator
     v
   end
 
-  # 
+  #
   # This method is sticking around for backwards compatability...use #number instead
   #
   def num n, width, decimal_positions=0, opts={}
@@ -93,9 +93,9 @@ module OpenChain; class FixedPositionGenerator
         raise DataTruncationError, "Number #{value} cannot be greater than #{max_value}." if value > max_value
       end
 
-      # The value should already be rounded, so there should be no additional rounding being done 
+      # The value should already be rounded, so there should be no additional rounding being done
       # by the number_with_precision call here, instead precision is here for display purposes only
-      # Only use en locale so we don't end up with different decimal point value if somehow our default locale 
+      # Only use en locale so we don't end up with different decimal point value if somehow our default locale
       # is changed (ie 1.00 -> 1,00)
 
       if value.zero? && pad_zero
@@ -133,7 +133,7 @@ module OpenChain; class FixedPositionGenerator
 
   def datetime d, date_format: nil, timezone: nil, max_length: nil, justification: :right, pad_char: nil
     format = opts_val(date_format, :date_format)
-    
+
     v = nil
     if d.nil?
       v = ''.ljust(Time.now.strftime(format).length, opts_val(pad_char, :blank_date_fill_char))
@@ -154,7 +154,7 @@ module OpenChain; class FixedPositionGenerator
     v
   end
 
-  private 
+  private
 
   def opts_val val, opts_key
     val.nil? ? @opts[opts_key] : val
@@ -164,7 +164,7 @@ module OpenChain; class FixedPositionGenerator
     number.to_s.match(/\./)
   end
   def replace_newlines s
-    s.gsub(/(?:(?:\r\n)|\n|\r)/,@opts[:line_break_replace_char])
+    s.gsub(/(?:(?:\r\n)|\n|\r)/, @opts[:line_break_replace_char])
   end
 
   def encode_string s, enc, replacement_char

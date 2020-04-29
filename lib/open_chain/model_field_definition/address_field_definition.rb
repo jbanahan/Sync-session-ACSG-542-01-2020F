@@ -30,7 +30,7 @@ module OpenChain; module ModelFieldDefinition; module AddressFieldDefinition
        [17, :add_address_book, :in_address_book, 'In Address Book?', {data_type: :boolean, user_accessible: false}],
        [18, :add_address_type, :address_type, 'Address Type', {data_type: :string, user_accessible: false}]
     ]
-    add_fields CoreModule::ADDRESS, make_country_arrays(100,'add','addresses', "country")
-    add_fields CoreModule::ADDRESS, make_company_arrays(200,'add','addresses','comp','Company','company')
+    add_fields CoreModule::ADDRESS, make_country_arrays(100, 'add', 'addresses', "country")
+    add_fields CoreModule::ADDRESS, make_company_arrays(200, 'add', 'addresses', 'comp', 'Company', 'company')
   end
 end; end; end

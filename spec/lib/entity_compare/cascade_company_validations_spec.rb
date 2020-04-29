@@ -59,6 +59,6 @@ describe OpenChain::EntityCompare::CascadeCompanyValidations do
         expect(BusinessValidationTemplate).not_to receive(:create_results_for_object!)
         subject.compare 'Company', importer.id, nil, nil, nil, nil, nil, nil
       end
-    end 
+    end
   end
 end

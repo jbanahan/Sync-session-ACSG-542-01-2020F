@@ -12,8 +12,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnInvoiceXmlParser
 
   def party_map
     # It appears that PVH's Invoice doesn't use a consistent FactoryCode identifiery for the Factory (like
-    # the PO does).  Therefore, I'm just going to skip parsing the factory - the MID is included for them 
-    # at the invoice line level anyway (which is also not included in the party either).  If we REALLY need one, 
+    # the PO does).  Therefore, I'm just going to skip parsing the factory - the MID is included for them
+    # at the invoice line level anyway (which is also not included in the party either).  If we REALLY need one,
     # we should be able to link to the PO at the invoice line level.
     {vendor: "party[partyRoleCode = 'Seller']", ship_to: "party[partyRoleCode = 'ShipmentDestination']", consignee: "party[partyRoleCode = 'Consignee']"}
   end
@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnInvoiceXmlParser
       id = party_xml.text "name"
     elsif party_type == :consignee
       id = reference_value(party_xml, "ConsigneeCode")
-      # There are a few PVH vendors that don't actually send the Consignee Code in the XML, so just fall back to the name 
+      # There are a few PVH vendors that don't actually send the Consignee Code in the XML, so just fall back to the name
       # in that case as the identifier
       if id.blank?
         id = party_xml.text "name"
@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnInvoiceXmlParser
     cartons = reference_value(base_item, "TotalNumberOfCartons")
     invoice_line.cartons = cartons.to_i unless cartons.blank?
     invoice_line.customs_quantity = BigDecimal(reference_value(base_item, "CustomsUnits").to_s)
-    
+
     invoice_line
   end
 

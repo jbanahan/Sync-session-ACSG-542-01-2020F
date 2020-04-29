@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
     div_cd = custom_defintions[:ord_line_division]
 
     o = Factory(:order, importer: importer)
-    
+
     l = o.order_lines.create! product: product
     l.update_custom_value! dest_cd, "DEST1"
     l.update_custom_value! div_cd, "DIV1"
@@ -33,8 +33,8 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
     o
   }
 
-  let(:importer) { 
-    i = with_customs_management_id(Factory(:importer), "PVHWSHT") 
+  let(:importer) {
+    i = with_customs_management_id(Factory(:importer), "PVHWSHT")
     i.addresses.create! name: "DEST1", line_1: "ADDR1", city: "CITY", state: "ST", postal_code: "12345", phone_number: "123-456-7890", fax_number: "098-765-4321"
     i
   }
@@ -89,7 +89,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
       end
       expect(del.freight_location).to eq "TERMINAL"
       expect(del.port_of_origin).to eq lading_port.name
-      
+
       expect(del.arrival_date).to eq Date.new(2016, 2, 16)
       expect(del.instruction_provided_by).to eq ["PVH CORP", "200 MADISON AVE", "NEW YORK, NY 10016-3903"]
       expect(del.body[0..2]).to eq ["PORT OF DISCHARGE: #{unlading_port.name}", "REFERENCE: CNREF", ""]
@@ -223,7 +223,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
 
       delivery_orders = subject.generate_delivery_order_data entry
       expect(delivery_orders.size).to eq 1
-      
+
       del = delivery_orders.first
       expect(del.body[4]).to eq "30 CTNS **HOT** 12345 20' SEAL# SEAL123 22 LBS"
       expect(del.body[5]).to eq "DIVISION XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX - 10 CTNS"
@@ -333,7 +333,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDeliveryOrderSpreadsheetGenerator do
       expect(delivery_orders.length).to eq 2
 
       expect(delivery_orders.first.tab_title).to eq "123456789012345678901234567890"
-      expect(delivery_orders.second.tab_title).to eq "12345678901234567890123456 (2)"      
+      expect(delivery_orders.second.tab_title).to eq "12345678901234567890123456 (2)"
     end
   end
 end

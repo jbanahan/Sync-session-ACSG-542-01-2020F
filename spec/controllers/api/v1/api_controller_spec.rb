@@ -56,7 +56,7 @@ describe Api::V1::ApiController do
     controller do
       def index
         obj = Company.first
-        action_secure(params[:permission_check], obj, {lock_check: params[:lock_check]}){ render json: {notice: "Block yielded!"} }
+        action_secure(params[:permission_check], obj, {lock_check: params[:lock_check]}) { render json: {notice: "Block yielded!"} }
       end
     end
 
@@ -109,11 +109,11 @@ describe Api::V1::ApiController do
         render json: {ok: 'ok'}
       end
     end
-    
+
     it "sets MasterSetup.current" do
       u = Factory(:user)
       allow_api_access u
-      
+
       get :index
       expect(response).to be_success
       expect(MasterSetup.current).to eq ms
@@ -121,7 +121,7 @@ describe Api::V1::ApiController do
   end
 
   describe "action_secure" do
-    
+
     it "checks permission and fails if permission check returns false" do
       expect(subject).to receive(:render_forbidden).with("You do not have permission to edit this object.")
       subject.action_secure(false, nil)

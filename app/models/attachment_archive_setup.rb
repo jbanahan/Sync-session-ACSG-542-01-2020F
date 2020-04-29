@@ -36,14 +36,14 @@ class AttachmentArchiveSetup < ActiveRecord::Base
   # This method returns all valid archive setups for a particular company.  This includes the setup associated with the company
   # or any parent company.
   def self.setups_for company
-    setups = AttachmentArchiveSetup.where("company_id IN (SELECT distinct c.id FROM companies c LEFT OUTER JOIN linked_companies l on c.id = l.parent_id 
+    setups = AttachmentArchiveSetup.where("company_id IN (SELECT distinct c.id FROM companies c LEFT OUTER JOIN linked_companies l on c.id = l.parent_id
 WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
 
     # Lets return the company's setup first (since the first setup is the one  callers to this will use most)
     # and we should prioritize the company's own setup over the parent in cases where each have one.
     company_setup = nil
-    setups.reject! do |s| 
-      if s.company_id == company.id 
+    setups.reject! do |s|
+      if s.company_id == company.id
         company_setup = s
         true
       else
@@ -55,16 +55,16 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
     setups
   end
 
-  #creates an archive with files for this importer that are on entries up to the max_size_in_bytes size
+  # creates an archive with files for this importer that are on entries up to the max_size_in_bytes size
   def create_entry_archive! name, max_size_in_bytes
     archive = nil
     AttachmentArchiveSetup.transaction do
-      archive = AttachmentArchive.create! :name=>name, :start_at=>Time.now, :company_id=>self.company_id 
+      archive = AttachmentArchive.create! :name=>name, :start_at=>Time.now, :company_id=>self.company_id
       running_size = 0
       available_entry_files(broker_reference_override: @broker_reference_override).each do |att|
         running_size += att.attached_file_size
         break if running_size > max_size_in_bytes
-        archive.attachment_archives_attachments.create!(:attachment_id=>att.id,:file_name=>att.unique_file_name)
+        archive.attachment_archives_attachments.create!(:attachment_id=>att.id, :file_name=>att.unique_file_name)
       end
     end
     archive
@@ -74,10 +74,10 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
     num = 1
     arch = company.attachment_archives.order("created_at DESC").first
     num = arch.name.split("-").last.to_i + 1 if arch
-    return "#{company.name.gsub(/\W/,'')}-#{num}"
+    return "#{company.name.gsub(/\W/, '')}-#{num}"
   end
 
-  # This method creates archive(s) for the given customer and the given reference numbers.  It does NOT 
+  # This method creates archive(s) for the given customer and the given reference numbers.  It does NOT
   # utilize any of the archive setup start / end dates (in fact, a setup doesn't even need to exist).
   # If any files have already been archived, they will be removed from the previous archive.
   def self.create_entry_archives_for_reference_numbers! max_archive_size_in_bytes, importer, reference_numbers
@@ -90,15 +90,15 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
     entry_counter = 0
 
     while !finished_archiving_docs
-      ActiveRecord::Base.transaction do 
+      ActiveRecord::Base.transaction do
         Lock.db_lock(importer) { current_archive = AttachmentArchive.create! start_at: Time.zone.now, company_id: importer.id, name: next_archive_name(importer)  }
-        Lock.db_lock(current_archive) do 
+        Lock.db_lock(current_archive) do
           current_archive_size = 0
 
           (entry_counter..(all_entries.length - 1)).each do |counter|
             archived = false
 
-            catch (:archive_too_big) do 
+            catch (:archive_too_big) do
               # add_entry_docs_to_archive throws 'archive_too_big' if the current archive doesn't have enough space left in it to add
               # all of this entries docs.  If that happens, we basically want to finish the archive, get back to the outer while loop
               # and start a new archive.
@@ -124,11 +124,11 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
         end
       end
     end
-      
+
     archives
   end
 
-  #are there any more entry attachments available to be put on archives
+  # are there any more entry attachments available to be put on archives
   def entry_attachments_available?
     entry_attachments_available_count > 0
   end
@@ -146,14 +146,14 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
     a = Attachment.select("distinct attachments.#{select_values}").
       joins("INNER JOIN entries on entries.id = attachments.attachable_id AND attachments.attachable_type = \"Entry\"").
       joins("LEFT OUTER JOIN attachment_archives_attachments on attachments.id = attachment_archives_attachments.attachment_id").
-      # Rather than relying on a join against the archive setup table for a flag, which would mean for any customer that switched off the packet we'd instantly then 
-      # have thousands of back images to fill in for archive, What we're doing here is preventing the use of any other documents in cases where the entry has 
+      # Rather than relying on a join against the archive setup table for a flag, which would mean for any customer that switched off the packet we'd instantly then
+      # have thousands of back images to fill in for archive, What we're doing here is preventing the use of any other documents in cases where the entry has
       # one of our prepared / stitched Archive Packets already present
       joins(self.class.sanitize_sql_array(["LEFT OUTER JOIN attachments arc_packet ON attachments.attachable_id = arc_packet.attachable_id and arc_packet.attachment_type = ?", Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE])).
       where("arc_packet.id IS NULL OR arc_packet.id = attachments.id OR (#{non_stitchable_attachments})").
       where("attachment_archives_attachments.attachment_id is null").
       where("attachments.is_private IS NULL OR attachments.is_private = 0").
-      where("entries.importer_id = ?",self.company_id).
+      where("entries.importer_id = ?", self.company_id).
       order("entries.arrival_date ASC")
 
     # If an override was given, then we should use that list as the sole decider of which files for the importer
@@ -226,7 +226,7 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
       archivable_attachments.each do |a|
         # We need to remove the attachment from any existing archives, then we'll add it to this one
         a.attachment_archives_attachments.destroy_all
-        
+
         archive.attachment_archives_attachments.create! attachment_id: a.id, file_name: a.unique_file_name
       end
     end
@@ -239,7 +239,7 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
     attachments = entry.attachments.where("is_private IS NULL OR is_private = 0").to_a
     archivable_attachments = []
 
-    # If the customer is using our service where we stitch pdfs/tifs together into a single pdf, then we should only 
+    # If the customer is using our service where we stitch pdfs/tifs together into a single pdf, then we should only
     # be pulling the archive packet, along with any other docs that can't be combined.  Like excel or word docs.
     if setup&.combine_attachments?
       archive_packet = attachments.find {|a| a.attachment_type == Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE}
@@ -248,7 +248,7 @@ WHERE c.id = ? OR l.child_id = ?)", company.id, company.id).to_a
         archivable_attachments << archive_packet
         attachments.each {|a| archivable_attachments << a if !a.stitchable_attachment?}
       else
-        # It's possible the archive packet couldn't be created due to a malformed pdf/tif etc causing the stitch process to be unable 
+        # It's possible the archive packet couldn't be created due to a malformed pdf/tif etc causing the stitch process to be unable
         # to build the file.  In that case, we want to include all the docs.
         archivable_attachments = attachments
       end

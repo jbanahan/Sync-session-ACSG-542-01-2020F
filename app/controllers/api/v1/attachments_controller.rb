@@ -116,7 +116,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
     def edit_object params, user
       obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
       if obj && obj.can_attach?(user)
-        Lock.db_lock(obj) do 
+        Lock.db_lock(obj) do
           yield obj
         end
       else

@@ -4,12 +4,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
     let (:snapshot) { EntitySnapshot.new }
 
     it "accepts shipment snapshot with booking received date and without canceled date" do
-      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,6,30), canceled_date:nil)
+      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018, 6, 30), canceled_date:nil)
       expect(described_class.accept? snapshot).to eq true
     end
 
     it "does not accept shipment snapshot with canceled date" do
-      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,6,30), canceled_date:Date.new(2018,1,31))
+      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018, 6, 30), canceled_date:Date.new(2018, 1, 31))
       expect(described_class.accept? snapshot).to eq false
     end
 
@@ -24,16 +24,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
     end
 
     it "ignores snapshots with booking received dates prior to June 1, 2018" do
-      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018,5,31), canceled_date:Date.new(2018,1,31))
+      snapshot.recordable = Shipment.new(booking_received_date:Date.new(2018, 5, 31), canceled_date:Date.new(2018, 1, 31))
       expect(described_class.accept? snapshot).to eq false
     end
   end
 
   describe "compare" do
     it "generates a booking request when booking received date is set and booking hasn't been sent" do
-      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,6,2))
+      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018, 6, 2))
       shipment.save!
-      
+
       xml = "<root_name><a>SomeValue</a><b>SomeOtherValue</b></root_name>"
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).to receive(:generate_xml).with(shipment).and_return(REXML::Document.new(xml))
       xml_output_file = nil
@@ -46,7 +46,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
       }
       now = Time.zone.now
       Timecop.freeze { subject.compare shipment.id }
-      
+
       shipment.reload
       expect(shipment.sync_records.length).to eq 1
       sr = shipment.sync_records.first
@@ -68,10 +68,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
     end
 
     it "does not generate a booking request when the request has already been sent" do
-      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,1,29))
+      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018, 1, 29))
       shipment.save!
       shipment.sync_records.create! trading_partner: 'Booking Request', sent_at: Time.zone.now
-      shipment.update_attributes!(booking_received_date:Date.new(2018,1,29))
+      shipment.update_attributes!(booking_received_date:Date.new(2018, 1, 29))
       snapshot_new = shipment.create_snapshot Factory(:user)
 
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGenerator).not_to receive(:generate_xml)
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestShipme
       ms = stub_master_setup
       expect(ms).to receive(:production?).and_return(true)
 
-      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018,6,29))
+      shipment = Shipment.new(reference: '555', booking_received_date:Date.new(2018, 6, 29))
       shipment.save!
 
       xml = "<root_name><a>SomeValue</a><b>SomeOtherValue</b></root_name>"

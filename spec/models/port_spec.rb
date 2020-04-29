@@ -4,7 +4,7 @@ describe Port do
       good = '12345'
       p = Port.new(:schedule_k_code=>good)
       expect(p.save).to eq(true)
-      ['1234','123a5',' 12345'].each do |bad|
+      ['1234', '123a5', ' 12345'].each do |bad|
         p = Port.new(:schedule_k_code=>bad)
         expect(p.save).to eq(false)
         expect(p.errors.full_messages.first).to include "Schedule K"
@@ -14,7 +14,7 @@ describe Port do
       good = '1234'
       p = Port.new(:schedule_d_code=>good)
       expect(p.save).to eq(true)
-      ['123','12345','123a',' 1234'].each do |bad|
+      ['123', '12345', '123a', ' 1234'].each do |bad|
         p = Port.new(:schedule_d_code=>bad)
         expect(p.save).to eq(false)
         expect(p.errors.full_messages.first).to include "Schedule D"
@@ -24,7 +24,7 @@ describe Port do
       good = '1234'
       p = Port.new(:cbsa_port=>good)
       expect(p.save).to eq(true)
-      ['123','12345','123a',' 1234'].each do |bad|
+      ['123', '12345', '123a', ' 1234'].each do |bad|
         p = Port.new(:cbsa_port=>bad)
         expect(p.save).to eq(false)
         expect(p.errors.full_messages.first.downcase).to include "cbsa port"
@@ -34,7 +34,7 @@ describe Port do
       good = '1234'
       p = Port.new(:cbsa_sublocation=>good)
       expect(p.save).to eq(true)
-      ['123','12345','123a',' 1234'].each do |bad|
+      ['123', '12345', '123a', ' 1234'].each do |bad|
         p = Port.new(:cbsa_sublocation=>bad)
         expect(p.save).to eq(false)
         expect(p.errors.full_messages.first.downcase).to include "cbsa sublocation"
@@ -46,7 +46,7 @@ describe Port do
         expect(p.save).to eq(true)
       end
 
-      ['ABC',' ABCDE','abcde'].each do |bad|
+      ['ABC', ' ABCDE', 'abcde'].each do |bad|
         p = Port.new(:unlocode=>bad)
         expect(p.save).to eq(false)
         expect(p.errors.full_messages.first).to include "UN/LOCODE"
@@ -58,7 +58,7 @@ describe Port do
       data = "0922\t9922\tPort Name, Is Here\n4444\t4441\tAnother Port"
       Port.load_cbsa_data data
       expect(Port.all.size).to eq(2)
-      [['0922','9922','Port Name, Is Here'],['4444','4441','Another Port']].each do |a|
+      [['0922', '9922', 'Port Name, Is Here'], ['4444', '4441', 'Another Port']].each do |a|
         p = Port.find_by cbsa_port: a[0]
         expect(p.cbsa_sublocation).to eq(a[1])
         expect(p.name).to eq(a[2])
@@ -68,7 +68,7 @@ describe Port do
       data = "\"01\",,\"PORTLAND, ME\"\n,\"0101\",\"PORTLAND, ME\"\n,\"0102\",\"BANGOR, ME\""
       Port.load_schedule_d data
       expect(Port.all.size).to eq(2)
-      {"0101"=>"PORTLAND, ME","0102"=>"BANGOR, ME"}.each do |code,name|
+      {"0101"=>"PORTLAND, ME", "0102"=>"BANGOR, ME"}.each do |code, name|
         expect(Port.find_by(schedule_d_code: code).name).to eq(name)
       end
     end
@@ -78,7 +78,7 @@ describe Port do
       expect(Port.all.size).to eq(2)
       new_data = "\"01\",,\"PORTLAND, ME\"\n,\"4601\",\"JERSEY\"\n,\"0102\",\"B\""
       Port.load_schedule_d new_data
-      expect(Port.all.size).to eq(2) #0101 should be gone, 4601 should be added, and 0102 should be updated
+      expect(Port.all.size).to eq(2) # 0101 should be gone, 4601 should be added, and 0102 should be updated
       expect(Port.find_by(schedule_d_code: "0101")).to be_nil
       expect(Port.find_by(schedule_d_code: "4601").name).to eq("JERSEY")
       expect(Port.find_by(schedule_d_code: "0102").name).to eq("B")
@@ -108,16 +108,16 @@ describe Port do
 
     context "UNLOC codes" do
       let (:rows) {
-        [["*", "CA", "", ".CANADA", "*","*","*","*","*","*","*"],
-         ["*", "CA", "MON", "Montréal", "Montreal", "*", "---4----", "*","*","YUL","*"],
-         ["*", "CA", "VAN", "Vancouver", "Vancouver", "*", "1-------", "*","*","*","*"],
-         ["*", "CA", "TOR", "Toronto", "Toronto", "*", "1-------", "*","*","*","*"],
-         ["*", "CA", "STJ", "St. John's", "St. John's", "*", "--3----", "*","*","*","*"],
-         ["*", "CA", "JON", "Jonquière", "Jonquiere", "*", "--3----", "*","*","XJQ","*"]]
+        [["*", "CA", "", ".CANADA", "*", "*", "*", "*", "*", "*", "*"],
+         ["*", "CA", "MON", "Montréal", "Montreal", "*", "---4----", "*", "*", "YUL", "*"],
+         ["*", "CA", "VAN", "Vancouver", "Vancouver", "*", "1-------", "*", "*", "*", "*"],
+         ["*", "CA", "TOR", "Toronto", "Toronto", "*", "1-------", "*", "*", "*", "*"],
+         ["*", "CA", "STJ", "St. John's", "St. John's", "*", "--3----", "*", "*", "*", "*"],
+         ["*", "CA", "JON", "Jonquière", "Jonquiere", "*", "--3----", "*", "*", "XJQ", "*"]]
       }
 
-      let (:data) do 
-        rows.map{ |r| r.map {|v| v.gsub("*", "")}.to_csv }.join("\n").encode("Windows-1252")
+      let (:data) do
+        rows.map { |r| r.map {|v| v.gsub("*", "")}.to_csv }.join("\n").encode("Windows-1252")
       end
 
       it "loads UNLOC codes, not updating those that already exist, and creating non-1/4 ports that have IATA codes" do
@@ -148,8 +148,8 @@ describe Port do
       end
 
       it "assigns name from column E if column D doesn't convert to UTF-8" do
-        bad_row = ["*", "CA", "WIN", "Winnip\x81g", "Winnipeg", "*", "---4----", "*","*","*","*"].map { |v| v.gsub("*", "").force_encoding("Windows-1252")}.to_csv
-        
+        bad_row = ["*", "CA", "WIN", "Winnip\x81g", "Winnipeg", "*", "---4----", "*", "*", "*", "*"].map { |v| v.gsub("*", "").force_encoding("Windows-1252")}.to_csv
+
         Port.load_unlocode bad_row
         expect(Port.count).to eq 1
         expect(Port.where(unlocode: "CAWIN").first.name).to eq "Winnipeg"
@@ -158,7 +158,7 @@ describe Port do
   end
 
   describe "entry_country" do
-    it "should match for schedule d or CBSA" do 
+    it "should match for schedule d or CBSA" do
       expect(Port.new(schedule_d_code:'0123').entry_country).to eq('United States')
       expect(Port.new(cbsa_port:'0123').entry_country).to eq('Canada')
       expect(Port.new(schedule_k_code:'0123').entry_country).to be_nil

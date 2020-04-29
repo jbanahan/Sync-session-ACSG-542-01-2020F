@@ -1,7 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 # Checks that every order line has an HTS with a corresponding OfficialTariff for the specified country
-# required JSON: {"iso_code": <string>} 
+# required JSON: {"iso_code": <string>}
 
 class ValidationRuleOrderLineHtsValid < BusinessValidationRule
   include ValidatesOrderLine

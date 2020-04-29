@@ -1,6 +1,6 @@
 module ConfigMigrations; module Common; class AddShipmentVendorPortalSearches
 
-  def up 
+  def up
     create_searches
   end
 
@@ -21,26 +21,26 @@ module ConfigMigrations; module Common; class AddShipmentVendorPortalSearches
     search_names.each do |name|
       case name
       when "Not Booked"
-        create_search "Not Booked", {hiddenCriteria: [{field:'shp_booking_received_date',operator:'null'}]}
+        create_search "Not Booked", {hiddenCriteria: [{field:'shp_booking_received_date', operator:'null'}]}
       when "Booked - Not Confirmed"
-        create_search("Booked - Not Confirmed", 
+        create_search("Booked - Not Confirmed",
           {hiddenCriteria: [
-            {field:'shp_booking_received_date',operator:'notnull'},
-            {field:'shp_booking_confirmed_date',operator:'null'}
+            {field:'shp_booking_received_date', operator:'notnull'},
+            {field:'shp_booking_confirmed_date', operator:'null'}
           ]}
         )
       when "Booked - Not Shipped"
-        create_search("Booked - Not Shipped", 
+        create_search("Booked - Not Shipped",
           {hiddenCriteria: [
-            {field:'shp_booking_received_date',operator:'notnull'},
-            {field:'shp_booking_confirmed_date',operator:'notnull'},
-            {field:'shp_departure_date',operator:'null'}
+            {field:'shp_booking_received_date', operator:'notnull'},
+            {field:'shp_booking_confirmed_date', operator:'notnull'},
+            {field:'shp_departure_date', operator:'null'}
           ]}
         )
       when "Shipped"
-        create_search("Shipped", 
+        create_search("Shipped",
           {hiddenCriteria: [
-            {field:'shp_departure_date',operator:'notnull'}
+            {field:'shp_departure_date', operator:'notnull'}
           ]}
         )
       when "All"
@@ -51,9 +51,9 @@ module ConfigMigrations; module Common; class AddShipmentVendorPortalSearches
     end
 
 
-    create_search("Shipped", 
+    create_search("Shipped",
       {hiddenCriteria: [
-        {field:'shp_departure_date',operator:'notnull'}
+        {field:'shp_departure_date', operator:'notnull'}
       ]}
     )
 

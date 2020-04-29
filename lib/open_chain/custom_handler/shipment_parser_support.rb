@@ -1,4 +1,4 @@
-module OpenChain; module CustomHandler; module ShipmentParserSupport 
+module OpenChain; module CustomHandler; module ShipmentParserSupport
 
   def flag_unaccepted order_nums
     OrdersChecker.flag_unaccepted order_nums
@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
   end
 
   module OrdersChecker
-    
+
     def self.flag_unaccepted order_nums
       return unless Array.wrap(order_nums).length > 0
 
@@ -64,12 +64,12 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
       # BE SURE TO UPDATE PROCESS_MANIFEST_CTRL.COFFEE IF YOU CHANGE THIS ERROR MESSAGE!!
       msg = []
       if assigned_to_multi_shp.count > 0
-        partly_flattened = assigned_to_multi_shp.map{ |ord,shps| "#{ord} (#{shps.join(', ')})" }
-        msg << "The following purchase orders are assigned to other shipments: #{partly_flattened.join(', ')}" 
+        partly_flattened = assigned_to_multi_shp.map { |ord, shps| "#{ord} (#{shps.join(', ')})" }
+        msg << "The following purchase orders are assigned to other shipments: #{partly_flattened.join(', ')}"
       end
-      
+
       if mode_mismatch.count > 0
-        msg << "The following purchase orders have a mode of transport that doesn't match the assigned shipment: #{mode_mismatch.join(', ')}" 
+        msg << "The following purchase orders have a mode of transport that doesn't match the assigned shipment: #{mode_mismatch.join(', ')}"
       end
       raise_error(msg.join(" *** ")) if msg.present?
     end
@@ -101,12 +101,11 @@ module OpenChain; module CustomHandler; module ShipmentParserSupport
     end
 
     def self.compile_multi_matches results
-      out = Hash.new{ |k,v| k[v] = [] }
-      results.each{ |r| out[r[0]] << r[1] }
+      out = Hash.new { |k, v| k[v] = [] }
+      results.each { |r| out[r[0]] << r[1] }
       out
     end
 
-    
     def self.raise_error message
       if InstanceInformation.webserver?
         raise UnreportedError, message

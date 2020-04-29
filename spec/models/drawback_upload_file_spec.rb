@@ -8,12 +8,12 @@ describe DrawbackUploadFile do
       @mock_attachment = double("Attachment")
       allow(@mock_attachment).to receive(:attached_file_name).and_return("x")
       allow_any_instance_of(DrawbackUploadFile).to receive(:attachment).and_return(@mock_attachment)
-      @importer = Factory(:company,:importer=>true)
+      @importer = Factory(:company, :importer=>true)
     end
     it "should set finish_at" do
       @importer.update! master: true
       d = DrawbackUploadFile.create!(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
-      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
+      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath', @importer).and_return('abc')
       d.process @user
       d.reload
       expect(d.finish_at).to be > 2.seconds.ago
@@ -21,7 +21,7 @@ describe DrawbackUploadFile do
     it "should write system message when processing is complete" do
       @importer.update! master: true
       d = DrawbackUploadFile.create!(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
-      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
+      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath', @importer).and_return('abc')
       d.process @user
       @user.reload
       expect(@user.messages.size).to eq(1)
@@ -38,9 +38,9 @@ describe DrawbackUploadFile do
       allow(s3_att).to receive(:path).and_return('xyz')
       allow(@mock_attachment).to receive(:attached).and_return(s3_att)
       expect(OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser).to receive(:parse_s3).with('xyz').and_raise("ERR")
-      expect{
+      expect {
         expect(d.process(@user)).to eq(nil)
-      }.to change(ErrorLogEntry,:count).by(1)
+      }.to change(ErrorLogEntry, :count).by(1)
       expect(d.finish_at).to be > 10.seconds.ago
       expect(d.error_message).to eq("ERR")
     end
@@ -53,7 +53,7 @@ describe DrawbackUploadFile do
       expect(d.process(@user)).to eq('abc')
     end
     it "should route OHL Entry files" do
-      expect(Entry).to receive(:where).with("arrival_date > ?",instance_of(ActiveSupport::TimeWithZone)).and_return('abc')
+      expect(Entry).to receive(:where).with("arrival_date > ?", instance_of(ActiveSupport::TimeWithZone)).and_return('abc')
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_OHL_ENTRY)
       expect(OpenChain::OhlDrawbackParser).to receive(:parse).with('tmppath')
       expect(OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor).to receive(:process_entries).with('abc').and_return('def')
@@ -62,8 +62,8 @@ describe DrawbackUploadFile do
     it "should route DDB Export file" do
       @importer.update! master: true
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_UA_DDB_EXPORTS)
-      imp = Factory(:company,:importer=>true)
-      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath',@importer).and_return('abc')
+      imp = Factory(:company, :importer=>true)
+      expect(OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser).to receive(:parse_csv_file).with('tmppath', @importer).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it "should route FMI Export file" do
@@ -73,7 +73,7 @@ describe DrawbackUploadFile do
     end
     it "should route J Crew Import V2 files" do
       d = DrawbackUploadFile.new(processor:DrawbackUploadFile::PROCESSOR_JCREW_IMPORT_V2)
-      expect(OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2).to receive(:parse_csv_file).with('tmppath',@user).and_return('abc')
+      expect(OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2).to receive(:parse_csv_file).with('tmppath', @user).and_return('abc')
       expect(d.process(@user)).to eq 'abc'
     end
     it "should route J Crew Canada Export file" do
@@ -91,13 +91,13 @@ describe DrawbackUploadFile do
     it "should route Lands End Export file" do
       imp = with_customs_management_id(Factory(:importer), "LANDS")
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_LANDS_END_EXPORTS)
-      expect(OpenChain::LandsEndExportParser).to receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
+      expect(OpenChain::LandsEndExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it "should route Crocs Export file" do
       imp = with_customs_management_id(Factory(:importer), "CROCS")
       d = DrawbackUploadFile.new(:processor=>DrawbackUploadFile::PROCESSOR_CROCS_EXPORTS)
-      expect(OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser).to receive(:parse_csv_file).with('tmppath',imp).and_return('abc')
+      expect(OpenChain::CustomHandler::Crocs::CrocsDrawbackExportParser).to receive(:parse_csv_file).with('tmppath', imp).and_return('abc')
       expect(d.process(@user)).to eq('abc')
     end
     it "should route Crocs Receiving file" do
@@ -106,8 +106,8 @@ describe DrawbackUploadFile do
       s3_att = double("S3 Attachment")
       allow(s3_att).to receive(:path).and_return('xyz')
       allow(@mock_attachment).to receive(:attached).and_return(s3_att)
-      expect(OpenChain::CustomHandler::Crocs::CrocsReceivingParser).to receive(:parse_s3).with('xyz').and_return([Date.new(2011,1,1),Date.new(2012,1,1)])
-      expect(OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor).to receive(:process_entries_by_arrival_date).with(Date.new(2011,1,1),Date.new(2012,1,1)).and_return 'abc'
+      expect(OpenChain::CustomHandler::Crocs::CrocsReceivingParser).to receive(:parse_s3).with('xyz').and_return([Date.new(2011, 1, 1), Date.new(2012, 1, 1)])
+      expect(OpenChain::CustomHandler::Crocs::CrocsDrawbackProcessor).to receive(:process_entries_by_arrival_date).with(Date.new(2011, 1, 1), Date.new(2012, 1, 1)).and_return 'abc'
       expect(d.process(@user)).to eq('abc')
     end
   end

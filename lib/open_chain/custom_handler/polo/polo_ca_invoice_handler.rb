@@ -266,7 +266,7 @@ module OpenChain; module CustomHandler; module Polo
 
       def valid_detail_line? values
         # Look for non-blank values in at least 5 of the 10 cells.
-        values.select{|v| !v.blank?}.length > 4
+        values.select {|v| !v.blank?}.length > 4
       end
 
       def decimal_value val

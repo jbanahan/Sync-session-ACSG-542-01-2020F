@@ -9,8 +9,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
   def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
     return unless type=='ProductVendorAssignment'
     risk_cdef = prep_custom_definitions([:prodven_risk])[:prodven_risk]
-    new_risk = get_risk_value(risk_cdef,get_json_hash(new_bucket,new_path,new_version))
-    old_risk = get_risk_value(risk_cdef,get_json_hash(old_bucket,old_path,old_version))
+    new_risk = get_risk_value(risk_cdef, get_json_hash(new_bucket, new_path, new_version))
+    old_risk = get_risk_value(risk_cdef, get_json_hash(old_bucket, old_path, old_version))
 
     if new_risk != old_risk && [new_risk, old_risk].any? {|m| m =~ /auto-flow/i}
       find_linked_orders(id).each do |ord|
@@ -35,6 +35,6 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPr
     # running async so it could have been deleted in the interim
     return [] if pva.nil?
 
-    Order.where(vendor_id: pva.vendor_id, closed_at: nil).where("id IN (SELECT order_id FROM order_lines WHERE order_lines.order_id = orders.id AND order_lines.product_id = ?)",pva.product_id)
+    Order.where(vendor_id: pva.vendor_id, closed_at: nil).where("id IN (SELECT order_id FROM order_lines WHERE order_lines.order_id = orders.id AND order_lines.product_id = ?)", pva.product_id)
   end
 end; end; end; end

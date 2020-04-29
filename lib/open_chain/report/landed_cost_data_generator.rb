@@ -1,5 +1,5 @@
 # This class generates data for a replication of an Alliance Landed Cost report.  The report
-# is based on data from the Entry and Broker Invoices associated with the entry.  The 
+# is based on data from the Entry and Broker Invoices associated with the entry.  The
 # output of the public methods is a single hash representing the landed cost data for the entries
 # being reported on.
 module OpenChain; module Report
@@ -15,7 +15,7 @@ module OpenChain; module Report
       generate_data find_entries entry
     end
 
-    private 
+    private
 
       def find_entries query
         if query.is_a? Entry
@@ -106,7 +106,7 @@ module OpenChain; module Report
             freight_amount_per_invoice = invoice_specific_freight_lines[inv.invoice_number] ? invoice_specific_freight_lines[inv.invoice_number] : BigDecimal.new("0")
             proration = safe_divide freight_amount_per_invoice, total_invoice_quantity
             freight_remainder = freight_amount_per_invoice
-            
+
             line_count = 0
             i[:commercial_invoice_lines] = []
             inv.commercial_invoice_lines.each do |line|
@@ -184,7 +184,7 @@ module OpenChain; module Report
             end
             ed[:number_of_invoice_lines] += line_count
           end
-         
+
           ed[:percentage][:entered_value] = safe_divide(ed[:totals][:entered_value], ed[:totals][:landed_cost]) * BigDecimal.new("100")
           ed[:percentage][:duty] = safe_divide(ed[:totals][:duty], ed[:totals][:landed_cost]) * BigDecimal.new("100")
           ed[:percentage][:fee] = safe_divide(ed[:totals][:fee], ed[:totals][:landed_cost]) * BigDecimal.new("100")
@@ -260,7 +260,7 @@ module OpenChain; module Report
           entered_value = l.commercial_invoice_tariffs.map {|t| t.entered_value.presence || BigDecimal(0)}.sum
 
           proration_percentage = safe_divide(entered_value, total_entered_value).round(5, BigDecimal::ROUND_HALF_UP)
-          
+
           amount = (amount_to_prorate * proration_percentage).round(2, BigDecimal::ROUND_HALF_UP)
 
           if proration_left - amount > 0
@@ -276,7 +276,7 @@ module OpenChain; module Report
         if proration_left > 0
           begin
             prorations.each_pair do |k, v|
-              # Don't add leftover proration amounts into buckets that have no existing value, it basically means that 
+              # Don't add leftover proration amounts into buckets that have no existing value, it basically means that
               # there was no entered value on them so they shouldn't have any of the leftover amount dropped back into them.
 
               # Since we're only adding the proration amounts to lines with entered value, make sure that there's at least one
@@ -291,7 +291,7 @@ module OpenChain; module Report
             end
           end while proration_left > 0
         end
-        
+
         prorations
       end
 
@@ -358,7 +358,6 @@ module OpenChain; module Report
           # Sum all the matching invoice values
           lines[inv] = (matches.length > 0) ? matches.reduce(:+) : BigDecimal.new("0")
         end
-        
 
         lines
       end
@@ -368,7 +367,7 @@ module OpenChain; module Report
           @freight_charges ||= DataCrossReference.hash_for_type DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
           @freight_charges["0600"] = ""
         end
-        
+
         @freight_charges.has_key? charge_code
       end
 

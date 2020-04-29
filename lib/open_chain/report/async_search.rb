@@ -24,7 +24,7 @@ module OpenChain; module Report; class AsyncSearch
 
   rescue => e
     e.log_me
-    run_by.messages.create!(:subject=>"Report FAILED: #{search_setup.try(:name)}",:body=>"<p>Your report failed to run due to a system error: #{ERB::Util.html_escape(e.message)}</p>")
+    run_by.messages.create!(:subject=>"Report FAILED: #{search_setup.try(:name)}", :body=>"<p>Your report failed to run due to a system error: #{ERB::Util.html_escape(e.message)}</p>")
   end
 
   def self.run run_by, search_setup, settings={}

@@ -15,14 +15,14 @@
 # Once you have the level of access, you should be able to run code scans.
 #
 # To do this you must install the scanning application and obtain the license file.
-# 
-# The application can be downloaded directly through the coverity site by clicking the Help menu and selecting the Downloads option.  Scroll to the 
+#
+# The application can be downloaded directly through the coverity site by clicking the Help menu and selecting the Downloads option.  Scroll to the
 # Tools section (lower left side of popup), change the "Select a package" select box to choose the install package for your operating system.
 #
 # Download the file, and run it, installing it somewhere on your machine (I just chose my Downloads dir).  Record the install directory, you'll need it
 # to set up the rake task.
 #
-# Directly below the coverity download is the license download...choose the license.dat file.  
+# Directly below the coverity download is the license download...choose the license.dat file.
 # Download it and place it somewhere safe (I just chose to save it in the coverity install directory)
 #
 # #######################################
@@ -37,18 +37,18 @@
 # `rake coverity:analyze` - This task runs the actual analysis step that does the security scanning.
 #
 #########################################
-# 
+#
 # `rake coverity:commit` - This task commits the analysis to the Coverity server.
 #
 # NOTE: The coverity server is NOT publicly addressable, therefeore in order for this command to complete, it must be run from a system that can connect
-# to the Maersk network.  
+# to the Maersk network.
 #
 # For cases where your code is on a system that is not Maersk network accessible and you have another system that IS accessible, you can install
 # coverity on that other system (download it from the same spot you downloaded the coverity install on your dev machine) and copy the contents
-# of the .coverity/build directory to that machine.  You can then adjust any paths from the commit task's command line to match the required paths on 
+# of the .coverity/build directory to that machine.  You can then adjust any paths from the commit task's command line to match the required paths on
 # the new instance.  With the --dir option pointing the the location you copied the .config/build directory to on the new machine.
 #
-# This is really annoying but the only way around the network limitation that I could find. 
+# This is really annoying but the only way around the network limitation that I could find.
 ##############################################
 require_relative 'rake_support'
 
@@ -90,7 +90,7 @@ class CoverityTasks
     coverity_config["server"] = get_user_response("Enter Coverity server url", default_value: coverity_url)
     coverity_config["username"] = get_user_response("Enter your Coverity server username", input_test: non_blank_test("Username"))
     coverity_config["authentication_key"] = get_user_response("Enter path to authentication key (Optional: If not provided, password will be required when sending scans to coverity)", input_test: file_exists_test(allow_blank: true))
-    
+
     write_coverity_config_file(coverity_config)
     coverity_config = coverity_config_file
 
@@ -108,14 +108,14 @@ class CoverityTasks
 
   def analyze
     config = coverity_setup
-    
+
     sh(coverity_command(config, "cov-build"), "--dir", coverity_build_path, "--config", coverity_config_path, "--fs-capture-search", ".", "--no-command")
 
     # We need to strip all the environment stuff that bundler adds (thus the usage of 'with_original_env' and then make sure to add back in the Gemfile location)
     # Coverity appears to utilize a stripped down ruby and it doesn't properly handle scanning for a Gemfile (wtf?)
     # Thus, we can feed the Gemfile location via an env var to the subprocess
     bundle_gemfile = ENV["BUNDLE_GEMFILE"]
-    Bundler.with_original_env do 
+    Bundler.with_original_env do
       sh({"BUNDLE_GEMFILE" => bundle_gemfile}, coverity_command(config, "cov-analyze"), "--dir",  coverity_build_path, "--all", "--webapp-security", "--security-file", coverity_license_path(config))
     end
   end
@@ -227,7 +227,7 @@ class CoverityTasks
   end
 
   def file_exists_test allow_blank: false
-    lambda do |file_path| 
+    lambda do |file_path|
       if allow_blank && file_path.blank?
         nil
       else

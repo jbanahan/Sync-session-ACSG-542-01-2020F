@@ -1,9 +1,9 @@
 describe OpenChain::FtpSiteMonitor do
 
   let (:valid_opts) {
-    {protocol: "sftp", hostname: "ftpserver", username: "user", password: "password", directory: "dir", 
+    {protocol: "sftp", hostname: "ftpserver", username: "user", password: "password", directory: "dir",
       email_to: ["me@there.com"], max_age_minutes: 60}
-     
+
   }
 
   describe "run_schedulable" do
@@ -25,7 +25,7 @@ describe OpenChain::FtpSiteMonitor do
       end
     end
 
-    it "looks up mailing list and sets into email_to" do 
+    it "looks up mailing list and sets into email_to" do
       list = MailingList.create! company_id: Factory(:company).id, user_id: Factory(:user).id, system_code: "list", name: "list", email_addresses: "me@there.com"
       valid_opts[:mailing_list] = "list"
       expect_any_instance_of(subject).to receive(:run).with anything, anything, instance_of(MailingList), nil, nil

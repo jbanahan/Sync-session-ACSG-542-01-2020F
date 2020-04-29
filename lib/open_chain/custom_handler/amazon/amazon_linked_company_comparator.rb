@@ -1,7 +1,7 @@
 require 'open_chain/entity_compare/entry_comparator'
 
 module OpenChain; module CustomHandler; module Amazon; class AmazonLinkedCompanyComparator
-  extend OpenChain::EntityCompare::EntryComparator  
+  extend OpenChain::EntityCompare::EntryComparator
 
   def self.amazon
     amz = Company.where(system_code: "AMZN").first
@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonLinkedCompany
 
   # accept only if entry's customer belongs to Amazon but is not yet linked
   def self.accept? snapshot
-    if super 
+    if super
       cust_num = snapshot.recordable.customer_number.to_s.upcase
       if cust_num.match?(/^AMZN/)
         return !amazon.linked_companies.map(&:system_code).include?(cust_num)

@@ -179,7 +179,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
       expect(invoices.first).to eq synced_invoice
       expect(invoices.second).to eq invoice_2
     end
-    
+
     it "ignores invoices that were not sent on an entry's costing report" do
       # Just creating the second invoice withtout the sync record means it should not appear on the report
       invoice_2
@@ -192,11 +192,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberInvoiceReport do
 
   describe "run_schedulable" do
     it "runs report for current time" do
-      # Make sure run_scheduled is using the current time by making the entry's sync record by making the sync record be at the extreme 
+      # Make sure run_scheduled is using the current time by making the entry's sync record by making the sync record be at the extreme
       # edge of the run window
       synced_invoice
 
-      # Run schedulable uses a date range of the previous workweek (Monday - Sunday), so set the entry up so that based 
+      # Run schedulable uses a date range of the previous workweek (Monday - Sunday), so set the entry up so that based
       # soley on the time of the sync it apperas to be off the report, but adjusting for the timezone change it will be on the report.
       synced_invoice.sync_records.first.update_attributes! sent_at: ActiveSupport::TimeZone["UTC"].parse("2016-04-11 03:59")
 

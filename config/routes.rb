@@ -36,14 +36,14 @@ OpenChain::Application.routes.draw do
       resources :messages, only: [:index, :create] do
         post :mark_as_read, on: :member
       end
-      resources :comments, only: [:create,:destroy]
+      resources :comments, only: [:create, :destroy]
       get "/:base_object_type/:base_object_id/comments", to: "comments#polymorphic_index"
       post "/:base_object_type/:base_object_id/comments", to: "comments#polymorphic_create"
       get "/:base_object_type/:base_object_id/comment/:id", to: "comments#polymorphic_show"
       delete "/:base_object_type/:base_object_id/comment/:id", to: "comments#polymorphic_destroy"
 
-      resources :commercial_invoices, only: [:index,:create,:update]
-      resources :shipments, only: [:index,:show,:create,:update] do
+      resources :commercial_invoices, only: [:index, :create, :update]
+      resources :shipments, only: [:index, :show, :create, :update] do
         member do
           post :process_tradecard_pack_manifest
           post :process_booking_worksheet
@@ -90,7 +90,7 @@ OpenChain::Application.routes.draw do
         post :validate, on: :member
       end
 
-      resources :orders, only: [:index,:show,:update] do
+      resources :orders, only: [:index, :show, :update] do
         member do
           get :state_toggle_buttons
           post :toggle_state_button
@@ -109,7 +109,7 @@ OpenChain::Application.routes.draw do
       end
 
       resources :users, only: [] do
-        resources :event_subscriptions, only: [:index,:create]
+        resources :event_subscriptions, only: [:index, :create]
         collection do
           post :login
           post :google_oauth2
@@ -146,8 +146,8 @@ OpenChain::Application.routes.draw do
         post :toggle_state_button, on: :member
       end
 
-      resources :product_vendor_assignments, only: [:index,:show,:update,:create] do
-        collection do 
+      resources :product_vendor_assignments, only: [:index, :show, :update, :create] do
+        collection do
           match :bulk_update, via: [:put, :patch]
           post :bulk_create
         end
@@ -166,7 +166,7 @@ OpenChain::Application.routes.draw do
         end
       end
 
-      resources :vendors, only: [:index,:show,:update,:create] do
+      resources :vendors, only: [:index, :show, :update, :create] do
         post :validate, on: :member
         get :state_toggle_buttons, on: :member
         post :toggle_state_button, on: :member
@@ -226,8 +226,8 @@ OpenChain::Application.routes.draw do
 
         resources :business_validation_schedules, except: [:show]
       end
-      
-      resources :one_time_alerts, only: [:edit, :update, :destroy] do 
+
+      resources :one_time_alerts, only: [:edit, :update, :destroy] do
         collection do
           post 'update_reference_fields'
         end
@@ -239,8 +239,8 @@ OpenChain::Application.routes.draw do
         end
       end
 
-      resources :addresses, only: [:index, :create, :update, :destroy] do 
-        collection do 
+      resources :addresses, only: [:index, :create, :update, :destroy] do
+        collection do
           get :autocomplete
         end
       end
@@ -313,7 +313,7 @@ OpenChain::Application.routes.draw do
   get "/entries/bi/three_month", to: "entries#bi_three_month"
   get "/entries/bi/three_month_hts", to: "entries#bi_three_month_hts"
 
-  resources :entries, :only => [:index,:show] do
+  resources :entries, :only => [:index, :show] do
     member do
       get 'validation_results'
       get 'sync_records'
@@ -331,27 +331,27 @@ OpenChain::Application.routes.draw do
     end
 
     resources :broker_invoices, only: [] do
-      member do 
+      member do
         get 'sync_records'
       end
     end
   end
 
   resources :business_validation_templates do
-    member do 
+    member do
       get 'download'
       post 'copy'
     end
-    collection do 
+    collection do
       post 'upload'
     end
     resources :t_search_criterions, only: [:create, :destroy]
     resources :business_validation_rules, only: [:create, :destroy, :edit, :update] do
-      member do 
+      member do
         post 'copy'
         get 'download'
       end
-      collection do 
+      collection do
         post 'upload'
       end
       resources :r_search_criterions, only: [:create, :destroy]
@@ -367,8 +367,8 @@ OpenChain::Application.routes.draw do
   end
 
   resources :commercial_invoices, :only => [:show]
-  resources :broker_invoices, :only => [:index,:show] do
-    member do 
+  resources :broker_invoices, :only => [:index, :show] do
+    member do
       get 'sync_records'
     end
 
@@ -393,7 +393,7 @@ OpenChain::Application.routes.draw do
     end
   end
   resources :entity_snapshots, :only => [:show] do
-    member do 
+    member do
       post 'restore'
       get 'download'
       get 'download_integration_file'
@@ -404,7 +404,7 @@ OpenChain::Application.routes.draw do
       post 'update_rank'
     end
   end
-  resources :instant_classification_results, :only => [:show,:index]
+  resources :instant_classification_results, :only => [:show, :index]
   resources :milestone_plans, except: [:show, :destroy] do
     resources :milestone_definitions, :only => [:index]
   end
@@ -433,7 +433,7 @@ OpenChain::Application.routes.draw do
   end
   resources :master_setups, only: [:index, :edit, :update] do
     collection do
-      get 'perf' #MasterSetup.get performance test
+      get 'perf' # MasterSetup.get performance test
       get 'show_system_message'
       post 'set_system_message'
       post 'upgrade'
@@ -449,7 +449,7 @@ OpenChain::Application.routes.draw do
 
   get "/official_tariffs/auto_classify/:hts", to: "official_tariffs#auto_classify"
 
-  resources :official_tariffs, :only=>[:index,:show] do
+  resources :official_tariffs, :only=>[:index, :show] do
     collection do
     get 'find'
     get 'find_schedule_b'
@@ -457,7 +457,7 @@ OpenChain::Application.routes.draw do
     get 'auto_complete'
     end
   end
-  resources :official_tariff_meta_data, :only=>[:create,:update]
+  resources :official_tariff_meta_data, :only=>[:create, :update]
 
   resources :status_rules
 
@@ -485,7 +485,7 @@ OpenChain::Application.routes.draw do
   end
 
   resources :public_fields, only: [:index] do
-    collection do 
+    collection do
       post :save
     end
   end
@@ -497,7 +497,7 @@ OpenChain::Application.routes.draw do
     post :download
   end
 
-  resources :advanced_search, :only => [:show,:index,:update,:create,:destroy] do
+  resources :advanced_search, :only => [:show, :index, :update, :create, :destroy] do
     get 'last_search_id', :on=>:collection
     member do
       get 'setup'
@@ -520,7 +520,7 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  #custom features
+  # custom features
   match "/custom_features" => "custom_features#index", :via => :get
   match "/custom_features/ua_winshuttle_b" => "custom_features#ua_winshuttle_b_index", :via=>:get
   match "/custom_features/ua_winshuttle_b" => "custom_features#ua_winshuttle_b_send", :via=>:post
@@ -671,7 +671,7 @@ OpenChain::Application.routes.draw do
   post "/custom_features/le_product/upload", to: "custom_features#le_product_upload"
   get "/custom_features/le_product/:id/download", to: "custom_features#le_product_download"
 
-  #H&M specific
+  # H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get
 
@@ -683,7 +683,7 @@ OpenChain::Application.routes.draw do
   post "/custom_features/hm_receipt_file/upload" => "custom_features#hm_receipt_file_upload"
   get "/custom_features/hm_receipt_file/:id/download" => "custom_features#hm_receipt_file_download"
 
-  #reports
+  # reports
   match "/reports" => "reports#index", :via => :get
   match "/reports/show_tariff_comparison" =>"reports#show_tariff_comparison", :via => :get
   match "/reports/run_tariff_comparison" => "reports#run_tariff_comparison", :via => :post
@@ -803,10 +803,10 @@ OpenChain::Application.routes.draw do
   get "/reports/show_pvh_duty_discount_report" => "reports#show_pvh_duty_discount_report"
   post "/reports/run_pvh_duty_discount_report" => "reports#run_pvh_duty_discount_report"
 
-  resources :report_results, :only => [:index,:show] do
+  resources :report_results, :only => [:index, :show] do
     get 'download', on: :member
   end
-  resources :custom_reports, :except=>[:index,:edit] do
+  resources :custom_reports, :except=>[:index, :edit] do
     member do
       get 'preview'
       get 'run'
@@ -834,7 +834,7 @@ OpenChain::Application.routes.draw do
   get "/login", to: "user_sessions#new", as: :login
   match "/logout", to: "user_sessions#destroy", as: :logout, via: [:get, :post, :delete]
 
-  resources :user_sessions, :only => [:index,:new,:create,:destroy]
+  resources :user_sessions, :only => [:index, :new, :create, :destroy]
 
   resources :item_change_subscriptions, except: [:new, :edit, :show]
 
@@ -914,7 +914,7 @@ OpenChain::Application.routes.draw do
   end
 
   resources :countries, except: [:create, :new, :destroy]
-  resources :regions, :only => [:index,:create,:destroy,:update] do
+  resources :regions, :only => [:index, :create, :destroy, :update] do
     member do
       get 'add_country'
       get 'remove_country'
@@ -931,7 +931,7 @@ OpenChain::Application.routes.draw do
       get 'history'
       post 'unlock', action: "unlock_user"
     end
-    collection do 
+    collection do
       get 'find_by_email'
       get 'me'
       post "email_new_message"
@@ -950,7 +950,7 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  resources :vendors, :only => [:show,:index,:new,:create] do
+  resources :vendors, :only => [:show, :index, :new, :create] do
     member do
       get 'addresses'
       get 'orders'
@@ -962,12 +962,12 @@ OpenChain::Application.routes.draw do
     collection do
       get 'matching_vendors'
     end
-    resources :vendor_plants, only: [:show,:edit,:update,:create] do
+    resources :vendor_plants, only: [:show, :edit, :update, :create] do
       member do
         get 'unassigned_product_groups'
         post 'assign_product_group'
       end
-      resources :plant_product_group_assignments, only: [:show,:update]
+      resources :plant_product_group_assignments, only: [:show, :update]
     end
   end
   resources :companies, except: [:destroy] do
@@ -996,7 +996,7 @@ OpenChain::Application.routes.draw do
     resources :attachment_archives, :only=>[:create, :show] do
       post 'complete', :on=>:member
     end
-    resources :attachment_archive_setups, :except=>[:destroy,:index]
+    resources :attachment_archive_setups, :except=>[:destroy, :index]
 
 		resources :users, except: [:destroy] do
       member do
@@ -1049,7 +1049,7 @@ OpenChain::Application.routes.draw do
       match 'update_search_criterions', via: [:put, :patch]
     end
     get 'show_angular', :on=>:collection
-    resources :imported_file_downloads, :only=>[:index,:show]
+    resources :imported_file_downloads, :only=>[:index, :show]
   end
   match "/imported_files_results/:id" => "imported_files#results", :via=>:get
   match "/imported_files_results/:id/total_objects" => "imported_files#total_objects", :via => :get
@@ -1089,8 +1089,8 @@ OpenChain::Application.routes.draw do
       put 'restore'
       post 'remind'
     end
-    resources :corrective_action_plans, :only=>[:show,:create,:destroy,:update] do
-      member do 
+    resources :corrective_action_plans, :only=>[:show, :create, :destroy, :update] do
+      member do
         post 'add_comment'
         patch 'activate'
         put 'activate'
@@ -1103,14 +1103,14 @@ OpenChain::Application.routes.draw do
   resources :answers, only:[:update] do
     resources :answer_comments, only:[:create]
   end
-  resources :corrective_issues, :only=>[:create,:update,:destroy] do
-    member do 
+  resources :corrective_issues, :only=>[:create, :update, :destroy] do
+    member do
       post 'update_resolution', action: :update_resolution_status
     end
   end
 
-  resources :drawback_upload_files, :only=>[:index,:create] do
-    collection do 
+  resources :drawback_upload_files, :only=>[:index, :create] do
+    collection do
       patch 'process_j_crew_entries'
       put 'process_j_crew_entries'
     end
@@ -1149,9 +1149,9 @@ OpenChain::Application.routes.draw do
   match '/projects/:id/add_project_set/:project_set_name' => 'projects#add_project_set', via: :post
   match '/projects/:id/remove_project_set/:project_set_name' => 'projects#remove_project_set', via: :delete
   resources :projects, except: [:destroy, :new, :edit] do
-    resources :project_updates, only: [:update,:create]
-    resources :project_deliverables, only: [:update,:create]
-    member do 
+    resources :project_updates, only: [:update, :create]
+    resources :project_deliverables, only: [:update, :create]
+    member do
       patch 'toggle_close'
       put 'toggle_close'
       patch 'toggle_on_hold'
@@ -1160,7 +1160,7 @@ OpenChain::Application.routes.draw do
   end
   resources :project_deliverables, only: [:index]
   resources :schedulable_jobs, except: [:show] do
-    member do 
+    member do
       post 'run'
       post 'reset_run_flag'
     end
@@ -1184,7 +1184,7 @@ OpenChain::Application.routes.draw do
     post 'upload', on: :collection
   end
 
-  resources :search_templates, only: [:index,:destroy]
+  resources :search_templates, only: [:index, :destroy]
 
   resources :milestone_notification_configs, only: [:index]
 
@@ -1200,7 +1200,7 @@ OpenChain::Application.routes.draw do
     get :download, on: :member
     get :for_referer, on: :collection
   end
-  
+
   resources :business_validation_schedules, only: [:index]
 
   resources :custom_view_templates, except: [:show, :update]
@@ -1214,8 +1214,8 @@ OpenChain::Application.routes.draw do
   resources :product_vendor_assignments, only: [:index]
 
 
-  resources :daily_statements, only: [:index, :show] do 
-    member do 
+  resources :daily_statements, only: [:index, :show] do
+    member do
       post 'reload'
       get 'show_attachments'
       post 'message_attachments'
@@ -1223,8 +1223,8 @@ OpenChain::Application.routes.draw do
     end
   end
 
-  resources :monthly_statements, only: [:index, :show] do 
-    member do 
+  resources :monthly_statements, only: [:index, :show] do
+    member do
       post 'reload'
     end
   end
@@ -1257,7 +1257,7 @@ OpenChain::Application.routes.draw do
   get "/settings/system_summary", to: "settings#system_summary"
   post "/feedback", to: "feedback#send_feedback"
   get "/model_fields/find_by_module_type", to: "model_fields#find_by_module_type"
-  
+
   match "/quick_search", to: "quick_search#show", via: [:post, :get]
   match '/quick_search/by_module/:module_type', to: 'quick_search#by_module', via: [:post, :get]
 
@@ -1267,7 +1267,7 @@ OpenChain::Application.routes.draw do
 
   get "/:recordable_type/:recordable_id/business_rule_snapshots", to: "business_rule_snapshots#index"
 
-  #Jasmine test runner
+  # Jasmine test runner
   mount JasmineRails::Engine => '/specs' if defined?(JasmineRails) && !Rails.env.production?
 
   get "/dump_request", to: "application#dump_request"

@@ -11,7 +11,7 @@ class StatusRulesController < ApplicationController
   end
   def index
     action_secure(current_user.edit_status_rules?, nil, {:verb => "work with", :lock_check => false, :module_name=>"status rule"}) {
-      s = build_search(SEARCH_PARAMS,'m_type','m_type')
+      s = build_search(SEARCH_PARAMS, 'm_type', 'm_type')
       respond_to do |format|
         format.html {
                 @status_rules = s.paginate(:per_page => 20, :page => params[:page])
@@ -94,7 +94,7 @@ class StatusRulesController < ApplicationController
       format.xml  { head :ok }
     end
   end
-  
+
   private
   def secure
     if current_user.company.master?

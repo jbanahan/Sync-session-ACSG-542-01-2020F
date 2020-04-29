@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
-  subject { 
-    Class.new do 
+  subject {
+    Class.new do
       include OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport
 
       def duty_invoice_number p1, p2
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
 
 
   describe 'generate_and_send' do
-    before :each do 
+    before :each do
       broker_invoice_1
       broker_invoice_2
     end
@@ -71,77 +71,77 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
     it "doesn't send anything if there are no broker_invoices" do
       entry.broker_invoices.destroy_all
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything there are no master bills" do
       entry.update! master_bills_of_lading: nil
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything if there are no containers on Ocean entries" do
       entry.update! container_numbers: nil
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "does send if there are no containers on non-Ocean entries" do
       entry.update! container_numbers: nil, transport_mode_code: "40"
       expect(subject).to receive(:generate_and_send_invoice_files).exactly(2).times
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything if there is no One USG date for US entries" do
       entry.update! one_usg_date: nil
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "sends for Canada if One USG is not present" do
       entry.update! one_usg_date: nil, import_country: Factory(:country, iso_code: "CA")
       expect(subject).to receive(:generate_and_send_invoice_files).exactly(2).times
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything if invoice lines are missing PO numbers" do
       entry.commercial_invoice_lines.update_all po_number: nil
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything if invoice lines are missing part numbers" do
       entry.commercial_invoice_lines.update_all part_number: nil
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything if invoice lines are missing unit price" do
       entry.commercial_invoice_lines.update_all unit_price: nil
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything if invoice lines are missing units" do
       entry.commercial_invoice_lines.update_all quantity: nil
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
     it "doesn't send anything if there are no invoice lines" do
       entry.commercial_invoices.destroy_all
       expect(subject).not_to receive(:generate_and_send_invoice_files)
-      
+
       subject.generate_and_send(entry_snapshot)
     end
 
@@ -170,7 +170,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
   end
 
   describe "generate_and_send_invoice_files" do
-    before :each do 
+    before :each do
       broker_invoice_1
     end
 
@@ -236,7 +236,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
     }
 
     let (:original_sync_record) {
-      ftp_session = FtpSession.create! 
+      ftp_session = FtpSession.create!
       attachment = ftp_session.create_attachment!
 
       broker_invoice_1.sync_records.create! trading_partner: "PVH BILLING DUTY", sent_at: Time.zone.now, ftp_session_id: ftp_session.id
@@ -277,7 +277,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       expect(lines[0]).not_to be_nil
       expect(lines[0]).to have_xpath_value("ChargeField/Purpose", "Decrement")
       expect(lines[0]).to have_xpath_value("ChargeField/Value", "100.0")
-      
+
       # The xml file has a mix of increment and decrement in it to test both paths.
       expect(lines[1]).not_to be_nil
       expect(lines[1]).to have_xpath_value("ChargeField/Purpose", "Increment")
@@ -306,7 +306,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
       expect(lines[0]).not_to be_nil
       expect(lines[0]).to have_xpath_value("ChargeField/Purpose", "Decrement")
       expect(lines[0]).to have_xpath_value("ChargeField/Value", "100.0")
-      
+
       # because the original file was missing the Purpose tags (after we stripped them from the data above),
       # both ChargeField purposes should be Decrement values
       expect(lines[1]).not_to be_nil
@@ -316,7 +316,7 @@ describe OpenChain::CustomHandler::Pvh::PvhBillingFileGeneratorSupport do
 
     it "doesn't send if original invoice already reversed" do
       invoice_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").last
-      
+
       broker_invoice_1.sync_records.create! trading_partner: "PVH BILLING DUTY REVERSAL", sent_at: Time.zone.now
       expect(subject.generate_and_send_reversal entry_snapshot, invoice_snapshot, new_invoice, "DUTY").to eq false
     end

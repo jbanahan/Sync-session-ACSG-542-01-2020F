@@ -1,7 +1,7 @@
 #
 # This class exists primarily to be used as a flag object, latch
 # that can be passed around to methods.
-# 
+#
 class MutableBoolean
 
   def initialize(boolean)

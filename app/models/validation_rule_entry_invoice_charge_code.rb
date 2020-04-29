@@ -1,8 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 class ValidationRuleEntryInvoiceChargeCode < BusinessValidationRule
-  
-  # options: 
+  # options:
   # {'charge_codes': [...]} white-listed
   # {'blacklist_charge_codes': [...]} blacklisted (overridden by 'charge_codes')
   # {'filter': 'suffix' | 'no_suffix'} applies check only to invoices with/without a suffix. All are included by default
@@ -18,13 +17,13 @@ class ValidationRuleEntryInvoiceChargeCode < BusinessValidationRule
     code_count = query(entry.id, rule_attributes['filter'])
     invalid_codes = check_list(code_count, list, list_type)
     if invalid_codes.presence
-      "The following invalid charge codes were found: #{invalid_codes.join(', ')}" 
+      "The following invalid charge codes were found: #{invalid_codes.join(', ')}"
     end
   end
 
   def check_list code_count, list, list_type
     invalid_codes = []
-    code_count.each do |tally| 
+    code_count.each do |tally|
       unless tally['amount'].zero?
         if list_type == :white
           invalid_codes << tally['charge_code'] if !list.include? tally['charge_code']
@@ -48,14 +47,14 @@ class ValidationRuleEntryInvoiceChargeCode < BusinessValidationRule
   end
 
   private
-  
+
   def sql entry_id, clause
     sql = <<-SQL
       SELECT bil.charge_code, SUM(bil.charge_amount) amount
-      FROM entries e 
+      FROM entries e
         INNER JOIN broker_invoices bi ON e.id = bi.entry_id
         INNER JOIN broker_invoice_lines bil ON bi.id = bil.broker_invoice_id
-      WHERE e.id = ? 
+      WHERE e.id = ?
       #{clause}
       GROUP BY bil.charge_code
       ORDER BY bil.charge_code

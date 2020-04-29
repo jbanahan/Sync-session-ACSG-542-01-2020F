@@ -5,11 +5,11 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
     cid = country.id
     srk = official_tariff.special_rate_key
     # do nothing if the rates are already built for this key
-    return unless SpiRate.where(special_rate_key:srk,country_id:cid).empty?
+    return unless SpiRate.where(special_rate_key:srk, country_id:cid).empty?
 
     rates = nil
     begin
-      rates = parse_spi(parse_data_for(country),official_tariff.special_rates)
+      rates = parse_spi(parse_data_for(country), official_tariff.special_rates)
     rescue Exception => e
       if log
         log.add_warning_message e
@@ -20,15 +20,15 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
     return if rates.nil?
     rates.each do |rate_data|
       SpiRate.create!(special_rate_key:srk,
-        country_id:cid,program_code:rate_data[:program_code],
-        rate:rate_data[:amount],rate_text:rate_data[:text])
+        country_id:cid, program_code:rate_data[:program_code],
+        rate:rate_data[:amount], rate_text:rate_data[:text])
     end
   end
 
   def self.parse_spi parse_data, spi_raw
     spi = spi_raw
     if parse_data[:replaces]
-      parse_data[:replaces].each {|k,v| spi = spi.gsub(k,v)}
+      parse_data[:replaces].each {|k, v| spi = spi.gsub(k, v)}
     end
     results = spi.scan parse_data[:parser]
 
@@ -66,11 +66,10 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
             else
               program_code = program_code.gsub(spi_cleanup[0], &spi_cleanup[1])
             end
-            
           end
         end
 
-        programs << {program_code:program_code,amount:rate_decimal,text:rate_text}
+        programs << {program_code:program_code, amount:rate_decimal, text:rate_text}
       end
     end
 
@@ -79,7 +78,7 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
 
   def self.parse_rate r
     # These are all assumed to be percentage values...
-    cleaned = r.gsub(/[%:,]/,'').upcase.strip
+    cleaned = r.gsub(/[%:,]/, '').upcase.strip
     return 0 if cleaned=='FREE'
     return nil if !cleaned.match(/^[0-9]{0,3}\.{0,1}[0-9]{0,3}$/)
     return BigDecimal(cleaned)*0.01
@@ -89,7 +88,7 @@ module OpenChain; module OfficialTariffProcessor; class GenericProcessor
     iso_code = country.european_union? ? 'EU' : country.iso_code
     case iso_code.upcase
       when "US"
-        return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/,/^Free, under the terms/,/^$/], skip_spi: [], replaces:{'No change (A) Free'=>'Free','See U.S. note 3(e)'=>'See U.S. note 3e',/(\w+\s+)+(Pen|PEN)(ALTY)?:\s*\+\d+\s*(\(EX\)\s*)?/=>''}}
+        return {parser: /([^(]+)\s*\(([^)]+)\)/, spi_split: /,\s*/, spi_cleanup: [[/^(.) (.)$/, '\1\2']], exceptions: [/^\s*Free\s*$/, /^The duty rate provided for /, /^A duty upon the full value of the import/, /^No change/, /^cified in such announ/, /^Free, under the terms/, /^$/], skip_spi: [], replaces:{'No change (A) Free'=>'Free', 'See U.S. note 3(e)'=>'See U.S. note 3e', /(\w+\s+)+(Pen|PEN)(ALTY)?:\s*\+\d+\s*(\(EX\)\s*)?/=>''}}
       when "CA"
         # Remove all spaces from the spi program codes, CA doesn't have any programs that should have spaces.
         return {parser: /([^:(]+):\s*\(([^)]+)\),*\s*/, spi_split: /,\s*/, exceptions: [], spi_cleanup: [[/\s/, ""], [/.*/, :upcase]], skip_spi: [/^\s*General\s*$/i]}

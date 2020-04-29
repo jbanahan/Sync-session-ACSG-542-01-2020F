@@ -9,9 +9,9 @@ describe OpenChain::JCrewDrawbackProcessor do
       @cd_del = cdefs[:shp_delivery_date]
       @cd_size = cdefs[:shpln_size]
       @cd_color = cdefs[:shpln_color]
-      @product = Factory(:product,unique_identifier:'JCREW-12345',name:'12345')
-      @importer = with_customs_management_id(Factory(:company,:importer=>true), "JCREW")
-      @c_line = Factory(:commercial_invoice_line,:quantity=>10,:part_number=>'12345',:po_number=>'12345',:country_origin_code=>'CN')
+      @product = Factory(:product, unique_identifier:'JCREW-12345', name:'12345')
+      @importer = with_customs_management_id(Factory(:company, :importer=>true), "JCREW")
+      @c_line = Factory(:commercial_invoice_line, :quantity=>10, :part_number=>'12345', :po_number=>'12345', :country_origin_code=>'CN')
       @c_line.entry.update_attributes(
         :entry_number=>"12345678901",
         :arrival_date=>0.days.ago,
@@ -32,10 +32,10 @@ describe OpenChain::JCrewDrawbackProcessor do
         :classification_qty_1 => 10,
         :classification_uom_1 => "PCS"
       )
-      @s_line = Factory(:shipment_line,:quantity=>10,:product=>@product)
+      @s_line = Factory(:shipment_line, :quantity=>10, :product=>@product)
       @shipment = @s_line.shipment
       @shipment.update_custom_value! @cd_del, 1.days.from_now
-      @shipment.update_attributes(:importer_id=>@importer.id,:reference=>@entry.entry_number)
+      @shipment.update_attributes(:importer_id=>@importer.id, :reference=>@entry.entry_number)
       @s_line.update_custom_value! @cd_po, @c_line.po_number
       @s_line.update_custom_value! @cd_size, "XXL"
       @s_line.update_custom_value! @cd_color, 'RED'
@@ -56,13 +56,13 @@ describe OpenChain::JCrewDrawbackProcessor do
       expect(d.part_number).to eq "#{@product.name}#{@s_line.get_custom_value(@cd_color).value}#{@s_line.get_custom_value(@cd_size).value}"
       expect(d.hts_code).to eq @c_tar.hts_code
       expect(d.description).to eq @entry.merchandise_description
-      expect(d.unit_of_measure).to eq "EA" #hard code to eaches
+      expect(d.unit_of_measure).to eq "EA" # hard code to eaches
       expect(d.quantity).to eq @s_line.quantity
-      expect(d.unit_price).to eq BigDecimal("14.40") #entered value / total units
+      expect(d.unit_price).to eq BigDecimal("14.40") # entered value / total units
       expect(d.rate).to eq BigDecimal("0.1") # duty amount / entered value
-      expect(d.duty_per_unit).to eq BigDecimal("1.44") #unit price * rate
-      expect(d.compute_code).to eq "7" #hard code
-      expect(d.ocean).to eq true #mode 10 or 11
+      expect(d.duty_per_unit).to eq BigDecimal("1.44") # unit price * rate
+      expect(d.compute_code).to eq "7" # hard code
+      expect(d.ocean).to eq true # mode 10 or 11
       expect(d.importer_id).to eq @entry.importer_id
       expect(d.total_mpf).to eq @entry.mpf
       expect(PieceSet.where(:commercial_invoice_line_id=>@c_line.id).where(:shipment_line_id=>@s_line.id).where(:drawback_import_line_id=>d.id).size).to eq(1)

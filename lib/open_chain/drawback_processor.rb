@@ -7,7 +7,7 @@ module OpenChain
   # `get_received_date(shipment_line)` - returning received_date that should be written to DrawbackImportLine
   class DrawbackProcessor
 
-    DOZENS_LABELS = ["DOZ","DPR"]
+    DOZENS_LABELS = ["DOZ", "DPR"]
     # Link entries to shipments and create drawback import lines, writing change records for each commercial invoice line
     def self.process_entries entries
       processor = self.new
@@ -30,7 +30,7 @@ module OpenChain
     # Returns an array of ShipmentLines that were matched
     def link_commercial_invoice_line c_line, change_record=nil
       r = []
-      cr = change_record.nil? ? ChangeRecord.new : change_record #use a junk change record to make the rest of the coding easier if nil was passed
+      cr = change_record.nil? ? ChangeRecord.new : change_record # use a junk change record to make the rest of the coding easier if nil was passed
       unallocated_quantity = (c_line.quantity.nil? ? 0 : c_line.quantity) - c_line.piece_sets.where("shipment_line_id is not null").sum("piece_sets.quantity")
       if unallocated_quantity <= 0
         cr.add_message("Commercial Invoice Line is fully allocated to shipments.")
@@ -40,12 +40,12 @@ module OpenChain
           shipment_line_unallocated = s_line.quantity - s_line.piece_sets.where("commercial_invoice_line_id is not null").sum("piece_sets.quantity")
           next if shipment_line_unallocated <= 0
           if shipment_line_unallocated >= unallocated_quantity
-            c_line.piece_sets.create!(:shipment_line_id=>s_line.id,:quantity=>unallocated_quantity)
+            c_line.piece_sets.create!(:shipment_line_id=>s_line.id, :quantity=>unallocated_quantity)
             cr.add_message("Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: #{unallocated_quantity}")
             r << s_line
             break
           else
-            c_line.piece_sets.create!(:shipment_line_id=>s_line.id,:quantity=>shipment_line_unallocated)
+            c_line.piece_sets.create!(:shipment_line_id=>s_line.id, :quantity=>shipment_line_unallocated)
             cr.add_message("Matched to Shipment: #{s_line.shipment.reference}, Line: #{s_line.line_number}, Quantity: #{shipment_line_unallocated}")
             unallocated_quantity -= shipment_line_unallocated
             r << s_line
@@ -64,11 +64,11 @@ module OpenChain
         return r
       end
       entry = c_line.entry
-      tariff = c_line.commercial_invoice_tariffs.first #Under Armour will only have one
+      tariff = c_line.commercial_invoice_tariffs.first # Under Armour will only have one
       [
-        [(tariff.entered_value==0),"Cannot make line because entered value is 0."],
-        [(tariff.entered_value.nil?),"Cannot make line because entered value is empty."],
-        [(tariff.duty_amount.nil?),"Cannot make line because duty amount is empty."],
+        [(tariff.entered_value==0), "Cannot make line because entered value is 0."],
+        [(tariff.entered_value.nil?), "Cannot make line because entered value is empty."],
+        [(tariff.duty_amount.nil?), "Cannot make line because duty amount is empty."],
       ].each do |x|
         if x[0]
           cr.add_message x[1], true
@@ -83,9 +83,9 @@ module OpenChain
           :port_code=>entry.entry_port_code,
           :box_37_duty => entry.total_duty,
           :box_40_duty => entry.total_duty_direct,
-          :country_of_origin_code => get_country_of_origin(ship_line,c_line),
+          :country_of_origin_code => get_country_of_origin(ship_line, c_line),
           :product_id => ship_line.product_id,
-          :part_number=> get_part_number(ship_line,c_line),
+          :part_number=> get_part_number(ship_line, c_line),
           :hts_code=>tariff.hts_code,
           :description=>entry.merchandise_description,
           :unit_of_measure=>"EA",

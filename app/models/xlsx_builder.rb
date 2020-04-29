@@ -35,14 +35,14 @@ class XlsxBuilder
 
   # Creates a new worksheet in the workbook. If headers param is given will set the given headers
   # as the first row of the new worksheet.
-  # 
+  #
   # Returns an XlsSheet wrapper object.
   def create_sheet sheet_name, headers: []
     sheet = XlsxSheet.new(@workbook.add_worksheet(name: sheet_name.truncate(31)))
     if headers && headers.length > 0
-      add_header_row(sheet, headers) 
+      add_header_row(sheet, headers)
     end
-    
+
     sheet
   end
 
@@ -109,7 +109,7 @@ class XlsxBuilder
     nil
   end
 
-  # Creates a new workbook style, the value returned from this method is the value you must pass to add_body_row to apply the style to the 
+  # Creates a new workbook style, the value returned from this method is the value you must pass to add_body_row to apply the style to the
   # cell(s) you wish to apply the style to.
   #
   # format_name - string/symbol format identifer
@@ -151,7 +151,7 @@ class XlsxBuilder
     nil
   end
 
-  # Set the column width to a specific width.  
+  # Set the column width to a specific width.
   # By default, columns sizes are auto calculated based on the data contained in them.
   # The index of the given widths array will correspond to column index you wish to update.
   # If you pass for a particular index, that column will be set to auto calculate the width.
@@ -210,7 +210,7 @@ class XlsxBuilder
     nil
   end
 
-  # To do things like put the page number in the header, etc. 
+  # To do things like put the page number in the header, etc.
   # See control characters here: https://github.com/randym/axlsx/blob/master/notes_on_header_footer.md
   #
   # NOTE: If you use page number, that is relative to the number of pages the tab itself takes up, not the whole workbook.
@@ -342,7 +342,7 @@ class XlsxBuilder
     end
 
     def make_style_param row_data, styles
-      # This can be a single value or it can be an array, we need to preserve that because axlsx does different things 
+      # This can be a single value or it can be an array, we need to preserve that because axlsx does different things
       # based on if it's one or the other
       if styles.respond_to?(:map)
         # Return an array, which means that axlsx will only style certain columns
@@ -353,7 +353,7 @@ class XlsxBuilder
         style = find_style(styles)
 
         # Basically, return an array using the single style defined as the value for each index
-        # This makes applying the style easy, what this is essentially saying is use 
+        # This makes applying the style easy, what this is essentially saying is use
         # this style for every column
         row_data.map {|s| style }
       end

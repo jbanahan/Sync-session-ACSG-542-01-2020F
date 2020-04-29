@@ -11,7 +11,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
     }
     @p = described_class.new
 
-    @export = IntacctAllianceExport.create! file_number: @line['file number'], suffix: @line['suffix'], division: "1", ar_total: "12.50", ap_total: "12.50", customer_number: "C", invoice_date: Date.new(2014,1,1), export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE
+    @export = IntacctAllianceExport.create! file_number: @line['file number'], suffix: @line['suffix'], division: "1", ar_total: "12.50", ap_total: "12.50", customer_number: "C", invoice_date: Date.new(2014, 1, 1), export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE
   end
 
   describe "create_receivable" do
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(r.invoice_date).to eq @export.invoice_date
       expect(r.customer_number).to eq @export.customer_number
       expect(r.currency).to eq @line['currency']
-      
+
       expect(r.intacct_receivable_lines.size).to eq(2)
 
       # Don't bother checking both lines, since the same exact value was used for both
@@ -224,7 +224,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       expect(p.bill_number).to eq @line["invoice number"]
       expect(p.bill_date).to eq @export.invoice_date
 
-      
+
       l = p.intacct_payable_lines.first
       expect(l.gl_account).to eq "6085"
 
@@ -453,14 +453,14 @@ describe OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser do
       # This line is basically just a check that the right flag is used by the parse method when creating
       # lmd recievables
       expect(receivables.first.invoice_number).to eq @line["invoice number"]
-      
+
       payables = @export.intacct_payables
       expect(payables.size).to eq(1)
       expect(payables.first.vendor_number).to eq line2["vendor"]
     end
 
     it "handles payable lines with incomplete check information" do
-      # Somehow lines that are not checks have check dates in them (user error likely) and were causing issues 
+      # Somehow lines that are not checks have check dates in them (user error likely) and were causing issues
       # creating payables (.ie they're identified as seperate payables).  Make sure this is resolved.
       @line["payable"] = "Y"
       @line["freight file number"] = ""

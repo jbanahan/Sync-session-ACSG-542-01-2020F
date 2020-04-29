@@ -1,10 +1,10 @@
 module JoinSupport
-#used to help classes add SQL join statements based on module chains
+# used to help classes add SQL join statements based on module chains
 
   def set_module_chain base_search_object
-  #if the class is linked to search_setup, get the module chain from there, else get it from the CoreModule
-  #sets the value to the internal @module_chain variable
-  #implementing class must have either self.model_field_uid or self.search_setup
+  # if the class is linked to search_setup, get the module chain from there, else get it from the CoreModule
+  # sets the value to the internal @module_chain variable
+  # implementing class must have either self.model_field_uid or self.search_setup
     if respond_to?('search_setup') && !self.search_setup.nil?
       @module_chain = self.search_setup.module_chain
     else
@@ -49,7 +49,7 @@ module JoinSupport
     query
   end
 
-  def add_parent_joins(p,module_chain,target_module)
+  def add_parent_joins(p, module_chain, target_module)
     return p if module_chain.first == target_module
     add_parent_joins_recursive p, module_chain, target_module, module_chain.first
   end

@@ -1,12 +1,12 @@
 require 'open_chain/custom_handler/ann_inc/ann_ftz_validation_helper'
 
-# Fail if 'Classification Type' is 'Multi' and tariff 'Percent of Value' fields don't add to 100 
+# Fail if 'Classification Type' is 'Multi' and tariff 'Percent of Value' fields don't add to 100
 module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRuleProductTariffPercentsAddTo100 < BusinessValidationRule
   include OpenChain::CustomHandler::AnnInc::AnnFtzValidationHelper
 
   def run_validation product
     cl = product.classifications.find_by country_id: us.id
-    
+
     if cl&.custom_value(cdefs[:classification_type]) == "Multi"
       total = 0
       cl.tariff_records.each do |tr|
@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRulePr
         return "The sum of all Percent of Value fields for a Style should equal 100%."
       end
     end
-  
+
     nil
   end
 

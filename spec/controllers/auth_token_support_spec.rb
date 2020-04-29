@@ -2,7 +2,7 @@
 # test and setup request / reesponse / controller etc...just do a plain test
 describe AuthTokenSupport, type: :model do
 
-  let (:cookies) { 
+  let (:cookies) {
     {}
   }
 
@@ -26,8 +26,8 @@ describe AuthTokenSupport, type: :model do
 
   describe "set_auth_token_cookie" do
 
-    let (:user) { 
-      u = User.new 
+    let (:user) {
+      u = User.new
       u.username = "user"
       u.api_auth_token = "token"
 
@@ -35,7 +35,7 @@ describe AuthTokenSupport, type: :model do
     }
 
     let (:run_as) {
-      u = User.new 
+      u = User.new
       u.username = "runas"
       u.api_auth_token = "runastoken"
 
@@ -95,7 +95,7 @@ describe AuthTokenSupport, type: :model do
       cookies["RUN-AS-AUTH-TOKEN"] = "user:token"
       u = subject.run_as_user_from_cookie(cookies)
       expect(user).to eq u
-      
+
     end
 
     it "returns nil if cookie doesn't exist" do
@@ -128,6 +128,6 @@ describe AuthTokenSupport, type: :model do
 
     it "returns nil if authtoken doesn't have a value" do
       expect(subject.user_from_auth_token nil).to be_nil
-    end    
+    end
   end
 end

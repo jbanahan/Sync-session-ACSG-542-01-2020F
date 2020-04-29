@@ -88,7 +88,7 @@ describe SummaryStatementsController do
 
       get :new
       assigned_companies = []
-      assigns(:companies).each{|c| assigned_companies << {name: c["name"], id: c["id"] } }
+      assigns(:companies).each {|c| assigned_companies << {name: c["name"], id: c["id"] } }
       expect(assigned_companies).to eq [{name: "A", id: c2.id }, {name: "B", id: c1.id}]
     end
 

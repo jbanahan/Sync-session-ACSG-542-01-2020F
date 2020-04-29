@@ -18,10 +18,10 @@ class DebugRecordsController < ApplicationController
       user = User.find(params[:user_id])
       if DebugRecord.where(:user_id=>params[:user_id]).destroy_all
         add_flash :notices, "All debug records for user were destroyed."
-        redirect_to company_user_path(user.company,user)
+        redirect_to company_user_path(user.company, user)
       else
         add_flash :errors, "Debug records were not successfully destroyed."
-        redirect_to compan_user_debug_records(user.company,user)
+        redirect_to compan_user_debug_records(user.company, user)
       end
     }
   end

@@ -7,12 +7,12 @@ describe ValidationRuleEntryMidMatchesMidList do
 
   it 'raises an error if given no company system code' do
     subject.update_attribute(:rule_attributes_json, nil)
-    expect{subject.run_validation(entry)}.to raise_error("No importer specified")
+    expect {subject.run_validation(entry)}.to raise_error("No importer specified")
   end
-  
+
   it 'raises an error if no company exists with given system code' do
     company.update_attribute(:system_code, 'BCOMPANY')
-    expect{subject.run_validation(entry)}.to raise_error("Invalid importer system code")
+    expect {subject.run_validation(entry)}.to raise_error("Invalid importer system code")
   end
 
   it 'passes if the specified importer has no mid_xrefs' do

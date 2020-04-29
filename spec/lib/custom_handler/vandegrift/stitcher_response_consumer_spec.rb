@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
         expect(val.id).to eq entry.id
       end
       expect_any_instance_of(Attachment).to receive(:skip_virus_scan=).with(true)
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         expect(subject.process_stitch_response stitch_response).to eq true
       end
 
@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
 
     it "logs an error if the response has an error message" do
       stitch_response['stitch_response']['errors'] = [{'message' => 'This is an error'}]
-      expect{ subject.process_stitch_response stitch_response }.to change(ErrorLogEntry,:count).by(1)
+      expect { subject.process_stitch_response stitch_response }.to change(ErrorLogEntry, :count).by(1)
     end
 
     it "swallows specific error response for EOFException" do
@@ -92,7 +92,7 @@ ERR
 
       expect {
         expect(subject.process_stitch_response stitch_response).to be_nil
-      }.to_not change(ErrorLogEntry,:count)
+      }.to_not change(ErrorLogEntry, :count)
     end
 
     it "swallows specific error response for ClassCastException" do
@@ -105,7 +105,7 @@ ERR
 
       expect {
         expect(subject.process_stitch_response stitch_response).to be_nil
-      }.to_not change(ErrorLogEntry,:count)
+      }.to_not change(ErrorLogEntry, :count)
     end
   end
 

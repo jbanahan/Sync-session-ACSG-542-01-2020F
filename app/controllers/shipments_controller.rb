@@ -28,7 +28,7 @@ class ShipmentsController < ApplicationController
   # GET /shipments/new.xml
   def new
     s = Shipment.new
-    action_secure(s.can_edit?(current_user),s,{:verb => "create",:module_name=>"shipment"}) {
+    action_secure(s.can_edit?(current_user), s, {:verb => "create", :module_name=>"shipment"}) {
       @no_action_bar = true
     }
   end
@@ -41,7 +41,7 @@ class ShipmentsController < ApplicationController
   def download
     s = Shipment.where(id: params[:id]).includes(:importer).first
 
-    action_secure(s.can_edit?(current_user),s,{:verb => "download",:module_name=>"shipment"}) {
+    action_secure(s.can_edit?(current_user), s, {:verb => "download", :module_name=>"shipment"}) {
       generator = case s.importer.try(:system_code)
         when "JJILL"
           OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator

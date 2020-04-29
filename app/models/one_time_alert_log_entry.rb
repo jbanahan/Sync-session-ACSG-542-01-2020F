@@ -13,9 +13,9 @@
 #
 
 class OneTimeAlertLogEntry < ActiveRecord::Base
-  attr_accessible :alertable_id, :alertable, :alertable_type, :logged_at, 
+  attr_accessible :alertable_id, :alertable, :alertable_type, :logged_at,
     :one_time_alert_id, :reference_fields
-  
+
   belongs_to :alertable, polymorphic: true, inverse_of: :alert_log_entries
   belongs_to :one_time_alert
 end

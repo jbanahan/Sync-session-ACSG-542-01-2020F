@@ -1,6 +1,6 @@
 require 'socket'
 
-# This set of specs takes quite a while to complete (25 seconds or so) as there are a number of HTTP 
+# This set of specs takes quite a while to complete (25 seconds or so) as there are a number of HTTP
 # requests that are sent to the Google Drive API, each one from .5 to 1 second in length.
 describe OpenChain::GoogleDrive do
 
@@ -52,9 +52,9 @@ describe OpenChain::GoogleDrive do
         retry_expect(additional_rescue_from: [StandardError]) {
           tempfile_contents = nil
           tempfile = nil
-          subject.download_to_tempfile(path) do |f| 
+          subject.download_to_tempfile(path) do |f|
             tempfile = f
-            tempfile_contents = f.read 
+            tempfile_contents = f.read
           end
           expect(tempfile_contents).to eq contents
           expect(tempfile.closed?).to eq true
@@ -80,9 +80,9 @@ describe OpenChain::GoogleDrive do
           retry_expect(additional_rescue_from: [StandardError]) {
             tempfile_contents = nil
             tempfile = nil
-            subject.download_to_tempfile(path) do |f| 
+            subject.download_to_tempfile(path) do |f|
               tempfile = f
-              tempfile_contents = f.read 
+              tempfile_contents = f.read
             end
             expect(tempfile_contents).to eq contents
             expect(tempfile.closed?).to eq true
@@ -97,7 +97,7 @@ describe OpenChain::GoogleDrive do
     let (:file_ids) { [] }
     let (:folder_ids) { [] }
 
-    after :each do 
+    after :each do
       delete_folder_ids(folder_ids)
       delete_file_ids(file_ids)
     end
@@ -144,7 +144,7 @@ describe OpenChain::GoogleDrive do
         test_folder = File.basename(existing_drive_folder)
         # The at leasts here are due to the after hooks
         expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
-        
+
         file = subject.upload_file remote_path, local_file_path
         expect(file[:id]).not_to be_nil
         file_ids << file[:id]
@@ -180,7 +180,7 @@ describe OpenChain::GoogleDrive do
         cache = {}
         # The at leasts here are due to the after hooks
         expect(subject).to receive(:get_path_cache).at_least(1).times.and_return cache
-        
+
         file = subject.upload_file remote_path, local_file_path
         expect(file[:id]).not_to be_nil
 
@@ -191,7 +191,7 @@ describe OpenChain::GoogleDrive do
   end
 
   describe "delete_file" do
-    
+
     let (:uploaded_file) {
       io = StringIO.new
       subject.upload_file remote_path, io
@@ -398,7 +398,7 @@ describe OpenChain::GoogleDrive do
       file
     }
 
-    after :each do 
+    after :each do
       delete_folder_ids(folder_ids)
     end
 

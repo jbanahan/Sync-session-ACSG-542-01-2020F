@@ -25,11 +25,11 @@
 #
 
 class IntacctPayable < ActiveRecord::Base
-  attr_accessible :bill_date, :bill_number, :check_number, :company, 
-    :currency, :intacct_alliance_export_id, :intacct_alliance_export, :intacct_errors, :intacct_key, 
+  attr_accessible :bill_date, :bill_number, :check_number, :company,
+    :currency, :intacct_alliance_export_id, :intacct_alliance_export, :intacct_errors, :intacct_key,
     :intacct_upload_date, :payable_type, :vendor_number, :vendor_reference,
     :created_at
-  
+
   belongs_to :intacct_alliance_export, :inverse_of => :intacct_payables
   has_many :intacct_payable_lines, :dependent => :destroy
   has_many :intacct_checks

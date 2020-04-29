@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
 
-  let (:row) { 
+  let (:row) {
     ['style', 'suf ind', 'exc code', 'suf', 'Factory', "Factory Name", "Addr 1", "Addr 2", "Addr 3", "City", "", "", "ZZ", "", "1234567890", "5", "Comments"]
   }
 
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       it "does not add an existing factory to a product" do
         factory = Factory(:address, company: @importer, system_code: row[4])
         exist = Factory(:product, unique_identifier: "LERETURNS-#{row[0]}-#{row[1]}-#{row[2]}-#{row[3]}", importer: @importer, factories: [factory])
-        
+
         prod = subject.process_product_line row
         expect(prod.factories.size).to eq 1
         expect(prod.factories.first).to eq factory
@@ -120,8 +120,8 @@ describe OpenChain::CustomHandler::LandsEnd::LePartsParser do
       expect(Product.where(unique_identifier: "LERETURNS-12-#{row[1]}-#{row[2]}-#{row[3]}", importer_id: @importer.id).first).to_not be_nil
     end
   end
- 
-  describe "integration_folder" do 
+
+  describe "integration_folder" do
     it "uses correct folder" do
       expect(described_class.integration_folder).to eq ["www-vfitrack-net/_lands_end_products", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_lands_end_products"]
     end

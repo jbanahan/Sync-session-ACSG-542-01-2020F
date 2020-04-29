@@ -87,7 +87,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
       # on 1 cent and the way we're summing multiple tariff lines
       l = i[:commercial_invoice_lines][2]
 
-      expect(l[:entered_value]).to eq(@ci_line_3.commercial_invoice_tariffs.inject(BigDecimal.new("0")){|s, v| s + v.entered_value})
+      expect(l[:entered_value]).to eq(@ci_line_3.commercial_invoice_tariffs.inject(BigDecimal.new("0")) {|s, v| s + v.entered_value})
       expect(l[:duty]).to eq(BigDecimal.new("500")) # add two tariff lines together
       expect(l[:fee]).to eq(BigDecimal.new("0"))
       expect(l[:brokerage]).to eq(BigDecimal.new("33.34"))
@@ -147,7 +147,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
 
       @bi.broker_invoice_lines.create :charge_type=>"F", :charge_amount => BigDecimal.new("100"), :charge_description=> ci_2.invoice_number, :charge_code=>"0600"
 
-      
+
       lc = described_class.new.landed_cost_data_for_entry @entry.id
 
       e = lc[:entries].first
@@ -175,7 +175,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
 
       @bi.broker_invoice_lines.create :charge_type=>"F", :charge_amount => BigDecimal.new("100"), :charge_description=> "Test#{ci_2.invoice_number}", :charge_code=>"0600"
 
-      
+
       lc = described_class.new.landed_cost_data_for_entry @entry.id
 
       e = lc[:entries].first
@@ -219,7 +219,7 @@ describe OpenChain::Report::LandedCostDataGenerator do
       expect(l[:international_freight]).to eq (per_unit * @ci_line_1.quantity).round(2, BigDecimal::ROUND_HALF_UP)
       expect(l[:per_unit][:international_freight]).to eq(l[:international_freight] / @ci_line_1.quantity)
       expect(l[:percentage][:international_freight]).to eq((l[:international_freight] / l[:landed_cost]) * BigDecimal.new("100"))
-      # Since we switched the "O" charge line to a freight line via the charge code type, make sure this was taken into account 
+      # Since we switched the "O" charge line to a freight line via the charge code type, make sure this was taken into account
       # and our other charges are now 0
       expect(l[:other]).to eq(BigDecimal.new("0"))
 

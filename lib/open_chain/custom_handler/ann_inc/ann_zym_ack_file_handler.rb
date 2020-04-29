@@ -4,15 +4,15 @@ module OpenChain
   module CustomHandler
     module AnnInc
       class AnnZymAckFileHandler < OpenChain::CustomHandler::AckFileHandler
-        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport 
-        
+        include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
+
         def initialize
           @cdefs = self.class.prep_custom_definitions [:related_styles]
         end
         def find_object row, opts
           p = Product.find_by_unique_identifier row[0]
           return p unless p.nil?
-          cv = CustomValue.where(:custom_definition_id=>@cdefs[:related_styles].id).where("text_value like ?","%#{row[0]}%").first
+          cv = CustomValue.where(:custom_definition_id=>@cdefs[:related_styles].id).where("text_value like ?", "%#{row[0]}%").first
           p = cv.customizable if cv
           p
         end

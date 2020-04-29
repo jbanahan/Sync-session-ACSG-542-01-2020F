@@ -10,9 +10,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
     return false unless super
     return false unless MasterSetup.get.custom_feature?("Document Stitching")
     accept = false
-  
+
     # If combine attachments is enabled, then we're going to combine them, regardless of the start/end date
-    # The start end date is more for control of the documents available to the archiver desktop program 
+    # The start end date is more for control of the documents available to the archiver desktop program
     # or the monthly archiver / ftp export process.
     setup = attachment_archive_setup_for snapshot.recordable
     setup.present? && setup.combine_attachments? == true
@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
 
     # We should also re-generate attachments when an Archive Packet is deleted
     if any_entities_missing_from_lists?(old_attachments, new_attachments) || archive_packet_deleted?(old_json, new_json)
-      Lock.db_lock(entry) do 
+      Lock.db_lock(entry) do
         # This method returns false if a stitch request was not sent (.ie no docs associated w/ the entry to send)
         if !generate_and_send_stitch_request(entry, archive_setup)
           # Destroy the archive packet if there's no attachments available to stitch and an archive packet exists
@@ -120,7 +120,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
     self.new.attachment_archive_setup_for(entry)
   end
 
-  private 
+  private
     def sqs_queue
       queue = MasterSetup.secrets["pdf_stitcher"].try(:[], "request_queue")
       raise "No 'request_queue' key found under 'pdf_stitcher' config in secrets.yml." if queue.blank?

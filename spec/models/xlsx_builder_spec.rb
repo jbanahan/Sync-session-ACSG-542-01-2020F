@@ -91,7 +91,7 @@ describe XlsxBuilder do
         expect(reader.number_format(sheet, 0, 0)).to eq "YYYY-MM-DD HH:MM"
       end
 
-      it "applies default style to ActiveSupport::TimeWithZone" do 
+      it "applies default style to ActiveSupport::TimeWithZone" do
         subject.add_body_row sheet, [Time.zone.parse("2018-07-13 12:23")]
         expect(reader.number_format(sheet, 0, 0)).to eq "YYYY-MM-DD HH:MM"
       end
@@ -110,7 +110,7 @@ describe XlsxBuilder do
 
     context "merged ranges" do
       it "applies merged range, if specified" do
-        subject.add_body_row sheet, ["Nigel", "Tufnel", "was", "here!"], merged_cell_ranges: [(0..1),(2..3)]
+        subject.add_body_row sheet, ["Nigel", "Tufnel", "was", "here!"], merged_cell_ranges: [(0..1), (2..3)]
         expect(reader.merged_cell_ranges(sheet)).to eq([{row: 0, cols: (0..1)}, {row: 0, cols: (2..3)}])
       end
     end
@@ -136,7 +136,7 @@ describe XlsxBuilder do
   end
 
   describe "write" do
-    let! (:sheet) { 
+    let! (:sheet) {
       subject.create_sheet "Sheet", headers: ["Testing"]
     }
 
@@ -160,7 +160,7 @@ describe XlsxBuilder do
     end
   end
 
-  describe "create_style" do 
+  describe "create_style" do
     let (:sheet) {
       subject.create_sheet "Sheet"
     }
@@ -178,7 +178,7 @@ describe XlsxBuilder do
       subject.create_sheet "Sheet"
     }
 
-    it "creates a link cell" do 
+    it "creates a link cell" do
       link = subject.create_link_cell "www.google.com"
       expect(link[:type]).to eq :hyperlink
       expect(link[:location]).to eq "www.google.com"
@@ -204,7 +204,7 @@ describe XlsxBuilder do
 
     it "freezes sheet at given row" do
       subject.freeze_horizontal_rows sheet, 1
-      
+
       reader.sheet(sheet) do |s|
         pane = s.sheet_views.first.pane
         expect(pane).not_to be_nil
@@ -239,7 +239,7 @@ describe XlsxBuilder do
       sheet
     }
 
-    it "applies min/max widths using defaults" do 
+    it "applies min/max widths using defaults" do
       subject.apply_min_max_width_to_columns sheet
 
       expect(reader.width_at(sheet, 0)).to eq 50
@@ -247,7 +247,7 @@ describe XlsxBuilder do
       expect(reader.width_at(sheet, 2)).to eq 12
     end
 
-    it "applies min/max widths using given values" do 
+    it "applies min/max widths using given values" do
       subject.apply_min_max_width_to_columns sheet, min_width: 5, max_width: 10
 
       expect(reader.width_at(sheet, 0)).to eq 10
@@ -266,13 +266,13 @@ describe XlsxBuilder do
 
     it "assigns properties to image" do
       subject.add_image sheet, "spec/fixtures/files/attorney.png", 375, 360, 1, 0, hyperlink: "https://en.wikipedia.org/wiki/Better_Call_Saul", opts: { name: "Saul" }
-      
+
       anchor = sheet.raw_sheet.drawing.anchors.last
-      
+
       marker = anchor.from
       expect(marker.col).to eq 1
-      expect(marker.row).to eq 0 
-      
+      expect(marker.row).to eq 0
+
       pic = anchor.object
       expect(pic.name).to eq "Saul"
       expect(pic.image_src).to eq "spec/fixtures/files/attorney.png"

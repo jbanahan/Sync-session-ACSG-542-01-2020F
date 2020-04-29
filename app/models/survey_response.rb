@@ -39,7 +39,7 @@
 
 class SurveyResponse < ActiveRecord::Base
   attr_accessible :address, :email, :phone, :fax, :name, :rating, :user, :subtitle, :base_object, :group, :updated_at
-    
+
   belongs_to :user
   belongs_to :survey
   belongs_to :base_object, polymorphic: true, inverse_of: :survey_responses
@@ -108,7 +108,7 @@ class SurveyResponse < ActiveRecord::Base
   def self.search_secure user, base
     r = nil
     if user.view_surveys?
-      r = base.joins(:survey).where("survey_responses.user_id = :user_id OR surveys.company_id = :company_id",{user_id:user.id,company_id:user.company_id})
+      r = base.joins(:survey).where("survey_responses.user_id = :user_id OR surveys.company_id = :company_id", {user_id:user.id, company_id:user.company_id})
     else
       r = base.where(user_id:user.id)
     end
@@ -119,16 +119,16 @@ class SurveyResponse < ActiveRecord::Base
     self.survey.company_id == user.company_id && user.edit_surveys? && !self.survey.archived?
   end
 
-  #can the user view private comments for this survey
+  # can the user view private comments for this survey
   def can_view_private_comments? user
     self.survey.company_id == user.company_id
   end
 
-  #send email invite to user
+  # send email invite to user
   def invite_user!
     m = OpenMailer.send_survey_invite(self)
     m.deliver_now
-    unless self.email_sent_date #only set it the first time
+    unless self.email_sent_date # only set it the first time
       self.email_sent_date=0.seconds.ago
       self.save
     end

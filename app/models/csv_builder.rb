@@ -1,8 +1,8 @@
 require 'csv'
 
-# Simple interface for building csv files that mimics the xls(x) builders API...though 
+# Simple interface for building csv files that mimics the xls(x) builders API...though
 # with some methods left unused and some options ignored that don't apply for CSV files (like styles, and links, etc)
-# 
+#
 # This class exists primarily to make the search writer utilize the same interface for all outputs.
 class CsvBuilder
 
@@ -32,14 +32,14 @@ class CsvBuilder
 
   # Creates a new worksheet in the workbook. If headers param is given will set the given headers
   # as the first row of the new worksheet.
-  # 
+  #
   # Returns an XlsSheet wrapper object.
   def create_sheet sheet_name, headers: []
     sheet = CsvSheet.new(@csv, sheet_name)
     if headers && headers.length > 0
-      add_header_row(sheet, headers) 
+      add_header_row(sheet, headers)
     end
-    
+
     sheet
   end
 
@@ -148,7 +148,7 @@ class CsvBuilder
         # While technically csv can support newlines the value is quoted correctly, not very many csv readers
         # actually support this - so we're going to remove newlines
         if data.respond_to?(:gsub)
-          data = data.gsub(/[\r\n]/,' ')
+          data = data.gsub(/[\r\n]/, ' ')
         end
 
         if data.is_a?(DateTime) || data.is_a?(ActiveSupport::TimeWithZone)

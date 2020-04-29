@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
 
   def process_invoice invoice_xml, log, opts
     check_importer invoice_xml, log
-    inv_number = invoice_xml.text("InvoiceNumber").gsub(/\W/,"")
+    inv_number = invoice_xml.text("InvoiceNumber").gsub(/\W/, "")
 
     importer = ann_importer
     log.error_and_raise "No Ann Taylor importer with system code 'ATAYLOR'." unless importer
@@ -74,21 +74,21 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
     old_vendor = Company.where(system_code: uid).includes(:addresses).first
     if old_vendor
       # each address defines a new vendor, so one address can be assumed
-      inv.country_origin = old_vendor.addresses.first.country 
+      inv.country_origin = old_vendor.addresses.first.country
       inv.vendor = old_vendor
     else
       new_vendor.update_attributes!(system_code: uid, addresses: [addr])
       inv.country_origin = addr.country
       inv.vendor = new_vendor
     end
-    
+
     nil
   end
 
   def assign_factory inv, invoice_xml
     factory_xml = REXML::XPath.first invoice_xml, "OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']"
     new_factory = Company.new(factory: true, name: factory_xml.text("CompanyName") )
-    addr = create_address new_factory, factory_xml 
+    addr = create_address new_factory, factory_xml
     uid = "#{ann_importer.system_code}-#{Address.make_hash_key addr}"
     old_factory = Company.where(system_code: uid).first
     if old_factory
@@ -113,12 +113,12 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnCommercialInvoic
 
   def process_invoice_line invoice, line_xml
     line = invoice.invoice_lines.build
-    
+
     line.air_sea_discount = dec(customized_field_value line_xml, 'Air/Sea Discount')
     line.department =  customized_field_value(line_xml, 'Department')
     line.early_pay_discount = dec(customized_field_value line_xml, 'Early Payment Discount')
     line.trade_discount = dec(customized_field_value line_xml, "Trade Discount")
-    line.fish_wildlife = customized_field_value line_xml, 'Fish &amp; Wildlife' 
+    line.fish_wildlife = customized_field_value line_xml, 'Fish &amp; Wildlife'
     line.line_number = line_xml.text "LineNo"
     line.middleman_charge = middleman_charge line_xml
     line.net_weight = dec(line_xml.text "NetWeight")

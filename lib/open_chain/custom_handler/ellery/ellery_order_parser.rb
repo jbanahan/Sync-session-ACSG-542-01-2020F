@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
-  def self.integration_folder 
+  def self.integration_folder
     ["www-vfitrack-net/_ellery_po", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_ellery_po"]
   end
 
@@ -26,7 +26,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
         rows = []
         po_number = local_po
       end
-    
+
       po_number = local_po
       rows << row
     end
@@ -133,7 +133,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
   def order_header_fingerprint_fields
     [
       :ord_imp_id, :ord_ven_id, :ord_ship_to_id, :ord_ord_num, cd(:ord_division), cd(:ord_destination_code),
-      :ord_cust_ord_no, :ord_ord_date, :ord_window_end, :ord_currency, :ord_fob_point, :ord_mode, 
+      :ord_cust_ord_no, :ord_ord_date, :ord_window_end, :ord_currency, :ord_fob_point, :ord_mode,
       cd(:ord_ship_type), cd(:ord_buyer), :ord_payment_terms, cd(:ord_customer_code), cd(:ord_buyer_order_number)
     ]
   end
@@ -141,7 +141,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
 
   def process_order_line order, row, products
     # As near as I can tell, Ellery doesn't have duplicate UPC's on the order...what
-    # they do though is "close out" a line once it's partially shipped and then 
+    # they do though is "close out" a line once it's partially shipped and then
     # re-open the line on the same order as another line.  We don't want to duplicate
     # that functionality.  They also totally close out every existing line and then
     # replace them all.  We can't replicate that due to how we connect orders to shipments.
@@ -153,7 +153,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
       # progressively as new edits to the order are made.
       line = order.order_lines.build
     end
-    
+
     # NOTE: Any new fields added should also be added to the fingerprint arrays below
     line.product = products[row[27]]
     line.sku = sku
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
     line.find_and_set_custom_value cdefs[:ord_line_units_per_inner_pack], row[40].to_i
     line.hts = row[41].to_s.gsub(".", "")
     line.find_and_set_custom_value cdefs[:ord_line_planned_available_date], parse_date(row[42])
-    line.price_per_unit = BigDecimal(row[43].to_s) 
+    line.price_per_unit = BigDecimal(row[43].to_s)
     line.quantity = BigDecimal(row[44].to_s)
 
     line
@@ -172,7 +172,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
 
   def order_line_fingerprint_fields
     [
-      :ordln_prod_db_id, :ordln_sku, cd(:ord_line_size), cd(:ord_line_color), cd(:ord_line_division), cd(:ord_line_units_per_inner_pack), :ordln_hts, 
+      :ordln_prod_db_id, :ordln_sku, cd(:ord_line_size), cd(:ord_line_color), cd(:ord_line_division), cd(:ord_line_units_per_inner_pack), :ordln_hts,
       cd(:ord_line_planned_available_date), :ordln_ppu, :ordln_ordered_qty
     ]
   end
@@ -183,7 +183,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
 
     order = nil
     created = false
-    Lock.acquire("Order-#{order_number}") do 
+    Lock.acquire("Order-#{order_number}") do
       order = Order.where(importer_id: importer.id, order_number: order_number).first_or_initialize
 
       if !order.persisted?
@@ -268,7 +268,6 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
     if hts_updated || new_product
       product.create_snapshot user, nil, last_file_path
     end
-    
   end
 
   def find_or_create_vendor row, importer
@@ -280,7 +279,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
     return vendor unless vendor.nil?
 
     created = false
-    Lock.acquire("Company-#{vendor_system_code}") do 
+    Lock.acquire("Company-#{vendor_system_code}") do
       vendor = Company.vendors.where(system_code: vendor_system_code).first_or_initialize name: row[3]
       if !vendor.persisted?
         created = true
@@ -316,16 +315,16 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
 
     address = @addresses[name]
     return address unless address.nil?
-    
+
     created = false
-    Lock.acquire("Address-#{name}") do 
+    Lock.acquire("Address-#{name}") do
       address = Address.where(company_id: importer.id, name: row[14]).first_or_initialize
       if !address.persisted?
         created = true
         address.save!
       end
     end
-    
+
     if address && created
       Lock.db_lock(address) do
         address.line_1 = row[15]
@@ -343,7 +342,7 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
 
   def find_country code
     # Ellery sends 3 char country codes (which is fine)...but they don't send standard ones
-    #...just do the best we can with what they give us and fix bad translations based on some test file data
+    # ...just do the best we can with what they give us and fix bad translations based on some test file data
     translations = {"CHI" => "CHN"}
     if translations[code]
       code = translations[code]
@@ -366,8 +365,8 @@ module OpenChain; module CustomHandler; module Ellery; class ElleryOrderParser
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions [
-      :prod_part_number, :prod_product_group, :prod_class, 
-      :ord_division, :ord_destination_code, :ord_ship_type, :ord_buyer, :ord_customer_code, :ord_buyer_order_number, 
+      :prod_part_number, :prod_product_group, :prod_class,
+      :ord_division, :ord_destination_code, :ord_ship_type, :ord_buyer, :ord_customer_code, :ord_buyer_order_number,
       :ord_line_size, :ord_line_color, :ord_line_division, :ord_line_units_per_inner_pack, :ord_line_planned_available_date
     ]
   end

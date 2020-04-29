@@ -22,7 +22,7 @@ describe OpenChain::Events::EventProcessor do
     before :each do
       @proc = described_class.new
       # work around protected method
-      def @proc.handler event 
+      def @proc.handler event
         module_event_handler event
       end
     end

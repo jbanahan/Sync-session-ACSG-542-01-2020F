@@ -12,12 +12,12 @@
 class CommercialInvoiceMap < ActiveRecord::Base
   attr_accessible :destination_mfid, :source_mfid
 
-  #generate a commercial invoice based on the given shipment lines (which all must be from the same shipment)
+  # generate a commercial invoice based on the given shipment lines (which all must be from the same shipment)
   def self.generate_invoice! user, shipment_lines, field_override_hash = {}
-    CommercialInvoice.transaction do 
+    CommercialInvoice.transaction do
       shipments = shipment_lines.collect {|sl| sl.shipment}.uniq
       if shipments.size != 1
-        raise "Cannot generate invoice with lines from multiple shipments."   
+        raise "Cannot generate invoice with lines from multiple shipments."
       end
       header_map, line_map, tariff_map = get_maps
       shipment = shipments.first
@@ -28,13 +28,13 @@ class CommercialInvoiceMap < ActiveRecord::Base
       }
       obj_map[CoreModule::ORDER] = shipment_lines.first.order_lines.first.order unless obj_map[CoreModule::ORDER_LINE].blank?
       ci = CommercialInvoice.create!
-      header_map.each do |src,dest|
-        val = src.process_export(obj_map[src.core_module],user)
+      header_map.each do |src, dest|
+        val = src.process_export(obj_map[src.core_module], user)
         if val
           dest.process_import ci, val, user
         end
       end
-      field_override_hash.each do |uid,val|
+      field_override_hash.each do |uid, val|
         mf = ModelField.find_by_uid uid
         if !val.blank? && mf.core_module == CoreModule::COMMERCIAL_INVOICE
           mf.process_import ci, val, user
@@ -50,19 +50,19 @@ class CommercialInvoiceMap < ActiveRecord::Base
         c_line = ci.commercial_invoice_lines.build
         ship_invoice_map[sl] = c_line
         ct = nil
-        line_map.each do |src,dest|
-          val = src.process_export(obj_map[src.core_module],user)
+        line_map.each do |src, dest|
+          val = src.process_export(obj_map[src.core_module], user)
           dest.process_import c_line, val, user if val
         end
         if tariff_map.size > 0
           ct = c_line.commercial_invoice_tariffs.build
-          line_map.each do |src,dest|
-            val = src.process_export(obj_map[src.core_module],user)
+          line_map.each do |src, dest|
+            val = src.process_export(obj_map[src.core_module], user)
             dest.process_import ct, val, user if val
           end
         end
         if field_override_hash[:lines] && field_override_hash[:lines][sl.id.to_s]
-          field_override_hash[:lines][sl.id.to_s].each do |mfid,val|
+          field_override_hash[:lines][sl.id.to_s].each do |mfid, val|
             mf = ModelField.find_by_uid mfid
             if val && !mf.blank?
               case mf.core_module
@@ -88,12 +88,12 @@ class CommercialInvoiceMap < ActiveRecord::Base
         c_line.value = c_line.quantity * c_line.unit_price if !c_line.quantity.nil? && !c_line.unit_price.nil?
       end
       ci.save!
-      ship_invoice_map.each do |sl,cl|
+      ship_invoice_map.each do |sl, cl|
         if sl.order_lines.blank?
-          PieceSet.create!(:shipment_line_id=>sl.id,:commercial_invoice_line_id=>cl.id,:quantity=>sl.quantity)
+          PieceSet.create!(:shipment_line_id=>sl.id, :commercial_invoice_line_id=>cl.id, :quantity=>sl.quantity)
         else
-          ps = PieceSet.where(:shipment_line_id=>sl.id,:order_line_id=>sl.order_lines.first.id).first
-          ps = PieceSet.new(:shipment_line_id=>sl.id,:order_line_id=>sl.order_lines.first.id,:quantity=>sl.quantity) unless ps
+          ps = PieceSet.where(:shipment_line_id=>sl.id, :order_line_id=>sl.order_lines.first.id).first
+          ps = PieceSet.new(:shipment_line_id=>sl.id, :order_line_id=>sl.order_lines.first.id, :quantity=>sl.quantity) unless ps
           ps.update_attributes(:commercial_invoice_line_id=>cl.id)
         end
       end
@@ -125,6 +125,6 @@ class CommercialInvoiceMap < ActiveRecord::Base
         map_to_use[source] = dest_mf
       end
     end
-    [header_map,line_map,tariff_map]
+    [header_map, line_map, tariff_map]
   end
 end

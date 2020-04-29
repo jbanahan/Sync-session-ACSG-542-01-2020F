@@ -38,7 +38,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
     log << msg("Starting snapshot for '#{setup['name']}' with tags '#{setup['tags'].map {|k, v| "#{k}:#{v}"}.join(", ")}' and retention_days #{setup['retention_days']}.")
     instances = OpenChain::Ec2.find_tagged_instances setup['tags']
     log << msg("Taking snapshots of #{instances.length} #{"instance".pluralize(instances.length)}.")
-    
+
     instances.each do |instance|
       begin
         instance_id = instance.instance_id
@@ -92,7 +92,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
             aws_snapshot.update_attributes!(end_time: Time.zone.now)
           end
         end
-        
+
         snapshot.nil? || snapshot.errored? || snapshot.completed?
       end
 
@@ -125,7 +125,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
 
   def copy_snapshots_to_another_region snapshot_runs
     # Copying across regions can actually take quite a while...so we're not going to wait on it.
-    snapshot_runs.values.each do |snapshot_run|
+    snapshot_runs.each_value do |snapshot_run|
       Array.wrap(snapshot_run[:setup]["copy_to_regions"]).each do |region|
         snapshot_run[:snapshots].each do |snapshot_data|
           Array.wrap(snapshot_data[:snapshots]).each do |snapshot|
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
     ensure
       slack_client.send_message! "it-alerts-warnings", "An error occurred attempting to snapshot#{instance_id.blank? ? "" : " Instance-Id #{instance_id}"}."
     end
-    
+
   end
 
   class AwsBackupError < RuntimeError
@@ -175,7 +175,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftAwsSn
       set_backtrace(backtrace)
     end
 
-    def message 
+    def message
       m = super
       if !self.instance_id.blank?
         m = "Error snapshotting instance id #{self.instance_id}.  #{m}"

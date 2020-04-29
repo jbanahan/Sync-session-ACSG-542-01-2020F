@@ -7,19 +7,18 @@ module OpenChain
     end
     private_class_method :tariff_record_key
 
-    
     # find all of the classifications in the selcted products that have the same country & tariff for all products and build an equivalent classification/tariff in the base product.
     # selected_product can be either an array of product_ids or a SearchRun
     def self.build_common_classifications selected_products, base_product
       products = []
-      if selected_products.is_a? SearchRun 
+      if selected_products.is_a? SearchRun
         keys = selected_products.find_all_object_keys.to_a
         keys.in_groups_of(1000) { |group| products << Product.includes(:classifications=>:tariff_records).where("products.id in (?)", group).all}
         products.flatten!
       elsif selected_products.respond_to? :values
-        products = Product.includes(:classifications=>:tariff_records).where("products.id in (?)",selected_products.values)
+        products = Product.includes(:classifications=>:tariff_records).where("products.id in (?)", selected_products.values)
       else
-        products = Product.includes(:classifications=>:tariff_records).where("products.id in (?)",selected_products)
+        products = Product.includes(:classifications=>:tariff_records).where("products.id in (?)", selected_products)
       end
 
       first_record = true
@@ -33,15 +32,15 @@ module OpenChain
         # in the general case, and the worst case will mean the same number.
         if first_record
           first_record = false
-          p.classifications.each do |c| 
+          p.classifications.each do |c|
             classifications_by_country[c.country_id] ||= {}
             c.tariff_records.each do |t|
               classifications_by_country[c.country_id][tariff_record_key(t)] = t
-            end 
+            end
           end
 
         else
-          #If we've removed all the classifications, then we can stop looping
+          # If we've removed all the classifications, then we can stop looping
           break if classifications_by_country.size == 0
 
           classifications_by_country.each do |country_id, tariff_records_hash|
@@ -70,8 +69,8 @@ module OpenChain
 
         classification = base_product.classifications.build(:country_id=>country_id)
         tariffs.each do |key, tr|
-          classification.tariff_records.build(hts_1: tr.hts_1, hts_2: tr.hts_2, hts_3: tr.hts_3, 
-                                              line_number: tr.line_number, schedule_b_1: tr.schedule_b_1, 
+          classification.tariff_records.build(hts_1: tr.hts_1, hts_2: tr.hts_2, hts_3: tr.hts_3,
+                                              line_number: tr.line_number, schedule_b_1: tr.schedule_b_1,
                                               schedule_b_2: tr.schedule_b_2, schedule_b_3: tr.schedule_b_3)
         end
       end
@@ -87,7 +86,7 @@ module OpenChain
       params = request_params.deep_dup.with_indifferent_access
 
       # Only retain the keys in the params hash that are contained in the array below
-      params.keys.each do |k|
+      params.each_key do |k|
         params.delete k unless ['sr_id', 'pk', 's3_key', 's3_bucket', 'product', 'product_cf'].include? k
       end
       replace_search_result_key params
@@ -117,14 +116,13 @@ module OpenChain
       params
     end
 
-    # This method works similar to the standard bulk update, but it DOES NOT delete and recreate 
+    # This method works similar to the standard bulk update, but it DOES NOT delete and recreate
     # any classification or tariff objects.  It merely takes HTS values from the params and places them into
     # existing products.  It does not clear ANY data from existing products, it is ONLY additive.
     def self.quick_classify params, current_user, options = {}
-      
       # This handles the case where we're running from delayed job, ensuring
       # that current user is set. Won't hurt to run from web either.
-      User.run_with_user_settings current_user do 
+      User.run_with_user_settings current_user do
         # This is to support the delay'ed case where we're serializing parameters as json
         # because there's issues with directly marshalling the request params
         if params.is_a? String
@@ -160,15 +158,15 @@ module OpenChain
             good_count = total_objects = gc if good_count.nil?
 
             if p.can_classify? current_user
-              Product.transaction do 
+              Product.transaction do
                 # When quick classify is run for a single product, the classification attributes
                 # will contain the id of the classification that should be updated.
 
                 # The params here are standard rack/rails query params that may or may not have
-                # an id indicating the classification record to update.  If a param for a 
-                # classification does not have an id (id's are only present when quick classifying 
+                # an id indicating the classification record to update.  If a param for a
+                # classification does not have an id (id's are only present when quick classifying
                 # a single product), then we'll use the country_id to find which
-                # classification to append the data to.  If it doesn't exist then we can leave the 
+                # classification to append the data to.  If it doesn't exist then we can leave the
                 # parameters alone and they will append a new classification to the product.
 
                 # deep_dup is required because if clone/dup is used the 'classification_attributes' hash will
@@ -192,13 +190,13 @@ module OpenChain
                     end
                   end
 
-                  # We'll now set the tariff record's id if it's not already set.  We'll use the line number 
+                  # We'll now set the tariff record's id if it's not already set.  We'll use the line number
                   # as the indicator for which tariff row we're going to update if there is no id value.
                   if classification
                     class_attr['tariff_records_attributes'].each do |line_number, tariff_attr|
 
                       unless tariff_attr['id']
-                        tariff = classification.tariff_records.find{ |tr| tr.line_number == line_number.to_i }
+                        tariff = classification.tariff_records.find { |tr| tr.line_number == line_number.to_i }
                         if tariff
                           tariff_attr['id'] = tariff.id
                         end
@@ -207,18 +205,18 @@ module OpenChain
                   end
                 end
 
-                success = lambda {|o, snapshot| 
+                success = lambda {|o, snapshot|
                   snapshot.bulk_process_log = log
                   log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: false, entity_snapshot: snapshot
                 }
-                failure = lambda {|o,errors|
+                failure = lambda {|o, errors|
                   raise OpenChain::ValidationLogicError.new(nil, o)
                 }
                 before_validate = lambda {|o| OpenChain::CoreModuleProcessor.update_status(o)}
 
                 # Purposefully NOT sending all params to avoid any external processing since we're really ONLY expecting
                 # classification values to be set.
-                OpenChain::CoreModuleProcessor.validate_and_save_module(nil,p,classification_params['product'], current_user, success,failure, before_validate: before_validate, parse_custom_fields: false)
+                OpenChain::CoreModuleProcessor.validate_and_save_module(nil, p, classification_params['product'], current_user, success, failure, before_validate: before_validate, parse_custom_fields: false)
               end
             else
               error_count += 1
@@ -226,12 +224,12 @@ module OpenChain
               good_count -= 1
             end
           rescue OpenChain::ValidationLogicError => e
-            # This ends up needing to be done outside of the failure lambda due to how that lambda must throw the 
+            # This ends up needing to be done outside of the failure lambda due to how that lambda must throw the
             # logic error to force a rollback.
             o = e.base_object
             good_count -= 1
             cr = log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: true
-            o.errors.full_messages.each do |m| 
+            o.errors.full_messages.each do |m|
               cr.add_message "Error saving product #{o.unique_identifier}: #{m}", true
               error_count += 1
             end
@@ -253,14 +251,14 @@ module OpenChain
         params = ActiveSupport::JSON.decode params
       end
 
-      User.current = current_user if User.current.nil? #set this in case we're not in a web environment (like delayed_job)
+      User.current = current_user if User.current.nil? # set this in case we're not in a web environment (like delayed_job)
       good_count = nil
       error_count = 0
       total_objects = nil
 
       log = BulkProcessLog.create! user: current_user, started_at: Time.zone.now, bulk_type: BulkProcessLog::BULK_TYPES[:update]
       record_sequence = 0
-    
+
       has_classifications = !params['product']['classifications_attributes'].nil?
 
       # clear all product, classification and tariff attributes that are blank..if they're blank, the user didn't input any
@@ -278,7 +276,7 @@ module OpenChain
               else
                 class_attrs.delete(c_key) if c_value.blank?
               end
-            end 
+            end
           end
         else
           params['product'].delete(p_key) if p_value.blank?
@@ -294,7 +292,6 @@ module OpenChain
         good_count = total_objects = gc if good_count.nil?
 
         begin
-          
           if p.can_edit?(current_user) && (!has_classifications || p.can_classify?(current_user))
             dup_params = params.deep_dup
             Product.transaction do
@@ -307,7 +304,7 @@ module OpenChain
                 # Each classifications_attributes is going to have a country id, what we're going to
                 # do is find which specific classification record for the product matches that country id
                 # and then set that classification back into the dup_params hash.  This will allow the
-                # update_attributes call done from the validate_and_save_module to know exactly which 
+                # update_attributes call done from the validate_and_save_module to know exactly which
                 # classification / tariff record should be updated.
 
                 dup_params['product']['classifications_attributes'].each do |index, class_attr|
@@ -322,7 +319,7 @@ module OpenChain
 
                       # The keys are the the indexes these records appeared at on screen, so by sorting them
                       # we can process loop through these and process them in the order they appeared on screen.
-                      # Which would, baring the line number being manually entered, naturally be the way the users 
+                      # Which would, baring the line number being manually entered, naturally be the way the users
                       # would want to also have them be displayed.
                       tariffs.keys.sort.each_with_index do |t_index, x|
                         tariff_attr = tariffs[t_index]
@@ -331,7 +328,7 @@ module OpenChain
                         # If someone actually entered a line number then we'll want to use that value
                         # (creating a new record if that line number didn't already exist).
                         # Otherwise, use the index count as the line # to find the tariff record associated with this classification
-                        tariff_attr['hts_line_number'] = (x+1).to_s if tariff_attr['hts_line_number'].blank? 
+                        tariff_attr['hts_line_number'] = (x+1).to_s if tariff_attr['hts_line_number'].blank?
                         if tariff_attr['hts_line_number']
                           tariff_record = country_class.tariff_records.find {|t| t.line_number == tariff_attr['hts_line_number'].to_i}
                         end
@@ -347,19 +344,19 @@ module OpenChain
                   end
                 end
               end
-              success = lambda {|o, snapshot| 
+              success = lambda {|o, snapshot|
                 snapshot.bulk_process_log = log
                 log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: false, entity_snapshot: snapshot
               }
 
-              failure = lambda {|o,errors|
+              failure = lambda {|o, errors|
                 raise OpenChain::ValidationLogicError.new(nil, o)
               }
-              before_validate = lambda {|o| 
-                CustomFieldProcessor.new(dup_params).save_classification_custom_fields(o,dup_params['product'], current_user)
+              before_validate = lambda {|o|
+                CustomFieldProcessor.new(dup_params).save_classification_custom_fields(o, dup_params['product'], current_user)
                 OpenChain::CoreModuleProcessor.update_status o
               }
-              OpenChain::CoreModuleProcessor.validate_and_save_module(dup_params,p,dup_params['product'], current_user, success,failure,:before_validate=>before_validate, :exclude_blank_values=>true)
+              OpenChain::CoreModuleProcessor.validate_and_save_module(dup_params, p, dup_params['product'], current_user, success, failure, :before_validate=>before_validate, :exclude_blank_values=>true)
             end
           else
             error_count += 1
@@ -368,19 +365,19 @@ module OpenChain
             good_count += -1
           end
         rescue OpenChain::ValidationLogicError => e
-          # This ends up needing to be done outside of the failure lambda due to how that lambda must throw the 
+          # This ends up needing to be done outside of the failure lambda due to how that lambda must throw the
           # logic error to force a rollback.
           o = e.base_object
           good_count += -1
           cr = log.change_records.create! recordable: o, record_sequence_number: record_sequence, failed: true
-          o.errors.full_messages.each do |m| 
+          o.errors.full_messages.each do |m|
             cr.add_message"Error saving product #{o.unique_identifier}: #{m}", true
             error_count += 1
           end
           cr.save!
         end
       end
-      
+
       log.update_attributes total_object_count: total_objects, changed_object_count: good_count, finished_at: Time.zone.now
       create_bulk_user_message current_user, good_count, error_count, log, options
     end
@@ -388,7 +385,7 @@ module OpenChain
     def self.create_bulk_user_message current_user, good_count, error_count, bulk_log, options
       title = "#{bulk_log.bulk_type} Job Complete"
       if error_count > 0
-        title += " (#{error_count} #{"Error".pluralize(error_count)})" 
+        title += " (#{error_count} #{"Error".pluralize(error_count)})"
       end
       title += "."
 
@@ -413,12 +410,12 @@ module OpenChain
       messages[:good_count] = good_count
       messages
     end
-    private_class_method :create_bulk_user_message    
+    private_class_method :create_bulk_user_message
 
   end
 
   class BulkInstantClassify
-    include ActiveSupport::Inflector 
+    include ActiveSupport::Inflector
 
     def self.delayed_instant_classify request_params, current_user
       self.delay.instant_classify(BulkUpdateClassification.cleanse_params(request_params).to_json, current_user)
@@ -429,8 +426,8 @@ module OpenChain
         params = ActiveSupport::JSON.decode params
       end
 
-      icr = InstantClassificationResult.create(:run_by_id=>current_user.id,:run_at=>0.seconds.ago)
-      instant_classifications = InstantClassification.ranked #run this here to avoid calling inside the loop
+      icr = InstantClassificationResult.create(:run_by_id=>current_user.id, :run_at=>0.seconds.ago)
+      instant_classifications = InstantClassification.ranked # run this here to avoid calling inside the loop
       OpenChain::CoreModuleProcessor.bulk_objects(CoreModule::PRODUCT, primary_keys: params['pk'], primary_key_file_bucket: params['s3_bucket'], primary_key_file_path: params['s3_key']) do |gc, product|
         result_record = icr.instant_classification_result_records.build(:product_id=>product.id)
         ic_to_use = InstantClassification.find_by_product product, current_user, instant_classifications
@@ -441,7 +438,7 @@ module OpenChain
         result_record.save
       end
       icr.update_attributes(:finished_at=>0.seconds.ago)
-      current_user.messages.create(:subject=>"Instant Classification Complete",:body=>"Your instant classification is complete.<br /><br />#{icr.instant_classification_result_records.size} products were inspected.<br />#{icr.instant_classification_result_records.where_changed.count} products were updated.<br /><br />Click <a href='/instant_classification_results/#{icr.id}'>here</a> to see the results.")
+      current_user.messages.create(:subject=>"Instant Classification Complete", :body=>"Your instant classification is complete.<br /><br />#{icr.instant_classification_result_records.size} products were inspected.<br />#{icr.instant_classification_result_records.where_changed.count} products were updated.<br /><br />Click <a href='/instant_classification_results/#{icr.id}'>here</a> to see the results.")
     end
   end
 
@@ -449,11 +446,11 @@ module OpenChain
     def initialize p
       @params = p
     end
-    def save_classification_custom_fields(product,product_params,user,ignore_blank_values=true)
+    def save_classification_custom_fields(product, product_params, user, ignore_blank_values=true)
       return if product_params.nil? || product_params['classifications_attributes'].nil? || @params['classification_custom'].nil?
       product.classifications.each do |classification|
         unless classification.destroyed?
-          product_params['classifications_attributes'].each do |k,v|
+          product_params['classifications_attributes'].each do |k, v|
             if v['class_cntry_id'].to_i == classification.country_id
               custom_values = @params['classification_custom'][k.to_s]['classification_cf']
               if ignore_blank_values
@@ -463,15 +460,15 @@ module OpenChain
                 end
               end
               OpenChain::CoreModuleProcessor.update_custom_fields classification, custom_values, user
-            end  
+            end
           end
         end
         save_tariff_custom_fields(classification, user, ignore_blank_values)
-      end    
+      end
     end
 
     private
-    def save_tariff_custom_fields(classification,user, ignore_blank_values)
+    def save_tariff_custom_fields(classification, user, ignore_blank_values)
       return if @params['tariff_custom'].nil?
       classification.tariff_records.each do |tr|
         unless tr.destroyed?

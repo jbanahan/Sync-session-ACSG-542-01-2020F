@@ -137,7 +137,7 @@ class Lock
     end while !lock_info
 
     block_completed = false
-    
+
     # The thread will extend the life of the lock again if the block below runs for longer than given expiration time
     # If the lock expiration is anything <= 5 seconds, then we're not going to even bother running this
     if lock_auto_exiration_seconds <= 5
@@ -151,8 +151,8 @@ class Lock
         end while !block_completed
       }
     end
-    
-    begin 
+
+    begin
       acquired_lock(lock_name)
       result = execute_block yield_in_transaction, &Proc.new
     ensure
@@ -166,7 +166,7 @@ class Lock
   end
 
   def self.clean_lock_name lock_name
-    # If the lock IS UTF-8, strip any invalid chars...these seem to sometimes crop up when we're 
+    # If the lock IS UTF-8, strip any invalid chars...these seem to sometimes crop up when we're
     # parsing data from untrusted sources and using it for key values (like in imported file spreadsheets, csv files, etc.)
     # We don't really care that the lock name has bad UTF-8 chars in it...let that get handled elsewhere
     # All we care about here is that the mutex lock is established.
@@ -187,7 +187,7 @@ class Lock
 
   def self.maybe_raise_timeout should_raise, message, backtrace
     return unless should_raise
-    
+
     if backtrace.nil?
       raise Timeout::Error, message
     else
@@ -196,7 +196,7 @@ class Lock
   end
 
   def self.acquire_for_class klass, opts={}
-    return self.acquire(klass.name,opts) {yield}
+    return self.acquire(klass.name, opts) {yield}
   end
 
   def self.execute_block with_transaction

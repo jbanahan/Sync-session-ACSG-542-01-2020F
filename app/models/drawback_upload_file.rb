@@ -31,10 +31,10 @@ require 'open_chain/custom_handler/crocs/crocs_drawback_export_parser'
 require 'open_chain/custom_handler/crocs/crocs_drawback_processor'
 require 'open_chain/custom_handler/crocs/crocs_receiving_parser'
 
-#file uploaded from web to be processed to create drawback data
+# file uploaded from web to be processed to create drawback data
 class DrawbackUploadFile < ActiveRecord::Base
   attr_accessible :error_message, :finish_at, :processor, :start_at, :attachment, :attachments_attributes
-  
+
   PROCESSOR_UA_WM_IMPORTS ||= 'ua_wm_imports'
   PROCESSOR_UA_DDB_EXPORTS ||= 'ua_ddb_exports'
   PROCESSOR_UA_FMI_EXPORTS ||= 'ua_fmi_exports'
@@ -55,7 +55,7 @@ class DrawbackUploadFile < ActiveRecord::Base
     q[:attached].blank?
   }
 
-  #validate the file layout vs. the specification, return array of error messages or empty array
+  # validate the file layout vs. the specification, return array of error messages or empty array
   def validate_layout
     r = []
     case self.processor
@@ -64,14 +64,14 @@ class DrawbackUploadFile < ActiveRecord::Base
     end
     r
   end
-  #process the attached file through the appropriate processor
+  # process the attached file through the appropriate processor
   def process user
     r = nil
     p_map = {
       PROCESSOR_UA_WM_IMPORTS=>lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourReceivingParser.parse_s3 self.attachment.attached.path},
       PROCESSOR_OHL_ENTRY => lambda {
         OpenChain::OhlDrawbackParser.parse tempfile.path
-        OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor.process_entries Entry.where("arrival_date > ?",90.days.ago)
+        OpenChain::CustomHandler::UnderArmour::UnderArmourDrawbackProcessor.process_entries Entry.where("arrival_date > ?", 90.days.ago)
       },
       # This should only run on UnderArmour's instance, so the master company is what we want to link to
       PROCESSOR_UA_DDB_EXPORTS => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourExportParser.parse_csv_file tempfile.path, Company.where(master: true).first },
@@ -80,7 +80,7 @@ class DrawbackUploadFile < ActiveRecord::Base
       PROCESSOR_UA_STO_EXPORTS_V2 => lambda {OpenChain::CustomHandler::UnderArmour::UnderArmourStoExportV2Parser.parse self.attachment.attached.path},
       PROCESSOR_JCREW_BORDERFREE => lambda {OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser.parse_csv_file tempfile.path, Company.with_customs_management_number("JCREW").first},
       PROCESSOR_JCREW_CANADA_EXPORTS => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackExportParser.parse_csv_file tempfile.path, Company.with_customs_management_number("JCREW").first},
-      PROCESSOR_JCREW_IMPORT_V2 => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2.parse_csv_file(tempfile.path,user) },
+      PROCESSOR_JCREW_IMPORT_V2 => lambda { OpenChain::CustomHandler::JCrew::JCrewDrawbackImportProcessorV2.parse_csv_file(tempfile.path, user) },
       PROCESSOR_LANDS_END_EXPORTS => lambda {OpenChain::LandsEndExportParser.parse_csv_file tempfile.path, Company.with_customs_management_number("LANDS").first},
       PROCESSOR_LANDS_END_IMPORTS => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackImportParser.new(Company.with_customs_management_number("LANDS").first).parse IO.read tempfile.path},
       PROCESSOR_LANDS_END_CD => lambda {OpenChain::CustomHandler::LandsEnd::LeDrawbackCdParser.new(Company.with_customs_management_number("LANDS").first).parse IO.read tempfile.path},

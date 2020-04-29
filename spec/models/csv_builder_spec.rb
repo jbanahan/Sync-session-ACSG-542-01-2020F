@@ -1,7 +1,7 @@
 describe CsvBuilder do
 
   def raw_csv_data
-    io = StringIO.new 
+    io = StringIO.new
     subject.write io
     io.rewind
     io.read
@@ -23,13 +23,13 @@ describe CsvBuilder do
 
   describe "add_body_row" do
     let (:sheet) { subject.create_sheet "Sheet" }
-    
+
     it "adds a new row" do
       expect(subject.add_body_row sheet, ["Body"]).to be_nil
       expect(raw_csv_data).to eq "Body\n"
     end
 
-    context "with special field handling" do 
+    context "with special field handling" do
       it "formats dates as YYYY-MM-DD" do
         expect(subject.add_body_row sheet, [Date.new(2018, 7, 13)]).to be_nil
         expect(raw_csv_data).to eq "2018-07-13\n"
@@ -59,7 +59,7 @@ describe CsvBuilder do
 
   describe "add_header_row" do
     let (:sheet) { subject.create_sheet "Sheet" }
-    
+
     it "adds a new row" do
       expect(subject.add_header_row sheet, ["Header"]).to be_nil
       expect(raw_csv_data).to eq "Header\n"
@@ -67,7 +67,7 @@ describe CsvBuilder do
   end
 
   describe "write" do
-    let! (:sheet) { 
+    let! (:sheet) {
       # This initializes the csv internals
       subject.create_sheet "Sheet", headers: ["Testing"]
     }

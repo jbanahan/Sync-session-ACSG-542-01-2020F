@@ -1,9 +1,9 @@
 module OpenChain
   class OhlDrawbackParser
     attr_reader :entry
-    DOZENS_INDICATORS ||= ["DOZ",'DPR']
+    DOZENS_INDICATORS ||= ["DOZ", 'DPR']
     SOURCE_CODE ||= 'OHL Drawback'
-    
+
     # There are two formats for the report from OHL, these maps accomodate both
     SHORT_MAP ||= {
       importer_name:0,
@@ -71,15 +71,15 @@ module OpenChain
 
     # parse an OHL Drawback File (sample in spec/support/bin folder)
     def self.parse file_path
-      sheet = Spreadsheet.open(file_path).worksheet(0) #always first sheet in workbook
+      sheet = Spreadsheet.open(file_path).worksheet(0) # always first sheet in workbook
       rows = []
       last_entry_num = nil
       entries = []
       map_to_use = nil
-      sheet.each 1 do |row| #start at row 1, skipping headers
+      sheet.each 1 do |row| # start at row 1, skipping headers
         entry_num = row[1]
         if entry_num != last_entry_num && !rows.blank?
-          entries << OhlDrawbackParser.new(rows,map_to_use).entry
+          entries << OhlDrawbackParser.new(rows, map_to_use).entry
           rows = []
         end
         rows << row
@@ -93,10 +93,10 @@ module OpenChain
             map_to_use = SHORT_MAP
           when 21
             map_to_use = SHORTER_MAP
-        end 
-        next unless map_to_use #skip lines that don't match a map length
+        end
+        next unless map_to_use # skip lines that don't match a map length
       end
-      entries << OhlDrawbackParser.new(rows,map_to_use).entry unless rows.blank?
+      entries << OhlDrawbackParser.new(rows, map_to_use).entry unless rows.blank?
       entries
     end
 
@@ -104,11 +104,11 @@ module OpenChain
     def initialize entry_rows, map_to_use
       @map = map_to_use
       start_time = Time.now
-      return if entry_rows.first[@map[:transport_mode_code]].to_s=="-1" #don't load FTZ entries
+      return if entry_rows.first[@map[:transport_mode_code]].to_s=="-1" # don't load FTZ entries
       process_header entry_rows.first
       entry_rows.each {|r| process_details r}
       @entry.save!
-      #set time to process in milliseconds without calling callbacks
+      # set time to process in milliseconds without calling callbacks
       @entry.update_column :time_to_process, ((Time.now-start_time) * 1000).to_i
       @entry
     end
@@ -131,8 +131,8 @@ module OpenChain
       raise "Importer Name is required." if importer_name.blank?
       c = Company.find_or_create_by(name: importer_name, importer: true)
       @entry = Entry.find_by_entry_number_and_importer_id row[@map[:entry_number]], c.id
-      @entry ||= Entry.new(:source_system=>SOURCE_CODE,:importer_id=>c.id,:import_country=>Country.find_by_iso_code('US'),:entry_number=>row[@map[:entry_number]],:total_duty_direct=>0)
-      @entry.commercial_invoices.destroy_all 
+      @entry ||= Entry.new(:source_system=>SOURCE_CODE, :importer_id=>c.id, :import_country=>Country.find_by_iso_code('US'), :entry_number=>row[@map[:entry_number]], :total_duty_direct=>0)
+      @entry.commercial_invoices.destroy_all
       @invoice = @entry.commercial_invoices.build(:invoice_number=>'N/A') unless @invoice
       @entry.entry_port_code = row[@map[:entry_port_code]]
       @entry.arrival_date = datetime row[@map[:arrival_date]]
@@ -160,15 +160,15 @@ module OpenChain
       t.duty_amount = row.at(@map[:duty_amount])
       t.classification_qty_1 = row[@map[:quantity]]
       t.classification_uom_1 = row[@map[:uom]]
-      t.hts_code = row[@map[:hts_code]].to_s.gsub('.','') if row[@map[:hts_code]]
+      t.hts_code = row[@map[:hts_code]].to_s.gsub('.', '') if row[@map[:hts_code]]
       t.entered_value = row[@map[:entered_value]]
       t.duty_rate = row[@map[:ad_valorem_rate]] > 1 ? row[@map[:ad_valorem_rate]] * 0.01 : row[@map[:ad_valorem_rate]]
       @entry.total_duty_direct += row.at(@map[:total_duty_direct]) unless row[@map[:total_duty_direct]].nil?
       @line_number += 1
     end
-    
+
     private
-    #convert excel spreadsheet date column to US Eastern Date/Time
+    # convert excel spreadsheet date column to US Eastern Date/Time
     def datetime v
       ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse(v.strftime("%Y-%m-%d")) unless v.nil?
     end

@@ -28,7 +28,7 @@ module Api; module V1; class IntacctDataController < SqlProxyPostbacksController
         yield
       else
         Thread.new do
-          #need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
+          # need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
           ActiveRecord::Base.connection_pool.with_connection do
             yield
           end

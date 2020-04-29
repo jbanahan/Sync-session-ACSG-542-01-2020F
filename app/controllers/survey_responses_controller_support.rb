@@ -28,7 +28,7 @@ module SurveyResponsesControllerSupport
     end
 
     handle_checkout_expiration sr
-    
+
     sr
   end
 
@@ -44,7 +44,7 @@ module SurveyResponsesControllerSupport
     if sr.assigned_to_user? user
       return false
     else
-      return sr.submitted_date && sr.can_edit?(current_user) 
+      return sr.submitted_date && sr.can_edit?(current_user)
     end
   end
 
@@ -62,7 +62,7 @@ module SurveyResponsesControllerSupport
   end
 
   def checkout_token sr, user
-    (sr.checkout_by_user == user ? sr.checkout_token : nil) 
+    (sr.checkout_by_user == user ? sr.checkout_token : nil)
   end
 
   def survey_user user
@@ -73,11 +73,11 @@ module SurveyResponsesControllerSupport
     respond_mode = respond_mode?(sr, user)
     archived = sr.archived? || sr.survey.archived?
     h = sr.as_json(methods: [:responder_name], include: [
-        {answers:{methods:[:hours_since_last_update],include: {
-          question:{methods:[:html_content,:choice_list, :require_comment_for_choices, :require_attachment_for_choices], only:[:id,:warning, :require_comment, :require_attachment]},
-          answer_comments:{only:[:id,:content,:private,:created_at],include:[{user:{only:[:id, :username],methods:[:full_name]}}]}
+        {answers:{methods:[:hours_since_last_update], include: {
+          question:{methods:[:html_content, :choice_list, :require_comment_for_choices, :require_attachment_for_choices], only:[:id, :warning, :require_comment, :require_attachment]},
+          answer_comments:{only:[:id, :content, :private, :created_at], include:[{user:{only:[:id, :username], methods:[:full_name]}}]}
         }}},
-        {survey:{only:[:id,:name, :require_contact],methods:[:rating_values]}},
+        {survey:{only:[:id, :name, :require_contact], methods:[:rating_values]}},
         {user:{include: {company: {only: [:name]}}, methods: [:full_name], only:[:email]}},
         {group:{include: {users: {only: [:email]}}}}
       ])
@@ -90,7 +90,7 @@ module SurveyResponsesControllerSupport
     h['survey_response']['can_submit'] = !archived && respond_mode && sr.submitted_date.blank? && sr.checkout_by_user.nil?
     h['survey_response']['can_comment'] = !archived && sr.checkout_by_user.nil?
     h['survey_response']['can_make_private_comment'] = !archived && sr.can_edit?(user) && sr.checkout_by_user.nil?
-    h['survey_response']['answers'].each_with_index do |a, i| 
+    h['survey_response']['answers'].each_with_index do |a, i|
       a['sort_number'] = (i+1)
       if a['answer_comments'] && !sr.can_edit?(user)
         a['answer_comments'].delete_if {|ac| ac['private']}
@@ -101,9 +101,9 @@ module SurveyResponsesControllerSupport
       a['question']['attachments'] = Attachment.attachments_as_json(answer.question)['attachments'] unless a['question'].nil? || answer.nil? || answer.question.nil?
     end
 
-    # In order to do some validation that questions requiring comments actually have 
+    # In order to do some validation that questions requiring comments actually have
     # comments made by the survey takers, we need to know the full list of survey takers
-    # and check against those.  Another means of attacking this would be to denote via a method at the 
+    # and check against those.  Another means of attacking this would be to denote via a method at the
     # answer comment level if the comment was by a survey taker or not.  This approach seems easier though.
     h['survey_response']['survey_takers'] = survey_takers(sr).collect(&:id)
     h['survey_response']['checkout_by_user'] = nil
@@ -128,7 +128,7 @@ module SurveyResponsesControllerSupport
       include:{
         corrective_issues: {
           only: [:id, :description, :suggested_action, :action_taken, :resolved],
-          methods:[:html_description,:html_suggested_action,:html_action_taken]
+          methods:[:html_description, :html_suggested_action, :html_action_taken]
         },
         comments: {
           only: [:id, :body],
@@ -155,7 +155,7 @@ module SurveyResponsesControllerSupport
 
   def submit_survey_response survey_response, user
     errors = validate_submitted_response survey_response, user
-    
+
     if errors.blank?
       survey_response.submitted_date = Time.zone.now
       survey_response.survey_response_logs.create! message: "Response submitted.", user: user
@@ -181,7 +181,7 @@ module SurveyResponsesControllerSupport
 
     def validate_submitted_response sr, user
       # Ensure all required questions are answered by the persons required to do so
-      # (.ie if question requires comment/attachment, the a comment/attachment must be 
+      # (.ie if question requires comment/attachment, the a comment/attachment must be
       # present by a survey taker user)
 
       # Name, Address, Phone, Email must all be present

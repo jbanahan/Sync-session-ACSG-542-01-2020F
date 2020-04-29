@@ -12,7 +12,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
   end
 
   def self.valid_file? filename
-    ['.XLS','.XLSX'].include? File.extname(filename.upcase)
+    ['.XLS', '.XLSX'].include? File.extname(filename.upcase)
   end
 
   def can_view? user
@@ -33,7 +33,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
         outbound_row_number = 1
         wb, sheet = XlsMaker.create_workbook_and_sheet "Results", ["Customer Name", "Customer Number", "Broker Reference", "Entry Number", "BOL Date", "Export Date", "Entry Filed Date", "Release Date", "Master Bills", "House Bills", "Container Numbers", "Container Sizes", "Total Broker Invoice", "Container Count", "Cost", "Links"]
         total_cost = 0
-        inbound_file_hash.values.each do |entry_row|
+        inbound_file_hash.each_value do |entry_row|
           begin
             add_row_to_sheet entry_row.entry, entry_row.total_management_fee, sheet, outbound_row_number
             outbound_row_number += 1

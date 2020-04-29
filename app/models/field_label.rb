@@ -13,9 +13,9 @@
 #  index_field_labels_on_model_field_uid  (model_field_uid)
 #
 
-#represents labels for ModelFields which may come from static definitions within this class or from the database (user configured labels)
-#You should only need to access this method through the static self.set_label(model_field_uid,label) and self.label_text(model_field_uid) methods.  
-#Everything else is handled internally.
+# represents labels for ModelFields which may come from static definitions within this class or from the database (user configured labels)
+# You should only need to access this method through the static self.set_label(model_field_uid,label) and self.label_text(model_field_uid) methods.
+# Everything else is handled internally.
 class FieldLabel < ActiveRecord::Base
   attr_accessible :label, :model_field_uid
 
@@ -25,7 +25,7 @@ class FieldLabel < ActiveRecord::Base
   validates :label, :presence=>true, :length => {:minimum => 1}
 
   DEFAULT_VALUES_CACHE = {
-    #Fallback hard coded values loaded by ModelField static definitions
+    # Fallback hard coded values loaded by ModelField static definitions
   }
 
   def self.set_label mf_uid, lbl
@@ -44,8 +44,8 @@ class FieldLabel < ActiveRecord::Base
   end
 
   def self.set_default_value mf_uid, lbl
-    #sets the default value for a model field, generally only used by the 
-    #ModelField static intializers
+    # sets the default value for a model field, generally only used by the
+    # ModelField static intializers
     DEFAULT_VALUES_CACHE[mf_uid.to_sym]=lbl
   end
   def self.default_value mf_uid

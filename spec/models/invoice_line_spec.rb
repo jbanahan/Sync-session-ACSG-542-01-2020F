@@ -1,6 +1,6 @@
-describe InvoiceLine do 
+describe InvoiceLine do
 
-  subject { 
+  subject {
     InvoiceLine.new air_sea_discount: BigDecimal("1"), early_pay_discount: BigDecimal("2"), trade_discount: BigDecimal("3"), middleman_charge: BigDecimal("4")
   }
 

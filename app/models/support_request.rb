@@ -14,7 +14,7 @@
 #
 
 class SupportRequest < ActiveRecord::Base
-  attr_accessible :body, :external_link, :referrer_url, :severity, 
+  attr_accessible :body, :external_link, :referrer_url, :severity,
     :ticket_number, :user_id, :user
 
   belongs_to :user
@@ -30,7 +30,7 @@ class SupportRequest < ActiveRecord::Base
     config = support_request_config
     raise "No ticket sender configured." if config.nil?
 
-    config.keys.each do |key|
+    config.each_key do |key|
       sender = key.to_s.downcase
 
       if "email" == sender
@@ -57,7 +57,7 @@ class SupportRequest < ActiveRecord::Base
     end
 
     def send_request support_request
-      # Need to do this to generate the id, so we have an actual ticket number below in cases where 
+      # Need to do this to generate the id, so we have an actual ticket number below in cases where
       # the support request may not have been saved yet.
       if !support_request.persisted?
         support_request.save!
@@ -80,11 +80,11 @@ class SupportRequest < ActiveRecord::Base
   class TestingSender
 
     cattr_accessor :sent_requests
-    
+
     def send_request support_request
       @@sent_requests ||= []
 
-      # Need to do this to generate the id, so we have an actual ticket number below in cases where 
+      # Need to do this to generate the id, so we have an actual ticket number below in cases where
       # the support request may not have been saved yet.
       if !support_request.persisted?
         support_request.save!
@@ -100,4 +100,4 @@ class SupportRequest < ActiveRecord::Base
     Rails.env.test?
   end
   private_class_method :test_env?
-end 
+end

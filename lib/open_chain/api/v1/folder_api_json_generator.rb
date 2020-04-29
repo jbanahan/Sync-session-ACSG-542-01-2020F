@@ -29,7 +29,7 @@ module OpenChain; module Api; module V1; class FolderApiJsonGenerator
     end
 
     hash[:permissions] = {can_attach: folder.can_attach?(current_user), can_comment: folder.can_comment?(current_user), can_edit: folder.can_edit?(current_user)}
-    
+
     hash
   end
 

@@ -85,11 +85,11 @@ class ReportsController < ApplicationController
   end
 
   def run_drawback_exports_without_imports
-    run_report "Drawback Exports Without Imports", OpenChain::Report::DrawbackExportsWithoutImports, {'start_date'=>params[:start_date],'end_date'=>params[:end_date]}, ["Starting Date: #{params[:start_date]}","Ending Date: #{params[:end_date]}"]
+    run_report "Drawback Exports Without Imports", OpenChain::Report::DrawbackExportsWithoutImports, {'start_date'=>params[:start_date], 'end_date'=>params[:end_date]}, ["Starting Date: #{params[:start_date]}", "Ending Date: #{params[:end_date]}"]
   end
 
   def show_shoes_for_crews_entry_breakdown
-    #nothing to do here
+    # nothing to do here
   end
   def run_shoes_for_crews_entry_breakdown
     run_report "Shoes For Crews", OpenChain::Report::ShoesForCrewsEntryBreakdown, {}, []
@@ -120,7 +120,7 @@ class ReportsController < ApplicationController
 
   def run_foot_locker_billing_summary
     if OpenChain::Report::FootLockerBillingSummary.permission? current_user
-      settings = {'start_date'=>params[:start_date],'end_date'=>params['end_date']}
+      settings = {'start_date'=>params[:start_date], 'end_date'=>params['end_date']}
       run_report "Foot Locker US Billing Summary", OpenChain::Report::FootLockerBillingSummary, settings, ["Invoice date between #{params[:start_date]} and #{params[:end_date]}."]
     else
       error_redirect "You do not have permission to view this report"
@@ -137,7 +137,7 @@ class ReportsController < ApplicationController
 
   def run_foot_locker_ca_billing_summary
     if OpenChain::Report::FootLockerCaBillingSummary.permission? current_user
-      settings = {'start_date'=>params[:start_date],'end_date'=>params['end_date']}
+      settings = {'start_date'=>params[:start_date], 'end_date'=>params['end_date']}
       run_report "Foot Locker CA Billing Summary", OpenChain::Report::FootLockerCaBillingSummary, settings, ["Invoice date between #{params[:start_date]} and #{params[:end_date]}."]
     else
       error_redirect "You do not have permission to view this report"
@@ -154,7 +154,7 @@ class ReportsController < ApplicationController
 
   def run_das_billing_summary
     if OpenChain::Report::DasBillingSummary.permission? current_user
-      settings = {'start_date'=>params[:start_date],'end_date'=>params['end_date']}
+      settings = {'start_date'=>params[:start_date], 'end_date'=>params['end_date']}
       run_report "DAS Canada Billing Summary", OpenChain::Report::DasBillingSummary, settings, ["CADEX sent between #{params[:start_date]} and #{params[:end_date]}."]
     else
       error_redirect "You do not have permission to view this report"
@@ -190,7 +190,7 @@ class ReportsController < ApplicationController
     if OpenChain::Report::MarcJacobsFreightBudget.permission? current_user
       year = params[:year]
       month = params[:month]
-      run_report "Marc Jacobs Freight Budget - #{year}-#{month}", OpenChain::Report::MarcJacobsFreightBudget, {:year=>year,:month=>month}, ["Month: #{year}-#{month}"]
+      run_report "Marc Jacobs Freight Budget - #{year}-#{month}", OpenChain::Report::MarcJacobsFreightBudget, {:year=>year, :month=>month}, ["Month: #{year}-#{month}"]
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -217,7 +217,7 @@ class ReportsController < ApplicationController
 
   def run_kitchencraft_billing
     if OpenChain::Report::KitchenCraftBillingReport.permission? current_user
-      settings = {:start_date=>params[:start_date],:end_date=>params[:end_date]}
+      settings = {:start_date=>params[:start_date], :end_date=>params[:end_date]}
       run_report "KitchenCraft Billing", OpenChain::Report::KitchenCraftBillingReport, settings, ["Release Date between #{settings[:start_date]} and #{settings[:end_date]}."]
     else
       error_redirect "You do not have permission to view this report"
@@ -236,7 +236,7 @@ class ReportsController < ApplicationController
     if OpenChain::Report::LandedCostReport.permission? current_user
       customer = Company.with_customs_management_number(params[:customer_number]).first
       if customer && customer.can_view?(current_user)
-        settings = {:start_date=>params[:start_date],:end_date=>params[:end_date], :customer_number => params[:customer_number]}
+        settings = {:start_date=>params[:start_date], :end_date=>params[:end_date], :customer_number => params[:customer_number]}
         run_report "Landed Cost Report", OpenChain::Report::LandedCostReport, settings, ["Release Date on or after #{settings[:start_date]} and prior to #{settings[:end_date]}."]
       else
         error_redirect "You do not have permission to view this company"
@@ -311,7 +311,7 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report."
     end
   end
-  
+
   def show_duty_savings_report
     if OpenChain::Report::DutySavingsReport.permission?(current_user)
       render
@@ -322,8 +322,8 @@ class ReportsController < ApplicationController
 
   def run_duty_savings_report
     if OpenChain::Report::DutySavingsReport.permission?(current_user)
-      settings = {"start_date" => params[:start_date], 
-                  "end_date" => params[:end_date], 
+      settings = {"start_date" => params[:start_date],
+                  "end_date" => params[:end_date],
                   "customer_numbers" => params[:customer_numbers].delete("\r\;, ").split("\n")}
       run_report "Duty Savings Report", OpenChain::Report::DutySavingsReport, settings, []
     else
@@ -358,7 +358,7 @@ class ReportsController < ApplicationController
 
   def run_deferred_revenue
     if OpenChain::Report::AllianceDeferredRevenueReport.permission?(current_user)
-      settings = {:start_date => params[:start_date].to_date,}
+      settings = {:start_date => params[:start_date].to_date, }
       run_report "Deferred Revenue Report", OpenChain::Report::AllianceDeferredRevenueReport, settings, ["On #{settings[:start_date]}"]
     else
       error_redirect "You do not have permission to view this report."
@@ -520,7 +520,7 @@ class ReportsController < ApplicationController
     klass = OpenChain::Report::AscenaEntryAuditReport
     @cust_info = klass.permissions current_user
     if !@cust_info.empty?
-      @cust_info.map!{ |ci| [ci[:name], ci[:cust_num]] } 
+      @cust_info.map! { |ci| [ci[:name], ci[:cust_num]] }
       render
     else
       error_redirect "You do not have permission to view this report"
@@ -532,14 +532,14 @@ class ReportsController < ApplicationController
     cust_info = klass.permissions current_user
     if !cust_info.empty?
       # Filter out customer numbers user doesn't have permissions for.
-      cust_number = ([params[:cust_number]] & cust_info.map{ |ci| ci[:cust_num] }).first
+      cust_number = ([params[:cust_number]] & cust_info.map { |ci| ci[:cust_num] }).first
       run_report "Ascena / Ann Inc. / Maurices Entry Audit Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
                                                 end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
                                                 end_fiscal_year_month: params[:end_fiscal_year_month], cust_number: cust_number},
-                                                ["Start release date: #{params[:start_release_date]}", 
-                                                 "End release date: #{params[:end_release_date]}", 
-                                                 "Start Fiscal Year/Month: #{params[:start_fiscal_year_month]}", 
-                                                 "End Fiscal Year/Month: #{params[:end_fiscal_year_month]}", 
+                                                ["Start release date: #{params[:start_release_date]}",
+                                                 "End release date: #{params[:end_release_date]}",
+                                                 "Start Fiscal Year/Month: #{params[:start_fiscal_year_month]}",
+                                                 "End Fiscal Year/Month: #{params[:end_fiscal_year_month]}",
                                                  "Customer Number: #{params[:cust_number]}"]
     else
       error_redirect "You do not have permission to view this report"
@@ -558,14 +558,14 @@ class ReportsController < ApplicationController
     klass = OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport
     cust_info = klass.permissions current_user
     if !cust_info.empty?
-      cust_nums = cust_info.map{ |ci| ci[:cust_num] }
+      cust_nums = cust_info.map { |ci| ci[:cust_num] }
       run_report "Ascena / Maurices Vendor Scorecard Report", klass, {range_field: params[:range_field], start_release_date: params[:start_release_date],
                                                                       end_release_date: params[:end_release_date], start_fiscal_year_month: params[:start_fiscal_year_month],
-                                                                      end_fiscal_year_month: params[:end_fiscal_year_month], cust_numbers: cust_nums}, 
-                                                                      ["Start release date: #{params[:start_release_date]}", 
-                                                                       "End release date: #{params[:end_release_date]}", 
-                                                                       "Start Fiscal Year/Month: #{params[:start_fiscal_year_month]}", 
-                                                                       "End Fiscal Year/Month: #{params[:end_fiscal_year_month]}", 
+                                                                      end_fiscal_year_month: params[:end_fiscal_year_month], cust_numbers: cust_nums},
+                                                                      ["Start release date: #{params[:start_release_date]}",
+                                                                       "End release date: #{params[:end_release_date]}",
+                                                                       "Start Fiscal Year/Month: #{params[:start_fiscal_year_month]}",
+                                                                       "End Fiscal Year/Month: #{params[:end_fiscal_year_month]}",
                                                                        "Customer Numbers: #{cust_nums.join(", ")}"]
     else
       error_redirect "You do not have permission to view this report"
@@ -812,15 +812,15 @@ class ReportsController < ApplicationController
     klass = OpenChain::CustomHandler::Ascena::AscenaMpfSavingsReport
     @cust_info = klass.permissions current_user
     if !@cust_info.empty?
-      @cust_info.map!{ |ci| [ci[:name], ci[:cust_num]] } 
+      @cust_info.map! { |ci| [ci[:name], ci[:cust_num]] }
       @cust_info << (["Combine companies"] << @cust_info.map(&:last).join(',')) if (@cust_info.count > 1)
-    
+
       # create a dropdown of all the fiscal months available
       @fiscal_months = []
       FiscalMonth.where(company_id: klass.ascena.id).where("end_date > ?", Date.parse("01-01-2018")).order("start_date ASC").each do |fm|
         @fiscal_months << fm.fiscal_descriptor
       end
-      
+
       render
     else
       error_redirect "You do not have permission to view this report"
@@ -832,7 +832,7 @@ class ReportsController < ApplicationController
     cust_info = klass.permissions current_user
     if !cust_info.empty?
       # Filter out customer numbers user doesn't have permissions for.
-      cust_numbers = params[:cust_numbers].split(",") & cust_info.map{ |ci| ci[:cust_num] }
+      cust_numbers = params[:cust_numbers].split(",") & cust_info.map { |ci| ci[:cust_num] }
       fm = klass.fiscal_month params
       if fm.nil?
         add_flash :errors, "You must select a valid fiscal month."
@@ -898,15 +898,15 @@ class ReportsController < ApplicationController
     klass = OpenChain::CustomHandler::Ascena::AscenaDutySavingsReport
     @cust_info = klass.permissions current_user
     if !@cust_info.empty?
-      @cust_info.map!{ |ci| [ci[:name], ci[:cust_num]] } 
+      @cust_info.map! { |ci| [ci[:name], ci[:cust_num]] }
       @cust_info << (["Combine companies"] << @cust_info.map(&:last).join(',')) if (@cust_info.count > 1)
-    
+
       # create a dropdown of all the fiscal months available
       @fiscal_months = []
       FiscalMonth.where(company_id: klass.ascena.id).order("start_date ASC").each do |fm|
         @fiscal_months << fm.fiscal_descriptor
       end
-      
+
       render
     else
       error_redirect "You do not have permission to view this report"
@@ -918,7 +918,7 @@ class ReportsController < ApplicationController
     cust_info = klass.permissions current_user
     if !cust_info.empty?
       # Filter out customer numbers user doesn't have permissions for.
-      cust_numbers = params[:cust_numbers].split(",") & cust_info.map{ |ci| ci[:cust_num] }
+      cust_numbers = params[:cust_numbers].split(",") & cust_info.map { |ci| ci[:cust_num] }
       fm = klass.fiscal_month params
       if fm.nil?
         add_flash :errors, "You must select a valid fiscal month."
@@ -986,11 +986,11 @@ class ReportsController < ApplicationController
       importer_ids = get_customer_year_over_year_report_importer_ids
       if !importer_ids.nil? && importer_ids.length > 0
         run_report "Entry Year Over Year Report", klass, {range_field: params[:range_field], importer_ids: importer_ids,
-                    ca: params[:country] == "CA", year_1: params[:year_1], year_2: params[:year_2], 
-                    include_cotton_fee: params[:cotton_fee] == 'true', include_taxes: params[:taxes] == 'true', 
-                    include_other_fees: params[:other_fees] == 'true', mode_of_transport: params[:mode_of_transport], 
-                    entry_types: get_customer_year_over_year_report_entry_types, include_isf_fees: params[:isf_fees] == 'true', 
-                    include_port_breakdown: params[:port_breakdown] == 'true', 
+                    ca: params[:country] == "CA", year_1: params[:year_1], year_2: params[:year_2],
+                    include_cotton_fee: params[:cotton_fee] == 'true', include_taxes: params[:taxes] == 'true',
+                    include_other_fees: params[:other_fees] == 'true', mode_of_transport: params[:mode_of_transport],
+                    entry_types: get_customer_year_over_year_report_entry_types, include_isf_fees: params[:isf_fees] == 'true',
+                    include_port_breakdown: params[:port_breakdown] == 'true',
                     group_by_mode_of_transport: params[:group_by_mode_of_transport] == 'true', include_line_graphs: params[:line_graphs] == 'true',
                     sum_units_by_mode_of_transport: params[:sum_units_by_mode_of_transport] == 'true' }, []
       else
@@ -1052,7 +1052,7 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report"
     end
   end
-  
+
   def run_puma_division_quarter_breakdown
     klass = OpenChain::Report::PumaDivisionQuarterBreakdown
     if klass.permission? current_user
@@ -1061,14 +1061,14 @@ class ReportsController < ApplicationController
       error_redirect "You do not have permission to view this report"
     end
   end
-  
+
   def show_us_billing_summary
     if OpenChain::Report::UsBillingSummary.permission? current_user
       @us_importers = Company.importers.joins(:system_identifiers).where(system_identifiers: {system: "Customs Management"})
     else
       error_redirect "You do not have permission to view this report"
     end
-  end                             
+  end
 
   def run_us_billing_summary
     klass = OpenChain::Report::UsBillingSummary
@@ -1157,10 +1157,10 @@ class ReportsController < ApplicationController
   private
     def run_report name, klass, settings, friendly_settings
       begin
-        ReportResult.run_report! name, current_user, klass, {:settings=>settings,:friendly_settings=>friendly_settings}
+        ReportResult.run_report! name, current_user, klass, {:settings=>settings, :friendly_settings=>friendly_settings}
         add_flash :notices, "Your report has been scheduled. You'll receive a system message when it finishes."
       rescue
-        $!.log_me ["Running #{klass.to_s} report.","Params: #{params.to_s}"]
+        $!.log_me ["Running #{klass.to_s} report.", "Params: #{params.to_s}"]
         add_flash :errors, "There was an error running your report: #{$!.message}"
       end
       redirect_to report_results_path

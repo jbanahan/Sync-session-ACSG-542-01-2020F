@@ -39,7 +39,7 @@ describe Project do
   end
   describe "red_messages" do
     it "should not have message if closed" do
-      expect(Project.new(closed_at:Time.now,due:2.weeks.ago).red_messages).to be_blank
+      expect(Project.new(closed_at:Time.now, due:2.weeks.ago).red_messages).to be_blank
     end
     it "should have message if no active milestones" do
       expect(Project.new.red_messages.to_a).to eq ["Project doesn't have any open deliverables."]
@@ -53,7 +53,7 @@ describe Project do
       expect(Project.new(due:1.day.ago).red_messages.join).to match /overdue/
     end
     it "should be red if any incomplete tasks exist" do
-      d = Factory(:project_deliverable,due_date:1.day.ago)
+      d = Factory(:project_deliverable, due_date:1.day.ago)
       expect(d.project.red_messages.join).to match /1 deliverable overdue/
     end
   end

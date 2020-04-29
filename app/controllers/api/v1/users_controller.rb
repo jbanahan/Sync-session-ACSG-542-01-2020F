@@ -7,7 +7,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
   before_filter :prevent_clearance_response_cookies
 
   def login
-    # TODO - This really needs account freezing implemented after too many failed attempts 
+    # TODO - This really needs account freezing implemented after too many failed attempts
     # within a certain timeframe.  Would be quite easy to do w/ a redis based auto expiring key.
     user = authenticate params
     login_user user
@@ -43,8 +43,8 @@ module Api; module V1; class UsersController < Api::V1::ApiController
   end
 
   def google_oauth2
-    # What's happening here is the user's device is making a validation request to google to obtain an 
-    # authtoken.  Their device is then sharing that token with us, which we can then use to 
+    # What's happening here is the user's device is making a validation request to google to obtain an
+    # authtoken.  Their device is then sharing that token with us, which we can then use to
     # validate the token information by finding out the user the token is associated with.
     # The response from google includes the user's email, which we can then use to look up the
     # local user and then login the user.
@@ -57,7 +57,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
     access_token = params[:auth_token].presence || params[:access_token]
 
     user = nil
-    if access_token.blank? 
+    if access_token.blank?
       render_error "The access_token parameter was missing."
     else
       strategy = OmniAuth::Strategies::GoogleOauth2.new Rails.application.config.google_oauth2_api_login[:client_id], Rails.application.config.google_oauth2_api_login[:client_secret]
@@ -72,7 +72,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
         # Email address is required to be unique throughout the system..so we can rely on only having a single result
         user = User.where(email: result[:email]).first
       end
-      
+
       if user
         login_user user
       else
@@ -122,7 +122,7 @@ module Api; module V1; class UsersController < Api::V1::ApiController
 
     def prevent_clearance_response_cookies
       session = clearance_session
-      
+
       if session
         # Override these methods to prevent clearance from writing cookies to the response
         # We don't want these for the API.

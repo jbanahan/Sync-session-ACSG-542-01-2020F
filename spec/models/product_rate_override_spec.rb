@@ -21,7 +21,7 @@ describe ProductRateOverride do
         u = double('user')
         expect(Product).to receive(:search_where).with(u).and_return '99=99'
         pro = Factory(:product_rate_override)
-        search = ProductRateOverride.search_secure(u,ProductRateOverride)
+        search = ProductRateOverride.search_secure(u, ProductRateOverride)
         expect(search.to_sql).to match(/product_rate_overrides\.product_id IN \(SELECT products\.id FROM products WHERE 99=99\)/)
         expect(search.to_a).to eq [pro]
       end

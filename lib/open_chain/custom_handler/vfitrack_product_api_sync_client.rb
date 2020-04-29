@@ -1,7 +1,7 @@
 require 'open_chain/custom_handler/api_sync_client'
 require 'open_chain/api/product_api_client'
 
-# This is a simple base class to extend for instance/company specific 
+# This is a simple base class to extend for instance/company specific
 # syncing of data meant for syncing to VFI Track.
 
 # The methods you must implement are:
@@ -56,7 +56,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
     @query_map = map
   end
 
-  def valid_columns 
+  def valid_columns
     [:product_id, :prod_uid, :prod_name, :prod_country_of_origin, :fda_product_code, :class_cntry_iso, :class_customs_description, :hts_line_number, :hts_hts_1, :hts_hts_2, :hts_hts_3]
   end
 
@@ -93,7 +93,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
 
 
   def add_classification_tariff_fields_to_local_data row, product_data
-    # The tariff line / hts # is the only piece of data we're 
+    # The tariff line / hts # is the only piece of data we're
     # sharing across multiple result rows to form a single product result
     classification = Array.wrap(product_data["classifications"]).find {|c| c["class_cntry_iso"] == row[@query_map[:class_cntry_iso]] }
     if classification.nil?
@@ -112,7 +112,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
       classification["tariff_records"] ||= []
       classification["tariff_records"] << tariff
     end
-    
+
     tariff['hts_line_number'] = row[@query_map[:hts_line_number]]
     tariff['hts_hts_1'] = row[@query_map[:hts_hts_1]] if @query_map[:hts_hts_1]
     tariff['hts_hts_2'] = row[@query_map[:hts_hts_2]] if @query_map[:hts_hts_2]
@@ -133,11 +133,11 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
   end
 
   def merge_remote_data_with_local remote_data, local_data
-    # Basically, what we're doing here is taking the 
+    # Basically, what we're doing here is taking the
     # local data representation of the product and merging it
     # together with the remote json one.  It's important
-    # that the local is merged INTO the remote so that the 
-    # ids in the remote are retained.    
+    # that the local is merged INTO the remote so that the
+    # ids in the remote are retained.
 
     # The only data we really should push is Classification country / HTS 1 / FDA Product Code
     if remote_data.blank?
@@ -242,7 +242,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
           mark_as_destroyed(remote_classification) unless local_tariff_isos.include?(country)
         end
       end
-      
+
 
       if remote_classifications.length > 0
         remote_data["classifications"] = remote_classifications
@@ -250,7 +250,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
 
       remote_data
     end
-  
+
     def update_classification_data remote_classifications, local_classification
       return unless local_classification['class_cntry_iso']
 
@@ -260,7 +260,7 @@ module OpenChain; module CustomHandler; class VfiTrackProductApiSyncClient < Ope
         remote_classification = {'class_cntry_iso' => local_classification['class_cntry_iso']}
         remote_classifications << remote_classification
       end
-      
+
       set_data(remote_classification, '*cf_99', local_classification["class_customs_description"]) if @query_map.has_key?(:class_customs_description)
 
       local_tariff_rows = Set.new

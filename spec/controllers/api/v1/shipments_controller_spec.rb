@@ -8,33 +8,33 @@ describe Api::V1::ShipmentsController do
   }
 
   before(:each) do
-    @u = Factory(:master_user,shipment_edit:true,shipment_view:true,order_view:true,product_view:true)
+    @u = Factory(:master_user, shipment_edit:true, shipment_view:true, order_view:true, product_view:true)
     allow_api_access @u
   end
 
   describe "index" do
     it "should find shipments" do
-      Factory(:shipment,reference:'123')
-      Factory(:shipment,reference:'ABC')
+      Factory(:shipment, reference:'123')
+      Factory(:shipment, reference:'ABC')
       get :index
       expect(response).to be_success
       j = JSON.parse response.body
-      expect(j['results'].collect{|r| r['shp_ref']}).to eq ['123','ABC']
+      expect(j['results'].collect {|r| r['shp_ref']}).to eq ['123', 'ABC']
     end
 
     it "should limit fields returned" do
-      s1 = Factory(:shipment,reference:'123',mode:'Air',master_bill_of_lading:'MBOL')
+      s1 = Factory(:shipment, reference:'123', mode:'Air', master_bill_of_lading:'MBOL')
       get :index, fields:'shp_ref,shp_mode', shipment_lines:true, booking_lines:true
       expect(response).to be_success
       j = JSON.parse(response.body)['results']
-      j.first.delete 'permissions' #not testing permissions hash
-      expect(j).to eq [{'id'=>s1.id,'shp_ref'=>'123','shp_mode'=>'Air','lines'=>[],'booking_lines'=>[], 'screen_settings'=>{}}]
+      j.first.delete 'permissions' # not testing permissions hash
+      expect(j).to eq [{'id'=>s1.id, 'shp_ref'=>'123', 'shp_mode'=>'Air', 'lines'=>[], 'booking_lines'=>[], 'screen_settings'=>{}}]
     end
   end
 
   describe "show" do
     it "should render shipment" do
-      s = Factory(:shipment,reference:'123',mode:'Air',importer_reference:'DEF')
+      s = Factory(:shipment, reference:'123', mode:'Air', importer_reference:'DEF')
       get :show, id: s.id
       expect(response).to be_success
       j = JSON.parse response.body
@@ -78,14 +78,14 @@ describe Api::V1::ShipmentsController do
 
     it "should render summary section" do
       ol1 = Factory(:order_line)
-      ol2 = Factory(:order_line,order: ol1.order)
-      sl1 = Factory(:shipment_line,quantity:1100,product:ol1.product)
+      ol2 = Factory(:order_line, order: ol1.order)
+      sl1 = Factory(:shipment_line, quantity:1100, product:ol1.product)
       sl1.linked_order_line_id = ol1.id
-      sl2 = Factory(:shipment_line,shipment:sl1.shipment,quantity:25,product:ol2.product)
+      sl2 = Factory(:shipment_line, shipment:sl1.shipment, quantity:25, product:ol2.product)
       sl2.linked_order_line_id = ol2.id
-      bl1 = Factory(:booking_line,shipment:sl1.shipment,quantity:600,product:ol1.product,order:ol1.order)
-      bl2 = Factory(:booking_line,shipment:sl1.shipment,quantity:50,order_line:ol1)
-      [sl1,sl2,bl1,bl2].each {|s| s.update_attributes(updated_at:Time.now)}
+      bl1 = Factory(:booking_line, shipment:sl1.shipment, quantity:600, product:ol1.product, order:ol1.order)
+      bl2 = Factory(:booking_line, shipment:sl1.shipment, quantity:50, order_line:ol1)
+      [sl1, sl2, bl1, bl2].each {|s| s.update_attributes(updated_at:Time.now)}
 
       get :show, id: sl1.shipment_id.to_s, summary: 'true'
       j = JSON.parse response.body
@@ -104,14 +104,14 @@ describe Api::V1::ShipmentsController do
     end
 
     it "should convert numbers to numeric" do
-      sl = Factory(:shipment_line,quantity:10)
+      sl = Factory(:shipment_line, quantity:10)
       get :show, id: sl.shipment_id, shipment_lines: true
       j = JSON.parse response.body
       sln = j['shipment']['lines'].first
       expect(sln['shpln_shipped_qty']).to eq 10
     end
     it "should render custom values" do
-      cd = Factory(:custom_definition,module_type:'Shipment',data_type:'string')
+      cd = Factory(:custom_definition, module_type:'Shipment', data_type:'string')
       s = Factory(:shipment)
       s.update_custom_value! cd, 'myval'
       get :show, id: s.id
@@ -120,7 +120,7 @@ describe Api::V1::ShipmentsController do
       expect(j['shipment']["*cf_#{cd.id}"]).to eq 'myval'
     end
     it "should render shipment lines" do
-      sl = Factory(:shipment_line,line_number:5,quantity:10)
+      sl = Factory(:shipment_line, line_number:5, quantity:10)
       get :show, id: sl.shipment_id, shipment_lines: true
       expect(response).to be_success
       j = JSON.parse response.body
@@ -130,7 +130,7 @@ describe Api::V1::ShipmentsController do
       expect(slj['shpln_shipped_qty']).to eq 10.0
     end
     it "should render booking lines" do
-      sl = Factory(:booking_line,line_number:5,quantity:10)
+      sl = Factory(:booking_line, line_number:5, quantity:10)
       get :show, id: sl.shipment_id, booking_lines: true
       expect(response).to be_success
       j = JSON.parse response.body
@@ -140,9 +140,9 @@ describe Api::V1::ShipmentsController do
       expect(slj['bkln_quantity']).to eq 10.0
     end
     it "should render optional order lines" do
-      ol = Factory(:order_line,quantity:20,currency:'USD')
-      ol.order.update_attributes(customer_order_number:'C123',order_number:'123')
-      sl = Factory(:shipment_line,quantity:10,product:ol.product)
+      ol = Factory(:order_line, quantity:20, currency:'USD')
+      ol.order.update_attributes(customer_order_number:'C123', order_number:'123')
+      sl = Factory(:shipment_line, quantity:10, product:ol.product)
       sl.linked_order_line_id = ol.id
       sl.save!
       get :show, id: sl.shipment_id, shipment_lines: true, include: 'order_lines'
@@ -157,9 +157,9 @@ describe Api::V1::ShipmentsController do
       expect(olj['ord_cust_ord_no']).to eq ol.order.customer_order_number
     end
     it "should render shipment containers" do
-      c = Factory(:container,entry:nil,shipment:Factory(:shipment),
+      c = Factory(:container, entry:nil, shipment:Factory(:shipment),
         container_number:'CN1234')
-      sl = Factory(:shipment_line,shipment:c.shipment,container:c)
+      sl = Factory(:shipment_line, shipment:c.shipment, container:c)
       get :show, id: sl.shipment_id, shipment_lines: true, include: "containers"
       expect(response).to be_success
       j = JSON.parse response.body
@@ -168,8 +168,8 @@ describe Api::V1::ShipmentsController do
       expect(j['shipment']['lines'][0]['shpln_container_uid']).to eq c.id
     end
     it "should optionally render carton sets" do
-      cs = Factory(:carton_set,starting_carton:1000)
-      Factory(:shipment_line,shipment:cs.shipment,carton_set:cs)
+      cs = Factory(:carton_set, starting_carton:1000)
+      Factory(:shipment_line, shipment:cs.shipment, carton_set:cs)
       get :show, id: cs.shipment_id, shipment_lines: true, include: 'carton_sets'
       expect(response).to be_success
       j = JSON.parse response.body
@@ -178,7 +178,7 @@ describe Api::V1::ShipmentsController do
       expect(j['shipment']['lines'][0]['shpln_carton_set_uid']).to eq cs.id
     end
     it "should render comments" do
-      s = Factory(:shipment,reference:'123',mode:'Air',importer_reference:'DEF')
+      s = Factory(:shipment, reference:'123', mode:'Air', importer_reference:'DEF')
       s.comments.create! user: @u, subject: "Subject", body: "Comment Body"
       get :show, id: s.id, include: "comments"
 
@@ -334,11 +334,11 @@ describe Api::V1::ShipmentsController do
   describe "process_tradecard_pack_manifest" do
     before :each do
       @s = Factory(:shipment, reference: "ref num")
-      @att = Factory(:attachment,attachable:@s, attached_file_name: "attached.txt")
+      @att = Factory(:attachment, attachable:@s, attached_file_name: "attached.txt")
     end
     it "should fail if user cannot edit shipment" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
-      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id], 'id'=>@s.id}}.to_not change(AttachmentProcessJob, :count)
       expect(response.status).to eq 403
     end
 
@@ -346,14 +346,14 @@ describe Api::V1::ShipmentsController do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       a2 = Factory(:attachment, attached_file_name: "not attached.txt")
       a3 = Factory(:attachment, attached_file_name: "also not attached.txt")
-      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[a2.id, a3.id],'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[a2.id, a3.id], 'id'=>@s.id}}.to_not change(AttachmentProcessJob, :count)
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['errors']).to eq ['Processing cancelled. The following attachments are not linked to the shipment: not attached.txt, also not attached.txt']
     end
     it "should fail if AttachmentProcessJob already exists and doesn't have an error" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
-      apj = @s.attachment_process_jobs.create!(attachment_id:@att.id,job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
-      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}}.to_not change(AttachmentProcessJob,:count)
+      apj = @s.attachment_process_jobs.create!(attachment_id:@att.id, job_name:'Tradecard Pack Manifest', user_id:@u.id, start_at:1.minute.ago)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id], 'id'=>@s.id}}.to_not change(AttachmentProcessJob, :count)
       expect(response.status).to eq 400
       expect(JSON.parse(response.body)['errors']).to eq ['Processing cancelled. The following attachments have already been submitted: attached.txt']
       expect(apj.error_message).to be_nil
@@ -361,7 +361,7 @@ describe Api::V1::ShipmentsController do
     it "processes single job" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       expect_any_instance_of(AttachmentProcessJob).to receive(:process)
-      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(1)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id], 'id'=>@s.id}}.to change(AttachmentProcessJob, :count).from(0).to(1)
       expect(response).to be_success
       resp = JSON.parse(response.body)
       expect(resp['shipment']).to_not be_nil
@@ -375,12 +375,12 @@ describe Api::V1::ShipmentsController do
       expect(@u.messages).to be_empty
     end
     it "processes multiple jobs", :disable_delayed_jobs do
-      att_2 = Factory(:attachment,attachable:@s, attached_file_name: "attached2.txt")
-      
+      att_2 = Factory(:attachment, attachable:@s, attached_file_name: "attached2.txt")
+
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       allow_any_instance_of(AttachmentProcessJob).to receive(:process)
 
-      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id],'id'=>@s.id}}.to change(AttachmentProcessJob,:count).from(0).to(2)
+      expect {post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id], 'id'=>@s.id}}.to change(AttachmentProcessJob, :count).from(0).to(2)
       expect(response).to be_success
       resp = JSON.parse(response.body)
       expect(resp['shipment']).to_not be_nil
@@ -399,61 +399,61 @@ describe Api::V1::ShipmentsController do
       expect(msg.body).to eq "All worksheets processed successfully."
     end
     it "assigns timestamp before being queued" do
-      #DelayedJob prevents processing from taking place.
-      #Ensures that submitted but unprocessed worksheets can't be resubmitted
+      # DelayedJob prevents processing from taking place.
+      # Ensures that submitted but unprocessed worksheets can't be resubmitted
 
-      att_2 = Factory(:attachment,attachable:@s, attached_file_name: "attached2.txt")
-      
+      att_2 = Factory(:attachment, attachable:@s, attached_file_name: "attached2.txt")
+
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
-      post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id],'id'=>@s.id}
+      post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id], 'id'=>@s.id}
       expect(AttachmentProcessJob.count).to eq 2
-      expect(AttachmentProcessJob.pluck(:start_at).all?{ |time_stamp| time_stamp.present? }).to eq true
+      expect(AttachmentProcessJob.pluck(:start_at).all? { |time_stamp| time_stamp.present? }).to eq true
     end
 
     context "error reporting" do
       before do
         allow_any_instance_of(Shipment).to receive(:can_edit?).and_return true
       end
-   
+
       it "logs exception" do
         expect_any_instance_of(AttachmentProcessJob).to receive(:process).and_raise "Failed to process!"
-        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}
+        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id], 'id'=>@s.id}
         expect(JSON.parse(response.body)['errors']).to eq ['Failed to process!']
         expect(AttachmentProcessJob.first.error_message).to eq 'Failed to process!'
       end
 
       it "clears log on retry if it doesn't contain 'already submitted' error" do
-        apj = @s.attachment_process_jobs.create!(attachment_id:@att.id,error_message:"ERROR",job_name:'Tradecard Pack Manifest',user_id:@u.id,start_at:1.minute.ago)
+        apj = @s.attachment_process_jobs.create!(attachment_id:@att.id, error_message:"ERROR", job_name:'Tradecard Pack Manifest', user_id:@u.id, start_at:1.minute.ago)
         expect_any_instance_of(AttachmentProcessJob).to receive(:process)
-        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id],'id'=>@s.id}
+        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id], 'id'=>@s.id}
         apj.reload
         expect(apj.error_message).to be_nil
-      end      
-      
+      end
+
       it "notifies user of exceptions for multiple jobs", :disable_delayed_jobs do
-        att_2 = Factory(:attachment,attachable:@s, attached_file_name: "attached2.txt")
+        att_2 = Factory(:attachment, attachable:@s, attached_file_name: "attached2.txt")
         bad_attachment = Attachment.first
         counter = 0
-        
+
         allow_any_instance_of(AttachmentProcessJob).to receive(:process) do |apj|
           counter += 1
           raise "Failed to process!" if apj.attachment == bad_attachment
         end
 
-        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id],'id'=>@s.id}
-        expect(counter).to eq 2 #The exception didn't prevent the second file from processing
+        post :process_tradecard_pack_manifest, {'attachment_ids'=>[@att.id, att_2.id], 'id'=>@s.id}
+        expect(counter).to eq 2 # The exception didn't prevent the second file from processing
         expect(@u.messages.count).to eq 1
         msg = @u.messages.first
         expect(msg.subject).to eq "Shipment ref num worksheet upload completed with errors."
         expect(msg.body).to eq "The following worksheets could not be processed *** #{bad_attachment.attached_file_name}: Failed to process!"
-      end   
+      end
     end
   end
   describe "create" do
     before(:each) do
-      @ven = Factory(:company,vendor:true,system_code:'VC')
-      @imp = Factory(:company,importer:true,system_code:'IMP')
-      @product = Factory(:product,unique_identifier:'PUID1')
+      @ven = Factory(:company, vendor:true, system_code:'VC')
+      @imp = Factory(:company, importer:true, system_code:'IMP')
+      @product = Factory(:product, unique_identifier:'PUID1')
       @ven.products_as_vendor << @product
       @s_hash = {'shipment'=>{'shp_ref'=>'MYREF',
         'shp_mode'=>'Sea',
@@ -462,7 +462,7 @@ describe Api::V1::ShipmentsController do
         }}
     end
     it "should save" do
-      expect {post :create, @s_hash}.to change(Shipment,:count).from(0).to(1)
+      expect {post :create, @s_hash}.to change(Shipment, :count).from(0).to(1)
       expect(response).to be_success
       s = Shipment.first
       j = JSON.parse(response.body)['shipment']
@@ -483,7 +483,7 @@ describe Api::V1::ShipmentsController do
           'shpln_puid'=>@product.unique_identifier
         }
       ]
-      expect {post :create, @s_hash}.to change(Shipment,:count).from(0).to(1)
+      expect {post :create, @s_hash}.to change(Shipment, :count).from(0).to(1)
       expect(response).to be_success
       s = Shipment.first
       j = JSON.parse(response.body)['shipment']['lines']
@@ -502,11 +502,11 @@ describe Api::V1::ShipmentsController do
     end
     it "should save containers" do
       @s_hash['shipment']['containers'] = [
-        {'con_container_number'=>'CNUM','con_container_size'=>'40'},
-        {'con_container_number'=>'CNUM2','con_container_size'=>'20'}
+        {'con_container_number'=>'CNUM', 'con_container_size'=>'40'},
+        {'con_container_number'=>'CNUM2', 'con_container_size'=>'20'}
       ]
       @s_hash["include"] = "containers"
-      expect {post :create, @s_hash}.to change(Shipment,:count).from(0).to(1)
+      expect {post :create, @s_hash}.to change(Shipment, :count).from(0).to(1)
       expect(response).to be_success
       s = Shipment.first
       j = JSON.parse(response.body)['shipment']['containers']
@@ -523,11 +523,11 @@ describe Api::V1::ShipmentsController do
     end
     it "should save carton_sets" do
       @s_hash['shipment']['carton_sets'] = [
-        {'cs_starting_carton'=>1,'cs_length'=>10},
-        {'cs_starting_carton'=>2,'cs_carton_qty'=>50}
+        {'cs_starting_carton'=>1, 'cs_length'=>10},
+        {'cs_starting_carton'=>2, 'cs_carton_qty'=>50}
       ]
       @s_hash['include'] = 'carton_sets'
-      expect {post :create, @s_hash}.to change(CartonSet,:count).from(0).to(2)
+      expect {post :create, @s_hash}.to change(CartonSet, :count).from(0).to(2)
       expect(response).to be_success
       s = Shipment.first
       j = JSON.parse(response.body)['shipment']['carton_sets']
@@ -541,12 +541,12 @@ describe Api::V1::ShipmentsController do
     end
     it "should not save if user doesn't have permission" do
       allow_any_instance_of(Shipment).to receive(:can_edit?).and_return false
-      expect {post :create, @s_hash}.to_not change(Shipment,:count)
+      expect {post :create, @s_hash}.to_not change(Shipment, :count)
       expect(response.status).to eq 403
     end
     context "order_lines" do
       before :each do
-        @o_line = Factory(:order_line, product:@product, quantity:1000,order:Factory(:order,importer:@imp))
+        @o_line = Factory(:order_line, product:@product, quantity:1000, order:Factory(:order, importer:@imp))
         @s_hash['shipment']['lines'] = [
           {'shpln_line_number'=>'1',
             'shpln_shipped_qty'=>'104',
@@ -555,19 +555,19 @@ describe Api::V1::ShipmentsController do
           }]
       end
       it "should link order line to shipment line" do
-        expect {post :create, @s_hash}.to change(Shipment,:count).from(0).to(1)
+        expect {post :create, @s_hash}.to change(Shipment, :count).from(0).to(1)
         expect(response).to be_success
         s = Shipment.first.shipment_lines.first
         expect(s.order_lines.to_a).to eq [@o_line]
       end
       it "should not allow linking an order if the user cannot view the order" do
         allow_any_instance_of(OrderLine).to receive(:can_view?).and_return false
-        expect {post :create, @s_hash}.to_not change(Shipment,:count)
+        expect {post :create, @s_hash}.to_not change(Shipment, :count)
         expect(response.status).to eq 400
       end
       it "should not link order line if products are different" do
         @o_line.update_attributes(product_id:Factory(:product).id)
-        expect {post :create, @s_hash}.to_not change(Shipment,:count)
+        expect {post :create, @s_hash}.to_not change(Shipment, :count)
         expect(response.status).to eq 400
       end
     end
@@ -578,17 +578,17 @@ describe Api::V1::ShipmentsController do
           'shpln_shipped_qty'=>'104',
           'shpln_puid'=>@product.unique_identifier,
         }]
-      expect {post :create, @s_hash}.to_not change(Shipment,:count)
+      expect {post :create, @s_hash}.to_not change(Shipment, :count)
       expect(response.status).to eq 400
     end
   end
   describe "update" do
     before :each do
-      @ven = Factory(:company,vendor:true,system_code:'VC')
-      @imp = Factory(:company,importer:true,system_code:'IMP')
-      @product = Factory(:product,unique_identifier:'PUID1')
+      @ven = Factory(:company, vendor:true, system_code:'VC')
+      @imp = Factory(:company, importer:true, system_code:'IMP')
+      @product = Factory(:product, unique_identifier:'PUID1')
       @ven.products_as_vendor << @product
-      @shipment = Factory(:shipment,importer:@imp,mode:'Air')
+      @shipment = Factory(:shipment, importer:@imp, mode:'Air')
       @s_hash = {
         'id'=>@shipment.id,
         'shp_ref'=>'MYREF',
@@ -605,8 +605,8 @@ describe Api::V1::ShipmentsController do
     end
 
     it "should update shipment line" do
-      sl = Factory(:shipment_line,shipment:@shipment,product:@product,quantity:100,line_number:1)
-      @s_hash['lines'] = [{shpln_line_number:1,shpln_shipped_qty:24}]
+      sl = Factory(:shipment_line, shipment:@shipment, product:@product, quantity:100, line_number:1)
+      @s_hash['lines'] = [{shpln_line_number:1, shpln_shipped_qty:24}]
       put :update, id: @shipment.id, shipment: @s_hash
       expect(response).to be_success
       sl.reload
@@ -620,62 +620,62 @@ describe Api::V1::ShipmentsController do
           'shpln_puid'=>@product.unique_identifier
         }
       ]
-      expect {put :update, id: @shipment.id, shipment: @s_hash}.to_not change(ShipmentLine,:count)
+      expect {put :update, id: @shipment.id, shipment: @s_hash}.to_not change(ShipmentLine, :count)
       expect(response.status).to eq 400
     end
     it "should not allow lines to be deleted if !can_add_remove_lines?" do
       allow_any_instance_of(Shipment).to receive(:can_add_remove_shipment_lines?).and_return false
-      sl = Factory(:shipment_line,shipment:@shipment)
+      sl = Factory(:shipment_line, shipment:@shipment)
       @s_hash['lines'] = [
         { 'id'=>sl.id,
           '_destroy' => 'true'
         }
       ]
-      expect {put :update, id: @shipment.id, shipment: @s_hash}.to_not change(ShipmentLine,:count)
+      expect {put :update, id: @shipment.id, shipment: @s_hash}.to_not change(ShipmentLine, :count)
       expect(response.status).to eq 400
     end
     it "should update container" do
-      con = Factory(:container,entry:nil,shipment:@shipment,container_number:'CNOLD')
-      @s_hash['containers'] = [{'id'=>con.id,'con_container_number'=>'CNUM','con_container_size'=>'40'}]
+      con = Factory(:container, entry:nil, shipment:@shipment, container_number:'CNOLD')
+      @s_hash['containers'] = [{'id'=>con.id, 'con_container_number'=>'CNUM', 'con_container_size'=>'40'}]
       put :update, id: @shipment.id, shipment: @s_hash
       expect(response).to be_success
       con.reload
       expect(con.container_number).to eq 'CNUM'
     end
     it "should allow lines to be deleted" do
-      sl = Factory(:shipment_line,shipment:@shipment,product:@product,quantity:100,line_number:1)
-      @s_hash['lines'] = [{shpln_line_number:1,_destroy:true}]
+      sl = Factory(:shipment_line, shipment:@shipment, product:@product, quantity:100, line_number:1)
+      @s_hash['lines'] = [{shpln_line_number:1, _destroy:true}]
       put :update, id: @shipment.id, shipment: @s_hash
       expect(response).to be_success
       expect(ShipmentLine.find_by_id(sl.id)).to be_nil
     end
     it "should allow containers to be deleted" do
-      con = Factory(:container,entry:nil,shipment:@shipment,container_number:'CNOLD')
-      @s_hash['containers'] = [{'id'=>con.id,'_destroy'=>true}]
+      con = Factory(:container, entry:nil, shipment:@shipment, container_number:'CNOLD')
+      @s_hash['containers'] = [{'id'=>con.id, '_destroy'=>true}]
       put :update, id: @shipment.id, shipment: @s_hash
       expect(response).to be_success
       expect(Container.find_by_id(con.id)).to be_nil
     end
     it "should not allow containers to be deleted if they have lines" do
-      con = Factory(:container,entry:nil,shipment:@shipment,container_number:'CNOLD')
-      Factory(:shipment_line,shipment:@shipment,product:@product,quantity:100,line_number:1,container:con)
-      @s_hash['containers'] = [{'id'=>con.id,'_destroy'=>true}]
+      con = Factory(:container, entry:nil, shipment:@shipment, container_number:'CNOLD')
+      Factory(:shipment_line, shipment:@shipment, product:@product, quantity:100, line_number:1, container:con)
+      @s_hash['containers'] = [{'id'=>con.id, '_destroy'=>true}]
       put :update, id: @shipment.id, shipment: @s_hash
       expect(response.status).to eq 400
       expect(Container.find_by_id(con.id)).to_not be_nil
     end
     it "should allow containers to be deleted if associated shipment lines are going to be deleted too" do
-      con = Factory(:container,entry:nil,shipment:@shipment,container_number:'CNOLD')
-      sl = Factory(:shipment_line,shipment:@shipment,product:@product,quantity:100,line_number:1,container:con)
-      @s_hash['containers'] = [{'id'=>con.id,'_destroy'=>true}]
-      @s_hash['lines'] = [{'id'=>sl.id,'_destroy'=>true}]
-      expect{put :update, id: @shipment.id, shipment: @s_hash}.to change(Container,:count).from(1).to(0)
+      con = Factory(:container, entry:nil, shipment:@shipment, container_number:'CNOLD')
+      sl = Factory(:shipment_line, shipment:@shipment, product:@product, quantity:100, line_number:1, container:con)
+      @s_hash['containers'] = [{'id'=>con.id, '_destroy'=>true}]
+      @s_hash['lines'] = [{'id'=>sl.id, '_destroy'=>true}]
+      expect {put :update, id: @shipment.id, shipment: @s_hash}.to change(Container, :count).from(1).to(0)
       expect(response).to be_success
     end
 
     context "with booking lines" do
 
-      let (:order_line) { Factory(:order_line, product:@product, quantity:1000,order:Factory(:order,importer:@imp)) }
+      let (:order_line) { Factory(:order_line, product:@product, quantity:1000, order:Factory(:order, importer:@imp)) }
       let (:shipment_data) {
         {'id'=>@shipment.id,
          'booking_lines' => [
@@ -687,7 +687,7 @@ describe Api::V1::ShipmentsController do
       }
 
       it "should update booking line" do
-        sl = Factory(:booking_line,shipment:@shipment,product:@product,quantity:100,line_number:1)
+        sl = Factory(:booking_line, shipment:@shipment, product:@product, quantity:100, line_number:1)
         shipment_data['booking_lines'].first.merge!({'bkln_line_number' => 1, 'bkln_quantity' => 24})
         put :update, id: @shipment.id, shipment: shipment_data
         expect(response).to be_success
@@ -708,7 +708,7 @@ describe Api::V1::ShipmentsController do
       end
 
       it "rejects orders belonging to a different importer" do
-        order_line.order.update_attributes!(importer: Factory(:company,importer:true,system_code:'ACME'))
+        order_line.order.update_attributes!(importer: Factory(:company, importer:true, system_code:'ACME'))
         put :update, id: @shipment.id, shipment: shipment_data
         expect(response.status).to eq 400
         expect(JSON.parse(response.body)['errors']).to eq ["Order has different importer from shipment"]
@@ -736,9 +736,9 @@ describe Api::V1::ShipmentsController do
     it "should return all orders available from shipment.available_orders" do
       imp = Company.new(name:'IMPORTERNAME')
       vend = Company.new(name:'VENDORNAME')
-      o1 = Order.new(importer:imp,vendor:vend,order_date:Date.new(2014,1,1),mode:'Air',order_number:'ONUM',customer_order_number:'CNUM')
+      o1 = Order.new(importer:imp, vendor:vend, order_date:Date.new(2014, 1, 1), mode:'Air', order_number:'ONUM', customer_order_number:'CNUM')
       o1.id = 99
-      o2 = Order.new(importer:imp,vendor:vend,order_date:Date.new(2014,1,1),mode:'Air',order_number:'ONUM2',customer_order_number:'CNUM2')
+      o2 = Order.new(importer:imp, vendor:vend, order_date:Date.new(2014, 1, 1), mode:'Air', order_number:'ONUM2', customer_order_number:'CNUM2')
       o2.id = 100
       ar_object = double("ShipmentRelation")
       expect_any_instance_of(Shipment).to receive(:available_orders).with(@u).and_return ar_object
@@ -766,8 +766,8 @@ describe Api::V1::ShipmentsController do
     before :each do
       allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
       @shipment = Factory(:shipment)
-      @o1 = Factory :order,order_number:'ONUM',customer_order_number:'CNUM'
-      @o2 = Factory :order,order_number:'ONUM2',customer_order_number:'CNUM2'
+      @o1 = Factory :order, order_number:'ONUM', customer_order_number:'CNUM'
+      @o2 = Factory :order, order_number:'ONUM2', customer_order_number:'CNUM2'
 
       Factory :booking_line, shipment_id:@shipment.id, order_id:@o1.id
       Factory :booking_line, shipment_id:@shipment.id, order_id:@o2.id
@@ -801,7 +801,7 @@ describe Api::V1::ShipmentsController do
     it "returns booking_lines with an order_line_id, in a format that mocks the linked order_line" do
       allow_any_instance_of(Shipment).to receive(:can_view?).and_return true
       shipment = Factory(:shipment)
-      order = Factory :order, order_number:'ONUM',customer_order_number:'CNUM'
+      order = Factory :order, order_number:'ONUM', customer_order_number:'CNUM'
       prod1 = Factory :product
       oline1 = Factory :order_line, order_id:order.id, line_number:1, sku:'SKU', product_id:prod1.id
       bline1 = Factory :booking_line, shipment_id:shipment.id, order_line_id:oline1.id, line_number:5
@@ -821,8 +821,8 @@ describe Api::V1::ShipmentsController do
 
   describe "autocomplete_orders" do
     before :each do
-      @order_1 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNUM", order_number: "ORDERNUM")
-      @order_2 = Factory(:order,importer:@u.company,vendor:@u.company,approval_status:'Accepted', customer_order_number: "CNO#")
+      @order_1 = Factory(:order, importer:@u.company, vendor:@u.company, approval_status:'Accepted', customer_order_number: "CNUM", order_number: "ORDERNUM")
+      @order_2 = Factory(:order, importer:@u.company, vendor:@u.company, approval_status:'Accepted', customer_order_number: "CNO#")
       @s = Factory(:shipment, importer: @u.company, vendor: @u.company)
     end
 
@@ -907,7 +907,7 @@ describe Api::V1::ShipmentsController do
 
   describe "autocomplete_address" do
     before :each do
-      @u = Factory(:user, shipment_edit:true,shipment_view:true,order_view:true,product_view:true)
+      @u = Factory(:user, shipment_edit:true, shipment_view:true, order_view:true, product_view:true)
       @importer = Factory(:importer)
       @s = Factory(:shipment, importer: @importer)
       @u.company.linked_companies << @importer
@@ -1054,22 +1054,22 @@ describe Api::V1::ShipmentsController do
 
   context 'order booking' do
     let :importer do
-      Factory(:company,importer:true)
+      Factory(:company, importer:true)
     end
     let :vendor do
-      Factory(:company,vendor:true)
+      Factory(:company, vendor:true)
     end
     let :shipment do
-      Factory(:shipment,importer:importer,vendor:vendor,ship_from:order.ship_from)
+      Factory(:shipment, importer:importer, vendor:vendor, ship_from:order.ship_from)
     end
     let :order do
-      Factory(:order,importer:importer,vendor:vendor,ship_from:Factory(:address,company:vendor))
+      Factory(:order, importer:importer, vendor:vendor, ship_from:Factory(:address, company:vendor))
     end
     let :product do
       Factory(:product)
     end
     let :order_line do
-      Factory(:order_line,order:order,quantity:100,variant:Factory(:variant,product:product),product:product)
+      Factory(:order_line, order:order, quantity:100, variant:Factory(:variant, product:product), product:product)
     end
 
     describe "#create_booking_from_order" do
@@ -1083,7 +1083,7 @@ describe Api::V1::ShipmentsController do
 
         expect(Shipment).to receive(:generate_reference).and_return '12345678'
 
-        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to change(Shipment,:count).from(0).to(1)
+        expect {post :create_booking_from_order, order_id: order_line.order_id.to_s}.to change(Shipment, :count).from(0).to(1)
 
         o = order_line.order
         expect(response).to be_success
@@ -1092,7 +1092,7 @@ describe Api::V1::ShipmentsController do
         expect(s.importer).to eq importer
         expect(s.vendor).to eq vendor
         expect(s.booking_lines.count).to eq 1
-        expect(s.master_bill_of_lading).to eq 'mbol' #proves callback was run
+        expect(s.master_bill_of_lading).to eq 'mbol' # proves callback was run
         bl = s.booking_lines.first
         expect(bl.order_line).to eq order_line
         expect(bl.quantity).to eq 100
@@ -1101,7 +1101,7 @@ describe Api::V1::ShipmentsController do
         expect_any_instance_of(Shipment).to receive(:can_edit?).and_return false
         allow(Shipment).to receive(:generate_reference).and_return '12345678'
 
-        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment,:count)
+        expect {post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment, :count)
 
         expect(response).to_not be_success
       end
@@ -1109,7 +1109,7 @@ describe Api::V1::ShipmentsController do
         expect_any_instance_of(Order).to receive(:can_view?).and_return false
         allow(Shipment).to receive(:generate_reference).and_return '12345678'
 
-        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment,:count)
+        expect {post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment, :count)
 
         expect(response).to_not be_success
       end
@@ -1117,7 +1117,7 @@ describe Api::V1::ShipmentsController do
         expect_any_instance_of(Order).to receive(:can_book?).and_return false
         allow(Shipment).to receive(:generate_reference).and_return '12345678'
 
-        expect{post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment,:count)
+        expect {post :create_booking_from_order, order_id: order_line.order_id.to_s}.to_not change(Shipment, :count)
 
         expect(response).to_not be_success
       end
@@ -1134,11 +1134,11 @@ describe Api::V1::ShipmentsController do
         s = shipment
         ol = order_line
 
-        expect{put :book_order, id: s.id.to_s, order_id: order_line.order_id.to_s}.to change(BookingLine,:count).from(0).to(1)
+        expect {put :book_order, id: s.id.to_s, order_id: order_line.order_id.to_s}.to change(BookingLine, :count).from(0).to(1)
 
         expect(response).to be_success
         s.reload
-        expect(s.master_bill_of_lading).to eq 'mbol' #proves callback was run
+        expect(s.master_bill_of_lading).to eq 'mbol' # proves callback was run
         expect(s.booking_lines.count).to eq 1
         bl = s.booking_lines.first
         expect(bl.order_line).to eq ol
@@ -1148,43 +1148,43 @@ describe Api::V1::ShipmentsController do
       it 'should fail if user cannot book order' do
         expect_any_instance_of(Order).to receive(:can_book?).and_return false
 
-        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+        expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine, :count)
 
         expect(response).to_not be_success
       end
       it 'should fail if order ship from is different than shipment ship from' do
-        order.update_attributes(ship_from_id:Factory(:address,company:vendor))
+        order.update_attributes(ship_from_id:Factory(:address, company:vendor))
 
-        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+        expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine, :count)
 
         expect(response).to_not be_success
       end
       it 'should fail if user cannot view order' do
         expect_any_instance_of(Order).to receive(:can_view?).and_return false
 
-        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+        expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine, :count)
 
         expect(response).to_not be_success
       end
       it 'should fail if user cannot edit shipment' do
         expect_any_instance_of(Shipment).to receive(:can_edit?).and_return false
 
-        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+        expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine, :count)
 
         expect(response).to_not be_success
       end
       it 'should fail if shipment has different importer as order' do
-        order_line.order.update_attributes(importer_id:Factory(:company,importer:true).id)
+        order_line.order.update_attributes(importer_id:Factory(:company, importer:true).id)
 
-        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+        expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine, :count)
 
         expect(response).to_not be_success
         expect(response.body).to match(/importer must/)
       end
       it 'should fail if shipment has different vendor than order' do
-        order_line.order.update_attributes(vendor_id:Factory(:company,vendor:true).id)
+        order_line.order.update_attributes(vendor_id:Factory(:company, vendor:true).id)
 
-        expect{put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine,:count)
+        expect {put :book_order, id: shipment.id.to_s, order_id: order_line.order_id.to_s}.to_not change(BookingLine, :count)
 
         expect(response).to_not be_success
         expect(response.body).to match(/vendor must/)
@@ -1238,7 +1238,7 @@ describe Api::V1::ShipmentsController do
       expect(json["results"].length).to eq 1
       expect(json["results"].first["id"]).to eq shipment.id
     end
-    
+
     it "limits bookings by vendor id if user is a vendor" do
       @u.company.vendor = true
       @u.company.save!

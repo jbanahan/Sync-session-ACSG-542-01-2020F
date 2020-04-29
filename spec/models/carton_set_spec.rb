@@ -1,5 +1,5 @@
 describe CartonSet do
-  describe "total_gross_kgs" do 
+  describe "total_gross_kgs" do
     it "figures out the gross kgs" do
       cs = CartonSet.new carton_qty: 10, gross_kgs: BigDecimal("25.50")
       expect(cs.total_gross_kgs).to eq BigDecimal("255.0")

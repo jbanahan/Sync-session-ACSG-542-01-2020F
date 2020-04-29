@@ -5,8 +5,8 @@ describe LinkableAttachmentImportRule do
 
   context 'validations' do
     it 'should validate unique paths' do
-      should_work = Factory("linkable_attachment_import_rule",:path=>'f')
-      should_not_work = LinkableAttachmentImportRule.create(:path=>'f',:model_field_uid=>'prod_uid')
+      should_work = Factory("linkable_attachment_import_rule", :path=>'f')
+      should_not_work = LinkableAttachmentImportRule.create(:path=>'f', :model_field_uid=>'prod_uid')
       expect(should_not_work.errors[:path].size).to eq(1)
     end
     it 'should require path' do
@@ -22,8 +22,8 @@ describe LinkableAttachmentImportRule do
   describe 'exist_for_class?' do
     context "with_values" do
       before :each do
-        LinkableAttachmentImportRule.create!(:path=>'/this',:model_field_uid=>'ord_ord_num')
-        LinkableAttachmentImportRule.create!(:path=>'/that',:model_field_uid=>'prod_uid')
+        LinkableAttachmentImportRule.create!(:path=>'/this', :model_field_uid=>'ord_ord_num')
+        LinkableAttachmentImportRule.create!(:path=>'/that', :model_field_uid=>'prod_uid')
       end
       it "should find for module in use" do
         expect(LinkableAttachmentImportRule.exists_for_class?(Order)).to eq true
@@ -36,9 +36,9 @@ describe LinkableAttachmentImportRule do
 
   context 'import' do
     before(:each) do
-      #make some that shouldn't match
+      # make some that shouldn't match
       3.times {Factory(:linkable_attachment_import_rule)}
-      @file = Tempfile.new(['linkable','csv'])
+      @file = Tempfile.new(['linkable', 'csv'])
       @file.write 'abc'
       @file.flush
     end
@@ -114,7 +114,7 @@ describe LinkableAttachmentImportRule do
 
   describe "process_from_s3" do
     before :each do
-      @file = Tempfile.new(['linkable','csv'])
+      @file = Tempfile.new(['linkable', 'csv'])
       @file.write 'abc'
       @file.flush
     end
@@ -163,7 +163,7 @@ describe LinkableAttachmentImportRule do
     end
   end
 
-  describe "after_destroy" do 
+  describe "after_destroy" do
     it "reloads cache after destroy" do
       field =  Factory(:linkable_attachment_import_rule, path: '/path/to', model_field_uid: 'uid')
       expect(field).to receive(:load_cache).and_call_original

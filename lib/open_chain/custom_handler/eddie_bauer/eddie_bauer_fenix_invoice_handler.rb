@@ -21,7 +21,7 @@ module OpenChain; module CustomHandler; module EddieBauer
       false
     end
 
-    private 
+    private
 
       def add_default_header_info row
         ensure_line_length row

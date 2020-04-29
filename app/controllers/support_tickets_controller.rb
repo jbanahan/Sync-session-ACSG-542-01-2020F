@@ -1,16 +1,16 @@
 class SupportTicketsController < ApplicationController
 
-  def index 
+  def index
     @tickets = SupportTicket.where(:requestor_id=>current_user.id).order("state DESC")
     if current_user.support_agent?
       @assigned = SupportTicket.open.where(:agent_id=>current_user.id)
       @unassigned = SupportTicket.open.where(:agent_id=>nil)
-      @open_assigned_to_others = SupportTicket.open.where("agent_id != ?",current_user.id)
+      @open_assigned_to_others = SupportTicket.open.where("agent_id != ?", current_user.id)
     end
   end
-  
+
   def new
-    @ticket = current_user.support_agent? ? SupportTicket.new(:agent=>current_user) : SupportTicket.new(:requestor=>current_user) 
+    @ticket = current_user.support_agent? ? SupportTicket.new(:agent=>current_user) : SupportTicket.new(:requestor=>current_user)
     @ticket.last_saved_by = current_user
     @ticket.email_notifications = true
     @ticket.state = "Open"
@@ -21,7 +21,7 @@ class SupportTicketsController < ApplicationController
     if t.errors.blank?
       add_flash :notices, "Ticket saved successfully, a support agent has been notified."
       redirect_to support_tickets_path
-    else 
+    else
       errors_to_flash t, :now=>true
       @ticket = t
       render :new
@@ -41,7 +41,7 @@ class SupportTicketsController < ApplicationController
     if t.errors.blank?
       add_flash :notices, "Ticket saved successfully, a support agent has been notified."
       redirect_to support_tickets_path
-    else 
+    else
       errors_to_flash t, :now=>true
       @ticket = t
       render :edit

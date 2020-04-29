@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewDrawbackImportsReport do
       expect(described_class.permission? user).to be_truthy
     end
 
-    it "prevents users without view entry permissions" do 
+    it "prevents users without view entry permissions" do
       expect(user).to receive(:view_entries?).and_return false
       expect(described_class.permission? user).to be_falsey
     end

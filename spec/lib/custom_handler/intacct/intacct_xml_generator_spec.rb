@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
   describe "generate_receivable_xml" do
 
     let! (:receivable_line) {
-      receivable.intacct_receivable_lines.build charge_code: '123', charge_description: 'desc', amount: BigDecimal("12.50"), location: "loc", 
+      receivable.intacct_receivable_lines.build charge_code: '123', charge_description: 'desc', amount: BigDecimal("12.50"), location: "loc",
                                   line_of_business: "lob", freight_file: "f123", vendor_number: "ven", broker_file: "b123"
     }
 
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
       root = REXML::Document.new(xml).root
 
       t = REXML::XPath.first root, "/function/create_sotransaction"
-      
+
       posted = receivable.created_at.in_time_zone "Eastern Time (US & Canada)"
       expect(t.text "dateposted/year").to eq posted.strftime "%Y"
       expect(t.text "dateposted/month").to eq posted.strftime "%m"
@@ -213,7 +213,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
     end
 
     it "raises an error if an unexpected dimension_type is utilized" do
-      expect{ subject.generate_dimension_get "blah", "val"}.to raise_error "Unable to create request for unknown dimension type blah."
+      expect { subject.generate_dimension_get "blah", "val"}.to raise_error "Unable to create request for unknown dimension type blah."
     end
   end
 
@@ -245,7 +245,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
     end
 
     it "raises an error if an unknown dimension_type is used" do
-      expect{ subject.generate_dimension_create "blah", "id", "val"}.to raise_error "Unable to generate create request for unknown dimension type blah."
+      expect { subject.generate_dimension_create "blah", "id", "val"}.to raise_error "Unable to generate create request for unknown dimension type blah."
     end
   end
 
@@ -261,7 +261,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
       expect(g.attributes["object"]).to eq "MyObject"
       expect(g.attributes["key"]).to eq "MyKey"
-      
+
       field_text = REXML::XPath.each(g, "fields/field").map {|e| e.text}
 
       expect(field_text.size).to eq(2)
@@ -287,8 +287,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
   describe "generate_check_gl_entry_xml" do
 
     let (:check) {
-      IntacctCheck.new vendor_number: "v", bill_number: "b", vendor_reference: "ref", currency: "cur", gl_account: "a", 
-                    amount: BigDecimal.new("12"), location: "loc", line_of_business: "lob", freight_file: "f", customer_number: "c", 
+      IntacctCheck.new vendor_number: "v", bill_number: "b", vendor_reference: "ref", currency: "cur", gl_account: "a",
+                    amount: BigDecimal.new("12"), location: "loc", line_of_business: "lob", freight_file: "f", customer_number: "c",
                     broker_file: "brok", check_number: "123", bank_number: "bank", check_date: Date.new(2014, 4, 1), bank_cash_gl_account: "cash"
     }
 
@@ -357,7 +357,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
     it "generates xml for voided check entries" do
       check.amount = -check.amount
       control_id, xml = subject.generate_check_gl_entry_xml check
-      
+
       root = REXML::Document.new(xml).root
       expect(REXML::XPath.first(root, "/function/create_gltransaction/gltransactionentries").elements.size).to eq(2)
 
@@ -400,8 +400,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
   describe "generate_ap_adjustment" do
     let (:check) {
-      IntacctCheck.new vendor_number: "v", bill_number: "b", vendor_reference: "ref", currency: "cur", gl_account: "a", 
-        amount: BigDecimal.new("12"), location: "loc", line_of_business: "lob", freight_file: "f", customer_number: "c", 
+      IntacctCheck.new vendor_number: "v", bill_number: "b", vendor_reference: "ref", currency: "cur", gl_account: "a",
+        amount: BigDecimal.new("12"), location: "loc", line_of_business: "lob", freight_file: "f", customer_number: "c",
         broker_file: "brok", check_number: "123", bank_number: "bank", check_date: Date.new(2014, 4, 1), bank_cash_gl_account: "cash"
     }
 
@@ -542,7 +542,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctXmlGenerator do
 
   describe "generate_ap_payment" do
     let (:payment) {
-      described_class::IntacctApPayment.new("entity", "method", "request_method", "vendorid", "docno", "desc", Date.new(2018,12,30), "CUR", [])
+      described_class::IntacctApPayment.new("entity", "method", "request_method", "vendorid", "docno", "desc", Date.new(2018, 12, 30), "CUR", [])
     }
 
     let! (:payment_detail) {

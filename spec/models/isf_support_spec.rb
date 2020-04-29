@@ -32,7 +32,7 @@ describe ISFSupport do
       end
     end
   end
-  
+
   describe "validate_isf" do
     describe 'when the ISF is not valid' do
       describe "when the importer doesn't have an kewill customs number" do
@@ -156,7 +156,7 @@ describe ISFSupport do
       end
     end
 
-    describe "when Country of Origin or HTS number is missing from a shipment line" do 
+    describe "when Country of Origin or HTS number is missing from a shipment line" do
       before :each do
         @shipment = Factory(:shipment)
       end

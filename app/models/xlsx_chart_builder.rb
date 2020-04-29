@@ -26,7 +26,7 @@ class XlsxChartBuilder
   end
 
   # Creates a new line chart in the worksheet.
-  # 
+  #
   # Returns nothing: the XlsChart wrapper object must be dealt with (i.e. adding data) via block.
   #
   # upper_left_corner - The top left corner position of the chart.

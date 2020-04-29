@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::Polo::PoloTradecard810Parser do
 
   subject { described_class }
-  let (:xml) { 
+  let (:xml) {
     xml = <<-XML
 <?xml version="1.0"?>
 <Invoices>

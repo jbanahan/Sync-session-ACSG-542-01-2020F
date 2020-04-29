@@ -1,15 +1,15 @@
 module OpenChain; module ModelFieldGenerator; module HtsGenerator
   def hts_search_value_preprocess_lambda
-    lambda { |v| v.to_s.gsub(".","") }
+    lambda { |v| v.to_s.gsub(".", "") }
   end
 
-  def make_hts_arrays(rank_start,uid_prefix)
+  def make_hts_arrays(rank_start, uid_prefix)
     canada = Country.where(:iso_code=>"CA").first
     us = Country.where(:iso_code=>"US").first
     id_counter = rank_start
     r = []
     (1..3).each do |i|
-      r << [id_counter,"#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym,"HTS Code #{i}",{
+      r << [id_counter, "#{uid_prefix}_hts_#{i}".to_sym, "hts_#{i}".to_sym, "HTS Code #{i}", {
         :export_lambda => lambda {|t|
           h = case i
             when 1 then t.hts_1
@@ -31,10 +31,10 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
         :search_value_preprocess_lambda=> hts_search_value_preprocess_lambda
       }]
       id_counter += 1
-      r << [id_counter,"#{uid_prefix}_hts_#{i}_schedb".to_sym,"schedule_b_#{i}".to_sym,"Schedule B Code #{i}"] if us && us.import_location #make sure us exists so test fixtures pass
+      r << [id_counter, "#{uid_prefix}_hts_#{i}_schedb".to_sym, "schedule_b_#{i}".to_sym, "Schedule B Code #{i}"] if us && us.import_location # make sure us exists so test fixtures pass
       id_counter += 1
-      r << [id_counter,"#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate,"#{i} - General Rate",{
-        :import_lambda => lambda {|obj,data| return "General Duty Rate cannot be set by import, ignored."},
+      r << [id_counter, "#{uid_prefix}_hts_#{i}_gr".to_sym, :general_rate, "#{i} - General Rate", {
+        :import_lambda => lambda {|obj, data| return "General Duty Rate cannot be set by import, ignored."},
         :export_lambda => lambda {|t|
           ot = case i
             when 1 then t.hts_1_official_tariff
@@ -49,8 +49,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
         :read_only => true
       }]
       id_counter += 1
-      r << [id_counter,"#{uid_prefix}_hts_#{i}_cr".to_sym, :common_rate,"#{i} - Common Rate",{
-        :import_lambda => lambda {|obj,data| return "Common Duty Rate cannot be set by import, ignored."},
+      r << [id_counter, "#{uid_prefix}_hts_#{i}_cr".to_sym, :common_rate, "#{i} - Common Rate", {
+        :import_lambda => lambda {|obj, data| return "Common Duty Rate cannot be set by import, ignored."},
         :export_lambda => lambda {|t|
           ot = case i
             when 1 then t.hts_1_official_tariff
@@ -66,8 +66,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
       }]
       if canada && canada.import_location
         id_counter += 1
-        r << [id_counter,"#{uid_prefix}_hts_#{i}_gpt".to_sym, :general_preferential_tariff_rate,"#{i} - GPT Rate",{
-          :import_lambda => lambda {|obj,data| return "GPT Rate cannot be set by import, ignored."},
+        r << [id_counter, "#{uid_prefix}_hts_#{i}_gpt".to_sym, :general_preferential_tariff_rate, "#{i} - GPT Rate", {
+          :import_lambda => lambda {|obj, data| return "GPT Rate cannot be set by import, ignored."},
           :export_lambda => lambda {|t|
             ot = case i
               when 1 then t.hts_1_official_tariff
@@ -84,8 +84,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
       end
       if OfficialTariff.where("import_regulations is not null OR export_regulations is not null").count>0
         id_counter += 1
-        r << [id_counter,"#{uid_prefix}_hts_#{i}_impregs".to_sym, :import_regulations,"#{i} - Import Regulations",{
-          :import_lambda => lambda {|obj,data| return "HTS Import Regulations cannot be set by import, ignored."},
+        r << [id_counter, "#{uid_prefix}_hts_#{i}_impregs".to_sym, :import_regulations, "#{i} - Import Regulations", {
+          :import_lambda => lambda {|obj, data| return "HTS Import Regulations cannot be set by import, ignored."},
           :export_lambda => lambda {|t|
             ot = case i
               when 1 then t.hts_1_official_tariff
@@ -100,8 +100,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
           :read_only=>true
         }]
         id_counter += 1
-        r << [id_counter,"#{uid_prefix}_hts_#{i}_expregs".to_sym, :export_regulations,"#{i} - Export Regulations",{
-          :import_lambda => lambda {|obj,data| return "HTS Export Regulations cannot be set by import, ignored."},
+        r << [id_counter, "#{uid_prefix}_hts_#{i}_expregs".to_sym, :export_regulations, "#{i} - Export Regulations", {
+          :import_lambda => lambda {|obj, data| return "HTS Export Regulations cannot be set by import, ignored."},
           :export_lambda => lambda {|t|
             ot = case i
               when 1 then t.hts_1_official_tariff
@@ -117,8 +117,8 @@ module OpenChain; module ModelFieldGenerator; module HtsGenerator
         }]
       end
       id_counter += 1
-      r << [id_counter,"#{uid_prefix}_hts_#{i}_qc".to_sym,:category,"#{i} - Quota Category",{
-        :import_lambda => lambda {|obj,data| return "Quota Category cannot be set by import, ignored."},
+      r << [id_counter, "#{uid_prefix}_hts_#{i}_qc".to_sym, :category, "#{i} - Quota Category", {
+        :import_lambda => lambda {|obj, data| return "Quota Category cannot be set by import, ignored."},
         :export_lambda => lambda {|t|
           ot = case i
             when 1 then t.hts_1_official_tariff

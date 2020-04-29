@@ -3,7 +3,7 @@ class ChargeCategoriesController < ApplicationController
   def index
     admin_secure do
       @company = Company.find params[:company_id]
-      @charge_categories = @company.charge_categories  
+      @charge_categories = @company.charge_categories
     end
   end
 

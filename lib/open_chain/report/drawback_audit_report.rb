@@ -32,41 +32,41 @@ module OpenChain
           t.binmode
           CSV.open(t, "wb") do |csv|
             csv << results.fields
-            results.each{ |line| csv << line }
+            results.each { |line| csv << line }
           end
           dc.attachments.create!(attached: t)
         end
       end
-      
+
       def send_message(user, dc_id)
         user.messages.create(:subject=>"Report Complete: Drawback Audit Report",
-                             :body=>"<p>Your report has been attached to 
+                             :body=>"<p>Your report has been attached to
                              <a href='#{Rails.application.routes.url_helpers.drawback_claim_url(host: MasterSetup.get.request_host, id: dc_id, protocol: (Rails.env.development? ? "http" : "https"))}'>this drawback claim.</a>.</p>")
       end
 
       def drawback_claim_query(user, dc_id)
         <<-SQL
-          SELECT substring(drawback_claims.entry_number,4,7) as 'Invoice', 
-          drawback_claims.entry_number as 'Claim', 
-          a.import_entry_number as 'Entry Number', 
-          i.port_code as 'Import Port', 
-          a.import_date as 'Import Date', 
-          h.export_ref_1 as 'Export Ref', 
-          h.export_date as 'Export Date', 
-          i.hts_code as 'HTS Code', 
-          h.part_number as 'Part',  
-          i.description as 'Description', 
-          a.quantity as 'Quantity', 
-          i.unit_of_measure as 'UOM', 
-          i.unit_price as 'Unit Price', 
-          i.rate*100 as 'Duty Rate', 
-          i.duty_per_unit as '100% Duty Per Piece', 
-          i.duty_per_unit * a.quantity as '100% Duty Total', 
+          SELECT substring(drawback_claims.entry_number,4,7) as 'Invoice',
+          drawback_claims.entry_number as 'Claim',
+          a.import_entry_number as 'Entry Number',
+          i.port_code as 'Import Port',
+          a.import_date as 'Import Date',
+          h.export_ref_1 as 'Export Ref',
+          h.export_date as 'Export Date',
+          i.hts_code as 'HTS Code',
+          h.part_number as 'Part',
+          i.description as 'Description',
+          a.quantity as 'Quantity',
+          i.unit_of_measure as 'UOM',
+          i.unit_price as 'Unit Price',
+          i.rate*100 as 'Duty Rate',
+          i.duty_per_unit as '100% Duty Per Piece',
+          i.duty_per_unit * a.quantity as '100% Duty Total',
           truncate(round(a.quantity * i.duty_per_unit, 2) * .99,2) as 'Total Claimed'
           FROM drawback_claim_audits a
           INNER JOIN drawback_claims ON a.drawback_claim_id = drawback_claims.id
           LEFT OUTER JOIN drawback_export_histories h ON h.drawback_claim_id = a.drawback_claim_id AND h.part_number = a.export_part_number AND ifnull(h.export_ref_1,'') = ifnull(a.export_ref_1,'') AND h.export_date = a.export_date
-          LEFT OUTER JOIN drawback_import_lines i ON i.entry_number = a.import_entry_number AND i.part_number = a.import_part_number 
+          LEFT OUTER JOIN drawback_import_lines i ON i.entry_number = a.import_entry_number AND i.part_number = a.import_part_number
           WHERE #{DrawbackClaim.search_where(user)} AND h.drawback_claim_id = #{sanitize dc_id}
           GROUP BY a.id
         SQL
@@ -75,7 +75,6 @@ module OpenChain
       def self.run_report(user, settings = {})
         self.new.run(user, settings)
       end
-    
     end
   end
 end

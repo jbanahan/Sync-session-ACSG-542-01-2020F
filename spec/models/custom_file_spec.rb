@@ -2,7 +2,7 @@ describe CustomFile do
   context 'security' do
     it 'should delegate view to handler' do
       handler = double "handler"
-      expect(handler).to receive(:can_view?).twice.and_return(true,false)
+      expect(handler).to receive(:can_view?).twice.and_return(true, false)
       cf = CustomFile.new
       expect(cf).to receive(:handler).twice.and_return(handler)
       u = User.new
@@ -10,7 +10,7 @@ describe CustomFile do
       expect(cf.can_view?(u)).to be_falsey
     end
   end
-  
+
   context 'with functional paperclip/s3', paperclip: true, s3: true do
     let (:file_data) { Time.zone.now.to_s }
     let (:file) do
@@ -27,7 +27,7 @@ describe CustomFile do
     describe "save with attachment" do
       it 'should attach file', paperclip: true, s3: true do
         f = CustomFile.create! attached: file
-        expect(OpenChain::S3.get_data('chain-io',f.attached.path)).to eq file_data
+        expect(OpenChain::S3.get_data('chain-io', f.attached.path)).to eq file_data
       end
     end
 
@@ -108,7 +108,7 @@ describe CustomFile do
       expect(f.finish_at).to be > 10.seconds.ago
     end
     it "should write error" do
-      h = double "handler" 
+      h = double "handler"
       allow(h).to receive(:process).and_raise("BAD")
       f = CustomFile.create!
       allow(f).to receive(:handler).and_return(h)
@@ -141,7 +141,7 @@ describe CustomFile do
     end
     it 'should get handler with module' do
       f = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler')
-      expect(f.handler).to be_instance_of OpenChain::CustomHandler::PoloCsmSyncHandler 
+      expect(f.handler).to be_instance_of OpenChain::CustomHandler::PoloCsmSyncHandler
     end
     it 'should process with handler based on file_type name' do
       handler = double "handler"
@@ -162,7 +162,7 @@ describe CustomFile do
       body = 'body'
       mail = double "mail delivery"
       allow(mail).to receive(:deliver_now).and_return(nil)
-      expect(OpenMailer).to receive(:send_s3_file).with(@u,to,cc,subject,body,'chain-io',s3,f.attached_file_name).and_return(mail)
+      expect(OpenMailer).to receive(:send_s3_file).with(@u, to, cc, subject, body, 'chain-io', s3, f.attached_file_name).and_return(mail)
       f.email_updated_file @u, to, cc, subject, body
     end
   end

@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
     end
 
     it "does not accept shipment snapshot with canceled date" do
-      snapshot.recordable = Shipment.new(canceled_date:Date.new(2018,1,31))
+      snapshot.recordable = Shipment.new(canceled_date:Date.new(2018, 1, 31))
       expect(described_class.accept? snapshot).to eq false
     end
 
@@ -22,12 +22,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
 
   describe "compare", :snapshot do
     it "generates CSV when packing list sent at changes" do
-      shipment = Shipment.new(reference: '555', packing_list_sent_date: Date.new(2018,1,29))
-      shipment.find_and_set_custom_value(cdef, Date.new(2018,2,20))
+      shipment = Shipment.new(reference: '555', packing_list_sent_date: Date.new(2018, 1, 29))
+      shipment.find_and_set_custom_value(cdef, Date.new(2018, 2, 20))
       shipment.save!
       snapshot_old = shipment.create_snapshot Factory(:user)
 
-      shipment.update_attributes!(packing_list_sent_date:Date.new(2018,1,31))
+      shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
       snapshot_new = shipment.create_snapshot Factory(:user)
 
       csv = "A,B,C"
@@ -67,12 +67,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
     end
 
     it "generates CSV when factory pack revised date changes" do
-      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018,1,29))
-      shipment.find_and_set_custom_value(cdef, Date.new(2018,2,20))
+      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
+      shipment.find_and_set_custom_value(cdef, Date.new(2018, 2, 20))
       shipment.save!
       snapshot_old = shipment.create_snapshot Factory(:user)
 
-      shipment.update_custom_value!(cdef, Date.new(2018,2,21))
+      shipment.update_custom_value!(cdef, Date.new(2018, 2, 21))
       snapshot_new = shipment.create_snapshot Factory(:user)
 
       csv = "A,B,C"
@@ -112,8 +112,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
     end
 
     it "does not generate CSV when ISF sent at and factory pack revised date do not change" do
-      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018,1,29))
-      shipment.find_and_set_custom_value(cdef, Date.new(2018,2,20))
+      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
+      shipment.find_and_set_custom_value(cdef, Date.new(2018, 2, 20))
       shipment.save!
       snapshot_old = shipment.create_snapshot Factory(:user)
 
@@ -130,14 +130,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
     end
 
     it "updates existing sync record if present" do
-      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018,1,29))
+      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.save!
       snapshot_old = shipment.create_snapshot Factory(:user)
 
-      shipment.update_attributes!(packing_list_sent_date:Date.new(2018,1,31))
+      shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
       snapshot_new = shipment.create_snapshot Factory(:user)
 
-      synco = shipment.sync_records.create! trading_partner:'Factory Pack Declaration', sent_at:Date.new(2018,1,29)
+      synco = shipment.sync_records.create! trading_partner:'Factory Pack Declaration', sent_at:Date.new(2018, 1, 29)
 
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')
       expect(subject).to receive(:ftp_sync_file).with(instance_of(Tempfile), synco, instance_of(Hash))
@@ -159,11 +159,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
 
     # Represents the extremely unlikely case where a shipment is deleted while this evaluation is underway.
     it "does not generate CSV when the shipment can't be found" do
-      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018,1,29))
+      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.save!
       snapshot_old = shipment.create_snapshot Factory(:user)
 
-      shipment.update_attributes!(packing_list_sent_date:Date.new(2018,1,31))
+      shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
       snapshot_new = shipment.create_snapshot Factory(:user)
 
       shipment.delete
@@ -178,11 +178,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackShipmentC
       ms = stub_master_setup
       expect(ms).to receive(:production?).and_return(true)
 
-      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018,1,29))
+      shipment = Shipment.new(reference: '555', packing_list_sent_date:Date.new(2018, 1, 29))
       shipment.save!
       snapshot_old = shipment.create_snapshot Factory(:user)
 
-      shipment.update_attributes!(packing_list_sent_date:Date.new(2018,1,31))
+      shipment.update_attributes!(packing_list_sent_date:Date.new(2018, 1, 31))
       snapshot_new = shipment.create_snapshot Factory(:user)
 
       expect(OpenChain::CustomHandler::LumberLiquidators::LumberFactoryPackCsvGenerator).to receive(:generate_csv).with(shipment).and_return('A,B,C')

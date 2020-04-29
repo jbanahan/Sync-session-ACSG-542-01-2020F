@@ -21,13 +21,13 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityR
       sheet = workbook.worksheet('Data')
       expect(sheet).not_to be_nil
       expect(sheet.rows.length).to eq 7
-      expect(sheet.row(0)).to eq ['Customer #','Name and Address','Mgr','Anyst','Slsmn','Terr','Add Date','Billing Amt','Revenue Amt','Profit%','Files']
-      expect(sheet.row(1)).to eq ['ABCCOMP','ABC Company','X','Y','CG','Z',excel_date(Date.new(2003,8,28)),15783.75,355.00,2.249,3]
-      expect(sheet.row(2)).to eq ['DEFCOMP','DEF Company',nil,nil,nil,nil,excel_date(Date.new(2017,4,12)),10866.90,937.50,8.627,11]
-      expect(sheet.row(3)).to eq ['GHICOMP','GHI INC',nil,nil,'BOS',nil,excel_date(Date.new(2008,10,17)),7387.24,1265.00,17.124,3]
-      expect(sheet.row(4)).to eq ['JKLCOMP','JKL Enterprises',nil,nil,'HZ',nil,excel_date(Date.new(2017,4,24)),718.78,120.00,16.695,1]
-      expect(sheet.row(5)).to eq ['MNOCOMP','MNO INTERNATIONAL',nil,nil,nil,nil,excel_date(Date.new(2001,12,10)),-80.00,-2260.00,-2825.000,0]
-      expect(sheet.row(6)).to eq ['Grand Totals',nil,nil,nil,nil,nil,nil,55534756.67,2671.50,7.686,18]
+      expect(sheet.row(0)).to eq ['Customer #', 'Name and Address', 'Mgr', 'Anyst', 'Slsmn', 'Terr', 'Add Date', 'Billing Amt', 'Revenue Amt', 'Profit%', 'Files']
+      expect(sheet.row(1)).to eq ['ABCCOMP', 'ABC Company', 'X', 'Y', 'CG', 'Z', excel_date(Date.new(2003, 8, 28)), 15783.75, 355.00, 2.249, 3]
+      expect(sheet.row(2)).to eq ['DEFCOMP', 'DEF Company', nil, nil, nil, nil, excel_date(Date.new(2017, 4, 12)), 10866.90, 937.50, 8.627, 11]
+      expect(sheet.row(3)).to eq ['GHICOMP', 'GHI INC', nil, nil, 'BOS', nil, excel_date(Date.new(2008, 10, 17)), 7387.24, 1265.00, 17.124, 3]
+      expect(sheet.row(4)).to eq ['JKLCOMP', 'JKL Enterprises', nil, nil, 'HZ', nil, excel_date(Date.new(2017, 4, 24)), 718.78, 120.00, 16.695, 1]
+      expect(sheet.row(5)).to eq ['MNOCOMP', 'MNO INTERNATIONAL', nil, nil, nil, nil, excel_date(Date.new(2001, 12, 10)), -80.00, -2260.00, -2825.000, 0]
+      expect(sheet.row(6)).to eq ['Grand Totals', nil, nil, nil, nil, nil, nil, 55534756.67, 2671.50, 7.686, 18]
 
       sheet_2 = workbook.worksheet('Parameters')
       expect(sheet_2).not_to be_nil
@@ -49,7 +49,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftKewillCustomerActivityR
       sheet = workbook.worksheet('Data')
       expect(sheet).not_to be_nil
       expect(sheet.rows.length).to eq 1
-      expect(sheet.row(0)).to eq ['Customer #','Name and Address','Mgr','Anyst','Slsmn','Terr','Add Date','Billing Amt','Revenue Amt','Profit%','Files']
+      expect(sheet.row(0)).to eq ['Customer #', 'Name and Address', 'Mgr', 'Anyst', 'Slsmn', 'Terr', 'Add Date', 'Billing Amt', 'Revenue Amt', 'Profit%', 'Files']
 
       sheet_2 = workbook.worksheet('Parameters')
       expect(sheet_2).to be_nil

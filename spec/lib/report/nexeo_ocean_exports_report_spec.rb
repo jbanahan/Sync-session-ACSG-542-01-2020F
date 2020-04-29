@@ -4,8 +4,8 @@ describe OpenChain::Report::NexeoOceanExportsReport do
     before :each do
       port = Factory(:port, schedule_d_code: "1234", name: "PORT")
       @nexeo = with_customs_management_id(Factory(:importer), "NEXEO")
-      @shipment = Factory(:shipment, importer: @nexeo, importer_reference: "REF", vessel: "VESS", voyage: "VOY", est_departure_date: Date.new(2015, 12,1), lcl: false, 
-                          house_bill_of_lading: "HBOL", booking_carrier: "CAR", master_bill_of_lading: "MBOL", freight_total: BigDecimal("123"), 
+      @shipment = Factory(:shipment, importer: @nexeo, importer_reference: "REF", vessel: "VESS", voyage: "VOY", est_departure_date: Date.new(2015, 12, 1), lcl: false,
+                          house_bill_of_lading: "HBOL", booking_carrier: "CAR", master_bill_of_lading: "MBOL", freight_total: BigDecimal("123"),
                           invoice_total: BigDecimal("150"), gross_weight: BigDecimal("10"), lading_port: port, buyer_address: Factory(:address, name: "BUYER"))
       @shipment.containers.create! container_number: "CONT"
       @shipment.comments.create! subject: "Discharge Port", body: "Discharge", user: User.integration

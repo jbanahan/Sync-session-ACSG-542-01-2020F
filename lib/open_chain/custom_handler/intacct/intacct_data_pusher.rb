@@ -1,7 +1,7 @@
 require 'open_chain/custom_handler/intacct/intacct_client'
 
 module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
-  
+
   def self.run_schedulable opts = {}
     opts = opts.with_indifferent_access
 
@@ -28,10 +28,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
     IntacctPayable.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
       begin
         payable = IntacctPayable.find id
-        Lock.with_lock_retry(payable) do 
+        Lock.with_lock_retry(payable) do
           # double checking the upload date just in case we're running multiple pushes at the same time
           if payable.intacct_upload_date.nil?
-            # Find any checks associated with this payable file / vendor and include them so we can 
+            # Find any checks associated with this payable file / vendor and include them so we can
             # record the payments against the payable we're loading for the check.
             checks = IntacctCheck.where(company: payable.company, bill_number: payable.bill_number, vendor_number: payable.vendor_number, intacct_adjustment_key: nil).
                       where("intacct_payable_id = ? OR intacct_payable_id IS NULL", payable.id).all
@@ -72,7 +72,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
         Lock.with_lock_retry(check) do
           # double checking the upload date just in case we're running multiple pushes at the same time
           if check.intacct_upload_date.nil?
-            # If an adjustment wasn't already added for this check (could happen in cases where there were errors on the first upload that weren't cleared) AND 
+            # If an adjustment wasn't already added for this check (could happen in cases where there were errors on the first upload that weren't cleared) AND
             # If we've already uploaded a payable with the same file / suffix as this check, then we should indicate to the api client
             # that an account adjustment is needed at this time as well.
             payable_count = 0

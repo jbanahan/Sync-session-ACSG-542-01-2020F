@@ -15,11 +15,11 @@ module OpenChain; module Registries; module RegistrySupport
     values
   end
 
-  # 
+  #
   # This methods will evaluate a method on all the registered objects and ONLY return true if the method
   # returns true for every registered object.  It short-circuits (stops running) and returns false
   # once a single object returns false
-  # 
+  #
   def evaluate_registered_permission method, *args
     registered.each do |r|
       if r.respond_to?(method)

@@ -39,8 +39,7 @@ module OpenChain; module CustomHandler; module EddieBauer; class EddieBauerCaDra
       d.unit_price = ct.entered_value / cil.quantity
       d.rate = ct.duty_rate
       d.duty_per_unit = ct.duty_amount / cil.quantity
-      d.save!            
+      d.save!
     end
-    
   end
 end; end; end; end

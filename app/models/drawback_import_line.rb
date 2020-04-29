@@ -55,10 +55,10 @@
 class DrawbackImportLine < ActiveRecord::Base
   include LinesSupport
 
-  attr_accessible :box_37_duty, :box_40_duty, :compute_code, 
-    :country_of_origin_code, :description, :duty_per_unit, :entry_number, 
-    :hts_code, :import_date, :importer_id, :line_number, :ocean, :part_number, 
-    :port_code, :product_id, :product, :quantity, :rate, :received_date, 
+  attr_accessible :box_37_duty, :box_40_duty, :compute_code,
+    :country_of_origin_code, :description, :duty_per_unit, :entry_number,
+    :hts_code, :import_date, :importer_id, :line_number, :ocean, :part_number,
+    :port_code, :product_id, :product, :quantity, :rate, :received_date,
     :total_invoice_value, :total_mpf, :unit_of_measure, :unit_price,
     :color_description, :size_description, :exchange_rate, :receipt_quantity,
     :hts_duty, :hts_quantity, :quantity_2, :entered_value_7501, :total_taxes,
@@ -105,8 +105,8 @@ class DrawbackImportLine < ActiveRecord::Base
       self.description,
       self.unit_of_measure,
       "",
-      "%0.9f" % float_or_zero(self.quantity), #quantity imported
-      "%0.9f" % float_or_zero(self.quantity), #quantity available
+      "%0.9f" % float_or_zero(self.quantity), # quantity imported
+      "%0.9f" % float_or_zero(self.quantity), # quantity available
       "",
       "%0.7f" % float_or_zero(self.unit_price),
       "",
@@ -168,7 +168,7 @@ class DrawbackImportLine < ActiveRecord::Base
       r = ""
       unless str.blank?
         r = str
-        r = r[0,length] if r.length > length
+        r = r[0, length] if r.length > length
       end
       if ljust
         r = r.ljust(length)

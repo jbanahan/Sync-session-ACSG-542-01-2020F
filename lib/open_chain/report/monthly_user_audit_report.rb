@@ -17,7 +17,7 @@ module OpenChain
 
       def send_email(settings)
         wb = create_workbook
-        
+
         workbook_to_tempfile wb, 'MonthlyUserAudit-' do |t|
           subject = "#{Time.now.strftime('%B')} VFI Track User Audit Report for #{MasterSetup.get.system_code}"
           body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
@@ -34,17 +34,17 @@ module OpenChain
 
       def query
         <<-SQL
-          SELECT users.company_id AS 'Company DB ID', 
-            companies.name AS 'Company Name', 
-            companies.system_code AS 'Company Code', 
+          SELECT users.company_id AS 'Company DB ID',
+            companies.name AS 'Company Name',
+            companies.system_code AS 'Company Code',
             users.id AS 'User DB ID',
             users.last_request_at AS 'Last Activity',
-            users.first_name AS 'First Name', 
-            users.last_name AS 'Last Name', 
-            users.username AS 'Username', 
-            users.email AS 'Email', 
+            users.first_name AS 'First Name',
+            users.last_name AS 'Last Name',
+            users.username AS 'Username',
+            users.email AS 'Email',
             users.department AS 'Department',
-            IFNULL(portal_mode,'') AS 'Portal Mode', 
+            IFNULL(portal_mode,'') AS 'Portal Mode',
             IF(admin=1,'Yes','No') AS 'Admin',
             IF(sys_admin=1,'Yes','No') AS 'Sys Admin',
             IFNULL(group_concat(DISTINCT g.name),'') AS 'Groups',
@@ -105,7 +105,7 @@ module OpenChain
             LEFT OUTER JOIN user_group_memberships ugm ON ugm.user_id = users.id
             LEFT OUTER JOIN groups g ON g.id = ugm.group_id
           GROUP BY users.id
-          ORDER BY users.disabled, companies.name 
+          ORDER BY users.disabled, companies.name
         SQL
       end
 

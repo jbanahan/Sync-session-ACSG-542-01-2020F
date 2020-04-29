@@ -20,7 +20,7 @@ describe CoreModule do
       x = double('my validation')
       expect(x).to receive(:validation_call).with(p)
       l = lambda {|obj| x.validation_call(obj)}
-      cm = CoreModule.new('Product','Product',{business_logic_validations:l})
+      cm = CoreModule.new('Product', 'Product', {business_logic_validations:l})
       cm.validate_business_logic p
     end
     it "should call Product.validate_tariff_numbers" do
@@ -33,12 +33,12 @@ describe CoreModule do
   end
   describe "logical_key" do
     it "should use logical key lambda" do
-      ent = Entry.new(source_system:'SS',broker_reference:'123')
+      ent = Entry.new(source_system:'SS', broker_reference:'123')
       expect(CoreModule::ENTRY.logical_key(ent)).to eq 'SS_123'
     end
     it "should fallback to unique_id_field" do
       ord = Order.new(order_number:'ORDNUM')
-      expect(CoreModule::ORDER.logical_key(ord)).to eq CoreModule::ORDER.unique_id_field.process_export(ord,nil,true)
+      expect(CoreModule::ORDER.logical_key(ord)).to eq CoreModule::ORDER.unique_id_field.process_export(ord, nil, true)
     end
   end
   describe 'key_columns' do
@@ -102,7 +102,7 @@ describe CoreModule do
 
     it 'should return for classification' do
       uids = CoreModule::CLASSIFICATION.key_model_field_uids
-      expect(uids).to eq([:class_cntry_name,:class_cntry_iso])
+      expect(uids).to eq([:class_cntry_name, :class_cntry_iso])
       uids.each {|u| expect(u).to be_a_model_field_uid}
     end
 

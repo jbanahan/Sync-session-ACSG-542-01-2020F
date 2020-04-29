@@ -15,25 +15,25 @@ module OpenChain
             bill_columns << cd unless bill_columns.include?(cd)
             val = charge_totals[cd]
             val = BigDecimal("0.00") unless val
-            val = val.add(line.charge_amount,2)
+            val = val.add(line.charge_amount, 2)
             charge_totals[cd] = val
           end
 
           row = sheet.row(row_cursor)
           row.push "VFI"
-          row.push val(e,:ent_carrier_code,run_by)
-          row.push val(e,:ent_export_date,run_by)
-          row.push val(e,:ent_mbols,run_by)
-          row.push val(e,:ent_container_nums,run_by)
-          row.push val(e,:ent_vendor_names,run_by)
-          row.push val(e,:ent_lading_port_name,run_by)
-          row.push val(e,:ent_ult_con_name,run_by)
-          row.push "#{val(e,:ent_consignee_address_1,run_by)} #{val(e,:ent_consignee_address_2,run_by)}"
-          row.push val(e,:ent_consignee_city,run_by)
-          row.push val(e,:ent_consignee_state,run_by)
-          row.push val(e,:ent_unlading_port_name,run_by)
-          row.push val(e,:ent_gross_weight,run_by)
-          row.push val(e,:ent_container_sizes,run_by)
+          row.push val(e, :ent_carrier_code, run_by)
+          row.push val(e, :ent_export_date, run_by)
+          row.push val(e, :ent_mbols, run_by)
+          row.push val(e, :ent_container_nums, run_by)
+          row.push val(e, :ent_vendor_names, run_by)
+          row.push val(e, :ent_lading_port_name, run_by)
+          row.push val(e, :ent_ult_con_name, run_by)
+          row.push "#{val(e, :ent_consignee_address_1, run_by)} #{val(e, :ent_consignee_address_2, run_by)}"
+          row.push val(e, :ent_consignee_city, run_by)
+          row.push val(e, :ent_consignee_state, run_by)
+          row.push val(e, :ent_unlading_port_name, run_by)
+          row.push val(e, :ent_gross_weight, run_by)
+          row.push val(e, :ent_container_sizes, run_by)
           bill_columns.each do |cd|
             if charge_totals[cd]
               row.push << charge_totals[cd].to_f
@@ -61,7 +61,7 @@ module OpenChain
         row.push "Container Size(s)"
         bill_columns.each {|cd| row.push cd}
 
-        t = Tempfile.new(['shoes','.xls'])
+        t = Tempfile.new(['shoes', '.xls'])
         wb.write t.path
         t
       end

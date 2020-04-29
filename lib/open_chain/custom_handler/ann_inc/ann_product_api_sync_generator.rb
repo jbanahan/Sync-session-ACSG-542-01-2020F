@@ -15,11 +15,11 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
       api_objects.push *drain_previous_products
     end
 
-    # Ann can potentially have multiple "styles" associated with a single product record.  Each linked style is 
+    # Ann can potentially have multiple "styles" associated with a single product record.  Each linked style is
     # reference in the related styles custom field, so we need to expload all those relates styles out and send
     # distinct API calls to create/update each of those too.
     styles = [row[1]].push *row[7].to_s.split(/\s*\r?\n\s*/)
-    
+
     styles.each do |style|
       next if style.blank?
 
@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
 
       country = row[2]
       product["classifications"] ||= []
-      # Since we're using inner joins in the query below for classification and tariff data, they should always be present in the 
+      # Since we're using inner joins in the query below for classification and tariff data, they should always be present in the
       # row data..don't bother adding data protections for those cases
       classification = product["classifications"].find {|c| c["class_cntry_iso"] == country }
       if classification.nil?
@@ -49,7 +49,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
         product["classifications"] << classification
       end
 
-      # We can't have more than 1 of the same line number, so we can always assume that each tariff record from the 
+      # We can't have more than 1 of the same line number, so we can always assume that each tariff record from the
       # the query is a new one.
       classification["tariff_records"] << {"hts_line_number" => row[3], "hts_hts_1" => row[4], "hts_hts_2" => row[5], "hts_hts_3" => row[6]} unless row[8].to_s.to_boolean
     end
@@ -75,7 +75,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
   def prepare_product_json p
     # What we need to do here is to delete tariff records from our local product representation
     # if ANY classification has multiple tariffs.  When pulling in products for multi-tariff items
-    # operations decided they'd rather have no tariff records in the system for these than have 
+    # operations decided they'd rather have no tariff records in the system for these than have
     # them both (for some reason)
     p["classifications"].each do |c|
       tariffs = Array.wrap(c["tariff_records"])
@@ -87,7 +87,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
 
   def query_row_map
     # Even though we're handling our own query parsing, rather than use the parent class', the parent
-    # does also use the query map's keys for determining which fields need to be queried from VFI Track while 
+    # does also use the query map's keys for determining which fields need to be queried from VFI Track while
     # syncing.
     {
       product_id: nil,
@@ -108,9 +108,9 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
         INNER JOIN classifications c ON products.id = c.product_id
         INNER JOIN tariff_records r ON r.classification_id = c.id
         INNER JOIN countries iso ON iso.id = c.country_id AND iso.iso_code IN ('US', 'CA')
-        LEFT OUTER JOIN custom_values related_style ON related_style.customizable_id = products.id AND related_style.customizable_type = 'Product' 
+        LEFT OUTER JOIN custom_values related_style ON related_style.customizable_id = products.id AND related_style.customizable_type = 'Product'
           AND related_style.custom_definition_id = #{cdefs[:related_styles].id} AND LENGTH(related_style.text_value) > 0
-        LEFT OUTER JOIN custom_values manual ON manual.customizable_id = c.id AND manual.customizable_type = 'Classification' 
+        LEFT OUTER JOIN custom_values manual ON manual.customizable_id = c.id AND manual.customizable_type = 'Classification'
           AND manual.custom_definition_id = #{cdefs[:manual_flag].id}
     SQL
     if custom_where.blank?
@@ -136,7 +136,7 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnProductApiSyncGe
 
   def local_data_fingerprint local_data
     # Disable the localized data fingerprinting...because we have 1 + n records to sync to VFI Track
-    # per product, there's little point in trying to utilize a single fingerprint in the sync record 
+    # per product, there's little point in trying to utilize a single fingerprint in the sync record
     # across multiple remote products.
     nil
   end

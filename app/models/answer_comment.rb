@@ -17,10 +17,10 @@
 
 class AnswerComment < ActiveRecord::Base
   attr_accessible :answer_id, :answer, :content, :private, :user_id, :user
-  
+
   belongs_to :user
   belongs_to :answer, :touch=>true
-  
+
   validates_presence_of :user
   validates_presence_of :answer
   validates_presence_of :content

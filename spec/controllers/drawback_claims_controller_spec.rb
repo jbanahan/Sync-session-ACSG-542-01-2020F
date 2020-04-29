@@ -5,9 +5,9 @@ describe DrawbackClaimsController do
   describe "index" do
     before :each do
       @du = Factory(:drawback_user)
-      @dc = Factory(:drawback_claim,:importer=>@du.company,:sent_to_customs_date=>1.year.ago)
-      @dc2 = Factory(:drawback_claim,:importer=>@du.company)
-      @dc_other = Factory(:drawback_claim,:sent_to_customs_date=>1.day.ago)
+      @dc = Factory(:drawback_claim, :importer=>@du.company, :sent_to_customs_date=>1.year.ago)
+      @dc2 = Factory(:drawback_claim, :importer=>@du.company)
+      @dc_other = Factory(:drawback_claim, :sent_to_customs_date=>1.day.ago)
       sign_in_as @du
     end
     it "redirects to advanced search" do
@@ -58,7 +58,7 @@ describe DrawbackClaimsController do
     before :each do
       @u = Factory(:user)
       @claim = Factory(:drawback_claim)
-      @h = {'id'=>@claim.id,'drawback_claim'=>{'dc_name'=>'newname'}}
+      @h = {'id'=>@claim.id, 'drawback_claim'=>{'dc_name'=>'newname'}}
       sign_in_as @u
     end
     it "should update claim" do
@@ -81,7 +81,7 @@ describe DrawbackClaimsController do
     before :each do
       @u = Factory(:user)
       @c = Factory(:company)
-      @h = {'drawback_claim'=>{'dc_imp_id'=>@c.id,'dc_name'=>'nm','dc_hmf_claimed'=>'10.04'}}
+      @h = {'drawback_claim'=>{'dc_imp_id'=>@c.id, 'dc_name'=>'nm', 'dc_hmf_claimed'=>'10.04'}}
       sign_in_as @u
     end
     it "should save new claim" do
@@ -107,20 +107,20 @@ describe DrawbackClaimsController do
       @u = Factory(:user)
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return(true)
       @claim = Factory(:drawback_claim)
-      @att = Factory(:attachment,attachable:@claim)
+      @att = Factory(:attachment, attachable:@claim)
       sign_in_as @u
     end
     it "should process export history" do
       eh = double(:export_history_parser)
       expect(OpenChain::CustomHandler::DutyCalc::ExportHistoryParser).to receive(:delay).and_return(eh)
-      expect(eh).to receive(:process_from_attachment).with(@att.id.to_s,@u.id)
+      expect(eh).to receive(:process_from_attachment).with(@att.id.to_s, @u.id)
       post :process_report, id:@claim.id, attachment_id:@att.id, process_type:'exphist'
       expect(response).to redirect_to @claim
     end
     it "should process claim audit" do
       ca = double(:claim_audit_parser)
       expect(OpenChain::CustomHandler::DutyCalc::ClaimAuditParser).to receive(:delay).and_return(ca)
-      expect(ca).to receive(:process_from_attachment).with(@att.id.to_s,@u.id)
+      expect(ca).to receive(:process_from_attachment).with(@att.id.to_s, @u.id)
       post :process_report, id:@claim.id, attachment_id:@att.id, process_type:'audrpt'
       expect(response).to redirect_to @claim
     end
@@ -173,13 +173,13 @@ describe DrawbackClaimsController do
     end
     it "should render json" do
       @bvr.business_validation_template.update_attributes(name:'myname')
-      @rule_result.business_validation_rule.update_attributes(name:'rulename',description:'ruledesc')
+      @rule_result.business_validation_rule.update_attributes(name:'rulename', description:'ruledesc')
       @rule_result.note = 'abc'
       @rule_result.state = 'Pass'
       @rule_result.overridden_by = @u
       @rule_result.overridden_at = Time.now
       @rule_result.save!
-      @rule_result.reload #fixes time issue
+      @rule_result.reload # fixes time issue
       get :validation_results, id: @dc.id, format: :json
       expect(response).to be_success
       h = JSON.parse(response.body)['business_validation_result']
@@ -212,14 +212,14 @@ describe DrawbackClaimsController do
     end
     it "should restrict to edit_drawback?" do
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return false
-      expect{delete :clear_claim_audits, id: @c.id}.to_not change(DrawbackClaimAudit,:count)
+      expect {delete :clear_claim_audits, id: @c.id}.to_not change(DrawbackClaimAudit, :count)
       expect(flash[:errors].size).to eq 1
     end
     it "should clear claim audit" do
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return true
-      expect{
+      expect {
         delete :clear_claim_audits, id: @c.id
-      }.to change(DrawbackClaimAudit,:count).from(1).to(0)
+      }.to change(DrawbackClaimAudit, :count).from(1).to(0)
     end
   end
   describe 'clear_export_histories' do
@@ -231,14 +231,14 @@ describe DrawbackClaimsController do
     end
     it "should restrict to edit_drawback?" do
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return false
-      expect{delete :clear_export_histories, id: @c.id}.to_not change(DrawbackExportHistory,:count)
+      expect {delete :clear_export_histories, id: @c.id}.to_not change(DrawbackExportHistory, :count)
       expect(flash[:errors].size).to eq 1
     end
     it "should clear claim audit" do
       allow_any_instance_of(DrawbackClaim).to receive(:can_edit?).and_return true
-      expect{
+      expect {
         delete :clear_export_histories, id: @c.id
-      }.to change(DrawbackExportHistory,:count).from(1).to(0)
+      }.to change(DrawbackExportHistory, :count).from(1).to(0)
     end
   end
 end

@@ -16,8 +16,8 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonFdaRadProduct
 
   def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:prod_fda_model_number, :prod_fda_brand_name, :prod_fda_contact_name, :prod_fda_contact_title,
-                                                    :prod_fda_product_code, :prod_fda_container_type, :prod_fda_items_per_inner_container, :prod_fda_affirmation_compliance, 
-                                                    :prod_fda_affirmation_compliance_value, :prod_fda_manufacture_date, :prod_fda_exclusion_reason, :prod_fda_unknown_reason, 
+                                                    :prod_fda_product_code, :prod_fda_container_type, :prod_fda_items_per_inner_container, :prod_fda_affirmation_compliance,
+                                                    :prod_fda_affirmation_compliance_value, :prod_fda_manufacture_date, :prod_fda_exclusion_reason, :prod_fda_unknown_reason,
                                                     :prod_fda_accession_number, :prod_fda_manufacturer_name, :prod_fda_warning_accepted]
   end
 
@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonFdaRadProduct
 
     find_or_create_product(line) do |product|
       changed = MutableBoolean.new false
-      
+
       standard_parsing product, changed, line
 
       if changed.value
@@ -59,7 +59,6 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonFdaRadProduct
     affirmation_compliance_code, affirmation_compliance_qualifier = rad_declaration(product, line[19])
     set_custom_value(product, :prod_fda_affirmation_compliance, changed, affirmation_compliance_code)
     set_custom_value(product, :prod_fda_affirmation_compliance_value, changed, affirmation_compliance_qualifier)
-    
   end
 
   def rad_declaration product, declaration_value

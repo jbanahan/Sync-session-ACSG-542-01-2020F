@@ -19,19 +19,19 @@ class VendorsController < ApplicationController
   end
 
   def new
-    action_secure(current_user.create_vendors?,nil, {verb: 'create',module_name:'vendors', lock_check:false}) {
+    action_secure(current_user.create_vendors?, nil, {verb: 'create', module_name:'vendors', lock_check:false}) {
 
     }
   end
 
   def create
-    action_secure(current_user.create_vendors?,nil, {verb: 'create',module_name:'vendors', lock_check:false}) {
+    action_secure(current_user.create_vendors?, nil, {verb: 'create', module_name:'vendors', lock_check:false}) {
       name = params[:company][:name]
       if(name.blank?)
         error_redirect('Name is required.')
         return
       end
-      c = Company.create(name:name.strip,vendor:true)
+      c = Company.create(name:name.strip, vendor:true)
       if c.errors.full_messages.blank?
         c.create_snapshot current_user
         redirect_to vendor_path(c)
@@ -44,10 +44,10 @@ class VendorsController < ApplicationController
 
   def matching_vendors
     error_redirect 'Name must be provided.' if params[:name].blank?
-    test_name = params[:name].gsub(/ /,'')
-    test_name = test_name[0,3] if test_name.length > 3
+    test_name = params[:name].gsub(/ /, '')
+    test_name = test_name[0, 3] if test_name.length > 3
     h = {matches:[]}
-    Company.where(vendor:true).where("replace(companies.name,' ','') LIKE ?","%#{test_name}%").order(:name).each do |c|
+    Company.where(vendor:true).where("replace(companies.name,' ','') LIKE ?", "%#{test_name}%").order(:name).each do |c|
       h[:matches] << {id:c.id, name:c.name}
     end
     render json:h
@@ -60,18 +60,18 @@ class VendorsController < ApplicationController
   end
 
   def orders
-    render_infinite('orders','/vendors/orders','order_rows',:orders) do |c|
-      @orders = Order.search_secure(current_user,c.vendor_orders.order('orders.order_date desc'))
-      @orders = @orders.where('customer_order_number like ?',"%#{params[:q]}%") if params[:q]
+    render_infinite('orders', '/vendors/orders', 'order_rows', :orders) do |c|
+      @orders = Order.search_secure(current_user, c.vendor_orders.order('orders.order_date desc'))
+      @orders = @orders.where('customer_order_number like ?', "%#{params[:q]}%") if params[:q]
       @orders = @orders.paginate(:per_page => 20, :page => params[:page])
       @orders
     end
   end
 
   def survey_responses
-    render_infinite('surveys','/vendors/survey_responses', 'survey_response_rows',:survey_responses) do |c|
-      @survey_responses = SurveyResponse.search_secure(current_user,c.survey_responses)
-      @survey_responses = @survey_responses.joins(:survey).where('surveys.name like ?',"%#{params[:q]}%") if params[:q]
+    render_infinite('surveys', '/vendors/survey_responses', 'survey_response_rows', :survey_responses) do |c|
+      @survey_responses = SurveyResponse.search_secure(current_user, c.survey_responses)
+      @survey_responses = @survey_responses.joins(:survey).where('surveys.name like ?', "%#{params[:q]}%") if params[:q]
       @survey_responses = @survey_responses.paginate(:per_page=>20, :page=>params[:page])
       @survey_responses
     end
@@ -81,13 +81,13 @@ class VendorsController < ApplicationController
     vendor = Company.find(params[:id])
     view_template = CustomViewTemplate.for_object 'vendor_products', vendor, '/vendors/products'
     @partial_template = CustomViewTemplate.for_object 'vendor_product_rows', vendor, 'product_rows'
-    render_infinite('products',view_template,@partial_template,:products) do |c|
-      p = Product.joins(:product_vendor_assignments).where('product_vendor_assignments.vendor_id = ?',c.id)
+    render_infinite('products', view_template, @partial_template, :products) do |c|
+      p = Product.joins(:product_vendor_assignments).where('product_vendor_assignments.vendor_id = ?', c.id)
       @products = Product.search_secure(
-        current_user,p
+        current_user, p
         ).order('unique_identifier')
-      @products = @products.where('unique_identifier like ?',"%#{params[:q]}%") if params[:q]
-      @products = @products.paginate(:per_page=>20,:page => params[:page])
+      @products = @products.where('unique_identifier like ?', "%#{params[:q]}%") if params[:q]
+      @products = @products.paginate(:per_page=>20, :page => params[:page])
       @products
     end
   end
@@ -106,7 +106,7 @@ class VendorsController < ApplicationController
   def render_infinite noun, main_template, partial, partial_local_name
     secure_company_view do |c|
       collection = yield(c)
-      if !render_infinite_empty(collection,noun)
+      if !render_infinite_empty(collection, noun)
         render_layout_or_partial main_template, partial, {partial_local_name=>collection}
       end
     end

@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
     let! (:maurices) { with_customs_management_id(Factory(:importer, name: "Maurices"), "MAUR") }
     let! (:ascena_master) { with_customs_management_id(Factory(:importer, name: "Ascena Master"), "ASCENAMASTER") }
     let! (:user) { Factory(:master_user) }
-  
+
     let!(:ms) do
       m = stub_master_setup
       allow(m).to receive(:custom_feature?).with("Ascena Reports").and_return true
@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       m
     end
 
-    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"}, 
+    let!(:cust_descriptions) {[{cust_num: "ASCE", sys_code: "ASCENA", name: "ASCENA TRADE SERVICES LLC", short_name: "Ascena"},
                                {cust_num: "MAUR", sys_code: "MAUR", name: "MAURICES", short_name: "Maurices"}]}
 
     it "returns empty if 'Ascena Reports' custom feature absent" do
@@ -92,7 +92,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
     e
   end
 
-  # Purpose is to verify that different joins are made for Ascena and Maurices. 
+  # Purpose is to verify that different joins are made for Ascena and Maurices.
   describe "make_query" do
     context "Ascena" do
       let!(:entry) { create_data }
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
         results = ActiveRecord::Base.connection.execute qry
         expect(results.count).to eq 4
         r = []
-        results.each{ |res| r << res }
+        results.each { |res| r << res }
         expect(r[0]).to eq ["Ascena Vendor", @vendor.id, "Carpco Deluxe Knock-offs", @factory2.id, "entry_no", "2017-02-22", DateTime.new(2017, 3, 1, 5, 0), "INV", 3.45, "prodlineB", "PO2", "part_Y", 1.56, 1.56, -0.19]
         expect(r[1]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 2.43, "prodlineA", "PO", "part_X", 5.43, 5.43, 0.3]
         expect(r[2]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 1.21, "prodlineA2", "PO", "part_X", 0.0, 1.21, 0.0]
@@ -114,7 +114,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       let!(:entry) { create_data }
 
       it "returns expected results" do
-        entry.update! customer_number: "MAUR"  
+        entry.update! customer_number: "MAUR"
         @line.update! po_number: "PO1"
         @line2.update! po_number: "PO2"
         @line3.update! po_number: "PO3"
@@ -124,11 +124,11 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
         @order2.update! order_number: "ASCENA-MAU-PO3"
         @order3.update! order_number: "ASCENA-MAU-PO4"
         qry = subject.new.make_query "2017-02-25", "2017-03-25", "first_release_date", ["MAUR"]
-        
+
         results = ActiveRecord::Base.connection.execute qry
         expect(results.count).to eq 4
         r = []
-        results.each{ |res| r << res }
+        results.each { |res| r << res }
         expect(r[0]).to eq ["Ascena Vendor", @vendor.id, "Carpco Deluxe Knock-offs", @factory2.id, "entry_no", "2017-02-22", DateTime.new(2017, 3, 1, 5, 0), "INV", 3.45, "prodlineB", "PO3", "part_Y", 1.56, 1.56, -0.19]
         expect(r[1]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 2.43, "prodlineA", "PO1", "part_X", 5.43, 5.43, 0.3]
         expect(r[2]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 1.21, "prodlineA2", "PO2", "part_X", 0.0, 1.21, 0.0]
@@ -278,13 +278,13 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
 
       Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-04-05").in_time_zone("UTC")) do
         # Current fiscal month, which is the second month of the quarter.
-        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 2, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 2, start_date: Date.new(2017, 4, 1), end_date: Date.new(2017, 4, 30))
         # First month of the current quarter.
-        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,3,1), end_date: Date.new(2017,3,31))
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017, 3, 1), end_date: Date.new(2017, 3, 31))
         # Last month of the previous quarter.
-        FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 12, start_date: Date.new(2017,2,1), end_date: Date.new(2017,2,28))
+        FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 12, start_date: Date.new(2017, 2, 1), end_date: Date.new(2017, 2, 28))
         # First month of the previous quarter.
-        FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 10, start_date: Date.new(2016,12,1), end_date: Date.new(2016,12,31))
+        FiscalMonth.create!(company_id: ascena.id, year: 2016, month_number: 10, start_date: Date.new(2016, 12, 1), end_date: Date.new(2016, 12, 31))
 
         expect_any_instance_of(subject).to receive(:run_scorecard_report)
         m = double('mail')
@@ -301,8 +301,8 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
 
         # Verify some settings values were populated by the scheduling method for report-running purposes.
         expect(settings['range_field']).to eq('first_release_date')
-        expect(settings['start_release_date']).to eq(Date.new(2016,12,1))
-        expect(settings['end_release_date']).to eq(Date.new(2017,2,28))
+        expect(settings['start_release_date']).to eq(Date.new(2016, 12, 1))
+        expect(settings['end_release_date']).to eq(Date.new(2017, 2, 28))
         expect(settings['file_name']).to eq("Ascena-Maurices Vendor Scorecard [Q4 2016]")
       end
     end
@@ -312,7 +312,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
 
       Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-04-05").in_time_zone("UTC")) do
         # The current day is day 5 of the fiscal month, not day 4 (what the settings are looking for).
-        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017, 4, 1), end_date: Date.new(2017, 4, 30))
 
         expect(subject).not_to receive(:run_report)
         expect(OpenMailer).not_to receive(:send_simple_html)
@@ -332,7 +332,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
 
       Timecop.freeze(ActiveSupport::TimeZone["America/New_York"].parse("2017-04-05").in_time_zone("UTC")) do
         # Current quarter.
-        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017,4,1), end_date: Date.new(2017,4,30))
+        FiscalMonth.create!(company_id: ascena.id, year: 2017, month_number: 1, start_date: Date.new(2017, 4, 1), end_date: Date.new(2017, 4, 30))
         # There is no info on file for previous quarter.
 
         expect(subject).not_to receive(:run_report)

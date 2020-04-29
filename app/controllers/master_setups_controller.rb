@@ -49,8 +49,7 @@ class MasterSetupsController < ApplicationController
 
   def show_system_message
     admin_secure("Only administrators can work with the system message.") {
-    
-    } 
+    }
   end
 
   def set_system_message
@@ -74,17 +73,17 @@ class MasterSetupsController < ApplicationController
         add_flash :notices, "Upgrade to version #{params[:name]} initiated."
         # We don't care about this in dev..
         if !Rails.env.development?
-          OpenChain::SlackClient.new.send_message('it-dev-notifications',"#{current_user.username} has initiatied upgrade of `#{m.system_code}` from `#{old_version}` to `#{m.target_version}`.")
+          OpenChain::SlackClient.new.send_message('it-dev-notifications', "#{current_user.username} has initiatied upgrade of `#{m.system_code}` from `#{old_version}` to `#{m.target_version}`.")
         end
       end
-      redirect_to edit_master_setup_path MasterSetup.get 
+      redirect_to edit_master_setup_path MasterSetup.get
     }
   end
 
   def release_migration_lock
     sys_admin_secure("Only system administrators can release migration locks.") {
       MasterSetup.release_migration_lock(force_release: true)
-      redirect_to edit_master_setup_path MasterSetup.get 
+      redirect_to edit_master_setup_path MasterSetup.get
     }
   end
 
@@ -92,7 +91,7 @@ class MasterSetupsController < ApplicationController
     sys_admin_secure("Only system administrators can clear upgrade errors.") {
       OpenChain::Ssm.send_clear_upgrade_errors_command
       add_flash :notices, "Executing AWS Run Command job to clear errors.  Upgrade should re-run shortly."
-      redirect_to edit_master_setup_path MasterSetup.get 
+      redirect_to edit_master_setup_path MasterSetup.get
     }
   end
 
@@ -100,7 +99,7 @@ class MasterSetupsController < ApplicationController
     sys_admin_secure("Only system administrators can restart web servers.") {
       OpenChain::Ssm.send_restart_web_server_command
       add_flash :notices, "Executing AWS Run Command job to restart web servers."
-      redirect_to edit_master_setup_path MasterSetup.get 
+      redirect_to edit_master_setup_path MasterSetup.get
     }
   end
 
@@ -108,7 +107,7 @@ class MasterSetupsController < ApplicationController
     sys_admin_secure("Only system administrators can restart job queues.") {
       OpenChain::Ssm.send_restart_job_queue_command
       add_flash :notices, "Executing AWS Run Command job to restart job queues."
-      redirect_to edit_master_setup_path MasterSetup.get 
+      redirect_to edit_master_setup_path MasterSetup.get
     }
   end
 
@@ -116,7 +115,7 @@ class MasterSetupsController < ApplicationController
     sys_admin_secure("Only system administrators can restart the job queue service.") {
       OpenChain::Ssm.send_restart_job_queue_service_command
       add_flash :notices, "Executing AWS Run Command job to restart job queue service."
-      redirect_to edit_master_setup_path MasterSetup.get 
+      redirect_to edit_master_setup_path MasterSetup.get
     }
   end
 

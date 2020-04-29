@@ -80,7 +80,7 @@ describe OpenChain::Purge do
     end
 
     it "raises an error if no config is set up" do
-      expect{subject.run_schedulable({})}.to raise_error "You have not configured a data purge retention period."
+      expect {subject.run_schedulable({})}.to raise_error "You have not configured a data purge retention period."
     end
   end
 end

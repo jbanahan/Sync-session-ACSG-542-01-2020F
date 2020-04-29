@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
     end
   end
 
-  def cdefs 
+  def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:ord_invoicing_system, :prod_part_number, :ord_line_ex_factory_date, :ord_division]
   end
 
@@ -77,9 +77,9 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
 
       unless po_number.nil? || sap_po?(po_number)
         merch_div_no = merchandise_division(dom, true)
-       
+
         if merch_div_no
-          DataCrossReference.transaction do 
+          DataCrossReference.transaction do
             cr = DataCrossReference.where(cross_reference_type: DataCrossReference::RL_PO_TO_BRAND, key: po_number).first_or_create! value: merch_div_no
 
             # I'm relying here on the save being a no-op in cases where we've created the cross-reference - since the value isn't dirty.
@@ -106,11 +106,11 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
 
     def find_purchase_order importer, po_number, source_system_export_date
       purchase_order = nil
-      Lock.acquire("Order-#{po_number}") do 
+      Lock.acquire("Order-#{po_number}") do
         po = Order.where(importer_id: importer.id, customer_order_number: po_number).includes(:order_lines).first_or_create! do |order|
           order.order_number = order.create_unique_po_number
         end
-        
+
         if valid_export_date? po, source_system_export_date
           # Set the source system export date (which is really the timestamp for when we received the EDI) while
           # we've totally locked out other processes.  This ensures if we're processing multiple versions of the same
@@ -169,16 +169,16 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
         line.quantity = xml.text("ProductQuantityDetails/QuantityOrdered")
 
         line.find_and_set_custom_value cdefs[:ord_line_ex_factory_date], best_ex_factory(xml.text("ProductDates/DatesTimes[DateTimeType = '065']/Date"), xml.text("ProductDates/DatesTimes[DateTimeType = '118']/Date"))
-       
-        # Because we're storing these products in our system (which holds other importer product data), we need to preface the 
+
+        # Because we're storing these products in our system (which holds other importer product data), we need to preface the
         # table's unique identifier column with the importer identifier.
         product = Product.where(importer_id: po.importer_id, unique_identifier: po.importer.fenix_customer_identifier + "-" + style).first_or_initialize
-        
+
         # We only need to save product data the very first time we encounter it
         if product.new_record?
           # since we're only storing a minimal amount of information, also set the style into the name since
           # the PO screen displays the product name on it
-          product.name = style 
+          product.name = style
           # This info tells us if the line is a Set (ST), Prepack (AS), or standard (EA or PR [pair])
           product.unit_of_measure = xml.text("ProductQuantityDetails/ProductQuantityUOM")
 
@@ -200,7 +200,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850VandegriftPars
       po
     end
 
-    def first_xpath_text dom, expression 
+    def first_xpath_text dom, expression
       text = nil
       node = REXML::XPath.first(dom, expression)
       if node

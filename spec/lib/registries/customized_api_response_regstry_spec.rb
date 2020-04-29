@@ -1,4 +1,4 @@
-describe OpenChain::Registries::CustomizedApiResponseRegistry do 
+describe OpenChain::Registries::CustomizedApiResponseRegistry do
 
   subject { described_class }
 
@@ -21,7 +21,7 @@ describe OpenChain::Registries::CustomizedApiResponseRegistry do
     }
   }
 
-  before :each do 
+  before :each do
     subject.register service
   end
 
@@ -43,4 +43,4 @@ describe OpenChain::Registries::CustomizedApiResponseRegistry do
     end
   end
 
-end 
+end

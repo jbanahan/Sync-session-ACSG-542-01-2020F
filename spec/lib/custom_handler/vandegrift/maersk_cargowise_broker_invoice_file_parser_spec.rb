@@ -76,7 +76,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
 
       exist_inv = entry.broker_invoices.build(invoice_number:"BQMJ01119290555", suffix:"this field isn't updated by the parser and shouldn't be messed with")
       exist_line = exist_inv.broker_invoice_lines.build(charge_code:"bogus", charge_description:"bogus", charge_amount:BigDecimal.new(5))
-      exist_inv_2 = entry.broker_invoices.build(invoice_number:"BQMJ01119290556", invoice_total:BigDecimal.new("55.44"), invoice_date:Date.new(2019,5,5))
+      exist_inv_2 = entry.broker_invoices.build(invoice_number:"BQMJ01119290556", invoice_total:BigDecimal.new("55.44"), invoice_date:Date.new(2019, 5, 5))
       entry.save!
 
       subject.parse make_document(test_data)
@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "adds HST13 line" do
-      test_data.gsub!(/HST12/,'HST13')
+      test_data.gsub!(/HST12/, 'HST13')
 
       entry = Factory(:entry, broker_reference:"BQMJ01119290922", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, total_duty: 5.55, total_taxes:22.22)
       country = Factory(:country, iso_code:'US')
@@ -143,7 +143,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "rejects when broker reference is missing" do
-      test_data.gsub!(/Job/,'Jorb')
+      test_data.gsub!(/Job/, 'Jorb')
 
       subject.parse make_document(test_data)
 
@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "rejects when invoice number is missing" do
-      test_data.gsub!(/JobInvoiceNumber/,'JorbInvoyseNoumbur')
+      test_data.gsub!(/JobInvoiceNumber/, 'JorbInvoyseNoumbur')
 
       entry = Factory(:entry, broker_reference:"BQMJ01119290922", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
@@ -163,10 +163,10 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "handles missing optional values" do
-      test_data.gsub!(/CreateTime/,'CreateTim')
-      test_data.gsub!(/LocalTotal/,'RemoteAllBran')
-      test_data.gsub!(/Country/,'Western')
-      test_data.gsub!(/LocalAmount/,'RemoteAmolehill')
+      test_data.gsub!(/CreateTime/, 'CreateTim')
+      test_data.gsub!(/LocalTotal/, 'RemoteAllBran')
+      test_data.gsub!(/Country/, 'Western')
+      test_data.gsub!(/LocalAmount/, 'RemoteAmolehill')
 
       entry = Factory(:entry, broker_reference:"BQMJ01119290922", source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
 
@@ -209,7 +209,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileP
     end
 
     it "clears entry total duty direct if not deferred duty invoice" do
-      test_data.gsub!(/201/,'202')
+      test_data.gsub!(/201/, '202')
 
       entry = Factory(:entry, broker_reference:"BQMJ01119290922", source_system:Entry::CARGOWISE_SOURCE_SYSTEM, total_duty: 5.55, total_taxes:22.22, total_duty_direct:333.33)
 

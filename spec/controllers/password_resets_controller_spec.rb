@@ -3,7 +3,7 @@ describe PasswordResetsController do
   before :each do
     sign_in_as user
   end
-  
+
   describe "create" do
     it "sends password reset message" do
       u = Factory(:user, disallow_password:false, email:"this_is_a_test@email.com")
@@ -42,7 +42,7 @@ describe PasswordResetsController do
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
       expect_any_instance_of(User).to receive(:on_successful_login).with(request)
 
-      put :update, { "user"=>{'password'=>'pw12345','current_password'=>'old_pass','password_confirmation'=>'pw12345' }, "id"=>"555666" }
+      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'old_pass', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices].first).to eq "Password successfully updated"
       expect(response).to redirect_to root_url
 
@@ -56,7 +56,7 @@ describe PasswordResetsController do
       expect(subject).to receive(:sign_out)
       expect_any_instance_of(User).to_not receive(:update_user_password)
 
-      put :update, { "user"=>{'password'=>'pw12345','current_password'=>'old_pass','password_confirmation'=>'pw12345' }, "id"=>"555667" }
+      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'old_pass', 'password_confirmation'=>'pw12345' }, "id"=>"555667" }
       expect(flash[:notices]).to be_nil
       expect(flash[:errors].first).to eq "We're sorry, but we could not locate your account.  Please retry resetting your password from the login page."
       expect(response).to redirect_to new_user_session_path
@@ -73,7 +73,7 @@ describe PasswordResetsController do
 
       expect(subject).to receive(:errors_to_flash).with(be_a(User), now: true)
 
-      put :update, { "user"=>{'password'=>'pw12345','current_password'=>'old_pass','password_confirmation'=>'pw12345' }, "id"=>"555666" }
+      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'old_pass', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices]).to be_nil
       expect(flash[:errors]).to be_nil
       expect(response).to render_template :edit
@@ -88,7 +88,7 @@ describe PasswordResetsController do
       expect_any_instance_of(User).to_not receive(:update_user_password)
       expect_any_instance_of(User).to_not receive(:on_successful_login)
 
-      put :update, { "user"=>{'password'=>'pw12345','current_password'=>'','password_confirmation'=>'pw12345' }, "id"=>"555666" }
+      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices]).to be_nil
       expect(flash[:errors].first).to eq "Current password is required to change password"
       expect(response).to render_template :edit
@@ -105,7 +105,7 @@ describe PasswordResetsController do
 
       expect_any_instance_of(User).to receive(:authenticated?).with("ZBX678", "invalid").and_return false
 
-      put :update, { "user"=>{'password'=>'pw12345','current_password'=>'invalid','password_confirmation'=>'pw12345' }, "id"=>"555666" }
+      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'invalid', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices]).to be_nil
       expect(flash[:errors].first).to eq "Current password is invalid"
       expect(response).to render_template :edit
@@ -120,7 +120,7 @@ describe PasswordResetsController do
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
       expect_any_instance_of(User).to receive(:on_successful_login).with(request)
 
-      put :update, { "user"=>{'password'=>'pw12345','current_password'=>'','password_confirmation'=>'pw12345' }, "id"=>"555666" }
+      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices].first).to eq "Password successfully updated"
       expect(response).to redirect_to root_url
 
@@ -135,7 +135,7 @@ describe PasswordResetsController do
       expect_any_instance_of(User).to receive(:update_user_password).with('pw12345', 'pw12345').and_return true
       expect_any_instance_of(User).to_not receive(:on_successful_login)
 
-      put :update, { "user"=>{'password'=>'pw12345','current_password'=>'','password_confirmation'=>'pw12345' }, "id"=>"555666" }
+      put :update, { "user"=>{'password'=>'pw12345', 'current_password'=>'', 'password_confirmation'=>'pw12345' }, "id"=>"555666" }
       expect(flash[:notices]).to be_nil
       expect(flash[:errors]).to be_nil
       expect(response).to render_template :edit

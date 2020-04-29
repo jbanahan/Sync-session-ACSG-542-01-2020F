@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
-  subject do 
-    Class.new do 
+  subject do
+    Class.new do
       include OpenChain::CustomHandler::GpgDecryptPassthroughSupport
 
       def gpg_secrets_key
@@ -66,8 +66,8 @@ describe OpenChain::CustomHandler::GpgDecryptPassthroughSupport do
   end
 
   describe "decrypt_file_to_tempfile" do
-    subject { 
-      Class.new do 
+    subject {
+      Class.new do
         include OpenChain::CustomHandler::GpgDecryptPassthroughSupport
 
         def gpg_secrets_key

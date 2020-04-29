@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     it 'should handle pipe delimited line' do
       imp = double('importer')
       data = "a\n1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17"
-      expect(described_class).to receive(:parse_csv_line).with((1..17).map{|i| i.to_s},1,imp)
+      expect(described_class).to receive(:parse_csv_line).with((1..17).map {|i| i.to_s}, 1, imp)
       @f.write data
       @f.flush
       described_class.parse_csv_file @f.path, imp
@@ -17,7 +17,7 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     it 'should handle tab delimited line' do
       imp = double('importer')
       data = "a\n1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\t12\t13\t14\t15\t16\t17"
-      expect(described_class).to receive(:parse_csv_line).with((1..17).map{|i| i.to_s},1,imp)
+      expect(described_class).to receive(:parse_csv_line).with((1..17).map {|i| i.to_s}, 1, imp)
       @f.write data
       @f.flush
       described_class.parse_csv_file @f.path, imp
@@ -60,14 +60,14 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     it 'should check for 17 columns (A through Q)' do
       r = make_row
       r << 'another column'
-      expect{described_class.parse_csv_line r, 1, @imp}.to raise_error(/Line 1 had 18 elements/)
+      expect {described_class.parse_csv_line r, 1, @imp}.to raise_error(/Line 1 had 18 elements/)
     end
     it "should create line" do
       vals = default_vals
 
       # this mock could probably be eliminated and replaced with a Factory(:product, ...) if necessary
       expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
-      d = described_class.parse_csv_line(make_row,1,@imp)
+      d = described_class.parse_csv_line(make_row, 1, @imp)
 
       expect(d.class).to eq DutyCalcExportFileLine
       expect(d.export_date.strftime("%Y-%m-%d")).to eq "2011-08-23"
@@ -87,12 +87,12 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
     end
     it 'should handle short date format' do
       expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
-      d = described_class.parse_csv_line(make_row(export_date:'1/13/2014'),1,@imp)
+      d = described_class.parse_csv_line(make_row(export_date:'1/13/2014'), 1, @imp)
       expect(d.export_date.strftime("%Y-%m-%d")).to eq "2014-01-13"
     end
     it 'should handle short date format' do
       expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
-      d = described_class.parse_csv_line(make_row(export_date:'1/7/2015 20:46:49'),1,@imp)
+      d = described_class.parse_csv_line(make_row(export_date:'1/7/2015 20:46:49'), 1, @imp)
       expect(d.export_date.strftime("%Y-%m-%d")).to eq "2015-01-07"
     end
   end

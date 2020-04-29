@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
       e = snapshot.recordable
       archive_setup = attachment_archive_setup_for(e)
       if archive_setup&.send_in_real_time?
-        accept = e.broker_invoices.any?{ |bi| bi.invoice_date >= archive_setup.start_date && (archive_setup.end_date.nil? || bi.invoice_date <= archive_setup.end_date) }
+        accept = e.broker_invoices.any? { |bi| bi.invoice_date >= archive_setup.start_date && (archive_setup.end_date.nil? || bi.invoice_date <= archive_setup.end_date) }
       end
     end
     accept
@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftEntry
   end
 
   def get_archive_packet_id json
-    json_child_entities(json, "Attachment").find{ |a| a["model_fields"]["att_attachment_type"] == "Archive Packet" }.try(:[], "record_id")
+    json_child_entities(json, "Attachment").find { |a| a["model_fields"]["att_attachment_type"] == "Archive Packet" }.try(:[], "record_id")
   end
 
   def ftp_archive archive

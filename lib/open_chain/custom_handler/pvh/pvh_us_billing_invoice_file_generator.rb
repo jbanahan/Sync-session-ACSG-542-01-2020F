@@ -68,9 +68,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
           charge += offset if offset
         end
 
-        charges[uid] = charge 
+        charges[uid] = charge
       end
-      
     end
 
     charges
@@ -97,17 +96,17 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
 
   def container_level_codes
     {
-      "0044" => "C080", 
-      "0082" => "974", 
+      "0044" => "C080",
+      "0082" => "974",
       "0050" => "0545",
-      "0007" => "G740", 
-      "0008" => "E063", 
-      "0009" => "AFEE", 
-      "0191" => "ISF1", 
-      "0014" => "E590", 
-      "0125" => "175", 
+      "0007" => "G740",
+      "0008" => "E063",
+      "0009" => "AFEE",
+      "0191" => "ISF1",
+      "0014" => "E590",
+      "0125" => "175",
       "0031" => "176",
-      "0047" => "120", 
+      "0047" => "120",
       "0095" => "909"
     }
   end
@@ -147,11 +146,11 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
 
     return {} if difference.zero?
 
-    # If the difference is less than zero, then the line sum was larger than the total, we need to subtract from the 
+    # If the difference is less than zero, then the line sum was larger than the total, we need to subtract from the
     # lines.  Greater than zero means the total was larger than the line sum and we need to add value back into the lines.
     loop_addend = difference < 0 ? BigDecimal("0.01") : BigDecimal("-0.01")
 
-    loop do 
+    loop do
       json_child_entities(entry_snapshot, "CommercialInvoice", "CommercialInvoiceLine") do |line|
         record_id = record_id(line)
         offset = lines_with_hmf[record_id]

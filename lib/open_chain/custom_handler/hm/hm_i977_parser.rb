@@ -10,8 +10,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
   include OpenChain::CustomHandler::Hm::HmBusinessLogicSupport
 
   def self.parse_file file_content, log, opts = {}
-    # Each file is supposed to represent a single PO's worth of articles, so we should be ok just parsing them all 
-    # in a single parse attempt and not breaking them up into smaller distinct delayed job units (like we might do 
+    # Each file is supposed to represent a single PO's worth of articles, so we should be ok just parsing them all
+    # in a single parse attempt and not breaking them up into smaller distinct delayed job units (like we might do
     # with an EDI file)
     user = User.integration
     parser = self.new
@@ -35,8 +35,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
   end
 
   def update_product_values article_xml, product
-    # Because we're not storing every single style variant for H&M, Only set the name if it's blank 
-    # in the product.  The description we get from them is actually the 
+    # Because we're not storing every single style variant for H&M, Only set the name if it's blank
+    # in the product.  The description we get from them is actually the
     # full variant one, which may include color and/or sizing info.  So, that would mean that we'd
     # end up potentially changing the name with virtually every article received.
     changed = MutableBoolean.new false
@@ -62,17 +62,17 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
   def find_or_create_product part_number
     uid = "HENNE-#{part_number}"
     product = nil
-    Lock.acquire("Product-#{uid}") do 
+    Lock.acquire("Product-#{uid}") do
       product = Product.where(unique_identifier: uid, importer_id: hm.id).first_or_initialize
       if !product.persisted?
-        product.find_and_set_custom_value cdefs[:prod_part_number], part_number 
+        product.find_and_set_custom_value cdefs[:prod_part_number], part_number
         product.save!
       end
     end
 
     return nil if product.nil?
 
-    Lock.db_lock(product) do 
+    Lock.db_lock(product) do
       product = yield product
     end
 
@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
     @cust
   end
 
-  def cdefs 
+  def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:prod_po_numbers, :prod_part_number, :prod_season, :prod_product_group, :prod_type, :prod_suggested_tariff, :prod_fabric_content]
   end
 

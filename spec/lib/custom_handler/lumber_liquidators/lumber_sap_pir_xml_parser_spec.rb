@@ -9,11 +9,11 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser do
 
   it "should generate ProductVendorAssignment" do
     v = Factory(:company)
-    v.update_custom_value!(@vendor_sap_number_cd,'0000202713')
-    p = Factory(:product,unique_identifier:'000000000010039350')
+    v.update_custom_value!(@vendor_sap_number_cd, '0000202713')
+    p = Factory(:product, unique_identifier:'000000000010039350')
     importer = Factory(:importer, system_code:'LUMBER')
 
-    expect{described_class.parse_file(@data, log, opts)}.to change(ProductVendorAssignment,:count).from(0).to(1)
+    expect {described_class.parse_file(@data, log, opts)}.to change(ProductVendorAssignment, :count).from(0).to(1)
 
     pva = ProductVendorAssignment.first
     expect(pva.vendor).to eq v
@@ -29,15 +29,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser do
     expect(log.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER)[0].module_id).to eq p.id
   end
   it "should do nothing if vendor doesn't exist" do
-    Factory(:product,unique_identifier:'000000000010039350')
+    Factory(:product, unique_identifier:'000000000010039350')
 
-    expect{described_class.parse_file(@data, log, opts)}.to_not change(ProductVendorAssignment,:count)
+    expect {described_class.parse_file(@data, log, opts)}.to_not change(ProductVendorAssignment, :count)
   end
   it "should create product shell if product doesn't exist" do
     v = Factory(:company)
-    v.update_custom_value!(@vendor_sap_number_cd,'0000202713')
+    v.update_custom_value!(@vendor_sap_number_cd, '0000202713')
 
-    expect{described_class.parse_file(@data, log, opts)}.to change(ProductVendorAssignment,:count).from(0).to(1)
+    expect {described_class.parse_file(@data, log, opts)}.to change(ProductVendorAssignment, :count).from(0).to(1)
 
     pva = ProductVendorAssignment.first
     expect(pva.vendor).to eq v
@@ -45,31 +45,31 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberSapPirXmlParser do
   end
   it "should do nothing if ProductVendorAssignment already exists" do
     v = Factory(:company)
-    v.update_custom_value!(@vendor_sap_number_cd,'0000202713')
-    p = Factory(:product,unique_identifier:'000000000010039350')
+    v.update_custom_value!(@vendor_sap_number_cd, '0000202713')
+    p = Factory(:product, unique_identifier:'000000000010039350')
 
     p.vendors << v
 
-    expect{described_class.parse_file(@data, log, opts)}.to_not change(ProductVendorAssignment,:count)
+    expect {described_class.parse_file(@data, log, opts)}.to_not change(ProductVendorAssignment, :count)
 
     expect(EntitySnapshot.count).to eq 0
   end
 
   it "should fail if wrong root element provided" do
     data = "<WRONG_ROOT/>"
-    expect{described_class.parse_file(data, log, opts)}.to raise_error "Incorrect root element WRONG_ROOT, expecting 'INFREC01'."
+    expect {described_class.parse_file(data, log, opts)}.to raise_error "Incorrect root element WRONG_ROOT, expecting 'INFREC01'."
     expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Incorrect root element WRONG_ROOT, expecting 'INFREC01'."
   end
 
   it "should fail if product UID missing" do
     data = @data.gsub '000000000010039350', ''
-    expect{described_class.parse_file(data, log, opts)}.to raise_error "IDOC 0000000158084230 failed, no MATR value."
+    expect {described_class.parse_file(data, log, opts)}.to raise_error "IDOC 0000000158084230 failed, no MATR value."
     expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IDOC 0000000158084230 failed, no MATR value."
   end
 
   it "should fail if vendor SAP number missing" do
     data = @data.gsub '0000202713', ''
-    expect{described_class.parse_file(data, log, opts)}.to raise_error "IDOC 0000000158084230 failed, no LIFNR value."
+    expect {described_class.parse_file(data, log, opts)}.to raise_error "IDOC 0000000158084230 failed, no LIFNR value."
     expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "IDOC 0000000158084230 failed, no LIFNR value."
   end
 end

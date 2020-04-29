@@ -4,7 +4,7 @@ module OpenChain
   class TestInstanceManager
     # call this method to prep the test instance
     # NEVER CALL THIS IN PRODUCTION, IT CLEARS SCHEDULES AND EDITS USERS
-    def self.prep_test_instance request_host: , uuid: , friendly_name: 
+    def self.prep_test_instance request_host: , uuid: , friendly_name:
       m = self.new
       m.update_master_setup! request_host, uuid, friendly_name
       m.clear_schedulable_jobs!
@@ -33,7 +33,7 @@ module OpenChain
       else
         ms.uuid = uuid
       end
-      
+
       ms.request_host = req_host
       ms.suppress_ftp = true
       ms.suppress_email = true

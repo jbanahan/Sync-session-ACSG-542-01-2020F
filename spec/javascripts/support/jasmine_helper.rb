@@ -10,5 +10,4 @@
 #
 # Example: prevent PhantomJS auto install, uses PhantomJS already on your path.
 Jasmine.configure do |config|
-  
 end

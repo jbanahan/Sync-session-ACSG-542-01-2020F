@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::Polo::PoloBusinessLogic do
-  before :each do 
+  before :each do
     @logic = Class.new {extend OpenChain::CustomHandler::Polo::PoloBusinessLogic}
   end
 

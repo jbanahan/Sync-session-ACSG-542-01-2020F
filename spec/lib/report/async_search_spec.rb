@@ -1,21 +1,21 @@
-describe OpenChain::Report::AsyncSearch do 
+describe OpenChain::Report::AsyncSearch do
 
   subject { described_class }
   let (:user) { User.new }
   let (:search_setup) { SearchSetup.new download_format: "xlsx", user: user}
-  let (:tempfile) { 
+  let (:tempfile) {
     # Write something to the tempfile, this is needed to make sure the attachment is actually added when emailed
-    t = Tempfile.new ["temp", ".xlsx"] 
+    t = Tempfile.new ["temp", ".xlsx"]
     t.write "Testing"
     t.flush
     t
   }
 
-  after :each do 
+  after :each do
     tempfile.close! unless tempfile.closed?
   end
 
-  describe "run" do 
+  describe "run" do
     it "uses SearchWriter to write a report and yields the tempfile created" do
       expect(Tempfile).to receive(:open).and_yield tempfile
       expect(SearchWriter).to receive(:write_search).with(search_setup, tempfile,  user: user, audit: nil)
@@ -36,7 +36,7 @@ describe OpenChain::Report::AsyncSearch do
       expect(t.original_filename).to eq "report.xlsx"
     end
 
-    it "raises an error if user doesn't match the search setup" do 
+    it "raises an error if user doesn't match the search setup" do
       # I don't know how this could even happen, but I'll leave this check here.
       expect { subject.run(User.new, search_setup) }.to raise_error "You cannot run another user's report.  Your id is , this report is for user "
     end
@@ -102,7 +102,7 @@ describe OpenChain::Report::AsyncSearch do
     end
   end
 
-  describe "run_report" do 
+  describe "run_report" do
     let (:user) { Factory(:user) }
     let (:search_setup) { Factory(:search_setup, name: "Test", user: user, download_format: "xlsx") }
 
@@ -116,7 +116,7 @@ describe OpenChain::Report::AsyncSearch do
       # This is kinda hokey, but it works...we're passing a proc as a block to the run_report
       # method and then using the rspec method chain to see what's passed to the run methdo, then verifying
       # that the given proc/block is what was passed down
-      proc_block = Proc.new {}
+      proc_block = Proc.new{}
       expect(subject).to receive(:run).with(user, search_setup, {"search_setup_id" => search_setup.id}) do |*args, &block|
         expect(proc_block).to be block
       end

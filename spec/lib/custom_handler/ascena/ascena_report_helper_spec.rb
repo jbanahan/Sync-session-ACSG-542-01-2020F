@@ -7,16 +7,16 @@ class Report
   def run_query cdefs
     ActiveRecord::Base.connection.exec_query query(cdefs)
   end
-  
+
   def query cdefs
     unit_price_cdef_id = cdefs[:ord_line_wholesale_unit_price].id
     ref_cdef_id = cdefs[:prod_reference_number].id
     <<-SQL
-      SELECT #{invoice_value_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, ASCENA_SYS_CODE)} AS 'Invoice Value - Brand', 
-             #{invoice_value_7501('cil')} AS 'Invoice Value - 7501', 
-             #{invoice_value_contract('cil')} AS 'Invoice Value - Contract', 
-             #{unit_price_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, ASCENA_SYS_CODE)} AS 'Unit Price - Brand', 
-             #{unit_price_po('o', 'cil', ref_cdef_id, ASCENA_SYS_CODE)} AS 'Unit Price - PO', 
+      SELECT #{invoice_value_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, ASCENA_SYS_CODE)} AS 'Invoice Value - Brand',
+             #{invoice_value_7501('cil')} AS 'Invoice Value - 7501',
+             #{invoice_value_contract('cil')} AS 'Invoice Value - Contract',
+             #{unit_price_brand('o', 'cil', unit_price_cdef_id, ref_cdef_id, ASCENA_SYS_CODE)} AS 'Unit Price - Brand',
+             #{unit_price_po('o', 'cil', ref_cdef_id, ASCENA_SYS_CODE)} AS 'Unit Price - PO',
              #{unit_price_7501('cil')} AS 'Unit Price - 7501'
       FROM commercial_invoices ci
         INNER JOIN commercial_invoice_lines cil ON ci.id = cil.commercial_invoice_id
@@ -26,9 +26,9 @@ class Report
   end
 end
 
-describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do  
+describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
   let(:report) { Report.new }
-  
+
   before do
     @cdefs = self.class.prep_custom_definitions [:ord_line_wholesale_unit_price, :prod_reference_number]
     @ci = Factory(:commercial_invoice)
@@ -48,7 +48,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
     expect(result.count).to eq 1
     expect(result.first).to eq(
       {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4,
-       "Unit Price - Brand" => 7, "Unit Price - PO" => 6, "Unit Price - 7501" => BigDecimal(2.0/3,6)})                                  
+       "Unit Price - Brand" => 7, "Unit Price - PO" => 6, "Unit Price - 7501" => BigDecimal(2.0/3, 6)})
   end
 
   it "returns expected results when products are linked by reference number" do
@@ -58,7 +58,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaReportHelper do
     expect(result.count).to eq 1
     expect(result.first).to eq(
       {"Invoice Value - Brand" => 21, "Invoice Value - 7501" => 2, "Invoice Value - Contract" => 4,
-       "Unit Price - Brand" => 7, "Unit Price - PO" => 6, "Unit Price - 7501" => BigDecimal(2.0/3,6)})                                  
+       "Unit Price - Brand" => 7, "Unit Price - PO" => 6, "Unit Price - 7501" => BigDecimal(2.0/3, 6)})
   end
 
   context "Invoice Value - Contract" do

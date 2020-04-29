@@ -26,13 +26,13 @@ module OpenChain; module Report; class MonthlyYoyReport
   def get_range_field settings
     range_field = settings['range_field']
     # Defaults to file logged date if bad.  This was the date field the report was originally written against.
-    ['file_logged_date','invoice_date'].include?(range_field) ? range_field : "file_logged_date"
+    ['file_logged_date', 'invoice_date'].include?(range_field) ? range_field : "file_logged_date"
   end
 
   def query range_field
     <<-SQL
       SELECT CONCAT(year(#{range_field}),"-",LPAD(month(#{range_field}),2,"0")) AS 'Period',
-        year(#{range_field}) AS 'Year', 
+        year(#{range_field}) AS 'Year',
         month(#{range_field}) AS 'Month',
         import_country.iso_code AS 'Country',
         division_number AS 'Division Number',
@@ -40,11 +40,11 @@ module OpenChain; module Report; class MonthlyYoyReport
         CASE entries.transport_mode_code WHEN '10' THEN 'Ocean' WHEN '11' THEN 'Ocean' WHEN '40' THEN 'Air' WHEN '41' THEN 'Air' ELSE 'Other' END AS 'Mode',
         COUNT(*) AS 'File Count'
       FROM entries
-        INNER JOIN countries import_country ON entries.import_country_id = import_country.id 
+        INNER JOIN countries import_country ON entries.import_country_id = import_country.id
         #{range_field == "invoice_date" ? "LEFT OUTER JOIN (SELECT entry_id, MIN(invoice_date) AS invoice_date FROM commercial_invoices GROUP by entry_id) AS ci ON entries.id = ci.entry_id " : ""}
-      WHERE 
-        #{range_field} > '#{(Time.zone.now.beginning_of_year - 2.years).to_s(:db)}' AND 
-        #{range_field} < '#{Time.zone.now.beginning_of_month.to_s(:db)}' 
+      WHERE
+        #{range_field} > '#{(Time.zone.now.beginning_of_year - 2.years).to_s(:db)}' AND
+        #{range_field} < '#{Time.zone.now.beginning_of_month.to_s(:db)}'
       GROUP BY period, country, division_number, customer_number, mode
     SQL
   end

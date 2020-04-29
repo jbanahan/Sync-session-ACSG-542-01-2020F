@@ -16,7 +16,7 @@ class FieldLabelsController < ApplicationController
 
   def save
     to_save = params[:field_label]
-    to_save.each do |k,v|
+    to_save.each do |k, v|
       uid = v[:uid]
       current = FieldLabel.label_text uid
       new_val = v[:label]

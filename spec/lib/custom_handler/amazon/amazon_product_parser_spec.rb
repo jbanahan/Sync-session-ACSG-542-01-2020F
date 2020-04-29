@@ -4,16 +4,16 @@ describe OpenChain::CustomHandler::Amazon::AmazonProductParser do
   let! (:us) { Factory(:country, iso_code: "US") }
   let (:data) { IO.read 'spec/fixtures/files/amazon_parts.csv' }
   let (:csv_data) { CSV.parse(data) }
-  let! (:importer) { 
+  let! (:importer) {
     add_system_identifier(with_customs_management_id(Factory(:importer), "CMID"), "Amazon Reference", "ABC4439203")
   }
   let (:user) { Factory(:user) }
   let (:cdefs) { subject.cdefs }
   let (:inbound_file) { InboundFile.new }
 
-  describe "parse" do 
+  describe "parse" do
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:inbound_file).and_return inbound_file
     end
 

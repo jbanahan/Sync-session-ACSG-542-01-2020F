@@ -99,7 +99,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
   end
 
 
-  # What we're doing here is extracting out all the parsable files from the zip, parsing them, and then zipping the 
+  # What we're doing here is extracting out all the parsable files from the zip, parsing them, and then zipping the
   # parsed versions of the files back into a zip file into the given IO object
   def parse_zip_file source_file, dest_file
     # Techincally, we should be able to use the write_buffer method of Zip::OutputStream to directly write to the dest_file
@@ -234,8 +234,8 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
             current_product.price = split_line[3].to_s.strip.to_f
             current_product.total_price = split_line[4].to_s.strip.to_f
           end
-          
-        else 
+
+        else
           if split_line[1] && split_line[1].upcase.start_with?("HS:")
             current_product.hts = split_line[1][4..-1].to_s.strip
           end
@@ -263,7 +263,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
 
     def tariff_info style
       @tariff_cache ||= {}
-      @tariff_finder ||= OpenChain::TariffFinder.new("US", Company.with_customs_management_number(['J0000','JCREW']).to_a)
+      @tariff_finder ||= OpenChain::TariffFinder.new("US", Company.with_customs_management_number(['J0000', 'JCREW']).to_a)
       tyle = style[0..4]
       style = style.rjust(5, "0")
 
@@ -286,7 +286,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
 
         @tariff_cache[style] = results
       end
-      
+
       results
     end
 

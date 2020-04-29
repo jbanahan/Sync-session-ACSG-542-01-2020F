@@ -4,13 +4,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
   let(:cdefs) { subject.cdefs }
   let(:us) { Factory(:country, iso_code: "US") }
   let(:ca) { Factory(:country, iso_code: "CA") }
-  let(:product_1) do 
+  let(:product_1) do
     prod = Factory(:product, unique_identifier: "uid 1")
     prod.update_custom_value! cdefs[:related_styles], "uid 3\nuid 4"
     prod.save!
     prod
   end
-  let(:classi_1_1) do 
+  let(:classi_1_1) do
     cl = Factory(:classification, product: product_1, country: us)
     cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
@@ -33,7 +33,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr.save!
     tr
   end
-  let(:classi_1_2) do 
+  let(:classi_1_2) do
     cl = Factory(:classification, product: product_1, country: ca)
     cl.update_custom_value! cdefs[:approved_date], cl.updated_at - 2.days
     cl
@@ -46,12 +46,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
     tr.save!
     tr
   end
-  let(:product_2) do 
+  let(:product_2) do
     prod = Factory(:product, unique_identifier: "uid 2")
     prod.update_custom_value! cdefs[:related_styles], "uid 5"
     prod
   end
-  let(:classi_2_1) do 
+  let(:classi_2_1) do
     cl = Factory(:classification, product: product_2, country: us)
     cl.find_and_set_custom_value cdefs[:approved_date], cl.updated_at - 2.days
     cl.find_and_set_custom_value cdefs[:classification_type], "Decision"
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       file_2 = double "synced file 2"
       encrypted_file_1 = double "encrypted file 1"
       encrypted_file_2 = double "encrypted file 1"
-      
+
       expect(subject).to receive(:sync_csv).ordered do
         subject.instance_variable_set(:@row_count, 1)
         file_1
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       expect(subject).to receive(:ftp_file).with(encrypted_file_2, {remote_file_name: "118340_BOM_VFI_20190315023000_v2.txt.gpg"})
 
       # converts to Eastern time
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       Timecop.freeze(now) { subject.generate("118340_BOM_VFI_") }
     end
 
@@ -121,7 +121,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
       expect(subject).to receive(:ftp_file).with(encrypted_file, {remote_file_name: "118340_BOM_VFI_20190315023000.txt.gpg"})
 
       # converts to Eastern time
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       Timecop.freeze(now) { subject.generate("118340_BOM_VFI_") }
     end
   end
@@ -129,17 +129,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
   describe "sync_csv" do
     it "returns expected output" do
       load_all
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       file = Timecop.freeze(now) { subject.sync_csv }
-      file.rewind     
+      file.rewind
       lines = file.read.split("\n")
-      #main style
+      # main style
       expect(lines[0]).to eq %Q(118340|20190315T023000|||uid 1|uid 1-00||123456789|Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
       expect(lines[1]).to eq "118340|20190315T023000|||uid 1|uid 1-01||912345678|Y|key descr 1 1 2||0|1|30||||0|0|0|Y|||LADIES|2"
-      #first related style
+      # first related style
       expect(lines[2]).to eq %Q(118340|20190315T023000|||uid 3|uid 3-00||123456789|Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
       expect(lines[3]).to eq "118340|20190315T023000|||uid 3|uid 3-01||912345678|Y|key descr 1 1 2||0|1|30||||0|0|0|Y|||LADIES|2"
-      #second related style
+      # second related style
       expect(lines[4]).to eq %Q(118340|20190315T023000|||uid 4|uid 4-00||123456789|Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
       expect(lines[5]).to eq "118340|20190315T023000|||uid 4|uid 4-01||912345678|Y|key descr 1 1 2||0|1|30||||0|0|0|Y|||LADIES|2"
 
@@ -148,9 +148,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
 
     it "collapses empty strings" do
       tariff_1_1_1.update! hts_1: ""
-      now = DateTime.new(2019,3,15,6,30)
+      now = DateTime.new(2019, 3, 15, 6, 30)
       file = Timecop.freeze(now) { subject.sync_csv }
-      file.rewind     
+      file.rewind
       lines = file.read.split("\n")
       expect(lines[0]).to eq %Q(118340|20190315T023000|||uid 1|uid 1-00|||Y|key descr? "1" /1 1||0|10|15||||0|0|0|N|||LADIES|0)
     end
@@ -167,13 +167,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
 
     it "returns credentials for production" do
       expect(ms).to receive(:production?).and_return true
-      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$', 
+      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$',
                                              folder: "to_ecs/Ann/BOM", protocol: 'sftp', port: 2222})
     end
 
     it "returns credentials for test" do
       expect(ms).to receive(:production?).and_return false
-      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$', 
+      expect(subject.ftp_credentials).to eq({server: 'connect.vfitrack.net', username: 'www-vfitrack-net', password: 'phU^`kN:@T27w.$',
                                              folder: "to_ecs/Ann/BOM_TEST", protocol: 'sftp', port: 2222})
     end
   end
@@ -181,10 +181,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
   describe "query" do
     it "returns results for US 'Multi' classifications" do
       load_all
-      results = ActiveRecord::Base.connection.execute subject.query     
+      results = ActiveRecord::Base.connection.execute subject.query
       expect(results.count).to eq 2
       res = []
-      results.each{ |r| res << r }
+      results.each { |r| res << r }
       row_1, row_2 = res
       expect(row_1).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "123456789", 1, 10, 15, "key descr\u00A0\r\n\"1\" |1 1\r" ]
       expect(row_2).to eq [product_1.id, "uid 1", "uid 3\nuid 4", "Multi", "912345678", 2, 0, 30, "key descr 1 1 2"]
@@ -221,7 +221,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnBomProductGenerator do
 
     it "accepts 'custom where'" do
       generator = described_class.new where: "WHERE products.unique_identifier = 'uid 2'"
-      load_all     
+      load_all
       results = ActiveRecord::Base.connection.execute generator.query
       expect(results.count).to eq 1
       expect(results.first).to eq [product_2.id, "uid 2", "uid 5", "Decision", "24681012", 1, 40, 45, "key descr 2 1 1"]

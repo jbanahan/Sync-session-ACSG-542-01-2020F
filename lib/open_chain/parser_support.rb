@@ -1,5 +1,5 @@
 module OpenChain; module ParserSupport
-  
+
   class Updater
     def initialize
       @changed = false
@@ -12,7 +12,7 @@ module OpenChain; module ParserSupport
     def set_changed
       @changed = true
     end
-    
+
     def reset
       @changed = false
     end
@@ -27,7 +27,7 @@ module OpenChain; module ParserSupport
         entity.find_and_set_custom_value cdef, value
         set_changed if entity.get_custom_value(cdef).changed?
       end
-      
+
       nil
     end
   end

@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport
 
-  def generate_xml_and_send shipments, sync_records: 
+  def generate_xml_and_send shipments, sync_records:
     data = generate_kewill_shipment_data(shipments)
     # This is purposefully wrapped in an array, because all the sync records for the
     # sole data object being generated
@@ -43,7 +43,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
   # to build the entry data on a per implementation basis.
   protected
 
-    def cdefs 
+    def cdefs
       @cdefs ||= self.class.prep_custom_definitions([:prod_part_number, :shp_entry_prepared_date])
     end
 
@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
             master_house_combos[key] = bill_of_lading
           end
 
-          # If there's only a single master bill on the shipment, then we can get carton totals for the master bill in the 
+          # If there's only a single master bill on the shipment, then we can get carton totals for the master bill in the
           # same way we get the shipment totals.
           if master_bills.length == 1
             totals = shipment_lines_totals(s)
@@ -226,7 +226,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
           "FR" # ISO Description = Flat or Bolster -> Kewill = Flat Rack
         when "U"
           "OT" # ISO Description = Open Top -> Kewill = Open Top
-        else 
+        else
           nil
         end
 
@@ -307,7 +307,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
         inv_line.part_number = product.custom_value(cdefs[:prod_part_number])
         inv_line.description = product.name
         inv_line.hts = product.hts_for_country("US").first
-      end      
+      end
 
       order_line = shipment_line.order_line
       if order_line
@@ -369,10 +369,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
               base_container[field] = value unless !base_container[field].blank?
             end
           end
-          
         end
       end
-      
+
       base_container
     end
 

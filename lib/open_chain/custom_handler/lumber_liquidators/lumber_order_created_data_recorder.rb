@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     order_updated
   end
 
-  private 
+  private
     def extract_created_lines old_snapshot, new_snapshot
       old_lines = json_child_entities(old_snapshot, "OrderLine")
       new_lines = json_child_entities(new_snapshot, "OrderLine")
@@ -77,7 +77,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     def cdefs
       @cdefs ||= self.class.prep_custom_definitions [
         :ord_country_of_origin,
-        :ordln_po_create_article, :ordln_po_create_quantity, :ordln_po_create_hts, 
+        :ordln_po_create_article, :ordln_po_create_quantity, :ordln_po_create_hts,
         :ordln_po_create_price_per_unit, :ordln_po_create_total_price, :ordln_po_create_country_origin]
     end
 

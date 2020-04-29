@@ -19,7 +19,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
     start_date = (now - 7.days)
     # Subtract days until we're at a Monday
     start_date -= 1.day while start_date.wday != 1
-    # Basically, we're formatting these dates so the represent the Monday @ Midnight and the following Monday @ midnight, relying on the 
+    # Basically, we're formatting these dates so the represent the Monday @ Midnight and the following Monday @ midnight, relying on the
     # where clause being >= && <.  We don't want any results showing that are actually on the following Monday based on Eastern timezone
     [start_date.beginning_of_day.in_time_zone("UTC"), (start_date + 7.days).beginning_of_day.in_time_zone("UTC")]
   end
@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
       file.flush
       file.rewind
 
-      ActiveRecord::Base.transaction do 
+      ActiveRecord::Base.transaction do
         invoices.each do |invoice|
           sr = invoice.sync_records.where(trading_partner: "LL BILLING").first_or_initialize
           sr.sent_at = Time.zone.now
@@ -83,7 +83,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
     generate_summary_invoice_page sheet, broker_invoices, invoice_date
 
     sheet = XlsMaker.create_sheet wb, "Details", ["VFI Invoice Number", "Invoice Date", "Invoice Total", "PO Number", "Container Number", "Ocean Freight", "Duty", "Fees", "PO Total"]
-    
+
     bold_format = XlsMaker.create_format "Bolded", weight: :bold
     invoice_amount_format = XlsMaker.create_format "Invoice Amount", number_format: "[$$-409]#,##0.00;[RED]-[$$-409]#,##0.00"
     invoice_total_format = XlsMaker.create_format "Invoice Total", weight: :bold, number_format: "[$$-409]#,##0.00;[RED]-[$$-409]#,##0.00"
@@ -110,7 +110,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
         XlsMaker.add_body_row sheet, (row_number += 1), row, [], true
         XlsMaker.set_cell_formats sheet, row_number, [nil, nil, invoice_amount_format, nil, nil, line_amount_format, line_amount_format, line_amount_format, line_amount_format]
 
-        rows += 1 
+        rows += 1
       end
     end
 

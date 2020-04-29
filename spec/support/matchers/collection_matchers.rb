@@ -1,4 +1,4 @@
-#Make sure the give collection is sorted alphabetically by the given field
+# Make sure the give collection is sorted alphabetically by the given field
 RSpec::Matchers.define :be_alphabetical_by do |field|
   match do |collection|
     ret = true

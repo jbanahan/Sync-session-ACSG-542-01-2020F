@@ -1,5 +1,5 @@
 
-# This class extends StrionIO to add the ability to define filename and content type values 
+# This class extends StrionIO to add the ability to define filename and content type values
 # for loading Paperclip attachments from a StringIO buffer, rather than Tempfiles
 class StringIOAttachment < StringIO
   attr_accessor :original_filename, :content_type
@@ -13,7 +13,7 @@ Paperclip.io_adapters.register StringIOAttachmentAdapter do |target|
   StringIOAttachmentAdapter === target
 end
 
-# This is a Paperclip validator (which piggy backs off rails validators) that executes a virus scan 
+# This is a Paperclip validator (which piggy backs off rails validators) that executes a virus scan
 # using the configured virus scanner from the registry.  It should scan every new file that enters
 # the system.
 module Paperclip; module Validators; class AttachmentAntiVirusValidator < ActiveModel::EachValidator
@@ -33,7 +33,7 @@ module Paperclip; module Validators; class AttachmentAntiVirusValidator < Active
       if !OpenChain::AntiVirus::AntiVirusRegistry.safe?(file.path)
         record.errors[attribute] << "File '#{value.original_filename}' has been flagged as having a virus."
       end
-    ensure 
+    ensure
       if file&.tempfile
         file.tempfile.close(true)
       end
@@ -54,7 +54,7 @@ module Paperclip; module Validators; class AttachmentAntiVirusValidator < Active
 
 end; end; end
 
-# This prevents users from uploading certain files with known dangerous file extensions. 
+# This prevents users from uploading certain files with known dangerous file extensions.
 # While a user can certainly change the file name and upload the file to get around this, by changing the filename
 # it also will negate the default file handler action in Windows.  Meaning if the user really wanted to run the file
 # they'd have to rename it before running it....which in nearly all cases negates the attack vector, since the attack
@@ -62,7 +62,7 @@ end; end; end
 module Paperclip; module Validators; class AttachmentExtensionBlacklistValidator < ActiveModel::EachValidator
 
   # This blacklist is pretty much just Outlooks standard blacklist.
-  EXTENSION_BLACKLIST = Set.new(['.﻿bat', '.chm', '.cmd', '.com', '.cpl', '.crt', '.exe', '.hlp', '.hta', '.inf', 
+  EXTENSION_BLACKLIST = Set.new(['.﻿bat', '.chm', '.cmd', '.com', '.cpl', '.crt', '.exe', '.hlp', '.hta', '.inf',
     '.ins', '.isp', '.jse', '.lnk', '.mdb', '.ms', '.pcd', '.pif', '.reg', '.scr', '.sct', '.shs', '.vb', '.ws']).freeze
 
   def validate_each(record, attribute, value)
@@ -94,7 +94,7 @@ module Paperclip; module Validators; class AttachmentExtensionBlacklistValidator
 end; end; end
 
 # This call adds the virus scanner and extension blacklist to the validations.
-# I'm not a fan of how this has to be added directly to ActiveRecord::Base, but that's also how all 
+# I'm not a fan of how this has to be added directly to ActiveRecord::Base, but that's also how all
 # the other Paperclip validators work too, so I'm doing it this way as well.
 ActiveRecord::Base.send(:extend, Paperclip::Validators::AttachmentAntiVirusValidator::HelperMethods)
 ActiveRecord::Base.send(:extend, Paperclip::Validators::AttachmentExtensionBlacklistValidator::HelperMethods)
@@ -108,7 +108,7 @@ module Paperclip; class HasAttachedFile
     if options[:validate_media_type] != false
       name = @name
       @klass.validates_media_type_spoof_detection name,
-        :if => ->(instance){ instance.send(name).dirty? }
+        :if => ->(instance) { instance.send(name).dirty? }
     end
     @klass.validates_attachment @name, anti_virus: true
     @klass.validates_attachment @name, extension_blacklist: true
@@ -126,12 +126,12 @@ end; end;
 #
 # That being the case, I'm going to address the ACTUAL issue called out in the security report,
 # file purporting to be 'image/jpeg' but are actual html files, and let anything else through.
-# 
+#
 # https://robots.thoughtbot.com/paperclip-security-release
 #
 # So, in essence, if the file's media type is 'image' (via the user supplied content-type or the file extension version),
 # we'll do the spoof check.  Otherwise, we'll skip it.
-# 
+#
 Paperclip::MediaTypeSpoofDetector.class_eval do
 
   alias_method :original_spoofed?, :spoofed?

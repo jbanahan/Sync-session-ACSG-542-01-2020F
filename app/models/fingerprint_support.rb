@@ -6,10 +6,10 @@ module FingerprintSupport
 
   # This method takes a hash that defines which model fields and associations
   # to use to create the fingerprint.  A fingerprint_definition for something like
-  # an entry would look like: 
+  # an entry would look like:
   #
-  # {model_fields: [:ent_brok_ref, :ent_entry_num], 
-  #   commercial_invoices: { 
+  # {model_fields: [:ent_brok_ref, :ent_entry_num],
+  #   commercial_invoices: {
   #     model_fields: [:ci_invoice_number, :ci_vendor_name],
   #     commercial_invoice_lines: {
   #       model_fields: [:cil_line_number, :cil_part_number],

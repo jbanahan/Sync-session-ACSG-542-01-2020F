@@ -25,8 +25,8 @@ class AwsBackupSessionsController < ApplicationController
     }
   end
 
-  private 
-  
+  private
+
   def secure
     AwsBackupSession.find_can_view(current_user)
   end

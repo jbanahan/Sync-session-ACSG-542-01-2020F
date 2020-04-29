@@ -5,23 +5,23 @@ describe SurveyResponse do
       t = 3.days.ago
       sr = Factory(:survey_response)
       srl = sr.survey_response_logs
-      srl.create!(message:'earlier',user_id:u.id,created_at:10.days.ago)
-      srl.create!(message:'findme',user_id:u.id,created_at:t)
+      srl.create!(message:'earlier', user_id:u.id, created_at:10.days.ago)
+      srl.create!(message:'findme', user_id:u.id, created_at:t)
       srl.create!(message:'newer no user')
-      srl.create!(message:'newer different user',user_id:Factory(:user).id)
+      srl.create!(message:'newer different user', user_id:Factory(:user).id)
       sr.reload
       expect(sr.last_logged_by_user(u).to_i).to eq t.to_i
     end
   end
   describe "rated?" do
     it "should return true if there is a master rating" do
-      expect(Factory(:survey_response,:rating=>'abc')).to be_rated
+      expect(Factory(:survey_response, :rating=>'abc')).to be_rated
     end
     it "should return false if there is no master rating or answers with ratings" do
-      expect(Factory(:survey_response,:rating=>nil)).to_not be_rated
+      expect(Factory(:survey_response, :rating=>nil)).to_not be_rated
     end
     it "should return true if any answers have ratings" do
-      expect(Factory(:answer,:rating=>'abc').survey_response).to be_rated
+      expect(Factory(:answer, :rating=>'abc').survey_response).to be_rated
     end
   end
   it "should require survey" do
@@ -40,8 +40,8 @@ describe SurveyResponse do
     sr.submitted_date = d
     sr.accepted_date = d
 
-    sr.update_attributes(:updated_at=>d2,:email_sent_date=>d2,:email_opened_date=>d2,
-      :response_opened_date=>d2,:submitted_date=>d2,:accepted_date=>d2)
+    sr.update_attributes(:updated_at=>d2, :email_sent_date=>d2, :email_opened_date=>d2,
+      :response_opened_date=>d2, :submitted_date=>d2, :accepted_date=>d2)
 
     found = SurveyResponse.find sr.id
     expect(found.email_sent_date.to_i).to eq d.to_i
@@ -49,13 +49,13 @@ describe SurveyResponse do
     expect(found.response_opened_date.to_i).to eq d.to_i
     expect(found.submitted_date.to_i).to eq d.to_i
     expect(found.accepted_date.to_i).to eq d.to_i
-    expect(found.updated_at.to_i).to eq d2.to_i #this one isn't protected
+    expect(found.updated_at.to_i).to eq d2.to_i # this one isn't protected
   end
   describe "status" do
     before :each do
       s = Factory(:survey)
-      Factory(:question,:survey=>s)
-      Factory(:question,:survey=>s)
+      Factory(:question, :survey=>s)
+      Factory(:question, :survey=>s)
       u = Factory(:user)
       @sr = s.generate_response! u
     end
@@ -84,7 +84,7 @@ describe SurveyResponse do
       expect(@sr.can_view?(@response_user)).to be_truthy
     end
     it "should pass if user can view_survey? and survey is created by user's company" do
-      other_user = Factory(:user, company:@survey.company,survey_view:true)
+      other_user = Factory(:user, company:@survey.company, survey_view:true)
       expect(@sr.can_view?(other_user)).to be_truthy
     end
     it "should fail if user can view_survey? and survey is NOT created by user's company" do
@@ -94,19 +94,19 @@ describe SurveyResponse do
   end
   describe "search_secure" do
     it "should find assigned to me, even if I cannot view_survey" do
-      u = Factory(:user,survey_view:false)
-      sr = Factory(:survey_response,user:u)
-      expect(SurveyResponse.search_secure(u,SurveyResponse).to_a).to eq [sr]
+      u = Factory(:user, survey_view:false)
+      sr = Factory(:survey_response, user:u)
+      expect(SurveyResponse.search_secure(u, SurveyResponse).to_a).to eq [sr]
     end
     it "should find where survey is created by my company and I can view" do
-      u = Factory(:user,survey_view:true)
-      sr = Factory(:survey_response,survey:Factory(:survey,company:u.company))
-      expect(SurveyResponse.search_secure(u,SurveyResponse).to_a).to eq [sr]
+      u = Factory(:user, survey_view:true)
+      sr = Factory(:survey_response, survey:Factory(:survey, company:u.company))
+      expect(SurveyResponse.search_secure(u, SurveyResponse).to_a).to eq [sr]
     end
     it "should not find where survey is created by my company and I canNOT view surveys" do
-      u = Factory(:user,survey_view:false)
-      sr = Factory(:survey_response,survey:Factory(:survey,company:u.company))
-      expect(SurveyResponse.search_secure(u,SurveyResponse).to_a).to eq []
+      u = Factory(:user, survey_view:false)
+      sr = Factory(:survey_response, survey:Factory(:survey, company:u.company))
+      expect(SurveyResponse.search_secure(u, SurveyResponse).to_a).to eq []
     end
   end
   describe "can_edit?" do
@@ -116,18 +116,18 @@ describe SurveyResponse do
       @sr = @survey.generate_response! @response_user
     end
     it "should pass if user is from the survey company and can edit surveys" do
-      u = Factory(:user,:company=>@survey.company,:survey_edit=>true)
+      u = Factory(:user, :company=>@survey.company, :survey_edit=>true)
       expect(@sr.can_edit?(u)).to be_truthy
     end
     it "should fail if user is from the survey company and cannot edit surveys" do
-      u = Factory(:user,:company=>@survey.company,:survey_edit=>false)
+      u = Factory(:user, :company=>@survey.company, :survey_edit=>false)
       expect(@sr.can_edit?(u)).to be_falsey
     end
     it "should fail if user is not from the survey company" do
-      expect(@sr.can_edit?(Factory(:user,survey_edit:true))).to be_falsey
+      expect(@sr.can_edit?(Factory(:user, survey_edit:true))).to be_falsey
     end
     it "does not allow edit when survey is archvied" do
-      u = Factory(:user,:company=>@survey.company,:survey_edit=>true)
+      u = Factory(:user, :company=>@survey.company, :survey_edit=>true)
       @survey.update_attributes! archived: true
       expect(@sr.can_edit?(u)).to be_falsey
     end
@@ -139,7 +139,7 @@ describe SurveyResponse do
       @sr = @survey.generate_response! @response_user
     end
     it "should pass if the user is from the survey company" do
-      u = Factory(:user,:company=>@survey.company)
+      u = Factory(:user, :company=>@survey.company)
       expect(@sr.can_view_private_comments?(u)).to be_truthy
     end
     it "should fail if the user is not from the survey company" do
@@ -153,27 +153,27 @@ describe SurveyResponse do
     let! (:master_setup) { stub_master_setup }
     let (:survey) {
       survey = Factory(:question).survey
-      survey.update_attributes(:email_subject=>"TEST SUBJ",:email_body=>"EMLBDY")
+      survey.update_attributes(:email_subject=>"TEST SUBJ", :email_body=>"EMLBDY")
       survey
     }
     let (:user) { Factory(:user) }
 
     context "assigned to a user" do
       let (:now) { Time.zone.now }
-      let (:response) { 
+      let (:response) {
         response = survey.generate_response! user
         response.invite_user!
         response
       }
 
       before :each do
-        Timecop.freeze(now) do 
+        Timecop.freeze(now) do
           response
         end
       end
 
       it "logs that notification was sent" do
-        expect(response.survey_response_logs.collect{ |log| log.message}).to include("Invite sent to #{user.email}")
+        expect(response.survey_response_logs.collect { |log| log.message}).to include("Invite sent to #{user.email}")
       end
 
       it "updates email_sent_date if not set" do
@@ -208,7 +208,7 @@ describe SurveyResponse do
 
       it "sends an email notification to all members of the group" do
         response.reload
-        expect(response.survey_response_logs.collect{ |log| log.message}).to include "Invite sent to #{user.email}, #{user2.email}"
+        expect(response.survey_response_logs.collect { |log| log.message}).to include "Invite sent to #{user.email}, #{user2.email}"
         expect(response.email_sent_date.to_date).to eq Time.zone.now.to_date
 
         last_delivery = ActionMailer::Base.deliveries.last
@@ -250,7 +250,7 @@ describe SurveyResponse do
 
   describe "most_recent_user_log" do
     it "returns the newest log with a user_id associated with it" do
-      Timecop.freeze(Time.zone.now) do 
+      Timecop.freeze(Time.zone.now) do
         @survey = Factory(:question).survey
         @u = Factory(:user)
         @response = @survey.generate_response! @u
@@ -315,7 +315,7 @@ describe SurveyResponse do
 
       sr = nil
       sr2 = nil
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         user = Factory(:user)
         sr = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day)
         sr2 = Factory(:survey_response, checkout_token: "token", checkout_by_user: user, checkout_expiration: now - 1.day + 2.seconds)
@@ -339,7 +339,7 @@ describe SurveyResponse do
   describe '#not_expired' do
     it "should find unexpired survey responses" do
       u = Factory(:user)
-      s = Factory(:survey,expiration_days:5)
+      s = Factory(:survey, expiration_days:5)
       is_expired = s.generate_response! u
       is_expired.email_sent_date = 10.days.ago
       is_expired.save!
@@ -348,7 +348,7 @@ describe SurveyResponse do
       not_expired.save!
       never_sent = s.generate_response! u
       no_expiration = Factory(:survey).generate_response! u
-      expect(SurveyResponse.not_expired.order(:id)).to eq [not_expired,never_sent,no_expiration]
+      expect(SurveyResponse.not_expired.order(:id)).to eq [not_expired, never_sent, no_expiration]
     end
   end
 end

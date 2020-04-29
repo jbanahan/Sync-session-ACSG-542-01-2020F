@@ -22,7 +22,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
     root = dom.root
     log.error_and_raise "Incorrect root element, '#{root.name}'.  Expecting 'ShippingOrderMessage'." unless root.name == 'ShippingOrderMessage'
 
-    elem_shipping_order = REXML::XPath.first(root,'ShippingOrder')
+    elem_shipping_order = REXML::XPath.first(root, 'ShippingOrder')
     shipment_ref = et(elem_shipping_order, 'ShippingOrderNumber')
     log.reject_and_raise "XML must have Shipment Reference Number at /ShippingOrder/ShippingOrderNumber." if shipment_ref.blank?
 
@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
         shipment.booking_voyage = et(elem_shipping_order, 'Voyage')
         shipment.voyage = shipment.booking_voyage if shipment.voyage.blank?
 
-        elem_carrier_code = REXML::XPath.first(elem_shipping_order,"PartyInfo[Type='Carrier']/Code")
+        elem_carrier_code = REXML::XPath.first(elem_shipping_order, "PartyInfo[Type='Carrier']/Code")
         shipment.booking_carrier = elem_carrier_code ? elem_carrier_code.text : nil
         shipment.vessel_carrier_scac = shipment.booking_carrier if shipment.vessel_carrier_scac.blank?
 

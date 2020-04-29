@@ -27,12 +27,12 @@ module Api; module V1; class MessagesController < Api::V1::ApiController
     page = !params['page'].blank? && params['page'].to_s.match(/^\d*$/) ? params['page'].to_i : 1
     per_page = !params['per_page'].blank? && params['per_page'].to_s.match(/^\d*$/) ? params['per_page'].to_i : 10
     per_page = 50 if per_page > 50
-    collection.paginate(per_page:per_page,page:page)
+    collection.paginate(per_page:per_page, page:page)
   end
   private :paginate
 
   def message_hash m
-    h = {id:m.id,subject:m.subject,body:m.body}
+    h = {id:m.id, subject:m.subject, body:m.body}
     h[:viewed] = true if m.viewed?
     h
   end

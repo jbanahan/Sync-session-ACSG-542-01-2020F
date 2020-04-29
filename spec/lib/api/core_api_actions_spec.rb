@@ -1,7 +1,7 @@
 describe OpenChain::Api::CoreApiActions do
 
   subject {
-    Class.new do 
+    Class.new do
       include OpenChain::Api::CoreApiActions
 
       def core_module
@@ -19,7 +19,7 @@ describe OpenChain::Api::CoreApiActions do
       def post a, b
         raise "Mock me"
       end
-    end.new 
+    end.new
   }
 
   describe "entity_name" do
@@ -73,7 +73,7 @@ describe OpenChain::Api::CoreApiActions do
       SearchCriterion.new model_field_uid: "bi_entry_number", operator: "eq", value: "123"
     }
     let (:criterion_2) {
-     SearchCriterion.new model_field_uid: "bi_invoice_number", operator: "eq", value: "456" 
+     SearchCriterion.new model_field_uid: "bi_invoice_number", operator: "eq", value: "456"
     }
 
     let (:sort_1) {
@@ -83,12 +83,12 @@ describe OpenChain::Api::CoreApiActions do
      SortCriterion.new model_field_uid: "bi_entry_number", descending: true
     }
 
-    it "assembles search" do 
+    it "assembles search" do
       request = {
         "fields" => "bi_entry_number,bi_invoice_number",
         "page"=>"1",
         "per_page"=>"50",
-        "sid0"=>"bi_entry_number", "sop0"=>"eq", "sv0"=>"123", 
+        "sid0"=>"bi_entry_number", "sop0"=>"eq", "sv0"=>"123",
         "sid1"=>"bi_invoice_number", "sop1"=>"eq", "sv1"=>"456",
         "oid0"=>"bi_invoice_number",
         "oid1"=>"bi_entry_number", "oo1"=>"D"
@@ -121,7 +121,7 @@ describe OpenChain::Api::CoreApiActions do
     end
   end
 
-  describe "mf_uid_list_to_param" do 
+  describe "mf_uid_list_to_param" do
     it "converts an array of model field uid symbols to a request parameter hash" do
       param = subject.mf_uid_list_to_param [:a, :b, :c, :d]
       expect(param['fields']).to eq "a,b,c,d"

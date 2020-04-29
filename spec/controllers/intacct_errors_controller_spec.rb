@@ -56,7 +56,7 @@ describe IntacctErrorsController do
       p1 = IntacctReceivable.create! intacct_errors: "ERROR"
 
       put :clear_receivable, id: p1.id
-      
+
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to view this Receivable."
     end
@@ -176,7 +176,7 @@ describe IntacctErrorsController do
       p1 = IntacctPayable.create! intacct_errors: "ERROR"
 
       put :clear_payable, id: p1.id
-      
+
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to view this Payable."
     end
@@ -206,7 +206,7 @@ describe IntacctErrorsController do
       c1 = IntacctCheck.create! intacct_errors: "ERROR"
 
       put :clear_check, id: c1.id
-      
+
       expect(response).to be_redirect
       expect(flash[:errors]).to include "You do not have permission to view this Check."
     end

@@ -48,7 +48,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
 
   def compare old_bucket, old_path, old_version, new_bucket, new_path, new_version
     new_json = get_json_hash(new_bucket, new_path, new_version)
-    
+
     # Don't run unless there are broker invoices
     return unless json_child_entities(new_json, "BrokerInvoice").length > 0
 
@@ -145,7 +145,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryDocsComparator
 
     created = false
     classification_added = false
-    Lock.acquire("Product-#{unique_id}") do 
+    Lock.acquire("Product-#{unique_id}") do
       product = Product.where(unique_identifier: unique_id, importer_id: part_data[:importer_id]).first
       # This is a bit of a microoptimization...we don't set the custom definition for part number unless we're creating the product
       # The field should never be something other than the unique identifier so this should work fine

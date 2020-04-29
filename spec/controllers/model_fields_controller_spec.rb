@@ -18,7 +18,7 @@ describe ModelFieldsController do
   end
 
   it "should include fields w permission" do
-    u = Factory(:user,:company=>Factory(:company,:master=>true),:broker_invoice_view=>true)
+    u = Factory(:user, :company=>Factory(:company, :master=>true), :broker_invoice_view=>true)
 
     sign_in_as u
     get :find_by_module_type, :module_type=>"Entry"
@@ -31,7 +31,7 @@ describe ModelFieldsController do
     render_views
 
     before :each do
-      @mf = ModelField.new(10000,:test,CoreModule::PRODUCT,:name)
+      @mf = ModelField.new(10000, :test, CoreModule::PRODUCT, :name)
     end
 
     it "should return product model fields with the proper label" do

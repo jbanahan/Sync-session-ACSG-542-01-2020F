@@ -3,12 +3,12 @@ describe OpenChain::CustomHandler::Vandegrift::FenixNdInvoice810Generator do
   let (:us) { Factory(:country, iso_code: "US") }
   let (:cn) { Factory(:country, iso_code: "CN") }
 
-  let (:importer) { 
+  let (:importer) {
     Company.new name: "Importer", addresses: [Address.new(line_1: "123 Importer St.", line_2: "Suite 123", city: "Fakesville", state: "PA", postal_code: "12345", country: us)]
   }
 
   let (:vendor) {
-   Company.new name: "Vendor", name_2: "V2", addresses: [Address.new(line_1: "123 Vendor St.", line_2: "Suite 123", city: "Fakesville", state: "PA", postal_code: "12345", country: us)] 
+   Company.new name: "Vendor", name_2: "V2", addresses: [Address.new(line_1: "123 Vendor St.", line_2: "Suite 123", city: "Fakesville", state: "PA", postal_code: "12345", country: us)]
   }
 
   let (:consignee) {
@@ -16,7 +16,7 @@ describe OpenChain::CustomHandler::Vandegrift::FenixNdInvoice810Generator do
   }
 
   let (:invoice) {
-    i = Invoice.new 
+    i = Invoice.new
     i.invoice_number = "INVOICE"
     i.invoice_date = Date.new(2018, 9, 4)
     i.country_origin = cn
@@ -62,7 +62,7 @@ describe OpenChain::CustomHandler::Vandegrift::FenixNdInvoice810Generator do
   }
 
   describe "write_invoice_810" do
-    before :each do 
+    before :each do
       invoice_lines
     end
 
@@ -212,7 +212,7 @@ describe OpenChain::CustomHandler::Vandegrift::FenixNdInvoice810Generator do
         expect(inv).to eq invoice
         tempfile << "TEST"
         tempfile.flush
-        
+
         nil
       end
 
@@ -226,7 +226,7 @@ describe OpenChain::CustomHandler::Vandegrift::FenixNdInvoice810Generator do
 
       expect(subject).to receive(:write_invoice_810) do |tempfile, inv|
         expect(File.basename(tempfile)).to start_with("fenix_invoice_test_testing_")
-        
+
         nil
       end
       expect(subject).to receive(:ftp_sync_file)

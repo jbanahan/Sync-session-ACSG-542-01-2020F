@@ -26,7 +26,7 @@ class OrdersController < ApplicationController
   # GET /orders/1.xml
   def show
       o = Order.find(params[:id])
-      action_secure(o.can_view?(current_user),o,{:lock_check => false, :verb => "view", :module_name=>"order"}) {
+      action_secure(o.can_view?(current_user), o, {:lock_check => false, :verb => "view", :module_name=>"order"}) {
         @order = o
         @state_button_path = 'orders'
         @state_button_object_id = @order.id
@@ -34,7 +34,7 @@ class OrdersController < ApplicationController
         respond_to do |format|
             format.html {
               freeze_custom_values @order
-              custom_template = CustomViewTemplate.for_object('order_view',@order)
+              custom_template = CustomViewTemplate.for_object('order_view', @order)
               if custom_template.blank?
                 render
               else
@@ -42,8 +42,8 @@ class OrdersController < ApplicationController
               end
             }
             format.xml  { render :xml => @order }
-            format.json { render :json => @order.to_json(:only=>[:id,:order_number], :include=>{
-              :order_lines => {:only=>[:line_number,:quantity,:id], :include=>{:product=>{:only=>[:id,:name]}}}
+            format.json { render :json => @order.to_json(:only=>[:id, :order_number], :include=>{
+              :order_lines => {:only=>[:line_number, :quantity, :id], :include=>{:product=>{:only=>[:id, :name]}}}
             })}
         end
       }
@@ -53,7 +53,7 @@ class OrdersController < ApplicationController
   # GET /orders/new.xml
   def new
     o = Order.new
-    action_secure(current_user.company.master,o,{:lock_check=>false,:verb=>"create", :module_name=>"order"}) {
+    action_secure(current_user.company.master, o, {:lock_check=>false, :verb=>"create", :module_name=>"order"}) {
       @order = o
     }
   end
@@ -61,7 +61,7 @@ class OrdersController < ApplicationController
   # GET /orders/1/edit
   def edit
     o = Order.find(params[:id])
-    action_secure(o.can_edit?(current_user),o,{:verb => "edit", :module_name=>"order"}) {
+    action_secure(o.can_edit?(current_user), o, {:verb => "edit", :module_name=>"order"}) {
       @order = o
     }
   end
@@ -72,12 +72,12 @@ class OrdersController < ApplicationController
     # Create a dummy order for security validations
     ord = Order.new
     ord.assign_model_field_attributes params[:order], no_validation: true
-    action_secure(current_user.company.master,ord,{:verb => "edit", :module_name=>"order"}) {
+    action_secure(current_user.company.master, ord, {:verb => "edit", :module_name=>"order"}) {
       success = lambda {|o|
         add_flash :notices, "Order created successfully."
         redirect_to o
       }
-      failure = lambda {|o,errors|
+      failure = lambda {|o, errors|
         errors_to_flash o, :now=>true
         @order = Order.new
         @order.assign_model_field_attributes params[:order], no_validation: true
@@ -85,7 +85,7 @@ class OrdersController < ApplicationController
         @vendors = Company.vendors.not_locked
         render :action=>"new"
       }
-      validate_and_save_module(Order.new,params[:order],success,failure)
+      validate_and_save_module(Order.new, params[:order], success, failure)
     }
   end
 
@@ -93,12 +93,12 @@ class OrdersController < ApplicationController
   # PUT /orders/1.xml
   def update
     o = Order.find(params[:id])
-    action_secure(o.can_edit?(current_user),o,{:module_name=>"order"}) {
+    action_secure(o.can_edit?(current_user), o, {:module_name=>"order"}) {
       succeed = lambda {|ord|
         add_flash :notices, "Order was updated successfully."
         redirect_to ord
       }
-      failure = lambda {|ord,errors|
+      failure = lambda {|ord, errors|
         errors_to_flash ord, :now=>true
         @order = ord
         @divisions = Division.all
@@ -113,7 +113,7 @@ class OrdersController < ApplicationController
   # DELETE /orders/1.xml
   def destroy
     o = Order.find(params[:id])
-    action_secure(current_user.company.master,o,{:verb => "delete", :module_name=>"order"}) {
+    action_secure(current_user.company.master, o, {:verb => "delete", :module_name=>"order"}) {
       @order = o
       @order.destroy
       errors_to_flash @order
@@ -126,7 +126,7 @@ class OrdersController < ApplicationController
 
   def close
     o = Order.find params[:id]
-    action_secure(o.can_close?(current_user),o,{:verb => "close", :module_name=>"order"}) {
+    action_secure(o.can_close?(current_user), o, {:verb => "close", :module_name=>"order"}) {
       o.async_close! current_user
       add_flash :notices, "Order has been closed."
       redirect_to o
@@ -135,7 +135,7 @@ class OrdersController < ApplicationController
 
   def reopen
     o = Order.find params[:id]
-    action_secure(o.can_close?(current_user),o,{:verb => "reopen", :module_name=>"order"}) {
+    action_secure(o.can_close?(current_user), o, {:verb => "reopen", :module_name=>"order"}) {
       o.async_reopen! current_user
       add_flash :notices, "Order has been reopened."
       redirect_to o
@@ -144,7 +144,7 @@ class OrdersController < ApplicationController
 
   def accept
     o = Order.find params[:id]
-    action_secure(o.can_be_accepted? && o.can_accept?(current_user),o,{:verb => "accept", :module_name=>"order"}) {
+    action_secure(o.can_be_accepted? && o.can_accept?(current_user), o, {:verb => "accept", :module_name=>"order"}) {
       o.async_accept! current_user
       add_flash :notices, "Order has been accepted."
       redirect_to o
@@ -153,7 +153,7 @@ class OrdersController < ApplicationController
 
   def unaccept
     o = Order.find params[:id]
-    action_secure(o.can_accept?(current_user),o,{:verb => "unaccept", :module_name=>"order"}) {
+    action_secure(o.can_accept?(current_user), o, {:verb => "unaccept", :module_name=>"order"}) {
       o.async_unaccept! current_user
       add_flash :notices, "Order acceptance has been removed."
       redirect_to o

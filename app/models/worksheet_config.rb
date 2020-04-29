@@ -13,25 +13,25 @@ require 'spreadsheet'
 
 class WorksheetConfig < ActiveRecord::Base
   attr_accessible :module_type, :name, :worksheet_config_mappings_attributes
-  
+
   has_many :worksheet_config_mappings, :dependent => :destroy
 
   validates :name, :presence => true
 
-  accepts_nested_attributes_for :worksheet_config_mappings, :allow_destroy => true, 
-    :reject_if => lambda {|m| 
+  accepts_nested_attributes_for :worksheet_config_mappings, :allow_destroy => true,
+    :reject_if => lambda {|m|
       return false if !m[:_destroy].blank?
-      (m[:model_field_uid].blank? || m[:row].blank? || m[:column].blank?) 
+      (m[:model_field_uid].blank? || m[:row].blank? || m[:column].blank?)
     }
 
-  def process(obj,data,user, opts={})
+  def process(obj, data, user, opts={})
     o = {:processor => XlsWorksheetProcessor.new}.merge opts
     p = o[:processor]
     custom_data = {}
     p.data = data
     self.worksheet_config_mappings.each do |m|
-      mf = ModelField.find_by_uid m.model_field_uid 
-      mf.process_import(obj,p.value(m.row,m.column), user)
+      mf = ModelField.find_by_uid m.model_field_uid
+      mf.process_import(obj, p.value(m.row, m.column), user)
     end
     obj.save
   end
@@ -46,7 +46,7 @@ class XlsWorksheetProcessor
     @data = w
   end
 
-  def value(row_num,col_num)
+  def value(row_num, col_num)
     raise "Worksheet file not set." if @data.nil?
     r = data.row(row_num)
     return nil if r.nil?

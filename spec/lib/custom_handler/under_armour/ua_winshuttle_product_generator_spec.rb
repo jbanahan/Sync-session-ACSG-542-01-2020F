@@ -7,8 +7,8 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
     it "should run_and_email" do
       d = double('class')
       expect(d).to receive(:sync_xls).and_return 'xyz'
-      expect(d).to receive(:email_file).with('xyz','j@sample.com')
-      expect(ArchivedFile).to receive(:make_from_file!).with('xyz','Winshuttle Output',/Sent to j@sample.com at /)
+      expect(d).to receive(:email_file).with('xyz', 'j@sample.com')
+      expect(ArchivedFile).to receive(:make_from_file!).with('xyz', 'Winshuttle Output', /Sent to j@sample.com at /)
       allow(described_class).to receive(:new).and_return d
       described_class.run_and_email('j@sample.com')
     end
@@ -26,23 +26,23 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       @plant_cd = described_class.prep_custom_definitions([:plant_codes])[:plant_codes]
       @colors_cd = described_class.prep_custom_definitions([:colors])[:colors]
       DataCrossReference.load_cross_references StringIO.new("0010,US\n0011,CA\n0012,CN"), DataCrossReference::UA_PLANT_TO_ISO
-      @ca = Factory(:country,iso_code:'CA')
-      @us = Factory(:country,iso_code:'US')
-      @cn = Factory(:country,iso_code:'CN')
-      @mx = Factory(:country,iso_code:'MX')
+      @ca = Factory(:country, iso_code:'CA')
+      @us = Factory(:country, iso_code:'US')
+      @cn = Factory(:country, iso_code:'CN')
+      @mx = Factory(:country, iso_code:'MX')
     end
     it "should elminiate items that don't need sync via query" do
-      #prepping data
+      # prepping data
       p = Factory(:product)
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
-      Factory(:tariff_record,hts_1:"12345678",classification:Factory(:classification,country_id:@us.id,product:p))
+      Factory(:tariff_record, hts_1:"12345678", classification:Factory(:classification, country_id:@us.id, product:p))
       rows = []
       described_class.new.sync {|row| rows << row}
       expect(rows.size).to eq(2)
 
-      #running a second time shouldn't result in any rows from query to be processed
+      # running a second time shouldn't result in any rows from query to be processed
       rows = []
       g = described_class.new
       expect(g).not_to receive(:preprocess_row)
@@ -54,17 +54,17 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
-      [@ca,@us,@cn,@mx].each do |c|
-        #create a classification with tariff for all countries
-        Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
+      [@ca, @us, @cn, @mx].each do |c|
+        # create a classification with tariff for all countries
+        Factory(:tariff_record, hts_1:"#{c.id}12345678", classification:Factory(:classification, country_id:c.id, product:p))
       end
       rows = []
       described_class.new.sync {|row| rows << row}
       expect(rows.size).to eq(3)
-      [rows[1],rows[2]].each do |r|
+      [rows[1], rows[2]].each do |r|
         expect(r[0]).to be_blank
         expect(r[1]).to eq("#{p.unique_identifier}-001")
-        expect(['0010','0011'].include?(r[2])).to be_truthy
+        expect(['0010', '0011'].include?(r[2])).to be_truthy
         expect(r[3]).to eq("#{r[2]=='0010' ? @us.id: @ca.id}12345678".hts_format)
       end
     end
@@ -74,18 +74,18 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       p.update_custom_value! @colors_cd, "001\n002"
       DataCrossReference.create_ua_material_color_plant! p.unique_identifier, '001', '0010'
       DataCrossReference.create_ua_material_color_plant! p.unique_identifier, '002', '0011'
-      [@ca,@us].each do |c|
-        #create a classification with tariff for relevant countries
-        Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
+      [@ca, @us].each do |c|
+        # create a classification with tariff for relevant countries
+        Factory(:tariff_record, hts_1:"#{c.id}12345678", classification:Factory(:classification, country_id:c.id, product:p))
       end
       rows = []
       described_class.new.sync {|row| rows << row}
       expect(rows.size).to eq(3)
-      [rows[1],rows[2]].each do |r|
+      [rows[1], rows[2]].each do |r|
         expect(r.size).to eq(4)
         expect(r[0]).to be_blank
         expect(r[1]).to eq("#{p.unique_identifier}-#{r[2]=='0010' ? '001' : '002'}")
-        expect(['0010','0011'].include?(r[2])).to be_truthy
+        expect(['0010', '0011'].include?(r[2])).to be_truthy
         expect(r[3]).to eq("#{r[2]=='0010' ? @us.id: @ca.id}12345678".hts_format)
       end
     end
@@ -94,7 +94,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       p.update_custom_value! @plant_cd, "0010"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
-      Factory(:tariff_record,hts_1:"12345678",classification:Factory(:classification,country_id:@us.id,product:p))
+      Factory(:tariff_record, hts_1:"12345678", classification:Factory(:classification, country_id:@us.id, product:p))
       rows = []
       described_class.new.sync {|row| rows << row}
       r = rows.first
@@ -108,9 +108,9 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
-      [@ca,@us].each do |c|
-        #create a classification with tariff for all countries
-        Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
+      [@ca, @us].each do |c|
+        # create a classification with tariff for all countries
+        Factory(:tariff_record, hts_1:"#{c.id}12345678", classification:Factory(:classification, country_id:c.id, product:p))
       end
       rows = []
       described_class.new.sync {|row| rows << row}
@@ -133,11 +133,11 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
       p.update_custom_value! @plant_cd, "0010\n0011"
       p.update_custom_value! @colors_cd, '001'
       allow(DataCrossReference).to receive(:find_ua_material_color_plant).and_return('1')
-      [@ca,@us].each do |c|
-        #create a classification with tariff for all countries
-        Factory(:tariff_record,hts_1:"#{c.id}12345678",classification:Factory(:classification,country_id:c.id,product:p))
+      [@ca, @us].each do |c|
+        # create a classification with tariff for all countries
+        Factory(:tariff_record, hts_1:"#{c.id}12345678", classification:Factory(:classification, country_id:c.id, product:p))
       end
-      
+
       DataCrossReference.create_ua_winshuttle_fingerprint! p.unique_identifier, '001', '0010', Digest::MD5.hexdigest("~#{p.unique_identifier}-001~0010~#{p.classifications[1].tariff_records.first.hts_1.hts_format}")
 
       rows = []
@@ -148,13 +148,13 @@ describe OpenChain::CustomHandler::UnderArmour::UaWinshuttleProductGenerator do
   end
 
   describe "email_file" do
-    before :each do 
+    before :each do
       @f = double('file')
       @mailer = double(:mailer)
       expect(@mailer).to receive(:deliver_now)
     end
     it "should email result" do
-      expect(OpenMailer).to receive(:send_simple_html).with('joe@sample.com','Winshuttle Product Output File','Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com',[@f]).and_return(@mailer)
+      expect(OpenMailer).to receive(:send_simple_html).with('joe@sample.com', 'Winshuttle Product Output File', 'Your Winshuttle product output file is attached.  For assistance, please email support@vandegriftinc.com', [@f]).and_return(@mailer)
       described_class.new.email_file @f, 'joe@sample.com'
     end
     it 'should make original_filename method on file object' do

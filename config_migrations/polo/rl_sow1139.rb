@@ -44,12 +44,12 @@ module ConfigMigrations; module Polo; class RlSow1139
     )
 
     bvt = BusinessValidationTemplate.where(module_type: 'Product', name: 'Product Validations').first_or_create!
-    bvt.search_criterions.create!(operator:"regexp",model_field_uid:'prod_uid', value: "^[[:alnum:]]{12}$")
+    bvt.search_criterions.create!(operator:"regexp", model_field_uid:'prod_uid', value: "^[[:alnum:]]{12}$")
 
     # Fish and wildlife check
     bvr = bvt.business_validation_rules.where(type:'ValidationRuleFieldFormat', name: 'Fish and Wildlife indicator must be selected').first_or_create!
-    bvr.search_criterions.create!(operator:"notnull",model_field_uid:"#{cdefs[:scientific_name_1].model_field_uid}")
-    bvr.search_criterions.create!(operator:"notnull",model_field_uid:"#{cdefs[:fish_wildlife_origin_1].model_field_uid}")
+    bvr.search_criterions.create!(operator:"notnull", model_field_uid:"#{cdefs[:scientific_name_1].model_field_uid}")
+    bvr.search_criterions.create!(operator:"notnull", model_field_uid:"#{cdefs[:fish_wildlife_origin_1].model_field_uid}")
     rule_attributes_hash = {
         "#{cdefs[:fish_wildlife].model_field_uid}"=>{"regex"=>"^true$"}
     }

@@ -6,7 +6,7 @@ module UserManualHelper
     elsif um.wistia_code?
       nil
     else
-      Rails.application.routes.url_helpers.download_user_manual_url(um, host: MasterSetup.get.request_host, 
+      Rails.application.routes.url_helpers.download_user_manual_url(um, host: MasterSetup.get.request_host,
                                                                         protocol: (MasterSetup.development_env? ? "http" : "https"))
     end
   end

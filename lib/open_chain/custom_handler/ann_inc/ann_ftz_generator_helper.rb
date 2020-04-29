@@ -32,9 +32,9 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
     # What we're doing here is buffering the outer_row values
     # until we see a new product id (or we're processing the last line).
     # This allows us to keep related styles on consecutive rows.
-    
+
     # map replaces empty strings with nil
-    outer_row = remap(outer_row.map{ |k,v| [k, v.presence] }.to_h)
+    outer_row = remap(outer_row.transform_values(&:presence))
     rows = nil
     if opts[:last_result] || @row_buffer.empty? || @row_buffer.first[-1] == outer_row[-1]
       @row_buffer << outer_row
@@ -43,16 +43,16 @@ module OpenChain; module CustomHandler; module AnnInc; module AnnFtzGeneratorHel
       # Use the hash so we ensure we're keeping all the rows for the same product grouped together
       exploded_rows = Hash.new {|h, k| h[k] = []}
       @row_buffer.each { |buffer_row| explode_lines buffer_row, exploded_rows }
-      
+
       rows = exploded_rows.values.flatten
 
       @row_buffer.clear
       # Now put the new record in the buffer
       @row_buffer << outer_row unless opts[:last_result]
     else
-      # Because we're buffering the output in preprocess row, this causes a bit of issue with the sync method since no 
+      # Because we're buffering the output in preprocess row, this causes a bit of issue with the sync method since no
       # output is returned sometimes.  This ends up confusing it and it doesn't mark the product as having been synced.
-      # Even though rows for it will get pushed on a further iteration.  Throwing this symbol we can tell it to always 
+      # Even though rows for it will get pushed on a further iteration.  Throwing this symbol we can tell it to always
       # mark the record as synced even if no preprocess output is given
       throw :mark_synced
     end

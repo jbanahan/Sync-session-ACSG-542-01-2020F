@@ -25,7 +25,7 @@ module OpenChain
       sr = search_run
       p = sr.parent
       rc = p.result_cache
-      rc = p.build_result_cache(:page=>1,:per_page=>100) if rc.nil?
+      rc = p.build_result_cache(:page=>1, :per_page=>100) if rc.nil?
       rc
     end
   end

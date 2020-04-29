@@ -8,7 +8,7 @@ describe OpenChain::ChainDelayedJobPlugin do
 
   describe "is_upgrade_delayed_job" do
     it "identifies 'OpenChain::Upgrade#upgrade_delayed_job_if_needed' method as upgrade job" do
-      # The following should create a handler string that's very similiar (if not identical) to what's is serialized 
+      # The following should create a handler string that's very similiar (if not identical) to what's is serialized
       # when "OpenChain::Upgrade.delay.upgrade_delayed_job_if_needed" is run
       handler = {payload_object: Delayed::PerformableMethod.new(OpenChain::Upgrade, "upgrade_delayed_job_if_needed", nil)}.to_yaml
       expect(job).to receive(:handler).and_return handler
@@ -124,7 +124,7 @@ describe OpenChain::ChainDelayedJobPlugin do
 
     it "returns true if memory limit is higher than given threshold" do
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         expect(subject).to receive(:next_memory_check).and_return (now - 1.minute)
         expect_any_instance_of(GetProcessMem).to receive(:mb).and_return 100
         expect(subject).to receive(:next_memory_check=).with((now + 1.minute))
@@ -134,7 +134,7 @@ describe OpenChain::ChainDelayedJobPlugin do
 
     it "returns false if memory limit is lower than given threshold" do
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         expect(subject).to receive(:next_memory_check).and_return (now - 1.minute)
         expect_any_instance_of(GetProcessMem).to receive(:mb).and_return 98
         expect(subject).to receive(:next_memory_check=).with((now + 1.minute))
@@ -144,7 +144,7 @@ describe OpenChain::ChainDelayedJobPlugin do
 
     it "returns false if it's not time for next memory check" do
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         expect(subject).to receive(:next_memory_check).and_return (now + 1.minute)
         expect(subject).not_to receive(:next_memory_check=)
         expect(subject.memory_limit_exceeded? now, 99).to eq false
@@ -153,7 +153,7 @@ describe OpenChain::ChainDelayedJobPlugin do
 
     it "returns false if memory check has not been done, but sets next check time" do
       now = Time.zone.now
-      Timecop.freeze(now) do 
+      Timecop.freeze(now) do
         expect(subject).to receive(:next_memory_check).and_return nil
         expect(subject).to receive(:next_memory_check=).with(now + 1.minute)
         expect(subject.memory_limit_exceeded? now, 99).to eq false
@@ -178,7 +178,7 @@ describe OpenChain::ChainDelayedJobPlugin do
 
     it "sets thread variables and reloads state" do
       expect(ModelField).to receive(:reload_if_stale)
-      
+
       subject.job_wrapper(job) do |j|
         expect(j).to be job
 
@@ -199,7 +199,7 @@ describe OpenChain::ChainDelayedJobPlugin do
 
     it "unsets thread variables even if job raises an error" do
       expect(ModelField).to receive(:reload_if_stale)
-      
+
       expect {
         subject.job_wrapper(job) do |j|
           expect(Thread.current.thread_variable_get("delayed_job")).to eq true

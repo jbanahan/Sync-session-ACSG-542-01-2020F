@@ -56,7 +56,7 @@ describe Paperclip::Validators::AttachmentAntiVirusValidator do
       expect(record).to receive(:attached).and_return paperclip_attachment
       expect(paperclip_attachment).to receive(:file?).and_return true
        expect(paperclip_attachment).to receive(:staged?).and_return false
-      
+
       subject.validate_each record, "attached", paperclip_attachment
     end
   end

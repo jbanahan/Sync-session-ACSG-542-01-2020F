@@ -1,7 +1,7 @@
 # -*- SkipSchemaAnnotations
 
 # This rule validates that if there are any tariff numbers used on the entry that have special
-# tariffs set up in the SpecialTariffCrossReference table that those special tariff numbers are 
+# tariffs set up in the SpecialTariffCrossReference table that those special tariff numbers are
 # also present on the invoice line.
 class ValidationRuleEntrySpecialTariffsNotClaimed < BusinessValidationRule
   include ValidatesCommercialInvoiceLine
@@ -15,7 +15,7 @@ class ValidationRuleEntrySpecialTariffsNotClaimed < BusinessValidationRule
   def validate_special_tariff_not_claimed invoice, invoice_line, special_tariffs_hash
     errors = []
     tariffs_used = invoice_line.commercial_invoice_tariffs.map &:hts_code
-    
+
     tariffs_used.each do |hts_number|
       # Skip any lines that are part of the exclusion set
       next if tariff_exceptions.include?(hts_number)
@@ -32,8 +32,7 @@ class ValidationRuleEntrySpecialTariffsNotClaimed < BusinessValidationRule
         end
       end
     end
-    
+
     errors
   end
-  
 end

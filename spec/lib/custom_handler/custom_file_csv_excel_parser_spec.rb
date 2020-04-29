@@ -1,13 +1,12 @@
 describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
   subject { Class.new { include OpenChain::CustomHandler::CustomFileCsvExcelParser }.new }
 
- 
   describe "file_reader" do
     let(:alt_subject) do
-      Class.new do 
-        include OpenChain::CustomHandler::CustomFileCsvExcelParser 
+      Class.new do
+        include OpenChain::CustomHandler::CustomFileCsvExcelParser
 
-        def csv_reader_options 
+        def csv_reader_options
           {test: "csv"}
         end
 
@@ -87,7 +86,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
 
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileCsvReader.new custom_file, {}
         rows = []
-        r.foreach {|row| rows << row} 
+        r.foreach {|row| rows << row}
 
         expect(rows).to eq [["1", "2", "3"], ["A", "B", "C"]]
       end
@@ -99,7 +98,7 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
         rows = []
         # when you turn on return_headers, csv yields CSVRow objects...so call fields on them.  This is how
         # we know the options "took"
-        r.foreach {|row| rows << row.fields} 
+        r.foreach {|row| rows << row.fields}
 
         expect(rows).to eq [["A", "B", "C"]]
       end
@@ -120,23 +119,23 @@ describe OpenChain::CustomHandler::CustomFileCsvExcelParser do
       it "yields all row values from a sheet" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader.new(custom_file, {})
         expect(r).to receive(:get_xl_client).with("path", {bucket: "bucket"}).and_return xl_client
-        expect(xl_client).to receive(:all_row_values).with(sheet_number: 0).and_yield([1,2]).and_yield([3,4])
+        expect(xl_client).to receive(:all_row_values).with(sheet_number: 0).and_yield([1, 2]).and_yield([3, 4])
 
         rows = []
         r.foreach {|row| rows << row}
 
-        expect(rows).to eq [[1,2], [3,4]]
+        expect(rows).to eq [[1, 2], [3, 4]]
       end
 
       it "utilizes reader options" do
         r = OpenChain::CustomHandler::CustomFileCsvExcelParser::CustomFileExcelReader.new(custom_file, {sheet_number: 1, bucket: "different_bucket", opt: "opt"})
         expect(r).to receive(:get_xl_client).with("path", {bucket: "different_bucket", opt: "opt"}).and_return xl_client
-        expect(xl_client).to receive(:all_row_values).with(sheet_number: 1).and_yield([1,2]).and_yield([3,4])
+        expect(xl_client).to receive(:all_row_values).with(sheet_number: 1).and_yield([1, 2]).and_yield([3, 4])
 
         rows = []
         r.foreach {|row| rows << row}
 
-        expect(rows).to eq [[1,2], [3,4]]
+        expect(rows).to eq [[1, 2], [3, 4]]
       end
     end
   end

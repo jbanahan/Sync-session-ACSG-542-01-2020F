@@ -8,5 +8,4 @@ module OpenChain; module AwsUtilSupport
   def convert_tag_hash_to_filters_param tags
     tags.blank? ? [] : tags.map { |k, v| {name: "tag:#{k}", values: Array.wrap(v)} }
   end
-  
 end; end

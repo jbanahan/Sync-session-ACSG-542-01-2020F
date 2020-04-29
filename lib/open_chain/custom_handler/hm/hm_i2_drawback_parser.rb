@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2DrawbackParser
         # Defaulted to true for export sales if the date is from 2017 or later.  For data shipped in
         # Q4 2016, this value is set via the Purolator data feed.  (Considering this project had was
         # still in development in 2019, this is really only relevant for the initial data load.)
-        i2_line.export_received = i2_line.shipment_date.present? ? (i2_line.shipment_date >= Date.new(2017,1,1)) : false
+        i2_line.export_received = i2_line.shipment_date.present? ? (i2_line.shipment_date >= Date.new(2017, 1, 1)) : false
         i2_line.save!
       end
     end

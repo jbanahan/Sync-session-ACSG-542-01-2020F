@@ -2,7 +2,7 @@ module LinesSupport
   extend ActiveSupport::Concern
   include DefaultLineNumberSupport
 
-  #need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
+  # need to implement two private methods in mixed in class "parent_obj" and "parent_id_where".  See OrderLine for example.
   included do
     has_many :piece_sets, autosave: true, inverse_of: self.table_name.singularize.to_sym
     has_many :order_lines, :through => :piece_sets
@@ -13,7 +13,7 @@ module LinesSupport
     has_many :commercial_invoice_lines, :through => :piece_sets
     has_many :security_filing_lines, :through=>:piece_sets
 
-    unless ["CommercialInvoiceLine","SecurityFilingLine"].include?(self.name)
+    unless ["CommercialInvoiceLine", "SecurityFilingLine"].include?(self.name)
       belongs_to :product
       before_validation :default_quantity
 
@@ -23,7 +23,7 @@ module LinesSupport
       end
     end
 
-    unless ["CommercialInvoiceLine","SecurityFilingLine","DrawbackImportLine"].include?(self.name)
+    unless ["CommercialInvoiceLine", "SecurityFilingLine", "DrawbackImportLine"].include?(self.name)
       belongs_to :product
       before_validation :default_quantity
       validates :product, :presence => true
@@ -63,11 +63,11 @@ module LinesSupport
   end
 
   def process_links
-    {:order_line_id=>@linked_order_line_id,:shipment_line_id=>@linked_shipment_line_id,
-    :sales_order_line_id=>@linked_sales_order_line_id,:delivery_line_id=>@linked_delivery_line_id,
-    :commercial_invoice_line_id=>@linked_commercial_invoice_line_id,:drawback_import_line_id=>@linked_drawback_import_line_id,
-    :security_filing_line_id=>@linked_security_filing_line_id}.each do |s,i|
-      process_link s,i
+    {:order_line_id=>@linked_order_line_id, :shipment_line_id=>@linked_shipment_line_id,
+    :sales_order_line_id=>@linked_sales_order_line_id, :delivery_line_id=>@linked_delivery_line_id,
+    :commercial_invoice_line_id=>@linked_commercial_invoice_line_id, :drawback_import_line_id=>@linked_drawback_import_line_id,
+    :security_filing_line_id=>@linked_security_filing_line_id}.each do |s, i|
+      process_link s, i
       # Clear out the linked id since the process_link generates a piece set for it, therefore there's
       # no need for that value any longer..and it could potentially get re-used and cause problems if the
       # line object is saved more than once.
@@ -75,7 +75,7 @@ module LinesSupport
     end
   end
 
-  #returns the worst milestone state of all associated piece sets
+  # returns the worst milestone state of all associated piece sets
   def worst_milestone_state
     return nil if self.piece_sets.blank?
     highest_index = nil
@@ -93,7 +93,7 @@ module LinesSupport
     highest_index.nil? ? nil : MilestoneForecast::ORDERED_STATES[highest_index]
   end
 
-  #clean up piece sets after destroy
+  # clean up piece sets after destroy
   def merge_piece_sets
     foreign_key = self.class.reflections["piece_sets"].foreign_key
     self.piece_sets.each do |ps|
@@ -123,8 +123,8 @@ module LinesSupport
   def process_link field_symbol, id
     unless id.nil?
       ps = self.piece_sets.find {|ps| !(ps.marked_for_destruction? || ps.destroyed?) && ps.public_send(field_symbol) == id }
-      if ps.nil? #if there is a PieceSet only linked to the "linked line", it's a place holder that needs to have it's quantity reduced or be replaced
-        holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0)+ifnull(piece_sets.drawback_import_line_id,0)+ifnull(piece_sets.commercial_invoice_line_id,0))=?",id).first
+      if ps.nil? # if there is a PieceSet only linked to the "linked line", it's a place holder that needs to have it's quantity reduced or be replaced
+        holding_piece_set = PieceSet.where(field_symbol=>id).where("(ifnull(piece_sets.order_line_id,0)+ifnull(piece_sets.shipment_line_id,0)+ifnull(piece_sets.sales_order_line_id,0)+ifnull(piece_sets.delivery_line_id,0)+ifnull(piece_sets.drawback_import_line_id,0)+ifnull(piece_sets.commercial_invoice_line_id,0))=?", id).first
         if holding_piece_set
           if holding_piece_set.quantity <= self.quantity
             holding_piece_set.destroy

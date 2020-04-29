@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
-  let (:custom_file) { 
+  let (:custom_file) {
     cf = double("Custom File")
     allow(cf).to receive(:attached).and_return cf
     allow(cf).to receive(:path).and_return "path/to/file.xlsx"
@@ -138,7 +138,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     end
 
     it "should error if importer is not found" do
-      file_contents = [["Column", "Heading"],["NOIMPORTER", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"], ["NOIMPORTER", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
 
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
 
     it "should error if importer is blank" do
       importer = Factory(:importer)
-      file_contents = [["Column", "Heading"],["  ", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"], ["  ", "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
 
@@ -159,7 +159,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
     end
 
     it "should not send invoices if suppressed" do
-      file_contents = [["Column", "Heading"],[importer.fenix_customer_identifier, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"], [importer.fenix_customer_identifier, "INV1", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       expect(OpenChain::CustomHandler::FenixNdInvoiceGenerator).not_to receive(:generate)
 
@@ -175,7 +175,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       inv.update_attributes importer_id: importer.id
       id = inv.id
 
-      file_contents = [["Column", "Heading"],[importer.fenix_customer_identifier, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"], [importer.fenix_customer_identifier, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 
       errors = subject.parse "file.xlsx", true
@@ -193,7 +193,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       inv.update_attributes importer_id: importer.id, invoice_number: ""
       id = inv.id
 
-      file_contents = [["Column", "Heading"],[importer.fenix_customer_identifier, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
+      file_contents = [["Column", "Heading"], [importer.fenix_customer_identifier, "#{inv.invoice_number}", "2013-10-28", "UIL", "Part1", "CN", "1234.56.7890", "Some Part", "10", "1.25", "PO#", "1"]]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
 
       errors = subject.parse "file.xlsx", true
@@ -214,7 +214,7 @@ describe OpenChain::CustomHandler::FenixCommercialInvoiceSpreadsheetHandler do
       ]
       expect(subject).to receive(:foreach).and_yield(file_contents[0]).and_yield(file_contents[1])
       errors = subject.parse "file.xlsx", true
-  
+
       expect(errors.length).to eq 0
 
       invoices = CommercialInvoice.where(invoice_number: "123").order("commercial_invoices.id ASC").all

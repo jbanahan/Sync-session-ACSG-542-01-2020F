@@ -1,21 +1,21 @@
 describe OneTimeAlertsController do
   let(:user) { Factory(:user, first_name: "David", last_name: "St. Hubbins", username: "dsthubbins") }
-  
+
   before { sign_in_as user }
 
   describe "index" do
-    let(:ota1) { Factory(:one_time_alert, inactive: true, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 1", expire_date: Date.new(2018,3,15), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num"), Factory(:search_criterion, model_field_uid: "ent_ent_released_date")]) }
-    let(:ota2) { Factory(:one_time_alert, inactive: false, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 2", expire_date: Date.new(2018,3,20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_cust_num"), Factory(:search_criterion, model_field_uid: "ent_arrival_date")]) }
-    let(:ota3) { Factory(:one_time_alert, inactive: false, user: Factory(:user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel"), name: "ota 3", module_type: "Entry", expire_date: Date.new(2018,3,15))}
-    let(:ota4) { Factory(:one_time_alert, inactive: false, user: Factory(:user, first_name: "Derek", last_name: "Smalls", username: "dsmalls"), name: "ota 4", module_type: "Entry", expire_date: Date.new(2018,3,20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num")]) }
-    
+    let(:ota1) { Factory(:one_time_alert, inactive: true, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 1", expire_date: Date.new(2018, 3, 15), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num"), Factory(:search_criterion, model_field_uid: "ent_ent_released_date")]) }
+    let(:ota2) { Factory(:one_time_alert, inactive: false, user: user, expire_date_last_updated_by: user, module_type: "Entry", name: "ota 2", expire_date: Date.new(2018, 3, 20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_cust_num"), Factory(:search_criterion, model_field_uid: "ent_arrival_date")]) }
+    let(:ota3) { Factory(:one_time_alert, inactive: false, user: Factory(:user, first_name: "Nigel", last_name: "Tufnel", username: "ntufnel"), name: "ota 3", module_type: "Entry", expire_date: Date.new(2018, 3, 15))}
+    let(:ota4) { Factory(:one_time_alert, inactive: false, user: Factory(:user, first_name: "Derek", last_name: "Smalls", username: "dsmalls"), name: "ota 4", module_type: "Entry", expire_date: Date.new(2018, 3, 20), search_criterions: [Factory(:search_criterion, model_field_uid: "ent_entry_num")]) }
+
     it "renders for user with permission" do
       ota1; ota2; ota3; ota4
       expect(OneTimeAlert).to receive(:can_view?).with(user).and_return true
-      
-      Timecop.freeze(DateTime.new(2018,3,17)) { get :index, tab: "enabled" }
+
+      Timecop.freeze(DateTime.new(2018, 3, 17)) { get :index, tab: "enabled" }
       expect(response).to be_success
-      
+
       expect(assigns(:tab)).to eq "enabled"
 
       expect(assigns(:expired).length).to eq 1
@@ -28,7 +28,7 @@ describe OneTimeAlertsController do
       expect(expired.module_type).to eq ota1.module_type
       expect(expired.expire_date).to eq ota1.expire_date
       expect(expired.reference_field_uids).to eq "ent_entry_num, ent_ent_released_date"
-      
+
       expect(assigns(:enabled).length).to eq 1
       enabled = assigns(:enabled).first
       expect(enabled.inactive).to eq false
@@ -46,15 +46,15 @@ describe OneTimeAlertsController do
       user.admin = true; user.save!
       expect(OneTimeAlert).to receive(:can_view?).with(user).and_return true
 
-      Timecop.freeze(DateTime.new(2018,3,17)) { get :index, display_all: true, tab: "expired" }
+      Timecop.freeze(DateTime.new(2018, 3, 17)) { get :index, display_all: true, tab: "expired" }
       expect(response).to be_success
 
       expect(assigns(:tab)).to eq "expired"
       expect(assigns(:expired).length).to eq 2
-      expect(assigns(:expired).map{ |e| e.name }).to include("ota 1", "ota 3")
+      expect(assigns(:expired).map { |e| e.name }).to include("ota 1", "ota 3")
 
       expect(assigns(:enabled).length).to eq 2
-      expect(assigns(:enabled).map{ |e| e.name }).to include("ota 2", "ota 4")
+      expect(assigns(:enabled).map { |e| e.name }).to include("ota 2", "ota 4")
     end
 
     it "shows update notice (when applicable)" do
@@ -92,8 +92,8 @@ describe OneTimeAlertsController do
       get :new, display_all: true
       expect(assigns(:alert)).to be_instance_of(OneTimeAlert)
       expect(assigns(:display_all)).to eq true
-      expect(assigns(:cm_list)).to eq [["BrokerInvoice", "Broker Invoice"], 
-                                       ["Entry", "Entry"], ["Order", "Order"], 
+      expect(assigns(:cm_list)).to eq [["BrokerInvoice", "Broker Invoice"],
+                                       ["Entry", "Entry"], ["Order", "Order"],
                                        ["Product", "Product"], ["Shipment", "Shipment"]]
     end
 
@@ -128,7 +128,7 @@ describe OneTimeAlertsController do
   end
 
   describe "create" do
-    let(:dt) { DateTime.new 2018,3,15,12 }
+    let(:dt) { DateTime.new 2018, 3, 15, 12 }
 
     it "creates alert for permitted user" do
       expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
@@ -157,18 +157,18 @@ describe OneTimeAlertsController do
 
   describe "copy" do
     let!(:user2) { Factory(:user) }
-    let!(:alert) { Factory(:one_time_alert, module_type: "Product", inactive: false, blind_copy_me: true, email_addresses: "sthubbins@hellhole.co.uk", email_body: "body", 
-                                           email_subject: "subject", name: "OTA Name", enabled_date: Date.new(2018,3,15), expire_date: Date.new(2019,3,15), 
-                                           expire_date_last_updated_by: user2, mailing_list: Factory(:mailing_list), user: user2) } 
+    let!(:alert) { Factory(:one_time_alert, module_type: "Product", inactive: false, blind_copy_me: true, email_addresses: "sthubbins@hellhole.co.uk", email_body: "body",
+                                           email_subject: "subject", name: "OTA Name", enabled_date: Date.new(2018, 3, 15), expire_date: Date.new(2019, 3, 15),
+                                           expire_date_last_updated_by: user2, mailing_list: Factory(:mailing_list), user: user2) }
 
     it "duplicates alert if populated" do
       sc = Factory(:search_criterion, model_field_uid: 'prod_uid')
       alert.search_criterions << sc
 
       expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
-      
-      expect{ put :copy, id: alert.id, display_all: true }.to change(OneTimeAlert, :count).from(1).to(2)
-      
+
+      expect { put :copy, id: alert.id, display_all: true }.to change(OneTimeAlert, :count).from(1).to(2)
+
       cpy = OneTimeAlert.last
       expect(cpy.id).to_not eq alert.id
       expect(cpy.inactive).to eq true
@@ -192,9 +192,9 @@ describe OneTimeAlertsController do
 
     it "does nothing if alert missing name" do
       expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
-      
+
       alert.update_attributes! name: nil
-      expect{ put :copy, id: alert.id }.to_not change(OneTimeAlert, :count)
+      expect { put :copy, id: alert.id }.to_not change(OneTimeAlert, :count)
       expect(response).to redirect_to request.referrer
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to include "This alert can't be copied."
@@ -213,26 +213,25 @@ describe OneTimeAlertsController do
 
     it "blocks unauthorized users" do
       expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return false
-      expect{ put :copy, id: alert.id }.to_not change(OneTimeAlert, :count)
+      expect { put :copy, id: alert.id }.to_not change(OneTimeAlert, :count)
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to include "You do not have permission to copy One Time Alerts."
     end
   end
 
   context "mass update" do
-    let!(:ota_1) { Factory(:one_time_alert, user: user, name: "ota 1", expire_date: Date.new(2018,3,15)) }
-    let!(:ota_2) { Factory(:one_time_alert, user: user, name: "ota 2", expire_date: Date.new(2018,3,15)) }
-    let!(:ota_3) { Factory(:one_time_alert, user: user, name: "ota 3", expire_date: Date.new(2018,3,15)) }
-    let!(:ota_4) { Factory(:one_time_alert, user: Factory(:user), name: "ota 4", expire_date: Date.new(2018,3,15)) }
-    
+    let!(:ota_1) { Factory(:one_time_alert, user: user, name: "ota 1", expire_date: Date.new(2018, 3, 15)) }
+    let!(:ota_2) { Factory(:one_time_alert, user: user, name: "ota 2", expire_date: Date.new(2018, 3, 15)) }
+    let!(:ota_3) { Factory(:one_time_alert, user: user, name: "ota 3", expire_date: Date.new(2018, 3, 15)) }
+    let!(:ota_4) { Factory(:one_time_alert, user: Factory(:user), name: "ota 4", expire_date: Date.new(2018, 3, 15)) }
+
     describe "mass_delete" do
-    
       it "deletes multiple alerts for permitted user" do
         ota_1; ota_2; ota_3; ota_3
 
         expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
 
-        expect{delete :mass_delete, ids: [ota_1.id, ota_3.id, ota_4.id], display_all: true}.to change(OneTimeAlert, :count).from(4).to 2
+        expect {delete :mass_delete, ids: [ota_1.id, ota_3.id, ota_4.id], display_all: true}.to change(OneTimeAlert, :count).from(4).to 2
         expect(OneTimeAlert.all.map(&:name)).to include("ota 2", "ota 4")
         expect(response).to redirect_to one_time_alerts_path(display_all: true)
         expect(flash[:notices]).to include "Selected One Time Alerts have been deleted."
@@ -244,14 +243,14 @@ describe OneTimeAlertsController do
 
         expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
 
-        expect{delete :mass_delete, ids: [ota_1.id, ota_3.id, ota_4.id]}.to change(OneTimeAlert, :count).from(4).to 1
+        expect {delete :mass_delete, ids: [ota_1.id, ota_3.id, ota_4.id]}.to change(OneTimeAlert, :count).from(4).to 1
         expect(OneTimeAlert.all.map(&:name)).to include("ota 2")
         expect(response).to redirect_to one_time_alerts_path
         expect(flash[:notices]).to include "Selected One Time Alerts have been deleted."
       end
 
-      it "prevents access by other users" do        
-        expect{delete :mass_delete, ids: [ota_1.id, ota_3.id]}.to_not change(OneTimeAlert, :count)
+      it "prevents access by other users" do
+        expect {delete :mass_delete, ids: [ota_1.id, ota_3.id]}.to_not change(OneTimeAlert, :count)
         expect(flash[:errors]).to include "You do not have permission to edit One Time Alerts."
       end
     end
@@ -260,12 +259,12 @@ describe OneTimeAlertsController do
       it "updates expire date for multiple alerts for permitted user" do
         expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
 
-        Timecop.freeze(DateTime.new 2018,4,1) { put :mass_expire, ids: [ota_1.id, ota_3.id, ota_4.id], display_all: true }
+        Timecop.freeze(DateTime.new 2018, 4, 1) { put :mass_expire, ids: [ota_1.id, ota_3.id, ota_4.id], display_all: true }
         [ota_1, ota_2, ota_3, ota_4].each(&:reload)
-        expect(ota_1.expire_date).to eq Date.new(2018,4,1)
-        expect(ota_2.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_3.expire_date).to eq Date.new(2018,4,1)
-        expect(ota_4.expire_date).to eq Date.new(2018,3,15)
+        expect(ota_1.expire_date).to eq Date.new(2018, 4, 1)
+        expect(ota_2.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_3.expire_date).to eq Date.new(2018, 4, 1)
+        expect(ota_4.expire_date).to eq Date.new(2018, 3, 15)
         expect(response).to redirect_to one_time_alerts_path(display_all: true)
         expect(flash[:notices]).to include "Selected One Time Alerts will expire at the end of the day."
       end
@@ -274,23 +273,23 @@ describe OneTimeAlertsController do
         user.admin = true; user.save!
         expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
 
-        Timecop.freeze(DateTime.new 2018,4,1) { put :mass_expire, ids: [ota_1.id, ota_3.id, ota_4.id] }
+        Timecop.freeze(DateTime.new 2018, 4, 1) { put :mass_expire, ids: [ota_1.id, ota_3.id, ota_4.id] }
         [ota_1, ota_2, ota_3, ota_4].each(&:reload)
-        expect(ota_1.expire_date).to eq Date.new(2018,4,1)
-        expect(ota_2.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_3.expire_date).to eq Date.new(2018,4,1)
-        expect(ota_4.expire_date).to eq Date.new(2018,4,1)
+        expect(ota_1.expire_date).to eq Date.new(2018, 4, 1)
+        expect(ota_2.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_3.expire_date).to eq Date.new(2018, 4, 1)
+        expect(ota_4.expire_date).to eq Date.new(2018, 4, 1)
         expect(flash[:notices]).to include "Selected One Time Alerts will expire at the end of the day."
       end
 
       it "prevents access by other users" do
-        Timecop.freeze(DateTime.new 2018,4,1) { put :mass_expire, ids: [ota_1.id, ota_3.id] }
+        Timecop.freeze(DateTime.new 2018, 4, 1) { put :mass_expire, ids: [ota_1.id, ota_3.id] }
 
         [ota_1, ota_2, ota_3, ota_4].each(&:reload)
-        expect(ota_1.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_2.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_3.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_4.expire_date).to eq Date.new(2018,3,15)
+        expect(ota_1.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_2.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_3.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_4.expire_date).to eq Date.new(2018, 3, 15)
 
         expect(flash[:errors]).to include "You do not have permission to edit One Time Alerts."
       end
@@ -300,12 +299,12 @@ describe OneTimeAlertsController do
       it "increment expire date for multiple alerts by 1 year for permitted user" do
         expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
 
-        Timecop.freeze(DateTime.new 2018,4,1) { put :mass_enable, ids: [ota_1.id, ota_3.id, ota_4.id], display_all: true }
+        Timecop.freeze(DateTime.new 2018, 4, 1) { put :mass_enable, ids: [ota_1.id, ota_3.id, ota_4.id], display_all: true }
         [ota_1, ota_2, ota_3, ota_4].each(&:reload)
-        expect(ota_1.expire_date).to eq Date.new(2019,4,1)
-        expect(ota_2.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_3.expire_date).to eq Date.new(2019,4,1)
-        expect(ota_4.expire_date).to eq Date.new(2018,3,15)
+        expect(ota_1.expire_date).to eq Date.new(2019, 4, 1)
+        expect(ota_2.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_3.expire_date).to eq Date.new(2019, 4, 1)
+        expect(ota_4.expire_date).to eq Date.new(2018, 3, 15)
         expect(response).to redirect_to one_time_alerts_path(display_all: true)
         expect(flash[:notices]).to include "Expire dates for selected One Time Alerts have been extended."
       end
@@ -314,24 +313,24 @@ describe OneTimeAlertsController do
         user.admin = true; user.save!
         expect(OneTimeAlert).to receive(:can_edit?).with(user).and_return true
 
-        Timecop.freeze(DateTime.new 2018,4,1) { put :mass_enable, ids: [ota_1.id, ota_3.id, ota_4.id] }
+        Timecop.freeze(DateTime.new 2018, 4, 1) { put :mass_enable, ids: [ota_1.id, ota_3.id, ota_4.id] }
         [ota_1, ota_2, ota_3, ota_4].each(&:reload)
-        expect(ota_1.expire_date).to eq Date.new(2019,4,1)
-        expect(ota_2.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_3.expire_date).to eq Date.new(2019,4,1)
-        expect(ota_4.expire_date).to eq Date.new(2019,4,1)
+        expect(ota_1.expire_date).to eq Date.new(2019, 4, 1)
+        expect(ota_2.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_3.expire_date).to eq Date.new(2019, 4, 1)
+        expect(ota_4.expire_date).to eq Date.new(2019, 4, 1)
 
         expect(flash[:notices]).to include "Expire dates for selected One Time Alerts have been extended."
       end
 
       it "prevents access by other users" do
         sign_in_as Factory(:user)
-        Timecop.freeze(DateTime.new 2018,4,1) { put :mass_enable, ids: [ota_1.id, ota_3.id] }
+        Timecop.freeze(DateTime.new 2018, 4, 1) { put :mass_enable, ids: [ota_1.id, ota_3.id] }
 
         [ota_1, ota_2, ota_3].each(&:reload)
-        expect(ota_1.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_2.expire_date).to eq Date.new(2018,3,15)
-        expect(ota_3.expire_date).to eq Date.new(2018,3,15)
+        expect(ota_1.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_2.expire_date).to eq Date.new(2018, 3, 15)
+        expect(ota_3.expire_date).to eq Date.new(2018, 3, 15)
 
         expect(flash[:errors]).to include "You do not have permission to edit One Time Alerts."
       end
@@ -356,7 +355,7 @@ describe OneTimeAlertsController do
       expect(ord_ord_num).to receive(:label).and_return "Order Number"
       expect(prod_uid).to receive(:label).and_return "Unique Identifier"
       expect(shp_ref).to receive(:label).and_return "Reference Number"
-      
+
       allow_any_instance_of(ModuleChain).to receive(:model_fields) do |mc, u|
         expect(u).to eq user
         mc_owner = mc.to_a.first.class_name
@@ -375,18 +374,18 @@ describe OneTimeAlertsController do
           raise "Unexpected name found in OneTimeAlert::MODULE_CLASS_NAMES."
         end
       end
-      
+
       get :reference_fields_index, display_all: true
-      
+
       expect(response).to be_success
       expect(assigns(:display_all)).to eq true
-      expect(JSON.parse(assigns(:available))).to eq("BrokerInvoice" => [{ "mfid" => "bi_invoice_number", "label" => "Invoice Number"}], 
-                                                    "Entry" => [{"mfid" => "ent_entry_num", "label" => "Entry Number"}], 
-                                                    "Product" => [{"mfid" => "prod_uid", "label" => "Unique Identifier"}], 
+      expect(JSON.parse(assigns(:available))).to eq("BrokerInvoice" => [{ "mfid" => "bi_invoice_number", "label" => "Invoice Number"}],
+                                                    "Entry" => [{"mfid" => "ent_entry_num", "label" => "Entry Number"}],
+                                                    "Product" => [{"mfid" => "prod_uid", "label" => "Unique Identifier"}],
                                                     "Order" => [], "Shipment" => [])
-      
-      expect(JSON.parse(assigns(:included))).to eq("Order" => [{"mfid" => "ord_ord_num", "label" => "Order Number"}], 
-                                                   "Shipment" => [{"mfid" => "shp_ref", "label" => "Reference Number"}], 
+
+      expect(JSON.parse(assigns(:included))).to eq("Order" => [{"mfid" => "ord_ord_num", "label" => "Order Number"}],
+                                                   "Shipment" => [{"mfid" => "shp_ref", "label" => "Reference Number"}],
                                                    "BrokerInvoice" => [], "Entry" => [], "Product" => [])
     end
 
@@ -399,7 +398,7 @@ describe OneTimeAlertsController do
 
   describe "log_index" do
     let!(:alert) { Factory(:one_time_alert, user: user) }
-    
+
     it "renders for user with permission" do
       expect(OneTimeAlert).to receive(:can_view?).with(user).and_return true
 

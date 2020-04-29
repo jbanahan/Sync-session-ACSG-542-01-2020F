@@ -27,7 +27,7 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
   end
 
   def process_excel custom_file
-    errors = Hash.new{ |h, k| h[k] = [] }
+    errors = Hash.new { |h, k| h[k] = [] }
     if  [".xls", ".xlsx"].include? File.extname(custom_file.path).downcase
       begin
         imp_id = Company.where(system_code: "HENNE").first.id
@@ -48,7 +48,7 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
   def parse_row! row, row_num, imp_id, errors
     po_number = text_value(row[0])
     tariff_number = text_value(row[3])
-    
+
     unless po_number =~ /^\d{6}$/
       errors[:fixable] << "PO number has wrong format at row #{row_num + 1}!"
       return
@@ -64,15 +64,15 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
   end
 
   def unpack_row row
-    inv_hsh = {invoice_number: text_value(row[0]), destination_code: text_value(row[2]).capitalize, mfid: text_value(row[4]), total_quantity: decimal_value(row[11]), 
-               invoice_value_foreign: decimal_value(row[14], decimal_places: 2), docs_received_date: date_value(row[16]), docs_ok_date: date_value(row[17]), 
+    inv_hsh = {invoice_number: text_value(row[0]), destination_code: text_value(row[2]).capitalize, mfid: text_value(row[4]), total_quantity: decimal_value(row[11]),
+               invoice_value_foreign: decimal_value(row[14], decimal_places: 2), docs_received_date: date_value(row[16]), docs_ok_date: date_value(row[17]),
                issue_codes: text_value(row[18]), rater_comments: text_value(row[19]), total_quantity_uom: 'CTNS'}
 
-    line_hsh = {part_number: text_value(row[1]), country_origin_code: text_value(row[5]), quantity: decimal_value(row[6]), 
-                unit_price: decimal_value(row[12], decimal_places: 2), currency: text_value(row[13]).upcase, value_foreign: decimal_value(row[15], decimal_places: 2), 
+    line_hsh = {part_number: text_value(row[1]), country_origin_code: text_value(row[5]), quantity: decimal_value(row[6]),
+                unit_price: decimal_value(row[12], decimal_places: 2), currency: text_value(row[13]).upcase, value_foreign: decimal_value(row[15], decimal_places: 2),
                 line_number: 1}
-    
-    tariff_hsh = {hts_code: text_value(row[3]), classification_qty_1: decimal_value(row[7]), classification_uom_1: text_value(row[8]), 
+
+    tariff_hsh = {hts_code: text_value(row[3]), classification_qty_1: decimal_value(row[7]), classification_uom_1: text_value(row[8]),
                   gross_weight: decimal_value(row[10])}
 
     if row[9].presence && row[9].to_f > 0
@@ -101,13 +101,13 @@ module OpenChain; module CustomHandler; module Hm; class HmPoLineParser
   def fprint_obj invoice
     cil = invoice.commercial_invoice_lines.first
     return false if cil.nil?
-    
+
     invoice.invoice_number.to_s + cil.part_number.to_s + sprintf('%.2f', invoice.invoice_value_foreign || 0) + invoice.docs_received_date.try(:strftime, '%m-%d-%Y').to_s
   end
 
   def has_matching_fingerprint? importer_id, inv_num, fprint
     invs = CommercialInvoice.where(invoice_number: inv_num, importer_id: importer_id)
-    invs.map{ |i| fprint_obj(i) == fprint }.any?
+    invs.map { |i| fprint_obj(i) == fprint }.any?
   end
 
 end; end; end; end;

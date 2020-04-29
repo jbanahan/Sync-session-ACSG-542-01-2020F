@@ -42,7 +42,7 @@ require 'open_chain/custom_handler/ci_load_handler'
     l.seller_mid = text_value(row[17])
     l.cotton_fee_flag = text_value(row[18])
     l.spi = text_value(row[19])
-    
+
     l
   end
 end; end; end; end

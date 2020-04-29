@@ -9,13 +9,13 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
       @entry.update_attributes! customer_number: "CQ", release_date: "2015-06-01", master_bills_of_lading: "MBOL", entry_number: "EN12345"
 
       @tariff3 = Factory(:commercial_invoice_tariff, duty_amount: 10,
-                          commercial_invoice_line: Factory(:commercial_invoice_line, value: 10, hmf: 20, mpf: 30, 
+                          commercial_invoice_line: Factory(:commercial_invoice_line, value: 10, hmf: 20, mpf: 30,
                                                             commercial_invoice: Factory(:commercial_invoice, entry: @entry)))
       @line2 = @tariff3.commercial_invoice_line
 
       @container1 = Factory(:container, entry: @entry, commercial_invoice_lines: [@line])
       @container2 = Factory(:container, entry: @entry, commercial_invoice_lines: [@line2])
-      
+
       @broker_invoice_line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: @entry, invoice_total: 50), charge_amount: 50)
       @broker_invoice = @broker_invoice_line.broker_invoice
 
@@ -28,7 +28,7 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
       allow_any_instance_of(Entry).to receive(:can_view?).with(@user).and_return true
     end
 
-    describe "run" do 
+    describe "run" do
       it "lists container costs for an entry" do
         wb = subject.run @user, {'start_date' => '2015-06-01', 'end_date' => '2015-06-02', 'customer_number' => "CQ"}
         expect(wb).not_to be_nil
@@ -68,7 +68,7 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
 
       it "progressively distributes remainder of unevenly divided freight and brokerage sums across all containers" do
         # In other words...
-        # 3 containers, $80 charge 
+        # 3 containers, $80 charge
           # -> Container 1 = 26.67, Container 2 = 26.67, Container 3 = 26.66
           # NOT ->  Container 1 = 26.68, Container 2 = 26.66, Container 3 = 26.66
         @broker_invoice.update_attributes! invoice_total: 80
@@ -88,7 +88,7 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
         expect(sheet.row(1)[8]).to eq BigDecimal("26.67")
         expect(sheet.row(2)[8]).to eq BigDecimal("26.67")
         expect(sheet.row(3)[8]).to eq BigDecimal("26.66")
-      end 
+      end
 
       it "excludes entries ouside of given timeframe" do
         # Test whether we're applying timezone manipulation or not
@@ -117,7 +117,7 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
         sheet = wb.worksheet "06-01-15 - 06-01-15"
         expect(sheet.row(1)).to eq []
       end
-    end 
+    end
 
     describe "run_report" do
       it "runs the report" do
@@ -131,7 +131,5 @@ describe OpenChain::Report::EntryContainerCostBreakdown do
       end
     end
   end
-
-  
 
 end

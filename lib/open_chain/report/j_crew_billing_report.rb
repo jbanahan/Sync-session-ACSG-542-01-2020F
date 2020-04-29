@@ -50,12 +50,12 @@ module OpenChain; module Report; class JCrewBillingReport
   def run
     start_date = @opts[:start_date].to_date
     end_date = @opts[:end_date].to_date
-    
+
     invoice_date = ActiveSupport::TimeZone["America/New_York"].now.to_date
     invoice_number = "VG-WE#{invoice_date.strftime "%Y%m%d"}"
 
     header_row = ["Invoice", nil, "2003513", "Draft", invoice_date.strftime("%m/%d/%Y"), "No", "No", "Martha.long@jcrew.com", "770"]
-    
+
     invoice_sheets = []
     rows = []
     current_entry_rows = []
@@ -82,10 +82,10 @@ module OpenChain; module Report; class JCrewBillingReport
           end
         end
       end
-      
+
       if rows.length + current_entry_rows.length >= max_row_count
         # If we're adding a new sheet here, it means that we will absolutely be using more than one sheet total, in which case
-        # we will need the A,B invoice number suffix, therefore we send the invoice_sheets length to indicate how many invoices have 
+        # we will need the A,B invoice number suffix, therefore we send the invoice_sheets length to indicate how many invoices have
         # been done already.
         invoice_sheets << finalize_file_rows(invoice_date, duty_gl_total, rows, invoice_sheets.length)
         rows = []
@@ -115,7 +115,7 @@ module OpenChain; module Report; class JCrewBillingReport
         write_excel_file(zipfile, base_filename, invoice_sheets)
         write_csv_files(zipfile, invoice_sheets)
       end
-    
+
       tempfile.flush
       tempfile.rewind
 
@@ -216,7 +216,7 @@ module OpenChain; module Report; class JCrewBillingReport
       end
 
       file_rows
-    end 
+    end
 
     def build_header invoice_number, invoice_date
       header = []
@@ -255,7 +255,7 @@ module OpenChain; module Report; class JCrewBillingReport
       row[25] = "General Expense (Non IO)"
       row[26] = account_data[:profit_center]
       row[29] = account_data[:gl_account]
-      
+
       row
     end
 
@@ -301,7 +301,7 @@ module OpenChain; module Report; class JCrewBillingReport
     end
 
     def sum_brokerage_amounts_for_entry entry, start_date, end_date
-      # We're purposefully not passing start_date into the query because 
+      # We're purposefully not passing start_date into the query because
       # we need to find all the broker invoices that may have previously been included on an earlier sheet
       # to make sure we're not double including duty amounts.
       invoices = BrokerInvoice.where(entry_id: entry.id)
@@ -362,21 +362,21 @@ module OpenChain; module Report; class JCrewBillingReport
       charge_code = line.charge_code.to_i
       description = line.charge_description.upcase
 
-      # Only include lines that have codes less than 1K and do NOT match 
+      # Only include lines that have codes less than 1K and do NOT match
       # the other criteria
       charge_code < 1000 &&
         !(description.include?("COST") ||
           description.include?("FREIGHT") ||
           description.include?("DUTY") ||
           description.include?("WAREHOUSE") ||
-          [1,99,105,106,107,108,109,120,208,4,5,98,134,603,
-              11,13,20,30,41,48,60,69,71,76,85,87,89,97,128,133,136,141,143,145,
-              148,153,155,165,167,169,171,177,179,185,186,188,194,195,201,203,205,
-              206,207,213,215,401,402,403,404,410,411,413,414,415,416,417,418,
-              419,420,421,429,430,434,435,437,510,511,512,513,514,515,516,517,
-              518,519,520,521,524,525,526,527,528,529,530,531,532,533,534,535,
-              536,537,540,541,542,543,544,600,601,740,741,905,906,910,914,921,946,
-              950,955,956,957,964,980,999].include?(charge_code)
+          [1, 99, 105, 106, 107, 108, 109, 120, 208, 4, 5, 98, 134, 603,
+              11, 13, 20, 30, 41, 48, 60, 69, 71, 76, 85, 87, 89, 97, 128, 133, 136, 141, 143, 145,
+              148, 153, 155, 165, 167, 169, 171, 177, 179, 185, 186, 188, 194, 195, 201, 203, 205,
+              206, 207, 213, 215, 401, 402, 403, 404, 410, 411, 413, 414, 415, 416, 417, 418,
+              419, 420, 421, 429, 430, 434, 435, 437, 510, 511, 512, 513, 514, 515, 516, 517,
+              518, 519, 520, 521, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535,
+              536, 537, 540, 541, 542, 543, 544, 600, 601, 740, 741, 905, 906, 910, 914, 921, 946,
+              950, 955, 956, 957, 964, 980, 999].include?(charge_code)
         )
     end
 
@@ -410,7 +410,7 @@ module OpenChain; module Report; class JCrewBillingReport
     def prorate_by_po_counts entry, charge_amount, buckets
       # Sum the # of po numbers for the entry, then we can use that amount
       # to evenly prorate the total charge amount across each bucket based
-      # on the # of PO's in the bucket.  
+      # on the # of PO's in the bucket.
       # We then add back in the fractional cents remaining based on the highest value of the original
       # proration calculation's truncated amounts.
 
@@ -420,7 +420,7 @@ module OpenChain; module Report; class JCrewBillingReport
       return if total_number_pos <= 0
 
       total_prorated = BigDecimal.new 0
-      buckets.values.each do |v|
+      buckets.each_value do |v|
         original_amount = (BigDecimal.new(v[:line_count]) / total_number_pos) * charge_amount
         po_amount = original_amount.round(2, :truncate)
 

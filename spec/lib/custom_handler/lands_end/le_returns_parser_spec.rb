@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
     }
     let! (:lands_end) { Factory(:importer, system_code: "LANDS1") }
     let (:us) { Factory(:country, iso_code: "US") }
-    let! (:product) { 
+    let! (:product) {
       p = Factory(:product, importer: lands_end, unique_identifier: "LANDS1-4211928")
       p.update_hts_for_country(us, "1234567890")
       p
@@ -87,8 +87,8 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
     let! (:path) {
       allow(custom_file).to receive(:attached_file_name).and_return "file.csv"
     }
-    let (:builder) { 
-      b = instance_double(XlsxBuilder) 
+    let (:builder) {
+      b = instance_double(XlsxBuilder)
       allow(b).to receive(:output_format).and_return "xlsx"
       # We need to write something to the tempfile, otherwise the mailer will strip the attachment.
       allow(b).to receive(:write) do |tempfile|
@@ -99,7 +99,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
     }
     let (:user) { Factory(:user, email:"me@there.com") }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:custom_file).and_return custom_file
     end
 
@@ -150,6 +150,5 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsParser do
       end
     end
 
-  
   end
 end

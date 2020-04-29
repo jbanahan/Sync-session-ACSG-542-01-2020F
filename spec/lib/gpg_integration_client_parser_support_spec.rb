@@ -1,7 +1,7 @@
 describe OpenChain::GpgIntegrationClientParserSupport do
 
-  subject { 
-    Class.new do 
+  subject {
+    Class.new do
       include OpenChain::GpgIntegrationClientParserSupport
     end
   }
@@ -34,13 +34,13 @@ describe OpenChain::GpgIntegrationClientParserSupport do
     end
 
     it "uses parameters from gpg_secrets_key method if opts has a blank `private_key` key" do
-      opts = {gpg_secrets_key: ""} 
+      opts = {gpg_secrets_key: ""}
       expect(subject).to receive(:gpg_secrets_key).with(opts).and_return("secrets")
       expect(subject.discover_gpg_key(opts)).to eq("secrets")
     end
 
     it "uses parameters from gpg_parameters method if opts has a missing `private_key` key" do
-      opts = {} 
+      opts = {}
       expect(subject).to receive(:gpg_secrets_key).with(opts).and_return("secrets")
       expect(subject.discover_gpg_key(opts)).to eq("secrets")
     end
@@ -63,7 +63,7 @@ describe OpenChain::GpgIntegrationClientParserSupport do
 
     it "raises an error if invalid GPG parameters are returned" do
       expect(subject).to receive(:discover_gpg_key).and_return(nil)
-      expect{subject.pre_process_data "encrypted", {encrypted: true}}.to raise_error ArgumentError, "Missing gpg configuration for ''"
+      expect {subject.pre_process_data "encrypted", {encrypted: true}}.to raise_error ArgumentError, "Missing gpg configuration for ''"
     end
 
     it "returns given data object if data is not encrypted" do

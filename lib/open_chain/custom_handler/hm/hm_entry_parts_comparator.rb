@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryPartsComparator
 
   def extract_part_data json
     part_data = []
-    
+
     json_child_entities(json, "CommercialInvoice").each do |invoice|
       po_number = mf(invoice, 'ci_invoice_number')
       json_child_entities(invoice, 'CommercialInvoiceLine').each do |line|
@@ -117,11 +117,11 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryPartsComparator
 
     product = nil
     unique_id = "HENNE-#{part_data[:part_number]}"
-    
+
 
     created = false
     classification_added = false
-    Lock.acquire("Product-#{unique_id}") do 
+    Lock.acquire("Product-#{unique_id}") do
       product = Product.where(unique_identifier: unique_id, importer_id: part_data[:importer_id]).first
       # This is a bit of a microoptimization...we don't set the custom definition for part number unless we're creating the product
       # The field should never be something other than the unique identifier so this should work fine
@@ -177,14 +177,14 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryPartsComparator
 
       po_updated = set_po_information product, part_data
 
-      # I don't really know why product.changed? is not working here to detect when we build tariff records 
-      # or add new custom values, but it's not, so I'm saving inline in those cases and using flags to determine if a 
+      # I don't really know why product.changed? is not working here to detect when we build tariff records
+      # or add new custom values, but it's not, so I'm saving inline in those cases and using flags to determine if a
       # save occurred to determine if we should snapshot or not.
       if created || tariff_saved || po_updated || desc_updated || classification_added
         product.create_snapshot user, nil, "H&M Entry Parts"
       end
     end
-    
+
     product
   end
 
@@ -197,7 +197,7 @@ module OpenChain; module CustomHandler; module Hm; class HmEntryPartsComparator
     if classified_from.blank? || classified_from == entry.broker_reference
       can_update = true
     else
-      # Find the entry that is referenced by the product and validate that its logged date is prior to 
+      # Find the entry that is referenced by the product and validate that its logged date is prior to
       # this file's logged date.
       other_entry = Entry.where(source_system: Entry::KEWILL_SOURCE_SYSTEM, broker_reference: classified_from).first
       can_update = other_entry.nil? || other_entry.file_logged_date.nil? || entry.file_logged_date > other_entry.file_logged_date

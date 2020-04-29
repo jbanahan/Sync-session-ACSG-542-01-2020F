@@ -17,21 +17,21 @@ module OpenChain; module BulkAction; class BulkActionRunner
     process_object_ids user, ids, action_class, opts
   end
   def self.process_object_ids user, ids, action_class, opts
-    data = {user_id:user.id,keys:ids,opts:opts}.to_json
+    data = {user_id:user.id, keys:ids, opts:opts}.to_json
     s3_key = "#{MasterSetup.get.uuid}/bulk_action_run/#{Digest::MD5.hexdigest(data)}-#{Time.now.to_i}.json"
     OpenChain::S3.upload_data OpenChain::S3.bucket_name, s3_key, data
     self.delay.run_s3 s3_key, action_class
   end
   def self.run_s3 key, action_class
     ActiveRecord::Base.transaction do
-      data = JSON.parse(OpenChain::S3.get_data(OpenChain::S3.bucket_name,key))
+      data = JSON.parse(OpenChain::S3.get_data(OpenChain::S3.bucket_name, key))
       u = User.find data['user_id']
-      BulkProcessLog.with_log(u,action_class.bulk_type) do |bpl|
-        data['keys'].each_with_index do |id,idx|
+      BulkProcessLog.with_log(u, action_class.bulk_type) do |bpl|
+        data['keys'].each_with_index do |id, idx|
           action_class.act u, id, data['opts'], bpl, idx+1
         end
       end
-      OpenChain::S3.delete(OpenChain::S3.bucket_name,key)
+      OpenChain::S3.delete(OpenChain::S3.bucket_name, key)
     end
   end
 end; end; end

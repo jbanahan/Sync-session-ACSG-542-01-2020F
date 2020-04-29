@@ -1,6 +1,6 @@
 describe ValidationRuleOrderLineHtsValid do
   let!(:template) { Factory(:business_validation_template, name: "template name")}
-  let!(:rule) do 
+  let!(:rule) do
     r = described_class.new(name: "rule name", description: "descr", rule_attributes_json: {iso_code: "US"}.to_json)
     r.business_validation_template = template; r.save!
     r
@@ -28,10 +28,10 @@ describe ValidationRuleOrderLineHtsValid do
       ordln_2.update_attributes! hts: nil
       expect(rule.run_validation(order)).to eq "Missing HTS code found on line 2."
     end
-    
+
     it "raises exception if ISO code not specified" do
       rule.update_attributes! rule_attributes_json: nil
-      expect{ rule.run_validation(order) }.to raise_error "Rule 'rule name' on 'template name' is missing 'iso_code' attribute."
+      expect { rule.run_validation(order) }.to raise_error "Rule 'rule name' on 'template name' is missing 'iso_code' attribute."
     end
 
   end

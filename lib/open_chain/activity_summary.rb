@@ -31,7 +31,7 @@ module OpenChain; class ActivitySummary
   module DutyDetail
 
     def create_linked_digests(current_user, company)
-      company.linked_companies.select{|co| co.importer?}.map{|co| create_digest(current_user, co)}.compact
+      company.linked_companies.select {|co| co.importer?}.map {|co| create_digest(current_user, co)}.compact
     end
 
     def create_digest(current_user, company)
@@ -105,7 +105,7 @@ module OpenChain; class ActivitySummary
 
     def create_by_release_range_download company_id, range, base_date=Time.zone.now.midnight
       date_uid = (range == "holds") ? :ent_hold_date : release_date_mf.uid
-      mf_uids = [:ent_entry_num,:ent_filed_date,date_uid,:ent_entered_value,:ent_customer_references,:ent_po_numbers,:ent_cust_name]
+      mf_uids = [:ent_entry_num, :ent_filed_date, date_uid, :ent_entered_value, :ent_customer_references, :ent_po_numbers, :ent_cust_name]
       select_clause = mf_uids.map { |uid| mf = ModelField.find_by_uid(uid); "#{mf.field_name} AS \"#{mf.label}\"" }.push("id AS \"Link\"").join(", ")
       qry = create_by_release_range_query(company_id, range, base_date).select(select_clause).to_sql
       wb, sheet = XlsMaker.create_workbook_and_sheet DETAILS[range]
@@ -117,7 +117,7 @@ module OpenChain; class ActivitySummary
     # build the hash with the elements that are common between both countries
     def generate_common_hash company_id, b_utc
       h = {}
-      h['summary'] = {'1w'=>nil,'4w'=>nil,'open'=>nil}
+      h['summary'] = {'1w'=>nil, '4w'=>nil, 'open'=>nil}
       h['summary']['1w'] = generate_week_summary company_id, b_utc
       h['summary']['4w'] = generate_4week_summary company_id, b_utc
       h['summary']['holds'] = generate_hold_summary company_id, b_utc
@@ -166,7 +166,7 @@ module OpenChain; class ActivitySummary
       Array.wrap(clauses).join(' AND ').presence || "1=1"
     end
     def base_date_utc base_date
-      timezone.local(base_date.year,base_date.month,base_date.day).utc
+      timezone.local(base_date.year, base_date.month, base_date.day).utc
     end
     def generate_week_summary importer_id, base_date_utc
       generate_summary_line importer_id, week_clause(base_date_utc)
@@ -188,16 +188,16 @@ module OpenChain; class ActivitySummary
       generate_summary_line importer_id, ytd_clause(base_date_utc)
     end
     def generate_port_breakouts importer_id, base_date_utc
-      generate_breakout_hash lambda {|imp,dc| generate_port_breakout_line(imp,dc)}, importer_id, base_date_utc
+      generate_breakout_hash lambda {|imp, dc| generate_port_breakout_line(imp, dc)}, importer_id, base_date_utc
     end
 
     def generate_ports_ytd importer_id, base_date_utc
       pbh = generate_port_breakout_line importer_id, ytd_clause(base_date_utc)
       r = []
       pbh.each do |p|
-        r << {'name'=>p.first,'count'=>p.last['val'],'code'=>p.last['code']}
+        r << {'name'=>p.first, 'count'=>p.last['val'], 'code'=>p.last['code']}
       end
-      r.sort {|a,b| b['count'] <=> a['count']}
+      r.sort {|a, b| b['count'] <=> a['count']}
     end
 
     def generate_port_breakout_line importer_id, date_clause
@@ -210,16 +210,16 @@ module OpenChain; class ActivitySummary
       r = {}
       execute_query(sql) do |result_set|
         result_set.each do |row|
-          r[row.first] = {'code'=>row[1],'val'=>row.last}
+          r[row.first] = {'code'=>row[1], 'val'=>row.last}
         end
       end
       r
     end
 
     def generate_breakout_hash query_lambda, importer_id, base_date_utc
-      one_week = query_lambda.call(importer_id,week_clause(base_date_utc))
-      four_week = query_lambda.call(importer_id,four_week_clause(base_date_utc))
-      open = query_lambda.call(importer_id,not_released_clause(base_date_utc))
+      one_week = query_lambda.call(importer_id, week_clause(base_date_utc))
+      four_week = query_lambda.call(importer_id, four_week_clause(base_date_utc))
+      open = query_lambda.call(importer_id, not_released_clause(base_date_utc))
       names = (one_week.keys+four_week.keys+open.keys).uniq.sort
       tot_1 = 0
       tot_4 = 0
@@ -233,16 +233,16 @@ module OpenChain; class ActivitySummary
         cd = one_week[p]['code'] unless ow.nil?
         cd ||= four_week[p]['code'] unless fw.nil?
         cd ||= open[p]['code'] unless op.nil?
-        r << {'name'=>p,'1w'=>ow,'4w'=>fw,'open'=>op,'code'=>cd}
+        r << {'name'=>p, '1w'=>ow, '4w'=>fw, 'open'=>op, 'code'=>cd}
         tot_1 += ow unless ow.nil?
         tot_4 += fw unless fw.nil?
         tot_o += op unless op.nil?
       end
-      r << {'name'=>'TOTAL','1w'=>tot_1,'4w'=>tot_4,'open'=>tot_o}
+      r << {'name'=>'TOTAL', '1w'=>tot_1, '4w'=>tot_4, 'open'=>tot_o}
       r
     end
     def generate_hts_breakouts importer_id, base_date_utc
-      generate_breakout_hash lambda {|imp,dc| generate_hts_breakout_line(imp,dc)}, importer_id, base_date_utc
+      generate_breakout_hash lambda {|imp, dc| generate_hts_breakout_line(imp, dc)}, importer_id, base_date_utc
     end
     def generate_hts_breakout_line importer_id, date_clause
       sql = "SELECT left(commercial_invoice_tariffs.hts_code,2), count(*)
@@ -256,7 +256,7 @@ module OpenChain; class ActivitySummary
       r = {}
       execute_query(sql) do |result_set|
         result_set.each do |row|
-          r[row.first] = {'code'=>row.first,'val'=>row.last}
+          r[row.first] = {'code'=>row.first, 'val'=>row.last}
         end
       end
       r
@@ -276,7 +276,7 @@ module OpenChain; class ActivitySummary
       r = []
       execute_query(sql) do |result_set|
         result_set.each do |row|
-          r << {'name'=>row.first,'entered'=>row.last}
+          r << {'name'=>row.first, 'entered'=>row.last}
         end
       end
       r
@@ -389,7 +389,7 @@ order by importer_id, k84_due_date desc"
       execute_query(qry) do |results|
         return r if results.first.nil? || results.first.first.nil?
         results.each do |row|
-          r << {'due'=>row[0],'amount'=>row[1],'importer_name'=>row[3]}
+          r << {'due'=>row[0], 'amount'=>row[1], 'importer_name'=>row[3]}
         end
       end
       r
@@ -431,7 +431,7 @@ order by importer_id, k84_due_date desc"
     end
 
     def linked_companies_unpaid_duty importer, base_date_utc
-      importer.linked_companies.select{|co| co.importer?}.map{ |co| single_company_unpaid_duty(co, base_date_utc)}
+      importer.linked_companies.select {|co| co.importer?}.map { |co| single_company_unpaid_duty(co, base_date_utc)}
     end
 
     def single_company_unpaid_duty importer, base_date_utc
@@ -461,7 +461,7 @@ order by importer_id, monthly_statement_due_date desc"
       execute_query(qry) do |results|
         return r if results.first.nil? || results.first.first.nil?
         results.each do |row|
-          r << {'due'=>row[0],'paid'=>row[1],'amount'=>row[2], 'importer_name'=>row[4]}
+          r << {'due'=>row[0], 'paid'=>row[1], 'amount'=>row[2], 'importer_name'=>row[4]}
         end
       end
       r
@@ -506,7 +506,7 @@ order by importer_id, monthly_statement_due_date desc"
     attr_accessor :iso_code, :importer
 
     def self.permission? user, importer_id
-      Entry.can_view_importer?(Company.find(importer_id),user)
+      Entry.can_view_importer?(Company.find(importer_id), user)
     end
 
     def self.run_report run_by, settings={}
@@ -674,7 +674,7 @@ order by importer_id, monthly_statement_due_date desc"
       self.row_num = 12
       write_released_ytd board, summary, (self.row_num += 3)
       transcribe wb, sheet, board
-      wb.set_column_widths sheet, 40, 20, 20, 20, 20, 20, 20,20
+      wb.set_column_widths sheet, 40, 20, 20, 20, 20, 20, 20, 20
       wb.add_image sheet, "app/assets/images/logo.png", 198, 59, 4, 2
       nil
     end
@@ -696,8 +696,8 @@ order by importer_id, monthly_statement_due_date desc"
       merged_cells = []
       row[:merged_cells].each_with_index { |mc, idx| merged_cells << (mc ? idx : nil) }
       # partition numeric sequences with nils, e.g. [1,2,3,nil,nil,4,5,6] => [[1,2,3],[4,5,6]]
-      merged_cells = merged_cells.chunk{ |mc| !mc.nil?}.select{ |mc| mc.first == true }.map(&:last)
-      merged_cells.map{ |mc| Range.new(mc.first, mc.last) }
+      merged_cells = merged_cells.chunk { |mc| !mc.nil?}.select { |mc| mc.first == true }.map(&:last)
+      merged_cells.map { |mc| Range.new(mc.first, mc.last) }
     end
 
     def write_header board
@@ -739,50 +739,50 @@ order by importer_id, monthly_statement_due_date desc"
     end
 
     def write_pms board, rows, row_num
-      board.insert_row row_num, fst_col, ["Periodic Monthly Statement",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
+      board.insert_row row_num, fst_col, ["Periodic Monthly Statement", nil, nil, nil], Array.new(4, :default_header), Array.new(4, true)
       board.insert_row (self.row_num += 1), fst_col, ["Company", "Due", "Paid", "Amount"], Array.new(4, :bold)
-      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['paid'], r['amount']], [nil,nil,nil,:default_currency] }
+      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['paid'], r['amount']], [nil, nil, nil, :default_currency] }
     end
 
     def write_k84 board, rows, row_num
-      board.insert_row row_num, fst_col, ["Estimated K84 Statement",nil,nil], Array.new(3, :default_header), Array.new(3, true)
+      board.insert_row row_num, fst_col, ["Estimated K84 Statement", nil, nil], Array.new(3, :default_header), Array.new(3, true)
       board.insert_row (self.row_num += 1), fst_col, ["Name", "Due", "Amount"], Array.new(3, :bold)
-      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['amount']], [nil,nil,:default_currency] }
+      rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['importer_name'], r['due'], r['amount']], [nil, nil, :default_currency] }
     end
 
     def write_unpaid_duty board, rows, row_num
-      board.insert_row row_num, fst_col, ["Unpaid Duty",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
+      board.insert_row row_num, fst_col, ["Unpaid Duty", nil, nil, nil], Array.new(4, :default_header), Array.new(4, true)
       board.insert_row (self.row_num += 1), fst_col, ["Company", "Total Duty", "Total Fees", "Total Duty and Fees"], Array.new(4, :bold)
       rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['customer_name'].upcase, r['total_duty'], r['total_fees'], r['total_duty_and_fees']], [nil] + Array.new(3, :default_currency) }
     end
 
     def write_breakouts board, sum, row_num
-      board.insert_row row_num, fst_col, ["Entry Breakouts",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
+      board.insert_row row_num, fst_col, ["Entry Breakouts", nil, nil, nil], Array.new(4, :default_header), Array.new(4, true)
       write_ent_ports board, sum["by_port"], (self.row_num += 1)
       write_lines_by_chpt board, sum["by_hts"], (self.row_num +=2 )
     end
 
     def write_ent_ports board, rows, row_num
-      board.insert_row row_num, fst_col, ["Entries by Port",nil,nil,nil], Array.new(4, :centered_header), Array.new(4, true)
+      board.insert_row row_num, fst_col, ["Entries by Port", nil, nil, nil], Array.new(4, :centered_header), Array.new(4, true)
       board.insert_row (self.row_num += 1) , fst_col, ["Port", "1 Week", "4 Weeks", "Open"], Array.new(4, :bold)
       rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['name'], r['1w'], r['4w'], r['open']] }
     end
 
     def write_lines_by_chpt board, rows, row_num
-      board.insert_row row_num, fst_col, ["Lines by Chapter",nil,nil,nil], Array.new(4, :centered_header), Array.new(4, true)
+      board.insert_row row_num, fst_col, ["Lines by Chapter", nil, nil, nil], Array.new(4, :centered_header), Array.new(4, true)
       board.insert_row (self.row_num += 1) , fst_col, ["Chapter", "1 Week", "4 Weeks", "Open"], Array.new(4, :bold)
       rows.each { |r| board.insert_row (self.row_num += 1), fst_col, [r['name'], r['1w'], r['4w'], r['open']] }
     end
 
     def write_released_ytd board, sum, row_num
-      board.insert_row row_num, snd_col, ["Released Year To Date",nil], Array.new(2, :default_header), Array.new(2, true)
+      board.insert_row row_num, snd_col, ["Released Year To Date", nil], Array.new(2, :default_header), Array.new(2, true)
       write_ytd_summary board, sum['summary']['ytd'], (self.row_num += 1)
       write_ytd_top_5 board, sum['vendors_ytd'], (self.row_num += 2)
       write_ytd_ports board, sum['ports_ytd'], (self.row_num += 2)
     end
 
     def write_ytd_summary board, rows, row_num
-      board.insert_row row_num, snd_col, ["Summary",nil], Array.new(2, :centered_header), Array.new(2, true)
+      board.insert_row row_num, snd_col, ["Summary", nil], Array.new(2, :centered_header), Array.new(2, true)
       board.insert_row (self.row_num += 1), snd_col, ["Entries", rows['count']]
       board.insert_row (self.row_num += 1), snd_col, ["Duty", rows['duty']], [nil, :default_currency]
       if us?
@@ -797,19 +797,19 @@ order by importer_id, monthly_statement_due_date desc"
     end
 
     def write_ytd_top_5 board, rows, row_num
-      board.insert_row row_num, snd_col, ["Top 5 Vendors",nil], Array.new(2, :centered_header), Array.new(2, true)
+      board.insert_row row_num, snd_col, ["Top 5 Vendors", nil], Array.new(2, :centered_header), Array.new(2, true)
       board.insert_row (self.row_num += 1), (snd_col + 1), ["Entered Value"], [:right_header]
-      rows.each { |r| board.insert_row (self.row_num += 1), snd_col, [r['name'], r['entered']],[nil, :default_currency] }
+      rows.each { |r| board.insert_row (self.row_num += 1), snd_col, [r['name'], r['entered']], [nil, :default_currency] }
     end
 
     def write_ytd_ports board, rows, row_num
-      board.insert_row row_num, snd_col, ["Ports",nil], Array.new(2, :centered_header), Array.new(2, true)
+      board.insert_row row_num, snd_col, ["Ports", nil], Array.new(2, :centered_header), Array.new(2, true)
       board.insert_row (self.row_num += 1), (snd_col + 1), ["Shipments"], [:right_header]
       rows.each { |r| board.insert_row (self.row_num += 1), snd_col, [r['name'], r['count']] }
     end
 
     def write_linked_companies board, row_num
-      board.insert_row row_num, fst_col, ["Companies Included",nil,nil,nil], Array.new(4, :default_header), Array.new(4, true)
+      board.insert_row row_num, fst_col, ["Companies Included", nil, nil, nil], Array.new(4, :default_header), Array.new(4, true)
 
       ([importer] + importer.linked_companies.to_a).each do |lc|
         customs_id = lc.customs_identifier

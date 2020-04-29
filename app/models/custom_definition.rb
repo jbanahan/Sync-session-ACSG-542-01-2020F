@@ -26,8 +26,8 @@
 #
 
 class CustomDefinition < ActiveRecord::Base
-  attr_accessible :cdef_uid, :data_type, :default_value, :definition, 
-    :is_address, :is_user, :label, :module_type, :quick_searchable, :rank, 
+  attr_accessible :cdef_uid, :data_type, :default_value, :definition,
+    :is_address, :is_user, :label, :module_type, :quick_searchable, :rank,
     :tool_tip, :virtual_search_query, :virtual_value_query
 
   cattr_accessor :skip_reload_trigger
@@ -74,8 +74,8 @@ class CustomDefinition < ActiveRecord::Base
     o
   end
 
-  #returns an Array of custom definitions for the module, sorted by rank then label
-  #Note: Internally this calls .all on the result from the DB, so are getting back a real array, not an ActiveRecord result.
+  # returns an Array of custom definitions for the module, sorted by rank then label
+  # Note: Internally this calls .all on the result from the DB, so are getting back a real array, not an ActiveRecord result.
   def self.cached_find_by_module_type module_type
     begin
       o = CACHE.get "CustomDefinition:module_type:#{module_type}"
@@ -164,7 +164,7 @@ class CustomDefinition < ActiveRecord::Base
   end
 
   # This method generates a query suitable to be used in a SQL FROM or WHERE clause.
-  def qualified_field_name 
+  def qualified_field_name
     if self.virtual_search_query.blank?
       generate_qualified_field_query
     else
@@ -173,14 +173,14 @@ class CustomDefinition < ActiveRecord::Base
     end
   end
 
-  # This method utilizes the virtual value query (injecting the customizable_id given) and returns the virtual value 
-  # the query finds.  NOTE: A LIMIT 1 is added to all queries.  This method is meant to return a single value 
+  # This method utilizes the virtual value query (injecting the customizable_id given) and returns the virtual value
+  # the query finds.  NOTE: A LIMIT 1 is added to all queries.  This method is meant to return a single value
   # for a specific "parent" object.
   def virtual_value customizable
     return nil if self.virtual_value_query.blank?
 
     interpolated_query = parameterize_query(self.virtual_value_query, { customizable_id: customizable.id }) +  " LIMIT 1"
-    
+
     self.class.connection.execute(interpolated_query).first.try(:first)
   end
 
@@ -225,9 +225,9 @@ class CustomDefinition < ActiveRecord::Base
         end
 
         regexp = Regexp.new(('#{\s*' + "#{key}" + '\s*}'))
-        
-        # Do NOT do gsub! here...the query value passed in is likely the acutal virtual_value_query attribute and we don't 
-        # want to change that value in place, otherwise every lookup will use the same id we gsub into place.    
+
+        # Do NOT do gsub! here...the query value passed in is likely the acutal virtual_value_query attribute and we don't
+        # want to change that value in place, otherwise every lookup will use the same id we gsub into place.
         query = query.gsub(regexp, value.to_s)
       end
       query

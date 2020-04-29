@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
       shipment = Shipment.where(importer_id: ellery.id, reference: "ELLHOL-974J000427SH0").first
       expect(shipment).not_to be_nil
       expect(shipment.importer_reference).to eq "974J000427SH0"
-      expect(shipment.last_exported_from_source).to eq DateTime.new(2017,12,11,8,2)
+      expect(shipment.last_exported_from_source).to eq DateTime.new(2017, 12, 11, 8, 2)
       expect(shipment.master_bill_of_lading).to eq "APLU067467875\n APLU012345678"
       expect(shipment.last_file_bucket).to eq "bucket"
       expect(shipment.last_file_path).to eq "file.edi"
@@ -51,23 +51,23 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
       expect(shipment.mode).to eq "Ocean"
       expect(shipment.lading_port).to eq lading
       expect(shipment.unlading_port).to eq unlading
-      expect(shipment.destination_port).to eq discharge 
+      expect(shipment.destination_port).to eq discharge
       expect(shipment.last_foreign_port).to eq last_origin
 
-      expect(shipment.est_departure_date).to eq Date.new(2017,12,06)
-      expect(shipment.departure_date).to eq Date.new(2017,12,07)
-      expect(shipment.est_arrival_port_date).to eq Date.new(2018,1,27)
-      expect(shipment.arrival_port_date).to eq Date.new(2018,1,28)
+      expect(shipment.est_departure_date).to eq Date.new(2017, 12, 06)
+      expect(shipment.departure_date).to eq Date.new(2017, 12, 07)
+      expect(shipment.est_arrival_port_date).to eq Date.new(2018, 1, 27)
+      expect(shipment.arrival_port_date).to eq Date.new(2018, 1, 28)
 
       expect(shipment.volume).to eq 23.87
       expect(shipment.gross_weight).to eq 2716.5
       expect(shipment.shipment_type).to eq "CY/CY"
-      expect(shipment.docs_received_date).to eq Date.new(2017,12,11)
+      expect(shipment.docs_received_date).to eq Date.new(2017, 12, 11)
       container = shipment.containers.find {|c| c.container_number == 'ECMU1504385'}
       expect(container).not_to be_nil
       expect(container.container_size).to eq "2B"
       expect(container.seal_number).to eq "K2149159"
-      
+
       expect(shipment.shipment_lines.length).to eq 2
       line = shipment.shipment_lines.first
 
@@ -80,11 +80,11 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
       expect(line.carton_qty).to eq 125
       expect(line.cbms).to eq 3.3
       expect(line.gross_kgs).to eq BigDecimal("365.4")
-      
+
       expect(line.custom_value(cdefs[:shpln_invoice_number])).to eq "PK105027"
       expect(line.master_bill_of_lading).to eq "APLU067467875"
       expect(line.fcr_number).to eq "ELHJ00842SH017"
-      expect(line.custom_value(cdefs[:shpln_received_date])).to eq Date.new(2017,12,1)
+      expect(line.custom_value(cdefs[:shpln_received_date])).to eq Date.new(2017, 12, 1)
 
       expect(shipment.custom_value(cdefs[:shp_entry_prepared_date])).not_to be_nil
       expect(shipment.custom_value(cdefs[:shp_invoice_prepared_date])).not_to be_nil
@@ -108,7 +108,7 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
       expect(s.shipment_lines.length).to eq 2
 
       c = s.containers.first
-      
+
       # Just check for some data from the EDI to be present
       expect(s.volume).to eq 23.87
       expect(s.gross_weight).to eq 2716.5
@@ -135,7 +135,7 @@ describe OpenChain::CustomHandler::Ellery::Ellery856Parser do
       subject.parse data, bucket: "bucket", key: "file.edi"
       expect(Shipment.first.unlading_port).to be_nil
     end
-    
+
     it "errors if Ellery is missing" do
       ellery.destroy
       expect { subject.parse data }.to raise_error "No importer found with System Code ELLHOL."

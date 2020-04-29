@@ -53,11 +53,11 @@ module OpenChain; module Api; module V1; module ApiModelFieldSupport
   # and rolls them all into a single method.
   # You must pass an associations hash which is the name of the associations that may be included in the field
   # list (assuming a corresponding include param is present in the request).
-  # 
-  # An associations hash for something like an entry might look like: {"commercial_invoices" => CoreModule::COMMERCIAL_INVOICE, 
+  #
+  # An associations hash for something like an entry might look like: {"commercial_invoices" => CoreModule::COMMERCIAL_INVOICE,
   # "commercial_invoice_lines" => CoreModule::COMMERCIAL_INVOICE_LINES, "broker_invoices" => CoreModule::BROKER_INVOICE
-  # 
-  # 
+  #
+  #
   def all_requested_model_fields core_module, http_params: params, user: current_user, include_all_modules: false, associations: {}
     modules = [core_module]
     # If no include mappings were given, we'll assume the caller wants all fields from all modules available

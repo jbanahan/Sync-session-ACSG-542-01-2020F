@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser do
 
   describe "process_part_lines" do
     let (:user) { Factory(:user) }
-    let! (:importer) { 
+    let! (:importer) {
       add_system_identifier(with_customs_management_id(Factory(:importer), "CMID"), "Amazon Reference", "X76YHUR3GKHXS")
     }
     let (:cdefs) { subject.cdefs }
@@ -17,11 +17,11 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser do
         key: "WE DECLARE THAT THE PRODUCTS ARE NOT SUBJECT TO RADIATION PERFORMANCE STANDARDS BECAUSE THEY WERE MANUFACTURED PRIOR TO THE EFFECTIVE DATE OF ANY APPLICABLE STANDARD"
     }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:inbound_file).and_return inbound_file
     end
 
-    it "creates product and sets FDA RAD data" do 
+    it "creates product and sets FDA RAD data" do
       expect { subject.process_part_lines(user, "US_PGA_RAD_data.csv", csv_rows) }.to change { Product.count }.from(0).to(1)
 
       p = Product.first
@@ -40,7 +40,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser do
       expect(p.custom_value(cdefs[:prod_fda_accession_number])).to eq "1234567890"
       expect(p.custom_value(cdefs[:prod_fda_manufacturer_name])).to eq "Some Manufacturer"
       expect(p.custom_value(cdefs[:prod_fda_warning_accepted])).to eq true
-      
+
       # This is testing that the right radiation code was used and the correct qualifier is set from that
       expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance])).to eq "RA1"
       expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance_value])).to eq "Feb 12, 2018"
@@ -73,7 +73,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser do
       expect(p.custom_value(cdefs[:prod_fda_accession_number])).to eq "1234567890"
       expect(p.custom_value(cdefs[:prod_fda_manufacturer_name])).to eq "Some Manufacturer"
       expect(p.custom_value(cdefs[:prod_fda_warning_accepted])).to eq true
-      
+
       # This is testing that the right radiation code was used and the correct qualifier is set from that
       expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance])).to eq "RA1"
       expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance_value])).to eq "Feb 12, 2018"
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser do
       p.update_custom_value! cdefs[:prod_fda_manufacturer_name], "Some Manufacturer"
       p.update_custom_value! cdefs[:prod_fda_warning_accepted], true
       p.update_custom_value! cdefs[:prod_fda_affirmation_compliance], "RA1"
-      p.update_custom_value! cdefs[:prod_fda_affirmation_compliance_value], "Feb 12, 2018" 
+      p.update_custom_value! cdefs[:prod_fda_affirmation_compliance_value], "Feb 12, 2018"
 
       subject.process_part_lines(user, "US_PGA_FDG_date.csv", csv_rows)
 
@@ -130,7 +130,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser do
         subject.process_part_lines(user, "US_PGA_FDG_date.csv", csv_rows)
 
         p = Product.first
-        expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance_value])).to eq "NOT SURE" 
+        expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance_value])).to eq "NOT SURE"
         expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance])).to eq "RB2"
       end
 
@@ -142,7 +142,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser do
         subject.process_part_lines(user, "US_PGA_FDG_date.csv", csv_rows)
 
         p = Product.first
-        expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance_value])).to be_nil 
+        expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance_value])).to be_nil
         expect(p.custom_value(cdefs[:prod_fda_affirmation_compliance])).to eq "RA4"
       end
     end

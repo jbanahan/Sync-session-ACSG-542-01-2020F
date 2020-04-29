@@ -5,18 +5,18 @@ describe MasterSetup do
       @m.custom_features = nil
     end
     it 'should take an array of custom features and return the array' do
-      features = ['a','b','c']
+      features = ['a', 'b', 'c']
       @m.custom_features_list = features
       expect(@m.custom_features_list).to eq(features)
     end
     it 'should take a string with line breaks and return the array' do
-      features = ['a','b','c']
+      features = ['a', 'b', 'c']
       @m.custom_features_list = features.join('\r\n')
       expect(@m.custom_features).to eq(features.join('\r\n'))
       @m.custom_features_list = features
     end
     it 'should check on custom_feature?' do
-      features = ['a','b','c']
+      features = ['a', 'b', 'c']
       @m.custom_features_list = features
       expect(@m).to be_custom_feature('a')
       expect(@m).not_to be_custom_feature('d')
@@ -27,7 +27,7 @@ describe MasterSetup do
     subject { described_class }
 
     context "with production setup" do
-      before :each do 
+      before :each do
         expect(subject).to receive(:production_env?).and_return true
       end
 
@@ -38,7 +38,7 @@ describe MasterSetup do
     end
 
     context "with non-production setup" do
-      before :each do 
+      before :each do
         expect(subject).to receive(:production_env?).and_return false
       end
 
@@ -51,7 +51,7 @@ describe MasterSetup do
   end
 
   context "current_code_version" do
-    before :each do 
+    before :each do
       # Set a known value into the CURRENT_VERSION constant just to make sure that's what current_code_version
       # is utilizing
       @existing_version = MasterSetup::CURRENT_VERSION
@@ -70,12 +70,12 @@ describe MasterSetup do
   end
 
   context "need_upgrade?" do
-    let! (:master_setup) { 
+    let! (:master_setup) {
       ms = MasterSetup.create! target_version: "CURRENT"
       allow(MasterSetup).to receive(:get).with(false).and_return ms
       ms
     }
-    
+
     it "should require an upgrade if the target version from the DB is not the same as the current code version" do
       master_setup.update_attributes! :target_version => "UPDATE ME!!!"
       expect(MasterSetup.need_upgrade?).to be_truthy
@@ -93,8 +93,8 @@ describe MasterSetup do
   end
 
   describe "get_migration_lock" do
-    let! (:master_setup) { 
-      ms = MasterSetup.first_or_create! 
+    let! (:master_setup) {
+      ms = MasterSetup.first_or_create!
       allow(MasterSetup).to receive(:first).and_return ms
       ms
     }
@@ -105,7 +105,7 @@ describe MasterSetup do
       expect(MasterSetup.first.migration_host).to eq "host"
     end
 
-    it "does not set hostname if it's already set" do 
+    it "does not set hostname if it's already set" do
       master_setup.update_attributes! migration_host: "host2"
       expect(MasterSetup.get_migration_lock host: "host").to eq false
       expect(MasterSetup.first.migration_host).to eq "host2"
@@ -125,8 +125,8 @@ describe MasterSetup do
   end
 
   describe "release_migration_lock" do
-    let! (:master_setup) { 
-      ms = MasterSetup.first_or_create! 
+    let! (:master_setup) {
+      ms = MasterSetup.first_or_create!
       allow(MasterSetup).to receive(:first).and_return ms
       ms
     }
@@ -168,7 +168,7 @@ describe MasterSetup do
       expect(master_setup.migration_host).to be_nil
     end
   end
-  
+
   describe "config_true?" do
 
     it "returns false if config value isn't set" do
@@ -185,7 +185,7 @@ describe MasterSetup do
       expect(MasterSetup.config_true? :key).to eq true
     end
 
-    it "returns false if config value is anything else" do 
+    it "returns false if config value is anything else" do
       Rails.application.config.vfitrack[:key] = Object.new
       expect(MasterSetup.config_true? :key).to eq false
     end
@@ -201,8 +201,8 @@ describe MasterSetup do
     end
   end
 
-  describe "config_value" do 
-    
+  describe "config_value" do
+
     context "with a config value" do
       before :each do
         Rails.application.config.vfitrack[:key] = "value"
@@ -249,7 +249,7 @@ describe MasterSetup do
       expect { |b| MasterSetup.config_value(:key, default: "default", yield_if_equals: "default", &b)}.to yield_with_args("default")
     end
   end
-  
+
   describe "production?" do
     let (:master_setup) {  }
 
@@ -304,8 +304,8 @@ describe MasterSetup do
     {adapter: "mysql2", database: "database_name", username: "user", password: "password", host: "db.host.com", port: 3306, pool: 15, timeout: 5000, flags: 2}
   }
 
-  describe "database_host" do 
-    before :each do 
+  describe "database_host" do
+    before :each do
       allow(OpenChain::DatabaseUtils).to receive(:primary_database_configuration).and_return database_config
     end
 
@@ -319,7 +319,7 @@ describe MasterSetup do
   end
 
   describe "database_name" do
-    before :each do 
+    before :each do
       allow(OpenChain::DatabaseUtils).to receive(:primary_database_configuration).and_return database_config
     end
 
@@ -327,11 +327,11 @@ describe MasterSetup do
       expect(MasterSetup.database_name).to eq "database_name"
     end
   end
-  
+
   describe "upgrades_allowed?" do
     let! (:ms) { stub_master_setup }
     let (:config) { {} }
-    before :each do 
+    before :each do
       allow(MasterSetup).to receive(:vfitrack_config).and_return(config)
     end
 
@@ -344,18 +344,18 @@ describe MasterSetup do
       expect(MasterSetup.upgrades_allowed?).to eq false
     end
 
-    it "returns false if 'prevent_upgrades' is true in config" do 
+    it "returns false if 'prevent_upgrades' is true in config" do
       config[:prevent_upgrades] = true
       expect(MasterSetup.upgrades_allowed?).to eq false
     end
 
-    it "returns true if 'prevent_upgrades' is false in config" do 
+    it "returns true if 'prevent_upgrades' is false in config" do
       config[:prevent_upgrades] = false
       expect(MasterSetup.upgrades_allowed?).to eq true
     end
   end
 
-  describe "production_env?" do 
+  describe "production_env?" do
     let (:production) { ActiveSupport::StringInquirer.new "production" }
     let (:test) { ActiveSupport::StringInquirer.new "test" }
 
@@ -372,7 +372,7 @@ describe MasterSetup do
     end
   end
 
-  describe "test_env?" do 
+  describe "test_env?" do
     let (:production) { ActiveSupport::StringInquirer.new "production" }
     let (:test) { ActiveSupport::StringInquirer.new "test" }
 
@@ -389,7 +389,7 @@ describe MasterSetup do
     end
   end
 
-  describe "test_env?" do 
+  describe "test_env?" do
     let (:production) { ActiveSupport::StringInquirer.new "production" }
     let (:dev) { ActiveSupport::StringInquirer.new "development" }
 

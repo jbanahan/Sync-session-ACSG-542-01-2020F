@@ -21,7 +21,7 @@ module OpenChain
 
       def create_workbook
         wb = XlsMaker.create_workbook "Products Needing Risk Assignment"
-        custom_defs = self.class.prep_custom_definitions([:prodven_risk,:cmp_sap_company])
+        custom_defs = self.class.prep_custom_definitions([:prodven_risk, :cmp_sap_company])
         table_from_query wb.worksheet(0), query(custom_defs[:prodven_risk], custom_defs[:cmp_sap_company]), {'Vendor SAP #' => link_lambda}, query_column_offset: 1
         wb
       end

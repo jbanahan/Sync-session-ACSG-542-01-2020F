@@ -2,7 +2,7 @@ describe ChargeCategoriesController do
 
   before :each do
     @c = Factory(:company)
-    @cat = @c.charge_categories.create!(:charge_code=>'A',:category=>'B')
+    @cat = @c.charge_categories.create!(:charge_code=>'A', :category=>'B')
 
   end
   describe "index" do
@@ -23,7 +23,7 @@ describe ChargeCategoriesController do
   describe "create" do
     it "should require user to be admin" do
       sign_in_as Factory(:user)
-      post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x','category'=>'y'}
+      post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x', 'category'=>'y'}
       expect(response).to redirect_to request.referrer
       expect(flash[:errors].size).to eq(1)
       @c.reload
@@ -31,7 +31,7 @@ describe ChargeCategoriesController do
     end
     it "should create category" do
       sign_in_as Factory(:admin_user)
-      post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x','category'=>'y'}
+      post :create, :company_id=>@c.id, 'charge_category'=>{'charge_code'=>'x', 'category'=>'y'}
       expect(response).to redirect_to company_charge_categories_path(@c)
       expect(flash[:notices].first).to eq("Charge Category created successfully.")
       @c.reload
@@ -48,7 +48,7 @@ describe ChargeCategoriesController do
       expect(flash[:errors].size).to eq(1)
       @c.reload
       expect(@c.charge_categories.size).to eq(1)
-    end 
+    end
     it "should destroy category" do
       sign_in_as Factory(:admin_user)
       delete :destroy, :company_id=>@c.id, :id=>@cat.id

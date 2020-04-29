@@ -28,7 +28,7 @@ describe OpenChain::Registries::PasswordValidationRegistry do
 
   describe "valid_password?" do
 
-    before :each do 
+    before :each do
       subject.register service
     end
 

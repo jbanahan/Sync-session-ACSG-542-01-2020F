@@ -4,7 +4,7 @@ require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 
 #
 # This is a abstract base class for sending Polo XML product data to another organization.
-# 
+#
 # The extending class must merely implement the sync_code and ftp_credentials methods to use this class.
 #
 module OpenChain; module CustomHandler; module Polo; class PoloAbstractProductXmlGenerator < OpenChain::CustomHandler::ProductGenerator
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Polo; class PoloAbstractProductXm
     add_element el, "TightningCuffs ", boolean(p.custom_value(cdefs[:tightening_at_cuffs]))
     add_element el, "Royalty", p.custom_value(cdefs[:royalty_percentage])
     add_element el, "FDAIndic", p.custom_value(cdefs[:prod_fda_indicator])
-    
+
     us_classification = p.classifications.find {|c| c.country&.iso_code == "US" }
     if us_classification
       fda_code = us_classification.custom_value(cdefs[:fda_product_code])
@@ -140,16 +140,16 @@ module OpenChain; module CustomHandler; module Polo; class PoloAbstractProductXm
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:fiber_content, :rl_short_description, :knit_woven, :knit_type, :type_of_bottom, 
-      :functional_neck_closure, :significantly_napped, :pass_water_resistant_test, :type_of_coating, :padding_or_filling, :meets_down_requirments, 
-      :tightening_at_waist, :denim, :denim_color, :corduroy, :total_back_panels, :short_fall_above_knee, :mesh_lining, :full_elastic_waistband, 
-      :full_functional_drawstring, :cover_crown_of_head, :wholly_or_partially_braid, :yarn_dyed, :colors_in_warp_weft, :size_scale, :type_of_fabric, 
-      :functional_open_fly, :tightening_at_cuffs, :royalty_percentage, :prod_fda_indicator, :fda_product_code, :set_type, :stitch_count_vertical, 
-      :stitch_count_horizontal, :grams_square_meter, :ounces_sq_yd, :weight_of_fabric, :form_fitting_or_loose_fitting, :fly_covered, 
-      :embellishments_or_ornamentation, :sizing, :sold_in_sleepwear_dept, :pcs_in_set, :sold_as_set, :welted, :cover_the_ankle, :japanese_leather_definition, 
-      :length_cm, :width_cm, :height_cm, :length_in, :width_in, :height_in, :strap_width, :secure_closure, :closure_type, :multiple_compartment, 
-      :fourchettes_for_gloves, :lined_for_gloves, :seamed, :components, :cost_of_component, :weight_of_components, :coated_filled_plated, 
-      :type_coated_filled_plated, :precious_semi_precious, :telescopic_shaft, :eu_sanitation_certificate, :japan_sanitation_certificate, 
+    @cdefs ||= self.class.prep_custom_definitions([:fiber_content, :rl_short_description, :knit_woven, :knit_type, :type_of_bottom,
+      :functional_neck_closure, :significantly_napped, :pass_water_resistant_test, :type_of_coating, :padding_or_filling, :meets_down_requirments,
+      :tightening_at_waist, :denim, :denim_color, :corduroy, :total_back_panels, :short_fall_above_knee, :mesh_lining, :full_elastic_waistband,
+      :full_functional_drawstring, :cover_crown_of_head, :wholly_or_partially_braid, :yarn_dyed, :colors_in_warp_weft, :size_scale, :type_of_fabric,
+      :functional_open_fly, :tightening_at_cuffs, :royalty_percentage, :prod_fda_indicator, :fda_product_code, :set_type, :stitch_count_vertical,
+      :stitch_count_horizontal, :grams_square_meter, :ounces_sq_yd, :weight_of_fabric, :form_fitting_or_loose_fitting, :fly_covered,
+      :embellishments_or_ornamentation, :sizing, :sold_in_sleepwear_dept, :pcs_in_set, :sold_as_set, :welted, :cover_the_ankle, :japanese_leather_definition,
+      :length_cm, :width_cm, :height_cm, :length_in, :width_in, :height_in, :strap_width, :secure_closure, :closure_type, :multiple_compartment,
+      :fourchettes_for_gloves, :lined_for_gloves, :seamed, :components, :cost_of_component, :weight_of_components, :coated_filled_plated,
+      :type_coated_filled_plated, :precious_semi_precious, :telescopic_shaft, :eu_sanitation_certificate, :japan_sanitation_certificate,
       :korea_sanitation_certificate])
   end
 

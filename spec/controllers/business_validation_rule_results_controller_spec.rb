@@ -58,7 +58,7 @@ describe BusinessValidationRuleResultsController do
     it "sanitizes params and only allows updating state and note values" do
       rule_result.update_attributes message: "xyz"
 
-      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass',message:'qrs'}
+      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass', message:'qrs'}
 
       rule_result.reload
       expect(rule_result.note).to eq 'abc'

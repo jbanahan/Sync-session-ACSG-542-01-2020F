@@ -12,7 +12,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
     before :each do
       @countries = {}
-      ['US','IT','CA','TW'].each {|iso| @countries[iso] = Factory(:country,:iso_code=>iso)}
+      ['US', 'IT', 'CA', 'TW'].each {|iso| @countries[iso] = Factory(:country, :iso_code=>iso)}
       t = Factory(:tariff_record, classification: Factory(:classification, country: @countries['IT']))
       @p = t.product
       expect_any_instance_of(described_class).to receive(:init_outbound_custom_definitions).and_call_original
@@ -22,7 +22,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
     it "should not find product that doesn't need sync" do
       @p.update_attributes(:updated_at=>2.days.ago)
-      @p.sync_records.create!(:trading_partner=>"Brazil",:sent_at=>1.day.ago,:confirmed_at=>1.hour.ago)
+      @p.sync_records.create!(:trading_partner=>"Brazil", :sent_at=>1.day.ago, :confirmed_at=>1.hour.ago)
       expect(described_class.new.products_to_send.to_a).to be_empty
     end
 
@@ -56,13 +56,13 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       CSV.parse(data, col_sep: "|")
     end
 
-    let (:eu) { Factory(:country,:iso_code=>"IT") }
+    let (:eu) { Factory(:country, :iso_code=>"IT") }
 
     before :each do
       # This example group takes a long time to run just due to the sheer number of custom values
       # created in here.
       @t = Factory(:tariff_record, hts_1: "1234567890", hts_2: "0123456789", hts_3: "98765432", classification: Factory(:classification, country: eu))
-      
+
       @c = @t.classification
       @p = @c.product
       allow(subject).to receive(:send_file)
@@ -112,13 +112,13 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
       row = r[1]
       expect(row[0]).to eq(@p.unique_identifier)
       expect(row[1]).to eq(@c.country.iso_code)
-      expect(row[2]).to eq('') #MP1
+      expect(row[2]).to eq('') # MP1
       expect(row[3]).to eq(@t.hts_1.hts_format)
       expect(row[4]).to eq(@t.hts_2.hts_format)
       expect(row[5]).to eq(@t.hts_3.hts_format)
-      expect(row[6]).to eq("1") #length
-      expect(row[7]).to eq("2") #width
-      expect(row[8]).to eq("3") #height
+      expect(row[6]).to eq("1") # length
+      expect(row[7]).to eq("2") # width
+      expect(row[8]).to eq("3") # height
       # Fabric Fields are all nil
       (9..53).each {|x| expect(row[x]).to be_nil}
       expect(row[54..72]).to eq ["k", "fc", "cn1", "cn2", "cn3", "sn1", "sn2", "sn3", "fwo1", "fwo2", "fwo3", "fws1", "fws2", "fws3", "ow", "true", "spt", "true", "false"]
@@ -130,8 +130,8 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "should handle multiple products" do
-      tr2 = Factory(:tariff_record,:hts_1=>'123456')
-      @tmp = subject.generate_outbound_sync_file [@p,tr2.product]
+      tr2 = Factory(:tariff_record, :hts_1=>'123456')
+      @tmp = subject.generate_outbound_sync_file [@p, tr2.product]
       r = parse_csv(@tmp)
       expect(r.size).to eq(3)
       expect(r[1][0]).to eq(@p.unique_identifier)
@@ -139,7 +139,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "should not send tariffs other than IT" do
-      Factory(:tariff_record,:classification=>Factory(:classification,:country=>Factory(:country, iso_code: "US"),:product=>@p),:hts_1=>'654321')
+      Factory(:tariff_record, :classification=>Factory(:classification, :country=>Factory(:country, iso_code: "US"), :product=>@p), :hts_1=>'654321')
       @p.reload
       expect(@p.classifications.count).to eq(2)
       @tmp = subject.generate_outbound_sync_file [@p]
@@ -149,7 +149,7 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it "should update sent_at time for existing sync_records" do
-      @p.sync_records.create!(:trading_partner=>"Brazil",:sent_at=>1.day.ago)
+      @p.sync_records.create!(:trading_partner=>"Brazil", :sent_at=>1.day.ago)
       @tmp = subject.generate_outbound_sync_file [@p]
       @p.reload
       expect(@p.sync_records.size).to eq(1)
@@ -160,9 +160,9 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
     end
 
     it 'should send file to ftp folder' do
-      override_time = DateTime.new(2010,1,2,3,4,5)
+      override_time = DateTime.new(2010, 1, 2, 3, 4, 5)
       @tmp = Tempfile.new('x')
-      expect(subject).to receive(:send_file).with(@tmp,"ChainIO_HTSExport_20100102030405.csv")
+      expect(subject).to receive(:send_file).with(@tmp, "ChainIO_HTSExport_20100102030405.csv")
       subject.send_and_delete_sync_file @tmp, override_time
       expect(File.exist?(@tmp.path)).to be_falsey
       @tmp = nil
@@ -304,24 +304,24 @@ describe OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator do
   end
 
   describe "send_file" do
-  
+
     it 'should send file' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_to_RL_Brazil', :protocol=>"sftp", :remote_file_name=>fn})
+      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net", "polo", "pZZ117", @tmp, {:folder=>'/_to_RL_Brazil', :protocol=>"sftp", :remote_file_name=>fn})
       OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator.new.send_file(@tmp, fn)
     end
-  
+
     it 'should send file in qa_mode' do
       @tmp = Tempfile.new('y')
       fn = 'abc.txt'
-      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net","polo","pZZ117",@tmp,{:folder=>'/_test_to_RL_Brazil', :protocol=>"sftp", :remote_file_name=>fn})
+      expect(FtpSender).to receive(:send_file).with("connect.vfitrack.net", "polo", "pZZ117", @tmp, {:folder=>'/_test_to_RL_Brazil', :protocol=>"sftp", :remote_file_name=>fn})
       OpenChain::CustomHandler::Polo::PoloBrazilProductGenerator.new(:env=>:qa).send_file(@tmp, fn)
     end
   end
 
   describe "send_and_delete_ack_file_from_s3" do
-  
+
     before :each do
       @contents = "File Contents"
       @tempfile = Tempfile.new ['file', '.txt']

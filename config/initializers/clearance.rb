@@ -77,5 +77,5 @@ Clearance.configure do |config|
 
     # Keep in mind that this is called with every single request as well
     cookies[:remember_me] ? 20.years.from_now : nil
-  } 
+  }
 end

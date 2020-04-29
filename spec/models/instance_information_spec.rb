@@ -70,8 +70,8 @@ describe InstanceInformation do
   describe "check_in" do
     subject { described_class }
     let (:now) { Time.zone.now }
-    
-    before :each do 
+
+    before :each do
       allow(subject).to receive(:server_name).and_return "Name"
       allow(subject).to receive(:server_role).and_return "Role"
       allow(MasterSetup).to receive(:current_code_version).and_return "Version"
@@ -102,4 +102,4 @@ describe InstanceInformation do
       expect(i.host).to eq "www.development.net"
     end
   end
-end 
+end

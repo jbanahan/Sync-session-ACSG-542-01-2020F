@@ -5,19 +5,18 @@ describe OpenChain::CustomHandler::Ascena::AscenaEntryBillingComparator do
     let (:user) { Factory(:master_user) }
     let (:entry) { Factory(:entry, customer_number: 'ASCE', source_system: "Alliance") }
     let (:snapshot) { EntitySnapshot.create!(recordable: entry, user: user) }
-    
 
     it "accepts entry snapshots for ASCE account" do
       expect(subject.accept? snapshot).to be true
     end
 
     it "accepts entry snapshots for MAUR account beginning 5/7/19" do
-      entry.update_attributes! customer_number: "MAUR", entry_filed_date: Date.new(2019,5,7)
+      entry.update_attributes! customer_number: "MAUR", entry_filed_date: Date.new(2019, 5, 7)
       expect(subject.accept? snapshot).to be true
     end
 
     it "doesn't accept earlier MAUR snapshots" do
-      entry.update_attributes! customer_number: "MAUR", entry_filed_date: Date.new(2019,5,1)
+      entry.update_attributes! customer_number: "MAUR", entry_filed_date: Date.new(2019, 5, 1)
       expect(subject.accept? snapshot).to be false
     end
 

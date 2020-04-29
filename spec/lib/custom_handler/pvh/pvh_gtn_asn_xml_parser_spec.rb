@@ -8,8 +8,8 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
   let (:pvh) { Factory(:importer, system_code: "PVH") }
   let (:user) { Factory(:user) }
   let (:order) { Factory(:order, order_number: "PVH-RTTC216384", customer_order_number: "RTTC216384", importer: pvh)}
-  let (:product) { 
-    p = Factory(:product, importer_id: pvh.id, unique_identifier: "PVH-7696164") 
+  let (:product) {
+    p = Factory(:product, importer_id: pvh.id, unique_identifier: "PVH-7696164")
     p.update_custom_value! cdefs[:prod_part_number], "7696164"
     p
   }
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
   let (:final_dest_port) { Factory(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
   let (:inbound_file) { InboundFile.new }
   let (:cdefs) { subject.cdefs }
-  let (:invoice) { 
+  let (:invoice) {
     i = Invoice.create! invoice_number: "EEGC/7469/1819", importer_id: pvh.id
     line = i.invoice_lines.create! po_number: "RTTC216384", part_number: "7696164", mid: "MYKULRUB669TAI"
     i
@@ -29,7 +29,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
 
   describe "process_asn_update" do
 
-    before :each do 
+    before :each do
       india
       ca
       pvh
@@ -134,7 +134,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       expect(l.mid).to eq "MYKULRUB669TAI"
     end
 
-    context "with existing data" do 
+    context "with existing data" do
 
       it "clears any existing Kewill Entry sync record's sent_at date" do
         sr = existing_shipment.sync_records.create! trading_partner: "Kewill Entry", sent_at: Time.zone.now
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       it "clears any existing containers not in the xml" do
         c = existing_shipment.containers.create! container_number: "CONTAINER"
         l = Factory(:shipment_line, shipment: existing_shipment, container: c, quantity: 10, product: product, linked_order_line_id: order_line_1.id)
-      
+
         subject.process_asn_update asn_xml, user, "bucket", "key"
 
         expect(c).not_to exist_in_db

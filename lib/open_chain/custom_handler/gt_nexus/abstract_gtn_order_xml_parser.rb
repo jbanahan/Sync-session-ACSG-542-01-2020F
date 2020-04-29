@@ -3,25 +3,25 @@ require 'open_chain/custom_handler/xml_helper'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 require 'open_chain/custom_handler/gt_nexus/generic_gtn_parser_support'
 
-# This class is meant to be extended for customer specific Order loads in the GT Nexus 
+# This class is meant to be extended for customer specific Order loads in the GT Nexus
 # order xml format.
 #
 # By default, the parse handles finding / creating all orders, products, parties listed in the order
 # and provides simple overridable methods to use to extend the base information extracted from the xml
 # for the Order, OrderLine, Product, and Company records it generates.
-# 
+#
 # Additionally some configuration values can be set by a constructor.
 #
 # The bare minimum that must be done to extend this class is to implement the following methods:
-# 
-# - initialize - Your initialize method must call super and pass a configuration hash.  If you want to 
+#
+# - initialize - Your initialize method must call super and pass a configuration hash.  If you want to
 # stick with the defaults, pass a blank hash.  See initialize below to see the configuration options available.
 # - importer_system_code
 # - party_system_code
 # - import_country.
 #
 # Additional methods of interest provided for ease of adding customer specific values are:
-# 
+#
 # - set_additional_order_information
 # - set_additional_order_line_information
 # - set_additional_party_information
@@ -64,18 +64,18 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
     inbound_file.error_and_raise "Your customer specific class extension must implement this method, returning the system code of the importer to utilize on the Orders."
   end
 
-  # Return the system code to use for the party xml given.  
+  # Return the system code to use for the party xml given.
   # DO NOT do any prefixing (like w/ the importer system code), the caller will handle all of that
   # for you.  Just return the identifying information for the party using the provided XML party element.
   def party_system_code party_xml, party_type
     # I'm pretty sure in the vast majority of cases we should be using customer specific identifiers
-    # inside the identification element...those appear to be 100% customer specific though and not 
+    # inside the identification element...those appear to be 100% customer specific though and not
     # generic, so we'll have to have this be overriden to determine which internal code in the party object should
     # be used in all cases.
     inbound_file.error_and_raise "This method must be overriden by an implementing class."
   end
 
-  # Given an orderDetail / orderItem xml element determines the import country to utilize when setting an hts 
+  # Given an orderDetail / orderItem xml element determines the import country to utilize when setting an hts
   # value on a given product.
   # Return nil if the tariff number shouldn't be set.
   #
@@ -90,7 +90,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
 
     # In the general case, we're not exploding prepacks onto the PO, we're going to be just handling the lines
     # as they are sent at the top level orderItem elements
-    # If explode prepacks is true, then we will handle the nested orderItem elements 
+    # If explode prepacks is true, then we will handle the nested orderItem elements
     @explode_prepacks = configuration[:explode_prepacks].nil? ? false : configuration[:explode_prepacks]
 
     if should_explode_prepacks?
@@ -127,9 +127,9 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
     user = User.integration
 
     inbound_file.reject_and_raise("Unexpected root element. Expected Order but found '#{xml.root.name}'.") unless xml.root.name == "Order"
-    
+
     # I don't believe GTN actually exports multiple PO's per XML document, they use the
-    # same schema for uploading to them and downloading from them, so the functionality is 
+    # same schema for uploading to them and downloading from them, so the functionality is
     # there to send them mulitple PO's, but as to getting them exported to us on event triggers,
     # I don't think we get more than one per XML document
     REXML::XPath.each(xml.root, "/Order/orderDetail") do |order|
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
   def process_order_cancel xml, user, bucket, key
     order_number = order_number(xml)
     set_importer_system_code(xml)
-    
+
     order = Order.where(order_number: prefix_identifier_value(importer, order_number), importer_id: importer.id).first
     return unless order
 
@@ -208,7 +208,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
   end
 
   # Finds or creates the order, sets some basic information and then yields the order.
-  # 
+  #
   # If we determine from the order revision number that the order should not be processed,
   # then no order object is yielded to the caller.
   def find_or_create_order order_xml, bucket, key
@@ -223,9 +223,9 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
         order = o
       end
     end
-    
+
     if order
-      Lock.db_lock(order) do 
+      Lock.db_lock(order) do
         if process_file?(order, revision_time)
           order.customer_order_number = order_number
           inbound_file.add_identifier :po_number, order_number, module_type: Order, module_id: order.id
@@ -271,7 +271,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
       order.currency = terms.text "currencyCode"
       order.order_date = date_value(terms, "Issue")
     end
-    
+
     set_additional_order_information order, xml
     nil
   end
@@ -304,7 +304,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
 
   # Deletes all order lines that can be deleted (.ie that are not shipped/booked) that
   # are NOT included in the referenced_order_lines parameter.
-  # 
+  #
   # Deletions are determine based on the line_number of the referenced_order_lines.
   def delete_lines order, referenced_order_lines
     line_numbers = Set.new referenced_order_lines.map(&:line_number)
@@ -430,10 +430,10 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
   # A mapping of party type to XPath expression of how to extract the party element for a particular type.
   # By default, vendor and factory are mapped to the order.
   #
-  # Extending classes can override this...the keys MUST be the company attribute to set to true to 
+  # Extending classes can override this...the keys MUST be the company attribute to set to true to
   # denote a particular company type (vendor, factory, etc).  The values must be the XPath to find the party
   # element based from the party elements parent (orderDetail element in most cases)
-  def party_map  
+  def party_map
     {vendor: "party[partyRoleCode = 'Seller']", factory: "party[partyRoleCode = 'OriginOfGoods']"}
   end
 
@@ -477,9 +477,9 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
         products_to_snapshot[product.unique_identifier] = product if product && needs_snapshot
         cache[product.unique_identifier] = product
       end
-    end    
+    end
 
-    products_to_snapshot.values.each {|product| product.create_snapshot user, nil, filename }
+    products_to_snapshot.each_value {|product| product.create_snapshot user, nil, filename }
 
     cache
   end
@@ -504,7 +504,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
   # Finds, creates, updates the prepack product referenced on the given orderItem element
   def find_or_create_prepack_product order_xml, line_xml, product_cache
     # I don't know enough about how GTN works with prepacks, etc and since we don't have
-    # a customer sending us prepack information we need to handle atm I'm just going to 
+    # a customer sending us prepack information we need to handle atm I'm just going to
     # assume it can be handle exactly like a standard product, just at the lower orderItem/orderItem
     # level, rather than the top level orderItem one
     find_or_create_standard_product(order_xml, line_xml, product_cache)
@@ -519,7 +519,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
     changed = MutableBoolean.new false
     base_item = base_item_element(line_xml)
     product.name = item_descriptor_value(base_item, "LongDescription")
-    
+
     if set_product_hts_numbers?
       hts = base_item.text("customsClassification/classificationNumber")
       if !hts.blank? && hts.to_s.length >= 8
@@ -533,13 +533,13 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
         end
       end
     end
-    
+
     references_updated = set_additional_product_information(product, order_xml, line_xml)
 
     changed.value || product.changed? || references_updated
   end
 
-  # Finds a product or creates it given a style...handles setting the importer system code or not based on the 
+  # Finds a product or creates it given a style...handles setting the importer system code or not based on the
   # prefix_identifiers_with_system_codes configuration setting.
   def find_or_create_product style, product_cache
     # All we're really doing here is setting up the basic information like style and then
@@ -549,9 +549,9 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnOrderXm
 
     unique_identifier = product_unique_identifier(style)
     product = product_cache[unique_identifier]
-    
+
     if product.nil?
-      Lock.acquire("Product-#{unique_identifier}") do 
+      Lock.acquire("Product-#{unique_identifier}") do
         product = Product.where(unique_identifier: unique_identifier, importer_id: importer.id).first_or_initialize
 
         unless product.persisted?

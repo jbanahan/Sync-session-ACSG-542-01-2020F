@@ -1,10 +1,10 @@
 describe AnswerCommentsController do
   describe "create" do
     before :each do
-      @user = Factory(:user,first_name:'Joe',last_name:'Jackson')
+      @user = Factory(:user, first_name:'Joe', last_name:'Jackson')
 
       sign_in_as @user
-      @answer = Factory(:answer) 
+      @answer = Factory(:answer)
       allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return true
     end
     it "should check permission on parent survey response can_view?" do
@@ -13,7 +13,7 @@ describe AnswerCommentsController do
     end
     it "should add comment and return json response" do
       allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return true
-      post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext','private'=>'true'}
+      post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext', 'private'=>'true'}
       c = @answer.answer_comments.first
       expect(c.user).to eq(@user)
       expect(c.content).to eq('mytext')
@@ -26,12 +26,12 @@ describe AnswerCommentsController do
     end
     it "should create update record" do
       allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return true
-      post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext','private'=>'true'}
+      post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext', 'private'=>'true'}
       expect(@answer.survey_response.survey_response_updates.first.user).to eq(@user)
     end
     it "should strip private flag if user cannot edit survey response" do
-      allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return false 
-      post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext','private'=>'true'}
+      allow_any_instance_of(SurveyResponse).to receive(:can_edit?).and_return false
+      post :create, 'answer_id' => @answer.id.to_s, 'comment'=>{'content'=>'mytext', 'private'=>'true'}
       c = @answer.answer_comments.first
       expect(c.private).to be_falsey
       expect(response).to be_success

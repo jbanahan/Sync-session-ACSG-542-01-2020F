@@ -8,24 +8,24 @@ require 'open_chain/s3'
 # The file that SAP sends ends in .xls, but it's really a tab separated file ('cause SAP sucks)
 #
 module OpenChain; module CustomHandler; module UnderArmour
-  class UaTbdReportParser 
+  class UaTbdReportParser
     include OpenChain::CustomHandler::UnderArmour::UnderArmourCustomDefinitionSupport
-    
+
     def initialize custom_file
-      @custom_file = custom_file 
-      @cdefs = self.class.prep_custom_definitions [:colors,:plant_codes,:prod_import_countries]
+      @custom_file = custom_file
+      @cdefs = self.class.prep_custom_definitions [:colors, :plant_codes, :prod_import_countries]
     end
 
     def can_view?(user)
       user.company.master? && user.edit_products? && MasterSetup.get.custom_feature?('UA SAP')
     end
-    def process user 
+    def process user
       begin
         raise "User does not have permission to process this file." unless can_view?(user)
         tmp = OpenChain::S3.download_to_tempfile OpenChain::S3.bucket_name(:production), @custom_file.attached.path
         last_style = nil
         collected_rows = []
-        CSV.foreach(tmp.path,col_sep:"\t",encoding:"UTF-16LE:UTF-8",quote_char:"\0") do |r|
+        CSV.foreach(tmp.path, col_sep:"\t", encoding:"UTF-16LE:UTF-8", quote_char:"\0") do |r|
           next unless self.class.valid_row?(r)
           my_style = self.class.get_style r
           if my_style!=last_style
@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       p.load_custom_values
       write_aggregate_values! p.get_custom_value(@cdefs[:colors]), array_of_rows, lambda {|r| self.class.get_color r}
       write_aggregate_values! p.get_custom_value(@cdefs[:plant_codes]), array_of_rows, lambda {|r| r[2].blank? ? '' : self.class.prep_plant_code(r[2])}
-      write_aggregate_values! p.get_custom_value(@cdefs[:prod_import_countries]), array_of_rows, lambda {|r| 
+      write_aggregate_values! p.get_custom_value(@cdefs[:prod_import_countries]), array_of_rows, lambda {|r|
         k = r[2]
         return nil if r[2].blank?
         DataCrossReference.find_ua_plant_to_iso self.class.prep_plant_code(k)
@@ -81,8 +81,8 @@ module OpenChain; module CustomHandler; module UnderArmour
 
     def self.valid_plant? plant_code
       return false if plant_code.blank?
-      ['0052','0061','0068'].each {|i| return false if plant_code==i}
-      plant_code.match(/^\d{4}$/) || plant_code.match(/^I\d{3}$/) 
+      ['0052', '0061', '0068'].each {|i| return false if plant_code==i}
+      plant_code.match(/^\d{4}$/) || plant_code.match(/^I\d{3}$/)
     end
 
     def self.valid_material? material
@@ -95,7 +95,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       style = r[1]
       material = r[9]
       plant = r[2]
-      [style,material,plant].each {|v| return false if v.blank?}
+      [style, material, plant].each {|v| return false if v.blank?}
       plant = prep_plant_code plant
       return false unless valid_material?(material)
       return false unless valid_plant?(plant)
@@ -112,7 +112,7 @@ module OpenChain; module CustomHandler; module UnderArmour
       s
     end
 
-    def self.write_material_color_plant_xrefs rows 
+    def self.write_material_color_plant_xrefs rows
       rows.each do |r|
         s = get_style r
         c = get_color r

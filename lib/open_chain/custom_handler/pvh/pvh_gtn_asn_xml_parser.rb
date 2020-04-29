@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
 
     # This indicates to our Kewill entry xml generator that the data is ready to be sent to Kewill.
     set_custom_value(shipment, Time.zone.now, :shp_entry_prepared_date)
-    # We also clear out any existing sync records for the Kewill Entry every time the shipment comes in...this forces a resend to 
+    # We also clear out any existing sync records for the Kewill Entry every time the shipment comes in...this forces a resend to
     # Kewill on each shipment update.
     sr = shipment.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER}
     sr.sent_at = nil if sr.present?
@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
   end
 
   def set_additional_shipment_information shipment, shipment_xml
-    # PVH's ASNs sometimes don't have MasterBills (house bills instead).  Not sure how widespread this is...so I don't want to put it into the 
+    # PVH's ASNs sometimes don't have MasterBills (house bills instead).  Not sure how widespread this is...so I don't want to put it into the
     # generic parser at the moment.
     if shipment.master_bill_of_lading.blank? && !shipment.house_bill_of_lading.blank?
       shipment.master_bill_of_lading = shipment.house_bill_of_lading
@@ -94,7 +94,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
     end
 
     # There are cases where the data might have originally been sent without a container (truck this is especially likely for)
-    # and then updated later to add the trailer number.  In this case, we need to make sure that 
+    # and then updated later to add the trailer number.  In this case, we need to make sure that
     # we remove any shipment lines that do not have a container number.
     if container_numbers_from_xml.length > 0 && !container_numbers_from_xml.include?("") && !container_numbers_from_xml.include?(nil)
       shipment.shipment_lines.each do |line|

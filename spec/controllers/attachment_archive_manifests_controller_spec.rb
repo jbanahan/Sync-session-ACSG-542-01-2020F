@@ -32,7 +32,7 @@ describe AttachmentArchiveManifestsController do
       expect(response.status).to eq(204)
     end
     it "should respond with a 204 if the manifest doesn't exist in s3" do
-      # The excessive mocking is because you can't really reliably 
+      # The excessive mocking is because you can't really reliably
       # test a situation where the attachment record exists but the actual
       # data isn't in S3 yet.
       attachment = double()

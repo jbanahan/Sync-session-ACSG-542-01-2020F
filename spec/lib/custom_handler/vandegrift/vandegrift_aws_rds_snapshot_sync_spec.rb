@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
     expect(OpenChain::Rds).to receive(:find_db_instance).with(instance, region: region, cluster: cluster).and_return inst
   end
 
-  describe "sync_rds_snapshots" do 
+  describe "sync_rds_snapshots" do
 
     let (:source_snapshot) {
       source = instance_double(OpenChain::Rds::RdsSnapshot)
@@ -50,7 +50,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
 
       now = Time.zone.now
       Timecop.freeze(now) { subject.sync_rds_snapshots setup }
-      
+
       session = AwsBackupSession.last
       expect(session).not_to be_nil
 
@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
       now = Time.zone.now
       Timecop.freeze(now) { subject.sync_rds_snapshots setup }
       n = now.in_time_zone("America/New_York")
-      
+
       session = AwsBackupSession.last
       expect(session).not_to be_nil
       expect(session.log).to eq "#{n.strftime("%Y-%m-%d %H:%M")} - Deleted RDS snapshot dest-snapshot-id from region us-test-2."
@@ -185,7 +185,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftAwsRdsSnapshotSync do
 
       now = Time.zone.now
       Timecop.freeze(now) { subject.sync_rds_snapshots setup }
-      
+
       session = AwsBackupSession.last
       expect(session).not_to be_nil
 

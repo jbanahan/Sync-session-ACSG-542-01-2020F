@@ -4,7 +4,7 @@ describe EntitySnapshotFailure do
   let (:failure) { EntitySnapshotFailure.create! snapshot: snapshot, snapshot_json: "json"}
 
   describe "fix_snapshot_data" do
-    
+
     it "stores snapshot data and processes the snapshot" do
       expect(EntitySnapshot).to receive(:store_snapshot_json).with(snapshot, "json", record_failure: false).and_return true
       expect(OpenChain::EntityCompare::EntityComparator).to receive(:handle_snapshot).with snapshot

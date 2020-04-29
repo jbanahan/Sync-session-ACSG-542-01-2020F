@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
 
   let (:user) { Factory(:master_user) }
-  let (:shipment) { 
+  let (:shipment) {
     s = Factory(:shipment, receipt_location: 'Prague, CZK', destination_port: Factory(:port), final_dest_port: Factory(:port),
       master_bill_of_lading: 'MASTER', house_bill_of_lading: 'HOUSE', vessel: 'La Fromage Du Mer',
       voyage: '20000 Leagues', booking_received_date: 1.week.ago, cargo_on_hand_date: 3.days.ago,
@@ -16,10 +16,10 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
   let (:cdefs) { subject.send(:cdefs) }
   let (:container1) { Factory :container, shipment: shipment, container_number: '99000', seal_number: 'SEAL1212', container_size: 'GINORMOUS' }
   let (:container2) { Factory :container, shipment: shipment, container_number: '99099', seal_number: 'SEAL2020', container_size: 'MODEST' }
-  let (:order) { Factory(:order, vendor: vendor, customer_order_number:'123456789', ship_window_end: Date.new(2016,03,15), first_expected_delivery_date: Date.new(2016,03,20)) }
-  let (:order2) { Factory(:order, vendor: vendor, customer_order_number:'987654321', ship_window_end: Date.new(2016,03,16), first_expected_delivery_date: Date.new(2016,03,21)) }
+  let (:order) { Factory(:order, vendor: vendor, customer_order_number:'123456789', ship_window_end: Date.new(2016, 03, 15), first_expected_delivery_date: Date.new(2016, 03, 20)) }
+  let (:order2) { Factory(:order, vendor: vendor, customer_order_number:'987654321', ship_window_end: Date.new(2016, 03, 16), first_expected_delivery_date: Date.new(2016, 03, 21)) }
   let (:us) { Factory(:country, iso_code: "US") }
-  let (:product) { 
+  let (:product) {
     product = Factory(:product, importer: Factory(:importer))
     product.update_custom_value!(cdefs[:prod_part_number], "Part")
     product
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
 
       it 'rolls up' do
         create_all_data
-        ShipmentLine.all.each{ |sl| sl.update_attributes! container_id: nil, shipment_id: shipment.id }
+        ShipmentLine.all.each { |sl| sl.update_attributes! container_id: nil, shipment_id: shipment.id }
         Container.destroy_all
         subject.generate(builder, shipment, user)
 
@@ -102,7 +102,7 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
         expect(sheet[3]).to eq [shipment.confirmed_on_board_origin_date, shipment.departure_date, shipment.eta_last_foreign_port_date, shipment.departure_last_foreign_port_date, shipment.est_arrival_port_date]
 
         expect(sheet[6]).to eq ["Container Number", "Customer Order Number", "Part Number", "Manufacturer (Name)", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date", "Fish & Wildlife Flag", "Warehouse Code", "Gross Weight", "Chargeable Weight"]
-        
+
         line = shipment.shipment_lines.first
 
         row = sheet[7]
@@ -152,9 +152,9 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
     end
 
     context "with containers" do
-      before do 
+      before do
         shipment.update_attributes! mode: "Ocean"
-        create_all_data 
+        create_all_data
       end
 
       it 'creates a sheet for each container' do
@@ -163,7 +163,7 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
         data = XlsxTestReader.new(builder).raw_workbook_data
         expect(data.keys).to eq ["99000", "99099"]
 
-        #CONTAINER 1
+        # CONTAINER 1
         sheet = data["99000"]
 
         expect(sheet[0]).to eq ["Freight Receipt Location", "Discharge Port Name", "Final Destination Name", "Master Bill of Lading", "House Bill of Lading", "Vessel", "Voyage", "Container Number", "Container Size", "Seal Number", "K File #"]
@@ -172,8 +172,8 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
         expect(sheet[3]).to eq [shipment.confirmed_on_board_origin_date, shipment.departure_date, shipment.eta_last_foreign_port_date, shipment.departure_last_foreign_port_date, shipment.est_arrival_port_date]
 
         expect(sheet[6]).to eq ["Container Number", "Customer Order Number", "Part Number", "Manufacturer (Name)", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date", "Fish & Wildlife Flag", "Warehouse Code"]
-        
-        #SHOWS ROLL-UP
+
+        # SHOWS ROLL-UP
         row = sheet[7]
         expect(row[0..6]).to eq ["99000", order.customer_order_number, "Part", vendor.name, 11, 21, 31]
         expect(row[7].to_date).to eq order.ship_window_end.to_date
@@ -192,12 +192,12 @@ describe OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator do
         expect(row[12].to_date).to eq shipment.cargo_on_hand_date.to_date
         expect(row[13].to_date).to eq shipment.docs_received_date.to_date
 
-        #CONTAINER 2
+        # CONTAINER 2
         sheet = data["99099"]
 
         expect(sheet[0]).to eq ["Freight Receipt Location", "Discharge Port Name", "Final Destination Name", "Master Bill of Lading", "House Bill of Lading", "Vessel", "Voyage", "Container Number", "Container Size", "Seal Number", "K File #"]
         expect(sheet[1]).to eq [shipment.receipt_location, shipment.destination_port.name, shipment.final_dest_port.name, shipment.master_bill_of_lading, shipment.house_bill_of_lading, shipment.vessel, shipment.voyage, container2.container_number, container2.container_size, container2.seal_number, shipment.importer_reference]
-        expect(sheet[2]).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Origin Port Date", "Departure Last Origin Port Date", "Est Arrival Discharge", nil, nil,nil,nil,nil, nil]
+        expect(sheet[2]).to eq ["Confirmed On Board Origin Date", "Departure Date", "ETA Last Origin Port Date", "Departure Last Origin Port Date", "Est Arrival Discharge", nil, nil, nil, nil, nil, nil]
         expect(sheet[3]).to eq [shipment.confirmed_on_board_origin_date, shipment.departure_date, shipment.eta_last_foreign_port_date, shipment.departure_last_foreign_port_date, shipment.est_arrival_port_date]
 
         expect(sheet[6]).to eq ["Container Number", "Customer Order Number", "Part Number", "Manufacturer (Name)", "Cartons", "Quantity Shipped", "Volume (CBMS)", "Ship Window End Date", "Freight Terms", "Shipment Type", "First Expected Delivery Date", "Booking Received Date", "Cargo On Hand Date", "Docs Received Date", "Fish & Wildlife Flag", "Warehouse Code"]

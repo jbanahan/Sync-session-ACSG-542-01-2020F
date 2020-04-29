@@ -6,7 +6,7 @@ module Api; module V1; class EntriesController < Api::V1::ApiCoreModuleControlle
   include OpenChain::BusinessRuleValidationResultsSupport
   include OpenChain::EmailValidationSupport
 
-  def validate 
+  def validate
     ent = Entry.find params[:id]
     run_validations ent
   end
@@ -53,7 +53,7 @@ module Api; module V1; class EntriesController < Api::V1::ApiCoreModuleControlle
       begin
         ReportResult.run_report! name, current_user, klass, {:settings=>{iso_code: iso_code, importer_id: params[:importer_id]}}
       rescue => e
-        e.log_me ["Running #{klass.to_s} report.","Params: #{params.to_s}"]
+        e.log_me ["Running #{klass.to_s} report.", "Params: #{params.to_s}"]
         render_error "There was an error running your report: #{e.message}"
         return
       end
@@ -61,4 +61,4 @@ module Api; module V1; class EntriesController < Api::V1::ApiCoreModuleControlle
     }
   end
 
-end; end; end    
+end; end; end

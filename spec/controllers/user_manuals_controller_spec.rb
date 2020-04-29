@@ -17,12 +17,12 @@ describe UserManualsController do
       sign_in_as Factory(:admin_user)
       get :index
       expect(response).to be_success
-      expect(assigns(:user_manuals).to_a).to eq [um1,um2]
+      expect(assigns(:user_manuals).to_a).to eq [um1, um2]
     end
   end
   describe '#update' do
     before :each do
-      @um = Factory(:user_manual,name:'X')
+      @um = Factory(:user_manual, name:'X')
     end
     it "should admin secure" do
       check_admin_secured do
@@ -46,12 +46,12 @@ describe UserManualsController do
     end
     it "should admin secure" do
       check_admin_secured do
-        expect { post :create, user_manual: {name:'X'}, user_manual_file: @file}.to_not change(UserManual,:count)
+        expect { post :create, user_manual: {name:'X'}, user_manual_file: @file}.to_not change(UserManual, :count)
       end
     end
     it "should create with attachment" do
       sign_in_as Factory(:admin_user)
-      expect { post :create, user_manual: {name:'X'}, user_manual_file: @file}.to change(UserManual,:count).from(0).to(1)
+      expect { post :create, user_manual: {name:'X'}, user_manual_file: @file}.to change(UserManual, :count).from(0).to(1)
       expect(response).to redirect_to user_manuals_path
       um = UserManual.first
       expect(um.name).to eq 'X'
@@ -64,12 +64,12 @@ describe UserManualsController do
     end
     it "should admin secure" do
       check_admin_secured do
-        expect { delete :destroy, id: @um.id}.to_not change(UserManual,:count)
+        expect { delete :destroy, id: @um.id}.to_not change(UserManual, :count)
       end
     end
     it "should delete" do
       sign_in_as Factory(:admin_user)
-      expect { delete :destroy, id: @um.id }.to change(UserManual,:count).from(1).to(0)
+      expect { delete :destroy, id: @um.id }.to change(UserManual, :count).from(1).to(0)
       expect(response).to redirect_to user_manuals_path
     end
   end
@@ -96,7 +96,7 @@ describe UserManualsController do
       # setup dummy data
       m1 = double('manual1')
       m2 = double('manual2')
-      [m1,m2].each_with_index do |m,i|
+      [m1, m2].each_with_index do |m, i|
         allow(m).to receive(:name).and_return "manual#{i+1}"
         allow(m).to receive(:id).and_return(i+1)
       end
@@ -104,13 +104,13 @@ describe UserManualsController do
       request.env['HTTP_REFERER'] = 'http://example.com/my_page'
 
       expect(UserManual).to receive(:for_user_and_page).
-        with(u,'http://example.com/my_page').
-        and_return [m2,m1] #returning in reverse order to confirm that sorting works
+        with(u, 'http://example.com/my_page').
+        and_return [m2, m1] # returning in reverse order to confirm that sorting works
 
       get :for_referer
 
       expect(response).to be_success
-      expect(assigns(:manuals)).to eq [m1,m2]
+      expect(assigns(:manuals)).to eq [m1, m2]
     end
   end
   describe '#download' do

@@ -1,21 +1,21 @@
 describe OpenChain::Report::UsBillingSummary do
-  
+
   let(:user) { Factory(:master_user) }
 
-  let(:date1) { DateTime.new 2019,3,15 }
-  let(:date2) { DateTime.new 2019,3,16 }
-  let(:date3) { DateTime.new 2019,3,17 }
-  let(:date4) { DateTime.new 2019,3,18 }
+  let(:date1) { DateTime.new 2019, 3, 15 }
+  let(:date2) { DateTime.new 2019, 3, 16 }
+  let(:date3) { DateTime.new 2019, 3, 17 }
+  let(:date4) { DateTime.new 2019, 3, 18 }
 
   def load_data
-    ent =  Factory(:entry, entry_number: "ent num", arrival_date: date1, release_date: date2, entry_port_code: "PORT", broker_reference: "brok ref", 
+    ent =  Factory(:entry, entry_number: "ent num", arrival_date: date1, release_date: date2, entry_port_code: "PORT", broker_reference: "brok ref",
                            customer_name: "cust name", export_date: date3, master_bills_of_lading: "MBOLS", house_bills_of_lading: "HBOLS",
                            total_units: 10, total_packages: 11, container_numbers: "cont numbers")
     ci = Factory(:commercial_invoice, entry: ent, mfid: "MFID", vendor_name: "vend name", invoice_number: "inv number")
-    cil = Factory(:commercial_invoice_line, commercial_invoice: ci, line_number: 1, quantity: 2, unit_of_measure: "UOM", value: 3, 
+    cil = Factory(:commercial_invoice_line, commercial_invoice: ci, line_number: 1, quantity: 2, unit_of_measure: "UOM", value: 3,
                                             cotton_fee: 4, hmf: 13, mpf: 14, department: "Dept", po_number: "PO", part_number: "part")
-    Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, tariff_description: "tar descr", hts_code: "HTS", gross_weight: 5, 
-                                        classification_qty_1: 12, classification_uom_1: "cl uom 1", entered_value: 6, 
+    Factory(:commercial_invoice_tariff, commercial_invoice_line: cil, tariff_description: "tar descr", hts_code: "HTS", gross_weight: 5,
+                                        classification_qty_1: 12, classification_uom_1: "cl uom 1", entered_value: 6,
                                         duty_amount: 7, duty_rate: 8)
     Factory(:broker_invoice, entry: ent, customer_number: "cust num", invoice_total: 9, invoice_date: date4, suffix: "A")
 
@@ -23,17 +23,17 @@ describe OpenChain::Report::UsBillingSummary do
   end
 
   def map
-    {"Entry Number" => 0, "Arrival" => 1, "Release" => 2, "Entry Port" => 3, "File Number" => 4, "Customer Name" => 5, "Export Date" => 6, 
-     "MBOLs" => 7, "HBOLs" => 8, "MID" => 9, "Vendor" => 10, "Invoice Line" => 11, "Commercial Invoice Number" => 12, "Item Description" => 13, 
-     "HTS Code" => 14, "Gross Weight" => 15, "Invoice Quantity" => 16, "Invoice UOM" => 17, "Tariff Quantity" => 18, "Tariff UOM" => 19, 
-     "Entered Value" => 20, "Invoice Value" => 21, "Duty Amount" => 22, "Duty Rate" => 23, "Cotton Fee" => 24, "HMF" => 25, "MPF" => 26, 
-     "Department" => 27, "PO Number" => 28, "Style" => 29, "Invoice Number" => 30, "Invoice Total" => 31, "Entry Fee Per Line" => 32, 
+    {"Entry Number" => 0, "Arrival" => 1, "Release" => 2, "Entry Port" => 3, "File Number" => 4, "Customer Name" => 5, "Export Date" => 6,
+     "MBOLs" => 7, "HBOLs" => 8, "MID" => 9, "Vendor" => 10, "Invoice Line" => 11, "Commercial Invoice Number" => 12, "Item Description" => 13,
+     "HTS Code" => 14, "Gross Weight" => 15, "Invoice Quantity" => 16, "Invoice UOM" => 17, "Tariff Quantity" => 18, "Tariff UOM" => 19,
+     "Entered Value" => 20, "Invoice Value" => 21, "Duty Amount" => 22, "Duty Rate" => 23, "Cotton Fee" => 24, "HMF" => 25, "MPF" => 26,
+     "Department" => 27, "PO Number" => 28, "Style" => 29, "Invoice Number" => 30, "Invoice Total" => 31, "Entry Fee Per Line" => 32,
      "Total Packages" => 33, "Containers" => 34}
   end
 
   describe "permission?" do
     let(:ms) { stub_master_setup }
-    
+
     before do
       expect(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
@@ -69,7 +69,7 @@ describe OpenChain::Report::UsBillingSummary do
       sheet = reader["Billing Summary"]
       tempfile.close
       expect(sheet[0]).to eq map.keys
-      #check datetime conversions
+      # check datetime conversions
       expect(sheet[1][map["Release"]]).to eq(date2 - 1.day)
       expect(sheet[1][map["Arrival"]]).to eq(date1 - 1.day)
     end
@@ -85,7 +85,7 @@ describe OpenChain::Report::UsBillingSummary do
       expect(results.count).to eq 1
       expect(results.fields).to eq map.keys
       r = results.first
-      
+
       expect(r[map["Entry Number"]]).to eq "ent num"
       expect(r[map["Arrival"]]).to eq date1
       expect(r[map["Release"]]).to eq date2

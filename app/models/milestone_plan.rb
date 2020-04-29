@@ -11,7 +11,7 @@
 
 class MilestonePlan < ActiveRecord::Base
   attr_accessible :code, :name, :milestone_definitions_attributes
-  
+
   has_many :piece_sets
   has_many :milestone_definitions, :dependent => :destroy, :autosave=>true
 
@@ -22,7 +22,7 @@ class MilestonePlan < ActiveRecord::Base
   accepts_nested_attributes_for :milestone_definitions
 
   def build_forecasts piece_set
-    #preload existing forecasts to avoid N+1 calls
+    # preload existing forecasts to avoid N+1 calls
     ms = piece_set.milestone_forecast_set
     ms = piece_set.build_milestone_forecast_set if ms.nil?
     existing_forecasts = {}
@@ -57,7 +57,7 @@ class MilestonePlan < ActiveRecord::Base
           errors.add(:base, "You can only have one starting milestone.")
           return
         else
-          found_starting = true 
+          found_starting = true
         end
       end
     end

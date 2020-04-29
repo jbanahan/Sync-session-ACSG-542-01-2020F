@@ -1,14 +1,14 @@
 describe AttachmentArchiveSetup do
   let (:importer) { Factory(:company) }
-  let (:entry) { Factory(:entry,:importer=>importer,:arrival_date=>1.month.ago, broker_reference: "REF") }
+  let (:entry) { Factory(:entry, :importer=>importer, :arrival_date=>1.month.ago, broker_reference: "REF") }
   let (:archive_setup) { importer.create_attachment_archive_setup(:start_date=>1.year.ago) }
-  let (:attachment) { entry.attachments.create!(:attached_file_name=>'a.pdf',:attached_file_size=>100) }
-  let (:attachment_2) { entry.attachments.create!(:attached_file_name=>'b.pdf',:attached_file_size=>100, is_private: false)}
+  let (:attachment) { entry.attachments.create!(:attached_file_name=>'a.pdf', :attached_file_size=>100) }
+  let (:attachment_2) { entry.attachments.create!(:attached_file_name=>'b.pdf', :attached_file_size=>100, is_private: false)}
   let (:invoice) { Factory(:broker_invoice, :entry => entry, :invoice_date => (Time.current.midnight - 30.days) - 1.second) }
-  
+
   describe "create_entry_archive!" do
 
-    before :each do 
+    before :each do
       archive_setup
       attachment
       attachment_2
@@ -24,21 +24,21 @@ describe AttachmentArchiveSetup do
       expect(archive.attachments).to include(attachment, attachment_2)
     end
     it "should stop at max size" do
-      # Because of the indeterminate ordering of the archive (attachments are only ordered by entry arrival date), 
+      # Because of the indeterminate ordering of the archive (attachments are only ordered by entry arrival date),
       # just make sure 1 of the 2 attachments were included in the archive
       att = archive_setup.create_entry_archive!("my name", 199).attachments.to_a
       expect(att.length).to eq(1)
       fail("Archive attachments should have included @att or @att2") unless att[0].id == attachment.id || att[0].id == attachment_2.id
     end
     it "should not include non-entry attachments" do
-      att3 = Attachment.create!(:attached_file_name=>'no.txt',:attached_file_size=>1)
+      att3 = Attachment.create!(:attached_file_name=>'no.txt', :attached_file_size=>1)
       archive = archive_setup.create_entry_archive!("my name", 1000)
       expect(archive.attachments.length).to eq(2)
       expect(archive.attachments).to include(attachment, attachment_2)
     end
     it "should not include attachments for other importers" do
       e2 = Factory(:entry)
-      att3 = e2.attachments.create(:attached_file_name=>'c.txt',:attached_file_size=>1)
+      att3 = e2.attachments.create(:attached_file_name=>'c.txt', :attached_file_size=>1)
       archive = archive_setup.create_entry_archive!("my name", 1000)
       expect(archive.attachments.length).to eq(2)
       expect(archive.attachments).to include(attachment, attachment_2)
@@ -61,16 +61,16 @@ describe AttachmentArchiveSetup do
       expect(archive_setup.create_entry_archive!("my name", 1000).attachments.length).to eq(2)
     end
     it "should not include attachments on another archive" do
-      other_archive = AttachmentArchive.create!(:name=>'x',:company=>importer)
+      other_archive = AttachmentArchive.create!(:name=>'x', :company=>importer)
       other_archive.attachments << attachment
       expect(archive_setup.create_entry_archive!("my name", 1000).attachments.to_a).to eq([attachment_2])
     end
     it "should only include 'Archive Packet' attachments if there are any present on an entry" do
-      att3 = entry.attachments.create! :attached_file_name=>'b.txt',:attached_file_size=>100, :attachment_type => Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
+      att3 = entry.attachments.create! :attached_file_name=>'b.txt', :attached_file_size=>100, :attachment_type => Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
       expect(archive_setup.create_entry_archive!("my name", 1000).attachments.to_a).to eq [att3]
     end
     it "should also include non-stitchable attachments if any 'Archive Packets' are on the entry " do
-      att3 = entry.attachments.create! :attached_file_name=>'b.pdf',:attached_file_size=>100, :attachment_type => Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
+      att3 = entry.attachments.create! :attached_file_name=>'b.pdf', :attached_file_size=>100, :attachment_type => Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE
       attachment.update_attributes! :attached_file_name => 'test.non-stitchable'
 
       att = archive_setup.create_entry_archive!("my name", 1000).attachments.to_a
@@ -83,7 +83,7 @@ describe AttachmentArchiveSetup do
       invoice.update_attributes! invoice_date: Time.current.midnight.at_beginning_of_month - 1.day
       archive = archive_setup.create_entry_archive! "my name", 5.megabytes
       expect(archive.attachments.length).to eq(2)
-      expect(archive.attachments).to include(attachment,attachment_2)
+      expect(archive.attachments).to include(attachment, attachment_2)
     end
     it "excludes invoices from this month when using 'previous month' archiving scheme" do
       archive_setup.update_attributes! archive_scheme: "PREVIOUS_MONTH"
@@ -109,7 +109,7 @@ describe AttachmentArchiveSetup do
     end
 
     context "by release date" do
-      before :each do 
+      before :each do
         archive_setup.update! archive_scheme: "RELEASE_PREVIOUS_MONTH"
         entry.update! release_date: (Time.zone.now.at_beginning_of_month - 1.second)
         entry.broker_invoices.destroy_all
@@ -146,7 +146,7 @@ describe AttachmentArchiveSetup do
   end
 
   describe "entry_attachments_available?" do
-    before :each do 
+    before :each do
       archive_setup
       attachment
       attachment_2
@@ -168,18 +168,18 @@ describe AttachmentArchiveSetup do
     end
   end
 
-  describe "create_entry_archives_for_reference_numbers!" do 
+  describe "create_entry_archives_for_reference_numbers!" do
 
     subject { described_class }
 
-    before :each do 
+    before :each do
       archive_setup
       attachment
       attachment_2
       invoice
     end
 
-    it "creates an archive" do 
+    it "creates an archive" do
       now = Time.zone.now
 
       archives = nil
@@ -202,9 +202,9 @@ describe AttachmentArchiveSetup do
 
     it "creates multiple archives when there are too many files for one archive" do
       entry_2 = Factory(:entry, broker_reference: "file2", importer: importer, arrival_date: Time.zone.now.to_date)
-      attachment_3 = entry_2.attachments.create!(:attached_file_name=>'3.pdf',:attached_file_size=>100)
+      attachment_3 = entry_2.attachments.create!(:attached_file_name=>'3.pdf', :attached_file_size=>100)
 
-      archives = subject.create_entry_archives_for_reference_numbers! 200, importer, [entry.broker_reference, entry_2.broker_reference]      
+      archives = subject.create_entry_archives_for_reference_numbers! 200, importer, [entry.broker_reference, entry_2.broker_reference]
       expect(archives.length).to eq 2
 
       a = archives.first
@@ -231,12 +231,12 @@ describe AttachmentArchiveSetup do
       expect(archives.first.attachments).to include attachment
 
       another_archive.reload
-      expect(another_archive.attachments).not_to include attachment      
+      expect(another_archive.attachments).not_to include attachment
     end
 
     context "with combine attachments enabled" do
-      before :each do 
-        archive_setup.update_attributes! combine_attachments: true  
+      before :each do
+        archive_setup.update_attributes! combine_attachments: true
       end
 
       it "skips files for an entry that should already be in the archive packet" do
@@ -260,14 +260,14 @@ describe AttachmentArchiveSetup do
         expect(archives.first.attachments).to include attachment, attachment_2
       end
     end
-    
+
   end
 
   describe "setups_for" do
     subject { described_class }
 
     let (:company) { Factory(:company) }
-    let (:parent) { 
+    let (:parent) {
       p = Factory(:company)
       p.linked_companies << company
       p

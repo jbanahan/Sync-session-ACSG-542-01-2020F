@@ -8,7 +8,7 @@ module CustomReportEntryInvoiceBreakdownSupport
     search_cols = self.search_columns.order("rank ASC")
     if hide_repeating_headers
       search_col_mods = {}
-      search_cols.each{ |sc| search_col_mods[sc.model_field_uid] = table_from_mf(sc.model_field_uid) } # HACK (see below)
+      search_cols.each { |sc| search_col_mods[sc.model_field_uid] = table_from_mf(sc.model_field_uid) } # HACK (see below)
     end
     invoices = BrokerInvoice.select("DISTINCT broker_invoices.*")
     self.search_criterions.each {|sc| invoices = sc.apply invoices}
@@ -44,19 +44,19 @@ module CustomReportEntryInvoiceBreakdownSupport
       end
       if self.include_links?
         if bi.entry.present?
-          write_hyperlink row_cursor, col_cursor, bi.entry.view_url,"Web View"
+          write_hyperlink row_cursor, col_cursor, bi.entry.view_url, "Web View"
         end
         col_cursor += 1
       end
       if self.include_rule_links?
         if bi.entry.present?
-          write_hyperlink row_cursor, col_cursor, validation_results_url(obj: bi.entry),"Web View"
+          write_hyperlink row_cursor, col_cursor, validation_results_url(obj: bi.entry), "Web View"
         end
         col_cursor += 1
       end
-      search_cols.each do |col| 
+      search_cols.each do |col|
         unless hide_repeating_headers && repeating_header && search_col_mods[col.model_field_uid] == 'entries'
-          content = col.model_field.process_export(bi,run_by) 
+          content = col.model_field.process_export(bi, run_by)
           write row_cursor, col_cursor, content
         end
         col_cursor += 1
@@ -74,10 +74,10 @@ module CustomReportEntryInvoiceBreakdownSupport
       row_cursor += 1
     end
 
-    #write headings
+    # write headings
     header = []
 
-    search_cols.each do |col| 
+    search_cols.each do |col|
       header << col
     end
     bill_columns.each do |cd|

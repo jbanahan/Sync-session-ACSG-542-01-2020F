@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
     self.class.can_view? user
   end
 
-  def process user 
+  def process user
     result = process_file user, @custom_file
     subject = "CQ Origin Report Complete"
     body = "The report has been processed without error."
@@ -88,7 +88,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
               body = "Attached are the product lines that were missing from VFI Track.  Please fill out the #{missing_products.original_filename} file with all the necessary information and load the data into VFI Track, then reprocess the attached #{orders.original_filename} PO file to load the POs that were missing products into the system."
               OpenMailer.send_simple_html(user.email, "CQ Origin PO Report Result", body, [missing_products, orders, orders_only_errors]).deliver_now
             end
-            
+
           end
         end
       end
@@ -113,7 +113,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
           next
         end
 
-        #skip any line that is missing a PO Number or SKU-Number
+        # skip any line that is missing a PO Number or SKU-Number
         next if order_number(row).blank? || cq_part_number(row).blank?
 
         if current_order_lines.length > 0 && order_number(current_order_lines[0]) != order_number(row)
@@ -165,8 +165,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
 
     def create_missing_products_workbook missing_products
       builder = missing_products_builder
-      sheet = builder.create_sheet "Missing Products", headers: ["AAP SKU (Item Number)", "Part Number", "CQ Line Code", "CQ SKU", "Merchandise Group Description", 
-        "Merchandise Department Description", "Merchandise Class Description", "Merchandise Sub-Class Description", "Item Description", "US HTS Code", "US Duty", 
+      sheet = builder.create_sheet "Missing Products", headers: ["AAP SKU (Item Number)", "Part Number", "CQ Line Code", "CQ SKU", "Merchandise Group Description",
+        "Merchandise Department Description", "Merchandise Class Description", "Merchandise Sub-Class Description", "Item Description", "US HTS Code", "US Duty",
         "CAN HS Code", "CAN Duty", "Freight Cost", "Piece Per Set", "Inactive (Discontinued)", "Comments"]
       builder.freeze_horizontal_rows sheet, 1
 
@@ -235,7 +235,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePoOriginRep
         products = Product.where(importer_id: importer).joins(:custom_values).where(custom_values: {custom_definition_id: cdefs[:prod_short_description].id, string_value: cq_part}).all
         product = fuzzy_match_part_number(products, row)
       end
-      
+
       product
     end
 

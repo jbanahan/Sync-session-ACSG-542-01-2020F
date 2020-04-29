@@ -108,8 +108,8 @@ describe OpenChain::Report::PvhContainerLogReport do
       end
 
       context "with pvh company" do
-        let (:user) { 
-          user = Factory(:user) 
+        let (:user) {
+          user = Factory(:user)
           allow(user).to receive(:view_entries?).and_return true
           user
         }
@@ -120,7 +120,7 @@ describe OpenChain::Report::PvhContainerLogReport do
           expect(described_class.permission? user).to eq false
         end
 
-        it "allows to pvh users" do 
+        it "allows to pvh users" do
           user.company = pvh
           user.save!
 
@@ -131,8 +131,8 @@ describe OpenChain::Report::PvhContainerLogReport do
           company = Factory(:importer)
           company.linked_companies << pvh
           user.company = company
-          user.save! 
-          
+          user.save!
+
           expect(described_class.permission? user).to eq true
         end
       end

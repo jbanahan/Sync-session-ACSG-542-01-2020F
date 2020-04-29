@@ -5,7 +5,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
   }
 
   let (:invoice) {
-    i = Invoice.new 
+    i = Invoice.new
     i.importer = importer
     i
   }
@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
 
   describe "accept?" do
     subject { described_class }
-    
+
     let! (:xref) { DataCrossReference.create! cross_reference_type: DataCrossReference::INVOICE_CI_LOAD_CUSTOMERS, key: "CUST" }
 
     it "accepts customers with invoice generator cross reference set up" do
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
       end
       now = Time.zone.parse("2018-09-01 12:00")
       Timecop.freeze(now) { subject.send_invoice invoice }
-      
+
       expect(s.sent_at).to eq now
       expect(s.confirmed_at).to eq (now + 1.minute)
       expect(s.trading_partner).to eq "CI LOAD"
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillInvoiceCiLoadComparator do
   describe "compare" do
     subject { described_class }
 
-    before :each do 
+    before :each do
       invoice.save!
     end
 

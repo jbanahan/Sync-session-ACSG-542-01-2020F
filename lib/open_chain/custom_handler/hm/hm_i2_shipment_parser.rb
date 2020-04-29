@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
         if system == :fenix && completed
           check_unused_pars_count(starting_pars_count)
         end
-      rescue => e
+      rescue StandardError => e
         # If there was an error raised, we need to unmark all the pars numbers utilized before re-raising the error
         unmark_used_pars_numbers
         raise e
@@ -139,8 +139,8 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     system == :fenix ? fenix_split(system, rows) : [rows]
   end
 
-  def fenix_split(system, rows) 
-    # So, we need to split the rows in the file at around 999 lines...the wrinkle is that we 
+  def fenix_split(system, rows)
+    # So, we need to split the rows in the file at around 999 lines...the wrinkle is that we
     # can't split it across PO numbers.  So, if we're at line 997 and the next PO has 4 lines..
     # we need to split the file at 997.
     all_files = []
@@ -149,7 +149,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     current_shipment = nil
     current_po = nil
 
-    list_swap_lambda = lambda do 
+    list_swap_lambda = lambda do
       # We have a new PO here...so we need to figure out what to do w/ the current po row list...
       # If the list can't be added to our current file rows, since it would make it too long, then create a new file
       if current_file_rows.length + current_po_row_list.length > max_fenix_invoice_length
@@ -288,7 +288,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     invoice.currency = "USD"
-    
+
     invoice
   end
 
@@ -304,7 +304,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     # end up coming over as 1 or 0 (depending on how the system rounds the value) since the CI Load does not support
     # decimal values in the gross weight field.
     net_weight = (decimal_value(line[16]).presence || BigDecimal("0")).round
-    
+
     i.line_number = decimal_value(line[7]).to_i
 
     # 19 is the H&M Order number, which can be used to map back to an entry invoice line
@@ -315,12 +315,12 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     i.value = (i.quantity.to_f > 0 && i.unit_price.to_f > 0) ? (i.unit_price * i.quantity) : 0
 
     i.commercial_invoice_tariffs.build hts_code: values[:hts], tariff_description: values[:description], gross_weight: net_weight
-    
+
     values
   end
 
   def country_origin system, code
-    # The US code for Burma/Myanmaar is still BU, however, Geodis/H&M are sending MM.  We're just going to 
+    # The US code for Burma/Myanmaar is still BU, however, Geodis/H&M are sending MM.  We're just going to
     # translate it to BU internally.
     @@country_map ||= {"MM" => "BU"}
     code = code.to_s.strip.upcase
@@ -331,7 +331,6 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     else
       code
     end
-    
   end
 
   def set_totals invoice
@@ -357,7 +356,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     data = HmShipmentData.new
     data.invoice_number = invoice.invoice_number
     data.invoice_date = invoice.invoice_date
-    
+
     # Don't add PARS numbers unless we're running a Fenix file
     if system == :fenix
       data.pars_number = get_next_pars_number
@@ -405,7 +404,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
     unique_identifier = "#{product_importer.system_code}-#{part_number}"
 
-    # Product should NEVER be missing as all these products should come through on the I1 feed before making it 
+    # Product should NEVER be missing as all these products should come through on the I1 feed before making it
     # through on an I2
     product = Product.where(importer_id: product_importer.id, unique_identifier: unique_identifier).first
     values = {part_number: part_number, unique_identifier: unique_identifier, order_number: order_number, country_origin: country_origin_code}
@@ -439,8 +438,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       values[:missing_data] = true
     end
 
-    
-    if system == :fenix 
+    if system == :fenix
       # Set the quantity to 999,999.99 if we're doing a Canadian file...quantity can't be missing from
       # the EDI 810 feed we use to feed the data to Fenix, so we're using an absurd value to indicate that it's missing,
       # and then sending an exception report to CA ops indicating missing data.
@@ -460,13 +458,13 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
       where(commercial_invoices: {invoice_number: order_number}).
       where(country_origin_code: country_origin).
       order("entries.release_date DESC")
-      
+
     matched_line = nil
     matched_line = base_query.where(part_number: part_number).first
     if matched_line.nil?
       partial_matches = base_query.all
       # Whoever is keying HM entries doesn't always key the part number, but the way H&M orders work is generally
-      # to only have a single line on the order (which equates to our commercial invoice).  
+      # to only have a single line on the order (which equates to our commercial invoice).
       # These means that we can consider the invoice line a match if there's a only single line on the invoice.
       partial_matches.each do |pm|
         matched_line = pm if pm.commercial_invoice.commercial_invoice_lines.length == 1
@@ -495,7 +493,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     end
 
     if missing_product_data.length > 0
-      exception_spreadsheet = build_missing_product_spreadsheet(invoice.invoice_number, missing_product_data, :kewill) 
+      exception_spreadsheet = build_missing_product_spreadsheet(invoice.invoice_number, missing_product_data, :kewill)
       Tempfile.open(["HM-Invoice-Exceptions", ".xls"]) do |wb|
         wb.binmode
         exception_spreadsheet.write wb
@@ -586,7 +584,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     i.invoice_total = number_to_currency(total)
 
     i.employee = "Shahzad Dad"
-  
+
     i.firm_address = OpenChain::CustomHandler::CommercialInvoicePdfGenerator::ADDRESS.new
     i.firm_address.name = "OHL"
     i.firm_address.line_1 = "281 AirTech Pkwy. Suite 191"
@@ -603,7 +601,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     counter = 0
     widths = []
     if invoice.commercial_invoice_lines.length == 0
-      XlsMaker.add_body_row sheet, (counter += 1), [invoice.invoice_number]  
+      XlsMaker.add_body_row sheet, (counter += 1), [invoice.invoice_number]
     else
       invoice.commercial_invoice_lines.each do |l|
         source_row = rows[counter]
@@ -628,7 +626,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
   end
 
   def standard_tariffs cil
-    cil.commercial_invoice_tariffs.reject{ |cit| cit&.hts_code.to_s =~ /^(9902)|(9903)|(9908)/ }
+    cil.commercial_invoice_tariffs.reject { |cit| cit&.hts_code.to_s =~ /^(9902)|(9903)|(9908)/ }
   end
 
   def build_missing_product_spreadsheet invoice_number, missing_products, destination_system
@@ -640,7 +638,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
 
       if prod[:product]
         product = prod[:product]
-        
+
         ca_classification = product.classifications.find {|c| c.country.try(:iso_code) == "CA"}
         ca_tariff = ca_classification.try(:tariff_records).try(:first).try(:hts_1)
         us_tariff = product.classifications.find {|c| c.country.try(:iso_code) == "US" }.try(:tariff_records).try(:first).try(:hts_1)
@@ -678,7 +676,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     Tempfile.open(["ParsCoversheet", ".pdf"]) do |tempfile|
       tempfile.binmode
       OpenChain::CustomHandler::Hm::HmParsPdfGenerator.generate_pars_pdf(file_data, tempfile)
-      # Use the first invoice date from the data 
+      # Use the first invoice date from the data
       data = file_data.find {|d| !d.invoice_date.nil? }
       date = (data.nil? ? Time.zone.now.to_date : data.invoice_date).strftime("%Y-%m-%d")
       filename = "PARS Coversheet - #{invoice_number} - #{date}.pdf"
@@ -713,21 +711,21 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     # Since this method is running inside of a transaction, if we try and get the next pars number
     # inside this current transaction, the value that method sets into the cross reference it pulls
     # the pars number from won't get committed until the outer transaction commits.  If another transaction
-    # is running at the same time and pulls the same value and sets the same update times, it's possible the database 
+    # is running at the same time and pulls the same value and sets the same update times, it's possible the database
     # will try and merge the transaction results and that can result in multiple invoices using the same
     # PARS number.  Which we don't want.
     # The solution is to drop back out to a dedicated db connection / transaction just for this call so that
     # it completes immediately (internally, the find/mark method uses db locking to ensure gated access
     # to the next record)
     number = nil
-    OpenChain::DatabaseUtils.run_in_separate_connection do 
+    OpenChain::DatabaseUtils.run_in_separate_connection do
       pars_numbers = used_pars_numbers
       pars = DataCrossReference.find_and_mark_next_unused_hm_pars_number
       pars_numbers << pars unless pars.nil?
 
       number = pars&.key
     end
-    
+
     number
   end
 
@@ -739,13 +737,12 @@ module OpenChain; module CustomHandler; module Hm; class HmI2ShipmentParser
     pars_numbers = used_pars_numbers
     return if pars_numbers.blank?
 
-    OpenChain::DatabaseUtils.run_in_separate_connection do 
+    OpenChain::DatabaseUtils.run_in_separate_connection do
       DataCrossReference.where(id: pars_numbers.map(&:id)).update_all value: nil
     end
 
     pars_numbers.clear
-    
+
     nil
   end
-
 end; end; end; end;

@@ -17,7 +17,7 @@
 #
 
 class InvoicedEvent < ActiveRecord::Base
-  attr_accessible :billable_event_id, :billable_event, :charge_type, 
+  attr_accessible :billable_event_id, :billable_event, :charge_type,
     :invoice_generator_name, :updated_at, :vfi_invoice_line_id, :vfi_invoice_line
 
   belongs_to :billable_event

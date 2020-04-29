@@ -37,7 +37,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
     end
     it "turns file lines into shipment" do
       second_line = workflow_file_line.dup
-      # Change JUST the color, the should result in a second distinct order line on the PO 
+      # Change JUST the color, the should result in a second distinct order line on the PO
       second_line[17] = "460"
 
       third_line = workflow_file_line.dup
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
       expect(s.voyage).to eq "016"
       expect(s.importer_reference).to eq "2254444"
       expect(s.est_arrival_port_date).to eq Date.new(2016, 1, 21)
-      expect(s.est_departure_date).to eq Date.new(2015, 12,20)
+      expect(s.est_departure_date).to eq Date.new(2015, 12, 20)
       expect(s.destination_port).to eq unlading_port
       expect(s.lading_port).to eq lading_port
 
@@ -169,7 +169,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
     end
 
     it "does not create new snapshots when no updates have been done to modules" do
-      # The easiest way to do a check that smart snapshotting is being done is to 
+      # The easiest way to do a check that smart snapshotting is being done is to
       # just run the same lines through twice (which is really what's going to happen in the system anyway).
       result = subject.process_shipment_lines user, "OOLU2567813300", [workflow_file_line]
 
@@ -205,7 +205,7 @@ describe OpenChain::CustomHandler::Pvh::PvhShipmentWorkflowParser do
 
   describe "can_view?" do
     let (:can_view_user) { Factory(:master_user)}
-    let (:www_setup) { 
+    let (:www_setup) {
       setup = MasterSetup.new system_code: "www-vfitrack-net"
       allow(MasterSetup).to receive(:get).and_return setup
     }

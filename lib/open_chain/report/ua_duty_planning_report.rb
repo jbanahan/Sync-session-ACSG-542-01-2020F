@@ -14,12 +14,12 @@ module OpenChain; module Report; class UaDutyPlanningReport
       trade_lanes: {},
       countries: {}
     }
-    cdefs = prep_custom_definitions [:prod_export_countries,:prod_import_countries,:prod_seasons,:expected_duty_rate]
+    cdefs = prep_custom_definitions [:prod_export_countries, :prod_import_countries, :prod_seasons, :expected_duty_rate]
     query_opts = params.with_indifferent_access
     raise "Must have style list or season code." if query_opts[:season].blank? && query_opts[:style_s3_path].blank?
-    f = Tempfile.open(['ua_duty_planning','.csv'])
+    f = Tempfile.open(['ua_duty_planning', '.csv'])
     begin
-      f << ['Country of Origin','Region of Destination','Style','','HTS Code','','Duty'].to_csv
+      f << ['Country of Origin', 'Region of Destination', 'Style', '', 'HTS Code', '', 'Duty'].to_csv
       products = find_products(user, query_opts, cdefs)
       products.each do |p|
         write_product f, p, cdefs, caches
@@ -27,7 +27,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
     ensure
       f.flush
     end
-    OpenChain::S3.delete(OpenChain::S3.bucket_name,query_opts[:style_s3_path]) unless query_opts[:style_s3_path].blank?
+    OpenChain::S3.delete(OpenChain::S3.bucket_name, query_opts[:style_s3_path]) unless query_opts[:style_s3_path].blank?
     return f
   end
 
@@ -43,7 +43,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
       export_countries.split("\n").each do |export_iso|
         next unless export_iso.length == 2
         next if export_iso == cls.country.iso_code
-        product_rows << [export_iso,cls.country.iso_code,p.unique_identifier,p.name,hts_code,hts_code,output_rate(caches,tr,export_iso,cdefs)].to_csv
+        product_rows << [export_iso, cls.country.iso_code, p.unique_identifier, p.name, hts_code, hts_code, output_rate(caches, tr, export_iso, cdefs)].to_csv
       end
     end
     product_rows.sort.each {|pr| f << pr}
@@ -53,13 +53,13 @@ module OpenChain; module Report; class UaDutyPlanningReport
     r = nil
     classification_override = tr.classification.get_custom_value(cdefs[:expected_duty_rate]).value
     if !classification_override.nil?
-      r = BigDecimal(classification_override,2)
+      r = BigDecimal(classification_override, 2)
     else
       ot = find_official_tariff caches[:official_tariffs], tr
       if ot
-        trade_lane = find_trade_lane(caches,tr.classification.country,export_iso)
+        trade_lane = find_trade_lane(caches, tr.classification.country, export_iso)
         if trade_lane
-          tpp_rate = find_tpp_rate(trade_lane,ot)
+          tpp_rate = find_tpp_rate(trade_lane, ot)
           if tpp_rate
             r = tpp_rate
           end
@@ -67,7 +67,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
         if r.nil?
           crd = ot.common_rate_decimal
           if crd
-            r = BigDecimal(crd*100.00,2)
+            r = BigDecimal(crd*100.00, 2)
             if trade_lane && trade_lane.tariff_adjustment_percentage
               r = r + (trade_lane.tariff_adjustment_percentage)
             end
@@ -81,7 +81,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
   def self.find_tpp_rate trade_lane, official_tariff
     rates = []
     trade_lane.trade_preference_programs.each do |tpp|
-      override = tpp.tpp_hts_overrides.where('tpp_hts_overrides.hts_code = LEFT(?,length(tpp_hts_overrides.hts_code))',official_tariff.hts_code).order('length(tpp_hts_overrides.hts_code) DESC').pluck(:rate).first
+      override = tpp.tpp_hts_overrides.where('tpp_hts_overrides.hts_code = LEFT(?,length(tpp_hts_overrides.hts_code))', official_tariff.hts_code).order('length(tpp_hts_overrides.hts_code) DESC').pluck(:rate).first
       if override
         rates << override
       else
@@ -92,7 +92,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
           program_code:tpp.tariff_identifier
         ).pluck(:rate).first
         if rate
-          rate = BigDecimal(rate*100.00,2)
+          rate = BigDecimal(rate*100.00, 2)
           if tpp.tariff_adjustment_percentage
             rate = rate + tpp.tariff_adjustment_percentage
           end
@@ -104,11 +104,11 @@ module OpenChain; module Report; class UaDutyPlanningReport
   end
 
   def self.find_trade_lane caches, import_country, export_iso
-    export_country = find_country(caches[:countries],export_iso)
+    export_country = find_country(caches[:countries], export_iso)
     tl_key = "#{import_country.id}-#{export_country.id}"
     tl = caches[:trade_lanes][tl_key]
     if !tl
-      tl = TradeLane.where(destination_country_id:import_country.id,origin_country_id:export_country.id).first
+      tl = TradeLane.where(destination_country_id:import_country.id, origin_country_id:export_country.id).first
       tl = 'X' if tl.nil?
       caches[:trade_lanes][tl_key] = tl
     end
@@ -130,20 +130,20 @@ module OpenChain; module Report; class UaDutyPlanningReport
     key = "#{country_id}-#{hts}"
     ot = cache[key]
     if ot.blank?
-      ot = OfficialTariff.where(country_id:country_id,hts_code:hts).first
+      ot = OfficialTariff.where(country_id:country_id, hts_code:hts).first
       cache[key] = ot
     end
     ot
   end
 
   def self.find_products user, query_opts, cdefs
-    p = Product.joins([:custom_values,:classifications=>[:tariff_records,:country]])
+    p = Product.joins([:custom_values, :classifications=>[:tariff_records, :country]])
     p = Product.search_secure user, p
     if !query_opts[:style_s3_path].blank?
       uids = get_uids_from_s3(query_opts[:style_s3_path])
-      p = p.where("products.unique_identifier IN (?)",uids)
+      p = p.where("products.unique_identifier IN (?)", uids)
     elsif !query_opts[:season].blank?
-      p = p.where("products.id IN (SELECT customizable_id FROM custom_values WHERE custom_definition_id = #{cdefs[:prod_seasons].id} AND text_value LIKE ?)","%#{query_opts[:season]}%")
+      p = p.where("products.id IN (SELECT customizable_id FROM custom_values WHERE custom_definition_id = #{cdefs[:prod_seasons].id} AND text_value LIKE ?)", "%#{query_opts[:season]}%")
     else
       raise "No styles or season provided."
     end
@@ -153,7 +153,7 @@ module OpenChain; module Report; class UaDutyPlanningReport
   end
 
   def self.get_uids_from_s3 path
-    data = OpenChain::S3.get_data(OpenChain::S3.bucket_name,path)
+    data = OpenChain::S3.get_data(OpenChain::S3.bucket_name, path)
     data.lines.map(&:strip)
   end
 end; end; end

@@ -190,9 +190,9 @@ module OpenChain; module CustomHandler; module AnnInc; class AnnFirstSaleValidat
       next if first_sale?(cil) || commercial_invoice_line_discount(cil) > 0
       cust_inv_line = find_matching_line(cust_inv, cil, errors) { |il, discount| discount > 0 }
       if cust_inv_line
-        missing_fields = {"Air/Sea Discount" => cust_inv_line.air_sea_discount, 
-                          "Trade Discount" => cust_inv_line.trade_discount, 
-                          "Early Payment Discount" => cust_inv_line.early_pay_discount}.select{ |k, v| trap_nil(v) > 0 }.map{ |k, v| "#{k} (#{v})"}.join(", ")
+        missing_fields = {"Air/Sea Discount" => cust_inv_line.air_sea_discount,
+                          "Trade Discount" => cust_inv_line.trade_discount,
+                          "Early Payment Discount" => cust_inv_line.early_pay_discount}.select { |k, v| trap_nil(v) > 0 }.map { |k, v| "#{k} (#{v})"}.join(", ")
         errors << "Line #{cust_inv_line.line_number} is missing the following discounts: #{missing_fields}"
       end
     end

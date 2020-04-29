@@ -20,7 +20,7 @@ describe OpenChain::TariffFinder do
   end
 
   describe "find_by_style" do
-    
+
     before :each do
       @imp = Factory(:company)
       @c1 = Factory(:country)

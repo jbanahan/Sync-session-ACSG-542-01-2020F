@@ -2,11 +2,11 @@ class DutyCalcExportFilesController < ApplicationController
   before_filter :secure_me
 
   def download
-    d = DutyCalcExportFile.find params[:id] 
+    d = DutyCalcExportFile.find params[:id]
     if d.attachment.blank?
       error_redirect "Export file does not have an attachment."
     else
-      redirect_to download_attachment_path(d.attachment)  
+      redirect_to download_attachment_path(d.attachment)
     end
   end
 

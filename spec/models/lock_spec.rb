@@ -14,8 +14,8 @@ describe Lock do
     it "should lock with fully qualified class name" do
       k = OpenChain::XLClient
       opts = {a:'b'}
-      expect(Lock).to receive(:acquire).with('OpenChain::XLClient',opts).and_yield
-      yield_value = Lock.acquire_for_class(k,opts) do
+      expect(Lock).to receive(:acquire).with('OpenChain::XLClient', opts).and_yield
+      yield_value = Lock.acquire_for_class(k, opts) do
         'hello'
       end
       expect(yield_value).to eq 'hello'
@@ -76,8 +76,8 @@ describe Lock do
       # Make sure the latter thread waited at least sleepSeconds to get the lock
       # (Due to thread scheduling and timing the sleeps might be slightly quicker that sleepSeconds)
       expect(end_blocking - start_blocking).to be >= (sleepSeconds - 0.1)
-      #expect(Lock.send(:expires_in, 'LockSpec')).to be <= 300
-      #expect(Lock.send(:unlocked?, 'LockSpec')).to be_truthy
+      # expect(Lock.send(:expires_in, 'LockSpec')).to be <= 300
+      # expect(Lock.send(:unlocked?, 'LockSpec')).to be_truthy
     end
 
     it "should release the lock if an error occurs in the first thread" do
@@ -181,7 +181,7 @@ describe Lock do
       t2 = Thread.new {
         sleep (1.0 / 100.0) while !lockAcquired
         begin
-          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false) {}
+          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false){}
         rescue => e
           done = true
           error = e
@@ -217,7 +217,7 @@ describe Lock do
       t2 = Thread.new {
         sleep (0.1) while !lockAcquired
         begin
-          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false) {}
+          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false){}
         rescue => e
           error = e
           error_time = Time.zone.now
@@ -258,7 +258,7 @@ describe Lock do
       t2 = Thread.new {
         sleep (0.1) while !lockAcquired
         begin
-          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false, raise_timeout: false) {}
+          Lock.acquire('LockSpec', timeout: 1, yield_in_transaction: false, raise_timeout: false){}
         rescue => e
           error = e
           error_time = Time.zone.now
@@ -385,7 +385,7 @@ describe Lock do
       e = double("MyModel")
       expect(e).to receive(:with_lock).exactly(3).and_raise ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
 
-      expect{Lock.with_lock_retry(e, true, 2)}.to raise_error ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
+      expect {Lock.with_lock_retry(e, true, 2)}.to raise_error ActiveRecord::StatementInvalid, "Error: Lock wait timeout exceeded"
     end
   end
 end

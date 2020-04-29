@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
   end
 
   describe "receive" do
-    
+
     before :each do
       @g = subject
       @ftped_files = []
@@ -41,7 +41,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
       end
 
       line = Factory(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "CC", charge_description: "CDESC",
-                      broker_invoice: Factory(:broker_invoice, invoice_number: "INV", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD", 
+                      broker_invoice: Factory(:broker_invoice, invoice_number: "INV", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD",
                         customer_number: "BT", bill_to_name: "BTN", bill_to_address_1: "BADD1", bill_to_address_2: "BADD2", bill_to_city: "BCITY", bill_to_state: "BST", bill_to_zip: "BZIP", bill_to_country: Factory(:country),
                         entry: Factory(:entry, broker_reference: "REF", entry_number: "ENT", customer_number: "CUST", carrier_code: "CARR",
                           lading_port_code: "LAD", unlading_port_code: "UNL", merchandise_description: "DESC", total_packages: 10, gross_weight: 10,
@@ -116,7 +116,7 @@ describe OpenChain::CustomHandler::Generic210Generator do
 
     it "sends one 210 per broker invoice" do
       line2 = Factory(:broker_invoice_line, charge_type: "T", charge_amount: "50", charge_code: "CC", charge_description: "CDESC",
-                      broker_invoice: Factory(:broker_invoice, invoice_number: "INV2", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD", 
+                      broker_invoice: Factory(:broker_invoice, invoice_number: "INV2", invoice_total: 100, invoice_date: Date.new(2015, 1, 1), currency: "CAD",
                         customer_number: "BT", bill_to_name: "BTN", bill_to_address_1: "BADD1", bill_to_address_2: "BADD2", bill_to_city: "BCITY", bill_to_state: "BST", bill_to_zip: "BZIP", bill_to_country: Factory(:country),
                         entry: @entry)
                      )

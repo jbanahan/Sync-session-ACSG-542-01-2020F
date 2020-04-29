@@ -34,12 +34,12 @@ describe OpenChain::Report::IntacctExceptionReport do
 
       expect(sheet[0]).to eq ["Clear Error", "Intacct Company", "Customer", "Invoice Number", "Invoice Date", "Suggested Fix", "Actual Intacct Error"]
       expect(sheet[1]).to eq ["Clear This Error", "A", "Cust", "Inv", r.invoice_date.to_date, "Unknown Error. Contact support@vandegriftinc.com to resolve error.", "Errors"]
-      
+
       sheet = wb["Payable Errors"]
 
       expect(sheet[0]).to eq ["Clear Error", "Intacct Company", "Customer", "Vendor", "Bill Number", "Bill Date", "Suggested Fix", "Actual Intacct Error"]
       expect(sheet[1]).to eq ["Clear This Error", "A", "Cust", "Vend", "Bill", p.bill_date.to_date, "Unknown Error. Contact support@vandegriftinc.com to resolve error.", "Errors"]
-      
+
       sheet = wb["Check Errors"]
 
       expect(sheet[0]).to eq ["Clear Error", "Intacct Company", "Customer", "Vendor", "Check Number", "Check Date", "Bill Number", "Suggested Fix", "Actual Intacct Error"]
@@ -122,7 +122,7 @@ describe OpenChain::Report::IntacctExceptionReport do
 
   describe "run_schedulable" do
     subject { described_class }
-    
+
     it "runs with passed in options" do
       r = IntacctReceivable.create! company: 'A', customer_number: 'Cust', invoice_number: "Inv", invoice_date: Time.zone.now, intacct_errors: "Errors"
       p = IntacctPayable.create! company: 'A', vendor_number: 'Vend', bill_number: "Bill", bill_date: Time.zone.now, intacct_errors: "Errors"

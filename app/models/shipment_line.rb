@@ -38,12 +38,12 @@ class ShipmentLine < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger
 
-  attr_accessible :canceled_order_line_id, :carton_qty, :carton_set_id, 
-    :cbms, :container_id, :container, :fcr_number, :gross_kgs, :invoice_number, 
-    :line_number, :manufacturer_address_id, :master_bill_of_lading, :mid, 
+  attr_accessible :canceled_order_line_id, :carton_qty, :carton_set_id,
+    :cbms, :container_id, :container, :fcr_number, :gross_kgs, :invoice_number,
+    :line_number, :manufacturer_address_id, :master_bill_of_lading, :mid,
     :product_id, :product, :quantity, :shipment_id, :shipment, :variant_id,
     :variant, :linked_order_line_id
-  
+
   belongs_to :shipment, inverse_of: :shipment_lines
   belongs_to :container, inverse_of: :shipment_lines
   belongs_to :carton_set, inverse_of: :shipment_lines
@@ -55,7 +55,7 @@ class ShipmentLine < ActiveRecord::Base
   validates_uniqueness_of :line_number, :scope => :shipment_id
   validates_with OpenChain::Validator::VariantLineIntegrityValidator
 
-  dont_shallow_merge :ShipmentLine, ['id','created_at','updated_at','line_number']
+  dont_shallow_merge :ShipmentLine, ['id', 'created_at', 'updated_at', 'line_number']
 
   def related_orders
     s = Set.new
@@ -66,7 +66,7 @@ class ShipmentLine < ActiveRecord::Base
   end
 
   def find_same
-    r = ShipmentLine.where(:shipment_id=>self.shipment_id,:line_number=>self.line_number)
+    r = ShipmentLine.where(:shipment_id=>self.shipment_id, :line_number=>self.line_number)
     raise "Multiple shipment lines found for shipment #{self.shipment_id} and line #{self.line_number}" if r.size > 1
     r.empty? ? nil : r.first
   end
@@ -102,11 +102,11 @@ class ShipmentLine < ActiveRecord::Base
   end
 
   private
-  def parent_obj #supporting method for LinesSupport
+  def parent_obj # supporting method for LinesSupport
     self.shipment
   end
 
-  def parent_id_where #supporting method for LinesSupport
+  def parent_id_where # supporting method for LinesSupport
     return :shipment_id => self.shipment.id
   end
 

@@ -1,7 +1,7 @@
 describe Api::V1::ProductRateOverridesController do
   let :make_hash do
-    Factory(:country,iso_code:'CA')
-    Factory(:country,iso_code:'US')
+    Factory(:country, iso_code:'CA')
+    Factory(:country, iso_code:'US')
     {
       'product_rate_override'=>
       {
@@ -24,7 +24,7 @@ describe Api::V1::ProductRateOverridesController do
   end
   describe '#index' do
     it 'should get object' do
-      pro = Factory(:product_rate_override,rate:0.21)
+      pro = Factory(:product_rate_override, rate:0.21)
       get :index
       expect(response).to be_success
       h = JSON.parse(response.body)['results']
@@ -35,7 +35,7 @@ describe Api::V1::ProductRateOverridesController do
   end
   describe '#show' do
     it 'should get object' do
-      pro = Factory(:product_rate_override,rate:0.21)
+      pro = Factory(:product_rate_override, rate:0.21)
       get :show, id: pro.id.to_s
       expect(response).to be_success
       h = JSON.parse(response.body)['product_rate_override']
@@ -43,14 +43,14 @@ describe Api::V1::ProductRateOverridesController do
     end
     it 'should not get object without permission' do
       allow_any_instance_of(ProductRateOverride).to receive(:can_view?).and_return false
-      pro = Factory(:product_rate_override,rate:0.21)
+      pro = Factory(:product_rate_override, rate:0.21)
       get :show, id: pro.id.to_s
       expect(response).to_not be_success
     end
   end
   describe '#update' do
     it 'should update object' do
-      pro = Factory(:product_rate_override,rate:0.21)
+      pro = Factory(:product_rate_override, rate:0.21)
       h = make_hash
       h['id'] = pro.id.to_s
       h['product_rate_override']['id'] = h['id']
@@ -64,7 +64,7 @@ describe Api::V1::ProductRateOverridesController do
     end
     it 'should not update object without permission' do
       allow_any_instance_of(ProductRateOverride).to receive(:can_edit?).and_return false
-      pro = Factory(:product_rate_override,rate:0.21)
+      pro = Factory(:product_rate_override, rate:0.21)
       h = make_hash
       h['id'] = pro.id.to_s
       h['product_rate_override']['id'] = h['id']
@@ -81,7 +81,7 @@ describe Api::V1::ProductRateOverridesController do
       @h['product_rate_override']['pro_product_id'] = @p.id.to_s
     end
     it 'should create object' do
-      expect {post :create, @h}.to change(ProductRateOverride,:count).from(0).to(1)
+      expect {post :create, @h}.to change(ProductRateOverride, :count).from(0).to(1)
       expect(response).to be_success
       pro = ProductRateOverride.first
       expect(pro.origin_country.iso_code).to eq 'CA'
@@ -91,7 +91,7 @@ describe Api::V1::ProductRateOverridesController do
     end
     it 'should not create object without permission' do
       allow_any_instance_of(ProductRateOverride).to receive(:can_edit?).and_return false
-      expect {post :create, @h}.to_not change(ProductRateOverride,:count)
+      expect {post :create, @h}.to_not change(ProductRateOverride, :count)
       expect(response).to_not be_success
     end
 

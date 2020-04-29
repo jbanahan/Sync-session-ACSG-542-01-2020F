@@ -18,7 +18,7 @@
 
 class FiscalMonth < ActiveRecord::Base
   attr_accessible :company_id, :end_date, :month_number, :start_date, :year
-  
+
   belongs_to :company
   validates_presence_of :company
 

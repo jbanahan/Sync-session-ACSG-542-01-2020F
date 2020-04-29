@@ -20,7 +20,7 @@ class Region < ActiveRecord::Base
 
   private
   def clean_searches
-    [SearchColumn,SearchCriterion,SortCriterion].each do |k|
+    [SearchColumn, SearchCriterion, SortCriterion].each do |k|
       k.where("model_field_uid like '*r_#{self.id}%'").destroy_all
     end
   end

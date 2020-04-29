@@ -36,12 +36,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillMultiShip
         end
       end
     end
-    
   end
 
   def generate_and_send shipments
     sorted_shipments = sort_shipments_for_generation(shipments)
-    ActiveRecord::Base.transaction do 
+    ActiveRecord::Base.transaction do
       sync_records = shipment_sync_records(shipments)
       xml_generator.generate_xml_and_send sorted_shipments, sync_records: shipment_sync_records(shipments)
       mark_sync_records_as_synced sync_records
@@ -49,7 +48,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillMultiShip
   end
 
   def sort_shipments_for_generation shipments
-    # By default, we're just going to sort by the importer reference and then fall back to created_at to keep a 
+    # By default, we're just going to sort by the importer reference and then fall back to created_at to keep a
     # consistent order.
     shipments.sort_by {|s| [s.importer_reference, s.created_at] }
   end
@@ -99,7 +98,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillMultiShip
 
     all_matching_shipments = {}
 
-    grouped_shipments.values.each do |shipments|
+    grouped_shipments.each_value do |shipments|
       matching_shipments = shipments
       matching_shipments.push *find_other_matching_shipments(shipments)
       all_matching_shipments[shipments.first.master_bill_of_lading] = matching_shipments

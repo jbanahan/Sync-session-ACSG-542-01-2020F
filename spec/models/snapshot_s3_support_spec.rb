@@ -1,15 +1,15 @@
 describe SnapshotS3Support do
 
   subject { Class.new { include SnapshotS3Support } }
-  let! (:ms) { 
-    ms = double("MasterSetup") 
+  let! (:ms) {
+    ms = double("MasterSetup")
     allow(MasterSetup).to receive(:get).and_return ms
     allow(ms).to receive(:system_code).and_return "syscode"
     ms
   }
 
   describe "bucket_name" do
-    
+
     it "returns bucket name using rails env concatted with system code" do
       expect(Rails).to receive(:env).and_return "environment"
       expect(subject.bucket_name).to eq "environment.syscode.snapshots.vfitrack.net"
@@ -68,7 +68,7 @@ describe SnapshotS3Support do
         expect(key).to eq "entry/100.json"
         expect(ActiveSupport::Gzip.decompress(content)).to eq "json"
         expect(opts).to eq({content_encoding:"gzip", content_type: "application/json"})
-        s3_obj 
+        s3_obj
       end
 
       values = subject.write_to_s3 "json", entity
@@ -85,7 +85,7 @@ describe SnapshotS3Support do
         expect(key).to eq "prefix/entry/100.json"
         expect(ActiveSupport::Gzip.decompress(content)).to eq "json"
         expect(opts).to eq({content_encoding:"gzip", content_type: "application/json"})
-        s3_obj 
+        s3_obj
       end
       values = subject.write_to_s3 "json", entity, path_prefix: 'prefix'
     end
@@ -132,8 +132,8 @@ describe SnapshotS3Support do
 
   describe "copy_to_deleted_bucket" do
     let (:testing_system_code) { "testing-system-code" }
-    let! (:master_setup) { 
-      ms = stub_master_setup 
+    let! (:master_setup) {
+      ms = stub_master_setup
       allow(ms).to receive(:system_code).and_return testing_system_code
       ms
     }
@@ -141,7 +141,7 @@ describe SnapshotS3Support do
     let (:source_path) { "path/to/doc.txt" }
     let (:env) { "test-environment"}
 
-    subject { Class.new { 
+    subject { Class.new {
       include SnapshotS3Support
 
       def bucket
@@ -157,11 +157,11 @@ describe SnapshotS3Support do
       end
     }.new }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:bucket).and_return source_bucket
       allow(MasterSetup).to receive(:rails_env).and_return env
     end
-    
+
     it "calls OpenChain::S3.copy_object with correct information" do
       allow(subject).to receive(:doc_path).and_return source_path
       allow(subject).to receive(:version).and_return "version"

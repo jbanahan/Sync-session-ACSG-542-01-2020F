@@ -47,7 +47,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     nil
   end
 
-  def cdefs 
+  def cdefs
     @cdefs ||= self.class.prep_custom_definitions [:prod_brand, :prod_part_number, :prod_reference_number, :prod_department_code, :prod_fda_product_code, :prod_fda_product, :class_customs_description, :class_classification_notes]
   end
 
@@ -60,7 +60,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     # Ascena's product file is going to have duplicate styles (quite a number of them...but most of the time
     # it's going to be because the styles have different vendors...which we don't care about).
     # The only time we care about duplicate styles is when they have different hts numbers.
-    # 
+    #
     # This happens because ascena ships womens and girls garments with the exact same styles,
     # however, the girls size garments can have different HTS numbers...thus we get a second row
     # for these.  We don't want this to overwrite the existing record.  Thus, we handle these
@@ -76,7 +76,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
 
       hts = hts_val(row)
       set_style_data(all_styles, style, hts)
-      
+
       parent_style = text(row[3])
       if parent_style != style && !parent_style.blank?
         set_style_data(all_styles, parent_style, hts)
@@ -88,9 +88,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
       style = text(row[1])
       next if style.blank?
 
-      # If we know we had duplicate styles to process, don't process these until 
+      # If we know we had duplicate styles to process, don't process these until
       # the end...(we could potentially reprocess them inline once we know we have
-      # all the rows needed, but that's more complicated logic and I think we're ok 
+      # all the rows needed, but that's more complicated logic and I think we're ok
       # doing it like this)
       if all_styles[style] && all_styles[style][:hts].length > 1
         duplicate_styles[style] << row
@@ -99,7 +99,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
         process_file_row(user, custom_file.attached_file_name, row, style, hts_val(row), nil)
         # See if the parent style has multiple HTSs
         parent_style = text(row[3])
-        # If the parent style is the same as the style (which appears to happen a lot), then we 
+        # If the parent style is the same as the style (which appears to happen a lot), then we
         # can move on
         next if style == parent_style
 
@@ -140,7 +140,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   end
 
   def set_style_data all_styles, style, hts
-    # 
+    #
     style_values = all_styles[style]
     if style_values.nil?
       all_styles[style] = { counter: 1, hts: Set.new([hts]) }
@@ -165,7 +165,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
 
       set_custom_value(product, cdefs[:prod_part_number], style, changed)
       # Only set the parent id (reference number) if it's different than the style (both because ascena
-      # sends the parent id as the same value as the style all the time, and when creating parents it'll 
+      # sends the parent id as the same value as the style all the time, and when creating parents it'll
       # be the same value)
       parent_id = text(row[3])
       parent_id = nil if style == parent_id
@@ -215,7 +215,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
   def find_or_create_product style, flag
     unique_identifier = "#{importer.system_code}-#{style}"
     product = nil
-    Lock.acquire("Product-#{unique_identifier}") do 
+    Lock.acquire("Product-#{unique_identifier}") do
       product = Product.where(importer_id: importer.id, unique_identifier: unique_identifier).first_or_initialize
       unless product.persisted?
         flag.value = true
@@ -223,7 +223,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
       end
     end
 
-    Lock.with_lock_retry(product) do 
+    Lock.with_lock_retry(product) do
       yield product
     end
   end

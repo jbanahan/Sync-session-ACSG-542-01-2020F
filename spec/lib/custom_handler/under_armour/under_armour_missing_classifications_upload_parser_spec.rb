@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
       expect(user).to receive(:edit_products?).and_return true
       expect(subject.can_view? user).to eq false
     end
-    
+
     it "blocks non-product-editing master users on systems with feature" do
       allow(ms).to receive(:custom_feature?).with('UA SAP').and_return true
       expect(user).to receive(:edit_products?).and_return false
@@ -38,9 +38,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
     let(:header) { ["Article", "Name", "Destination Country Code", "Style", "Color", "Size", "Descriptive Size", "Site Code"] }
     let(:row_1) { ["art1", "shirt", "US", "stylish", "blue", "big", "descriptive size", "site1"] }
     let(:row_2) { ["art2", "shorts", "CA", "tacky", "red", "small", "descriptive size2", "site2"] }
-    
+
     subject { described_class.new(custom_file) }
-  
+
     it "reads file, discards header, passes rows to #parse" do
       expect(subject).to receive(:foreach).with(custom_file).and_return [header, row_1, row_2]
       expect(subject).to receive(:parse).with([row_1, row_2], [], {}, 'file.csv')
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
       expect(mail).to be_nil
       expect(Product.count).to eq 2
     end
-  
+
     it "Notifies user if upload fails" do
       expect(subject).to receive(:process_file).with(custom_file, user).and_raise "KABOOM!"
       subject.process user
@@ -89,8 +89,8 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
     let(:row_1) { ["art num", "shirt", "US", "stylish", "blue", "big", "descriptive size", "site1"] }
     let(:row_2) { ["art num", "nice shirt", "CA", "meh", "green", "medium", "descriptive size2", "site2"] }
     let(:row_3) { ["art num2", "ugly shirt", "CN", "frumpy", "mauve", "too small", "descriptive size3", "site3"] }
-    
-    it 'creates products; aggregates import countries, site codes for a single article, uses the last row for other fields' do      
+
+    it 'creates products; aggregates import countries, site codes for a single article, uses the last row for other fields' do
       subject.parse [row_1, row_2, row_3], ["site1", "site2", "site3"], {}, custom_file
       expect(Product.count).to eq 2
       p = Product.first
@@ -118,7 +118,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
 
     it 'updates products; aggregates import countries, site codes of existing products; leaves other fields unchanged' do
       subject.parse [row_1], ["site1", "site2"], {}, custom_file
-      subject.parse [row_2, row_2], ["site1", "site2"], {}, custom_file #check that duplicate data is ignored
+      subject.parse [row_2, row_2], ["site1", "site2"], {}, custom_file # check that duplicate data is ignored
       expect(Product.count).to eq 1
       p = Product.first
       expect(p.entity_snapshots.count).to eq 2
@@ -131,13 +131,13 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourMissingClassification
       expect(p.custom_value(cdefs[:prod_size_description])).to eq "descriptive size"
       expect(p.custom_value(cdefs[:prod_site_codes])).to eq "site1\n site2"
     end
-  
+
     it 'skips row and records missing site codes' do
       row_1[7] = "site3"
       missing_codes = {}
       expect_any_instance_of(Product).to receive(:create_snapshot).with(User.integration, nil, "UA Missing Classification Upload Parser")
-      subject.parse [row_1, row_2], ["site1","site2"], missing_codes, custom_file
-      
+      subject.parse [row_1, row_2], ["site1", "site2"], missing_codes, custom_file
+
       expect(Product.count).to eq 1
       p = Product.first
       expect(p.custom_value(cdefs[:prod_site_codes])).to eq "site2"

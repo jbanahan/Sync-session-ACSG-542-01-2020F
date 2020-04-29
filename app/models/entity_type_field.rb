@@ -15,14 +15,14 @@
 
 class EntityTypeField < ActiveRecord::Base
   attr_accessible :entity_type_id, :model_field_uid
-  
+
   belongs_to :entity_type
 
   validates_presence_of :entity_type_id
   validates_presence_of :model_field_uid
 
   after_commit :reset_cache
-  
+
   def self.cached_entity_type_ids model_field
     o = CACHE.get "EntityTypeField:etids:#{model_field.uid}"
     if o.nil?

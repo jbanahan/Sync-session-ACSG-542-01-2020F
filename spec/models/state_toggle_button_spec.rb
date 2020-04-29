@@ -8,21 +8,21 @@ describe StateToggleButton do
     subject { described_class }
 
     it "should find from same core_module" do
-      Factory(:state_toggle_button, module_type:'Order', date_attribute:'ord_accepted_at',user_attribute:'ord_accepted_by') #don't find
+      Factory(:state_toggle_button, module_type:'Order', date_attribute:'ord_accepted_at', user_attribute:'ord_accepted_by') # don't find
       expect(subject.for_core_object_user(shipment, user)).to eq [state_toggle_button]
     end
 
     it "should filter by search_criterion" do
-      state_toggle_button.search_criterions.create!(model_field_uid:'shp_importer_reference',operator:'eq',value:'12345')
+      state_toggle_button.search_criterions.create!(model_field_uid:'shp_importer_reference', operator:'eq', value:'12345')
       btn2 = Factory(:state_toggle_button,  module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
-      btn2.search_criterions.create!(model_field_uid:'shp_importer_reference',operator:'eq',value:'DEF')
+      btn2.search_criterions.create!(model_field_uid:'shp_importer_reference', operator:'eq', value:'DEF')
 
       expect(subject.for_core_object_user(shipment, user)).to eq [state_toggle_button]
     end
 
     it "should not find if user not in any permission group" do
       state_toggle_button.update_attributes! permission_group_system_codes:"GRPA\nGRPB\nGRPC"
-      
+
       expect(subject.for_core_object_user(shipment, user)).to eq []
     end
 
@@ -34,27 +34,27 @@ describe StateToggleButton do
 
     it "skips disabled buttons" do
       state_toggle_button.update_attributes! disabled: true
-      
+
       expect(subject.for_core_object_user(shipment, user)).to eq []
     end
   end
 
-  describe "toggle!" do 
+  describe "toggle!" do
 
     it "should set the date and user_id fields" do
       expect(shipment).to receive(:create_snapshot_with_async_option).with(false, user)
 
       now = Time.zone.parse("2018-01-01 12:00")
       Timecop.freeze(now) { state_toggle_button.toggle! shipment, user }
-      
+
       shipment.reload
       expect(shipment.canceled_date).to eq now
       expect(shipment.canceled_by).to eq user
     end
 
     it "should clear the date and user_id fields" do
-      btn = Factory(:state_toggle_button,module_type:'Shipment',date_attribute:'shp_canceled_date',user_attribute:'shp_canceled_by')
-      
+      btn = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
+
       shipment.update_attributes! canceled_date:1.day.ago, canceled_by:user
 
       expect(shipment).to receive(:create_snapshot_with_async_option).with(false, user)
@@ -77,8 +77,8 @@ describe StateToggleButton do
     end
 
     it "should set custom value fields" do
-      cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'datetime')
-      cd_user_id = Factory(:custom_definition,module_type:'Shipment',data_type:'integer', is_user: true)
+      cd_date = Factory(:custom_definition, module_type:'Shipment', data_type:'datetime')
+      cd_user_id = Factory(:custom_definition, module_type:'Shipment', data_type:'integer', is_user: true)
       state_toggle_button.update_attributes! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
       expect(shipment).to receive(:create_snapshot_with_async_option).with(false, user)
@@ -91,8 +91,8 @@ describe StateToggleButton do
     end
 
     it "should clear custom value fields" do
-      cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'date')
-      cd_user_id = Factory(:custom_definition,module_type:'Shipment',data_type:'integer')
+      cd_date = Factory(:custom_definition, module_type:'Shipment', data_type:'date')
+      cd_user_id = Factory(:custom_definition, module_type:'Shipment', data_type:'integer')
       state_toggle_button.update_attributes! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
       shipment.get_custom_value(cd_date).value = Time.now
@@ -142,16 +142,16 @@ describe StateToggleButton do
       expect(state_toggle_button.to_be_activated?(s)).to eq false
     end
     it "should show activate if date_custom_definition and custom value returns blank" do
-      cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'date')
-      cd_user_id = Factory(:custom_definition,module_type:'Shipment',data_type:'integer')
+      cd_date = Factory(:custom_definition, module_type:'Shipment', data_type:'date')
+      cd_user_id = Factory(:custom_definition, module_type:'Shipment', data_type:'integer')
       state_toggle_button.update_attributes! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
       s = Factory(:shipment)
       expect(state_toggle_button.to_be_activated?(s)).to eq true
     end
     it "should not show activate if date_custom_definition and custom value returns !blank" do
-      cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'date')
-      cd_user_id = Factory(:custom_definition,module_type:'Shipment',data_type:'integer')
+      cd_date = Factory(:custom_definition, module_type:'Shipment', data_type:'date')
+      cd_user_id = Factory(:custom_definition, module_type:'Shipment', data_type:'integer')
       state_toggle_button.update_attributes! date_custom_definition_id: cd_date.id, user_custom_definition_id: cd_user_id.id, date_attribute: nil, user_attribute: nil
 
       shipment.get_custom_value(cd_date).value = Time.now
@@ -162,14 +162,14 @@ describe StateToggleButton do
 
   context "validations" do
     it "should not allow with both date and custom date attributes" do
-      cd_date = Factory(:custom_definition,module_type:'Shipment',data_type:'date')
-      btn = StateToggleButton.new(module_type:'Shipment',date_attribute:'canceled_date',date_custom_definition_id:cd_date.id)
-      expect{btn.save!}.to raise_error(/both date and custom date/)
+      cd_date = Factory(:custom_definition, module_type:'Shipment', data_type:'date')
+      btn = StateToggleButton.new(module_type:'Shipment', date_attribute:'canceled_date', date_custom_definition_id:cd_date.id)
+      expect {btn.save!}.to raise_error(/both date and custom date/)
     end
     it "should not allow with both user and custom user attributes" do
-      cd_user = Factory(:custom_definition,module_type:'Shipment',data_type:'integer')
-      btn = StateToggleButton.new(module_type:'Shipment',user_attribute:'canceled_by',user_custom_definition_id:cd_user.id)
-      expect{btn.save!}.to raise_error(/both user and custom user/)
+      cd_user = Factory(:custom_definition, module_type:'Shipment', data_type:'integer')
+      btn = StateToggleButton.new(module_type:'Shipment', user_attribute:'canceled_by', user_custom_definition_id:cd_user.id)
+      expect {btn.save!}.to raise_error(/both user and custom user/)
     end
   end
 

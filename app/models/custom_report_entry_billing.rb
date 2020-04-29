@@ -2,31 +2,31 @@
 
 class CustomReportEntryBilling < CustomReport
   attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
-  
-  #display name for report
+
+  # display name for report
   def self.template_name
     "Entry Billing"
   end
 
-  #long description of report purpose / structure
+  # long description of report purpose / structure
   def self.description
     "Shows Broker Invoices with links to Entry."
   end
 
-  #ModelFields available to be included on report as columns
+  # ModelFields available to be included on report as columns
   def self.column_fields_available user
     CoreModule::BROKER_INVOICE.model_fields(user).values + CoreModule::BROKER_INVOICE_LINE.model_fields(user).values
   end
 
 
-  #ModelFields available to be used as SearchCriterions
+  # ModelFields available to be used as SearchCriterions
   def self.criterion_fields_available user
     column_fields_available user
   end
 
-  #can this user run the report
+  # can this user run the report
   def self.can_view? user
-    user.view_broker_invoices? 
+    user.view_broker_invoices?
   end
 
   def run run_by, row_limit = nil
@@ -37,9 +37,9 @@ class CustomReportEntryBilling < CustomReport
     invoices = BrokerInvoice.search_secure run_by, invoices
     invoices = invoices.limit(row_limit) if row_limit
 
-    #write headings
+    # write headings
     header = []
-    search_cols.each do |col| 
+    search_cols.each do |col|
       header << col
     end
 
@@ -80,12 +80,10 @@ class CustomReportEntryBilling < CustomReport
           write_data (row_cursor +=1), inv.entry, row
         end
       end
-
-      
     end
   end
 
-  private 
+  private
     def write_data row_cursor, entry, row
       column = 0
       if entry
@@ -98,7 +96,7 @@ class CustomReportEntryBilling < CustomReport
           write_hyperlink row_cursor, column, validation_results_url(obj: entry), "Web View"
           column += 1
         end
-        
+
       else
         row = []
         row << nil if self.include_links?

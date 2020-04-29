@@ -44,12 +44,12 @@ class SearchCriterion < ActiveRecord::Base
   include HoldsCustomDefinition
   include JoinSupport
 
-  attr_accessible :automated_billing_setup_id, :business_validation_rule_id, 
-    :business_validation_schedule_id, :business_validation_template_id, 
-    :custom_definition_id, :custom_report_id, :custom_view_template_id, 
-    :imported_file_id, :include_empty, :instant_classification_id, 
-    :milestone_notification_config_id, :model_field_uid, :one_time_alert_id, 
-    :operator, :search_run_id, :search_setup_id, :secondary_model_field_uid, 
+  attr_accessible :automated_billing_setup_id, :business_validation_rule_id,
+    :business_validation_schedule_id, :business_validation_template_id,
+    :custom_definition_id, :custom_report_id, :custom_view_template_id,
+    :imported_file_id, :include_empty, :instant_classification_id,
+    :milestone_notification_config_id, :model_field_uid, :one_time_alert_id,
+    :operator, :search_run_id, :search_setup_id, :secondary_model_field_uid,
     :state_toggle_button_id, :status_rule_id, :value
 
   belongs_to :milestone_plan
@@ -109,7 +109,7 @@ class SearchCriterion < ActiveRecord::Base
   }
 
   def copy_attributes
-    omit = [:id, :created_at, :updated_at].concat(SearchCriterion.attribute_names.select{ |att| att =~ /_id$/ }.map(&:to_sym))
+    omit = [:id, :created_at, :updated_at].concat(SearchCriterion.attribute_names.select { |att| att =~ /_id$/ }.map(&:to_sym))
     JSON.parse(self.to_json except: omit)
   end
 
@@ -119,7 +119,7 @@ class SearchCriterion < ActiveRecord::Base
 
   def json current_user
     mf = self.model_field
-    {:mfid=>self.model_field_uid,:label=>(mf.can_view?(current_user) ? mf.label : ModelField.disabled_label),:operator=>self.operator,:value=>self.value,:datatype=>self.model_field.data_type,:include_empty=>self.include_empty?}
+    {:mfid=>self.model_field_uid, :label=>(mf.can_view?(current_user) ? mf.label : ModelField.disabled_label), :operator=>self.operator, :value=>self.value, :datatype=>self.model_field.data_type, :include_empty=>self.include_empty?}
   end
 
   def core_module
@@ -145,11 +145,11 @@ class SearchCriterion < ActiveRecord::Base
     ['lt', 'gt', 'gteq', 'eq', 'nq']
   end
 
-  #does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)
+  # does the given object pass the criterion test (assumes that the object will be of the type that the model field's process_query_parameter expects)
   def test? obj, user=nil, opts={}
     mf = ModelField.find_by_uid(self.model_field_uid)
     return false if mf.disabled?
-    
+
     if field_relative?
       test_relative? mf, obj, user, opts
     elsif field_decimal?
@@ -262,7 +262,7 @@ class SearchCriterion < ActiveRecord::Base
     mf_two
   end
 
-  #value formatted properly for the appropriate condition in the SQL
+  # value formatted properly for the appropriate condition in the SQL
   def where_value
     val = self.model_field.preprocess_search_value(self.value)
     if (!val.nil? && date_time_field? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator))
@@ -270,10 +270,10 @@ class SearchCriterion < ActiveRecord::Base
     end
 
     self_val = date_field? && !val.nil? && val.is_a?(Time)? val.to_date : val
-    if boolean_field? && ['null','notnull'].include?(self.operator)
+    if boolean_field? && ['null', 'notnull'].include?(self.operator)
       return self.operator=='notnull'
     elsif boolean_field?
-      return ["t","true","yes","y"].include? self_val.to_s.downcase
+      return ["t", "true", "yes", "y"].include? self_val.to_s.downcase
     end
 
     case self.operator
@@ -338,7 +338,7 @@ class SearchCriterion < ActiveRecord::Base
 
   def test_relative? mf, obj, user, opts
     # For legacy reasons, also accepts a two-element array for comparisons between hierarchical levels. This can now be done
-    # with a single object (the second one is found by stepping through the module chain). With the array input it's also possible 
+    # with a single object (the second one is found by stepping through the module chain). With the array input it's also possible
     # to compare two unrelated hierarchies, though currently there probably isn't a use case.
     mf_two = get_relative_model_field
     primary_obj, secondary_obj = [obj, obj]
@@ -352,7 +352,7 @@ class SearchCriterion < ActiveRecord::Base
 
   def test_decimal? mf, object, user, opts
     mf_two = get_secondary_model_field
-    
+
     compare_one_field(mf, object) do |obj_descendant|
       passes_decimal? mf, mf_two, obj_descendant
     end
@@ -376,7 +376,6 @@ class SearchCriterion < ActiveRecord::Base
     r = false
     catch(:break_out) do
       CoreModule.walk_object_heirarchy(obj1) do |cm1, obj1_descendant|
-        
         CoreModule.walk_object_heirarchy(obj2) do |cm2, obj2_descendant|
           if (mf1.core_module == cm1) && (mf2.core_module == cm2)
             r = yield obj1_descendant, obj2_descendant
@@ -527,7 +526,7 @@ class SearchCriterion < ActiveRecord::Base
     str.blank? ? [str] : str.split("\n ")
   end
 
-  #does the given value pass the criterion test
+  # does the given value pass the criterion test
   def passes? value_to_test, opts
     mf = find_model_field
     return false if mf.disabled?
@@ -543,11 +542,11 @@ class SearchCriterion < ActiveRecord::Base
 
     # If we include empty values, Returns true for nil, blank strings (ie. only whitespace), or anything that equals zero
     return true if (self.include_empty && ((value_to_test.blank? && value_to_test != false) || value_to_test == 0))
-    #all of these operators should return false if value_to_test is nil
-    
+    # all of these operators should return false if value_to_test is nil
+
     # Generally speaking, any operator that is meant to compare a database DATE value to something else, where the
     # database date value could be nil, should be included in this array and return false.
-    return false if value_to_test.nil? && ["co","nc","sw","ew","gt","gteq","lt","bda","ada","adf","bdf","pm","bma","ama","amf","bmf","cmo","pqu","cqu","pfcy","cytd"].include?(self.operator)
+    return false if value_to_test.nil? && ["co", "nc", "sw", "ew", "gt", "gteq", "lt", "bda", "ada", "adf", "bdf", "pm", "bma", "ama", "amf", "bmf", "cmo", "pqu", "cqu", "pfcy", "cytd"].include?(self.operator)
 
     # Does the given value pass the criterion test (this is primarily for boolean fields)
     # Since we're considering blank strings as empty, we should also consider 0 (ie. blank number) as empty as well
@@ -596,7 +595,7 @@ class SearchCriterion < ActiveRecord::Base
       vt = d==:date && !value_to_test.nil? ? value_to_test.to_date : value_to_test
 
       self_val = nil
-      if d == :date && ["eq","gt","lt","nq"].include?(self.operator)
+      if d == :date && ["eq", "gt", "lt", "nq"].include?(self.operator)
         self_val = Date.parse(self.value.to_s)
       elsif d == :datetime && !self.value.nil? && SearchCriterion.date_time_operators_requiring_timezone.include?(self.operator)
         # parse_date_time converts the datetime criterion into a UTC String (for the initial DB Query), what we're doing
@@ -604,7 +603,7 @@ class SearchCriterion < ActiveRecord::Base
         # Adding the "UTC" informs the parse method that the given time string is in a different timezone
         self_val = Time.zone.parse((parse_date_time self.value) + " UTC")
       else
-        self_val = number_value(:integer,self.value)
+        self_val = number_value(:integer, self.value)
       end
 
       if self.operator == "eq"
@@ -616,7 +615,7 @@ class SearchCriterion < ActiveRecord::Base
       elsif self.operator == "lt"
         return vt < self_val
       elsif self.operator == "bda"
-        return vt < self_val.days.ago.to_date #.to_date gets rid of times that screw up comparisons
+        return vt < self_val.days.ago.to_date # .to_date gets rid of times that screw up comparisons
       elsif self.operator == "ada"
         return vt >= self_val.days.ago.to_date
       elsif self.operator == "adf"
@@ -632,7 +631,7 @@ class SearchCriterion < ActiveRecord::Base
         return vt.to_s.match(self.value).nil?
       elsif self.operator == "pm"
         base_date = self_val.months.ago
-        base_date = Date.new(base_date.year,base_date.month,1)
+        base_date = Date.new(base_date.year, base_date.month, 1)
         return (vt < Time.now.to_date) && (vt >= base_date) && !(vt.month == 0.seconds.ago.month && vt.year == 0.seconds.ago.year)
       elsif self.operator == "bma"
         return vt < get_safe_date(d, (Time.zone.now - self_val.months).beginning_of_month.at_midnight)
@@ -664,12 +663,12 @@ class SearchCriterion < ActiveRecord::Base
     elsif d == :boolean
       # The screen does't use 'eq', 'nq' for boolean types, it uses 'null', 'notnull' (evaluated above)
       # So this code doesn't run for searches initiated by the screen.
-      truthiness = ["t","true","yes","y"]
+      truthiness = ["t", "true", "yes", "y"]
       self_val = truthiness.include?(self.value.to_s.downcase)
       if self.operator == "eq"
         return value_to_test == self_val
       elsif self.operator == "nq"
-        #testing not equal to true
+        # testing not equal to true
         if truthiness.include?(self.value.downcase)
           return value_to_test.nil? || !value_to_test
         else

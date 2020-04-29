@@ -10,9 +10,9 @@ module Api; module V1; class TradePreferenceProgramsController < Api::V1::ApiCor
     tpp = h['id'].blank? ? TradePreferenceProgram.new : TradePreferenceProgram.includes(
       {custom_values:[:custom_definition]}
     ).find_by_id(h['id'])
-    raise StatusableError.new("Object with id #{h['id']} not found.",404) if tpp.nil?
+    raise StatusableError.new("Object with id #{h['id']} not found.", 404) if tpp.nil?
     import_fields h, tpp, core_module
-    raise StatusableError.new("You do not have permission to save this Trade Lane.",:forbidden) unless tpp.can_edit?(current_user)
+    raise StatusableError.new("You do not have permission to save this Trade Lane.", :forbidden) unless tpp.can_edit?(current_user)
     tpp.save if tpp.errors.full_messages.blank?
     tpp
   end

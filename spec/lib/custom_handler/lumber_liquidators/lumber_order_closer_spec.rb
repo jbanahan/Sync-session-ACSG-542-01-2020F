@@ -2,12 +2,12 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
   describe '#process' do
     it "should convert flat file data and user id call go" do
       expect(OpenChain::S3).to receive(:bucket_name).and_return('mybucket')
-      expect(OpenChain::S3).to receive(:get_data).with('mybucket','mypath').and_return("ABC\nDEF\n")
+      expect(OpenChain::S3).to receive(:get_data).with('mybucket', 'mypath').and_return("ABC\nDEF\n")
       u = double(:user)
       effective_date = double(:date)
       expect(User).to receive(:find).with(99).and_return u
 
-      expect(described_class).to receive(:go).with(["ABC","DEF"], effective_date, u)
+      expect(described_class).to receive(:go).with(["ABC", "DEF"], effective_date, u)
       expect(OpenChain::S3).to receive(:delete).with('mybucket', 'mypath')
 
       described_class.process('mypath', effective_date, 99)
@@ -18,17 +18,17 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
       nums = double('order_numbers')
       u = double('user')
       effective_date = double(:date)
-      expect(described_class).to receive(:open_closed_orders).with(nums,u).and_return 10
+      expect(described_class).to receive(:open_closed_orders).with(nums, u).and_return 10
       expect(described_class).to receive(:close_orders).with(nums, effective_date, u).and_return 1
-      expect(described_class).to receive(:send_completion_message).with(10,1,u)
+      expect(described_class).to receive(:send_completion_message).with(10, 1, u)
 
       described_class.go nums, effective_date, u
     end
   end
   describe '#open_closed_orders' do
     it 'should open closed orders' do
-      o = Factory(:order,order_number:'12345',closed_at:Time.now)
-      keep_closed = Factory(:order,closed_at:Time.now)
+      o = Factory(:order, order_number:'12345', closed_at:Time.now)
+      keep_closed = Factory(:order, closed_at:Time.now)
       expect(described_class.open_closed_orders ['12345'], Factory(:user)).to eq 1
 
       o.reload
@@ -41,10 +41,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCloser do
   describe '#close_orders' do
     before :each do
       @effective_date = Date.today - 1
-      @keep_open = Factory(:order,order_number:'12345', order_date: @effective_date)
+      @keep_open = Factory(:order, order_number:'12345', order_date: @effective_date)
       @close = Factory(:order, order_date: @effective_date - 1)
     end
-    
+
     it 'should close open orders not on list' do
       expect(described_class.close_orders ['12345'], @effective_date, Factory(:user)).to eq 1
 

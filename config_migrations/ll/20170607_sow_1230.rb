@@ -1,7 +1,7 @@
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
 module ConfigMigrations; module LL; class Sow1230
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
-  CDEF_FIELDS = [:ordln_inland_freight_amount,:ordln_inland_freight_vendor_number]
+  CDEF_FIELDS = [:ordln_inland_freight_amount, :ordln_inland_freight_vendor_number]
   def prep_custom_definitions
     self.class.prep_custom_definitions CDEF_FIELDS
   end
@@ -25,7 +25,7 @@ module ConfigMigrations; module LL; class Sow1230
   end
 
   def remove_field_validations cdefs
-    cdefs.each do |k,v|
+    cdefs.each do |k, v|
       FieldValidatorRule.find_by_model_field_uid(v.model_field_uid.to_s).destroy
     end
   end

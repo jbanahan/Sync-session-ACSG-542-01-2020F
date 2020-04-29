@@ -8,7 +8,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   end
 
   before :each do
-    @sap_brand_cd = Factory(:custom_definition,:label=>'SAP Brand',:module_type=>'Product',:data_type=>'boolean')
+    @sap_brand_cd = Factory(:custom_definition, :label=>'SAP Brand', :module_type=>'Product', :data_type=>'boolean')
   end
 
   after :each do
@@ -22,17 +22,17 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
   describe "run_schedulable" do
 
     before :each do
-      us = Factory(:country,:iso_code=>'US')
-      ca = Factory(:country,:iso_code=>'CA')
-      italy = Factory(:country,:iso_code=>'IT')
-      nz = Factory(:country,:iso_code=>'NZ')
+      us = Factory(:country, :iso_code=>'US')
+      ca = Factory(:country, :iso_code=>'CA')
+      italy = Factory(:country, :iso_code=>'IT')
+      nz = Factory(:country, :iso_code=>'NZ')
       @p = Factory(:product)
       @p.update_custom_value! @sap_brand_cd, true
       @p2 = Factory(:product)
       @p2.update_custom_value! @sap_brand_cd, true
-      [us,ca,italy,nz].each do |country|
-        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>@p))
-        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>@p2))
+      [us, ca, italy, nz].each do |country|
+        Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>country.id, :product=>@p))
+        Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>country.id, :product=>@p2))
       end
       @p.update_column :updated_at, (1.year.ago)
       @files = []
@@ -61,21 +61,21 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
   it "should raise error if no sap brand custom definition" do
     @sap_brand_cd.destroy
-    expect{ subject }.to raise_error RuntimeError
+    expect { subject }.to raise_error RuntimeError
   end
 
   describe "sync_xml" do
 
     before :each do
-      @us = Factory(:country,:iso_code=>'US')
+      @us = Factory(:country, :iso_code=>'US')
     end
 
     it "it generates an xml file" do
-      ca = Factory(:country,:iso_code=>'CA')
+      ca = Factory(:country, :iso_code=>'CA')
       p = Factory(:product)
       p.update_custom_value! @sap_brand_cd, true
-      [@us,ca].each do |country|
-        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>p))
+      [@us, ca].each do |country|
+        Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>country.id, :product=>p))
       end
 
       @cdefs.each do |key, cdef|
@@ -90,7 +90,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
           else
             value = key.to_s
           end
-          
+
         elsif "boolean" == cdef.data_type.to_s
           value = true
         end
@@ -152,7 +152,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "maps 'woven' value to 'WVN'" do
       p = Factory(:product)
       p.update_custom_value! @sap_brand_cd, true
-      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country=>@us,:product=>p))
+      Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country=>@us, :product=>p))
       p.update_custom_value! @cdefs[:knit_woven], "Woven"
        @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -166,17 +166,17 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should not send countries except US, CA, IT, KR, JP, HK, NO with custom where" do
-      ca = Factory(:country,:iso_code=>'CA')
-      italy = Factory(:country,:iso_code=>'IT')
-      nz = Factory(:country,:iso_code=>'NZ')
+      ca = Factory(:country, :iso_code=>'CA')
+      italy = Factory(:country, :iso_code=>'IT')
+      nz = Factory(:country, :iso_code=>'NZ')
       no = Factory(:country, :iso_code => "NO")
       jp = Factory(:country, :iso_code => "JP")
       kr = Factory(:country, :iso_code => "KR")
       hk = Factory(:country, :iso_code => "HK")
       p = Factory(:product)
       p.update_custom_value! @sap_brand_cd, true
-      [@us,ca,italy,nz,no, jp, kr, hk].each do |country|
-        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>p))
+      [@us, ca, italy, nz, no, jp, kr, hk].each do |country|
+        Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>country.id, :product=>p))
       end
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
@@ -186,24 +186,24 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "should allow custom list of valid countries" do
-      italy = Factory(:country,:iso_code=>'IT')
-      nz = Factory(:country,:iso_code=>'NZ')
+      italy = Factory(:country, :iso_code=>'IT')
+      nz = Factory(:country, :iso_code=>'NZ')
       p = Factory(:product)
       p.update_custom_value! @sap_brand_cd, true
-      [@us,italy,nz].each do |country|
-        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>country.id,:product=>p))
+      [@us, italy, nz].each do |country|
+        Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>country.id, :product=>p))
       end
-      @tmp = described_class.new(:custom_where=>"WHERE 1=1",:custom_countries=>['NZ','IT']).sync_xml
+      @tmp = described_class.new(:custom_where=>"WHERE 1=1", :custom_countries=>['NZ', 'IT']).sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
-      expect(REXML::XPath.each(doc.root, "product/classification_country").map(&:text)).to eq ['IT','NZ']
+      expect(REXML::XPath.each(doc.root, "product/classification_country").map(&:text)).to eq ['IT', 'NZ']
     end
 
     it "should not send records with blank tariff numbers" do
       p1 = Factory(:product)
       p2 = Factory(:product)
-      [p1,p2].each {|p| p.update_custom_value! @sap_brand_cd, true}
-      Factory(:tariff_record,:classification=>Factory(:classification,:country_id=>@us.id,:product=>p1))
-      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p2))
+      [p1, p2].each {|p| p.update_custom_value! @sap_brand_cd, true}
+      Factory(:tariff_record, :classification=>Factory(:classification, :country_id=>@us.id, :product=>p1))
+      Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>@us.id, :product=>p2))
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -212,7 +212,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
 
     it "sends clean_fiber_content if clean_fiber_content is set" do
       p = Factory(:product)
-      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))
+      Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>@us.id, :product=>p))
 
       p.update_custom_value! @cdefs[:clean_fiber_content], "cleanfibercontent"
       p.update_custom_value! @sap_brand_cd, true
@@ -225,10 +225,10 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "should not send products that aren't SAP Brand" do
       p1 = Factory(:product)
       p1.update_custom_value! @sap_brand_cd, true
-      p2 = Factory(:product) #no custom value at all
-      p3 = Factory(:product) #false custom value
+      p2 = Factory(:product) # no custom value at all
+      p3 = Factory(:product) # false custom value
       p3.update_custom_value! @sap_brand_cd, false
-      [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))}
+      [p1, p2, p3].each {|p| Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>@us.id, :product=>p))}
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -238,14 +238,14 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "should not limit if :no_brand_restriction = true" do
       p1 = Factory(:product)
       p1.update_custom_value! @sap_brand_cd, true
-      p2 = Factory(:product) #no custom value at all
-      p3 = Factory(:product) #false custom value
+      p2 = Factory(:product) # no custom value at all
+      p3 = Factory(:product) # false custom value
       p3.update_custom_value! @sap_brand_cd, false
-      [p1,p2,p3].each {|p| Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))}
+      [p1, p2, p3].each {|p| Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>@us.id, :product=>p))}
 
-      @tmp = described_class.new(:no_brand_restriction=>true,:custom_where=>"WHERE 1=1").sync_xml
+      @tmp = described_class.new(:no_brand_restriction=>true, :custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
-      expect(REXML::XPath.each(doc.root, "product/style").map(&:text).sort).to eq [p1.unique_identifier,p2.unique_identifier,p3.unique_identifier].sort
+      expect(REXML::XPath.each(doc.root, "product/style").map(&:text).sort).to eq [p1.unique_identifier, p2.unique_identifier, p3.unique_identifier].sort
     end
 
     it "should sync and skip product with invalid UTF-8 data" do
@@ -253,8 +253,8 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
       p2 = Factory(:product, :unique_identifier => "Ænema")
       [p1, p2].each do |p|
         p.update_custom_value! @sap_brand_cd, true
-        Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))
-      end  
+        Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>@us.id, :product=>p))
+      end
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
       expect(REXML::XPath.each(doc.root, "product/style").map(&:text)).to eq [p1.unique_identifier]
@@ -263,7 +263,7 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     it "removes newlines" do
       p = Factory(:product, :unique_identifier => "Test\r\nTest")
       p.update_custom_value! @sap_brand_cd, true
-      Factory(:tariff_record,:hts_1=>'1234567890',:classification=>Factory(:classification,:country_id=>@us.id,:product=>p))
+      Factory(:tariff_record, :hts_1=>'1234567890', :classification=>Factory(:classification, :country_id=>@us.id, :product=>p))
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml
       doc = REXML::Document.new(IO.read(@tmp.path))
@@ -271,22 +271,22 @@ describe OpenChain::CustomHandler::PoloSapProductGenerator do
     end
 
     it "does not send multiple classifications for the same style/country combo" do
-      eu = Factory(:country,:iso_code=>'IT')
+      eu = Factory(:country, :iso_code=>'IT')
       # Create multiple products to ensure the checks against the previous style/iso are done correctly
       p = Factory(:product, unique_identifier: "ZZZ")
       p.update_custom_value! @sap_brand_cd, true
       # Set the line numbers different from the natural id order to ensure we're sorting on line number
-      Factory(:tariff_record,:hts_1=>'1234567890', line_number: "2", classification: Factory(:classification,:country_id=>@us.id,:product=>p))
-      Factory(:tariff_record,:hts_1=>'9876543210', line_number: "1", classification: p.classifications.first)
+      Factory(:tariff_record, :hts_1=>'1234567890', line_number: "2", classification: Factory(:classification, :country_id=>@us.id, :product=>p))
+      Factory(:tariff_record, :hts_1=>'9876543210', line_number: "1", classification: p.classifications.first)
       # Create an IT classification to ensure we're ording correctly on country iso and that we're taking the country code into account when
       # checking for multiple tariff lines
-      Factory(:tariff_record,:hts_1=>'1234567890', line_number: "1", classification: Factory(:classification,:country_id=>eu.id,:product=>p))
+      Factory(:tariff_record, :hts_1=>'1234567890', line_number: "1", classification: Factory(:classification, :country_id=>eu.id, :product=>p))
 
       p2 = nil
       Timecop.freeze(Time.zone.now - 7.days) do
         p2 = Factory(:product, unique_identifier: "AAA")
         p2.update_custom_value! @sap_brand_cd, true
-        Factory(:tariff_record,:hts_1=>'1234567890', line_number: "2", classification: Factory(:classification,:country_id=>@us.id,:product=>p2))
+        Factory(:tariff_record, :hts_1=>'1234567890', line_number: "2", classification: Factory(:classification, :country_id=>@us.id, :product=>p2))
       end
 
       @tmp = described_class.new(:custom_where=>"WHERE 1=1").sync_xml

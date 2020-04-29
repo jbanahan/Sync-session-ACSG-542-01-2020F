@@ -33,13 +33,13 @@
 class CustomValue < ActiveRecord::Base
   include TouchesParentsChangedAt
 
-  attr_accessible :boolean_value, :custom_definition_id, :customizable_id, 
-    :customizable_type, :date_value, :datetime_value, :decimal_value, 
-    :integer_value, :string_value, :text_value, :custom_definition, 
+  attr_accessible :boolean_value, :custom_definition_id, :customizable_id,
+    :customizable_type, :date_value, :datetime_value, :decimal_value,
+    :integer_value, :string_value, :text_value, :custom_definition,
     :customizable
 
-  BATCH_INSERT_POSITIONS = ['string_value','date_value','decimal_value',
-    'integer_value','boolean_value','text_value','datetime_value']
+  BATCH_INSERT_POSITIONS = ['string_value', 'date_value', 'decimal_value',
+    'integer_value', 'boolean_value', 'text_value', 'datetime_value']
 
   belongs_to :custom_definition
   belongs_to :customizable, polymorphic: true, inverse_of: :custom_values
@@ -58,7 +58,7 @@ class CustomValue < ActiveRecord::Base
   # Writes given array of custom values directly to database
   #
   # It does this by first deleting the custom values and then re-inserting them via 2 sql queries (rather than
-  # a series of updates).  This is claimed to be faster, but I'm not convinced.  I'm considering this a 
+  # a series of updates).  This is claimed to be faster, but I'm not convinced.  I'm considering this a
   # legacy method and it should be avoided if possible.
   def self.batch_write! values, touch_parent = false, opts = {}
     opts = {skip_insert_nil_values: false}.merge opts
@@ -84,8 +84,8 @@ class CustomValue < ActiveRecord::Base
         end
         to_touch << cv.customizable if touch_parent && !to_touch.include?(cv.customizable)
       end
-      deletes.each do |def_id,customizables|
-        ActiveRecord::Base.connection.execute "DELETE FROM custom_values WHERE #{ActiveRecord::Base.sanitize_sql_array(["custom_definition_id = ? and customizable_id IN (?) and customizable_type = ?", def_id, customizables.collect{|c| c[:id]}, customizables.first[:type]])}"
+      deletes.each do |def_id, customizables|
+        ActiveRecord::Base.connection.execute "DELETE FROM custom_values WHERE #{ActiveRecord::Base.sanitize_sql_array(["custom_definition_id = ? and customizable_id IN (?) and customizable_type = ?", def_id, customizables.collect {|c| c[:id]}, customizables.first[:type]])}"
       end
       if !inserts.empty?
         CustomValue.import inserts
@@ -160,7 +160,7 @@ class CustomValue < ActiveRecord::Base
   end
 
 
-  def touch_parents_changed_at #overriden to find core module differently
+  def touch_parents_changed_at # overriden to find core module differently
     ct = self.customizable_type
     unless ct.nil?
       cm = CoreModule.find_by_class_name ct
@@ -175,7 +175,7 @@ class CustomValue < ActiveRecord::Base
       # ActiveRecord handles XX-XX-XXXX by default as DD-MM-YYYY
       # so invert that US formatting.
       if /^[0-9]{2}[\/-][0-9]{2}[\/-][0-9]{4}$/.match(d)
-        return Date.new(d[6,4].to_i,d[0,2].to_i,d[3,2].to_i)
+        return Date.new(d[6, 4].to_i, d[0, 2].to_i, d[3, 2].to_i)
       else
         # Just let ActiveRecord figure out how to coerce to Date at this point
         # This should correctly handle the case where the data is formatted as YYYY-MM-DD

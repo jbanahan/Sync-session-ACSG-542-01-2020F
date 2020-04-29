@@ -23,8 +23,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   # namespaced to their own class
   included do
     CiLoadEntry ||= Struct.new(
-      :file_number, :customer, :invoices, :containers, :bills_of_lading, :dates, :edi_identifier, :customer_reference, :vessel, :voyage, :carrier, 
-      :customs_ship_mode, :lading_port, :unlading_port, :entry_port, :pieces, :pieces_uom, :goods_description, :weight_kg, :consignee_code, 
+      :file_number, :customer, :invoices, :containers, :bills_of_lading, :dates, :edi_identifier, :customer_reference, :vessel, :voyage, :carrier,
+      :customs_ship_mode, :lading_port, :unlading_port, :entry_port, :pieces, :pieces_uom, :goods_description, :weight_kg, :consignee_code,
       :ultimate_consignee_code, :country_of_origin, :country_of_export, :location_of_goods, :destination_state, :bond_type, :entry_filer_code,
       :entry_type, :entry_number, :total_value_us, :firms_code, :charges, :recon_value_flag
     )
@@ -36,21 +36,21 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     # In other words, to send an export date use a code of "1"...to send an Arrival Date, use a code of 'arrival_date'
     CiLoadEntryDate ||= Struct.new(:code, :date)
     CiLoadBillsOfLading ||= Struct.new(:master_bill, :house_bill, :sub_bill, :sub_sub_bill, :pieces, :pieces_uom)
-    CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type)
+    CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type) # rubocop:disable Lint/StructNewOverride
     CiLoadInvoice ||= Struct.new(
-      :invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number, 
+      :invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number,
       :invoice_total, :charges, :customer_reference, :gross_weight_kg, :net_weight, :net_weight_uom
     )
     CiLoadInvoiceLine ||= Struct.new(
-      :tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value, 
-      :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons, 
-      :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties, 
+      :tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value,
+      :quantity_1, :uom_1, :quantity_2, :uom_2, :po_number, :first_sale, :department, :spi, :non_dutiable_amount, :cotton_fee_flag, :mid, :cartons,
+      :add_to_make_amount, :unit_price, :unit_price_uom, :buyer_customer_number, :seller_mid, :spi2, :line_number, :charges, :related_parties,
       :description, :container_number, :ftz_quantity, :ftz_zone_status, :ftz_priv_status_date, :ftz_expired_hts_number, :category_number, :parties,
       :exported_date, :visa_number, :visa_date, :lading_port, :textile_category_code, :ruling_type, :ruling_number, :quantity_3, :uom_3, :net_weight, :net_weight_uom
     )
     CiLoadInvoiceTariff ||= Struct.new(:hts, :gross_weight, :spi, :spi2, :foreign_value, :quantity_1, :uom_1, :quantity_2, :uom_2, :quantity_3, :uom_3)
     # Qualifier should be one of MF (Manufacturer) or BY (Buyer)
-    CiLoadParty ||= Struct.new(:qualifier, :name, :address_1, :address_2, :address_3, :city, :country_subentity, :zip, :country, :customer_number, :mid)
+    CiLoadParty ||= Struct.new(:qualifier, :name, :address_1, :address_2, :address_3, :city, :country_subentity, :zip, :country, :customer_number, :mid) # rubocop:disable Lint/StructNewOverride
   end
 
   # Generate XML from data presented via the structs above.
@@ -72,7 +72,6 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       header_list = add_element(invoice_parent, "EdiInvoiceHeaderList")
 
       Array.wrap(entry.invoices).each do |invoice|
-        
         header = add_element(header_list, "EdiInvoiceHeader")
         generate_invoice_header(header, entry, invoice, invoice.invoice_lines, entry_identifier)
 
@@ -126,7 +125,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
     add_element(parent, "pieceCount", g.number(entry.pieces, 12, decimal_places: 0, strip_decimals: true, pad_string: false)) if nonzero?(entry.pieces)
     add_element(parent, "uom", g.string(entry.pieces_uom, 6, pad_string: false)) unless entry.pieces_uom.blank?
-    
+
     add_element(parent, "descOfGoods", g.string(entry.goods_description, 70, pad_string: false)) unless entry.goods_description.blank?
 
     if entry.weight_kg && entry.weight_kg > 0
@@ -148,7 +147,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     generate_bills(parent, entry, edi_identifier)
     generate_entry_dates(parent, entry, edi_identifier)
     generate_containers(parent, entry, edi_identifier)
-    
+
     parent
   end
 
@@ -202,7 +201,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       Array.wrap(entry.bills_of_lading).each_with_index do |bill_of_lading, bol_index|
         shipment_id = generate_shipment_id(id_list, bill_of_lading, edi_identifier, (bol_index + 1))
       end
-      
+
     end
   end
 
@@ -290,7 +289,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     # all this data together in the EDI system of the Customs Management system...if you actually want to use
     # multiple bills of lading...you need to use fields called MASTER_BILL_ADDL and HOUSE_BILL_ADDL
     # we're going to assume that if the sequence is > 1 then we're dealing with additional bills
-    
+
     scac, bill = chop_bill(bol.master_bill)
     add_element(id, "scac", g.string(scac, 4, pad_string: false)) unless scac.blank?
     add_element(id, "masterBillAddl", g.string(bill, 12, pad_string: false)) unless bill.blank?
@@ -310,7 +309,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   end
 
   def generate_identifier_data parent, identifier
-    # Allow truncating the master bill, this is mostly brought on by the fact that there are 1 or 2 shipping companies that 
+    # Allow truncating the master bill, this is mostly brought on by the fact that there are 1 or 2 shipping companies that
     # now use 13 character masterbills, and Kewill's edi only allows 12 chars (dumb).
     add_element(parent, "houseBill", g.string(identifier.house_bill, 12, pad_string: false)) unless identifier.house_bill.blank?
     add_element(parent, "masterBill", g.string(identifier.master_bill, 12, pad_string: false))
@@ -414,9 +413,9 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "relatedParties", g.string((true?(line.related_parties) ? "Y" : "N"), 1, pad_string: false, exception_on_truncate: false)) unless line.related_parties.nil?
     add_element(parent, "ftzQuantity", g.number(line.ftz_quantity, 10, pad_string: false, decimal_places: 0)) if nonzero?(line.ftz_quantity)
     add_element(parent, "ftzZoneStatus", g.string(line.ftz_zone_status, 1, pad_string: false, exception_on_truncate: true)) unless line.ftz_zone_status.blank?
-    add_element(parent, "ftzPrivStatusDate", g.date(line.ftz_priv_status_date)) unless line.ftz_priv_status_date.blank?   
+    add_element(parent, "ftzPrivStatusDate", g.date(line.ftz_priv_status_date)) unless line.ftz_priv_status_date.blank?
     add_element(parent, "prevExpiredFtzTariffNo", g.string(line.ftz_expired_hts_number, 10, pad_string: false)) unless line.ftz_expired_hts_number.blank?
-    
+
     add_element(parent, "descr", g.string(line.description, 40, pad_string: false)) unless line.description.blank?
     add_element(parent, "noContainer", g.string(line.container_number, 15, pad_string: false)) unless line.container_number.blank?
     add_element(parent, "categoryNo", g.string(line.category_number, 3, pad_string: false)) unless line.category_number.blank?
@@ -438,7 +437,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     if add_special_tariffs?(entry, invoice, line)
       tariff_lines = process_special_tariffs(invoice, line, tariff_lines)
     end
-    
+
     if tariff_lines.blank?
       add_tariff_fields(parent, line)
     else
@@ -449,7 +448,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
         add_invoice_tariff_line(tariff_class, entry, invoice, invoice_line_number, tariff, (tariff_counter += 1))
       end
     end
-    
+
     nil
   end
 
@@ -464,8 +463,8 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     sorted_lines = []
 
     dup_tariff_lines = tariff_lines.dup
-    
-    # The order the tariff numbers appear here are the priority order they'll end up in the actual output sorted 
+
+    # The order the tariff numbers appear here are the priority order they'll end up in the actual output sorted
     # in front of the "primary tariffs"
     ["9903", "9902"].each do |priority_code|
       dup_tariff_lines.each_with_index do |t, index|
@@ -488,7 +487,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     # We'll handle both ways...at least partially due to the handling of the special tariff cross references that allow for
     # adding special tariffs on the fly.
     if tariff_lines.length > 0
-      #don't add special tariffs for tariff numbers that are already present in the tariff list
+      # don't add special tariffs for tariff numbers that are already present in the tariff list
       existing_tariffs = Set.new(tariff_lines.map &:hts)
 
       special_tariff_line = nil
@@ -580,7 +579,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   end
 
   def convert_invoice_line_to_tariff line, hts: nil, copy_value: false
-    # The attributes we're using between the invoice line and the tariff line are actually (currently) identical 
+    # The attributes we're using between the invoice line and the tariff line are actually (currently) identical
     # So, we're not actually going to do anything aside from cloning the line itself
     new_line = line.dup
     new_line.foreign_value = nil unless copy_value
@@ -616,10 +615,10 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     return [string] if string.length < segment_length
 
     components = []
-    
+
     # copy the string since we're slicing it below
     split_string = string.dup
-    max_splits.times do 
+    max_splits.times do
       if split_string.length < segment_length
         components << split_string
         break
@@ -640,7 +639,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
       mid = ManufacturerId.where(mid: k).first
       h[k] = mid
     end
-    
+
     mid = @mids[line.seller_mid]
     raise MissingCiLoadDataError, "No MID exists in VFI Track for '#{line.seller_mid}'." unless mid
     raise MissingCiLoadDataError, "MID '#{line.seller_mid}' is not an active MID." unless mid.active
@@ -651,7 +650,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def add_seller_mid parent, entry, invoice, invoice_line_number, mid
     party = add_element(parent, "EdiInvoiceParty")
     add_invoice_line_key_fields(party, entry, invoice, invoice_line_number)
-    add_element(party, "partiesQualifier","SE")
+    add_element(party, "partiesQualifier", "SE")
     add_element(party, "address1", g.string(mid.address_1, 95, pad_string: false, exception_on_truncate: true)) unless mid.address_1.blank?
     add_element(party, "address2", g.string(mid.address_2, 104, pad_string: false, exception_on_truncate: true)) unless mid.address_2.blank?
     add_element(party, "city", g.string(mid.city, 93, pad_string: false, exception_on_truncate: true)) unless mid.city.blank?
@@ -663,7 +662,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   end
 
   def get_buyer line
-    # We're going to allow users to specify the customer number and then optionally the customer address to utilize by 
+    # We're going to allow users to specify the customer number and then optionally the customer address to utilize by
     # passing the customer number (CUSTNO) and then putting a hyphen and the Kewill address number to use (defaulting to 1)
     # if not given.
     # CUSTNO -> Find Address for CUSTNO with a number 1.
@@ -682,7 +681,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
 
       h[k] = Address.joins(:company).where(companies: {id: Company.with_customs_management_number(cust_no)}).where(system_code: address_no).first
     end
-    
+
     address = @addresses[[cust_no, address_no]]
 
     raise MissingCiLoadDataError, "No Customer Address # '#{address_no}' found for '#{cust_no}'." unless address
@@ -693,7 +692,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
   def add_buyer parent, entry, invoice, invoice_line_number, buyer
     party = add_element(parent, "EdiInvoiceParty")
     add_invoice_line_key_fields(party, entry, invoice, invoice_line_number)
-    add_element(party, "partiesQualifier","BY")
+    add_element(party, "partiesQualifier", "BY")
     add_element(party, "address1", g.string(buyer.line_1, 95, pad_string: false, exception_on_truncate: true)) unless buyer.line_1.blank?
     add_element(party, "address2", g.string(buyer.line_2, 104, pad_string: false, exception_on_truncate: true)) unless buyer.line_2.blank?
     add_element(party, "city", g.string(buyer.city, 93, pad_string: false, exception_on_truncate: true)) unless buyer.city.blank?

@@ -2,8 +2,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
 
   subject { described_class }
 
-  describe "send_s3_document_to_kewill" do 
-    let (:downloaded_file) { 
+  describe "send_s3_document_to_kewill" do
+    let (:downloaded_file) {
       tf = Tempfile.new ["file", ".txt"]
       tf << "Content"
       tf.flush
@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
           expect(file).to eq downloaded_file
           opts = ftp_options
         end
-        
+
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
         expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
 
@@ -100,7 +100,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
           expect(file).to eq downloaded_file
           opts = ftp_options
         end
-        
+
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST Some Random Info (1).pdf", version: "version", original_filename: "12345 - CUST Some Random Info (1).pdf").and_yield downloaded_file
         expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST Some Random Info (1).pdf", "version")
 
@@ -122,7 +122,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
           expect(file).to eq downloaded_file
           opts = ftp_options
         end
-        
+
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", version: "version", original_filename: "12345 - CUST.pdf").and_yield downloaded_file
         expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf", "version")
 
@@ -140,7 +140,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
 
       it "allows user to duplicate the filename extension" do
         expect(subject).to receive(:ftp_file)
-        
+
         expect(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf.pdf", version: "version", original_filename: "12345 - CUST.pdf.pdf").and_yield downloaded_file
         expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345 - CUST.pdf.pdf", "version")
 
@@ -191,7 +191,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
       expect(OpenChain::S3).to receive(:metadata).with("owner", "bucket", "US Entry Documents/Root/Document Type/12345.txt", "version").and_return "you@there.com"
       expect(OpenChain::S3).to receive(:delete).with("bucket", "US Entry Documents/Root/Document Type/12345.txt", "version")
 
-     
+
       subject.send_s3_document_to_kewill("bucket", "US Entry Documents/Root/Document Type/12345.txt", "version")
 
       email = ActionMailer::Base.deliveries.first

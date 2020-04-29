@@ -8,14 +8,14 @@ require 'open_chain/custom_handler/amazon/amazon_product_documents_parser'
 
 # Amazon sends us a whole bunch of different product csv files, and they're all going to end up
 # in the same source directory.  The whole point of this class is to determine
-# which ACTUAL product file they sent and then send the data through to the parser 
+# which ACTUAL product file they sent and then send the data through to the parser
 # that handles that file type.
 module OpenChain; module CustomHandler; module Amazon; class AmazonProductParserBroker
   include OpenChain::IntegrationClientParser
 
   def self.parse data, opts = {}
     parser = get_parser(opts[:key])
-    # We want to update the inbound file that the integration client parser provides and 
+    # We want to update the inbound file that the integration client parser provides and
     # rekey it to the actual parser utilized.
     inbound_file.parser_name = parser.to_s
 
@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
       when "RAD"
         return OpenChain::CustomHandler::Amazon::AmazonFdaRadProductParser
       when "CVD", "ADD"
-        # I don't actually know how the CVD / ADD part files are going to be named...we don't have 
+        # I don't actually know how the CVD / ADD part files are going to be named...we don't have
         # sample files for them, so it's just a best guess.  The detection algorithm for them might
         # have to change here.
         return OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser
@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser
       else
         inbound_file.reject_and_raise "No parser exists to handle Amazon #{oga_code} OGA file types."
       end
-      
+
     elsif filename =~ /^US_.+_PGA_/i
       # Docs File -> <DESTINATION_COUNTRY>_<IOR_ID>_<SKU>_<MANUFACTURERNAME>_PGA_<PGA_CODE>_<DOCUMENT_NAME>_<DATE>.<FILE_EXTENSION>
       return OpenChain::CustomHandler::Amazon::AmazonProductDocumentsParser

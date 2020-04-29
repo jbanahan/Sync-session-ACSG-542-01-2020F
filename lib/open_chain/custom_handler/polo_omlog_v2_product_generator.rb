@@ -56,12 +56,12 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
   end
 
   def ftp_credentials
-    {:server=>'ftp.omlogasia.com',:username=>'ftp06user21',:password=>'kXynC3jm',:folder=>'chain'}
+    {:server=>'ftp.omlogasia.com', :username=>'ftp06user21', :password=>'kXynC3jm', :folder=>'chain'}
   end
 
-  #overriding to handle special splitting of CSM numbers
+  # overriding to handle special splitting of CSM numbers
   def sync_csv include_headers=true
-    f = Tempfile.new(['ProductSync','.csv'])
+    f = Tempfile.new(['ProductSync', '.csv'])
     cursor = 0
     sync(include_headers: include_headers) do |rv|
       if include_headers || cursor > 0
@@ -72,7 +72,7 @@ module OpenChain; module CustomHandler; class PoloOmlogV2ProductGenerator < Prod
           (0..max_col).each do |i|
             v = i==1 ? c : rv[i]
             v = "" if v.blank?
-            v = v.hts_format if [10,13,16].include?(i)
+            v = v.hts_format if [10, 13, 16].include?(i)
             row << v.to_s.gsub(/\r?\n/, " ")
           end
           f << row.to_csv

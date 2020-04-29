@@ -5,7 +5,7 @@ describe SupportTicket do
   describe "open scope" do
     it "should return open tickets" do
       find = Factory(:support_ticket)
-      dont_find = Factory(:support_ticket,:state=>"closed")
+      dont_find = Factory(:support_ticket, :state=>"closed")
       r = SupportTicket.open
       expect(r.size).to eq(1)
       expect(r.first).to eq(find)
@@ -50,8 +50,8 @@ describe SupportTicket do
   context "notifications", :disable_delayed_jobs do
     before :each do
       @requestor = Factory(:user)
-      @agent = Factory(:user,:support_agent=>true)
-      @st = Factory(:support_ticket,:requestor=>@requestor,:agent=>@agent,:email_notifications=>true)
+      @agent = Factory(:user, :support_agent=>true)
+      @st = Factory(:support_ticket, :requestor=>@requestor, :agent=>@agent, :email_notifications=>true)
       @mock_email = double(:email)
     end
     it "should notify agent when requestor is_last_saved_by" do

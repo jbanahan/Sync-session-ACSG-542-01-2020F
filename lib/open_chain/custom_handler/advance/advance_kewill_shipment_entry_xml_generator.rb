@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceKewillShipm
     inv_line = super(shipment_line)
 
     # For CQ, we need to determine if the part associated with the line has a set quantity associated
-    # with it.  If so, then we need to multiply the commercial quantity by the set quantity 
+    # with it.  If so, then we need to multiply the commercial quantity by the set quantity
     # to get the actual piece count.
     if !inv_line.nil?
       # Clear out the hts, by leaving it blank Kewill will look up the part data from the parts library and will
@@ -62,13 +62,13 @@ module OpenChain; module CustomHandler; module Advance; class AdvanceKewillShipm
       inv_line.pieces_uom = "NO"
       inv_line.unit_price_uom = "PCS"
     end
-    
+
     inv_line
   end
 
   # The existing feed that we're replacing did not feed any bills of lading to Kewill, nobody really knows why
-  # as the person that set it up is gone, but it's most likely because we don't have the true master bill for the 
-  # shipment in the Prep 7501 that generates the shipment we're working with, only the house bill.  So, the 
+  # as the person that set it up is gone, but it's most likely because we don't have the true master bill for the
+  # shipment in the Prep 7501 that generates the shipment we're working with, only the house bill.  So, the
   # value in the master bill in the shipment is really the house, and that's what's used as the EDI identifier
   # in as the master bill in the Kewill EDI system...and no Bills are sent.
   def generate_bills_of_lading shipments

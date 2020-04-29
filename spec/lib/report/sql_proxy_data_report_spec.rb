@@ -1,5 +1,5 @@
 describe OpenChain::Report::SqlProxyDataReport do
-  
+
   class FakeReport
     include OpenChain::Report::SqlProxyDataReport
 
@@ -46,7 +46,7 @@ describe OpenChain::Report::SqlProxyDataReport do
     it "receives sql proxy results and writes them to a spreadsheet" do
       results = [{'a' => 'A', 'b'=>"B"}]
       column_headers = {'a' => "Aleph", 'b' => "Beit"}
-      
+
       subject.table_from_sql_proxy_query sheet, results, column_headers
 
       expect(sheet.row(0)).to eq ["Aleph", "Beit"]
@@ -56,7 +56,7 @@ describe OpenChain::Report::SqlProxyDataReport do
     it "receives sql proxy results and writes them to a spreadsheet, using conversions" do
       results = [{'a' => 'A', 'b'=>"B"}]
       column_headers = {'a' => "Aleph", 'b' => "Beit"}
-      data_conversions = {'a' => lambda{|r, v| v == 'A' ? "א" : v}, 'b' => lambda{|r, v| v == 'B' ? "ב" : v}}
+      data_conversions = {'a' => lambda {|r, v| v == 'A' ? "א" : v}, 'b' => lambda {|r, v| v == 'B' ? "ב" : v}}
 
       subject.table_from_sql_proxy_query sheet, results, column_headers, data_conversions
 
@@ -100,8 +100,8 @@ describe OpenChain::Report::SqlProxyDataReport do
     after :each do
       @tf.close! if @tf && !@tf.closed?
     end
-    
-    it "handles results and returns a tempfile containing a spreadsheet" do 
+
+    it "handles results and returns a tempfile containing a spreadsheet" do
       u = User.new
       settings = {'a' => "b"}
       expect(subject).to receive(:worksheet_name).with(u, settings).and_return "Test"
@@ -119,13 +119,13 @@ describe OpenChain::Report::SqlProxyDataReport do
       expect(sheet.row(1)).to eq ["A", "B"]
     end
 
-    it "handles results and returns a tempfile containing a spreadsheet, using conversions" do 
+    it "handles results and returns a tempfile containing a spreadsheet, using conversions" do
       u = User.new
       settings = {'a' => "b"}
       expect(subject).to receive(:worksheet_name).with(u, settings).and_return "Test"
       expect(subject).to receive(:column_headers).with(u, settings).and_return({'a' => "Aleph", 'b' => "Beit"})
       expect(subject).to receive(:report_filename).with(u, settings).and_return "file.xls"
-      expect(subject).to receive(:get_data_conversions).with(u, settings).and_return({'a' => lambda{|r, v| v == 'A' ? "א" : v}, 'b' => lambda{|r, v| v == 'B' ? "ב" : v}})
+      expect(subject).to receive(:get_data_conversions).with(u, settings).and_return({'a' => lambda {|r, v| v == 'A' ? "א" : v}, 'b' => lambda {|r, v| v == 'B' ? "ב" : v}})
 
       results = [{'a' => 'A', 'b'=>"B"}]
 

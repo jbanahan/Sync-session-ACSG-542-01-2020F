@@ -6,13 +6,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       end_date = ActiveSupport::TimeZone["America/New_York"].parse "2016-08-01 00:00"
 
       expect_any_instance_of(described_class).to receive(:run).with(User.integration, start_date, end_date, {email_to: ["me@there.com"]})
-      Timecop.freeze(Time.zone.parse "2016-08-03 12:00") do 
+      Timecop.freeze(Time.zone.parse "2016-08-03 12:00") do
         described_class.run_schedulable({"email_to" => ["me@there.com"]})
       end
     end
 
     it "errors if settings doesn't include email_to attribute" do
-      expect{described_class.run_schedulable({})}.to raise_error "Report must have an email_to attribute configured."
+      expect {described_class.run_schedulable({})}.to raise_error "Report must have an email_to attribute configured."
     end
   end
 
@@ -25,21 +25,21 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
   end
 
   describe "permission?" do
-    let (:user) { 
-      u = User.new 
-      u.company = Company.new 
+    let (:user) {
+      u = User.new
+      u.company = Company.new
       u
     }
 
     context "with custom feature enabled" do
-      
+
       before :each do
         ms = stub_master_setup
         allow(ms).to receive(:custom_feature?).with("Lumber Charges Report").and_return true
       end
 
       context "with view permissions" do
-        before :each do 
+        before :each do
           allow(user).to receive(:view_broker_invoices?).and_return true
           allow(user).to receive(:view_entries?).and_return true
         end
@@ -91,15 +91,15 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       tariff = line.commercial_invoice_tariffs.create! gross_weight: BigDecimal("100"), entered_value: BigDecimal("50")
       tariff = line.commercial_invoice_tariffs.create! gross_weight: BigDecimal("100"), entered_value: BigDecimal("50")
 
-      inv = entry.broker_invoices.create! 
+      inv = entry.broker_invoices.create!
       inv.broker_invoice_lines.create! charge_code: "0007", charge_amount: BigDecimal("100"), charge_description: "Brokerage"
 
-      entry 
+      entry
     }
 
     let (:user) { Factory(:master_user, time_zone: "America/New_York") }
 
-    after :each do 
+    after :each do
       @tempfile.close! if @tempfile && !@tempfile.closed?
     end
 
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       tariff = line.commercial_invoice_tariffs.create! gross_weight: BigDecimal("100"), entered_value: BigDecimal("12.50"), duty_amount: BigDecimal("10")
       tariff = line.commercial_invoice_tariffs.create! gross_weight: BigDecimal("100"), entered_value: BigDecimal("12.50"), duty_amount: BigDecimal("10")
 
-      inv = entry.broker_invoices.create! 
+      inv = entry.broker_invoices.create!
       inv.broker_invoice_lines.create! charge_code: "0007", charge_amount: BigDecimal("100"), charge_description: "Brokerage"
       inv.broker_invoice_lines.create! charge_code: "0004", charge_amount: BigDecimal("200"), charge_description: "Ocean Rate"
       inv.broker_invoice_lines.create! charge_code: "0191", charge_amount: BigDecimal("300"), charge_description: "ISF"
@@ -158,7 +158,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       inv.broker_invoice_lines.create! charge_code: "0235", charge_amount: BigDecimal("700"), charge_description: "CPM Fee"
       inv.broker_invoice_lines.create! charge_code: "0016", charge_amount: BigDecimal("800"), charge_description: "Courier"
 
-      entry 
+      entry
     }
 
     it "turns entry data into row values for the spreadsheet" do
@@ -309,7 +309,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberActualizedChargesRep
       expect(sheet.row(0)).to eq ["Ship Date", "", "Port of Entry", "", "", "", "Broker Reference", "Entry Number", "", "PO Number", "Vendor", "Container Number", "", "Container Size", "Carrier Code", "Master Bill", "", "Vessel", "ETA Date", "Quantity", "Gross Weight (KG)", "Gross Weight (LB)", "Ocean Freight", "", "Custom Clearance Fees", "Additional Charges", "CPM Fee", "ISF Fee", "CCC Charges", "Pier Pass / Clean Truck Fee", "", "MSC Charges", "Customs Duty", "", "", "Bill of Lading Origin", "Origin Port", "", "", "", "Countervailing Duty", "Anti Dumpting Duty", "Contract #"]
       row = sheet.row(1)
 
-      expect(row[0]).to eq Date.new(2016,8,1)
+      expect(row[0]).to eq Date.new(2016, 8, 1)
       expect(row[2]).to eq "Entry"
       expect(row[6]).to eq "REF"
       expect(row[7]).to eq "ENT"

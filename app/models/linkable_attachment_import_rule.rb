@@ -39,9 +39,9 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
     if rule
       Attachment.add_original_filename_method file
       file.original_filename= original_filename
-      val = value_override.blank? ? get_value_from_filename(original_filename) : value_override 
-      r = LinkableAttachment.create!(:model_field_uid=>rule.model_field_uid,:value=>val)
-      a = r.build_attachment 
+      val = value_override.blank? ? get_value_from_filename(original_filename) : value_override
+      r = LinkableAttachment.create!(:model_field_uid=>rule.model_field_uid, :value=>val)
+      a = r.build_attachment
       a.attached = file
       a.save!
     end
@@ -60,7 +60,7 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
     return split.first if split.size > 1
     split = filename.split('.')
     return split.first if split.size > 1
-    return filename 
+    return filename
   end
 
   def self.reload_cache
@@ -97,7 +97,7 @@ class LinkableAttachmentImportRule < ActiveRecord::Base
   end
 
   def self.clear_cache
-    @@lock.synchronize do 
+    @@lock.synchronize do
       @@link_cache.clear
       @@link_cache_updated_at = nil
     end

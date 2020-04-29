@@ -1,21 +1,21 @@
 # -*- SkipSchemaAnnotations
 
 # This class DOES NOT support the multiple field validation aspect of ValidatesFieldFormat.
-# 
+#
 # If you set up multiple model fields, the validation will raise an error
 class ValidationRuleAnyEntryInvoiceLineHasFieldFormat < BusinessValidationRule
   include ValidatesCommercialInvoiceLine
-  include ValidatesFieldFormat  
+  include ValidatesFieldFormat
 
   def run_validation entity
     @matched = false
-    # We shouldn't be getting any actual messages back here, instead we're letting the 
+    # We shouldn't be getting any actual messages back here, instead we're letting the
     # validation go through all the lines and then just checking the matched flag to see if
     # any lines actually matched.
     super
 
     return nil if @matched
-    
+
     if rule_attribute('fail_if_matches')
       "At least one #{model_field.label} value must NOT match '#{match_expression}' format."
     else

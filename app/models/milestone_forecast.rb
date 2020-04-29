@@ -20,7 +20,7 @@
 class MilestoneForecast < ActiveRecord::Base
   attr_accessible :forecast, :milestone_definition_id, :milestone_forecast_set_id, :planned, :state
 
-  ORDERED_STATES = ["Achieved","Pending","Unplanned","Missed","Trouble","Overdue"]
+  ORDERED_STATES = ["Achieved", "Pending", "Unplanned", "Missed", "Trouble", "Overdue"]
 
   belongs_to :milestone_definition
   belongs_to :milestone_forecast_set
@@ -33,7 +33,7 @@ class MilestoneForecast < ActiveRecord::Base
   alias_method :original_milestone_forecast_set_method, :milestone_forecast_set
 
   def milestone_forecast_set
-    #overridden to find objects that have not been saved
+    # overridden to find objects that have not been saved
     # http://www.agilereasoning.com/2008/04/26/using-belongs_to-in-rails-model-validations-when-the-parent-is-unsaved/
     m = original_milestone_forecast_set_method
     if m.nil?
@@ -65,7 +65,7 @@ class MilestoneForecast < ActiveRecord::Base
 
   def set_state
     if self.planned.nil?
-      self.state = "Unplanned" 
+      self.state = "Unplanned"
     else
       act = self.actual
       if act.nil?

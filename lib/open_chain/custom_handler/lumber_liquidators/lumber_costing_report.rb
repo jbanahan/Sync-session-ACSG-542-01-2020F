@@ -62,7 +62,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
 
       Tempfile.open(["Cost_", ".txt"]) do |temp|
         Attachment.add_original_filename_method temp, "Cost_#{entry.broker_reference}_#{ActiveSupport::TimeZone["America/New_York"].now.strftime("%Y-%m-%d")}.txt"
-        
+
         data.each do |row|
           temp << row.to_csv(col_sep: "|")
         end
@@ -114,7 +114,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
   end
 
   def find_entry entry_id
-    Entry.transaction do 
+    Entry.transaction do
       entry = Entry.lock.where(id: entry_id).includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]], broker_invoices: [:broker_invoice_lines]).first
       yield entry
     end
@@ -133,7 +133,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
   def send_manual_po entry
     # In this case, the entry has been flagged as needing to be manually billed.  Manually billed means
     # that we cannot build a cost file for the entry.  This is pretty much exclusively because a part on the entry
-    # does not appear on a LL PO - this tends to happen on sample shipments.  In this case, the billing files will be 
+    # does not appear on a LL PO - this tends to happen on sample shipments.  In this case, the billing files will be
     # emailed to Lumber and they will handle it on their end.
     invoices = []
     begin
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
     values = []
 
     if can_send_entry?(entry)
-      
+
       total_entered_value = entry.entered_value
       charge_totals = calculate_charge_totals(entry)
       charge_buckets = charge_totals.deep_dup
@@ -196,17 +196,17 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
       end
 
       add_remaining_proration_amounts values, charge_buckets
-      
+
 
       values.each do |line|
         row = [
               line[:entry_number], line[:bol], line[:container], line[:po], line[:line_number], line[:part], line[:quantity], line[:vendor_code], line[:value],
-              line[:ocean_rate], line[:duty], line[:add], line[:cvd], line[:brokerage], line[:acessorial], line[:isc_management], line[:isf], line[:blp_handling], 
+              line[:ocean_rate], line[:duty], line[:add], line[:cvd], line[:brokerage], line[:acessorial], line[:isc_management], line[:isf], line[:blp_handling],
               line[:blp], line[:pier_pass], line[:hmf], line[:mpf], line[:inland_freight], line[:courier], line[:oga], line[:clean_truck], line[:other], line[:currency]
             ]
 
         # Since we're aping an existing feed, which doesn't send zeros, for some reason, remove them here too
-        row = row.map do |v| 
+        row = row.map do |v|
           if v.is_a?(Numeric)
             if v == 0
               nil
@@ -265,7 +265,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
       else
         # Normalize the part number - Lumber sends a ton of leading zeros which we don't have in the entry.
         order = order['order']
-        
+
         order['order_lines'].each do |ol|
           ol['ordln_puid'] = normalize_part_number(ol['ordln_puid'])
         end

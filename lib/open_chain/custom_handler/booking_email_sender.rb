@@ -20,11 +20,10 @@ module OpenChain; module CustomHandler; class BookingEmailSender
       else
         email(message_type, user, shipment, shipment_lines, email_to, [booking_file])
       end
-      
     end
   end
 
-  private 
+  private
     def self.email message_type, user, shipment, shipment_lines, email_to, attachments
       subject = "#{message_type} - #{shipment.reference}"
       if shipment.first_port_receipt

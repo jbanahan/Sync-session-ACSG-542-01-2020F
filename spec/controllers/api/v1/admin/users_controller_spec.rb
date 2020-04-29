@@ -3,7 +3,7 @@ describe Api::V1::Admin::UsersController do
     it "should create new search setups based on the template" do
       allow_api_access Factory(:admin_user)
       u = Factory(:user)
-      st = SearchTemplate.create!(name:'x',search_json:"{'a':'b'}")
+      st = SearchTemplate.create!(name:'x', search_json:"{'a':'b'}")
       expect_any_instance_of(SearchTemplate).to receive(:add_to_user!).with(u)
       post :add_templates, id: u.id, template_ids: [st.id.to_s]
       expect(response).to be_success

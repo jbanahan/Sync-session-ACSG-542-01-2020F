@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
   let (:data) { IO.read 'spec/fixtures/files/catair_3461.txt' }
-  let! (:inbound_file) { 
+  let! (:inbound_file) {
     file = InboundFile.new
     allow(subject).to receive(:inbound_file).and_return file
     file
@@ -10,7 +10,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
     with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "CUSTNO")
   }
 
-  describe "process_file" do 
+  describe "process_file" do
 
     it "parses catair file and generates xml" do
       shipments = subject.process_file data
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
   end
 
   describe "process_B" do
-    it "logs and raises an error if invalid Application Code is sent" do 
+    it "logs and raises an error if invalid Application Code is sent" do
       expect { subject.process_B nil, "B  4103316XX"}.to raise_error "CATAIR B-record's Application Identifier Code (Position 11-12) must be 'SE' to indicate a Cargo Release.  It was 'XX'."
       expect(inbound_file).to have_reject_message "CATAIR B-record's Application Identifier Code (Position 11-12) must be 'SE' to indicate a Cargo Release.  It was 'XX'."
     end
@@ -136,7 +136,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
       expect(party.address_3).to be_nil
     end
 
-    it "does nothing if address data is blank" do 
+    it "does nothing if address data is blank" do
       subject.process_SE35_55 party, "SE5501                                   02               "
       expect(party.address_1).to be_nil
       expect(party.address_2).to be_nil
@@ -164,7 +164,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
     subject { described_class }
     let (:shipment) { described_class::CiLoadEntry.new }
 
-    before :each do 
+    before :each do
       allow_any_instance_of(subject).to receive(:inbound_file).and_return inbound_file
     end
 

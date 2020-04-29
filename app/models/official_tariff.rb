@@ -39,16 +39,16 @@
 require 'digest/md5'
 require 'open_chain/stat_client'
 class OfficialTariff < ActiveRecord::Base
-  attr_accessible :add_valorem_rate, :calculation_method, :chapter, 
-    :column_2_rate, :common_rate, :common_rate_decimal, :country_id, 
-    :country, :erga_omnes_rate, :export_regulations, :fda_indicator, 
-    :full_description, :general_preferential_tariff_rate, 
-    :general_rate, :heading, :hts_code, :import_regulations, 
-    :most_favored_nation_rate, :per_unit_rate, :remaining_description, 
-    :special_rate_key, :special_rates, :sub_heading, :unit_of_measure, 
+  attr_accessible :add_valorem_rate, :calculation_method, :chapter,
+    :column_2_rate, :common_rate, :common_rate_decimal, :country_id,
+    :country, :erga_omnes_rate, :export_regulations, :fda_indicator,
+    :full_description, :general_preferential_tariff_rate,
+    :general_rate, :heading, :hts_code, :import_regulations,
+    :most_favored_nation_rate, :per_unit_rate, :remaining_description,
+    :special_rate_key, :special_rates, :sub_heading, :unit_of_measure,
     :use_count, :country
 
-  LACEY_CODES ||= ["4401","4402","4403","4404","4406","4407","4408","4409",
+  LACEY_CODES ||= ["4401", "4402", "4403", "4404", "4406", "4407", "4408", "4409",
                     "4412", "4414", "4417", "4418", "4419", "4420", "4421",
                     "6602", "8201", "9201", "9202", "9302", "93051020",
                     "940169", "950420", "9703"]
@@ -66,7 +66,7 @@ class OfficialTariff < ActiveRecord::Base
   validates :hts_code, :uniqueness => {:scope => :country_id}
 
   def special_rate_keys
-    SpecialRate.where(special_rate_key:self.special_rate_key,country_id:self.country_id)
+    SpecialRate.where(special_rate_key:self.special_rate_key, country_id:self.country_id)
   end
 
   def iso_code
@@ -84,8 +84,8 @@ class OfficialTariff < ActiveRecord::Base
   end
 
   def lacey_act
-    #JSON doesn't like sending methods that end in a question mark.  I'm keeping the "?"
-    #version because it's more intuitive. This is ONLY used for the controller's #find render.
+    # JSON doesn't like sending methods that end in a question mark.  I'm keeping the "?"
+    # version because it's more intuitive. This is ONLY used for the controller's #find render.
     return lacey_act?
   end
 
@@ -95,10 +95,10 @@ class OfficialTariff < ActiveRecord::Base
 
   def self.valid_hts? country, hts
     country_id = country.respond_to?(:id) ? country.id : country
-    OfficialTariff.where(:country_id=>country_id,:hts_code=>hts).count > 0
+    OfficialTariff.where(:country_id=>country_id, :hts_code=>hts).count > 0
   end
 
-  #update the database with the total number of times that each official tariff has been used
+  # update the database with the total number of times that each official tariff has been used
   def self.update_use_count
     OpenChain::StatClient.wall_time('ot_use') do
       conn = ActiveRecord::Base.connection
@@ -118,21 +118,21 @@ class OfficialTariff < ActiveRecord::Base
           end
         end
         job_start = conn.execute("SELECT now()").first.first
-        hts_hash.each do |k,v|
+        hts_hash.each do |k, v|
           # Add a second to avoid any rounding issues to cause the query below blanking the use counts to blank ones that shouldn't be
           OfficialTariff.where(country_id: c.id, hts_code: k).update_all use_count: v, updated_at: (job_start + 1.second)
         end
-        OfficialTariff.where(country_id:c.id).where("use_count IS NULL OR updated_at < ?",job_start).update_all(use_count:0, updated_at: (job_start + 1.second))
+        OfficialTariff.where(country_id:c.id).where("use_count IS NULL OR updated_at < ?", job_start).update_all(use_count:0, updated_at: (job_start + 1.second))
       end
     end
   end
 
-  #get hash of auto-classification results keyed by country object
+  # get hash of auto-classification results keyed by country object
   def self.auto_classify base_hts
-    return {} if base_hts.blank? || base_hts.strip.size < 6 #only works on 6 digit or longer
-    to_test = base_hts[0,6]
+    return {} if base_hts.blank? || base_hts.strip.size < 6 # only works on 6 digit or longer
+    to_test = base_hts[0, 6]
     r = {}
-    OfficialTariff.joins(:country).where("hts_code like ?","#{to_test}%").where("countries.import_location = ?",true).order("official_tariffs.use_count DESC, official_tariffs.hts_code ASC").each do |ot|
+    OfficialTariff.joins(:country).where("hts_code like ?", "#{to_test}%").where("countries.import_location = ?", true).order("official_tariffs.use_count DESC, official_tariffs.hts_code ASC").each do |ot|
       r[ot.country] ||= []
       r[ot.country] << ot
     end
@@ -144,7 +144,7 @@ class OfficialTariff < ActiveRecord::Base
     return "http://ec.europa.eu/taxation_customs/dds2/taric/measures.jsp?Taric=#{URI.encode(hts_code)}&LangDescr=en"
   end
 
-  #address for external link to certain countries' binding ruling databases
+  # address for external link to certain countries' binding ruling databases
   def binding_ruling_url
     return nil if self.country.nil? || self.hts_code.nil?
     if self.country.iso_code == 'US'
@@ -155,30 +155,30 @@ class OfficialTariff < ActiveRecord::Base
     nil
   end
 
-  #return tariff for hts_code & country_id
+  # return tariff for hts_code & country_id
   def self.find_cached_by_hts_code_and_country_id hts_code, country_id
     # t = CACHE.get("OfficialTariff:ct:#{hts_code.strip}:#{country_id}")
-    OfficialTariff.where(:country_id=>country_id,:hts_code=>hts_code).first
+    OfficialTariff.where(:country_id=>country_id, :hts_code=>hts_code).first
     # CACHE.set("OfficialTariff:ct:#{hts_code.strip}:#{country_id}",t) unless t.nil?
   end
 
-  #return all potential tariffs that match at the 6 digit level
+  # return all potential tariffs that match at the 6 digit level
   def find_matches(other_country)
     h = six_digit_hts
-    OfficialTariff.where(:country_id=>other_country).where("hts_code like ?","#{h}%")
+    OfficialTariff.where(:country_id=>other_country).where("hts_code like ?", "#{h}%")
   end
 
   def find_schedule_b_matches
-    OfficialScheduleBCode.where("hts_code like ?","#{six_digit_hts}%")
+    OfficialScheduleBCode.where("hts_code like ?", "#{six_digit_hts}%")
   end
 
   def meta_data
-    @meta_data = OfficialTariffMetaDatum.where(:country_id=>self.country_id,:hts_code=>self.hts_code).first if @meta_data.nil?
-    @meta_data = OfficialTariffMetaDatum.new(:country_id=>self.country_id,:hts_code=>self.hts_code) if @meta_data.nil?
+    @meta_data = OfficialTariffMetaDatum.where(:country_id=>self.country_id, :hts_code=>self.hts_code).first if @meta_data.nil?
+    @meta_data = OfficialTariffMetaDatum.new(:country_id=>self.country_id, :hts_code=>self.hts_code) if @meta_data.nil?
     @meta_data
   end
 
-  #override as_json to format hts_code
+  # override as_json to format hts_code
   def as_json(options={})
     result = super({ :except => :hts_code }.merge(options.nil? ? {} : options))
     otr = result["official_tariff"]
@@ -212,7 +212,7 @@ class OfficialTariff < ActiveRecord::Base
   # and the string doesn't contain a number followed by a percent sign, nil is returned.  If the express_as_decimal flag is
   # provided as true (default is false), that 10.5 in our previous example would be returned as .105 (i.e. the
   # numeric value divided by 100).
-  # 
+  #
   def self.numeric_rate_value text_rate_value, express_as_decimal:false
     numeric_component = text_rate_value.to_s.match(/(?<percent>\d*[.]?\d*)%/).try(:[], :percent)
     # See if the rate is actually free
@@ -233,13 +233,13 @@ class OfficialTariff < ActiveRecord::Base
     end
 
     def six_digit_hts
-      self.hts_code.length > 6 ? self.hts_code[0,6] : self.hts_code
+      self.hts_code.length > 6 ? self.hts_code[0, 6] : self.hts_code
     end
 
     def set_common_rate
       if self.country_id
         country = Country.find_cached_by_id self.country_id
-        if ['CA','CN','PA'].include? country.iso_code
+        if ['CA', 'CN', 'PA'].include? country.iso_code
           self.common_rate = self.most_favored_nation_rate
         elsif country.european_union?
           self.common_rate = self.erga_omnes_rate
@@ -247,8 +247,8 @@ class OfficialTariff < ActiveRecord::Base
           self.common_rate = self.general_rate
         end
         if !self.common_rate.blank?
-          if self.common_rate.gsub(/\%/,'').strip.match(/^\d+\.?\d*$/)
-            self.common_rate_decimal = BigDecimal(self.common_rate.gsub(/\%/,'').strip,4)/100
+          if self.common_rate.gsub(/\%/, '').strip.match(/^\d+\.?\d*$/)
+            self.common_rate_decimal = BigDecimal(self.common_rate.gsub(/\%/, '').strip, 4)/100
           elsif self.common_rate.match(/^Free$/)
             self.common_rate_decimal = 0
           end

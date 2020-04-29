@@ -273,12 +273,12 @@ class Country < ActiveRecord::Base
     ['ZIMBABWE', 'ZW', 'ZWE'],
   ]
 
-  EU_ISO_CODES = ['AT','BE','BG','CY','CZ','DK','EE','FI','FR','DE','GR','HU','IE','IT','LV',
-    'LT','LU','MT','NL','PL','PT','RO','SK','SI','ES','SE','GB']
+  EU_ISO_CODES = ['AT', 'BE', 'BG', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV',
+    'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'GB']
 
   @@skip_reload = false
 
-  attr_accessible :import_location, :classification_rank, :quicksearch_show, 
+  attr_accessible :import_location, :classification_rank, :quicksearch_show,
     :active_origin
 
   after_save :update_model_fields

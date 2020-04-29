@@ -15,14 +15,14 @@ module OpenChain; module Api; module V1; class CompanyApiJsonGenerator
       :cmp_updated_at,
       :cmp_enabled_booking_types,
     ]) + custom_field_keys(CoreModule::COMPANY)
-    h = to_entity_hash(c,headers_to_render)
+    h = to_entity_hash(c, headers_to_render)
     h['permissions'] = render_permissions(c)
     h
   end
 
   private
     def render_permissions c
-      cu = current_user #current_user is method, so saving as variable to prevent multiple calls
+      cu = current_user # current_user is method, so saving as variable to prevent multiple calls
       {
         can_view: c.can_view?(cu),
         can_edit: c.can_edit?(cu),

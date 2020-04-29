@@ -3,8 +3,8 @@
 
 if RUBY_VERSION =~ /^2\.[456789]/
 
-  ## This Monkey Patches BigDecimal to restore how it worked prior to Ruby 2.4 
-  ## There's too many spots in our code at the moment that need fixing and other gems 
+  ## This Monkey Patches BigDecimal to restore how it worked prior to Ruby 2.4
+  ## There's too many spots in our code at the moment that need fixing and other gems
   ## that are not updated for 2.4 behavior (rails specifically) that I don't want to deal
   ## with the ArgumentError it raises for something like BigDecimal("notanumber"), rather than returning "0".
 
@@ -22,7 +22,7 @@ if RUBY_VERSION =~ /^2\.[456789]/
   end
 
   module Kernel
-    # When there's time to fully test this - this change will remove a warning about 
+    # When there's time to fully test this - this change will remove a warning about
     # BigDecimal.new being deprecated.
     #
     # alias :old_BigDecimal :BigDecimal
@@ -31,9 +31,11 @@ if RUBY_VERSION =~ /^2\.[456789]/
     #   old_BigDecimal(*args)
     # end
 
+    # rubocop:disable Naming/MethodName
     def BigDecimal *args
       BigDecimal.new(*args)
     end
+    # rubocop:enable Naming/MethodName
   end
 
   ### End BigDecimal patch ###

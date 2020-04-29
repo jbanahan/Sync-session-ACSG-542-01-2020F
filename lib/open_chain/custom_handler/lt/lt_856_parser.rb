@@ -18,7 +18,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
   end
 
   def business_logic_errors
-    @business_logic_errors ||= Hash.new { |h,k| h[k] = Set.new }
+    @business_logic_errors ||= Hash.new { |h, k| h[k] = Set.new }
   end
 
   def parse_date date_val
@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
     last_exported_from_source = parse_dtm_date_value date_time
     raise EdiStructuralError, "Invalid BSN03 / BSN04 Date/Time formatting for value #{date_time}." unless last_exported_from_source
 
-    find_and_process_shipment(importer, imp_reference, mode, mbol, last_exported_from_source, last_file_bucket, last_file_path) do |shipment|      
+    find_and_process_shipment(importer, imp_reference, mode, mbol, last_exported_from_source, last_file_bucket, last_file_path) do |shipment|
       process_shipment(shipment, edi_segments)
       raise_business_logic_errors if business_logic_errors.keys.present?
       shipment.save!
@@ -51,11 +51,11 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
     message = "".html_safe
     if business_logic_errors[:missing_orders].present?
       message << "<br>LT orders are missing for the following Order Numbers:<br>".html_safe
-      message << business_logic_errors[:missing_orders].map{ |o| CGI.escapeHTML o }.join('<br>').html_safe
+      message << business_logic_errors[:missing_orders].map { |o| CGI.escapeHTML o }.join('<br>').html_safe
     end
     if business_logic_errors[:missing_lines].present?
       message << "<br>LT order lines are missing for the following Order / UPC pairs:<br>".html_safe
-      message << business_logic_errors[:missing_lines].map{ |ol| CGI.escapeHTML ol }.join('<br>').html_safe
+      message << business_logic_errors[:missing_lines].map { |ol| CGI.escapeHTML ol }.join('<br>').html_safe
     end
     if business_logic_errors[:missing_container].present?
       shipment_number = CGI.escapeHTML(business_logic_errors[:missing_container].first)
@@ -72,10 +72,10 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
       shipment = s if process_file?(s, last_exported_from_source)
     end
     if shipment
-      Lock.with_lock_retry(shipment) do 
+      Lock.with_lock_retry(shipment) do
         shipment.assign_attributes(importer_reference: imp_reference, last_exported_from_source: last_exported_from_source, mode: mode,
                                    master_bill_of_lading: mbol, last_file_bucket: last_file_bucket, last_file_path: last_file_path)
-        yield shipment 
+        yield shipment
       end
     end
   end
@@ -94,7 +94,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
     else
       process_order_loop(shipment_loop[:hl_children], shipment)
     end
-    
+
     # As soon as we get an 856, we'll want to generate the CI load for it...
     shipment.find_and_set_custom_value(cdefs[:shp_entry_prepared_date], Time.zone.now)
   end
@@ -179,15 +179,15 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
 
       case qualifier
       when "O-OR"
-        shipment.first_port_receipt = port 
+        shipment.first_port_receipt = port
       when "D-PB"
-        shipment.unlading_port = port 
+        shipment.unlading_port = port
       when "N-PD"
         shipment.final_dest_port = port
       when "L-KL"
-        shipment.lading_port = port 
+        shipment.lading_port = port
       when "H-ZZ"
-        shipment.last_foreign_port = port 
+        shipment.last_foreign_port = port
       end
     end
   end

@@ -7,7 +7,7 @@ class SnapshotWriter
 
   # This method is for those that want to be able to get at the actual value the snapshot writer
   # utilizes when generating a snapshot.  This can be handy if you need to compare an object to
-  # a snapshot.  In which case, you should use the json_string option, which will return the 
+  # a snapshot.  In which case, you should use the json_string option, which will return the
   # exact field value you'd expect to get when reading data out of a hashified snapshot json string.
   def self.field_value entity, model_field, json_string: false
     value = model_field.process_export entity, nil, true
@@ -21,7 +21,7 @@ class SnapshotWriter
     # Null values are not added to the snapshot, so return these as null here too
     if !value.nil? && json_string
       # All JSONized values are returned with quotes around them except null or booleans.
-      # What we're after is the string value, sans quotes.  This is primarily to 
+      # What we're after is the string value, sans quotes.  This is primarily to
       # allow us to take an entity's current state and see if it matches against what's
       # in a snapshot.
 
@@ -42,18 +42,18 @@ class SnapshotWriter
 
   # This method is for those that want to be able to get at the actual value the snapshot writer
   # utilizes when generating a snapshot.  This can be handy if you need to compare an object to
-  # a snapshot.  In which case, you should use the json_string option, which will return the 
+  # a snapshot.  In which case, you should use the json_string option, which will return the
   # exact field value you'd expect to get when reading data out of a hashified snapshot json string.
   def field_value entity, model_field, json_string: false
     self.class.field_value entity, model_field, json_string: json_string
   end
 
-  protected 
-  
+  protected
+
     def hash_for_entity entity_descriptor, entity
       core_module = core_module_for_entity(entity)
       base_hash = {'entity'=> write_core_entity_fields(core_module, entity)}
-      
+
       children = hash_for_entity_children(entity_descriptor.children, entity)
       base_hash['entity']['children'] = children if children.length > 0
 
@@ -62,7 +62,7 @@ class SnapshotWriter
 
     def write_entity_model_fields core_module, entity
       model_fields = {}
-      core_module.model_fields_for_snapshot.values.each do |mf|
+      core_module.model_fields_for_snapshot.each_value do |mf|
         v = field_value(entity, mf)
         model_fields[mf.uid] = v unless v.nil?
       end
@@ -95,7 +95,7 @@ class SnapshotWriter
     end
 
     def write_core_entity_fields core_module, entity
-      {'core_module'=> core_module.class_name,'record_id'=>entity.id, 'model_fields'=>write_entity_model_fields(core_module, entity)}
+      {'core_module'=> core_module.class_name, 'record_id'=>entity.id, 'model_fields'=>write_entity_model_fields(core_module, entity)}
     end
 
     def core_module_for_entity entity

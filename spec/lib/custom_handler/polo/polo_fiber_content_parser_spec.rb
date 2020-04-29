@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
     context "valid fibers" do
       before :each do
-        # We're going to allow every fabric utilized in this context to be valid, this 
+        # We're going to allow every fabric utilized in this context to be valid, this
         # saves us having to create datacrossreference objects for every test
         @validated_fabrics = Set.new ['Cotton', 'Spandex', 'Gold', 'Onyx']
         # Stub the include? method so that any value passed to it is considered valid
@@ -178,7 +178,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
         DataCrossReference.create! cross_reference_type: DataCrossReference::RL_FABRIC_XREF, key: "wool (w/ stuff)", value: "XREF"
         expect(@p.parse_fiber_content "100% WOOL (w/ stuff)").to eq proxy_result({fiber_1: "XREF", type_1: "Outer", percent_1: "100", algorithm: "single_non_footwear"})
       end
-      
+
       it "uses an xref on fiber content with cleaned up description" do
         DataCrossReference.create! cross_reference_type: DataCrossReference::RL_FABRIC_XREF, key: "wool", value: "XREF"
         expect(@p.parse_fiber_content "100% WOOL").to eq proxy_result({fiber_1: "XREF", type_1: "Outer", percent_1: "100", algorithm: "single_non_footwear"})
@@ -293,7 +293,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       end
 
       it "raises parse error when percentages trail the fiber" do
-        begin 
+        begin
           @p.parse_fiber_content "ZINC 60%,  STEEL 10%              Cotton 30%"
           fail("Should have raised error.")
         rescue OpenChain::CustomHandler::Polo::PoloFiberContentParser::FiberParseError => e
@@ -340,7 +340,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       @tariff = @prod.classifications.create(country: usa).tariff_records.create(hts_1: '1234567890')
 
       @test_cds = described_class.prep_custom_definitions [:fiber_content, :fabric_type_1, :fabric_1, :fabric_percent_1, :fabric_type_2, :fabric_2, :fabric_percent_2, :msl_fiber_failure, :msl_fiber_status, :clean_fiber_content, :set_type]
-      
+
       @prod.update_custom_value! @test_cds[:fabric_type_1], "Type"
       @prod.update_custom_value! @test_cds[:fabric_1], "Fabric"
       @prod.update_custom_value! @test_cds[:fabric_percent_1], "0"
@@ -350,7 +350,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     context "clean fiber handling" do
       ["42", "61", "62", "63", "65"].each do |chapter|
 
-        before :each do 
+        before :each do
           @tariff.update_attribute :hts_1, "#{chapter}34567890"
         end
 
@@ -377,7 +377,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
         @prod.update_custom_value! @test_cds[:fiber_content], "49.5% Canvas 50.5% Cotton"
         changed_at = 1.day.ago
-        @prod.update_column :changed_at, changed_at 
+        @prod.update_column :changed_at, changed_at
         @prod.update_column :updated_at, changed_at
         expect(described_class.parse_and_set_fiber_content @prod.id).to be true
 
@@ -487,7 +487,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
       expect(@prod.custom_value(@test_cds[:fabric_percent_1])).to eq BigDecimal.new("100")
       expect(@prod.custom_value(@test_cds[:msl_fiber_failure])).to be false
       # Make sure unused fields are deleted
-      expect(@prod.custom_values.find{|cv| cv.custom_definition_id == @test_cds[:fabric_type_2].id}).to be_nil
+      expect(@prod.custom_values.find {|cv| cv.custom_definition_id == @test_cds[:fabric_type_2].id}).to be_nil
       expect(@prod.custom_value(@test_cds[:msl_fiber_status])).to eq "Passed"
       # Make sure the product's changed at is set (which also updates the updated at, so that setting the fiber fields
       # will trigger a send to MSL+ - which is where this fiber data ultimately needs to end up)
@@ -554,7 +554,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     end
 
     it 'includes the pass fail message in the fingerprint' do
-      # This is a scenario we have to account for when the fiber field doesn't change at all but the user adds xrefs 
+      # This is a scenario we have to account for when the fiber field doesn't change at all but the user adds xrefs
       # so that even though the fiber field didn't change, the output state of it does, so it should be fully updated.
       @prod.update_custom_value! @test_cds[:fiber_content], "100% Blah"
 
@@ -564,7 +564,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
 
       # Add an xref so 'Blah' is now valid
       DataCrossReference.create! key: "Blah", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
-     
+
       expect(described_class.parse_and_set_fiber_content @prod.id).to be true
       @prod.reload
       expect(@prod.custom_value(@test_cds[:msl_fiber_failure])).to be false
@@ -596,7 +596,7 @@ describe OpenChain::CustomHandler::Polo::PoloFiberContentParser do
     end
 
     it "finds products with updated fiber contents and calls parse on them" do
-      # This should be skipped because its updated at is in the future 
+      # This should be skipped because its updated at is in the future
       future_product = Factory(:product)
       future_product.update_custom_value! @test_cds[:fiber_content], "100% Canvas"
       future_product.custom_values.first.update_column :updated_at, (Time.zone.now + 1.day)

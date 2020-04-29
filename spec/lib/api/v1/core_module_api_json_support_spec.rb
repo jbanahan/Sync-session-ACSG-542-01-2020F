@@ -18,18 +18,18 @@ describe OpenChain::Api::V1::CoreModuleApiJsonSupport do
 
   describe "render_state_toggle_buttons" do
     let! (:button) { Factory(:state_toggle_button,
-        activate_text:'A',activate_confirmation_text:'B',module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date",
-        deactivate_text:'C',deactivate_confirmation_text:'D',simple_button: false, identifier: "identifier", display_index: 1)
+        activate_text:'A', activate_confirmation_text:'B', module_type: "Shipment", user_attribute: "shp_canceled_by", date_attribute: "shp_canceled_date",
+        deactivate_text:'C', deactivate_confirmation_text:'D', simple_button: false, identifier: "identifier", display_index: 1)
     }
     let (:user) { Factory(:user) }
     let (:object) { Factory(:shipment) }
-   
+
     it "return array of buttons hash data" do
       expect(StateToggleButton).to receive(:for_core_object_user).with(object, user).and_return([button])
       allow(button).to receive(:to_be_activated?).and_return(true)
 
       expect(subject.render_state_toggle_buttons(object, user)).to eq [
-        {id:button.id, button_text:'A', button_confirmation:'B', core_module_path:'shipments', base_object_id:object.id, 
+        {id:button.id, button_text:'A', button_confirmation:'B', core_module_path:'shipments', base_object_id:object.id,
           simple_button: false, identifier: "identifier", display_index: 1}
       ]
     end
@@ -39,13 +39,13 @@ describe OpenChain::Api::V1::CoreModuleApiJsonSupport do
       allow(button).to receive(:to_be_activated?).and_return(false)
 
       expect(subject.render_state_toggle_buttons(object, user)).to eq [
-        {id:button.id, button_text:'C', button_confirmation:'D', core_module_path:'shipments', base_object_id:object.id, 
+        {id:button.id, button_text:'C', button_confirmation:'D', core_module_path:'shipments', base_object_id:object.id,
           simple_button: false, identifier: "identifier", display_index: 1}
       ]
     end
 
     context "with state toggle buttons" do
-      before :each do 
+      before :each do
         allow(StateToggleButton).to receive(:for_core_object_user).and_return([button])
       end
 
@@ -57,7 +57,7 @@ describe OpenChain::Api::V1::CoreModuleApiJsonSupport do
         expect(subject.render_state_toggle_buttons(object, user, params: {include: "state_toggle_buttons"}).size).to eq 1
       end
 
-      it "renders buttons to a hash object if provided" do 
+      it "renders buttons to a hash object if provided" do
         hash = {}
         buttons = subject.render_state_toggle_buttons(object, user, api_hash: hash)
         expect(hash[:state_toggle_buttons]).to eq buttons

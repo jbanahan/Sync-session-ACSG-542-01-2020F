@@ -57,7 +57,7 @@ class CommentsController < ApplicationController
   def send_email
     cmt = Comment.find(params[:id])
     email_sent = false
-    action_secure(cmt.commentable.can_view?(current_user),cmt.commentable, {:lock_check => false, :verb => "work with", :module_name => "item"}) {
+    action_secure(cmt.commentable.can_view?(current_user), cmt.commentable, {:lock_check => false, :verb => "work with", :module_name => "item"}) {
       email_sent = email(cmt)
     }
     if email_sent || params[:to].blank?
@@ -85,7 +85,7 @@ private
   def email cmt
     to = params[:to]
     if email_list_valid?(to)
-      OpenMailer.send_comment(current_user,to,cmt,comment_url(cmt)).deliver_later
+      OpenMailer.send_comment(current_user, to, cmt, comment_url(cmt)).deliver_later
       true
     else
       false

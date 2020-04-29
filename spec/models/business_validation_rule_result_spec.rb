@@ -40,7 +40,7 @@ describe BusinessValidationRuleResult do
   describe "run_validation" do
     it "should set failure state and message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json, fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
@@ -50,7 +50,7 @@ describe BusinessValidationRuleResult do
     end
     it "returns 'true' if new state matches previous one but message has changed" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json, fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new state: 'x', message: 'original msg'
       rule.business_validation_rule = vr
@@ -78,7 +78,7 @@ describe BusinessValidationRuleResult do
     end
     it "should set state to Pass if no fail message" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json, fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       rule = BusinessValidationRuleResult.new
       rule.business_validation_rule = vr
@@ -88,7 +88,7 @@ describe BusinessValidationRuleResult do
     end
     it "should set state to skipped if rule search_criterions aren't met" do
       json = {model_field_uid: :ord_ord_num, regex:'X.*Y'}.to_json
-      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json,fail_state:'x')
+      vr = ValidationRuleFieldFormat.create!( name: "Name", description: "Description", rule_attributes_json:json, fail_state:'x')
       expect(vr).to receive(:active?).and_return true
       vr.search_criterions.create!(model_field_uid: :ord_ord_num, operator: 'eq', value:'ZZ')
       rule = BusinessValidationRuleResult.new
@@ -121,7 +121,7 @@ describe BusinessValidationRuleResult do
     end
 
     context "mocked business_validation_rule" do
-      let!(:rule) { 
+      let!(:rule) {
         d = double(BusinessValidationRule)
         allow(subject).to receive(:business_validation_rule).and_return d
         allow(d).to receive(:active?).and_return true
@@ -133,14 +133,14 @@ describe BusinessValidationRuleResult do
 
       let (:object) { Object.new }
 
-      it "allows returning arrays of messages to indicate failure" do 
+      it "allows returning arrays of messages to indicate failure" do
         expect(rule).to receive(:run_validation).with(object).and_return ["Failure"]
 
         expect(subject.run_validation object).to eq true
         expect(subject.state).to eq "Failure"
       end
 
-      it "allows returning arrays with multiple messages to indicate failure" do 
+      it "allows returning arrays with multiple messages to indicate failure" do
         expect(rule).to receive(:run_validation).with(object).and_return ["Failure 1", "Failure 2"]
 
         expect(subject.run_validation object).to eq true
@@ -178,7 +178,7 @@ describe BusinessValidationRuleResult do
   describe "run_validation_with_state_tracking" do
 
     subject {
-      r = described_class.new 
+      r = described_class.new
       r.id = 1
       r
     }

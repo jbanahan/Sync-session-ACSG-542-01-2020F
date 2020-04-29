@@ -6,13 +6,13 @@ class ValidationRuleCanadaGpt < BusinessValidationRule
   GPT_COUNTRIES ||= Set.new [
     'AF', 'AI', 'AO', 'AM', 'BD', 'BZ', 'BJ', 'BT', 'BO', 'IO', 'BF', 'BI', 'KH', 'CM', 'CV', 'CF', 'TD', 'CX', 'CC', 'KM', 'CG', 'CD',
     'CK', 'CI', 'DJ', 'EG', 'SV', 'ER', 'ET', 'FK', 'FJ', 'GM', 'GE', 'GH', 'GT', 'GN', 'GW', 'GY', 'HT', 'HN', 'IQ', 'KE', 'KI', 'LA',
-    'LS', 'LR', 'MG', 'MW', 'ML', 'MH', 'MR', 'FM', 'MD', 'MN', 'MS', 'MA', 'MZ', 'NR', 'NP', 'NI', 'NE', 'NG', 'NU', 'NF', 'PK', 'PG', 
-    'PY', 'PH', 'PN', 'RW', 'WS', 'SH', 'ST', 'SN', 'SL', 'SB', 'SO', 'LK', 'SD', 'SZ', 'SY', 'TJ', 'TZ', 'TL', 'TG', 'TK', 'TO', 'TM', 
+    'LS', 'LR', 'MG', 'MW', 'ML', 'MH', 'MR', 'FM', 'MD', 'MN', 'MS', 'MA', 'MZ', 'NR', 'NP', 'NI', 'NE', 'NG', 'NU', 'NF', 'PK', 'PG',
+    'PY', 'PH', 'PN', 'RW', 'WS', 'SH', 'ST', 'SN', 'SL', 'SB', 'SO', 'LK', 'SD', 'SZ', 'SY', 'TJ', 'TZ', 'TL', 'TG', 'TK', 'TO', 'TM',
     'TV', 'UG', 'UA', 'UZ', 'VU', 'VN', 'BG', 'YE', 'ZM', 'ZW',
     # All countries listed after this point have GPT expire 1/1/2015
-    'DZ', 'AS', 'AG', 'AR', 'AZ', 'BS', 'BH', 'BB', 'BM', 'BA', 'BW', 'BR', 'KY', 'CL', 'CN', 'CO', 'CR', 'HR', 'CU', 'DM', 'DO', 'EC', 
-    'CQ', 'PF', 'GA', 'GI', 'GD', 'DU', 'HK', 'IN', 'ID', 'IR', 'IL', 'JM', 'JO', 'KZ', 'KW', 'LB', 'MO', 'MK', 'MY', 'MV', 'MU', 'MX', 
-    'NA', 'NC', 'OM', 'PW', 'PA', 'PE', 'QA', 'RU', 'KN', 'LC', 'VC', 'SC', 'SG', 'ZA', 'KR', 'ZA', 'SR', 'TH', 'TT', 'TN', 'TR', 'TC', 
+    'DZ', 'AS', 'AG', 'AR', 'AZ', 'BS', 'BH', 'BB', 'BM', 'BA', 'BW', 'BR', 'KY', 'CL', 'CN', 'CO', 'CR', 'HR', 'CU', 'DM', 'DO', 'EC',
+    'CQ', 'PF', 'GA', 'GI', 'GD', 'DU', 'HK', 'IN', 'ID', 'IR', 'IL', 'JM', 'JO', 'KZ', 'KW', 'LB', 'MO', 'MK', 'MY', 'MV', 'MU', 'MX',
+    'NA', 'NC', 'OM', 'PW', 'PA', 'PE', 'QA', 'RU', 'KN', 'LC', 'VC', 'SC', 'SG', 'ZA', 'KR', 'ZA', 'SR', 'TH', 'TT', 'TN', 'TR', 'TC',
     'AE', 'UY', 'VE', 'VI'
   ]
 
@@ -30,11 +30,11 @@ class ValidationRuleCanadaGpt < BusinessValidationRule
         end
       end
     end
-  
+
     message
   end
 
-  private 
+  private
     def hts_qualifies_for_gpt? hts_code
       @tariff_map ||= Hash.new do |hash, key|
         ot = OfficialTariff.joins(:country).where(hts_code: hts_code, countries: {iso_code: "CA"}).first

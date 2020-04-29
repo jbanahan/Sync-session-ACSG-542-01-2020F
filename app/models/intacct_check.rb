@@ -39,14 +39,14 @@
 #
 
 class IntacctCheck < ActiveRecord::Base
-  attr_accessible :amount, :bank_cash_gl_account, :bank_number, :bill_number, 
-    :broker_file, :check_date, :check_number, :company, :currency, 
-    :customer_number, :file_number, :freight_file, :gl_account, 
-    :intacct_adjustment_key, :intacct_alliance_export_id, :intacct_alliance_export, 
-    :intacct_errors, :intacct_key, :intacct_payable_id, :intacct_payable, 
-    :intacct_upload_date, :line_of_business, :location, :suffix, :vendor_number, 
+  attr_accessible :amount, :bank_cash_gl_account, :bank_number, :bill_number,
+    :broker_file, :check_date, :check_number, :company, :currency,
+    :customer_number, :file_number, :freight_file, :gl_account,
+    :intacct_adjustment_key, :intacct_alliance_export_id, :intacct_alliance_export,
+    :intacct_errors, :intacct_key, :intacct_payable_id, :intacct_payable,
+    :intacct_upload_date, :line_of_business, :location, :suffix, :vendor_number,
     :vendor_reference, :voided
-  
+
   belongs_to :intacct_alliance_export, inverse_of: :intacct_checks
   belongs_to :intacct_check, inverse_of: :intacct_checks
 end

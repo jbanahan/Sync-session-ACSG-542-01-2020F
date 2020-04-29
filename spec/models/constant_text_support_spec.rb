@@ -1,4 +1,4 @@
-describe ConstantTextSupport do  
+describe ConstantTextSupport do
 
   describe "constant_text_for_date" do
     let (:object) {

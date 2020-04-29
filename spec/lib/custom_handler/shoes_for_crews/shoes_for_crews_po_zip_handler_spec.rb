@@ -1,11 +1,11 @@
-describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler do 
+describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler do
 
   subject { described_class }
 
   let (:zip_path) { "spec/fixtures/files/shoes_for_crews_pos.zip"}
   let (:file) { File.open(zip_path, "rb")}
 
-  after(:each) do 
+  after(:each) do
     file.close
   end
 
@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoZipHandler do
         io.write file.read
         nil
       end
-      
+
       zip = subject.retrieve_file_data("bucket", "path")
       expect(zip).to be_a Zip::InputStream
       expect(zip.get_next_entry).not_to be_nil

@@ -45,12 +45,12 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
     it "associates a list of invoice numbers with entry URLs, returning nil for those that aren't found" do
       bi1 = Factory(:broker_invoice, entry: Factory(:entry), invoice_number: "1234")
       bi2 = Factory(:broker_invoice, entry: Factory(:entry), invoice_number: "5678")
-      expect(handler.get_urls(["1234", "5678", "9012"])).to eq({"1234" => bi1.entry.excel_url, 
+      expect(handler.get_urls(["1234", "5678", "9012"])).to eq({"1234" => bi1.entry.excel_url,
                                                                 "5678" => bi2.entry.excel_url,
                                                                 "9012" => nil})
     end
   end
-  
+
   describe "send_success_email" do
     it "sends email with attachment and list of missing invoices if there were no errors" do
       Tempfile.open(["s3_content", ".txt"]) do |t|
@@ -59,7 +59,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
         Attachment.add_original_filename_method t, "foo.xlsx"
         t.rewind
 
-        handler.send_success_email "tufnel@stonehenge.biz", t, ["inv1<", "inv2"] #test escaping
+        handler.send_success_email "tufnel@stonehenge.biz", t, ["inv1<", "inv2"] # test escaping
         m = OpenMailer.deliveries.pop
         expect(m.to.first).to eq "tufnel@stonehenge.biz"
         expect(m.subject).to eq "[VFI Track] Intacct Invoice Report Upload completed successfully"
@@ -101,7 +101,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
         urls = instance_double "Hash"
         expect(cf).to receive :path
         expect(cf).to receive(:attached_file_name).twice.and_return "foo.xlsx"
-        expect_any_instance_of(OpenChain::XLClient).to receive(:all_row_values).with(starting_row_number: 7).and_yield([nil,nil,"123A"]).and_yield([nil,nil,"hi there"])
+        expect_any_instance_of(OpenChain::XLClient).to receive(:all_row_values).with(starting_row_number: 7).and_yield([nil, nil, "123A"]).and_yield([nil, nil, "hi there"])
         expect(handler).to receive(:get_urls).with(["123A"]).and_return urls
         expect(handler).to receive(:write_xl).with(instance_of(OpenChain::XLClient), urls)
         expect_any_instance_of(OpenChain::XLClient).to receive(:save).with "test-uuid/intacct_invoice_report/foo.xlsx", {bucket: "chainio-temp"}
@@ -120,9 +120,9 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftIntacctInvoiceReportHan
 
     describe "write_xl" do
       it "writes the column header and adds links from URL hash" do
-        r = [nil,nil,"inv_num"]
-        r2 = [nil,nil,"inv_num_2"]
-        r3 = [nil,nil,"inv_num_3"] # this one doesn't get written since it's missing from the hash
+        r = [nil, nil, "inv_num"]
+        r2 = [nil, nil, "inv_num_2"]
+        r3 = [nil, nil, "inv_num_3"] # this one doesn't get written since it's missing from the hash
         expect(xl_client).to receive(:set_cell).with 0, 6, 16, MasterSetup.application_name + " Entry Link"
         expect(xl_client).to receive(:all_row_values).with(starting_row_number: 7).and_yield(r).and_yield(r2).and_yield(r3)
         expect(xl_client).to receive(:set_cell).with 0, 7, 16, "Web Link", "http://entry_link"

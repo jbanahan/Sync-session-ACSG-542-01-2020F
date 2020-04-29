@@ -8,12 +8,12 @@ module OpenChain; module CustomHandler; class KewillEntryParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::EntryParserSupport
 
-  # If no hash value is present, the symbol value component represents the name of the 
+  # If no hash value is present, the symbol value component represents the name of the
   # date attribute that will be set, the datatype is assumed to be a datetime.
   # If a hash value is present, at a minimum, an attribute: key must be set.
   # You may include a datatype: key w/ a value of either date or datetime.
   # Also, you may include a directive: of either :first or :last to specify if
-  # the lowest or highest value for the date is kept. 
+  # the lowest or highest value for the date is kept.
   DATE_MAP ||= {
     1 => {attribute: :export_date, datatype: :date},
     2 => :bol_received_date,
@@ -103,7 +103,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     99639 => {attribute: :ddtc_hold_date, directive: :hold},
     99671 => {attribute: :ddtc_hold_date, directive: :hold},
     99640 => {attribute: :ddtc_hold_release_date, directive: :hold_release},
-    99689 => {attribute: :fda_hold_date, directive: :hold}, 
+    99689 => {attribute: :fda_hold_date, directive: :hold},
     99681 => {attribute: :fda_hold_date, directive: :hold},
     99683 => {attribute: :fda_hold_date, directive: :hold},
     99682 => {attribute: :fda_hold_date, directive: :hold},
@@ -157,7 +157,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     outer = json_content.is_a?(String) ? ActiveSupport::JSON.decode(json_content) : json_content
     json = outer['entry']
     return nil if json.nil?
-    
+
     entry = nil
 
     begin
@@ -169,10 +169,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     if entry
       if MasterSetup.get.custom_feature?("Kewill Imaging")
         # We're setting up a message delay of 10 minutes here because it seems this feed comes across sometimes faster than
-        # Kewill Imaging can store off the files locally.  The imaging request gets over to our imaging clients prior to the 
+        # Kewill Imaging can store off the files locally.  The imaging request gets over to our imaging clients prior to the
         # image existing in Kewill Imaging and thus we don't get any files back.  So, use :delay_seconds in order to hold back
         # for 10 minutes.
-        # There's also a point in time early on in data entry where the entry data is coming over fairly often, so we don't 
+        # There's also a point in time early on in data entry where the entry data is coming over fairly often, so we don't
         # want to constantly be requesting images on every single update.
         OpenChain::AllianceImagingClient.request_images(entry.broker_reference, delay_seconds: 600) unless opts[:imaging] == false
       end
@@ -181,7 +181,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     entry
   end
-  
+
   def process_entry json, opts={}
     start_time = Time.zone.now
     user = User.integration
@@ -194,13 +194,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       process_liquidation e, entry
       process_notes e, entry
       process_bill_numbers e, entry
-      #Process containers before commercial invoices since invoice lines can link to containers
+      # Process containers before commercial invoices since invoice lines can link to containers
       process_containers e, entry
       process_commercial_invoices e, entry
       process_post_summary_corrections e, entry
       process_broker_invoices e, entry
       process_fda_dates e, entry
-      
+
       if opts[:key] && opts[:bucket]
         entry.last_file_path = opts[:key]
         entry.last_file_bucket = opts[:bucket]
@@ -252,7 +252,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def find_and_process_entry(e)
-      entry = nil 
+      entry = nil
       file_no, updated_at, extract_time, cancelled_date = self.class.entry_info e
       # For some reason there's some rare cases where an entry comes over with no file number...ignore them.
       return nil if file_no.blank? || file_no == "0"
@@ -276,7 +276,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       end
 
       # entry will be nil if we're skipping the file due to it being outdated
-      if entry 
+      if entry
         Lock.with_lock_retry(entry) do
           # The lock call here can potentially update us with new data, so we need to check again that another process isn't processing a newer file
           if !skip_file?(entry, extract_time)
@@ -296,7 +296,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_cancelled_entry entry, extract_time
-      # Use the extract time of the purge, so that we're consistent in how we're tracking automated purges by 
+      # Use the extract time of the purge, so that we're consistent in how we're tracking automated purges by
       # always using a value that's tracking against the source system's clock (.ie Kewill's database)
       entry.purge! date_purged: extract_time
     end
@@ -324,7 +324,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # File No and Extract Time should never, ever be missing
       file_no, updated_at, extract_time, cancelled_date = entry_info e
 
-      # Every other file has the file dates in the path based on UTC, so we're just going to 
+      # Every other file has the file dates in the path based on UTC, so we're just going to
       # continue doing that here too.
       now = Time.zone.now.in_time_zone("UTC")
       "#{now.strftime("%Y-%m/%d")}#{integration_folder}/#{file_no}-#{extract_time.strftime("%Y-%m-%d-%H-%M")}.json"
@@ -341,7 +341,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       # Clear dates
       attributes = {}
-      DATE_MAP.keys.each do |v|
+      DATE_MAP.each_key do |v|
         configs = get_date_config v
         next if configs.empty?
         # Don't clear anything w/ a first/last/ifnull directive, since we want to retain those original dates
@@ -405,9 +405,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         # We're only currently tracking pms days since 2012, if we don't have a date after that time..then error
         # so that we can set up the schedule
 
-        # The entry filed date check is here because the ISF system creates shell entry records with Arrival Dates sometimes months 
+        # The entry filed date check is here because the ISF system creates shell entry records with Arrival Dates sometimes months
         # in advance - which is valid.  However, the presence of the arrival date also then triggers an attempt to determine a statement
-        # date - which at this point in time is pointless as nothing has actually been filed for the entry yet and PMS statement dates may not 
+        # date - which at this point in time is pointless as nothing has actually been filed for the entry yet and PMS statement dates may not
         # have even been published yet US CBP.  So wait till there's an entry filed date to bother reporting on the missing PMS values
 
         # FYI...the formula for creating PMS Date events is the PMS Due Date is the 15th business day of the month.  In other words, count
@@ -476,7 +476,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       entry.pay_type = e[:abi_payment_type]
 
-      
       statement_no = e[:statement_no]
       daily_statement_no = e[:daily_statement_no]
       # statement_no contains either the periodic statement or the daily statement no
@@ -493,7 +492,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.error_free_release = e[:error_free_cr].to_s.upcase == "Y"
       entry.paperless_certification = e[:certification_es].to_s.upcase == "Y"
       entry.paperless_release = e[:paperless_es].to_s.upcase == "Y"
-      
+
       entry.final_statement_date = parse_numeric_date e[:final_stmnt_rcvd]
 
       entry.release_cert_message = e[:cr_certification_output_mess]
@@ -512,7 +511,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         daily_statement_entry = DailyStatementEntry.joins(:daily_statement).where(broker_reference: entry.broker_reference).where(daily_statements: {statement_number: entry.daily_statement_number}).readonly(false).first
         # This could happen if the statement came over before the entry did (not entirely sure if that's really possible, but might as well program for it)
         if daily_statement_entry
-          Lock.db_lock(daily_statement_entry) do 
+          Lock.db_lock(daily_statement_entry) do
             daily_statement_entry.entry_id = entry.id
 
             # If we changed the amount billed on the statement (like if new broker invoices come over), we need to snapshot the invoice then
@@ -548,8 +547,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def process_totals e, entry
       accumulations = {}
       [
-        :commercial_invoice_numbers, :total_packages_uom, :mids, :country_export_codes, :country_origin_code, :vendor_names, :total_units_uoms, 
-        :po_numbers, :part_numbers, :departments, :store_names, :product_lines, :spis, :charge_codes, :container_numbers, 
+        :commercial_invoice_numbers, :total_packages_uom, :mids, :country_export_codes, :country_origin_code, :vendor_names, :total_units_uoms,
+        :po_numbers, :part_numbers, :departments, :store_names, :product_lines, :spis, :charge_codes, :container_numbers,
         :container_sizes, :fcl_lcls, :customer_references
       ].each {|v| accumulations[v] = Set.new }
 
@@ -570,7 +569,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           accumulations[:mids] << il.mid
           accumulations[:country_export_codes] << il.country_export_code
           accumulations[:country_origin_code] << il.country_origin_code
-          accumulations[:vendor_names] << il.vendor_name 
+          accumulations[:vendor_names] << il.vendor_name
           accumulations[:total_units_uoms] << il.unit_of_measure
           accumulations[:po_numbers] << il.po_number
           accumulations[:part_numbers] << il.part_number
@@ -604,12 +603,12 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         accumulations[:container_sizes] << (c.size_description.blank? ? c.container_size.to_s : "#{c.container_size}-#{c.size_description}")
         accumulations[:fcl_lcls] << c.fcl_lcl
       end
-      
+
       Array.wrap(e[:cust_refs]).each {|ref| accumulations[:customer_references] << ref[:cust_ref]}
       Array.wrap(e[:broker_invoices]).each {|bi| accumulations[:customer_references] << bi[:cust_ref]}
 
       # The dup is here so we can iterate over values while still inserting/reading
-      # from the primary hash (inserts happen due to the default hash behavior we've 
+      # from the primary hash (inserts happen due to the default hash behavior we've
       # added)
       accumulations.dup.each_pair do |k, v|
         vals = accumulated(accumulations, k)
@@ -669,7 +668,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         when :total_units
           entry.total_units = value
         when :total_cvd
-          #Only set a zero value if the entry value has already been set and we're clearing it
+          # Only set a zero value if the entry value has already been set and we're clearing it
           entry.total_cvd = value if value.nonzero? || entry.total_cvd.try(:nonzero?)
         when :total_add
           entry.total_add = value if value.nonzero? || entry.total_add.try(:nonzero?)
@@ -691,13 +690,13 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def process_notes e, entry
-      # There are sometimes thousands of comments...just do a delete here, rather than a destroy.  Entry comments don't have 
+      # There are sometimes thousands of comments...just do a delete here, rather than a destroy.  Entry comments don't have
       # descendents we need to worry about so the time savings can actually add up to multiple seconds here.
       # We're then going to use a specialized bulk import process to roll all the lines into a single SQL statement.
-      # This is an attempt to workaround deadlocks occurring from doing hundreds of insert into statements 
+      # This is an attempt to workaround deadlocks occurring from doing hundreds of insert into statements
       # (which is triggered by database gap locks)
 
-      # I don't know why but `entry.entry_comments.delete_all` is generating a distinct sql delete per comment, rather 
+      # I don't know why but `entry.entry_comments.delete_all` is generating a distinct sql delete per comment, rather
       # than the single "delete from entry_comments where entry_id = ?"" that the documentation says it should be doing.
       # Possible rails bug?  Whatever it is, this is a workaround for that behavior not working.
       EntryComment.where(entry_id: entry.id).delete_all
@@ -710,7 +709,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
         comment = EntryComment.new entry_id: entry.id, body: n[:note], username: n[:modified_by], generated_at: generated_at
         comments << comment
-        # The public private flag is set a little wonky because we do a before_save callback as a further step to determine if the 
+        # The public private flag is set a little wonky because we do a before_save callback as a further step to determine if the
         # comment should be public or not.  This is skipped if the flag is already set.
         if n[:confidential].to_s.upcase == "Y"
          comment.public_comment = false
@@ -760,7 +759,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
         configs.each do |c|
           in_val = (c[:datatype] == :date ? parse_numeric_date(date[:date]) : parse_numeric_datetime(date[:date]))
-          
+
           val = nil
           case c[:directive]
           when :first
@@ -859,9 +858,9 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       inv.gross_weight = i[:weight_gross]
       inv.total_charges = parse_decimal i[:charges]
       inv.invoice_date = parse_numeric_date i[:invoice_date]
-      # The data on invoice value in Alliance appears to be messed up, we SHOULD be able to 
+      # The data on invoice value in Alliance appears to be messed up, we SHOULD be able to
       # get the invoice_value from the value_us field.  However, that field appears to have
-      # conflicting data in it when you actually do the foreign -> US conversion using the 
+      # conflicting data in it when you actually do the foreign -> US conversion using the
       # exchange rates.  .ie Invoice Foreign: 1468.80 / Exchange: 1.0818 ...Value US: 1468.80 (????)
       inv.invoice_value = inv.invoice_value_foreign * inv.exchange_rate
       inv.total_quantity = i[:qty]
@@ -892,7 +891,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       if line.quantity && line.quantity.nonzero? && line.value
         line.unit_price = (line.value / line.quantity).round(2)
       end
-      
+
       # Contract is sent with decimal places, so don't do the offset stuff when parsing
       line.contract_amount = parse_decimal l[:contract], no_offset: true
       line.department = l[:department] unless l[:department].to_s == "0"
@@ -995,7 +994,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # Duty Additional is where there's multiple specific rates, the second specific rate is put here.
       # 13.2¢/liter + 7% + 50.5¢/barrel (barrel amount would go in additional)
       tariff.duty_additional = parse_decimal(t[:duty_additional])
-      # Not sure what this is supposed to be tracking, there's not a single tariff line in the entry system w/ a 
+      # Not sure what this is supposed to be tracking, there's not a single tariff line in the entry system w/ a
       # duty other value...adding anyway, just in case.
       tariff.duty_other = parse_decimal(t[:duty_other])
       tariff.duty_amount = [tariff.duty_advalorem, tariff.duty_specific, tariff.duty_additional, tariff.duty_other].compact.sum
@@ -1051,7 +1050,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         container = entry.containers.build
         set_container_data c, container
       end
-      
+
       nil
     end
 
@@ -1083,7 +1082,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         invoice_number = bi[:file_no].to_s + bi[:suffix].to_s
 
         # Migrate any existing invoice's sync records to the new invoice record we're creating
-        existing_invoice = entry.broker_invoices.find {|inv| inv.invoice_number == invoice_number } 
+        existing_invoice = entry.broker_invoices.find {|inv| inv.invoice_number == invoice_number }
 
         if existing_invoice
           invoice = BrokerInvoice.new entry: entry
@@ -1100,7 +1099,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
         if existing_invoice
           existing_invoice.sync_records.each do |existing_sync|
-            sr = invoice.sync_records.build 
+            sr = invoice.sync_records.build
             existing_sync.copy_attributes_to sr
           end
           # Delete the existing invoice and then add the new invoice to the entry
@@ -1206,14 +1205,14 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # (.ie contract amount) and all sorts of garbage is added to them sometimes.
       str = str.to_s.gsub(/[^-\d\.]/, "")
 
-      # if no_offset is passed, we're going to treat the incoming value like a standard numeric string, not the 
+      # if no_offset is passed, we're going to treat the incoming value like a standard numeric string, not the
       # missing decimal garbage that Alliance normally sends.
       unless no_offset
         str = str.rjust(decimal_offset, '0')
 
         # The decimal places is what the value will be rounding to when returned
         # The decimal offset is used because all of the numeric values in Alliance are
-        # stored and sent without decimal places "12345" instead of "123.45" so that 
+        # stored and sent without decimal places "12345" instead of "123.45" so that
         # they don't have to worry about decimal rounding and integer arithmetic can be done on everything.
         # This also means that we need to know the scale of the number before parsing it.
         unless str.include?(".") || decimal_offset <= 0
@@ -1241,7 +1240,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         time = d.to_s
         begin
           tz.parse time
-        rescue 
+        rescue
           # For some reason Alliance will send us dates with a 60 in the minutes columns (rather than adding an hour)
           # .ie  201305152260
           if time =~ /60$/
@@ -1266,7 +1265,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
         # Stupid alliance sometimes sends dates with a time component of 24
         # If that happens, roll the date forward a day
-        if date && time[8,2] == "24"
+        if date && time[8, 2] == "24"
           date = date + 1.day
         end
         date
@@ -1331,14 +1330,14 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         #
         # 2) A "line" level note indicating which particular 7501 customs line number status has been updated.  These lines indicate
         #    a single line or a range of lines that have status updates.  In general they follow and pertain to a header level
-        #    note preceeding the line level, but sometimes line level notes are "floating" unrelated to any header - releases 
+        #    note preceeding the line level, but sometimes line level notes are "floating" unrelated to any header - releases
         #    a sometimes mixed in without any header messages.
         #
         #    Examples: "FDA MAY PROCEED USCS Ln 001 THRU 002", "FDA EXAM, NOTIFY USCS Ln 003  000", "FDA RELEASED USCS Ln 001 THRU 003"
         #
-        # 3) An 'fda' level note indicating which FDA line's status has change.  We don't care about these, we only track at the 
+        # 3) An 'fda' level note indicating which FDA line's status has change.  We don't care about these, we only track at the
         #    7501 level.
-        # 
+        #
         #    Example: "Start Tar Pos 1 End Tar Pos 1 OGA Ln 001 THRU 001"
 
         # Scan for a header level note...the only one we care about is FDA Review, as that's the only one that doesn't
@@ -1347,25 +1346,25 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         if result.length > 0 && result[0][1].to_i == 1
           status = result[0][1].to_i
           set_fda_dates fda_statuses, fda_line_numbers, :review, n[:date_updated]
-        else 
+        else
           # Look for the FDA line specific statuses here..
           # This looks for a status message that has a leading status message, followed by "USCS Ln"
           # then some digits (the starting line number), then an optional THRU followed by another line number.
 
           # We'll need to match on the actual message to determine if we need to set the hold or release date...
           # Here's the full list of statuses along w/ their status numbers (not found in the Notes, unfortunately).
-          # 
-          # 01        FDA EXAM                                                        
-          # 02        FDA EXAM, NOTIFY                                                
-          # 05        FDA EXAM, DO NOT DEVAN                                          
-          # 06        FDA EXAM, REDELIVER                                             
-          # 07        FDA MAY PROCEED                                                 
-          # 08        FDA RELEASED                                                    
-          # 09        FDA RELEASED W/COMMENT                                          
-          # 10        FDA DETAINED                                                    
-          # 11        FDA CANCEL DETENTION                                            
-          # 12        FDA REFUSED                                                     
-          # 13        FDA PARTIAL RELEASE/REFUSE                                      
+          #
+          # 01        FDA EXAM
+          # 02        FDA EXAM, NOTIFY
+          # 05        FDA EXAM, DO NOT DEVAN
+          # 06        FDA EXAM, REDELIVER
+          # 07        FDA MAY PROCEED
+          # 08        FDA RELEASED
+          # 09        FDA RELEASED W/COMMENT
+          # 10        FDA DETAINED
+          # 11        FDA CANCEL DETENTION
+          # 12        FDA REFUSED
+          # 13        FDA PARTIAL RELEASE/REFUSE
           # 14        FDA CANCEL REFUSAL
           # 14        FDA DOCUMENTS REQUIRED
 

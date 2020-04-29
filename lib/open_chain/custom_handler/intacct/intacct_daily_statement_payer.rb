@@ -42,7 +42,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
     errors = []
     payment = nil
 
-    begin 
+    begin
       sorted_data.each do |data|
         data[:lines].each do |line|
           if line[:amount] > 0
@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
 
             billed_lines[data[:broker_reference]] << line
           else
-            # this means we have a credit we need to apply.  Intacct makes you apply a credit against the matching debit line...so find the debit line we created above 
+            # this means we have a credit we need to apply.  Intacct makes you apply a credit against the matching debit line...so find the debit line we created above
             # in payment line item that is associated with the same entry
             invoice_data = billed_lines[data[:broker_reference]]
 
@@ -67,23 +67,23 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
             # Find the line from those we've already generated which has the postive amount matching the credit (which displays as negative) that may not already
             # have been credited.  There's scenarios where due to billing screwups, duty can be billed / credited several times on the same entry
             uncredited_line = invoice_data.find {|l| l[:amount] == (line[:amount] * -1) && l[:credited].nil? }
-            raise "Unable to apply credit for Intacct Bill #{data[:invoice_number]} amount of #{number_to_currency line[:amount]}.  No matching debit line found." if uncredited_line.nil?            
-            
+            raise "Unable to apply credit for Intacct Bill #{data[:invoice_number]} amount of #{number_to_currency line[:amount]}.  No matching debit line found." if uncredited_line.nil?
+
             line_to_credit = uncredited_line[:payment_detail]
-            raise "Unable to apply credit for Intacct Bill #{data[:invoice_number]} amount of #{number_to_currency line[:amount]}.  No matching debit line found." if line_to_credit.nil?    
+            raise "Unable to apply credit for Intacct Bill #{data[:invoice_number]} amount of #{number_to_currency line[:amount]}.  No matching debit line found." if line_to_credit.nil?
 
             line_to_credit.credit_bill_record_no = data[:intacct_id]
             line_to_credit.credit_bill_line_id = line[:intacct_id]
             line_to_credit.credit_amount = (line[:amount] * -1)
 
-            # We have to also blank the bill_amount value...I'm not entirely sure WHY this is, but Intacct will only let you 
+            # We have to also blank the bill_amount value...I'm not entirely sure WHY this is, but Intacct will only let you
             # apply line item credits to bill amounts that match.  Not sure why you couldn't apply a credit of $X to a bill line
             # with $Y amount on it, but you can't...maybe it's some sort of dual entry book keeping rule.
             line_to_credit.bill_amount = nil
 
             uncredited_line[:credited] = true
           end
-        end  
+        end
       end
     rescue => e
       errors << e.message
@@ -141,7 +141,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
 
   def verify_daily_statement_totals daily_statement
     # Determine the broker invoice numbers that have duty payments on them (either debits OR credits)
-    # We'll then look up those values in intacct and make sure the totals match the amounts 
+    # We'll then look up those values in intacct and make sure the totals match the amounts
     # in intacct.  If they do then we can proceed to pay off the bill.
     invoice_data = statement_duty_invoice_numbers(daily_statement)
 
@@ -150,7 +150,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
 
     # From this point, we need to do the following things
     errors = validate_broker_invoices_in_intacct invoice_data, intacct_data
-    
+
     errors.push *validate_statement_amounts(daily_statement, invoice_data, intacct_data)
 
     {intacct_data: intacct_data, errors: errors}
@@ -167,7 +167,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
       errors = []
       invoice_data.each do |inv_data|
         intacct_bill = intacct_data.find { |d| d[:invoice_number] == inv_data[:invoice_number] }
-        # Validate that each broker invoice is present in the intacct data 
+        # Validate that each broker invoice is present in the intacct data
         if intacct_bill.nil?
           errors << "Invoice # #{inv_data[:invoice_number]} is missing from Intacct."
         else
@@ -189,7 +189,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
 
       statement.daily_statement_entries.each do |dse|
         entry = dse.entry
-        # If there's a missing entry for the daily statement, then 
+        # If there's a missing entry for the daily statement, then
         # it's going to reflect in the statement totals being off, so we can just
         # rely on that fact to catch the imbalance and reject the statement.
         if entry
@@ -237,7 +237,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
           errors << "File # #{dse.broker_reference} has no broker invoice information in VFI Track."
         elsif intacct_total.nil?
           errors << "File # #{dse.broker_reference} has no Accounts Payable Bills found in Intacct."
-        else 
+        else
           if dse.entry.try(:entry_type).to_i != 21
             if invoice_total[:duty_total] != dse.total_amount
               errors << "File # #{dse.broker_reference} shows #{number_to_currency(invoice_total[:duty_total])} billed in VFI Track but #{number_to_currency(dse.total_amount)} on the statement."
@@ -298,7 +298,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyStatem
 
     def retrieve_intacct_bill_data invoice_data
       return [] if invoice_data.blank?
-      
+
       bill_numbers = invoice_data.map {|d| "'#{@intacct_client.sanitize_query_parameter_value d[:invoice_number]}'" }.join(",")
       ap_bill_entities = @intacct_client.list_objects 'vfc', 'APBILL', "VENDORID = '#{intacct_duty_vendor}' AND RECORDID IN (#{bill_numbers})", fields: ["RECORDNO"]
       ap_bill_ids = extract_intacct_bill_ids(ap_bill_entities)

@@ -47,7 +47,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctStatementProcessor do
     end
 
     it "finds and pays daily statements on a monthly statement and reports errored results" do
-      errored_daily_statement = DailyStatement.create! pay_type: 6, statement_number: "ERROR STATEMENT", final_received_date: Date.new(2018,3,22), port_code: "ERROR PORT", total_amount: BigDecimal("1.99"), monthly_statement_id: monthly_daily_statement.monthly_statement_id, status: "F"
+      errored_daily_statement = DailyStatement.create! pay_type: 6, statement_number: "ERROR STATEMENT", final_received_date: Date.new(2018, 3, 22), port_code: "ERROR PORT", total_amount: BigDecimal("1.99"), monthly_statement_id: monthly_daily_statement.monthly_statement_id, status: "F"
 
       expect(payer).to receive(:pay_statement).with(monthly_daily_statement).and_return nil
       expect(payer).to receive(:pay_statement).with(errored_daily_statement).and_return ["ERROR"]

@@ -165,48 +165,48 @@ class Shipment < ActiveRecord::Base
   include ISFSupport
   include IntegrationParserSupport
 
-  attr_accessible :arrival_port_date, :arrive_at_transship_port_date, 
-    :available_for_delivery_date, :barge_arrive_date, :barge_depart_date, 
-    :bol_date, :booked_quantity, :booking_approved_by_id, 
-    :booking_approved_date, :booking_cargo_ready_date, :booking_carrier, 
-    :booking_confirmed_by_id, :booking_confirmed_date, :booking_cutoff_date, 
-    :booking_est_arrival_date, :booking_est_departure_date, 
-    :booking_first_port_receipt_id, :booking_mode, :booking_number, 
+  attr_accessible :arrival_port_date, :arrive_at_transship_port_date,
+    :available_for_delivery_date, :barge_arrive_date, :barge_depart_date,
+    :bol_date, :booked_quantity, :booking_approved_by_id,
+    :booking_approved_date, :booking_cargo_ready_date, :booking_carrier,
+    :booking_confirmed_by_id, :booking_confirmed_date, :booking_cutoff_date,
+    :booking_est_arrival_date, :booking_est_departure_date,
+    :booking_first_port_receipt_id, :booking_mode, :booking_number,
     :booking_received_date, :booking_request_count, :booking_requested_by_id, :booking_requested_by,
-    :booking_requested_equipment, :booking_revised_by_id, :booking_revised_date, 
+    :booking_requested_equipment, :booking_revised_by_id, :booking_revised_date,
     :booking_shipment_type, :booking_vessel, :booking_voyage, :buyer_address_id, :buyer_address,
-    :cancel_requested_at, :cancel_requested_by_id, :canceled_by_id, 
-    :canceled_date, :cargo_on_board_date, :cargo_on_hand_date, 
-    :cargo_ready_date, :carrier_id, :carrier_released_date, 
-    :confirmed_on_board_origin_date, :consignee_id, :consignee, :consolidator_address_id, :consolidator_address, 
-    :container_stuffing_address_id, :container_stuffing_address, :container_unloaded_date, 
+    :cancel_requested_at, :cancel_requested_by_id, :canceled_by_id,
+    :canceled_date, :cargo_on_board_date, :cargo_on_hand_date,
+    :cargo_ready_date, :carrier_id, :carrier_released_date,
+    :confirmed_on_board_origin_date, :consignee_id, :consignee, :consolidator_address_id, :consolidator_address,
+    :container_stuffing_address_id, :container_stuffing_address, :container_unloaded_date,
     :country_export_id, :country_import_id, :country_origin_id,
     :country_export, :country_import, :country_origin,
-    :customs_released_carrier_date, :delay_reason_codes, :delivered_date, 
-    :departure_date, :departure_last_foreign_port_date, :description_of_goods, 
-    :destination_port_id, :destination_port, :do_issued_at, :docs_received_date, 
-    :empty_out_at_origin_date, :empty_return_date, :entry_port_id, 
-    :est_arrival_port_date, :est_delivery_date, :est_departure_date, 
-    :est_inland_port_date, :est_load_date, :eta_last_foreign_port_date, 
-    :export_license_required, :fcr_created_final_date, :final_dest_port_id, 
-    :first_port_receipt_id, :first_port_receipt, :fish_and_wildlife, :forwarder_id, :freight_terms, 
-    :freight_total, :full_container_discharge_date, :full_ingate_date, 
-    :full_out_gate_discharge_date, :gross_weight, :hazmat, 
-    :house_bill_of_lading, :importer_id, :importer, :importer_reference, 
-    :in_warehouse_time, :inland_destination_port_id, :inland_port_date, 
-    :invoice_total, :isf_sent_at, :isf_sent_by_id, :lacey_act, :lading_port_id, :lading_port, 
-    :last_exported_from_source, :last_file_bucket, :last_file_path, 
-    :last_foreign_port_id, :lcl, :marks_and_numbers, :master_bill_of_lading, 
-    :mode, :number_of_packages, :number_of_packages_uom, :on_rail_destination_date, 
-    :packing_list_sent_by_id, :packing_list_sent_date, :pickup_at, 
-    :port_last_free_day, :receipt_location, :reference, :requested_equipment, 
-    :seller_address_id, :seller_address, :ship_from_id, :ship_from, :ship_to_address_id, :ship_to_address, :ship_to_id, 
-    :shipment_cutoff_date, :shipment_instructions_sent_by_id, 
-    :shipment_instructions_sent_date, :shipment_type, :solid_wood_packing_materials, 
-    :trucker_name, :unlading_port_id, :unlading_port, :vendor_id, :vendor, :vessel, :vessel_carrier_scac, 
-    :vessel_nationality, :vgm_sent_by_id, :vgm_sent_date, :volume, :voyage, 
+    :customs_released_carrier_date, :delay_reason_codes, :delivered_date,
+    :departure_date, :departure_last_foreign_port_date, :description_of_goods,
+    :destination_port_id, :destination_port, :do_issued_at, :docs_received_date,
+    :empty_out_at_origin_date, :empty_return_date, :entry_port_id,
+    :est_arrival_port_date, :est_delivery_date, :est_departure_date,
+    :est_inland_port_date, :est_load_date, :eta_last_foreign_port_date,
+    :export_license_required, :fcr_created_final_date, :final_dest_port_id,
+    :first_port_receipt_id, :first_port_receipt, :fish_and_wildlife, :forwarder_id, :freight_terms,
+    :freight_total, :full_container_discharge_date, :full_ingate_date,
+    :full_out_gate_discharge_date, :gross_weight, :hazmat,
+    :house_bill_of_lading, :importer_id, :importer, :importer_reference,
+    :in_warehouse_time, :inland_destination_port_id, :inland_port_date,
+    :invoice_total, :isf_sent_at, :isf_sent_by_id, :lacey_act, :lading_port_id, :lading_port,
+    :last_exported_from_source, :last_file_bucket, :last_file_path,
+    :last_foreign_port_id, :lcl, :marks_and_numbers, :master_bill_of_lading,
+    :mode, :number_of_packages, :number_of_packages_uom, :on_rail_destination_date,
+    :packing_list_sent_by_id, :packing_list_sent_date, :pickup_at,
+    :port_last_free_day, :receipt_location, :reference, :requested_equipment,
+    :seller_address_id, :seller_address, :ship_from_id, :ship_from, :ship_to_address_id, :ship_to_address, :ship_to_id,
+    :shipment_cutoff_date, :shipment_instructions_sent_by_id,
+    :shipment_instructions_sent_date, :shipment_type, :solid_wood_packing_materials,
+    :trucker_name, :unlading_port_id, :unlading_port, :vendor_id, :vendor, :vessel, :vessel_carrier_scac,
+    :vessel_nationality, :vgm_sent_by_id, :vgm_sent_date, :volume, :voyage,
     :warning_overridden_at, :warning_overridden_by_id
-  
+
 	belongs_to	:carrier, :class_name => "Company"
 	belongs_to  :vendor,  :class_name => "Company"
   belongs_to  :forwarder, :class_name => "Company"
@@ -248,7 +248,7 @@ class Shipment < ActiveRecord::Base
 	validates  :reference, :presence => true
   validates_uniqueness_of :reference
 
-  dont_shallow_merge :Shipment, ['id','created_at','updated_at','vendor_id','reference']
+  dont_shallow_merge :Shipment, ['id', 'created_at', 'updated_at', 'vendor_id', 'reference']
 
   # Generate a pseudo-unique reference number
   # Number is checked against the reference field in the database for uniqueness
@@ -287,7 +287,7 @@ class Shipment < ActiveRecord::Base
     self.booking_requested_by = user
     self.booking_request_count ||= 0
     self.booking_request_count = (self.booking_request_count + 1)
-    OpenChain::Registries::OrderBookingRegistry.request_booking_hook(self,user)
+    OpenChain::Registries::OrderBookingRegistry.request_booking_hook(self, user)
     self.save!
     OpenChain::EventPublisher.publish :shipment_booking_request, self
     self.create_snapshot_with_async_option async_snapshot, user
@@ -448,7 +448,7 @@ class Shipment < ActiveRecord::Base
     self.request_cancel! user, true
   end
 
-  #private support methods for can cancel
+  # private support methods for can cancel
   def can_cancel_as_vendor? user
     (!self.booking_received_date) && user.company==self.vendor
   end
@@ -461,10 +461,10 @@ class Shipment < ActiveRecord::Base
     user.company==self.carrier
   end
   private :can_cancel_as_carrier?
-  def can_cancel_as_agent? user   
+  def can_cancel_as_agent? user
     return false unless user.company.agent?
     agent_results = ActiveRecord::Base.connection.execute agent_qry
-    agent_results.each{ |ar| return false unless ar[0] == user.company.id  }
+    agent_results.each { |ar| return false unless ar[0] == user.company.id  }
     true
   end
   private :can_cancel_as_agent?
@@ -531,28 +531,28 @@ class Shipment < ActiveRecord::Base
     return f.empty? ? nil : f.first
   end
 
-  #return all orders that could be added to this shipment and that the user can view
+  # return all orders that could be added to this shipment and that the user can view
   def available_orders user
-    return Order.where("1=0") if self.importer_id.blank? #can't find anything without an importer
-    r = Order.search_secure(user,Order).where(importer_id:self.importer_id,approval_status:'Accepted').not_closed
+    return Order.where("1=0") if self.importer_id.blank? # can't find anything without an importer
+    r = Order.search_secure(user, Order).where(importer_id:self.importer_id, approval_status:'Accepted').not_closed
     r = r.where(vendor_id:self.vendor_id) if self.vendor_id
     r
   end
 
   def available_products user
-    return Product.where("1=0") if self.importer_id.blank? #can't find anything without an importer
+    return Product.where("1=0") if self.importer_id.blank? # can't find anything without an importer
     p = Product.search_secure(user, Product).where(importer_id: self.importer_id)
   end
 
-  #get unique linked commercial invoices
+  # get unique linked commercial invoices
   def commercial_invoices
     CommercialInvoice.
       joins(:commercial_invoice_lines=>[:piece_sets=>[:shipment_line]]).
-      where("shipment_lines.shipment_id = ?",self.id).uniq
+      where("shipment_lines.shipment_id = ?", self.id).uniq
   end
 	def self.modes
     # These are deprecated old modes...don't reference for the new screen
-	  return ['Air','Sea','Truck','Rail','Parcel','Hand Carry','Other']
+	  return ['Air', 'Sea', 'Truck', 'Rail', 'Parcel', 'Hand Carry', 'Other']
 	end
 
   def ocean?
@@ -585,7 +585,7 @@ class Shipment < ActiveRecord::Base
 	end
 
 	def can_edit?(user)
-	  #same rules as view
+	  # same rules as view
 	  return user.edit_shipments? && can_view?(user)
 	end
 

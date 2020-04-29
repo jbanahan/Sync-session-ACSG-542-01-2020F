@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
-  
-  def default_values 
+
+  def default_values
     {
       :po=>'PO123',
       :style=>'123456',
@@ -37,10 +37,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
   def make_row overrides={}
     h = default_values.merge overrides
-    [:po,:style,:name,:origin,:import,:unit_cost,:ac_date,
-      :merch_dept_num,:merch_dept_name,:proposed_hts,:proposed_long_description,
-      :fw,:import_indicator,:inco_terms,:missy,:petite,:tall,:season,
-      :article_type,:dsp_type,:vendor_code,:vendor_name,:order_quantity, :seller_code, :seller_name, :buyer_code, :buyer_name,:short,:plus].collect {|k| h[k]}.to_csv(:quote_char=>"\007",:col_sep=>'|')
+    [:po, :style, :name, :origin, :import, :unit_cost, :ac_date,
+      :merch_dept_num, :merch_dept_name, :proposed_hts, :proposed_long_description,
+      :fw, :import_indicator, :inco_terms, :missy, :petite, :tall, :season,
+      :article_type, :dsp_type, :vendor_code, :vendor_name, :order_quantity, :seller_code, :seller_name, :buyer_code, :buyer_name, :short, :plus].collect {|k| h[k]}.to_csv(:quote_char=>"\007", :col_sep=>'|')
   end
 
   def cancelled_order_row_with_related_styles
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
   describe "process" do
 
-    let! (:master_company) { 
+    let! (:master_company) {
       # It appears that sometimes there's already a master company..if so, just use it
       Company.where(master: true).first_or_create! name: "My Master Company"
     }
@@ -96,7 +96,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
 
       let! (:valid_tariff) { OfficialTariff.create!(hts_code: '1234567890', country: us) }
 
-      before :each do 
+      before :each do
         allow(subject).to receive(:generate_orders)
       end
 
@@ -160,15 +160,15 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         p = Product.find p.id
         expect(p.custom_value(cdefs[:sap_revised_date])).to eq(1.year.ago.to_date)
       end
-      
+
       it "should not set hts number if not valid" do
         data = make_row(:proposed_hts=>'655432198')
         subject.process data, user, log, opts
         expect(Product.first.classifications.first.tariff_records.first.hts_1).to be_blank
       end
-      
+
       it "should not create classification if country is not import_location?" do
-        cn = Factory(:country,:iso_code=>'CN')
+        cn = Factory(:country, :iso_code=>'CN')
         data = make_row(:import=>'CN')
         subject.process data, user, log, opts
         expect(Product.first.classifications).to be_empty
@@ -181,22 +181,22 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         subject.process data, user, log, opts
         expect(Product.first.custom_value(cdefs[:ac_date]).strftime("%m/%d/%Y")).to eq("12/28/2013")
       end
-      
+
       it "should aggregate unit cost by country" do
-        data = make_row(:unit_cost=>'10.11',:import=>'CA')
-        data << make_row(:unit_cost=>'12.21',:import=>'CA')
-        data << make_row(:unit_cost=>'6.14',:import=>'CA')
-        data << make_row(:unit_cost=>'6.14',:import=>'CA')
-        data << make_row(:unit_cost=>'6.14',:import=>'US')
+        data = make_row(:unit_cost=>'10.11', :import=>'CA')
+        data << make_row(:unit_cost=>'12.21', :import=>'CA')
+        data << make_row(:unit_cost=>'6.14', :import=>'CA')
+        data << make_row(:unit_cost=>'6.14', :import=>'CA')
+        data << make_row(:unit_cost=>'6.14', :import=>'US')
         subject.process data, user, log, opts
         expect(Product.first.custom_value(cdefs[:cost])).to eq("US - 06.14\nCA - 12.21\nCA - 10.11\nCA - 06.14")
       end
-      
+
       it "should set hts for multiple countries" do
-        cn = Factory(:country,:iso_code=>'CN',:import_location=>true)
+        cn = Factory(:country, :iso_code=>'CN', :import_location=>true)
         ot = cn.official_tariffs.create!(:hts_code=>'9876543210')
         data = make_row
-        data << make_row(:import=>'CN',:proposed_hts=>ot.hts_code)
+        data << make_row(:import=>'CN', :proposed_hts=>ot.hts_code)
         subject.process data, user, log, opts
         p = Product.first
         expect(p.classifications.length).to eq(2)
@@ -204,9 +204,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         expect(p.classifications.find {|c| c.country_id == us.id }.tariff_records.first.hts_1).to eq('1234567890')
         expect(p.classifications.find {|c| c.country_id == cn.id }.tariff_records.first.hts_1).to eq(ot.hts_code)
       end
-      
+
       it "should not override actual hts if proposed changes" do
-        p = Factory(:product,:unique_identifier=>default_values[:style])
+        p = Factory(:product, :unique_identifier=>default_values[:style])
         p.classifications.create!(:country_id=>us.id).tariff_records.create!(:hts_1=>'1111111111')
         subject.process make_row, user, log, opts
         p.reload
@@ -214,9 +214,9 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         expect(p.classifications.first.tariff_records.size).to eq(1)
         expect(p.classifications.first.tariff_records.first.hts_1).to eq('1111111111')
       end
-      
+
       it "should not override actual long description if proposed change" do
-        p = Factory(:product,:unique_identifier=>default_values[:style])
+        p = Factory(:product, :unique_identifier=>default_values[:style])
         p.update_custom_value! cdefs[:approved_long], 'something'
         subject.process make_row, user, log, opts
         p = Product.first
@@ -226,7 +226,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       it "should handle multiple products" do
         h = default_values
         data = make_row
-        data << make_row(:style=>'STY2',:ac_date=>'10/30/2015',:petite=>'p2',:tall=>'t2', :short=>'s2', :plus=>'pl2')
+        data << make_row(:style=>'STY2', :ac_date=>'10/30/2015', :petite=>'p2', :tall=>'t2', :short=>'s2', :plus=>'pl2')
         subject.process data, user, log, opts
         expect(Product.count).to eq(2)
         p1 = Product.where(unique_identifier: h[:style]).first
@@ -241,14 +241,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         expect(p.entity_snapshots.size).to eq(1)
         expect(p.entity_snapshots.first.user).to eq(user)
       end
-      
+
       it "should update last sap sent date but not first sap sent date" do
-        p = Factory(:product,:unique_identifier=>default_values[:style])
-        p.update_custom_value! cdefs[:first_sap_date], Date.new(2012,4,10)
-        p.update_custom_value! cdefs[:last_sap_date], Date.new(2012,4,15)
+        p = Factory(:product, :unique_identifier=>default_values[:style])
+        p.update_custom_value! cdefs[:first_sap_date], Date.new(2012, 4, 10)
+        p.update_custom_value! cdefs[:last_sap_date], Date.new(2012, 4, 15)
         subject.process make_row, user, log, opts
         p = Product.first
-        expect(p.custom_value(cdefs[:first_sap_date])).to eq(Date.new(2012,4,10))
+        expect(p.custom_value(cdefs[:first_sap_date])).to eq(Date.new(2012, 4, 10))
         expect(p.custom_value(cdefs[:last_sap_date]).strftime("%y%m%d")).to eq(0.days.ago.strftime("%y%m%d"))
       end
 
@@ -257,7 +257,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         subject.process row, user, log, opts
         p = Product.first
         expect(p.custom_value(cdefs[:imp_flag])).to be_falsey
-        cls = p.classifications.find {|c| c.country_id == us.id }  
+        cls = p.classifications.find {|c| c.country_id == us.id }
         expect(cls.custom_value(cdefs[:oga_flag])).to be_falsey
       end
 
@@ -270,7 +270,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         p.update_custom_value! cdefs[:dept_num], "Dept1"
         p.update_custom_value! cdefs[:dept_name], "Name1"
 
-        row = make_row :po =>"PO2",:origin=>"Origin2",:import=>"Import2",:unit_cost=>2.0,:merch_dept_num=>"Dept2",:merch_dept_name=>"Name2"
+        row = make_row :po =>"PO2", :origin=>"Origin2", :import=>"Import2", :unit_cost=>2.0, :merch_dept_num=>"Dept2", :merch_dept_name=>"Name2"
         subject.process row, user, log, opts
         p = Product.first
 
@@ -283,23 +283,23 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "should normalize the unit cost to at least 2 decimal places and at least 4 significant digits" do
-        subject.process make_row(:import=>"Import",:unit_cost=>"0"), user, InboundFile.new, opts
+        subject.process make_row(:import=>"Import", :unit_cost=>"0"), user, InboundFile.new, opts
         p = Product.first
         expect(p.custom_value(cdefs[:cost])).to eq("Import - 00.00")
 
-        subject.process make_row(:import=>"Import",:unit_cost=>"1"), user, InboundFile.new, opts
+        subject.process make_row(:import=>"Import", :unit_cost=>"1"), user, InboundFile.new, opts
         p = Product.first
         expect(p.custom_value(cdefs[:cost])).to eq("Import - 01.00\nImport - 00.00")
 
-        subject.process make_row(:import=>"Import",:unit_cost=>"2.0"), user, InboundFile.new, opts
+        subject.process make_row(:import=>"Import", :unit_cost=>"2.0"), user, InboundFile.new, opts
         p = Product.first
         expect(p.custom_value(cdefs[:cost])).to eq("Import - 02.00\nImport - 01.00\nImport - 00.00")
 
-        subject.process make_row(:import=>"Import",:unit_cost=>"12.00"), user, InboundFile.new, opts
+        subject.process make_row(:import=>"Import", :unit_cost=>"12.00"), user, InboundFile.new, opts
         p = Product.first
         expect(p.custom_value(cdefs[:cost])).to eq("Import - 12.00\nImport - 02.00\nImport - 01.00\nImport - 00.00")
 
-        subject.process make_row(:import=>"Import",:unit_cost=>"120.001"), user, InboundFile.new, opts
+        subject.process make_row(:import=>"Import", :unit_cost=>"120.001"), user, InboundFile.new, opts
         p = Product.first
         expect(p.custom_value(cdefs[:cost])).to eq("Import - 120.001\nImport - 12.00\nImport - 02.00\nImport - 01.00\nImport - 00.00")
       end
@@ -317,7 +317,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         subject.process make_row({:style => "P-ABC", :missy=>"M-ABC", :petite=>nil, :tall=>"T-ABC", :short=>"S-ABC", :plus=>"PL-ABC"}), user, log, opts
         p.reload
         expect(p.unique_identifier).to eq("M-ABC")
-        expect(p.custom_value(cdefs[:related_styles]).split.sort).to eq(['P-ABC','PL-ABC', 'S-ABC','T-ABC'])
+        expect(p.custom_value(cdefs[:related_styles]).split.sort).to eq(['P-ABC', 'PL-ABC', 'S-ABC', 'T-ABC'])
       end
 
       it "should update maximum cost if the unit_price is higher and NOT update minimum cost" do
@@ -364,13 +364,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         row = make_row import: "XX"
         subject.process row, user, log, opts
 
-        expect(Product.first.classifications.find {|c| c.country_id == other_country.id}).to be_nil    
+        expect(Product.first.classifications.find {|c| c.country_id == other_country.id}).to be_nil
       end
     end
 
     context "order parsing" do
 
-      before :each do 
+      before :each do
         allow(subject).to receive(:generate_products)
         allow(OpenChain::CustomHandler::AnnInc::AnnRelatedStylesManager).to receive(:get_style).and_return existing_product
       end
@@ -500,7 +500,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         expect(c.name).to eql('A New Name')
       end
 
-      it "zero pads system codes" do 
+      it "zero pads system codes" do
         default_values[:vendor_code] = "12345"
         default_values[:seller_code] = "98765"
         default_values[:buyer_code] = "56789"
@@ -517,7 +517,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "properly sets the docs required if company is docs required and dsp effective date is before the ship window" do
-        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2013,1,1)
+        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2013, 1, 1)
         existing_vendor.update_custom_value! cdefs[:mp_type], 'All Docs'
 
         subject.process make_row({dsp_type: 'MP'}), user, log, opts
@@ -527,11 +527,11 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
       end
 
       it "sets docs required to false if company dsp effective date is after the ship window" do
-        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2014,1,1)
+        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2014, 1, 1)
         existing_vendor.update_custom_value! cdefs[:mp_type], 'All Docs'
 
         subject.process make_row({dsp_type: 'MP'}), user, log, opts
-        
+
         order = Order.where(order_number: "PO123").first
         expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
       end
@@ -540,17 +540,17 @@ describe OpenChain::CustomHandler::AnnInc::AnnSapProductHandler do
         existing_vendor.update_custom_value! cdefs[:mp_type], 'All Docs'
 
         subject.process make_row({dsp_type: 'MP'}), user, log, opts
-        
+
         order = Order.where(order_number: "PO123").first
         expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
       end
 
       it "sets docs required to false if MP Type is not 'All Docs'" do
-        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2014,1,1)
+        existing_vendor.update_custom_value! cdefs[:dsp_effective_date], Date.new(2014, 1, 1)
         existing_vendor.update_custom_value! cdefs[:mp_type], 'Upon Reqest'
 
         subject.process make_row({dsp_type: 'MP'}), user, log, opts
-        
+
         order = Order.where(order_number: "PO123").first
         expect(order.custom_value(cdefs[:ord_docs_required])).to eq false
       end

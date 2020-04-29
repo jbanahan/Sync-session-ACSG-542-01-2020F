@@ -13,9 +13,9 @@ module OpenChain; module CustomHandler; class PoloCsmSyncHandler
     self.class.can_view? user
   end
 
-  def initialize(custom_file,file_received_at=0.seconds.ago)
+  def initialize(custom_file, file_received_at=0.seconds.ago)
     @custom_file = custom_file
-    @received_date = file_received_at 
+    @received_date = file_received_at
   end
 
   def process user, first_row = 1
@@ -46,24 +46,24 @@ module OpenChain; module CustomHandler; class PoloCsmSyncHandler
         season_map[us_style] ||= Set.new
         season_map[us_style] << row_hash[0]['value']
       end
-      style_map.each do |us_style,csm_set|
+      style_map.each do |us_style, csm_set|
         current_style = us_style
         begin
           p = nil
-          Lock.acquire("Product-#{us_style}") do 
+          Lock.acquire("Product-#{us_style}") do
             p = Product.where(:unique_identifier=>us_style).first_or_create!
           end
 
           raise(CsmError, "File failed: #{user.full_name} can't edit product #{p.unique_identifier}") unless p.can_edit?(user)
 
-          Lock.db_lock(p) do 
+          Lock.db_lock(p) do
             p.update_custom_value! cdefs[:csm_numbers], csm_set.to_a.join("\n")
             p.update_custom_value! cdefs[:csm_department], dept_map[us_style]
             update_season p, season_map[us_style]
             update_first_csm_date p
             update_last_csm_date p
 
-            OpenChain::FieldLogicValidator.validate!(p) 
+            OpenChain::FieldLogicValidator.validate!(p)
             p.update_attributes! last_updated_by: user
             p.create_snapshot user
           end
@@ -82,9 +82,9 @@ module OpenChain; module CustomHandler; class PoloCsmSyncHandler
       csm_errors << e.message
     rescue
       system_errors = true
-      $!.log_me ["Custom File ID: #{@custom_file.id}","Style: #{current_style}"]
+      $!.log_me ["Custom File ID: #{@custom_file.id}", "Style: #{current_style}"]
     end
-     
+
     subject = "CSM Sync Complete"
     if system_errors || csm_errors.size > 0
       subject += " with Errors"
@@ -110,7 +110,7 @@ module OpenChain; module CustomHandler; class PoloCsmSyncHandler
 
   def self.process_from_s3 bucket, path, options = {}
     OpenChain::S3.download_to_tempfile(bucket, path, original_filename: options[:original_filename]) do |tmp|
-      cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler',:uploaded_by=>User.find_by_username('rbjork'))
+      cf = CustomFile.new(:file_type=>'OpenChain::CustomHandler::PoloCsmSyncHandler', :uploaded_by=>User.find_by_username('rbjork'))
       cf.attached = tmp
       cf.save!
       cf.process(cf.uploaded_by)
@@ -120,7 +120,7 @@ module OpenChain; module CustomHandler; class PoloCsmSyncHandler
   class CsmError < StandardError; end
 
   private
-  
+
     def get_csm_number row_hash
       r = ""
       (2..5).each do |i|
@@ -130,11 +130,11 @@ module OpenChain; module CustomHandler; class PoloCsmSyncHandler
       end
       r
     end
-    
-    def string_val val 
+
+    def string_val val
       r = val
       return r if r.nil?
-      r = r[0,r.size-2] if r.end_with? '.0' #fix numerics
+      r = r[0, r.size-2] if r.end_with? '.0' # fix numerics
       r
     end
 
@@ -144,28 +144,28 @@ module OpenChain; module CustomHandler; class PoloCsmSyncHandler
       current_vals.split("\n").each {|v| season_set << v} unless current_vals.blank?
       new_value = season_set.to_a.sort.join("\n")
       if new_value!=cv.value
-        cv.value = new_value 
-        cv.save!
-      end
-    end
-    
-    def update_first_csm_date product
-      cv = product.get_custom_value cdefs[:csm_received_date_first]
-      if cv.value.blank?
-        cv.value = @received_date 
-        cv.save!
-      end
-    end
-    
-    def update_last_csm_date product
-      cv = product.get_custom_value cdefs[:csm_received_date_last]
-      if cv.value.blank? || cv.value.to_datetime.to_i < @received_date.to_i
-        cv.value = @received_date 
+        cv.value = new_value
         cv.save!
       end
     end
 
-    def cdefs 
+    def update_first_csm_date product
+      cv = product.get_custom_value cdefs[:csm_received_date_first]
+      if cv.value.blank?
+        cv.value = @received_date
+        cv.save!
+      end
+    end
+
+    def update_last_csm_date product
+      cv = product.get_custom_value cdefs[:csm_received_date_last]
+      if cv.value.blank? || cv.value.to_datetime.to_i < @received_date.to_i
+        cv.value = @received_date
+        cv.save!
+      end
+    end
+
+    def cdefs
       @cdefs ||= self.class.prep_custom_definitions([:csm_numbers, :csm_department, :csm_season, :csm_received_date_first, :csm_received_date_last])
     end
 

@@ -1,7 +1,7 @@
 describe OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet do
   let(:prod) { Factory(:product) }
   let!(:us) { Factory(:country, iso_code: "US") }
-  let(:classi) do 
+  let(:classi) do
     cl = Factory(:classification, product: prod, country: us)
     cl.find_and_set_custom_value cdefs[:manual_flag], true
     cl.find_and_set_custom_value cdefs[:classification_type], "Multi"
@@ -30,7 +30,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet 
     end
 
     it "fails if any classification with 'Manual Entry Processing' is missing a 'Classification Type'" do
-      classi.update_custom_value! cdefs[:classification_type], "Not Applicable"     
+      classi.update_custom_value! cdefs[:classification_type], "Not Applicable"
 
       expect(rule.run_validation prod).to eq "If the Manual Entry Processing checkbox is checked, Classification Type is required."
     end

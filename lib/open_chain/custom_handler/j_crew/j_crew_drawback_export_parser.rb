@@ -5,8 +5,8 @@ module OpenChain; module CustomHandler; module JCrew
       return nil if r.size <= 1 && r[0].blank? # stray rows
       raise "Line #{row_number} had #{r.size} elements.  All lines must have 167 elements." unless r.size==167
       d = DutyCalcExportFileLine.new
-      d.ship_date = Date.strptime(r[105],'%m/%d/%Y')
-      d.export_date = Date.strptime(r[106],'%m/%d/%Y')
+      d.ship_date = Date.strptime(r[105], '%m/%d/%Y')
+      d.export_date = Date.strptime(r[106], '%m/%d/%Y')
       d.part_number = r[164]
       d.ref_1 = r[116]
       d.ref_2 = r[8]

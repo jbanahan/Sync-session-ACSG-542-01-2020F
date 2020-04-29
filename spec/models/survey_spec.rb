@@ -1,12 +1,12 @@
 describe Survey do
   describe "copy!" do
-    before :each do 
-      @survey = Factory(:survey,:name=>"my name",:email_subject=>"emlsubj",:email_body=>"emlbod",:ratings_list=>"rat")
+    before :each do
+      @survey = Factory(:survey, :name=>"my name", :email_subject=>"emlsubj", :email_body=>"emlbod", :ratings_list=>"rat")
     end
     it 'should copy all questions with new ids' do
-      q1 = Factory(:question,:rank=>1,:survey_id=>@survey.id,:content=>'my question content 1',:choices=>"x",:warning=>true)
-      q2 = Factory(:question,:rank=>2,:survey_id=>@survey.id,:content=>'my question content 2')
-      q3 = Factory(:question,:rank=>3,:survey_id=>@survey.id,:content=>'my question content 3')
+      q1 = Factory(:question, :rank=>1, :survey_id=>@survey.id, :content=>'my question content 1', :choices=>"x", :warning=>true)
+      q2 = Factory(:question, :rank=>2, :survey_id=>@survey.id, :content=>'my question content 2')
+      q3 = Factory(:question, :rank=>3, :survey_id=>@survey.id, :content=>'my question content 3')
       new_survey = @survey.copy!
       expect(new_survey.id).to be > 0
       expect(new_survey.id).not_to eq(@survey.id)
@@ -38,7 +38,7 @@ describe Survey do
   end
   it 'should link to user' do
     u = Factory(:user)
-    s = Factory(:survey,:created_by_id=>u.id)
+    s = Factory(:survey, :created_by_id=>u.id)
     expect(s.created_by).to eq(u)
   end
   it "should be locked if responses exist" do
@@ -53,7 +53,7 @@ describe Survey do
   end
   it "should update nested questions" do
     s = Factory(:survey)
-    s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
+    s.update_attributes(:questions_attributes=>[{:content=>'1234567890', :rank=>2}, {:content=>"09876543210", :rank=>1}])
     s = Survey.find(s.id)
     expect(s.questions.find_by(content: "09876543210").rank).to eq(1)
     expect(s.questions.find_by(content: "1234567890").rank).to eq(2)
@@ -62,7 +62,7 @@ describe Survey do
     it 'should make a response with all answers' do
       u = Factory(:user)
       s = Factory(:survey)
-      s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
+      s.update_attributes(:questions_attributes=>[{:content=>'1234567890', :rank=>2}, {:content=>"09876543210", :rank=>1}])
       sr = s.generate_response! u, "abc"
       expect(sr.answers.size).to eq 2
       expect(sr.survey_response_logs.where(:message=>"Survey assigned to #{u.full_name}").size).to eq 1
@@ -75,7 +75,7 @@ describe Survey do
       group = Group.create! system_code: "G", name: "Group"
       u.groups << group
       s = Factory(:survey)
-      s.update_attributes(:questions_attributes=>[{:content=>'1234567890',:rank=>2},{:content=>"09876543210",:rank=>1}])
+      s.update_attributes(:questions_attributes=>[{:content=>'1234567890', :rank=>2}, {:content=>"09876543210", :rank=>1}])
       sr = s.generate_group_response! group, 'abc'
       expect(sr.answers.size).to eq 2
       expect(sr.survey_response_logs.where(:message=>"Survey assigned to group #{group.name}").size).to eq 1
@@ -90,25 +90,25 @@ describe Survey do
       s = Factory(:survey)
       s.generate_response! u1
       s.generate_response! u2
-      #no response for user 3
+      # no response for user 3
 
-      expect(s.assigned_users).to eq([u1,u2])
+      expect(s.assigned_users).to eq([u1, u2])
     end
   end
   describe "can_edit?" do
-    before :each do 
+    before :each do
       @s = Factory(:survey)
     end
     it "should allow editing if user has permission and is from survey's company" do
-      u = Factory(:user,:company=>@s.company,:survey_edit=>true)
+      u = Factory(:user, :company=>@s.company, :survey_edit=>true)
       expect(@s.can_edit?(u)).to be_truthy
     end
     it "should not allow editing if user doesn't have permission" do
-      u = Factory(:user,:company=>@s.company)
+      u = Factory(:user, :company=>@s.company)
       expect(@s.can_edit?(u)).to be_falsey
     end
     it "should not allow editing if user isn't from survey's company" do
-      u = Factory(:user,:survey_edit=>true)
+      u = Factory(:user, :survey_edit=>true)
       expect(@s.can_edit?(u)).to be_falsey
     end
   end
@@ -117,15 +117,15 @@ describe Survey do
       @s = Factory(:survey)
     end
     it "should allow view/download if user has permission and is from survey's company" do
-      u = Factory(:user,:company=>@s.company,:survey_edit=>true)
+      u = Factory(:user, :company=>@s.company, :survey_edit=>true)
       expect(@s.can_view?(u)).to be_truthy
     end
     it "should not allow view/download if user doesn't have permission" do
-      u = Factory(:user,:company=>@s.company)
+      u = Factory(:user, :company=>@s.company)
       expect(@s.can_view?(u)).to be_falsey
     end
     it "should not allow view/download if user isn't from survey's company" do
-      u = Factory(:user,:survey_edit=>true)
+      u = Factory(:user, :survey_edit=>true)
       expect(@s.can_view?(u)).to be_falsey
     end
   end
@@ -135,15 +135,15 @@ describe Survey do
     end
     it "should return values, one per line" do
       vals = "a\nb"
-      expect(Survey.new(:ratings_list=>vals).rating_values).to eq(["a","b"])
+      expect(Survey.new(:ratings_list=>vals).rating_values).to eq(["a", "b"])
     end
   end
   describe "to_xls" do
     before :each do
-      @survey = Factory(:survey,:name=>"my name",:email_subject=>"emlsubj",:email_body=>"emlbod",:ratings_list=>"1\n2") 
-      @q1 = Factory(:question,:rank=>1,:survey_id=>@survey.id,:content=>'my question content 1',:choices=>"x",:warning=>true)
-      @q2 = Factory(:question,:rank=>2,:survey_id=>@survey.id,:content=>'my question content 2')
-      
+      @survey = Factory(:survey, :name=>"my name", :email_subject=>"emlsubj", :email_body=>"emlbod", :ratings_list=>"1\n2")
+      @q1 = Factory(:question, :rank=>1, :survey_id=>@survey.id, :content=>'my question content 1', :choices=>"x", :warning=>true)
+      @q2 = Factory(:question, :rank=>2, :survey_id=>@survey.id, :content=>'my question content 2')
+
       @r1 = Factory(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub", :rating=>"rat", :email_sent_date=>Time.now, :response_opened_date=>Time.now, :submitted_date=>Time.now)
       @r2 = Factory(:survey_response, :survey_id=>@survey.id, :subtitle=>"sub2", :submitted_date=>Time.now)
       @r3 = Factory(:survey_response, :survey_id=>@survey.id, :submitted_date=>nil)

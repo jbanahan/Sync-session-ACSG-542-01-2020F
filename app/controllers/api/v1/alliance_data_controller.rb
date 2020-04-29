@@ -12,7 +12,7 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbacksControlle
 
   def receive_updated_entry_numbers
     extract_results(params) do |results, context|
-      run_in_thread do 
+      run_in_thread do
         # Split the results into groups of 1000 (to avoid overflowing the max size of a delayed job handler column)
         results.keys.in_groups_of(batch_size, false) do |keys|
           sub_results = {}
@@ -24,7 +24,7 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbacksControlle
     end
   end
 
-  def receive_mid_updates 
+  def receive_mid_updates
     extract_results(params) do |results, context|
       # results should be an array
       run_in_thread do
@@ -39,7 +39,7 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbacksControlle
     end
   end
 
-  private 
+  private
 
     def run_in_thread
       # Run inline for testing
@@ -47,7 +47,7 @@ module Api; module V1; class AllianceDataController < SqlProxyPostbacksControlle
         yield
       else
         Thread.new do
-          #need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
+          # need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
           ActiveRecord::Base.connection_pool.with_connection do
             yield
           end

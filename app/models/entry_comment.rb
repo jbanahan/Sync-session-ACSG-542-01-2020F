@@ -17,10 +17,10 @@
 #
 
 class EntryComment < ActiveRecord::Base
-  attr_accessible :body, :created_at, :entry_id, :entry, :generated_at, 
+  attr_accessible :body, :created_at, :entry_id, :entry, :generated_at,
     :public_comment, :updated_at, :username
 
-  # Be aware that the entry parsers, for performance reasons, do NOT call destroy_all when reprocessing entry notes, 
+  # Be aware that the entry parsers, for performance reasons, do NOT call destroy_all when reprocessing entry notes,
   # so if ANY dependent destroys are added below, you MUST go back to the entry parser and amend that (or work around it)
   belongs_to :entry, :inverse_of=>:entry_comments
   before_validation :identify_public_comments
@@ -37,12 +37,12 @@ class EntryComment < ActiveRecord::Base
     "CUSTOMS" => 'ABI',
     "KC Email" => 'SYSTEM',
     "KC_KI" => 'SYSTEM',
-    "SYSTEM" => 'SYSTEM', 
+    "SYSTEM" => 'SYSTEM',
     "PayDueRsnd" => 'SYSTEM',
     "UniversalEvent" => 'ABI',
     "Private Broker" => 'SYSTEM'
   }
- 
+
   def can_view? user
     entry.can_view?(user) && (public_comment || user.company.broker?)
   end
@@ -52,13 +52,13 @@ class EntryComment < ActiveRecord::Base
     r.blank? ? 'USER' : r
   end
 
-  private 
+  private
     def identify_public_comments
       # Don't run regexes if the flag has been set
       if public_comment.nil?
         self.public_comment = publicly_viewable?(self.body)
       end
-      
+
       true
     end
 
@@ -72,7 +72,7 @@ class EntryComment < ActiveRecord::Base
         /^Pay Due not changed, Same Pay Due Date/i,\
         /^Payment Type Changed/i,\
         /^STMNT DATA REPLACED AS REQUESTED/i,\
-        /^stmt.*authorized/i].any?{|r| r =~ comment}
+        /^stmt.*authorized/i].any? {|r| r =~ comment}
 
       !match
     end

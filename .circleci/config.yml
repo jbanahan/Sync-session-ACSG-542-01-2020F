@@ -124,6 +124,9 @@ jobs:
     - run:
         name: Brakeman Static Analysis
         command: if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake brakeman:scan; fi
+    - run:
+        name: Rubocop Analysis
+        command: if [ "$CIRCLE_NODE_INDEX" == "0" ]; then bundle exec rake rubocop:scan; fi
     # Teardown
     #   If you break your build into multiple jobs with workflows, you will probably want to do the parts of this that are relevant in each
     # Save test results

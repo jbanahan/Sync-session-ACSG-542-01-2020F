@@ -1,6 +1,6 @@
 # -*- SkipSchemaAnnotations
 
-#checks that entries with tariffs having specified SPI are duty free
+# checks that entries with tariffs having specified SPI are duty free
 class ValidationRuleEntryDutyFree < BusinessValidationRule
   include ValidatesCommercialInvoiceLine
 

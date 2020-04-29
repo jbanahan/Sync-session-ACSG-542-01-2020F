@@ -64,9 +64,9 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
 
 
   describe "run_schedulable" do
-    let!(:current_canada_fm) { Factory(:fiscal_month, company: canada, start_date: Date.new(2020,3,2), end_date: Date.new(2020, 4, 5), year: 2020, month_number: 2)}
+    let!(:current_canada_fm) { Factory(:fiscal_month, company: canada, start_date: Date.new(2020, 3, 2), end_date: Date.new(2020, 4, 5), year: 2020, month_number: 2)}
     let!(:previous_canada_fm) { Factory(:fiscal_month, company: canada, start_date: Date.new(2020, 2, 3), end_date: Date.new(2020, 3, 1), year: 2020, month_number: 1)}
-    let!(:current_us_fm) { Factory(:fiscal_month, company: us, start_date: Date.new(2020,3,2), end_date: Date.new(2020, 4, 5), year: 2020, month_number: 2)}
+    let!(:current_us_fm) { Factory(:fiscal_month, company: us, start_date: Date.new(2020, 3, 2), end_date: Date.new(2020, 4, 5), year: 2020, month_number: 2)}
     let!(:previous_us_fm) { Factory(:fiscal_month, company: us, start_date: Date.new(2020, 2, 3), end_date: Date.new(2020, 3, 1), year: 2020, month_number: 1)}
 
     context "running report for US" do
@@ -81,7 +81,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
         first_sale_false.value_foreign = 100
         first_sale_false.save!
 
-        Timecop.freeze(DateTime.new(2020,3,5,12,0)) do
+        Timecop.freeze(DateTime.new(2020, 3, 5, 12, 0)) do
           subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                   'cust_number' => 'PVH',
                                   'fiscal_day' => 4)
@@ -104,7 +104,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
 
         report = subject.new.run(2020, 1, 'PVH')
 
-        Timecop.freeze(DateTime.new(2020,3,5,12,0)) do
+        Timecop.freeze(DateTime.new(2020, 3, 5, 12, 0)) do
           subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                   'cust_number' => 'PVH',
                                   'fiscal_day' => 4)
@@ -173,7 +173,7 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
 
       report = subject.new.run(2020, 1, 'PVHCANADA')
 
-      Timecop.freeze(DateTime.new(2020,3,5,12,0)) do
+      Timecop.freeze(DateTime.new(2020, 3, 5, 12, 0)) do
         subject.run_schedulable('email' => ['tufnel@stonehenge.biz', 'st-hubbins@hellhole.co.uk'],
                                 'cust_number' => 'PVHCANADA',
                                 'fiscal_day' => 4)

@@ -28,7 +28,7 @@ class Variant < ActiveRecord::Base
   validates :variant_identifier, uniqueness: { scope: :product_id,
     message: "must have a unique id within the product" }
 
-  dont_shallow_merge :Variant, ['id','created_at','updated_at']
+  dont_shallow_merge :Variant, ['id', 'created_at', 'updated_at']
 
   def can_view? user
     return false unless self.product

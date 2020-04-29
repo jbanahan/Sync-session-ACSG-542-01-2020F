@@ -14,7 +14,7 @@ describe OpenChain::CustomHandler::ShipmentDownloadGenerator do
   end
 
   let (:user) { Factory(:master_user) }
-  let (:shipment) { 
+  let (:shipment) {
     s = Factory(:shipment, receipt_location: 'Prague, CZK', destination_port: Factory(:port), final_dest_port: Factory(:port),
       master_bill_of_lading: 'MASTER', house_bill_of_lading: 'HOUSE', vessel: 'La Fromage Du Mer',
       voyage: '20000 Leagues', booking_received_date: 1.week.ago, cargo_on_hand_date: 3.days.ago,

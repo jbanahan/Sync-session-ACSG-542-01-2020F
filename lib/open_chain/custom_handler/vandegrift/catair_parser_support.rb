@@ -41,7 +41,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     return first_char if ["A", "B", "Y", "Z"].include?(first_char)
 
     # While the 3461 has all segments that start like SE\d\d...the 7501 segments are all 2 digits (
-    # and can technically also have SE\d\d mixed in too).  So, I'm going to assume that if the 
+    # and can technically also have SE\d\d mixed in too).  So, I'm going to assume that if the
     # line starts with 2 digits, then the segment is identified just by the 2 digits, otherwise
     # it's identified by a 2 character + 2 digit identifier
 
@@ -64,7 +64,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
         cust_no = nil
         Company.importers.where(irs_number: k).each do |c|
           cust_no = c.kewill_customer_number
-          break if cust_no.present?        
+          break if cust_no.present?
         end
         h[k] = cust_no
       end
@@ -91,10 +91,10 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     # that will go into the MBOL/HBOL fields (as that's the primary key for the EDI_SHIPMENT_HEADER table)
     # We'll just use the full entry number for that (which we also use as the invoice # created)
 
-    # This is kinda weird, but it's because the module can't directly reference the CI Load structs that are 
+    # This is kinda weird, but it's because the module can't directly reference the CI Load structs that are
     # inherited by the including class...so we reference them via the class directly
     id = self.class::CiLoadEdiIdentifier.new
-    # We need to remove the hyphens from the entry number otherwise the length is longer than the XML 
+    # We need to remove the hyphens from the entry number otherwise the length is longer than the XML
     # allows for the master bill
     id.master_bill = compose_full_entry_number(shipment).join("")
     shipment.edi_identifier = id

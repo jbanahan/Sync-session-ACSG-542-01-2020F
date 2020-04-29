@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Generic; class IsfLateFlagFilePar
   end
 
   def self.valid_file? filename
-    ['.XLS','.XLSX', '.CSV'].include? File.extname(filename.upcase)
+    ['.XLS', '.XLSX', '.CSV'].include? File.extname(filename.upcase)
   end
 
   def can_view? user

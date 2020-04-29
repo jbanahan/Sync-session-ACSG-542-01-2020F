@@ -51,7 +51,7 @@ class CustomReportIsfStatus < CustomReport
     end
   end
 
-  private 
+  private
 
     def write_query isfs, search_columns, run_by
       row_number = 0

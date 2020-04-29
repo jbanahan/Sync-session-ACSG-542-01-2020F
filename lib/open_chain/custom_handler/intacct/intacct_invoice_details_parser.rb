@@ -20,7 +20,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     # Be aware that the way Alliance stores and returns most string values includes a bunch of trailing spaces
     # Also, every value in the result set (dates and numbers) are strings.
 
-    # If we're getting this data, then we should have already requested it, look up the export 
+    # If we're getting this data, then we should have already requested it, look up the export
     # based on that request.
     export = find_alliance_export_record result_set
     return unless export
@@ -31,8 +31,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     brokerage_payable_lines, lmd_payable_lines = extract_payable_lines export, result_set
 
     Lock.with_lock_retry(export) do
-      # Intacct requires that the broker file and freight file dimensions are in the system prior to 
-      # uploading the payable/receivable information.  So we're tracking the numbers referenced in the 
+      # Intacct requires that the broker file and freight file dimensions are in the system prior to
+      # uploading the payable/receivable information.  So we're tracking the numbers referenced in the
       # result set and will upload them immediately.
 
       lines = {:broker_file => [], :freight_file => []}
@@ -127,12 +127,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       broker_invoice = !lmd_division?(s(export.division))
 
       # A brokerage payable is any brokerage invoice line that has a vendor
-      if broker_invoice 
+      if broker_invoice
         # Any line marked a payable is actually a payable
         if l["payable"] == "Y"
           brokerage_payables[s(l["vendor"])] << l
         elsif lmd_division?(s(l["line division"])) && !s(l["freight file number"]).blank?
-          # If the division on the line is 11 or 12, then the line becomes a payable to the LMD division from 
+          # If the division on the line is 11 or 12, then the line becomes a payable to the LMD division from
           # the brokerage division (essentially the inverse of the LMD receivable lines)
           brokerage_payables[VFI_LMD_VENDOR_CODE] << l
         end
@@ -163,7 +163,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     customer_number = (lmd_receivable_from_brokerage ? LMD_VFI_CUSTOMER_CODE : find_customer_number(s(export.customer_number)))
 
     existing = IntacctReceivable.where(company: company, invoice_number: s(first_line["invoice number"]), customer_number: customer_number).first_or_create!
-    
+
     r = nil
     Lock.with_lock_retry(existing) do
       # Make sure we haven't already sent data for this receivable, but we will allow recreating receivables that haven't been uploaded
@@ -178,8 +178,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       # This should only ever actually happen on LMD Receivables made from Brokerage Files
       if r.invoice_number.blank?
         # Use the brokerage file number as the receivable "key" on the LMD File...if we try and use the freight file number
-        # we end up in a situation where we have to synthesize suffixes on the freight invoices since there can be multiple 
-        # brokerage files associated w/ a single freight file.  
+        # we end up in a situation where we have to synthesize suffixes on the freight invoices since there can be multiple
+        # brokerage files associated w/ a single freight file.
         # By keeping the brokerage file number as the break bulk invoice number, we also provide a simple way to track down
         # which receivable maps to which brokerage receivable.
         r.invoice_number = s(first_line["broker file number"])
@@ -199,7 +199,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         actual_charge_sum += charge_amount
 
         rl = r.intacct_receivable_lines.build
-        # If we're generating a brokerage receivable, the line item locations we create should always be for the 
+        # If we're generating a brokerage receivable, the line item locations we create should always be for the
         # originating division.  This is because some lines on a brokerage file may be flagged as LMD lines and linked
         # to the LMD division.  This is great for behind the scenes tracking, but in reality the entirety of the brokerage
         # receivable should be against the broker division.
@@ -230,7 +230,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
 
       r.save!
     end
-    
+
     r
   end
 
@@ -239,8 +239,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
     first_line = payable_lines.first
 
     header_division = export.division
-    lmd_company = lmd_division?(header_division) 
-    company = (lmd_company ? LMD_COMPANY_CODE : VFI_COMPANY_CODE) 
+    lmd_company = lmd_division?(header_division)
+    company = (lmd_company ? LMD_COMPANY_CODE : VFI_COMPANY_CODE)
     # Use the invoice number as the bill number for payables (which will be unique then per vendor)
     bill_number = s first_line["invoice number"]
 
@@ -251,11 +251,11 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       # Check number needs to be part of the key since it's very possible we'll issue multiple checks to the same vendor on the same invoice
       existing = IntacctPayable.where(company: company, vendor_number: vendor, bill_number: bill_number, payable_type: IntacctPayable::PAYABLE_TYPE_BILL).first_or_create!
     end
-    
+
     p = nil
     Lock.with_lock_retry(existing) do
       return unless existing.intacct_upload_date.nil? && existing.intacct_key.nil?
-      
+
       payable_to_lmd = (vendor == VFI_LMD_VENDOR_CODE)
 
       p = existing
@@ -304,12 +304,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
 
       p.save!
     end
-    
+
     p
   end
 
   def parse_check_result result_set
-    # All we're really doing here is pulling a few additional pieces of information about the check that 
+    # All we're really doing here is pulling a few additional pieces of information about the check that
     # couldn't be retrieved from the check register report that Alliance publishes
 
     # There should only be a single query result line and the check record and export should already exist
@@ -325,7 +325,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       check = nil
       Lock.with_lock_retry(export) do
         # At this point in time, we only ever have a single check per data export object
-        check = export.intacct_checks.first 
+        check = export.intacct_checks.first
 
         # Just a really basic check to verify we're dealing w/ the right export object
         if check && check.check_number == s(first_line['check number']) && check.intacct_upload_date.nil? && check.intacct_key.nil?
@@ -360,7 +360,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         if check.company == LMD_COMPANY_CODE
           OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Freight File", check.freight_file, check.freight_file)
         else
-          OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Broker File", check.broker_file, check.broker_file) 
+          OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Broker File", check.broker_file, check.broker_file)
           OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension("Freight File", check.freight_file, check.freight_file) if check.freight_file && !check.freight_file.empty?
         end
       end
@@ -376,7 +376,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
       # If the export was originally for the LMD division (.ie not a freight passthrough)
       # then we just need to sum the LMD receivables.
       receivable = lmd_division?(export.division) ? lmd_receivable : brokerage_receivable
-      
+
       # Credit notes should be summed as negative amounts (they're in intacct as positve amounts)
       sum = BigDecimal.new "0"
 
@@ -385,7 +385,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctInvoiceDeta
         multiplier = (receivable.receivable_type =~ /#{IntacctReceivable::CREDIT_INVOICE_TYPE}/i) ? -1 : 1
         sum = receivable.intacct_receivable_lines.inject(BigDecimal.new("0")) {|total, l| total + (l.amount * multiplier)}
       end
-      
+
       valid = true
       if export.ar_total != sum
         valid = false

@@ -22,10 +22,10 @@ module OpenChain
     def self.get_rule_failures_count_for(company)
       customer_number = company.customs_identifier
 
-      ss = SearchSetup.new(module_type:'Entry',user:User.integration)
-      ss.search_criterions.build(model_field_uid:'ent_rule_state',operator:'eq',value:'Fail')
-      ss.search_criterions.build(model_field_uid:'ent_cust_num',operator:'eq',value:customer_number)
-      SearchQuery.new(ss,User.integration).count
+      ss = SearchSetup.new(module_type:'Entry', user:User.integration)
+      ss.search_criterions.build(model_field_uid:'ent_rule_state', operator:'eq', value:'Fail')
+      ss.search_criterions.build(model_field_uid:'ent_cust_num', operator:'eq', value:customer_number)
+      SearchQuery.new(ss, User.integration).count
     end
 
     def self.slack_client

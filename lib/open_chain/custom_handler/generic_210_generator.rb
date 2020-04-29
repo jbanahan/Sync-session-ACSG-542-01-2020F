@@ -18,10 +18,10 @@ module OpenChain; module CustomHandler; class Generic210Generator
       # The sync record fingerprint is going to just be a \n delimited list of the broker invoice numbers we've already sent.
       # Any new invoice numbers we encounter will get sent and then the fingerpint list is rebuilt and saved off to include the
       # new numbers.
-      Lock.acquire("210-#{entry.broker_reference}") do 
+      Lock.acquire("210-#{entry.broker_reference}") do
         sync_record = entry.sync_records.where(trading_partner: "210").first_or_create(fingerprint: "")
         sent_invoices = sync_record.fingerprint.split "\n"
-        
+
         invoices_to_send = entry.broker_invoices.collect {|inv| sent_invoices.include?(inv.invoice_number) ? nil : inv}.compact
 
         unless invoices_to_send.blank?
@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; class Generic210Generator
 
             # XML might be blank if the invoices have no charges that should be transmitted
             unless xml.blank?
-              Tempfile.open(["VFI210-#{invoice.invoice_number.strip}-",'.xml']) do |t|
+              Tempfile.open(["VFI210-#{invoice.invoice_number.strip}-", '.xml']) do |t|
                 t << xml.to_s
                 t.flush
                 t.rewind
@@ -68,10 +68,10 @@ module OpenChain; module CustomHandler; class Generic210Generator
     add_date_elements root, (entry.arrival_date ? entry.arrival_date.in_time_zone(timezone).to_date : nil), child_element_name: "ArrivalDate"
     add_date_elements root, (entry.export_date ? entry.export_date : nil), child_element_name: "ExportDate"
 
-    add_entity_address_info root, "Consignee", name: v(:ent_ult_con_name, entry), id: v(:ent_ult_con_code, entry), address_1: v(:ent_consignee_address_1, entry), 
+    add_entity_address_info root, "Consignee", name: v(:ent_ult_con_name, entry), id: v(:ent_ult_con_code, entry), address_1: v(:ent_consignee_address_1, entry),
                               address_2: v(:ent_consignee_address_2, entry), city: v(:ent_consignee_city, entry), state: v(:ent_consignee_state, entry)
-    
-    add_entity_address_info root, "BillTo", name: v(:bi_to_name, broker_invoice), id: v(:bi_customer_number, broker_invoice), address_1: v(:bi_to_add1, broker_invoice), 
+
+    add_entity_address_info root, "BillTo", name: v(:bi_to_name, broker_invoice), id: v(:bi_customer_number, broker_invoice), address_1: v(:bi_to_add1, broker_invoice),
                               address_2: v(:bi_to_add2, broker_invoice), city: v(:bi_to_city, broker_invoice), state: v(:bi_to_state, broker_invoice), zip: v(:bi_to_zip, broker_invoice), country: v(:bi_to_country_iso, broker_invoice)
 
     add_collection_element root, "MasterBills", "MasterBill", v(:ent_mbols, entry)
@@ -106,7 +106,7 @@ module OpenChain; module CustomHandler; class Generic210Generator
       end
     end
 
-    # It's possible that we'll end up not actually having any invoice lines that 
+    # It's possible that we'll end up not actually having any invoice lines that
     # we added to the xml, in which case, don't bother sending anything.
     total_lines > 0 ? doc : nil
   end
@@ -121,7 +121,7 @@ module OpenChain; module CustomHandler; class Generic210Generator
     end
 
     def charge_lines invoice
-      # We need to weed out the invoice lines that are not actual charges.  These are Duty lines (charge code = 1) on an invoice where there 
+      # We need to weed out the invoice lines that are not actual charges.  These are Duty lines (charge code = 1) on an invoice where there
       # are also Duty Pd Direct lines (charge code = 99).  If there are no Duty Pd Direct lines, then we leave the Duty line in.
 
       # Other codes that should not be sent (.ie they're all marked as suppress_accounting in Alliance)
@@ -132,15 +132,15 @@ module OpenChain; module CustomHandler; class Generic210Generator
       # Harbor Maint Fee - 0107
       # Freight Paid Direct - 0600
       # Trucking Paid Direct - 0601
-      # Customs Entry - 0602 
+      # Customs Entry - 0602
       # Freight Charges - 0603
       # Trucking Charges - 0604
       all_codes = Set.new(invoice.broker_invoice_lines.map {|line| line.charge_code})
-      invoice.broker_invoice_lines.select do |line| 
+      invoice.broker_invoice_lines.select do |line|
         if line.charge_code == "0001"
           !all_codes.include?("0099")
         else
-          !SUPPRESS_ACCOUNTING_CODES.include?(line.charge_code) 
+          !SUPPRESS_ACCOUNTING_CODES.include?(line.charge_code)
         end
       end
     end

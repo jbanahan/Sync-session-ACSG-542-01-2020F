@@ -2,7 +2,6 @@
 module ValidatesField
   extend ActiveSupport::Concern
   include FieldValidationHelper
- 
 
   def validate_field obj, opt = {}
     opt = {yield_matches: false, yield_failures: true}.merge opt
@@ -28,24 +27,24 @@ module ValidatesField
       end
       next unless passed
 
-      #left operand
+      # left operand
       if ['eqfdec', 'nqfdec', 'gtfdec', 'ltfdec'].include? attrs['operator']
         field_1 = model_field.process_export(obj, nil, true)
         field_2 = attrs['secondary_model_field'].process_export(obj, nil, true)
         tested_val = (field_1 - field_2) / field_2
       else
-        tested_val = model_field.process_export(obj,nil,true)
+        tested_val = model_field.process_export(obj, nil, true)
       end
-      #right operand
+      # right operand
       value = attrs["value"]
       cc_hash = {"model_field_uid" => model_field.uid.to_s, "operator" => attrs["operator"], "value" => value}
       if attrs["secondary_model_field"].present?
         cc_hash["secondary_model_field_uid"] = attrs["secondary_model_field"].uid.to_s
       end
       sc = condition_criterion(cc_hash)
-      op_label = CriterionOperator::OPERATORS.find{ |op| op.key == attrs["operator"]}.label.downcase
-      #If this option is used, any block will have to check this attribute and adjust message accordingly
-      fail_if_matches = attrs['fail_if_matches'] 
+      op_label = CriterionOperator::OPERATORS.find { |op| op.key == attrs["operator"]}.label.downcase
+      # If this option is used, any block will have to check this attribute and adjust message accordingly
+      fail_if_matches = attrs['fail_if_matches']
       fail = fail_if_matches ? sc.test?(obj, nil, {split_field: attrs['split_field']}) : !sc.test?(obj, nil, {split_field: attrs['split_field']})
       allow_blank = attrs['allow_blank'].to_s.to_boolean
 
@@ -62,7 +61,7 @@ module ValidatesField
       end
       tested += 1
     end
-    
+
     messages.delete_if(&:blank?).join("\n").presence if tested == messages.count
   end
 end

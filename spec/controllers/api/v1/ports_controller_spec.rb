@@ -19,8 +19,8 @@ describe Api::V1::PortsController do
       expect(j.size).to eq 0
     end
     it "should allow name filter" do
-      p = Factory(:port,name:'XabX')
-      p2 = Factory(:port,name:'XdeX')
+      p = Factory(:port, name:'XabX')
+      p2 = Factory(:port, name:'XdeX')
       get :autocomplete, n: 'ab'
       expect(response).to be_success
       j = JSON.parse response.body
@@ -30,7 +30,7 @@ describe Api::V1::PortsController do
     end
 
     it "searches on schedule d" do
-      p = Factory(:port,name:'XabX', schedule_d_code: "1234", schedule_k_code: "")
+      p = Factory(:port, name:'XabX', schedule_d_code: "1234", schedule_k_code: "")
 
       get :autocomplete, n: '12'
       expect(response).to be_success
@@ -40,7 +40,7 @@ describe Api::V1::PortsController do
     end
 
     it "searches on schedule K" do
-      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "12345")
+      p = Factory(:port, name:'XabX', schedule_d_code: "", schedule_k_code: "12345")
 
       get :autocomplete, n: '12'
       expect(response).to be_success
@@ -50,7 +50,7 @@ describe Api::V1::PortsController do
     end
 
     it "searches on locode" do
-      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "", unlocode: "LOCOD")
+      p = Factory(:port, name:'XabX', schedule_d_code: "", schedule_k_code: "", unlocode: "LOCOD")
 
       get :autocomplete, n: 'cod'
       expect(response).to be_success
@@ -60,7 +60,7 @@ describe Api::V1::PortsController do
     end
 
     it "searches on cbsa port" do
-      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "", cbsa_port: "1234")
+      p = Factory(:port, name:'XabX', schedule_d_code: "", schedule_k_code: "", cbsa_port: "1234")
 
       get :autocomplete, n: '12'
       expect(response).to be_success
@@ -70,7 +70,7 @@ describe Api::V1::PortsController do
     end
 
     it "searches on iata code" do
-      p = Factory(:port,name:'XabX', schedule_d_code: "", schedule_k_code: "", cbsa_port: "", iata_code: "IAT")
+      p = Factory(:port, name:'XabX', schedule_d_code: "", schedule_k_code: "", cbsa_port: "", iata_code: "IAT")
 
       get :autocomplete, n: 'T'
       expect(response).to be_success

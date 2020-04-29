@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   end
 
   def generate_and_send_invoice_files(entry_snapshot, invoice_snapshot, invoice)
-    # It's possible due to some error conditions that we'll have sent one invoice type for the invoice, but not 
+    # It's possible due to some error conditions that we'll have sent one invoice type for the invoice, but not
     # another type.  So make sure we're not sending the invoice type over and over again.
     if has_duty_charges?(invoice_snapshot) && invoice_type_needs_sending?(invoice, "DUTY")
       sent = false
@@ -88,7 +88,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         rescue => e
           handle_errored_sends(invoice, "DUTY", e)
           return nil
-        end 
+        end
       end
 
       begin
@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         rescue => e
           handle_errored_sends(invoice, "CONTAINER", e)
           return nil
-        end 
+        end
       end
 
       begin
@@ -161,7 +161,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   ContainerBillingKey ||= Struct.new(:bill_number, :container_number)
 
   def generate_and_send_container_charges(entry_snapshot, invoice_snapshot, invoice)
-    # Strip any non-alphanumeric chars..not sure if ever bill using them or not, but PVH appears to have systemic issues if 
+    # Strip any non-alphanumeric chars..not sure if ever bill using them or not, but PVH appears to have systemic issues if
     # we even have a hyphen in the invoice number, so just be safe and clear it out.
     invoice_number = mf(invoice_snapshot, :bi_invoice_number).gsub(/[^A-Za-z0-9]/, "")
     invoice_date = mf(invoice_snapshot, :bi_invoice_date)
@@ -177,7 +177,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       # Write prorated charges out
 
       # This method will split the invoice lines according to the method required by the mode of transport / etc
-      # The resulting object is a hash that is keyed by the bill number / container value to utilize when sending 
+      # The resulting object is a hash that is keyed by the bill number / container value to utilize when sending
       # the data to GT Nexus.  Each value contains an array of InvoiceLineData objects, containing all the lines
       # pertinent to the bill/container key.
       invoice_lines = extract_and_sort_invoice_line_data(entry_snapshot)
@@ -234,7 +234,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         total_weight = BigDecimal("1")
         proration_sums[invoice_line_data.keys.first] = total_weight
       else
-        # Raise an error...we have multiple billing units, but none of them have weight amounts so we can't 
+        # Raise an error...we have multiple billing units, but none of them have weight amounts so we can't
         # accurately prorate the values.  We COULD prorate evenly...or fall back to volume?
         raise "Unable to calculate proration amounts.  No shipments lines associated with this entry have weights recorded for them."
       end
@@ -301,12 +301,12 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
       customer_number = mf(invoice_snapshot, "bi_customer_number").to_s.upcase
       bill_to_name = mf(invoice_snapshot, "bi_to_name").to_s.upcase
       # We do some form of special billing for PVH, in that we bill any Pierpass charges to a separate PVH entity.
-      # PVH does not want those charges sent to GTN.  Operations is supposed to only be billing Pierpass to that account, 
+      # PVH does not want those charges sent to GTN.  Operations is supposed to only be billing Pierpass to that account,
       # everything else is sent to 'PVH Corp'.  So, we should be able to accept anything billed to that account name.
       # Unfortunately, the bill to customer used for both cases is just "PVH".
 
-      # We also bill PVH under a separate accounts of PVHCA and PVHNE. 
-      # PVHCA is "special projects" for a team at PVH which they do not want sent to GTN.  
+      # We also bill PVH under a separate accounts of PVHCA and PVHNE.
+      # PVHCA is "special projects" for a team at PVH which they do not want sent to GTN.
       # PVHNE is neckwear and none of that data is in GTN either.
       # Therefore, suppress anything for these two accounts.
       return customer_number == "PVH" && bill_to_name == "PVH CORP"
@@ -318,7 +318,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   def generate_and_send_reversal(entry_snapshot, invoice_snapshot, invoice, invoice_type)
     original_invoice, invoice_xml_lines = find_and_reverse_original_invoice_xml_lines(entry_snapshot, invoice_snapshot, invoice_type)
     return false if invoice_xml_lines.blank?
-    
+
     generate_and_send_invoice_xml(invoice, invoice_snapshot, invoice_type, invoice_number(entry_snapshot, invoice_snapshot, invoice_type)) do |details|
       invoice_xml_lines.each do |line|
         details << line
@@ -565,17 +565,17 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     # We don't actually have time values for when we issue invoices, so just set to noon
     # The ActiveSupport::TimeZone sets either "EDT" or "EST" depending on the time of the year
     generate_date_time_elements(add_element(charge_field, "ChargeDate"), invoice_date.strftime("%Y-%m-%d"), "12:00:00", timezone: "UTC")
-    
-    # Technically, all reversals should be handled via the find_and_reverse_original_invoice_xml_lines method, which 
+
+    # Technically, all reversals should be handled via the find_and_reverse_original_invoice_xml_lines method, which
     # just builds the xml for the invoice from the existing sent invoice.  However, there WILL be times where that invoice
-    # doesn't exist any longer (someone cleared the sync record, somethign screwy happened with billing), so we're going to have to 
+    # doesn't exist any longer (someone cleared the sync record, somethign screwy happened with billing), so we're going to have to
     # also handle the decrement (credit) case here too.  So if the amount is negative, then just send a purpose of decrement
     # and send the absolute value of the amount.
     positive = amount && amount >= 0
     add_element(charge_field, "Value", amount&.abs)
     add_element(charge_field, "Currency", currency)
     add_element(charge_field, "Purpose", positive ? "Increment" : "Decrement")
-    
+
     charge_field
   end
 
@@ -587,7 +587,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   end
 
   def find_shipments_by_entry_snapshot entry_snapshot
-    find_shipments(mf(entry_snapshot, :ent_transport_mode_code), 
+    find_shipments(mf(entry_snapshot, :ent_transport_mode_code),
       Entry.split_newline_values(mf(entry_snapshot, :ent_mbols).to_s),
       Entry.split_newline_values(entry_house_bills(entry_snapshot)))
   end
@@ -612,7 +612,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     {"DUTY" => DUTY_SYNC, "CONTAINER" => CONTAINER_SYNC}
   end
 
-  # This method will extract all charge codes associated with container billing and will skip 
+  # This method will extract all charge codes associated with container billing and will skip
   # any charge code listed by the skip codes method
   def extract_container_level_charges invoice_snapshot
     codes_to_skip = skip_codes + duty_level_codes.keys
@@ -701,7 +701,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
   def find_and_reverse_original_invoice_xml_lines entry_snapshot, invoice_snapshot, invoice_type
     # What we're looking for is an debit invoice that was issued prior to the given snapshot that has the original
-    # amounts billed to the customer.  This is done like this because we're using actual entry data to calculate 
+    # amounts billed to the customer.  This is done like this because we're using actual entry data to calculate
     # billing. So, in the time between when the original invoice was issued and the reversal is issued, entry data
     # may have changed.  However, we want to reverse all the lines at the same rates they were originally issued.
     # The only way to accomplish that is to retrieve the original bill and then reverse the amounts from that.
@@ -724,24 +724,24 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
           invoice = find_entity_object(other_invoice)
           next if invoice.nil?
 
-          sync_record = invoice.sync_records.find { |sr| sr.trading_partner == reversal_invoice_type(invoice_type) }      
+          sync_record = invoice.sync_records.find { |sr| sr.trading_partner == reversal_invoice_type(invoice_type) }
           if sync_record.nil? || sync_record.sent_at.nil?
             original_invoice = invoice
           end
-          
+
           break if original_invoice
         end
       end
     end
 
     # If the original invoice can't be found, just bill this one normally.  This should be a corner case where something
-    # was only partially reversed or something like that.  If that's the case, we still need to issue the credit, so 
+    # was only partially reversed or something like that.  If that's the case, we still need to issue the credit, so
     # we can just do that using that standard billing generation code.
     return nil if original_invoice.nil?
 
     # Since we have the original invoice, we can then find the xml that was sent for it through the sync record
     sync_record = original_invoice.sync_records.find { |sr| sr.trading_partner == invoice_type_xref[invoice_type] }
-    
+
     original_file = sync_record&.ftp_session&.attachment
     return nil if original_file.nil?
 
@@ -760,7 +760,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
         if purpose.nil?
           add_element(field, "Purpose", "Decrement")
         else
-          purpose.text = purpose.text.to_s.strip.upcase == "INCREMENT" ? "Decrement" : "Increment" 
+          purpose.text = purpose.text.to_s.strip.upcase == "INCREMENT" ? "Decrement" : "Increment"
         end
       end
     end
@@ -779,7 +779,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
           # US suffixes are alphabetic (A, B, C, etc..)
           val = mf(s1, :bi_suffix).to_s <=> mf(s2, :bi_suffix).to_s
         end
-        
+
       end
       val
     end

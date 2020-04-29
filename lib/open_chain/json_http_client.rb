@@ -61,7 +61,7 @@ module OpenChain; class JsonHttpClient < HttpClient
       end
       send_request uri, request_method, additional_headers, authorization_token
     end
-    
+
     def json_response? response
       response['content-type'].to_s.include? JSON_MIME
     end

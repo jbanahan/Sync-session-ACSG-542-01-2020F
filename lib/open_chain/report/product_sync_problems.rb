@@ -27,7 +27,7 @@ module OpenChain
           row_cursor += 1
         end
 
-        t = Tempfile.new(['product_sync_problems','.xls'])
+        t = Tempfile.new(['product_sync_problems', '.xls'])
         wb.write t.path
         t
       end

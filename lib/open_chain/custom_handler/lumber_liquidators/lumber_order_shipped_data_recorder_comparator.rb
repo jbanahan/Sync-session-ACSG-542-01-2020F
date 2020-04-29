@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_s
 require 'open_chain/entity_compare/uncancelled_shipment_comparator'
 
 # Extracts the data from the snapshot that LL wants to store off as "milestone snapshot" data, as a point
-# in time reference to what these values were when the order was booked (if the order is re-booked, the 
+# in time reference to what these values were when the order was booked (if the order is re-booked, the
 # the values will get updated).
 #
 # We're actually going to refer to "created" as when the line itself was booked.
@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
   include OpenChain::EntityCompare::ComparatorHelper
 
   def self.accept? snapshot
-    # The last exported from source field is set by the GT Nexus ASN Parser.  LL wants this data to be recorded when 
+    # The last exported from source field is set by the GT Nexus ASN Parser.  LL wants this data to be recorded when
     # the first ASN for the shipment is sent back from GTN, this is how we're tracking that.
     super(snapshot) && !snapshot.recordable.try(:last_exported_from_source).nil?
   end
@@ -40,7 +40,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
 
     shipment_reference = mf(new_snapshot, :shp_ref)
 
-    # Now that we have a listing of every order on the shipment and the lines for each one, we can 
+    # Now that we have a listing of every order on the shipment and the lines for each one, we can
     # lock them and update each line that requires it and record the shipping data for the lines.
     user = User.integration
     order_data.each_pair do |order_id, lines|
@@ -48,7 +48,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
       next unless order
 
       updated = false
-      Lock.db_lock(order) do 
+      Lock.db_lock(order) do
         lines.each do |line_data|
 
           line = order.order_lines.find {|l| l.id == line_data[:line_id] }
@@ -131,7 +131,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberOr
     def cdefs
       @cdefs ||= self.class.prep_custom_definitions [
         :ord_country_of_origin,
-        :ordln_po_shipped_article, :ordln_po_shipped_quantity, :ordln_po_shipped_hts, 
+        :ordln_po_shipped_article, :ordln_po_shipped_quantity, :ordln_po_shipped_hts,
         :ordln_po_shipped_price_per_unit, :ordln_po_shipped_total_price, :ordln_po_shipped_country_origin,
         :ordln_po_shipped_bol, :ordln_po_shipped_container_number, :ordln_po_shipped_seal_number]
     end

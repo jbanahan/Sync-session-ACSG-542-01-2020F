@@ -2,12 +2,12 @@ describe ValidationRuleEntryTariffMatchesProduct do
   context "full rule test" do
     before :each do
       @c = Factory(:company)
-      @t = Factory(:tariff_record,hts_1:'1234567890',classification:Factory(:classification,product:Factory(:product,importer:@c)))
-      @ct = Factory(:commercial_invoice_tariff,hts_code:@t.hts_1,
+      @t = Factory(:tariff_record, hts_1:'1234567890', classification:Factory(:classification, product:Factory(:product, importer:@c)))
+      @ct = Factory(:commercial_invoice_tariff, hts_code:@t.hts_1,
         commercial_invoice_line:Factory(:commercial_invoice_line,
           part_number:@t.product.unique_identifier,
           commercial_invoice:Factory(:commercial_invoice,
-            entry:Factory(:entry,import_country:@t.classification.country,
+            entry:Factory(:entry, import_country:@t.classification.country,
               importer:@c
             )
           )

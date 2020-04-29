@@ -1,17 +1,17 @@
-describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do 
+describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
 
   subject { described_class }
 
   describe "accept?" do
 
-    let (:snapshot) { 
+    let (:snapshot) {
       s = EntitySnapshot.new
       s.recordable = entry
       s
     }
 
-    let (:entry) { 
-      e = Entry.new file_logged_date: Date.new(2019, 4, 24), customer_number: "PVH" 
+    let (:entry) {
+      e = Entry.new file_logged_date: Date.new(2019, 4, 24), customer_number: "PVH"
       e.broker_invoices << BrokerInvoice.new(invoice_number: "INV")
       e
     }
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::Pvh::PvhEntryBillingComparator do
       stub_master_setup
     }
 
-    it "accepts PVHCANADA snapshots" do 
+    it "accepts PVHCANADA snapshots" do
       entry.customer_number = "PVHCANADA"
       expect(master_setup).to receive(:custom_feature?).with("PVH Canada GTN Billing").and_return true
       expect(subject.accept? snapshot).to eq true

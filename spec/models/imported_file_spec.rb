@@ -3,7 +3,7 @@ describe ImportedFile do
     it "should build proper where clause" do
       f = ImportedFile.new :id => 25
 
-      results = [1,2,3]
+      results = [1, 2, 3]
       query = nil
       expect(f).to receive(:execute_query) do |q|
         query = q
@@ -22,11 +22,11 @@ describe ImportedFile do
     end
     it "should return results" do
       f = Factory(:imported_file)
-      fir = f.file_import_results.create!(:finished_at=>Time.now) #only shows for last finished result
+      fir = f.file_import_results.create!(:finished_at=>Time.now) # only shows for last finished result
       p1 = Factory(:product)
       p2 = Factory(:product)
-      [p1,p2].each {|p| fir.change_records.create!(:recordable=>p)}
-      expect(f.result_keys).to eq([p1.id,p2.id])
+      [p1, p2].each {|p| fir.change_records.create!(:recordable=>p)}
+      expect(f.result_keys).to eq([p1.id, p2.id])
     end
   end
 
@@ -44,9 +44,9 @@ describe ImportedFile do
         f = Factory(:imported_file, :user=>current_user, :attached_file_name=>original_attachment_name)
         mail = double "mail delivery"
         allow(mail).to receive(:deliver_now).and_return(nil)
-        expect(OpenMailer).to receive(:send_s3_file).with(current_user,to,cc,subj,body,'chain-io',s3_path,original_attachment_name).and_return(mail)
+        expect(OpenMailer).to receive(:send_s3_file).with(current_user, to, cc, subj, body, 'chain-io', s3_path, original_attachment_name).and_return(mail)
         expect(f).to receive(:make_updated_file).and_return(s3_path)
-        expect(f).to receive(:make_imported_file_download_from_s3_path).with(s3_path,current_user,[]).and_call_original
+        expect(f).to receive(:make_imported_file_download_from_s3_path).with(s3_path, current_user, []).and_call_original
         expect(OpenChain::S3).to receive(:download_to_tempfile).with('chain-io', s3_path).and_return(temp)
         f.email_updated_file current_user, to, cc, subj, body
       ensure
@@ -64,7 +64,7 @@ describe ImportedFile do
         @attached = double "Attachment"
         expect(@attached).to receive(:path).and_return("some/location.xls")
         expect(OpenChain::XLClient).to receive(:new).with("some/location.xls").and_return(@xlc)
-        @imported_file = Factory(:imported_file,:module_type=>"Product",:user=>Factory(:user),:attached_file_name=>'abc.xls')
+        @imported_file = Factory(:imported_file, :module_type=>"Product", :user=>Factory(:user), :attached_file_name=>'abc.xls')
         expect(@imported_file).to receive(:attached).and_return(@attached)
         success_hash = {"result"=>"success"}
         @expected_alternate_location = /#{master_setup.uuid}\/updated_imported_files\/#{@imported_file.user_id}\/[0-9]{10}\.xls/
@@ -76,43 +76,43 @@ describe ImportedFile do
         expect(result).to match @expected_alternate_location
       end
       it 'should update header level products' do
-        ["prod_name","prod_uid"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
-        p1 = Factory(:product,:name=>"p1name")
-        p2 = Factory(:product,:name=>"p2name")
-        p3 = Factory(:product,:name=>"p3name")
+        ["prod_name", "prod_uid"].each_with_index {|v, i| @imported_file.search_columns.create!(:model_field_uid=>v, :rank=>i)}
+        p1 = Factory(:product, :name=>"p1name")
+        p2 = Factory(:product, :name=>"p2name")
+        p3 = Factory(:product, :name=>"p3name")
         expect(@xlc).to receive(:last_row_number).and_return(2)
-        #first row has extra whitespace that should be stripped
-        expect(@xlc).to receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname1","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>" #{p1.unique_identifier} ","datatype"=>"string"}}])
-        expect(@xlc).to receive(:get_row).with(0,1).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname2","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p2.unique_identifier,"datatype"=>"string"}}])
-        expect(@xlc).to receive(:get_row).with(0,2).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname3","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>p3.unique_identifier,"datatype"=>"string"}}])
-        expect(@xlc).to receive(:set_cell).with(0,0,0,p1.name)
-        expect(@xlc).to receive(:set_cell).with(0,1,0,p2.name)
-        expect(@xlc).to receive(:set_cell).with(0,2,0,p3.name)
+        # first row has extra whitespace that should be stripped
+        expect(@xlc).to receive(:get_row).with(0, 0).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>"oldname1", "datatype"=>"string"}}, {"position"=>{"column"=>1}, "cell"=>{"value"=>" #{p1.unique_identifier} ", "datatype"=>"string"}}])
+        expect(@xlc).to receive(:get_row).with(0, 1).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>"oldname2", "datatype"=>"string"}}, {"position"=>{"column"=>1}, "cell"=>{"value"=>p2.unique_identifier, "datatype"=>"string"}}])
+        expect(@xlc).to receive(:get_row).with(0, 2).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>"oldname3", "datatype"=>"string"}}, {"position"=>{"column"=>1}, "cell"=>{"value"=>p3.unique_identifier, "datatype"=>"string"}}])
+        expect(@xlc).to receive(:set_cell).with(0, 0, 0, p1.name)
+        expect(@xlc).to receive(:set_cell).with(0, 1, 0, p2.name)
+        expect(@xlc).to receive(:set_cell).with(0, 2, 0, p3.name)
         @imported_file.make_updated_file
       end
       it 'should not clear fields when product missing' do
         missing_value = "missing val"
-        ["prod_name","prod_uid"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        ["prod_name", "prod_uid"].each_with_index {|v, i| @imported_file.search_columns.create!(:model_field_uid=>v, :rank=>i)}
         expect(@xlc).to receive(:last_row_number).and_return(0)
-        expect(@xlc).to receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>"oldname1","datatype"=>"string"}},{"position"=>{"column"=>1},"cell"=>{"value"=>missing_value,"datatype"=>"string"}}])
-        expect(@xlc).not_to receive(:set_cell).with(0,0,0,"")
+        expect(@xlc).to receive(:get_row).with(0, 0).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>"oldname1", "datatype"=>"string"}}, {"position"=>{"column"=>1}, "cell"=>{"value"=>missing_value, "datatype"=>"string"}}])
+        expect(@xlc).not_to receive(:set_cell).with(0, 0, 0, "")
         @imported_file.make_updated_file
       end
       it 'should update custom values' do
-        cd = Factory(:custom_definition,:module_type=>"Product")
+        cd = Factory(:custom_definition, :module_type=>"Product")
         p = Factory(:product)
         cv = p.get_custom_value(cd)
         cv.value = "x"
         cv.save!
-        [cd.model_field_uid,"prod_uid"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        [cd.model_field_uid, "prod_uid"].each_with_index {|v, i| @imported_file.search_columns.create!(:model_field_uid=>v, :rank=>i)}
         expect(@xlc).to receive(:last_row_number).and_return(0)
-        expect(@xlc).to receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>1},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}}])
-        expect(@xlc).to receive(:set_cell).with(0,0,0,"x")
+        expect(@xlc).to receive(:get_row).with(0, 0).and_return([{"position"=>{"column"=>1}, "cell"=>{"value"=>p.unique_identifier, "datatype"=>"string"}}])
+        expect(@xlc).to receive(:set_cell).with(0, 0, 0, "x")
         @imported_file.make_updated_file
       end
       it 'should update classification level items' do
-        cd = Factory(:custom_definition,:module_type=>"Classification")
-        ["prod_uid","class_cntry_iso",cd.model_field_uid].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        cd = Factory(:custom_definition, :module_type=>"Classification")
+        ["prod_uid", "class_cntry_iso", cd.model_field_uid].each_with_index {|v, i| @imported_file.search_columns.create!(:model_field_uid=>v, :rank=>i)}
         p = Factory(:product)
         ctry = Factory(:country)
         c = p.classifications.create!(:country_id=>ctry.id)
@@ -120,15 +120,15 @@ describe ImportedFile do
         cv.value = "y"
         cv.save!
         expect(@xlc).to receive(:last_row_number).and_return(0)
-        expect(@xlc).to receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>"q","datatype"=>"string"}}])
-        expect(@xlc).to receive(:set_cell).with(0,0,2,"y")
+        expect(@xlc).to receive(:get_row).with(0, 0).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>p.unique_identifier, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1}, "cell"=>{"value"=>ctry.iso_code, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2}, "cell"=>{"value"=>"q", "datatype"=>"string"}}])
+        expect(@xlc).to receive(:set_cell).with(0, 0, 2, "y")
         @imported_file.make_updated_file
       end
       it 'should clear fields for missing child object' do
-        cd = Factory(:custom_definition,:module_type=>"Classification")
-        ["prod_uid","class_cntry_iso",cd.model_field_uid].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        cd = Factory(:custom_definition, :module_type=>"Classification")
+        ["prod_uid", "class_cntry_iso", cd.model_field_uid].each_with_index {|v, i| @imported_file.search_columns.create!(:model_field_uid=>v, :rank=>i)}
         p = Factory(:product)
         ctry = Factory(:country)
         c = p.classifications.create!(:country_id=>ctry.id)
@@ -136,73 +136,73 @@ describe ImportedFile do
         cv.value = "y"
         cv.save!
         expect(@xlc).to receive(:last_row_number).and_return(0)
-        expect(@xlc).to receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>"BAD","datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>"q","datatype"=>"string"}}])
-        expect(@xlc).to receive(:set_cell).with(0,0,2,"")
+        expect(@xlc).to receive(:get_row).with(0, 0).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>p.unique_identifier, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1}, "cell"=>{"value"=>"BAD", "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2}, "cell"=>{"value"=>"q", "datatype"=>"string"}}])
+        expect(@xlc).to receive(:set_cell).with(0, 0, 2, "")
         @imported_file.make_updated_file
       end
 
       it 'should update tariff level items' do
-        ["prod_uid","class_cntry_iso","hts_line_number","hts_hts_1"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        ["prod_uid", "class_cntry_iso", "hts_line_number", "hts_hts_1"].each_with_index {|v, i| @imported_file.search_columns.create!(:model_field_uid=>v, :rank=>i)}
         ctry = Factory(:country)
         bad_product = Factory(:product)
-        bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4,:hts_1=>'0984717191')
+        bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4, :hts_1=>'0984717191')
         p = Factory(:product)
         c = p.classifications.create!(:country_id=>ctry.id)
-        t = c.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
+        t = c.tariff_records.create(:line_number=>4, :hts_1=>'1234567890')
         expect(@xlc).to receive(:last_row_number).and_return(0)
-        expect(@xlc).to receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p.unique_identifier,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t.line_number,"datatype"=>"number"}},
-                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        expect(@xlc).to receive(:set_cell).with(0,0,3,"1234567890".hts_format)
+        expect(@xlc).to receive(:get_row).with(0, 0).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>p.unique_identifier, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1}, "cell"=>{"value"=>ctry.iso_code, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2}, "cell"=>{"value"=>t.line_number, "datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3}, "cell"=>{"value"=>'7777777', "datatype"=>"number"}}])
+        expect(@xlc).to receive(:set_cell).with(0, 0, 3, "1234567890".hts_format)
         @imported_file.make_updated_file
       end
       it 'should add extra countries' do
-        ["prod_uid","class_cntry_iso","hts_line_number","hts_hts_1"].each_with_index {|v,i| @imported_file.search_columns.create!(:model_field_uid=>v,:rank=>i)}
+        ["prod_uid", "class_cntry_iso", "hts_line_number", "hts_hts_1"].each_with_index {|v, i| @imported_file.search_columns.create!(:model_field_uid=>v, :rank=>i)}
         ctry = Factory(:country)
         ctry_2 = Factory(:country)
         bad_product = Factory(:product)
-        bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4,:hts_1=>'0984717191')
+        bad_product.classifications.create!(:country_id=>ctry.id).tariff_records.create(:line_number=>4, :hts_1=>'0984717191')
 
         p_a = Factory(:product)
         c_a = p_a.classifications.create!(:country_id=>ctry.id)
-        t_a = c_a.tariff_records.create(:line_number=>4,:hts_1=>'1234567890')
+        t_a = c_a.tariff_records.create(:line_number=>4, :hts_1=>'1234567890')
         c_a_2 = p_a.classifications.create!(:country_id=>ctry_2.id)
-        t_a_2 = c_a_2.tariff_records.create!(:line_number=>4,:hts_1=>'988777789')
+        t_a_2 = c_a_2.tariff_records.create!(:line_number=>4, :hts_1=>'988777789')
 
         p_b = Factory(:product)
         c_b = p_b.classifications.create!(:country_id=>ctry.id)
-        t_b = c_b.tariff_records.create(:line_number=>4,:hts_1=>'0987654321')
+        t_b = c_b.tariff_records.create(:line_number=>4, :hts_1=>'0987654321')
         c_b_2 = p_b.classifications.create!(:country_id=>ctry_2.id)
-        t_b_2 = c_b_2.tariff_records.create!(:line_number=>4,:hts_1=>'44444444')
+        t_b_2 = c_b_2.tariff_records.create!(:line_number=>4, :hts_1=>'44444444')
 
-        expect(@xlc).to receive(:last_row_number).exactly(4).times.and_return(1,1,2,3)
-        expect(@xlc).to receive(:get_row).with(0,0).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_a.unique_identifier,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_a.line_number,"datatype"=>"number"}},
-                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        expect(@xlc).to receive(:get_row).with(0,1).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_b.unique_identifier,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_b.line_number,"datatype"=>"number"}},
-                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        expect(@xlc).to receive(:copy_row).with(0,0,2)
-        expect(@xlc).to receive(:copy_row).with(0,1,3)
-        expect(@xlc).to receive(:set_cell).with(0,2,1,ctry_2.iso_code)
-        expect(@xlc).to receive(:set_cell).with(0,3,1,ctry_2.iso_code)
-        expect(@xlc).to receive(:get_row).with(0,2).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_a.unique_identifier,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry_2.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_a.line_number,"datatype"=>"number"}},
-                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        expect(@xlc).to receive(:get_row).with(0,3).and_return([{"position"=>{"column"=>0},"cell"=>{"value"=>p_b.unique_identifier,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>1},"cell"=>{"value"=>ctry_2.iso_code,"datatype"=>"string"}},
-                                                            {"position"=>{"column"=>2},"cell"=>{"value"=>t_b.line_number,"datatype"=>"number"}},
-                                                            {"position"=>{"column"=>3},"cell"=>{"value"=>'7777777',"datatype"=>"number"}}])
-        expect(@xlc).to receive(:set_cell).with(0,0,3,t_a.hts_1.hts_format)
-        expect(@xlc).to receive(:set_cell).with(0,1,3,t_b.hts_1.hts_format)
-        expect(@xlc).to receive(:set_cell).with(0,2,3,t_a_2.hts_1.hts_format)
-        expect(@xlc).to receive(:set_cell).with(0,3,3,t_b_2.hts_1.hts_format)
+        expect(@xlc).to receive(:last_row_number).exactly(4).times.and_return(1, 1, 2, 3)
+        expect(@xlc).to receive(:get_row).with(0, 0).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>p_a.unique_identifier, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1}, "cell"=>{"value"=>ctry.iso_code, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2}, "cell"=>{"value"=>t_a.line_number, "datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3}, "cell"=>{"value"=>'7777777', "datatype"=>"number"}}])
+        expect(@xlc).to receive(:get_row).with(0, 1).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>p_b.unique_identifier, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1}, "cell"=>{"value"=>ctry.iso_code, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2}, "cell"=>{"value"=>t_b.line_number, "datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3}, "cell"=>{"value"=>'7777777', "datatype"=>"number"}}])
+        expect(@xlc).to receive(:copy_row).with(0, 0, 2)
+        expect(@xlc).to receive(:copy_row).with(0, 1, 3)
+        expect(@xlc).to receive(:set_cell).with(0, 2, 1, ctry_2.iso_code)
+        expect(@xlc).to receive(:set_cell).with(0, 3, 1, ctry_2.iso_code)
+        expect(@xlc).to receive(:get_row).with(0, 2).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>p_a.unique_identifier, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1}, "cell"=>{"value"=>ctry_2.iso_code, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2}, "cell"=>{"value"=>t_a.line_number, "datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3}, "cell"=>{"value"=>'7777777', "datatype"=>"number"}}])
+        expect(@xlc).to receive(:get_row).with(0, 3).and_return([{"position"=>{"column"=>0}, "cell"=>{"value"=>p_b.unique_identifier, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>1}, "cell"=>{"value"=>ctry_2.iso_code, "datatype"=>"string"}},
+                                                            {"position"=>{"column"=>2}, "cell"=>{"value"=>t_b.line_number, "datatype"=>"number"}},
+                                                            {"position"=>{"column"=>3}, "cell"=>{"value"=>'7777777', "datatype"=>"number"}}])
+        expect(@xlc).to receive(:set_cell).with(0, 0, 3, t_a.hts_1.hts_format)
+        expect(@xlc).to receive(:set_cell).with(0, 1, 3, t_b.hts_1.hts_format)
+        expect(@xlc).to receive(:set_cell).with(0, 2, 3, t_a_2.hts_1.hts_format)
+        expect(@xlc).to receive(:set_cell).with(0, 3, 3, t_b_2.hts_1.hts_format)
         @imported_file.make_updated_file :extra_country_ids=>[ctry_2.id]
       end
     end
@@ -373,7 +373,7 @@ describe ImportedFile do
       end
 
       it "creates/assigns a change record to the object and file import result" do
-        expect{listener.process_row 3, obj, messages, true}.to change(ChangeRecord, :count).by(1)
+        expect {listener.process_row 3, obj, messages, true}.to change(ChangeRecord, :count).by(1)
         cr = ChangeRecord.first
         expect(cr.unique_identifier).to eq "mf value"
         expect(cr.record_sequence_number).to eq 3
@@ -398,7 +398,7 @@ describe ImportedFile do
         res = imported_file.file_import_results.first
         expect(res.rows_processed).to eq 2
       end
-      
+
       it "updates object and creates snapshot" do
         listener.process_row 3, obj, messages
         expect(obj.last_updated_by).to eq user
@@ -407,7 +407,7 @@ describe ImportedFile do
         expect(snap.context).to eq "nota bene"
         expect(snap.recordable).to eq obj
       end
-      
+
       it "doesn't create change record messages or update file import results if there are no messages" do
         listener.process_row 3, obj, []
         expect(ChangeRecordMessage.count).to eq 0

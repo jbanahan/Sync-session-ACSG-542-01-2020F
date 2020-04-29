@@ -3,8 +3,8 @@ require 'mini_mime'
 
 class OpenMailer < ActionMailer::Base
   default :from => "do-not-reply@vfitrack.net"
-  
-  after_action :handle_sent_email #includes handling for :redirect_to_developer, :send_generic_exception
+
+  after_action :handle_sent_email # includes handling for :redirect_to_developer, :send_generic_exception
 
   ATTACHMENT_LIMIT ||= 10.megabytes
   ATTACHMENT_TEXT ||= <<EOS
@@ -14,16 +14,16 @@ All system attachments are deleted after seven days, please retrieve your attach
 EOS
   BUG_EMAIL = "bug@vandegriftinc.com"
 
-  #send a simple plain text email
+  # send a simple plain text email
   def send_simple_text to, subject, body
 
     @body_content = body
-    mail(:to=>to,:subject=>subject) do |format|
+    mail(:to=>to, :subject=>subject) do |format|
       format.text
     end
   end
 
-  #send a very simple HTML email (attachments are expected to answer as File objects or paths )
+  # send a very simple HTML email (attachments are expected to answer as File objects or paths )
   def send_simple_html to, subject, body, file_attachments = [], mail_options = {}
     @body_content = body
     pm_attachments = []
@@ -40,7 +40,7 @@ EOS
     m
   end
 
-  def send_change(history,subscription,text_only)
+  def send_change(history, subscription, text_only)
     details = history.details_hash
     type = details[:type].nil? ? "Item" : details[:type]
     identifier = details[:identifier].nil? ? "[unknown]" : details[:identifier]
@@ -93,7 +93,7 @@ EOS
     end
   end
 
-  def send_comment(current_user,to_address,comment,link=nil)
+  def send_comment(current_user, to_address, comment, link=nil)
     @user = current_user
     @comment = comment
     @link = link
@@ -126,7 +126,7 @@ EOS
     m
   end
 
-  def send_uploaded_items(to,imported_file,data,current_user)
+  def send_uploaded_items(to, imported_file, data, current_user)
     @current_user = current_user
     data_file_path = Tempfile.new([File.basename(imported_file.attached_file_name, ".*"), File.extname(imported_file.attached_file_name)])
     data_file_path.binmode
@@ -188,8 +188,8 @@ EOS
     end
   end
 
-#ERROR EMAILS
-  def send_search_fail(to,search_name,error_message,ftp_server,ftp_username,ftp_subfolder)
+# ERROR EMAILS
+  def send_search_fail(to, search_name, error_message, ftp_server, ftp_username, ftp_subfolder)
     @search_name = search_name
     @error_message = error_message
     @ftp_server = ftp_server
@@ -211,10 +211,10 @@ EOS
     end
   end
 
-  def send_imported_file_process_fail imported_file, source="Not Specified" #source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
+  def send_imported_file_process_fail imported_file, source="Not Specified" # source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
     @imported_file = imported_file
     @source = source
-    mail(:to=>BUG_EMAIL,:subject =>"[VFI Track Exception] - Imported File Error") do |format|
+    mail(:to=>BUG_EMAIL, :subject =>"[VFI Track Exception] - Imported File Error") do |format|
       format.text
     end
   end
@@ -228,7 +228,7 @@ EOS
     end
   end
 
-  #only Exception#log_me should use this.  Everything else should just call .log_me on the exception
+  # only Exception#log_me should use this.  Everything else should just call .log_me on the exception
   def send_generic_exception e, additional_messages=[], error_message=nil, backtrace=nil, attachment_paths=[]
     @exception = e
     # Sometimes (like from log_me) the error given is just a String, so handle that case.
@@ -279,7 +279,7 @@ EOS
     end
   end
 
-  #send survey response invite
+  # send survey response invite
   def send_survey_invite survey_response
     survey = survey_response.survey
     @subtitle = survey_response.subtitle
@@ -289,7 +289,7 @@ EOS
     to = [survey_response.user.try(:email)]
     to << survey_response.group
     to = explode_group_and_mailing_lists to.compact, "TO"
-    mail(:to=>to,:subject=>email_subject) do |format|
+    mail(:to=>to, :subject=>email_subject) do |format|
       format.html
     end
   end
@@ -302,7 +302,7 @@ EOS
     end
   end
 
-  #send survey update notification
+  # send survey update notification
   def send_survey_subscription_update survey_response, response_updates, survey_subscriptions, corrective_action_plan = false
     @cap_mode = corrective_action_plan
     @link_addr = survey_response_url(survey_response, host: MasterSetup.get.request_host)
@@ -315,7 +315,7 @@ EOS
     end
   end
 
-  #send survey update to survey response assigned user
+  # send survey update to survey response assigned user
   def send_survey_user_update survey_response, corrective_action_plan = false
     @cap_mode = corrective_action_plan
     @link_addr = survey_url(survey_response.survey, host: MasterSetup.get.request_host)
@@ -331,14 +331,14 @@ EOS
   def send_support_ticket_to_agent support_ticket
     to = support_ticket.agent ? support_ticket.agent.email : "support@vandegriftinc.com"
     @ticket = support_ticket
-    mail(:to=>to,:subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
+    mail(:to=>to, :subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
       format.html
     end
   end
 
   def send_support_ticket_to_requestor support_ticket
     @ticket = support_ticket
-    mail(:to=>support_ticket.requestor.email,:subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
+    mail(:to=>support_ticket.requestor.email, :subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
       format.html
     end
   end
@@ -353,7 +353,7 @@ EOS
 
   def send_tariff_set_change_notification tariff_set, user
     @ts = tariff_set
-    mail(to:user.email,subject:"[VFI Track] Tariff Update - #{tariff_set.country.name}") do |format|
+    mail(to:user.email, subject:"[VFI Track] Tariff Update - #{tariff_set.country.name}") do |format|
       format.text
     end
   end
@@ -370,12 +370,12 @@ EOS
 
     @login_url = new_user_session_url(host: MasterSetup.get.request_host)
 
-    mail(to:user.email,subject:"[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|
+    mail(to:user.email, subject:"[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|
       format.html
     end
   end
 
-  def send_high_priority_tasks(user, tasks) #tasks is a list of ProjectDeliverable objects
+  def send_high_priority_tasks(user, tasks) # tasks is a list of ProjectDeliverable objects
     @user = user
     @tasks = tasks
     time = Time.now
@@ -451,12 +451,12 @@ EOS
 
   private
 
-    #http://developer.postmarkapp.com/developer-send-api.html#attachments
-    def extension_blacklisted? file 
-      [".vbs", ".exe", ".bin", ".bat", ".chm", ".com", ".cpl", 
-       ".crt", ".hlp", ".hta", ".inf", ".ins", ".isp", ".jse", 
-       ".lnk", ".mdb", ".pcd", ".pif", ".reg", ".scr", ".sct", 
-       ".shs", ".vbe", ".vba", ".wsf", ".wsh", ".wsl", ".msc", 
+    # http://developer.postmarkapp.com/developer-send-api.html#attachments
+    def extension_blacklisted? file
+      [".vbs", ".exe", ".bin", ".bat", ".chm", ".com", ".cpl",
+       ".crt", ".hlp", ".hta", ".inf", ".ins", ".isp", ".jse",
+       ".lnk", ".mdb", ".pcd", ".pif", ".reg", ".scr", ".sct",
+       ".shs", ".vbe", ".vba", ".wsf", ".wsh", ".wsl", ".msc",
        ".msi", ".msp", ".mst"].include? File.extname(file)
     end
 
@@ -498,7 +498,7 @@ EOS
       local_attachments = {}
       @attachment_messages = []
 
-      approved_attachments = Array.wrap(file_attachments).reject{ |f| extension_blacklisted? f }      
+      approved_attachments = Array.wrap(file_attachments).reject { |f| extension_blacklisted? f }
       approved_attachments.each do |file|
 
         save_large_attachment(file, email_to) do |email_attachment, attachment_text|
@@ -561,8 +561,8 @@ EOS
       if action_name == "send_generic_exception"
         # We never want to suppress exception emails, otherwise issues when testing could get missed very easily
         log_email mail, suppressed: false
-        # In dev, we don't actually want to email errors...we're actually going to use the logger instead to render them 
-        redirect_to_developer 
+        # In dev, we don't actually want to email errors...we're actually going to use the logger instead to render them
+        redirect_to_developer
       else
         # It's possible via the API we provide to mark a single instance of the mail object as being suppressed so check for that or if
         # we're suppressing ALL emails (like on dev or live test systems)
@@ -576,7 +576,7 @@ EOS
         end
 
         message.delivery_method(LoggingMailerProxy, mail.delivery_method.settings.merge({original_delivery_method: mail.delivery_method, sent_email: sent_email}))
-      end      
+      end
     end
 
     def suppress_email mail
@@ -639,7 +639,7 @@ EOS
         headers['X-ORIGINAL-TO'] = message.to.blank? ? 'blank' : message.to.join(", ")
         headers['X-ORIGINAL-CC'] = message.cc.blank? ? 'blank' : message.cc.join(", ")
         headers['X-ORIGINAL-BCC'] = message.bcc.blank? ? 'blank' : message.bcc.join(", ")
-        #Postmark doesn't like blank strings, nils, or blank lists...
+        # Postmark doesn't like blank strings, nils, or blank lists...
         message.cc = [""]
         message.bcc = [""]
 

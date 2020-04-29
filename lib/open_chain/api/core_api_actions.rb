@@ -1,8 +1,8 @@
 require 'open_chain/api/api_client'
 
 # Provides show / create / update / search api method implementations.
-# 
-# Methods including / extending this module need to provide 
+#
+# Methods including / extending this module need to provide
 # an implemetnation of the core_module method for which api calls should reference.
 
 module OpenChain; module Api; module CoreApiActions
@@ -23,7 +23,7 @@ module OpenChain; module Api; module CoreApiActions
   end
 
   def mf_uid_list_to_param uids
-    uids.blank? ? {} : {"fields" => uids.inject(""){|i, uid| i += "#{uid.to_s},"}[0..-2]}
+    uids.blank? ? {} : {"fields" => uids.inject("") {|i, uid| i += "#{uid.to_s},"}[0..-2]}
   end
 
   def show id, mf_uids

@@ -9,7 +9,7 @@ require 'open_chain/validations/password/username_not_password_validator'
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberPasswordValidationRegistry
 
   def self.child_services
-    [ 
+    [
       OpenChain::CustomHandler::LumberLiquidators::LumberPasswordLengthValidator, OpenChain::Validations::Password::UsernameNotPasswordValidator,
       OpenChain::Validations::Password::PasswordComplexityValidator, OpenChain::CustomHandler::LumberLiquidators::LumberPreviousPasswordValidator
     ]

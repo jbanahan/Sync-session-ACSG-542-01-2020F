@@ -1,4 +1,4 @@
-describe OpenChain::EntityCompare::UncancelledShipmentComparator do 
+describe OpenChain::EntityCompare::UncancelledShipmentComparator do
 
   let (:snapshot) {
     s = EntitySnapshot.new
@@ -10,13 +10,13 @@ describe OpenChain::EntityCompare::UncancelledShipmentComparator do
     Shipment.new
   }
 
-  subject { 
+  subject {
     Class.new {
       extend OpenChain::EntityCompare::UncancelledShipmentComparator
-    } 
+    }
   }
 
-  describe "accept?" do 
+  describe "accept?" do
     it "accepts shipments that are not cancelled" do
       expect(subject.accept? snapshot).to eq true
     end

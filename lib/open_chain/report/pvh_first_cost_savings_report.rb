@@ -66,7 +66,7 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
     file_name = "PVH_First_Cost_Savings_for_Fiscal_#{filename_fiscal_descriptor}_#{ActiveSupport::TimeZone[get_time_zone].now.strftime("%Y-%m-%d")}.xlsx"
     if settings['email'].present?
       workbook_to_tempfile workbook, "PVH First Cost Savings", file_name: "#{file_name}" do |temp|
-        body_msg = "Attached is the \"PVH First Cost Savings Report, #{fiscal_year.to_s}-#{fiscal_month.to_s}\" based on ACH Due Date."
+        body_msg = "Attached is the \"PVH First Cost Savings Report, #{fiscal_year}-#{fiscal_month}\" based on ACH Due Date."
         OpenMailer.send_simple_html(settings['email'], "PVH First Cost Savings Report", body_msg, temp).deliver_now
       end
     else
@@ -273,44 +273,44 @@ module OpenChain; module Report; class PvhFirstCostSavingsReport
     def make_query fiscal_date_start, fiscal_date_end
       <<-SQL
         SELECT
-          ent.entry_number, 
-          ent.release_date, 
-          cil.vendor_name, 
-          factory_company.name AS factory_name, 
-          cil.po_number, 
-          cont.container_number, 
-          ent.transport_mode_code, 
-          cil.quantity, 
-          cil.country_origin_code, 
-          ci.invoice_number, 
-          cil.contract_amount, 
-          cil.part_number, 
-          cil.id AS commercial_invoice_line_id, 
-          ent.master_bills_of_lading, 
-          ent.house_bills_of_lading, 
+          ent.entry_number,
+          ent.release_date,
+          cil.vendor_name,
+          factory_company.name AS factory_name,
+          cil.po_number,
+          cont.container_number,
+          ent.transport_mode_code,
+          cil.quantity,
+          cil.country_origin_code,
+          ci.invoice_number,
+          cil.contract_amount,
+          cil.part_number,
+          cil.id AS commercial_invoice_line_id,
+          ent.master_bills_of_lading,
+          ent.house_bills_of_lading,
           ent.fcl_lcl,
           LEFT(cil.po_number, 4) AS codiv
-        FROM 
-          entries AS ent 
-          INNER JOIN commercial_invoices AS ci ON 
-            ent.id = ci.entry_id 
-          INNER JOIN commercial_invoice_lines AS cil ON 
-            ci.id = cil.commercial_invoice_id 
-          LEFT OUTER JOIN orders AS ord ON 
-            CONCAT('PVH-', cil.po_number) = ord.order_number AND 
-            ent.importer_id = ord.importer_id 
-          LEFT OUTER JOIN companies AS factory_company ON 
-            ord.factory_id = factory_company.id 
-          LEFT OUTER JOIN containers AS cont ON 
-            cil.container_id = cont.id 
-        WHERE 
-          ent.customer_number = 'PVH' AND 
-          ent.fiscal_date >= '#{fiscal_date_start}' AND 
-          ent.fiscal_date <= '#{fiscal_date_end}' AND 
+        FROM
+          entries AS ent
+          INNER JOIN commercial_invoices AS ci ON
+            ent.id = ci.entry_id
+          INNER JOIN commercial_invoice_lines AS cil ON
+            ci.id = cil.commercial_invoice_id
+          LEFT OUTER JOIN orders AS ord ON
+            CONCAT('PVH-', cil.po_number) = ord.order_number AND
+            ent.importer_id = ord.importer_id
+          LEFT OUTER JOIN companies AS factory_company ON
+            ord.factory_id = factory_company.id
+          LEFT OUTER JOIN containers AS cont ON
+            cil.container_id = cont.id
+        WHERE
+          ent.customer_number = 'PVH' AND
+          ent.fiscal_date >= '#{fiscal_date_start}' AND
+          ent.fiscal_date <= '#{fiscal_date_end}' AND
           cil.first_sale = true
         ORDER BY
-          ent.entry_number, 
-          ci.invoice_number, 
+          ent.entry_number,
+          ci.invoice_number,
           cil.po_number
       SQL
     end

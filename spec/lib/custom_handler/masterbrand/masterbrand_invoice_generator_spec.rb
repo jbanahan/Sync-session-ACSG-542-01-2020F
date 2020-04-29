@@ -18,7 +18,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
       expect_any_instance_of(described_class::ReportGenerator).to receive(:create_report_for_invoice).with([e1.id, e2.id, e3.id], invoice).and_return detail_tmp
       expect(described_class).to receive(:email_invoice).with(invoice, "sthubbins@hellhole.co.uk", "MasterBrand autobill invoice 12-17", "MasterBrand autobill invoice 12-17", detail_tmp)
 
-      Timecop.freeze(DateTime.new(2018,1,5)) { described_class.run_schedulable({'email'=>'sthubbins@hellhole.co.uk'}) }
+      Timecop.freeze(DateTime.new(2018, 1, 5)) { described_class.run_schedulable({'email'=>'sthubbins@hellhole.co.uk'}) }
     end
   end
 
@@ -78,9 +78,9 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
 
       billables = [double('billable')]
 
-      expect(described_class).to receive(:write_invoiced_events).with(billables,instance_of(VfiInvoiceLine))
+      expect(described_class).to receive(:write_invoiced_events).with(billables, instance_of(VfiInvoiceLine))
 
-      expect{described_class.bill_new_entries billables, inv}.to change(inv.vfi_invoice_lines,:count).from(0).to(1)
+      expect {described_class.bill_new_entries billables, inv}.to change(inv.vfi_invoice_lines, :count).from(0).to(1)
 
       line = VfiInvoiceLine.first
       expect(line.quantity).to eq billables.length
@@ -93,7 +93,7 @@ describe OpenChain::CustomHandler::Masterbrand::MasterbrandInvoiceGenerator do
   describe "bill_monthly_charge" do
     it "attaches an invoice line" do
       billables = double('billables')
-      expect(described_class).to receive(:write_invoiced_events).with(billables,instance_of(VfiInvoiceLine))
+      expect(described_class).to receive(:write_invoiced_events).with(billables, instance_of(VfiInvoiceLine))
       inv = Factory(:vfi_invoice)
       described_class.bill_monthly_charge billables, inv
       line = VfiInvoice.first.vfi_invoice_lines.first

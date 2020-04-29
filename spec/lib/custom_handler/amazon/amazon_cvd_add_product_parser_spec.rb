@@ -4,7 +4,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser do
   let (:cvd_file) { IO.read 'spec/fixtures/files/amazon_cvd_parts.csv' }
   let (:add_csv_data) { CSV.parse(add_file) }
   let (:cvd_csv_data) { CSV.parse(cvd_file) }
-  
+
   describe "parse" do
 
     subject { described_class }
@@ -19,13 +19,13 @@ describe OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser do
 
   describe "process_part_lines" do
     let (:user) { Factory(:user) }
-    let! (:importer) { 
+    let! (:importer) {
       add_system_identifier(with_customs_management_id(Factory(:importer), "CMID"), "Amazon Reference", "X76YHUR3GKHXS")
     }
     let (:cdefs) { subject.cdefs }
     let (:inbound_file) { InboundFile.new }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:inbound_file).and_return inbound_file
     end
 
@@ -34,7 +34,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser do
 
       subject { described_class.new :add }
 
-      it "creates product and sets FDA data" do 
+      it "creates product and sets FDA data" do
         expect { subject.process_part_lines(user, "US_PGA_ADD_date.csv", csv_rows) }.to change { Product.count }.from(0).to(1)
 
         p = Product.first
@@ -86,7 +86,7 @@ describe OpenChain::CustomHandler::Amazon::AmazonCvdAddProductParser do
       let (:csv_rows) { [cvd_csv_data[1]] }
       subject { described_class.new :cvd }
 
-      it "creates product and sets CVD data" do 
+      it "creates product and sets CVD data" do
         expect { subject.process_part_lines(user, "US_PGA_CVD_date.csv", csv_rows) }.to change { Product.count }.from(0).to(1)
 
         p = Product.first

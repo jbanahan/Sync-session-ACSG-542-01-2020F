@@ -32,12 +32,12 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
 
   def save_object h
     ord = h['id'].blank? ? Order.new : Order.includes([
-      {order_lines: [:piece_sets,{custom_values:[:custom_definition]},:product]},
+      {order_lines: [:piece_sets, {custom_values:[:custom_definition]}, :product]},
       {custom_values:[:custom_definition]}
     ]).find_by_id(h['id'])
-    raise StatusableError.new("Object with id #{h['id']} not found.",404) if ord.nil?
-    ord.assign_model_field_attributes(h,skip_not_editable:true)
-    raise StatusableError.new("You do not have permission to save this Order.",:forbidden) unless ord.can_edit?(current_user)
+    raise StatusableError.new("Object with id #{h['id']} not found.", 404) if ord.nil?
+    ord.assign_model_field_attributes(h, skip_not_editable:true)
+    raise StatusableError.new("You do not have permission to save this Order.", :forbidden) unless ord.can_edit?(current_user)
     ord.save! if ord.errors.full_messages.blank?
     ord
   end

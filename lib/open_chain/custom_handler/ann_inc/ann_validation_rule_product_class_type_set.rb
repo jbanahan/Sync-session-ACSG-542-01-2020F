@@ -3,7 +3,7 @@ require 'open_chain/custom_handler/ann_inc/ann_ftz_validation_helper'
 # Fail if 'Manual Entry Processing' is filled but 'Classification Type' is blank
 module OpenChain; module CustomHandler; module AnnInc; class AnnValidationRuleProductClassTypeSet < BusinessValidationRule
   include OpenChain::CustomHandler::AnnInc::AnnFtzValidationHelper
-    
+
   def run_validation product
     cl = product.classifications.find_by country_id: us.id
     if cl&.custom_value(cdefs[:manual_flag])

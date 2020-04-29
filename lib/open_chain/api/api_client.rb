@@ -109,7 +109,7 @@ module OpenChain; module Api; class ApiClient
     raise api_error
   end
 
-  class ApiError < StandardError 
+  class ApiError < StandardError
     attr_reader :response, :http_status
 
     def initialize http_status, json_error
@@ -124,7 +124,7 @@ module OpenChain; module Api; class ApiClient
     end
   end
 
-  # Special subclass of the ApiError to help us identify/notify when we have authentication issues internally since this 
+  # Special subclass of the ApiError to help us identify/notify when we have authentication issues internally since this
   # is a case that needs to be resolved immediately.
   class ApiAuthenticationError < ApiError
 
@@ -152,7 +152,7 @@ module OpenChain; module Api; class ApiClient
       begin
         r = yield request_authtoken
       rescue => e
-        # There's no real point in retrying 400 series errors, since they're all going to be issues in some manner with the 
+        # There's no real point in retrying 400 series errors, since they're all going to be issues in some manner with the
         # client request.  The only one we want to specifically watch out for and raise differently is a 401, since that means authentication failed.
         if e.is_a? OpenChain::HttpErrorWithResponse
           http_status = e.http_status.to_i
@@ -183,7 +183,7 @@ module OpenChain; module Api; class ApiClient
       r
     end
 
-  private 
+  private
     def construct_path path
       path = path[1..-1] if path.starts_with? "/"
 

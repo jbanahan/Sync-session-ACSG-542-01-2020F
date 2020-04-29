@@ -26,7 +26,7 @@ module OpenChain; module EntityCompare; class TimedBusinessRuleComparator
     mf = ModelField.find_by_uid schedule.model_field_uid
     base_date = mf.process_export(obj, nil)
     return unless base_date
-    
+
     if schedule.operator == "Before"
       offset = date?(mf) ? 1.day : 1.second
       run_date = base_date - (schedule.num_days.days + offset)
@@ -51,7 +51,7 @@ module OpenChain; module EntityCompare; class TimedBusinessRuleComparator
   def self.assign_job schedule, obj, run_date
     run_date_str = run_date.strftime("%Y-%m-%d %H:%M:%S")
     job_settings = { validatable_id: obj.id, validatable_type: obj.class.to_s, run_date: Time.zone.parse(run_date_str) }
-    job = schedule.business_validation_scheduled_jobs.find{ |j| j.validatable == obj }
+    job = schedule.business_validation_scheduled_jobs.find { |j| j.validatable == obj }
     if job
       job.update_attributes! job_settings unless job.run_date == run_date
     else
@@ -59,4 +59,4 @@ module OpenChain; module EntityCompare; class TimedBusinessRuleComparator
     end
   end
 
-end; end; end  
+end; end; end

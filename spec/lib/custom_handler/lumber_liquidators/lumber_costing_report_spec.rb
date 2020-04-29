@@ -1,9 +1,9 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
   let (:api) { double("OpenChain::Api::OrderApiClient")}
   subject { described_class.new api_client: api}
-  let (:entry) do 
+  let (:entry) do
       entry = Factory(:entry, entry_number: "ENT", master_bills_of_lading: "MBOL", entered_value: 100, arrival_date: '2016-01-20 12:00', customer_number: "LUMBER", source_system:"Alliance", export_country_codes: "VN", transport_mode_code: "10")
-      container = Factory(:container, entry: entry, container_number: "CONT") 
+      container = Factory(:container, entry: entry, container_number: "CONT")
       invoice_line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: entry), container: container,
                              po_number: "PO", part_number: "000123", quantity: 10, value: 100.0, add_duty_amount: 110.0, cvd_duty_amount: 120.00, hmf: 130.00, prorated_mpf: 140.00)
       tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 100, duty_amount: 200, gross_weight:BigDecimal.new("200"))
@@ -16,13 +16,13 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     end
 
   describe "generate_entry_data" do
-    
+
     let (:valid_api_response) {
       {
         'order' => {
           'order_lines' => [
             {'ordln_puid' => "00123", "ordln_line_number" => 5}
-          ]  
+          ]
         }
       }
     }
@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
         'order' => {
           'order_lines' => [
             {'ordln_puid' => "UID", "ordln_line_number" => 5}
-          ]  
+          ]
         }
       }
     }
@@ -87,9 +87,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
         expect(data[3][13]).to be_nil
       end
     end
-    
 
-    [{"0004"=>9},{"0007"=>13},{'0176'=>14},{'0050'=>14},{'0142'=>14},{'0235'=>15},{'0191'=>16},{'0189'=>19},{'0720'=>19},{'0739'=>19},{'0212'=>22},{'0016'=>23},{'0031'=>24},{'0125'=>24},{'0026'=>24},{'0193'=>25},{'0196'=>25}, {'0915'=>16}].each do |charge|
+    [{"0004"=>9}, {"0007"=>13}, {'0176'=>14}, {'0050'=>14}, {'0142'=>14}, {'0235'=>15}, {'0191'=>16}, {'0189'=>19}, {'0720'=>19}, {'0739'=>19}, {'0212'=>22}, {'0016'=>23}, {'0031'=>24}, {'0125'=>24}, {'0026'=>24}, {'0193'=>25}, {'0196'=>25}, {'0915'=>16}].each do |charge|
       it "uses the correct output charge column for code #{charge.keys.first}" do
         broker_invoice = entry.broker_invoices.first
         broker_invoice.broker_invoice_lines.delete_all
@@ -176,9 +175,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
         expect(subject).not_to receive(:generate_and_send_entry_data)
         subject.run start_time: Time.zone.parse("2016-01-17 12:00")
       end
-      
+
       it "does not find non-lumber entries" do
-        entry.update_attributes! customer_number: "NOTLUMBER"  
+        entry.update_attributes! customer_number: "NOTLUMBER"
       end
 
       it "does not find without an arrival date" do
@@ -204,7 +203,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
     let(:ftped_filenames) { [] }
 
     before :each do
-      allow(subject).to receive(:generate_entry_data).with(entry).and_return([entry, [["data", "data"],["d", "d"]]])
+      allow(subject).to receive(:generate_entry_data).with(entry).and_return([entry, [["data", "data"], ["d", "d"]]])
       allow(subject).to receive(:ftp_file) {|file| ftped_file << file.read; ftped_filenames << file.original_filename }
     end
 
@@ -271,7 +270,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       t
     }
 
-    after :each do 
+    after :each do
       attachment_content.close! unless attachment_content.closed?
     end
 

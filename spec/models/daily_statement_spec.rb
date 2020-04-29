@@ -13,7 +13,7 @@ describe DailyStatement do
         expect(described_class.where(described_class.search_where(master_user)).all).to include statement
       end
 
-      it "allows importer users to view statements linked to their account" do 
+      it "allows importer users to view statements linked to their account" do
         user = Factory(:user, company: Factory(:importer))
         statement.update_attributes! importer_id: user.company.id
 
@@ -37,7 +37,7 @@ describe DailyStatement do
         expect(described_class.where(described_class.search_where(master_user)).all).to include statement
       end
     end
-    
+
     it "does not allow users that cannot view statements to see any" do
       expect_any_instance_of(User).to receive(:view_statements?).and_return false
       expect(described_class.where(described_class.search_where(master_user)).all).to eq []
@@ -60,7 +60,7 @@ describe DailyStatement do
         expect(statement.can_view? Factory(:user)).to eq false
       end
 
-      it "allows importer users to view statements linked to their account" do 
+      it "allows importer users to view statements linked to their account" do
         user = Factory(:user, company: Factory(:importer))
         statement.update_attributes! importer_id: user.company.id
 
@@ -85,11 +85,11 @@ describe DailyStatement do
       end
     end
 
-    it "does not let users without statement view permission to view statements" do 
+    it "does not let users without statement view permission to view statements" do
       user = User.new
       expect(user).to receive(:view_statements?).and_return false
       expect(statement.can_view? user).to eq false
-    end    
+    end
   end
 
   describe "final_statement?" do
@@ -112,7 +112,7 @@ describe DailyStatement do
 
   describe "status_description" do
     [["f", "Final"], ["P", "Preliminary"], [nil, ""]].each do |vals|
-      it "identifies #{vals[1]}" do 
+      it "identifies #{vals[1]}" do
         expect(described_class.new(status: vals[0]).status_description).to eq vals[1]
       end
     end

@@ -85,6 +85,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     shipments
   end
 
+  # rubocop:disable Naming/MethodName
   def process_B shipment, line
     application_code = extract_string(line, (11..12))
     # SE in 11-12 indictates an Entry Summary (7501)..if that's not there we need to reject the file because
@@ -92,6 +93,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     inbound_file.reject_and_raise("CATAIR B-record's Application Identifier Code (Position 11-12) must be 'AE' to indicate a Entry Summary.  It was '#{application_code}'.") unless application_code  == "AE"
     nil
   end
+  # rubocop:enable Naming/MethodName
 
   def process_10 shipment, line
     shipment.entry_filer_code = extract_string(line, (4..6))
@@ -120,7 +122,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     shipment.unlading_port = extract_integer(line, (7..10))
     est_arrival_date = extract_date(line, (11..16), date_format: date_format)
     if est_arrival_date
-      shipment.dates << CiLoadEntryDate.new(:est_arrival_date, est_arrival_date) 
+      shipment.dates << CiLoadEntryDate.new(:est_arrival_date, est_arrival_date)
     end
     shipment.firms_code = extract_string(line, (17..20))
 
@@ -216,17 +218,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     nil
   end
 
+  # rubocop:disable Naming/MethodName
   def process_SE61 invoice_line, line
     invoice_line.ftz_expired_hts_number = extract_string(line, (5..14))
     nil
   end
+  # rubocop:enable Naming/MethodName
 
   def add_special_tariffs? entry, invoice, line
     false
   end
 
   protected
-    # The following methods are protected to allow for potential extending classes to 
+    # The following methods are protected to allow for potential extending classes to
     # override/extend them for potential customer specific handling (if needed)
     def new_shipment
       s = CiLoadEntry.new

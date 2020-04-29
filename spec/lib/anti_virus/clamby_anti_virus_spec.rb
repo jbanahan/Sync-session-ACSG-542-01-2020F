@@ -8,7 +8,7 @@ describe OpenChain::AntiVirus::ClambyAntiVirus do
       File.open(__FILE__, "r")
     }
 
-    after :each do 
+    after :each do
       file.close unless file.closed?
     end
 
@@ -55,7 +55,7 @@ describe OpenChain::AntiVirus::ClambyAntiVirus do
 
     it "does not configure in test env" do
       expect(MasterSetup).to receive(:test_env?).and_return true
-      expect(Clamby).not_to receive(:configure)      
+      expect(Clamby).not_to receive(:configure)
 
       subject.registered
     end

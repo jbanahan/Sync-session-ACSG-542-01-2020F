@@ -1,13 +1,13 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
   subject {described_class}
 
-  let (:booking_unlocked_date) { 
+  let (:booking_unlocked_date) {
       Class.new {
         include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
         }.prep_custom_definitions([:shp_booking_unlocked_date])[:shp_booking_unlocked_date]
     }
 
-  let (:ordln_gross_weight_kg) { 
+  let (:ordln_gross_weight_kg) {
       Class.new {
         include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
         }.prep_custom_definitions([:ordln_gross_weight_kg])[:ordln_gross_weight_kg]
@@ -15,7 +15,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
 
   describe 'registry' do
     it "should be able to be registered" do
-      expect{OpenChain::Registries::OrderBookingRegistry.register(described_class)}.to_not raise_error
+      expect {OpenChain::Registries::OrderBookingRegistry.register(described_class)}.to_not raise_error
     end
   end
   describe '#can_book?' do
@@ -38,34 +38,34 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
       o
     end
     it "should return true if all conditions are met" do
-      expect(subject.can_book?(order,user)).to be_truthy
+      expect(subject.can_book?(order, user)).to be_truthy
     end
     it "should return false if order is already on a booking" do
       o = order
       expect(o).to receive(:booking_lines_by_order_line).and_return ['x']
-      expect(subject.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o, user)).to be_falsey
     end
     it "should return false if user cannot edit shipments" do
       u = user
       expect(u).to receive(:edit_shipments?).and_return false
-      expect(subject.can_book?(order,u)).to be_falsey
+      expect(subject.can_book?(order, u)).to be_falsey
     end
     it "should return false if user's company is not order's vendor" do
       c2 = Company.new
       c2.id = 100
       o = order
       o.vendor = c2
-      expect(subject.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o, user)).to be_falsey
     end
     it "should return false if order has failed business rules" do
       o = order
       expect(o).to receive(:business_rules_state).and_return 'Fail'
-      expect(subject.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o, user)).to be_falsey
     end
     it "should return false if business rules have not been run" do
       o = order
       expect(o).to receive(:business_rules_state).and_return nil
-      expect(subject.can_book?(o,user)).to be_falsey
+      expect(subject.can_book?(o, user)).to be_falsey
     end
   end
 
@@ -115,7 +115,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
         mode:'Ocean',
         first_port_receipt_id:199,
         requested_equipment:'4 40HC',
-        cargo_ready_date:Date.new(2015,1,1)
+        cargo_ready_date:Date.new(2015, 1, 1)
       )
       s.find_and_set_custom_value booking_unlocked_date, Time.zone.now
       u = double('user')
@@ -136,7 +136,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
         mode:'Ocean',
         first_port_receipt_id:199,
         requested_equipment:'4 40HC',
-        cargo_ready_date:Date.new(2015,1,1)
+        cargo_ready_date:Date.new(2015, 1, 1)
       )
       s.find_and_set_custom_value booking_unlocked_date, Time.zone.now
 
@@ -154,101 +154,101 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
   describe '#can_revise_booking?' do
 
     let (:delivery_location) { Factory(:port, unlocode: "LOCOD") }
-    let (:shipment) { 
+    let (:shipment) {
       s = Factory(:shipment, reference: "12345", mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: delivery_location, vendor: company)
       s.attachments.create! attached_file_name: "file.pdf", attachment_type: "VDS-Vendor Document Set"
       s.booking_lines.create order: order, order_line: order.order_lines.first, quantity: 10, cbms: 10
       s
     }
-    let (:user) { 
-      u = User.new 
+    let (:user) {
+      u = User.new
       u.company = company
       u
     }
     let (:company) { Company.new }
-    let (:order) { 
-      o = Factory(:order, fob_point: delivery_location.unlocode) 
+    let (:order) {
+      o = Factory(:order, fob_point: delivery_location.unlocode)
       l = Factory(:order_line, order: o)
       o
     }
 
-    before :each do 
+    before :each do
       shipment.booking_received_date = Time.zone.now
       shipment.find_and_set_custom_value booking_unlocked_date, Time.zone.now
       allow(shipment).to receive(:can_edit?).with(user).and_return true
     end
 
     it "should allow if user can edit and is vendor and Booking Received is not null and Booking Unlocked Date is set" do
-      expect(subject.can_revise_booking?(shipment,user)).to eq true
+      expect(subject.can_revise_booking?(shipment, user)).to eq true
     end
 
     it "should not allow if order fob point does not match booking" do
       order.update_attributes! fob_point: "BLAHBLAH"
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
 
     it "does not allow booking to be revised if there are no VDS docs" do
       shipment.attachments.destroy_all
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
 
     it "does not allow booking to be revised if there are no booking lines" do
       shipment.booking_lines.destroy_all
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
 
     it "does not allow booking to be revised if booking line is missing a volume" do
       shipment.booking_lines.first.update_attributes! cbms: 0
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
 
     it "should not allow if user can edit and is vendor and Booking Received is not null and Booking Unlocked Date is not set" do
       shipment.find_and_set_custom_value booking_unlocked_date, nil
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
 
     it "should not allow if user can edit and is vendor and Booking Received is null and Booking Unlocked Date is set" do
       shipment.booking_received_date = nil
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
 
     it "should not allow if user is not vendor" do
       shipment.vendor = Company.new
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
     it "should not allow if user cannot edit" do
       expect(shipment).to receive(:can_edit?).with(user).and_return false
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
     it "should not allow if shipment is canceled" do
       shipment.canceled_date = Time.zone.now
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
     it "does not allow if shipment is missing fields" do
       # The full range of fields is checked elswhere, just make sure we're chekcing them for this
       shipment.mode = ""
-      expect(subject.can_revise_booking?(shipment,user)).to eq false
+      expect(subject.can_revise_booking?(shipment, user)).to eq false
     end
   end
 
   describe "can_request_booking?" do
 
     let (:delivery_location) { Factory(:port, unlocode: "LOCOD") }
-    let (:shipment) { 
+    let (:shipment) {
       s = Factory(:shipment, reference: "12345", mode: "mode", shipment_type: "type", cargo_ready_date: Time.zone.now, requested_equipment: "1", first_port_receipt: delivery_location, vendor: company)
       s.attachments.create! attached_file_name: "file.pdf", attachment_type: "VDS-Vendor Document Set"
       s.booking_lines.create order: order, order_line: order.order_lines.first, quantity: 10, cbms: 10
       s
     }
 
-    let (:user) { 
-      u = User.new 
+    let (:user) {
+      u = User.new
       u.company = company
       u
     }
     let (:company) { Factory(:company) }
-    let (:order) { 
-      o = Factory(:order, fob_point: delivery_location.unlocode) 
+    let (:order) {
+      o = Factory(:order, fob_point: delivery_location.unlocode)
       l = Factory(:order_line, order: o)
       o
     }
@@ -264,22 +264,22 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
 
     it "does not allow booking to be requested if order delivery location does not match the shipments" do
       order.update_attributes! fob_point: "BLAHBLAH"
-      expect(subject.can_request_booking?(shipment,user)).to eq false
+      expect(subject.can_request_booking?(shipment, user)).to eq false
     end
 
     it "does not allow booking to be requested if there are no VDS docs" do
       shipment.attachments.destroy_all
-      expect(subject.can_request_booking?(shipment,user)).to eq false
+      expect(subject.can_request_booking?(shipment, user)).to eq false
     end
 
     it "does not allow booking to be requested if there are no booking lines" do
       shipment.booking_lines.destroy_all
-      expect(subject.can_request_booking?(shipment,user)).to eq false
+      expect(subject.can_request_booking?(shipment, user)).to eq false
     end
 
     it "does not allow booking to be requested if booking line is missing a volume" do
       shipment.booking_lines.first.update_attributes! cbms: 0
-      expect(subject.can_request_booking?(shipment,user)).to eq false
+      expect(subject.can_request_booking?(shipment, user)).to eq false
     end
 
     it "does not allow booking to be requested if mode is blank" do
@@ -333,14 +333,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
       s = Shipment.new
       user = User.new
       expect(s).to receive(:cancel_shipment!).with(user)
-      subject.post_request_cancel_hook(s,user)
+      subject.post_request_cancel_hook(s, user)
     end
   end
 
   describe "open_bookings_hook" do
     let! (:shipment) { Factory(:shipment) }
 
-    before :each do 
+    before :each do
       booking_unlocked_date
     end
 
@@ -402,7 +402,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
       expect(subject.can_book_order_to_shipment? Order.new, Shipment.new).to eq true
     end
 
-    context "with booked orders on shipment" do 
+    context "with booked orders on shipment" do
       let (:ship_to) { Factory(:address) }
       let (:delivery_location) { Factory(:port, unlocode: "UNLOC")}
       let (:booked_order) {
@@ -441,7 +441,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderBooking do
         expect(subject.can_book_order_to_shipment? another_order, shipment).to eq false
       end
 
-      it "doesn't allow booking unless all ship to lines on the order match whats on the shipment" do 
+      it "doesn't allow booking unless all ship to lines on the order match whats on the shipment" do
         another_order.order_lines.build ship_to_id: Factory(:address).id
         expect(subject.can_book_order_to_shipment? another_order, shipment).to eq false
       end

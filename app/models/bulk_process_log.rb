@@ -15,18 +15,18 @@
 
 class BulkProcessLog < ActiveRecord::Base
 
-  attr_accessible :bulk_type, :changed_object_count, :finished_at, 
+  attr_accessible :bulk_type, :changed_object_count, :finished_at,
     :started_at, :total_object_count, :user_id, :user
-  
+
   BULK_TYPES ||= {update: "Bulk Update", classify: "Bulk Classify"}
   belongs_to :user
   has_many :change_records, -> { order([{failed: :desc}, :record_sequence_number]) }
   has_many :entity_snapshots
 
   def self.with_log user, bulk_type
-    log = BulkProcessLog.create!(user:user,bulk_type:bulk_type,started_at:Time.now)
+    log = BulkProcessLog.create!(user:user, bulk_type:bulk_type, started_at:Time.now)
     yield log
-    log.update_attributes(finished_at:Time.now,changed_object_count:log.change_records.count)
+    log.update_attributes(finished_at:Time.now, changed_object_count:log.change_records.count)
     log.notify_user!
   end
 

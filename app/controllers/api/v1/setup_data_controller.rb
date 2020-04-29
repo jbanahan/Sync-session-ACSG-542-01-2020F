@@ -1,7 +1,7 @@
 # provides general info on system setup that users may need
 module Api; module V1; class SetupDataController < ApiController
   def index
-    render json: {'import_countries'=>import_countries,'regions'=>regions}
+    render json: {'import_countries'=>import_countries, 'regions'=>regions}
   end
 
   def import_countries

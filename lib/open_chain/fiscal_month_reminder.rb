@@ -25,7 +25,7 @@ module OpenChain; class FiscalMonthReminder
   private
 
   def self.send_email address, company_list
-    formatted_list = company_list.map{|c| "#{c.name} " + (c.system_code.presence ? "(#{c.system_code})" : "")}.join("<br>")
+    formatted_list = company_list.map {|c| "#{c.name} " + (c.system_code.presence ? "(#{c.system_code})" : "")}.join("<br>")
     body = "There are fewer than #{THRESHOLD} months remaining on the fiscal calendars of the following companies:<br><br>#{formatted_list}".html_safe
     OpenMailer.send_simple_html(address, "Fiscal calendar(s) need update", body).deliver_now
   end

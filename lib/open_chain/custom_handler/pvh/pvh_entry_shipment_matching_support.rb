@@ -55,7 +55,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     units = 0 if units.nil?
 
     # Narrow down the shipment_lines to search over if we have a container number
-    # We're not going to actually know the container number for each line for 
+    # We're not going to actually know the container number for each line for
     # Canada (and probably a bunch of US invoice lines when lines are keyed).
     # In that case, we're just going to have to look through every line on the shipment
     # for something that matches to the po/part/unit count.
@@ -92,14 +92,14 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
       # we should use it and ensure the shipment line matches on invoice number.
 
       # Invoice Numbers can have some weird punctuation that's not consistent between invoices and asns or paper docs
-      #...we're going to strip out anything that's not alpha chars and then match that way
+      # ...we're going to strip out anything that's not alpha chars and then match that way
       invoice_number = invoice_number.gsub(/[^[[:alnum:]]]/, "")
       invoice_matching_lines = matched_lines.find_all {|l| invoice_number == l.invoice_number.to_s.gsub(/[^[[:alnum:]]]/, "")}
 
-      # There's some cases where the Shipment has incorrect invoice numbers on them.  Getting the vendor to correct those numbers is 
-      # a huge ordeal with PVH.  Also, for several months we haven't been using the invoice number as a match criteria, 
+      # There's some cases where the Shipment has incorrect invoice numbers on them.  Getting the vendor to correct those numbers is
+      # a huge ordeal with PVH.  Also, for several months we haven't been using the invoice number as a match criteria,
       # so if we match on invoice number and then that eliminates everything, then skip the invoice matching.  We're already matched
-      # on PO / Style to the shipment, so don't worry about about getting "wrong" lines.  The invoice number is just a better 
+      # on PO / Style to the shipment, so don't worry about about getting "wrong" lines.  The invoice number is just a better
       # distinguisher if available.
       matched_lines = invoice_matching_lines if invoice_matching_lines.length > 0
     end
@@ -130,11 +130,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
 
   def find_potential_split_tariff_line shipment_lines, order_number, part_number
     translated_order_number = "PVH-#{order_number}"
-    # For some cases where a commercial invoice line has to be split into two lines due to 
+    # For some cases where a commercial invoice line has to be split into two lines due to
     # carrying two tariffs per 1 PO line, we're going to need to toss aside our rule of only using
     # a shipment line a single time.
 
-    # From what we can tell, in these cases, the order line will have an HTS# of 9999999999.  Ergo, 
+    # From what we can tell, in these cases, the order line will have an HTS# of 9999999999.  Ergo,
     # IF the the order line has an HTS of 9999999999, we will allow it to be utilized multiple times.
     shipment_lines.select do |line|
       line.order_line&.hts.to_s.strip == "9999999999" &&

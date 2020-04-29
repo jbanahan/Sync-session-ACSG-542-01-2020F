@@ -51,10 +51,10 @@ class ValidationRuleEntryInvoiceLineMatchesPoLine < BusinessValidationRule
     @match_fields ||= get_match_fields
     @match_fields.each do |mf|
       inv_line_model_field = ModelField.find_by_uid(mf['invoice_line_field'])
-      inv_line_value = inv_line_model_field.process_export(invoice_line,nil,true)
+      inv_line_value = inv_line_model_field.process_export(invoice_line, nil, true)
       ord_line_model_field = ModelField.find_by_uid(mf['order_line_field'])
-      sc = SearchCriterion.new(model_field_uid:ord_line_model_field.uid,operator:mf['operator'],value:inv_line_value)
-      if !field_matches(sc,order_lines)
+      sc = SearchCriterion.new(model_field_uid:ord_line_model_field.uid, operator:mf['operator'], value:inv_line_value)
+      if !field_matches(sc, order_lines)
         msgs << "No matching order for PO # #{po_number} and Part # #{part_number} where #{ord_line_model_field.label(false)} #{CriterionOperator.find_by_key(mf['operator']).label} #{inv_line_model_field.label(false)} (#{sc.value})"
       end
     end

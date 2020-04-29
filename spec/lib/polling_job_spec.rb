@@ -107,9 +107,9 @@ describe OpenChain::PollingJob do
   end
 
   describe "null_start_time" do
-    let(:job) { 
-      j = SchedulableJob.new 
-      j.created_at = Time.zone.now 
+    let(:job) {
+      j = SchedulableJob.new
+      j.created_at = Time.zone.now
       j
     }
 

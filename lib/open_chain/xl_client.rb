@@ -3,8 +3,7 @@ require 'digest'
 module OpenChain
   # Client to communicate with XLServer
   class XLClient
-  
-    #initialize a new XLClient for the attached object
+    # initialize a new XLClient for the attached object
     def self.new_from_attachable attachable
       self.new attachable.attached.path
     end
@@ -12,38 +11,38 @@ module OpenChain
     # if true the client will raise exceptions instead of including the errors in the JSON response (default = false)
     attr_accessor :raise_errors
     attr_reader :path
-    
+
     def initialize path, options = {}
       @options = {scheme: "s3", bucket: Rails.configuration.paperclip_defaults[:bucket]}.merge options
 
       @path = assemble_file_path path, @options
-      @session_id = Digest::SHA256.hexdigest "#{MasterSetup.get.uuid}-#{Time.now.to_f}-#{@path}" #should be unqiue enough
+      @session_id = Digest::SHA256.hexdigest "#{MasterSetup.get.uuid}-#{Time.now.to_f}-#{@path}" # should be unqiue enough
     end
 
     # Send the given command Hash to the server and return a Hash with the response
     def send command
       r = send_command command
-      raise OpenChain::XLClientError.new(r['errors'].join("\n")) if @raise_errors && r.is_a?(Hash) && !r['errors'].blank? 
+      raise OpenChain::XLClientError.new(r['errors'].join("\n")) if @raise_errors && r.is_a?(Hash) && !r['errors'].blank?
       r
     end
 
-    #wraps the `new` command
-    def new 
-      c = {"command"=>"new","path"=>@path}
+    # wraps the `new` command
+    def new
+      c = {"command"=>"new", "path"=>@path}
       send c
     end
 
     # wraps the get_cell command
-    # takes the sheet, row, column number, and an optional boolean argument specifying whether to return the value, datatype has 
+    # takes the sheet, row, column number, and an optional boolean argument specifying whether to return the value, datatype has
     # that xlserver returns or just the value (default is to only return the value)
     def get_cell sheet, row, column, value_only = true
-      c = {"command"=>"get_cell","path"=>@path,"payload"=>{"sheet"=>sheet,"row"=>row,"column"=>column}}
+      c = {"command"=>"get_cell", "path"=>@path, "payload"=>{"sheet"=>sheet, "row"=>row, "column"=>column}}
       cell = process_cell_response send c
       # Strip out the outer "cell" hash, there's no point at all to returning it
       cell = cell["cell"]
       if cell && value_only
         cell["value"]
-      else 
+      else
         cell
       end
     end
@@ -52,34 +51,34 @@ module OpenChain
     def set_cell sheet, row, column, value, url=nil
       datatype = determine_datatype value
       output_value = format_value datatype, value
-      c = {"command"=>"set_cell","path"=>@path,"payload"=>{"position"=>{"sheet"=>sheet,"row"=>row,"column"=>column},"cell"=>{"value"=>output_value,"link"=>url,"datatype"=>datatype}}}
+      c = {"command"=>"set_cell", "path"=>@path, "payload"=>{"position"=>{"sheet"=>sheet, "row"=>row, "column"=>column}, "cell"=>{"value"=>output_value, "link"=>url, "datatype"=>datatype}}}
       send c
     end
-    
+
     # wraps the create_sheet command
     def create_sheet name
-      c = {"command"=>"create_sheet","path"=>@path,"payload"=>{"name"=>name}}
+      c = {"command"=>"create_sheet", "path"=>@path, "payload"=>{"name"=>name}}
       send c
     end
 
     def clone_sheet source_sheet_index, sheet_name=nil
       payload = {"source_index" => source_sheet_index}
       payload['name'] = sheet_name unless sheet_name.blank?
-      c = {"command"=>"clone_sheet","path"=>@path,"payload"=>payload}
+      c = {"command"=>"clone_sheet", "path"=>@path, "payload"=>payload}
       response = send c
       validate_response response
       response['sheet_index']
     end
 
     def delete_sheet index
-      c = {"command"=>"delete_sheet","path"=>@path,"payload"=>{"index"=>index}}
+      c = {"command"=>"delete_sheet", "path"=>@path, "payload"=>{"index"=>index}}
       response = send c
       validate_response response
       nil
     end
 
     def delete_sheet_by_name name
-      c = {"command"=>"delete_sheet","path"=>@path,"payload"=>{"name"=>name}}
+      c = {"command"=>"delete_sheet", "path"=>@path, "payload"=>{"name"=>name}}
       response = send c
       validate_response response
       nil
@@ -87,19 +86,19 @@ module OpenChain
 
     # wraps the last_row_number command, converting result into integer or throwing exception
     def last_row_number sheet_number
-      c = {"command"=>"last_row_number","path"=>@path,"payload"=>{"sheet_index"=>sheet_number}}
+      c = {"command"=>"last_row_number", "path"=>@path, "payload"=>{"sheet_index"=>sheet_number}}
       r = send c
       return r['result'] if r['result']
       raise_error r
     end
 
     def get_row sheet, row
-      c = {"command"=>"get_row","path"=>@path,"payload"=>{"sheet"=>sheet,"row"=>row}}
+      c = {"command"=>"get_row", "path"=>@path, "payload"=>{"sheet"=>sheet, "row"=>row}}
       r = send c
       process_row_response r
     end
 
-    def get_rows sheet: 0, number_of_rows: 50, row: 
+    def get_rows sheet: 0, number_of_rows: 50, row:
       c = {"command"=>"get_rows", "path"=>@path, "payload"=>{"sheet"=>sheet, "row"=>row, "range"=>number_of_rows}}
       r = send c
       validate_response r
@@ -120,16 +119,16 @@ module OpenChain
       rows_to_retrieve = (lrn + 1) - starting_row_number
       rows_retrieved = 0
       # When using a block, the caller can `throw :stop_polling` at any point to tell this method to quit
-      # getting more rows from the xlserver.  This is effective in cases where some data conditions 
+      # getting more rows from the xlserver.  This is effective in cases where some data conditions
       # prevent you from needing to complete the file, but you don't actually want to raise an error
-      catch (:stop_polling) do 
+      catch (:stop_polling) do
         begin
           to_retrieve = [chunk_size, (rows_to_retrieve - rows_retrieved)].min
 
           rows = get_rows(row: starting_row_number, sheet: sheet_number, number_of_rows: to_retrieve)
           rows_retrieved += to_retrieve
           starting_row_number += to_retrieve
-          
+
           if block_given?
             rows.each {|row| yield row }
           else
@@ -172,7 +171,7 @@ module OpenChain
     private :parse_row_values_to_array
 
     def copy_row sheet, source_row, destination_row
-      cmd = {'command'=>'copy_row','path'=>@path,'payload'=>{'sheet'=>sheet,'source_row'=>source_row,'destination_row'=>destination_row}}
+      cmd = {'command'=>'copy_row', 'path'=>@path, 'payload'=>{'sheet'=>sheet, 'source_row'=>source_row, 'destination_row'=>destination_row}}
       r = send cmd
       process_row_response r
     end
@@ -180,18 +179,18 @@ module OpenChain
     # wraps the save command
     def save alternate_location=nil, alternate_location_options = {}
       alternate_path = (alternate_location.blank? ? @path : assemble_file_path(alternate_location, @options.merge(alternate_location_options)))
-      c = {"command"=>"save","path"=>@path,"payload"=>{"alternate_location"=>alternate_path}}
+      c = {"command"=>"save", "path"=>@path, "payload"=>{"alternate_location"=>alternate_path}}
       send c
     end
 
     def set_row_color sheet, row, color
       # Color must be one of the following values (these come from the IndexedColors java class in the POI library used by xlserver )
-      # AQUA, AUTOMATIC, BLACK, BLUE, BLUE_GREY, BRIGHT_GREEN, BROWN, CORAL, CORNFLOWER_BLUE, DARK_BLUE, DARK_GREEN, DARK_RED, DARK_TEAL, DARK_YELLOW, 
-      # GOLD, GREEN, GREY_25_PERCENT, GREY_40_PERCENT, GREY_50_PERCENT, GREY_80_PERCENT, INDIGO, LAVENDER, LEMON_CHIFFON, LIGHT_BLUE, LIGHT_CORNFLOWER_BLUE, 
-      # LIGHT_GREEN, LIGHT_ORANGE, LIGHT_TURQUOISE, LIGHT_YELLOW, LIME, MAROON, OLIVE_GREEN, ORANGE, ORCHID, PALE_BLUE, PINK, PLUM, RED, ROSE, ROYAL_BLUE, 
+      # AQUA, AUTOMATIC, BLACK, BLUE, BLUE_GREY, BRIGHT_GREEN, BROWN, CORAL, CORNFLOWER_BLUE, DARK_BLUE, DARK_GREEN, DARK_RED, DARK_TEAL, DARK_YELLOW,
+      # GOLD, GREEN, GREY_25_PERCENT, GREY_40_PERCENT, GREY_50_PERCENT, GREY_80_PERCENT, INDIGO, LAVENDER, LEMON_CHIFFON, LIGHT_BLUE, LIGHT_CORNFLOWER_BLUE,
+      # LIGHT_GREEN, LIGHT_ORANGE, LIGHT_TURQUOISE, LIGHT_YELLOW, LIME, MAROON, OLIVE_GREEN, ORANGE, ORCHID, PALE_BLUE, PINK, PLUM, RED, ROSE, ROYAL_BLUE,
       # SEA_GREEN, SKY_BLUE, TAN, TEAL, TURQUOISE, VIOLET, WHITE, YELLOW
-      
-      cmd = {'command' => 'set_color', 'path' => @path, "payload" => {"position"=> {"sheet"=>sheet,"row"=>row}, "color" => color.to_s.upcase}}
+
+      cmd = {'command' => 'set_color', 'path' => @path, "payload" => {"position"=> {"sheet"=>sheet, "row"=>row}, "color" => color.to_s.upcase}}
       r = send cmd
       process_cell_response r
       nil
@@ -199,12 +198,12 @@ module OpenChain
 
     def set_cell_color sheet, row, column, color
       # Color must be one of the following values (these come from the IndexedColors java class in the POI library used by xlserver )
-      # AQUA, AUTOMATIC, BLACK, BLUE, BLUE_GREY, BRIGHT_GREEN, BROWN, CORAL, CORNFLOWER_BLUE, DARK_BLUE, DARK_GREEN, DARK_RED, DARK_TEAL, DARK_YELLOW, 
-      # GOLD, GREEN, GREY_25_PERCENT, GREY_40_PERCENT, GREY_50_PERCENT, GREY_80_PERCENT, INDIGO, LAVENDER, LEMON_CHIFFON, LIGHT_BLUE, LIGHT_CORNFLOWER_BLUE, 
-      # LIGHT_GREEN, LIGHT_ORANGE, LIGHT_TURQUOISE, LIGHT_YELLOW, LIME, MAROON, OLIVE_GREEN, ORANGE, ORCHID, PALE_BLUE, PINK, PLUM, RED, ROSE, ROYAL_BLUE, 
+      # AQUA, AUTOMATIC, BLACK, BLUE, BLUE_GREY, BRIGHT_GREEN, BROWN, CORAL, CORNFLOWER_BLUE, DARK_BLUE, DARK_GREEN, DARK_RED, DARK_TEAL, DARK_YELLOW,
+      # GOLD, GREEN, GREY_25_PERCENT, GREY_40_PERCENT, GREY_50_PERCENT, GREY_80_PERCENT, INDIGO, LAVENDER, LEMON_CHIFFON, LIGHT_BLUE, LIGHT_CORNFLOWER_BLUE,
+      # LIGHT_GREEN, LIGHT_ORANGE, LIGHT_TURQUOISE, LIGHT_YELLOW, LIME, MAROON, OLIVE_GREEN, ORANGE, ORCHID, PALE_BLUE, PINK, PLUM, RED, ROSE, ROYAL_BLUE,
       # SEA_GREEN, SKY_BLUE, TAN, TEAL, TURQUOISE, VIOLET, WHITE, YELLOW
 
-      cmd = {'command' => 'set_color', 'path' => @path, "payload" => {"position"=> {"sheet"=>sheet,"row"=>row, "column"=>column}, "color" => color.to_s.upcase}}
+      cmd = {'command' => 'set_color', 'path' => @path, "payload" => {"position"=> {"sheet"=>sheet, "row"=>row, "column"=>column}, "color" => color.to_s.upcase}}
       r = send cmd
       process_cell_response r
       nil
@@ -227,16 +226,16 @@ module OpenChain
         # BigDecimal to_s uses engineering notation (stupidly) by default
         value = value.is_a?(BigDecimal) ? value.to_s("F") : value.to_s
         trailing_zeros = value.index /\.0+$/
-        if trailing_zeros 
+        if trailing_zeros
           value = value[0, trailing_zeros]
         end
       elsif !value.is_a? String
         value = value.to_s
       end
-      
+
       value
     end
-    
+
     private
 
     def request_uri
@@ -251,7 +250,7 @@ module OpenChain
 
     def send_command command
       command['session'] = @session_id
-      json = command.to_json 
+      json = command.to_json
       r = {'errors'=>'Client error: did not successfully receive server response.'}
       retry_count = 0
       response_body = "no response"
@@ -336,7 +335,7 @@ module OpenChain
     def determine_datatype value
       return "datetime" if value.is_a?(Date) || value.is_a?(DateTime) || value.is_a?(Time)
       return "number" if value.is_a?(Numeric)
-      "string" 
+      "string"
     end
     def format_value datatype, value
       r = value
@@ -353,7 +352,7 @@ module OpenChain
         path
       else
         uri_scheme = options[:scheme]
-        
+
         # The scheme tells the xlserver what sort of backend to use (s3 will basically always be what we'll use here),
         # the first machine name in the full hostname for s3 paths determines the bucket to use.  The rest of the hostname
         # is superfluous at the moment - I just used the actual amazon host. The path itself is the s3 object's key,
@@ -371,6 +370,5 @@ module OpenChain
   end
 
   class XLClientError < RuntimeError
-    
   end
 end

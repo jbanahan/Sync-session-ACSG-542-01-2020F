@@ -1,4 +1,4 @@
-describe Invoice do 
+describe Invoice do
 
   describe "calculate_and_set_invoice_totals" do
     let (:invoice) {

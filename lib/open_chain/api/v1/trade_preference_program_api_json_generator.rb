@@ -24,9 +24,9 @@ module OpenChain; module Api; module V1; class TradePreferenceProgramApiJsonGene
     h['permissions'] = render_permissions(obj)
     h
   end
-  
+
   def render_permissions obj
-    cu = current_user #current_user is method, so saving as variable to prevent multiple calls
+    cu = current_user # current_user is method, so saving as variable to prevent multiple calls
     {
       can_view: obj.can_view?(cu),
       can_edit: obj.can_edit?(cu),

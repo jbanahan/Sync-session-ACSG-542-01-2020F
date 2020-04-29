@@ -2,9 +2,9 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
   let(:user) { Factory(:master_user) }
   let(:fenix) { OpenChain::CustomHandler::FenixNdInvoiceGenerator }
 
-  describe "can_view?" do  
+  describe "can_view?" do
     let(:parser) { described_class.new double("custom file")}
-    
+
     it "allows master users on www" do
       ms = stub_master_setup
       allow(ms).to receive(:system_code).and_return 'www-vfitrack-net'
@@ -16,14 +16,14 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
       ms = stub_master_setup
       allow(ms).to receive(:system_code).and_return 'www-vfitrack-net'
       user.company.update_attributes(master: false)
-      
+
       expect(parser.can_view? user).to eq false
     end
 
     it "prevents access by master users on other instances" do
       ms = stub_master_setup
       allow(ms).to receive(:system_code).and_return 'pepsi'
-      
+
       expect(parser.can_view? user).to eq false
     end
   end
@@ -37,9 +37,9 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
       let(:row_2a) { ["", "", "", "", "", "", "", "", "", "", "", "fact name 2", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] }
       let(:row_3)  { ["", "", "", "", "", "", "", "", "", "", "COO 3",      "vend name 2", "invoice num 2", "", "", "po num 3", "style 3", "", "", 3, "", "HTS 333333", "", "", 4, "", 5, "", "", "note a3", "note b3", "note c3", "", "", "", "", "", "", "", ""] }
       let(:row_3a) { ["", "", "", "", "", "", "", "", "", "", "", "fact name 3", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""] }
-      
+
       let!(:cf) { double "custom file" }
-      
+
       let(:parser) do
         allow(cf).to receive(:path).and_return "path/to/upload.xls"
         allow(cf).to receive(:id).and_return 1
@@ -53,7 +53,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
                                                           .and_yield(row_1, 3).and_yield(row_1a, 4)
                                                           .and_yield(row_2, 5).and_yield(row_2a, 6)
                                                           .and_yield(row_3, 7).and_yield(row_3a, 8)
-        
+
         expect(fenix).to receive(:generate) do |inv|
           expect(inv.persisted?).to eq false
           expect(inv.currency).to eq "USD"
@@ -95,7 +95,7 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
         end
 
         Timecop.freeze(now) { parser.process user }
-         
+
         expect(DataCrossReference.find_pvh_invoice("vend name 1", "invoice num 1")).to eq true
         expect(DataCrossReference.find_pvh_invoice("vend name 2", "invoice num 2")).to eq true
       end
@@ -126,11 +126,11 @@ describe OpenChain::CustomHandler::Pvh::PvhCaWorkflowParser do
 
         parser.process user
       end
-      
+
       it "raises exception for file-type other than xls, xlsx" do
         allow(cf).to receive(:path).and_return "path/to/upload.csv"
         parser = described_class.new cf
-        expect{ parser.process user }.to raise_error ArgumentError, "Only XLS and XLSX files are accepted."
+        expect { parser.process user }.to raise_error ArgumentError, "Only XLS and XLSX files are accepted."
       end
 
     end

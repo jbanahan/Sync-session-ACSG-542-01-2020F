@@ -1,7 +1,7 @@
 require 'rexml/document'
 
 describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingConfirmationXmlParser do
-  
+
   describe "parse_dom" do
 
     let (:test_data) { IO.read('spec/fixtures/files/ll_booking_confirmation.xml') }
@@ -9,16 +9,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingConfirmationX
     let!(:importer) { Factory(:importer, system_code:'LUMBER') }
 
     it "should fail on bad root element" do
-      test_data.gsub!(/ShippingOrderMessage/,'BADROOT')
+      test_data.gsub!(/ShippingOrderMessage/, 'BADROOT')
       doc = REXML::Document.new(test_data)
-      expect{subject.parse_dom(doc, log)}.to raise_error("Incorrect root element, 'BADROOT'.  Expecting 'ShippingOrderMessage'.")
+      expect {subject.parse_dom(doc, log)}.to raise_error("Incorrect root element, 'BADROOT'.  Expecting 'ShippingOrderMessage'.")
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Incorrect root element, 'BADROOT'.  Expecting 'ShippingOrderMessage'."
     end
 
     it "should fail if shipment ref is missing" do
-      test_data.gsub!(/2018574260/,'')
+      test_data.gsub!(/2018574260/, '')
       doc = REXML::Document.new(test_data)
-      expect{subject.parse_dom(doc, log)}.to raise_error("XML must have Shipment Reference Number at /ShippingOrder/ShippingOrderNumber.")
+      expect {subject.parse_dom(doc, log)}.to raise_error("XML must have Shipment Reference Number at /ShippingOrder/ShippingOrderNumber.")
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "XML must have Shipment Reference Number at /ShippingOrder/ShippingOrderNumber."
     end
 
@@ -80,8 +80,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingConfirmationX
 
     # Ensures missing values don't cause exceptions to be thrown (nil-pointer, etc.).
     it "should handle missing carrier party and dates" do
-      test_data.gsub!(/Carrier/,'Scarier')
-      test_data.gsub!(/Date/,'Dirt')
+      test_data.gsub!(/Carrier/, 'Scarier')
+      test_data.gsub!(/Date/, 'Dirt')
 
       shipment = Shipment.create!(reference:'2018574260')
 

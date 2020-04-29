@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
 
   def process_transaction user, transaction, last_file_bucket:, last_file_path:
     segments = transaction.segments
-    
+
     # Use the BSN03-04 value as the send date and our indicator of whether the shipment data is outdated or not in reprocessing scenarios
     bsn = find_segment(segments, "BSN")
     shipment_number = value(bsn, 2)
@@ -95,7 +95,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
 
     shipment.master_bill_of_lading = find_ref_value(segments, "BM")
     shipment.house_bill_of_lading = find_ref_value(segments, "CN")
-    
+
     find_segments(segments, "DTM") do |dtm|
       datetime = parse_date(Array.wrap(value(dtm, (2..3))).join)
       next unless datetime
@@ -127,7 +127,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   end
 
   def process_order_pack_item_loops shipment, hl_loops
-    # In the 856, every single carton on the shipment is sent as individual Pack and Item 
+    # In the 856, every single carton on the shipment is sent as individual Pack and Item
     # loops.  We're obviously not going to create a distinct shipment line for each carton
     # so we'll roll everthing up to order/styles (the style on the 856 is actually the buyer style
     # on the order lines).
@@ -137,7 +137,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
       po_number = find_element_value(po_loop[:segments], "PRF01")
       td1 = find_segment(po_loop[:segments], "TD1")
 
-      # Burlington doesn't send multiple lines on PO's...every PO "line" in their system is cut as 
+      # Burlington doesn't send multiple lines on PO's...every PO "line" in their system is cut as
       # a distinct 850 - the po # is 7 digits and the last 2 digits of the 9 digit number we receive
       # is the virtual line number.  What that means is that we'll never have multiple non-prepack items that
       # below to the same PO.  For the prepack items, we'll need to prorate this gross weight
@@ -156,9 +156,9 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
           uom = find_element_value(item_loop[:segments], "SN103")
 
           if uom == "AS"
-            # Each prepack is a unique style that we'll add as a line on the shipment (since we explode 
+            # Each prepack is a unique style that we'll add as a line on the shipment (since we explode
             # prepacks on the order)
-            # We don't have to do what we did with the 850 and multiply the prepack quantity by the 
+            # We don't have to do what we did with the 850 and multiply the prepack quantity by the
             # Line's quantity.  In this case, the SN102 value is just the sum of the prepack quantities inside the carton.
             #
             # The only real catch is that since all of the prepacks are in the same carton we can't add a distinct
@@ -187,11 +187,11 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
               order_lines.each do |l|
                 style = l.product.custom_value(cdefs[:prod_part_number])
                 ordered_inner_packs = l.custom_value(cdefs[:ord_line_units_per_inner_pack]).to_i
-                
+
                 # It appears that what's happening here in this case is the PO has the same styles although the sizes are different (different skus)
                 # then on the 856 there's no subline references to the distinct prepack line.  So, what happens then is that every
                 # line has the same style.  Ultimately we'd like the 856 to link to distinct prepacks, so what we'll do is actually
-                # include the order line on the po_data and just use the order/line number as the hash key so that we get the 
+                # include the order line on the po_data and just use the order/line number as the hash key so that we get the
                 # correct # of shipment lines added
                 key = "#{po_number}*~*#{l.line_number}"
                 po_data[key][:quantity] += BigDecimal(outer_pack_quantity * ordered_inner_packs)
@@ -218,7 +218,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
   end
 
   def process_order_item_pack_loops shipment, hl_loops
-    # In the 856, every single carton on the shipment is sent as individual Pack and Item 
+    # In the 856, every single carton on the shipment is sent as individual Pack and Item
     # loops.  We're obviously not going to create a distinct shipment line for each carton
     # so we'll roll everthing up to order/styles (the style on the 856 is actually the buyer style
     # on the order lines).
@@ -228,7 +228,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
       po_number = find_element_value(po_loop[:segments], "PRF01")
       td1 = find_segment(po_loop[:segments], "TD1")
 
-      # Burlington doesn't send multiple lines on PO's...every PO "line" in their system is cut as 
+      # Burlington doesn't send multiple lines on PO's...every PO "line" in their system is cut as
       # a distinct 850 - the po # is 7 digits and the last 2 digits of the 9 digit number we receive
       # is the virtual line number.  What that means is that we'll never have multiple non-prepack items that
       # below to the same PO.  For the prepack items, we'll need to prorate this gross weight
@@ -248,9 +248,9 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
         uom = find_element_value(item_loop[:segments], "SN103")
 
         if uom == "AS"
-          # Each prepack is a unique style that we'll add as a line on the shipment (since we explode 
+          # Each prepack is a unique style that we'll add as a line on the shipment (since we explode
           # prepacks on the order)
-          # We don't have to do what we did with the 850 and multiply the prepack quantity by the 
+          # We don't have to do what we did with the 850 and multiply the prepack quantity by the
           # Line's quantity.  In this case, the SN102 value is just the sum of the prepack quantities inside the carton.
           #
           # The only real catch is that since all of the prepacks are in the same carton we can't add a distinct
@@ -280,11 +280,11 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
             order_lines.each do |l|
               style = l.product.custom_value(cdefs[:prod_part_number])
               ordered_inner_packs = l.custom_value(cdefs[:ord_line_units_per_inner_pack]).to_i
-              
+
               # It appears that what's happening here in this case is the PO has the same styles although the sizes are different (different skus)
               # then on the 856 there's no subline references to the distinct prepack line.  So, what happens then is that every
               # line has the same style.  Ultimately we'd like the 856 to link to distinct prepacks, so what we'll do is actually
-              # include the order line on the po_data and just use the order/line number as the hash key so that we get the 
+              # include the order line on the po_data and just use the order/line number as the hash key so that we get the
               # correct # of shipment lines added
               key = "#{po_number}*~*#{l.line_number}"
               po_data[key][:quantity] += BigDecimal(outer_pack_quantity * ordered_inner_packs)
@@ -295,7 +295,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
               end
             end
           end
-          
+
         else
           # Standard packs
           style = find_lin_style(item_loop[:segments])
@@ -395,11 +395,11 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
       # prepack lines.  However, for ease of programming, i'm going to just do it by dropping 1/100th of a KG
       # at a time into each "bucket" until there's no remainder left.
       #
-      # It shouldn't really matter, since Kewill doesn't even support decimal values for the Gross Weight, so 
+      # It shouldn't really matter, since Kewill doesn't even support decimal values for the Gross Weight, so
       # it'll all get rounded at the end anyway.
       remainder_step = BigDecimal("0.01")
       begin
-        weights.keys.each do |style|
+        weights.each_key do |style|
           weights[style] += remainder_step
           remainder -= remainder_step
 

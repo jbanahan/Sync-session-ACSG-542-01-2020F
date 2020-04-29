@@ -17,13 +17,13 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
     def check_output
       invoice = Invoice.first
 
-      #header
+      # header
       expect(invoice.importer).to eq ann
       expect(invoice.country_origin).to eq country
       expect(invoice.exchange_rate).to eq 2
       expect(invoice.gross_weight).to eq 731.75
       expect(invoice.gross_weight_uom).to eq "KG"
-      expect(invoice.invoice_date).to eq Date.new(2017,4,9)
+      expect(invoice.invoice_date).to eq Date.new(2017, 4, 9)
       expect(invoice.invoice_number).to eq "435118117HK"
       expect(invoice.currency).to eq "USD"
       expect(invoice.invoice_total_foreign).to eq 14568.54
@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
       vendor = invoice.vendor
       expect(vendor.name).to eq "PT. ERATEX (HONG KONG)"
       expect(vendor.system_code).to eq "ATAYLOR-91ebc99a3a87fa077a9c65be84883977"
-      
+
       expect(vendor.addresses.count).to eq 1
       vendor_address = vendor.addresses.first
       expect(vendor_address.name).to eq vendor.name
@@ -52,10 +52,10 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
       expect(factory_address.line_2).to eq "200 Hard St"
       expect(factory_address.city).to eq "Probolinggo"
       expect(factory_address.country).to eq country2
-      
+
       expect(invoice.country_origin).to eq country
 
-      #line
+      # line
       expect(invoice.invoice_lines.count).to eq 1
       line = invoice.invoice_lines.first
 
@@ -85,7 +85,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
     end
 
     it "parses a commercial invoice" do
-      expect{ subject.parse(document, log, {}) }.to change(Invoice, :count ).from(0).to 1
+      expect { subject.parse(document, log, {}) }.to change(Invoice, :count ).from(0).to 1
       check_output
     end
 
@@ -96,21 +96,21 @@ describe OpenChain::CustomHandler::AnnInc::AnnCommercialInvoiceXmlParser do
 
     it "replaces earlier parse" do
       subject.parse(document, InboundFile.new, {})
-      expect{ subject.parse(document, log, {}) }.to_not change(Invoice, :count)
+      expect { subject.parse(document, log, {}) }.to_not change(Invoice, :count)
       check_output
     end
-  
+
     it "errors if importer code other than 'ANNTAYNYC' is found" do
       importer_code = REXML::XPath.first(document, "//OrganizationAddress[AddressType='Importer']/OrganizationCode")
       importer_code.text = "ACME"
-      expect{ subject.parse(document, log, {}) }.to raise_error "Unexpected importer code: ACME"
+      expect { subject.parse(document, log, {}) }.to raise_error "Unexpected importer code: ACME"
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unexpected importer code: ACME"
     end
 
     it "errors if importer isn't found" do
       ann.destroy
 
-      expect{ subject.parse(document, log, {}) }.to raise_error "No Ann Taylor importer with system code 'ATAYLOR'."
+      expect { subject.parse(document, log, {}) }.to raise_error "No Ann Taylor importer with system code 'ATAYLOR'."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "No Ann Taylor importer with system code 'ATAYLOR'."
     end
   end

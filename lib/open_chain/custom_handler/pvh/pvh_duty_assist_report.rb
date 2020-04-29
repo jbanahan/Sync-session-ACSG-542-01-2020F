@@ -72,9 +72,9 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
       cust_number = config['cust_number']
       report = xlsx_workbook_to_tempfile(report, "Duty Assist", file_name: "#{cust_number}_Data_Dump_Fiscal_#{fiscal_month.start_date.strftime('%Y-%m')}_#{Date.today.strftime('%Y-%m-%d')}.xlsx")
       body = if cust_number == "PVH"
-                 "Attached is the \"PVH Duty Dump Report, #{fm.year.to_s}-#{fm.month_number.to_s}\" based on ACH Due Date."
-               else
-                 "Attached is the \"PVHCANADA Duty Dump Report, #{fm.year.to_s}-#{fm.month_number.to_s}\" based on CADEX Acceptance Date."
+                 "Attached is the \"PVH Duty Dump Report, #{fm.year}-#{fm.month_number}\" based on ACH Due Date."
+             else
+                 "Attached is the \"PVHCANADA Duty Dump Report, #{fm.year}-#{fm.month_number}\" based on CADEX Acceptance Date."
              end
       OpenMailer.send_simple_html(config['email'], "#{cust_number} Data Dump #{fm.year}-#{fm.month_number}", body, report).deliver_now
     end
@@ -330,7 +330,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     row << invoice_line.country_origin_code # K
     row << tariff.tariff_description # L
     row << tariff.hts_code # M
-    row << invoice.currency #N
+    row << invoice.currency # N
 
     exchange_rate = ensure_numeric(invoice.exchange_rate)
     invoice_value = ensure_numeric(invoice_line.value)

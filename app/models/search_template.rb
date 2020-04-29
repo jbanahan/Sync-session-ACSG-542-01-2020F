@@ -76,9 +76,9 @@ class SearchTemplate < ActiveRecord::Base
       include_rule_links:ss.include_rule_links,
       no_time:ss.no_time
     }
-    h[:search_columns] = ss.search_columns.collect {|sc| {model_field_uid:sc.model_field_uid,rank:sc.rank}}
-    h[:search_criterions] = ss.search_criterions.collect {|sc| {model_field_uid:sc.model_field_uid,operator:sc.operator,value:sc.value}}
-    h[:sort_criterions] = ss.sort_criterions.collect {|sc| {model_field_uid:sc.model_field_uid,rank:sc.rank,descending:sc.descending}}
+    h[:search_columns] = ss.search_columns.collect {|sc| {model_field_uid:sc.model_field_uid, rank:sc.rank}}
+    h[:search_criterions] = ss.search_criterions.collect {|sc| {model_field_uid:sc.model_field_uid, operator:sc.operator, value:sc.value}}
+    h[:sort_criterions] = ss.sort_criterions.collect {|sc| {model_field_uid:sc.model_field_uid, rank:sc.rank, descending:sc.descending}}
     h.to_json
   end
 end

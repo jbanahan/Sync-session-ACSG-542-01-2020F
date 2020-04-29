@@ -17,8 +17,8 @@ module OpenChain
         wb = create_workbook(settings[:invoice_numbers])
         workbook_to_tempfile wb, 'PvhBillingSummary-'
       end
-      
-      def create_workbook(invoice_numbers)        
+
+      def create_workbook(invoice_numbers)
         wb, lvs_sheet = XlsMaker.create_workbook_and_sheet 'LVS Billing', numeric_headers
         hvs_sheet = XlsMaker.create_sheet wb, 'HVS Billing', numeric_headers
         v_sheet = XlsMaker.create_sheet wb, 'V Billing', numeric_headers
@@ -33,7 +33,7 @@ module OpenChain
         wb
       end
 
-      def numeric_headers 
+      def numeric_headers
         ['F17', 'F8', 'F11', 'F24', '', 'F29', 'F32', 'F35', 'F38', 'F164', 'F165', 'F166', 'F167', 'F168', 'F173', 'F104', 'F102', 'F127', 'F28', 'F36']
       end
 
@@ -45,7 +45,7 @@ module OpenChain
           execute_query(query(report_type, false, invoice_numbers)) do |fees_query|
             brokerage_duty_qry.each do |outer_line|
               combined << outer_line
-              matching = fees_query.find{ |inner_line| inner_line[5] == outer_line[5] }
+              matching = fees_query.find { |inner_line| inner_line[5] == outer_line[5] }
               combined << matching if matching
             end
           end
@@ -57,7 +57,7 @@ module OpenChain
         type = "LV" if report_type == :lvs
         type = "AB" if report_type == :hvs
         type = "V" if report_type == :v
-        safe_invoice_numbers = invoice_numbers.map{ |inv| ActiveRecord::Base.sanitize inv }.join(',')
+        safe_invoice_numbers = invoice_numbers.map { |inv| ActiveRecord::Base.sanitize inv }.join(',')
 
         <<-SQL
           SELECT '' AS 'BATCH',
@@ -80,7 +80,7 @@ module OpenChain
             '' AS 'DESCRIPTION',
             '' AS 'REMIT CODE',
             '' AS 'INVOICE TYPE'
-          FROM entries AS e 
+          FROM entries AS e
             INNER JOIN broker_invoices AS bi ON e.id = bi.entry_id
             INNER JOIN broker_invoice_lines AS bil ON bi.id = bil.broker_invoice_id
           WHERE bi.invoice_number IN (#{safe_invoice_numbers}) AND
@@ -90,7 +90,6 @@ module OpenChain
           ORDER BY bi.invoice_number;
         SQL
       end
-    
     end
   end
 end

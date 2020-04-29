@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
 
         expect(order.customer_order_number).to eq "6232562"
         expect(order.importer).to eq ann_taylor
-        expect(order.order_date).to eq Date.new(2016,11,2)
+        expect(order.order_date).to eq Date.new(2016, 11, 2)
         expect(order.custom_value(cdefs[:ord_type])).to eq "Standard PO"
         expect(order.custom_value(cdefs[:ord_division])).to eq "ATF"
         expect(order.custom_value(cdefs[:ord_department])).to eq "300"
@@ -43,14 +43,14 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
         expect(order.vendor.linked_companies).to include order.factory
         expect(ann_taylor.linked_companies).to include order.factory
 
-        expect(order.order_lines.length).to eq 2    
+        expect(order.order_lines.length).to eq 2
 
         line = order.order_lines.first
         expect(line.product).not_to be_nil
         expect(line.product.unique_identifier).to eq "ATAYLOR-337955"
         expect(line.product.name).to eq "icon-m wire aviator"
         expect(line.product.custom_value(cdefs[:prod_part_number])).to eq "337955"
-        
+
         expect(line.line_number).to eq 10
         expect(line.sku).to eq "21930706"
         expect(line.unit_of_measure).to eq "EA"
@@ -77,7 +77,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
         expect(snap).not_to be_nil
         expect(snap.user).to eq User.integration
         expect(snap.context).to eq "file.edi"
-        
+
         expect(line.line_number).to eq 20
         expect(line.sku).to eq "21930713"
         expect(line.unit_of_measure).to eq "PK"
@@ -102,12 +102,12 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
       end
 
       it "does not update an order when the file contains stale info" do
-        order = Factory(:order, order_number:"ATAYLOR-6232562", importer_id:ann_taylor.id, order_date:Date.new(2015,5,5), last_exported_from_source:ActiveSupport::TimeZone["America/New_York"].parse("201803211251"))
+        order = Factory(:order, order_number:"ATAYLOR-6232562", importer_id:ann_taylor.id, order_date:Date.new(2015, 5, 5), last_exported_from_source:ActiveSupport::TimeZone["America/New_York"].parse("201803211251"))
 
         subject.parse standard_edi_data, bucket: "bucket", key: "file.edi"
 
         order.reload
-        expect(order.order_date).to eq Date.new(2015,5,5)
+        expect(order.order_date).to eq Date.new(2015, 5, 5)
       end
 
       it "parses prepack orders with multiple lines" do
@@ -197,7 +197,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnOrder850Parser do
       it "errors if ann taylor importer is missing" do
         ann_taylor.destroy
 
-        expect{subject.parse standard_edi_data}.to raise_error "No Ann Taylor importer found with system code 'ATAYLOR'."
+        expect {subject.parse standard_edi_data}.to raise_error "No Ann Taylor importer found with system code 'ATAYLOR'."
       end
     end
 

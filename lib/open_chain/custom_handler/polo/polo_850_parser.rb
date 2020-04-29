@@ -29,9 +29,9 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
       log.error_and_raise "Unable to find Master RL account.  This account should not be missing." unless importer
       log.company = importer
 
-      # Due to the way the transactional looking occurs around the PO object, it's possible that we can have multiple 
+      # Due to the way the transactional looking occurs around the PO object, it's possible that we can have multiple
       # products with the same unique id created if we enclose the outer PO create in a transaction and do the po find/create
-      # inside that transaction...so, we'll create all the products ahead of time in their own individual locks/transactions 
+      # inside that transaction...so, we'll create all the products ahead of time in their own individual locks/transactions
       # and then do the PO create.
       products = create_products(dom)
       find_purchase_order(importer, po_number, find_source_system_datetime(dom), log) do |po|
@@ -50,10 +50,10 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
 
     def find_purchase_order importer, po_number, source_system_export_date, log
       purchase_order = nil
-      Lock.acquire("Order-#{po_number}") do 
+      Lock.acquire("Order-#{po_number}") do
         po = Order.where(importer_id: importer.id, order_number: po_number, customer_order_number: po_number).includes(:order_lines).first_or_create!
         log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, po_number, module_type:Order.to_s, module_id:po.id
-        
+
         if valid_export_date? po, source_system_export_date
           # Set the source system export date (which is really the timestamp for when we received the EDI) while
           # we've totally locked out other processes.  This ensures if we're processing multiple versions of the same
@@ -174,7 +174,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
       date_2 ? date_2 : date_1
     end
 
-    def first_xpath_text dom, expression 
+    def first_xpath_text dom, expression
       text = nil
       node = REXML::XPath.first(dom, expression)
       if node
@@ -185,7 +185,7 @@ module OpenChain; module CustomHandler; module Polo; class Polo850Parser
     end
 
     def find_product style
-      # Make sure we're using the same Lock that is used in file import processor, since that'll be the process we're 
+      # Make sure we're using the same Lock that is used in file import processor, since that'll be the process we're
       # competing against potentially when creating these
       Lock.acquire("Product-#{style}") do
         # We don't want to set the importer, because RL doesn't set it on 99% of their styles when

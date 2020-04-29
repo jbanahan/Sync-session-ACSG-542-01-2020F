@@ -10,11 +10,11 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
         lines = data.lines
         mode, file_date = process_first_line lines[0]
         file_name, import_number = process_second_line lines[1]
-        return unless file_name.match(/\.US$/) #only process US files
+        return unless file_name.match(/\.US$/) # only process US files
         vessel, voyage, etd, act_dest_code, receipt_location = process_fifth_line lines[4]
         con_num, con_size, con_type, seal, eta = process_eighth_line lines[7]
         importer = find_importer
-        header_data = {mode:mode,import_number:import_number,file_date:file_date,vessel:vessel,voyage:voyage,etd:etd,con_num:con_num,con_size:con_size,con_type:con_type,seal:seal,eta:eta,importer:importer,act_dest_code:act_dest_code,user:user,receipt_location:receipt_location}
+        header_data = {mode:mode, import_number:import_number, file_date:file_date, vessel:vessel, voyage:voyage, etd:etd, con_num:con_num, con_size:con_size, con_type:con_type, seal:seal, eta:eta, importer:importer, act_dest_code:act_dest_code, user:user, receipt_location:receipt_location}
         shp = build_shipment header_data
         con = (header_data[:mode]=='Ocean' ? build_container(shp, header_data) : nil)
         build_lines shp, con, lines, cdefs, header_data
@@ -31,7 +31,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
   end
 
   def self.build_shipment hd
-    s = Shipment.where(importer_reference:hd[:import_number],importer_id:hd[:importer].id,voyage:hd[:voyage]).where('created_at > ?',1.year.ago).first
+    s = Shipment.where(importer_reference:hd[:import_number], importer_id:hd[:importer].id, voyage:hd[:voyage]).where('created_at > ?', 1.year.ago).first
     if s.nil?
       s = Shipment.new(
         reference:"HENNE-#{hd[:import_number]}-#{hd[:file_date]}",
@@ -65,7 +65,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
   end
 
   def self.build_line shp, con, ln, cdefs, hd
-    ord_num = ln[33,8].strip
+    ord_num = ln[33, 8].strip
     sl = shp.shipment_lines.find {|my_line|
       ol = my_line.order_lines.first
       on = ol.order.customer_order_number if ol
@@ -73,16 +73,16 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
     }
     if sl.nil?
       sl = shp.shipment_lines.build
-      p = Product.where(importer_id:shp.importer_id,unique_identifier:"HENNE-#{ord_num}").first_or_create!
-      #it's ok to run this after create because the whole thing is in a transaction
+      p = Product.where(importer_id:shp.importer_id, unique_identifier:"HENNE-#{ord_num}").first_or_create!
+      # it's ok to run this after create because the whole thing is in a transaction
       raise "You do not have permission to edit this product." unless p.can_edit?(hd[:user])
       p.update_custom_value! cdefs[:prod_part_number], ord_num
       sl.product = p
-      sl.quantity = ln[56,6].strip
-      sl.carton_qty = ln[62,7].strip
-      sl.cbms = ln[79,11].strip
-      sl.gross_kgs = ln[69,10].strip
-      sl.fcr_number = ln[1,16].strip
+      sl.quantity = ln[56, 6].strip
+      sl.carton_qty = ln[62, 7].strip
+      sl.cbms = ln[79, 11].strip
+      sl.gross_kgs = ln[69, 10].strip
+      sl.fcr_number = ln[1, 16].strip
       sl.container = con
       build_order_line sl, ln, ord_num, cdefs, hd
       build_invoice_line sl, ln, ord_num, hd
@@ -113,7 +113,7 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
         order_number:"HENNE-#{ord_num}",
         customer_order_number:ord_num
       ).first_or_create!
-      ol = o.order_lines.build(product:sl.product,quantity:sl.quantity)
+      ol = o.order_lines.build(product:sl.product, quantity:sl.quantity)
       raise "You do not have permission to edit this order." unless o.can_edit?(hd[:user])
       o.save!
       sl.linked_order_line_id = ol.id
@@ -122,10 +122,10 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
       raise "You do not have permission to edit this order." unless ol.order.can_edit?(hd[:user])
       ol.save!
     end
-    dest_code = ln[17,8].strip
+    dest_code = ln[17, 8].strip
     dest_code = hd[:act_dest_code] if dest_code.blank?
     ol.update_custom_value! cdefs[:ord_line_destination_code], dest_code
-    ol.update_custom_value! cdefs[:ord_line_department_code], ln[47,9].strip
+    ol.update_custom_value! cdefs[:ord_line_department_code], ln[47, 9].strip
   end
 
   def self.find_importer
@@ -189,33 +189,33 @@ module OpenChain; module CustomHandler; module Hm; class HmShipmentParser
     end
     split_line = line.split(' ')
     raise "Import number should be all digits" unless split_line[3].match /^\d+$/
-    [split_line[1],split_line[3]]
+    [split_line[1], split_line[3]]
   end
 
   # FIFTH LINE STUFF
 
   def self.process_fifth_line line
-    act_dest_code = line[24,10].strip
-    vessel = line[34,20].strip
-    voyage = line[54,12].strip
-    receipt_location = line[66,18].strip
-    etd = parse_date(line[122,6])
-    [vessel,voyage,etd,act_dest_code,receipt_location]
+    act_dest_code = line[24, 10].strip
+    vessel = line[34, 20].strip
+    voyage = line[54, 12].strip
+    receipt_location = line[66, 18].strip
+    etd = parse_date(line[122, 6])
+    [vessel, voyage, etd, act_dest_code, receipt_location]
   end
 
   # EIGTH LINE STUFF
 
   def self.process_eighth_line line
-    container_number = line[1,17].strip
-    container_size = line[18,6].strip
-    container_type = line[24,6].strip
-    seal = line[30,16].strip
-    eta = parse_date(line[122,6])
-    [container_number,container_size,container_type,seal,eta]
+    container_number = line[1, 17].strip
+    container_size = line[18, 6].strip
+    container_type = line[24, 6].strip
+    seal = line[30, 16].strip
+    eta = parse_date(line[122, 6])
+    [container_number, container_size, container_type, seal, eta]
   end
 
   def self.parse_date str
-    Date.new("20#{str[0,2]}".to_i,str[2,2].to_i,str[4,2].to_i)
+    Date.new("20#{str[0, 2]}".to_i, str[2, 2].to_i, str[4, 2].to_i)
   end
 
 end; end; end; end;

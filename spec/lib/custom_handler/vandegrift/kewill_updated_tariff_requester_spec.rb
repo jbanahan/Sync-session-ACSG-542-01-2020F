@@ -6,12 +6,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillUpdatedTariffRequester do
     let! (:master_setup) { stub_master_setup }
     let (:start_time) { Time.zone.parse "2017-11-28 15:00"}
     let (:end_time) { Time.zone.parse "2017-11-28 16:00"}
-    let (:sql_proxy_client) { 
+    let (:sql_proxy_client) {
       c = instance_double(OpenChain::KewillSqlProxyClient)
       c
     }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:poll).and_yield start_time, end_time
       allow(subject).to receive(:sql_proxy_client).and_return sql_proxy_client
       allow(sql_proxy_client).to receive(:aws_context_hash).with("json", path_date: instance_of(ActiveSupport::TimeWithZone), parser_identifier: "kewill_tariffs").and_return({s3_bucket: "test-bucket", s3_path: "test-path", sqs_queue: "test-queue"})

@@ -7,23 +7,23 @@ module OpenChain
     class PortMissingError < ::RuntimeError
       attr_accessor :port_code
     end
-    #write XML files to go to e-Focus (at OHL) for supply chain tracking
+    # write XML files to go to e-Focus (at OHL) for supply chain tracking
     class PoloCaEfocusGenerator
       include OpenChain::XmlBuilder
       include OpenChain::FtpFileSupport
 
       # key is fenix code, value is ohl code
-      TRANSPORT_MODE_MAP ||= {'1'=>'A','2'=>'L','3'=>'M','6'=>'R','7'=>'F','9'=>'O'}
+      TRANSPORT_MODE_MAP ||= {'1'=>'A', '2'=>'L', '3'=>'M', '6'=>'R', '7'=>'F', '9'=>'O'}
       SYNC_CODE ||= 'polo_ca_efocus'
-      POLO_IMPORTER_TAX_IDS ||= ['806167003RM0001','871349163RM0001','866806458RM0001']
+      POLO_IMPORTER_TAX_IDS ||= ['806167003RM0001', '871349163RM0001', '866806458RM0001']
 
       def self.run_schedulable
         self.new.generate
       end
-      
-      #This is the master method that does all of the work
+
+      # This is the master method that does all of the work
       def generate
-        sync_xml do |t, sync| 
+        sync_xml do |t, sync|
           ftp_sync_file t, sync
           # Save the sync record now that it has an ftp session
           sync.save!
@@ -51,19 +51,18 @@ module OpenChain
             if sr.fingerprint != fingerprint
               output.rewind
               if block_given?
-                Tempfile.open(["PoloCaEfocus",".xml"]) do |t|
+                Tempfile.open(["PoloCaEfocus", ".xml"]) do |t|
                   t << output.read
                   t.rewind
-                  yield t, sr if block_given? 
+                  yield t, sr if block_given?
                 end
               else
-                t = Tempfile.new ["PoloCaEfocus",".xml"]
+                t = Tempfile.new ["PoloCaEfocus", ".xml"]
                 t << output.read
                 t.rewind
                 files << t
               end
             end
-            
           rescue OpenChain::CustomHandler::PortMissingError
             body = <<endbody
 Error for file #{ent.broker_reference}.
@@ -72,9 +71,9 @@ Port code #{$!.port_code} is not set in the Ralph Lauren e-Focus XML Generator.
 
 If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
 endbody
-            OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com','INVALID RALPH LAUREN CA PORT CODE',body).deliver_now
+            OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com', 'INVALID RALPH LAUREN CA PORT CODE', body).deliver_now
           end
-          sr.update_attributes(:sent_at=>2.seconds.ago,:confirmed_at=>1.second.ago,:confirmation_file_name=>'n/a', fingerprint: fingerprint) unless sr.nil?
+          sr.update_attributes(:sent_at=>2.seconds.ago, :confirmed_at=>1.second.ago, :confirmation_file_name=>'n/a', fingerprint: fingerprint) unless sr.nil?
         end
         block_given? ? nil : files
       end
@@ -120,14 +119,14 @@ endbody
         output_file
       end
 
-      def ftp_credentials 
+      def ftp_credentials
         environ = (Rails.env.production? ? 'prod' : 'dev')
         ftp2_vandegrift_inc "to_ecs/Ralph_Lauren/efocus_ca_#{environ}", remote_file_name
       end
 
-      def remote_file_name 
+      def remote_file_name
         n = nil
-        Tempfile.open(['VFITRACK','.xml']) do |t|
+        Tempfile.open(['VFITRACK', '.xml']) do |t|
           n = File.basename t.path
         end
         n
@@ -165,11 +164,11 @@ endbody
         nil
       end
       def add_house_bills parent, hbol_numbers
-        #since we don't have the right structure on the inbound, writing all house
-        #bills under each master bill
+        # since we don't have the right structure on the inbound, writing all house
+        # bills under each master bill
         unless hbol_numbers.blank?
           hbol_numbers.split(' ').each do |hb|
-            h = hb.size > 16 ? hb[0,16] : hb
+            h = hb.size > 16 ? hb[0, 16] : hb
             add_el parent, 'house-bill', h
           end
         end

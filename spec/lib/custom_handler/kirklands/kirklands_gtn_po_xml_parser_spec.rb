@@ -32,7 +32,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser do
   let (:us) { Factory(:country, iso_code: "US")}
 
   describe "process_order_update" do
-    before :each do 
+    before :each do
       us
       india
       allow(subject).to receive(:inbound_file).and_return inbound_file
@@ -61,7 +61,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser do
 
       # Kirklands extended fields
       expect(o.custom_value(cdefs[:ord_department_code])).to eq "25"
-      expect(o.custom_value(cdefs[:ord_department])).to eq "TEXTILES"      
+      expect(o.custom_value(cdefs[:ord_department])).to eq "TEXTILES"
 
       expect(o.entity_snapshots.length).to eq 1
       s = o.entity_snapshots.first
@@ -88,7 +88,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser do
       expect(a.state).to be_nil
       expect(a.postal_code).to be_nil
       expect(a.country).to eq india
-      
+
       agent = o.agent
       expect(agent).not_to be_nil
       expect(agent).to have_system_identifier("GTN Agent", "28387")
@@ -131,7 +131,7 @@ describe OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser do
       expect(l.country_of_origin).to eq "IN"
       expect(l.price_per_unit).to eq BigDecimal("4.85")
       expect(l.unit_msrp).to eq BigDecimal("24.99")
-      
+
       p = l.product
       expect(p.unique_identifier).to eq "219397"
       expect(p.name).to eq "PILLOW OPEN PLAID BLK 20IN"

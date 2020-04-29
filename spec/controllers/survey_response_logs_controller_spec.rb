@@ -1,6 +1,6 @@
 describe SurveyResponseLogsController do
   describe "index" do
-    before :each do 
+    before :each do
       u = Factory(:user)
 
       sign_in_as u

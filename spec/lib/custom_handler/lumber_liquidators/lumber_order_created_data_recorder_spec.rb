@@ -1,6 +1,6 @@
 describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCreatedDataRecorder do
 
-  before :all do 
+  before :all do
     described_class.new.send(:cdefs)
   end
 
@@ -52,7 +52,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberOrderCreatedDataReco
     order = Order.create! order_number: "4500230506", importer_id: Factory(:importer).id
     # Don't set anything that's not required, we want to ensure the data that's set comes from the
     # snapshot data.
-    order.order_lines.create! line_number: 1, product_id: product.id 
+    order.order_lines.create! line_number: 1, product_id: product.id
     order
   }
 

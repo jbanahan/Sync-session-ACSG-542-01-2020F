@@ -4,13 +4,13 @@ describe OpenChain::Report::DrawbackExportsWithoutImports do
       @c = Factory(:company)
       @u = Factory(:user)
       allow(described_class).to receive(:permission?).and_return(true)
-      @exp = DutyCalcExportFileLine.create!(:part_number=>'ABC',:export_date=>1.day.ago,:quantity=>100,:ref_1=>'r1',:ref_2=>'r2',:importer_id=>@c.id)
+      @exp = DutyCalcExportFileLine.create!(:part_number=>'ABC', :export_date=>1.day.ago, :quantity=>100, :ref_1=>'r1', :ref_2=>'r2', :importer_id=>@c.id)
     end
     after :each do
       @tmp.unlink if @tmp
     end
     it "should write worksheet" do
-      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago,'end_date'=>1.month.from_now}
+      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago, 'end_date'=>1.month.from_now}
       wb = Spreadsheet.open @tmp
       s = wb.worksheet 0
       r = s.row(1)
@@ -21,23 +21,23 @@ describe OpenChain::Report::DrawbackExportsWithoutImports do
       expect(r[4]).to eq(@exp.quantity)
     end
     it "should write headings" do
-      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago,'end_date'=>1.month.from_now}
+      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago, 'end_date'=>1.month.from_now}
       wb = Spreadsheet.open @tmp
       s = wb.worksheet 0
       r = s.row(0)
-      expect(["Export Date","Part Number","Ref 1","Ref 2","Quantity"]).to eq((0..4).collect {|i| r[i]})
+      expect(["Export Date", "Part Number", "Ref 1", "Ref 2", "Quantity"]).to eq((0..4).collect {|i| r[i]})
     end
     it "should only include exports within date range" do
-      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago,'end_date'=>1.week.ago}
+      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago, 'end_date'=>1.week.ago}
       wb = Spreadsheet.open @tmp
       s = wb.worksheet 0
       r = s.row(1)
       expect(r).to be_empty
     end
     it "should only include exports within 'not_in_imports' scope" do
-      dont_find = DutyCalcExportFileLine.create!(:part_number=>'DEF',:export_date=>1.day.ago,:quantity=>100,:ref_1=>'r1',:ref_2=>'r2',:importer_id=>@c.id)
-      DrawbackImportLine.create!(:part_number=>dont_find.part_number,:import_date=>1.month.ago,:product_id=>Factory(:product).id,:importer_id=>@c.id)
-      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago,'end_date'=>1.month.from_now}
+      dont_find = DutyCalcExportFileLine.create!(:part_number=>'DEF', :export_date=>1.day.ago, :quantity=>100, :ref_1=>'r1', :ref_2=>'r2', :importer_id=>@c.id)
+      DrawbackImportLine.create!(:part_number=>dont_find.part_number, :import_date=>1.month.ago, :product_id=>Factory(:product).id, :importer_id=>@c.id)
+      @tmp = described_class.run_report @u, {'start_date'=>1.month.ago, 'end_date'=>1.month.from_now}
       wb = Spreadsheet.open @tmp
       s = wb.worksheet 0
       r = s.row(1)
@@ -46,7 +46,7 @@ describe OpenChain::Report::DrawbackExportsWithoutImports do
     end
     it "should fail if user cannot run report" do
       allow(described_class).to receive(:permission?).and_return(false)
-      expect {described_class.run_report @user}.to raise_error "You do not have permission to run this report." 
+      expect {described_class.run_report @user}.to raise_error "You do not have permission to run this report."
     end
   end
   describe "permission?" do

@@ -4,7 +4,7 @@ module OpenChain; module EntityCompare; class CascadeCompanyValidations
     return unless type=='Company'
 
     c = Company.where(id: id).first
-    # Never validate everything if the company that was updated was teh master company, this is going to 
+    # Never validate everything if the company that was updated was teh master company, this is going to
     # literally validate every order and/or entry in the system.
     return if c.master?
 
@@ -15,7 +15,7 @@ module OpenChain; module EntityCompare; class CascadeCompanyValidations
   end
 
   def self.validate_connected_orders c
-    Order.where('importer_id = :cid OR vendor_id = :cid',cid:c.id).where(closed_at: nil).find_each do |o|
+    Order.where('importer_id = :cid OR vendor_id = :cid', cid:c.id).where(closed_at: nil).find_each do |o|
       BusinessValidationTemplate.create_results_for_object! o
     end
   end
@@ -25,5 +25,5 @@ module OpenChain; module EntityCompare; class CascadeCompanyValidations
       BusinessValidationTemplate.create_results_for_object! e
     end
   end
-  
+
 end; end; end

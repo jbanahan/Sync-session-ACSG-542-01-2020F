@@ -41,5 +41,4 @@ describe OpenChain::HealthCheckMiddleware do
     end
   end
 
-  
 end

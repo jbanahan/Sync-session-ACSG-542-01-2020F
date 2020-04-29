@@ -20,7 +20,7 @@ describe OpenChain::Events::EventHandler do
     e
   }
 
-  let (:object) { 
+  let (:object) {
     object = double("Module Object")
     allow(object).to receive(:class).and_return "Testing"
     object

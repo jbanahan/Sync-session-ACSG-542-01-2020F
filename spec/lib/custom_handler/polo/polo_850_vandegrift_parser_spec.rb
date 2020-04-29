@@ -128,7 +128,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         expect(order.last_file_path).to eq "key"
         expect(order.customer_order_number).to eq @po_number
         expect(order.importer).to eq @importer
-        expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0,2]}:#{@message_time[2,2]}").in_time_zone("UTC")
+        expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0, 2]}:#{@message_time[2, 2]}").in_time_zone("UTC")
         expect(order.get_custom_value(@cdefs[:ord_invoicing_system]).value).to eq "Tradecard"
         expect(order.get_custom_value(@cdefs[:ord_division]).value).to eq @po_lines.first[:merchandise_division]
         expect(order.order_lines.size).to eq(1)
@@ -176,7 +176,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         subject.parse_file @xml_lambda.call, log
 
         order.reload
-        expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0,2]}:#{@message_time[2,2]}").in_time_zone("UTC")
+        expect(order.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("#{@message_date} #{@message_time[0, 2]}:#{@message_time[2, 2]}").in_time_zone("UTC")
         expect(order.order_lines.length).to eq 2
         l = order.order_lines.first
         expect(l.id).to eq updated_line.id
@@ -232,14 +232,14 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
 
       it "raises an error for unknown buyer ids" do
         @buyer_id = "unknown"
-        expect{subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unknown Buyer ID #{@buyer_id} found in PO Number #{@po_number}.  If this is a new Buyer you must link this number to an Importer account."
+        expect {subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unknown Buyer ID #{@buyer_id} found in PO Number #{@po_number}.  If this is a new Buyer you must link this number to an Importer account."
         expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unknown Buyer ID #{@buyer_id} found in PO Number #{@po_number}.  If this is a new Buyer you must link this number to an Importer account."
       end
 
       it "raises an error if Importer cannot be found" do
         @importer.destroy
 
-        expect{subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unable to find Fenix Importer for importer number 806167003RM0001.  This account should not be missing."
+        expect {subject.parse_file(@xml_lambda.call, log)}.to raise_error "Unable to find Fenix Importer for importer number 806167003RM0001.  This account should not be missing."
         expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "Unable to find Fenix Importer for importer number 806167003RM0001.  This account should not be missing."
       end
     end
@@ -253,7 +253,7 @@ describe OpenChain::CustomHandler::Polo::Polo850VandegriftParser do
         @style = "Style"
         @merchandise_division_desc = "MERCH"
         @cdefs = described_class.prep_custom_definitions [:ord_division]
-        @xml_lambda = lambda do 
+        @xml_lambda = lambda do
           <<-XML
 <Orders>
   <MessageInformation>

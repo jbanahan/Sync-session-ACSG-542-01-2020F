@@ -6,22 +6,22 @@ describe Api::V1::VendorsController do
       ms
     }
     before :each do
-      @u = Factory(:master_user,vendor_view:true,vendor_edit:true)
+      @u = Factory(:master_user, vendor_view:true, vendor_edit:true)
       allow_api_access @u
     end
     describe '#index' do
       it 'should return vendors' do
-        Factory(:company,vendor:true,name:'V1')
-        Factory(:company,vendor:true,name:'V2')
+        Factory(:company, vendor:true, name:'V1')
+        Factory(:company, vendor:true, name:'V2')
         get :index
         h = JSON.parse(response.body)['results']
-        expect(h.collect {|v| v['cmp_name']}).to eq ['V1','V2']
+        expect(h.collect {|v| v['cmp_name']}).to eq ['V1', 'V2']
       end
     end
     describe '#create' do
       it 'should create with vendor flag set to true' do
         h = {'cmp_name'=>'compname'}
-        expect {post :create, company:h}.to change(Company,:count).by(1)
+        expect {post :create, company:h}.to change(Company, :count).by(1)
         expect(response).to be_success
         c = Company.last
         expect(c.name).to eq 'compname'
@@ -30,8 +30,8 @@ describe Api::V1::VendorsController do
     end
     describe '#update' do
       it 'should update vendor' do
-        v = Factory(:company,vendor:true,name:'V1')
-        h = {'id'=>v.id,'cmp_name'=>'compname'}
+        v = Factory(:company, vendor:true, name:'V1')
+        h = {'id'=>v.id, 'cmp_name'=>'compname'}
         put :update, id: v.id.to_s, company: h
         expect(response).to be_success
         v.reload
@@ -41,7 +41,7 @@ describe Api::V1::VendorsController do
     end
     describe '#show' do
       it 'should get vendor' do
-        v = Factory(:company,vendor:true,name:'V1')
+        v = Factory(:company, vendor:true, name:'V1')
         get :show, id: v.id.to_s
         expect(response).to be_success
         h = JSON.parse(response.body)['company']

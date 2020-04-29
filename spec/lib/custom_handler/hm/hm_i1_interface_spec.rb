@@ -1,5 +1,5 @@
 describe OpenChain::CustomHandler::Hm::HmI1Interface do
-  
+
   let (:cdefs) {
     subject.instance_variable_get(:@cdefs)
   }
@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
 
   let!(:hm) { with_customs_management_id(Factory(:company), 'HENNE') }
   let (:log) { InboundFile.new }
-  
+
   describe "parse_file" do
     it "delegates to #process" do
       expect_any_instance_of(described_class).to receive(:process).with(old_i1, log)
@@ -37,8 +37,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect(p1.name).to eq "Large Blue Hooded Sweatshirt"
       expect(p1.importer).to eq hm
       expect(p1.custom_value(cdefs[:prod_po_numbers])).to eq "182909"
-      expect(p1.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2016,1,2)
-      expect(p1.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2016,1,2)
+      expect(p1.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2016, 1, 2)
+      expect(p1.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2016, 1, 2)
       expect(p1.custom_value(cdefs[:prod_part_number])).to eq "0148762"
       expect(p1.custom_value(cdefs[:prod_season])).to eq "201501"
       expect(p1.custom_value(cdefs[:prod_suggested_tariff])).to eq "61101190"
@@ -54,8 +54,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect(p2.name).to eq "Small Red T-Shirt"
       expect(p2.importer).to eq hm
       expect(p2.custom_value(cdefs[:prod_po_numbers])).to eq "909281"
-      expect(p2.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015,1,12)
-      expect(p2.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2015,1,10)
+      expect(p2.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015, 1, 12)
+      expect(p2.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2015, 1, 10)
       expect(p2.custom_value(cdefs[:prod_part_number])).to eq "2001002"
       expect(p2.custom_value(cdefs[:prod_season])).to eq "105102"
       expect(p2.custom_value(cdefs[:prod_suggested_tariff])).to eq "09110116"
@@ -67,8 +67,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect(p3.name).to eq "Medium Black Sweatpants" # don't overwrite this field if it's already populated
       expect(p3.importer).to eq hm
       expect(p3.custom_value(cdefs[:prod_po_numbers])).to eq "293010"
-      expect(p3.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2016,3,3)
-      expect(p3.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2016,2,15)
+      expect(p3.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2016, 3, 3)
+      expect(p3.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2016, 2, 15)
       expect(p3.custom_value(cdefs[:prod_part_number])).to eq "1259873"
       expect(p3.custom_value(cdefs[:prod_season])).to eq "312612\n 216213"
       expect(p3.custom_value(cdefs[:prod_suggested_tariff])).to eq "10221227"
@@ -99,8 +99,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect(p1.name).to eq "Large Blue Hooded Sweatshirt"
       expect(p1.importer).to eq hm
       expect(p1.custom_value(cdefs[:prod_po_numbers])).to eq "182909"
-      expect(p1.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2016,1,2)
-      expect(p1.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2016,1,2)
+      expect(p1.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2016, 1, 2)
+      expect(p1.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2016, 1, 2)
       expect(p1.custom_value(cdefs[:prod_part_number])).to eq "0148762"
       expect(p1.custom_value(cdefs[:prod_season])).to eq "201501"
       expect(p1.custom_value(cdefs[:prod_suggested_tariff])).to eq "61101190"
@@ -115,8 +115,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       expect(p2.name).to eq "Small Red T-Shirt"
       expect(p2.importer).to eq hm
       expect(p2.custom_value(cdefs[:prod_po_numbers])).to eq "909281"
-      expect(p2.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015,1,12)
-      expect(p2.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2015,1,10)
+      expect(p2.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015, 1, 12)
+      expect(p2.custom_value(cdefs[:prod_earliest_arrival_date])).to eq Date.new(2015, 1, 10)
       expect(p2.custom_value(cdefs[:prod_part_number])).to eq "2001002"
       expect(p2.custom_value(cdefs[:prod_season])).to eq "105102"
       expect(p2.custom_value(cdefs[:prod_suggested_tariff])).to eq "09110116"
@@ -139,8 +139,8 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
     it "updates an existing Product from a CSV row" do
       prod = Factory(:product, unique_identifier: "HENNE-0148762", name: "Large Blue Hooded Sweatshirt", importer_id: hm.id)
       prod.find_and_set_custom_value cdefs[:prod_po_numbers], "182909"
-      prod.find_and_set_custom_value cdefs[:prod_earliest_ship_date], Date.new(2016,1,2)
-      prod.find_and_set_custom_value cdefs[:prod_earliest_arrival_date], Date.new(2016,1,2)
+      prod.find_and_set_custom_value cdefs[:prod_earliest_ship_date], Date.new(2016, 1, 2)
+      prod.find_and_set_custom_value cdefs[:prod_earliest_arrival_date], Date.new(2016, 1, 2)
       prod.find_and_set_custom_value cdefs[:prod_part_number], "0148762"
       prod.find_and_set_custom_value cdefs[:prod_season], "201501"
       prod.find_and_set_custom_value cdefs[:prod_suggested_tariff], "61101190"
@@ -148,15 +148,15 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       prod.save!
 
       line = CSV.parse_line(old_i1.split("\n")[1], :col_sep => ";")
-      line[3] = "0148762001002" #uid of first line
+      line[3] = "0148762001002" # uid of first line
       subject.update_product prod, line
 
       expect(prod.unique_identifier).to eq "HENNE-0148762"
-      expect(prod.name).to eq "Large Blue Hooded Sweatshirt" #don't overwrite this field if it's already populated
+      expect(prod.name).to eq "Large Blue Hooded Sweatshirt" # don't overwrite this field if it's already populated
       expect(prod.importer).to eq hm
       expect((prod.get_custom_value cdefs[:prod_po_numbers]).value).to eq "182909\n 909281"
-      expect((prod.get_custom_value cdefs[:prod_earliest_ship_date]).value).to eq Date.new(2015,1,12)
-      expect((prod.get_custom_value cdefs[:prod_earliest_arrival_date]).value).to eq Date.new(2015,1,10)
+      expect((prod.get_custom_value cdefs[:prod_earliest_ship_date]).value).to eq Date.new(2015, 1, 12)
+      expect((prod.get_custom_value cdefs[:prod_earliest_arrival_date]).value).to eq Date.new(2015, 1, 10)
       expect((prod.get_custom_value cdefs[:prod_part_number]).value).to eq "0148762"
       expect((prod.get_custom_value cdefs[:prod_season]).value).to eq "201501\n 105102"
       expect((prod.get_custom_value cdefs[:prod_suggested_tariff]).value).to eq "09110116"
@@ -172,7 +172,7 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
       described_class.add_custom_methods p
       p
     }
-    
+
     it "concats a string to a custom value if it isn't already included" do
       subject.cv_concat product, cdefs[:prod_po_numbers], "123456"
       expect(product.custom_value(cdefs[:prod_po_numbers])).to eq "182909\n 123456"
@@ -193,25 +193,25 @@ describe OpenChain::CustomHandler::Hm::HmI1Interface do
   describe "assign_earlier" do
     let (:product) {
       p = Factory(:product, unique_identifier: "HENNE-0148762")
-      p.update_custom_value! cdefs[:prod_earliest_ship_date], Date.new(2015,1,12)
+      p.update_custom_value! cdefs[:prod_earliest_ship_date], Date.new(2015, 1, 12)
       described_class.add_custom_methods p
       p
     }
 
     it "assigns input date to custom value if it's earlier than the existing date" do
       subject.assign_earlier product, cdefs[:prod_earliest_ship_date], "01/05/2015"
-      expect(product.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015,1,5)
+      expect(product.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015, 1, 5)
     end
 
     it "assigns input date to custom value if the value is blank" do
       product.update_custom_value! cdefs[:prod_earliest_ship_date], nil
       subject.assign_earlier product, cdefs[:prod_earliest_ship_date], "01/05/2015"
-      expect(product.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015,1,5)
+      expect(product.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015, 1, 5)
     end
 
     it "leaves custom value unchanged if it's earlier than input date" do
       subject.assign_earlier product, cdefs[:prod_earliest_ship_date], "02/12/2015"
-      expect(product.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015,1,12)
+      expect(product.custom_value(cdefs[:prod_earliest_ship_date])).to eq Date.new(2015, 1, 12)
     end
   end
 end

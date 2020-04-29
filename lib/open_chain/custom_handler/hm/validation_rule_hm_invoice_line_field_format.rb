@@ -1,5 +1,5 @@
 module OpenChain; module CustomHandler; module Hm; class ValidationRuleHmInvoiceLineFieldFormat < BusinessValidationRule
-  
+
   def run_validation entry
     positive_regex = rule_attributes["regex"] ? true : false
     pattern = rule_attributes["regex"] || rule_attributes["not_regex"]

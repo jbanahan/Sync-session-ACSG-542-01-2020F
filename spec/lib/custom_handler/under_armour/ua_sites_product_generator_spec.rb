@@ -9,7 +9,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
     @t2 = Factory(:tariff_record, classification: cl2, hts_1: "0987654321")
     DataCrossReference.create!(key: "123", value: "US", cross_reference_type: "ua_site")
   end
-  
+
   describe "sync_csv" do
     after :each do
       @f.close! if @f && !@f.closed?
@@ -20,7 +20,7 @@ describe OpenChain::CustomHandler::UnderArmour::UaSitesProductGenerator do
       Factory(:tariff_record, classification: non_site_cl, hts_1: "1357935791")
       DataCrossReference.create!(key: "234", value: "CN", cross_reference_type: "ua_site")
       @p.update_custom_value! @cdefs[:prod_site_codes], "123\n 234"
-      
+
       g = described_class.new
       @f = g.sync_csv
       out = CSV.read @f.path

@@ -5,9 +5,9 @@ describe Api::V1::UserManualsController do
       allow_api_access u
 
       um1 = um2 = nil
-      
-      Timecop.freeze(DateTime.new(2019,3,15,12)) do 
-        um1 = Factory(:user_manual, name:'Man1',wistia_code:'wc',category:'cat')
+
+      Timecop.freeze(DateTime.new(2019, 3, 15, 12)) do
+        um1 = Factory(:user_manual, name:'Man1', wistia_code:'wc', category:'cat')
         um2 = Factory(:user_manual, name:'AbcManual')
       end
 
@@ -15,7 +15,7 @@ describe Api::V1::UserManualsController do
 
       expect(controller).to receive(:url).with(um1).and_return "custom URL"
       expect(controller).to receive(:url).with(um2).and_return nil
-      expect(UserManual).to receive(:for_user_and_page).with(u,source_page).and_return [um1,um2]
+      expect(UserManual).to receive(:for_user_and_page).with(u, source_page).and_return [um1, um2]
 
       # expecting return to be sorted by name
       expected = {

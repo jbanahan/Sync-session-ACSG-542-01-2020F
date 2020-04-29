@@ -88,7 +88,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
       Attachment.add_original_filename_method(file, filename) unless filename.blank?
 
       body = "<p>There was a problem processing the attached Under Armour Shipment XML File. The file that errored is attached.</p><p>Error:"
-      body += error.map{|e| ERB::Util.html_escape e}.join("<br>")
+      body += error.map {|e| ERB::Util.html_escape e}.join("<br>")
       body += "</p>"
 
       OpenMailer.send_simple_html(["edisupport@vandegriftinc.com", "logisticsops@underarmour.com", "uacustomscompliance@underarmour.com"], "Under Armour Shipment XML Processing Error", body.html_safe, [file]).deliver_now
@@ -107,7 +107,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
       shipment.volume += line.cbms unless line.cbms.nil?
     end
 
-    # Round to 2 decimal places, because that's all our database supports (if we don't, then the snapshot may have a ton of 
+    # Round to 2 decimal places, because that's all our database supports (if we don't, then the snapshot may have a ton of
     # decimal places and then the next snapshot value will show the db truncation and it will look like the next snapshot made a change)
     shipment.gross_weight = shipment.gross_weight.round(2) if shipment.gross_weight.nonzero?
     shipment.volume = shipment.volume.round(2) if shipment.volume.nonzero?
@@ -175,7 +175,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
       shipment_line.carton_qty += 1
     end
 
-    # Round to 2 decimal places, because that's all our database supports (if we don't, then the snapshot may have a ton of 
+    # Round to 2 decimal places, because that's all our database supports (if we don't, then the snapshot may have a ton of
     # decimal places and then the next snapshot value will show the db truncation and it will look like the next snapshot made a change)
     shipment_line.cbms = shipment_line.cbms.round(2) if shipment_line.cbms.nonzero?
     shipment_line.gross_kgs = shipment_line.gross_kgs.round(2) if shipment_line.gross_kgs.nonzero?
@@ -250,7 +250,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmour856
     revision >= shipment.custom_value(cdefs[:shp_revision]).to_i
   end
 
-  def importer 
+  def importer
     @importer ||= Company.importers.where(system_code: "UNDAR").first
     @importer
   end

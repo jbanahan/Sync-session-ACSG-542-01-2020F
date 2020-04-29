@@ -4,7 +4,7 @@ require 'open_chain/aws_config_support'
 module OpenChain; class SQS
   extend OpenChain::AwsConfigSupport
 
-  #translate given object to json and add to queue
+  # translate given object to json and add to queue
   def self.send_json queue, json, opts = {}
     opts = {retry_count: 3, sleep: 1}.merge opts
     json_string = json.is_a?(String) ? json : json.to_json
@@ -15,7 +15,7 @@ module OpenChain; class SQS
     rescue => e
       if (attempts+=1) <= opts[:retry_count]
         sleep opts[:sleep]
-        retry 
+        retry
       end
 
       raise e
@@ -24,7 +24,7 @@ module OpenChain; class SQS
     nil
   end
 
-  #retrieve all available messages yielding each to the given block after parsing JSON to hash
+  # retrieve all available messages yielding each to the given block after parsing JSON to hash
   # If :max_message_count option is given, only that number of messages are yieled to the given block
   def self.poll queue_url, opts = {}
     # idle_timeout is the amount of time to wait for a new sqs message before stopping the polling process.
@@ -50,7 +50,7 @@ module OpenChain; class SQS
       end
     end
 
-    # The poll method continuously yields messages while the queue still has them, waiting at most 
+    # The poll method continuously yields messages while the queue still has them, waiting at most
     # :wait_time_seconds for new ones to appear before quitting.  It also handles deleting
     # any messages yielded to the block as long as the block completes without raising an error.
 
@@ -101,7 +101,7 @@ module OpenChain; class SQS
   # Normally, I'd abstract away the handling of these, but since receive_message has
   # so many options that affect the data returned inside these objects, I'm letting them
   # leak out of the SQS wrapper we've written.
-  # 
+  #
   # Where possible, I STRONGLY suggest using the #poll method instead of this one.
   def self.retrieve_messages queue_url, opts = {}
     opts = {queue_url: queue_url}.merge opts
@@ -116,7 +116,7 @@ module OpenChain; class SQS
   end
 
   # Creates the queue if it doesn't exist, and returns the queue_url
-  # If queue already exists, this is a no-op on the AWS service end 
+  # If queue already exists, this is a no-op on the AWS service end
   # and the queue_url for the queue is returned.
   def self.create_queue queue_name
     resp = sqs_client.create_queue queue_name: queue_name
@@ -133,7 +133,6 @@ module OpenChain; class SQS
     resp.attributes
   end
 
-  
   def self.get_queue_url queue_name
     # Raises an error if the queue does not exist, just return nil in that case
     resp = sqs_client.get_queue_url queue_name: queue_name

@@ -18,9 +18,9 @@
 class VfiInvoice < ActiveRecord::Base
   include CoreObjectSupport
 
-  attr_accessible :currency, :customer_id, :customer, :invoice_date, 
+  attr_accessible :currency, :customer_id, :customer, :invoice_date,
     :invoice_number
-  
+
   belongs_to :customer, :class_name => "Company"
   has_many :vfi_invoice_lines, :dependent => :destroy, :inverse_of => :vfi_invoice
 
@@ -34,7 +34,7 @@ class VfiInvoice < ActiveRecord::Base
   def can_edit? user
     false
   end
-  
+
   def self.search_where(user)
     c = Company.find(user.company_id)
     c.master? ? "1=1" : "customer_id in (#{user.available_importers.pluck(:id).join(', ')})"
@@ -48,7 +48,7 @@ class VfiInvoice < ActiveRecord::Base
     Lock.acquire("next-inv") do
       last_id = self.order('id desc').limit(1).pluck(:id).first
       last_id = 0 if last_id.nil?
-      yield "VFI-#{last_id + 1}" 
+      yield "VFI-#{last_id + 1}"
     end
   end
 

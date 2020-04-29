@@ -5,7 +5,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
 
     register_change_comparators
   end
-  
+
   def self.register_change_comparators
     # Add the requires here, so that they're not loaded on every single customer system, when there's no need for them on those
     require 'open_chain/entity_compare/comparator_registry'
@@ -31,7 +31,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftSyste
     require 'open_chain/custom_handler/amazon/amazon_entry_billing_comparator'
     require 'open_chain/custom_handler/amazon/amazon_linked_company_security_filing_comparator'
 
-    
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::BillingComparators::ProductComparator
 
     OpenChain::EntityCompare::ComparatorRegistry.register OpenChain::CustomHandler::Hm::HmEntryDocsComparator

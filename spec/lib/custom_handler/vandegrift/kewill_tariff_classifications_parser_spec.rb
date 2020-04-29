@@ -83,7 +83,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillTariffClassificationsParser
       tariff_json[0]["countervailing_duty_flag"] = "Y"
       tariff_json[0]["antidumping_duty_flag"] = "Y"
       tariff_json[0]["blocked_record"] = 1
-      
+
       subject.parse_json tariff_json
 
       c = TariffClassification.where(country_id: us.id, tariff_number: "1006204060", effective_date_start: Date.new(2012, 10, 31)).first
@@ -93,13 +93,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillTariffClassificationsParser
       expect(c.blocked_record).to eq true
     end
 
-    it "handles 9999 tariff rates" do 
+    it "handles 9999 tariff rates" do
       tariff_json[0]["tariff_rates"][0]["rate_advalorem"] = "999999999999"
 
       subject.parse_json tariff_json
       c = TariffClassification.where(country_id: us.id, tariff_number: "1006204060", effective_date_start: Date.new(2012, 10, 31)).first
       expect(c).not_to be_nil
-      
+
       r = c.tariff_classification_rates.first
       expect(r.rate_advalorem).to be_nil
     end

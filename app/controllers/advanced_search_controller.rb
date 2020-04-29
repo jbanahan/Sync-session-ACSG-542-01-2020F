@@ -12,14 +12,14 @@ class AdvancedSearchController < ApplicationController
   end
 
   def index
-    @no_action_bar = true #implements it's own via templates/search_results.html
+    @no_action_bar = true # implements it's own via templates/search_results.html
   end
 
   def update
     ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
     base_params = params[:search_setup]
-    
+
     if base_params[:search_criterions].blank?
       if base_params[:sort_criterions].presence || base_params[:search_schedules].presence
         render_json_error "Must have a search criterion to include sorts or schedules!"
@@ -117,20 +117,20 @@ class AdvancedSearchController < ApplicationController
         sr.last_accessed = Time.now
         sr.save!
 
-        h = execute_query_to_hash(SearchQuery.new(ss,current_user),current_user,page,per_page)
+        h = execute_query_to_hash(SearchQuery.new(ss, current_user), current_user, page, per_page)
         h[:search_run_id] = sr.id
         render :json=> h
 
-        #load the result cached in another thread so it doesn't block
-        sr_id = sr.id #only reference the id so we get a clean object from the database to avoid threading conflicts
+        # load the result cached in another thread so it doesn't block
+        sr_id = sr.id # only reference the id so we get a clean object from the database to avoid threading conflicts
         Thread.new do
-          #need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
+          # need to wrap connection handling for safe threading per: http://bibwild.wordpress.com/2011/11/14/multi-threading-in-rails-activerecord-3-0-3-1/
           ActiveRecord::Base.connection_pool.with_connection do
             s_run = SearchRun.where(id: sr_id).first
             if s_run
               rc = s_run.parent.result_cache
               if rc
-                rc.update_attributes(object_ids:nil,page:s_run.page,per_page:s_run.per_page)
+                rc.update_attributes(object_ids:nil, page:s_run.page, per_page:s_run.per_page)
                 rc.load_current_page
               end
             end
@@ -144,7 +144,7 @@ class AdvancedSearchController < ApplicationController
   def total_objects
     ss = SearchSetup.for_user(current_user).where(id: params[:id]).first
     raise ActionController::RoutingError.new('Not Found') unless ss
-    render :json=>total_object_count_hash(SearchQuery.new(ss,current_user))
+    render :json=>total_object_count_hash(SearchQuery.new(ss, current_user))
   end
 
   def download
@@ -226,10 +226,10 @@ class AdvancedSearchController < ApplicationController
           :user=>{:email=>ss.user.email, :integration=> ss.user == User.integration},
           :locked=>ss.locked?,
           :uploadable_error_messages=>ss.uploadable_error_messages,
-          :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name,:id=>s.id,:module=>s.core_module.label}},
+          :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name, :id=>s.id, :module=>s.core_module.label}},
           :download_format=>(ss.download_format.presence || "xlsx"),
-          :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank, :constant_field_value => c.constant_field_value}},
-          :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid,:label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label),:rank=>c.rank,:descending=>c.descending?}},
+          :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid, :label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label), :rank=>c.rank, :constant_field_value => c.constant_field_value}},
+          :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid, :label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label), :rank=>c.rank, :descending=>c.descending?}},
           :search_criterions=>ss.search_criterions.collect {|c| c.json(current_user)},
           :search_schedules=>ss.search_schedules.collect {|s|
             f = {:mailing_list_id=>s.mailing_list_id, :email_addresses=>s.email_addresses, :send_if_empty=>s.send_if_empty, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
@@ -245,7 +245,7 @@ class AdvancedSearchController < ApplicationController
             end
             f
           },
-          :model_fields => ModelField.sort_by_label(get_model_fields_for_setup(ss)).collect {|mf| {:mfid=>mf.uid,:label=>mf.label,:datatype=>mf.data_type}}
+          :model_fields => ModelField.sort_by_label(get_model_fields_for_setup(ss)).collect {|mf| {:mfid=>mf.uid, :label=>mf.label, :datatype=>mf.data_type}}
         }
         render :json=>h
       }

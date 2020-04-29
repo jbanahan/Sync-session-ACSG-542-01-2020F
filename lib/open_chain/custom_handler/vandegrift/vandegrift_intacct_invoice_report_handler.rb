@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
   end
 
   def send_xl user, urls, file_name
-    missing_invoices = urls.select{ |h,k| !k.present? }.keys
+    missing_invoices = urls.select { |h, k| !k.present? }.keys
     OpenChain::S3.download_to_tempfile(s3_destination_bucket, s3_file_path) do |t|
       Attachment.add_original_filename_method(t, file_name)
       send_success_email user.email, t, missing_invoices
@@ -60,9 +60,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftIntac
   def get_urls invoice_nums
     urls = BrokerInvoice.joins(:entry)
                         .where(invoice_number: invoice_nums)
-                        .map{ |bi| [bi.invoice_number, bi.entry.excel_url] }
+                        .map { |bi| [bi.invoice_number, bi.entry.excel_url] }
                         .to_h
-    invoice_nums.each{ |n| urls[n] = nil if urls[n].nil? }
+    invoice_nums.each { |n| urls[n] = nil if urls[n].nil? }
     urls
   end
 

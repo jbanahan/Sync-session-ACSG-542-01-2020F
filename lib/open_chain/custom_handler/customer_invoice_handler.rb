@@ -27,20 +27,20 @@ module OpenChain; module CustomHandler; class CustomerInvoiceHandler
 
   def self.email_errors user, file_name, errors
     subject = "Custom invoice upload incomplete"
-    inv_nums = errors.map{|n| CGI.escapeHTML n }.join("<br>").html_safe
+    inv_nums = errors.map {|n| CGI.escapeHTML n }.join("<br>").html_safe
     body = "<p>The following invoices in <strong>#{CGI.escapeHTML file_name}</strong> already exist and could not be updated:<br>#{inv_nums}</p>".html_safe
     OpenMailer.send_simple_html(user.email, subject, body).deliver_now
   end
 
   class Wrapper < RowWrapper
-    FIELD_MAP = {invoice_number: 0, vendor_name: 1, factory_name: 2, invoice_total_foreign: 3, currency: 4, ln_po_number: 5, 
-                 ln_middleman_charge: 6, ln_air_sea_discount: 7, ln_early_pay_discount: 8, ln_trade_discount: 9, ln_part_number: 10, 
+    FIELD_MAP = {invoice_number: 0, vendor_name: 1, factory_name: 2, invoice_total_foreign: 3, currency: 4, ln_po_number: 5,
+                 ln_middleman_charge: 6, ln_air_sea_discount: 7, ln_early_pay_discount: 8, ln_trade_discount: 9, ln_part_number: 10,
                  ln_part_description: 11, invoice_date: 12, customer_reference_number: 13, goods_description: 14, invoice_total_domestic: 15,
                  total_discounts: 16, total_charges: 17, exchange_rate: 18, net_invoice_total: 19, net_weight: 20, net_weight_uom: 21,
-                 country_origin_iso: 22, payment_terms: 23, sale_terms: 24, ship_mode: 25, total_gross_weight: 26, total_gross_weight_uom: 27, 
-                 total_volume: 28, total_volume_uom: 29, ln_department: 30, ln_country_export_iso: 31, ln_first_sale: 32, ln_fish_and_wildlife: 33, 
-                 ln_gross_weight: 34, ln_gross_weight_uom: 35, ln_hts: 36, ln_line_number: 37, ln_mid: 38, ln_net_weight: 39, ln_net_weight_uom: 40, 
-                 ln_country_origin_iso: 41, ln_pieces: 42, ln_quantity: 43, ln_quantity_uom: 44, ln_unit_price: 45, ln_value_domestic: 46, 
+                 country_origin_iso: 22, payment_terms: 23, sale_terms: 24, ship_mode: 25, total_gross_weight: 26, total_gross_weight_uom: 27,
+                 total_volume: 28, total_volume_uom: 29, ln_department: 30, ln_country_export_iso: 31, ln_first_sale: 32, ln_fish_and_wildlife: 33,
+                 ln_gross_weight: 34, ln_gross_weight_uom: 35, ln_hts: 36, ln_line_number: 37, ln_mid: 38, ln_net_weight: 39, ln_net_weight_uom: 40,
+                 ln_country_origin_iso: 41, ln_pieces: 42, ln_quantity: 43, ln_quantity_uom: 44, ln_unit_price: 45, ln_value_domestic: 46,
                  ln_value_foreign: 47, ln_volume: 48, ln_volume_uom: 49}
 
     def initialize row
@@ -52,7 +52,7 @@ module OpenChain; module CustomHandler; class CustomerInvoiceHandler
     include OpenChain::CustomHandler::CustomFileCsvExcelParser
 
     attr_reader :errors
-    
+
     def initialize
       @co_cache = {}
     end
@@ -63,7 +63,7 @@ module OpenChain; module CustomHandler; class CustomerInvoiceHandler
       cust_num = parameters['cust_num']
       file_name = custom_file.attached_file_name
       importer = Company.where(system_code: cust_num).first
-      
+
       foreach(custom_file) do |row|
         r = Wrapper.new row
         next if r[:invoice_number].to_s =~ /Invoice Number/
@@ -83,7 +83,7 @@ module OpenChain; module CustomHandler; class CustomerInvoiceHandler
       inv = nil; proceed = nil
       inv_number = text_value lines.first[:invoice_number]
       raise "Missing invoice number!" unless inv_number
-      Lock.acquire("Invoice-#{cust_num}-#{inv_number}") do 
+      Lock.acquire("Invoice-#{cust_num}-#{inv_number}") do
         inv = Invoice.where(importer_id: importer.id, invoice_number: inv_number).first_or_initialize
         proceed = inv.manually_generated? || inv.new_record?
         inv.save! if proceed && inv.new_record?
@@ -147,7 +147,7 @@ module OpenChain; module CustomHandler; class CustomerInvoiceHandler
 
     def process_invoice_line inv, line
       ln = inv.invoice_lines.build
-      
+
       ln.air_sea_discount = decimal_value line[:ln_air_sea_discount]
       ln.department =  text_value line[:ln_department]
       ln.early_pay_discount = decimal_value line[:ln_early_pay_discount]
@@ -167,7 +167,7 @@ module OpenChain; module CustomHandler; class CustomerInvoiceHandler
       ln.value_domestic = decimal_value line[:ln_value_domestic]
       ln.unit_price = decimal_value line[:ln_unit_price]
       ln.country_export = country_cache text_value(line[:ln_country_export_iso])
-      ln.first_sale = boolean_value line[:ln_first_sale] 
+      ln.first_sale = boolean_value line[:ln_first_sale]
       ln.gross_weight = decimal_value line[:ln_gross_weight]
       ln.gross_weight_uom = text_value line[:ln_gross_weight_uom]
       ln.hts_number = text_value line[:ln_hts]

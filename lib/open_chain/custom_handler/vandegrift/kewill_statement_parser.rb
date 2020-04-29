@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
     # This parser is usable across multiple deployment instances so make sure the integration folder we're storing
     # to is tied to the system code as well
 
-    # If we move to having multiple integration folders (like w/ an ftp server change), make sure the newest 
+    # If we move to having multiple integration folders (like w/ an ftp server change), make sure the newest
     # folder is the first returned in the array.
     ["#{MasterSetup.get.system_code}/kewill_statements", "/home/ubuntu/ftproot/chainroot/#{MasterSetup.get.system_code}/kewill_statements"]
   end
@@ -54,7 +54,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
           fee_codes << fee.code
         end
 
-        #Now we need to remove any fees from the detail that were not referenced in the json doc
+        # Now we need to remove any fees from the detail that were not referenced in the json doc
         detail.daily_statement_entry_fees.each do |f|
           f.destroy unless fee_codes.include? f.code
         end
@@ -65,13 +65,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
         e.destroy unless broker_references.include? e.broker_reference
       end
 
-      # Now that we've synced up all the statement details to the json doc data, we need to set the 
+      # Now that we've synced up all the statement details to the json doc data, we need to set the
       # daily statement totals based on those details
       set_daily_statement_totals(statement)
 
       statement.save!
 
-      statement.create_snapshot user, nil, last_file_path 
+      statement.create_snapshot user, nil, last_file_path
 
       s = statement
     end
@@ -103,7 +103,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
     s
   end
 
-  private 
+  private
 
     def parse_monthly_statement statement, json
       # Don't ever change the status if the statement is in final status
@@ -133,10 +133,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
 
     def calculate_monthly_totals statement
       totals = {
-        total_amount: BigDecimal("0"), duty_amount: BigDecimal("0"), tax_amount: BigDecimal("0"), 
+        total_amount: BigDecimal("0"), duty_amount: BigDecimal("0"), tax_amount: BigDecimal("0"),
         cvd_amount: BigDecimal("0"), add_amount: BigDecimal("0"), interest_amount: BigDecimal("0"),
         fee_amount: BigDecimal("0"),
-        preliminary_total_amount: BigDecimal("0"), preliminary_duty_amount: BigDecimal("0"), preliminary_tax_amount: BigDecimal("0"), 
+        preliminary_total_amount: BigDecimal("0"), preliminary_duty_amount: BigDecimal("0"), preliminary_tax_amount: BigDecimal("0"),
         preliminary_cvd_amount: BigDecimal("0"), preliminary_add_amount: BigDecimal("0"), preliminary_interest_amount: BigDecimal("0"),
         preliminary_fee_amount: BigDecimal("0")
       }
@@ -145,13 +145,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
       # That's why I'm doing a direct activerecord call / loop here, rather than relying on the potentially
       # outdated daily_statements relation in MonthlyStatement
       DailyStatement.where(monthly_statement_id: statement.id).each do |daily_statement|
-        totals.keys.each do |key|
+        totals.each_key do |key|
           val = daily_statement.public_send(key)
           totals[key] += val unless val.nil?
         end
       end
 
-      totals.keys.each {|key| statement.public_send("#{key}=", totals[key]) }
+      totals.each_key {|key| statement.public_send("#{key}=", totals[key]) }
     end
 
 
@@ -221,7 +221,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
         if statement_entry.entry
           statement_entry.billed_amount = statement_entry.entry.broker_invoice_lines.where(charge_code: "0001").sum(:charge_amount)
         end
-        
+
       end
       statement_entry.port_code = parse_port_code(json["port_code"])
 
@@ -254,7 +254,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
         statement_entry.interest_amount = parse_decimal(json["interest_amount"])
         statement_entry.total_amount = parse_decimal(json["total_amount"])
       end
-      
+
       statement_entry
     end
 
@@ -286,29 +286,29 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
 
     def set_daily_statement_totals statement
       totals = {
-        total_amount: BigDecimal("0"), duty_amount: BigDecimal("0"), tax_amount: BigDecimal("0"), 
+        total_amount: BigDecimal("0"), duty_amount: BigDecimal("0"), tax_amount: BigDecimal("0"),
         cvd_amount: BigDecimal("0"), add_amount: BigDecimal("0"), interest_amount: BigDecimal("0"),
         fee_amount: BigDecimal("0"),
-        preliminary_total_amount: BigDecimal("0"), preliminary_duty_amount: BigDecimal("0"), preliminary_tax_amount: BigDecimal("0"), 
+        preliminary_total_amount: BigDecimal("0"), preliminary_duty_amount: BigDecimal("0"), preliminary_tax_amount: BigDecimal("0"),
         preliminary_cvd_amount: BigDecimal("0"), preliminary_add_amount: BigDecimal("0"), preliminary_interest_amount: BigDecimal("0"),
         preliminary_fee_amount: BigDecimal("0")
       }
 
       # The meta-programming below is primarily me being lazy
       statement.daily_statement_entries.each do |e|
-        totals.keys.each do |key|
+        totals.each_key do |key|
           val = e.public_send(key)
           totals[key] += val unless val.nil?
         end
       end
 
-      totals.keys.each {|key| statement.public_send("#{key}=", totals[key]) }
+      totals.each_key {|key| statement.public_send("#{key}=", totals[key]) }
       nil
     end
 
     def find_and_process_daily_statement statement_number, last_exported_from_source, log, last_file_bucket, last_file_path
       statement = nil
-      Lock.acquire("DailyStatement-#{statement_number}") do 
+      Lock.acquire("DailyStatement-#{statement_number}") do
         statement = DailyStatement.where(statement_number: statement_number).first_or_create! last_exported_from_source: last_exported_from_source
       end
 
@@ -332,7 +332,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
 
     def find_and_process_monthly_statement statement_number, last_exported_from_source, log, last_file_bucket, last_file_path
       statement = nil
-      Lock.acquire("MonthlyStatement-#{statement_number}") do 
+      Lock.acquire("MonthlyStatement-#{statement_number}") do
         statement = MonthlyStatement.where(statement_number: statement_number).first_or_create! last_exported_from_source: last_exported_from_source
       end
 
@@ -381,7 +381,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillStatement
 
       # The decimal places is what the value will be rounding to when returned
       # The decimal offset is used because all of the numeric values in Kewill are
-      # stored and sent without decimal places "12345" instead of "123.45" so that 
+      # stored and sent without decimal places "12345" instead of "123.45" so that
       # they don't have to worry about decimal rounding and integer arithmetic can be done on everything.
       # This also means that we need to know the scale of the number before parsing it.
       if !str.include?(".") && decimal_offset > 0

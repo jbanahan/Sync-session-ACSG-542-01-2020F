@@ -37,7 +37,7 @@ describe CustomDefinition do
       expect(cd.virtual_value(Product.new).try(:to_date)).to eq Time.zone.now.to_date
     end
 
-    it 'interpolates the value of #{customizable_id} in the query' do 
+    it 'interpolates the value of #{customizable_id} in the query' do
       cd = CustomDefinition.new virtual_value_query: 'SELECT #{customizable_id}'
       p = Product.new
       p.id = 100
@@ -62,7 +62,7 @@ describe CustomDefinition do
         cd
       }
 
-      it "generates a query suitable to be used in searches" do 
+      it "generates a query suitable to be used in searches" do
         expect(custom_definition.qualified_field_name).to eq "(SELECT `string_value` FROM custom_values WHERE customizable_id = `products`.id AND custom_definition_id = 7 AND customizable_type = 'Product')"
       end
     end
@@ -78,6 +78,6 @@ describe CustomDefinition do
         expect(custom_definition.qualified_field_name).to eq "(SELECT now())"
       end
     end
-    
+
   end
 end

@@ -13,5 +13,4 @@ module OpenChain; module Api; module V1; class AddressApiJsonGenerator
     h['map_url'] = a.google_maps_url
     h
   end
-  
 end; end; end; end;

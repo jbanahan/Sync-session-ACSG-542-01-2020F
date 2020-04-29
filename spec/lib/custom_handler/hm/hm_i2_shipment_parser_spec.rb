@@ -13,7 +13,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
   let(:ca) { Factory(:country, iso_code: "CA")}
   let(:us) { Factory(:country, iso_code: "US")}
   let(:log) { InboundFile.new }
-  
+
   let (:cdefs) {
     described_class.new.cdefs
   }
@@ -30,7 +30,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
     let(:ca_file) { make_csv_file("ZSTO") }
     let(:us_file) { make_csv_file("ZRET") }
     let(:product) { Factory(:product, importer: hm, unique_identifier: "HENNE-1234567", name: "Description") }
-    let(:ca_product) { 
+    let(:ca_product) {
       p = product
       c = p.classifications.create! country_id: ca.id
       t = c.tariff_records.create! hts_1: "1234567890"
@@ -40,13 +40,13 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       p = product
       c = p.classifications.create! country_id: us.id
       t = c.tariff_records.create! hts_1: "9876543210"
-      p 
+      p
     }
 
     before :each do
       hm_fenix
     end
-    
+
     def set_product_custom_values product, product_value, value_order_number, canada_description
       product.update_custom_value! cdefs[:prod_value], product_value
       product.update_custom_value! cdefs[:prod_value_order_number], value_order_number
@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       nil
     end
 
-    context "with canadian shipment" do 
+    context "with canadian shipment" do
 
       let! (:pars) { DataCrossReference.create! key: "PARSley", value: nil, cross_reference_type: "hm_pars" }
 
@@ -228,8 +228,8 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         # Just validate that the invoice numbers match what we expect...then we'll validate the number of files that go out.
         expect(invoices.first.invoice_number).to eq "INV#-01"
         expect(invoices.first.commercial_invoice_lines.first.part_number).to eq "1234567"
-        
-        # Make sure the 
+
+        # Make sure the
         expect(invoices.second.invoice_number).to eq "INV#-02"
         expect(invoices.second.commercial_invoice_lines.first.part_number).to eq "9876543"
 
@@ -353,7 +353,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
     context "with us shipment" do
 
-      before :each do 
+      before :each do
         # The actual invoice produced by US and CA files are identical except wrt to hts handling
         us_product
         ca_product
@@ -427,10 +427,10 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
         invoice = entry.commercial_invoices.first
         invoice.commercial_invoice_lines.first.update_attributes! part_number: ""
         invoice.commercial_invoice_lines.create! mid: "MID", quantity: 10, country_origin_code: "CN"
-        
+
         set_us_product_custom_values 20, "987654"
         product.classifications.first.update_custom_value!(cdefs[:class_customs_description], "US Description")
-        
+
         invoice = nil
         expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator).to receive(:generate_and_send_invoices) do |instance, file_number, inv|
           expect(file_number).to eq "INV#"
@@ -579,13 +579,13 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       i.gross_weight = BigDecimal("650")
       i.invoice_date = Date.new(2016, 7, 8)
 
-      line = CommercialInvoiceLine.new 
+      line = CommercialInvoiceLine.new
       line.quantity = BigDecimal("10")
       line.value = BigDecimal("100.40")
 
       i.commercial_invoice_lines << line
 
-      line = CommercialInvoiceLine.new 
+      line = CommercialInvoiceLine.new
       line.quantity = BigDecimal("10.1")
       line.value = BigDecimal("100.407")
       i.commercial_invoice_lines << line
@@ -652,7 +652,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       i.gross_weight = BigDecimal("650")
       i.invoice_date = Date.new(2016, 7, 8)
 
-      line = CommercialInvoiceLine.new 
+      line = CommercialInvoiceLine.new
       line.quantity = BigDecimal("10")
       line.value = BigDecimal("100.40")
       line.part_number = "12345"
@@ -665,7 +665,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
       i.commercial_invoice_lines << line
 
-      line = CommercialInvoiceLine.new 
+      line = CommercialInvoiceLine.new
       line.quantity = BigDecimal("10.1")
       line.value = BigDecimal("200.40")
       line.part_number = "123456"
@@ -673,21 +673,21 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       line.country_origin_code = "COO2"
       line.unit_price = 21.50
       t = line.commercial_invoice_tariffs.build
-      
+
       # special tariff
       t.tariff_description = "DESC2"
       t.hts_code = "9902543210"
-      
+
       # another special tariff
-      t = line.commercial_invoice_tariffs.build      
+      t = line.commercial_invoice_tariffs.build
       t.tariff_description = "DESC3"
       t.hts_code = "9903543210"
 
       # yet another special tariff
-      t = line.commercial_invoice_tariffs.build      
+      t = line.commercial_invoice_tariffs.build
       t.tariff_description = "DESC4"
       t.hts_code = "9908543210"
-      
+
       t = line.commercial_invoice_tariffs.build
       t.tariff_description = "DESC5"
       t.hts_code = "9876543210"
@@ -727,7 +727,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
   end
 
   describe "build_missing_product_spreadsheet" do
-    let(:ca_product) { 
+    let(:ca_product) {
       p = Factory(:product, importer: hm, unique_identifier: "HENNE-CA-Product", name: "CA Description")
       c = p.classifications.create! country_id: ca.id
       t = c.tariff_records.create! hts_1: "1234567890"
@@ -739,7 +739,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
       p = Factory(:product, importer: hm, unique_identifier: "HENNE-US-Product", name: "US Description")
       c = p.classifications.create! country_id: us.id
       t = c.tariff_records.create! hts_1: "9876543210"
-      p 
+      p
     }
 
     context "with fenix data" do
@@ -755,7 +755,7 @@ describe OpenChain::CustomHandler::Hm::HmI2ShipmentParser do
 
         expect(sheet.row(0)).to eq ["Part Number", "H&M Order #", "H&M Country Origin", "H&M Description", "PO Numbers", "US HS Code", "CA HS Code", "Product Value", "MID", "Product Link", "US Entry Links", "Resolution"]
         expect(sheet.row(1)).to eq ["12345", "23456", "BD", "CA Description", "987654, Another PO", "", "1234.56.7890", "", "", XlsMaker.create_link_cell(ca_product.excel_url, "12345"), XlsMaker.create_link_cell(entry.excel_url, "REF"), "Use Part Number and H&M Order # (Invoice Number in US Entry) to lookup the missing information in the linked US Entry then add the Canadian classification in linked Product record."]
-        expect(sheet.row(2)).to eq ["9876", "345678", "IN", "US Description", "", "9876.54.3210", "", "","", XlsMaker.create_link_cell(us_product.excel_url, "9876"), "", "Use linked Product and add Canadian classifiction in VFI Track."]
+        expect(sheet.row(2)).to eq ["9876", "345678", "IN", "US Description", "", "9876.54.3210", "", "", "", XlsMaker.create_link_cell(us_product.excel_url, "9876"), "", "Use linked Product and add Canadian classifiction in VFI Track."]
       end
 
       it "reports missing product value if classifications are present" do

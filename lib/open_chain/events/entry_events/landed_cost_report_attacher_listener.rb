@@ -1,9 +1,9 @@
 require 'tempfile'
 require 'open_chain/report/landed_cost_data_generator'
 
-# This entry event listener runs a landed cost report for the entry 
+# This entry event listener runs a landed cost report for the entry
 # and then attaches the output of the report to entry as an attachment.
-# 
+#
 module OpenChain; module Events; module EntryEvents
   class LandedCostReportAttacherListener
 
@@ -27,10 +27,10 @@ module OpenChain; module Events; module EntryEvents
       else
         landed_cost_checksum = calculate_landed_cost_checksum landed_cost_data
       end
-      
+
       attachment_type = "Landed Cost Report"
 
-      # See if we have another landed cost file that matches this checksum, if we do, then 
+      # See if we have another landed cost file that matches this checksum, if we do, then
       # we can just continue on as the landed cost report is already attached to this entry.
       unless entry.attachments.where(checksum: landed_cost_checksum, attachment_type: attachment_type).first
 
@@ -56,7 +56,7 @@ module OpenChain; module Events; module EntryEvents
           # down, we'll just push doing this off to another queue.
           Attachment.delay.push_to_google_drive "JJill Landed Cost", att.id
 
-          # Reload the entry attachments so we have the correct attachments list for anyhting later in the 
+          # Reload the entry attachments so we have the correct attachments list for anyhting later in the
           # listener call chain
           entry.attachments.reload
         end
@@ -72,16 +72,16 @@ module OpenChain; module Events; module EntryEvents
       # should be fine simply grabbing only this data to use as our fingerprint data.
 
       # We have to make sure that we always process the data in the same order (regardless of how the actual backend
-      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before 
+      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before
       # processing a checksum for them.
 
       per_unit_columns_to_copy = [:entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other].sort
 
       # First, copy all the data we're after to a new structure.
       lc_data = ""
-      landed_cost_data[:entries].sort_by{|e| e[:broker_reference]}.each do |entry_data|
+      landed_cost_data[:entries].sort_by {|e| e[:broker_reference]}.each do |entry_data|
         lc_data << entry_data[:broker_reference].to_s
-        entry_data[:commercial_invoices].sort_by{|ci| ci[:invoice_number]}.each do |invoice_data|
+        entry_data[:commercial_invoices].sort_by {|ci| ci[:invoice_number]}.each do |invoice_data|
           lc_data << invoice_data[:invoice_number].to_s
           invoice_data[:commercial_invoice_lines].sort_by {|l| l[:po_number].to_s + l[:part_number].to_s + l[:quantity].to_s}.each do |line_data|
             per_unit_columns_to_copy.each do |c|
@@ -97,13 +97,13 @@ module OpenChain; module Events; module EntryEvents
     def calculate_landed_cost_checksum_v2 landed_cost_data
       # Ultimately, what we care about checksum'ing is the data that's ACTUALLY on the report we're generating.
       # The data in the landed_cost_data variable is from the backend generator that generates generic data used on multiple
-      # different reports that pick and choose what data to present.  We could just to_json the hash and make a sha 
-      # hash from that, BUT, then if we add an data elements for some other report to the backend hash, we'll instantly invalidate 
+      # different reports that pick and choose what data to present.  We could just to_json the hash and make a sha
+      # hash from that, BUT, then if we add an data elements for some other report to the backend hash, we'll instantly invalidate
       # the hashes for this attachment printout and cause a ton of extra files to generate, which will cause a bunch of extra work
       # for our desk clerks.
 
       # We have to make sure that we always process the data in the same order (regardless of how the actual backend
-      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before 
+      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before
       # processing a checksum for them.
 
       entry_level = [:entry_number, :broker_reference, :customer_references]
@@ -112,9 +112,9 @@ module OpenChain; module Events; module EntryEvents
       per_unit_level = [:entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other]
 
       lc_data = []
-      landed_cost_data[:entries].sort_by{|e| e[:broker_reference]}.each do |entry_data|
+      landed_cost_data[:entries].sort_by {|e| e[:broker_reference]}.each do |entry_data|
         lc_data.push *collect_fingerprint_field(entry_data, entry_level)
-        entry_data[:commercial_invoices].sort_by{|ci| ci[:invoice_number]}.each do |invoice_data|
+        entry_data[:commercial_invoices].sort_by {|ci| ci[:invoice_number]}.each do |invoice_data|
           lc_data.push *collect_fingerprint_field(invoice_data, invoice_level)
           invoice_data[:commercial_invoice_lines].sort_by {|l| l[:po_number].to_s + l[:part_number].to_s + l[:quantity].to_s}.each do |line_data|
             lc_data.push *collect_fingerprint_field(line_data, line_level)
@@ -129,16 +129,16 @@ module OpenChain; module Events; module EntryEvents
     def calculate_landed_cost_checksum_v3 landed_cost_data
       # Ultimately, what we care about checksum'ing is the data that's ACTUALLY on the report we're generating.
       # The data in the landed_cost_data variable is from the backend generator that generates generic data used on multiple
-      # different reports that pick and choose what data to present.  We could just to_json the hash and make a sha 
-      # hash from that, BUT, then if we add an data elements for some other report to the backend hash, we'll instantly invalidate 
+      # different reports that pick and choose what data to present.  We could just to_json the hash and make a sha
+      # hash from that, BUT, then if we add an data elements for some other report to the backend hash, we'll instantly invalidate
       # the hashes for this attachment printout and cause a ton of extra files to generate, which will cause a bunch of extra work
       # for our desk clerks.
 
       # We have to make sure that we always process the data in the same order (regardless of how the actual backend
-      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before 
+      # splits it out) so we're going to make sure to sort the invoices and invoice lines from the result before
       # processing a checksum for them.
 
-      # This fingerprint varies from V2 in that it includes the total row per line too.  By just including the per unit amounts, V2 
+      # This fingerprint varies from V2 in that it includes the total row per line too.  By just including the per unit amounts, V2
       # was missing some small adjustments to the entry due to the difference amounting to changes of hundredths of a cent at
       # the per unit level.  For instance, a change in cotten fee of 1.70 over 3K units was not changing the actual fee amount at the per
       # unit level (being a 1/10th of a cent), but the fee totals are different so a new report should have printed.
@@ -149,9 +149,9 @@ module OpenChain; module Events; module EntryEvents
       per_unit_level = [:entered_value, :duty, :fee, :international_freight, :inland_freight, :brokerage, :other]
 
       lc_data = []
-      landed_cost_data[:entries].sort_by{|e| e[:broker_reference]}.each do |entry_data|
+      landed_cost_data[:entries].sort_by {|e| e[:broker_reference]}.each do |entry_data|
         lc_data << collect_fingerprint_field(entry_data, entry_level)
-        entry_data[:commercial_invoices].sort_by{|ci| ci[:invoice_number]}.each do |invoice_data|
+        entry_data[:commercial_invoices].sort_by {|ci| ci[:invoice_number]}.each do |invoice_data|
           lc_data << collect_fingerprint_field(invoice_data, invoice_level)
           invoice_data[:commercial_invoice_lines].sort_by {|l| l[:po_number].to_s + l[:part_number].to_s + l[:quantity].to_s}.each do |line_data|
             lc_data << collect_fingerprint_field(line_data, line_level)
@@ -180,7 +180,7 @@ module OpenChain; module Events; module EntryEvents
       values
     end
 
-    private 
+    private
 
       def jjill_with_freight_charges entry
         if entry.customer_number == "JILL"
@@ -198,5 +198,5 @@ module OpenChain; module Events; module EntryEvents
         @freight_charges ||= DataCrossReference.hash_for_type DataCrossReference::ALLIANCE_FREIGHT_CHARGE_CODE
         @freight_charges.has_key? charge_code
       end
-  end 
+  end
 end; end; end

@@ -31,23 +31,23 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
 
     log.company = Company.where(system_code: "LUMBER").first
 
-    idoc_number = REXML::XPath.first(root,'IDOC/EDI_DC40').text('DOCNUM')
+    idoc_number = REXML::XPath.first(root, 'IDOC/EDI_DC40').text('DOCNUM')
     log.isa_number = idoc_number
 
-    base = REXML::XPath.first(root,'IDOC/E1EINAM')
+    base = REXML::XPath.first(root, 'IDOC/E1EINAM')
 
-    product_uid = et(base,'MATNR')
+    product_uid = et(base, 'MATNR')
     log.reject_and_raise "IDOC #{idoc_number} failed, no MATR value." if product_uid.blank?
     log.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, product_uid
 
-    vendor_sap_number = et(base,'LIFNR')
+    vendor_sap_number = et(base, 'LIFNR')
     log.reject_and_raise "IDOC #{idoc_number} failed, no LIFNR value." if vendor_sap_number.blank?
-    sc = SearchCriterion.new(model_field_uid:@cdefs[:cmp_sap_company].model_field_uid,operator:'eq',value:vendor_sap_number)
+    sc = SearchCriterion.new(model_field_uid:@cdefs[:cmp_sap_company].model_field_uid, operator:'eq', value:vendor_sap_number)
     vendor = sc.apply(Company).first
     return unless vendor
 
     p = nil
-    Lock.acquire("Product-#{product_uid}") do 
+    Lock.acquire("Product-#{product_uid}") do
       p = Product.where(unique_identifier:product_uid).first_or_create!
     end
 
@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     pva = nil
     pva_created = false
     Lock.db_lock(p) do
-      pva = ProductVendorAssignment.where(product_id:p.id,vendor_id:vendor.id).first_or_initialize
+      pva = ProductVendorAssignment.where(product_id:p.id, vendor_id:vendor.id).first_or_initialize
 
       if !pva.persisted?
         pva.save!
@@ -66,7 +66,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       end
     end
 
-    pva #return value not required but helpful for debugging
+    pva # return value not required but helpful for debugging
   end
 
 end; end; end; end

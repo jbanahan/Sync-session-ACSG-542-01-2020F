@@ -34,7 +34,7 @@ class SchedulableReportResult < ReportResult
   def self.run_schedulable opts = {}
     opts = opts.with_indifferent_access
     user, report_name, report_class, settings = parse_required_opts opts
-    
+
     # Merge settings from report schedule setup with any settings returned by the classes schedulable_settings' method
     if opts['settings'] && settings['settings']
       # Settings from the json setup should win over ones from the report's schedulable_settings method
@@ -70,7 +70,7 @@ class SchedulableReportResult < ReportResult
       end
 
       raise "report_class #{opts["report_class"]} must implement the run_report method." unless report_class.respond_to?(:run_report)
-      
+
       if report_class.respond_to?(:schedulable_settings)
         settings = report_class.schedulable_settings(user, report_name, opts).with_indifferent_access
       end

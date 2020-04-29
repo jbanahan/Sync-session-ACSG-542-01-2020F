@@ -3,7 +3,7 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
   subject { described_class.new nil }
 
   describe "process" do
-    let (:custom_file) { 
+    let (:custom_file) {
       cf = instance_double(CustomFile)
       allow(cf).to receive(:attached_file_name).and_return "file.xlsx"
       cf
@@ -11,11 +11,11 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
 
     let (:user) { Factory(:user, email: "me@there.com") }
 
-    let (:body_row) { 
+    let (:body_row) {
       ["2", "Match", "1", "LANDS-EBO", "LANDS-EBO", "21571", nil, "ONDNX007922291", "LBO-191010-1 ", "64394301", "Hampton Inn & S", "Janet Pratt", "FREDERICTON", nil, "E3C 0B4", "4211928", "450650", "3625", "WR CS STR FIT STR CHN PNT", "WMS/GIRLS PANTS", "6204.62.00.19", "6204.62.40.21", "BD", 1, 28.11, 28.11, Date.new(2019, 12, 1), "15818-028267659", Date.new(2019, 12, 2), "453", 6.37, 2.19, 0, 0, "124", Date.new(2019, 12, 3), Date.new(2019, 12, 4), "BD", "BDMID", "6204624021", nil]
     }
 
-    before :each do 
+    before :each do
       allow(subject).to receive(:custom_file).and_return custom_file
     end
 
@@ -68,6 +68,6 @@ describe OpenChain::CustomHandler::LandsEnd::LeReturnsCommercialInvoiceGenerator
       it "does not allow master users" do
         expect(subject.can_view?(master_user)).to eq false
       end
-    end  
+    end
   end
 end

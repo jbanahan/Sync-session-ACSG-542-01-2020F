@@ -12,7 +12,7 @@ module OpenChain; module EntityCompare; module ProductComparator; class StaleTar
 
     valid_tariffs = comparator.check_for_unstale_tariffs(old_bucket, old_path, old_version, new_bucket, new_path, new_version)
     stale_tariffs = comparator.check_for_stale_tariffs(new_bucket, new_path, new_version)
-    
+
     if valid_tariffs.any? || stale_tariffs.any?
       comparator.update_product id, valid_tariffs, stale_tariffs
     end
@@ -20,9 +20,9 @@ module OpenChain; module EntityCompare; module ProductComparator; class StaleTar
   end
 
   def check_for_unstale_tariffs old_bucket, old_path, old_version, new_bucket, new_path, new_version
-    
+
     new_snap = cached_json(new_bucket, new_path, new_version)
-    # See if we have a classification marked as a stale tariff...if so, then check to see the tariff # 
+    # See if we have a classification marked as a stale tariff...if so, then check to see the tariff #
     # for the classification changed since the previous snapshot.  If it did, then see if the new tariff is
     # valid, if so, then mark the classification as not stale.
     stale_cdef = cdefs[:class_stale_classification]
@@ -57,7 +57,7 @@ module OpenChain; module EntityCompare; module ProductComparator; class StaleTar
     end
 
     # So at this point we have a hash of classfication countries and the hts set on them
-    #..let's validate them all by checking for official tariffs.  If they're official
+    # ..let's validate them all by checking for official tariffs.  If they're official
     # we can unmark the product's stale classification.
     valid_tariffs = {}
 
@@ -105,7 +105,7 @@ module OpenChain; module EntityCompare; module ProductComparator; class StaleTar
 
   def update_product id, valid_tariffs, invalid_tariffs
     # We need to be careful here...the product MAY have changed while the job for this comparator has been queued..
-    # so ONLY mark the classification as not stale if the tariff for the country is the same as the 
+    # so ONLY mark the classification as not stale if the tariff for the country is the same as the
     product = Product.where(id: id).first
 
     # product could have been deleted since this was queued
@@ -175,7 +175,7 @@ module OpenChain; module EntityCompare; module ProductComparator; class StaleTar
       @cache[country_iso][hts] = OfficialTariff.joins(:country).where(hts_code: hts).where(countries: {iso_code: country_iso}).first.present?
     end
 
-    @cache[country_iso][hts]    
+    @cache[country_iso][hts]
   end
 
   def cdefs

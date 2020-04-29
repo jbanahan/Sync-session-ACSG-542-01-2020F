@@ -3,8 +3,8 @@ describe OrdersController do
   before :each do
     ms = stub_master_setup
     allow(ms).to receive(:order_enabled).and_return true
-    c = Factory(:company,:master=>true,system_code:'MSTR')
-    @u = Factory(:master_user,order_view:true,:company=>c)
+    c = Factory(:company, :master=>true, system_code:'MSTR')
+    @u = Factory(:master_user, order_view:true, :company=>c)
 
     sign_in_as @u
   end
@@ -12,14 +12,14 @@ describe OrdersController do
   describe '#show' do
     context 'order_view_template' do
       it 'should render default template' do
-        o = Factory(:order,importer:@u.company)
+        o = Factory(:order, importer:@u.company)
         get :show, id: o.id
         expect(response).to render_template :show
       end
       it 'should render custom template' do
-        cvt = CustomViewTemplate.create!(template_identifier:'order_view',template_path:'custom_views/j_jill/orders/show', module_type: "Order")
-        cvt.search_criterions.create!(model_field_uid:'ord_imp_syscode',operator:'eq',value:@u.company.system_code)
-        o = Factory(:order,importer:@u.company)
+        cvt = CustomViewTemplate.create!(template_identifier:'order_view', template_path:'custom_views/j_jill/orders/show', module_type: "Order")
+        cvt.search_criterions.create!(model_field_uid:'ord_imp_syscode', operator:'eq', value:@u.company.system_code)
+        o = Factory(:order, importer:@u.company)
         get :show, id: o.id
         expect(response).to render_template 'custom_views/j_jill/orders/show'
       end
@@ -87,7 +87,7 @@ describe OrdersController do
   end
   describe "reopen" do
     before :each do
-      @o = Factory(:order,closed_at:Time.now)
+      @o = Factory(:order, closed_at:Time.now)
     end
     it "should reopen if user can close" do
       allow_any_instance_of(Order).to receive(:can_close?).and_return true
@@ -107,7 +107,7 @@ describe OrdersController do
 
   describe 'validation_results' do
     before :each do
-      @ord = Factory(:order,order_number:'123456')
+      @ord = Factory(:order, order_number:'123456')
       @rule_result = Factory(:business_validation_rule_result)
       allow_any_instance_of(Order).to receive(:can_view?).with(@u).and_return true
       allow_any_instance_of(BusinessValidationResult).to receive(:can_view?).with(@u).and_return true
@@ -124,13 +124,13 @@ describe OrdersController do
     end
     it "should render json" do
       @bvr.business_validation_template.update_attributes(name:'myname')
-      @rule_result.business_validation_rule.update_attributes(name:'rulename',description:'ruledesc')
+      @rule_result.business_validation_rule.update_attributes(name:'rulename', description:'ruledesc')
       @rule_result.note = 'abc'
       @rule_result.state = 'Pass'
       @rule_result.overridden_by = @u
       @rule_result.overridden_at = Time.now
       @rule_result.save!
-      @rule_result.reload #fixes time issue
+      @rule_result.reload # fixes time issue
       get :validation_results, id: @ord.id, format: :json
       expect(response).to be_success
       h = JSON.parse(response.body)['business_validation_result']
@@ -166,8 +166,8 @@ describe OrdersController do
       expect(JSON.parse(response.body)["mf_hsh"]).to be_empty
     end
     it 'should get count for specific items from #get_bulk_count' do
-      expect_any_instance_of(described_class).to receive(:get_bulk_count).with({"0"=>"99","1"=>"54"}, nil).and_return 2
-      post :bulk_update_fields, {"pk" => {"0"=>"99","1"=>"54"}}
+      expect_any_instance_of(described_class).to receive(:get_bulk_count).with({"0"=>"99", "1"=>"54"}, nil).and_return 2
+      post :bulk_update_fields, {"pk" => {"0"=>"99", "1"=>"54"}}
       expect(response).to be_success
       expect(JSON.parse(response.body)['count']).to eq 2
     end
@@ -183,8 +183,8 @@ describe OrdersController do
     it 'should call bulk action runner with BulkOrderUpdate' do
       today = Date.today.to_s
       bar = OpenChain::BulkAction::BulkActionRunner
-      expect(bar).to receive(:process_object_ids).with(@u,['1','2'], OpenChain::BulkAction::BulkOrderUpdate, {"ord_ord_date" => today})
-      post :bulk_update, pk: {'0'=>'1','1'=>'2'}, mf_hsh: {"ord_ord_date" => today}
+      expect(bar).to receive(:process_object_ids).with(@u, ['1', '2'], OpenChain::BulkAction::BulkOrderUpdate, {"ord_ord_date" => today})
+      post :bulk_update, pk: {'0'=>'1', '1'=>'2'}, mf_hsh: {"ord_ord_date" => today}
       expect(response).to be_success
     end
   end
@@ -195,7 +195,7 @@ describe OrdersController do
       bar = OpenChain::BulkAction::BulkActionRunner
       expect(bar).to receive(:process_from_parameters).with(@u, {"pk"=>{"0"=>"1", "1"=>"2"}, "controller"=>"orders", "action"=>"bulk_send_to_sap"}, OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap, {max_results:100})
 
-      post :bulk_send_to_sap, pk: {'0'=>'1','1'=>'2'};
+      post :bulk_send_to_sap, pk: {'0'=>'1', '1'=>'2'};
 
       expect(response).to redirect_to("blah")
       expect(flash[:errors]).to be_blank
@@ -207,7 +207,7 @@ describe OrdersController do
       bar = OpenChain::BulkAction::BulkActionRunner
       expect(bar).to receive(:process_from_parameters).with(@u, {"pk"=>{"0"=>"1", "1"=>"2"}, "controller"=>"orders", "action"=>"bulk_send_to_sap"}, OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap, {max_results:100})
 
-      post :bulk_send_to_sap, pk: {'0'=>'1','1'=>'2'};
+      post :bulk_send_to_sap, pk: {'0'=>'1', '1'=>'2'};
 
       expect(response).to redirect_to("/")
       expect(flash[:errors]).to be_blank
@@ -219,7 +219,7 @@ describe OrdersController do
       bar = OpenChain::BulkAction::BulkActionRunner
       expect(bar).to receive(:process_from_parameters).with(@u, {"pk"=>{"0"=>"1", "1"=>"2"}, "controller"=>"orders", "action"=>"bulk_send_to_sap"}, OpenChain::CustomHandler::LumberLiquidators::BulkSendToSap, {max_results:100}).and_raise(OpenChain::BulkAction::TooManyBulkObjectsError)
 
-      post :bulk_send_to_sap, pk: {'0'=>'1','1'=>'2'};
+      post :bulk_send_to_sap, pk: {'0'=>'1', '1'=>'2'};
 
       expect(response).to redirect_to("blah")
       expect(flash[:errors].first).to eq("You may not send more than 100 orders to SAP at one time.")

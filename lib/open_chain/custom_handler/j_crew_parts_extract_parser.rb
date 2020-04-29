@@ -77,7 +77,7 @@ module OpenChain
             if product.nil?
               if line =~ /^\d+/
                 product = {}
-                product[:po] = parse_data line[0,18]
+                product[:po] = parse_data line[0, 18]
                 product[:season] = parse_data line[18, 14]
                 product[:article] = parse_data line[32, 15]
                 product[:hts] = parse_data line[47, 25]

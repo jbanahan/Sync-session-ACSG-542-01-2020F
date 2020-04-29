@@ -13,7 +13,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
     importer = ascena
     return false unless importer
 
-    (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) && 
+    (MasterSetup.get.system_code == "www-vfitrack-net" || Rails.env.development?) &&
     (user.view_entries? && (user.company.master? || importer.can_view?(user)))
   end
 
@@ -44,11 +44,11 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       OpenMailer.send_simple_html(email, subject, body, t).deliver_now
     end
   end
-  
+
   def eligible_mids
-    DataCrossReference.where(cross_reference_type: 'asce_mid').pluck(:key).map{ |k| k.split("-").first }
+    DataCrossReference.where(cross_reference_type: 'asce_mid').pluck(:key).map { |k| k.split("-").first }
   end
-  
+
   def cdefs
     self.class.prep_custom_definitions [:ord_type, :ord_selling_agent, :ord_line_wholesale_unit_price, :prod_vendor_style, :prod_reference_number]
   end
@@ -72,7 +72,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       table_from_query sheet_2, detail_queries[:first_sale], conversions(time_zone)
       table_from_query sheet_3, detail_queries[:missed], conversions(time_zone)
       table_from_query sheet_4, detail_queries[:potential], conversions(time_zone)
-    end 
+    end
 
     def self.conversions time_zone
       {"Entry Filed Date" => datetime_translation_lambda(time_zone)}
@@ -91,12 +91,12 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       XlsMaker.add_body_row sheet, cursor += 1, ["First Sale Eligible Vendors Claiming First Sale at Entry"]
       XlsMaker.add_body_row sheet, cursor += 1, ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Duty Savings', 'Fiscal Season to Date Savings', 'Fiscal YTD Savings']
       cursor = write_section sheet, first_sale_hsh, cursor += 1
-      
+
       XlsMaker.add_body_row sheet, cursor += 1, ['First Sale Eligible Vendors Not Claiming First Sale at Entry']
       cursor = write_vendor_margins sheet, avg_savings_percentages, cursor += 1
       XlsMaker.add_body_row sheet, cursor += 1, ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Missed Duty Savings', 'Fiscal Season to Date Missed Savings', 'Fiscal YTD Missed Savings']
       cursor = write_section sheet, missed_hsh, cursor += 1
-      
+
       XlsMaker.add_body_row sheet, cursor += 1, ['First Sale Ineligible Vendors Potential Duty Savings']
       cursor = write_vendor_margins sheet, avg_savings_percentages, cursor += 1
       XlsMaker.add_body_row sheet, cursor += 1, ['Vendor', 'Seller', 'Factory', 'Previous Fiscal Month Potential Duty Savings', 'Fiscal Season to Date Potential Savings', 'Fiscal YTD Potential Savings']
@@ -107,14 +107,14 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       hsh[:triplets].each do |vendor, seller_factory_pairs|
         seller_factory_pairs.each do |sf|
           seller, factory = sf
-          XlsMaker.add_body_row sheet, cursor, [vendor, seller, factory, hsh[:previous_fiscal_month][:lines][vendor][seller][factory], 
-                                                                         hsh[:fiscal_season_to_date][:lines][vendor][seller][factory], 
+          XlsMaker.add_body_row sheet, cursor, [vendor, seller, factory, hsh[:previous_fiscal_month][:lines][vendor][seller][factory],
+                                                                         hsh[:fiscal_season_to_date][:lines][vendor][seller][factory],
                                                                          hsh[:fiscal_ytd][:lines][vendor][seller][factory]]
-          cursor += 1                                                                         
+          cursor += 1
         end
         XlsMaker.add_body_row sheet, cursor, [nil, nil, nil, hsh[:previous_fiscal_month][:vendor_total][vendor],
                                                              hsh[:fiscal_season_to_date][:vendor_total][vendor],
-                                                             hsh[:fiscal_ytd][:vendor_total][vendor], 
+                                                             hsh[:fiscal_ytd][:vendor_total][vendor],
                                                              "#{vendor} Subtotal"]
         cursor += 1
       end
@@ -144,27 +144,27 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       [first_sale_hash, missed_hash, potential_hash, avg_savings_percentages]
     end
 
-    #PRIVATE
-    
+    # PRIVATE
+
     def self.split_results query_results
       month_first_half, month_second_half = yield(query_results[:previous_fiscal_month])
       season_first_half, season_second_half = yield(query_results[:fiscal_season_to_date])
       ytd_first_half, ytd_second_half = yield(query_results[:fiscal_ytd])
-      [{previous_fiscal_month: month_first_half, fiscal_season_to_date: season_first_half, fiscal_ytd: ytd_first_half}, 
+      [{previous_fiscal_month: month_first_half, fiscal_season_to_date: season_first_half, fiscal_ytd: ytd_first_half},
        {previous_fiscal_month: month_second_half, fiscal_season_to_date: season_second_half, fiscal_ytd: ytd_second_half}]
     end
 
     def self.mid_partition query_results, eligible_mids
-      query_results.partition{ |r| eligible_mids.include? r['mid'] }
+      query_results.partition { |r| eligible_mids.include? r['mid'] }
     end
 
     def self.first_sale_partition query_results
-      query_results.partition{ |r| r['first_sale_flag'] == 'Y' }
+      query_results.partition { |r| r['first_sale_flag'] == 'Y' }
     end
 
     def self.extract_avg_savings first_sale_hash
-      {previous_fiscal_month: first_sale_hash[:previous_fiscal_month][:avg_savings_perc], 
-       fiscal_season_to_date: first_sale_hash[:fiscal_season_to_date][:avg_savings_perc], 
+      {previous_fiscal_month: first_sale_hash[:previous_fiscal_month][:avg_savings_perc],
+       fiscal_season_to_date: first_sale_hash[:fiscal_season_to_date][:avg_savings_perc],
        fiscal_ytd: first_sale_hash[:fiscal_season_to_date][:avg_savings_perc]}
     end
 
@@ -183,9 +183,9 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       triplets = combine_triplets(prev_month[:triplets], season[:triplets], ytd[:triplets])
       {previous_fiscal_month: prev_month, fiscal_season_to_date: season, fiscal_ytd: ytd, triplets: triplets }
     end
-    
+
     def self.convert_one_first_sale_result query_result
-      vendor_total = Hash.new{|h,k| h[k] = 0}
+      vendor_total = Hash.new {|h, k| h[k] = 0}
       grand_total = first_sale_diff_total = inv_val_contract_total = avg_savings_perc = 0
       triplets = []
       first_sale = init_deep_hash
@@ -204,7 +204,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
     end
 
     def self.convert_one_missed_or_potential_result query_result, avg_savings_perc
-      vendor_total = Hash.new{|h,k| h[k] = 0}
+      vendor_total = Hash.new {|h, k| h[k] = 0}
       grand_total = 0
       triplets = []
       missed_or_potential = init_deep_hash
@@ -227,13 +227,13 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
     end
 
     def self.combine_triplets prev_month_triplets, season_triplets, ytd_triplets
-      triplets_by_vendor = Hash.new{|h, k| h[k] = []}
+      triplets_by_vendor = Hash.new {|h, k| h[k] = []}
       (prev_month_triplets + season_triplets + ytd_triplets).sort.uniq.each { |t| triplets_by_vendor[t[0]] << [t[1], t[2]] }
       triplets_by_vendor
     end
 
     def self.init_deep_hash
-      Hash.new do |h1, k1| 
+      Hash.new do |h1, k1|
         h1[k1] = Hash.new do |h2, k2|
           h2[k2] = Hash.new { |h3, k3| h3[k3] = 0 }
         end
@@ -261,7 +261,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
   end
 
   class FiscalMonthRange
-    
+
     def range_for_previous_fiscal_month
       previous_month = current_fm.back 1
       "e.fiscal_date >= '#{previous_month.start_date}' AND e.fiscal_date < '#{current_fm.start_date}'"
@@ -277,7 +277,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       start_fm = current_fm.back(current_fm.month_number - 1)
       "e.fiscal_date >= '#{start_fm.start_date}' AND e.fiscal_date < '#{current_fm.start_date}'"
     end
-    
+
     def current_fm
       unless @current_fm
         today = Time.zone.now.in_time_zone("America/New_York").to_date
@@ -286,18 +286,18 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
       end
       @current_fm
     end
-  
+
   end
 
 
   class DetailQueryGenerator
     extend OpenChain::CustomHandler::Ascena::AscenaReportHelper
     extend SharedSql
-    
+
     def self.get_detail_queries cdefs, eligible_mids, fm_range
-      first_sale = detail_query(cdefs, fm_range, true, "cil.mid IN (#{eligible_mids.map{ |mid| '\'' + mid + '\'' }.join(',')}) AND cil.contract_amount > 0")
-      missed = detail_query(cdefs, fm_range, false, "cil.mid IN (#{eligible_mids.map{ |mid| '\'' + mid + '\'' }.join(',')}) AND cil.contract_amount <= 0")
-      potential = detail_query(cdefs, fm_range, false, "(cil.mid NOT IN (#{eligible_mids.map{ |mid| '\'' + mid + '\'' }.join(',')}) OR cil.mid IS NULL)")
+      first_sale = detail_query(cdefs, fm_range, true, "cil.mid IN (#{eligible_mids.map { |mid| '\'' + mid + '\'' }.join(',')}) AND cil.contract_amount > 0")
+      missed = detail_query(cdefs, fm_range, false, "cil.mid IN (#{eligible_mids.map { |mid| '\'' + mid + '\'' }.join(',')}) AND cil.contract_amount <= 0")
+      potential = detail_query(cdefs, fm_range, false, "(cil.mid NOT IN (#{eligible_mids.map { |mid| '\'' + mid + '\'' }.join(',')}) OR cil.mid IS NULL)")
       {first_sale: first_sale, missed: missed, potential: potential}
     end
 
@@ -360,7 +360,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
   class SavingsQueryRunner
     extend OpenChain::CustomHandler::Ascena::AscenaReportHelper
     extend SharedSql
-    
+
     def self.run_savings_queries cdefs, fm_range
       prev_month = run_savings_previous_fiscal_month(cdefs, fm_range)
       season = run_savings_fiscal_season_to_date(cdefs, fm_range)
@@ -369,7 +369,7 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
     end
 
     # PRIVATE
-    
+
     def self.run_savings_previous_fiscal_month cdefs, fm_range
       ActiveRecord::Base.connection.exec_query savings_query(cdefs, fm_range.range_for_previous_fiscal_month)
     end
@@ -392,9 +392,9 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
                SUM(#{first_sale_savings('cil')}) AS first_sale_sav,
                SUM(#{first_sale_difference('cil')}) AS first_sale_diff,
                SUM(#{invoice_value_contract('cil')}) AS inv_val_contract,
-               SUM(#{invoice_value_contract('cil')} * (SELECT duty_rate 
-                                                       FROM commercial_invoice_tariffs t 
-                                                       WHERE t.commercial_invoice_line_id = cil.id 
+               SUM(#{invoice_value_contract('cil')} * (SELECT duty_rate
+                                                       FROM commercial_invoice_tariffs t
+                                                       WHERE t.commercial_invoice_line_id = cil.id
                                                        LIMIT 1)) AS val_contract_x_tariff_rate
         FROM entries e
           INNER JOIN commercial_invoices ci ON e.id = ci.entry_id
@@ -412,6 +412,6 @@ module OpenChain; module Report; class AscenaActualVsPotentialFirstSaleReport
 
   end
 
- 
+
 
 end; end; end

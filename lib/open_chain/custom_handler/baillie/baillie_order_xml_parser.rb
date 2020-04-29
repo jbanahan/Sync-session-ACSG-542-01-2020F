@@ -5,5 +5,5 @@ module OpenChain; module CustomHandler; module Baillie; class BaillieOrderXmlPar
   def self.integration_folder
     ['baillie/_po_xml', '/home/ubuntu/ftproot/chainroot/baillie/_po_xml']
   end
-  
+
 end; end; end; end

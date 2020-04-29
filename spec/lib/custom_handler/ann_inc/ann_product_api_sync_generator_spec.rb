@@ -202,7 +202,7 @@ describe OpenChain::CustomHandler::AnnInc::AnnProductApiSyncGenerator do
       expect(result.size).to eq 2
 
       expect(result.first).to eq [product.id, "UID", "CA", 1, "9876543210", nil, nil, "ABC\nDEF", 1]
-      expect(result.second).to eq [product.id, "UID", "US", 1, "1234567890","2468101214", "1357911131", "ABC\nDEF", 0]
+      expect(result.second).to eq [product.id, "UID", "US", 1, "1234567890", "2468101214", "1357911131", "ABC\nDEF", 0]
     end
 
     it "returns nothing if everything is already synced" do

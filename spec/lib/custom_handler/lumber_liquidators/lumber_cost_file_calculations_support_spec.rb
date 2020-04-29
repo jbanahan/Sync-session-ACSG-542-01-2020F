@@ -98,7 +98,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
       totals = {ocean_rate: BigDecimal("100"), brokerage: BigDecimal("200")}
       bucket = {ocean_rate: BigDecimal("10"), brokerage: BigDecimal("20")}
 
-      # Becuase the expected proration amount should be more than is actually in the bucket, 
+      # Becuase the expected proration amount should be more than is actually in the bucket,
       # the method should not pull more value than is present.
       charges = subject.calculate_proration_for_lines line, BigDecimal("100"), totals, bucket
 
@@ -133,7 +133,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
 
     it "splits any remaining values from the charge buckets over all the value hashes" do
       bucket_remainder = {brokerage: BigDecimal("0.01"), ocean_rate: BigDecimal("0.1")}
-      values = [{brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}, {brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10},{brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}]
+      values = [{brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}, {brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}, {brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}]
 
       subject.add_remaining_proration_amounts values, bucket_remainder
 
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
 
     it "skips values that have no entered value on them" do
       bucket_remainder = {brokerage: BigDecimal("0.01")}
-      values = [{brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}, {brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10},{brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 0}]
+      values = [{brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}, {brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 10}, {brokerage: BigDecimal("0"), ocean_rate: BigDecimal("0"), entered_value: 0}]
 
       subject.add_remaining_proration_amounts values, bucket_remainder
 

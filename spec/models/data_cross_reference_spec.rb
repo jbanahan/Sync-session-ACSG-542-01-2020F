@@ -6,8 +6,8 @@ describe DataCrossReference do
     it "should find all for reference" do
       csv = "k,v\nk2,v2"
       subject.load_cross_references csv, 'xref_type'
-      subject.create!(key:'ak',value:'av',cross_reference_type:'xrt')
-      expect(subject.hash_for_type('xref_type')).to eq({'k'=>'v','k2'=>'v2'})
+      subject.create!(key:'ak', value:'av', cross_reference_type:'xrt')
+      expect(subject.hash_for_type('xref_type')).to eq({'k'=>'v', 'k2'=>'v2'})
     end
 
     it "finds xrefs only for given company" do
@@ -19,10 +19,10 @@ describe DataCrossReference do
 
   context "get_all_pairs" do
     it "should get all pairs for a cross reference type" do
-      described_class.create!(key:'a',value:'b',cross_reference_type:'x')
-      described_class.create!(key:'c',value:'d',cross_reference_type:'x')
-      described_class.create!(key:'dontfind',value:'d',cross_reference_type:'z')
-      h = {'a'=>'b','c'=>'d'}
+      described_class.create!(key:'a', value:'b', cross_reference_type:'x')
+      described_class.create!(key:'c', value:'d', cross_reference_type:'x')
+      described_class.create!(key:'dontfind', value:'d', cross_reference_type:'z')
+      h = {'a'=>'b', 'c'=>'d'}
       expect(described_class.get_all_pairs('x')).to eq h
     end
   end
@@ -65,7 +65,7 @@ describe DataCrossReference do
     end
     it "should create" do
       described_class.create_lenox_item_master_hash! 'part_no', 'hashval'
-      expect(described_class.where(key:'part_no',value:'hashval',cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH).count).to eq 1
+      expect(described_class.where(key:'part_no', value:'hashval', cross_reference_type:described_class::LENOX_ITEM_MASTER_HASH).count).to eq 1
     end
   end
   context "lenox_hts_fingerprint" do
@@ -111,11 +111,11 @@ describe DataCrossReference do
 
   context "find_ua_plant_to_iso" do
     it "should find" do
-      described_class.create!(key:'x',value:'y',cross_reference_type:described_class::UA_PLANT_TO_ISO)
+      described_class.create!(key:'x', value:'y', cross_reference_type:described_class::UA_PLANT_TO_ISO)
       expect(described_class.find_ua_plant_to_iso('x')).to eq('y')
     end
   end
-  
+
   context "find_ua_country_by_site" do
     it "finds" do
       described_class.create!(key: 'x', value:'y', cross_reference_type:described_class::UA_SITE_TO_COUNTRY)
@@ -125,7 +125,7 @@ describe DataCrossReference do
 
   context "find_ua_winshuttle_fingerprint" do
     it "should find" do
-      described_class.create!(key:DataCrossReference.make_compound_key('x', 'y', 'z'),value:'y',cross_reference_type:described_class::UA_WINSHUTTLE_FINGERPRINT)
+      described_class.create!(key:DataCrossReference.make_compound_key('x', 'y', 'z'), value:'y', cross_reference_type:described_class::UA_WINSHUTTLE_FINGERPRINT)
       expect(described_class.find_ua_winshuttle_fingerprint('x', 'y', 'z')).to eq('y')
     end
   end
@@ -143,14 +143,14 @@ describe DataCrossReference do
 
   context "find_ua_material_color_plant" do
     it "should find" do
-      described_class.create!(key:'x-y-z',value:'a',cross_reference_type:described_class::UA_MATERIAL_COLOR_PLANT)
-      expect(described_class.find_ua_material_color_plant('x','y','z')).to eq('a')
+      described_class.create!(key:'x-y-z', value:'a', cross_reference_type:described_class::UA_MATERIAL_COLOR_PLANT)
+      expect(described_class.find_ua_material_color_plant('x', 'y', 'z')).to eq('a')
     end
   end
   context "create_ua_material_color_plant!" do
     it "should create" do
-      described_class.create_ua_material_color_plant! 'x','y','z'
-      expect(described_class.find_ua_material_color_plant('x','y','z')).to eq('1')
+      described_class.create_ua_material_color_plant! 'x', 'y', 'z'
+      expect(described_class.find_ua_material_color_plant('x', 'y', 'z')).to eq('1')
     end
   end
   context "add_xref!" do
@@ -172,7 +172,7 @@ describe DataCrossReference do
   end
   describe "create_us_hts_to_ca!" do
     let(:co) { Factory(:company, alliance_customer_number: "ACME") }
-    
+
     it "creates" do
       described_class.create_us_hts_to_ca! '1111111111', '2222222222', co.id
       cr = DataCrossReference.first
@@ -189,7 +189,7 @@ describe DataCrossReference do
       expect(cr.company).to eq co
     end
   end
-  
+
   describe "find_ca_hts_to_descr" do
     it "finds" do
       c = Factory(:company, alliance_customer_number: "ACME")
@@ -227,7 +227,7 @@ describe DataCrossReference do
 
   describe "create_pvh_invoice" do
     it "creates" do
-      expect{ described_class.create_pvh_invoice!("pvh", "inv_num") }.to change(DataCrossReference, :count).from(0).to(1)
+      expect { described_class.create_pvh_invoice!("pvh", "inv_num") }.to change(DataCrossReference, :count).from(0).to(1)
       xref = DataCrossReference.first
       expect(xref.cross_reference_type).to eq(described_class::PVH_INVOICES)
       expect(xref.key).to eq "pvh*~*inv_num"
@@ -246,7 +246,7 @@ describe DataCrossReference do
   describe "company_for_xref" do
     let!(:u) { double "user" }
     let!(:xref_edit_hash) { {key_label: "key", value_label: "value", company: {system_code: "ACME"}} }
-    
+
     it "returns company associated with xref_edit_hash, looking-up by system_code" do
       co = Factory(:company, system_code: "ACME")
       expect(described_class.company_for_xref(xref_edit_hash)).to eq co
@@ -276,9 +276,9 @@ describe DataCrossReference do
     let(:xref_hsh) do
       {
         "xref_type" => {
-          show_value_column: true, 
-          identifier: "xref_type", 
-          require_company: false, 
+          show_value_column: true,
+          identifier: "xref_type",
+          require_company: false,
           preprocessor: lambda {|k, v| {key: k, value: v} }
         }
       }
@@ -321,7 +321,7 @@ describe DataCrossReference do
       preprocessor = lambda { |key, value| {key: "key", value: nil} }
       xref_hsh["xref_type"][:preprocessor] = preprocessor
       xref_hsh["xref_type"][:show_value_column] = false
-      
+
       expect(described_class).to receive(:xref_edit_hash).with(nil).and_return xref_hsh
       described_class.destroy_all
       expect(described_class.preprocess_and_add_xref! "xref_type", "unprocessed_key", "unprocessed_value").to eq true
@@ -367,7 +367,7 @@ describe DataCrossReference do
   end
 
   describe "xref_edit_hash" do
-    #no two lambdas share the same identity so this simplifies the tests
+    # no two lambdas share the same identity so this simplifies the tests
     def strip_preproc hsh
       hsh.delete(:preprocessor)
       hsh
@@ -381,7 +381,7 @@ describe DataCrossReference do
 
     let(:preproc) {  OpenChain::DataCrossReferenceUploadPreprocessor }
     context "polo system" do
-      before :each do 
+      before :each do
         allow(master_setup).to receive(:custom_feature?).with("Polo").and_return true
       end
 
@@ -395,13 +395,13 @@ describe DataCrossReference do
     end
 
     context "vfi system" do
-      before :each do 
+      before :each do
         allow(master_setup).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
       end
 
       it "returns information about xref screens sys-admin user has access to" do
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
-        
+
         expect(xrefs.size).to eq 11
         expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
@@ -414,7 +414,7 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['asce_brand_xref'])).to eq title: "Ascena Brands", description: "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", identifier: "asce_brand_xref", key_label: "Brand Name", value_label: "Brand Abbrev", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."
-        
+
       end
 
       it "returns info about xref screens xref-maintenance group member has access to" do
@@ -438,7 +438,7 @@ describe DataCrossReference do
     end
 
     context "ll system" do
-      before :each do 
+      before :each do
         allow(master_setup).to receive(:custom_feature?).with("Lumber Liquidators").and_return true
       end
 
@@ -498,7 +498,7 @@ describe DataCrossReference do
         it "allows access to US-to-CA xref for sys admins" do
           expect(DataCrossReference.can_view? 'us_hts_to_ca', Factory(:sys_admin_user)).to eq true
         end
-        
+
         it "prevents access for anyone else" do
           expect(DataCrossReference.can_view? 'us_hts_to_ca', User.new).to eq false
         end
@@ -584,7 +584,7 @@ describe DataCrossReference do
     it "returns nil to unauthorized user" do
       allow(DataCrossReference).to receive(:can_view?).and_return false
       allow(described_class).to receive(:xref_edit_hash).with(u).and_return({"xref_name" => {key_label: "KEY LABEL", value_label: "VALUE LABEL", show_value_column: true, require_company: true}})
-      
+
       expect(described_class.generate_csv("xref_name", u)).to be_nil
     end
 
@@ -592,7 +592,7 @@ describe DataCrossReference do
       allow(DataCrossReference).to receive(:can_view?).and_return true
       allow(described_class).to receive(:xref_edit_hash).with(u).and_return({"xref_name" => {key_label: "KEY LABEL", value_label: "VALUE LABEL", show_value_column: true, require_company: true}})
       csv = described_class.generate_csv("xref_name", u).split("\n")
-      
+
       expect(csv[0].split(",")).to eq ["KEY LABEL", "VALUE LABEL", "Company", "Last Updated"]
       expect(csv[1].split(",").take(3)).to eq ["1111111111", "2222222222", "ACME (AC)"]
       expect(csv[2].split(",").take(3)).to eq ["3333333333", "4444444444", "ACME (AC)"]
@@ -604,7 +604,7 @@ describe DataCrossReference do
       dcr_1.update_attributes(company: nil)
       dcr_2.update_attributes(company: nil)
       csv = described_class.generate_csv("xref_name", u).split("\n")
-      
+
       expect(csv[0].split(",")).to eq ["KEY LABEL", "VALUE LABEL", "Last Updated"]
       expect(csv[1].split(",").take(2)).to eq ["1111111111", "2222222222"]
       expect(csv[2].split(",").take(2)).to eq ["3333333333", "4444444444"]
@@ -614,7 +614,7 @@ describe DataCrossReference do
       allow(DataCrossReference).to receive(:can_view?).and_return true
       allow(described_class).to receive(:xref_edit_hash).with(u).and_return({"xref_name" => {key_label: "KEY LABEL", show_value_column: false, require_company: true}})
       csv = described_class.generate_csv("xref_name", u).split("\n")
-      
+
       expect(csv[0].split(",")).to eq ["KEY LABEL", "Company", "Last Updated"]
       expect(csv[1].split(",").take(2)).to eq ["1111111111", "ACME (AC)"]
       expect(csv[2].split(",").take(2)).to eq ["3333333333", "ACME (AC)"]
@@ -669,14 +669,14 @@ describe DataCrossReference do
     let (:importer) { Factory(:importer) }
     let! (:importer_locode) { DataCrossReference.create! cross_reference_type: DataCrossReference::UN_LOCODE_TO_US_CODE, key: "USLAX", value: "LAX", company_id: importer.id }
     let! (:locode) { DataCrossReference.create! cross_reference_type: DataCrossReference::UN_LOCODE_TO_US_CODE, key: "USORD", value: "ORD" }
-  
+
     describe "find_us_port_code" do
 
-      # Should not find a company specific xref 
+      # Should not find a company specific xref
       it "finds a generic xref" do
         expect(DataCrossReference.find_us_port_code "USORD").to eq "ORD"
       end
-      
+
       it "finds a company specific xref" do
         expect(DataCrossReference.find_us_port_code "USLAX", company: importer).to eq "LAX"
       end
