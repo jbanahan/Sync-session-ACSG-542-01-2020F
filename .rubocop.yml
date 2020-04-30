@@ -24,6 +24,9 @@ Style/ConditionalAssignment:
 Style/Documentation:
   Enabled: false
 
+Style/GuardClause:
+  Enabled: false
+
 Style/IfUnlessModifier:
   Enabled: false
 
@@ -44,6 +47,10 @@ Style/NumericPredicate:
 
 Style/RedundantSelf:
   Enabled: false
+
+Style/Semicolon:
+  Exclude:
+    - 'spec/**/**'
 
 Style/StringLiterals:
   Enabled: false
@@ -147,6 +154,9 @@ Naming/MethodParameterName:
     - spec/**/*
 
 RSpec/AnyInstance:
+  Enabled: false
+
+RSpec/ContextWording:
   Enabled: false
 
 RSpec/ExampleLength:
