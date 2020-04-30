@@ -6,6 +6,6 @@ namespace :rubocop do
 
   desc 'Scans only files that diverge from master branch.'
   task branch: :environment do
-    sh 'git diff --name-only master | xargs rubocop'
+    sh 'git diff --diff-filter=d --name-only master | xargs rubocop'
   end
 end
