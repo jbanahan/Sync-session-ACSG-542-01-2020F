@@ -422,6 +422,26 @@ describe OpenChain::CustomHandler::KewillEntryParser do
              ],
             'sent_date' => 201803151200
           }
+        ],
+        "delivery_orders": [
+            {
+                "do_no": 1,
+                "trucker": "",
+                "trucker_name": "BARSAN",
+                "deliver_to_name": "EMSER TILE WESTERN DC"
+            },
+            {
+                "do_no": 2,
+                "trucker": "",
+                "trucker_name": "CONTAINER FREIGHT",
+                "deliver_to_name": "CAL CARTAGE"
+            },
+            {
+                "do_no": 3,
+                "trucker": "",
+                "trucker_name": "AP EXPRESS",
+                "deliver_to_name": "EMSER TILE WESTERN DC"
+            }
         ]
       }
     end
@@ -585,6 +605,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.split_shipment?).to eq false
       expect(entry.split_release_option).to eq "1"
       expect(entry.summary_line_count).to eq 2
+      expect(entry.trucker_names).to eql("BARSAN\n CONTAINER FREIGHT\n AP EXPRESS")
+      expect(entry.deliver_to_names).to eql("EMSER TILE WESTERN DC\n CAL CARTAGE")
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4

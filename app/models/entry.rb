@@ -54,6 +54,7 @@
 #  daily_statement_number                 :string(255)
 #  ddtc_hold_date                         :datetime
 #  ddtc_hold_release_date                 :datetime
+#  deliver_to_names                       :text(65535)
 #  delivery_order_pickup_date             :datetime
 #  departments                            :text(65535)
 #  destination_state                      :string(255)
@@ -225,6 +226,7 @@
 #  tracking_status                        :integer
 #  transport_mode_code                    :string(255)
 #  trucker_called_date                    :datetime
+#  trucker_names                          :text(65535)
 #  ult_consignee_code                     :string(255)
 #  ult_consignee_name                     :string(255)
 #  unlading_port_code                     :string(255)

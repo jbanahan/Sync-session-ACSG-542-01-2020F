@@ -485,6 +485,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           export_lambda: lambda { |obj| obj.daily_statement_entry.present? ? obj.daily_statement_entry.total_amount : 0},
           qualified_field_name: "(SELECT total_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
       }],
+      [271, :ent_trucker_names, :trucker_names, "Trucker Name(s)", data_type: :string],
+      [272, :ent_deliver_to_names, :deliver_to_names, "Deliver To Name(s)", data_type: :string]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600, 'ent', 'entries', 'Entry')

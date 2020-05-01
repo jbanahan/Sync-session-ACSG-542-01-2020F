@@ -200,6 +200,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       process_post_summary_corrections e, entry
       process_broker_invoices e, entry
       process_fda_dates e, entry
+      process_trucker_information e, entry
 
       if opts[:key] && opts[:bucket]
         entry.last_file_path = opts[:key]
@@ -687,6 +688,22 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def accumulated hash, key
       hash[key].keep_if {|v| !v.blank? }.to_a.join multi_value_separator
+    end
+
+    def process_trucker_information e, entry
+      # This is primarily here for tests. e["delivery_orders"] should always exist, though it may be empty.
+      return if e["delivery_orders"].blank?
+
+      trucker_names = Set.new
+      deliver_to_names = Set.new
+
+      e["delivery_orders"].each do |delivery_order|
+        trucker_names << delivery_order["trucker_name"]
+        deliver_to_names << delivery_order["deliver_to_name"]
+      end
+
+      entry.trucker_names = trucker_names.to_a.join("\n ")
+      entry.deliver_to_names = deliver_to_names.to_a.join("\n ")
     end
 
     def process_notes e, entry
