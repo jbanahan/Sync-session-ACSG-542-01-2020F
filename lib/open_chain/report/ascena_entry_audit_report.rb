@@ -159,4 +159,18 @@ module OpenChain; module Report; class AscenaEntryAuditReport
 
     ActiveRecord::Base.sanitize_sql_array([qry, importer_system_code, start_date, end_date, self.class.sys_code_to_cust_num(importer_system_code)])
   end
+
+  # Only here as a temporary stop-gap.  Moved from AscenaReportHelper.  This method can be deleted in near future.
+  def duty_savings_first_sale inv_line_alias
+    <<-SQL
+      IF(#{inv_line_alias}.contract_amount IS NULL OR #{inv_line_alias}.contract_amount = 0,
+         0,
+         (SELECT IFNULL(ROUND((l.contract_amount - l.value) * (t.duty_amount / t.entered_value), 2), 0)
+          FROM commercial_invoice_lines l
+            INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id
+          WHERE l.id = cil.id
+          LIMIT 1 ))
+    SQL
+  end
+
 end; end; end

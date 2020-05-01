@@ -63,17 +63,18 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
     inv = e.commercial_invoices.create! invoice_number: "INV"
 
     @line = inv.commercial_invoice_lines.create! po_number: "PO", contract_amount: 5.43, mid: "mid12345", value: 2.43, product_line: "prodlineA", part_number: "part_X"
-    tariff = @line.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
+    tariff1a = @line.commercial_invoice_tariffs.create! duty_rate: BigDecimal(".1")
+    tariff1b = @line.commercial_invoice_tariffs.create! duty_rate: BigDecimal(".05")
 
     # No first sale claim on this line
     @line2 = inv.commercial_invoice_lines.create! po_number: "PO", contract_amount: 0, mid: @line.mid, value: 1.21, product_line: "prodlineA2", part_number: "part_X"
-    tariff2 = @line2.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
+    tariff2 = @line2.commercial_invoice_tariffs.create! duty_rate: BigDecimal(".1")
 
     @line3 = inv.commercial_invoice_lines.create! po_number: "PO2", contract_amount: 1.56, mid: "mid23456", value: 3.45, product_line: "prodlineB", part_number: "part_Y"
-    tariff3 = @line3.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
+    tariff3 = @line3.commercial_invoice_tariffs.create! duty_rate: BigDecimal(".1")
 
     @line4 = inv.commercial_invoice_lines.create! po_number: "PO3", contract_amount: 1.67, mid: "mid12345", value: 0.25, product_line: "prodlineC", part_number: "part_Z"
-    tariff4 = @line4.commercial_invoice_tariffs.create! entered_value: BigDecimal("10"), duty_amount: BigDecimal("1")
+    tariff4 = @line4.commercial_invoice_tariffs.create! duty_rate: BigDecimal(".1")
 
     DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid12345-vendorId1", value: "2017-01-01")
     DataCrossReference.create!(cross_reference_type: "asce_mid", key: "mid12345-vendorId2", value: "2016-12-31")
@@ -104,7 +105,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
         r = []
         results.each { |res| r << res }
         expect(r[0]).to eq ["Ascena Vendor", @vendor.id, "Carpco Deluxe Knock-offs", @factory2.id, "entry_no", "2017-02-22", DateTime.new(2017, 3, 1, 5, 0), "INV", 3.45, "prodlineB", "PO2", "part_Y", 1.56, 1.56, -0.19]
-        expect(r[1]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 2.43, "prodlineA", "PO", "part_X", 5.43, 5.43, 0.3]
+        expect(r[1]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 2.43, "prodlineA", "PO", "part_X", 5.43, 5.43, 0.45]
         expect(r[2]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 1.21, "prodlineA2", "PO", "part_X", 0.0, 1.21, 0.0]
         expect(r[3]).to eq ["Ascena Vendor 2", @vendor2.id, "Crapco Industries", @factory.id, "entry_no", "2016-12-31", DateTime.new(2017, 3, 1, 5, 0), "INV", 0.25, "prodlineC", "PO3", "part_Z", 1.67, 1.67, 0.14]
       end
@@ -130,7 +131,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
         r = []
         results.each { |res| r << res }
         expect(r[0]).to eq ["Ascena Vendor", @vendor.id, "Carpco Deluxe Knock-offs", @factory2.id, "entry_no", "2017-02-22", DateTime.new(2017, 3, 1, 5, 0), "INV", 3.45, "prodlineB", "PO3", "part_Y", 1.56, 1.56, -0.19]
-        expect(r[1]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 2.43, "prodlineA", "PO1", "part_X", 5.43, 5.43, 0.3]
+        expect(r[1]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 2.43, "prodlineA", "PO1", "part_X", 5.43, 5.43, 0.45]
         expect(r[2]).to eq ["Ascena Vendor", @vendor.id, "Crapco Industries", @factory.id, "entry_no", "2017-01-01", DateTime.new(2017, 3, 1, 5, 0), "INV", 1.21, "prodlineA2", "PO2", "part_X", 0.0, 1.21, 0.0]
         expect(r[3]).to eq ["Ascena Vendor 2", @vendor2.id, "Crapco Industries", @factory.id, "entry_no", "2016-12-31", DateTime.new(2017, 3, 1, 5, 0), "INV", 0.25, "prodlineC", "PO4", "part_Z", 1.67, 1.67, 0.14]
       end
@@ -151,25 +152,25 @@ describe OpenChain::CustomHandler::Ascena::AscenaVendorScorecardReport do
       expect(sheet.rows.count).to eq 6
       expect(sheet.row(0)).to eq ["<Summary by vendor>", nil, nil, nil, nil, nil]
       expect(sheet.row(2)).to eq ["No.", "VENDOR", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "PENETRATION"]
-      expect(sheet.row(3)).to eq [1, "Ascena Vendor", 8.2, 6.99, 0.11, 0.85]
+      expect(sheet.row(3)).to eq [1, "Ascena Vendor", 8.2, 6.99, 0.26, 0.85]
       expect(sheet.row(4)).to eq [2, "Ascena Vendor 2", 1.67, 1.67, 0.14, 1]
-      expect(sheet.row(5)).to eq [nil, "TOTAL", 9.87, 8.66, 0.25, 0.88]
+      expect(sheet.row(5)).to eq [nil, "TOTAL", 9.87, 8.66, 0.4, 0.88]
 
       expect(sheet = wb.worksheet("Vendor Factory Pair")).not_to be_nil
       expect(sheet.rows.count).to eq 7
       expect(sheet.row(0)).to eq ["<Summary by vendor / factory pair>", nil, nil, nil, nil, nil, nil]
       expect(sheet.row(2)).to eq ["No.", "VENDOR", "FACTORY", "SUM OF INV AMOUNT", "SUM OF FS INV AMOUNT", "SUM OF SAVINGS", "REMARKS"]
       expect(sheet.row(3)).to eq [1, "Ascena Vendor", "Carpco Deluxe Knock-offs", 1.56, 1.56, -0.19, "Eligible - 02/22/2017"]
-      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", 6.64, 5.43, 0.3, "Eligible < 2017"]
+      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", 6.64, 5.43, 0.45, "Eligible < 2017"]
       expect(sheet.row(5)).to eq [3, "Ascena Vendor 2", "Crapco Industries", 1.67, 1.67, 0.14, "Eligible - 12/31/2016"]
-      expect(sheet.row(6)).to eq [nil, "TOTAL", nil, 9.87, 8.66, 0.25, nil]
+      expect(sheet.row(6)).to eq [nil, "TOTAL", nil, 9.87, 8.66, 0.4, nil]
 
       expect(sheet = (wb.worksheet "Data")).not_to be_nil
       expect(sheet.rows.count).to eq 7
       expect(sheet.row(0)).to eq ["<Detailed Data Lines>", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
       expect(sheet.row(2)).to eq ["No.", "VENDOR", "FACTORY", "ENTRY NUMBER", "INV AMOUNT", "FS SAVINGS", "FIRST RELEASE DATE", "INVOICE NUMBER", "VALUE", "PRODUCT LINE", "PO NUMBER", "PART NUMBER", "CONTRACT AMOUNT", "REMARKS"]
       expect(sheet.row(3)).to eq [1, "Ascena Vendor", "Carpco Deluxe Knock-offs", "entry_no", 1.56, -0.19, "03/01/2017", "INV", 3.45, "prodlineB", "PO2", "part_Y", 1.56, "Eligible - 02/22/2017"]
-      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", "entry_no", 5.43, 0.3, "03/01/2017", "INV", 2.43, "prodlineA", "PO", "part_X", 5.43, "Eligible < 2017"]
+      expect(sheet.row(4)).to eq [2, "Ascena Vendor", "Crapco Industries", "entry_no", 5.43, 0.45, "03/01/2017", "INV", 2.43, "prodlineA", "PO", "part_X", 5.43, "Eligible < 2017"]
       expect(sheet.row(5)).to eq [3, "Ascena Vendor", "Crapco Industries", "entry_no", 1.21, 0.0, "03/01/2017", "INV", 1.21, "prodlineA2", "PO", "part_X", 0, "Eligible < 2017"]
       expect(sheet.row(6)).to eq [4, "Ascena Vendor 2", "Crapco Industries", "entry_no", 1.67, 0.14, "03/01/2017", "INV", 0.25, "prodlineC", "PO3", "part_Z", 1.67, "Eligible - 12/31/2016"]
     end

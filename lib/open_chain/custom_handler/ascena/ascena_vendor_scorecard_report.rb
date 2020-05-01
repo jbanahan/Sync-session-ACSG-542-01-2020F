@@ -99,9 +99,9 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
       row.product_line = result_set_row['product_line']
       row.po_number = result_set_row['po_number']
       row.part_number = result_set_row['part_number']
-      row.contract_amount = result_set_row['contract_amount']
-      row.invoice_value_contract = result_set_row['invoice_value_contract']
-      row.duty_savings_first_sale = result_set_row['duty_savings_first_sale']
+      row.contract_amount = (result_set_row['contract_amount'] || 0.0)
+      row.invoice_value_contract = (result_set_row['invoice_value_contract'] || 0.0)
+      row.duty_savings_first_sale = (result_set_row['duty_savings_first_sale'] || 0.0)
       data_arr.push row
     end
 
@@ -310,7 +310,12 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaVendorScoreca
                 cil.part_number,
                 cil.contract_amount,
                 #{invoice_value_contract('cil')} AS 'invoice_value_contract',
-                #{duty_savings_first_sale('cil')} AS 'duty_savings_first_sale'
+                (IF(cil.contract_amount IS NULL OR cil.contract_amount = 0,
+                   0,
+                   (SELECT SUM(IFNULL(ROUND((l.contract_amount - l.value) * t.duty_rate, 2), 0))
+                    FROM commercial_invoice_lines l
+                      INNER JOIN commercial_invoice_tariffs t ON l.id = t.commercial_invoice_line_id
+                    WHERE l.id = cil.id)))  AS 'duty_savings_first_sale'
               FROM
                 commercial_invoices AS ci
                 INNER JOIN commercial_invoice_lines cil ON
