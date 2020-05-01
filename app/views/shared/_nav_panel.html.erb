@@ -1,12 +1,16 @@
 <div id='chain-nav-panel' class="pb-3">
   <nav class='navbar navbar-dark pl-1 nav-small-screen topnav' role='navigation'>
-    <button class="navbar-toggler" type="button" data-toggle="offcanvas" title="shortcut key: m">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <ul class="nav justify-content-end">
-      <li class="nav-item">
-        <a class="nav-link" href='/' title='Home'><i class="fa fa-home fa-lg" aria-hidden="true"></i></a>
-      </li>
+    <% unless @portal_mode == 'vendor' %>
+      <button class="navbar-toggler" type="button" data-toggle="offcanvas" title="shortcut key: m">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    <% end %>
+    <ul class="nav ml-auto">
+      <% unless @portal_mode == 'vendor' %>
+        <li class="nav-item">
+          <a class="nav-link" href='/' title='Home'><i class="fa fa-home fa-lg" aria-hidden="true"></i></a>
+        </li>
+      <% end %>
       <li id="user_mobile_dropdown_menu" class="nav-item dropdown">
         <div class="user-menu-loading">
           Please wait while the user menu is loading
@@ -18,46 +22,55 @@
         </a>
       </li>
     </ul>
-    <ul class="nav">
-      <li class="nav-item">
-        <div class="input-group">
-          <form class='form-inline pl-2' role='search' action='/quick_search' method='GET' id='mini-qs'>
-            <div style="overflow: hidden: padding-right: 1em;">
-              <input type='search' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title="shortcut key: /" name='v' aria-label="Search" style="width: 100%;">
-            </div>
-            <div class="input-group-append">
-              <a href='javascript:void(null);' onclick="$('#mini-qs').submit(); return false;" role="button" class="pl-2">
-                <i class='fa fa-search fa-lg'></i>
-              </a>
-            </div>
-          </form>
-        </div>
-      </li>
-    </ul>
+    <% unless @portal_mode == 'vendor' %>
+      <ul class="nav">
+        <li class="nav-item">
+          <div class="input-group">
+            <form class='form-inline pl-2' role='search' action='/quick_search' method='GET' id='mini-qs'>
+              <div style="overflow: hidden: padding-right: 1em;">
+                <input type='search' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title="shortcut key: /" name='v' aria-label="Search" style="width: 100%;">
+              </div>
+              <div class="input-group-append">
+                <a href='javascript:void(null);' onclick="$('#mini-qs').submit(); return false;" role="button" class="pl-2">
+                  <i class='fa fa-search fa-lg'></i>
+                </a>
+              </div>
+            </form>
+          </div>
+        </li>
+      </ul>
+    <% end %>
   </nav>
   <nav class='navbar navbar-dark pl-1 nav-large-screen topnav' role='navigation'>
-    <button id='btn-left-toggle' class="navbar-toggler" type="button" data-toggle="offcanvas" title="shortcut key: m">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <ul class="navbar-nav mr-auto">
-      <li class="nav-item">
-        <form class='form-inline pl-2' role='search' action='/quick_search' method='GET' id='quicksearch'>
-          <input type='text' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title="shortcut key: /" name='v' id='quick_search_input' aria-label="Search">
-          <a class="nav-link" href='#' onclick="$('#quicksearch').submit(); return false;" role="button">
-            <i class='fa fa-search fa-lg pl-2'></i>
-          </a>
-        </form>
-      </li>
-    </ul>
-    <ul class="nav justify-content-end">
-    <%-unless current_user.hide_message?('vfitrack_tour')-%>
+    <% unless @portal_mode == 'vendor' %>
+      <button id='btn-left-toggle' class="navbar-toggler" type="button" data-toggle="offcanvas" title="shortcut key: m">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <form class='form-inline pl-2' role='search' action='/quick_search' method='GET' id='quicksearch'>
+            <input type='text' class='search-query form-control' placeholder='Quick Search' data-toggle='tooltip' title="shortcut key: /" name='v' id='quick_search_input' aria-label="Search">
+            <a class="nav-link" href='#' onclick="$('#quicksearch').submit(); return false;" role="button">
+              <i class='fa fa-search fa-lg pl-2'></i>
+            </a>
+          </form>
+        </li>
+      </ul>
+    <% end %>
+    <ul class="nav ml-auto">
+    <%-unless current_user.hide_message?('vfitrack_tour') || @portal_mode == 'vendor' -%>
       <li class="nav-item">
         <button id='btn_nav_tour' class='btn btn-warning'>Take the Maersk Navigator Tour</button>
       </li>
     <%-end-%>
-      <li class="nav-item">
-        <a id="btn_home" class="nav-link" href='/' title='Home'><i class="fa fa-home fa-lg" aria-hidden="true"></i></a>
-      </li>
+      <% unless @portal_mode == 'vendor' %>
+        <li class="nav-item">
+          <a id="btn_home" class="nav-link" href='/' title='Home'><i class="fa fa-home fa-lg" aria-hidden="true"></i></a>
+        </li>
+      <% end %>
+      <% if @portal_mode == 'vendor'%>
+        <p class="nav-label"><%=current_user.full_name%></p>
+      <% end %>
       <li id="user_dropdown_menu" class="nav-item dropdown">
         <div class="user-menu-loading">
           <i class="fa fa-cog fa-spin fa-lg fa-fw"></i>
@@ -89,6 +102,20 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" data-dismiss="modal" id="set-homepage-btn">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" tabindex="-1" role="dialog" id="announcement-modal" style="text-align: center;">
+  <div class="modal-dialog" style="display: inline-block; width: auto !important; max-width: 100%; text-align: left;">
+    <div class="modal-content">
+      <div class="modal-header text-white bg-dark rounded-0">  
+        <h4 class="modal-title"><strong>Announcements</strong></h4>
+        <button id="announcement-corner-close" type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span class="text-white" aria-hidden="true">&times;</span>
+        </button>      
+        </div>
+      <div class="modal-body" style="overflow-y: auto; max-height: 80vh;">
       </div>
     </div>
   </div>
@@ -131,12 +158,13 @@
           <div class="dropdown-menu" aria-labelledby="messages-settings-menu">
             <a href="#" class='dropdown-item notification-mark-all-read'>Mark all read</a>
             <div class="dropdown-divider"></div>
-            <a href="#" class='dropdown-item email-message-toggle'><span class='email-message-check-wrap'><%if current_user.email_new_messages%><span class='fa fa-check'></span><%end%></span> Email new messages</a>
+            <a href="#" class='dropdown-item email-message-toggle'><span class='email-message-check-wrap'><%if current_user.email_new_messages%><span class='fa fa-check-circle-o'></span><%end%></span> Email new messages</a>
           </div>
         </div>
         <div class="ml-auto">
           <div id="btn_messages_manuals" class="btn-group">
             <button type="button" class="btn btn-secondary" notification-center-toggle-target='messages'>Messages</button>
+            <button type="button" class="btn btn-secondary" notification-center-toggle-target='announcements'>Announcements</button>
             <button type="button" class="btn btn-secondary" notification-center-toggle-target='manuals'>Manuals</button>
           </div>
         </div>
@@ -146,6 +174,7 @@
       </div>
       <div class="modal-body" id='notification-center-body'>
         <div notification-center-pane='messages' content-url='/messages'></div>
+        <div notification-center-pane='announcements' content-url='/announcements/index_for_user'></div>
         <div notification-center-pane='manuals' content-url='/user_manuals/for_referer'></div>
       </div>
     </div>
@@ -161,6 +190,6 @@
     writeNotificationCenter = function(wrapper) {
       ChainNotificationCenter.initialize('<%=current_user.id%>', 30);
     }
-    ChainNavPanel.write(userPromise,writeNotificationCenter);
+    ChainNavPanel.write(userPromise,writeNotificationCenter,"<%=@portal_mode%>", "<%=current_user.portal_mode%>");
   });
 </script>

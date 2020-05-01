@@ -45,3 +45,10 @@
     display: none;
   }
 }
+#announcement-modal {
+  z-index: 1075;
+}
+.nav-label {
+  color: white;
+  cursor: default;
+}

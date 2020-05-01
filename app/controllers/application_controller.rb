@@ -447,6 +447,26 @@ class ApplicationController < ActionController::Base
   def portal_redirect
     return unless @require_user_run
     prp = current_user.portal_redirect_path
-    redirect_to prp unless prp.blank? || request.path.downcase.index(prp.downcase)==0
+    path = request.path.downcase
+    http_meth = request.method.downcase
+    redirect_to prp if prp.present? && !(request.path.downcase.index(prp.downcase)==0 || whitelisted?(prp, path, http_meth))
+  end
+
+  # These are required in order to access the notification center and receive announcements.
+  def whitelisted? prp, path, http_method
+    return false unless prp == '/vendor_portal'
+    {
+      '/messages/\d+/read' => 'get', # read_message_path
+      read_all_messages_path => 'get',
+      message_count_messages_path => 'get',
+      messages_path => 'get',
+      '/messages/\d+' => 'get', # messages_path
+      email_new_message_users_path => 'post',
+      index_for_user_announcements_path => 'get',
+      show_modal_announcements_path => 'get',
+      '/user_manuals/\d+/download' => 'get', # download_user_manual_path
+      for_referer_user_manuals_path => 'get'
+
+    }.any? { |pattern, meth| Regexp.new("\\A#{pattern}\\z").match(path) && meth == http_method }
   end
 end

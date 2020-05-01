@@ -1,7 +1,7 @@
 root = exports ? this
 root.ChainNotificationCenter = {
   getMessageCount : (url) ->
-    $.getJSON url, (data) ->
+    $.getJSON @messageCountUrl, (data) ->
       if data > 0
         $('.message_envelope').each () ->
           $(this).html(''+data).addClass('messages')
@@ -9,14 +9,46 @@ root.ChainNotificationCenter = {
         $('.message_envelope').each () ->
           $(this).html('').removeClass('messages')
 
+  showNewAnnouncements: (url) ->
+    that = @
+    $.getJSON @announcementCountUrl, (data) ->
+      if data.count > 0
+        that.showAnnouncements null
+
+  showAnnouncements: (ids, no_confirm) ->
+    args = "&ids=#{ids.join(',')}" if ids
+    args += "&no_confirm=true" if no_confirm   
+    url = @announcementUrl + (args || "")
+    ChainAllPages.renderRemote(requestPath: url, target: "#announcement-modal .modal-body")        
+    if no_confirm
+      $('#announcement-corner-close').css("display", "inline")
+    else
+      $('#announcement-corner-close').css("display", "none")
+    $('#announcement-modal').modal({backdrop: 'static', keyboard: false})
+
+  markAllAnnouncementsRead: () ->
+    ids = $('.anc-lnk').map(() -> $(@).attr('anc-id')).toArray().join(',')
+    $(".announcement-panel").removeClass('unread').addClass('read')
+    $.ajax {
+      url:'/api/v1/announcements/confirm'
+      method: 'PUT'
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+      data: JSON.stringify({announcement_ids: ids})
+    }
 
   # If pollingSeconds is <=0, no ongoing polling is done.
   initialize : (user_id, pollingSeconds) ->
-    @url = '/messages/message_count?user_id='+user_id
+    @messageCountUrl = "/messages/message_count?user_id=#{user_id}"
+    @announcementUrl = "/announcements/show_modal?user_id=#{user_id}"
+    @announcementCountUrl = "/api/v1/announcements/count?user_id=#{user_id}"
 
     $(document).ready () =>
       @initNotificationCenter()
-      @getMessageCount(@url)
+      @showNewAnnouncements(@announcementCountUrl)
+      @getMessageCount(@messageCountUrl)
       if pollingSeconds > 0
         @startPolling(pollingSeconds)
 
@@ -24,7 +56,7 @@ root.ChainNotificationCenter = {
     # This event doesn't work on IE included with Windows < 10
     document.addEventListener 'visibilitychange', ->
       if document.visibilityState == 'visible'
-        ChainNotificationCenter.getMessageCount(ChainNotificationCenter.pollingUrl())
+        ChainNotificationCenter.getMessageCount(ChainNotificationCenter.messageCountUrl)
 
     $('[data-toggle="notification-center"]').click ->
       ChainNotificationCenter.toggleNotificationCenter()
@@ -42,6 +74,21 @@ root.ChainNotificationCenter = {
           data: {"_method":"delete"}
           success: () ->
             $('#message-panel-'+msgId).fadeOut()
+        }
+
+    $('#notification-center').on 'click', '.delete-announcement-btn', (evt) ->
+      ancId = $(this).attr('announcement-id')
+      evt.preventDefault()
+      if(window.confirm('Are you sure you want to delete this announcement?'))
+        $.ajax {
+          url:"/api/v1/announcements/#{ancId}/hide_from_user"
+          method: "PUT"
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json"
+          }
+          success: () ->
+            $("#announcement-panel-#{ancId}").fadeOut()
         }
 
     $('#notification-center').on 'click', '.show-time-btn', (evt) ->
@@ -63,7 +110,7 @@ root.ChainNotificationCenter = {
       if panel.hasClass('unread')
         panel.addClass('read').removeClass('unread')
         $.get '/messages/'+id+'/read', ->
-          ChainNotificationCenter.getMessageCount(ChainNotificationCenter.pollingUrl())
+          ChainNotificationCenter.getMessageCount(ChainNotificationCenter.messageCountUrl)
 
     $('#notification-center').on 'hide.bs.collapse', '.collapse', (event) ->
       t = event.target
@@ -76,22 +123,32 @@ root.ChainNotificationCenter = {
         success: () ->
           $('#notification-center').find('.unread').each () ->
             $(this).removeClass('unread').addClass('read')
-          ChainNotificationCenter.getMessageCount(ChainNotificationCenter.pollingUrl())
+          ChainNotificationCenter.markAllAnnouncementsRead().then () ->
+            ChainNotificationCenter.getMessageCount(ChainNotificationCenter.messageCountUrl)
       }
 
     $('#notification-center').on 'chain:notification-load', '[notification-center-pane="messages"]', () ->
       $('[notification-center-pane="messages"] .message-body a').addClass('btn').addClass('btn-sm').addClass('btn-primary')
 
+    $('#notification-center').on 'click', '.email-message-toggle', (event) ->
+      event.preventDefault()
+      $.ajax {
+        method: 'POST'
+        url:'/users/email_new_message'
+        success: (data) ->
+          h = ''
+          h = "<span class='fa fa-check-circle-o'></span>" if data.msg_state
+          $('.email-message-check-wrap').html(h)
+      }
 
-  pollingUrl : ->
-    @url
 
   startPolling : (pollingSeconds) ->
     # If there's an interval registration, we're already polling
     unless @intervalRegistration? || pollingSeconds <= 0
       @intervalRegistration = setInterval( () =>
         unless document.hidden or document.msHidden or document.webkitHidden
-          @getMessageCount @url
+          @showNewAnnouncements(@announcementCountUrl)
+          @getMessageCount @messageCountUrl
       , pollingSeconds * 1000)
 
   stopPolling : () ->

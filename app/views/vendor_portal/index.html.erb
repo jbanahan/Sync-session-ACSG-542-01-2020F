@@ -22,20 +22,10 @@
   </script>
 </head>
 <% body_tag(master_setup, current_user, run_as_user) %>
+  <% if current_user %>
+    <%= render "shared/nav_panel" %>
+  <% end %>
   <div ng-app='VendorPortal'>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-md-12">
-          <div class='text-right'>
-            <%=current_user.full_name%> -
-            <chain-messages-link></chain-messages-link> -
-            <button id='support-link' title='Help' class='btn btn-link'><i class="fa fa-question-circle"></i></button> -
-            <%if current_user.portal_mode != 'vendor'%><a href='/'>Leave Portal Mode</a> -<%end%>
-            <a href='/logout'>Log Out</a>
-          </div>
-        </div>
-      </div>
-    </div>
     <div ui-view></div>
     <chain-support-modal></chain-support-modal>
     <chain-errors></chain-errors>

@@ -251,6 +251,25 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
+      "fingerprint": "086c8aecdb63fee94b064450bb9b90941cc00a65c85e808b9be4a4ba7fa731b3",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/announcement.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":selected_user_ids",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "Announcement"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
       "fingerprint": "08bc69c3fb69e54d23cb07e8e628b9ae4e16764b5bf31a98f26e38b5caca95f9",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -487,7 +506,7 @@
       "line": 17,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"Click Here\", OfficialTariff.find(params[:id]).binding_ruling_url, :target => \"rulings\")",
-      "render_path": [{"type":"controller","class":"OfficialTariffsController","method":"show","line":32,"file":"app/controllers/official_tariffs_controller.rb","rendered":{"name":"official_tariffs/show","file":"/home/jbanahan/Documents/OpenChain/app/views/official_tariffs/show.html.erb"}}],
+      "render_path": [{"type":"controller","class":"OfficialTariffsController","method":"show","line":34,"file":"app/controllers/official_tariffs_controller.rb","rendered":{"name":"official_tariffs/show","file":"/home/jay/Repos/OpenChain/app/views/official_tariffs/show.html.erb"}}],
       "location": {
         "type": "template",
         "template": "official_tariffs/show"
@@ -872,6 +891,25 @@
       "location": {
         "type": "model",
         "model": "Shipment"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
+      "fingerprint": "1c2b806a1ca5ff2cc035bb7f3b9cead325754c465d37b4a36fcf80211421903d",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/user_announcement_marker.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":user_id",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "UserAnnouncementMarker"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -2830,6 +2868,25 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
+      "fingerprint": "5582353222b2c5a20b6666919c8b786cc512cd471fd160583ea21149262b4444",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/user_announcement_marker.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":announcement_id",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "UserAnnouncementMarker"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
       "fingerprint": "558f27d096c866184fc097b25e00842c1522d7b44fd80695570076e493c41bf0",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -3601,7 +3658,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/core_object_support.rb",
-      "line": 194,
+      "line": 201,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "self.joins(:custom_values).where(\"custom_values.custom_definition_id = ?\", custom_definition.id).where(\"custom_values.#{custom_definition.data_column} = ?\", value)",
       "render_path": null,
@@ -4673,7 +4730,7 @@
       "check_name": "Execute",
       "message": "Possible command injection",
       "file": "lib/open_chain/gpg.rb",
-      "line": 146,
+      "line": 289,
       "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
       "code": "system(\"#{build_safe_command_line(home_dir, *args)} > #{Shellwords.escape(output_file.path)} 2>&1\")",
       "render_path": null,
@@ -6527,7 +6584,7 @@
       "line": 36,
       "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
       "code": "RedCloth.new((Unresolved Model).new.body).to_html",
-      "render_path": [{"type":"controller","class":"SupportTicketsController","method":"edit","line":34,"file":"app/controllers/support_tickets_controller.rb","rendered":{"name":"support_tickets/edit","file":"/home/jbanahan/Documents/OpenChain/app/views/support_tickets/edit.html.erb"}}],
+      "render_path": [{"type":"controller","class":"SupportTicketsController","method":"edit","line":34,"file":"app/controllers/support_tickets_controller.rb","rendered":{"name":"support_tickets/edit","file":"/home/jay/Repos/OpenChain/app/views/support_tickets/edit.html.erb"}}],
       "location": {
         "type": "template",
         "template": "support_tickets/edit"
@@ -8149,7 +8206,7 @@
       "check_name": "FileAccess",
       "message": "Model attribute used in file name",
       "file": "lib/open_chain/upgrade.rb",
-      "line": 287,
+      "line": 293,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
       "code": "FileUtils.cp_r(MasterSetup.instance_directory.join(\"..\", \"vfitrack-configurations\").join(MasterSetup.instance_directory.basename.to_s).to_s, MasterSetup.instance_directory.join(\"..\"))",
       "render_path": null,
@@ -8401,7 +8458,7 @@
       "line": 20,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"Click Here\", OfficialTariff.find(params[:id]).taric_url, :target => \"_blank\")",
-      "render_path": [{"type":"controller","class":"OfficialTariffsController","method":"show","line":32,"file":"app/controllers/official_tariffs_controller.rb","rendered":{"name":"official_tariffs/show","file":"/home/jbanahan/Documents/OpenChain/app/views/official_tariffs/show.html.erb"}}],
+      "render_path": [{"type":"controller","class":"OfficialTariffsController","method":"show","line":34,"file":"app/controllers/official_tariffs_controller.rb","rendered":{"name":"official_tariffs/show","file":"/home/jay/Repos/OpenChain/app/views/official_tariffs/show.html.erb"}}],
       "location": {
         "type": "template",
         "template": "official_tariffs/show"
@@ -8608,7 +8665,7 @@
       "check_name": "FileAccess",
       "message": "Model attribute used in file name",
       "file": "lib/open_chain/upgrade.rb",
-      "line": 318,
+      "line": 324,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
       "code": "IO.read(MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\"))",
       "render_path": null,
@@ -8890,6 +8947,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2020-02-13 14:25:15 -0600",
+  "updated": "2020-03-24 11:44:36 -0400",
   "brakeman_version": "4.5.0"
 }

@@ -178,6 +178,9 @@ class User < ActiveRecord::Base
   has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
   has_many   :event_subscriptions, inverse_of: :user, dependent: :destroy, autosave: true
   has_and_belongs_to_many :groups, join_table: "user_group_memberships", after_add: :add_to_group_cache, after_remove: :remove_from_group_cache
+  has_and_belongs_to_many :personal_announcements, join_table: "user_announcements", class_name: "Announcement"
+  has_many :marked_announcements, through: :user_announcement_markers, source: :announcement
+  has_many :user_announcement_markers, dependent: :destroy
 
   validates  :company, :presence => true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }
@@ -188,6 +191,21 @@ class User < ActiveRecord::Base
 
   before_save :should_update_timestaps?
   after_save :reset_timestamp_flag
+
+  # Returns all unconfirmed announcements with a date range that includes the present moment.
+  def new_announcements
+    qry = <<-SQL
+        LEFT OUTER JOIN user_announcements ua ON (announcements.id = ua.announcement_id AND ua.user_id = ?)
+        LEFT OUTER JOIN user_announcement_markers uam ON (announcements.id = uam.announcement_id AND uam.user_id = ?)
+      WHERE uam.confirmed_at IS NULL
+        AND ((announcements.category = 'users' AND ua.id IS NOT NULL) OR (announcements.category = 'all'))
+        AND NOW() >= announcements.start_at
+        AND NOW() < announcements.end_at
+    SQL
+
+    Announcement.order(created_at: :desc)
+                .joins ActiveRecord::Base.sanitize_sql_array([qry, self.id, self.id])
+  end
 
   # find or create the ApiAdmin user
   def self.api_admin

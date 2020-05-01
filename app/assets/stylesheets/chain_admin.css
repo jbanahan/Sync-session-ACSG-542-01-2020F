@@ -1,4 +1,5 @@
 /* Manfiest for chain_admin
  *= require_directory ./chain_admin/lib
+ *= require_directory ./chain_admin/app
  *= require_directory ./apps_every_page
  */

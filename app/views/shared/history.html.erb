@@ -11,7 +11,7 @@
       panel.find('.history-dropdown').removeClass('fa-chevron-right').addClass('fa-chevron-down');
 
       if(!$("#diff-content-"+snapshotId).data("remotely-rendered")) {
-        Chain.renderRemote({requestPath: "/entity_snapshots/"+snapshotId+".html", target: "#diff-content-"+snapshotId})
+        ChainAllPages.renderRemote({requestPath: "/entity_snapshots/"+snapshotId+".html", target: "#diff-content-"+snapshotId})
       }
     });
     $('#history-table').on('hide.bs.collapse', function(event){

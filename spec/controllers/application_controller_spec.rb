@@ -321,7 +321,15 @@ describe ApplicationController do
   describe "portal_redirect" do
     controller do
       def show
-        render :text => current_user.username
+        render :text => "SHOW"
+      end
+
+      def index
+        render text: "INDEX"
+      end
+
+      def create
+        render text: "CREATE"
       end
     end
 
@@ -329,27 +337,92 @@ describe ApplicationController do
       @routes.draw {
         resources :anonymous
       }
-    end
 
-    it "should redirect to portal_redirect_path if not blank?" do
-
-      allow_any_instance_of(User).to receive(:portal_redirect_path).and_return '/abc'
       u = Factory(:user)
       sign_in_as u
-
-      get :show, id: 1
-
-      expect(response).to redirect_to '/abc'
-
     end
-    it "should not do anything if portal_redirect_path.blank?" do
-      u = Factory(:user)
-      sign_in_as u
 
+    it "does nothing if portal_redirect_path is blank" do
+      allow_any_instance_of(User).to receive(:portal_redirect_path).and_return nil
       get :show, id: 1
-
       expect(response).to be_success
-      expect(response.body).to eq u.username
+      expect(response.body).to eq "SHOW"
+    end
+
+    it "does nothing if request path begins with portal_redirect_path" do
+      allow_any_instance_of(User).to receive(:portal_redirect_path).and_return "/abc"
+      controller.request.path = "/abc/rest/of/path"
+
+      get :show, id: 1
+      expect(response).to be_success
+      expect(response.body).to eq "SHOW"
+    end
+
+    it "does nothing if combination of portal_redirect_path and request path is whitelisted" do
+      allow_any_instance_of(User).to receive(:portal_redirect_path).and_return "/vendor_portal"
+
+      controller.request.path = "/messages/1/read"
+      get :show, id: 1
+      expect(response).to be_success
+      expect(response.body).to eq "SHOW"
+
+      controller.request.path = "/messages/read_all"
+      get :index
+      expect(response).to be_success
+      expect(response.body).to eq "INDEX"
+
+      controller.request.path = "/messages/message_count"
+      get :index
+      expect(response).to be_success
+      expect(response.body).to eq "INDEX"
+
+      controller.request.path = "/messages"
+      get :index
+      expect(response).to be_success
+      expect(response.body).to eq "INDEX"
+
+      # same path, wrong method
+      controller.request.path = "/messages"
+      post :create
+      expect(response).to redirect_to "/vendor_portal"
+
+      controller.request.path = "/messages/1"
+      get :show, id: 1
+      expect(response).to be_success
+      expect(response.body).to eq "SHOW"
+
+      controller.request.path = "/users/email_new_message"
+      post :create # Really ought to be a PUT, but that's the API
+      expect(response).to be_success
+      expect(response.body).to eq "CREATE"
+
+      controller.request.path = "/announcements/index_for_user"
+      get :index
+      expect(response).to be_success
+      expect(response.body).to eq "INDEX"
+
+      controller.request.path = "/announcements/show_modal"
+      get :show, id: 1
+      expect(response).to be_success
+      expect(response.body).to eq "SHOW"
+
+      controller.request.path = "/user_manuals/1/download"
+      get :show, id: 1
+      expect(response).to be_success
+      expect(response.body).to eq "SHOW"
+
+      controller.request.path = "/user_manuals/for_referer"
+      get :index
+      expect(response).to be_success
+      expect(response.body).to eq "INDEX"
+    end
+
+    it "redirects to portal_redirect_path otherwise" do
+      allow_any_instance_of(User).to receive(:portal_redirect_path).and_return "/abc"
+      controller.request.path = "cba/rest/of/path"
+
+      get :show, id: 1
+      expect(response).to redirect_to "/abc"
     end
   end
 

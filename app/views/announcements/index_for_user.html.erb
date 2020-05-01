@@ -1,0 +1,41 @@
+<script>
+  $(function() {
+    $('.anc-lnk').on('click', function() {
+      var id = $(this).attr('anc-id');
+      $("#announcement-panel-" + id).removeClass('unread').addClass('read');
+      ChainNotificationCenter.showAnnouncements([id]);
+    });
+  });
+</script>
+<div class="container-fluid announcement-wrap">
+  <div class='row'>
+    <div class='col-md-12'>
+      <%- @announcements.each do |a| %>
+        <div class="<%=a.confirmed_at ? 'read' : 'unread'%> announcement-panel" id="announcement-panel-<%=a.id%>">
+          <h5>
+            <span class="anc-lnk" anc-id="<%=a.id%>">
+              <button class='btn btn-sm btn-link'>
+                <span class='fa fa-circle announcement-viewed-icon'></span>
+              </button> 
+              <%=(a.title.blank? ? '[No Title]' : a.title)%>
+            </span>
+            <div class='float-right'>
+              <button type="button" class='btn btn-sm btn-secondary show-time-btn' title='<%=a.start_at%>'>
+                <span class='fa fa-clock-o'></span>
+              </button>
+              <button type="button" class='btn btn-sm btn-danger delete-announcement-btn' announcement-id='<%=a.id%>' title='Delete'>
+                <span class='fa fa-trash'></span>
+              </button>
+            </div>
+          </h5>
+          <hr>
+        </div>
+      <%- end %>  
+    </div>
+  </div>
+  <div class='row'>
+    <div class='col-12 text-center'>
+      <strong>Announcements are automatically removed from your list after 30 days.</strong>
+    </div>
+  </div>
+</div>

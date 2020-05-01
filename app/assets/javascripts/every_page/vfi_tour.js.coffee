@@ -310,7 +310,7 @@ root.VfiTour = {
         {
           element: '#notification_bell'
           title: 'Notifications and Manuals'
-          content: 'Here you will be given notice of any system messages, such as reports and searches that have been prepared for download. You’ll also find user manuals here.'
+          content: 'Here you will be given notice of any announcements and system messages, such as reports and searches that have been prepared for download. You’ll also find user manuals here.'
           onNext: () ->
             unless ($('#notification-center').hasClass('show'))
               $('#notification_bell').click()
@@ -333,8 +333,8 @@ root.VfiTour = {
         }
         {
           element: '#btn_messages_manuals'
-          title: 'Messages and Manuals'
-          content: "By default you'll find your messages below. Click Manuals to switch to your list of available user manuals."
+          title: 'Messages, Announcements, and Manuals'
+          content: "By default you'll find your Messages below. Click Announcements to view system Announcements. Click Manuals to access your list of available user manuals."
           onShow: () ->
             unless ($('#notification-center').hasClass('show'))
               $('#notification_bell').click()

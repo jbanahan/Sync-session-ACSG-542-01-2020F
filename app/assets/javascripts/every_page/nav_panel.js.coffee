@@ -1,9 +1,9 @@
 root = exports ? this
 root.ChainNavPanel = {
-  write : (userPromise,notificationCenterCallback) ->
+  write : (userPromise,notificationCenterCallback,portalMode,userPortalMode) ->
     registerHotKeys = ->
       $(document).on 'keydown', (evt) ->
-        return if $(evt.target).is(':input')
+        return if $(evt.target).is(':input') || $(evt.target).parent('.ql-container').length
         switch evt.keyCode
           when 27 # esc
             $('#notification-center').modal('hide') if $('#notification-center:visible')
@@ -176,30 +176,44 @@ root.ChainNavPanel = {
       mo = MenuBuilder().createMenuObject(user)
       MenuWriter().writeMenu($("#sidebar"),mo)
 
-    writeUserMenu = () -> 
+    writeUserMenu = (portalMode, userPortalMode) -> 
       $('.user-menu-loading').remove() 
-      UserMenuWriter().writeMenu($("#user_dropdown_menu"), false) 
-      UserMenuWriter().writeMenu($("#user_mobile_dropdown_menu"), true)
+      UserMenuWriter().writeMenu($("#user_dropdown_menu"), false, portalMode, userPortalMode) 
+      UserMenuWriter().writeMenu($("#user_mobile_dropdown_menu"), true, portalMode, userPortalMode)
 
     UserMenuWriter = () -> 
       return { 
-        writeMenu: (wrapper, mobile) -> 
-          html = "<a " + ( if mobile then "" else "id='user_menu'" )+" title='shortcut key: u' href='javascript:void(null);' class='nav-link dropdown-toggle pr-1' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'> 
-            <i class='fa fa-user-circle-o fa-lg'></i><span class='caret'></span> 
-          </a> 
-          <div class='dropdown-menu dropdown-menu-right' aria-labelledby='user_dropdown_menu'>
-            <a "+ ( if mobile then "" else "id='btn_account'" )+" class='dropdown-item' href='/users/me'>My Account</a> 
-            <a "+ ( if mobile then "" else "id='btn_dashboard'" )+" class='dropdown-item' href='/dashboard_widgets'>My Dashboard</a> 
-            <a "+ ( if mobile then "" else "id='uploads'" )+" class='dropdown-item' href='/imported_files'>My Uploads</a> 
-            <a "+ ( if mobile then "" else "id='nav-set-homepage'" )+" class='dropdown-item' href='javascript:void(null);'>Set Homepage</a> 
-            <a "+ ( if mobile then "" else "id='btn_user_manuals'" )+" class='dropdown-item' href='javascript:void(null);'>User Manuals</a> 
-            <a "+ ( if mobile then "" else "id='nav-support'" )+" class='dropdown-item' href='javascript:void(null);'>Support</a>
-            "+ ( if mobile then "" else "<button id='btn_menu_tour' class='dropdown-item' href='javascript:void(null);'>Maersk Navigator Tour</button>" )+"
-            <a "+ ( if mobile then "" else "id='btn_vandegrift_link'" )+" class='dropdown-item' href='https://www.vandegriftinc.com' target='_blank'>Vandegriftinc.com</a>
-            <div class='dropdown-divider'></div> 
-            <a class='dropdown-item' href='/logout'>Log Out</a>
-          </div>"
+        writeMenu: (wrapper, mobile, portalMode, userPortalMode) -> 
+          if portalMode == "vendor"
+            choices = ["userManuals", "support", "companyHomepage"] 
+          else 
+            choices = ["myAccount", "myDashboard", "myUploads", "setHomepage", "userManuals", "support", "vfiTrackTour", "companyHomepage"]
+          
+          optionData = @menuOptions(mobile)
+
+          html = """<a #{( if mobile then "''" else "id='user_menu'" )}" title='shortcut key: u' href='javascript:void(null);' class='nav-link dropdown-toggle pr-1' data-toggle='dropdown' aria-haspopup='true' aria-expanded='false'>
+                      <i class='fa fa-user-circle-o fa-lg'></i><span class='caret'></span>
+                    </a> 
+                    <div class='dropdown-menu dropdown-menu-right' aria-labelledby='user_dropdown_menu'>"""
+          
+          $.each(choices, (idx, val) ->
+            html += optionData[val])
+          
+          html+=      "<div class='dropdown-divider'></div>"
+          html+=      "<a class='dropdown-item' href='/'>Leave Portal Mode" unless userPortalMode == 'vendor'
+          html+=    """<a class='dropdown-item' href='/logout'>Log Out</a>
+                    </div>"""
           wrapper.append(html)
+
+        menuOptions: (mobile) ->
+          myAccount: """<a #{( if mobile then "''" else "id='btn_account'" )} class='dropdown-item' href='/users/me'>My Account</a>"""
+          myDashboard: """<a #{( if mobile then "''" else "id='btn_dashboard'" )} class='dropdown-item' href='/dashboard_widgets'>My Dashboard</a>"""
+          myUploads: """<a #{( if mobile then "''" else "id='uploads'" )} class='dropdown-item' href='/imported_files'>My Uploads</a>"""
+          setHomepage: """<a #{( if mobile then "''" else "id='nav-set-homepage'" )} class='dropdown-item' href='javascript:void(null);'>Set Homepage</a>"""
+          userManuals: """<a #{( if mobile then "''" else "id='btn_user_manuals'" )} class='dropdown-item' href='javascript:void(null);'>User Manuals</a>"""
+          support: """<a #{( if mobile then "''" else "id='nav-support'" )}" class='dropdown-item' href='javascript:void(null);'>Support</a>"""
+          vfiTrackTour: if mobile then "''" else "<button id='btn_menu_tour' class='dropdown-item' href='javascript:void(null);'>Maersk Navigator Tour</button>"
+          companyHomepage: """<a #{( if mobile then "''" else "id='btn_vandegrift_link'" )} class='dropdown-item' href='https://www.vandegriftinc.com' target='_blank'>Vandegriftinc.com</a>"""
       }
 
     setupHomepageModal = ->
@@ -286,7 +300,7 @@ root.ChainNavPanel = {
         return
 
     registerHotKeys()
-    writeUserMenu()
+    writeUserMenu(portalMode, userPortalMode)
     userPromise.then (user) ->
       writeMenu(user)
     setupOffCanvas()

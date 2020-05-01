@@ -36,7 +36,19 @@ OpenChain::Application.routes.draw do
       resources :messages, only: [:index, :create] do
         post :mark_as_read, on: :member
       end
+
+      resources :announcements, only: [] do
+        member do
+          put :hide_from_user
+        end
+        collection do
+          put :confirm
+          get :count
+        end
+      end
+
       resources :comments, only: [:create, :destroy]
+
       get "/:base_object_type/:base_object_id/comments", to: "comments#polymorphic_index"
       post "/:base_object_type/:base_object_id/comments", to: "comments#polymorphic_create"
       get "/:base_object_type/:base_object_id/comment/:id", to: "comments#polymorphic_show"
@@ -118,7 +130,6 @@ OpenChain::Application.routes.draw do
           post 'me/toggle_email_new_messages', to: 'users#toggle_email_new_messages'
           post :change_my_password
         end
-
       end
 
       resources :official_tariffs, only: [] do
@@ -221,6 +232,12 @@ OpenChain::Application.routes.draw do
         resources :groups, only: [:create, :update, :destroy]
 
         resources :custom_view_templates, only: [:edit, :update]
+
+        resources :announcements do
+          member do
+            put :preview_save
+          end
+        end
 
         resources :state_toggle_buttons, only: [:edit, :update, :destroy]
 
@@ -828,6 +845,13 @@ OpenChain::Application.routes.draw do
       get 'read_all'
       get 'message_count'
       post 'send_to_users'
+    end
+  end
+
+  resources :announcements, only: [] do
+    collection do
+      get :index_for_user
+      get :show_modal
     end
   end
 

@@ -617,3 +617,12 @@ Factory.define :unit_of_measure do |f|
   f.description 'bar'
   f.system 'Customs Management'
 end
+Factory.define :announcement do |f|
+  f.title 'title'
+  f.start_at DateTime.new(2020, 3, 15, 12, 0)
+  f.end_at DateTime.new(2020, 3, 20, 15, 0)
+end
+Factory.define :user_announcement do |f|
+end
+Factory.define :user_announcement_marker do |f|
+end

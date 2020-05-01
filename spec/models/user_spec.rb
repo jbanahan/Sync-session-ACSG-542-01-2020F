@@ -1,4 +1,58 @@
 describe User do
+  describe "new_announcements" do
+    let(:user) { Factory(:user, time_zone: "Eastern Time (US & Canada)") }
+    let(:now) { Time.zone.now }
+
+    it "returns associated announcements within date range for type 'all' in descending order" do
+      anc1 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      anc2 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      anc3 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+
+      [anc1, anc2, anc3].each_with_index do |a, idx|
+        # test sorting
+        a.created_at = now - (10 - idx).days
+        a.save!
+      end
+
+      expect(user.new_announcements).to eq [anc3, anc2, anc1]
+    end
+
+    it "returns associated announcements within date range for type 'user'" do
+      user2 = Factory(:user, time_zone: "Eastern Time (US & Canada)")
+      anc1 = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      anc2 = Factory(:announcement, category: 'users', start_at: now - 1.day, end_at: now + 1.day)
+      anc2.selected_users << user
+
+      [anc1, anc2].each_with_index do |a, idx|
+        # test sorting
+        a.created_at = now - (10 - idx).days
+        a.save!
+      end
+
+      expect(user.new_announcements).to eq [anc2, anc1]
+      expect(user2.new_announcements).to eq [anc1]
+    end
+
+    it "omits confirmed announcements" do
+      anc = Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now + 1.day)
+      Factory(:user_announcement_marker, announcement: anc, user: user, confirmed_at: now)
+
+      expect(user.new_announcements).to be_empty
+    end
+
+    it "omits announcements before UTC start date" do
+      Factory(:announcement, category: 'all', start_at: now + 1.hour, end_at: now + 1.day)
+
+      expect(user.new_announcements).to be_empty
+    end
+
+    it "omits announcements after UTC end date" do
+      Factory(:announcement, category: 'all', start_at: now - 1.day, end_at: now - 1.hour)
+
+      expect(user.new_announcements).to be_empty
+    end
+  end
+
   describe "locked?" do
     let(:user) { Factory.create(:user) }
     it 'returns false if user is not active' do
