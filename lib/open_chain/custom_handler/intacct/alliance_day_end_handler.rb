@@ -12,8 +12,8 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
   def self.process_delayed check_register_file_id, invoice_file_id, user_id
     user = user_id ? User.find(user_id) : nil
-    check_register_file = CustomFile.find check_register_file_id
-    invoice_file = CustomFile.find invoice_file_id
+    check_register_file = check_register_file_id ? CustomFile.find(check_register_file_id) : nil
+    invoice_file = invoice_file_id ? CustomFile.find(invoice_file_id) : nil
 
     p = self.new check_register_file, invoice_file
     p.process user
@@ -34,37 +34,41 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
   end
 
   def process user = nil
-    raise "Missing invoice file!" unless @invoices
-    users = []
-    if user.nil?
-      users = User.joins(:groups).where(groups: {system_code: IntacctErrorsController::VFI_ACCOUNTING_USERS}).all
-      raise "No users found to send Day End information to." if users.size == 0
-    else
+    users = User.joins(:groups).where(groups: {system_code: IntacctErrorsController::VFI_ACCOUNTING_USERS}).all
+    if user.present?
+      # Something about a blank ActiveRecord result doesn't play nicely with the uniq below.
+      # This is hacky, but gets the job done.  We're looking for all of the accounting group
+      # users plus whoever is running this job, who will probably also be in the accounting
+      # group (but doesn't technically have to be).
+      if users.length == 0
+        users = []
+      end
       users << user
+      users = users.uniq
     end
 
     # Read Check Info
     start = Time.zone.now
-    @check_register.update_attributes! start_at: start
-    @invoices.update_attributes! start_at: start
+    @check_register&.update! start_at: start
+    @invoices&.update! start_at: start
 
     check_parser = OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.new
-    check_errors, check_info = read_check_register @check_register, check_parser
+    check_errors, check_info = @check_register ? read_check_register(@check_register, check_parser) : [[], []]
 
     # Read all payable / receivable information
     invoice_parser = OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.new
-    invoice_errors, invoice_info = read_invoices @invoices, invoice_parser
+    invoice_errors, invoice_info = @invoices ? read_invoices(@invoices, invoice_parser) : [[], []]
 
     # If error, abort...send errors to Luca, Isabelle..one tab for check errors, one tab for ar/ap errors.
     if check_errors.size > 0 || invoice_errors.size > 0
       # Send errors to the users to notify for day end stuff
-      send_parser_errors @check_register.attached_file_name, check_errors, @invoices.attached_file_name, invoice_errors, users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
+      send_parser_errors @check_register&.attached_file_name, check_errors, @invoices&.attached_file_name, invoice_errors, users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
       subject = "Day End Processing Complete With Errors"
       message = "The day end files could not be processed.  A separate report containing the errors will be mailed to you."
       send_messages_to_users users, subject, message
     else
       proxy_client = OpenChain::KewillSqlProxyClient
-      check_results = create_checks(check_info, check_parser, proxy_client)
+      check_results = @check_register ? create_checks(check_info, check_parser, proxy_client) : { exports: [] }
 
       stop_processing = false
       if check_results[:errors].present?
@@ -77,7 +81,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
         check_sum += ex.ap_total
       end
 
-      invoice_results = create_invoices(invoice_info, invoice_parser, proxy_client)
+      invoice_results = @invoices ? create_invoices(invoice_info, invoice_parser, proxy_client) : { exports: [] }
       ap_sum = BigDecimal.new "0"
       ar_sum = BigDecimal.new "0"
       invoice_results[:exports].each do |ex|
@@ -95,13 +99,15 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       wait_for_export_updates users, check_results[:exports] + invoice_results[:exports]
       wait_for_dimension_uploads
 
-      errors = validate_export_amounts_received start, check_sum, ar_sum, ap_sum
+      errors = {}
+      errors.merge!(validate_check_export_amounts_received(start, check_sum)) if @check_register
+      errors.merge!(validate_ar_ap_export_amounts_received(start, ar_sum, ap_sum)) if @invoices
 
       error_count = 0
       if errors.try(:size).to_i > 0
         error_count = errors[:checks].try(:length).to_i + errors[:invoices].try(:length).to_i
 
-        send_parser_errors @check_register.attached_file_name, errors[:checks], @invoices.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
+        send_parser_errors @check_register&.attached_file_name, errors[:checks], @invoices&.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
       else
         upload_intacct_data OpenChain::CustomHandler::Intacct::IntacctDataPusher.new
 
@@ -127,8 +133,8 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     nil
   ensure
     end_time = Time.zone.now
-    @check_register.update_attributes! finish_at: end_time
-    @invoices.try(:update_attributes!, finish_at: end_time)
+    @check_register&.update! finish_at: end_time
+    @invoices&.update! finish_at: end_time
   end
 
   def read_check_register check_file, parser
@@ -326,7 +332,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       end
     end
 
-    def validate_export_amounts_received start_time, check_total, ar_total, ap_total
+    def validate_check_export_amounts_received start_time, check_total
       errors = {}
       db_start_time = start_time.to_s(:db)
 
@@ -339,6 +345,13 @@ QRY
       qry = ActiveRecord::Base.sanitize_sql_array([qry, IntacctAllianceExport::EXPORT_TYPE_CHECK, db_start_time])
       amount = ActiveRecord::Base::connection.execute(qry).first[0]
       errors[:checks] = ["Expected to retrieve #{number_to_currency(check_total)} in Check data from Alliance.  Received #{number_to_currency(amount ? amount : 0)} instead."] if amount != check_total
+
+      errors
+    end
+
+    def validate_ar_ap_export_amounts_received start_time, ar_total, ap_total
+      errors = {}
+      db_start_time = start_time.to_s(:db)
 
       # AR Total - This is the sum of all the AR lines received by our invoicing process
       # The bit in the middle w/ the VFI/LMD stuff is excluding any receivables for the LMD company that

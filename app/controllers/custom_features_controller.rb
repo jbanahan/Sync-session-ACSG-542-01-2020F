@@ -414,20 +414,20 @@ class CustomFeaturesController < ApplicationController
   def alliance_day_end_upload
     # Can't use the generic, we're loading two files and doing some other things here
     action_secure(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.can_view?(current_user), Entry, {:verb=>"view", :module_name=>"Alliance Day End Processor", :lock_check=>false}) {
-      check_register = CustomFile.new(:file_type=>ALLIANCE_DAY_END, :uploaded_by=>current_user, :attached=>params[:check_register])
-      invoice_file = CustomFile.new(:file_type=>ALLIANCE_DAY_END, :uploaded_by=>current_user, :attached=>params[:invoice_file])
+      check_register = params[:check_register].present? ? CustomFile.new(:file_type=>ALLIANCE_DAY_END, :uploaded_by=>current_user, :attached=>params[:check_register]) : nil
+      invoice_file = params[:invoice_file].present? ? CustomFile.new(:file_type=>ALLIANCE_DAY_END, :uploaded_by=>current_user, :attached=>params[:invoice_file]) : nil
 
       saved = false
       CustomFile.transaction do
-        saved = check_register.save! && invoice_file.save!
+        saved = (check_register.nil? || check_register.save!) && (invoice_file.nil? || invoice_file.save!) && (check_register || invoice_file)
       end
 
       if saved
         OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.new(check_register, invoice_file).delay.process current_user
         add_flash :notices, "Your day end files are being processed.  You'll receive a system message "
       else
-        errors_to_flash check_register
-        errors_to_flash invoice_file
+        errors_to_flash check_register if check_register
+        errors_to_flash invoice_file if invoice_file
       end
       redirect_to '/custom_features/alliance_day_end'
     }

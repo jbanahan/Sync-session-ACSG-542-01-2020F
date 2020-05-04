@@ -26,7 +26,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
-      expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
+      expect(@h).to receive(:validate_check_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10).and_return({})
+      expect(@h).to receive(:validate_ar_ap_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 20, 10).and_return({})
       expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
       expect(@h).to receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 0
 
@@ -134,7 +135,12 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
     end
 
     it "handles upload errors" do
+      group = Factory(:group, system_code: "intacct-accounting")
       user = Factory(:user)
+      user.groups << group
+      user_2 = Factory(:user)
+      user_2.groups << group
+
       check_info = {checks: ""}
       invoice_info = {invoices: ""}
       expect(@h).to receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
@@ -146,11 +152,12 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
       expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
 
-      expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
+      expect(@h).to receive(:wait_for_export_updates).with [user, user_2], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
-      expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
+      expect(@h).to receive(:validate_check_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10).and_return({})
+      expect(@h).to receive(:validate_ar_ap_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 20, 10).and_return({})
       expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
-      expect(@h).to receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 2
+      expect(@h).to receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email, user_2.email]).and_return 2
 
       @h.process user
 
@@ -181,7 +188,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
-      expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({checks: ["Error", "Error"], invoices: ["Error", "Error"]})
+      expect(@h).to receive(:validate_check_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10).and_return({checks: ["Error", "Error"]})
+      expect(@h).to receive(:validate_ar_ap_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 20, 10).and_return({invoices: ["Error", "Error"]})
 
       @h.process user
 
@@ -215,7 +223,8 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
 
       expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports] + invoice_results[:exports]
       expect(@h).to receive(:wait_for_dimension_uploads)
-      expect(@h).to receive(:validate_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10, 20, 10).and_return({})
+      expect(@h).to receive(:validate_check_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10).and_return({})
+      expect(@h).to receive(:validate_ar_ap_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 20, 10).and_return({})
       expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
       expect(@h).to receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 2
 
@@ -224,9 +233,76 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       expect(user.messages.first).not_to be_nil
     end
 
-    it "errors if missing either invoice file" do
-      h = described_class.new(@check_file)
-      expect {h.process}.to raise_error "Missing invoice file!"
+    it "processes check file only if missing invoice file" do
+      @h = described_class.new(@check_file, nil)
+
+      user = Factory(:user, email: "st-hubbins@hellhole.co.uk")
+      check_info = {checks: ""}
+      expect(@h).to receive(:read_check_register).with(@check_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser)).and_return [[], check_info]
+      expect(@h).not_to receive(:read_invoices)
+
+      check_results = {exports: [IntacctAllianceExport.new(ap_total: 10)]}
+      expect(@h).to receive(:create_checks).with(check_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser), OpenChain::KewillSqlProxyClient).and_return check_results
+      expect(@h).not_to receive(:create_invoices)
+
+      expect(@h).to receive(:wait_for_export_updates).with [user], check_results[:exports]
+      expect(@h).to receive(:wait_for_dimension_uploads)
+      expect(@h).to receive(:validate_check_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 10).and_return({})
+      expect(@h).not_to receive(:validate_ar_ap_export_amounts_received)
+      expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
+      expect(@h).to receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 0
+
+      @h.process user
+
+      m = user.messages.first
+      expect(m).to be_nil
+
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["st-hubbins@hellhole.co.uk"]
+      expect(mail.subject).to eq "Day End Processing Complete"
+      expect(mail.body.raw_source).to match(/Day End Processing has completed./)
+
+      @check_file.reload
+      expect(@check_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@check_file.finish_at.to_date).to eq Time.zone.now.to_date
+    end
+
+    it "processes invoice file only if missing check file" do
+      @h = described_class.new(nil, @invoice_file)
+
+      user = Factory(:user, email: "st-hubbins@hellhole.co.uk")
+      invoice_info = {invoices: ""}
+      expect(@h).not_to receive(:read_check_register)
+      expect(@h).to receive(:read_invoices).with(@invoice_file, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser)).and_return [[], invoice_info]
+
+      invoice_results = {exports: [IntacctAllianceExport.new(ap_total: 10, ar_total: 20)]}
+      expect(@h).not_to receive(:create_checks)
+      expect(@h).to receive(:create_invoices).with(invoice_info, instance_of(OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser), OpenChain::KewillSqlProxyClient).and_return invoice_results
+
+      expect(@h).to receive(:wait_for_export_updates).with [user], invoice_results[:exports]
+      expect(@h).to receive(:wait_for_dimension_uploads)
+      expect(@h).not_to receive(:validate_check_export_amounts_received)
+      expect(@h).to receive(:validate_ar_ap_export_amounts_received).with(instance_of(ActiveSupport::TimeWithZone), 20, 10).and_return({})
+      expect(@h).to receive(:upload_intacct_data).with(instance_of(OpenChain::CustomHandler::Intacct::IntacctDataPusher))
+      expect(@h).to receive(:run_exception_report).with(instance_of(OpenChain::Report::IntacctExceptionReport), [user.email]).and_return 0
+
+      @h.process user
+
+      m = user.messages.first
+      expect(m).to be_nil
+
+      expect(ActionMailer::Base.deliveries.count).to eq 1
+
+      mail = ActionMailer::Base.deliveries.pop
+      expect(mail.to).to eq ["st-hubbins@hellhole.co.uk"]
+      expect(mail.subject).to eq "Day End Processing Complete"
+      expect(mail.body.raw_source).to match(/Day End Processing has completed./)
+
+      @invoice_file.reload
+      expect(@invoice_file.start_at.to_date).to eq Time.zone.now.to_date
+      expect(@invoice_file.finish_at.to_date).to eq Time.zone.now.to_date
     end
   end
 
@@ -473,6 +549,7 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       cf2 = CustomFile.create!
       u = Factory(:user)
 
+      expect_any_instance_of(described_class).to receive(:initialize).with(cf1, cf2)
       expect_any_instance_of(described_class).to receive(:process).with u
       described_class.process_delayed cf1.id, cf2.id, u.id
     end
@@ -481,16 +558,49 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       cf1 = CustomFile.create!
       cf2 = CustomFile.create!
 
+      expect_any_instance_of(described_class).to receive(:initialize).with(cf1, cf2)
       expect_any_instance_of(described_class).to receive(:process).with nil
       described_class.process_delayed cf1.id, cf2.id, nil
     end
+
+    it "accepts nil for check file" do
+      cf = CustomFile.create!
+      u = Factory(:user)
+
+      expect_any_instance_of(described_class).to receive(:initialize).with(nil, cf)
+      expect_any_instance_of(described_class).to receive(:process).with u
+      described_class.process_delayed nil, cf.id, u
+    end
+
+    it "accepts nil for invoice file" do
+      cf = CustomFile.create!
+      u = Factory(:user)
+
+      expect_any_instance_of(described_class).to receive(:initialize).with(cf, nil)
+      expect_any_instance_of(described_class).to receive(:process).with u
+      described_class.process_delayed cf.id, nil, u
+    end
   end
 
-  describe "validate_export_amounts_received" do
+  describe "validate_check_export_amounts_received" do
     it "ensures the expected amounts were received" do
       check_export = IntacctAllianceExport.create! ap_total: 10, export_type: 'check', data_received_date: Time.zone.now
       check = IntacctCheck.create! intacct_alliance_export: check_export, amount: 10
 
+      errors = described_class.new(nil, nil).send(:validate_check_export_amounts_received, Time.zone.now() - 5.minutes, 10)
+      expect(errors.size).to eq 0
+    end
+
+    it "returns errors if unexpected values are returned" do
+      errors = described_class.new(nil, nil).send(:validate_check_export_amounts_received, Time.zone.now() - 5.minutes, 10)
+      expect(errors.values.flatten.size).to eq 1
+
+      expect(errors[:checks]).to eq ["Expected to retrieve $10.00 in Check data from Alliance.  Received $0.00 instead."]
+    end
+  end
+
+  describe "validate_ar_ap_export_amounts_received" do
+    it "ensures the expected amounts were received" do
       invoice_export = IntacctAllianceExport.create! ap_total: 20, ar_total: 30, export_type: 'invoice', data_received_date: Time.zone.now
       receivable = IntacctReceivable.create! company: 'vfc', intacct_alliance_export: invoice_export
       receivable_line = IntacctReceivableLine.create! amount: 50, intacct_receivable: receivable
@@ -512,15 +622,14 @@ describe OpenChain::CustomHandler::Intacct::AllianceDayEndHandler do
       vfi_to_lmd_payable = IntacctPayable.create! company: 'vfc', vendor_number: "LMD", intacct_alliance_export: invoice_export
       vfi_to_lmd_payable_line = IntacctPayableLine.create! amount: 50, intacct_payable: vfi_to_lmd_payable
 
-      errors = described_class.new(nil, nil).send(:validate_export_amounts_received, Time.zone.now() - 5.minutes, 10, 30, 20)
+      errors = described_class.new(nil, nil).send(:validate_ar_ap_export_amounts_received, Time.zone.now() - 5.minutes, 30, 20)
       expect(errors.size).to eq 0
     end
 
     it "returns errors if unexpected values are returned" do
-      errors = described_class.new(nil, nil).send(:validate_export_amounts_received, Time.zone.now() - 5.minutes, 10, 30, 20)
-      expect(errors.values.flatten.size).to eq 3
+      errors = described_class.new(nil, nil).send(:validate_ar_ap_export_amounts_received, Time.zone.now() - 5.minutes, 30, 20)
+      expect(errors.values.flatten.size).to eq 2
 
-      expect(errors[:checks]).to eq ["Expected to retrieve $10.00 in Check data from Alliance.  Received $0.00 instead."]
       expect(errors[:invoices]).to eq ["Expected to retrieve $30.00 in AR lines from Alliance.  Received $0.00 instead.", "Expected to retrieve $20.00 in AP lines from Alliance.  Received $0.00 instead."]
     end
   end

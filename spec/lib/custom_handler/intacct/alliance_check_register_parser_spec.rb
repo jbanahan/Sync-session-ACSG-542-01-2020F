@@ -303,12 +303,9 @@ FILE
       # Block the attachment setting so we're not saving to S3
       expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
 
-      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
-
       expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:delay).with(priority: -1).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
-      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:process_delayed) do |check_id, invoice_id, user_id|
+      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:process_delayed) do |check_id, _invoice_id, user_id|
         expect(CustomFile.find(check_id).file_type).to eq "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser"
-        expect(invoice_id).to eq invoice_file.id
         expect(user_id).to be_nil
       end
 
@@ -319,34 +316,11 @@ FILE
       expect(DataCrossReference.where(key: Digest::MD5.hexdigest("This is a test"), value: "file.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM).first).not_to be_nil
     end
 
-    it "saves given file, but doesn't call day end process without a check file existing" do
-      # Block the attachment setting so we're not saving to S3
-      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
-      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
-
-      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
-      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
-      expect(saved).not_to be_nil
-    end
-
-    it "does not kick off day end process if invoice file has already been processed" do
-      # Block the attachment setting so we're not saving to S3
-      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
-      check_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration, start_at: Time.zone.now
-
-      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
-
-      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
-      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
-      expect(saved).not_to be_nil
-    end
-
     it "recognizes duplicate check file content and does not launch day end" do
       DataCrossReference.create!(key: Digest::MD5.hexdigest("This is a test"), value: "existing.txt", cross_reference_type: DataCrossReference::ALLIANCE_CHECK_REPORT_CHECKSUM)
 
        # Block the attachment setting so we're not saving to S3
       expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
-      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
       expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
@@ -366,27 +340,10 @@ FILE
        # Block the attachment setting so we're not saving to S3
       expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
 
-      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
-
       expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::AllianceDayEndHandler
       expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).to receive(:process_delayed)
 
       OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
-    end
-
-    it "does not queue day end job if one is already on the queue" do
-      invoice_file = CustomFile.create! file_type: "OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser", uploaded_by: User.integration
-      dj = Delayed::Job.new
-      dj.handler = "OpenChain::CustomHandler::Intacct::AllianceDayEndHandler--process_delayed"
-      dj.save!
-
-      expect_any_instance_of(CustomFile).to receive(:attached=).with @tempfile
-      expect(OpenChain::CustomHandler::Intacct::AllianceDayEndHandler).not_to receive(:delay)
-
-      OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.process_from_s3(@bucket, @path)
-
-      saved = CustomFile.where(file_type: "OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser").first
-      expect(saved).not_to be_nil
     end
   end
 
