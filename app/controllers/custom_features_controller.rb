@@ -423,7 +423,7 @@ class CustomFeaturesController < ApplicationController
       end
 
       if saved
-        OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.new(check_register, invoice_file).delay.process current_user
+        OpenChain::CustomHandler::Intacct::AllianceDayEndHandler.delay.process_delayed(check_register&.id, invoice_file&.id, current_user.id)
         add_flash :notices, "Your day end files are being processed.  You'll receive a system message "
       else
         errors_to_flash check_register if check_register

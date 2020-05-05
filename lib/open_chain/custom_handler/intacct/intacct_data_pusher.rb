@@ -16,10 +16,15 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
     @api_client = client
   end
 
-  def run companies
-    push_checks companies
-    push_receivables companies
-    push_payables companies
+  def run companies, checks_only: false, invoices_only: false
+    push_checks(companies) unless invoices_only
+
+    if !checks_only
+      push_receivables companies
+      push_payables companies
+    end
+
+    nil
   end
 
   def push_payables companies
@@ -28,7 +33,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
     IntacctPayable.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
       begin
         payable = IntacctPayable.find id
-        Lock.with_lock_retry(payable) do
+        Lock.db_lock(payable) do
           # double checking the upload date just in case we're running multiple pushes at the same time
           if payable.intacct_upload_date.nil?
             # Find any checks associated with this payable file / vendor and include them so we can
@@ -55,7 +60,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
     IntacctReceivable.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
       begin
         receivable = IntacctReceivable.find id
-        Lock.with_lock_retry(receivable) do
+        Lock.db_lock(receivable) do
           # double checking the upload date just in case we're running multiple pushes at the same time
           @api_client.send_receivable receivable if receivable.intacct_upload_date.nil?
         end
@@ -69,7 +74,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
     IntacctCheck.where(intacct_upload_date: nil, intacct_errors: nil, company: companies).order("created_at ASC").pluck(:id).each do |id|
       begin
         check = IntacctCheck.find id
-        Lock.with_lock_retry(check) do
+        Lock.db_lock(check) do
           # double checking the upload date just in case we're running multiple pushes at the same time
           if check.intacct_upload_date.nil?
             # If an adjustment wasn't already added for this check (could happen in cases where there were errors on the first upload that weren't cleared) AND

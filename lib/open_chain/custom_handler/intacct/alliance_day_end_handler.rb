@@ -15,15 +15,12 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     check_register_file = check_register_file_id ? CustomFile.find(check_register_file_id) : nil
     invoice_file = invoice_file_id ? CustomFile.find(invoice_file_id) : nil
 
-    p = self.new check_register_file, invoice_file
-    p.process user
+    p = self.new
+    p.process check_register_file, invoice_file, user
   end
 
-  # 2nd arg optional for compatibility with CustomFeatureController#generic_download
-  def initialize check_register_file, invoice_file=nil
-    @check_register = check_register_file
-    @invoices = invoice_file
-  end
+  # Arg purposefully ignored, it's here solely for interface compatibility
+  def initialize _invoice_file = nil; end
 
   def self.can_view? user
     IntacctErrorsController.allowed_user?(user)
@@ -33,7 +30,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     self.class.can_view? user
   end
 
-  def process user = nil
+  def process check_register, invoices, user = nil
     users = User.joins(:groups).where(groups: {system_code: IntacctErrorsController::VFI_ACCOUNTING_USERS}).all
     if user.present?
       # Something about a blank ActiveRecord result doesn't play nicely with the uniq below.
@@ -49,26 +46,26 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
 
     # Read Check Info
     start = Time.zone.now
-    @check_register&.update! start_at: start
-    @invoices&.update! start_at: start
+    check_register&.update! start_at: start
+    invoices&.update! start_at: start
 
     check_parser = OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.new
-    check_errors, check_info = @check_register ? read_check_register(@check_register, check_parser) : [[], []]
+    check_errors, check_info = check_register ? read_check_register(check_register, check_parser) : [[], []]
 
     # Read all payable / receivable information
     invoice_parser = OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.new
-    invoice_errors, invoice_info = @invoices ? read_invoices(@invoices, invoice_parser) : [[], []]
+    invoice_errors, invoice_info = invoices ? read_invoices(invoices, invoice_parser) : [[], []]
 
     # If error, abort...send errors to Luca, Isabelle..one tab for check errors, one tab for ar/ap errors.
     if check_errors.size > 0 || invoice_errors.size > 0
       # Send errors to the users to notify for day end stuff
-      send_parser_errors @check_register&.attached_file_name, check_errors, @invoices&.attached_file_name, invoice_errors, users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
+      send_parser_errors check_register&.attached_file_name, check_errors, invoices&.attached_file_name, invoice_errors, users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
       subject = "Day End Processing Complete With Errors"
       message = "The day end files could not be processed.  A separate report containing the errors will be mailed to you."
       send_messages_to_users users, subject, message
     else
       proxy_client = OpenChain::KewillSqlProxyClient
-      check_results = @check_register ? create_checks(check_info, check_parser, proxy_client) : { exports: [] }
+      check_results = check_register ? create_checks(check_info, check_parser, proxy_client) : { exports: [] }
 
       stop_processing = false
       if check_results[:errors].present?
@@ -81,7 +78,7 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
         check_sum += ex.ap_total
       end
 
-      invoice_results = @invoices ? create_invoices(invoice_info, invoice_parser, proxy_client) : { exports: [] }
+      invoice_results = invoices ? create_invoices(invoice_info, invoice_parser, proxy_client) : { exports: [] }
       ap_sum = BigDecimal.new "0"
       ar_sum = BigDecimal.new "0"
       invoice_results[:exports].each do |ex|
@@ -100,16 +97,19 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
       wait_for_dimension_uploads
 
       errors = {}
-      errors.merge!(validate_check_export_amounts_received(start, check_sum)) if @check_register
-      errors.merge!(validate_ar_ap_export_amounts_received(start, ar_sum, ap_sum)) if @invoices
+      errors.merge!(validate_check_export_amounts_received(start, check_sum)) if check_register
+      errors.merge!(validate_ar_ap_export_amounts_received(start, ar_sum, ap_sum)) if invoices
 
       error_count = 0
       if errors.try(:size).to_i > 0
         error_count = errors[:checks].try(:length).to_i + errors[:invoices].try(:length).to_i
 
-        send_parser_errors @check_register&.attached_file_name, errors[:checks], @invoices&.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
+        send_parser_errors check_register&.attached_file_name, errors[:checks], invoices&.attached_file_name, errors[:invoices], users.map(&:email), ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now.to_date
       else
-        upload_intacct_data OpenChain::CustomHandler::Intacct::IntacctDataPusher.new
+        checks_only = invoices.nil?
+        invoices_only = check_register.nil?
+
+        upload_intacct_data OpenChain::CustomHandler::Intacct::IntacctDataPusher.new, checks_only: checks_only, invoices_only: invoices_only
 
         # The exception report returns the number of errors found while uploading so we can determine in the user message if there were upload
         # errors or not
@@ -133,8 +133,8 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     nil
   ensure
     end_time = Time.zone.now
-    @check_register&.update! finish_at: end_time
-    @invoices&.update! finish_at: end_time
+    check_register&.update! finish_at: end_time
+    invoices&.update! finish_at: end_time
   end
 
   def read_check_register check_file, parser
@@ -266,11 +266,11 @@ module OpenChain; module CustomHandler; module Intacct; class AllianceDayEndHand
     {errors: all_errors, exports: exports}
   end
 
-  def upload_intacct_data pusher
+  def upload_intacct_data pusher, checks_only: false, invoices_only: false
     # NEVER run this unless we're in production..we don't have a test environment for Intacct
     # so make sure we don't accidently upload to intacct at all
-    if Rails.env.production?
-      pusher.run ['vfc', 'lmd']
+    if MasterSetup.get.production?
+      pusher.run ['vfc', 'lmd'], checks_only: checks_only, invoices_only: invoices_only
     end
   end
 
