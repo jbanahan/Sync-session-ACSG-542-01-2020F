@@ -179,12 +179,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
         expect(inv.commercial_invoice_lines.length).to eq 2
       end
 
-      it "does not exploded prepack values" do
+      it "explodes prepack values" do
         copy_product.update_custom_value! cdefs[:prod_prepack], true
 
-        # Older versions of this generator would use these variants to explode out the quantity.
-        # Since that's no longer done (qty is already exploded in shipment line),
-        # this test exists now mostly to verify that we are NOT exploding the variant values.
         copy_product.variants.create! variant_identifier: "PROD-3-XL"
         copy_product.variants.first.update_custom_value! cdefs[:var_units_per_inner_pack], 5
         copy_product.variants.second.update_custom_value! cdefs[:var_units_per_inner_pack], 10
@@ -196,7 +193,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourFenixInvoiceGenerator
         line = inv.commercial_invoice_lines.first
         expect(line.part_number).to eq "PROD-2"
         expect(line.country_origin_code).to eq "CN"
-        expect(line.quantity).to eq 30
+        expect(line.quantity).to eq 310
         expect(line.unit_price).to eq BigDecimal("1.55")
         expect(line.po_number).to eq "PO"
         expect(line.customer_reference).to eq "REF"

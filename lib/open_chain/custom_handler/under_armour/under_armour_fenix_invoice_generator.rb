@@ -99,9 +99,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourFen
       order_line = shipment_line.order_lines.first
       datum[:order_number] = order_line.order.customer_order_number
       datum[:unit_price] = order_line.price_per_unit || BigDecimal("0")
-      # For prepacks, this quantity is already an exploded quantity.  There's no need to loop through the
-      # variants.
-      datum[:quantity] = shipment_line.quantity.presence || BigDecimal("0")
+      datum[:quantity] = prepack ? exploded_quantity(shipment_line) : (shipment_line.quantity.presence || BigDecimal("0"))
       datum[:style] = product.custom_value(cdefs[:prod_part_number])
 
       # Under Armour has the potential to have an HTS value at the variant level...(due to their sizes
