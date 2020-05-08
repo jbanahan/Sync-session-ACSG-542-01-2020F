@@ -7,10 +7,7 @@ require 'open_chain/s3'
 # point method named parse that takes the raw file bytes as the first param (really a string) and then a hash that will have the
 # keys :bucket, and :key which define the S3 location of the file the data came from.
 #
-# You should also define a class method named integration_folder that returns the key path in the integration bucket that the
-# files will be stored in (in general, you'll strip the date components at the front of the path and the actual filename to arrive
-# at this value).  Defining this method allows you to use the process_day and process_past_days methods for your parser.
-#
+
 module OpenChain; module IntegrationClientParser
   extend ActiveSupport::Concern
 

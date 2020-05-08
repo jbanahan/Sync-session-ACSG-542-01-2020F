@@ -196,8 +196,13 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "sends data to Ascena PO parser" do
         do_parser_test('Ascena PO', OpenChain::CustomHandler::Ascena::AscenaPoParser, '/_ascena_po/a.csv')
       end
+
       it "should send data to ascena apll 856 parser if path contains _ascena_apll_asn" do
         do_parser_test('Ascena APLL ASN', OpenChain::CustomHandler::Ascena::Apll856Parser, '/_ascena_apll_asn/a.txt')
+      end
+
+      it "sends data to supplemental file parser if path contains _ascena_suppl" do
+        do_parser_test('Ascena Supplemental', OpenChain::CustomHandler::Ascena::AscenaSupplementalFileParser, '/_ascena_suppl/a.csv', original_filename: "a.csv")
       end
     end
     context "baillie" do

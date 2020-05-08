@@ -8,6 +8,7 @@ require 'open_chain/custom_handler/ann_inc/ann_order_850_parser'
 require 'open_chain/custom_handler/ann_inc/ann_commercial_invoice_xml_parser'
 require 'open_chain/custom_handler/ann_inc/ann_ohl_product_generator'
 require 'open_chain/custom_handler/ascena/apll_856_parser'
+require 'open_chain/custom_handler/ascena/ascena_supplemental_file_parser'
 require 'open_chain/custom_handler/baillie/baillie_order_xml_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_po_parser'
 require 'open_chain/custom_handler/eddie_bauer/eddie_bauer_ftz_asn_generator'
@@ -202,6 +203,8 @@ module OpenChain
         OpenChain::CustomHandler::Ascena::AscenaPoParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "ascena_apll_asn") && custom_features.include?('Ascena APLL ASN')
         OpenChain::CustomHandler::Ascena::Apll856Parser.delay.process_from_s3(bucket, s3_path)
+      elsif (parser_identifier == "ascena_suppl") && custom_features.include?('Ascena Supplemental')
+        OpenChain::CustomHandler::Ascena::AscenaSupplementalFileParser.delay.process_from_s3 bucket, s3_path, original_filename: original_filename
       elsif (parser_identifier == "po_xml") && custom_features.include?("Baillie")
         OpenChain::CustomHandler::Baillie::BaillieOrderXmlParser.delay.process_from_s3(bucket, s3_path)
       elsif (parser_identifier == "fenix_invoices") && custom_features.include?('fenix')
