@@ -293,7 +293,7 @@ module OpenChain; module Report; class JCrewBillingReport
     def entries start_date, end_date
       Entry.joins(:broker_invoices)
         .where("broker_invoices.invoice_date >= ? AND invoice_date <= ?", start_date, end_date)
-        .where("broker_invoices.customer_number in (?)", ['JCREW', 'J0000', 'CREWFTZ'])
+        .where("broker_invoices.customer_number in (?)", ['JCREW', 'J0000', 'CREWFTZ', 'JCREW1', 'J0001'])
         .order(:broker_reference)
         .uniq
         .includes(:commercial_invoices=>[:commercial_invoice_lines=>[:commercial_invoice_tariffs]])

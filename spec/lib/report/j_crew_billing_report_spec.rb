@@ -61,66 +61,70 @@ describe OpenChain::Report::JCrewBillingReport do
       csv_files
     end
 
-    it "generates a billing file for direct pos" do
-      data = nil
-      csv_files = nil
-      now = ActiveSupport::TimeZone["UTC"].parse("2018-07-18 01:00")
-      Timecop.freeze(now) do
-        subject.run do |tempfile|
-          data = extract_xlsx_data tempfile
-          csv_files = extract_csv_data tempfile
-          expect(tempfile.binmode?).to eq true
-          expect(tempfile.original_filename).to eq "JCrew Billing 2014-01-01 thru 2014-01-01.zip"
+    ['JCREW', 'J0000', 'CREWFTZ', 'JCREW1', 'J0001'].each do |customer_number|
+      it "generates a billing file for direct pos (#{customer_number})" do
+        entry.broker_invoices.first.update! customer_number: customer_number
+
+        data = nil
+        csv_files = nil
+        now = ActiveSupport::TimeZone["UTC"].parse("2018-07-18 01:00")
+        Timecop.freeze(now) do
+          subject.run do |tempfile|
+            data = extract_xlsx_data tempfile
+            csv_files = extract_csv_data tempfile
+            expect(tempfile.binmode?).to eq true
+            expect(tempfile.original_filename).to eq "JCrew Billing 2014-01-01 thru 2014-01-01.zip"
+          end
         end
+
+        expect(data).not_to be_nil
+
+        expect(data.size).to eq 1
+        worksheet = data["VG-WE20180717"]
+        expect(worksheet).not_to be_nil
+        expect(worksheet.length).to eq 9
+
+        # The first 5 rows are headers defining the column attributes of the different line types...we don't care about these
+
+        expect(worksheet[5][0..6]).to eq ["Invoice", "VG-WE20180717", nil, "2003513", "Draft", "07/17/2018", "No"]
+        expect(worksheet[5][10]).to eq "No"
+        expect(worksheet[5][18..22]).to eq ["martha.long@jcrew.com", nil, nil, "US Purchasing", "USD"]
+        expect(worksheet[5][69]).to eq "770"
+
+        expect(worksheet[6][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", 1, "Inv#", nil, nil, 100]
+        expect(worksheet[6][17]).to eq "EA"
+        expect(worksheet[6][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211541"]
+
+        expect(worksheet[7][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", 2, "Inv#", nil, nil, 57.25]
+        expect(worksheet[7][17]).to eq "EA"
+        expect(worksheet[7][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211521"]
+
+        expect(worksheet[8][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", 3, "VG-WE20180717 Credit", nil, nil, -57.25]
+        expect(worksheet[8][17]).to eq "EA"
+        expect(worksheet[8][23..29]).to eq ["JC02", "0022", "General Expense (Non IO)", nil, nil, nil, "111295"]
+
+        expect(csv_files.length).to eq 1
+
+        expect(csv_files.first[:name]).to eq "VG-WE20180717.csv"
+        csv = csv_files.first[:data]
+
+        expect(csv[5][0..6]).to eq ["Invoice", "VG-WE20180717", nil, "2003513", "Draft", "07/17/2018", "No"]
+        expect(csv[5][10]).to eq "No"
+        expect(csv[5][18..22]).to eq ["martha.long@jcrew.com", nil, nil, "US Purchasing", "USD"]
+        expect(csv[5][69]).to eq "770"
+
+        expect(csv[6][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", "1", "Inv#", nil, nil, "100.0"]
+        expect(csv[6][17]).to eq "EA"
+        expect(csv[6][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211541"]
+
+        expect(csv[7][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", "2", "Inv#", nil, nil, "57.25"]
+        expect(csv[7][17]).to eq "EA"
+        expect(csv[7][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211521"]
+
+        expect(csv[8][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", "3", "VG-WE20180717 Credit", nil, nil, "-57.25"]
+        expect(csv[8][17]).to eq "EA"
+        expect(csv[8][23..29]).to eq ["JC02", "0022", "General Expense (Non IO)", nil, nil, nil, "111295"]
       end
-
-      expect(data).not_to be_nil
-
-      expect(data.size).to eq 1
-      worksheet = data["VG-WE20180717"]
-      expect(worksheet).not_to be_nil
-      expect(worksheet.length).to eq 9
-
-      # The first 5 rows are headers defining the column attributes of the different line types...we don't care about these
-
-      expect(worksheet[5][0..6]).to eq ["Invoice", "VG-WE20180717", nil, "2003513", "Draft", "07/17/2018", "No"]
-      expect(worksheet[5][10]).to eq "No"
-      expect(worksheet[5][18..22]).to eq ["martha.long@jcrew.com", nil, nil, "US Purchasing", "USD"]
-      expect(worksheet[5][69]).to eq "770"
-
-      expect(worksheet[6][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", 1, "Inv#", nil, nil, 100]
-      expect(worksheet[6][17]).to eq "EA"
-      expect(worksheet[6][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211541"]
-
-      expect(worksheet[7][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", 2, "Inv#", nil, nil, 57.25]
-      expect(worksheet[7][17]).to eq "EA"
-      expect(worksheet[7][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211521"]
-
-      expect(worksheet[8][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", 3, "VG-WE20180717 Credit", nil, nil, -57.25]
-      expect(worksheet[8][17]).to eq "EA"
-      expect(worksheet[8][23..29]).to eq ["JC02", "0022", "General Expense (Non IO)", nil, nil, nil, "111295"]
-
-      expect(csv_files.length).to eq 1
-
-      expect(csv_files.first[:name]).to eq "VG-WE20180717.csv"
-      csv = csv_files.first[:data]
-
-      expect(csv[5][0..6]).to eq ["Invoice", "VG-WE20180717", nil, "2003513", "Draft", "07/17/2018", "No"]
-      expect(csv[5][10]).to eq "No"
-      expect(csv[5][18..22]).to eq ["martha.long@jcrew.com", nil, nil, "US Purchasing", "USD"]
-      expect(csv[5][69]).to eq "770"
-
-      expect(csv[6][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", "1", "Inv#", nil, nil, "100.0"]
-      expect(csv[6][17]).to eq "EA"
-      expect(csv[6][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211541"]
-
-      expect(csv[7][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", "2", "Inv#", nil, nil, "57.25"]
-      expect(csv[7][17]).to eq "EA"
-      expect(csv[7][23..29]).to eq ["JC02", "0021", "General Expense (Non IO)", "0006000", nil, nil, "211521"]
-
-      expect(csv[8][0..8]).to eq ["Invoice Line", "VG-WE20180717", nil, "2003513", "3", "VG-WE20180717 Credit", nil, nil, "-57.25"]
-      expect(csv[8][17]).to eq "EA"
-      expect(csv[8][23..29]).to eq ["JC02", "0022", "General Expense (Non IO)", nil, nil, nil, "111295"]
     end
 
     [
