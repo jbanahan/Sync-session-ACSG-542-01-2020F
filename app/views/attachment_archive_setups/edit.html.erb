@@ -1,1 +1,53 @@
+<%content_for :javascript do -%>
+  $(function() {
+    $('#show_packet_modal').click(function(e) {
+      e.preventDefault();
+      $('#packet_generator_modal').modal();
+      return false;
+    });
+
+    $('#modal-save').click(function(e) {
+      var start_date = $('#start_date').val();
+      var csv_file = $('#csv_file').val();
+      if(start_date || csv_file) {
+      $('#archive_packet_form').submit();
+      } else {
+        alert("Start date or CSV file must be present");
+      }
+    });
+  });
+<% end %>
+
 <%=render :partial=>'form'%>
+
+<%content_for :action_bar do-%>
+  <%- if @company.attachment_archive_setup.present? %>
+    <button id="show_packet_modal">Generate Archive Packets</button>
+  <% end %>
+<% end %>
+
+<div class="modal" id="packet_generator_modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Archive Packet Generation</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <%=form_tag generate_packets_company_attachment_archive_setups_path(@company.id), id: 'archive_packet_form' do %>
+          <h4>Select either date based or csv file based. If both are present the dates will be applied to the entries in the CSV</h4>
+          <p>Last Billed Date on or after: <%= text_field_tag :start_date, '', class: 'isdate form-text' %> and prior to <%= text_field_tag :end_date, '', class: 'isdate form-text' %></p>
+
+          <p>Copy and paste CSV file below. CSV file should contain one column with entry numbers, and no header.</p>
+          <%= text_area_tag(:csv_file, nil, class: 'form-control', rows: '15') %>
+        <% end %>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="modal-save">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

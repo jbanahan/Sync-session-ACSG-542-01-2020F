@@ -3,8 +3,35 @@ describe AttachmentArchiveSetupsController do
     @admin = Factory(:admin_user)
     @user = Factory(:user)
     @c = Factory(:company)
-
   end
+
+  describe "generate_packets" do
+    it "should fail if user not admin" do
+      sign_in_as @user
+      post :generate_packets, :company_id=>@c.id
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to eq(["You do not have permission to access this page."])
+    end
+
+    it "should fail if a start date or a csv file is not provided" do
+      sign_in_as @admin
+      post :generate_packets, :company_id=>@c.id
+      expect(flash[:errors]).to eq(["Either the start date or csv file must be provided."])
+    end
+
+    it "delays the packet generation" do
+      sign_in_as @admin
+      expect(OpenChain::ArchivePacketGenerator).to receive(:delay).and_return(OpenChain::ArchivePacketGenerator)
+      post :generate_packets, :company_id=>@c.id, :start_date=>Time.zone.today
+    end
+
+    it "should succeed if user admin" do
+      sign_in_as @admin
+      post :generate_packets, :company_id=>@c.id, :start_date=>Time.zone.today
+      expect(flash[:notices]).to eq(["Your packet generation request has been received. You will receive a message when it is complete."])
+    end
+  end
+
   describe "new" do
     it "should fail if user not admin" do
       sign_in_as @user
@@ -12,6 +39,7 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to eq(["You do not have permission to access this page."])
     end
+
     it "should succeed if user admin" do
       sign_in_as @admin
       get :new, :company_id=>@c.id
@@ -19,16 +47,19 @@ describe AttachmentArchiveSetupsController do
       expect(assigns(:company)).to eq(@c)
     end
   end
+
   describe "edit" do
     before :each do
       @c.create_attachment_archive_setup(:start_date=>Time.now)
     end
+
     it "should fail if user not admin" do
       sign_in_as @user
       get :edit, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to eq(["You do not have permission to access this page."])
     end
+
     it "should succeed if user admin" do
       sign_in_as @admin
       get :edit, :company_id=>@c.id, :id=>@c.attachment_archive_setup.id
@@ -36,6 +67,7 @@ describe AttachmentArchiveSetupsController do
       expect(assigns(:company)).to eq(@c)
     end
   end
+
   describe "create" do
     it "should succeed if user admin" do
       sign_in_as @admin
@@ -46,6 +78,7 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to [@c, @c.attachment_archive_setup]
       expect(flash[:notices]).to eq(["Your setup was successfully created."])
     end
+
     it "should fail if company already has record" do
       sign_in_as @admin
       @c.create_attachment_archive_setup(:start_date=>Time.now)
@@ -56,6 +89,7 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to eq(["This company already has an attachment archive setup."])
     end
+
     it "should fail if user not admin" do
       sign_in_as @user
       target_date = Date.new(2011, 12, 1)
@@ -65,6 +99,7 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to eq(["You do not have permission to access this page."])
     end
+
     it "blanks the order, include only, and real time attributes if combined attribute is not checked" do
       sign_in_as @admin
       target_date = Date.new(2011, 12, 1)
@@ -78,10 +113,12 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to [@c, @c.attachment_archive_setup]
     end
   end
+
   describe "update" do
     before :each do
       @c.create_attachment_archive_setup(:start_date=>Time.now)
     end
+
     it "should succeed if user is admin" do
       sign_in_as @admin
       target_date = Date.new(2011, 12, 1)
@@ -93,6 +130,7 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to [@c, @c.attachment_archive_setup]
       expect(flash[:notices]).to eq(["Your setup was successfully updated."])
     end
+
     it "should fail if user not admin" do
       sign_in_as @user
       target_date = Date.new(2011, 12, 1)
@@ -102,6 +140,7 @@ describe AttachmentArchiveSetupsController do
       expect(response).to redirect_to request.referrer
       expect(flash[:errors]).to eq ["You do not have permission to access this page."]
     end
+
     it "blanks the order, include only, and real time attributes if combined attribute is not checked" do
       sign_in_as @admin
       target_date = Date.new(2011, 12, 1)

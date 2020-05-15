@@ -1020,7 +1020,11 @@ OpenChain::Application.routes.draw do
     resources :attachment_archives, :only=>[:create, :show] do
       post 'complete', :on=>:member
     end
-    resources :attachment_archive_setups, :except=>[:destroy, :index]
+    resources :attachment_archive_setups, :except=>[:destroy, :index] do
+      collection do
+        post :generate_packets
+      end
+    end
 
 		resources :users, except: [:destroy] do
       member do
