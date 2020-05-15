@@ -12,14 +12,14 @@ root.ChainAllPages =
   # Request should be a javascript object ({}), that at the absolute least, must have the following
   # attributes in order to make a request:
   # requestPath -> the http endpoint for the request
-  # 
+  #
   # Optional attributes:
   # target -> a jquery selector used to append the response HTML directly into
-  # 
+  #
   # Ajax attributes (these all pretty much directly map to the jquery Ajax parameters)
   # ajaxMethod -> the HTTP method to use (default GET)
   # ajaxData -> Any query parameters to use
-  
+
   renderRemote: (requestData) ->
     request = {
       url: requestData.requestPath
@@ -30,7 +30,7 @@ root.ChainAllPages =
     csrfToken = ChainAllPages.getAuthToken()
     request.headers['X-CSRF-Token'] = csrfToken if csrfToken
     request.data = request.ajaxData if requestData.ajaxData
-    
+
     if request.url
       $.ajax(request).done((response) ->
         if requestData.target
@@ -46,8 +46,9 @@ root.ChainAllPages =
 
   getAuthToken : () ->
     # First check for the csrf cookie (since that's what angular uses as well), then fall back to the meta tag.
-    # PhantomJs doesn't support Array.prototype.find, hence the use of filter 
-    token = document.cookie?.split("; ").filter((elem) -> /^XSRF-TOKEN/.exec(elem))[0]?.split("=")[1]
-    unless token
+    # PhantomJs doesn't support Array.prototype.find, hence the use of filter
+    escapedToken = document.cookie?.split("; ").filter((elem) -> /^XSRF-TOKEN/.exec(elem))[0]?.split("=")[1]
+    if escapedToken
+      token = decodeURIComponent escapedToken
+    else
       token = $('meta[name="csrf-token"]').attr('content')
-    token

@@ -113,7 +113,7 @@ root.Chain =
 
   # generates html string for a bootstrap error panel
   makeAlertPanel: (messages, needs_container = true) ->
-    Chain.makePanel messages, "alert", needs_container 
+    Chain.makePanel messages, "alert", needs_container
 
   makeErrorPanel: (messages, needs_container = true) ->
     Chain.makePanel messages, "error", needs_container
@@ -202,7 +202,7 @@ root.Chain =
             r.push(h) for h in data
             add(r)
           )
-        select: (event,ui) ->          
+        select: (event,ui) ->
           $(@).val(ui.item.label)
           $(@).blur()
 
@@ -244,7 +244,7 @@ root.Chain =
       quickClassSel = $("div.quick_class_country[country_id='#{country_result.country_id}'] i")
       inputSel = $(".hts_cell").find("input.hts_field[country='#{country_result.country_id}'][tariff-line-num=#{tariff_line_num}]")
       Chain.htsAutoComplete inputSel
-      $("div[quick-class-content-id='#{country_result.country_id}'] input.hts_field[tariff-line-num='#{tariff_line_num}']").each(()-> 
+      $("div[quick-class-content-id='#{country_result.country_id}'] input.hts_field[tariff-line-num='#{tariff_line_num}']").each(()->
         Classify.validateHTSValue country_result.country_id, tariff_line_num, $(this)
         Chain.updateTariffList(country_result.country_id))
       if country_result['hts'].length == 1
@@ -256,7 +256,7 @@ root.Chain =
       else if country_result['hts'].length > 1
         inputSel.val("").blur()
         quickClassSel.removeClass('fa fa-check-circle fa-exclamation-triangle').addClass('fa fa-question-circle')
-    
+
     for cntry in data
       if cntry.country_id == source_country_id
         # only write the options; don't update icons or overwrite HTS for the source country
@@ -338,7 +338,7 @@ root.Chain =
     previousTariffSel = "div[quick-class-content-id='#{classification.country_id}'] div.tariff[tariff-line-num='#{previousLineNum}']"
     $(Chain.quickClassifyTariff(classification, tariff, true)).insertAfter $(previousTariffSel)
     newTariffSel = "div[quick-class-content-id='#{classification.country_id}'] div.tariff[tariff-line-num='#{previousLineNum + 1}']"
-    Chain.addTariffCallbacks(classification, tariff) 
+    Chain.addTariffCallbacks(classification, tariff)
 
   addTariffCallbacks: (classification, tariff) ->
     c = classification
@@ -356,7 +356,7 @@ root.Chain =
       () ->
         errorThisCountry = emptyHtsThisCountry = false
         htsFields.each () ->
-          errorThisField = $(@).hasClass('error') 
+          errorThisField = $(@).hasClass('error')
           errorThisCountry = true if errorThisField
           emptyHtsThisField = $(@).val().length == 0 && $(@).hasClass('hts_field')
           emptyHtsThisCountry = true if emptyHtsThisField
@@ -385,7 +385,7 @@ root.Chain =
           emptyHtsThisCountry = true if emptyHtsThisField
           unless errorThisField || emptyHtsThisField
             autoClassifyButtonSel.show()
-          
+
         countrySel = $("div.quick_class_country[country_id='#{c.country_id}']")
         # If the exclamation point has been set that also implies that HTS is valid, so don't replace it
         unless errorThisCountry || emptyHtsThisCountry || countrySel.find('.fa-exclamation-triangle').length > 0
@@ -396,7 +396,7 @@ root.Chain =
       countryId = $(@).closest("div.quick_class_target").attr('quick-class-content-id')
       $(@).closest("div.tariff").remove()
       Chain.updateTariffList countryId
-    
+
     # Synchronize Sched B fields on HTS/Sched B tabs
     $("input.sched_b_field[country='#{c.country_id}']").blur (evt) ->
       newValue = $(this).val()
@@ -432,7 +432,7 @@ root.Chain =
   countriesWithBlankTariffs: () ->
     countryList = []
     lookup = Chain.countryLookup()
-    $('.quick_class_target').each () ->     
+    $('.quick_class_target').each () ->
       countryId = parseInt $(@).attr('quick-class-content-id')
       tariffList = $(@).find('.tariff').map () ->
                      htsValue = $(@).find('.hts_field').val()
@@ -489,13 +489,13 @@ root.Chain =
       tabsSel = $('#quick_class_content ul.nav-tabs')
       qcSel = $('.quick_class_target')
       if action == "show" && tabsSel.css("display") == "none"
-        tabsSel.show "fade",200, () -> 
+        tabsSel.show "fade",200, () ->
           qcSel.each () -> $(@).css("height", $(@).height() - tabsSel.height())
       else if action == "hide" && tabsSel.css("display") != "none"
         tabsHeight = tabsSel.height()
-        tabsSel.hide () -> 
-          qcSel.each () -> $(@).css("height", $(@).height() + tabsHeight)  
-    
+        tabsSel.hide () ->
+          qcSel.each () -> $(@).css("height", $(@).height() + tabsHeight)
+
     modal = $("#mod_quick_classify")
     unless modal.length
       $('body').append("<div style='display:none;' id='mod_quick_classify' class='ui-front'>x</div>")
@@ -534,7 +534,7 @@ root.Chain =
     'Save': (e) ->
       countriesWithBlankTariffs = Chain.countriesWithBlankTariffs()
       if countriesWithBlankTariffs.length > 0
-        window.alert("A populated tariff line cannot appear after a blank one: #{countriesWithBlankTariffs.join(', ')} ")      
+        window.alert("A populated tariff line cannot appear after a blank one: #{countriesWithBlankTariffs.join(', ')} ")
       else if Classify.hasInvalidTariffs()
         window.alert("Please correct or erase all bad tariff numbers.")
       else
@@ -616,13 +616,6 @@ root.Chain =
       ChainAllPages.renderRemote(requestPath: "/products/show_region_modal?country_ids=#{countryIds}", target: "#region_modal")
     # not sure why this opens automatically
     regionModal.dialog('close')
-
-  getAuthToken : () ->
-    # First check for the csrf cookie (since that's what angular uses as well), then fall back to the meta tag.
-    token = $.cookie("XSRF-TOKEN")
-    unless token
-      token = $('meta[name="csrf-token"]').attr('content')
-    token
 
   tariffPopUp : (htsNumber, country_id, country_iso) ->
     mod = $("#mod_tariff_popup")
@@ -720,7 +713,7 @@ $(document).ready () ->
 
   $(document).on 'click', "a[data-action='auto-classify']", (evt) ->
     evt.preventDefault()
-    regionModal = $('#region_modal')   
+    regionModal = $('#region_modal')
     regionModal.data("hts", $(@).parent().find('.hts_field').val())
     regionModal.data("tariff-line-num", parseInt($(@).attr('tariff-line-num')))
     regionModal.data("country", $(@).attr('country'))
