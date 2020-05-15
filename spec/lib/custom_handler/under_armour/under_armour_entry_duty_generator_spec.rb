@@ -1,24 +1,24 @@
 describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
   let (:ua) { with_fenix_id(Factory(:importer), "874548506RM0001") }
-  let! (:entry) {
-    e = Factory(:entry, importer: ua, cadex_accept_date: Date.new(2019, 10, 1))
+  let! (:entry) do
+    e = Factory(:entry, importer: ua, release_date: Date.new(2019, 10, 1))
     invoice = e.commercial_invoices.create! invoice_number: "ASNNUMBER", exchange_rate: 1.2
     line = invoice.commercial_invoice_lines.create! part_number: "ARTICLE", po_number: "PONUMBER"
-    tariff = line.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 100
+    line.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 100
 
     e
-  }
+  end
 
   describe "generate_xml" do
 
     let (:cdefs) { subject.send(:cdefs) }
-    let! (:product) {
+    let! (:product) do
       p = Factory(:product, unique_identifier: "UAPARTS-ARTICLE")
       p.update_custom_value! cdefs[:prod_prepack], false
       p.update_custom_value! cdefs[:prod_part_number], "PROD-1"
       p
-    }
+    end
 
     it "builds xml file for UA entries between start / end dates" do
       xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
@@ -68,9 +68,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
     it "handles multiple PO numbers" do
       line2 = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "PO2", part_number: "ARTICLE2"
-      tariff2 = line2.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
+      line2.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
 
-      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+      xml_data, _entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
 
       expect(xml_data).not_to be_nil
       r = xml_data.root
@@ -88,9 +88,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
     it "handles multiple ASN numbers with single PO" do
       invoice = entry.commercial_invoices.create! invoice_number: 'ASN2', exchange_rate: 1.8
       line = invoice.commercial_invoice_lines.create! po_number: "PONUMBER", part_number: "ARTICLE2"
-      tariff = line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
+      line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
 
-      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+      xml_data, _entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
 
       expect(xml_data).not_to be_nil
       r = xml_data.root
@@ -108,9 +108,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
     it "handles multiple ASN numbers with multiple PO numbers" do
       invoice = entry.commercial_invoices.create! invoice_number: 'ASN2', exchange_rate: 1.8
       line = invoice.commercial_invoice_lines.create! po_number: "PONUMBER2", part_number: "ARTICLE2"
-      tariff = line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
+      line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
 
-      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+      xml_data, _entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
 
       expect(xml_data).not_to be_nil
       r = xml_data.root
@@ -133,10 +133,10 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
     it "rolls up like part/HTS combinations" do
       line2 = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "PONUMBER", part_number: "ARTICLE"
-      tariff2 = line2.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 25
-      tariff3 = line2.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
+      line2.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 25
+      line2.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
 
-      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+      xml_data, _entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
 
       expect(xml_data).not_to be_nil
       r = xml_data.root
@@ -151,9 +151,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
     it "does not roll up like part/HTS combinations on different POs" do
       line2 = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "PONUMBER2", part_number: "ARTICLE"
-      tariff2 = line2.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 25
+      line2.commercial_invoice_tariffs.create! hts_code: "1234567890", duty_amount: 25
 
-      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+      xml_data, _entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
 
       expect(xml_data).not_to be_nil
       r = xml_data.root
@@ -202,9 +202,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
     it "doesn't add blank Header elements" do
       invoice = entry.commercial_invoices.create! invoice_number: 'NOTASN2', exchange_rate: 1.8
       line = invoice.commercial_invoice_lines.create! po_number: "PONUMBER2", part_number: "ARTICLE2"
-      tariff = line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
+      line.commercial_invoice_tariffs.create! hts_code: "9876543210", duty_amount: 50
 
-      xml_data, entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
+      xml_data, _entries = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2)
 
       expect(xml_data).not_to be_nil
       r = xml_data.root
@@ -247,7 +247,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
 
     it "generates xml and sends it in test" do
       ftp_info = nil
-      expect(subject).to receive(:ftp_sync_file) do |file, sr, info|
+      expect(subject).to receive(:ftp_sync_file) do |_file, _sr, info|
         ftp_info = info
       end
 

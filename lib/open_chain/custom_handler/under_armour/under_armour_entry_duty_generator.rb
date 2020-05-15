@@ -8,9 +8,9 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
   include OpenChain::FtpFileSupport
 
   UnderArmourDutyData = Struct.new(:article, :hts_code, :duty, :currency, :exchange_rate, :prepack, :part_number)
-  SYNC_CODE ||= "UA Duty"
+  SYNC_CODE ||= "UA Duty".freeze
 
-  def self.run_schedulable opts={}
+  def self.run_schedulable opts = {}
     raise "A start date must be set." if opts['start_date'].nil?
     self.new.generate_and_send(Time.zone.parse(opts['start_date']), opts['last_start_time'])
   end
@@ -64,7 +64,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
 
     def ftp_info
       path = MasterSetup.get.production? ? "ua_duty" : "ua_duty_test"
-      ftp = connect_vfitrack_net("to_ecs/#{path}")
+      connect_vfitrack_net("to_ecs/#{path}")
     end
 
     def generate_sync_records entries
@@ -177,12 +177,12 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
     end
 
     def find_entries importer, start_date, end_date
-      Entry.joins(Entry.join_clause_for_need_sync("UA DUTY")).
-        where(Entry.has_never_been_synced_where_clause).
-        where(importer: importer).
-        where("cadex_accept_date >= ? AND cadex_accept_date < ?", start_date, end_date).find_each do |entry|
-          yield entry
-        end
+      Entry.joins(Entry.join_clause_for_need_sync("UA DUTY"))
+           .where(Entry.has_never_been_synced_where_clause)
+           .where(importer: importer)
+           .where("release_date >= ? AND release_date < ?", start_date, end_date).find_each do |entry|
+        yield entry
+      end
     end
 
     def ua_importer
@@ -196,7 +196,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
     end
 
     def cdefs
-      @cd ||= self.class.prep_custom_definitions([:prod_prepack, :prod_part_number])
+      @cdefs ||= self.class.prep_custom_definitions([:prod_prepack, :prod_part_number])
     end
 
-end; end; end; end;
+end; end; end; end
