@@ -26,6 +26,29 @@ describe CommercialInvoiceLine do
     end
   end
 
+  describe "total_supplemental_tariff" do
+    it "sums specified field for chapter 99 tariffs" do
+      line = Factory(:commercial_invoice_line)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "123456789", duty_amount: 10)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "990234567", duty_amount: 12)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678", duty_amount: 13)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678", duty_amount: nil)
+
+      expect(line.total_supplemental_tariff(:duty_amount)).to eq 25
+    end
+  end
+
+  describe "supplemental_tariffs" do
+    it "returns associated chapter 99 tariffs" do
+      line = Factory(:commercial_invoice_line)
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "123456789")
+      tariff2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "990234567")
+      tariff3 = Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: "992345678")
+
+      expect(line.supplemental_tariffs).to contain_exactly(tariff2, tariff3)
+    end
+  end
+
   describe "total_fees" do
     it "sums fees for line" do
       expect(CommercialInvoiceLine.new(prorated_mpf: BigDecimal.new("1"), hmf: BigDecimal.new("2"), cotton_fee: BigDecimal.new("3"), other_fees: BigDecimal("7")).total_fees).to eq BigDecimal.new("13")

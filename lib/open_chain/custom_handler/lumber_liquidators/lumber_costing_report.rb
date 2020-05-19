@@ -191,6 +191,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
           line_values[:value] = line.value
           line_values[:other] = ""
           line_values[:currency] = "USD"
+          line_values[:duty] -= line_values[:additional_tariff_duty]
+
           values << line_values
         end
       end
@@ -201,7 +203,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberCo
       values.each do |line|
         row = [
               line[:entry_number], line[:bol], line[:container], line[:po], line[:line_number], line[:part], line[:quantity], line[:vendor_code], line[:value],
-              line[:ocean_rate], line[:duty], line[:add], line[:cvd], line[:brokerage], line[:acessorial], line[:isc_management], line[:isf], line[:blp_handling],
+              line[:ocean_rate], line[:duty], line[:add], line[:cvd], line[:brokerage], line[:acessorial], line[:isc_management], line[:isf], line[:additional_tariff_duty],
               line[:blp], line[:pier_pass], line[:hmf], line[:mpf], line[:inland_freight], line[:courier], line[:oga], line[:clean_truck], line[:other], line[:currency]
             ]
 

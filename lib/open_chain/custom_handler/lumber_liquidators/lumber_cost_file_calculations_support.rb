@@ -89,6 +89,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; module LumberC
       c = {}
       c[:entered_value] = (line_entered_value || BigDecimal("0"))
       c[:duty] = lines.map {|line| line.total_duty || BigDecimal("0") }.sum
+      c[:additional_tariff_duty] = lines.map {|line| line.total_supplemental_tariff(:duty_amount) || BigDecimal("0")}.sum
       c[:add] = lines.map {|line| line.add_duty_amount || BigDecimal("0") }.sum
       c[:cvd] = lines.map {|line| line.cvd_duty_amount || BigDecimal("0") }.sum
       c[:hmf] = lines.map {|line| line.hmf || BigDecimal("0") }.sum

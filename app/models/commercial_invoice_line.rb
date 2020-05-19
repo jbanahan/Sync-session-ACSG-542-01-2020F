@@ -112,6 +112,10 @@ class CommercialInvoiceLine < ActiveRecord::Base
     BigDecimal.new(self.commercial_invoice_tariffs.map(&:duty_amount).compact.sum)
   end
 
+  def total_supplemental_tariff meth
+    BigDecimal.new(self.supplemental_tariffs.map(&meth).compact.sum)
+  end
+
   def total_fees
     [prorated_mpf, hmf, cotton_fee, other_fees].compact.sum
   end
@@ -122,6 +126,10 @@ class CommercialInvoiceLine < ActiveRecord::Base
 
   def duty_plus_fees_add_cvd_amounts
     self.duty_plus_fees_amount + ([add_duty_amount, cvd_duty_amount]).compact.sum
+  end
+
+  def supplemental_tariffs
+    self.commercial_invoice_tariffs.select { |t| t.hts_code =~ /\A99/ }
   end
 
   def first_sale_savings

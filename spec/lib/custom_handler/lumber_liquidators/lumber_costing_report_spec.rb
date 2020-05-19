@@ -6,7 +6,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       container = Factory(:container, entry: entry, container_number: "CONT")
       invoice_line = Factory(:commercial_invoice_line, commercial_invoice: Factory(:commercial_invoice, entry: entry), container: container,
                              po_number: "PO", part_number: "000123", quantity: 10, value: 100.0, add_duty_amount: 110.0, cvd_duty_amount: 120.00, hmf: 130.00, prorated_mpf: 140.00)
-      tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, entered_value: 100, duty_amount: 200, gross_weight:BigDecimal.new("200"))
+      tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, hts_code: "1234567890", entered_value: 100, duty_amount: 200, gross_weight:BigDecimal.new("200"))
+      tariff2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line, hts_code: "9902345678", duty_amount: 70)
 
       broker_invoice = Factory(:broker_invoice, entry: entry)
       invoice_line = broker_invoice.broker_invoice_lines.create! charge_code: "0004", charge_description: "Ocean Freight", charge_amount: 200
@@ -45,7 +46,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostingReport do
       e, data = subject.generate_entry_data entry
       expect(e).not_to be_nil
       expect(data.size).to eq 1
-      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", "200.000", "200.000", "110.000", "120.000", "100.000", nil, nil, nil, nil, nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
+      expect(data.first).to eq ["ENT", "MBOL", "CONT", "PO", "00005", "000123", "10.000", "802542", "100.000", "200.000", "200.000", "110.000", "120.000", "100.000", nil, nil, nil, "70.000", nil, nil, "130.000", "140.000", nil, nil, nil, nil, nil, "USD"]
     end
 
     context "with prorated amounts" do

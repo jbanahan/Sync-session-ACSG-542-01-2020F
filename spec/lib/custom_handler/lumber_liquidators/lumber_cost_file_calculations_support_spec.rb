@@ -127,6 +127,19 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberCostFileCalculations
       expect(bucket[:ocean_rate]).to eq BigDecimal("70.00")
       expect(bucket[:brokerage]).to eq BigDecimal("100.01")
     end
+
+    it "splits out duty for supplemental tariffs" do
+      line.commercial_invoice_tariffs.each { |cit| cit.hts_code = "123456789" }
+      line.commercial_invoice_tariffs.build hts_code: "9903234567", duty_amount: BigDecimal("12")
+      line.commercial_invoice_tariffs.build hts_code: "9912345678", duty_amount: BigDecimal("18")
+
+      totals = {ocean_rate: BigDecimal("100"), brokerage: BigDecimal("200")}
+      bucket = totals.dup
+
+      charges = subject.calculate_proration_for_lines [line, line, line], BigDecimal("200"), totals, bucket
+      expect(charges[:duty]).to eq 390
+      expect(charges[:additional_tariff_duty]).to eq 90
+    end
   end
 
   describe "add_remaining_proration_amounts" do
