@@ -20,7 +20,6 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
     c = s.containers.create! container_number: "ABCD1234567890", fcl_lcl: "FCL"
 
     l = Factory(:shipment_line, shipment: s, container: c, quantity: 10, product: product, linked_order_line_id: order.order_lines.first.id, gross_kgs: 200, invoice_number: "1")
-    l2 = Factory(:shipment_line, shipment: s, container: c, quantity: 20, product: product, linked_order_line_id: order.order_lines.second.id, gross_kgs: 100, invoice_number: "1")
 
     l.shipment.reload
   }
@@ -67,6 +66,14 @@ describe OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatches
 
       it "falls back to non-invoice matching if invoice does not match" do
         shipment.shipment_lines.update_all invoice_number: "NOTAMATCH"
+        expect(subject.run_validation entry).to be_blank
+      end
+
+      it "skips goh lines" do
+        line = entry.commercial_invoices.first.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: 20
+        line.commercial_invoice_tariffs.create! hts_code: "3923900080"
+        entry.reload
+
         expect(subject.run_validation entry).to be_blank
       end
     end

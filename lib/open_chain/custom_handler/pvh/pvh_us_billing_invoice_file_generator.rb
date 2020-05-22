@@ -20,21 +20,25 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     generate_and_send_invoice_xml(invoice, invoice_snapshot, "DUTY", invoice_number(entry_snapshot, invoice_snapshot, "DUTY")) do |details|
       # Duty needs to come from the the actual commercial invoice line / tariff data since PVH wants it broken out to the line level..
       json_child_entities(entry_snapshot, "CommercialInvoice") do |invoice_snapshot|
-        json_child_entities(invoice_snapshot, "CommercialInvoiceLine") do |line_snapshot|
+        # GOH Lines need to have their duty / charge amounts sum'ed together from the "real" lines that they were split out from
+        # at the operational level.  The GOH lines don't actually come on the electronic ASN/Order/Invoice data.  They're just listed
+        # in the actual paperwork and operations splits them out onto distinct invoice lines.  We then have to take the charges from
+        # those lines and join them back to their original lines.
+        goh_lines, standard_lines = partition_goh_lines(invoice_snapshot)
+
+        standard_lines.each do |line_snapshot|
           charges = duty_charges_for_line(line_snapshot, hmf_offsets)
-          next unless charges.size > 0
+          process_line_snapshot(entry_snapshot, invoice_snapshot, line_snapshot, invoice_line_item_charges, credit_invoice, charges)
+        end
 
-          key = find_invoice_line_data(entry_snapshot, invoice_snapshot, line_snapshot)
-          total_line_charges = invoice_line_item_charges[key]
+        goh_lines.each do |line_snapshot|
+          charges = duty_charges_for_line(line_snapshot, hmf_offsets)
+          # There's no point in proceeding here if thre's no charges listed on the goh line
+          next unless charges_present?(charges)
 
-
-          charges.each_pair do |uid, amount|
-            # If we're generating a credit invoice, we need to multiply the actual duty amounts by negative 1 to get the credit values.
-            amount = (amount * -1) if credit_invoice
-
-            total_line_charges[uid] ||= BigDecimal("0")
-            total_line_charges[uid] += amount
-          end
+          goh_invoice_line_data = find_goh_matching_invoice_line_data(invoice_line_item_charges, invoice_snapshot, line_snapshot)
+          raise "Unable to find corresponding commercial invoice line for GOH line with Part # #{mf(line_snapshot, :cil_part_number)} / Units #{mf(line_snapshot, :cil_units)} / Value #{mf(line_snapshot, :cil_value)}." if goh_invoice_line_data.nil?
+          process_line_snapshot(entry_snapshot, invoice_snapshot, line_snapshot, invoice_line_item_charges, credit_invoice, charges, invoice_line_data: goh_invoice_line_data)
         end
       end
 
@@ -43,10 +47,57 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
         invoice_line = generate_invoice_line_item(details, "Manifest Line Item", key.item_number, master_bill: key.bill_number,
                           container_number: key.container_number, order_number: key.order_number, part_number: key.part_number)
         charges.each_pair do |uid, amount|
+          next if amount.nil? || amount == 0
+
           add_invoice_line_charge invoice_line, invoice_date, amount, duty_gtn_charge_code_map[uid], currency
         end
       end
     end
+  end
+
+  def find_goh_matching_invoice_line_data invoice_line_item_charges, goh_invoice_snapshot, goh_line_snapshot
+    invoice_line_data = invoice_line_item_charges.keys
+    # We're going to try and find a non-goh invoice line that has the same PO/Part/Unit count and use that line's key as the GOH's key
+    key_components = [:cil_po_number, :cil_part_number, :cil_units]
+    invoice_line_key = find_matching_line_by_goh_key(invoice_line_data, goh_invoice_snapshot, goh_line_snapshot, key_components)
+    return invoice_line_key if invoice_line_key.present?
+
+    # If we didn't find anything, then relax our matching and just match to the first line that has the same PO / Part number
+    key_components = [:cil_po_number, :cil_part_number]
+    find_matching_line_by_goh_key(invoice_line_data, goh_invoice_snapshot, goh_line_snapshot, key_components)
+  end
+
+  def find_matching_line_by_goh_key invoice_lines, goh_invoice_snapshot, goh_line_snapshot, key_components
+    goh_line_key = goh_key(mf(goh_invoice_snapshot, :ci_invoice_number), goh_line_snapshot, key_components)
+    invoice_lines.each do |line|
+      line_key = goh_key(line.invoice_number, line.invoice_line, key_components)
+      return line if line_key == goh_line_key
+    end
+
+    nil
+  end
+
+  def goh_key invoice_number, line_snapshot, line_key_components
+    keys = [invoice_number]
+    line_key_components.each { |key| keys << mf(line_snapshot, key) }
+    keys
+  end
+
+  def process_line_snapshot entry_snapshot, invoice_snapshot, line_snapshot, invoice_line_item_charges, credit_invoice, charges, allow_missing_line: false, invoice_line_data: nil
+    invoice_line_data = find_invoice_line_data(entry_snapshot, invoice_snapshot, line_snapshot, nil_if_missing: allow_missing_line) if invoice_line_data.nil?
+    return false if invoice_line_data.nil?
+
+    total_line_charges = invoice_line_item_charges[invoice_line_data]
+
+
+    charges.each_pair do |uid, amount|
+      # If we're generating a credit invoice, we need to multiply the actual duty amounts by negative 1 to get the credit values.
+      amount = (amount * -1) if credit_invoice
+
+      total_line_charges[uid] ||= BigDecimal("0")
+      total_line_charges[uid] += amount
+    end
+    true
   end
 
   # For US, we can just use the suffix directly from the invoice itself.
@@ -62,17 +113,26 @@ module OpenChain; module CustomHandler; module Pvh; class PvhUsBillingInvoiceFil
     charges = {}
     [:cil_total_duty, :cil_hmf, :cil_prorated_mpf, :cil_cotton_fee, :cil_add_duty_amount, :cil_cvd_duty_amount].each do |uid|
       charge = mf(line_snapshot, uid)
-      if charge && charge.nonzero?
+      # We want to record all charge categories in case we have to roll another line together...when writing the charges
+      # we'll skip any that are zero
+      charge = BigDecimal("0") if charge.nil?
+      if charge.nonzero?
         if uid == :cil_hmf
           offset = hmf_offsets[record_id(line_snapshot)]
           charge += offset if offset
         end
-
-        charges[uid] = charge
       end
+      charges[uid] = charge
     end
 
     charges
+  end
+
+  def charges_present? charges
+    charges.each_pair do |_code, value|
+      return true if value && value.nonzero?
+    end
+    false
   end
 
   def duty_gtn_charge_code_map

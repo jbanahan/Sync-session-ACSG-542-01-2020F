@@ -202,15 +202,34 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   def extract_and_sort_invoice_line_data entry_snapshot
     sorted_lines = Hash.new {|h, k| h[k] = [] }
     json_child_entities(entry_snapshot, "CommercialInvoice") do |invoice_snapshot|
-      json_child_entities(invoice_snapshot, "CommercialInvoiceLine") do |line_snapshot|
+      # We're going to skip lines that are goh lines, the actual commercial invoice line that has the goods hanging on the
+      # hanger will absorb the prorated brokerage invoice charge amounts.
+      _goh_lines, standard_lines = partition_goh_lines(invoice_snapshot)
+
+      standard_lines.each do |line_snapshot|
         # The invoice line data lookup also sets the expected bill / container number "keys" to use on the charge outputs
         # So we can just use this value to prorate the amounts over.
         invoice_line_data = find_invoice_line_data(entry_snapshot, invoice_snapshot, line_snapshot)
-        sorted_lines[ContainerBillingKey.new(invoice_line_data.bill_number, invoice_line_data.container_number)] << invoice_line_data
+        add_invoice_line_data(sorted_lines, invoice_line_data)
       end
     end
 
     sorted_lines
+  end
+
+  def add_invoice_line_data sorted_lines, invoice_line_data
+    sorted_lines[ContainerBillingKey.new(invoice_line_data.bill_number, invoice_line_data.container_number)] << invoice_line_data
+  end
+
+  def partition_goh_lines invoice_snapshot
+    json_child_entities(invoice_snapshot, "CommercialInvoiceLine").partition { |line| possible_goh_line?(line) }
+  end
+
+  def possible_goh_line? line_snapshot
+    json_child_entities(line_snapshot, "CommercialInvoiceTariff") do |tariff_snapshot|
+      return true if possible_goh_tariff?(mf(tariff_snapshot, :cit_hts_code))
+    end
+    return false
   end
 
   def generate_proration_sums invoice_line_data
@@ -336,20 +355,22 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
   end
 
   class InvoiceLineData
-    attr_accessor :bill_number, :container_number, :order_number, :part_number, :item_number, :shipment_line, :invoice_line
+    attr_accessor :bill_number, :container_number, :invoice_number, :order_number, :part_number, :item_number, :shipment_line, :invoice_line
 
-    def initialize bill_number, container_number, order_number, part_number, item_number, shipment_line
+    def initialize bill_number, container_number, order_number, part_number, item_number, shipment_line, invoice_number
       @bill_number = bill_number
       @container_number = container_number
       @order_number = order_number
       @part_number = part_number
       @item_number = item_number
       @shipment_line = shipment_line
+      @invoice_number = invoice_number
     end
 
     def == other_key
       self.bill_number == other_key.bill_number &&
         self.container_number == other_key.container_number &&
+        self.invoice_number == other_key.invoice_number &&
         self.order_number == other_key.order_number &&
         self.part_number == other_key.part_number &&
         self.item_number == other_key.item_number &&
@@ -361,11 +382,11 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     end
 
     def hash
-      [self.bill_number, self.container_number, self.order_number, self.part_number, self.item_number, self.shipment_line].hash
+      [self.bill_number, self.container_number, self.invoice_number, self.order_number, self.part_number, self.item_number, self.shipment_line].hash
     end
   end
 
-  def find_invoice_line_data entry_snapshot, invoice_snapshot, line_snapshot
+  def find_invoice_line_data entry_snapshot, invoice_snapshot, line_snapshot, nil_if_missing: false
     container_number = mf(line_snapshot, :cil_con_container_number)
     order_number = mf(line_snapshot, :cil_po_number)
     part_number = mf(line_snapshot, :cil_part_number)
@@ -373,6 +394,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
     invoice_number = mf(invoice_snapshot, :ci_invoice_number)
 
     shipment_line = find_shipment_line(find_shipments_by_entry_snapshot(entry_snapshot), container_number, order_number, part_number, units, invoice_number: invoice_number)
+    return nil if shipment_line.nil? && nil_if_missing
     raise "Failed to find matching PVH ASN line for Invoice # #{invoice_number}, PO # #{order_number} and Part Number #{part_number} on Entry File # '#{mf(entry_snapshot, :ent_brok_ref)}'." if shipment_line.nil?
 
     order_line = shipment_line&.order_line
@@ -380,7 +402,7 @@ module OpenChain; module CustomHandler; module Pvh; module PvhBillingFileGenerat
 
     container_number, bill_number = container_and_bill_number(entry_snapshot, shipment_line&.container, shipment_line)
 
-    d = InvoiceLineData.new(bill_number, container_number, order_number, part_number, order_line_number, shipment_line)
+    d = InvoiceLineData.new(bill_number, container_number, order_number, part_number, order_line_number, shipment_line, invoice_number)
     d.invoice_line = line_snapshot
 
     d

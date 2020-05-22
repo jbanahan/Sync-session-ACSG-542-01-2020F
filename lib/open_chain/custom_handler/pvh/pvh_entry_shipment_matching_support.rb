@@ -165,4 +165,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     @pvh ||= Company.where(system_code: "PVH").first
   end
 
+  def possible_goh_tariff? tariff_number
+    tariff_number.to_s.gsub(".", "") == "3923900080"
+  end
+
 end; end; end; end

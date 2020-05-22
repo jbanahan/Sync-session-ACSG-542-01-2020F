@@ -213,6 +213,47 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("ChargeField/Value", "125.0")
     end
 
+    context "with goh line" do
+      let! (:goh_line) do
+        invoice = entry.commercial_invoices.first
+
+        line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("0.25"), value: BigDecimal("5"), prorated_mpf: BigDecimal("1"), hmf: BigDecimal("2"), cotton_fee: BigDecimal("3"), add_duty_amount: BigDecimal("4"), cvd_duty_amount: BigDecimal("5")
+        tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("5"), hts_code: "3923900080"
+
+        line
+      end
+
+      it "rolls goh lines together with the corresponding 'actual' invoice line" do
+        shipment.shipment_lines.last.destroy
+        inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+        subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
+
+        expect(captured_xml.length).to eq 1
+
+        x = REXML::Document.new(captured_xml.first).root
+        # Validate the amounts are all rolled together correctly
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'C531']/Value", "80.0")
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'E586']/Value", "11.0")
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'D503']/Value", "22.0")
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'CTTF1']/Value", "33.0")
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'AND2']/Value", "44.0")
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'COD3']/Value", "55.0")
+      end
+
+      it "falls back to matching not based on quantity if hanger / item line quantities are off" do
+        goh_line.update! quantity: BigDecimal("40")
+        shipment.shipment_lines.last.destroy
+        inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+        subject.generate_and_send_duty_charges entry_snapshot, inv_snapshot, broker_invoice_duty
+
+        expect(captured_xml.length).to eq 1
+
+        x = REXML::Document.new(captured_xml.first).root
+        # Just validate the duty is rolled together
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'C531']/Value", "80.0")
+      end
+    end
+
     context "with hmf offsets" do
 
       it 'handles cases where hmf summed at the line is less than the total hmf' do
@@ -521,6 +562,33 @@ describe OpenChain::CustomHandler::Pvh::PvhUsBillingInvoiceFileGenerator do
 
       l = REXML::XPath.first(inv, "InvoiceDetails/InvoiceLineItem[ChargeField/Type/Code = 'C080']")
       expect(l).to have_xpath_value("ContainerNumber", "ABCD1234567890")
+    end
+
+    context "with goh line" do
+
+      let! (:goh_line) do
+        invoice = entry.commercial_invoices.first
+
+        line = invoice.commercial_invoice_lines.create! po_number: "ORDER", part_number: "PART", quantity: BigDecimal("20"), unit_price: BigDecimal("0.25"), value: BigDecimal("5"), prorated_mpf: BigDecimal("1"), hmf: BigDecimal("2"), cotton_fee: BigDecimal("3"), add_duty_amount: BigDecimal("4"), cvd_duty_amount: BigDecimal("5")
+        tariff_1 = line.commercial_invoice_tariffs.create! duty_amount: BigDecimal("5"), hts_code: "3923900080"
+
+        line
+      end
+
+      it "skips GOH lines" do
+        # This should pretty much work exactly like the standard test case, just skipping the GOH lines when calculating the ocean charges.
+        inv_snapshot = subject.json_child_entities(entry_snapshot, "BrokerInvoice").first
+        subject.generate_and_send_container_charges entry_snapshot, inv_snapshot, broker_invoice_line_container_charges
+
+        expect(captured_xml.length).to eq 1
+        x = REXML::Document.new(captured_xml.first).root
+
+        expect(x).to have_xpath_value("count(GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem)", 2)
+
+        # Validate the amounts are the original expected full amounts, not split across multiple lines
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = 'C080']/Value", "200.0")
+        expect(x).to have_xpath_value("GenericInvoices/GenericInvoice/InvoiceDetails/InvoiceLineItem/ChargeField[Type/Code = '974']/Value", "100.0")
+      end
     end
   end
 end

@@ -14,6 +14,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhValidationRuleEntry
     errors = []
     entry.commercial_invoices.each do |i|
       i.commercial_invoice_lines.each do |l|
+        next if goh_tariff?(l)
+
         if !invoice_line_matches?(shipments, entry, l)
           errors << "PO # #{l.po_number} / Part # #{l.part_number} - Failed to find matching PVH Shipment Line."
         end
@@ -34,7 +36,11 @@ module OpenChain; module CustomHandler; module Pvh; class PvhValidationRuleEntry
   end
 
   def preload_entry entry
-    ActiveRecord::Associations::Preloader.new.preload(entry, {commercial_invoices: {commercial_invoice_lines: :container}})
+    ActiveRecord::Associations::Preloader.new.preload(entry, {commercial_invoices: {commercial_invoice_lines: [:container, :commercial_invoice_tariffs]}})
+  end
+
+  def goh_tariff? invoice_line
+    invoice_line.commercial_invoice_tariffs.any? { |t| possible_goh_tariff?(t.hts_code) }
   end
 
 end; end; end; end

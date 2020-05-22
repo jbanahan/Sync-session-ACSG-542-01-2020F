@@ -149,4 +149,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     end
   end
 
+  def possible_goh_line? line_snapshot
+    false
+  end
+
 end; end; end; end;
