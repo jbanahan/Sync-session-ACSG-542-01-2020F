@@ -594,6 +594,16 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
     end
 
+    context "Puma" do
+      it 'handles Puma 7501 integration files' do
+        expect(master_setup).to receive(:custom_features_list).and_return ['Puma 7501']
+        expect(OpenChain::CustomHandler::Vandegrift::VandegriftPuma7501Parser).to receive(:delay).and_return OpenChain::CustomHandler::Vandegrift::VandegriftPuma7501Parser
+        expect(OpenChain::CustomHandler::Vandegrift::VandegriftPuma7501Parser).to receive(:process_from_s3).with("bucket", '12345')
+        cmd = {'request_type'=>'remote_file', 'original_path'=>'/_puma_7501/a.xml', 's3_bucket'=>'bucket', 's3_path'=>'12345'}
+        expect(subject.process_command(cmd)).to eq(success_hash)
+      end
+    end
+
     context "Target" do
       it 'handles Target Entry Initiation Files' do
         do_parser_test("Target Feeds", OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser, '/target_entry/entry.txt')

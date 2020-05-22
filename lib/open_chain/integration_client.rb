@@ -78,6 +78,7 @@ require 'open_chain/custom_handler/amazon/amazon_product_parser_broker'
 require 'open_chain/custom_handler/rockport/rockport_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/kirklands/kirklands_gtn_order_xml_parser'
 require 'open_chain/custom_handler/target/target_entry_initiation_file_parser'
+require 'open_chain/custom_handler/vandegrift/vandegrift_puma_7501_parser'
 
 module OpenChain
   class IntegrationClient
@@ -215,6 +216,8 @@ module OpenChain
         OpenChain::CustomHandler::Hm::HmI1Interface.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "hm_i2") && custom_features.include?('H&M I2 Interface')
         OpenChain::CustomHandler::Hm::HmI2ShipmentParser.delay(priority: -5).process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "puma_7501") && custom_features.include?("Puma 7501")
+        OpenChain::CustomHandler::Vandegrift::VandegriftPuma7501Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "hm_i977") && custom_features.include?('H&M Interfaces')
         OpenChain::CustomHandler::Hm::HmI977Parser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "hm_i978") && custom_features.include?('H&M Interfaces')
