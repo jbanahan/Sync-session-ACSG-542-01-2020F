@@ -149,7 +149,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
         po_container_values[key][:gross_weight] += line.gross_weight
       end
 
-      ci_duty_totals = Hash.new { |h, k| h[k] = BigDecimal("0")}
+      ci_duty_totals = Hash.new { |h, k| h[k] = BigDecimal("0") }
 
       po_container_values.each_value do |v|
         ci_duty_totals[:zlf3_standard] += v[:zlf3_standard]
@@ -161,7 +161,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
 
       # find what fraction of zlf3 each type represents
       ci_duty_perc = [:zlf3_standard, :zlf3_additional, :zlf3_add_cvd].map do |type|
-        [type, (ci_duty_totals[type] / total_ci_duty)]
+        perc = total_ci_duty.zero? ? 0 : (ci_duty_totals[type] / total_ci_duty)
+        [type, perc]
       end.to_h
 
       invoice.broker_invoice_lines.each do |line|
@@ -180,7 +181,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberIn
       end
 
       # Since broker invoices lump all zlf3 together, split them back out based on ratio from commercial invoice
-      total_bi_zlf3 = bi_totals.delete :zlf3
+      total_bi_zlf3 = bi_totals.delete(:zlf3) || BigDecimal("0")
       bi_totals[:zlf3_standard] = (total_bi_zlf3 * ci_duty_perc[:zlf3_standard]).round(2)
       bi_totals[:zlf3_additional] = (total_bi_zlf3 * ci_duty_perc[:zlf3_additional]).round(2)
       bi_totals[:zlf3_add_cvd] = (total_bi_zlf3 * ci_duty_perc[:zlf3_add_cvd]).round(2)
