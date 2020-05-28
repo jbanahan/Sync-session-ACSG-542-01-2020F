@@ -3,19 +3,20 @@ require 'email_validator'
 class RegistrationsController < ApplicationController
   include Recaptcha::Verify
 
-  skip_before_filter :require_user
+  skip_before_action :require_user
 
   def send_email
     valid_recaptcha = verify_recaptcha(timeout: 10)
     valid_email = EmailValidator.valid?(params[:email]) || params[:email].blank?
 
     {email: "Email", fname: "First Name", lname: "Last Name",
-     company: "Company", contact: "Contact"}.each { |k, v| add_flash(:errors, "You must fill in a value for '#{v}'.") if params[k].empty? }
+     company: "Company", contact: "Contact"}.each { |k, v| add_flash(:errors, "You must fill in a value for '#{v}'.") if params[k].blank? }
 
     if !has_errors? && valid_recaptcha && valid_email
-      OpenMailer.send_registration_request(params[:email], params[:fname], params[:lname], params[:company], params[:contact], params[:cust_no], MasterSetup.get.system_code).deliver_later
+      OpenMailer.send_registration_request(params[:email], params[:fname], params[:lname], params[:company], params[:contact],
+                                           params[:cust_no], MasterSetup.get.system_code).deliver_later
       render json: {flash: {notice: [
-        "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" +
+        "Thank you for registering, your request is being reviewed and you’ll receive a system invite shortly.\n\n" \
         "If you have any questions, please contact your Vandegrift account representative or support@vandegriftinc.com."
       ]}}
     else
