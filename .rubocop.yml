@@ -58,6 +58,10 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   Enabled: false
 
+Style/TernaryParentheses:
+  Enabled: true
+  EnforcedStyle: require_parentheses_when_complex
+
 Style/TrailingBodyOnModule:
   Enabled: false
 
@@ -81,6 +85,9 @@ Layout/EmptyLinesAroundClassBody:
   Enabled: false
 
 Layout/EmptyLinesAroundModuleBody:
+  Enabled: false
+
+Layout/ExtraSpacing:
   Enabled: false
 
 Layout/IndentationConsistency:

@@ -1,35 +1,42 @@
 describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
   describe "parse" do
-    before :each do
+    before do
       allow_any_instance_of(Order).to receive(:can_edit?).and_return true
-      Factory(:master_user, username:'integration')
-      @path = 'spec/support/bin/jjill850sample.xml'
-      @pathfw = 'spec/support/bin/jjill850samplefw.xml'
-      @c = Factory(:company, importer:true, system_code:'JJILL')
-      @us = Factory(:country, iso_code:'US')
+      Factory(:master_user, username: 'integration')
     end
+
+    let(:path) { 'spec/support/bin/jjill850sample.xml' }
+    let(:pathfw) { 'spec/support/bin/jjill850samplefw.xml' }
+    let!(:co) { Factory(:company, importer: true, system_code: 'JJILL') }
+    let!(:us) { Factory(:country, iso_code: 'US') }
+
     let(:log) { InboundFile.new }
+
     def run_file opts = {}
-      described_class.parse_file(IO.read(@path), log, opts)
+      described_class.parse_file(IO.read(path), log, opts)
     end
+
     def run_file_fw opts = {}
-      described_class.parse_file(IO.read(@pathfw), log, opts)
+      described_class.parse_file(IO.read(pathfw), log, opts)
     end
-    it "should close cancelled order" do
-      dom = REXML::Document.new(IO.read(@path))
+
+    it "closes cancelled order" do
+      dom = REXML::Document.new(IO.read(path))
       REXML::XPath.each(dom.root, '//BEG01') {|el| el.text = '01'}
       expect_any_instance_of(Order).to receive(:close!).with(instance_of(User))
       described_class.parse_dom dom, log
     end
-    it "should reopen order where BEG01 not eq to '03'" do
-      o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368', closed_by_id:7, closed_at:Time.now)
+
+    it "reopens order where BEG01 not eq to '03'" do
+      o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368', closed_by_id: 7, closed_at: Time.zone.now)
       DataCrossReference.create_jjill_order_fingerprint!(o, 'badfingerprint')
       expect_any_instance_of(Order).to receive(:reopen!).with(instance_of(User))
       expect_any_instance_of(Order).to receive(:post_update_logic!).with(instance_of(User))
       run_file
     end
-    it "should set fish/wildlife true if present" do
+
+    it "sets fish/wildlife true if present" do
       cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife]
       expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
 
@@ -40,7 +47,8 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       p1 = ol1.product
       expect(p1.custom_value(cdefs[:prod_fish_wildlife])).to eq true
     end
-    it "should not set fish/wildlife true if P0125 does not equal FISH/WILDLIFE" do
+
+    it "doesn't set fish/wildlife true if P0125 does not equal FISH/WILDLIFE" do
       cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife]
       expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
 
@@ -50,7 +58,8 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       p1 = ol1.product
       expect(p1.custom_value(cdefs[:prod_fish_wildlife])).to be_falsey
     end
-    it "should update fish/wildlife to true if P0125 is set on a subsequent run" do
+
+    it "updates fish/wildlife to true if P0125 is set on a subsequent run" do
       cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife]
       expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
 
@@ -67,8 +76,10 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       p1 = ol1.product
       expect(p1.custom_value(cdefs[:prod_fish_wildlife])).to eq true
     end
-    it "should save order" do
-      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
+
+    it "saves order" do
+      cdefs = described_class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :prod_part_number,
+                                                       :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
       expect_any_instance_of(Order).to receive(:post_create_logic!).with(instance_of(User))
       expect {run_file}.to change(Order, :count).from(0).to(1)
       o = Order.first
@@ -84,8 +95,8 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(fact).to be_factory
       expect(vend.linked_companies).to include(fact)
 
-      expect(o.importer).to eq @c
-      expect(@c.linked_companies).to include(vend)
+      expect(o.importer).to eq co
+      expect(co.linked_companies).to include(vend)
 
       expect(o.customer_order_number).to eq "1001368"
       expect(o.order_number).to eq "JJILL-1001368"
@@ -104,7 +115,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(o.get_custom_value(cdefs[:ord_original_gac_date]).date_value).to eq o.ship_window_end
       expect(o.product_category).to eq 'Other'
 
-      st  = o.ship_to
+      st = o.ship_to
       expect(st.system_code).to eq '0101'
       expect(st.name).to eq 'J JILL'
       expect(st.line_1).to eq 'RECEIVING' # hard coded
@@ -112,8 +123,8 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       expect(st.city).to eq 'TILTON'
       expect(st.state).to eq 'NH'
       expect(st.postal_code).to eq '03276'
-      expect(st.country).to eq @us
-      expect(st.company).to eq @c
+      expect(st.country).to eq us
+      expect(st.company).to eq co
 
       expect(o.order_lines.count).to eq 4
       ol1 = o.order_lines.first
@@ -136,14 +147,14 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
       expect(EntitySnapshot.count).to eq 1
 
-      expect(log.company).to eq @c
+      expect(log.company).to eq co
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].value).to eq "1001368"
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_type).to eq "Order"
       expect(log.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)[0].module_id).to eq o.id
     end
 
-    it "should fail if importer can't be found" do
-      @c.destroy
+    it "fails if importer can't be found" do
+      co.destroy
 
       expect {run_file}.to raise_error "Company with system code JJILL not found."
       expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)[0].message).to eq "Company with system code JJILL not found."
@@ -151,59 +162,71 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
 
     context "when line numbers are found" do
       it "updates existing order lines when not booked" do
-        o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368')
-        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111)
 
         run_file
         ol.reload
         expect(ol.quantity).to eq 299
       end
+
       it "updates existing order lines when booked" do
-        o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368')
-        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111)
         s = Factory(:shipment, reference: "REF")
-        s.booking_lines.create!(product_id:ol.product_id, quantity:1, order_id: o.id, order_line_id: ol.id)
+        s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
         run_file
         ol.reload
         expect(ol.quantity).to eq 299
       end
-      it "removes order lines not present in the XML" do
-        o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368')
-        Factory(:order_line, order: o, line_number: 5, quantity: 111 )
+
+      it "removes order lines not present in the XML except when booked" do
+        o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = Factory(:order_line, order: o, line_number: 5, quantity: 111)
+        Factory(:order_line, order: o, line_number: 6, quantity: 100)
+        s = Factory(:shipment, reference: "REF")
+        s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
         run_file
-        expect(OrderLine.where(line_number: 5)).to be_empty
+        expect(OrderLine.where(line_number: 6)).to be_empty
+        ol.reload
+        expect(ol.quantity).to eq 111
       end
     end
+
     context "when line numbers aren't found" do
-      let(:dom) { REXML::Document.new(IO.read(@path)) }
+
+      let(:dom) { REXML::Document.new(IO.read(path)) }
+
       before { REXML::XPath.each(dom.root, '//PO101') {|el| el.text = ''} }
 
       it "replaces order lines when not booked" do
-        o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368')
-        old_ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        old_ol = Factory(:order_line, order: o, line_number: 1, quantity: 111)
 
         described_class.parse_dom dom, log
         expect {old_ol.reload}.to raise_error ActiveRecord::RecordNotFound
         new_ol = OrderLine.where(line_number: 1).first
         expect(new_ol.quantity).to eq 299
       end
+
       it "doesn't change lines when booked" do
-        o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368')
-        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111 )
+        o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368')
+        ol = Factory(:order_line, order: o, line_number: 1, quantity: 111)
         s = Factory(:shipment, reference: "REF")
-        s.booking_lines.create!(product_id:ol.product_id, quantity:1, order_id: o.id, order_line_id: ol.id)
+        s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
         described_class.parse_dom dom, log
         ol.reload
         expect(ol.quantity).to eq 111
       end
     end
-    it "should update product name" do
+
+    it "updates product name" do
       original_product_name = "SPACE-DYED COTTON PULLOVER"
       new_product_name = "SOMETHING ELSE"
-      xml_text = IO.read(@path)
+      xml_text = IO.read(path)
 
       # first run creates product with original_product_name
       described_class.parse_file xml_text, log
@@ -218,85 +241,92 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
       p.reload
       expect(p.name).to eq new_product_name
     end
-    it "should reuse same address based on hash" do
-      st  = @c.addresses.create!(system_code:'0101', name:'J JILL',
-        line_1:'RECEIVING', line_2:'100 BIRCH POND DRIVE',
-        city:'TILTON', state:'NH', postal_code:'03276', country_id:@us.id)
+
+    it "reuses same address based on hash" do
+      st = co.addresses.create!(system_code: '0101', name: 'J JILL', line_1: 'RECEIVING', line_2: '100 BIRCH POND DRIVE',
+                                city: 'TILTON', state: 'NH', postal_code: '03276', country_id: us.id)
       expect {run_file}.to change(Order, :count).from(0).to(1)
       expect(Order.first.ship_to).to eq st
     end
-    it "should set mode to Air for 'A'" do
-      dom = REXML::Document.new(IO.read(@path))
+
+    it "sets mode to Air for 'A'" do
+      dom = REXML::Document.new(IO.read(path))
       REXML::XPath.each(dom.root, '//TD504') {|el| el.text = 'A'}
       described_class.parse_dom dom, log
       expect(Order.first.mode).to eq 'Air'
     end
 
-    it "should auto assign agent if only one exists" do
-      agent = Factory(:company, agent:true)
-      @c.linked_companies << agent
-      vn = Factory(:company, name:'CENTRALAND LMTD', system_code:'JJILL-0044198', vendor:true)
+    it "auto assigns agent if only one exists" do
+      agent = Factory(:company, agent: true)
+      co.linked_companies << agent
+      vn = Factory(:company, name: 'CENTRALAND LMTD', system_code: 'JJILL-0044198', vendor: true)
       vn.linked_companies << agent
       run_file
       expect(Order.first.agent).to eq agent
-
     end
 
-    it "should use existing vendor" do
-      vn = Factory(:company, name:'CENTRALAND LMTD', system_code:'JJILL-0044198', vendor:true)
+    it "uses existing vendor" do
+      vn = Factory(:company, name: 'CENTRALAND LMTD', system_code: 'JJILL-0044198', vendor: true)
       run_file
       expect(Order.first.vendor).to eq vn
     end
-    it "should use existing product" do
-      p = Factory(:product, importer_id:@c.id, unique_identifier:'JJILL-04-1024')
+
+    it "uses existing product" do
+      p = Factory(:product, importer_id: co.id, unique_identifier: 'JJILL-04-1024')
       run_file
       expect(OrderLine.first.product).to eq p
     end
-    it "should not use product that isn't for JJILL" do
-      p = Factory(:product, importer_id:Factory(:company).id, unique_identifier:'JJILL-04-1024')
-      expect {run_file}.to raise_error /Unique identifier/
+
+    it "doesn't use product that isn't for JJILL" do
+      Factory(:product, importer_id: Factory(:company).id, unique_identifier: 'JJILL-04-1024')
+      expect {run_file}.to raise_error(/Unique identifier/)
     end
-    it "should update order" do
-      o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368', approval_status:'Accepted')
+
+    it "updates order" do
+      o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368', approval_status: 'Accepted')
       DataCrossReference.create_jjill_order_fingerprint!(o, 'badfingerprint')
       run_file
       o.reload
       expect(o.order_lines.count).to eq 4
       expect(o.approval_status).to be_nil
     end
+
     it "updates booked (but unshipped) order header" do
-      o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368', fob_point: "PK", approval_status: "Accepted")
-      ol = Factory(:order_line, order:o)
+      o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368', fob_point: "PK", approval_status: "Accepted")
+      ol = Factory(:order_line, order: o)
       s = Factory(:shipment, reference: "REF")
-      s.booking_lines.create!(product_id:ol.product_id, quantity:1, order_id: o.id, order_line_id: ol.id)
+      s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id)
 
       run_file
       o.reload
       expect(o.fob_point).to eq "CN"
       expect(o.approval_status).to be_nil
     end
-    it "should not update order with newer last_exported_from_source" do
-      o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368', last_exported_from_source:Date.new(2014, 8, 1))
+
+    it "doesn't update order with newer last_exported_from_source" do
+      o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368', last_exported_from_source: Date.new(2014, 8, 1))
       run_file
       o.reload
       expect(o.order_lines).to be_empty
     end
-    it "should not change the original GAC custom field if it is already set" do
-      o = Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368', ship_window_end:Date.new(2014, 12, 25))
+
+    it "doesn't change the original GAC custom field if it is already set" do
+      o = Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368', ship_window_end: Date.new(2014, 12, 25))
       cdefs = described_class.prep_custom_definitions [:ord_original_gac_date]
       o.update_custom_value!(cdefs[:ord_original_gac_date], o.ship_window_end)
       run_file
       o.reload
       expect(o.custom_value(cdefs[:ord_original_gac_date])).to eq Date.new(2014, 12, 25)
     end
+
     context "notifications" do
       let(:u)   { 3.days.ago }
-      let(:o)   { Factory(:order, importer_id:@c.id, order_number:'JJILL-1001368', fob_point: "PK", updated_at:u, approval_status: "Accepted") }
-      let(:ol)  { Factory(:order_line, order:o, sku:"SKU") }
+      let(:o)   { Factory(:order, importer_id: co.id, order_number: 'JJILL-1001368', fob_point: "PK", updated_at: u, approval_status: "Accepted") }
+      let(:ol)  { Factory(:order_line, order: o, sku: "SKU") }
       let(:s)   { Factory(:shipment, reference: "REF1", booking_mode: "Air") }
-      let(:bl)  { s.booking_lines.create!(product_id:ol.product_id, quantity:1, order_id: o.id, order_line_id: ol.id) }
+      let(:bl)  { s.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id) }
       let(:s2)  { Factory(:shipment, reference: "REF2") }
-      let(:bl2) { s2.booking_lines.create!(product_id:ol.product_id, quantity:1, order_id: o.id, order_line_id: ol.id) }
+      let(:bl2) { s2.booking_lines.create!(product_id: ol.product_id, quantity: 1, order_id: o.id, order_line_id: ol.id) }
 
       it "doesn't update order assigned to multiple bookings" do
         bl; bl2
@@ -313,9 +343,10 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
         expect(m.subject).to eq "[VFI Track] Revisions to JJill Purchase Order 1001368 were Rejected."
         expect(m.body.raw_source).to match(/Revisions for PO 1001368 was rejected because the Purchase Order exists on multiple Shipments: REF1, REF2/)
       end
+
       it "doesn't update shipped order" do
         bl
-        s.shipment_lines.create!(product:ol.product, quantity:1, linked_order_line_id: ol.id)
+        s.shipment_lines.create!(product: ol.product, quantity: 1, linked_order_line_id: ol.id)
 
         run_file
         o.reload
@@ -329,6 +360,7 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
         expect(m.subject).to eq "[VFI Track] Revisions to JJill Purchase Order 1001368 were Rejected."
         expect(m.body.raw_source).to match(/Revisions for PO 1001368 were rejected because the Shipment REF1 was already shipped./)
       end
+
       it "sends warning if revised order mode and booking mode don't match" do
         bl
 
@@ -343,9 +375,10 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
         expect(m.subject).to eq "[VFI Track] Mode of Transport Discrepancy for PO 1001368 and Shipment REF1"
         expect(m.body.raw_source).to match(/The Mode of Transport for PO 1001368 does not match the Booked Mode of Transport for Shipment REF1/)
       end
+
       it "matches only first part of the booking mode to the revised order mode" do
         bl
-        s.update_attributes! booking_mode: "OCEAN - FCL"
+        s.update! booking_mode: "OCEAN - FCL"
 
         run_file
         o.reload
@@ -355,10 +388,11 @@ describe OpenChain::CustomHandler::JJill::JJill850XmlParser do
         m = OpenMailer.deliveries.pop
         expect(m).to be_nil
       end
-      it "should update order header when force_header_updates = true and order on shipment" do
-        s.shipment_lines.create!(product:ol.product, quantity:1, linked_order_line_id:ol.id)
 
-        run_file force_header_updates:true
+      it "updates order header when force_header_updates = true and order on shipment" do
+        s.shipment_lines.create!(product: ol.product, quantity: 1, linked_order_line_id: ol.id)
+
+        run_file force_header_updates: true
 
         o.reload
         expect(o.order_lines.to_a).to eq [ol]

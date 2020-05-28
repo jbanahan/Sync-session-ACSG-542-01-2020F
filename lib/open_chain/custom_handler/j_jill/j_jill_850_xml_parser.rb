@@ -9,26 +9,27 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::IntegrationClientParser
 
-  SHIP_MODES ||= {'A'=>'Air', 'B'=>'Ocean'}
-  SHIP_VIA_CODES ||= {'2'=>'Air Collect', '3'=>'Boat', '4'=>'Air Prepaid', '5'=>'Air Sea Diff'}
+  SHIP_MODES ||= {'A' => 'Air', 'B' => 'Ocean'}.freeze
+  SHIP_VIA_CODES ||= {'2' => 'Air Collect', '3' => 'Boat', '4' => 'Air Prepaid', '5' => 'Air Sea Diff'}.freeze
   def self.integration_folder
     ["www-vfitrack-net/_jjill_850", "/home/ubuntu/ftproot/chainroot/www-vfitrack-net/_jjill_850"]
   end
 
-  def self.parse_file data, log, opts={}
+  def self.parse_file data, log, opts = {}
     parse_dom REXML::Document.new(data), log, opts
   end
 
-  def self.parse_dom dom, log, opts={}
+  def self.parse_dom dom, log, opts = {}
     self.new(opts).parse_dom dom, log
   end
 
-  def initialize opts={}
-    @inner_opts = {force_header_updates:false}
+  def initialize opts = {}
+    @inner_opts = {force_header_updates: false}
     @inner_opts = @inner_opts.merge opts
     @jill = Company.find_by(system_code: UID_PREFIX)
     @user = User.integration
-    @cdefs = self.class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name, :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
+    @cdefs = self.class.prep_custom_definitions [:prod_fish_wildlife, :prod_importer_style, :prod_vendor_style, :prod_part_number, :ord_entry_port_name,
+                                                 :ord_ship_type, :ord_original_gac_date, :ord_line_size, :ord_line_color]
   end
 
   def parse_dom dom, log
@@ -41,6 +42,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   end
 
   private
+
   def parse_order order_root, extract_date, line_numbers_exist, log
     @vendor_styles = Set.new
     cancel = REXML::XPath.first(order_root, 'BEG/BEG01').text.to_i == 1
@@ -48,7 +50,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, cust_ord
     ord_num = "#{UID_PREFIX}-#{cust_ord}"
     Lock.acquire(ord_num) do
-      ord = Order.find_by(importer_id: @jill.id, order_number:ord_num)
+      ord = Order.find_by(importer_id: @jill.id, order_number: ord_num)
 
       update_lines = true
       update_header = true
@@ -70,7 +72,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         update_lines = !multiple_bookings && line_numbers_exist
       end
 
-      ord = Order.new(importer_id:@jill.id, order_number:ord_num) unless ord
+      ord ||= Order.new(importer_id: @jill.id, order_number: ord_num)
       return if ord.last_exported_from_source && ord.last_exported_from_source > extract_date
 
       if update_header
@@ -103,9 +105,9 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
         ord.reopen! @user
       end
 
-      transport_mode_diff = !compare_transport_modes(shp_refs.first, order_root) if shp_refs && shp_refs.present?
+      transport_mode_diff = !compare_transport_modes(shp_refs.first, order_root) if shp_refs.present?
       if !po_assigned_to_shipment && !multiple_bookings && transport_mode_diff
-        ord.unaccept! @user if ord.approval_status = 'Accepted'
+        ord.unaccept! @user if ord.approval_status == 'Accepted'
         notify_about_transport_mode_diff(cust_ord, ord.related_bookings.first.reference)
       end
 
@@ -114,7 +116,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       if fp.blank?
         ord.post_create_logic! @user
         DataCrossReference.create_jjill_order_fingerprint!(ord, fingerprint)
-      elsif fingerprint!=fp
+      elsif fingerprint != fp
         ord.post_update_logic! @user
         # We've already rejected changes if shipped or multiple bookings found
         if (!po_assigned_to_shipment && !multiple_bookings) && ord.approval_status == 'Accepted'
@@ -166,7 +168,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
   end
 
   def set_ship_to ord, order_root
-    st = Address.new(company_id:@jill.id)
+    st = Address.new(company_id: @jill.id)
     ship_to_root = REXML::XPath.first(order_root, "GROUP_5[N1/N101='ST']")
     return unless ship_to_root
     n1 = REXML::XPath.first(ship_to_root, 'N1')
@@ -178,7 +180,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     st.city = et n4, 'N401'
     st.state = et n4, 'N402'
     st.postal_code = et n4, 'N403'
-    st.country = (et(n4, 'N404')=='USA' ? Country.find_by(iso_code: 'US') : nil)
+    st.country = (et(n4, 'N404') == 'USA' ? Country.find_by(iso_code: 'US') : nil)
 
     hash_key = Address.make_hash_key st
     found_address = Address.find_by(address_hash: hash_key, company_id: @jill.id)
@@ -204,7 +206,6 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     line_number = 1
     order.order_lines.destroy_all
     REXML::XPath.each(order_root, 'GROUP_11') do |group_el|
-      po1_el = REXML::XPath.first(group_el, 'PO1')
       ol = order.order_lines.build
       ol.line_number = line_number
       line_number += 1
@@ -218,14 +219,14 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     REXML::XPath.each(order_root, 'GROUP_11') do |group_el|
       po1_el = REXML::XPath.first(group_el, 'PO1')
       line_number = et(po1_el, 'PO101').to_i
-      log.reject_and_raise "Missing line number in source file" unless line_number.present?
+      log.reject_and_raise "Missing line number in source file" if line_number.blank?
       new_line_nums << line_number
       ln = order.order_lines.find { |ordln| ordln.line_number == line_number }
-      ol = ln ? ln : order.order_lines.build(line_number: line_number)
+      ol = ln || order.order_lines.build(line_number: line_number)
       parse_line_remaining_fields ol, group_el
     end
     line_nums_missing_from_xml = old_line_nums - new_line_nums
-    order.order_lines.where(line_number: line_nums_missing_from_xml).destroy_all
+    order.order_lines.where(line_number: line_nums_missing_from_xml).reject(&:booked?).each(&:destroy)
   end
 
   def parse_line_remaining_fields order_line, group_el
@@ -238,14 +239,25 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     add_placeholder_fields_to_order_line order_line, po1_el
   end
 
-  def add_placeholder_fields_to_order_line ol, po1_el
+  def add_placeholder_fields_to_order_line ol, po1_el # rubocop:disable Naming/MethodParameterName
     # we can't write the custom values to the order lines until they're saved in the database,
     # so we'll store the values in placeholder fields that we can then loop through in the
     # update_line_custom_values field after the save is done
-    def ol.ph_color= x; @ph_color = x; end
-    def ol.ph_color; @ph_color; end
-    def ol.ph_size= x; @ph_size = x; end
-    def ol.ph_size; @ph_size; end
+    def ol.ph_color= color # rubocop:disable Style/TrivialAccessors
+      @ph_color = color
+    end
+
+    def ol.ph_color # rubocop:disable Style/TrivialAccessors
+      @ph_color
+    end
+
+    def ol.ph_size= size # rubocop:disable Style/TrivialAccessors
+      @ph_size = size
+    end
+
+    def ol.ph_size # rubocop:disable Style/TrivialAccessors
+      @ph_size
+    end
 
     ol.ph_color = et po1_el, 'PO113'
     ol.ph_size = et po1_el, 'PO119'
@@ -263,13 +275,14 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
       ol.update_custom_value! @cdefs[:ord_line_size], ol.ph_size if ol.respond_to? :ph_size
     end
   end
-  def parse_product group_11
-    po1_el = REXML::XPath.first(group_11, 'PO1')
+
+  def parse_product group11
+    po1_el = REXML::XPath.first(group11, 'PO1')
     prod_uid = "#{UID_PREFIX}-#{et po1_el, 'PO111'}"
-    p = Product.where(importer_id:@jill.id, unique_identifier:prod_uid).first_or_create!
+    p = Product.where(importer_id: @jill.id, unique_identifier: prod_uid).first_or_create!
 
     # update product attributes
-    product_name = REXML::XPath.first(group_11, 'LIN/LIN03').text
+    product_name = REXML::XPath.first(group11, 'LIN/LIN03').text
     uom = et po1_el, 'PO103'
     update_product_if_needed(p, product_name, uom)
 
@@ -300,19 +313,19 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     p
   end
 
-  def update_product_if_needed p, product_name, unit_of_measure
+  def update_product_if_needed prod, product_name, unit_of_measure
     need_update = false
-    if !product_name.blank? && product_name != p.name
-      p.name = product_name
+    if product_name.present? && product_name != prod.name
+      prod.name = product_name
       need_update = true
     end
-    if unit_of_measure != p.unit_of_measure
-      p.unit_of_measure = unit_of_measure
+    if unit_of_measure != prod.unit_of_measure
+      prod.unit_of_measure = unit_of_measure
       need_update = true
     end
     if need_update
-      p.save!
-      EntitySnapshot.create_from_entity p, @user
+      prod.save!
+      EntitySnapshot.create_from_entity prod, @user
     end
   end
 
@@ -320,11 +333,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     return nil if vendor_ref.nil?
     v = Company.find_by(system_code: "#{UID_PREFIX}-#{vendor_ref[0]}")
     if v.nil?
-      v = Company.create!(system_code:"#{UID_PREFIX}-#{vendor_ref[0]}", name:vendor_ref[1], vendor:true)
+      v = Company.create!(system_code: "#{UID_PREFIX}-#{vendor_ref[0]}", name: vendor_ref[1], vendor: true)
       @jill.linked_companies << v
     end
     v
   end
+
   def find_or_create_factory vendor, order_root
     factory_el = nil
     REXML::XPath.each(order_root, 'GROUP_5') do |g5|
@@ -340,13 +354,12 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     f = Company.find_by(system_code: sys_code)
     if f.nil?
       nm = REXML::XPath.first(factory_el, 'N1/N102').text
-      f = Company.create!(system_code:sys_code, name:nm, factory:true)
+      f = Company.create!(system_code: sys_code, name: nm, factory: true)
     end
     @jill.linked_companies << f if !@jill.linked_companies.include?(f)
     vendor.linked_companies << f if vendor && !vendor.linked_companies.include?(f)
     f
   end
-
 
   def parse_refs parent
     r = {}
