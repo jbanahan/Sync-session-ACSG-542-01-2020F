@@ -8,6 +8,8 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
   include OpenChain::FtpFileSupport
   include OpenChain::EntityCompare::ComparatorHelper
 
+  class AmazonBillingError < StandardError; end
+
   # This is simply a sync record we're going to add to ANY broker invoice we've already generated billing data for
   # We'll then use the more specific sync codes to associate sync records with the actual files we're generating
   # for the Duty files, the brokerage charge files, and the bill of lading level charges.
@@ -147,7 +149,10 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
       sync_record = find_or_build_sync_record invoice, invoice_type_trading_partner(invoice_type)
       sync_record.failure_message = error.message
       sync_record.save!
-      error.log_me ["Failed to generate #{invoice_type} invoice for Broker Invoice # #{invoice.invoice_number}."]
+      # Don't bother using the log_me function here...it's just spamming our email list with issues because operations
+      # continues to bill invalid codes.  The issues themselves ARE logged to the sync records so it should be fine.
+      error.log_me unless error.is_a?(AmazonBillingError)
+      nil
     end
 
     def send_invoice_xml broker_invoice, invoice_type, xml
@@ -242,7 +247,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
       ll = add_element(xml, "LoadLevel")
 
       mid = find_mid(entry_snapshot)
-      raise "Invoice #{mf(invoice_snapshot, :bi_invoice_number)} does not have any valid MID addresses." if mid.nil?
+      raise AmazonBillingError, "Invoice #{mf(invoice_snapshot, :bi_invoice_number)} does not have any valid MID addresses." if mid.nil?
 
       add_element(ll, "ShipFromAddressEntityCode", "SH")
       add_element(ll, "ShipFromName", mid.name)
@@ -289,7 +294,7 @@ module OpenChain; module CustomHandler; module Amazon; class AmazonBillingFileGe
 
           # This is really a backup, there should be a business rule preventing the invoice from being billed if the charge
           # codes used are invalid.
-          raise "Invoice #{mf(invoice_snapshot, :bi_invoice_number)} has an invalid Charge Code of '#{code}'. Only pre-validated charge codes can be billed to Amazon. This invoice must be reversed and re-issued without the invalid code."
+          raise AmazonBillingError, "Invoice #{mf(invoice_snapshot, :bi_invoice_number)} has an invalid Charge Code of '#{code}'. Only pre-validated charge codes can be billed to Amazon. This invoice must be reversed and re-issued without the invalid code."
         end
       end
       summary = add_element(xml, "Summary")

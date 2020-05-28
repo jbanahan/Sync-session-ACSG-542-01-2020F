@@ -4,6 +4,30 @@ require 'open_chain/aws_config_support'
 module OpenChain; class SQS
   extend OpenChain::AwsConfigSupport
 
+  class SqsMessageAttributes
+
+    attr_reader :approximate_receive_count, :approximate_first_receive_timestamp, :message_deduplication_id,
+                :message_group_id, :sender_id, :sent_timestamp, :sequence_number
+
+    def initialize sqs_message
+      sqs_attributes = sqs_message.attributes
+      @approximate_receive_count = sqs_attributes["ApproximateReceiveCount"].to_i
+      @approximate_first_receive_timestamp = self.class.to_time(sqs_attributes["ApproximateFirstReceiveTimestamp"])
+      @message_deduplication_id = sqs_attributes["MessageDeduplicationId"]
+      @message_group_id = sqs_attributes["MessageGroupId"]
+      @sender_id = sqs_attributes["SenderId"]
+      @sent_timestamp = self.class.to_time(sqs_attributes["SentTimestamp"])
+      @sequence_number = sqs_attributes["SequenceNumber"]
+    end
+
+    def self.to_time attribute
+      return nil if attribute.blank? || attribute == "0"
+
+      Time.strptime(attribute, "%Q").in_time_zone(Time.zone)
+    end
+
+  end
+
   # translate given object to json and add to queue
   def self.send_json queue, json, opts = {}
     opts = {retry_count: 3, sleep: 1}.merge opts
@@ -41,6 +65,7 @@ module OpenChain; class SQS
 
     max_message_count = opts.delete(:max_message_count).to_i
     yield_raw = opts.delete(:yield_raw)
+    retrieve_attributes = opts.delete(:include_attributes) == true
 
     poller = queue_poller(queue_url, opts)
 
@@ -76,13 +101,17 @@ module OpenChain; class SQS
       completed_messages = []
       begin
         messages.each do |msg|
-          if yield_raw == true
-            obj = msg
-          else
-            obj = JSON.parse msg.body
+          catch(:skip_delete) do
+            if yield_raw == true
+              obj = msg
+            else
+              obj = JSON.parse msg.body
+            end
+
+            attributes = SqsMessageAttributes.new(msg) if retrieve_attributes
+            yield obj, attributes
+            completed_messages << msg
           end
-          yield obj
-          completed_messages << msg
         end
       ensure
         poller.delete_messages(completed_messages) if completed_messages.length > 0

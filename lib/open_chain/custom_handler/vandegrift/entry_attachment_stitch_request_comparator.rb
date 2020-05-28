@@ -166,7 +166,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class EntryAttachment
       # it will use it as the request identifier in log messages, but won't fail if the value isn't there.
       reference_key = "#{attachable.class.name}-#{attachable.id}"
       request['stitch_request']['reference_info'] = {'key' => reference_key}.merge reference_hash
-      request['stitch_request']['destination_file'] = {'path' => "/chain-io/#{MasterSetup.get.uuid}/stitched/#{reference_key}-#{Time.zone.now.to_f}.pdf", 'service' => 's3'}
+      # The locking is here to ensure that only a single process is generating a timestamp at a time for the specified reference key
+      Lock.acquire(reference_key) do
+        request['stitch_request']['destination_file'] = {'path' => "/chain-io/#{MasterSetup.get.uuid}/stitched/#{reference_key}-#{Time.zone.now.to_f}.pdf", 'service' => 's3'}
+      end
 
       request
     end

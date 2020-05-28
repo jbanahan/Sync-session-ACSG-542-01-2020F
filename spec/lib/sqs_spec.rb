@@ -77,6 +77,9 @@ describe OpenChain::SQS do
   end
 
   describe "poll" do
+    let (:message_attributes) do
+      {"ApproximateReceiveCount" => "1", "ApproximateFirstReceiveTimestamp" => "1590527141779", "SenderId" => "sender", "SentTimestamp" => "1590527141779"}
+    end
 
     it "polls queue for messages and yields them to given block" do
       poller = instance_double("Aws::SQS::QueuePoller")
@@ -157,7 +160,52 @@ describe OpenChain::SQS do
       expect(poller).to receive(:poll).and_yield [message]
       expect(poller).to receive(:delete_messages).with [message]
 
-      expect {|b| subject.poll("queue", yield_raw: true, &b) }.to yield_with_args(message)
+      expect {|b| subject.poll("queue", yield_raw: true, &b) }.to yield_with_args(message, nil)
+    end
+
+    it "yields message attributes if specified" do
+      poller = instance_double("Aws::SQS::QueuePoller")
+      expect(subject).to receive(:queue_poller).and_return poller
+
+      message = instance_double("Aws:SQS::Types::Message")
+      expect(message).to receive(:attributes).and_return message_attributes
+      body = {"body" => "test"}
+      expect(message).to receive(:body).and_return(body.to_json)
+
+      expect(poller).to receive(:poll).and_yield [message]
+      expect(poller).to receive(:delete_messages).with [message]
+
+      expect {|b| subject.poll("queue", {include_attributes: true}, &b) }.to yield_with_args(body, instance_of(OpenChain::SQS::SqsMessageAttributes))
+    end
+
+    it "handles thrown :skip_delete symbol" do
+      poller = instance_double("Aws::SQS::QueuePoller")
+      expect(subject).to receive(:queue_poller).and_return poller
+
+      message = instance_double("Aws:SQS::Types::Message")
+      expect(message).to receive(:body).and_return '{"abc":123}'
+
+      expect(poller).to receive(:poll).and_yield [message]
+      expect(poller).not_to receive(:delete_messages)
+      subject.poll("queue") do |_message|
+        throw :skip_delete
+      end
+    end
+
+    it "handles thrown :skip_delete symbol, deleting messages not skipped" do
+      poller = instance_double("Aws::SQS::QueuePoller")
+      expect(subject).to receive(:queue_poller).and_return poller
+
+      message = instance_double("Aws:SQS::Types::Message")
+      allow(message).to receive(:body).and_return '{"abc":123}'
+      message2 = instance_double("Aws:SQS::Types::Messag")
+      allow(message2).to receive(:body).and_return '{"def":456}'
+
+      expect(poller).to receive(:poll).and_yield [message, message2]
+      expect(poller).to receive(:delete_messages).with([message2])
+      subject.poll("queue") do |sqs_message|
+        throw :skip_delete if sqs_message["abc"]
+      end
     end
   end
 

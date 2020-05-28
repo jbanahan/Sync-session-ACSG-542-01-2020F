@@ -166,6 +166,8 @@ describe OpenChain::CustomHandler::Vandegrift::EntryAttachmentStitchRequestCompa
 
     it "generates valid stitch request, ordering files according to the setup" do
       stitch_request = nil
+      expect(Lock).to receive(:acquire).with("Entry-#{entry.id}").and_yield
+
       Timecop.freeze(now) do
         stitch_request = subject.generate_stitch_request_for_entry entry, archive_setup
       end

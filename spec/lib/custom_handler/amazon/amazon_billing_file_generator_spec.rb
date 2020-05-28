@@ -386,9 +386,22 @@ describe OpenChain::CustomHandler::Amazon::AmazonBillingFileGenerator do
       expect(sr.failure_message).to be_nil
     end
 
-    it "handles errors when sending an invoice" do
+    it "handles errors when sending an invoice related to Amazon billing errors" do
       expect(subject).to receive(:generate_and_send_invoice_xml).with(entry_snapshot, invoice_snapshot, broker_invoice, :duty).and_raise(StandardError, "Error!")
-      expect_any_instance_of(StandardError).to receive(:log_me).with(["Failed to generate duty invoice for Broker Invoice # 12345."])
+      expect_any_instance_of(StandardError).to receive(:log_me)
+
+      subject.generate_and_send_invoice_files entry_snapshot, invoice_snapshot, broker_invoice
+
+      expect(broker_invoice.sync_records.length).to eq 1
+      sr = broker_invoice.sync_records.first
+      expect(sr.failure_message).to eq "Error!"
+      expect(sr.trading_partner).to eq "AMZN BILLING DUTY"
+      expect(sr).to be_persisted
+    end
+
+    it "handles unexpected errors" do
+      expect(subject).to receive(:generate_and_send_invoice_xml).with(entry_snapshot, invoice_snapshot, broker_invoice, :duty).and_raise(described_class::AmazonBillingError, "Error!")
+      expect_any_instance_of(described_class::AmazonBillingError).not_to receive(:log_me)
 
       subject.generate_and_send_invoice_files entry_snapshot, invoice_snapshot, broker_invoice
 

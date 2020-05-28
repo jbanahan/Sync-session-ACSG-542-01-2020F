@@ -10,8 +10,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
   end
 
   def self.consume_stitch_responses
-    OpenChain::SQS.poll(response_queue) do |message_hash|
-      process_stitch_response message_hash
+    OpenChain::SQS.poll(response_queue, include_attributes: true) do |message_hash, message_attributes|
+      begin # rubocop:disable Style/RedundantBegin
+        process_stitch_response message_hash
+      rescue OpenChain::S3::NoSuchKeyError
+        # If we've tried several times to process a stitch response and it raises a no key error, then just skip the message
+        # If the file isn't found...just throw a ':skip_delete' symbol (which SQS handles as essentially a no-op)..the
+        # message will be reprocessed later.
+        throw :skip_delete unless message_attributes.approximate_receive_count > 10
+      end
     end
   end
 

@@ -129,4 +129,34 @@ ERR
     end
   end
 
+  describe "consume_stitch_responses" do
+    let (:message_hash) { {'stitch_response' => "response"} }
+    let (:message_attributes) { instance_double(OpenChain::SQS::SqsMessageAttributes) }
+    let (:sqs_queue) { "https://queue" }
+
+    before :each do
+      allow(subject).to receive(:response_queue).and_return sqs_queue
+    end
+
+    it "passes message to process_stitch_response" do
+      expect(subject).to receive(:process_stitch_response).with message_hash
+      expect(OpenChain::SQS).to receive(:poll).with(sqs_queue, include_attributes: true).and_yield(message_hash, message_attributes)
+      subject.consume_stitch_responses
+    end
+
+    it "throws 'skip_delete' unless receive count is > 10" do
+      expect(OpenChain::SQS).to receive(:poll).with(sqs_queue, include_attributes: true).and_yield(message_hash, message_attributes)
+      expect(message_attributes).to receive(:approximate_receive_count).and_return 10
+      expect(subject).to receive(:process_stitch_response).and_raise OpenChain::S3::NoSuchKeyError
+      expect { subject.consume_stitch_responses }.to throw_symbol :skip_delete
+    end
+
+    it "swallows NoSuchKeyError if receive count is > 10" do
+      expect(OpenChain::SQS).to receive(:poll).with(sqs_queue, include_attributes: true).and_yield(message_hash, message_attributes)
+      expect(message_attributes).to receive(:approximate_receive_count).and_return 11
+      expect(subject).to receive(:process_stitch_response).and_raise OpenChain::S3::NoSuchKeyError
+      subject.consume_stitch_responses
+    end
+  end
+
 end
