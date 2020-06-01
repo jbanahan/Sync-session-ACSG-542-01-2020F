@@ -6,136 +6,160 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
 
   let (:api_client) { instance_double(OpenChain::CustomHandler::Intacct::IntacctClient) }
 
-  describe "push_payables" do
-    it "pushes payables to intacct that have not already been sent or errored and are for the company specified" do
-      p1 = IntacctPayable.create! intacct_upload_date: Time.zone.now, company: "C"
-      p2 = IntacctPayable.create! intacct_errors: "Error!", company: "C"
-      p3 = IntacctPayable.create! vendor_number: "Vendor", company: "C"
-      p4 = IntacctPayable.create! vendor_number: "Vendor", company: "A"
+  describe "push_payable" do
+    let (:payable) { IntacctPayable.create! vendor_number: "Vendor", company: "C", bill_number: "Bill" }
 
-
-      expect(api_client).to receive(:send_payable).with(p3, [])
-
-      subject.push_payables ["C"]
+    it "sends given payable" do
+      expect(Lock).to receive(:db_lock).with(payable).and_yield
+      expect(api_client).to receive(:send_payable).with(payable, [])
+      subject.push_payable payable
     end
 
-    it "pushes payables to intacct that have checks associated with them" do
-      p = IntacctPayable.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
+    it "sends payables with checks" do
       c1 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
-      c2 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_payable_id: p.id
+      c2 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_payable_id: payable.id
 
-      expect(api_client).to receive(:send_payable).with(p, [c1, c2])
+      expect(api_client).to receive(:send_payable).with(payable, [c1, c2])
 
-      subject.push_payables ['C']
-
-      p.reload
-      expect(p.intacct_checks.size).to eq 2
-      expect(p.intacct_checks).to include c1
-      expect(p.intacct_checks).to include c2
+      subject.push_payable payable
+      payable.reload
+      expect(payable.intacct_checks.size).to eq 2
+      expect(payable.intacct_checks).to include c1
+      expect(payable.intacct_checks).to include c2
     end
 
     it "does not include checks associated with another payable" do
-      p = IntacctPayable.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
-      c1 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_payable_id: -1
+      IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_payable_id: -1
 
-      expect(api_client).to receive(:send_payable).with(p, [])
+      expect(api_client).to receive(:send_payable).with(payable, [])
 
-      subject.push_payables ['C']
+      subject.push_payable payable
     end
 
     it "does not include checks that already have an adjustment associated with them" do
-      p = IntacctPayable.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill"
-      c1 = IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_adjustment_key: "ADJ-123"
+      IntacctCheck.create! vendor_number: "Vendor", company: 'C', bill_number: "Bill", intacct_adjustment_key: "ADJ-123"
 
-      expect(api_client).to receive(:send_payable).with(p, [])
+      expect(api_client).to receive(:send_payable).with(payable, [])
 
-      subject.push_payables ['C']
+      subject.push_payable payable
     end
 
-    it "skips payables that have been sent after being retrieved from initial lookup" do
-      p3 = IntacctPayable.create! vendor_number: "Vendor", company: 'C'
-      p3.intacct_upload_date = Time.zone.now
-      # This is a bit of a hack so we can test the logic
-      expect(IntacctPayable).to receive(:find).with(p3.id).and_return p3
-      expect(Lock).to receive(:db_lock).with(p3).and_yield
+    it "skips payables that have been sent after being reloaded by the Lock.db_lock call" do
+      expect(Lock).to receive(:db_lock) do |&block|
+        payable.update! intacct_upload_date: Time.zone.now
+        block.call
+      end
       expect(api_client).not_to receive(:send_payable)
 
-      subject.push_payables ['C']
+      subject.push_payable payable
+    end
+
+    it "skips payables that have errors after being reloaded by the Lock.db_lock call" do
+      expect(Lock).to receive(:db_lock) do |&block|
+        payable.update! intacct_errors: "Error"
+        block.call
+      end
+      expect(api_client).not_to receive(:send_payable)
+
+      subject.push_payable payable
+    end
+  end
+
+  describe "push_payables" do
+    it "pushes payables to intacct that have not already been sent or errored and are for the company specified" do
+      IntacctPayable.create! intacct_upload_date: Time.zone.now, company: "C"
+      IntacctPayable.create! intacct_errors: "Error!", company: "C"
+      p3 = IntacctPayable.create! vendor_number: "Vendor", company: "C"
+      IntacctPayable.create! vendor_number: "Vendor", company: "A"
+
+      expect(subject).to receive(:push_payable).with(p3)
+
+      subject.push_payables ["C"]
+    end
+  end
+
+  describe "push_receivable" do
+    let (:receivable) { IntacctReceivable.create! customer_number: "CUST", company: "C" }
+
+    it "pushes receivable to intacct" do
+      expect(api_client).to receive(:send_receivable).with receivable
+      expect(Lock).to receive(:db_lock).and_yield
+
+      subject.push_receivable receivable
+    end
+
+    it "skips receivables that have been sent after being reloaded by the Lock.db_lock call" do
+      expect(Lock).to receive(:db_lock) do |&block|
+        receivable.update! intacct_upload_date: Time.zone.now
+        block.call
+      end
+      expect(api_client).not_to receive(:send_receivable)
+
+      subject.push_receivable receivable
+    end
+
+    it "skips receivables that have errors after being reloaded by the Lock.db_lock call" do
+      expect(Lock).to receive(:db_lock) do |&block|
+        receivable.update! intacct_errors: "Error"
+        block.call
+      end
+      expect(api_client).not_to receive(:send_receivable)
+
+      subject.push_receivable receivable
     end
   end
 
   describe "push_receivables" do
     it "pushes receivables to intacct that have not already been sent or errored" do
-      r1 = IntacctReceivable.create! intacct_upload_date: Time.zone.now, company: "C"
-      r2 = IntacctReceivable.create! intacct_errors: "Error!", company: "C"
+      IntacctReceivable.create! intacct_upload_date: Time.zone.now, company: "C"
+      IntacctReceivable.create! intacct_errors: "Error!", company: "C"
       r3 = IntacctReceivable.create! customer_number: "CUST", company: "C"
-      r4 = IntacctReceivable.create! customer_number: "CUST", company: "A"
+      IntacctReceivable.create! customer_number: "CUST", company: "A"
 
-      expect(api_client).to receive(:send_receivable).with(r3)
+      expect(subject).to receive(:push_receivable).with(r3)
 
       subject.push_receivables ["C"]
     end
+  end
 
-    it "skips receivables that have been sent after being retrieved from initial lookup" do
-      r3 = IntacctReceivable.create! customer_number: "CUST", company: "C"
-      r3.intacct_upload_date = Time.zone.now
+  describe "push_check" do
+    let (:check) { IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI" }
+    let (:payable) do
+      IntacctPayable.create!(vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY",
+                             intacct_upload_date: Time.zone.now, payable_type: IntacctPayable::PAYABLE_TYPE_BILL)
+    end
 
-      expect(IntacctReceivable).to receive(:find).with(r3.id).and_return r3
-      expect(Lock).to receive(:db_lock).with(r3).and_yield
-      expect(api_client).not_to receive(:send_receivable)
+    it "sends check to intacct" do
+      expect(Lock).to receive(:db_lock).with(check).and_yield
+      expect(api_client).to receive(:send_check).with check, false
 
-      subject.push_receivables ["C"]
+      subject.push_check check
+    end
+
+    it "sends checks issued after the payable to intacct" do
+      payable
+      expect(api_client).to receive(:send_check).with check, true
+      subject.push_check check
+    end
+
+    it "does not push an adjustment if one has already been made" do
+      check.update! intacct_adjustment_key: "ADJ-KEY"
+      payable
+      expect(api_client).to receive(:send_check).with check, false
+      subject.push_check check
     end
   end
 
   describe "push_checks" do
     it "pushes checks to intacct" do
       c1 = IntacctCheck.create! vendor_number: "Vendor", company: "C"
-      c2 = IntacctCheck.create! vendor_number: "Vendor", intacct_errors: "Error", company: "C"
-      c3 = IntacctCheck.create! vendor_number: "Vendor", intacct_upload_date: Time.zone.now, company: "C"
-      c4 = IntacctCheck.create! vendor_number: "Vendor", company: "A"
+      IntacctCheck.create! vendor_number: "Vendor", intacct_errors: "Error", company: "C"
+      IntacctCheck.create! vendor_number: "Vendor", intacct_upload_date: Time.zone.now, company: "C"
+      IntacctCheck.create! vendor_number: "Vendor", company: "A"
 
-      expect(api_client).to receive(:send_check).with c1, false
+      expect(subject).to receive(:push_check).with c1
 
       subject.push_checks ["C"]
-    end
-
-    it "pushes checks issued after the payable to intacct" do
-      c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
-      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now, payable_type: IntacctPayable::PAYABLE_TYPE_BILL
-
-      expect(api_client).to receive(:send_check).with c1, true
-
-      subject.push_checks ["VFI"]
-    end
-
-    it "does not issue adjustments for a check if the payable has not yet been loaded" do
-      c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
-      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI"
-
-      expect(api_client).to receive(:send_check).with c1, false
-
-      subject.push_checks ["VFI"]
-    end
-
-    it "skips checks sent after being retrieved by initial lookup" do
-      c = IntacctCheck.create! customer_number: "CUST", company: "VFI"
-      c.intacct_upload_date = Time.zone.now
-
-      expect(IntacctCheck).to receive(:find).with(c.id).and_return c
-      expect(Lock).to receive(:db_lock).with(c).and_yield
-      expect(api_client).not_to receive(:send_check)
-
-      subject.push_checks ["VFI"]
-    end
-
-    it "does not push an adjustment if one has already been made" do
-      c1 = IntacctCheck.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_adjustment_key: "ADJ-KEY"
-      p = IntacctPayable.create! vendor_number: "Vendor", bill_number: '123A', company: "VFI", intacct_key: "KEY", intacct_upload_date: Time.zone.now, payable_type: IntacctPayable::PAYABLE_TYPE_BILL
-
-      expect(api_client).to receive(:send_check).with c1, false
-
-      subject.push_checks ["VFI"]
     end
   end
 
@@ -183,6 +207,68 @@ describe OpenChain::CustomHandler::Intacct::IntacctDataPusher do
       expect(subject).to receive(:push_payables).with(["A", "B"])
 
       subject.run ["A", "B"], invoices_only: true
+    end
+  end
+
+  describe "push_billing_export_data" do
+    subject { described_class }
+
+    let! (:receivable_1) do
+      rec1 = export.intacct_receivables.build invoice_number: "REC1"
+      rec1.intacct_receivable_lines.build broker_file: "R1"
+      rec1
+    end
+
+    let! (:receivable_2) do
+      rec2 = export.intacct_receivables.build invoice_number: "REC2"
+      rec2.intacct_receivable_lines.build broker_file: "R2"
+      rec2
+    end
+
+    let! (:payable_1) do
+      pay1 = export.intacct_payables.build bill_number: "PAY1"
+      pay1.intacct_payable_lines.build broker_file: "P1", freight_file: "F1"
+      pay1
+    end
+
+    let! (:payable_2) do
+      pay2 = export.intacct_payables.build bill_number: "PAY2"
+      pay2.intacct_payable_lines.build broker_file: "P2"
+      pay2
+    end
+
+    let (:export) { IntacctAllianceExport.new }
+
+    it "pushes export data to intacct" do
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "R1")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "R2")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "P1")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "P2")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Freight File", "F1")
+
+      expect_any_instance_of(described_class).to receive(:push_receivable).with(receivable_1)
+      expect_any_instance_of(described_class).to receive(:push_receivable).with(receivable_2)
+      expect_any_instance_of(described_class).to receive(:push_payable).with(payable_1)
+      expect_any_instance_of(described_class).to receive(:push_payable).with(payable_2)
+
+      subject.push_billing_export_data export
+    end
+
+    it "looks up export if a numeric is given" do
+      expect(IntacctAllianceExport).to receive(:where).with(id: 1).and_return [export]
+
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "R1")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "R2")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "P1")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Broker File", "P2")
+      expect_any_instance_of(described_class).to receive(:push_dimension).with("Freight File", "F1")
+
+      expect_any_instance_of(described_class).to receive(:push_receivable).with(receivable_1)
+      expect_any_instance_of(described_class).to receive(:push_receivable).with(receivable_2)
+      expect_any_instance_of(described_class).to receive(:push_payable).with(payable_1)
+      expect_any_instance_of(described_class).to receive(:push_payable).with(payable_2)
+
+      subject.push_billing_export_data 1
     end
   end
 end

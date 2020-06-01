@@ -474,6 +474,10 @@ describe OpenChain::IntegrationClientCommandProcessor do
       it "handles Catair 3461 files" do
         do_parser_test("Catair Parser", OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser, "/catair_7501/file.txt")
       end
+
+      it "handles cmus billing files" do
+        do_parser_test("alliance", OpenChain::CustomHandler::Intacct::IntacctCustomsManagementBillingXmlParser, "cmus_billing/file.xml")
+      end
     end
 
     context "foot_locker" do

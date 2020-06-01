@@ -45,9 +45,9 @@ module OpenChain; module Report; module BuilderOutputReportHelper
   end
 
   def write_builder_to_tempfile builder, report_filename_base
-    report_filename = "#{report_filename_base}.#{file_extension(builder)}"
+    report_filename = Attachment.get_sanitized_filename("#{report_filename_base}.#{file_extension(builder)}")
 
-    tempfile_params = ["#{self.class.name.demodulize}", builder.output_format.to_s]
+    tempfile_params = [self.class.name.demodulize, builder.output_format.to_s]
     if block_given?
       Tempfile.open(tempfile_params) do |temp|
         setup_tempfile_setup(temp, builder, report_filename)
@@ -118,17 +118,17 @@ module OpenChain; module Report; module BuilderOutputReportHelper
 
         row_output << value
       end
-      write_body_row(builder, sheet, row_output, styles: styles) unless row_output.blank?
+      write_body_row(builder, sheet, row_output, styles: styles) if row_output.present?
     end
   end
 
   # This lambda will translate and id (int) value to the excel URL to use for viewing a
   # core module object.
   def weblink_translation_lambda builder, core_object_class
-    lambda { |result_set_row, raw_column_value|
+    lambda do |_result_set_row, raw_column_value|
       url = core_object_class.excel_url raw_column_value
       builder.create_link_cell url
-    }
+    end
   end
 
   def _column_names result_set, offset
@@ -152,4 +152,4 @@ module OpenChain; module Report; module BuilderOutputReportHelper
     builder.output_format.to_s
   end
 
-end; end; end;
+end; end; end

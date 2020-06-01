@@ -7,8 +7,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
   # This is the answer to the security question: :$hSU'ZW^x6>E7'
 
   INTACCT_CONNECTION_INFO ||= {
-    :url => 'https://api.intacct.com/ia/xml/xmlgw.phtml',
-    :api_version => "2.1"
+    url: 'https://api.intacct.com/ia/xml/xmlgw.phtml',
+    api_version: "2.1"
   }.freeze
 
   class IntacctClientError < StandardError
@@ -26,8 +26,8 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       @value = value
     end
 
-    def == obj
-      (self.class == obj.class) && self.message == obj.message && self.dimension_type == obj.dimension_type && self.value == obj.value
+    def == other
+      (self.class == other.class) && self.message == other.message && self.dimension_type == other.dimension_type && self.value == other.value
     end
   end
 
@@ -59,7 +59,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       end
 
       key
-    rescue => e
+    rescue StandardError => e
       if e.is_a?(IntacctRetryError) && (retry_count += 1) < 5
         sleep retry_count
         retry
@@ -71,11 +71,12 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       # bother with the error reporting since our end goal of getting the dimension out there has been met we
       # don't care if this particular call errored.
       message = e.message.try(:downcase)
-      if message.include?("a successful transaction has already been recorded") || (message =~ /another \S+ with the given value\(s\)/i)
-        return id
+      if message.include?("a successful transaction has already been recorded") || (message =~ /another \S+ with the given value\(s\)/i) ||
+         message.include?("concurrent request in process")
+        id
       else
         e.log_me ["Failed to find and/or create dimension #{type} #{id} for location #{company}."]
-        return nil
+        nil
       end
     end
   end
@@ -91,7 +92,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     rescue IntacctInvalidDimensionError => e
       send_dimension(e.dimension_type, e.value, e.value)
       retry
-    rescue => e
+    rescue StandardError => e
       if e.is_a?(IntacctRetryError) && (retry_count += 1) < 3
         sleep retry_count
         retry
@@ -142,7 +143,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     rescue IntacctInvalidDimensionError => e
       send_dimension(e.dimension_type, e.value, e.value)
       retry
-    rescue => e
+    rescue StandardError => e
       payable.intacct_errors = e.message
     end
 
@@ -155,7 +156,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       function_control_id, xml = @generator.generate_check_gl_entry_xml check
 
       control_ids = [function_control_id]
-      check_control_id = function_control_id
       adjustment_control_id = nil
       if send_adjustment
         adjustment_control_id, adjustment_xml = @generator.generate_ap_adjustment check, nil
@@ -177,7 +177,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     rescue IntacctInvalidDimensionError => e
       send_dimension(e.dimension_type, e.value, e.value)
       retry
-    rescue => e
+    rescue StandardError => e
       check.intacct_errors = e.message
     end
     check.save!
@@ -214,9 +214,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
     # If an Array was passed to keys, then return an array back
     if keys.is_a?(Array)
-      return objects
+      objects
     else
-      return objects.first
+      objects.first
     end
   end
 
@@ -228,7 +228,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
     # Now determine if there's any more results that we have to retrieve
     result_id = nil
-    while (results.length < max_results && data.attributes["numremaining"].to_i > 0 && !(result_id = data.attributes["resultId"].to_s).blank?)
+    while results.length < max_results && data.attributes["numremaining"].to_i > 0 && (result_id = data.attributes["resultId"].to_s).present?
       function_control_id, xml = @generator.generate_read_more result_id
       response = post_xml location_id, false, false, xml, function_control_id, request_options: {api_version: "3.0"}, read_only: true
       data = parse_list_results response, function_control_id, results
@@ -295,6 +295,25 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     xml
   end
 
+  def self.intacct_config
+    @intacct_config ||= begin
+      config = MasterSetup.secrets["intacct"]&.with_indifferent_access&.symbolize_keys
+
+      # Since these properties get loaded to an XML file, need to encode all the values properly
+      # Not expecting multi-level config values for this yet, so don't worry about parsing hashes,etc.
+      if config.present?
+        config.each_pair do |k, v|
+          # Expected keys are
+          config[k] = v.encode(xml: :text) if v.is_a?(String)
+        end
+      end
+
+      config.presence
+    end
+    raise "No Intacct client configuration file found in secrets.yml." unless @intacct_config
+    @intacct_config
+  end
+
   private
 
     def can_send_request? connection_options
@@ -303,12 +322,10 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
 
     def process_response response
       # The response from Intacct should always be an XML document.
-      begin
-        REXML::Document.new(response.body)
-      rescue REXML::ParseException => e
-        e.log_me ["Invalid Intacct API Response:\n" + response.body]
-        raise e
-      end
+      REXML::Document.new(response.body)
+    rescue REXML::ParseException => e
+      e.log_me ["Invalid Intacct API Response:\n" + response.body]
+      raise e
     end
 
     def handle_error xml, function_control_id
@@ -356,31 +373,31 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
       # The Thread.current below is a means of allowing code to force the usage of non-unique controld ids
       # This is solely for use when there's a hash collision with pushing data and it must be overridden.
       # This should ONLY ever be utilized from the command line.
-      xml = <<-XML
-<?xml version="1.0" encoding="UTF-8"?>
-<request>
-  <control>
-    <senderid>#{connection_options[:sender_id]}</senderid>
-    <password>#{connection_options[:sender_password]}</password>
-    <controlid>#{control_id}</controlid>
-    <uniqueid>#{((production? && unique_content == true && !Thread.current.thread_variable_get(:force_non_unique_intacct_request)) ? "true" : "false")}</uniqueid>
-    <dtdversion>#{connection_options[:api_version]}</dtdversion>
-  </control>
-  <operation#{((transaction == true) ? ' transaction="true"' : "" )}>
-    <authentication>
-      <login>
-        <userid>#{connection_options[:user_id]}</userid>
-        <companyid>#{company_id(connection_options)}</companyid>
-        <password>#{connection_options[:user_password]}</password>
-        #{(location_id.blank? ? "" : "<locationid>#{location_id}</locationid>")}
-      </login>
-    </authentication>
-    <content>
-#{intacct_content_xml}
-    </content>
-  </operation>
-</request>
-XML
+      xml = <<~XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <request>
+          <control>
+            <senderid>#{connection_options[:sender_id]}</senderid>
+            <password>#{connection_options[:sender_password]}</password>
+            <controlid>#{control_id}</controlid>
+            <uniqueid>#{((production? && unique_content == true && !Thread.current.thread_variable_get(:force_non_unique_intacct_request)) ? "true" : "false")}</uniqueid>
+            <dtdversion>#{connection_options[:api_version]}</dtdversion>
+          </control>
+          <operation#{((transaction == true) ? ' transaction="true"' : "")}>
+            <authentication>
+              <login>
+                <userid>#{connection_options[:user_id]}</userid>
+                <companyid>#{company_id(connection_options)}</companyid>
+                <password>#{connection_options[:user_password]}</password>
+                #{(location_id.blank? ? "" : "<locationid>#{location_id}</locationid>")}
+              </login>
+            </authentication>
+            <content>
+        #{intacct_content_xml}
+            </content>
+          </operation>
+        </request>
+      XML
       xml
     end
 
@@ -397,8 +414,8 @@ XML
       MasterSetup.get.production?
     end
 
-    def extract_errors_information el
-      "Error No: #{el.text("errorno")}\nDescription: #{el.text("description")}\nDescription 2: #{el.text("description2")}\nCorrection: #{el.text("correction")}"
+    def extract_errors_information element
+      "Error No: #{element.text("errorno")}\nDescription: #{element.text("description")}\nDescription 2: #{element.text("description2")}\nCorrection: #{element.text("correction")}" # rubocop:disable Layout/LineLength
     end
 
     def retry_error? error_elements, error_message
@@ -417,37 +434,19 @@ XML
       error_elements.each do |el|
         if el.text("description2") =~ /Invalid (.*) '(.*)' specified./
           dimension_type = nil
-          if $1 == "Brokerage File"
+          if Regexp.last_match(1) == "Brokerage File"
             dimension_type = "Broker File"
-          elsif $1 == "Freight File"
+          elsif Regexp.last_match(1) == "Freight File"
             dimension_type = "Freight File"
           end
 
           if dimension_type
-            raise IntacctInvalidDimensionError.new(error_message, dimension_type, $2)
+            raise IntacctInvalidDimensionError.new(error_message, dimension_type, Regexp.last_match(2))
           end
         end
       end
 
       false
-    end
-
-    def self.intacct_config
-      @intacct_config ||= begin
-        config = MasterSetup.secrets["intacct"]&.with_indifferent_access&.symbolize_keys
-
-        # Since these properties get loaded to an XML file, need to encode all the values properly
-        # Not expecting multi-level config values for this yet, so don't worry about parsing hashes,etc.
-
-        config.each_pair do |k, v|
-          # Expected keys are
-          config[k] = v.encode(xml: :text) if v.is_a?(String)
-        end unless config.blank?
-
-        config.blank? ? nil : config
-      end
-      raise "No Intacct client configuration file found in secrets.yml." unless @intacct_config
-      @intacct_config
     end
 
 end; end; end; end

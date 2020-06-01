@@ -7,7 +7,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctXmlGenerato
   INTACCT_DIMENSION_XREF ||= {
     'Broker File' => 'class',
     'Freight File' => 'project'
-  }
+  }.freeze
 
   # See https://developer.intacct.com/api/accounts-payable/ap-payments/#create-ap-payment
   IntacctApPayment ||= Struct.new(:financial_entity, :payment_method, :payment_request_method, :vendor_id, :document_number, :description, :payment_date, :currency, :payment_details)

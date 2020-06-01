@@ -41,6 +41,10 @@ class IntacctReceivable < ActiveRecord::Base
     ['als', 'vcu'].include? company
   end
 
+  def self.credit_invoice? receivable
+    receivable.receivable_type.to_s.include? CREDIT_INVOICE_TYPE
+  end
+
   def self.create_receivable_type company, credit_invoice
     r_type = credit_invoice ? CREDIT_INVOICE_TYPE : SALES_INVOICE_TYPE
 

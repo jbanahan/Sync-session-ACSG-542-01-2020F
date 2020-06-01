@@ -40,6 +40,7 @@ require 'open_chain/custom_handler/lands_end/le_parts_parser'
 require 'open_chain/custom_handler/lands_end/le_canada_plus_processor'
 require 'open_chain/custom_handler/intacct/alliance_day_end_ar_ap_parser'
 require 'open_chain/custom_handler/intacct/alliance_check_register_parser'
+require 'open_chain/custom_handler/intacct/intacct_customs_management_billing_xml_parser'
 require 'open_chain/custom_handler/kewill_export_shipment_parser'
 require 'open_chain/custom_handler/siemens/siemens_decryption_passthrough_handler'
 require 'open_chain/custom_handler/polo/polo_850_parser'
@@ -188,6 +189,8 @@ module OpenChain
         OpenChain::CustomHandler::Intacct::AllianceDayEndArApParser.delay(priority: -1).process_from_s3 bucket, s3_path, original_filename: original_filename
       elsif (parser_identifier == "alliance_day_end_checks") && custom_features.include?('alliance')
         OpenChain::CustomHandler::Intacct::AllianceCheckRegisterParser.delay(priority: -1).process_from_s3 bucket, s3_path, original_filename: original_filename
+      elsif (parser_identifier == "cmus_billing") && custom_features.include?("alliance")
+        OpenChain::CustomHandler::Intacct::IntacctCustomsManagementBillingXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "kewill_entry") && custom_features.include?("Kewill Entries")
         OpenChain::CustomHandler::KewillEntryParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "kewill_statements") && custom_features.include?("Kewill Statements")
