@@ -82,7 +82,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
       end
     end
 
+    shipments.each {|s| postprocess_shipment(s) }
     shipments
+  end
+
+  def postprocess_shipment shipment
+    strip_entry_number(shipment)
+    nil
   end
 
   # rubocop:disable Naming/MethodName
@@ -96,6 +102,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
   # rubocop:enable Naming/MethodName
 
   def process_10 shipment, line
+    # Even though we clear out this data later, we want to process it here so that it's potentially
+    # available to use for synthesizing other values that will be part of this file (like the master bill
+    # or the commercial invoice number)
     shipment.entry_filer_code = extract_string(line, (4..6))
     shipment.entry_number = extract_string(line, (9..16))
     shipment.entry_port = extract_integer(line, (18..21))

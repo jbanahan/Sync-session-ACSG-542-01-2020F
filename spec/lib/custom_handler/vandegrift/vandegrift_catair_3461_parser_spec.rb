@@ -17,8 +17,9 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
       shipment = shipments.first
 
       expect(shipment).not_to be_nil
-      expect(shipment.entry_filer_code).to eq '316'
-      expect(shipment.entry_number).to eq "00000019"
+      expect(shipment.entry_filer_code).to be_nil
+      expect(shipment.entry_number).to be_nil
+      expect(shipment.file_number).to be_nil
       expect(shipment.entry_type).to eq "06"
       expect(shipment.customer).to eq "CUSTNO"
       expect(shipment.bond_type).to eq 4
@@ -26,7 +27,6 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
       expect(shipment.entry_port).to eq 4103
       expect(shipment.unlading_port).to eq 1234
       expect(shipment.edi_identifier&.master_bill).to eq "31600000019"
-      expect(shipment.file_number).to eq "1"
 
       expect(shipment.firms_code).to eq "HAW9"
       expect(shipment.vessel).to eq "FTZ138030"

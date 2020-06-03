@@ -19,13 +19,13 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
     it "parses catair file and generates CMUS data elements" do
       shipment = Array.wrap(subject.process_file data).first
 
-      expect(shipment.entry_filer_code).to eq "316"
-      expect(shipment.entry_number).to eq "00000019"
+      expect(shipment.entry_filer_code).to be_nil
+      expect(shipment.entry_number).to be_nil
+      expect(shipment.file_number).to be_nil
       expect(shipment.entry_port).to eq 4103
       expect(shipment.entry_type).to eq "06"
       expect(shipment.customs_ship_mode).to eq 10
       expect(shipment.edi_identifier&.master_bill).to eq "31600000019"
-      expect(shipment.file_number).to eq "1"
       expect(shipment.customer).to eq "CUSTNO"
       expect(shipment.consignee_code).to eq "CUSTNO"
       expect(shipment.vessel).to eq "138030"

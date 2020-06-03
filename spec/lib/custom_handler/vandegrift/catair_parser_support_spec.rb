@@ -94,4 +94,21 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
       expect(ActionMailer::Base.deliveries.length).to eq 0
     end
   end
+
+  describe "strip_entry_number" do
+    let (:shipment) {
+      e = OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser::CiLoadEntry.new
+      e.entry_filer_code = "123"
+      e.entry_number = "123456"
+      e.file_number = "12345"
+      e
+    }
+
+    it "removes entry number information" do
+      subject.strip_entry_number(shipment)
+      expect(shipment.entry_filer_code).to be_nil
+      expect(shipment.entry_number).to be_nil
+      expect(shipment.file_number).to be_nil
+    end
+  end
 end

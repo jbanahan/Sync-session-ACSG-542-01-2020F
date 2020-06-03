@@ -107,4 +107,19 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     "%m%d%y"
   end
 
+  def strip_entry_number shipment
+    # Rip out the filer code and entry number from the shipment
+    # These values tend to cause problems on the EDI loads if they're pulled onto
+    # an open shipment...which is how we do things, rather than create the shipment
+    # from scratch directly from the EDI.  When you pull onto an open shipment from EDI
+    # and there's file number / entry numbers listed then it's possible those will overwrite
+    # the entry number already on the shipment, which then causes all sorts of problems.
+    # We also use predefined entry numbers
+    # so we don't generally even want to use the file numbers from the catair files.
+    shipment.entry_filer_code = nil
+    shipment.entry_number = nil
+    shipment.file_number = nil
+    nil
+  end
+
 end; end; end; end

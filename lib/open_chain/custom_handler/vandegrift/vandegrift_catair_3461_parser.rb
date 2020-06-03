@@ -74,7 +74,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
       end
     end
 
+    shipments.each {|s| postprocess_shipment(s) }
     shipments
+  end
+
+  def postprocess_shipment shipment
+    strip_entry_number(shipment)
+    nil
   end
 
   def process_B shipment, line
