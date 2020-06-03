@@ -16,14 +16,13 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
     # The cast here is because the division is stored as a string, but it's actually a numeric.  If we sort by it we'll end up
     # with 1 then 11, then 2...etc.  We want it sorted in order.
     exports = IntacctAllianceExport.where("invoice_date >= ? AND invoice_date <= ?", start_date, end_date)
+                                   .where(export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE)
                                    .order(["cast(division as signed)", :invoice_date, :file_number, :suffix])
 
     summary_sheet = build_summary_sheet builder
     ar_sheet = build_ar_sheet builder
     ap_sheet = build_ap_sheet builder
     counter = 0
-    summary_ap_sum = BigDecimal("0")
-    summary_ar_sum = BigDecimal("0")
     exports.pluck(:id).each do |export_id|
       export = retrieve_export(export_id)
       next if export.nil?
@@ -31,8 +30,6 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
       counter += 1
 
       write_summary_row(builder, summary_sheet, export)
-      summary_ap_sum += export.ap_total
-      summary_ar_sum += export.ar_total
       export.intacct_receivables.each do |receivable|
         write_ar_row(builder, ar_sheet, export, receivable)
       end

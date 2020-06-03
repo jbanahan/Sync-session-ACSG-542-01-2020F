@@ -46,9 +46,9 @@ module OpenChain; module Report; module ReportEmailHelper
   def parse_email_group group_system_code
     return nil if group_system_code.blank?
 
-    group = Group.where(system_code: group_system_code).order(:system_code).to_a
-    raise ArgumentError, "Invalid email group found: #{Array.wrap(group_system_code).join(", ")}." if group.blank?
-    group
+    list = MailingList.where(system_code: group_system_code).order(:system_code).to_a
+    raise ArgumentError, "Invalid email group found: #{Array.wrap(group_system_code).join(", ")}." if list.blank?
+    list
   end
 
 end; end; end

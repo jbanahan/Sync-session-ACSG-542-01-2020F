@@ -83,5 +83,21 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyAccountingReport do
       expect(rows[0]).to eq ["Invoice Number", "Division", "Invoice Date", "Customer", "AR Total", "AP Total", "Profit / Loss"]
       expect(rows[1]).to eq ["No accounting data found for 05/01/2020."]
     end
+
+    it "skips non-invoice exports" do
+      export.update! export_type: "check"
+
+      now = Time.zone.parse("2020-05-02 04:00")
+      Timecop.freeze(now) { subject.run({"email" => "me@there.com"}) }
+
+      expect(ActionMailer::Base.deliveries.size).to eq 1
+      email = ActionMailer::Base.deliveries.first
+      expect(email.subject).to eq "Daily Accounting Report 05/01/2020"
+
+      spreadsheet = extract_spreadsheet(email)
+      expect(spreadsheet["Daily Billing Summary"]).not_to be_blank
+      rows = spreadsheet["Daily Billing Summary"]
+      expect(rows[1]).to eq ["No accounting data found for 05/01/2020."]
+    end
   end
 end
