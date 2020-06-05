@@ -28,8 +28,8 @@ describe ValidationRuleManifestDiscrepancies do
     end
 
     it 'passes even if older entry comments are incorrect' do
-      EntryComment.create(entry: entry, body: "H OERT 201702I07378 Qty: 1932 CTN MnQty: 1931", created_at: 5.minutes.ago)
-      EntryComment.create(entry: entry, body: "H OERT 201702I07378 Qty: 1931 CTN MnQty: 1931")
+      EntryComment.create(entry: entry, body: "H OERT 201702I07378 Qty: 1932 CTN MnQty: 1931", generated_at: 5.minutes.ago)
+      EntryComment.create(entry: entry, body: "H OERT 201702I07378 Qty: 1931 CTN MnQty: 1931", generated_at: 1.minute.ago)
 
       expect(rule.run_validation(entry)).to be_nil
     end
