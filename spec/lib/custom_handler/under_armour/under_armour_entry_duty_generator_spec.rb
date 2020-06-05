@@ -212,6 +212,16 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourEntryDutyGenerator do
       expect(r).to have_xpath_value("count(Header)", 1)
     end
 
+    it "handles nil duty amounts" do
+      # Apparently Fenix can send nil values for duty if there's no duty amount for the line.
+      t = entry.commercial_invoices.first.commercial_invoice_lines.first.commercial_invoice_tariffs.first
+      t.update! duty_amount: nil
+
+      xml_data = nil
+      expect { xml_data, * = subject.generate_xml Date.new(2019, 9, 30), Date.new(2019, 10, 2) }.not_to raise_error
+      expect(xml_data.root).to have_xpath_value("Header/Details/ItemInfo/Duty", "0.0")
+    end
+
   end
 
   describe "generate_and_send" do

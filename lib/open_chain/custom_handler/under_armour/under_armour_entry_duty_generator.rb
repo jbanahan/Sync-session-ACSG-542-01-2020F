@@ -167,7 +167,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourEnt
                 duty_data.part_number = product&.custom_value(cdefs[:prod_part_number])
                 asn_data[inv.invoice_number][key] = duty_data
               end
-              duty_data.duty = (duty_data.duty || BigDecimal(0)) + tariff.duty_amount
+              duty_data.duty = (duty_data.duty || BigDecimal(0)) + (tariff.duty_amount || BigDecimal(0))
             end
           end
         end
