@@ -212,7 +212,7 @@ GEM
       thor (>= 0.14, < 2.0)
     jquery-ui-rails (6.0.1)
       railties (>= 3.2.16)
-    json (1.8.6)
+    json (2.3.0)
     jsonpath (1.0.1)
       multi_json
       to_regexp (~> 0.2.1)

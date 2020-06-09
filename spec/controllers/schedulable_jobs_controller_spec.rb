@@ -64,7 +64,8 @@ describe SchedulableJobsController do
       it "fails to update if ops are an invalid json string" do
         put :update, id: schedulable_job.id, schedulable_job:{opts:'invalid'}
         expect(assigns(:sj)).to eq schedulable_job
-        expect(flash[:errors]).to include "Options 784: unexpected token at 'invalid'"
+        expect(flash[:errors].length).to eq 1
+        expect(flash[:errors].first).to include "unexpected token at 'invalid'"
       end
     end
   end
