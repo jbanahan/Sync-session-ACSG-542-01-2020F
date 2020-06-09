@@ -144,6 +144,9 @@ $(function() {
         <tr>
           <td><%= link_to("Clear Upgrade Errors", clear_upgrade_errors_master_setups_path, method: :post) %> - Removes any error files preventing an automatic upgrade retry. Click this after fixing upgrade errors to let the system retry an upgrade.</td>
         </tr>
+        <tr>
+          <td><%= link_to("Install Missing Gems", install_gems_master_setups_path, method: :post) %> - Installs any gems that may be missing during an upgrade.</td>
+        </tr>
       <% end %>
         <tr>
           <td><%= link_to("Restart #{MasterSetup.get.system_code} Web Applications", restart_web_servers_master_setups_path, method: :post, data: {confirm: "Are you sure you want to restart all web servers?"}) %> - Restart All Web Application Services</td>

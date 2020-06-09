@@ -27,6 +27,12 @@ module OpenChain; class Ssm
     true
   end
 
+  def self.install_required_gems_command
+    run_as_command = run_command_in_user_shell(MasterSetup.server_user_account, "bundle install", working_directory: MasterSetup.instance_directory.to_s)
+    send_run_shell_script_command(run_as_command, target_hash: vfitrack_all_servers())
+    true
+  end
+
   class << self
     private
 
@@ -129,13 +135,21 @@ module OpenChain; class Ssm
     #
     # This method uses some sudo tricks to be able to do that.
     def run_command_in_user_shell username, command, working_directory: nil
-      escaped_command = Shellwords.escape(command)
+      escaped_command = escape_command(command)
 
       if !working_directory.blank?
-        escaped_command = "cd #{Shellwords.escape(working_directory)} && #{escaped_command}"
+        escaped_command = "cd #{escape_command(working_directory)} && #{escaped_command}"
       end
 
+      # Because we're not wrapping username in quotes (the sudo command fails if we try that)
+      # Then we should add standard shellword escaping for the username
       "sudo -n -H -i -u #{Shellwords.escape(username)} /bin/bash -l -c \"#{escaped_command}\""
+    end
+
+    def escape_command command
+      # We're adding quotes to commands when we send them so we don't actually have to use Shellwords
+      # to escape the command.  All we'd need to do is make sure that any "" are escaped as \"
+      command.gsub('"', '\"')
     end
   end
 end; end;

@@ -125,4 +125,26 @@ describe OpenChain::Ssm do
       expect(subject.send_clear_upgrade_errors_command).to eq true
     end
   end
+
+  describe "install_required_gems_command" do
+    it "sends bundle install command" do
+      expect(ssm_client).to receive(:send_command).with(
+        {
+          document_name: "AWS-RunShellScript",
+          targets: [
+            {key: "tag:Application", values: ["VFI Track"]},
+            {key: "tag:Group", values: ["Customer"]},
+            {key: "tag:Role", values: ["Web", "Job Queue"]}
+          ],
+          timeout_seconds: 600,
+          parameters: {
+            commands: ['sudo -n -H -i -u ubuntu /bin/bash -l -c "cd /path/to/instance && bundle install"'],
+            executionTimeout: ["3600"],
+            workingDirectory: ["/path/to/instance"]
+          }
+        }
+      )
+      expect(subject.install_required_gems_command).to eq true
+    end
+  end
 end

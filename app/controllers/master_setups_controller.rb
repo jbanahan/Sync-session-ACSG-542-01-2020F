@@ -119,4 +119,11 @@ class MasterSetupsController < ApplicationController
     }
   end
 
+  def install_gems
+    sys_admin_secure("Only system administrators can install gems.") {
+      OpenChain::Ssm.install_required_gems_command
+      add_flash :notices, "Installing all gems referenced in current Gemfile.lock file."
+      redirect_to edit_master_setup_path MasterSetup.get
+    }
+  end
 end

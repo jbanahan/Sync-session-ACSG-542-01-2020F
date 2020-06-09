@@ -459,6 +459,7 @@ OpenChain::Application.routes.draw do
       post 'restart_web_servers'
       post 'restart_job_queue'
       post 'restart_job_queue_service'
+      post 'install_gems'
     end
   end
   resources :upgrade_logs, :only=>[:show]
