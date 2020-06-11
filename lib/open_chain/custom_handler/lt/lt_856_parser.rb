@@ -221,6 +221,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
 
     po4 = find_segment(item_segments, "PO4")
     upc = find_value_by_qualifier item_segments, "LIN06", "UP"
+    net_weight = find_segments_by_qualifier(item_segments, "MEA02", "N")&.first
     if upc
       order_line = order.order_lines.find { |line| line.sku == upc }
     end
@@ -230,6 +231,10 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
     end
     line = shipment.shipment_lines.build(container: container, linked_order_line_id: order_line.id, product: order_line.product,
                                          carton_qty: value(po4, 1), cbms: value(po4, 8), gross_kgs: value(po4, 6), invoice_number: value(lin, 5))
+    if net_weight.present?
+      line.net_weight = BigDecimal(value(net_weight, 3))
+      line.net_weight_uom = value(net_weight, 4)
+    end
     process_item_sln line, item_segments
   end
 

@@ -16,6 +16,8 @@
 #  manufacturer_address_id :integer
 #  master_bill_of_lading   :string(255)
 #  mid                     :string(255)
+#  net_weight              :decimal(11, 2)
+#  net_weight_uom          :string(255)
 #  product_id              :integer
 #  quantity                :decimal(13, 4)
 #  shipment_id             :integer
@@ -42,7 +44,7 @@ class ShipmentLine < ActiveRecord::Base
     :cbms, :container_id, :container, :fcr_number, :gross_kgs, :invoice_number,
     :line_number, :manufacturer_address_id, :master_bill_of_lading, :mid,
     :product_id, :product, :quantity, :shipment_id, :shipment, :variant_id,
-    :variant, :linked_order_line_id
+    :variant, :linked_order_line_id, :net_weight, :net_weight_uom
 
   belongs_to :shipment, inverse_of: :shipment_lines
   belongs_to :container, inverse_of: :shipment_lines

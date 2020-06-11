@@ -98,6 +98,8 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
       expect(sl1.cbms).to eq 16.017
       expect(sl1.gross_kgs).to eq 2227.200
       expect(sl1.invoice_number).to eq "KD009"
+      expect(sl1.net_weight).to eq 294.8
+      expect(sl1.net_weight_uom).to eq "KG"
 
       expect(sl2.shipment).to eq shipment
       expect(sl2.order_lines.first.order).to eq ord_1

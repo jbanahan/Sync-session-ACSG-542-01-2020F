@@ -301,6 +301,10 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       inv_line.container_number = shipment_line.container.try(:container_number)
       inv_line.cartons = shipment_line.carton_qty
       inv_line.mid = shipment_line.mid
+      if shipment_line.net_weight.present?
+        inv_line.net_weight = shipment_line.net_weight
+        inv_line.net_weight_uom = shipment_line.net_weight_uom
+      end
 
       product = shipment_line.product
       if product

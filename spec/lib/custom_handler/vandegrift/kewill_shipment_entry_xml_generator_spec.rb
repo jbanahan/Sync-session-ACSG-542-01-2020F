@@ -67,7 +67,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       # Make a high-cube so we're checking that it's set into the correct container type field
       container = s.containers.create! container_number: "CONTAINER", seal_number: "SEAL", container_size: "26GP"
 
-      shipment_line_1 = s.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container.id, mid: "MID1"
+      shipment_line_1 = s.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container.id, mid: "MID1", net_weight: 100, net_weight_uom: "KG"
       shipment_line_1.linked_order_line_id = order.order_lines.first.id
       shipment_line_1.product_id = order.order_lines.first.product.id
       shipment_line_1.save!
@@ -151,6 +151,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       expect(line.foreign_value).to eq 300
       expect(line.country_of_origin).to eq "VN"
       expect(line.mid).to eq "MID1"
+      expect(line.net_weight).to eq 100
+      expect(line.net_weight_uom).to eq "KG"
 
       line = inv.invoice_lines.second
       expect(line.gross_weight).to eq 40

@@ -41,6 +41,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillGenericSh
         add_product_to_invoice_line(cil, line.product)
       end
 
+      if line.net_weight.present?
+        cil.net_weight = line.net_weight
+        cil.net_weight_uom = line.net_weight_uom
+      end
+
       add_shipment_line_to_invoice_line cil, line
 
       if line.order_lines.length > 0

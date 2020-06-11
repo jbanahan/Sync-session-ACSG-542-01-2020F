@@ -23,7 +23,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
 
   let (:shipment) {
     shipment = Factory(:shipment, master_bill_of_lading: "MBOL", importer: with_customs_management_id(Factory(:importer), "CUSTNO"))
-    shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id)
+    shipment_line = Factory(:shipment_line, shipment: shipment, product: product, carton_qty: 10, gross_kgs: BigDecimal("100.50"), quantity: 99, linked_order_line_id: order.order_lines.first.id, net_weight: BigDecimal("100"), net_weight_uom: "KG")
     shipment_line.update_custom_value! cdefs[:shpln_invoice_number], "INVOICE"
 
     shipment.reload
@@ -53,6 +53,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillGenericShipmentCiLoadGenera
       expect(line.foreign_value).to eq BigDecimal("1286.01")
       expect(line.hts).to eq "1234567890"
       expect(line.mid).to eq "MID"
+      expect(line.net_weight).to eq 100
+      expect(line.net_weight_uom).to eq "KG"
 
       expect(line.buyer_customer_number).to eq "CUSTNO"
       expect(line.seller_mid).to eq "MID"
