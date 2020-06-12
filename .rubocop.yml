@@ -65,9 +65,6 @@ Style/TernaryParentheses:
 Style/TrailingBodyOnModule:
   Enabled: false
 
-Style/TernaryParentheses:
-  Enabled: false
-
 Style/WordArray:
   Enabled: false
 

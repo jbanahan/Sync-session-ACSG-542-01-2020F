@@ -29,8 +29,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
       # Just raise / log the errors as exceptions...that way we know about them.  We also have to make sure this method runs without
       # error otherwise the queue message isn't deleted.
       begin
-        raise "Failed to stitch together documents for reference key #{message_hash['stitch_response']['reference_key']}: #{message_hash['stitch_response']['errors'][0]['message']}"
-      rescue => e
+        raise "Failed to stitch together documents for reference key #{message_hash['stitch_response']['reference_key']}: #{message_hash['stitch_response']['errors'][0]['message']}" # rubocop:disable Layout/LineLength
+      rescue StandardError => e
         # We have to raise / catch / log this, otherwise the stitch response message isn't removed from the queue...which is not what we want
         # Swallow this main excpetion error we get when the docs have some issue w/ the pdf and the pdf is not capable of being stitched together
         e.log_me unless swallow_error?(e.message)
@@ -79,8 +79,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
     true
   end
 
-
   private
+
     def self.response_queue
       queue = MasterSetup.secrets["pdf_stitcher"].try(:[], "response_queue")
       raise "No 'response_queue' key found under 'pdf_stitcher' config in secrets.yml." if queue.blank?
@@ -89,7 +89,21 @@ module OpenChain; module CustomHandler; module Vandegrift; class StitcherRespons
     private_class_method :response_queue
 
     def self.swallow_error? message
+      file_missing_error?(message) || java_error?(message)
+    end
+    private_class_method :swallow_error?
+
+    def self.java_error? message
       (message =~ /Unhandled Java Exception in create_output\(\):/) && [/java.io.EOFException/, /java.lang.ClassCastException/].any? {|e| message.match? e }
     end
+    private_class_method :java_error?
+
+    def self.file_missing_error? message
+      # This is the error message that the S3 api raises if the path given can't be found.  This will happen sometimes when
+      # the files referenced change after the stitch message was queued.  We don't really need to track this, it's not really
+      # an error condition.  It happens naturally from time to time.
+      message =~ /The specified key does not exist/i
+    end
+    private_class_method :file_missing_error?
 
 end; end; end; end

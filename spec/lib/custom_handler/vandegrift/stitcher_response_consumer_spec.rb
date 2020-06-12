@@ -3,15 +3,15 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
   subject { described_class }
 
   describe "process_entry_stitch_response" do
-    let (:entry) {
+    let (:entry) do
       Factory(:entry, entry_number: "1234567890")
-    }
+    end
 
-    let (:a1) {
+    let (:a1) do
       entry.attachments.create! attached_file_name: "test.pdf", attachment_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE, created_at: (Time.zone.now - 1.day)
-    }
+    end
 
-    let (:stitch_response) {
+    let (:stitch_response) do
       {
         'stitch_response' => {
           'reference_info' => {
@@ -21,13 +21,13 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
           'destination_file' => {'path' => '/bucket/path/to/file.pdf', 'service' => 's3'}
         }
       }
-    }
+    end
 
-    let (:tempfile) {
+    let (:tempfile) do
       Tempfile.new ['stitch_response', '.pdf']
-    }
+    end
 
-    after :each do
+    after do
       tempfile.close!
     end
 
@@ -42,7 +42,7 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
       end
       expect_any_instance_of(Attachment).to receive(:skip_virus_scan=).with(true)
       Timecop.freeze(now) do
-        expect(subject.process_stitch_response stitch_response).to eq true
+        expect(subject.process_stitch_response(stitch_response)).to eq true
       end
 
       entry.reload
@@ -54,13 +54,13 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
     end
 
     it "does not add new archive if an existing archive is newer" do
-      a1.update_column :created_at, (Time.zone.now + 1.day)
+      a1.update_column :created_at, (Time.zone.now + 1.day) # rubocop:disable Rails/SkipsModelValidations
 
       expect(OpenChain::S3).to receive(:download_to_tempfile).with('bucket', 'path/to/file.pdf').and_yield tempfile
       expect(OpenChain::S3).to receive(:delete).with('bucket', 'path/to/file.pdf')
       expect_any_instance_of(Entry).not_to receive(:create_snapshot)
 
-      expect(subject.process_stitch_response stitch_response).to eq true
+      expect(subject.process_stitch_response(stitch_response)).to eq true
 
       entry.reload
       expect(entry.attachments.size).to eq(1)
@@ -80,32 +80,40 @@ describe OpenChain::CustomHandler::Vandegrift::StitcherResponseConsumer do
     end
 
     it "swallows specific error response for EOFException" do
-      error = <<-ERR
-A pdftk error occurred while stitching together the paths ["file", "file2"]: Unhandled Java Exception in create_output():
-java.io.EOFException
-   at pdftk.com.lowagie.text.pdf.RandomAccessFileOrArray.readFully(pdftk)
-   at pdftk.com.lowagie.text.pdf.RandomAccessFileOrArray.readFully(pdftk)
-   at pdftk.com.lowagie.text.pdf.PdfReader.getStreamBytesRaw(pdftk)
-   at pdftk.com.lowagie.text.pdf.PdfReader.getStreamBytesRaw(pdftk)
-ERR
+      error = <<~ERR
+        A pdftk error occurred while stitching together the paths ["file", "file2"]: Unhandled Java Exception in create_output():
+        java.io.EOFException
+           at pdftk.com.lowagie.text.pdf.RandomAccessFileOrArray.readFully(pdftk)
+           at pdftk.com.lowagie.text.pdf.RandomAccessFileOrArray.readFully(pdftk)
+           at pdftk.com.lowagie.text.pdf.PdfReader.getStreamBytesRaw(pdftk)
+           at pdftk.com.lowagie.text.pdf.PdfReader.getStreamBytesRaw(pdftk)
+      ERR
       stitch_response['stitch_response']['errors'] = [{'message' => error}]
 
-      expect {
-        expect(subject.process_stitch_response stitch_response).to be_nil
-      }.to_not change(ErrorLogEntry, :count)
+      expect do
+        expect(subject.process_stitch_response(stitch_response)).to be_nil
+      end.not_to change(ErrorLogEntry, :count)
     end
 
     it "swallows specific error response for ClassCastException" do
-      error = <<-ERR
-A pdftk error occurred while stitching together the paths ["file", "file2"]: Unhandled Java Exception in create_output():
-java.lang.ClassCastException: pdftk.com.lowagie.text.pdf.PdfNull cannot be cast to pdftk.com.lowagie.text.pdf.PdfArray
-   at pdftk.com.lowagie.text.pdf.PdfCopy.addPage(pdftk)
-ERR
+      error = <<~ERR
+        A pdftk error occurred while stitching together the paths ["file", "file2"]: Unhandled Java Exception in create_output():
+        java.lang.ClassCastException: pdftk.com.lowagie.text.pdf.PdfNull cannot be cast to pdftk.com.lowagie.text.pdf.PdfArray
+           at pdftk.com.lowagie.text.pdf.PdfCopy.addPage(pdftk)
+      ERR
       stitch_response['stitch_response']['errors'] = [{'message' => error}]
 
-      expect {
-        expect(subject.process_stitch_response stitch_response).to be_nil
-      }.to_not change(ErrorLogEntry, :count)
+      expect do
+        expect(subject.process_stitch_response(stitch_response)).to be_nil
+      end.not_to change(ErrorLogEntry, :count)
+    end
+
+    it "swallows specific error response for missing file error" do
+      stitch_response['stitch_response']['errors'] = [{'message' => "THE SPECIFIED KEY DOES NOT EXIST"}]
+
+      expect do
+        expect(subject.process_stitch_response(stitch_response)).to be_nil
+      end.not_to change(ErrorLogEntry, :count)
     end
   end
 
@@ -134,7 +142,7 @@ ERR
     let (:message_attributes) { instance_double(OpenChain::SQS::SqsMessageAttributes) }
     let (:sqs_queue) { "https://queue" }
 
-    before :each do
+    before do
       allow(subject).to receive(:response_queue).and_return sqs_queue
     end
 
