@@ -4,8 +4,9 @@ VFI Track is the primary application developed by Vandegrift, Inc.  It runs atop
 
 ## Docker development environment
 
-For local docker development environment you should first install dependecies and run migrations with:
+For local docker development environment you should first build the container, install dependecies and run migrations with:
 ```
+docker-compose build # This is actually optional, docker should build whatever container you attempt to use
 docker-compose run runner .dockerdev/setup
 ```
 
@@ -26,7 +27,18 @@ Some helpful examples:
 ```
 dcu rails
 dcr runner rails c
-dcr runner rspec spec/models/address_spec.rb
+```
+
+### Testing
+
+To run all specs run the testing service
+```
+dcr testing
+```
+
+To run a particular test, just append the file and/or line number you wish to run
+```
+dcr testing spec/models/address_spec.rb:132
 ```
 
 ## Staging a New Build

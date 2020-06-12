@@ -1,13 +1,12 @@
-version: '3.7'
+version: '3.8'
 services:
   app: &app
     build:
       context: .
-      dockerfile: ./.dockerdev/Dockerfile
+      dockerfile: .dockerdev/Dockerfile
       args:
         RUBY_VERSION: '2.5.1'
-        BUNDLER_VERSION: '1.17.3'
-    image: vfitrack-dev:1.0.0
+    image: vfitrack-dev:1.0.1
     tmpfs:
       - /tmp
 
@@ -16,20 +15,12 @@ services:
     # The same as running a docker container with -it options
     stdin_open: true
     tty: true
+    env_file: .env
     volumes:
       - .:/app:cached
-      - bundle:/bundle
+      - bundle:/usr/local/bundle
       # This is just to make it faster
       - rails_cache:/app/tmp/cache
-    environment:
-      - RAILS_ENV=${RAILS_ENV:-development}
-      - REDIS_URL=redis://redis:6379/
-      - HISTFILE=/app/log/.bash_history
-      - MYSQL_HISTFILE=/app/log/.mysql_history
-      - EDITOR=nano
-      # Help keep Rails memory usage in check
-      - MALLOC_ARENA_MAX=2
-      - WEB_CONCURRENCY=1
     depends_on:
       - mysql
       - redis
@@ -45,7 +36,20 @@ services:
 
   rails:
     <<: *backend
+    environment:
+      # Help keep Rails memory usage in check
+      - MALLOC_ARENA_MAX=2
+      - WEB_CONCURRENCY=1
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails server -b '0.0.0.0'"
+    ports:
+      - '3000:3000'
+
+  testing:
+    <<: *backend
+    environment:
+      # Use the system rails environment or default to development
+      - RAILS_ENV=test
+    entrypoint: ["bundle", "exec", "rspec"]
     ports:
       - '3000:3000'
 
