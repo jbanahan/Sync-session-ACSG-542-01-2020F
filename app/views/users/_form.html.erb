@@ -13,7 +13,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     $("#btn_cancel").click(function() {window.location = '<%=cancel_redirect%>'});
     $(".check_all").click(function(evt) {
       evt.preventDefault();
-      $(this).parents('tr.permission_row').find(':checkbox').attr('checked','checked');
+      $(this).parents('tr.permission_row').find(':checkbox').prop('checked', true);
     });
     $("#mod_run_as").dialog({autoOpen:false,title:'Run As',
       width:'auto',
@@ -27,7 +27,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     <% end %>
     $(".check_none").click(function(evt) {
       evt.preventDefault();
-      $(this).parents('tr.permission_row').find(':checkbox').attr('checked',false);
+      $(this).parents('tr.permission_row').find(':checkbox').prop('checked', false);
     });
     <% if @user.persisted? -%>
       $("#btn_reports").click(function(evt) { window.location = "<%=user_scheduled_reports_path @user%>"});
@@ -39,7 +39,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
     }));
 
     }
-    
+
     function setupTransferButton(button, sourceList, destinationList) {
       $(button).click(function(evt) {
         evt.preventDefault();
@@ -57,7 +57,7 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
 
     setupTransferButton("#btn_assign_custom_reports", "#available_custom_reports", "#assigned_custom_report_ids");
     setupTransferButton("#btn_remove_custom_reports", "#assigned_custom_report_ids", "#available_custom_reports");
-    
+
   });
 <%end%>
 <%content_for :action_bar do %>

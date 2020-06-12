@@ -4,7 +4,7 @@ module OpenChain
     class MonthlyUserAuditReport
       include OpenChain::Report::ReportHelper
 
-      def self.run_schedulable opts_hash={}
+      def self.run_schedulable _opts_hash = {}
         recipients = User.where(admin: true, system_user: [false, nil], disabled: [false, nil]).pluck(:email)
         self.new.send_email('email' => recipients)
       end
@@ -19,7 +19,7 @@ module OpenChain
         wb = create_workbook
 
         workbook_to_tempfile wb, 'MonthlyUserAudit-' do |t|
-          subject = "#{Time.now.strftime('%B')} VFI Track User Audit Report for #{MasterSetup.get.system_code}"
+          subject = "#{Time.zone.now.strftime('%B')} VFI Track User Audit Report for #{MasterSetup.get.system_code}"
           body = "<p>Report attached.<br>--This is an automated message, please do not reply. <br> This message was generated from VFI Track</p>".html_safe
           OpenMailer.send_simple_html(settings['email'], subject, body, t).deliver_now
         end
@@ -52,8 +52,8 @@ module OpenChain
             IF(broker_invoice_edit=1,'Yes','No') AS 'broker_invoice_edit',
             IF(broker_invoice_view=1,'Yes','No') AS 'broker_invoice_view',
             IF(classification_edit=1,'Yes','No') AS 'classification_edit',
-            IF(entry_edit=1,'Yes','No') AS 'commercial_invoice_edit',
-            IF(entry_view=1,'Yes','No') AS 'commercial_invoice_view',
+            IF(commercial_invoice_edit=1,'Yes','No') AS 'customer_invoice_edit',
+            IF(commercial_invoice_view=1,'Yes','No') AS 'customer_invoice_view',
             IF(delivery_attach=1,'Yes','No') AS 'delivery_attach',
             IF(delivery_comment=1,'Yes','No') AS 'delivery_comment',
             IF(delivery_delete=1,'Yes','No') AS 'delivery_delete',
