@@ -40,6 +40,8 @@ module OpenChain; class Purge
     # We don't want to use the reference_date because we retain an audit trail for 2 years
     RunAsSession.delay.purge
     RequestLog.delay.purge
+
+    RuntimeLog.delay.purge
   end
 
 end; end;

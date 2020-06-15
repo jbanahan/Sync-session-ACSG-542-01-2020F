@@ -255,7 +255,7 @@ describe AdvancedSearchController do
       expect(h['search_schedules']).to eq([
         {"mailing_list_id"=>nil, "email_addresses"=>"x@example.com", "send_if_empty"=>true, "run_monday"=>true, "run_tuesday"=>false, "run_wednesday"=>false, "run_thursday"=>false,
           "run_friday"=>false, "run_saturday"=>false, "run_sunday"=>false, "run_hour"=>8,
-          "download_format"=>"xls", "day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2}
+          "download_format"=>"xls", "day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2, "log_runtime"=>false}
       ])
       no_non_accessible = CoreModule::PRODUCT.default_module_chain.model_fields.values.collect {|mf| mf.user_accessible? ? mf : nil}.compact
       no_non_accessible.delete_if {|mf| !mf.can_view?(@user)}
@@ -287,7 +287,7 @@ describe AdvancedSearchController do
         {"mailing_list_id"=>nil, "email_addresses"=>"x@example.com", "send_if_empty"=>true, "run_monday"=>true, "run_tuesday"=>false, "run_wednesday"=>false, "run_thursday"=>false,
           "run_friday"=>false, "run_saturday"=>false, "run_sunday"=>false, "run_hour"=>8, "disabled"=>false, "report_failure_count"=>2,
           "download_format"=>"xls", "day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password",
-          "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123"}
+          "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123", "log_runtime" => false}
       ])
     end
     it "should set include empty for criterions" do

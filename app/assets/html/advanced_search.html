@@ -222,6 +222,12 @@
                         <input id='sched-disabled' type='checkbox' ng-model='scheduleToEdit.disabled'/>
                       </div>
                     </div>
+                    <div class='control-group'>
+                      <div class='controls'>
+                        <label class='control-label' for='sched-log-runtime'>Log Runtime?</label>
+                        <input id='sched-log-runtime' type='checkbox' ng-model='scheduleToEdit.log_runtime'/>
+                      </div>
+                    </div>
                     <div ng-show='searchSetup.mailing_lists.length > 0' class="control-group">
                       <label class="control-label" for="sched-mailing-lists">Distribution List</label>
                       <select ng-options="mailing_list.id as mailing_list.label for mailing_list in searchSetup.mailing_lists" class="form-control" id="sched-mailing-lists" ng-model="scheduleToEdit.mailing_list_id"></select>

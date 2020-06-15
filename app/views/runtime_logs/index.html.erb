@@ -1,0 +1,25 @@
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th><%=sortable_search_heading 'identifier'%></th>
+    <th><%=sortable_search_heading 'runtime_logable_type'%></th>
+    <th><%=sortable_search_heading 'created_at'%></th>
+    <th><%=sortable_search_heading 'start'%></th>
+    <th><%=sortable_search_heading 'end'%></th>
+  </thead>
+
+<% @runtime_logs.each do |runtime_log| %>
+  <tr class='hover'>
+    <td><%= runtime_log.identifier %></td>
+    <td><%= runtime_log.runtime_logable_type %></td>
+    <td><%= runtime_log.created_at %></td>
+    <td><%= runtime_log.start %></td>
+    <td><%= runtime_log.end %></td>
+  </tr>
+<% end %>
+</table>
+<%= will_paginate @runtime_log %>
+
+<% if @default_display %>
+  <p style="text-align: center;"><b><%=@default_display%></b></p>
+<% end %>

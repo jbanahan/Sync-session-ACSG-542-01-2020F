@@ -17,6 +17,7 @@
 #  id                     :integer          not null, primary key
 #  last_finish_time       :datetime
 #  last_start_time        :datetime
+#  log_runtime            :boolean          default(FALSE)
 #  mailing_list_id        :integer
 #  protocol               :string(255)
 #  report_failure_count   :integer          default(0)
@@ -51,13 +52,16 @@ class SearchSchedule < ActiveRecord::Base
     :last_finish_time, :last_start_time, :mailing_list_id, :protocol,
     :report_failure_count, :run_friday, :run_hour, :run_monday,
     :run_saturday, :run_sunday, :run_thursday, :run_tuesday,
-    :run_wednesday, :search_setup_id, :search_setup, :send_if_empty
+    :run_wednesday, :search_setup_id, :search_setup, :send_if_empty,
+    :log_runtime
 
   RUFUS_TAG = "search_schedule"
 
   belongs_to :search_setup
   belongs_to :custom_report
   belongs_to :mailing_list
+
+  has_many :runtime_logs, as: :runtime_logable, inverse_of: :runtime_logable, dependent: :destroy
 
   def user
     if self.search_setup
@@ -77,11 +81,13 @@ class SearchSchedule < ActiveRecord::Base
   end
 
   def run
+    start_time = Time.now
     if self.search_setup
       run_search(self.search_setup)
     elsif self.custom_report
       run_custom_report(self.custom_report)
     end
+    RuntimeLog.create!(runtime_logable: self, identifier: self.search_setup.name, start: start_time, end: Time.now) if self.log_runtime
   end
 
   # Prevents the scheduled search or custom report from running if it has been disabled or if the user associated with
@@ -203,9 +209,9 @@ class SearchSchedule < ActiveRecord::Base
       attachment_name = self.class.report_name rpt, extension, include_timestamp: !exclude_file_timestamp
 
       begin
-        if extension=='csv'
+        if extension == 'csv'
           t, blank_report = rpt.csv_file rpt.user
-        elsif extension=='xls'
+        elsif extension == 'xls'
           t, blank_report = rpt.xls_file rpt.user
         else
           t, blank_report = rpt.xlsx_file rpt.user
@@ -262,10 +268,20 @@ class SearchSchedule < ActiveRecord::Base
     search_name = (self.search_setup ? self.search_setup.name : self.custom_report.name)
     if disable_threshold_reached
       subject = "Scheduled Report '#{search_name}' was DISABLED"
-      body = "Your Scheduled Report '#{search_name}' was DISABLED because the file output was too large to process on five or more consecutive attempts.  To re-enable the report, please adjust the Scheduled Report parameters in VFI Track to reduce its output size, then clear the 'Disabled?' box in the Scheduled Report set-up section to resume running the report."
+      body = <<~BODYMESSAGE
+        Your Scheduled Report '#{search_name}' was DISABLED because the file output was too large to process on five
+        or more consecutive attempts.  To re-enable the report, please adjust the Scheduled Report parameters in
+        VFI Track to reduce its output size, then clear the 'Disabled?' box in the Scheduled Report set-up section to
+        resume running the report.
+      BODYMESSAGE
     else
       subject = "Scheduled Report '#{search_name}' failed"
-      body = "Your Scheduled Report '#{search_name}' failed because the file output was too large to process.  Please adjust the Scheduled Report parameters to reduce its output size.  Your report has failed #{self.report_failure_count} time#{(self.report_failure_count > 1 ? "s in a row" : "")}.  On the 5th consecutive failure, VFI Track will disable the report."
+      body = <<~BODYMESSAGE
+        Your Scheduled Report '#{search_name}' failed because the file output was too large to process.  Please adjust
+        the Scheduled Report parameters to reduce its output size.  Your report has failed #{self.report_failure_count}
+        time#{(self.report_failure_count > 1 ? "s in a row" : "")}.  On the 5th consecutive failure, VFI Track will
+        disable the report.
+      BODYMESSAGE
     end
     OpenMailer.send_simple_html(user.email, subject, body).deliver_now
   end
@@ -280,7 +296,7 @@ class SearchSchedule < ActiveRecord::Base
     d << "5" if self.run_friday
     d << "6" if self.run_saturday
 
-    return CSV.generate_line(d, {:row_sep=>""})
+    return CSV.generate_line(d, {:row_sep => ""})
   end
 
   def self.sanitize_filename(filename)

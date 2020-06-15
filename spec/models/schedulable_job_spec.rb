@@ -25,9 +25,21 @@ describe SchedulableJob do
     class BadSchedulable
     end
 
+    let(:sj) {Factory(:schedulable_job, run_class: "TestSchedulable", log_runtime: false)}
+
+    it "does not save a runtime by default" do
+      sj.run
+      expect(RuntimeLog.where(runtime_logable: sj).first).to be_nil
+    end
+
+    it "saves a runtime log when set" do
+      sj.log_runtime = true
+      sj.run
+      expect(RuntimeLog.where(runtime_logable: sj).first).not_to be_nil
+    end
+
     it "should submit job" do
       expect(TestSchedulable).to receive(:run_schedulable).with({'last_start_time'=>nil})
-      sj = SchedulableJob.new(:run_class=>"TestSchedulable")
       sj.run
     end
     it "should submit options" do
@@ -39,7 +51,7 @@ describe SchedulableJob do
     it "should submit options that are non-hash json objects" do
       opts = ["A", "B"].to_json
       expect(TestSchedulable).to receive(:run_schedulable).with(["A", "B"])
-      sj = SchedulableJob.new(run_class: "TestSchedulable", opts: opts)
+      sj.opts = opts
       sj.run
     end
     it "should email when successful" do

@@ -7,6 +7,7 @@
 #  failure_email      :string(255)
 #  id                 :integer          not null, primary key
 #  last_start_time    :datetime
+#  log_runtime        :boolean          default(FALSE)
 #  no_concurrent_jobs :boolean
 #  notes              :text(65535)
 #  opts               :text(65535)
@@ -33,8 +34,12 @@ require 'open_chain/schedule_support'
 
 class SchedulableJob < ActiveRecord::Base
   include OpenChain::ScheduleSupport
+
+  has_many :runtime_logs, as: :runtime_logable, inverse_of: :runtime_logable, dependent: :destroy
+
   attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday,
-    :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval, :no_concurrent_jobs, :running, :stopped, :queue_priority, :notes
+                  :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval,
+                  :no_concurrent_jobs, :running, :stopped, :queue_priority, :notes, :log_runtime
 
   validate :valid_opts
 
@@ -59,6 +64,7 @@ class SchedulableJob < ActiveRecord::Base
 
   def run log=nil
     begin
+      start_time = Time.zone.now
       rc = self.run_class.gsub("::", ":")
       components = rc.split(":")
       begin
@@ -74,9 +80,9 @@ class SchedulableJob < ActiveRecord::Base
       # Opts Hash can technically be any json object, so protect the merge call below
       run_opts = opts_hash
       if run_opts.respond_to?(:merge)
-        run_opts = {'last_start_time'=>self.last_start_time}.merge(run_opts)
+        run_opts = {'last_start_time' => self.last_start_time}.merge(run_opts)
       end
-      log.info "Running schedule for #{k.to_s} with options #{run_opts}" if log
+      log.info "Running schedule for #{k} with options #{run_opts}" if log
 
       raise "No 'run_schedulable' method exists on '#{self.run_class}' class." unless k.respond_to?(:run_schedulable)
 
@@ -92,15 +98,17 @@ class SchedulableJob < ActiveRecord::Base
         Thread.current.thread_variable_set("scheduled_job", nil)
       end
 
+      RuntimeLog.create!(runtime_logable: self, identifier: self.run_class, start: start_time, end: Time.zone.now) if self.log_runtime
+
       OpenMailer.send_simple_html(self.success_email, "[VFI Track] Scheduled Job Succeeded",
-          "Scheduled job for #{k.to_s} with options #{run_opts} has succeeded.").deliver_now unless self.success_email.blank?
+                                  "Scheduled job for #{k} with options #{run_opts} has succeeded.").deliver_now unless self.success_email.blank?
     rescue => e
       if self.failure_email.blank?
         # Log the error if no failure email is set.
-        e.log_me ["Scheduled job for #{k.to_s} with options #{run_opts} has failed"]
+        e.log_me ["Scheduled job for #{k} with options #{run_opts} has failed"]
       else
         OpenMailer.send_simple_html(self.failure_email, "[VFI Track] Scheduled Job Failed",
-            "Scheduled job for #{k.to_s} with options #{run_opts} has failed. The error message is below:<br><br>
+                                    "Scheduled job for #{k} with options #{run_opts} has failed. The error message is below:<br><br>
             #{e.message}".html_safe).deliver_now
       end
     end

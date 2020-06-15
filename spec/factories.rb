@@ -228,6 +228,7 @@ end
 
 Factory.define :search_schedule do |s|
   s.association :search_setup
+  s.log_runtime false
 end
 Factory.define :search_criterion do |f|
   f.model_field_uid 'prod_uid'
@@ -388,7 +389,7 @@ Factory.define :security_filing do |f|
   f.association :importer, :factory => :company
 end
 Factory.define :schedulable_job do |f|
-
+  f.log_runtime false
 end
 Factory.define :project do |f|
 
@@ -625,4 +626,7 @@ end
 Factory.define :user_announcement do |f|
 end
 Factory.define :user_announcement_marker do |f|
+end
+
+Factory.define :runtime_log do |l|
 end

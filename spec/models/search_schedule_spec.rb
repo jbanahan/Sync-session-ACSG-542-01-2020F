@@ -9,11 +9,22 @@ describe SearchSchedule do
       SearchSetup.new module_type: "Product", user: user, name: 'test/-#t!e~s)t .^t&x@t'
     }
     let(:report) { CustomReport.new user: user, name: "test/t!st.txt"}
-    let(:search_schedule) { SearchSchedule.new(search_setup: search_setup, custom_report: report, download_format: "csv", send_if_empty: true) }
+    let(:search_schedule) { Factory(:search_schedule, search_setup: search_setup, custom_report: report, download_format: "csv", send_if_empty: true) }
     let(:tempfile) { Tempfile.new ["search_schedule_spec", ".xls"] }
 
     after :each do
       tempfile.close! unless tempfile.closed?
+    end
+
+    it "does not save a runtime log by default" do
+      search_schedule.run
+      expect(RuntimeLog.where(runtime_logable: search_schedule).first).to be_nil
+    end
+
+    it "saves a runtime log when set" do
+      search_schedule.log_runtime = true
+      search_schedule.run
+      expect(RuntimeLog.where(runtime_logable: search_schedule).first).not_to be_nil
     end
 
     context "with search schedule" do

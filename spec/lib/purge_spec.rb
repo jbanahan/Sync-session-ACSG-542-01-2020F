@@ -20,6 +20,8 @@ describe OpenChain::Purge do
       expect(RunAsSession).to receive(:purge)
       expect(RequestLog).to receive(:purge)
 
+      expect(RuntimeLog).to receive(:purge)
+
       subject.purge_data_prior_to reference_date
     end
 
@@ -39,6 +41,8 @@ describe OpenChain::Purge do
 
       expect(RunAsSession).to receive(:delay).and_return obj
       expect(RequestLog).to receive(:delay).and_return obj
+
+      expect(RuntimeLog).to receive(:delay).and_return obj
 
       subject.purge_data_prior_to reference_date
     end

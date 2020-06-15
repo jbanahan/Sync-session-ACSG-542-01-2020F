@@ -307,6 +307,8 @@ OpenChain::Application.routes.draw do
     end
   end
 
+  resources :runtime_logs, :only => [:index]
+
   resources :inbound_files, :only => [:index, :show] do
     member do
       get 'download'
