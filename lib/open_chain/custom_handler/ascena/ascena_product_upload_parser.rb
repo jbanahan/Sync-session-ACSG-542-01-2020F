@@ -1,9 +1,10 @@
-require 'open_chain/mutable_boolean'
+require 'open_chain/custom_handler/change_tracking_parser_support'
 require 'open_chain/custom_handler/custom_file_csv_excel_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Ascena; class AscenaProductUploadParser
   include OpenChain::CustomHandler::CustomFileCsvExcelParser
+  include OpenChain::CustomHandler::ChangeTrackingParserSupport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::Report::ReportHelper
 
@@ -121,13 +122,13 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     nil
   end
 
-  def assign_fda product, cdef_prod_code, cdef_prod_code_flag, data, changed
+  def assign_fda product, cdef_prod_code, cdef_prod_code_flag, changed, data
     if data.presence
-      set_custom_value(product, cdefs[:prod_fda_product_code], data, changed)
-      set_custom_value(product, cdefs[:prod_fda_product], true, changed)
+      set_custom_value(product, cdefs[:prod_fda_product_code], changed, data)
+      set_custom_value(product, cdefs[:prod_fda_product], changed, true)
     else
-      set_custom_value(product, cdefs[:prod_fda_product_code], nil, changed)
-      set_custom_value(product, cdefs[:prod_fda_product], nil, changed)
+      remove_custom_value(product, cdefs[:prod_fda_product_code], changed)
+      remove_custom_value(product, cdefs[:prod_fda_product], changed)
     end
   end
 
@@ -163,17 +164,17 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     find_or_create_product(style, changed) do |product|
       product.name = text(row[6])
 
-      set_custom_value(product, cdefs[:prod_part_number], style, changed)
+      set_custom_value(product, cdefs[:prod_part_number], changed, style)
       # Only set the parent id (reference number) if it's different than the style (both because ascena
       # sends the parent id as the same value as the style all the time, and when creating parents it'll
       # be the same value)
       parent_id = text(row[3])
       parent_id = nil if style == parent_id
 
-      set_custom_value(product, cdefs[:prod_brand], text(row[0]), changed)
-      set_custom_value(product, cdefs[:prod_reference_number], parent_id, changed)
-      set_custom_value(product, cdefs[:prod_department_code], text(row[4]), changed)
-      assign_fda(product, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], text(row[33]), changed)
+      set_custom_value(product, cdefs[:prod_brand], changed, text(row[0]))
+      set_custom_value(product, cdefs[:prod_reference_number], changed, parent_id)
+      set_custom_value(product, cdefs[:prod_department_code], changed, text(row[4]))
+      assign_fda(product, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], changed, text(row[33]))
 
       classification = product.classifications.find {|c| c.country_id == us.id }
       if classification.nil?
@@ -181,8 +182,8 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
         classification = product.classifications.build country_id: us.id
       end
 
-      set_custom_value(classification, cdefs[:class_customs_description], text(row[38]), changed)
-      set_custom_value(classification, cdefs[:class_classification_notes], classification_notes, changed)
+      set_custom_value(classification, cdefs[:class_customs_description], changed, text(row[38]))
+      set_custom_value(classification, cdefs[:class_classification_notes], changed, classification_notes)
 
       tariff = classification.tariff_records.find {|t| t.line_number == 1 }
 
@@ -244,20 +245,6 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaProductUpload
     @country ||= Country.where(iso_code: "US").first
     raise "Unable to find US country." unless @country
     @country
-  end
-
-  def set_custom_value obj, cdef, val, flag
-    custom_value = obj.custom_values.find {|cd| cd.custom_definition_id == cdef.id}
-    return if custom_value.nil? && val.nil?
-
-    c_val = custom_value.try(:value)
-
-    if c_val != val
-      obj.find_and_set_custom_value cdef, val
-      flag.value = true
-    end
-
-    nil
   end
 
 end; end; end; end

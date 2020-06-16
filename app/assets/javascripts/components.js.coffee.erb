@@ -449,7 +449,7 @@
         if !scope.field or !scope.model
           return ''
         val = scope.model[scope.field.uid]
-        return '' unless val && val.length > 0
+        return '' if (typeof val != 'boolean') && (!val || val.length == 0)
 
         if scope.field.data_type == 'date'
           return moment(val).format('YYYY-MM-DD')
@@ -459,6 +459,10 @@
 
         if scope.field.data_type == 'text'
           return $compile(angular.element('<pre>'+val+'</pre>'))(scope)
+
+        if scope.field.data_type == 'boolean'
+          checkedClass = if val then 'fa-check-square-o' else 'fa-times'
+          return $compile(angular.element('<i class="fa '+checkedClass+'" model-field-uid="'+scope.field.uid+'"></i>'))(scope)
 
         return val
 

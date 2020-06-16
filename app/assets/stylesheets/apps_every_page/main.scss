@@ -89,6 +89,9 @@ input.decimal {
   text-align: right;
   padding-right: 1em;
 }
+.has_text {
+  white-space: pre-wrap;
+}
 div.section_box {
   border-radius: 10px;
   border: 1px solid black;

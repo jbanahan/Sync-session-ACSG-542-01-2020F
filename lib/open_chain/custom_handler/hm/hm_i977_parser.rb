@@ -1,5 +1,6 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
+require 'open_chain/custom_handler/change_tracking_parser_support'
 require 'open_chain/custom_handler/hm/hm_business_logic_support'
 
 # HM (for some reason) names all their feeds with random numeric values.
@@ -8,6 +9,7 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::Hm::HmBusinessLogicSupport
+  include OpenChain::CustomHandler::ChangeTrackingParserSupport
 
   def self.parse_file file_content, log, opts = {}
     # Each file is supposed to represent a single PO's worth of articles, so we should be ok just parsing them all
@@ -41,15 +43,15 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
     # end up potentially changing the name with virtually every article received.
     changed = MutableBoolean.new false
     product.name = article_xml.text("ArticleDescription") if product.name.blank?
-    set_custom_value(product, cdefs[:prod_product_group], article_xml.text("CustId"), changed)
-    set_custom_value(product, cdefs[:prod_type], article_xml.text("CustType"), changed)
-    set_custom_value(product, cdefs[:prod_fabric_content], article_xml.text("ArticleCompositionDetails"), changed)
+    set_custom_value(product, :prod_product_group, changed, article_xml.text("CustId"))
+    set_custom_value(product, :prod_type, changed, article_xml.text("CustType"))
+    set_custom_value(product, :prod_fabric_content, changed, article_xml.text("ArticleCompositionDetails"))
 
     # From what I can tell, Commcode is just an abbreviated version of Importcode.  So only use it if
     # ImportCode is blank
     suggested_tariff = article_xml.text("Importcode")
     suggested_tariff = article_xml.text("Commcode") if suggested_tariff.blank?
-    set_custom_value(product, cdefs[:prod_suggested_tariff], suggested_tariff, changed)
+    set_custom_value(product, :prod_suggested_tariff, changed, suggested_tariff)
 
     REXML::XPath.each(article_xml, "HMOrders/HMOrder") do |order|
       concat_custom_value(product, cdefs[:prod_po_numbers], order.text("HMOrderNr"), changed)
@@ -94,17 +96,6 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
     @cdefs ||= self.class.prep_custom_definitions [:prod_po_numbers, :prod_part_number, :prod_season, :prod_product_group, :prod_type, :prod_suggested_tariff, :prod_fabric_content]
   end
 
-  def set_custom_value product, cdef, value, changed, allow_blank: false
-    return false if value.blank? && !allow_blank
-
-    if value_changed?(product.custom_value(cdef), value, changed)
-      product.find_and_set_custom_value cdef, value
-      return true
-    else
-      return false
-    end
-  end
-
   def concat_custom_value product, cdef, value, changed
     return false if value.blank?
 
@@ -131,13 +122,6 @@ module OpenChain; module CustomHandler; module Hm; class HmI977Parser
     else
       return false
     end
-  end
-
-  def value_changed? previous_value, new_value, changed
-    if previous_value != new_value
-      changed.value = true
-    end
-    changed.value
   end
 
 end; end; end; end

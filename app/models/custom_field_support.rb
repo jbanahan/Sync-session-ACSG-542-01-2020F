@@ -13,7 +13,7 @@ module CustomFieldSupport
     cv = get_custom_value_by_overrides custom_definition
     return cv if cv
     # First hit the "in-memory" self object to see if the custom value object already exists in it
-    cv = self.custom_values.find {|v| v.custom_definition_id == custom_definition.id} if cv.nil? && !self.lock_custom_values
+    cv = find_custom_value(custom_definition) if cv.nil? && !self.lock_custom_values
     # Hit the database now and see if the custom value has been saved outside the normal rails model persistence methods
     # (file imports do this to optimize custom value loading).  If this isn't done, we end up with
     # unique custom value constraint errors if this model (self) is saved later
@@ -44,10 +44,13 @@ module CustomFieldSupport
   end
 
   def standard_custom_value custom_definition
-    id = custom_definition.id
-    cv = self.custom_values.find {|v| v.custom_definition_id == id}
+    cv = find_custom_value(custom_definition)
 
     cv ? cv.value(custom_definition) : nil
+  end
+
+  def find_custom_value custom_definition
+    self.custom_values.find {|v| v.custom_definition_id == custom_definition.id }
   end
 
   # This method ONLY uses the custom_values association to find the custom value object to use
@@ -59,7 +62,7 @@ module CustomFieldSupport
   # returned by this method.
   def find_and_set_custom_value custom_definition, value
     raise ArgumentError, "Invalid Custom Defintion for #{custom_definition.label}.  Virtual Custom Values are read-only." if custom_definition.virtual_field?
-    cv = self.custom_values.find {|v| v.custom_definition_id == custom_definition.id}
+    cv = find_custom_value(custom_definition)
     cv = self.custom_values.build(:custom_definition => custom_definition) if cv.nil?
     cv.set_value(custom_definition, value)
     cv

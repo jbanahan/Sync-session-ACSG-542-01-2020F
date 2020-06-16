@@ -19,6 +19,7 @@
 #  container_id               :integer
 #  contract_amount            :decimal(12, 2)
 #  cotton_fee                 :decimal(11, 2)
+#  cotton_fee_rate            :decimal(14, 8)
 #  country_export_code        :string(255)
 #  country_origin_code        :string(255)
 #  created_at                 :datetime         not null
@@ -39,11 +40,13 @@
 #  first_sale                 :boolean
 #  freight_amount             :decimal(12, 2)
 #  hmf                        :decimal(11, 2)
+#  hmf_rate                   :decimal(14, 8)
 #  id                         :integer          not null, primary key
 #  line_number                :integer
 #  mid                        :string(255)
 #  miscellaneous_discount     :decimal(12, 2)
 #  mpf                        :decimal(11, 2)
+#  mpf_rate                   :decimal(14, 8)
 #  non_dutiable_amount        :decimal(13, 2)
 #  other_amount               :decimal(12, 2)
 #  other_fees                 :decimal(11, 2)
@@ -55,6 +58,8 @@
 #  psc_reason_code            :string(255)
 #  quantity                   :decimal(12, 3)
 #  related_parties            :boolean
+#  ruling_number              :string(255)
+#  ruling_type                :string(255)
 #  state_export_code          :string(255)
 #  state_origin_code          :string(255)
 #  store_name                 :string(255)
@@ -93,7 +98,8 @@ class CommercialInvoiceLine < ActiveRecord::Base
     :psc_date, :psc_reason_code, :quantity, :related_parties, :state_export_code,
     :state_origin_code, :store_name, :subheader_number, :unit_of_measure,
     :unit_price, :value, :value_appraisal_method, :value_foreign, :vendor_name,
-    :visa_number, :visa_quantity, :visa_uom, :volume, :commercial_invoice_tariffs
+    :visa_number, :visa_quantity, :visa_uom, :volume, :commercial_invoice_tariffs, :ruling_number,
+    :ruling_type, :hmf_rate, :mpf_rate, :cotton_fee_rate
 
   belongs_to :commercial_invoice, inverse_of: :commercial_invoice_lines
   has_one :entry, :through => :commercial_invoice

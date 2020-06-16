@@ -1,12 +1,10 @@
-require 'open_chain/custom_handler/alliance_product_support'
 require 'open_chain/custom_handler/product_generator'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-require 'open_chain/custom_handler/vandegrift/kewill_web_services_support'
+require 'open_chain/custom_handler/vandegrift/kewill_product_generator_support'
 
 module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGenerator < OpenChain::CustomHandler::ProductGenerator
-  include OpenChain::CustomHandler::AllianceProductSupport
-  include OpenChain::CustomHandler::Vandegrift::KewillWebServicesSupport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
+  include OpenChain::CustomHandler::Vandegrift::KewillProductGeneratorSupport
 
   def self.run_schedulable opts = {}
     opts = opts.with_indifferent_access
@@ -25,7 +23,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     nil
   end
 
-  attr_reader :alliance_customer_number, :customer_numbers, :importer_system_code, :default_values, :default_special_tariff_country_origin
+  attr_reader :alliance_customer_number, :customer_numbers, :importer_system_code, :default_special_tariff_country_origin, :default_values
 
   def initialize alliance_customer_number, opts = {}
     opts = opts.with_indifferent_access
@@ -51,52 +49,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     @default_special_tariff_country_origin = opts[:default_special_tariff_country_origin]
   end
 
-  class ProductData
-    attr_accessor :customer_number, :part_number, :effective_date, :expiration_date, :description, :country_of_origin, :mid, :product_line, :exclusion_301_tariff,
-                  :tariff_data, :fda_data, :penalty_data
-  end
-
-  # This is CVD / ADD data
-  class PenaltyData
-    # penalty_type should be CVD or ADA (for ADD cases)
-    attr_accessor :penalty_type, :case_number
-  end
-
-  class TariffData
-    attr_accessor :tariff_number, :priority, :secondary_priority, :primary_tariff, :special_tariff, :spi, :lacey_data
-
-    def initialize tariff_number, priority, secondary_priority, primary_tariff, special_tariff
-      @tariff_number = tariff_number
-      @priority = priority
-      @secondary_priority = secondary_priority
-      @primary_tariff = primary_tariff
-      @special_tariff = special_tariff
-    end
-
-  end
-
-  class FdaData
-    attr_accessor :product_code, :uom, :country_production, :mid, :shipper_id, :description, :establishment_number, :container_dimension_1,
-                  :container_dimension_2, :container_dimension_3, :contact_name, :contact_phone, :cargo_storage_status, :affirmations_of_compliance,
-                  :accession_number
-  end
-
-  class FdaAffirmationOfComplianceData
-    attr_accessor :code, :qualifier
-  end
-
-  class LaceyData
-    attr_accessor :preparer_name, :preparer_email, :preparer_phone, :components
-  end
-
-  class LaceyComponentData
-    attr_accessor :component_of_article, :country_of_harvest, :quantity, :quantity_uom, :percent_recycled, :scientific_names
-  end
-
-  class LaceyScientificNames
-    attr_accessor :genus, :species
-  end
-
   def custom_defs
     @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom,
                 :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length,
@@ -104,10 +56,6 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
                 :prod_301_exclusion_tariff, :prod_fda_accession_number, :prod_cvd_case, :prod_add_case, :class_special_program_indicator, :prod_lacey_component_of_article, :prod_lacey_genus_1, :prod_lacey_species_1, :prod_lacey_genus_2,
                 :prod_lacey_species_2, :prod_lacey_country_of_harvest, :prod_lacey_quantity, :prod_lacey_quantity_uom, :prod_lacey_percent_recycled, :prod_lacey_preparer_name, :prod_lacey_preparer_email, :prod_lacey_preparer_phone]
     @cdefs
-  end
-
-  def ftp_credentials
-    ecs_connect_vfitrack_net('kewill_edi/to_kewill')
   end
 
   def sync_code
@@ -123,142 +71,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
 
   def write_row_to_xml parent, row_counter, row
     data = map_query_row_to_product_data(row)
-
-    p = add_element(parent, "part")
-    add_kewill_keys(add_element(p, "id"), data, include_style: false)
-    add_part_data(p, data)
-    append_defaults(p, "CatCiLine")
-
-    if Array.wrap(data.tariff_data).length > 0
-      classification_list_element = add_element(p, "CatTariffClassList")
-
-      Array.wrap(data.tariff_data).each_with_index do |tariff_data, index|
-        tariff_seq = index + 1
-        tariff_class = add_element(classification_list_element, "CatTariffClass")
-        add_kewill_keys(tariff_class, data)
-        add_element(tariff_class, "seqNo", tariff_seq)
-        add_tariff_data(tariff_class, tariff_data, tariff_seq, row)
-        append_defaults(tariff_class, "CatTariffClass")
-
-        # All the PGA data should go on the primary tariff row and nothing else
-        next unless tariff_data.primary_tariff
-
-        if Array.wrap(data.fda_data).length > 0
-          fda_es_list = add_element(tariff_class, "CatFdaEsList")
-          Array.wrap(data.fda_data).each_with_index do |fda_data, fda_index|
-            fda_seq = fda_index + 1
-
-            fda = add_element(fda_es_list, "CatFdaEs")
-            add_kewill_keys fda, data
-
-            # This is the CatTariffClass "key"...whoever designed this XML was dumb.
-            add_element(fda, "seqNo", tariff_seq)
-            add_element(fda, "fdaSeqNo", fda_seq)
-            add_fda_data(fda, fda_data)
-            append_defaults(fda, "CatFdaEs")
-
-            if Array.wrap(fda_data.affirmations_of_compliance).length > 0
-              fda_aff_list = add_element(fda, "CatFdaEsComplianceList")
-
-              Array.wrap(fda_data.affirmations_of_compliance).each_with_index do |aff_data, aff_index|
-                aff_seq = aff_index + 1
-
-                aff_comp = add_element(fda_aff_list, "CatFdaEsCompliance")
-                add_kewill_keys(aff_comp, data)
-                add_element(aff_comp, "seqNo", tariff_seq)
-                add_element(aff_comp, "fdaSeqNo", fda_seq)
-                add_element(aff_comp, "seqNoEntryOrder", aff_seq)
-                add_fda_affirmation_of_compliance(aff_comp, aff_data)
-                append_defaults(aff_comp, "CatFdaEsCompliance")
-              end
-            end
-          end
-        end
-
-        if Array.wrap(tariff_data.lacey_data).length > 0
-          pg_es_list = add_element(tariff_class, "CatPgEsList")
-
-          product_seq_number = 1
-          Array.wrap(tariff_data.lacey_data).each_with_index do |lacey, lacey_index|
-            pg_seq_number = lacey_index + 1
-
-            pg = add_element(pg_es_list, "CatPgEs")
-            add_kewill_keys pg, data
-            add_element(pg, "seqNo", tariff_seq)
-            add_element(pg, "pgCd", "AL1")
-            add_element(pg, "pgAgencyCd", "APH")
-            add_element(pg, "pgProgramCd", "APL")
-            add_element(pg, "pgSeqNbr", pg_seq_number)
-
-            aphis_es = add_element(pg, "CatPgAphisEs")
-            add_kewill_keys aphis_es, data
-            add_element(aphis_es, "seqNo", tariff_seq)
-            add_element(aphis_es, "pgCd", "AL1")
-            add_element(aphis_es, "pgAgencyCd", "APH")
-            add_element(aphis_es, "pgProgramCd", "APL")
-            add_element(aphis_es, "pgSeqNbr", pg_seq_number)
-            add_element(aphis_es, "productSeqNbr", product_seq_number)
-
-            add_lacey_data(aphis_es, lacey)
-
-            if Array.wrap(lacey.components).length > 0
-              pg_components_list = add_element(aphis_es, "CatPgAphisEsComponentsList")
-
-              Array.wrap(lacey.components).each_with_index do |component, component_index|
-                component_seq_number = component_index + 1
-
-                comp = add_element(pg_components_list, "CatPgAphisEsComponents")
-                add_kewill_keys comp, data
-                add_element(comp, "seqNo", tariff_seq)
-                add_element(comp, "pgCd", "AL1")
-                add_element(comp, "pgSeqNbr", pg_seq_number)
-                add_element(comp, "productSeqNbr", product_seq_number)
-                add_element(comp, "componentSeqNbr", component_seq_number)
-
-                add_lacey_component_data(comp, component)
-
-                # The first scentific name is sent on the lacey component data, we'll send
-                # the second on a sub list
-                if Array.wrap(component.scientific_names).length > 1
-                  scientific_list = add_element(comp, "CatPgAphisEsAddScientificList")
-
-                  Array.wrap(component.scientific_names)[1..-1].each_with_index do |scientific_name, scientific_index|
-                    scientific_seq_no = scientific_index + 1
-                    science = add_element(scientific_list, "CatPgAphisEsAddScientific")
-
-                    add_kewill_keys science, data
-                    add_element(science, "seqNo", tariff_seq)
-                    add_element(science, "pgCd", "AL1")
-                    add_element(science, "pgSeqNbr", pg_seq_number)
-                    add_element(science, "productSeq", product_seq_number)
-                    add_element(science, "componentSeqNbr", component_seq_number)
-                    add_element(science, "scientificSeqNbr", scientific_seq_no)
-
-                    add_lacey_scientific_name(science, scientific_name)
-                  end
-                end
-              end
-            end
-          end
-        end
-      end
-
-      if Array.wrap(data.penalty_data).length > 0
-        penalty_list_element = add_element(p, "CatPenaltyList")
-        Array.wrap(data.penalty_data).each do |penalty_data|
-          cat_penalty = add_element(penalty_list_element, "CatPenalty")
-          add_kewill_keys(cat_penalty, data, include_style: true)
-          add_penalty_data(cat_penalty, penalty_data)
-        end
-      end
-    end
+    write_tariff_data_to_xml(parent, data)
   end
 
   def map_query_row_to_product_data row
     d = ProductData.new
     map_product_header_data(d, row)
     d.tariff_data = map_tariff_number_data(d, row)
-    d.fda_data = map_fda_data(d, row)
     d.penalty_data = map_penalty_data(d, row)
 
     d
@@ -272,7 +91,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     d.customer_number = customer_number(row).presence || self.alliance_customer_number
     d.part_number = part_number(row)
     d.part_number = d.part_number.to_s.gsub(/^0+/, "") if has_option?(:strip_leading_zeros)
-    d.effective_date = effective_date
+    d.effective_date = effective_date(effective_date_value: effective_date_from_results(row))
     # Without this expiration, the product ci line data can't be pulled in.
     # Guessing they're doing a check over effective date and expiration date columns in their tables
     # to determine which record to utilize for a part.
@@ -299,9 +118,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       set_value_in_tariff_data(tariff_data, "spi", spi)
     end
 
+    # All the PGA data should go on the primary tariff row and nothing else
     primary_tariff = find_primary_tariff(tariff_data)
     if primary_tariff
       primary_tariff.lacey_data = map_lacey_data(product, primary_tariff, row)
+      primary_tariff.fda_data = map_fda_data(product, primary_tariff, row)
     end
 
     tariff_data
@@ -330,7 +151,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     !row[18].blank?
   end
 
-  def map_fda_data product, row
+  def map_fda_data product, tariff, row
     if has_fda_data? row
       f = FdaData.new
       f.product_code = row[6]
@@ -349,18 +170,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       f.affirmations_of_compliance = []
 
       if has_fda_affirmation_of_compliance?(row)
-        c = FdaAffirmationOfComplianceData.new
-        c.code = row[18]
-        c.qualifier = row[19]
-        f.affirmations_of_compliance << c
+        f.affirmations_of_compliance << FdaAffirmationOfComplianceData.new(row[18], row[19])
       end
 
       # The Accession Number is simply another Affirmation of Compliance value with a specific Code of ACC
       if row[21].present?
-        c = FdaAffirmationOfComplianceData.new
-        c.code = "ACC"
-        c.qualifier = row[21]
-        f.affirmations_of_compliance << c
+        f.affirmations_of_compliance << FdaAffirmationOfComplianceData.new("ACC", row[21])
       end
 
       return [f]
@@ -373,17 +188,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     penalties = []
 
     if row[25].present?
-      d = PenaltyData.new
-      d.penalty_type = "CVD"
-      d.case_number = row[25]
-      penalties << d
+      penalties << PenaltyData.new("CVD", row[25])
     end
 
     if row[26].present?
-      d = PenaltyData.new
-      d.penalty_type = "ADA"
-      d.case_number = row[26]
-      penalties << d
+      penalties << PenaltyData.new("ADA", row[26])
     end
 
     penalties
@@ -412,19 +221,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       c.scientific_names = []
 
       if row[36].present? && row[37].present?
-        s = LaceyScientificNames.new
-        s.genus = row[36]
-        s.species = row[37]
-
-        c.scientific_names << s
+        c.scientific_names << ScientificName.new(row[36], row[37])
       end
 
       if row[38].present? && row[39].present?
-        s = LaceyScientificNames.new
-        s.genus = row[38]
-        s.species = row[39]
-
-        c.scientific_names << s
+        c.scientific_names << ScientificName.new(row[38], row[39])
       end
 
       lacey << l
@@ -433,134 +234,14 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     lacey
   end
 
-  def add_part_data part, data
-    write_data(part, "styleNo", data.part_number, 40, error_on_trim: !has_option?(:allow_style_truncation))
-    write_data(part, "descr", data.description.to_s.upcase, 40)
-    write_data(part, "countryOrigin", data.country_of_origin, 2)
-    write_data(part, "manufacturerId", data.mid, 15)
-    write_data(part, "productLine", data.product_line, 30)
-    write_data(part, "dateExpiration", date_format(data.expiration_date), 8, error_on_trim: true)
-
-    nil
-  end
-
-  def add_tariff_data tariff_class, tariff_data, sequence, row
-    # Since we're allowing blank tariffs, just take part of the join condition for 8 char tariffs and recreate it here, dropping
-    # anything that's less than 8 chars (.ie not a good tariff)
-    write_data(tariff_class, "tariffNo", (tariff_data.tariff_number.to_s.length >= 8 ? tariff_data.tariff_number : ""), 10, error_on_trim: true)
-    write_data(tariff_class, "spiPrimary", tariff_data.spi, 2) if tariff_data.spi.present?
-    nil
-  end
-
-  def add_fda_data fda, data
-    write_data(fda, "productCode", data.product_code, 7)
-    write_data(fda, "fdaUom1", data.uom, 4)
-    write_data(fda, "countryProduction", data.country_production, 2)
-    write_data(fda, "manufacturerId", data.mid, 15)
-    write_data(fda, "shipperId", data.shipper_id, 15)
-    write_data(fda, "desc1Ci", data.description, 70)
-    write_data(fda, "establishmentNo", data.establishment_number, 12)
-    write_data(fda, "containerDimension1", data.container_dimension_1, 4)
-    write_data(fda, "containerDimension2", data.container_dimension_2, 4)
-    write_data(fda, "containerDimension3", data.container_dimension_3, 4)
-    write_data(fda, "contactName", data.contact_name, 10)
-    write_data(fda, "contactPhone", data.contact_phone, 10)
-    write_data(fda, "cargoStorageStatus", data.cargo_storage_status, 1)
-
-    nil
-  end
-
-  def add_fda_affirmation_of_compliance aff_comp, data
-    write_data(aff_comp, "complianceCode", data.code, 3)
-    # It appears Kewill named qualifier incorrectly...as the qualifier is actually the affirmation of compliance number/value
-    write_data(aff_comp, "complianceQualifier", data.qualifier, 25)
-
-    nil
-  end
-
-  def add_penalty_data cat_penalty, penalty_data
-    write_data(cat_penalty, "penaltyType", penalty_data.penalty_type, 3)
-    # Remove any hyphens and upcase in the ADD / CVD Case
-    write_data(cat_penalty, "caseNo", penalty_data.case_number.to_s.gsub("-", "").upcase, 10)
-    nil
-  end
-
-  def add_lacey_data parent, lacey
-    write_data(parent, "importerIndividualName", lacey.preparer_name, 95)
-    write_data(parent, "importerEmailAddress", lacey.preparer_email, 107)
-    write_data(parent, "importerPhoneNo", lacey.preparer_phone, 15)
-
-    nil
-  end
-
-  def add_lacey_component_data parent, component
-    write_data(parent, "componentName", component.component_of_article, 51)
-    write_data(parent, "componentQtyAmt", component.quantity, 13)
-    write_data(parent, "componentUom", component.quantity_uom, 5)
-    write_data(parent, "countryHarvested", component.country_of_harvest, 22)
-    write_data(parent, "percentRecycledMaterialAmt", component.percent_recycled, 7)
-
-    # This is broken down weirdly where the first scentific name is on the main component
-    # element / db table, but then additional ones are on subelements / subtable
-    scientific_name = Array.wrap(component.scientific_names).first
-    if scientific_name
-      add_lacey_scientific_name(parent, scientific_name)
-    end
-
-    nil
-  end
-
-  def add_lacey_scientific_name parent, scientific_name
-    write_data(parent, "scientificGenusName", scientific_name.genus, 22)
-    write_data(parent, "scientificSpeciesName", scientific_name.species, 22)
-  end
-
-  def xml_document_and_root_element
-    doc, kc_data = create_document category: "Parts", subAction: "CreateUpdate"
-    parts = add_element(kc_data, "parts")
-    [doc, parts]
-  end
-
-  def add_kewill_keys parent, data, include_style: true
-    write_data(parent, "custNo", data.customer_number, 10, error_on_trim: true)
-    write_data(parent, "partNo", data.part_number, 40, error_on_trim: !has_option?(:allow_style_truncation))
-    write_data(parent, "styleNo", data.part_number, 40, error_on_trim: !has_option?(:allow_style_truncation)) if include_style
-    write_data(parent, "dateEffective", date_format(data.effective_date), 8, error_on_trim: true)
-  end
-
-  def append_defaults parent, level
-    defaults = self.default_values[level]
-    return if defaults.blank?
-    defaults.each_pair do |name, value|
-      add_element(parent, name, value)
-    end
-  end
-
-  def effective_date
-    Date.new(2014, 1, 1)
-  end
-
-  def expiration_date
-    Date.new(2099, 12, 31)
-  end
-
   def max_products_per_file
     500
   end
 
-  def write_data(parent, element_name, data, max_length, allow_blank: false, error_on_trim: false)
-    if data && data.to_s.length > max_length
-      # There's a few values we never want to truncate, hence the check here.  Those are mostly only just primary key fields in Kewill
-      # that we never want to truncate.
-      raise "#{element_name} cannot be over #{max_length} characters.  It was '#{data.to_s}'." if error_on_trim
-      data = data.to_s[0, max_length]
-    end
-
-    add_element parent, element_name, data, allow_blank: allow_blank
-  end
-
-  def date_format date
-    date ? date.strftime("%Y%m%d") : nil
+  # Override this method to return a value from the query result row to use as an effective date
+  # if the extending generator wants to utilze CMUS part versioning
+  def effective_date_from_results row
+    nil
   end
 
   def importer
@@ -671,6 +352,34 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     qry
   end
 
+  def preprocess_row row, opts = {}
+    row.each do |column, val|
+      # So, what we're doing here is attempting to transliterate any NON-ASCII data...
+      # If that's not possible, we're using an ASCII bell character.
+
+      # If the translated text then returns that we have a bell character (which really should never
+      # occurr naturally in data), then we know we have an untranslatable char and we'll hard stop.
+
+      if val.is_a? String
+        translated = ActiveSupport::Inflector.transliterate(val, "\007")
+        if translated =~ /\x07/
+          raise "Untranslatable Non-ASCII character for Part Number '#{row[0]}' found at string index #{$LAST_MATCH_INFO.begin(0)} in product query column #{column}: '#{val}'."
+        else
+          # Strip newlines from everything, there's no scenario where a newline should be present in the file data
+          row[column] = translated.gsub(/\r?\n/, " ")
+        end
+      end
+    end
+
+    super(row)
+  # rubocop:disable Style/RescueStandardError
+  rescue => e
+    # Don't let a single product stop the rest of them from being sent.
+    e.log_me
+    nil
+    # rubocop:enable Style/RescueStandardError
+  end
+
   def importer_id_query_clause
     if has_option?(:use_customer_numbers)
       qry = ActiveRecord::Base.sanitize_sql_array([" AND sys_id.code IN (?)", self.customer_numbers])
@@ -708,7 +417,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     first_line_tariffs = first_line_tariffs&.split("***")&.select { |t| t.present? } || []
     remaining_tariffs = remaining_tariffs&.split("***")
                                          &.select { |t| t.present? }
-                                         &.map { |t| TariffData.new(t, nil, nil, nil, nil) } || []
+                                         &.map { |t| TariffData.new(t) } || []
 
     all_tariffs = []
     # By starting at zero, any special tariff with a blank priority will get prioritized in front of the primary
@@ -717,7 +426,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # should be sent to CMUS (aka Kewill) prior to the primary tariff numbers keyed on the part
     priority = 0.00
     first_line_tariffs.each_with_index do |t, index|
-      td = TariffData.new(t, (priority -= 0.01), secondary_priority(t), (index == 0), false)
+      td = TariffData.make_tariff(t, (priority -= 0.01), secondary_priority(t), (index == 0), false)
 
       # Check if any of the keyed tariffs are considered special tariffs, if so, use the priority
       # from the special tariff record so we can potentially reorder them below according to the
@@ -749,7 +458,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     exclude_301_tariffs = exclusion_301_tariff.present?
     if exclusion_301_tariff.present?
       # We know the exclusion should always be the first tariff sent...so set its priority the highest
-      all_tariffs << TariffData.new(exclusion_301_tariff, 1000, secondary_priority(exclusion_301_tariff), false, true)
+      all_tariffs << TariffData.make_tariff(exclusion_301_tariff, 1000, secondary_priority(exclusion_301_tariff), false, true)
     end
 
     # Find any special tariffs we should add into the tariff list, only utilize the tariff
@@ -760,7 +469,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         existing_special_tariff = all_tariffs.find {|existing_tariff| existing_tariff.tariff_number == special_tariff.special_hts_number }
         next unless existing_special_tariff.nil?
 
-        all_tariffs << TariffData.new(special_tariff.special_hts_number, special_tariff.priority.to_f, secondary_priority(special_tariff.special_hts_number), false, true)
+        all_tariffs << TariffData.make_tariff(special_tariff.special_hts_number, special_tariff.priority.to_f, secondary_priority(special_tariff.special_hts_number), false, true)
       end
     end
 

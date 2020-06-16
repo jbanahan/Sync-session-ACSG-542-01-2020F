@@ -59,4 +59,29 @@ describe SyncRecord do
       expect(sr2.ignore_updates_before).to eq sr.ignore_updates_before
     end
   end
+
+  describe "find_or_build_sync_record" do
+    it "builds a new sync record" do
+      entry = Entry.new
+      entry.sync_records.build(trading_partner: "AnotherType", sent_at: Time.zone.now)
+
+      sr = SyncRecord.find_or_build_sync_record entry, "SomeType"
+      expect(sr).not_to be_nil
+      expect(sr.trading_partner).to eq "SomeType"
+      expect(sr.sent_at).to be_nil
+      expect(entry.sync_records.find {|r| r == sr }).not_to be_nil
+    end
+
+    it "finds an existing sync record" do
+      entry = Entry.new
+      entry.sync_records.build(trading_partner: "SomeType", sent_at: Time.zone.now)
+
+      sr = SyncRecord.find_or_build_sync_record entry, "SomeType"
+      expect(sr).not_to be_nil
+      expect(sr.trading_partner).to eq "SomeType"
+      expect(sr.sent_at).not_to be_nil
+      expect(entry.sync_records.find_all {|r| r.trading_partner == "SomeType" }.length).to eq 1
+    end
+  end
+
 end

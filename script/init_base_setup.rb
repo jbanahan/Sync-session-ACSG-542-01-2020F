@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
 
+ENV["INIT_BASE_SETUP_LOAD"] = "true"
+
 require_relative File.expand_path(File.join(File.dirname(__FILE__), '..', 'config', 'environment'))
+
+ENV["INIT_BASE_SETUP_LOAD"] = "false"
 
 if ARGV.length == 0 || ARGV[0].to_s.length == 0
   STDERR.puts "You must pass a Company Name, Sys Admin Email address, and HTTP Host Name as parameter."

@@ -223,11 +223,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
                     "printPartNo7501" => "Y",
                     "process9802" => "N"},
                   "CatTariffClass" => {
-                    "ultimateConsignee" => "CONS"},
-                  "CatFdaEs" => {
-                    "abiPriorNotice" => "Y"},
-                  "CatFdaEsCompliance" => {
-                    "assembler" => "ASS"}
+                    "ultimateConsignee" => "CONS"}
                 }
               }
 
@@ -237,8 +233,6 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(parent.text "part/printPartNo7501").to eq "Y"
       expect(parent.text "part/process9802").to eq "N"
       expect(parent.text "part/CatTariffClassList/CatTariffClass/ultimateConsignee").to eq "CONS"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/abiPriorNotice").to eq "Y"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs/CatFdaEsComplianceList/CatFdaEsCompliance/assembler").to eq "ASS"
     end
 
     it "skips invalid top level FDA MIDS" do
@@ -351,7 +345,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(l.text "seqNo").to eq "1"
       expect(l.text "pgCd").to eq "AL1"
       expect(l.text "pgSeqNbr").to eq "1"
-      expect(l.text "productSeq").to eq "1"
+      expect(l.text "productSeqNbr").to eq "1"
       expect(l.text "componentSeqNbr").to eq "1"
       expect(l.text "scientificSeqNbr").to eq "1"
       expect(l.text "scientificGenusName").to eq "GENUS 2"

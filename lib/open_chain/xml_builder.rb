@@ -18,7 +18,9 @@ module OpenChain; module XmlBuilder
     opts = {allow_blank: true}.merge opts
     child = nil
     if opts[:allow_blank] || content
-      child = parent_element.add_element(child_element_name)
+      attributes = opts[:attrs].presence || {}
+      child = parent_element.add_element(child_element_name, attributes)
+
       if content
         if opts[:cdata]
           child.text = REXML::CData.new content

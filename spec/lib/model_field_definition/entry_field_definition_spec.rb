@@ -121,4 +121,46 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
       expect(mf.process_export(ent, nil, true)).to eq 15.75
     end
   end
+
+  describe 'ent_open_exception_codes' do
+    let :mf do
+      ModelField.find_by_uid :ent_open_exception_codes
+    end
+
+    it "should return concatenated exception codes" do
+      ent = Factory(:entry)
+      ent.entry_exceptions.create! code: "D", resolved_date: nil
+      ent.entry_exceptions.create! code: "B", resolved_date: nil
+      ent.entry_exceptions.create! code: "C", resolved_date: Date.new(2020, 1, 1)
+      ent.entry_exceptions.create! code: "A", resolved_date: nil
+      ent.entry_exceptions.create! code: "D", resolved_date: nil
+
+      ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_open_exception_codes', operator:'eq', value:"D\nB\nA")
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to eq "D\nB\nA"
+    end
+  end
+
+  describe 'ent_resolved_exception_codes' do
+    let :mf do
+      ModelField.find_by_uid :ent_resolved_exception_codes
+    end
+
+    it "should return concatenated exception codes" do
+      ent = Factory(:entry)
+      ent.entry_exceptions.create! code: "D", resolved_date: Date.new(2020, 1, 1)
+      ent.entry_exceptions.create! code: "B", resolved_date: Date.new(2020, 2, 2)
+      ent.entry_exceptions.create! code: "C", resolved_date: nil
+      ent.entry_exceptions.create! code: "A", resolved_date: Date.new(2020, 3, 3)
+      ent.entry_exceptions.create! code: "D", resolved_date: Date.new(2020, 4, 4)
+
+      ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+      ss.search_criterions.build(model_field_uid:'ent_resolved_exception_codes', operator:'eq', value:"D\nB\nA")
+      expect(ss.result_keys).to eq [ent.id]
+
+      expect(mf.process_export(ent, nil, true)).to eq "D\nB\nA"
+    end
+  end
 end

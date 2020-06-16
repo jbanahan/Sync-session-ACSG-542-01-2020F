@@ -124,7 +124,10 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "distPortEntry", g.string(entry.entry_port, 4, pad_string: false)) unless entry.entry_port.blank?
 
     add_element(parent, "pieceCount", g.number(entry.pieces, 12, decimal_places: 0, strip_decimals: true, pad_string: false)) if nonzero?(entry.pieces)
-    add_element(parent, "uom", g.string(entry.pieces_uom, 6, pad_string: false)) unless entry.pieces_uom.blank?
+
+    # Operations has asked that we default to CTNS even if no piece / package count is present...because that is the UOM used "99%" of the time.
+    pieces_uom = entry.pieces_uom.presence || "CTNS"
+    add_element(parent, "uom", g.string(pieces_uom, 6, pad_string: false))
 
     add_element(parent, "descOfGoods", g.string(entry.goods_description, 70, pad_string: false)) unless entry.goods_description.blank?
 
@@ -265,12 +268,14 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(c, "contSize", g.string(container.size, 7, pad_string: false)) unless container.size.blank?
     add_element(c, "descContent1", g.string(container.description, 40, pad_string: false)) unless container.description.blank?
     add_element(c, "containerType", g.string(container.container_type, 5, pad_string: false)) unless container.container_type.blank?
+
+    # Operations has asked that we default to CTNS even if no piece / package count is present...because that is the UOM used "99%" of the time.
+    pieces_uom = container.pieces_uom.presence || "CTNS"
+    add_element(c, "uom", g.string(pieces_uom, 6, pad_string: false))
+
     # Pieces and UOM must both be present
     if container.pieces.to_i > 0
-      raise "Container #{container.container_number} must have a Pieces UOM value present if any pieces are given." if container.pieces_uom.blank?
-
       add_element(c, "pieces", container.pieces.to_i)
-      add_element(c, "uom", g.string(container.pieces_uom, 6, pad_string: false))
     end
 
     if container.weight_kg && container.weight_kg.to_d > 0
@@ -387,7 +392,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     end
 
     add_element(parent, "manufacturerId2", g.string(mid, 15, pad_string: false, exception_on_truncate: true)) unless mid.blank?
-    add_element(parent, "cartonsAmt", g.number(line.cartons, 12, decimal_places: 2, strip_decimals: false, pad_string: false)) if nonzero?(line.cartons)
+    add_element(parent, "cartons", g.number(line.cartons, 12, decimal_places: 0, strip_decimals: true, pad_string: false)) if nonzero?(line.cartons)
 
     seller_mid = get_seller_mid(line) unless line.seller_mid.blank?
     buyer_address = get_buyer(line) unless line.buyer_customer_number.blank?

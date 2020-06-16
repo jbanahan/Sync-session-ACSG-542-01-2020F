@@ -24,6 +24,7 @@ class InboundFileIdentifier < ActiveRecord::Base
   belongs_to :inbound_file, inverse_of: :identifiers
 
   TYPE_ARTICLE_NUMBER = "Article Number".freeze
+  TYPE_PART_NUMBER = "Part Number".freeze
   TYPE_PO_NUMBER = "PO Number".freeze
   TYPE_SHIPMENT_NUMBER = "Shipment Reference Number".freeze
   TYPE_HOUSE_BILL = "House Bill Of Lading".freeze

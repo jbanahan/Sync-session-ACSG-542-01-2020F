@@ -1,28 +1,24 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/xml_helper'
+require 'open_chain/custom_handler/change_tracking_parser_support'
 require 'open_chain/custom_handler/lumber_liquidators/lumber_custom_definition_support'
-require 'open_chain/mutable_boolean'
 
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSapVendorXmlParser
   include OpenChain::CustomHandler::XmlHelper
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
   include OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::ChangeTrackingParserSupport
 
   def self.parse_file data, log, opts={}
     parse_dom REXML::Document.new(data), log, opts
   end
 
   def self.parse_dom dom, log, opts={}
-    self.new(opts).parse_dom dom, log
+    self.new.parse_dom dom, log
   end
 
   def self.integration_folder
     "/home/ubuntu/ftproot/chainroot/ll/_sap_vendor_xml"
-  end
-
-  def initialize opts={}
-    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company, :cmp_po_blocked, :cmp_sap_blocked_status]
-    @user = User.integration
   end
 
   def parse_dom dom, log
@@ -56,7 +52,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
       c.vendor = true
       c.name = name
 
-      set_custom_value(c, :cmp_sap_company, sap_code, changed)
+      set_custom_value(c, :cmp_sap_company, changed, sap_code)
 
       update_address c, sap_code, base, changed, log
       lock_or_unlock_vendor c, base, changed
@@ -80,7 +76,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     is_locked = lock_code=='X'
 
     # we always write the SAP value to the SAP Blocked Status field for tracking purposes
-    set_custom_value(company, :cmp_sap_blocked_status, is_locked, changed)
+    set_custom_value(company, :cmp_sap_blocked_status, changed, is_locked)
 
     # we only set the actual PO Blocked field if the vendor is Blocked
     # per LL SOW #2.36, we don't want to clear the blocked status if it's cleared in SAP since
@@ -88,7 +84,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     #
     # https://docs.google.com/document/d/1PX80pIkNiCnNRFtCaGrVhKVi5ubdI30GgqlnzDDU5LA/edit#heading=h.sqrtf262xrei
     if is_locked
-      set_custom_value(company, :cmp_po_blocked, true, changed)
+      set_custom_value(company, :cmp_po_blocked, changed, true)
     end
   end
 
@@ -113,13 +109,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     end
   end
 
-  def set_custom_value obj, cdef_uid, value, changed
-    cd = @cdefs[cdef_uid]
-    existing = obj.custom_value(cd)
-    if existing != value
-      obj.update_custom_value! cd, value
-      changed.value = true
-    end
+  def cdefs
+    @cdefs = self.class.prep_custom_definitions [:cmp_sap_company, :cmp_po_blocked, :cmp_sap_blocked_status]
   end
 
 end; end; end; end

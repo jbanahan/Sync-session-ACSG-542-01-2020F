@@ -56,6 +56,8 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
   include OpenChain::ModelFieldDefinition::InvoiceLineFieldDefinition
   include OpenChain::ModelFieldDefinition::UserFieldDefinition
   include OpenChain::ModelFieldDefinition::EventSubscriptionDefinition
+  include OpenChain::ModelFieldDefinition::EntryExceptionFieldDefinition
+  include OpenChain::ModelFieldDefinition::PgaSummaryFieldDefinition
 
   def add_field_definitions
     add_address_fields
@@ -111,5 +113,7 @@ module OpenChain; module ModelFieldDefinition; module FullModelFieldDefinition
     add_invoice_line_fields
     add_user_fields
     add_event_subscription_fields
+    add_entry_exception_fields
+    add_pga_summary_fields
   end
 end; end; end

@@ -23,7 +23,9 @@ RSpec::Matchers.define :have_xpath_value do |xpath_expression, value|
       name = actual
     end
 
-    "expected '#{name}' to evalute xpath expression '#{xpath_expression}' and return '#{value}'.  It was '#{@xpath_value}'."
+    xpath_output = @xpath_value.nil? ? "nil" : "'#{@xpath_value}'"
+
+    "expected '#{name}' to evalute xpath expression '#{xpath_expression}' and return '#{value}'. It was #{xpath_output}."
   end
 
   failure_message_when_negated do |actual|

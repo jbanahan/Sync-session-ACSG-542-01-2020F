@@ -49,7 +49,8 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceFieldDefi
           WHERE commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id
             AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
         SQL
-        }]
+        }],
+       [25, :ci_customer_reference, :customer_reference, "Customer Reference", {:data_type=>:string}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100, 'ci', 'commercial_invoices')
   end

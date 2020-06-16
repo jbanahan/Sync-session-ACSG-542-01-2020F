@@ -1,6 +1,5 @@
 require 'open_chain/ftp_file_support'
-require 'zip'
-require 'zip/filesystem'
+require 'open_chain/zip_builder'
 
 module OpenChain; class SftpMonthlyArchiver
   include OpenChain::FtpFileSupport
@@ -19,7 +18,7 @@ module OpenChain; class SftpMonthlyArchiver
     @company = if settings['alliance_customer_number'].present?
                 Company.with_customs_management_number(settings['alliance_customer_number']).first
                else
-                 Company.with_fenix_number(settings['fenix_customer_number']).first
+                Company.with_fenix_number(settings['fenix_customer_number']).first
                end
 
     @settings = settings
@@ -50,38 +49,45 @@ module OpenChain; class SftpMonthlyArchiver
   end
 
   def send_zip(archive)
-    begin # rubocop:disable Style/RedundantBegin
-      Tempfile.open(@settings['alliance_customer_number']) do |tempfile|
-        Zip::File.open(tempfile.path, Zip::File::CREATE) do |zipfile|
-          archive.attachment_archives_attachments.each do |archive_attachment|
-            attachment = archive_attachment.attachment
-            next if attachment.nil?
+    OpenChain::ZipBuilder.create_zip_builder(archive.name) do |builder|
+      zip_attachments(builder, archive)
+      zip_manifest(builder, archive)
 
-            io = StringIO.new
-            OpenChain::S3.get_data(attachment.bucket, attachment.path, io)
-            zipfile.file.open(archive_attachment.output_path, "w") { |f| f << io.read }
-          end
+      # The zip file we're sending is going to be hundreds of MB large, we can't virus scan it without killing the machine
+      # This is fine though, because the documents themselves have already been scanned as they came into the system via imaging.
+      ftp_file builder.to_tempfile, connect_vfitrack_net(@settings['ftp_folder'], archive.name).merge({ skip_virus_scan: true })
 
-          manifest = archive.company.attachment_archive_manifests.build.generate_manifest_tempfile! 1.year.ago
-          begin
-            zipfile.file.open("ArchiveManifest-#{Time.zone.now.strftime("%Y-%m-%d")}.xls", "w") { |f| f << manifest.read }
-          ensure
-            manifest.close!
-          end
-        end
-
-        # The zip file we're sending is going to be hundreds of MB large, we can't virus scan it without killing the machine
-        # This is fine though, because the documents themselves have already been scanned as they came into the system via imaging.
-        ftp_file tempfile, connect_vfitrack_net(@settings['ftp_folder'], archive.name).merge({ skip_virus_scan: true })
-
-        if @settings['notification_email'].present?
-          OpenMailer.send_simple_html(@settings['notification_email'],
-                                      "Attachment Archive #{archive.name} Uploaded",
-                                      "An attachment archive named #{archive.name} is being sent to you.  You should receive it shortly.").deliver_now
-        end
+      if @settings['notification_email'].present?
+        OpenMailer.send_simple_html(@settings['notification_email'],
+                                    "Attachment Archive #{archive.name} Uploaded",
+                                    "An attachment archive named #{archive.name} is being sent to you.  You should receive it shortly.").deliver_now
       end
-    rescue => e # rubocop:disable Style/RescueStandardError
-      e.log_me
+    end
+  rescue StandardError => e
+    e.log_me
+  end
+
+  def zip_attachments builder, archive
+    archive.attachment_archives_attachments.each do |archive_attachment|
+      attachment = archive_attachment.attachment
+      next if attachment.nil?
+
+      io = StringIO.new
+      OpenChain::S3.get_data(attachment.bucket, attachment.path, io)
+      io.rewind
+
+      builder.add_file archive_attachment.output_path, io
     end
   end
+
+  def zip_manifest builder, archive
+    manifest = nil
+    begin
+      manifest = archive.company.attachment_archive_manifests.build.generate_manifest_tempfile! 1.year.ago
+      builder.add_file "ArchiveManifest-#{Time.zone.now.strftime("%Y-%m-%d")}.xls", manifest
+    ensure
+      manifest&.close!
+    end
+  end
+
 end; end

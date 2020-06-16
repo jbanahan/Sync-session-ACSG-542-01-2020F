@@ -39,6 +39,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     85 => {attribute: :edi_received_date, datatype: :date},
     108 => :fda_transmit_date,
     121 => {attribute: :daily_statement_approved_date, datatype: :date},
+    906 => :summary_accepted_date,
     2014 => :final_delivery_date,
     2222 => :worksheet_date,
     2223 => :available_date,
@@ -201,6 +202,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       process_broker_invoices e, entry
       process_fda_dates e, entry
       process_trucker_information e, entry
+      process_exceptions e, entry
 
       if opts[:key] && opts[:bucket]
         entry.last_file_path = opts[:key]
@@ -503,6 +505,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.import_country = us
       entry.split_shipment = e[:split].to_s.upcase == "Y"
       entry.split_release_option = e[:split_release_option].to_i if e[:split_release_option].to_i > 0
+      entry.bond_surety_number = e[:bond_surety_no]
 
       nil
     end
@@ -706,6 +709,67 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.deliver_to_names = deliver_to_names.to_a.join("\n ")
     end
 
+    def process_exceptions e, entry
+      # Delete any existing exceptions.
+      entry.entry_exceptions.destroy_all
+
+      Array.wrap(e[:exceptions]).each do |n|
+        code = n[:exception_code]
+        creation_date = (n[:created_date] ? tz.parse(n[:created_date]) : nil)
+        resolved_date = (n[:resolved_date] ? tz.parse(n[:resolved_date]) : nil)
+
+        case code
+        when "CD"
+          entry.customs_detention_exception_opened_date = creation_date
+          entry.customs_detention_exception_resolved_date = resolved_date
+        when "CI"
+          entry.classification_inquiry_exception_opened_date = creation_date
+          entry.classification_inquiry_exception_resolved_date = resolved_date
+        when "CRH", "TGT"
+          entry.customer_requested_hold_exception_opened_date = creation_date
+          entry.customer_requested_hold_exception_resolved_date = resolved_date
+        when "UCE"
+          entry.customs_exam_exception_opened_date = creation_date
+          entry.customs_exam_exception_resolved_date = resolved_date
+        when "DD"
+          entry.document_discrepancy_exception_opened_date = creation_date
+          entry.document_discrepancy_exception_resolved_date = resolved_date
+        when "FDA"
+          entry.fda_issue_exception_opened_date = creation_date
+          entry.fda_issue_exception_resolved_date = resolved_date
+        when "FW"
+          entry.fish_and_wildlife_exception_opened_date = creation_date
+          entry.fish_and_wildlife_exception_resolved_date = resolved_date
+        when "LAD"
+          entry.lacey_act_exception_opened_date = creation_date
+          entry.lacey_act_exception_resolved_date = resolved_date
+        when "LD"
+          entry.late_documents_exception_opened_date = creation_date
+          entry.late_documents_exception_resolved_date = resolved_date
+        when "MH"
+          entry.manifest_hold_exception_opened_date = creation_date
+          entry.manifest_hold_exception_resolved_date = resolved_date
+        when "MD"
+          entry.missing_document_exception_opened_date = creation_date
+          entry.missing_document_exception_resolved_date = resolved_date
+        when "PR"
+          entry.pending_customs_review_exception_opened_date = creation_date
+          entry.pending_customs_review_exception_resolved_date = resolved_date
+        when "PI"
+          entry.price_inquiry_exception_opened_date = creation_date
+          entry.price_inquiry_exception_resolved_date = resolved_date
+        when "USD"
+          entry.usda_hold_exception_opened_date = creation_date
+          entry.usda_hold_exception_resolved_date = resolved_date
+        end
+
+        entry.entry_exceptions.build(code: code, comments: n[:exception_comments],
+                                     resolved_date: resolved_date, exception_creation_date: creation_date)
+      end
+
+      nil
+    end
+
     def process_notes e, entry
       # There are sometimes thousands of comments...just do a delete here, rather than a destroy.  Entry comments don't have
       # descendents we need to worry about so the time savings can actually add up to multiple seconds here.
@@ -849,6 +913,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
               lacey = tariff.commercial_invoice_lacey_components.build
               set_lacey_data l, lacey
             end
+
+            Array.wrap(t[:pga_summaries]).each do |p|
+              pga_summary = tariff.pga_summaries.build
+              set_pga_summary_data p, pga_summary
+            end
           end
 
           # When there are multiple tariff lines, only the first tariff line carries the entered value...therefore, we cannot calculate the
@@ -868,6 +937,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def set_invoice_header_data i, inv
       inv.invoice_number = i[:ci_no]
+      inv.customer_reference = i[:cust_ref]
       inv.currency = i[:currency]
       inv.exchange_rate = parse_decimal i[:exchange_rate], decimal_places: 6, decimal_offset: 6
       inv.invoice_value_foreign = parse_decimal i[:value_foreign]
@@ -932,6 +1002,8 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       line.non_dutiable_amount = parse_decimal(l[:non_dutiable_amt])
       line.miscellaneous_discount = parse_decimal(l[:misc_discount])
       line.agriculture_license_number = l[:agriculture_license_no]
+      line.ruling_number = l[:ruling_no]
+      line.ruling_type = l[:ruling_type]
 
       other_fees = BigDecimal.new("0")
 
@@ -941,6 +1013,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
         # We should never receive both on a single entry.
         when 499, 311
           line.mpf = parse_decimal fee[:amt_fee]
+          line.mpf_rate = parse_decimal fee[:alg_x_rate_advalorem], decimal_places: 8, decimal_offset: 8
           line.prorated_mpf = parse_decimal fee[:amt_fee_prorated]
 
           # If the mpf amount is below the amount required for proration, the
@@ -951,8 +1024,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
           end
         when 501
           line.hmf = parse_decimal fee[:amt_fee]
+          line.hmf_rate = parse_decimal fee[:alg_x_rate_advalorem], decimal_places: 8, decimal_offset: 8
         when 56
           line.cotton_fee = parse_decimal fee[:amt_fee]
+          line.cotton_fee_rate = parse_decimal fee[:alg_x_rate_specific], decimal_places: 8, decimal_offset: 8
         else
           if fee[:amt_fee_prorated].to_f > 0
             other_fees += parse_decimal fee[:amt_fee_prorated]
@@ -1058,6 +1133,16 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       # Store these as fractional amounts, NOT whole value percentages -> .10 and not 10 for 10%.
       lacey.percent_recycled_material = parse_decimal l[:percent_recycled_material], decimal_offset: 6
       lacey.container_numbers = l[:containers].join(multi_value_separator) unless l[:containers].blank?
+    end
+
+    def set_pga_summary_data p, pga_summary
+      pga_summary.sequence_number = p[:uscs_pg_seq_nbr]
+      pga_summary.agency_code = p[:pg_agency_cd]
+      pga_summary.program_code = p[:pg_program_cd]
+      pga_summary.tariff_regulation_code = p[:pg_cd]
+      pga_summary.commercial_description = p[:commercial_desc]
+      pga_summary.agency_processing_code = p[:agency_processing_cd]
+      pga_summary.disclaimer_type_code = p[:disclaimer_type_cd]
     end
 
     def process_containers e, entry

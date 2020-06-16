@@ -184,6 +184,17 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(s).not_to be_nil
         expect(s.text "dateReceived").to eq "20200324"
       end
+
+      it "defaults UOM to CTNS" do
+        entry.pieces_uom = nil
+        entry.containers.first.pieces_uom = nil
+
+        doc = subject.generate_entry_xml entry
+        s = REXML::XPath.first doc.root, "request/kcData/ediShipments/ediShipment"
+        expect(s).not_to be_nil
+        expect(s.text "uom").to eq "CTNS"
+        expect(s.text "EdiContainersList/EdiContainers/uom").to eq "CTNS"
+      end
     end
 
     context "with commercial invoice data" do
@@ -367,7 +378,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(l.text "addToMakeAmt").to eq "1500"
         expect(l.text "exemptionCertificate").to be_nil
         expect(l.text "manufacturerId2").to eq "PHMOUINS2106BAT"
-        expect(l.text "cartonsAmt").to eq "10.00"
+        expect(l.text "cartons").to eq "10"
         expect(l.text "detailLineNo").to eq "123"
         expect(l.text "countryExport").to eq "CE"
         expect(l.text "chargesAmt").to eq "20.25"

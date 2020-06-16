@@ -462,6 +462,10 @@ class CoreModule
       return "usr"
     when EVENT_SUBSCRIPTION
       return "evnts"
+    when ENTRY_EXCEPTION
+      return "ent_except"
+    when PGA_SUMMARY
+      return "pgasum"
     else
       raise "CoreModule '#{core_module.try(:label)}' does not have a prefix set up."
     end

@@ -1,4 +1,5 @@
 describe OpenChain::SftpMonthlyArchiver do
+
   it 'throws an exception if an Alliance or Fenix customer number is not present' do
     expect {described_class.new({'ftp_folder' => 'blah'})}.to raise_error(RuntimeError, 'Alliance or Fenix Customer Number Required')
   end

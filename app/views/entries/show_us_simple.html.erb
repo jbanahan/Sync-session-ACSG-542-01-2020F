@@ -13,24 +13,25 @@
   <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state:@entry.business_rules_state_for_user(current_user), validation_path: validation_results_entry_path(@entry)}%>
 </div>
 <a name='ent_header'></a>
+<% show_mf_opts = {table: true, disable_text_whitespace: true} %>
 <!-- Main header -->
 <table class='ent_columns'>
   <tbody>
     <tr>
       <td style="width:33%;">
         <table>
-          <%= show_model_fields @entry, [:ent_entry_num,:ent_brok_ref,:ent_customer_references,:ent_mbols,:ent_hbols,:ent_it_numbers,:ent_container_nums,:ent_export_date,:ent_isf_accepted_date,:ent_arrival_date,:ent_release_date], table: true %>
+          <%= show_model_fields @entry, [:ent_entry_num,:ent_brok_ref,:ent_customer_references,:ent_mbols,:ent_hbols,:ent_it_numbers,:ent_container_nums,:ent_export_date,:ent_isf_accepted_date,:ent_arrival_date,:ent_release_date], show_mf_opts %>
         </table>
       </td>
       <td style="width:33%;">
         <table>
           <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}/country/#{@entry.import_country&.iso_code}'>#{editor} <span class='fa fa-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
-          <%= show_model_fields @entry, [:ent_release_cert_message,:ent_cust_name,:ent_po_numbers,:ent_merch_desc,:ent_vessel,:ent_voyage,:ent_ult_con_name,:ent_transport_mode_code,:ent_carrier_code], table: true %>
+          <%= show_model_fields @entry, [:ent_release_cert_message,:ent_cust_name,:ent_po_numbers,:ent_merch_desc,:ent_vessel,:ent_voyage,:ent_ult_con_name,:ent_transport_mode_code,:ent_carrier_code], show_mf_opts %>
         </table>
       </td>
       <td style="width:34%;">
         <table>
-          <%= show_model_fields @entry, [:ent_total_fees,:ent_total_duty,:ent_entered_value,:ent_total_invoiced_value,:ent_total_units,:ent_total_units_uoms], table: true %>
+          <%= show_model_fields @entry, [:ent_total_fees,:ent_total_duty,:ent_entered_value,:ent_total_invoiced_value,:ent_total_units,:ent_total_units_uoms], show_mf_opts %>
         </table>
       </td>
     </tr>

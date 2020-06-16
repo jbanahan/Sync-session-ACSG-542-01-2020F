@@ -276,7 +276,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
     let(:changed) { MutableBoolean.new(false) }
 
     it "sets FDA Product Code, FDA Product? when there's a value" do
-      subject.assign_fda prod, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], "FDA CODE", changed
+      subject.assign_fda prod, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], changed, "FDA CODE"
       expect_custom_value(prod, cdefs[:prod_fda_product_code], "FDA CODE")
       expect_custom_value(prod, cdefs[:prod_fda_product], true)
       expect(changed.value).to eq true
@@ -285,7 +285,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaProductUploadParser do
     it "sets FDA Product Code, FDA Product? when value is blank" do
       prod.update_custom_value!(cdefs[:prod_fda_product_code], "foo")
       prod.update_custom_value!(cdefs[:prod_fda_product], true)
-      subject.assign_fda prod, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], "", changed
+      subject.assign_fda prod, cdefs[:prod_fda_product_code], cdefs[:prod_fda_product], changed, ""
 
       expect_custom_value(prod, cdefs[:prod_fda_product_code], nil)
       expect_custom_value(prod, cdefs[:prod_fda_product], nil)

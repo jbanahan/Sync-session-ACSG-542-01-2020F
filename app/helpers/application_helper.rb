@@ -75,7 +75,7 @@ module ApplicationHelper
 
   # render view of field in table row form
   def field_view_row object, model_field_uid, show_prefix=nil
-    l = lambda {|label, field, never_hide, model_field| field_row(label, field, never_hide, model_field)}
+    l = lambda { |label, field, never_hide, model_field| field_row(label, field, never_hide: never_hide, model_field: model_field) }
     field_view_generic object, model_field_uid, show_prefix, l
   end
 
@@ -112,6 +112,8 @@ module ApplicationHelper
       elsif model_field.custom_definition && model_field.custom_definition.is_address?
         a = Address.find_by_id(val)
         val = a.full_address if a
+      elsif model_field.data_type == :text
+        val = Entry.split_newline_values(val).join("\n")
       end
     end
     html_escape val
@@ -326,15 +328,16 @@ module ApplicationHelper
       if opts[:table]
         attrs = {}
         attrs[:class] = "has_numeric" if [:decimal, :integer].include?(mf.data_type)
+        attrs[:class] = "has_text" if mf.data_type == :text
         output << content_tag(:td, editor, attrs)
       else
         output << editor
       end
 
     elsif opts[:table]
-      output << field_row(label, editor, (opts[:never_hide] || html_attributes[:never_hide]), mf)
+      output << field_row(label, editor, never_hide: (opts[:never_hide] || html_attributes[:never_hide]), model_field: mf, disable_text_whitespace: opts[:disable_text_whitespace])
     else
-      output << field_bootstrap(label, editor, (opts[:never_hide] || html_attributes[:never_hide]))
+      output << field_bootstrap(label, editor, (opts[:never_hide] || html_attributes[:never_hide]), mf)
     end
 
     output
@@ -467,11 +470,26 @@ module ApplicationHelper
   end
 
   # render <tr> with field content
-  def field_row(label, field, never_hide=false, model_field=nil)
+  def field_row(label, field, never_hide: false, model_field: nil, disable_text_whitespace: false)
     model_field = get_model_field(model_field)
     td_label = content_tag(:td, label.blank? ? "" : label+": ", :class => 'label_cell')
-    is_numeric = model_field && [:decimal, :integer].include?(model_field.data_type) && field && !field.to_s.match(/[a-zA-Z\s]/)
-    td_content = content_tag(:td, field, :style=>"#{is_numeric ? "text-align:right;" : ""}")
+    field_styles = []
+    field_classes = []
+
+    opts = Hash.new do |h, k|
+      h[k] = []
+    end
+
+    if model_field
+      if [:decimal, :integer].include?(model_field.data_type)
+        # Numerics align right
+        opts[:style] << "text-align: right"
+      elsif !disable_text_whitespace && model_field.data_type == :text
+        opts[:class] << "has_text"
+      end
+    end
+
+    td_content = content_tag(:td, field, opts)
     content_tag(:tr, td_label+td_content, :class=>"hover field_row #{never_hide ? "neverhide" : ""}")
   end
 
@@ -480,16 +498,18 @@ module ApplicationHelper
     return '' if !never_hide && field.blank?
     field_content = field
     model_field = get_model_field(model_field)
+    field_content_classes = ["col-md-8"]
+
     if model_field && model_field.data_type==:text
-      field = field.gsub(/(:?\r\n)|(:?\r)|(:?\n)/, "<br>").html_safe
-      field_content = content_tag(:span, field, :class=>'pre-ish')
+      field_content_classes << "has_text"
     end
+
     content_tag(:div,
       content_tag(:div,
         label.blank? ? '' : label,
         :class=>'col-md-4', :style=>'font-weight:bold;'
       ) +
-      content_tag(:div, field_content, :class=>'col-md-8'),
+      content_tag(:div, field_content, :class=>field_content_classes.join(" ")),
       :class=>'row bootstrap-hover'
     )
   end

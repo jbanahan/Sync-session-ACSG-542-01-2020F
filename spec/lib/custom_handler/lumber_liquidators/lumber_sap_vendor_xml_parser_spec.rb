@@ -1,5 +1,3 @@
-require 'rexml/document'
-
 describe OpenChain::CustomHandler::LumberLiquidators::LumberSapVendorXmlParser do
 
   let(:log) { InboundFile.new }

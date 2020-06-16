@@ -33,6 +33,9 @@ Style/IfUnlessModifier:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
+Style/LineEndConcatenation:
+  Enabled: false
+
 Style/MethodDefParentheses:
   Enabled: false
 
@@ -116,6 +119,8 @@ Layout/IndentationWidth:
 
 Layout/LineLength:
   Max: 175
+  Exclude:
+    - db/**/*
 
 Lint/Loop:
   Enabled: false
@@ -159,6 +164,9 @@ Naming/MethodParameterName:
   Enabled: true
   Exclude:
     - spec/**/*
+
+Naming/VariableNumber:
+  Enabled: false
 
 RSpec/AnyInstance:
   Enabled: false

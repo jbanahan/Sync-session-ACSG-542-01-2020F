@@ -1,10 +1,8 @@
 require 'open_chain/custom_handler/vandegrift/kewill_product_generator'
-require 'open_chain/custom_handler/alliance_product_support'
 
 # This is mostly a copy paste from the generic alliance product generator, the main reason it exists
 # is so that the custom definitions referenced by the main Kewill generator are not created in the Lumber instance.
 module OpenChain; module CustomHandler; module LumberLiquidators; class LumberKewillProductGenerator < OpenChain::CustomHandler::Vandegrift::KewillProductGenerator
-  include OpenChain::CustomHandler::AllianceProductSupport
 
   def sync_code
     'Kewill'
@@ -74,17 +72,11 @@ WHERE
     penalties = []
 
     if row[5].present?
-      d = PenaltyData.new
-      d.penalty_type = "CVD"
-      d.case_number = row[5]
-      penalties << d
+      penalties << PenaltyData.new("CVD", row[5])
     end
 
     if row[6].present?
-      d = PenaltyData.new
-      d.penalty_type = "ADA"
-      d.case_number = row[6]
-      penalties << d
+      penalties << PenaltyData.new("ADA", row[6])
     end
 
     penalties

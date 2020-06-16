@@ -2,21 +2,22 @@
 #
 # Table name: products
 #
-#  changed_at         :datetime
-#  created_at         :datetime         not null
-#  division_id        :integer
-#  entity_type_id     :integer
-#  id                 :integer          not null, primary key
-#  importer_id        :integer
-#  inactive           :boolean          default(FALSE)
-#  last_file_bucket   :string(255)
-#  last_file_path     :string(255)
-#  last_updated_by_id :integer
-#  name               :string(255)
-#  status_rule_id     :integer
-#  unique_identifier  :string(255)
-#  unit_of_measure    :string(255)
-#  updated_at         :datetime         not null
+#  changed_at                :datetime
+#  created_at                :datetime         not null
+#  division_id               :integer
+#  entity_type_id            :integer
+#  id                        :integer          not null, primary key
+#  importer_id               :integer
+#  inactive                  :boolean          default(FALSE)
+#  last_exported_from_source :datetime
+#  last_file_bucket          :string(255)
+#  last_file_path            :string(255)
+#  last_updated_by_id        :integer
+#  name                      :string(255)
+#  status_rule_id            :integer
+#  unique_identifier         :string(255)
+#  unit_of_measure           :string(255)
+#  updated_at                :datetime         not null
 #
 # Indexes
 #

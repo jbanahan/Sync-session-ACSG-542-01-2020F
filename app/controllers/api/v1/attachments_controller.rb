@@ -2,6 +2,7 @@ require 'open_chain/api/v1/attachment_api_json_generator'
 
 module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleControllerBase
   include PolymorphicFinders
+  include DownloadS3ObjectSupport
 
   # The create call is done via a multipart/form posting..so don't check for json
   skip_before_filter :validate_format, only: [:create]
@@ -97,7 +98,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
       if MasterSetup.get.custom_feature?('Attachment Mask')
         url = download_attachment_url attachment, protocol: (Rails.env.production? ? "https" : "http"), host: MasterSetup.get.request_host
       else
-        url = attachment.secure_url expires_in
+        url = attachment_secure_url(attachment, expires_in: expires_in)
       end
 
       render json: {url: url, name: attachment.attached_file_name, expires_at: expires_in.iso8601}

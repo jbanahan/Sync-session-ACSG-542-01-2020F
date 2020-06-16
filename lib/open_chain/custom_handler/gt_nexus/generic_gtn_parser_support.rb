@@ -1,7 +1,9 @@
 require 'open_chain/custom_handler/nokogiri_xml_helper'
+require 'open_chain/custom_handler/change_tracking_parser_support'
 
 module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserSupport
   extend ActiveSupport::Concern
+  include OpenChain::CustomHandler::ChangeTrackingParserSupport
 
   # Extracts and parses the address information below a party element
   # For GTN, it's assumed were just going to have a single address for the company, as such
@@ -270,27 +272,6 @@ module OpenChain; module CustomHandler; module GtNexus; module GenericGtnParserS
   # configuration option is set to true (default == true)
   def prefix_identifier_value company, value
     prefix_identifiers_with_system_codes? ? "#{company.system_code}-#{value}" : value
-  end
-
-  # Sets a custom value into the given object.
-  # obj - the object to update
-  # value - the value to set
-  # uid - either a CustomDefinition object or the setup cdef_uid value for the custom field
-  # changed - if supplied, a MutableBoolean object that will be set to true if the value of the
-  # custom value was modified.
-  # skip_nil_values - results in the mehtod being a no-op if the value is nil
-  def set_custom_value obj, value, uid, changed: nil, skip_nil_values: false
-    return if value.nil? && skip_nil_values
-
-    cdef = uid.is_a?(Symbol) ? cdefs[uid] : uid
-
-    cval = obj.custom_value(cdef)
-    if cval != value
-      obj.find_and_set_custom_value(cdef, value)
-      changed.value = true if changed
-    end
-
-    nil
   end
 
   def set_importer_system_code xml

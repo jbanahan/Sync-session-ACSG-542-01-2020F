@@ -696,7 +696,26 @@ class ModelField
     end
   end
 
+  # This disables all ModelField reload functionlity for any
+  # code running inside the given block and then re-enables it
+  # after the block runs.
+  #
+  # reload_after_block - if true (default), a ModelField.reload is initiated after the block completes
+  def self.disable_reloads reload_after_block: true
+    @@reload_disabled = true
+    begin
+      yield
+    ensure
+      @@reload_disabled = false
+      reload(true) if reload_after_block
+    end
+
+    nil
+  end
+
   def self.reload(update_cache_time=false)
+    return if defined?(@@reload_disabled) && @@reload_disabled
+
     warm_expiring_caches do
       FieldLabel.clear_defaults
       MODEL_FIELDS.clear

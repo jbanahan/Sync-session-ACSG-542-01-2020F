@@ -48,8 +48,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnOrderXmlParser <
   def set_additional_product_information product, order_xml, line_xml
     changed = MutableBoolean.new false
     base_item = base_item_element(line_xml)
-    set_custom_value(product, (reference_value(base_item, "FishAndWildlife") == "Y" ? true : nil), :prod_fish_wildlife, changed: changed)
-    set_custom_value(product, reference_value(base_item, "ReportableFiberContent"), :prod_fabric_content, changed: changed)
+    set_custom_value(product, :prod_fish_wildlife, changed, (reference_value(base_item, "FishAndWildlife") == "Y" ? true : nil))
+    set_custom_value(product, :prod_fabric_content, changed, reference_value(base_item, "ReportableFiberContent"))
     changed.value
   end
 

@@ -6,6 +6,7 @@
 #  country_origin_code    :string(255)
 #  created_at             :datetime         not null
 #  currency               :string(255)
+#  customer_reference     :string(255)
 #  destination_code       :string(255)
 #  docs_ok_date           :date
 #  docs_received_date     :date
@@ -50,7 +51,7 @@ class CommercialInvoice < ActiveRecord::Base
     :invoice_value, :invoice_value_foreign, :issue_codes,
     :master_bills_of_lading, :mfid, :non_dutiable_amount, :rater_comments,
     :total_charges, :total_quantity, :total_quantity_uom, :vendor_id,
-    :vendor_name
+    :vendor_name, :customer_reference
 
   has_many :commercial_invoice_lines, dependent: :destroy, autosave: true, inverse_of: :commercial_invoice
   belongs_to :entry, inverse_of: :commercial_invoices

@@ -446,7 +446,8 @@ module CoreModuleDefinitions
           CommercialInvoice => lambda {|ent| ent.commercial_invoices},
           BrokerInvoice => lambda {|ent| ent.broker_invoices },
           Container => lambda {|ent| ent.containers },
-          EntryComment => lambda {|ent| ent.entry_comments }
+          EntryComment => lambda {|ent| ent.entry_comments },
+          EntryException => lambda {|ent| ent.entry_exceptions }
        },
        :child_joins => {CommercialInvoice => "LEFT OUTER JOIN commercial_invoices on entries.id = commercial_invoices.entry_id"},
        :quicksearch_fields => [:ent_brok_ref, :ent_entry_num, :ent_po_numbers, :ent_customer_references, :ent_mbols, :ent_container_nums, :ent_cargo_control_number, :ent_hbols, :ent_commercial_invoice_numbers],
@@ -459,11 +460,13 @@ module CoreModuleDefinitions
           commercial_invoices: {type: CommercialInvoice, children: {
             commercial_invoice_lines: {type: CommercialInvoiceLine, children: {
                 commercial_invoice_tariffs: {type: CommercialInvoiceTariff, children: {
-                    commercial_invoice_lacey_components: {type: CommercialInvoiceLaceyComponent}
-                  }}
+                    commercial_invoice_lacey_components: {type: CommercialInvoiceLaceyComponent},
+                    pga_summaries: {type: PgaSummary}
+                }}
               }}
           }},
           containers: {type: Container},
+          entry_exceptions: {type: EntryException},
           broker_invoices: {type: BrokerInvoice, children: {
             broker_invoice_lines: {type: BrokerInvoiceLine}
           }},
@@ -722,6 +725,14 @@ module CoreModuleDefinitions
     destroy_snapshots: false,
     module_chain: [InvoiceLine]
   )
+
+  ENTRY_EXCEPTION = CoreModule.new("EntryException", "Exceptions", {
+      destroy_snapshots: false
+  })
+
+  PGA_SUMMARY = CoreModule.new("PgaSummary", "PGA Summaries", {
+      destroy_snapshots: false
+  })
 
   # Don't need these any longer, clear them...this should be the last line in the file
   DESCRIPTOR_REPOSITORY.clear

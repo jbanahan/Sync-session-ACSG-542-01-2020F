@@ -29,9 +29,9 @@ module OpenChain; module CustomHandler; module Kirklands; class KirklandsGtnOrde
   def set_additional_product_information product, order_xml, line_xml
     changed = MutableBoolean.new false
 
-    set_custom_value(product, BigDecimal(et(line_xml, "FirstCostPrice", true)), :prod_fob_price, changed: changed)
-    set_custom_value(product, et(line_xml, "Origin/CountryCode"), :prod_country_of_origin, changed: changed)
-    set_custom_value(product, et(line_xml, "ProdReferenceNumber2"), :prod_vendor_item_number, changed: changed)
+    set_custom_value(product, :prod_fob_price, changed, BigDecimal(et(line_xml, "FirstCostPrice", true)))
+    set_custom_value(product, :prod_country_of_origin, changed, et(line_xml, "Origin/CountryCode"))
+    set_custom_value(product, :prod_vendor_item_number, changed, et(line_xml, "ProdReferenceNumber2"))
 
     changed.value
   end

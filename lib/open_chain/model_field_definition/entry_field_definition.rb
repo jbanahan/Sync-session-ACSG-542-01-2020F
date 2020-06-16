@@ -486,7 +486,55 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           qualified_field_name: "(SELECT total_amount FROM daily_statement_entries dse WHERE dse.entry_id = entries.id)"
       }],
       [271, :ent_trucker_names, :trucker_names, "Trucker Name(s)", data_type: :string],
-      [272, :ent_deliver_to_names, :deliver_to_names, "Deliver To Name(s)", data_type: :string]
+      [272, :ent_deliver_to_names, :deliver_to_names, "Deliver To Name(s)", data_type: :string],
+      [273, :ent_summary_accepted_date, :summary_accepted_date, "Summary Accepted Date", {:data_type=>:datetime}],
+      [274, :ent_bond_surety_number, :bond_surety_number, "Bond Surety Number", {:data_type=>:string}],
+      [275, :ent_open_exception_codes, :open_exception_codes, "Open Exception Codes", {
+          :data_type=>:string,
+          :read_only=>true,
+          :import_lambda=>lambda {|obj, data| "Open Exception Codes ignored. (read only)"},
+          :export_lambda=>lambda { |obj|
+            obj.entry_exceptions.select { |eex| eex.resolved_date.nil? }.map { |eex| eex.code }.uniq.join("\n")
+          },
+          :qualified_field_name=> '(SELECT GROUP_CONCAT(DISTINCT eex.code SEPARATOR "\n") FROM entry_exceptions AS eex WHERE eex.entry_id = entries.id AND eex.resolved_date IS NULL)'
+      }],
+      [276, :ent_resolved_exception_codes, :resolved_exception_codes, "Resolved Exception Codes", {
+          :data_type=>:string,
+          :read_only=>true,
+          :import_lambda=>lambda {|obj, data| "Resolved Exception Codes ignored. (read only)"},
+          :export_lambda=>lambda { |obj|
+            obj.entry_exceptions.select { |eex| eex.resolved_date.present? }.map { |eex| eex.code }.uniq.join("\n")
+          },
+          :qualified_field_name=> '(SELECT GROUP_CONCAT(DISTINCT eex.code SEPARATOR "\n") FROM entry_exceptions AS eex WHERE eex.entry_id = entries.id AND eex.resolved_date IS NOT NULL)'
+      }],
+      [277, :ent_customs_detention_exception_opened_date, :customs_detention_exception_opened_date, "Customs Detention Exception Opened Date", {:data_type=>:datetime}],
+      [278, :ent_customs_detention_exception_resolved_date, :customs_detention_exception_resolved_date, "Customs Detention Exception Resolved Date", {:data_type=>:datetime}],
+      [279, :ent_classification_inquiry_exception_opened_date, :classification_inquiry_exception_opened_date, "Classification Inquiry Exception Opened Date", {:data_type=>:datetime}],
+      [280, :ent_classification_inquiry_exception_resolved_date, :classification_inquiry_exception_resolved_date, "Classification Inquiry Exception Resolved Date", {:data_type=>:datetime}],
+      [281, :ent_customer_requested_hold_exception_opened_date, :customer_requested_hold_exception_opened_date, "Customer Requested Hold Exception Opened Date", {:data_type=>:datetime}],
+      [282, :ent_customer_requested_hold_exception_resolved_date, :customer_requested_hold_exception_resolved_date, "Customer Requested Hold Exception Resolved Date", {:data_type=>:datetime}],
+      [283, :ent_customs_exam_exception_opened_date, :customs_exam_exception_opened_date, "Customs Exam Exception Opened Date", {:data_type=>:datetime}],
+      [284, :ent_customs_exam_exception_resolved_date, :customs_exam_exception_resolved_date, "Customs Exam Exception Resolved Date", {:data_type=>:datetime}],
+      [285, :ent_document_discrepancy_exception_opened_date, :document_discrepancy_exception_opened_date, "Document Discrepancy Exception Opened Date", {:data_type=>:datetime}],
+      [286, :ent_document_discrepancy_exception_resolved_date, :document_discrepancy_exception_resolved_date, "Document Discrepancy Exception Resolved Date", {:data_type=>:datetime}],
+      [287, :ent_fda_issue_exception_opened_date, :fda_issue_exception_opened_date, "FDA Issue Exception Opened Date", {:data_type=>:datetime}],
+      [288, :ent_fda_issue_exception_resolved_date, :fda_issue_exception_resolved_date, "FDA Issue Exception Resolved Date", {:data_type=>:datetime}],
+      [289, :ent_fish_and_wildlife_exception_opened_date, :fish_and_wildlife_exception_opened_date, "Fish & Wildlife Exception Opened Date", {:data_type=>:datetime}],
+      [290, :ent_fish_and_wildlife_exception_resolved_date, :fish_and_wildlife_exception_resolved_date, "Fish & Wildlife Exception Resolved Date", {:data_type=>:datetime}],
+      [291, :ent_lacey_act_exception_opened_date, :lacey_act_exception_opened_date, "Lacey Act Exception Opened Date", {:data_type=>:datetime}],
+      [292, :ent_lacey_act_exception_resolved_date, :lacey_act_exception_resolved_date, "Lacey Act Exception Resolved Date", {:data_type=>:datetime}],
+      [293, :ent_late_documents_exception_opened_date, :late_documents_exception_opened_date, "Late Documents Exception Opened Date", {:data_type=>:datetime}],
+      [294, :ent_late_documents_exception_resolved_date, :late_documents_exception_resolved_date, "Late Documents Exception Resolved Date", {:data_type=>:datetime}],
+      [295, :ent_manifest_hold_exception_opened_date, :manifest_hold_exception_opened_date, "Manifest Hold Exception Opened Date", {:data_type=>:datetime}],
+      [296, :ent_manifest_hold_exception_resolved_date, :manifest_hold_exception_resolved_date, "Manifest Hold Exception Resolved Date", {:data_type=>:datetime}],
+      [297, :ent_missing_document_exception_opened_date, :missing_document_exception_opened_date, "Missing Document Exception Opened Date", {:data_type=>:datetime}],
+      [298, :ent_missing_document_exception_resolved_date, :missing_document_exception_resolved_date, "Missing Document Exception Resolved Date", {:data_type=>:datetime}],
+      [299, :ent_pending_customs_review_exception_opened_date, :pending_customs_review_exception_opened_date, "Pending Customs Review Exception Opened Date", {:data_type=>:datetime}],
+      [300, :ent_pending_customs_review_exception_resolved_date, :pending_customs_review_exception_resolved_date, "Pending Customs Review Exception Resolved Date", {:data_type=>:datetime}],
+      [301, :ent_price_inquiry_exception_opened_date, :price_inquiry_exception_opened_date, "Price Inquiry Exception Opened Date", {:data_type=>:datetime}],
+      [302, :ent_price_inquiry_exception_resolved_date, :price_inquiry_exception_resolved_date, "Price Inquiry Exception Resolved Date", {:data_type=>:datetime}],
+      [303, :ent_usda_hold_exception_opened_date, :usda_hold_exception_opened_date, "USDA Hold Exception Opened Date", {:data_type=>:datetime}],
+      [304, :ent_usda_hold_exception_resolved_date, :usda_hold_exception_resolved_date, "USDA Hold Exception Resolved Date", {:data_type=>:datetime}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600, 'ent', 'entries', 'Entry')

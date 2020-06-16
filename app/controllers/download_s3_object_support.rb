@@ -16,8 +16,7 @@ module DownloadS3ObjectSupport
         send_data data.read, stream: true, buffer_size: 4096, disposition: disposition, filename: attachment.attached_file_name, type: attachment.attached_content_type
       end
     else
-      disposition = "inline" if disposition.blank?
-      redirect_to attachment.secure_url(90.seconds, response_content_disposition: disposition)
+      redirect_to attachment_secure_url(attachment, disposition: disposition)
     end
   end
 
@@ -32,11 +31,29 @@ module DownloadS3ObjectSupport
         send_data data.read, opts
       end
     else
-      disposition = "inline" if disposition.blank?
-      url_opts = {response_content_disposition: disposition}
+      url_opts = {response_content_disposition: content_disposition(disposition, filename)}
       url_opts[:response_content_type] = content_type unless content_type.blank?
 
       redirect_to OpenChain::S3.url_for(bucket, path, expires_in, url_opts)
     end
   end
+
+  def content_disposition disposition, filename
+    disposition = disposition.presence || "inline"
+
+    # If we don't have an exactly standard disposition, the gem blows up...in that case,
+    # just return the disposition that was given.  It's possible that
+    # a filename was already appended by the caller
+    if ["inline", "attachment"].include?(disposition)
+      ContentDisposition.format(disposition: disposition, filename: filename, to_ascii: ->(tl_filename) { ActiveSupport::Inflector.transliterate(tl_filename) })
+    else
+      disposition
+    end
+  end
+
+  def attachment_secure_url attachment, expires_in: 90.seconds, disposition: "inline", filename: nil
+    filename = filename.presence || attachment.attached_file_name
+    attachment.secure_url(expires_in, response_content_disposition: content_disposition(disposition, filename))
+  end
+
 end

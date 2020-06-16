@@ -65,4 +65,13 @@ class SyncRecord < ActiveRecord::Base
     updated = (context[key] = val)
     self[:context] = {key => updated}.to_json
   end
+
+  def self.find_or_build_sync_record obj, trading_partner
+    sync_record = obj.sync_records.find {|r| r.trading_partner == trading_partner }
+    if sync_record.nil?
+      sync_record = obj.sync_records.build(trading_partner: trading_partner)
+    end
+    sync_record
+  end
+
 end

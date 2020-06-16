@@ -7,29 +7,31 @@ module OpenChain; module CustomHandler; module CustomDefinitionSupport
     custom_definitions = existing_custom_definitions(fields_to_init, available_fields)
     return custom_definitions if fields_to_init.length == custom_definitions.size
 
-    fields_to_create = []
+    fields_to_create = Set.new
     fields_to_init.each do |field|
       fields_to_create << field if custom_definitions[field].nil?
     end
 
-    fields_to_create.each do |code|
-      # Clone the instructions so we can modify the read_only value without impacting future runs
-      # this prevents weird behavior with multiple calls (like test case runs).
-      field_hash = available_fields[code]
-      validate_custom_definition_instruction_hash(code, field_hash)
+    ModelField.disable_reloads do
+      fields_to_create.each do |code|
+        # Clone the instructions so we can modify the read_only value without impacting future runs
+        # this prevents weird behavior with multiple calls (like test case runs).
+        field_hash = available_fields[code]
+        validate_custom_definition_instruction_hash(code, field_hash)
 
-      cdi = field_hash.clone
-      read_only = cdi.delete :read_only
+        cdi = field_hash.clone
+        read_only = cdi.delete :read_only
 
-      # The lock here is to prevent muliple processes from trying to create the same custom definition at the same time, which
-      # can happen when multiple distinct delayed jobs are running over the same file type at the same time (.ie same parser class).
-      Lock.acquire("CustomDefinition-#{cdi[:cdef_uid]}", yield_in_transaction: false) do
-        # Don't open an unnecessary transaction here, all we need is locking across processes, not atomicity
-        cust_def = CustomDefinition.create!(cdi)
-        custom_definitions[code] = cust_def
+        # The lock here is to prevent muliple processes from trying to create the same custom definition at the same time, which
+        # can happen when multiple distinct delayed jobs are running over the same file type at the same time (.ie same parser class).
+        Lock.acquire("CustomDefinition-#{cdi[:cdef_uid]}", yield_in_transaction: false) do
+          # Don't open an unnecessary transaction here, all we need is locking across processes, not atomicity
+          cust_def = CustomDefinition.create!(cdi)
+          custom_definitions[code] = cust_def
 
-        if read_only
-          FieldValidatorRule.create! custom_definition_id: cust_def.id, module_type: cust_def.module_type, model_field_uid: cust_def.model_field_uid, read_only: true
+          if read_only
+            FieldValidatorRule.create! custom_definition_id: cust_def.id, module_type: cust_def.module_type, model_field_uid: cust_def.model_field_uid, read_only: true
+          end
         end
       end
     end

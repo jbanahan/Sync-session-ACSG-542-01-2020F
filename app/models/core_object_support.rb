@@ -189,6 +189,10 @@ module CoreObjectSupport
     self.class.split_newline_values string_containing_newlines
   end
 
+  def create_newline_split_field array_containing_values
+    self.class.create_newline_split_field array_containing_values
+  end
+
   def find_or_initialize_sync_record trading_partner
     sr = self.sync_records.find { |sr| sr.trading_partner == trading_partner}
     sr = self.sync_records.build(trading_partner: trading_partner) if sr.nil?
@@ -259,6 +263,12 @@ module CoreObjectSupport
 
     def split_newline_values string_containing_newlines
       string_containing_newlines.blank? ? [] : (string_containing_newlines.split(/\r?\n */)).reject(&:blank?)
+    end
+
+    def create_newline_split_field array_containing_values
+      return nil if array_containing_values.nil?
+
+      array_containing_values.join("\n ")
     end
   end
 end

@@ -1,4 +1,8 @@
 describe CoreObjectSupport do
+
+  # Just use any object that implements CoreObjectSupport already
+  subject { Entry.new }
+
   describe "find_by_custom_value" do
     it "shuould find by value" do
       cd = Factory(:custom_definition, module_type:'Product')
@@ -450,10 +454,9 @@ describe CoreObjectSupport do
   end
 
   describe "split_newline_values" do
-    let(:ent) { Factory(:entry) }
 
     it "splits a string containing newline values into an array" do
-      res = ent.split_newline_values(" a
+      res = subject.split_newline_values(" a
                 b \n  c  ")
       expect(res.length).to eq(3)
       expect(res[0]).to eq(' a')
@@ -462,13 +465,13 @@ describe CoreObjectSupport do
     end
 
     it "handles nil value" do
-      res = ent.split_newline_values(nil)
+      res = subject.split_newline_values(nil)
       expect(res).to_not be_nil
       expect(res.length).to eq(0)
     end
 
     it "works at class level" do
-      res = Entry.split_newline_values(" a
+      res = subject.class.split_newline_values(" a
                 b \n  c  ")
       expect(res.length).to eq(3)
       expect(res[0]).to eq(' a')
@@ -477,7 +480,7 @@ describe CoreObjectSupport do
     end
 
     it "does not return blank elements" do
-      expect(ent.split_newline_values("\n \na\n\n")).to eq ["a"]
+      expect(subject.split_newline_values("\n \na\n\n")).to eq ["a"]
     end
   end
 
@@ -501,6 +504,24 @@ describe CoreObjectSupport do
     it "ignores sync records for other trading partners" do
       sr = subject.sync_records.create! trading_partner: "NOT TRADING"
       expect(subject.find_or_initialize_sync_record("TRADING")).not_to eq sr
+    end
+  end
+
+  describe "create_newline_split_field" do
+    it "creates a newline delimited string from array of values" do
+      expect(subject.create_newline_split_field ["1", "2", "3"]).to eq "1\n 2\n 3"
+    end
+
+    it "doesn't add newlines when only 1 value is given" do
+      expect(subject.create_newline_split_field ["1"]).to eq "1"
+    end
+
+    it "handles nil" do
+      expect(subject.create_newline_split_field nil).to eq nil
+    end
+
+    it "defines a class level method" do
+      expect(subject.class.create_newline_split_field ["1", "2", "3"]).to eq "1\n 2\n 3"
     end
   end
 end

@@ -14,11 +14,23 @@ module OpenChain; module CustomHandler; module Target; module TargetSupport
   def split_part_number part_number
     split = part_number.split("-")
 
-    if split.length > 0
+    if split.length > 1
       [split[0..-2].join("-"), split[-1]]
     else
       [part_number, nil]
     end
+  end
+
+  def order_number invoice_line
+    if invoice_line.department.blank?
+      invoice_line.po_number
+    else
+      "#{invoice_line.department}-#{invoice_line.po_number}"
+    end
+  end
+
+  def maersk_broker_vendor_number
+    "5003461"
   end
 
 end; end; end; end

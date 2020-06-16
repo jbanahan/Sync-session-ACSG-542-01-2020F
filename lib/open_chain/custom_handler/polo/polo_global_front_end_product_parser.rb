@@ -1,9 +1,10 @@
 require 'open_chain/integration_client_parser'
-require 'open_chain/mutable_boolean'
+require 'open_chain/custom_handler/change_tracking_parser_support'
 require 'open_chain/custom_handler/polo/polo_custom_definition_support'
 
 module OpenChain; module CustomHandler; module Polo; class PoloGlobalFrontEndProductParser
   include OpenChain::IntegrationClientParser
+  include OpenChain::CustomHandler::ChangeTrackingParserSupport
   include OpenChain::CustomHandler::Polo::PoloCustomDefinitionSupport
 
   def self.parse_file data, log, opts = {}
@@ -43,21 +44,21 @@ module OpenChain; module CustomHandler; module Polo; class PoloGlobalFrontEndPro
   def parse_product product, row, user, file
     # Used to track if any custom values changed or not..we'll not save unless something in the product changes.
     changed = MutableBoolean.new false
-    set_custom_value(product, :digit_style_6, string_value(row[2]), changed)
-    set_custom_value(product, :season, string_value(row[3]), changed)
-    set_custom_value(product, :msl_board_number, string_value(row[4]), changed)
-    set_custom_value(product, :sap_brand_name, string_value(row[5]), changed)
-    set_custom_value(product, :rl_merchandise_division_description, string_value(row[6]), changed)
-    set_custom_value(product, :gender_desc, string_value(row[7]), changed)
-    set_custom_value(product, :product_category, string_value(row[8]), changed)
-    set_custom_value(product, :product_class_description, string_value(row[9]), changed)
-    set_custom_value(product, :ax_subclass, string_value(row[10]), changed)
-    set_custom_value(product, :rl_short_description, string_value(row[12]), changed)
-    set_custom_value(product, :rl_long_description, string_value(row[13]), changed)
-    set_custom_value(product, :merchandising_fabrication, string_value(row[14]), changed)
-    set_custom_value(product, :heel_height, string_value(row[15]), changed)
-    set_custom_value(product, :material_status, material_status_value(row[16]), changed)
-    set_custom_value(product, :ax_export_status, ax_export_status_value(row[17]), changed)
+    set_custom_value(product, :digit_style_6, changed, string_value(row[2]))
+    set_custom_value(product, :season, changed, string_value(row[3]))
+    set_custom_value(product, :msl_board_number, changed, string_value(row[4]))
+    set_custom_value(product, :sap_brand_name, changed, string_value(row[5]))
+    set_custom_value(product, :rl_merchandise_division_description, changed, string_value(row[6]))
+    set_custom_value(product, :gender_desc, changed, string_value(row[7]))
+    set_custom_value(product, :product_category, changed, string_value(row[8]))
+    set_custom_value(product, :product_class_description, changed, string_value(row[9]))
+    set_custom_value(product, :ax_subclass, changed, string_value(row[10]))
+    set_custom_value(product, :rl_short_description, changed, string_value(row[12]))
+    set_custom_value(product, :rl_long_description, changed, string_value(row[13]))
+    set_custom_value(product, :merchandising_fabrication, changed, string_value(row[14]))
+    set_custom_value(product, :heel_height, changed, string_value(row[15]))
+    set_custom_value(product, :material_status, changed, material_status_value(row[16]))
+    set_custom_value(product, :ax_export_status, changed, ax_export_status_value(row[17]))
 
     if changed.value
       product.save!
@@ -77,16 +78,6 @@ module OpenChain; module CustomHandler; module Polo; class PoloGlobalFrontEndPro
       :gender_desc, :product_category, :product_class_description, :ax_subclass, :rl_short_description, :rl_long_description,
       :merchandising_fabrication, :heel_height, :material_status, :ax_export_status, :ax_updated_without_change
     ])
-  end
-
-  def set_custom_value product, cdef_uid, value, changed
-    cd = cdefs[cdef_uid]
-    existing = product.custom_value(cd)
-    if existing != value
-      product.find_and_set_custom_value cd, value
-      changed.value = true
-    end
-    nil
   end
 
   def material_status_value value

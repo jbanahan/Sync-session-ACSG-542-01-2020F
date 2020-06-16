@@ -2,243 +2,273 @@
 #
 # Table name: entries
 #
-#  across_declaration_accepted            :datetime
-#  across_sent_date                       :datetime
-#  additional_duty_confirmation_date      :date
-#  ams_hold_date                          :datetime
-#  ams_hold_release_date                  :datetime
-#  aphis_hold_date                        :datetime
-#  aphis_hold_release_date                :datetime
-#  arrival_date                           :datetime
-#  arrival_notice_receipt_date            :datetime
-#  atf_hold_date                          :datetime
-#  atf_hold_release_date                  :datetime
-#  available_date                         :datetime
-#  b3_print_date                          :datetime
-#  bol_discrepancy_date                   :date
-#  bol_received_date                      :datetime
-#  bond_type                              :string(255)
-#  broker_invoice_total                   :decimal(12, 2)
-#  broker_reference                       :string(255)
-#  cadex_accept_date                      :datetime
-#  cadex_sent_date                        :datetime
-#  cancelled_date                         :datetime
-#  cargo_control_number                   :string(255)
-#  cargo_manifest_hold_date               :datetime
-#  cargo_manifest_hold_release_date       :datetime
-#  carrier_code                           :string(255)
-#  carrier_name                           :string(255)
-#  cbp_hold_date                          :datetime
-#  cbp_hold_release_date                  :datetime
-#  cbp_intensive_hold_date                :datetime
-#  cbp_intensive_hold_release_date        :datetime
-#  census_warning                         :boolean
-#  charge_codes                           :string(255)
-#  commercial_invoice_numbers             :text(65535)
-#  company_number                         :string(255)
-#  consignee_address_1                    :string(255)
-#  consignee_address_2                    :string(255)
-#  consignee_city                         :string(255)
-#  consignee_country_code                 :string(255)
-#  consignee_postal_code                  :string(255)
-#  consignee_state                        :string(255)
-#  container_numbers                      :text(65535)
-#  container_sizes                        :string(255)
-#  cotton_fee                             :decimal(11, 2)
-#  created_at                             :datetime         not null
-#  customer_name                          :string(255)
-#  customer_number                        :string(255)
-#  customer_references                    :text(65535)
-#  daily_statement_approved_date          :date
-#  daily_statement_due_date               :date
-#  daily_statement_number                 :string(255)
-#  ddtc_hold_date                         :datetime
-#  ddtc_hold_release_date                 :datetime
-#  deliver_to_names                       :text(65535)
-#  delivery_order_pickup_date             :datetime
-#  departments                            :text(65535)
-#  destination_state                      :string(255)
-#  detained_at_port_of_discharge_date     :date
-#  direct_shipment_date                   :date
-#  division_number                        :string(255)
-#  docs_missing_date                      :date
-#  docs_received_date                     :date
-#  documentation_request_date             :datetime
-#  duty_due_date                          :date
-#  edi_received_date                      :date
-#  employee_name                          :string(255)
-#  entered_value                          :decimal(13, 2)
-#  entry_filed_date                       :datetime
-#  entry_number                           :string(255)
-#  entry_port_code                        :string(255)
-#  entry_type                             :string(255)
-#  error_free_release                     :boolean
-#  eta_date                               :date
-#  exam_ordered_date                      :datetime
-#  exam_release_date                      :datetime
-#  expected_update_time                   :datetime
-#  export_country_codes                   :string(255)
-#  export_date                            :date
-#  export_state_codes                     :string(255)
-#  fcl_lcl                                :string(255)
-#  fda_hold_date                          :datetime
-#  fda_hold_release_date                  :datetime
-#  fda_message                            :string(255)
-#  fda_pending_release_line_count         :integer
-#  fda_release_date                       :datetime
-#  fda_review_date                        :datetime
-#  fda_transmit_date                      :datetime
-#  file_logged_date                       :datetime
-#  final_delivery_date                    :datetime
-#  final_statement_date                   :date
-#  first_7501_print                       :datetime
-#  first_do_issued_date                   :datetime
-#  first_entry_sent_date                  :datetime
-#  first_it_date                          :date
-#  first_release_date                     :datetime
-#  first_release_received_date            :datetime
-#  fiscal_date                            :date
-#  fiscal_month                           :integer
-#  fiscal_year                            :integer
-#  fish_and_wildlife_hold_date            :datetime
-#  fish_and_wildlife_hold_release_date    :datetime
-#  fish_and_wildlife_secure_facility_date :datetime
-#  fish_and_wildlife_transmitted_date     :datetime
-#  free_date                              :datetime
-#  freight_pickup_date                    :datetime
-#  fsis_hold_date                         :datetime
-#  fsis_hold_release_date                 :datetime
-#  gross_weight                           :integer
-#  hmf                                    :decimal(11, 2)
-#  hold_date                              :datetime
-#  hold_release_date                      :datetime
-#  house_bills_of_lading                  :text(65535)
-#  house_carrier_code                     :string(255)
-#  hts_expired_date                       :date
-#  hts_misclassified_date                 :date
-#  hts_missing_date                       :date
-#  hts_need_additional_info_date          :date
-#  id                                     :integer          not null, primary key
-#  import_country_id                      :integer
-#  import_date                            :date
-#  importer_id                            :integer
-#  importer_request_date                  :datetime
-#  importer_tax_id                        :string(255)
-#  invoice_discrepancy_date               :date
-#  invoice_missing_date                   :date
-#  invoice_paid_date                      :datetime
-#  isf_accepted_date                      :datetime
-#  isf_sent_date                          :datetime
-#  it_numbers                             :text(65535)
-#  k84_due_date                           :date
-#  k84_month                              :integer
-#  k84_payment_due_date                   :date
-#  k84_receive_date                       :date
-#  lading_port_code                       :string(255)
-#  last_7501_print                        :datetime
-#  last_billed_date                       :datetime
-#  last_exported_from_source              :datetime
-#  last_file_bucket                       :string(255)
-#  last_file_path                         :string(255)
-#  liquidation_action_code                :string(255)
-#  liquidation_action_description         :string(255)
-#  liquidation_ada                        :decimal(12, 2)
-#  liquidation_cvd                        :decimal(12, 2)
-#  liquidation_date                       :datetime
-#  liquidation_duty                       :decimal(12, 2)
-#  liquidation_extension_code             :string(255)
-#  liquidation_extension_count            :integer
-#  liquidation_extension_description      :string(255)
-#  liquidation_fees                       :decimal(12, 2)
-#  liquidation_tax                        :decimal(12, 2)
-#  liquidation_total                      :decimal(12, 2)
-#  liquidation_type                       :string(255)
-#  liquidation_type_code                  :string(255)
-#  location_of_goods                      :string(255)
-#  location_of_goods_description          :string(255)
-#  manifest_info_received_date            :datetime
-#  master_bills_of_lading                 :text(65535)
-#  merchandise_description                :string(255)
-#  mfids                                  :text(65535)
-#  mid_discrepancy_date                   :date
-#  miscellaneous_entry_exception_date     :date
-#  monthly_statement_due_date             :date
-#  monthly_statement_number               :string(255)
-#  monthly_statement_paid_date            :date
-#  monthly_statement_received_date        :date
-#  mpf                                    :decimal(11, 2)
-#  nhtsa_hold_date                        :datetime
-#  nhtsa_hold_release_date                :datetime
-#  nmfs_hold_date                         :datetime
-#  nmfs_hold_release_date                 :datetime
-#  ogd_request_date                       :datetime
-#  on_hold                                :boolean
-#  one_usg_date                           :datetime
-#  origin_country_codes                   :string(255)
-#  origin_state_codes                     :string(255)
-#  other_agency_hold_date                 :datetime
-#  other_agency_hold_release_date         :datetime
-#  other_fees                             :decimal(11, 2)
-#  paperless_certification                :boolean
-#  paperless_release                      :boolean
-#  pars_ack_date                          :datetime
-#  pars_reject_date                       :datetime
-#  part_number_request_date               :datetime
-#  part_numbers                           :text(65535)
-#  pay_type                               :integer
-#  pga_docs_incomplete_date               :date
-#  pga_docs_missing_date                  :date
-#  po_numbers                             :text(65535)
-#  po_request_date                        :datetime
-#  product_lines                          :string(255)
-#  recon_flags                            :string(255)
-#  release_cert_message                   :string(255)
-#  release_date                           :datetime
-#  release_type                           :string(255)
-#  ship_terms                             :string(255)
-#  source_system                          :string(255)
-#  special_program_indicators             :string(255)
-#  special_tariff                         :boolean
-#  split_release_option                   :string(255)
-#  split_shipment                         :boolean
-#  split_shipment_date                    :datetime
-#  store_names                            :text(65535)
-#  sub_house_bills_of_lading              :text(65535)
-#  summary_line_count                     :integer
-#  summary_rejected                       :boolean
-#  tariff_request_date                    :datetime
-#  time_to_process                        :integer
-#  total_add                              :decimal(13, 4)
-#  total_cvd                              :decimal(13, 4)
-#  total_duty                             :decimal(12, 2)
-#  total_duty_direct                      :decimal(12, 2)
-#  total_duty_gst                         :decimal(11, 2)
-#  total_entry_fee                        :decimal(11, 2)
-#  total_fees                             :decimal(12, 2)
-#  total_gst                              :decimal(11, 2)
-#  total_invoiced_value                   :decimal(13, 2)
-#  total_non_dutiable_amount              :decimal(13, 2)
-#  total_packages                         :integer
-#  total_packages_uom                     :string(255)
-#  total_taxes                            :decimal(12, 2)
-#  total_units                            :decimal(12, 3)
-#  total_units_uoms                       :string(255)
-#  tracking_status                        :integer
-#  transport_mode_code                    :string(255)
-#  trucker_called_date                    :datetime
-#  trucker_names                          :text(65535)
-#  ult_consignee_code                     :string(255)
-#  ult_consignee_name                     :string(255)
-#  unlading_port_code                     :string(255)
-#  updated_at                             :datetime         not null
-#  us_exit_port_code                      :string(255)
-#  usda_hold_date                         :datetime
-#  usda_hold_release_date                 :datetime
-#  value_currency_request_date            :datetime
-#  vendor_names                           :text(65535)
-#  vessel                                 :string(255)
-#  voyage                                 :string(255)
-#  worksheet_date                         :datetime
+#  across_declaration_accepted                     :datetime
+#  across_sent_date                                :datetime
+#  additional_duty_confirmation_date               :date
+#  ams_hold_date                                   :datetime
+#  ams_hold_release_date                           :datetime
+#  aphis_hold_date                                 :datetime
+#  aphis_hold_release_date                         :datetime
+#  arrival_date                                    :datetime
+#  arrival_notice_receipt_date                     :datetime
+#  atf_hold_date                                   :datetime
+#  atf_hold_release_date                           :datetime
+#  available_date                                  :datetime
+#  b3_print_date                                   :datetime
+#  bol_discrepancy_date                            :date
+#  bol_received_date                               :datetime
+#  bond_surety_number                              :string(255)
+#  bond_type                                       :string(255)
+#  broker_invoice_total                            :decimal(12, 2)
+#  broker_reference                                :string(255)
+#  cadex_accept_date                               :datetime
+#  cadex_sent_date                                 :datetime
+#  cancelled_date                                  :datetime
+#  cargo_control_number                            :string(255)
+#  cargo_manifest_hold_date                        :datetime
+#  cargo_manifest_hold_release_date                :datetime
+#  carrier_code                                    :string(255)
+#  carrier_name                                    :string(255)
+#  cbp_hold_date                                   :datetime
+#  cbp_hold_release_date                           :datetime
+#  cbp_intensive_hold_date                         :datetime
+#  cbp_intensive_hold_release_date                 :datetime
+#  census_warning                                  :boolean
+#  charge_codes                                    :string(255)
+#  classification_inquiry_exception_opened_date    :datetime
+#  classification_inquiry_exception_resolved_date  :datetime
+#  commercial_invoice_numbers                      :text(65535)
+#  company_number                                  :string(255)
+#  consignee_address_1                             :string(255)
+#  consignee_address_2                             :string(255)
+#  consignee_city                                  :string(255)
+#  consignee_country_code                          :string(255)
+#  consignee_postal_code                           :string(255)
+#  consignee_state                                 :string(255)
+#  container_numbers                               :text(65535)
+#  container_sizes                                 :string(255)
+#  cotton_fee                                      :decimal(11, 2)
+#  created_at                                      :datetime         not null
+#  customer_name                                   :string(255)
+#  customer_number                                 :string(255)
+#  customer_references                             :text(65535)
+#  customer_requested_hold_exception_opened_date   :datetime
+#  customer_requested_hold_exception_resolved_date :datetime
+#  customs_detention_exception_opened_date         :datetime
+#  customs_detention_exception_resolved_date       :datetime
+#  customs_exam_exception_opened_date              :datetime
+#  customs_exam_exception_resolved_date            :datetime
+#  daily_statement_approved_date                   :date
+#  daily_statement_due_date                        :date
+#  daily_statement_number                          :string(255)
+#  ddtc_hold_date                                  :datetime
+#  ddtc_hold_release_date                          :datetime
+#  deliver_to_names                                :text(65535)
+#  delivery_order_pickup_date                      :datetime
+#  departments                                     :text(65535)
+#  destination_state                               :string(255)
+#  detained_at_port_of_discharge_date              :date
+#  direct_shipment_date                            :date
+#  division_number                                 :string(255)
+#  docs_missing_date                               :date
+#  docs_received_date                              :date
+#  document_discrepancy_exception_opened_date      :datetime
+#  document_discrepancy_exception_resolved_date    :datetime
+#  documentation_request_date                      :datetime
+#  duty_due_date                                   :date
+#  edi_received_date                               :date
+#  employee_name                                   :string(255)
+#  entered_value                                   :decimal(13, 2)
+#  entry_filed_date                                :datetime
+#  entry_number                                    :string(255)
+#  entry_port_code                                 :string(255)
+#  entry_type                                      :string(255)
+#  error_free_release                              :boolean
+#  eta_date                                        :date
+#  exam_ordered_date                               :datetime
+#  exam_release_date                               :datetime
+#  expected_update_time                            :datetime
+#  export_country_codes                            :string(255)
+#  export_date                                     :date
+#  export_state_codes                              :string(255)
+#  fcl_lcl                                         :string(255)
+#  fda_hold_date                                   :datetime
+#  fda_hold_release_date                           :datetime
+#  fda_issue_exception_opened_date                 :datetime
+#  fda_issue_exception_resolved_date               :datetime
+#  fda_message                                     :string(255)
+#  fda_pending_release_line_count                  :integer
+#  fda_release_date                                :datetime
+#  fda_review_date                                 :datetime
+#  fda_transmit_date                               :datetime
+#  file_logged_date                                :datetime
+#  final_delivery_date                             :datetime
+#  final_statement_date                            :date
+#  first_7501_print                                :datetime
+#  first_do_issued_date                            :datetime
+#  first_entry_sent_date                           :datetime
+#  first_it_date                                   :date
+#  first_release_date                              :datetime
+#  first_release_received_date                     :datetime
+#  fiscal_date                                     :date
+#  fiscal_month                                    :integer
+#  fiscal_year                                     :integer
+#  fish_and_wildlife_exception_opened_date         :datetime
+#  fish_and_wildlife_exception_resolved_date       :datetime
+#  fish_and_wildlife_hold_date                     :datetime
+#  fish_and_wildlife_hold_release_date             :datetime
+#  fish_and_wildlife_secure_facility_date          :datetime
+#  fish_and_wildlife_transmitted_date              :datetime
+#  free_date                                       :datetime
+#  freight_pickup_date                             :datetime
+#  fsis_hold_date                                  :datetime
+#  fsis_hold_release_date                          :datetime
+#  gross_weight                                    :integer
+#  hmf                                             :decimal(11, 2)
+#  hold_date                                       :datetime
+#  hold_release_date                               :datetime
+#  house_bills_of_lading                           :text(65535)
+#  house_carrier_code                              :string(255)
+#  hts_expired_date                                :date
+#  hts_misclassified_date                          :date
+#  hts_missing_date                                :date
+#  hts_need_additional_info_date                   :date
+#  id                                              :integer          not null, primary key
+#  import_country_id                               :integer
+#  import_date                                     :date
+#  importer_id                                     :integer
+#  importer_request_date                           :datetime
+#  importer_tax_id                                 :string(255)
+#  invoice_discrepancy_date                        :date
+#  invoice_missing_date                            :date
+#  invoice_paid_date                               :datetime
+#  isf_accepted_date                               :datetime
+#  isf_sent_date                                   :datetime
+#  it_numbers                                      :text(65535)
+#  k84_due_date                                    :date
+#  k84_month                                       :integer
+#  k84_payment_due_date                            :date
+#  k84_receive_date                                :date
+#  lacey_act_exception_opened_date                 :datetime
+#  lacey_act_exception_resolved_date               :datetime
+#  lading_port_code                                :string(255)
+#  last_7501_print                                 :datetime
+#  last_billed_date                                :datetime
+#  last_exported_from_source                       :datetime
+#  last_file_bucket                                :string(255)
+#  last_file_path                                  :string(255)
+#  late_documents_exception_opened_date            :datetime
+#  late_documents_exception_resolved_date          :datetime
+#  liquidation_action_code                         :string(255)
+#  liquidation_action_description                  :string(255)
+#  liquidation_ada                                 :decimal(12, 2)
+#  liquidation_cvd                                 :decimal(12, 2)
+#  liquidation_date                                :datetime
+#  liquidation_duty                                :decimal(12, 2)
+#  liquidation_extension_code                      :string(255)
+#  liquidation_extension_count                     :integer
+#  liquidation_extension_description               :string(255)
+#  liquidation_fees                                :decimal(12, 2)
+#  liquidation_tax                                 :decimal(12, 2)
+#  liquidation_total                               :decimal(12, 2)
+#  liquidation_type                                :string(255)
+#  liquidation_type_code                           :string(255)
+#  location_of_goods                               :string(255)
+#  location_of_goods_description                   :string(255)
+#  manifest_hold_exception_opened_date             :datetime
+#  manifest_hold_exception_resolved_date           :datetime
+#  manifest_info_received_date                     :datetime
+#  master_bills_of_lading                          :text(65535)
+#  merchandise_description                         :string(255)
+#  mfids                                           :text(65535)
+#  mid_discrepancy_date                            :date
+#  miscellaneous_entry_exception_date              :date
+#  missing_document_exception_opened_date          :datetime
+#  missing_document_exception_resolved_date        :datetime
+#  monthly_statement_due_date                      :date
+#  monthly_statement_number                        :string(255)
+#  monthly_statement_paid_date                     :date
+#  monthly_statement_received_date                 :date
+#  mpf                                             :decimal(11, 2)
+#  nhtsa_hold_date                                 :datetime
+#  nhtsa_hold_release_date                         :datetime
+#  nmfs_hold_date                                  :datetime
+#  nmfs_hold_release_date                          :datetime
+#  ogd_request_date                                :datetime
+#  on_hold                                         :boolean
+#  one_usg_date                                    :datetime
+#  origin_country_codes                            :string(255)
+#  origin_state_codes                              :string(255)
+#  other_agency_hold_date                          :datetime
+#  other_agency_hold_release_date                  :datetime
+#  other_fees                                      :decimal(11, 2)
+#  paperless_certification                         :boolean
+#  paperless_release                               :boolean
+#  pars_ack_date                                   :datetime
+#  pars_reject_date                                :datetime
+#  part_number_request_date                        :datetime
+#  part_numbers                                    :text(65535)
+#  pay_type                                        :integer
+#  pending_customs_review_exception_opened_date    :datetime
+#  pending_customs_review_exception_resolved_date  :datetime
+#  pga_docs_incomplete_date                        :date
+#  pga_docs_missing_date                           :date
+#  po_numbers                                      :text(65535)
+#  po_request_date                                 :datetime
+#  price_inquiry_exception_opened_date             :datetime
+#  price_inquiry_exception_resolved_date           :datetime
+#  product_lines                                   :string(255)
+#  recon_flags                                     :string(255)
+#  release_cert_message                            :string(255)
+#  release_date                                    :datetime
+#  release_type                                    :string(255)
+#  ship_terms                                      :string(255)
+#  source_system                                   :string(255)
+#  special_program_indicators                      :string(255)
+#  special_tariff                                  :boolean
+#  split_release_option                            :string(255)
+#  split_shipment                                  :boolean
+#  split_shipment_date                             :datetime
+#  store_names                                     :text(65535)
+#  sub_house_bills_of_lading                       :text(65535)
+#  summary_accepted_date                           :datetime
+#  summary_line_count                              :integer
+#  summary_rejected                                :boolean
+#  tariff_request_date                             :datetime
+#  time_to_process                                 :integer
+#  total_add                                       :decimal(13, 4)
+#  total_cvd                                       :decimal(13, 4)
+#  total_duty                                      :decimal(12, 2)
+#  total_duty_direct                               :decimal(12, 2)
+#  total_duty_gst                                  :decimal(11, 2)
+#  total_entry_fee                                 :decimal(11, 2)
+#  total_fees                                      :decimal(12, 2)
+#  total_gst                                       :decimal(11, 2)
+#  total_invoiced_value                            :decimal(13, 2)
+#  total_non_dutiable_amount                       :decimal(13, 2)
+#  total_packages                                  :integer
+#  total_packages_uom                              :string(255)
+#  total_taxes                                     :decimal(12, 2)
+#  total_units                                     :decimal(12, 3)
+#  total_units_uoms                                :string(255)
+#  tracking_status                                 :integer
+#  transport_mode_code                             :string(255)
+#  trucker_called_date                             :datetime
+#  trucker_names                                   :text(65535)
+#  ult_consignee_code                              :string(255)
+#  ult_consignee_name                              :string(255)
+#  unlading_port_code                              :string(255)
+#  updated_at                                      :datetime         not null
+#  us_exit_port_code                               :string(255)
+#  usda_hold_date                                  :datetime
+#  usda_hold_exception_opened_date                 :datetime
+#  usda_hold_exception_resolved_date               :datetime
+#  usda_hold_release_date                          :datetime
+#  value_currency_request_date                     :datetime
+#  vendor_names                                    :text(65535)
+#  vessel                                          :string(255)
+#  voyage                                          :string(255)
+#  worksheet_date                                  :datetime
 #
 # Indexes
 #
@@ -331,7 +361,21 @@ class Entry < ActiveRecord::Base
     :ult_consignee_code, :ult_consignee_name, :unlading_port_code, :unlading_port,
     :us_exit_port_code, :usda_hold_date, :usda_hold_release_date,
     :value_currency_request_date, :vendor_names, :vessel, :voyage, :worksheet_date,
-    :import_country, :ca_entry_port, :updated_at
+    :import_country, :ca_entry_port, :updated_at, :summary_accepted_date, :bond_surety_number,
+    :customs_detention_exception_opened_date, :customs_detention_exception_resolved_date,
+    :classification_inquiry_exception_opened_date, :classification_inquiry_exception_resolved_date,
+    :customer_requested_hold_exception_opened_date, :customer_requested_hold_exception_resolved_date,
+    :customs_exam_exception_opened_date, :customs_exam_exception_resolved_date,
+    :document_discrepancy_exception_opened_date, :document_discrepancy_exception_resolved_date,
+    :fda_issue_exception_opened_date, :fda_issue_exception_resolved_date,
+    :fish_and_wildlife_exception_opened_date, :fish_and_wildlife_exception_resolved_date,
+    :lacey_act_exception_opened_date, :lacey_act_exception_resolved_date,
+    :late_documents_exception_opened_date, :late_documents_exception_resolved_date,
+    :manifest_hold_exception_opened_date, :manifest_hold_exception_resolved_date,
+    :missing_documents_exception_opened_date, :missing_documents_exception_resolved_date,
+    :pending_customs_review_exception_opened_date, :pending_customs_review_exception_resolved_date,
+    :price_inquiry_exception_opened_date, :price_inquiry_exception_resolved_date,
+    :usda_hold_exception_opened_date, :usda_hold_exception_resolved_date
 
   # Tracking status is about whether an entry has been fully prepared
   # It does not report on release status, just whether the entry has been
@@ -347,6 +391,7 @@ class Entry < ActiveRecord::Base
   has_many :commercial_invoice_tariffs, through: :commercial_invoice_lines
   has_many :entry_comments, dependent: :destroy, inverse_of: :entry, autosave: true
   has_many :containers, dependent: :destroy, inverse_of: :entry, autosave: true
+  has_many :entry_exceptions, dependent: :destroy, inverse_of: :entry, autosave: true
   has_one :daily_statement_entry, inverse_of: :entry
 
   belongs_to :importer, :class_name=>"Company"
@@ -704,6 +749,16 @@ class Entry < ActiveRecord::Base
     remainder = total % 10
     check_digit = remainder > 0 ? (10 - remainder) : 0
     check_digit.to_s
+  end
+
+  # Adds hyphens to an entry number to fit the format ###-#######-#.  Nil value results in nil return.
+  def self.format_entry_number entry_number
+    entry_number&.gsub(/(\d{3})[.-]?(\d+)[.-]?(\d{1})/, '\1-\2-\3')
+  end
+
+  # Adds hyphens to an importer tax ID to fit the format ##-#########.  Nil value results in nil return.
+  def self.format_importer_tax_id tax_id
+    tax_id&.gsub(/(\d{2})[.-]?(\d+)/, '\1-\2')
   end
 
   private

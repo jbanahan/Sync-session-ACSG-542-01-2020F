@@ -30,7 +30,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
     remove_unreferenced_containers(shipment, @sent_containers)
 
     # This indicates to our Kewill entry xml generator that the data is ready to be sent to Kewill.
-    set_custom_value(shipment, Time.zone.now, :shp_entry_prepared_date)
+    set_custom_value(shipment, :shp_entry_prepared_date, nil, Time.zone.now)
     # We also clear out any existing sync records for the Kewill Entry every time the shipment comes in...this forces a resend to
     # Kewill on each shipment update.
     sr = shipment.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER}

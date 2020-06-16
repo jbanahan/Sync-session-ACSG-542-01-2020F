@@ -88,6 +88,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'cvd_amt_liquidated' => 567.89,
         'split' => "N",
         'split_release_option' => "1",
+        'bond_surety_no' => "bs_number",
         'dates' => [
           # Note the time ending in 60..stupid Alliance has dates w/ a minute value of 60 rather
           # than incrementing the hour.
@@ -115,6 +116,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
           {'date_no'=>85, 'date'=>201503020000},
           {'date_no'=>108, 'date'=>201503020100},
           {'date_no'=>121, 'date'=>201503020200},
+          {'date_no'=>906, 'date'=>202004161601},
           {'date_no'=>2014, 'date'=>201503020300},
           {'date_no'=>92007, 'date'=>201503020400},
           {'date_no'=>92008, 'date'=>201503020500},
@@ -206,6 +208,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
         'commercial_invoices' => [
           {
             'ci_no' => 'INV1',
+            'cust_ref' => 'REF531',
             'currency' => "USD",
             'exchange_rate' => 123456,
             'value_foreign' => 12345,
@@ -250,10 +253,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 'non_dutiable_amt' => 12345,
                 'misc_discount' => 33.44,
                 'agriculture_license_no' => "LICENSE NO",
+                'ruling_no' => "RULE NO",
+                'ruling_type' => "RULE TYPE",
                 'fees' => [
-                  {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234},
-                  {'customs_fee_code'=>501, 'amt_fee'=>345},
-                  {'customs_fee_code'=>56, 'amt_fee'=>456},
+                  {'customs_fee_code'=>499, 'amt_fee'=>123, 'amt_fee_prorated'=>234, 'alg_x_rate_advalorem'=>346400},
+                  {'customs_fee_code'=>501, 'amt_fee'=>345, 'alg_x_rate_advalorem'=>125000},
+                  {'customs_fee_code'=>56, 'amt_fee'=>456, 'alg_x_rate_specific'=>1054664},
                   {'customs_fee_code'=>123, 'amt_fee'=>5, 'amt_fee_prorated' => 250},
                   {'customs_fee_code'=>100, 'amt_fee'=>1250}
                 ],
@@ -308,7 +313,26 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                                 "percent_recycled_material": 20000,
                                 "containers": []
                               }
-                            ]
+                            ],
+                    "pga_summaries" => [{
+                                         "uscs_pg_seq_nbr": 1,
+                                         "pg_agency_cd": "FDA",
+                                         "pg_program_cd": "DRU",
+                                         "pg_cd": "FD2",
+                                         "commercial_desc": "ESOMERPRAZOLE MAGNESIUM",
+                                         "agency_processing_cd": "RND",
+                                         "disclaimer_type_cd": "TST"
+                                       },
+                                       {
+                                         "uscs_pg_seq_nbr": 2,
+                                         "pg_agency_cd": "FCC",
+                                         "pg_program_cd": "URD",
+                                         "pg_cd": "FCP",
+                                         "commercial_desc": "ESOMERPRADIO HAM",
+                                         "agency_processing_cd": "DNR",
+                                         "disclaimer_type_cd": "TEST"
+                                       }
+                                     ]
                   },
                   {
                     'tariff_no' => '9876543210',
@@ -442,6 +466,80 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                 "trucker_name": "AP EXPRESS",
                 "deliver_to_name": "EMSER TILE WESTERN DC"
             }
+        ],
+        "exceptions": [
+            {
+                "exception_code": "CD",
+                "exception_comments": "This is an exception",
+                "created_date": "2020-05-07 06:45:13.274",
+                "resolved_date": "2020-05-08 16:55:23.284"
+            },
+            {
+                "exception_code": "CI",
+                "exception_comments": "Comments...",
+                "created_date": "2020-05-05 07:46:14.275",
+                "resolved_date": "2020-05-09 17:05:24.285"
+            },
+            {
+                "exception_code": "TGT",
+                "created_date": "2020-05-06 07:46:14.275",
+                "resolved_date": "2020-05-10 17:05:24.285"
+            },
+            {
+                "exception_code": "UCE",
+                "created_date": "2020-05-07 07:46:14.275",
+                "resolved_date": "2020-05-11 17:05:24.285"
+            },
+            {
+                "exception_code": "DD",
+                "created_date": "2020-05-08 07:46:14.275",
+                "resolved_date": "2020-05-12 17:05:24.285"
+            },
+            {
+                "exception_code": "FDA",
+                "created_date": "2020-05-09 07:46:14.275",
+                "resolved_date": "2020-05-13 17:05:24.285"
+            },
+            {
+                "exception_code": "FW",
+                "created_date": "2020-05-10 07:46:14.275",
+                "resolved_date": "2020-05-14 17:05:24.285"
+            },
+            {
+                "exception_code": "LAD",
+                "created_date": "2020-05-11 07:46:14.275",
+                "resolved_date": "2020-05-15 17:05:24.285"
+            },
+            {
+                "exception_code": "LD",
+                "created_date": "2020-05-12 07:46:14.275",
+                "resolved_date": "2020-05-16 17:05:24.285"
+            },
+            {
+                "exception_code": "MH",
+                "created_date": "2020-05-13 07:46:14.275",
+                "resolved_date": "2020-05-17 17:05:24.285"
+            },
+            {
+                "exception_code": "MD",
+                "created_date": "2020-05-14 07:46:14.275",
+                "resolved_date": "2020-05-18 17:05:24.285"
+            },
+            {
+                "exception_code": "PR",
+                "created_date": "2020-05-15 07:46:14.275",
+                "resolved_date": "2020-05-19 17:05:24.285"
+            },
+            {
+                "exception_code": "PI",
+                "created_date": "2020-05-16 07:46:14.275",
+                "resolved_date": "2020-05-20 17:05:24.285"
+            },
+            {
+                "exception_code": "USD",
+                "created_date": "2020-05-17 07:46:14.275",
+                "resolved_date": "2020-05-21 17:05:24.285"
+            }
         ]
       }
     end
@@ -538,6 +636,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.first_release_date).to eq tz.parse "201503021000"
       expect(entry.bol_received_date).to eq tz.parse "201604271130"
       expect(entry.arrival_notice_receipt_date).to eq tz.parse "201701031200"
+      expect(entry.summary_accepted_date).to eq tz.parse "202004161601"
 
       # hold/release dates
       expect(entry.ams_hold_date).to eq tz.parse "201701031300"
@@ -607,6 +706,36 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.summary_line_count).to eq 2
       expect(entry.trucker_names).to eql("BARSAN\n CONTAINER FREIGHT\n AP EXPRESS")
       expect(entry.deliver_to_names).to eql("EMSER TILE WESTERN DC\n CAL CARTAGE")
+      expect(entry.bond_surety_number).to eq "bs_number"
+
+      expect(entry.customs_detention_exception_opened_date).to eq tz.parse("2020-05-07 06:45:13")
+      expect(entry.customs_detention_exception_resolved_date).to eq tz.parse("2020-05-08 16:55:23")
+      expect(entry.classification_inquiry_exception_opened_date).to eq tz.parse("2020-05-05 07:46:14")
+      expect(entry.classification_inquiry_exception_resolved_date).to eq tz.parse("2020-05-09 17:05:24")
+      expect(entry.customer_requested_hold_exception_opened_date).to eq tz.parse("2020-05-06 07:46:14")
+      expect(entry.customer_requested_hold_exception_resolved_date).to eq tz.parse("2020-05-10 17:05:24")
+      expect(entry.customs_exam_exception_opened_date).to eq tz.parse("2020-05-07 07:46:14")
+      expect(entry.customs_exam_exception_resolved_date).to eq tz.parse("2020-05-11 17:05:24")
+      expect(entry.document_discrepancy_exception_opened_date).to eq tz.parse("2020-05-08 07:46:14")
+      expect(entry.document_discrepancy_exception_resolved_date).to eq tz.parse("2020-05-12 17:05:24")
+      expect(entry.fda_issue_exception_opened_date).to eq tz.parse("2020-05-09 07:46:14")
+      expect(entry.fda_issue_exception_resolved_date).to eq tz.parse("2020-05-13 17:05:24")
+      expect(entry.fish_and_wildlife_exception_opened_date).to eq tz.parse("2020-05-10 07:46:14")
+      expect(entry.fish_and_wildlife_exception_resolved_date).to eq tz.parse("2020-05-14 17:05:24")
+      expect(entry.lacey_act_exception_opened_date).to eq tz.parse("2020-05-11 07:46:14")
+      expect(entry.lacey_act_exception_resolved_date).to eq tz.parse("2020-05-15 17:05:24")
+      expect(entry.late_documents_exception_opened_date).to eq tz.parse("2020-05-12 07:46:14")
+      expect(entry.late_documents_exception_resolved_date).to eq tz.parse("2020-05-16 17:05:24")
+      expect(entry.manifest_hold_exception_opened_date).to eq tz.parse("2020-05-13 07:46:14")
+      expect(entry.manifest_hold_exception_resolved_date).to eq tz.parse("2020-05-17 17:05:24")
+      expect(entry.missing_document_exception_opened_date).to eq tz.parse("2020-05-14 07:46:14")
+      expect(entry.missing_document_exception_resolved_date).to eq tz.parse("2020-05-18 17:05:24")
+      expect(entry.pending_customs_review_exception_opened_date).to eq tz.parse("2020-05-15 07:46:14")
+      expect(entry.pending_customs_review_exception_resolved_date).to eq tz.parse("2020-05-19 17:05:24")
+      expect(entry.price_inquiry_exception_opened_date).to eq tz.parse("2020-05-16 07:46:14")
+      expect(entry.price_inquiry_exception_resolved_date).to eq tz.parse("2020-05-20 17:05:24")
+      expect(entry.usda_hold_exception_opened_date).to eq tz.parse("2020-05-17 07:46:14")
+      expect(entry.usda_hold_exception_resolved_date).to eq tz.parse("2020-05-21 17:05:24")
 
       comments = entry.entry_comments
       expect(comments.size).to eq 4
@@ -700,6 +829,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
 
       ci = entry.commercial_invoices.first
       expect(ci.invoice_number).to eq "INV1"
+      expect(ci.customer_reference).to eq "REF531"
       expect(ci.currency).to eq "USD"
       expect(ci.exchange_rate).to eq BigDecimal.new("0.123456")
       expect(ci.invoice_value_foreign).to eq 123.45
@@ -744,9 +874,12 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.add_to_make_amount).to eq BigDecimal.new("1.23")
       expect(line.value_foreign).to eq BigDecimal.new("999.99")
       expect(line.mpf).to eq 1.23
+      expect(line.mpf_rate).to eq BigDecimal.new(".00346400")
       expect(line.prorated_mpf).to eq 2.34
       expect(line.hmf).to eq 3.45
+      expect(line.hmf_rate).to eq BigDecimal.new(".00125000")
       expect(line.cotton_fee).to eq 4.56
+      expect(line.cotton_fee_rate).to eq BigDecimal.new(".01054664")
       expect(line.add_case_number).to eq '123'
       expect(line.add_bond).to be_truthy
       expect(line.add_duty_amount).to eq 1.23
@@ -771,6 +904,9 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(line.psc_date).to eq tz.parse "201803151200"
       expect(line.agriculture_license_number).to eq "LICENSE NO"
       expect(line.entered_value_7501).to eq 300
+      expect(line.ruling_number).to eq "RULE NO"
+      expect(line.ruling_type).to eq "RULE TYPE"
+
       tariff = line.commercial_invoice_tariffs.first
       expect(tariff.hts_code).to eq "1234567890"
       expect(tariff.duty_advalorem).to eq 1.1
@@ -818,6 +954,21 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(lacey.percent_recycled_material).to eq BigDecimal("0.02")
       expect(lacey.container_numbers).to be_nil
 
+      expect(tariff.pga_summaries.length).to eq 2
+      pga_sum = tariff.pga_summaries.first
+      expect(pga_sum.sequence_number).to eq 1
+      expect(pga_sum.agency_code).to eq "FDA"
+      expect(pga_sum.program_code).to eq "DRU"
+      expect(pga_sum.tariff_regulation_code).to eq "FD2"
+      expect(pga_sum.commercial_description).to eq "ESOMERPRAZOLE MAGNESIUM"
+      expect(pga_sum.agency_processing_code).to eq "RND"
+      expect(pga_sum.disclaimer_type_code).to eq "TST"
+
+      pga_sum = tariff.pga_summaries.second
+      # No need to verify all of the fields.
+      expect(pga_sum.sequence_number).to eq 2
+      expect(pga_sum.agency_code).to eq "FCC"
+
       tariff = line.commercial_invoice_tariffs.second
       expect(tariff.tariff_description).to eq "REPLACEMENT DESC"
 
@@ -863,7 +1014,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.importer.name).to eq entry.customer_name
       expect(entry.importer.alliance_customer_number).to eq entry.customer_number
       expect(entry.importer.importer).to be_truthy
-      expect(entry.last_exported_from_source).to eq ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse "2015-03-12T13:26:20-04:00"
+      expect(entry.last_exported_from_source).to eq tz.parse "2015-03-12T13:26:20-04:00"
 
       # This should all be nil because the liquidation date is not set
       expect(entry.liquidation_date).to be_nil
@@ -880,6 +1031,28 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.liquidation_ada).to be_nil
       expect(entry.liquidation_cvd).to be_nil
       expect(entry.liquidation_total).to be_nil
+
+      expect(entry.entry_exceptions.length).to eq 14
+      expect(entry.entry_exceptions[0].code).to eq "CD"
+      expect(entry.entry_exceptions[0].comments).to eq "This is an exception"
+      expect(entry.entry_exceptions[0].exception_creation_date).to eq tz.parse "2020-05-07 06:45:13"
+      expect(entry.entry_exceptions[0].resolved_date).to eq tz.parse "2020-05-08 16:55:23"
+      expect(entry.entry_exceptions[1].code).to eq "CI"
+      expect(entry.entry_exceptions[1].comments).to eq "Comments..."
+      expect(entry.entry_exceptions[1].exception_creation_date).to eq tz.parse "2020-05-05 07:46:14"
+      expect(entry.entry_exceptions[1].resolved_date).to eq tz.parse "2020-05-09 17:05:24"
+      expect(entry.entry_exceptions[2].code).to eq "TGT"
+      expect(entry.entry_exceptions[3].code).to eq "UCE"
+      expect(entry.entry_exceptions[4].code).to eq "DD"
+      expect(entry.entry_exceptions[5].code).to eq "FDA"
+      expect(entry.entry_exceptions[6].code).to eq "FW"
+      expect(entry.entry_exceptions[7].code).to eq "LAD"
+      expect(entry.entry_exceptions[8].code).to eq "LD"
+      expect(entry.entry_exceptions[9].code).to eq "MH"
+      expect(entry.entry_exceptions[10].code).to eq "MD"
+      expect(entry.entry_exceptions[11].code).to eq "PR"
+      expect(entry.entry_exceptions[12].code).to eq "PI"
+      expect(entry.entry_exceptions[13].code).to eq "USD"
 
       expect(entry.entity_snapshots.length).to eq 1
       snapshot = entry.entity_snapshots.first
@@ -990,6 +1163,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.entry_comments.size).to eq 4
       expect(entry.containers.size).to eq 2
       expect(entry.containers.map {|c| c.container_number}).to include("CONT1")
+      expect(entry.entry_exceptions.size).to eq 14
     end
 
     it "copies sync records from existing broker invoice to newly created one" do

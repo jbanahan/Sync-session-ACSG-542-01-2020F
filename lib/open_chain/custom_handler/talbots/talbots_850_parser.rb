@@ -1,8 +1,9 @@
 require 'open_chain/custom_handler/generic_850_parser_framework'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-require 'open_chain/mutable_boolean'
+require 'open_chain/custom_handler/change_tracking_parser_support'
 
 module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser < OpenChain::CustomHandler::Generic850ParserFramework
+  include OpenChain::CustomHandler::ChangeTrackingParserSupport
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
 
   def self.integration_folder
@@ -165,8 +166,8 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
   def update_standard_product product, edi_segments, po1_segment, line_segments
     changed = MutableBoolean.new false
 
-    set_custom_value(product, fish_wildlife?(edi_segments), :prod_fish_wildlife, changed)
-    set_custom_value(product, find_message_value(edi_segments, "F "), :prod_fabric_content, changed, skip_nil_values: true)
+    set_custom_value(product, :prod_fish_wildlife, changed, fish_wildlife?(edi_segments))
+    set_custom_value(product, :prod_fabric_content, changed, find_message_value(edi_segments, "F "))
     product.name = find_message_value(edi_segments, "ITEM DESC")
 
     hts = find_segment_qualified_value(po1_segment, "H1").to_s.gsub(".", "")
@@ -194,9 +195,9 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
     variant_identifier = standard_variant_identifier(po1, line_segments)
     variant = product.variants.find {|v| v.variant_identifier == variant_identifier}
     variant = product.variants.build(variant_identifier: variant_identifier) if variant.nil?
-    set_custom_value(variant, hts, :var_hts_code, changed)
-    set_custom_value(variant, find_segment_qualified_value(po1, "VE"), :var_color, changed, skip_nil_values: true)
-    set_custom_value(variant, find_segment_qualified_value(po1, "ZZ"), :var_size, changed, skip_nil_values: true)
+    set_custom_value(variant, :var_hts_code, changed, hts)
+    set_custom_value(variant, :var_color, changed, find_segment_qualified_value(po1, "VE"))
+    set_custom_value(variant, :var_size, changed, find_segment_qualified_value(po1, "ZZ"))
 
     variant
   end
@@ -218,18 +219,6 @@ module OpenChain; module CustomHandler; module Talbots; class Talbots850Parser <
         return message[(message_identifier.length)..-1].strip.presence
       end
     end
-    nil
-  end
-
-  def set_custom_value obj, value, uid, changed, skip_nil_values: false
-    return if value.nil? && skip_nil_values
-
-    cval = obj.custom_value(cdefs[uid])
-    if cval != value
-      obj.find_and_set_custom_value(cdefs[uid], value)
-      changed.value = true
-    end
-
     nil
   end
 

@@ -140,7 +140,12 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
             AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
         SQL
         }],
-      [72, :cil_entered_value_7501, :entered_value_7501, "7501 Entered Value", {data_type: :integer}]
+      [72, :cil_entered_value_7501, :entered_value_7501, "7501 Entered Value", {data_type: :integer}],
+      [73, :cil_ruling_number, :ruling_number, "Ruling Number", {:data_type=>:string}],
+      [74, :cil_ruling_type, :ruling_type, "Ruling Type", {:data_type=>:string}],
+      [75, :cil_hmf_rate, :hmf_rate, "HMF Rate", {:data_type=>:decimal}],
+      [76, :cil_mpf_rate, :mpf_rate, "MPF Rate", {:data_type=>:decimal}],
+      [77, :cil_cotton_fee_rate, :cotton_fee_rate, "Cotton Fee Rate", {:data_type=>:decimal}]
     ]
   end
 end; end; end

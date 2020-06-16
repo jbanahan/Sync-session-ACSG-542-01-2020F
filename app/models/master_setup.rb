@@ -204,6 +204,7 @@ class MasterSetup < ActiveRecord::Base
 
   def self.init_base_setup company_name: "My Company", sys_admin_email: "support@vandegriftinc.com", init_script: false, host_name: nil, system_code: nil
     return nil unless ActiveRecord::Base.connection.table_exists?("master_setups")
+    return nil if ENV["INIT_BASE_SETUP_LOAD"].to_s == "true"
 
     m = MasterSetup.first
     return m unless m.nil?

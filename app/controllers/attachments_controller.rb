@@ -74,7 +74,10 @@ class AttachmentsController < ApplicationController
     if att.can_view?(current_user)
       disposition = params[:disposition].to_s
       downcase_disp = disposition.downcase
-      if downcase_disp.starts_with?("attachment") || downcase_disp.starts_with?("inline")
+      # If the given disposition is one of the standard ones, then pass it through
+      if ["attachment", "inline"].include? downcase_disp
+        download_attachment att, disposition: downcase_disp
+      elsif downcase_disp.starts_with?("attachment") || downcase_disp.starts_with?("inline")
         # This is done because the browser guesses at the filename to use if you don't explicitly tell
         # it what to use.  Part of that guessing includes the content-type from S3, which we aren't always
         # setting.  So, the easiest resolution is to just auto add the filename parameter to Content-Disposition

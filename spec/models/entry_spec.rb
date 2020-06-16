@@ -815,4 +815,28 @@ describe Entry do
       expect(Entry.calculate_cbp_check_digit "316", "0000504").to eq "0"
     end
   end
+
+  describe "format_entry_number" do
+    it "formats an entry number" do
+      expect(Entry.format_entry_number "31679758714").to eq "316-7975871-4"
+      expect(Entry.format_entry_number "316-7975871-4").to eq "316-7975871-4"
+      expect(Entry.format_entry_number "316.7975871.4").to eq "316-7975871-4"
+      expect(Entry.format_entry_number "3167975874").to eq "316-797587-4"
+      expect(Entry.format_entry_number "3167").to eq "3167"
+      expect(Entry.format_entry_number "ALL ALPHA").to eq "ALL ALPHA"
+      expect(Entry.format_entry_number nil).to eq nil
+    end
+  end
+
+  describe "format_importer_tax_id" do
+    it "formats an importer tax ID" do
+      expect(Entry.format_importer_tax_id "31679758714").to eq "31-679758714"
+      expect(Entry.format_importer_tax_id "31-679758714").to eq "31-679758714"
+      expect(Entry.format_importer_tax_id "31.679758714").to eq "31-679758714"
+      expect(Entry.format_importer_tax_id "3167975874").to eq "31-67975874"
+      expect(Entry.format_importer_tax_id "31").to eq "31"
+      expect(Entry.format_importer_tax_id "ALL ALPHA").to eq "ALL ALPHA"
+      expect(Entry.format_importer_tax_id nil).to eq nil
+    end
+  end
 end

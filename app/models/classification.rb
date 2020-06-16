@@ -34,7 +34,7 @@ class Classification < ActiveRecord::Base
 
   scope :sort_classification_rank, -> { joins(:country).order("ifnull(countries.classification_rank,9999) ASC, countries.name ASC") }
 
-  has_many :tariff_records, :dependent => :destroy, :before_add => :set_nested
+  has_many :tariff_records, :dependent => :destroy, :before_add => :set_nested, :inverse_of => :classification
 
   accepts_nested_attributes_for :tariff_records, :allow_destroy => true
   reject_nested_model_field_attributes_if :creating_blank_tariff?

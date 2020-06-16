@@ -20,6 +20,7 @@
 }
 </style>
 <%show_broker_invoices = current_user.view_broker_invoices?%>
+<% show_mf_opts = {table: true, disable_text_whitespace: true} %>
 <div class='container'>
   <%=render partial: '/shared/business_rules', locals:{base_object:@entry,rule_state:rule_state, validation_path: validation_results_entry_path(@entry)}%>
 </div>
@@ -53,18 +54,18 @@
         <table>
           <%= show_model_fields @entry, [:ent_entry_num,:ent_brok_ref,:ent_cust_num, :ent_cust_name, :ent_importer_tax_id,:ent_cargo_control_number,
           :ent_ca_entry_type,:ent_po_numbers,
-          :ent_vendor_names, :ent_customer_references, :ent_total_units,:ent_total_packages, :ent_total_packages_uom, :ent_gross_weight, :ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst, :ent_total_value_tax], table:true %>
+          :ent_vendor_names, :ent_customer_references, :ent_total_units,:ent_total_packages, :ent_total_packages_uom, :ent_gross_weight, :ent_total_invoiced_value,:ent_entered_value,:ent_total_duty,:ent_total_gst,:ent_total_duty_gst, :ent_total_value_tax], show_mf_opts %>
         </table>
       </td>
       <td style="width:33%;">
         <table>
-          <%= show_model_fields @entry, [:ent_direct_shipment_date,:ent_eta_date,:ent_arrival_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date, :ent_k84_payment_due_date,:ent_exam_ordered_date, :ent_exam_release_date, :ent_b3_print_date], table: true %>
+          <%= show_model_fields @entry, [:ent_direct_shipment_date,:ent_eta_date,:ent_arrival_date,:ent_across_sent_date,:ent_pars_ack_date,:ent_pars_reject_date,:ent_release_date,:ent_cadex_sent_date,:ent_cadex_accept_date,:ent_duty_due_date,:ent_file_logged_date,:ent_docs_received_date,:ent_first_do_issued_date, :ent_k84_receive_date, :ent_k84_due_date, :ent_k84_payment_due_date,:ent_exam_ordered_date, :ent_exam_release_date, :ent_b3_print_date], show_mf_opts %>
         </table>
       </td>
       <td style="width:34%;">
         <table>
           <%= show_model_fields @entry, :ent_entry_port_name, table: true, wrap_with: lambda {|mf, editor| !editor.blank? ? "<a href='/entries/importer/#{@entry.importer_id}/entry_port/#{@entry.entry_port_code}/country/#{@entry.import_country.try(:iso_code)}'>#{editor} <span class='fa fa-link' style='font-size:80%;'></span></a>".html_safe : ""} %>
-          <%= show_model_fields @entry, [:ent_mbols,:ent_hbols, :ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name,:ent_employee_name], table: true %>
+          <%= show_model_fields @entry, [:ent_mbols,:ent_hbols, :ent_container_nums,:ent_origin_country_codes,:ent_origin_state_code,:ent_export_country_codes,:ent_export_state_code,:ent_us_exit_port_code,:ent_ship_terms,:ent_transport_mode_code,:ent_carrier_code,:ent_carrier_name,:ent_voyage,:ent_ult_con_name,:ent_employee_name], show_mf_opts %>
         </table>
       </td>
     </tr>
@@ -117,12 +118,12 @@
         <tr>
           <td style='width:50%;'>
             <table>
-              <%= show_model_fields ci, [:ci_vendor_name,:ci_invoice_date,:ci_invoice_value], table:true %>
+              <%= show_model_fields ci, [:ci_vendor_name,:ci_invoice_date,:ci_invoice_value], show_mf_opts %>
             </table>
           </td>
           <td style='width:50%;'>
             <table>
-              <%= show_model_fields ci, [:ci_currency,:ci_exchange_rate], table:true %>
+              <%= show_model_fields ci, [:ci_currency,:ci_exchange_rate], show_mf_opts %>
             </table>
           </td>
         </tr>
@@ -203,12 +204,12 @@
           <tr>
             <td style='width:50%;'>
               <table>
-                <%= show_model_fields bi, [:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency], table:true %>
+                <%= show_model_fields bi, [:bi_invoice_number,:bi_suffix,:bi_invoice_total,:bi_currency], show_mf_opts %>
               </table>
             </td>
             <td style='width:50%;'>
               <table>
-                <%= show_model_fields bi, [:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso], table:true %>
+                <%= show_model_fields bi, [:bi_to_name,:bi_to_add1,:bi_to_add2,:bi_to_city,:bi_to_state,:bi_to_zip,:bi_to_country_iso], show_mf_opts %>
               </table>
             </td>
           </tr>

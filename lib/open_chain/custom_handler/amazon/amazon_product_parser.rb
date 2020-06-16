@@ -1,6 +1,5 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-require 'open_chain/mutable_boolean'
 require 'open_chain/custom_handler/amazon/amazon_product_parser_support'
 
 module OpenChain; module CustomHandler; module Amazon; class AmazonProductParser

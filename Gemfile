@@ -132,6 +132,8 @@ gem 'nonschema_migrations', '1.0.1'
 
 gem 'nokogiri', '1.10.9'
 
+gem 'content_disposition', '1.0.0'
+
 group :development, :test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.

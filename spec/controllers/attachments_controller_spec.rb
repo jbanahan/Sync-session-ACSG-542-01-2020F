@@ -284,7 +284,7 @@ describe AttachmentsController do
     it "handles inline disposition parameter" do
       expect(Attachment).to receive(:find).with("1").and_return attachment
       expect(attachment).to receive(:can_view?).with(user).and_return true
-      expect(subject).to receive(:download_attachment).with(attachment, disposition: 'inline; filename="file.txt"').and_call_original
+      expect(subject).to receive(:download_attachment).with(attachment, disposition: 'inline').and_call_original
 
       get :download, id: 1, disposition: "inline"
     end
@@ -292,7 +292,7 @@ describe AttachmentsController do
     it "handles attachment disposition parameter" do
       expect(Attachment).to receive(:find).with("1").and_return attachment
       expect(attachment).to receive(:can_view?).with(user).and_return true
-      expect(subject).to receive(:download_attachment).with(attachment, disposition: 'attachment; filename="file.txt"').and_call_original
+      expect(subject).to receive(:download_attachment).with(attachment, disposition: 'attachment').and_call_original
 
       get :download, id: 1, disposition: "attachment"
     end

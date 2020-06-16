@@ -1,5 +1,8 @@
+require 'open_chain/custom_handler/change_tracking_parser_support'
+
 module OpenChain; module CustomHandler; module Amazon; module AmazonProductParserSupport
   extend ActiveSupport::Concern
+  include OpenChain::CustomHandler::ChangeTrackingParserSupport
 
   def process_parts csv, user, filename
     # The first thing we want to do is group all the lines together by part number.
@@ -11,12 +14,6 @@ module OpenChain; module CustomHandler; module Amazon; module AmazonProductParse
 
   def sku row
     text(row[2])
-  end
-
-  def set_custom_value product, cdef_uid, changed, value
-    cv = product.find_and_set_custom_value(cdefs[cdef_uid], value)
-    changed.value = true if cv.changed?
-    nil
   end
 
   def text v

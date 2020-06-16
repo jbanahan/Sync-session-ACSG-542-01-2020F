@@ -80,6 +80,7 @@ require 'open_chain/custom_handler/rockport/rockport_gtn_invoice_xml_parser'
 require 'open_chain/custom_handler/kirklands/kirklands_gtn_order_xml_parser'
 require 'open_chain/custom_handler/target/target_entry_initiation_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_puma_7501_parser'
+require 'open_chain/custom_handler/target/target_parts_file_parser'
 
 module OpenChain
   class IntegrationClient
@@ -360,6 +361,8 @@ module OpenChain
         OpenChain::CustomHandler::Kirklands::KirklandsGtnOrderXmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "target_entry") && custom_features.include?("Target Feeds")
         OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "target_parts") && custom_features.include?("Target Feeds")
+        OpenChain::CustomHandler::Target::TargetPartsFileParser.delay.process_from_s3 bucket, s3_path
       else
         # This should always be the very last thing to process..that's why it's in the else
         if LinkableAttachmentImportRule.find_import_rule(original_directory)

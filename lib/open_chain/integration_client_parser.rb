@@ -76,8 +76,8 @@ module OpenChain; module IntegrationClientParser
     # This method is not really meant to be run in production, it's meant as a development helper.
     # Pass a path or a File object.
     def process_from_file file, opts={}
-      if file.is_a?(String)
-        file = File.open(file, "rb")
+      if file.is_a?(String) || file.is_a?(Pathname)
+        file = File.open(file.to_s, "rb")
       end
 
       handle_processing(nil, file.path, opts) do
