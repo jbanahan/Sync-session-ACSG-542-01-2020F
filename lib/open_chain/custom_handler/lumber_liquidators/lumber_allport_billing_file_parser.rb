@@ -186,9 +186,14 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberAl
       matching_entry
     end
 
-    # Limits all entry lookups to LL Kewill entries released within the last 6 months only.
+    # Limits all entry lookups to LL Kewill entries released within the last 6 months only.  In mid-2020, this query was
+    # amended to also include entries without release dates.  Per Luca De Candia, "we are being pressured to pay the
+    # vendor more quickly so we are running the reports a bit sooner."  Entry filed date was incoporated as a backstop.
+    # (Luca also specified 6 months should be fine as a filed date limit.)
     def find_matching_lumber_entries base_lookup
-      base_lookup.where(customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM).where("release_date >= ?", (Time.zone.now - 6.months).to_s(:db))
+      base_lookup.where(customer_number:'LUMBER', source_system:Entry::KEWILL_SOURCE_SYSTEM)
+                 .where("release_date >= ? OR release_date IS NULL", (Time.zone.now - 6.months).to_s(:db))
+                 .where("entry_filed_date >= ?", (Time.zone.now - 6.months).to_s(:db))
     end
 
     def get_file_numbers entries
