@@ -22,7 +22,9 @@ class CsvBuilder
   end
 
   # Creates a new csv file
-  def initialize csv_opts: {}
+  # date_format - must be in Ruby format (i.e. strftime syntax) if provided, optional
+  def initialize csv_opts: {}, date_format: nil
+    @date_format = date_format
     @csv = new_csv(csv_opts)
   end
 
@@ -75,6 +77,11 @@ class CsvBuilder
   # This is literally a no-op for csv outputs.
   def create_style format_name, format_definition, prevent_override: true, return_existing: false
     format_name.to_sym
+  end
+
+  # No-op.  Styles are not used.
+  def create_date_style format_name, date_format, prevent_override: true, return_existing: false
+    nil
   end
 
   # Since csv doesn't support styled hyperlinks, just return back the url given
@@ -152,9 +159,9 @@ class CsvBuilder
         end
 
         if data.is_a?(DateTime) || data.is_a?(ActiveSupport::TimeWithZone)
-          row << data.strftime("%Y-%m-%d %H:%M")
+          row << data.strftime(@date_format.present? ? "#{@date_format} %H:%M" : '%Y-%m-%d %H:%M')
         elsif data.is_a?(Date)
-          row << data.strftime("%Y-%m-%d")
+          row << data.strftime(@date_format.presence || '%Y-%m-%d')
         else
           row << data
         end

@@ -19,7 +19,20 @@
             </div>
           </div>
           <div class='row' style='margin-top:20px;'>
-            <div class='col-md-3 offset-md-3'>
+            <div class='col-md-3'>
+              <div class="form-group">
+                <label for="date_format">Date Format</label>
+                <select id="date_format" class="form-control" ng-model='searchSetup.date_format'>
+                  <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+                  <option value="mm-dd-yyyy">mm-dd-yyyy</option>
+                  <option value="dd-mm-yyyy">dd-mm-yyyy</option>
+                  <option value="yyyy/mm/dd">yyyy/mm/dd</option>
+                  <option value="mm/dd/yyyy">mm/dd/yyyy</option>
+                  <option value="dd/mm/yyyy">dd/mm/yyyy</option>
+                </select>
+              </div>
+            </div>
+            <div class='col-md-3'>
               <div class="form-group">
                 <label for="download_format">Download File Format</label>
                 <select id="download_format" class="form-control" ng-model='searchSetup.download_format'>
@@ -257,6 +270,19 @@
                           <option value="xlsx">Excel - xlsx</option>
                           <option value="csv">CSV</option>
                           <option value="xls">Excel - xls</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class='control-group'>
+                      <label class="control-label" for="sched_date_format">Date Format</label>
+                      <div class='controls'>
+                        <select id="sched_date_format" class="form-control" ng-model='scheduleToEdit.date_format'>
+                          <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+                          <option value="mm-dd-yyyy">mm-dd-yyyy</option>
+                          <option value="dd-mm-yyyy">dd-mm-yyyy</option>
+                          <option value="yyyy/mm/dd">yyyy/mm/dd</option>
+                          <option value="mm/dd/yyyy">mm/dd/yyyy</option>
+                          <option value="dd/mm/yyyy">dd/mm/yyyy</option>
                         </select>
                       </div>
                     </div>

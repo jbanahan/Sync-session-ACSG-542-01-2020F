@@ -127,6 +127,11 @@ cancel_redirect = company_users_path(@company) if current_user.admin?
         </div>
 
         <div class="form-group">
+          <label>Default report date format</label>
+          <%= f.select(:default_report_date_format, ["yyyy-mm-dd","mm-dd-yyyy","dd-mm-yyyy","yyyy/mm/dd","mm/dd/yyyy","dd/mm/yyyy"], {}, {class: "form-control", title: "Default report date format"}) %>
+        </div>
+
+        <div class="form-group">
           <label>Email format</label>
           <%= f.select(:email_format, ["html","text"], {}, {class: "form-control", title: "Email format"}) %>
         </div>

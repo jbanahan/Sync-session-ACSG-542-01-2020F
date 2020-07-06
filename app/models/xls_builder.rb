@@ -130,6 +130,10 @@ class XlsBuilder
     id
   end
 
+  def create_date_style format_name, date_format, prevent_override: true, return_existing: false
+    create_style(format_name, {number_format: date_format}, prevent_override: prevent_override, return_existing: return_existing)
+  end
+
   # Creates a hyperlink cell...the cell returned can be passed as an value to the add_body_row method
   #
   # xls.add_body_row sheet, ["Column A", xls.create_link_cell("http://www.google.com", "Click Here"), "Column C"]
@@ -279,12 +283,12 @@ class XlsBuilder
     end
 
     def create_default_date_style
-      create_style(:default_date, {number_format: 'YYYY-MM-DD'}, prevent_override: false, return_existing: true)
+      create_date_style :default_date, 'YYYY-MM-DD', prevent_override: false, return_existing: true
       :default_date
     end
 
     def create_default_datetime_style
-      create_style(:default_datetime, {number_format: 'YYYY-MM-DD HH:MM'}, prevent_override: false, return_existing: true)
+      create_date_style :default_datetime, 'YYYY-MM-DD HH:MM', prevent_override: false, return_existing: true
       :default_datetime
     end
 

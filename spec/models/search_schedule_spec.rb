@@ -6,10 +6,10 @@ describe SearchSchedule do
     let(:user) { Factory(:user, time_zone: "Hawaii", email: "tufnel@stonehenge.biz") }
     let(:search_setup) {
       # use a name that needs to be sanitized -> -test.txt
-      SearchSetup.new module_type: "Product", user: user, name: 'test/-#t!e~s)t .^t&x@t'
+      SearchSetup.new module_type: "Product", user: user, name: 'test/-#t!e~s)t .^t&x@t', download_format: 'xlsx', date_format: 'yyyy/mm/dd'
     }
     let(:report) { CustomReport.new user: user, name: "test/t!st.txt"}
-    let(:search_schedule) { Factory(:search_schedule, search_setup: search_setup, custom_report: report, download_format: "csv", send_if_empty: true) }
+    let(:search_schedule) { Factory(:search_schedule, search_setup: search_setup, custom_report: report, download_format: "csv", send_if_empty: true, date_format: "mm-yyyy-dd") }
     let(:tempfile) { Tempfile.new ["search_schedule_spec", ".xls"] }
 
     after :each do
@@ -42,6 +42,7 @@ describe SearchSchedule do
         expect_any_instance_of(SearchWriter).to receive(:write_search) do |search_writer, tempfile|
           expect(search_writer.output_format).to eq "csv"
           expect(search_writer.search_setup).to eq search_setup
+          expect(search_writer.date_format).to eq "mm-yyyy-dd"
           expect(tempfile).to be_a(Tempfile)
 
           1

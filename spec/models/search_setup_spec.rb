@@ -221,4 +221,34 @@ describe SearchSetup do
       end
     end
   end
+
+  describe "ruby_date_format" do
+    it "converts display/xls date format to ruby date format" do
+      expect(SearchSetup.ruby_date_format("yyyy-MM-dd")).to eq "%Y-%m-%d"
+      expect(SearchSetup.ruby_date_format("mm/DD/YYYY")).to eq "%m/%d/%Y"
+      expect(SearchSetup.ruby_date_format(nil)).to eq nil
+    end
+  end
+
+  describe "create_with_columns" do
+    it "creates a search setup based on provided values" do
+      user = User.new(default_report_date_format: "MM/DD/YYYY")
+      ss = described_class.create_with_columns Entry.new.core_module, [:ent_brok_ref, :ent_entry_num], user, "Alternate Name"
+      expect(ss.name).to eq "Alternate Name"
+      expect(ss.user).to eq user
+      expect(ss.module_type).to eq "Entry"
+      expect(ss.simple).to eq false
+      expect(ss.date_format).to eq "MM/DD/YYYY"
+
+      expect(ss.search_columns.length).to eq 2
+      expect(ss.search_columns[0].rank).to eq 0
+      expect(ss.search_columns[0].model_field_uid).to eq "ent_brok_ref"
+      expect(ss.search_columns[1].rank).to eq 1
+      expect(ss.search_columns[1].model_field_uid).to eq "ent_entry_num"
+    end
+
+    it "creates a search setup with a default name" do
+
+    end
+  end
 end

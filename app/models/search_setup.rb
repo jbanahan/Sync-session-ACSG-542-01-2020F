@@ -3,6 +3,7 @@
 # Table name: search_setups
 #
 #  created_at         :datetime         not null
+#  date_format        :string(255)
 #  download_format    :string(255)
 #  id                 :integer          not null, primary key
 #  include_links      :boolean
@@ -27,7 +28,7 @@ class SearchSetup < ActiveRecord::Base
   attr_accessible :download_format, :include_links, :include_rule_links, :module_type, :name,
     :no_time, :simple, :user_id, :user, :search_criterions_attributes,
     :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes,
-    :locked
+    :locked, :date_format
 
   validates   :name, :presence => true
   validates   :user, :presence => true
@@ -134,15 +135,13 @@ class SearchSetup < ActiveRecord::Base
 
   # Returns a new, saved search setup with the columns passed from the given array
   def self.create_with_columns(core_module, model_field_uids, user, name="Default")
-    ss = SearchSetup.create(:name=>name, :user => user, :module_type=>core_module.class_name,
-        :simple=>false)
+    ss = SearchSetup.create(name: name, user: user, module_type: core_module.class_name,
+        simple: false, date_format: user.default_report_date_format)
     model_field_uids.each_with_index do |uid, i|
       ss.search_columns.create(:rank=>i, :model_field_uid=>uid)
     end
     ss
   end
-
-
 
   def core_module
     CoreModule.find_by_class_name self.module_type
@@ -236,6 +235,10 @@ class SearchSetup < ActiveRecord::Base
 
   def self.max_results user
     user.try(:sys_admin?) ? 100000 : 25000
+  end
+
+  def self.ruby_date_format df
+    df&.downcase&.gsub("yyyy", "%Y")&.gsub("mm", "%m")&.gsub("dd", "%d")
   end
 
   private

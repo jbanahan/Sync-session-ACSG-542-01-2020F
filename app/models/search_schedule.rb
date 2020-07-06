@@ -4,6 +4,7 @@
 #
 #  created_at             :datetime         not null
 #  custom_report_id       :integer
+#  date_format            :string(255)
 #  day_of_month           :integer
 #  disabled               :boolean
 #  download_format        :string(255)
@@ -53,7 +54,7 @@ class SearchSchedule < ActiveRecord::Base
     :report_failure_count, :run_friday, :run_hour, :run_monday,
     :run_saturday, :run_sunday, :run_thursday, :run_tuesday,
     :run_wednesday, :search_setup_id, :search_setup, :send_if_empty,
-    :log_runtime
+    :log_runtime, :date_format
 
   RUFUS_TAG = "search_schedule"
 
@@ -163,8 +164,8 @@ class SearchSchedule < ActiveRecord::Base
 
   def run_search srch_setup
     User.run_with_user_settings(srch_setup.user) do
-      # Make sure we're using the output format designated in the search schedule, not the search_setup
-      sw = SearchWriter.new search_setup, output_format: self.download_format
+      # Make sure we're using the output and date formats designated in the search schedule, not the search_setup.
+      sw = SearchWriter.new search_setup, output_format: self.download_format, date_format: self.date_format
 
       Tempfile.open(["scheduled_search_run", ".#{sw.output_format}"]) do |tempfile|
         tempfile.binmode

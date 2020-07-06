@@ -92,8 +92,9 @@ describe AdvancedSearchController do
       @ss.reload
       expect(@ss.search_schedules).to be_empty
     end
-    it "should update name" do
-      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y', :include_links=>false, :include_rule_links=>false, :no_time=>true, :locked=>true}
+
+    it "should update values" do
+      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y', :include_links=>false, :include_rule_links=>false, :no_time=>true, :locked=>true, date_format: "MM/DD/YYYY"}
       expect(response).to be_success
       @ss.reload
       expect(@ss.name).to eq("Y")
@@ -101,7 +102,16 @@ describe AdvancedSearchController do
       expect(@ss.include_rule_links?).to be_falsey
       expect(@ss.no_time?).to be_truthy
       expect(@ss.locked?).to be_truthy
+      expect(@ss.date_format).to eq "MM/DD/YYYY"
     end
+
+    it "should default date format when no date format is provided" do
+      put :update, :id=>@ss.id, :search_setup=>{:name=>'Y'}
+      expect(response).to be_success
+      @ss.reload
+      expect(@ss.date_format).to eq "yyyy-mm-dd"
+    end
+
     it "should recreate columns" do
       @ss.search_columns.create!(:model_field_uid=>:prod_uid, :rank=>1)
       put :update, :id=>@ss.id, :search_setup=>{:search_columns=>[{:mfid=>'prod_uid', :label=>"UID", :rank=>2},
@@ -130,12 +140,16 @@ describe AdvancedSearchController do
       expect(@ss.sort_criterions.find_by(rank: 2, model_field_uid: 'prod_uid')).not_to be_descending
     end
     it "should recreate schedules" do
+      # Both of these date formats should be ignored.  Only the 'date_format' value in the schedules hash is used.
+      @user.default_report_date_format = "MM/DD/YYYY"
+      @ss.update! date_format: "DD-MM-YYYY"
+
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return(true)
       @ss.search_schedules.create!(:email_addresses=>"a@example.com")
       put :update, :id=>@ss.id, :search_setup=>{:search_schedules=>[
         {:email_addresses=>'b@example.com', :run_hour=>6, :day_of_month=>1, :download_format=>'xls',
           :run_monday=>true, :run_tuesday=>false, :run_wednesday=>false, :run_thursday=>false, :run_friday=>false, :run_saturday=>false, :run_sunday=>false,
-          :exclude_file_timestamp=>true, :disabled=>true, :report_failure_count=>2 },
+          :exclude_file_timestamp=>true, :disabled=>true, :report_failure_count=>2, date_format: "YYYY-DD-MM" },
         {:ftp_server=>'ftp.example.com', :ftp_username=>'user', :ftp_password=>'pass', :ftp_subfolder=>'/sub', :protocol=>"test", ftp_port: "123"}
       ], :search_criterions=> [{:mfid=>'prod_uid', :operator=>'eq', :value=>'y'}]}
       expect(response).to be_success
@@ -155,6 +169,7 @@ describe AdvancedSearchController do
       expect(email.exclude_file_timestamp).to be_truthy
       expect(email.disabled).to be_truthy
       expect(email.report_failure_count).to eq(2)
+      expect(email.date_format).to eq "YYYY-DD-MM"
 
       ftp = @ss.search_schedules.find_by(ftp_server: "ftp.example.com")
       expect(ftp.ftp_username).to eq('user')
@@ -213,14 +228,14 @@ describe AdvancedSearchController do
     end
     it "should write response for json" do
       @ss = Factory(:search_setup, :user=>@user, :name=>'MYNAME',
-        :include_links=>true, :include_rule_links=>true, :no_time=>true, :module_type=>"Product", locked:true)
+        :include_links=>true, :include_rule_links=>true, :no_time=>true, :module_type=>"Product", locked:true, date_format:"mm-dd-yyyy")
       @ss.search_columns.create!(:rank=>1, :model_field_uid=>:prod_uid)
       @ss.search_columns.create!(:rank=>2, :model_field_uid=>:prod_name)
       @ss.search_columns.create!(:rank=>3, :model_field_uid=>:_const, constant_field_name: "Broker", constant_field_value: "Vandegrift")
       @ss.sort_criterions.create!(:rank=>1, :model_field_uid=>:prod_uid, :descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name, :operator=>:eq, :value=>"123")
       # Include ftp information to make sure we're not actually including it by default for non-admin users
-      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true, :run_monday=>true, :run_hour=>8, :exclude_file_timestamp=>true, :download_format=>:xls, :day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :disabled=>"true", :report_failure_count=>2)
+      @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true, :run_monday=>true, :run_hour=>8, :exclude_file_timestamp=>true, :download_format=>:xls, :day_of_month=>11, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :disabled=>"true", :report_failure_count=>2, :date_format=>"yyyy-mm-dd")
       get :setup, :id=>@ss.id, :format=>'json'
       expect(response).to be_success
       h = JSON.parse response.body
@@ -236,6 +251,7 @@ describe AdvancedSearchController do
       expect(h['locked']).to be true
       expect(h['title']).to eq "Product"
       expect(h['allow_template']).to be_falsey
+      expect(h['date_format']).to eq "mm-dd-yyyy"
       search_list = h['search_list']
       expect(search_list.size).to eq(1)
       expect(search_list.first['name']).to eq(@ss.name)
@@ -255,7 +271,7 @@ describe AdvancedSearchController do
       expect(h['search_schedules']).to eq([
         {"mailing_list_id"=>nil, "email_addresses"=>"x@example.com", "send_if_empty"=>true, "run_monday"=>true, "run_tuesday"=>false, "run_wednesday"=>false, "run_thursday"=>false,
           "run_friday"=>false, "run_saturday"=>false, "run_sunday"=>false, "run_hour"=>8,
-          "download_format"=>"xls", "day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2, "log_runtime"=>false}
+          "download_format"=>"xls", "date_format"=>"yyyy-mm-dd", "day_of_month"=>11, "exclude_file_timestamp"=>true, "disabled"=>true, "report_failure_count"=>2, "log_runtime"=>false}
       ])
       no_non_accessible = CoreModule::PRODUCT.default_module_chain.model_fields.values.collect {|mf| mf.user_accessible? ? mf : nil}.compact
       no_non_accessible.delete_if {|mf| !mf.can_view?(@user)}
@@ -276,7 +292,7 @@ describe AdvancedSearchController do
       @ss.sort_criterions.create!(:rank=>1, :model_field_uid=>:prod_uid, :descending=>true)
       @ss.search_criterions.create!(:model_field_uid=>:prod_name, :operator=>:eq, :value=>"123")
       @ss.search_schedules.create!(:email_addresses=>'x@example.com', :send_if_empty=>true, :run_monday=>true, :run_hour=>8, :download_format=>:xls, :day_of_month=>11, :disabled=>"false", :report_failure_count=>2,
-                                  :exclude_file_timestamp=>true, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :ftp_port=>"123")
+                                  :exclude_file_timestamp=>true, :ftp_server=>"server", :ftp_username=>"user", :ftp_password=>"password", :ftp_subfolder=>"subf", :protocol=>"protocol", :ftp_port=>"123", :date_format=>"yyyy-mm-dd")
       allow_any_instance_of(SearchSetup).to receive(:can_ftp?).and_return true
 
       get :setup, :id=>@ss.id, :format=>'json'
@@ -286,7 +302,7 @@ describe AdvancedSearchController do
       expect(h['search_schedules']).to eq([
         {"mailing_list_id"=>nil, "email_addresses"=>"x@example.com", "send_if_empty"=>true, "run_monday"=>true, "run_tuesday"=>false, "run_wednesday"=>false, "run_thursday"=>false,
           "run_friday"=>false, "run_saturday"=>false, "run_sunday"=>false, "run_hour"=>8, "disabled"=>false, "report_failure_count"=>2,
-          "download_format"=>"xls", "day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password",
+          "download_format"=>"xls", "date_format"=>"yyyy-mm-dd", "day_of_month"=>11, "exclude_file_timestamp"=>true, "ftp_server"=>"server", "ftp_username"=>"user", "ftp_password"=>"password",
           "ftp_subfolder"=>"subf", "protocol"=>"protocol", "ftp_port" => "123", "log_runtime" => false}
       ])
     end
@@ -347,6 +363,14 @@ describe AdvancedSearchController do
       h['model_fields'].each {|mf| found_duty_due = true if mf['mfid']=='ent_duty_due_date'}
       expect(found_duty_due).to be_falsey
     end
+
+    it "should default date format when none is provided in the search setup" do
+      @ss = Factory(:search_setup, user: @user, name: 'MYNAME', module_type: "Product")
+      get :setup, id: @ss.id, format: 'json'
+      expect(response).to be_success
+      h = JSON.parse response.body
+      expect(h['date_format']).to eq "yyyy-mm-dd"
+    end
   end
 
   describe "show" do
@@ -374,6 +398,7 @@ describe AdvancedSearchController do
         allow_any_instance_of(SearchQuery).to receive(:unique_parent_count).and_return(42)
         allow_any_instance_of(Product).to receive(:can_view?).and_return(true)
       end
+
       it "should render json response" do
         allow_any_instance_of(Product).to receive(:can_edit?).and_return(true)
         allow_any_instance_of(User).to receive(:edit_classifications?).and_return(true) # to allow bulk actions
@@ -411,6 +436,7 @@ describe AdvancedSearchController do
         end
         expect(r['bulk_actions']).to eq(expected_bulk_actions)
       end
+
       it "should 404 if not for current_user" do
         u = Factory(:user)
         @ss.update_attributes(:user_id=>u.id)

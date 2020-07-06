@@ -22,14 +22,14 @@ describe CsvBuilder do
   end
 
   describe "add_body_row" do
-    let (:sheet) { subject.create_sheet "Sheet" }
+    context "default date formatting" do
+      let (:sheet) { subject.create_sheet "Sheet" }
 
-    it "adds a new row" do
-      expect(subject.add_body_row sheet, ["Body"]).to be_nil
-      expect(raw_csv_data).to eq "Body\n"
-    end
+      it "adds a new row" do
+        expect(subject.add_body_row sheet, ["Body"]).to be_nil
+        expect(raw_csv_data).to eq "Body\n"
+      end
 
-    context "with special field handling" do
       it "formats dates as YYYY-MM-DD" do
         expect(subject.add_body_row sheet, [Date.new(2018, 7, 13)]).to be_nil
         expect(raw_csv_data).to eq "2018-07-13\n"
@@ -40,7 +40,7 @@ describe CsvBuilder do
         expect(raw_csv_data).to eq "2018-07-13 12:23\n"
       end
 
-      it "formats ActivSupport::TimeWithZone as YYYY-MM-DD HH:MM" do
+      it "formats ActiveSupport::TimeWithZone as YYYY-MM-DD HH:MM" do
         expect(subject.add_body_row sheet, [Time.zone.parse("2018-07-13 12:23")]).to be_nil
         expect(raw_csv_data).to eq "2018-07-13 12:23\n"
       end
@@ -53,6 +53,26 @@ describe CsvBuilder do
       it "replaces all linefeeds in row data with spaces" do
         expect(subject.add_body_row sheet, ["Body\nText"]).to be_nil
         expect(raw_csv_data).to eq "Body Text\n"
+      end
+    end
+
+    context "custom date formatting" do
+      let (:subject) { described_class.new(date_format: "%m/%d/%Y") }
+      let (:sheet) { subject.create_sheet "Sheet" }
+
+      it "formats dates as MM/DD/YYYY" do
+        expect(subject.add_body_row sheet, [Date.new(2018, 7, 13)]).to be_nil
+        expect(raw_csv_data).to eq "07/13/2018\n"
+      end
+
+      it "formates DateTime as MM/DD/YYYY HH:MM" do
+        expect(subject.add_body_row sheet, [DateTime.new(2018, 7, 13, 12, 23, 30)]).to be_nil
+        expect(raw_csv_data).to eq "07/13/2018 12:23\n"
+      end
+
+      it "formats ActiveSupport::TimeWithZone as MM/DD/YYYY HH:MM" do
+        expect(subject.add_body_row sheet, [Time.zone.parse("2018-07-13 12:23")]).to be_nil
+        expect(raw_csv_data).to eq "07/13/2018 12:23\n"
       end
     end
   end

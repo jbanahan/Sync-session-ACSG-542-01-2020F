@@ -2,116 +2,117 @@
 #
 # Table name: users
 #
-#  User                    :string(255)
-#  active_days             :integer          default(0)
-#  admin                   :boolean
-#  api_auth_token          :string(255)
-#  api_request_counter     :integer
-#  broker_invoice_edit     :boolean
-#  broker_invoice_view     :boolean
-#  classification_edit     :boolean
-#  commercial_invoice_edit :boolean
-#  commercial_invoice_view :boolean
-#  company_id              :integer
-#  confirmation_token      :string(128)
-#  created_at              :datetime         not null
-#  crypted_password        :string(255)
-#  current_login_at        :datetime
-#  debug_expires           :datetime
-#  delivery_attach         :boolean
-#  delivery_comment        :boolean
-#  delivery_delete         :boolean
-#  delivery_edit           :boolean
-#  delivery_view           :boolean
-#  department              :string(255)
-#  disabled                :boolean
-#  disallow_password       :boolean
-#  drawback_edit           :boolean
-#  drawback_view           :boolean
-#  email                   :string(255)
-#  email_format            :string(255)
-#  email_new_messages      :boolean          default(FALSE)
-#  encrypted_password      :string(128)
-#  entry_attach            :boolean
-#  entry_comment           :boolean
-#  entry_edit              :boolean
-#  entry_view              :boolean
-#  failed_login_count      :integer          default(0), not null
-#  failed_logins           :integer          default(0)
-#  first_name              :string(255)
-#  forgot_password         :boolean
-#  google_name             :string(255)
-#  hidden_message_json     :text(65535)
-#  homepage                :string(255)
-#  host_with_port          :string(255)
-#  id                      :integer          not null, primary key
-#  last_login_at           :datetime
-#  last_name               :string(255)
-#  last_request_at         :datetime
-#  oauth_expires_at        :datetime
-#  oauth_token             :string(255)
-#  order_attach            :boolean
-#  order_comment           :boolean
-#  order_delete            :boolean
-#  order_edit              :boolean
-#  order_view              :boolean
-#  password_changed_at     :datetime
-#  password_expired        :boolean          default(FALSE)
-#  password_locked         :boolean          default(FALSE)
-#  password_reset          :boolean
-#  password_salt           :string(255)
-#  perishable_token        :string(255)      default(""), not null
-#  persistence_token       :string(255)
-#  portal_mode             :string(255)
-#  product_attach          :boolean
-#  product_comment         :boolean
-#  product_delete          :boolean
-#  product_edit            :boolean
-#  product_view            :boolean
-#  project_edit            :boolean
-#  project_view            :boolean
-#  provider                :string(255)
-#  remember_token          :string(128)
-#  run_as_id               :integer
-#  sales_order_attach      :boolean
-#  sales_order_comment     :boolean
-#  sales_order_delete      :boolean
-#  sales_order_edit        :boolean
-#  sales_order_view        :boolean
-#  search_open             :boolean
-#  security_filing_attach  :boolean
-#  security_filing_comment :boolean
-#  security_filing_edit    :boolean
-#  security_filing_view    :boolean
-#  shipment_attach         :boolean
-#  shipment_comment        :boolean
-#  shipment_delete         :boolean
-#  shipment_edit           :boolean
-#  shipment_view           :boolean
-#  simple_entry_mode       :boolean
-#  statement_view          :boolean
-#  support_agent           :boolean
-#  survey_edit             :boolean
-#  survey_view             :boolean
-#  sys_admin               :boolean
-#  system_user             :boolean
-#  tariff_subscribed       :boolean
-#  task_email              :boolean
-#  time_zone               :string(255)
-#  trade_lane_attach       :boolean
-#  trade_lane_comment      :boolean
-#  trade_lane_edit         :boolean
-#  trade_lane_view         :boolean
-#  uid                     :string(255)
-#  updated_at              :datetime         not null
-#  username                :string(255)
-#  variant_edit            :boolean
-#  vendor_attach           :boolean
-#  vendor_comment          :boolean
-#  vendor_edit             :boolean
-#  vendor_view             :boolean
-#  vfi_invoice_edit        :boolean
-#  vfi_invoice_view        :boolean
+#  User                       :string(255)
+#  active_days                :integer          default(0)
+#  admin                      :boolean
+#  api_auth_token             :string(255)
+#  api_request_counter        :integer
+#  broker_invoice_edit        :boolean
+#  broker_invoice_view        :boolean
+#  classification_edit        :boolean
+#  commercial_invoice_edit    :boolean
+#  commercial_invoice_view    :boolean
+#  company_id                 :integer
+#  confirmation_token         :string(128)
+#  created_at                 :datetime         not null
+#  crypted_password           :string(255)
+#  current_login_at           :datetime
+#  debug_expires              :datetime
+#  default_report_date_format :string(255)
+#  delivery_attach            :boolean
+#  delivery_comment           :boolean
+#  delivery_delete            :boolean
+#  delivery_edit              :boolean
+#  delivery_view              :boolean
+#  department                 :string(255)
+#  disabled                   :boolean
+#  disallow_password          :boolean
+#  drawback_edit              :boolean
+#  drawback_view              :boolean
+#  email                      :string(255)
+#  email_format               :string(255)
+#  email_new_messages         :boolean          default(FALSE)
+#  encrypted_password         :string(128)
+#  entry_attach               :boolean
+#  entry_comment              :boolean
+#  entry_edit                 :boolean
+#  entry_view                 :boolean
+#  failed_login_count         :integer          default(0), not null
+#  failed_logins              :integer          default(0)
+#  first_name                 :string(255)
+#  forgot_password            :boolean
+#  google_name                :string(255)
+#  hidden_message_json        :text(65535)
+#  homepage                   :string(255)
+#  host_with_port             :string(255)
+#  id                         :integer          not null, primary key
+#  last_login_at              :datetime
+#  last_name                  :string(255)
+#  last_request_at            :datetime
+#  oauth_expires_at           :datetime
+#  oauth_token                :string(255)
+#  order_attach               :boolean
+#  order_comment              :boolean
+#  order_delete               :boolean
+#  order_edit                 :boolean
+#  order_view                 :boolean
+#  password_changed_at        :datetime
+#  password_expired           :boolean          default(FALSE)
+#  password_locked            :boolean          default(FALSE)
+#  password_reset             :boolean
+#  password_salt              :string(255)
+#  perishable_token           :string(255)      default(""), not null
+#  persistence_token          :string(255)
+#  portal_mode                :string(255)
+#  product_attach             :boolean
+#  product_comment            :boolean
+#  product_delete             :boolean
+#  product_edit               :boolean
+#  product_view               :boolean
+#  project_edit               :boolean
+#  project_view               :boolean
+#  provider                   :string(255)
+#  remember_token             :string(128)
+#  run_as_id                  :integer
+#  sales_order_attach         :boolean
+#  sales_order_comment        :boolean
+#  sales_order_delete         :boolean
+#  sales_order_edit           :boolean
+#  sales_order_view           :boolean
+#  search_open                :boolean
+#  security_filing_attach     :boolean
+#  security_filing_comment    :boolean
+#  security_filing_edit       :boolean
+#  security_filing_view       :boolean
+#  shipment_attach            :boolean
+#  shipment_comment           :boolean
+#  shipment_delete            :boolean
+#  shipment_edit              :boolean
+#  shipment_view              :boolean
+#  simple_entry_mode          :boolean
+#  statement_view             :boolean
+#  support_agent              :boolean
+#  survey_edit                :boolean
+#  survey_view                :boolean
+#  sys_admin                  :boolean
+#  system_user                :boolean
+#  tariff_subscribed          :boolean
+#  task_email                 :boolean
+#  time_zone                  :string(255)
+#  trade_lane_attach          :boolean
+#  trade_lane_comment         :boolean
+#  trade_lane_edit            :boolean
+#  trade_lane_view            :boolean
+#  uid                        :string(255)
+#  updated_at                 :datetime         not null
+#  username                   :string(255)
+#  variant_edit               :boolean
+#  vendor_attach              :boolean
+#  vendor_comment             :boolean
+#  vendor_edit                :boolean
+#  vendor_view                :boolean
+#  vfi_invoice_edit           :boolean
+#  vfi_invoice_view           :boolean
 #
 # Indexes
 #
@@ -155,7 +156,7 @@ class User < ActiveRecord::Base
     :simple_entry_mode, :tariff_subscribed, :homepage, :provider, :uid,
     :google_name, :oauth_token, :oauth_expires_at, :disallow_password,
     :disabled, :group_ids, :portal_mode, :system_user, :statement_view, :department,
-    :email_new_messages
+    :email_new_messages, :default_report_date_format
 
   belongs_to :company
   belongs_to :run_as, :class_name => "User"

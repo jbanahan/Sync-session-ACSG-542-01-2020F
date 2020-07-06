@@ -38,6 +38,7 @@ class AdvancedSearchController < ApplicationController
       ss.include_rule_links = base_params[:include_rule_links]
       ss.no_time = base_params[:no_time]
       ss.download_format = (base_params[:download_format].presence || "xlsx")
+      ss.date_format = (base_params[:date_format].presence || "yyyy-mm-dd")
       ss.locked = base_params[:locked]
       ss.search_columns.delete_all
       user = current_user
@@ -75,6 +76,7 @@ class AdvancedSearchController < ApplicationController
             :disabled=>sc[:disabled],
             :log_runtime=>sc[:log_runtime],
             :report_failure_count=>sc[:report_failure_count],
+            :date_format=>sc[:date_format],
             :mailing_list=>current_user.company.mailing_lists.where(id: sc[:mailing_list_id]).first
           if ss.can_ftp?
             sched.ftp_server = sc[:ftp_server]
@@ -99,6 +101,7 @@ class AdvancedSearchController < ApplicationController
     end
     render :json=>{:ok=>:ok}
   end
+
   def show
     respond_to do |format|
       format.html {
@@ -229,13 +232,14 @@ class AdvancedSearchController < ApplicationController
           :uploadable_error_messages=>ss.uploadable_error_messages,
           :search_list=>current_user.search_setups.where(:module_type=>ss.module_type).order(:name).collect {|s| {:name=>s.name, :id=>s.id, :module=>s.core_module.label}},
           :download_format=>(ss.download_format.presence || "xlsx"),
+          :date_format=>(ss.date_format.presence || "yyyy-mm-dd"),
           :search_columns=>ss.search_columns.collect {|c| {:mfid=>c.model_field_uid, :label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label), :rank=>c.rank, :constant_field_value => c.constant_field_value}},
           :sort_criterions=>ss.sort_criterions.collect {|c| {:mfid=>c.model_field_uid, :label=>(c.model_field.can_view?(current_user) ? c.model_field.label : ModelField.disabled_label), :rank=>c.rank, :descending=>c.descending?}},
           :search_criterions=>ss.search_criterions.collect {|c| c.json(current_user)},
           :search_schedules=>ss.search_schedules.collect {|s|
             f = {:mailing_list_id=>s.mailing_list_id, :email_addresses=>s.email_addresses, :send_if_empty=>s.send_if_empty, :run_monday=>s.run_monday?, :run_tuesday=>s.run_tuesday?, :run_wednesday=>s.run_wednesday?, :run_thursday=> s.run_thursday?, :run_friday=>s.run_friday?,
             :run_saturday=>s.run_saturday?, :run_sunday=>s.run_sunday?, :run_hour=>s.run_hour, :day_of_month=> s.day_of_month, :download_format=>s.download_format, :exclude_file_timestamp=>s.exclude_file_timestamp, :disabled=>s.disabled?, :log_runtime=>s.log_runtime?,
-            :report_failure_count=>s.report_failure_count }
+            :report_failure_count=>s.report_failure_count, :date_format=>s.date_format }
 
             if ss.can_ftp?
               f[:ftp_server] = s.ftp_server

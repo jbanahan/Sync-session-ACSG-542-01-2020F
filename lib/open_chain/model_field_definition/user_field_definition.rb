@@ -74,7 +74,8 @@ module OpenChain; module ModelFieldDefinition; module UserFieldDefinition
       [71, :usr_password_changed_at, :password_changed_at, "Password Changed At", {data_type: :datetime}],
       [72, :usr_password_expired, :password_expired, "Password Expired", {data_type: :boolean}],
       [73, :usr_password_locked, :password_locked, "Password Locked", {data_type: :boolean}],
-      [74, :usr_password_reset, :password_reset, "Password Reset", {data_type: :boolean}]
+      [74, :usr_password_reset, :password_reset, "Password Reset", {data_type: :boolean}],
+      [75, :usr_default_report_date_format, :default_report_date_format, "Default Report Date Format", {data_type: :string}]
     ]
     add_fields CoreModule::USER, make_company_arrays(100, 'usr', 'users', 'comp', 'Company', 'company')
   end

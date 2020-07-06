@@ -11,6 +11,8 @@ module OpenChain
 
       cols = ss.search_columns.order("rank ASC").collect {|col| mf = col.model_field; mf.can_view?(user) ? mf.label : ModelField.disabled_label}
 
+      date_format = (ss.respond_to?(:date_format) && SearchSetup.ruby_date_format(ss.date_format).presence) || "%Y-%m-%d"
+
       k = ss.core_module.klass
       rows = []
       no_edit_links = false
@@ -40,9 +42,9 @@ module OpenChain
         # format dates & times
         row[:result].each_with_index do |r, i|
           if r.respond_to?(:acts_like_time?) && r.acts_like_time?
-            row[:result][i] = (ss.respond_to?(:no_time?) && ss.no_time?) ? r.strftime("%Y-%m-%d") : r.to_s
+            row[:result][i] = (ss.respond_to?(:no_time?) && ss.no_time?) ? r.strftime(date_format) : r.strftime(date_format + " %k:%M")
           elsif r.respond_to?(:acts_like_date?) && r.acts_like_date?
-            row[:result][i] = r.strftime("%Y-%m-%d")
+            row[:result][i] = r.strftime(date_format)
           end
         end
 
@@ -63,6 +65,7 @@ module OpenChain
       h[:search_run_id]=ss.search_run.id if ss.respond_to?(:search_run) && ss.search_run
       h
     end
+
     def total_object_count_hash search_query
       r = {'total_objects'=>search_query.unique_parent_count}
     end
@@ -72,6 +75,7 @@ module OpenChain
       r = param.to_i if !param.blank? && param.match(/^[1-9][0-9]*$/)
       r
     end
+
     def prep_bulk_actions core_module, user
       bulk_actions = []
       core_module.bulk_actions(user).each do |k, v|

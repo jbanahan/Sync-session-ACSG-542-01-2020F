@@ -6,12 +6,13 @@ require 'open_chain/url_support'
 class SearchWriter
   include OpenChain::UrlSupport
 
-  attr_reader :output_format, :search_setup, :user
+  attr_reader :output_format, :search_setup, :user, :date_format
 
-  def initialize search_setup, user: nil, output_format: nil
+  def initialize search_setup, user: nil, output_format: nil, date_format: nil
     @search_setup = search_setup
     @user = user.presence || search_setup.user
     @output_format = initialize_output_format(search_setup, output_format)
+    @date_format = initialize_date_format(search_setup, date_format, @user)
   end
 
   # Runs the given search setup, writing it to the io object provided.  If a block is given a tempfile
@@ -83,7 +84,7 @@ class SearchWriter
     def create_sheet_from_collection collection, title, builder, search_setup, user
       result_class = search_setup.core_module.klass
       column_model_fields = build_column_model_fields search_setup
-      column_styles = build_column_styles search_setup, column_model_fields
+      column_styles = build_column_styles search_setup, column_model_fields, builder
       sheet = initialize_sheet(title, builder, search_setup, column_model_fields, user)
       collection.each { |c| write_result_row builder, sheet, @search_setup, result_class, c, column_styles }
       builder.freeze_horizontal_rows sheet, 1
@@ -140,19 +141,33 @@ class SearchWriter
       search_setup.search_columns.order(:rank).map {|col| col.model_field }
     end
 
-    def build_column_styles search_setup, column_model_fields
-      column_model_fields.map {|mf| style_for_model_field search_setup, mf }
+    def build_column_styles search_setup, column_model_fields, builder
+      column_model_fields.map {|mf| style_for_model_field search_setup, mf, builder }
     end
 
-    def style_for_model_field search_setup, model_field
+    def style_for_model_field search_setup, model_field, builder
       case model_field.data_type
       when :date
-        :default_date
+        @date_format.present? ? create_custom_date_style(@date_format, builder) : :default_date
       when :datetime
-        search_setup.no_time? ? :default_date : :default_datetime
+        if @date_format.present?
+          search_setup.no_time? ? create_custom_date_style(@date_format, builder) : create_custom_datetime_style(@date_format, builder)
+        else
+          search_setup.no_time? ? :default_date : :default_datetime
+        end
       else
         nil
       end
+    end
+
+    def create_custom_date_style date_format, builder
+      builder.create_date_style(:custom_date, date_format, return_existing: true)
+      :custom_date
+    end
+
+    def create_custom_datetime_style date_format, builder
+      builder.create_date_style(:custom_datetime, "#{date_format} HH:MM", return_existing: true)
+      :custom_datetime
     end
 
     def generate_criteria_tab builder, search_setup, audit, user
@@ -231,10 +246,18 @@ class SearchWriter
       output
     end
 
+    def initialize_date_format search_setup, date_format_opt, user
+      output = (date_format_opt.presence || search_setup.date_format.presence || user.default_report_date_format)
+      if output.blank?
+        output = "YYYY-MM-DD"
+      end
+      output
+    end
+
     def create_builder
       case @output_format
       when "csv"
-        return CsvBuilder.new
+        return CsvBuilder.new(date_format: SearchSetup.ruby_date_format(@date_format))
       when "xls"
         return XlsBuilder.new
       else

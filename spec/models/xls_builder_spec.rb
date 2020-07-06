@@ -164,6 +164,18 @@ describe XlsBuilder do
     end
   end
 
+  describe "create_date_style" do
+    let (:sheet) {
+      subject.create_sheet "Sheet"
+    }
+
+    it "creates a new date style" do
+      style = subject.create_date_style "test", "MM-DD-YYYY"
+      subject.add_body_row sheet, ["Test"], styles: [style]
+      expect(format_at(sheet, 0, 0).number_format).to eq "MM-DD-YYYY"
+    end
+  end
+
   describe "create_link_cell" do
     let (:sheet) {
       subject.create_sheet "Sheet"
