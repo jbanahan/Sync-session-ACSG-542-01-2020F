@@ -5,7 +5,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
 
   COMPANY_YEAR_OVER_YEAR_REPORT_USERS ||= 'company_yoy_report'
 
-  CompanyYearOverYearData ||= Struct.new(:entry_count, :entry_line_count, :abi_line_count, :total_broker_invoice)
+  CompanyYearOverYearData ||= Struct.new(:entry_count, :entry_invoice_count, :entry_line_count, :abi_line_count, :total_broker_invoice)
 
   def self.permission? user
     user.view_entries? && MasterSetup.get.custom_feature?("Company Year Over Year Report") && user.in_group?(Group.use_system_group(COMPANY_YEAR_OVER_YEAR_REPORT_USERS, create: false))
@@ -88,6 +88,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
         if month_data.nil?
           month_data = CompanyYearOverYearData.new
           month_data.entry_count = result_set_row['entry_count']
+          month_data.entry_invoice_count = result_set_row['entry_invoice_count']
           month_data.entry_line_count = result_set_row['entry_line_count']
           month_data.abi_line_count = result_set_row['abi_line_count']
           month_data.total_broker_invoice = result_set_row['broker_invoice_total']
@@ -124,6 +125,7 @@ module OpenChain; module Report; class CompanyYearOverYearReport
     def add_row_block wb, sheet, year, comp_year, block_pos, year_hash, ytd_enforced
       wb.add_body_row sheet, make_data_headers(comp_year ? "Variance" : year), styles: Array.new(14, :default_header)
       wb.add_body_row sheet, get_category_row_for_year_month("Entries Transmitted", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_count, decimal:false), styles: [:bold] + Array.new(13, :number)
+      wb.add_body_row sheet, get_category_row_for_year_month("Entry Summary Invoices", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_invoice_count, decimal:false), styles: [:bold] + Array.new(13, :number)
       wb.add_body_row sheet, get_category_row_for_year_month("Entry Summary Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :entry_line_count, decimal:false), styles: [:bold] + Array.new(13, :number)
       wb.add_body_row sheet, get_category_row_for_year_month("ABI Lines", year_hash, year, comp_year, block_pos, ytd_enforced, :abi_line_count, decimal:false), styles: [:bold] + Array.new(13, :number)
       wb.add_body_row sheet, get_category_row_for_year_month("Total Broker Invoice", year_hash, year, comp_year, block_pos, ytd_enforced, :total_broker_invoice), styles: [:bold] + Array.new(13, :currency)
@@ -197,8 +199,9 @@ module OpenChain; module Report; class CompanyYearOverYearReport
           division_number,
           division_name,
           SUM(entry_count) AS entry_count,
-          SUM(abi_line_count) AS abi_line_count,
+          SUM(entry_invoice_count) AS entry_invoice_count,
           SUM(entry_line_count) AS entry_line_count,
+          SUM(abi_line_count) AS abi_line_count,
           SUM(broker_invoice_total) AS broker_invoice_total
         FROM
           (
@@ -209,8 +212,9 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 division_number,
                 div_xref.value AS division_name,
                 COUNT(*) AS entry_count,
+                SUM(IFNULL(child_count_tbl.entry_invoice_count, 0)) AS entry_invoice_count,
+                SUM(IFNULL(child_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
-                SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total
               FROM
                 entries
@@ -220,7 +224,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 LEFT OUTER JOIN (
                   SELECT
                     entries.id AS entry_id,
-                    COUNT(*) AS entry_line_count
+                    COUNT(DISTINCT ci.id) AS entry_invoice_count,
+                    COUNT(cil.id) AS entry_line_count
                   FROM
                     entries
                     LEFT OUTER JOIN commercial_invoices AS ci ON
@@ -233,8 +238,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                     #{make_range_field_sql('release_date', year_1, year_2)}
                   GROUP BY
                     entries.id
-                ) AS line_count_tbl ON
-	                entries.id = line_count_tbl.entry_id
+                ) AS child_count_tbl ON
+	                entries.id = child_count_tbl.entry_id
               WHERE
                 division_number IS NOT NULL AND
                 !(customer_number <=> 'EDDIEFTZ') AND
@@ -251,8 +256,9 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 division_number,
                 div_xref.value AS division_name,
                 COUNT(*) AS entry_count,
+                SUM(IFNULL(child_count_tbl.entry_invoice_count, 0)) AS entry_invoice_count,
+                SUM(IFNULL(child_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
-                SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total
               FROM
                 entries
@@ -262,7 +268,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 LEFT OUTER JOIN (
                   SELECT
                     entries.id AS entry_id,
-                    COUNT(*) AS entry_line_count
+                    COUNT(DISTINCT ci.id) AS entry_invoice_count,
+                    COUNT(cil.id) AS entry_line_count
                   FROM
                     entries
                     LEFT OUTER JOIN commercial_invoices AS ci ON
@@ -275,8 +282,8 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                     #{make_range_field_sql('arrival_date', year_1, year_2)}
                   GROUP BY
                     entries.id
-                ) AS line_count_tbl ON
-	                entries.id = line_count_tbl.entry_id
+                ) AS child_count_tbl ON
+	                entries.id = child_count_tbl.entry_id
               WHERE
                 division_number IS NOT NULL AND
                 customer_number = 'EDDIEFTZ' AND
@@ -293,15 +300,17 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                 'CA' AS division_number,
                 'Toronto' AS division_name,
                 COUNT(*) AS entry_count,
+                SUM(IFNULL(child_count_tbl.entry_invoice_count, 0)) AS entry_invoice_count,
+                SUM(IFNULL(child_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(summary_line_count, 0)) AS abi_line_count,
-                SUM(IFNULL(line_count_tbl.entry_line_count, 0)) AS entry_line_count,
                 SUM(IFNULL(broker_invoice_total, 0.0)) AS broker_invoice_total
               FROM
                 entries
                 LEFT OUTER JOIN (
                   SELECT
                     entries.id AS entry_id,
-                    COUNT(*) AS entry_line_count
+                    COUNT(DISTINCT ci.id) AS entry_invoice_count,
+                    COUNT(cil.id) AS entry_line_count
                   FROM
                     entries
                     LEFT OUTER JOIN commercial_invoices AS ci ON
@@ -309,13 +318,13 @@ module OpenChain; module Report; class CompanyYearOverYearReport
                     LEFT OUTER JOIN commercial_invoice_lines AS cil ON
                       ci.id = cil.commercial_invoice_id
                   WHERE
-                    division_number IS NOT NULL AND
+                    division_number IS NULL AND
                     !(customer_number <=> 'EDDIEFTZ') AND
                     #{make_range_field_sql('release_date', year_1, year_2)}
                   GROUP BY
                     entries.id
-                ) AS line_count_tbl ON
-	                entries.id = line_count_tbl.entry_id
+                ) AS child_count_tbl ON
+	                entries.id = child_count_tbl.entry_id
               WHERE
                 division_number IS NULL AND
                 entry_number LIKE '1198%' AND
