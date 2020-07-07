@@ -24,4 +24,5 @@ describe CommercialInvoiceTariff do
       expect(cit.value_for_tax).to be_nil
     end
   end
+
 end

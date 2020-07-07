@@ -42,23 +42,22 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsStatus
       # closed out (as determined by the presence of One USG Date).
       exc_entries = Entry.includes(:entry_exceptions, :containers)
                          .where(customer_number: "TARGEN", source_system: "Alliance")
-                         .where("(one_usg_date IS NULL OR
+                         .where("(one_usg_date IS NULL OR first_release_date IS NULL OR
                                  (SELECT COUNT(*) FROM entry_exceptions AS exc WHERE exc.entry_id = entries.id AND exc.resolved_date IS NULL) > 0)")
 
       raw_data = []
       exc_entries.find_each(batch_size: 250) do |ent|
         entry_rows = []
         # Unresolved exceptions are meant to appear on the report regardless of the entry's One USG Date status.
-        # These need to be resolved by ops.  Resolved exceptions drop after One USG Date has been set.
+        # These need to be resolved by ops.  Exceptions drop off as soon as they are resolved.
         ent.entry_exceptions.each do |exc|
-          if !exc.resolved? || ent.one_usg_date.nil?
+          if !exc.resolved?
             entry_rows << make_data_obj(ent, convert_reason_code(exc.code), exc.comments)
           end
         end
 
-        # Target wants to see "in progress" entries on this report even if they don't have exceptions or
-        # pseudo-exceptions.
-        if ent.one_usg_date.nil? && entry_rows.length == 0
+        # Target wants to see "in progress" entries on this report even if they don't have exceptions.
+        if entry_rows.length == 0 && include_entry?(ent)
           entry_rows << make_data_obj(ent, nil, nil)
         end
 
@@ -82,6 +81,11 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsStatus
       else
           code
       end
+    end
+
+    def include_entry? ent
+      # Entries that involve the FDA or EPA are handled a little differently than others.
+      ent.includes_pga_summary_for_agency?(["FDA", "EPA"]) ? ent.one_usg_date.nil? : ent.first_release_date.nil?
     end
 
     def make_data_obj entry, exception_code, comments

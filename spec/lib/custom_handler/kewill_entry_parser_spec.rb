@@ -331,7 +331,17 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                                          "commercial_desc": "ESOMERPRADIO HAM",
                                          "agency_processing_cd": "DNR",
                                          "disclaimer_type_cd": "TEST"
+                                       },
+                                       {
+                                         "uscs_pg_seq_nbr": 3,
+                                         "pg_agency_cd": "FCC",
+                                         "pg_program_cd": "URK",
+                                         "pg_cd": "EL",
+                                         "commercial_desc": "CANNED HAM",
+                                         "agency_processing_cd": "DNC",
+                                         "disclaimer_type_cd": "TESTS"
                                        }
+
                                      ]
                   },
                   {
@@ -954,7 +964,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(lacey.percent_recycled_material).to eq BigDecimal("0.02")
       expect(lacey.container_numbers).to be_nil
 
-      expect(tariff.pga_summaries.length).to eq 2
+      expect(tariff.pga_summaries.length).to eq 3
       pga_sum = tariff.pga_summaries.first
       expect(pga_sum.sequence_number).to eq 1
       expect(pga_sum.agency_code).to eq "FDA"
@@ -968,6 +978,20 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       # No need to verify all of the fields.
       expect(pga_sum.sequence_number).to eq 2
       expect(pga_sum.agency_code).to eq "FCC"
+
+      pga_sum = tariff.pga_summaries.last
+      # No need to verify all of the fields.
+      expect(pga_sum.sequence_number).to eq 3
+      expect(pga_sum.agency_code).to eq "FCC"
+
+      expect(entry.entry_pga_summaries.length).to eq 2
+      pga_sum = entry.entry_pga_summaries.first
+      expect(pga_sum.agency_code).to eq "FDA"
+      expect(pga_sum.summary_line_count).to eq 1
+
+      pga_sum = entry.entry_pga_summaries.second
+      expect(pga_sum.agency_code).to eq "FCC"
+      expect(pga_sum.summary_line_count).to eq 2
 
       tariff = line.commercial_invoice_tariffs.second
       expect(tariff.tariff_description).to eq "REPLACEMENT DESC"
@@ -1147,6 +1171,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       line = Factory(:broker_invoice_line, broker_invoice: Factory(:broker_invoice, entry: e, invoice_number: "12345A"))
       Factory(:container, entry: e, container_number: "CONT1")
       e.entry_comments.create! body: "Testing"
+      e.entry_exceptions.create! code: "TEST"
+      e.entry_pga_summaries.create! agency_code: "TEST"
 
       expect(subject).to receive(:process_special_tariffs)
 
@@ -1164,6 +1190,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.containers.size).to eq 2
       expect(entry.containers.map {|c| c.container_number}).to include("CONT1")
       expect(entry.entry_exceptions.size).to eq 14
+      expect(entry.entry_pga_summaries.size).to eq 2
     end
 
     it "copies sync records from existing broker invoice to newly created one" do

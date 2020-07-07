@@ -895,8 +895,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def process_commercial_invoices e, entry
       entry.destroy_commercial_invoices
+      entry.entry_pga_summaries.destroy_all
 
       entry_effective_date = tariff_effective_date(entry)
+      entry_pga_summary_data = Hash.new { |hash, key| hash[key] = 0 }
 
       Array.wrap(e[:commercial_invoices]).each do |i|
         invoice = entry.commercial_invoices.build
@@ -917,6 +919,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
             Array.wrap(t[:pga_summaries]).each do |p|
               pga_summary = tariff.pga_summaries.build
               set_pga_summary_data p, pga_summary
+              entry_pga_summary_data[pga_summary.agency_code] += 1
             end
           end
 
@@ -930,6 +933,11 @@ module OpenChain; module CustomHandler; class KewillEntryParser
             calculate_duty_rates(t, line, entry_effective_date, total_entered_value)
           end
         end
+      end
+
+      # Build entry-level PGA summary info records.
+      entry_pga_summary_data.each_key do |agency_code|
+        entry.entry_pga_summaries.build(agency_code: agency_code, summary_line_count: entry_pga_summary_data[agency_code])
       end
 
       nil

@@ -839,4 +839,23 @@ describe Entry do
       expect(Entry.format_importer_tax_id nil).to eq nil
     end
   end
+
+  describe "includes_pga_summary_for_agency?" do
+    it "returns true when agency code is found in PGA summaries, false when it's not" do
+      ent = Factory(:entry)
+      ent.entry_pga_summaries.build(agency_code:"FDA")
+      ent.entry_pga_summaries.build(agency_code:"epa")
+
+      expect(ent.includes_pga_summary_for_agency? "fda").to eq true
+      expect(ent.includes_pga_summary_for_agency? "FDA").to eq true
+      expect(ent.includes_pga_summary_for_agency? "epa").to eq true
+      expect(ent.includes_pga_summary_for_agency? "EPA").to eq true
+      expect(ent.includes_pga_summary_for_agency? nil).to eq false
+      expect(ent.includes_pga_summary_for_agency? "FBI").to eq false
+      expect(ent.includes_pga_summary_for_agency? ["fDa", "FBI"]).to eq true
+      expect(ent.includes_pga_summary_for_agency? ["fbi", "EPA", "ALF"]).to eq true
+      expect(ent.includes_pga_summary_for_agency? ["FBI", "ALF"]).to eq false
+      expect(ent.includes_pga_summary_for_agency? []).to eq false
+    end
+  end
 end

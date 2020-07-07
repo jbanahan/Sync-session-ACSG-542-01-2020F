@@ -534,11 +534,32 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [301, :ent_price_inquiry_exception_opened_date, :price_inquiry_exception_opened_date, "Price Inquiry Exception Opened Date", {:data_type=>:datetime}],
       [302, :ent_price_inquiry_exception_resolved_date, :price_inquiry_exception_resolved_date, "Price Inquiry Exception Resolved Date", {:data_type=>:datetime}],
       [303, :ent_usda_hold_exception_opened_date, :usda_hold_exception_opened_date, "USDA Hold Exception Opened Date", {:data_type=>:datetime}],
-      [304, :ent_usda_hold_exception_resolved_date, :usda_hold_exception_resolved_date, "USDA Hold Exception Resolved Date", {:data_type=>:datetime}]
+      [304, :ent_usda_hold_exception_resolved_date, :usda_hold_exception_resolved_date, "USDA Hold Exception Resolved Date", {:data_type=>:datetime}],
+      make_pga_flag_field(305, "AMS"),
+      make_pga_flag_field(306, "APH"),
+      make_pga_flag_field(307, "ATF"),
+      make_pga_flag_field(308, "DEA"),
+      make_pga_flag_field(309, "EPA"),
+      make_pga_flag_field(310, "FDA"),
+      make_pga_flag_field(311, "FSI"),
+      make_pga_flag_field(312, "FWS"),
+      make_pga_flag_field(313, "NHT"),
+      make_pga_flag_field(314, "NMF"),
+      make_pga_flag_field(315, "OMC"),
+      make_pga_flag_field(316, "TTB")
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600, 'ent', 'entries', 'Entry')
     add_fields CoreModule::ENTRY, make_attachment_arrays(700, 'ent', CoreModule::ENTRY, {ent_attachment_types: lambda {|u| u.company.master?}})
     add_fields CoreModule::ENTRY, make_business_rule_arrays(800, 'ent', 'entries', 'Entry')
+  end
+
+  def make_pga_flag_field rank, agency_code
+    [rank, "ent_pga_#{agency_code.downcase}".to_sym, "pga_#{agency_code.downcase}".to_sym, "PGA - #{agency_code}", {
+        :import_lambda=>lambda {|obj, data| "PGA - #{agency_code} ignored. (read only)"},
+        :export_lambda=>lambda {|obj| obj.includes_pga_summary_for_agency? agency_code },
+        :qualified_field_name=>"((SELECT COUNT(*) FROM entry_pga_summaries WHERE entry_id = entries.id AND agency_code = '#{agency_code}') > 0)",
+        :data_type=>:boolean }
+    ]
   end
 end; end; end

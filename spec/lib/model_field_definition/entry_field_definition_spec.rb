@@ -163,4 +163,37 @@ describe OpenChain::ModelFieldDefinition::EntryFieldDefinition do
       expect(mf.process_export(ent, nil, true)).to eq "D\nB\nA"
     end
   end
+
+  context 'pga_flag_fields' do
+    ["AMS", "APH", "ATF", "DEA", "EPA", "FDA", "FSI", "FWS", "NHT", "NMF", "OMC", "TTB"].each do |agency_code|
+      describe "ent_pga_#{agency_code.downcase}" do
+        it "should return true when PGA summary for #{agency_code} is present" do
+          uid = "ent_pga_#{agency_code.downcase}"
+          mf = ModelField.find_by_uid(uid.to_sym)
+
+          ent = Factory(:entry)
+          ent.entry_pga_summaries.create!(agency_code: agency_code)
+
+          ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+          ss.search_criterions.build(model_field_uid: uid, operator: "eq", value: true)
+          expect(ss.result_keys).to eq [ent.id]
+
+          expect(mf.process_export(ent, nil, true)).to eq true
+        end
+
+        it "should return false when PGA summary for #{agency_code} is not present" do
+          uid = "ent_pga_#{agency_code.downcase}"
+          mf = ModelField.find_by_uid(uid.to_sym)
+
+          ent = Factory(:entry)
+
+          ss = SearchSetup.new(module_type:'Entry', user_id:Factory(:admin_user).id)
+          ss.search_criterions.build(model_field_uid: uid, operator: "eq", value: false)
+          expect(ss.result_keys).to eq [ent.id]
+
+          expect(mf.process_export(ent, nil, true)).to eq false
+        end
+      end
+    end
+  end
 end

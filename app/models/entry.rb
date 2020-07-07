@@ -392,6 +392,7 @@ class Entry < ActiveRecord::Base
   has_many :entry_comments, dependent: :destroy, inverse_of: :entry, autosave: true
   has_many :containers, dependent: :destroy, inverse_of: :entry, autosave: true
   has_many :entry_exceptions, dependent: :destroy, inverse_of: :entry, autosave: true
+  has_many :entry_pga_summaries, dependent: :destroy, inverse_of: :entry, autosave: true
   has_one :daily_statement_entry, inverse_of: :entry
 
   belongs_to :importer, :class_name=>"Company"
@@ -691,7 +692,7 @@ class Entry < ActiveRecord::Base
   # content, which results in much faster destruction with larger entries.
   def destroy_commercial_invoices
     invoices = commercial_invoices.includes(commercial_invoice_lines:
-        [:custom_values, :piece_sets, commercial_invoice_tariffs: [:custom_values, :commercial_invoice_lacey_components]])
+        [:custom_values, :piece_sets, commercial_invoice_tariffs: [:custom_values, :commercial_invoice_lacey_components, :pga_summaries]])
     invoices.destroy_all
   end
 
@@ -759,6 +760,14 @@ class Entry < ActiveRecord::Base
   # Adds hyphens to an importer tax ID to fit the format ##-#########.  Nil value results in nil return.
   def self.format_importer_tax_id tax_id
     tax_id&.gsub(/(\d{2})[.-]?(\d+)/, '\1-\2')
+  end
+
+  # Determines whether this entry's PGA summaries include matching agency code to (one of)
+  # the code(s) provided.  pga_agency_code can be either a single code or an array of codes.  If the latter, only one
+  # of the codes needs to match to result in a 'true' return.
+  def includes_pga_summary_for_agency? pga_agency_code
+    code_arr = pga_agency_code.is_a?(Array) ? pga_agency_code.map(&:upcase) : [pga_agency_code&.upcase]
+    entry_pga_summaries.select { |pga| code_arr.include? pga.agency_code&.upcase }.count > 0
   end
 
   private
