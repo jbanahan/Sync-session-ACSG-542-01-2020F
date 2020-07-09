@@ -79,6 +79,7 @@ class BusinessValidationRule < ActiveRecord::Base
                 ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
                 ValidationRuleEntryTariffsMustIncludeAllTariffsOnProduct: { label: "Entry Tariffs Include all Product Tariffs" },
                 ValidationRuleManifestDiscrepancies: { label: "ABI Manifest Discrepancies" },
+                 ValidationRuleEntryInvoiceCooMatchesMid: { label: "Entry Invoice Country of Origin Matches MID"},
                 # DEPRECATED - doesn't appear in menu
                 ValidationRuleFieldComparison: {label: "Field Comparison", enabled_lambda: lambda { nil } },
                 'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
