@@ -57,7 +57,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
       # included in the report.
       entry_4 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-4", source_system: "Alliance",
                                 one_usg_date: Date.new(2020, 1, 1))
-      entry_4.entry_pga_summaries.create! agency_code: "FDA"
+      entry_4.entry_pga_summaries.create! agency_code: "FDA", total_claimed_pga_lines: 1
 
       # This entry has an unresolved exception.  Even though it has first release date, it should still show up on the report.
       entry_5 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-5", source_system: "Alliance",
@@ -72,7 +72,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
       # This entry has no exceptions, and no FDA/EPA PGA summary.  It should be included because it has no First
       # Release Date value.
       entry_7 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-7", source_system: "Alliance", one_usg_date: Date.new(2020, 1, 1))
-      entry_7.entry_pga_summaries.create! agency_code: "FCC"
+      entry_7.entry_pga_summaries.create! agency_code: "FCC", total_claimed_pga_lines: 1
 
       # This entry isn't Target's.  Excluded, obviously.
       Factory(:entry, customer_number: "ARGENT", broker_reference: "entry-8", source_system: "Alliance")
@@ -81,7 +81,14 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
       # included in the report.
       entry_9 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-9", source_system: "Alliance",
                                 one_usg_date: Date.new(2020, 1, 1))
-      entry_9.entry_pga_summaries.create! agency_code: "EPA"
+      entry_9.entry_pga_summaries.create! agency_code: "EPA", total_claimed_pga_lines: 1
+
+      # This entry has no unresolved exceptions, has an "EPA" PGA summary record and has a one USG date.  It should be
+      # included in the report because its PGA summary record has no claimed lines, effectively negating its presence,
+      # and it does not have a first release date.
+      entry_10 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-10", source_system: "Alliance",
+                                 one_usg_date: Date.new(2020, 1, 1))
+      entry_10.entry_pga_summaries.create! agency_code: "EPA", total_claimed_pga_lines: 0
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         subject.run_customs_status_report({'email' => 'a@b.com'})
@@ -100,7 +107,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
 
       sheet = reader["Exceptions"]
       expect(sheet).not_to be_nil
-      expect(sheet.length).to eq 8
+      expect(sheet.length).to eq 9
       expect(sheet[0]).to eq ["Importer", "Broker", "File No.", "Dept", "P.O.", "Doc Rec'd Date", "ETA", "ABI Date",
                               "Reason Code", "Comments from Broker", "No of Cntrs", "Port of Lading", "Port of Unlading",
                               "Vessel", "Bill of Lading Number", "Containers"]
@@ -116,6 +123,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
                               Date.new(2019, 12, 28), nil, nil, 0, "BZYX", "FDCB", "Venture X-3", "G", "I"]
       expect(sheet[6]).to eq ["TGMI", "316", "entry-5", nil, nil, nil, nil, nil, "ARF", nil, 0, nil, nil, nil, nil, nil]
       expect(sheet[7]).to eq ["TGMI", "316", "entry-7", nil, nil, nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
+      expect(sheet[8]).to eq ["TGMI", "316", "entry-10", nil, nil, nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
     end
 
     def make_utc_date year, month, day

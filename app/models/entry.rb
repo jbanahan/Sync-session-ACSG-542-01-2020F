@@ -765,9 +765,13 @@ class Entry < ActiveRecord::Base
   # Determines whether this entry's PGA summaries include matching agency code to (one of)
   # the code(s) provided.  pga_agency_code can be either a single code or an array of codes.  If the latter, only one
   # of the codes needs to match to result in a 'true' return.
-  def includes_pga_summary_for_agency? pga_agency_code
+  # Providing a true value for claimed_pga_lines (defaults to false), will only consider code matches where the
+  # total claimed PGA line count is greater than zero.
+  def includes_pga_summary_for_agency? pga_agency_code, claimed_pga_lines_only: false
     code_arr = pga_agency_code.is_a?(Array) ? pga_agency_code.map(&:upcase) : [pga_agency_code&.upcase]
-    entry_pga_summaries.select { |pga| code_arr.include? pga.agency_code&.upcase }.count > 0
+    entry_pga_summaries.select do |pga|
+      code_arr.include?(pga.agency_code&.upcase) && (!claimed_pga_lines_only || pga.total_claimed_pga_lines.to_i > 0)
+    end.count > 0
   end
 
   private

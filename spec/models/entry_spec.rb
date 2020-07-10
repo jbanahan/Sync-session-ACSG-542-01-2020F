@@ -843,8 +843,8 @@ describe Entry do
   describe "includes_pga_summary_for_agency?" do
     it "returns true when agency code is found in PGA summaries, false when it's not" do
       ent = Factory(:entry)
-      ent.entry_pga_summaries.build(agency_code:"FDA")
-      ent.entry_pga_summaries.build(agency_code:"epa")
+      ent.entry_pga_summaries.build(agency_code:"FDA", total_claimed_pga_lines: 0)
+      ent.entry_pga_summaries.build(agency_code:"epa", total_claimed_pga_lines: 0)
 
       expect(ent.includes_pga_summary_for_agency? "fda").to eq true
       expect(ent.includes_pga_summary_for_agency? "FDA").to eq true
@@ -856,6 +856,16 @@ describe Entry do
       expect(ent.includes_pga_summary_for_agency? ["fbi", "EPA", "ALF"]).to eq true
       expect(ent.includes_pga_summary_for_agency? ["FBI", "ALF"]).to eq false
       expect(ent.includes_pga_summary_for_agency? []).to eq false
+    end
+
+    it "factors total claimed PGA line count into the comparison when told to do so" do
+      ent = Factory(:entry)
+      ent.entry_pga_summaries.build(agency_code:"FDA", total_claimed_pga_lines: 1)
+      ent.entry_pga_summaries.build(agency_code:"EPA", total_claimed_pga_lines: 0)
+
+      expect(ent.includes_pga_summary_for_agency? "FDA", claimed_pga_lines_only:true).to eq true
+      expect(ent.includes_pga_summary_for_agency? "EPA", claimed_pga_lines_only:true).to eq false
+      expect(ent.includes_pga_summary_for_agency? "EPA", claimed_pga_lines_only:false).to eq true
     end
   end
 end

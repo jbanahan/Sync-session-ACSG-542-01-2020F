@@ -321,7 +321,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                                          "pg_cd": "FD2",
                                          "commercial_desc": "ESOMERPRAZOLE MAGNESIUM",
                                          "agency_processing_cd": "RND",
-                                         "disclaimer_type_cd": "TST"
+                                         "disclaimer_type_cd": "TST",
+                                         "is_disclaimer": "Y"
                                        },
                                        {
                                          "uscs_pg_seq_nbr": 2,
@@ -330,7 +331,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                                          "pg_cd": "FCP",
                                          "commercial_desc": "ESOMERPRADIO HAM",
                                          "agency_processing_cd": "DNR",
-                                         "disclaimer_type_cd": "TEST"
+                                         "disclaimer_type_cd": "TEST",
+                                         "is_disclaimer": "N"
                                        },
                                        {
                                          "uscs_pg_seq_nbr": 3,
@@ -339,7 +341,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
                                          "pg_cd": "EL",
                                          "commercial_desc": "CANNED HAM",
                                          "agency_processing_cd": "DNC",
-                                         "disclaimer_type_cd": "TESTS"
+                                         "disclaimer_type_cd": "TESTS",
+                                         "is_disclaimer": "N"
                                        }
 
                                      ]
@@ -973,11 +976,13 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(pga_sum.commercial_description).to eq "ESOMERPRAZOLE MAGNESIUM"
       expect(pga_sum.agency_processing_code).to eq "RND"
       expect(pga_sum.disclaimer_type_code).to eq "TST"
+      expect(pga_sum.disclaimed).to eq true
 
       pga_sum = tariff.pga_summaries.second
       # No need to verify all of the fields.
       expect(pga_sum.sequence_number).to eq 2
       expect(pga_sum.agency_code).to eq "FCC"
+      expect(pga_sum.disclaimed).to eq false
 
       pga_sum = tariff.pga_summaries.last
       # No need to verify all of the fields.
@@ -987,11 +992,15 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry.entry_pga_summaries.length).to eq 2
       pga_sum = entry.entry_pga_summaries.first
       expect(pga_sum.agency_code).to eq "FDA"
-      expect(pga_sum.summary_line_count).to eq 1
+      expect(pga_sum.total_pga_lines).to eq 1
+      expect(pga_sum.total_claimed_pga_lines).to eq 0
+      expect(pga_sum.total_disclaimed_pga_lines).to eq 1
 
       pga_sum = entry.entry_pga_summaries.second
       expect(pga_sum.agency_code).to eq "FCC"
-      expect(pga_sum.summary_line_count).to eq 2
+      expect(pga_sum.total_pga_lines).to eq 2
+      expect(pga_sum.total_claimed_pga_lines).to eq 2
+      expect(pga_sum.total_disclaimed_pga_lines).to eq 0
 
       tariff = line.commercial_invoice_tariffs.second
       expect(tariff.tariff_description).to eq "REPLACEMENT DESC"

@@ -2,12 +2,14 @@
 #
 # Table name: entry_pga_summaries
 #
-#  agency_code        :string(255)      not null
-#  created_at         :datetime
-#  entry_id           :integer          not null
-#  id                 :integer          not null, primary key
-#  summary_line_count :integer
-#  updated_at         :datetime
+#  agency_code                :string(255)      not null
+#  created_at                 :datetime
+#  entry_id                   :integer          not null
+#  id                         :integer          not null, primary key
+#  total_claimed_pga_lines    :integer
+#  total_disclaimed_pga_lines :integer
+#  total_pga_lines            :integer
+#  updated_at                 :datetime
 #
 # Indexes
 #
@@ -15,7 +17,7 @@
 #
 
 class EntryPgaSummary < ActiveRecord::Base
-  attr_accessible :agency_code, :summary_line_count
+  attr_accessible :agency_code, :total_pga_lines, :total_claimed_pga_lines, :total_disclaimed_pga_lines
 
   belongs_to :entry, inverse_of: :entry_pga_summaries
 end

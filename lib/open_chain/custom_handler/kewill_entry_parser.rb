@@ -898,7 +898,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       entry.entry_pga_summaries.destroy_all
 
       entry_effective_date = tariff_effective_date(entry)
-      entry_pga_summary_data = Hash.new { |hash, key| hash[key] = 0 }
+      entry_pga_summary_data = Hash.new { |hash, key| hash[key] = {disclaimed_lines: 0, claimed_lines: 0} }
 
       Array.wrap(e[:commercial_invoices]).each do |i|
         invoice = entry.commercial_invoices.build
@@ -919,7 +919,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
             Array.wrap(t[:pga_summaries]).each do |p|
               pga_summary = tariff.pga_summaries.build
               set_pga_summary_data p, pga_summary
-              entry_pga_summary_data[pga_summary.agency_code] += 1
+              entry_pga_summary_data[pga_summary.agency_code][pga_summary.disclaimed? ? :disclaimed_lines : :claimed_lines] += 1
             end
           end
 
@@ -937,7 +937,10 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
       # Build entry-level PGA summary info records.
       entry_pga_summary_data.each_key do |agency_code|
-        entry.entry_pga_summaries.build(agency_code: agency_code, summary_line_count: entry_pga_summary_data[agency_code])
+        disclaimed_count = entry_pga_summary_data[agency_code][:disclaimed_lines]
+        claimed_count = entry_pga_summary_data[agency_code][:claimed_lines]
+        entry.entry_pga_summaries.build(agency_code: agency_code, total_pga_lines: disclaimed_count + claimed_count,
+                                        total_claimed_pga_lines: claimed_count, total_disclaimed_pga_lines: disclaimed_count)
       end
 
       nil
@@ -1151,6 +1154,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       pga_summary.commercial_description = p[:commercial_desc]
       pga_summary.agency_processing_code = p[:agency_processing_cd]
       pga_summary.disclaimer_type_code = p[:disclaimer_type_cd]
+      pga_summary.disclaimed = p[:is_disclaimer].to_s.upcase == "Y"
     end
 
     def process_containers e, entry

@@ -85,7 +85,7 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsStatus
 
     def include_entry? ent
       # Entries that involve the FDA or EPA are handled a little differently than others.
-      ent.includes_pga_summary_for_agency?(["FDA", "EPA"]) ? ent.one_usg_date.nil? : ent.first_release_date.nil?
+      ent.includes_pga_summary_for_agency?(["FDA", "EPA"], claimed_pga_lines_only: true) ? ent.one_usg_date.nil? : ent.first_release_date.nil?
     end
 
     def make_data_obj entry, exception_code, comments
