@@ -91,7 +91,6 @@ class TariffLoader
     should_do_mfn_parse country
   end
 
-  # TODO this method needs unit-testing
   def process
     ts = nil
     # The first array index should be the file path and the second (if present) is a Tempfile pointing to the file we're processing
@@ -99,12 +98,11 @@ class TariffLoader
 
     begin
       OfficialTariff.transaction do
-        ts = TariffSet.create!(:country_id=>@country.id, :label=>@tariff_set_label)
-        i = 0
+        ts = TariffSet.create!(country_id: @country.id, label: @tariff_set_label)
         parser = get_parser tariff_file
         parser.foreach(tariff_file) do |row|
           headers = parser.headers
-          ot = TariffSetRecord.new(:tariff_set_id=>ts.id, :country=>@country) # use .new instead of ts.tariff_set_records.build to avoid large in memory array
+          ot = TariffSetRecord.new(tariff_set_id: ts.id, country: @country) # use .new instead of ts.tariff_set_records.build to avoid large in memory array
           FIELD_MAP.each do |header, lmda|
             col_num = headers.index header
             unless col_num.nil?
@@ -112,7 +110,6 @@ class TariffLoader
             end
           end
           ot.save!
-          i += 1
         end
       end
     ensure
@@ -124,12 +121,12 @@ class TariffLoader
 
   # Files routed by TariffFileMonitor are processed using this method (via handle_processing).
   # It's assumed that it's getting a file path, not file content.
-  def self.parse_file file_path, log, opts = {}
+  def self.parse_file file_path, log, _opts = {}
     file_name = file_path.split('/').last
     iso_code = file_name[0, 2].upcase
     tariff_set_label = "#{iso_code}-#{Time.zone.now.strftime("%Y-%m-%d")}"
 
-    c = Country.where(iso_code:iso_code).first
+    c = Country.find_by(iso_code: iso_code)
     log.error_and_raise "Country not found with ISO #{iso_code} for file #{file_name}" if c.nil?
 
     ts = TariffLoader.new(c, file_path, tariff_set_label).process
@@ -137,7 +134,7 @@ class TariffLoader
     ts.activate(nil, log)
   end
 
-  def self.process_from_s3 bucket, key, opts={}
+  def self.process_from_s3 bucket, key, opts = {}
     OpenChain::S3.download_to_tempfile(bucket, key, original_filename: key) do |t|
       # Handle processing is provided a file path, not the actual file content.  Still, it's not 0-bytes, so it
       # bypasses that validation.
@@ -145,7 +142,7 @@ class TariffLoader
     end
   end
 
-  def self.process_from_file file, opts={}
+  def self.process_from_file file, opts = {}
     # This File behavior is a little silly, but (a) it beats rewriting the entire processing apparatus here and
     # (b) typical usage for this method is to pass a path, making that silliness irrelevant.  This is just a
     # developer helper method.
@@ -156,11 +153,14 @@ class TariffLoader
   end
 
   # Manual upload via screen (tariff_sets) goes this route.  See TariffSetsController.
-  def self.process_s3 s3_key, country, tariff_set_label, auto_activate, user=nil
+  def self.process_s3 s3_key, country, tariff_set_label, auto_activate, user = nil
     OpenChain::S3.download_to_tempfile("chain-io", s3_key, original_filename: s3_key) do |t|
       ts = TariffLoader.new(country, t.path, tariff_set_label).process
       ts.activate if auto_activate
-      user.messages.create!(:subject=>"Tariff Set #{tariff_set_label} Loaded", :body=>"Tariff Set #{tariff_set_label} has been loaded and has#{auto_activate ? "" : " NOT"} been activated.") if user
+      if user
+        user.messages.create!(subject: "Tariff Set #{tariff_set_label} Loaded",
+                              body: "Tariff Set #{tariff_set_label} has been loaded and has#{auto_activate ? "" : " NOT"} been activated.")
+      end
     end
   end
 
@@ -173,7 +173,7 @@ class TariffLoader
 
     # See if we can find at least 1 of column header names in this row.  If we can,
     # we'll assume we're looking at the header row.
-    FIELD_MAP.keys.each_with_index do |key, idx|
+    FIELD_MAP.keys.each_with_index do |key, _idx|
       return true unless row.index(key).nil?
     end
     false
@@ -200,7 +200,7 @@ class TariffLoader
       # The following regex looks for a decimal value (optionally followed by a %) or words
       # followed by zero or one space, followed by a colon, followed by zero or one space
       # followed by an open parenth MFN (any chars) and then the first close parenth
-      if @do_mfn_parse && val =~ /(\d+%?|\w+) ?: ?\(MFN.*?\)/
+      if @do_mfn_parse && val =~ /(\d+(?:\.\d+)?%?|\w+) ?: ?\(MFN.*?\)/
         tariff.most_favored_nation_rate = $1
         # tariff.common_rate = $1
       end
@@ -247,13 +247,13 @@ class TariffLoader
         @headers
       end
 
-      def foreach file_path, &block
+      def foreach file_path
         CSV.foreach(file_path) do |row|
           # Iterate through the file until we find the header row
           if @headers
             yield row if TariffLoader.valid_row? row
-          else
-            @headers = row if TariffLoader.valid_header_row? row
+          elsif TariffLoader.valid_header_row? row
+            @headers = row
           end
         end
 
@@ -269,7 +269,7 @@ class TariffLoader
         @headers
       end
 
-      def foreach file_path, &block
+      def foreach file_path
         sheet = Spreadsheet.open(file_path).worksheet 0
         header_index = -1
         # Find the first row of the spreadsheet that looks like it contains the worksheet headers

@@ -119,6 +119,9 @@ end
 Factory.define :tariff_record do |t|
   t.association :classification
 end
+Factory.define :tariff_set do |t|
+  t.association :country
+end
 Factory.define :product_group do |f|
   f.sequence(:name)
 end

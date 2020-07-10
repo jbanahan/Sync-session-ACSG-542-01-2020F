@@ -1,5 +1,55 @@
 describe TariffLoader do
 
+  let (:xls_path) { 'spec/support/bin/SAMPLE_SIMPLE_TARIFF_ENG.xls' }
+
+  describe 'process' do
+    it 'creates a tariff set object' do
+      country = Factory(:country, iso_code:"AU")
+      time = Time.zone.now.strftime("%Y-%m-%d")
+      tl = TariffLoader.new(country, xls_path, time)
+
+      expect(tl.process).to be_kind_of(TariffSet).and have_attributes(country: country, label: time)
+    end
+  end
+
+  describe 'parse_spc_rates' do
+
+    let(:china) {Factory(:country, iso_code:"CN")}
+    let(:tariff_loader) { TariffLoader.new(china, xls_path, Time.zone.now.strftime("%Y-%m-%d")) }
+    let(:official_tariff) { Factory(:official_tariff, country: china) }
+
+    it 'sets the special_rates on a given official tariff and a value' do
+      expect(official_tariff.special_rates).to be_nil
+      tariff_loader.send(:parse_spc_rates, official_tariff, "5.000000%")
+      expect(official_tariff.special_rates).to eq "5.000000%"
+    end
+
+    context "tariff country is in the MOST_FAVORED_NATION_SPECIAL_PARSE_ISOS constant array" do
+
+      before {described_class.instance_variable_set(:@do_mfn_parse, true)}
+
+      it 'sets the most_favored_nation_rate' do
+        expect(official_tariff.most_favored_nation_rate).to be_nil
+        tariff_loader.send(:parse_spc_rates, official_tariff, "0.00000000%: (LDC1,LDC2,LDC,CL,ASEAN: BN,ASEAN: KH,ASEAN: ID,ASEAN: LA,ASEAN: MY,ASEAN: MM,ASEAN: PH,ASEAN: SG,ASEAN: TH,ASEAN: VN,HK,MO,Special-KH,PK,SG,NZ,PE,CR,IS FTA,AU FTA,Georgia), 100.00000000%: (General), 3.00000000%: (CH FTA), 33.00000000%: (US Penalty), 4.00000000%: (KR FTA), 5.20000000%: (APTA-5), 8.00000000%: (MFN tariff treatment)")
+        expect(official_tariff.most_favored_nation_rate).to eq "8.00000000%"
+      end
+    end
+
+    context "tariff country is any other country" do
+
+      before {described_class.instance_variable_set(:@do_mfn_parse, false)}
+
+      it 'does not set the most_favored_nation_rate' do
+        country = Factory(:country, iso_code:"AU")
+        time = Time.zone.now.strftime("%Y-%m-%d")
+        tl = TariffLoader.new(country, xls_path, time)
+
+        tl.send(:parse_spc_rates, official_tariff, "0.00000000%: (LDC,LDC1,LDC2,CL,ASEAN: BN,ASEAN: KH,ASEAN: ID,ASEAN: LA,ASEAN: MY,ASEAN: MM,ASEAN: PH,ASEAN: SG,ASEAN: TH,ASEAN: VN,HK,MO,Special-KH,Special-LA,NZ,IS FTA), 12.00000000%: (KR FTA), 20.00000000%: (MFN tariff treatment), 45.00000000%: (US Penalty), 5.30000000%: (PE), 6.00000000%: (CH FTA), 6.70000000%: (CR), 70.00000000%: (General), 8.00000000%: (AU FTA,Georgia)")
+        expect(official_tariff.most_favored_nation_rate).to be_nil
+      end
+    end
+  end
+
   describe 'parse_file' do
     let (:log) { InboundFile.new }
 
@@ -159,7 +209,4 @@ describe TariffLoader do
       expect(described_class.valid_row?([nil, "", "", nil, 42, "", "", "", "", nil, ""])).to eq true
     end
   end
-
-  # TODO process method is currently untested
-
 end
