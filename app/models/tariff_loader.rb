@@ -44,6 +44,9 @@ class TariffLoader
     "GENERAL" => lambda {|o, d| o.general_rate = d},
     "GENERAL_RATE" => lambda {|o, d| o.general_rate = d},
     "GR1" => lambda {|o, d| o.general_rate = d},
+    # The NZ file just had the NORMAL column added to replace GENERAL, not sure if this is long term or not
+    # But I'm adding this field to the map just in case - 2020-07-13.
+    "NORMAL" => lambda {|o, d| o.general_rate = d},
     "CHAPTER" => lambda {|o, d| o.chapter = d},
     "HEADING" => lambda {|o, d| o.heading = d},
     "SUBHEADING" => SUB_HEADING_LAMBDA,
