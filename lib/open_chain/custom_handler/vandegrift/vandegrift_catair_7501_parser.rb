@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     self.new.parse(data, opts)
   end
 
-  def parse data, opts = {}
+  def parse data, _opts = {}
     shipments = process_file(data)
     generate_and_send_shipment_xml(shipments)
     send_email_notification(shipments, "7501")
@@ -91,15 +91,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     nil
   end
 
-  # rubocop:disable Naming/MethodName
-  def process_B shipment, line
+  def process_B _shipment, line  # rubocop:disable Naming/MethodName
     application_code = extract_string(line, (11..12))
     # SE in 11-12 indictates an Entry Summary (7501)..if that's not there we need to reject the file because
     # it's not going to be structured as we expect it.
-    inbound_file.reject_and_raise("CATAIR B-record's Application Identifier Code (Position 11-12) must be 'AE' to indicate a Entry Summary.  It was '#{application_code}'.") unless application_code  == "AE"
+    inbound_file.reject_and_raise("CATAIR B-record's Application Identifier Code (Position 11-12) must be 'AE' to indicate a Entry Summary.  It was '#{application_code}'.") unless application_code == "AE" # rubocop:disable Layout/LineLength
     nil
   end
-  # rubocop:enable Naming/MethodName
 
   def process_10 shipment, line
     # Even though we clear out this data later, we want to process it here so that it's potentially
@@ -111,12 +109,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     shipment.entry_type = extract_string(line, (34..35))
     shipment.customs_ship_mode = extract_integer(line, (36..37))
 
-    populate_edi_identifiers(shipment)
+    populate_edi_identifiers(shipment, "7501")
     nil
   end
 
   def process_11 shipment, line
-    shipment.customer = find_customer_number("EI", extract_string(line, (3..14)))
+    shipment.customer = find_customer_number("EI", extract_string(line, (3..14)), log_customer_to_inbound_file: true)
     consignee = extract_string(line, (15..26))
     if consignee.present?
       shipment.consignee_code = find_customer_number("EI", consignee)
@@ -209,7 +207,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     # which makes sense, since CMUS should calc it based on the tariff
     # information provided.
     foreign_value = extract_integer(line, (25..34))
-    if foreign_value && foreign_value.nonzero?
+    if foreign_value&.nonzero?
       invoice_tariff.foreign_value = foreign_value
     end
     invoice_tariff.quantity_1 = extract_implied_decimal(line, (36..47), decimal_places: 2)
@@ -234,11 +232,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
   end
   # rubocop:enable Naming/MethodName
 
-  def add_special_tariffs? entry, invoice, line
+  def add_special_tariffs? _entry, _invoice, _line
     false
   end
 
   protected
+
     # The following methods are protected to allow for potential extending classes to
     # override/extend them for potential customer specific handling (if needed)
     def new_shipment
@@ -263,13 +262,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
       i
     end
 
-    def new_commercial_invoice_line shipment, invoice
+    def new_commercial_invoice_line _shipment, _invoice
       l = CiLoadInvoiceLine.new
       l.tariff_lines = []
       l
     end
 
-    def new_commercial_invoice_tariff shipment, invoice, invoice_line
+    def new_commercial_invoice_tariff _shipment, _invoice, invoice_line
       t = CiLoadInvoiceTariff.new
       t.gross_weight = invoice_line.gross_weight
       t.spi = invoice_line.spi

@@ -51,7 +51,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     first_four =~ /^\d\d/ ? first_four[0..1] : first_four
   end
 
-  def find_customer_number ior_type, ior_identifier
+  def find_customer_number ior_type, ior_identifier, log_customer_to_inbound_file: false
     # At this point, EIN is the only value we support for looking up the account to utilize.
     # This is largely just because we don't have any of the other identifier types stored with the Company data
     # EIN Number SHOULD be what we get in the overwhelming majority of files anyway, as the other all our
@@ -59,21 +59,25 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     # to identify that entity with CBP.
     inbound_file.reject_and_raise("Importer Record Types of '#{ior_type}' are not supported at this time.") unless ior_type == "EI"
 
-    @customer_numbers ||= begin
+    @customers ||= begin
       cache = Hash.new do |h, k|
-        cust_no = nil
+        customer = nil
         Company.importers.where(irs_number: k).each do |c|
-          cust_no = c.kewill_customer_number
-          break if cust_no.present?
+          if c.kewill_customer_number.present?
+            customer = c
+            break
+          end
         end
-        h[k] = cust_no
+        h[k] = customer
       end
       cache
     end
 
     customer_number = nil
     if ior_identifier.present?
-      customer_number = @customer_numbers[ior_identifier]
+      customer = @customers[ior_identifier]
+      inbound_file.company = customer if log_customer_to_inbound_file
+      customer_number = customer&.kewill_customer_number
     end
     inbound_file.reject_and_raise("Failed to find any importer account associated with EIN # '#{ior_identifier}' that has a CMUS Customer Number.") if customer_number.nil?
 
@@ -86,7 +90,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     [shipment.entry_filer_code, entry_number[0..-2].rjust(7, "0"), entry_number[-1]]
   end
 
-  def populate_edi_identifiers shipment
+  def populate_edi_identifiers shipment, document_type
     # For these CATAIR 3461/7501 files that won't have Master Bills or House Bills, we need to put something into the XML
     # that will go into the MBOL/HBOL fields (as that's the primary key for the EDI_SHIPMENT_HEADER table)
     # We'll just use the full entry number for that (which we also use as the invoice # created)
@@ -97,6 +101,21 @@ module OpenChain; module CustomHandler; module Vandegrift; module CatairParserSu
     # We need to remove the hyphens from the entry number otherwise the length is longer than the XML
     # allows for the master bill
     id.master_bill = compose_full_entry_number(shipment).join("")
+
+    # Only do this suffix adding if we're dealing w/ an FTZ shipment.
+    # This is because we get the same # for 2 sets of data we may need to load.
+    # The masterbill will be on the zone estimate (3461) and then the following week for
+    # the actual zone movement (7501).  So we need a way to distinguish between the two,
+    # otherwise CM won't accept the 7501 data because the same master bill was already loaded
+    # on a shipment when the 3461 was utilized.
+    if shipment.entry_type == "06"
+      if document_type == "3461"
+        id.master_bill += "P"
+      elsif document_type == "7501"
+        id.master_bill += "F"
+      end
+    end
+
     shipment.edi_identifier = id
     # The file number is the value from the entry number between the hyphens (stripping all leading zeros)
     shipment.file_number = compose_full_entry_number(shipment)[1].to_s.gsub(/\A0+/, "")

@@ -1,14 +1,14 @@
 describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
   let (:data) { IO.read 'spec/fixtures/files/catair_3461.txt' }
-  let! (:inbound_file) {
+  let! (:inbound_file) do
     file = InboundFile.new
     allow(subject).to receive(:inbound_file).and_return file
     file
-  }
+  end
 
-  let! (:importer) {
+  let! (:importer) do
     with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "CUSTNO")
-  }
+  end
 
   describe "process_file" do
 
@@ -22,11 +22,12 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
       expect(shipment.file_number).to be_nil
       expect(shipment.entry_type).to eq "06"
       expect(shipment.customer).to eq "CUSTNO"
+      expect(shipment.customs_ship_mode).to eq 11
       expect(shipment.bond_type).to eq 4
       expect(shipment.total_value_us).to eq 2_094_923_138
       expect(shipment.entry_port).to eq 4103
       expect(shipment.unlading_port).to eq 1234
-      expect(shipment.edi_identifier&.master_bill).to eq "31600000019"
+      expect(shipment.edi_identifier&.master_bill).to eq "31600000019P"
 
       expect(shipment.firms_code).to eq "HAW9"
       expect(shipment.vessel).to eq "FTZ138030"
@@ -52,7 +53,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
       expect(line.ftz_priv_status_date).to eq Date.new(2020, 2, 2)
       expect(line.ftz_quantity).to eq 5544
       expect(line.hts).to eq "3303003000"
-      expect(line.foreign_value).to eq 10000
+      expect(line.foreign_value).to eq 10_000
       expect(line.ftz_expired_hts_number).to eq "9999999999"
 
       expect(line.parties.length).to eq 1
@@ -68,6 +69,16 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
       expect(p.zip).to eq "12345"
       expect(p.country).to eq "CN"
       expect(p.mid).to eq "CNWAHLAIHUI"
+
+      expect(inbound_file.company).to eq importer
+    end
+
+    it "does not append master bill suffix for non-FTZ files" do
+      data.gsub!(" 06EI ", " 01EI ")
+
+      shipment = Array.wrap(subject.process_file(data)).first
+      expect(shipment.entry_type).to eq "01"
+      expect(shipment.edi_identifier&.master_bill).to eq "31600000019"
     end
 
     it "raises an error if non EIN importer identifier is utilized on SE10 lines" do
@@ -93,7 +104,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
 
     it "checks all importers that share EIN numbers for a CMUS identifier to use" do
       importer.system_identifiers.delete_all
-      alternate_importer = with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "ALTERNATE")
+      # Create an alternate importer to show that we use the one w/ the actual system identifier
+      with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "ALTERNATE")
 
       shipments = subject.process_file data
       shipment = shipments.first
@@ -105,7 +117,8 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
 
   describe "process_B" do
     it "logs and raises an error if invalid Application Code is sent" do
-      expect { subject.process_B nil, "B  4103316XX"}.to raise_error "CATAIR B-record's Application Identifier Code (Position 11-12) must be 'SE' to indicate a Cargo Release.  It was 'XX'."
+      expect { subject.process_B nil, "B  4103316XX"}
+        .to raise_error "CATAIR B-record's Application Identifier Code (Position 11-12) must be 'SE' to indicate a Cargo Release.  It was 'XX'."
       expect(inbound_file).to have_reject_message "CATAIR B-record's Application Identifier Code (Position 11-12) must be 'SE' to indicate a Cargo Release.  It was 'XX'."
     end
   end
@@ -162,9 +175,10 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair3461Parser do
 
   describe "parse" do
     subject { described_class }
+
     let (:shipment) { described_class::CiLoadEntry.new }
 
-    before :each do
+    before do
       allow_any_instance_of(subject).to receive(:inbound_file).and_return inbound_file
     end
 

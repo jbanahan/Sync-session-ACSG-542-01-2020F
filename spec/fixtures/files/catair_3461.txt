@@ -1,17 +1,17 @@
-AHAW9316      011320                                                            
-B  4103316SE                                                                    
-SE10A316  00000019 06EI 30-0641353    420949231384103  1234                          
-SE11W010920HAW9    FTZ138030           VOYA                                         
-SE30BY Ascena Retail Group, Inc           EI 30-0641353                         
-SE30CN Ascena Retail Group, Inc           EI 30-0641353                         
-SE30CN Ascena Retail Group, Inc           EI 30-0641353                         
-SE40001CN DESCRIPTION OF PRODUCT                                               
-SE41N02022000005544                                                             
-SE50MF COSBE LABORATORY INC.              MIDCNWAHLAIHUI                       
-SE5501NO.1A BUILDING AND NO.5 JINPU ROAD,                                       
-SE5515NO.1A BUILDING AND NO.5 JINPU ROAD,                                       
-SE56SHANTOU                            XXX      12345          CN               
-SE6033030030000000010000                                                        
+AHAW9316      011320
+B  4103316SE
+SE10A316  00000019 06EI 30-0641353  11420949231384103  1234
+SE11W010920HAW9    FTZ138030           VOYA
+SE30BY Ascena Retail Group, Inc           EI 30-0641353
+SE30CN Ascena Retail Group, Inc           EI 30-0641353
+SE30CN Ascena Retail Group, Inc           EI 30-0641353
+SE40001CN DESCRIPTION OF PRODUCT
+SE41N02022000005544
+SE50MF COSBE LABORATORY INC.              MIDCNWAHLAIHUI
+SE5501NO.1A BUILDING AND NO.5 JINPU ROAD,
+SE5515NO.1A BUILDING AND NO.5 JINPU ROAD,
+SE56SHANTOU                            XXX      12345          CN
+SE6033030030000000010000
 SE619999999999
-Y  4103316SE05287                                                               
-ZHAW9316      011320                                                            
+Y  4103316SE05287
+ZHAW9316      011320

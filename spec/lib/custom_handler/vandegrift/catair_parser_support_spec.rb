@@ -36,6 +36,17 @@ describe OpenChain::CustomHandler::Vandegrift::CatairParserSupport do
 
     it "finds importer with given IRS number and CMUS customer number" do
       expect(subject.find_customer_number "EI", "XX-XXXXXXX").to eq "CMUS"
+      expect(inbound_file.company).to be_nil
+    end
+
+    it "logs importer to inbound file if instructed" do
+      subject.find_customer_number "EI", "XX-XXXXXXX", log_customer_to_inbound_file: true
+      expect(inbound_file.company).to eq importer
+    end
+
+    it "logs importer to inbound file if not instructed" do
+      subject.find_customer_number "EI", "XX-XXXXXXX", log_customer_to_inbound_file: false
+      expect(inbound_file.company).to be_nil
     end
 
     it "logs and raises an error if non-EI CATAIR Importer identifier types are utilized" do

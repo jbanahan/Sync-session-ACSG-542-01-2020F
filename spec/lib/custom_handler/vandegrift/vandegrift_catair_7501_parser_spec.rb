@@ -1,23 +1,23 @@
 describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
 
   let (:data) { IO.read 'spec/fixtures/files/catair_7501.txt' }
-  let! (:inbound_file) {
+  let! (:inbound_file) do
     file = InboundFile.new
     allow(subject).to receive(:inbound_file).and_return file
     file
-  }
+  end
 
-  let (:importer) {
+  let (:importer) do
     with_customs_management_id(Factory(:importer, irs_number: "30-0641353"), "CUSTNO")
-  }
+  end
 
   describe "process_file" do
-    before(:each) do
+    before do
       importer
     end
 
     it "parses catair file and generates CMUS data elements" do
-      shipment = Array.wrap(subject.process_file data).first
+      shipment = Array.wrap(subject.process_file(data)).first
 
       expect(shipment.entry_filer_code).to be_nil
       expect(shipment.entry_number).to be_nil
@@ -25,7 +25,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
       expect(shipment.entry_port).to eq 4103
       expect(shipment.entry_type).to eq "06"
       expect(shipment.customs_ship_mode).to eq 10
-      expect(shipment.edi_identifier&.master_bill).to eq "31600000019"
+      expect(shipment.edi_identifier&.master_bill).to eq "31600000019F"
       expect(shipment.customer).to eq "CUSTNO"
       expect(shipment.consignee_code).to eq "CUSTNO"
       expect(shipment.vessel).to eq "138030"
@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
       expect(line.visa_date).to eq Date.new(2010, 1, 1)
       expect(line.spi).to eq "SP"
       expect(line.charges).to eq 1
-      expect(line.lading_port).to eq 54321
+      expect(line.lading_port).to eq 54_321
       expect(line.gross_weight).to eq 1
       expect(line.textile_category_code).to eq 321
       expect(line.related_parties).to eq true
@@ -93,14 +93,25 @@ describe OpenChain::CustomHandler::Vandegrift::VandegriftCatair7501Parser do
       expect(tariff.uom_2).to be_blank
       expect(tariff.quantity_3).to be_nil
       expect(tariff.uom_3).to be_blank
+
+      expect(inbound_file.company).to eq importer
+    end
+
+    it "does not append master bill suffix for non-FTZ files" do
+      data.gsub!("0610 X", "0110 X")
+
+      shipment = Array.wrap(subject.process_file(data)).first
+      expect(shipment.entry_type).to eq "01"
+      expect(shipment.edi_identifier&.master_bill).to eq "31600000019"
     end
   end
 
   describe "parse" do
     subject { described_class }
+
     let (:shipment) { described_class::CiLoadEntry.new }
 
-    before :each do
+    before do
       allow_any_instance_of(subject).to receive(:inbound_file).and_return inbound_file
     end
 

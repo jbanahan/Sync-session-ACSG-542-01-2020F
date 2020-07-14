@@ -13,7 +13,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     self.new.parse(data, opts)
   end
 
-  def parse data, opts = {}
+  def parse data, _opts = {}
     shipments = process_file(data)
     generate_and_send_shipment_xml(shipments)
     send_email_notification(shipments, "3461")
@@ -83,33 +83,33 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     nil
   end
 
-  def process_B shipment, line
+  def process_B _shipment, line # rubocop:disable Naming/MethodName
     application_code = extract_string(line, (11..12))
     # SE in 11-12 indictates a Cargo Release (3461)..if that's not there we need to reject the file because
     # it's not going to be structured as we expect it.
-    inbound_file.reject_and_raise("CATAIR B-record's Application Identifier Code (Position 11-12) must be 'SE' to indicate a Cargo Release.  It was '#{application_code}'.") unless application_code  == "SE"
+    inbound_file.reject_and_raise("CATAIR B-record's Application Identifier Code (Position 11-12) must be 'SE' to indicate a Cargo Release.  It was '#{application_code}'.") unless application_code == "SE" # rubocop:disable Layout/LineLength
     nil
   end
 
-  def process_SE10 shipment, line
+  def process_SE10 shipment, line # rubocop:disable Naming/MethodName
     shipment.entry_filer_code = extract_string(line, (6..8))
     shipment.entry_number = extract_string(line, (11..18))
     shipment.entry_type = extract_string(line, (20..21))
     ior_type = extract_string(line, (22..24))
     ior_identifier = extract_string(line, (25..36))
-    shipment.customer = find_customer_number(ior_type, ior_identifier)
-    shipment.customs_ship_mode = extract_integer(line, (37-38))
+    shipment.customer = find_customer_number(ior_type, ior_identifier, log_customer_to_inbound_file: true)
+    shipment.customs_ship_mode = extract_integer(line, (37..38))
     shipment.bond_type = extract_integer(line, 39)
     shipment.total_value_us = extract_integer(line, (40..49))
     shipment.entry_port = extract_integer(line, (50..54))
     shipment.unlading_port = extract_integer(line, (56..60))
 
-    populate_edi_identifiers(shipment)
+    populate_edi_identifiers(shipment, "3461")
 
     nil
   end
 
-  def process_SE11 shipment, line
+  def process_SE11 shipment, line # rubocop:disable Naming/MethodName
     # There is no CMUS EDI field for the Entry Date Election Code (which is only present
     # for FTZ entries) and would have a value of W
     elected_entry_date = extract_date(line, (6..11), date_format: date_format)
@@ -125,21 +125,21 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     nil
   end
 
-  def process_SE40 invoice_line, line
+  def process_SE40 invoice_line, line # rubocop:disable Naming/MethodName
     invoice_line.part_number = extract_string(line, (5..7))
     invoice_line.country_of_origin = extract_string(line, (8..9))
     invoice_line.description = extract_string(line, (11..80))
     nil
   end
 
-  def process_SE41 invoice_line, line
+  def process_SE41 invoice_line, line # rubocop:disable Naming/MethodName
     invoice_line.ftz_zone_status = extract_string(line, 5)
     invoice_line.ftz_priv_status_date = extract_date(line, (6..11), date_format: date_format)
     invoice_line.ftz_quantity = extract_integer(line, (12..19))
     nil
   end
 
-  def process_SE30_50 party, line
+  def process_SE30_50 party, line # rubocop:disable Naming/MethodName
     party.qualifier = extract_string(line, (5..7))
     party.name = extract_string(line, (8..42))
     # We're going to (ab)use the id qualifier in the Catair spec
@@ -157,7 +157,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     nil
   end
 
-  def process_SE35_55 party, line
+  def process_SE35_55 party, line # rubocop:disable Naming/MethodName
     # Just add the address info progressively into the party's address 1 - 3 fields
     # (Don't add it if it's a copy of existing lines)
     # Also, each 35 / 55 record can have 2 data elements per record.
@@ -219,7 +219,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     false
   end
 
-  def process_SE36_56 party, line
+  def process_SE36_56 party, line # rubocop:disable Naming/MethodName
     party.city = extract_string(line, (5..39))
     party.country_subentity = extract_string(line, (40..42))
     party.zip = extract_string(line, (49..63))
@@ -227,23 +227,23 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
     nil
   end
 
-  def process_SE60 invoice_line, line
+  def process_SE60 invoice_line, line # rubocop:disable Naming/MethodName
     invoice_line.hts = extract_string(line, (5..14))
     invoice_line.foreign_value = extract_integer(line, (15..24))
     nil
   end
 
-  def process_SE61 invoice_line, line
+  def process_SE61 invoice_line, line # rubocop:disable Naming/MethodName
     invoice_line.ftz_expired_hts_number = extract_string(line, (5..14))
     nil
   end
 
-  def add_special_tariffs? entry, invoice, line
+  def add_special_tariffs? _entry, _invoice, _line
     # We might want to change this so that it does add special tariffs for standard entry types...
     # but I'm not actually sure if we're expecting the Catair to even include the 301's or not...so for
     # now, since I know the FTZ entries we currently process with this parser shouldn't include supplemental tariffs
     # I'm shutting this off for all processes utilizing this parser.
-    return false
+    false
   end
 
   protected
@@ -272,8 +272,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftCatai
       i
     end
 
-    def new_commercial_invoice_line shipment, invoice
-      # These
+    def new_commercial_invoice_line _shipment, _invoice
       CiLoadInvoiceLine.new
     end
 
