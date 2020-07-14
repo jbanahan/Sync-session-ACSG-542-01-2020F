@@ -239,7 +239,7 @@ module OpenChain; module CustomHandler; module JJill; class JJill850XmlParser
     add_placeholder_fields_to_order_line order_line, po1_el
   end
 
-  def add_placeholder_fields_to_order_line ol, po1_el # rubocop:disable Naming/MethodParameterName
+  def add_placeholder_fields_to_order_line ol, po1_el
     # we can't write the custom values to the order lines until they're saved in the database,
     # so we'll store the values in placeholder fields that we can then loop through in the
     # update_line_custom_values field after the save is done

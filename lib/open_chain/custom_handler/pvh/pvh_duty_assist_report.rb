@@ -7,18 +7,15 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
   extend OpenChain::Report::ReportHelper
   extend OpenChain::FiscalCalendarSchedulingSupport
 
-  CUST_NUMBERS = {
-      "PVHCANADA" => "833231749RM0001",
-      "PVH" => "PVH"
-  }
+  CUST_NUMBERS ||= {"PVHCANADA" => "833231749RM0001", "PVH" => "PVH"}.freeze
+
+  PVH_DUTY_DISCOUNT_REPORT_USERS ||= 'pvh_duty_discount_report'.freeze
 
   def self.fiscal_month(settings, company_id)
     if settings['fiscal_month'].to_s =~ /(\d{4})-(\d{2})/
-      year = $1
-      month = $2
+      year = Regexp.last_match 1
+      month = Regexp.last_match 2
       FiscalMonth.where(company_id: company_id, year: year.to_i, month_number: month.to_i).first
-    else
-      nil
     end
   end
 
@@ -31,10 +28,12 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
   end
 
   def self.permission?(user)
-    MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.view_entries?
+    user.view_entries? && MasterSetup.get.custom_feature?("WWW VFI Track Reports") &&
+      (user.company.master? || user.in_group?(Group.use_system_group(PVH_DUTY_DISCOUNT_REPORT_USERS, name: "PVH Duty Discount Report",
+                                                                                                     description: "Users able to run the PVH Duty Discount Report.")))
   end
 
-  def self.run_report run_by, settings = {}
+  def self.run_report _run_by, settings = {}
     cust_number = CUST_NUMBERS[settings['cust_number']]
 
     company = company_lookup(cust_number)
@@ -45,7 +44,8 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
 
     wb = self.new.run(fm.year, fm.month_number, settings['cust_number'])
 
-    xlsx_workbook_to_tempfile(wb, "Duty Assist", file_name: "#{cust_number}_Duty Assist Data Dump_Fiscal_#{fm.start_date.strftime('%Y-%m')}_#{Date.today.strftime('%Y-%m-%d')}.xlsx")
+    file_name = "#{cust_number}_Duty Assist Data Dump_Fiscal_#{fm.start_date.strftime('%Y-%m')}_#{Time.zone.today.strftime('%Y-%m-%d')}.xlsx"
+    xlsx_workbook_to_tempfile(wb, "Duty Assist", file_name: file_name)
   end
 
   def self.company_lookup(cust_number)
@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
   def self.run_schedulable config = {}
     config['email'] = Array.wrap(config['email'])
     raise "Scheduled instances of the PVH / PVH Canada Duty Assist Report must include an email setting with at least one email address." unless config['email'].length > 0
-    raise "Scheduled instances of the PVH / PVH Canada Duty Assist Report must include a cust_number setting." unless config['cust_number'].present?
+    raise "Scheduled instances of the PVH / PVH Canada Duty Assist Report must include a cust_number setting." if config['cust_number'].blank?
 
     cust_number = CUST_NUMBERS[config['cust_number']]
 
@@ -66,11 +66,12 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     raise "No company found with customer number: #{config['cust_number']}" if company.blank?
 
     config['company'] = company
-    run_if_configured(config) do |fiscal_month, fiscal_date|
+    run_if_configured(config) do |fiscal_month, _fiscal_date|
       fm = fiscal_month.back(1)
       report = self.new.run(fm.year, fm.month_number, config['cust_number'])
       cust_number = config['cust_number']
-      report = xlsx_workbook_to_tempfile(report, "Duty Assist", file_name: "#{cust_number}_Data_Dump_Fiscal_#{fiscal_month.start_date.strftime('%Y-%m')}_#{Date.today.strftime('%Y-%m-%d')}.xlsx")
+      file_name = "#{cust_number}_Data_Dump_Fiscal_#{fiscal_month.start_date.strftime('%Y-%m')}_#{Time.zone.today.strftime('%Y-%m-%d')}.xlsx"
+      report = xlsx_workbook_to_tempfile(report, "Duty Assist", file_name: file_name)
       body = if cust_number == "PVH"
                  "Attached is the \"PVH Duty Dump Report, #{fm.year}-#{fm.month_number}\" based on ACH Due Date."
              else
@@ -85,14 +86,14 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
   end
 
   def write_report wb, path
-    File.open(path, "wb") {|f| wb.write path }
+    File.open(path, "wb") { wb.write path }
   end
 
-  def build_report entry_ids, customer_number, fiscal_month
+  def build_report entry_ids, customer_number, _fiscal_month
     us_entries = (customer_number == "PVH")
 
     wb = builder
-    decimal_style = wb.create_style :decimal, {format_code:"#,##0.00"}
+    decimal_style = wb.create_style :decimal, {format_code: "#,##0.00"}
     us_styles = [nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, decimal_style, decimal_style, decimal_style,
                  decimal_style, decimal_style, decimal_style, decimal_style, nil, nil, nil, nil, nil]
     sheet = wb.create_sheet("Results", headers: (us_entries ? us_headers : ca_headers))
@@ -104,19 +105,24 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
       # Skip anything that hasn't been invoiced yet
       next if entry.broker_invoices.length == 0
 
-      shipments = find_shipments(entry.transport_mode_code, Entry.split_newline_values(entry.master_bills_of_lading), Entry.split_newline_values(entry.house_bills_of_lading), force_lookup:true)
+      shipments = find_shipments(entry.transport_mode_code,
+                                 Entry.split_newline_values(entry.master_bills_of_lading),
+                                 Entry.split_newline_values(entry.house_bills_of_lading),
+                                 force_lookup: true)
       preload_shipments(shipments)
       entry.commercial_invoices.each do |invoice|
         invoice.commercial_invoice_lines.each do |invoice_line|
           shipment_line = lookup_shipment_line(shipments, entry, invoice, invoice_line)
-          row = us_entries ?
-                    generate_us_report_row(entry, invoice, invoice_line, shipment_line) :
-                    generate_ca_report_row(entry, invoice, invoice_line, shipment_line)
+          row = if us_entries
+                  generate_us_report_row(entry, invoice, invoice_line, shipment_line)
+                else
+                  generate_ca_report_row(entry, invoice, invoice_line, shipment_line)
+                end
           # We need a special format for US rows so we check which row type
           if us_entries
-            wb.add_body_row(sheet, row, styles: us_styles) unless row.blank?
+            wb.add_body_row(sheet, row, styles: us_styles) if row.present?
           else
-            wb.add_body_row(sheet, row) unless row.blank?
+            wb.add_body_row(sheet, row) if row.present? # rubocop:disable Style/IfInsideElse
           end
         end
       end
@@ -146,28 +152,28 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
 
   def us_headers
     [
-        "Entry Number", # A
-        "Invoice Number", # B
-        "Country Of Origin", # C
-        "PO", # D
-        "PO Line", # E
-        "Entry Date", # F
-        "Import Date", # G
-        "Product Description/Style Description", # H
-        "Master Bills", # I
-        "Arrival Date", # J
-        "Vendor Invoice Value", # K
-        "Dutiable Assist", # L
-        "Dutiable Value", # M
-        "Duty Adj Amt", # N
-        "Duty Savings", # O
-        "Duty Rate", # P
-        "Price / Unit", # Q
-        "Invoice Quantity", # R
-        "Exchange Rate", # S
-        "HTS", # T
-        "301 HTS", # U
-        "CN Rate" # V
+      "Entry Number", # A
+      "Invoice Number", # B
+      "Country Of Origin", # C
+      "PO", # D
+      "PO Line", # E
+      "Entry Date", # F
+      "Import Date", # G
+      "Product Description/Style Description", # H
+      "Master Bills", # I
+      "Arrival Date", # J
+      "Vendor Invoice Value", # K
+      "Dutiable Assist", # L
+      "Dutiable Value", # M
+      "Duty Adj Amt", # N
+      "Duty Savings", # O
+      "Duty Rate", # P
+      "Price / Unit", # Q
+      "Invoice Quantity", # R
+      "Exchange Rate", # S
+      "HTS", # T
+      "301 HTS", # U
+      "CN Rate" # V
     ]
   end
 
@@ -192,7 +198,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     dutiable_value = invoice_line.commercial_invoice_tariffs.map { |t| ensure_numeric(t.entered_value) }.sum
     vendor_invoice_value = ensure_numeric(invoice_line.value_foreign)
     duty_assist_amount = ensure_numeric(invoice_line.add_to_make_amount)
-    contract_amount = ensure_numeric(invoice_line.contract_amount)
     line_value = ensure_numeric(invoice_line.value)
     duty_savings = (dutiable_value - vendor_invoice_value - duty_assist_amount).round(2)
     duty_rate = ensure_numeric(primary_tariff.duty_rate)
@@ -202,7 +207,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     row << duty_assist_amount # L
     row << dutiable_value # M
     if invoice_line.first_sale # N
-      row << BigDecimal.new("0.00")
+      row << BigDecimal("0.00")
     else
       row << duty_savings
     end
@@ -267,7 +272,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     # 7501 value at the tariff level
     value = invoice_line.entered_value_7501.to_i
     if value == 0
-      value = invoice_line.commercial_invoice_tariffs.map {|t| t.entered_value_7501 }.compact.sum
+      value = invoice_line.commercial_invoice_tariffs.map(&:entered_value_7501).compact.sum
     end
 
     BigDecimal(value)
@@ -275,31 +280,31 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
 
   def ca_headers
     [
-        "Entry #", # A
-        "Invoice #", # B
-        "PO", # C
-        "Shipment #", # D
-        "PO Line", # E
-        "Release Date", # F
-        "ETA", # G
-        "Entry Date", # H
-        "Import Date", # I
-        "Style #", # J
-        "Country of Origin", # K
-        "Product Description", # L
-        "HTS #", # M
-        "Currency Type", # N
-        "Exchange Rate", # O
-        "Vendor Invoice Value Calculated (USD)", # P
-        "Invoice Tariff Entered Value (CAD)", # Q
-        "Duty Assist Amt (USD)", # R
-        "Duty Deductions (USD)", # S
-        "Dutiable Value (USD)", # T
-        "Duty Rate PCT", # U
-        "Duty Adj Amt (USD)", # V
-        "Duty Savings (USD)", # W
-        "First Cost - PO (USD)", # X
-        "Units Shipped" # Y
+      "Entry #", # A
+      "Invoice #", # B
+      "PO", # C
+      "Shipment #", # D
+      "PO Line", # E
+      "Release Date", # F
+      "ETA", # G
+      "Entry Date", # H
+      "Import Date", # I
+      "Style #", # J
+      "Country of Origin", # K
+      "Product Description", # L
+      "HTS #", # M
+      "Currency Type", # N
+      "Exchange Rate", # O
+      "Vendor Invoice Value Calculated (USD)", # P
+      "Invoice Tariff Entered Value (CAD)", # Q
+      "Duty Assist Amt (USD)", # R
+      "Duty Deductions (USD)", # S
+      "Dutiable Value (USD)", # T
+      "Duty Rate PCT", # U
+      "Duty Adj Amt (USD)", # V
+      "Duty Savings (USD)", # W
+      "First Cost - PO (USD)", # X
+      "Units Shipped" # Y
     ]
   end
 
@@ -338,8 +343,6 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     duty_assists = ensure_numeric(invoice_line.add_to_make_amount)
     duty_deductions = ensure_numeric(invoice_line.miscellaneous_discount) * BigDecimal(-1)
     duty_rate = ensure_numeric(tariff.duty_rate)
-    total_adjustments = ensure_numeric(invoice_line.adjustments_amount)
-    adjusted_value = total_adjustments
     dutiable_value = (invoice_value + duty_assists + duty_deductions)
 
     row << exchange_rate # O
@@ -360,7 +363,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     row
   end
 
-  def lookup_shipment_line shipments, entry, invoice, invoice_line
+  def lookup_shipment_line shipments, entry, _invoice, invoice_line
     # For LCL shipments, we need to lookup by the Invoice Number
     invoice_number = ocean_lcl_entry?(entry.transport_mode_code, entry.fcl_lcl) ? invoice_number : nil
 
