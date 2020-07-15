@@ -557,9 +557,12 @@ class Company < ActiveRecord::Base
     end
   end
 
+  # use alias .by_uid to appease rubocop
   def self.find_by_system_code system, code
     Company.joins(:system_identifiers).where(system_identifiers: {system: system, code: code}).first
   end
+
+  singleton_class.send(:alias_method, :by_system_code, :find_by_system_code)
 
   def self.find_or_create_company! system, code, create_attributes, lock_name: nil
     lock_name = "Company-#{system}-#{code}" if lock_name.blank?
