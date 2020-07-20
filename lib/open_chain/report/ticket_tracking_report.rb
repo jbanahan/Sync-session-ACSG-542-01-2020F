@@ -3,8 +3,7 @@ require 'open_chain/report/builder_output_report_helper'
 module OpenChain; module Report; class TicketTrackingReport
   include OpenChain::Report::BuilderOutputReportHelper
 
-  VANDEGRIFT_PROJECT_KEYS ||= ["DEMO", "IT", "TP"]
-
+  VANDEGRIFT_PROJECT_KEYS ||= ["DEMO", "IT", "TP"].freeze
 
   def self.permission? user
     (MasterSetup.get.system_code == 'www-vfitrack-net' || Rails.env.development?) &&
@@ -64,11 +63,11 @@ module OpenChain; module Report; class TicketTrackingReport
     execute_query(jira_query(project_keys, start_date, end_date)) do |jira_result|
       broker_refs = extract_broker_refs(jira_result).presence
       if broker_refs
-        execute_query(vfi_query broker_refs) do |vfi_result|
-          graft_results jira_result, vfi_result
+        execute_query(vfi_query(broker_refs)) do |vfi_result|
+          return graft_results jira_result, vfi_result
         end
       else
-        graft_results jira_result, []
+        return graft_results jira_result, []
       end
     end
   end
@@ -102,8 +101,9 @@ module OpenChain; module Report; class TicketTrackingReport
   end
 
   def comments_lambda
-    lambda do |result_set_row, raw_column_value|
-      q = ActiveRecord::Base.sanitize_sql_array(["SELECT actionbody FROM jiradb.jiraaction WHERE issueid = ? AND actiontype = 'comment' ORDER BY created", raw_column_value.to_i ])
+    lambda do |_result_set_row, raw_column_value|
+      q = ActiveRecord::Base.sanitize_sql_array(["SELECT actionbody FROM jiradb.jiraaction WHERE issueid = ? "\
+                                                 "AND actiontype = 'comment' ORDER BY created", raw_column_value.to_i])
       comments = ""
       execute_query(q) do |results|
         comments = results.map {|r| r[0] }.join "\n-----------------------\n"
@@ -112,7 +112,7 @@ module OpenChain; module Report; class TicketTrackingReport
       # number of chars allowed by Excel (32,767 chars), causing Excel to error.
       # 10K is not 32K, but is still very generous for a report field.  32K was deemed
       # excessive.  Bigger field value and can lead to performance problems.
-      comments[0...10000]
+      comments[0...10_000]
     end
   end
 
@@ -126,7 +126,7 @@ module OpenChain; module Report; class TicketTrackingReport
   end
 
   def list_format_lambda
-    lambda { |result_set_row, raw_column_value| raw_column_value.to_s.squish.split(/\s/).join(", ") }
+    ->(_result_set_row, raw_column_value) { raw_column_value.to_s.squish.split(/\s/).join(", ") }
   end
 
   def conversions(time_zone, wb)
@@ -134,11 +134,10 @@ module OpenChain; module Report; class TicketTrackingReport
      "Issue Resolved" => datetime_translation_lambda(time_zone),
      "Release Date" => datetime_translation_lambda(time_zone),
      "Comments" => comments_lambda,
-     "Order Number(s)" =>list_format_lambda,
-     "Part Number(s)" =>list_format_lambda,
+     "Order Number(s)" => list_format_lambda,
+     "Part Number(s)" => list_format_lambda,
      "Link to Entry" => weblink_translation_lambda(wb, CoreModule::ENTRY.klass),
-     "Link to Jira issue" => jira_url_lambda(wb)
-     }
+     "Link to Jira issue" => jira_url_lambda(wb)}
   end
 
   def jira_query project_keys, start_date, end_date
@@ -171,7 +170,7 @@ module OpenChain; module Report; class TicketTrackingReport
             AND i.CREATED >= ? AND i.created < ?
           GROUP BY i.id
           ORDER BY ship.STRINGVALUE
-        SQL
+    SQL
     ActiveRecord::Base.sanitize_sql_array([q, project_keys, start_date, end_date])
   end
 
@@ -195,8 +194,8 @@ module OpenChain; module Report; class TicketTrackingReport
             INNER JOIN countries c ON c.id = e.import_country_id AND c.iso_code = "US"
           WHERE e.broker_reference IN (?)
           ORDER BY e.broker_reference
-        SQL
+    SQL
     ActiveRecord::Base.sanitize_sql_array([q, brok_ref_list])
   end
 
-end; end; end;
+end; end; end
