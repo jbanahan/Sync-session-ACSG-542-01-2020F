@@ -160,11 +160,6 @@ Metrics/ParameterLists:
 Metrics/PerceivedComplexity:
   Enabled: false
 
-Naming/MethodParameterName:
-  Enabled: true
-  Exclude:
-    - spec/**/*
-
 # We have a lot of well-understood 2-letter abbreviations (mf, cm, wb, and so on)
 Naming/MethodParameterName:
   Enabled: false

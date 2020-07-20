@@ -698,13 +698,13 @@ module OpenChain; class ActivitySummary
       xlsx_workbook_to_tempfile wb, "temp", file_name: "#{imp_name}_entry_detail.xlsx"
     end
 
-    def assign_styles wb # rubocop:disable Naming/MethodParameterName
+    def assign_styles wb
       wb.create_style :bold, {b: true}
       wb.create_style :right_header, {b: true, alignment: {horizontal: :right}}
       wb.create_style :centered_header, {b: true, alignment: {horizontal: :center}}
     end
 
-    def write_xlsx wb, sheet, summary # rubocop:disable Naming/MethodParameterName
+    def write_xlsx wb, sheet, summary
       board = DrawingBoard.new
       write_header board
       write_summary_header board
@@ -728,7 +728,7 @@ module OpenChain; class ActivitySummary
       nil
     end
 
-    def transcribe wb, sheet, board # rubocop:disable Naming/MethodParameterName
+    def transcribe wb, sheet, board
       board.rows.each do |row|
         if row
           merged_cells = Array.wrap(merged_cell_array_to_range(row))

@@ -5,14 +5,14 @@ require 'open_chain/fiscal_month_assigner'
 module OpenChain; module CustomHandler; class FenixInvoiceParser
   include OpenChain::IntegrationClientParser
 
-  def self.parse_file file_content, log, opts={}
+  def self.parse_file file_content, log, opts = {}
     last_invoice_number = ''
     rows = []
-    CSV.parse(file_content, :headers=>true) do |row|
+    CSV.parse(file_content, headers: true) do |row|
       my_invoice_number = get_invoice_number row
       next unless my_invoice_number
 
-      if last_invoice_number!=my_invoice_number && !rows.empty?
+      if last_invoice_number != my_invoice_number && !rows.empty?
         process_invoice_rows rows, log, opts
         rows = []
       end
@@ -23,11 +23,9 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
   end
 
   def self.process_invoice_rows rows, log, opts
-    begin
       self.new.process_invoice_data rows, log, opts
-    rescue => e
+  rescue StandardError => e
       e.log_me ["Failed to process Fenix Invoice # #{get_invoice_number(rows.first)}" + (opts[:key] ? " from file '#{opts[:key]}'" : "") + "."]
-    end
   end
 
   def self.get_invoice_number row
@@ -44,7 +42,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
     # Looks like the invoice number includes the suffix, but in a way that doesn't zero pad it so we need to strip out
     # everything after the trailing hyphen
     if number =~ /^(.+)-\w+$/
-      number = $1
+      number = Regexp.last_match(1)
     end
 
     number = number.rjust(7, "0")
@@ -74,7 +72,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
         invoice.invoice_total += line.charge_amount
       end
 
-      ent = Entry.includes(:broker_invoices).find_by_source_system_and_broker_reference(invoice.source_system, invoice.broker_reference)
+      ent = Entry.includes(:broker_invoices).find_by(source_system: invoice.source_system, broker_reference: invoice.broker_reference)
       if ent
         ent.broker_invoices << invoice
         total_broker_invoice_value = 0.0
@@ -97,6 +95,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
   end
 
   private
+
     def make_header inv, row
       inv.broker_invoice_lines.destroy_all # clear existing lines
       inv.broker_reference = safe_strip row[9]
@@ -121,11 +120,11 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
 
       invoice = nil
       Lock.acquire("BrokerInvoice-#{invoice_number}") do
-        invoice = BrokerInvoice.where(:source_system=>'Fenix', :invoice_number=>invoice_number).first_or_create!
+        invoice = BrokerInvoice.where(source_system: 'Fenix', invoice_number: invoice_number).first_or_create!
       end
 
       if invoice
-        log.set_identifier_module_info :invoice_number, BrokerInvoice, invoice.id, value:invoice_number
+        log.set_identifier_module_info :invoice_number, BrokerInvoice, invoice.id, value: invoice_number
 
         Lock.db_lock(invoice) do
           yield invoice
@@ -135,11 +134,31 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
 
     def add_detail invoice, row
       charge_code = safe_strip row[6]
-      charge_code_prefix = charge_code.split(" ").first
-      charge_code = charge_code_prefix if charge_code_prefix.match /^[0-9]*$/
-      line = invoice.broker_invoice_lines.build(:charge_description=>safe_strip(row[7]), :charge_code=>charge_code, :charge_amount=>BigDecimal(safe_strip(row[8])))
+      charge_code_prefix = charge_code.to_s.strip.split(" ").first
+      charge_code = charge_code_prefix if charge_code_prefix.to_s.match(/^[0-9]*$/)
+      charge_description = safe_strip(row[7])
+
+      # This whole check is built entirely due to a bug in Fenix where it is sending a blank
+      # charge code for GST and HST tax lines.  These lines should all just be billed to
+      # the 255 account.  So, lets just handle that until Fenix fixes the issue.
+      if charge_code.blank? && hst_gst_charge_description?(charge_description.to_s)
+        charge_code = hst_gst_default_code
+      end
+
+      raise StandardError, "Invoice # #{invoice.invoice_number} is missing a charge code for charge description #{charge_description}." if charge_code.blank?
+
+      line = invoice.broker_invoice_lines.build(charge_description: charge_description, charge_code: charge_code, charge_amount: BigDecimal(safe_strip(row[8])))
       line.charge_type = (['1', '2', '20', '21'].include?(line.charge_code) ? 'D' : 'R')
       line
+    end
+
+    def hst_gst_charge_description? description
+      # What we're looking for is basically "HST (XX)" or "GST (XX)""
+      (description =~ /(?:GST|HST)\s*\([^)]+\)/i).present?
+    end
+
+    def hst_gst_default_code
+      "255"
     end
 
     def customer_number number, currency
@@ -153,16 +172,16 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
     end
 
     def safe_strip val
-      return val.blank? ? val : val.strip
+      val.blank? ? val : val.strip
     end
 
     def create_intacct_invoice invoice, entry_number
       # Use the xref value if there is one, otherwise use the raw value from Fenix
       xref = DataCrossReference.find_intacct_customer_number 'Fenix', invoice.customer_number
-      customer_number = (xref.blank? ? invoice.customer_number : xref)
+      customer_number = (xref.presence || invoice.customer_number)
       # There are certain customers that are billed in Fenix for a third system, ALS.  These cusotmers are stored in an xref,
       # if the name is there, then the company is 'als', otherwise it's 'vcu'
-      company =  DataCrossReference.has_key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
+      company = DataCrossReference.has_key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
 
       # If the invoice data comes in prior to the entry data coming from Fenix, then there's not going to be an Entry that the invoice
       # is associated with.  The actual invoice csv data does have the entry number in it, so we'll fall back to using
@@ -181,12 +200,12 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
         r.customer_number = customer_number
         r.currency = invoice.currency
 
-        actual_charge_sum = BigDecimal.new 0
+        actual_charge_sum = BigDecimal 0
         invoice.broker_invoice_lines.each do |line|
           actual_charge_sum += line.charge_amount
 
           pl = r.intacct_receivable_lines.build
-          pl.charge_code = "#{line.charge_code}".rjust(3, "0")
+          pl.charge_code = line.charge_code.to_s.rjust(3, "0")
           pl.charge_description = line.charge_description
           pl.amount = line.charge_amount
           pl.line_of_business = "Brokerage"
@@ -213,6 +232,6 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       end
 
       # We also want to queue up a send to push the broker file number dimension to intacct
-      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension 'Broker File', real_entry_number, real_entry_number unless real_entry_number.blank?
+      OpenChain::CustomHandler::Intacct::IntacctClient.delay.async_send_dimension 'Broker File', real_entry_number, real_entry_number if real_entry_number.present?
     end
 end; end; end
