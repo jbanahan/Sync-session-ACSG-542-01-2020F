@@ -166,12 +166,9 @@ module OpenChain; class BrilloHelper
     customer_hash = {}
     Faker::Config.random = Random.new(42)
     customers.each do |customer|
-      customer_hash[customer] = Faker::Company.name
-    end
-
-    customer_hash.each_key do |key|
-      ciphered_name = OpenChain::BrilloHelper.ceaser_cipher(key, 5)
-      customer_hash[ciphered_name.join] = customer_hash[key]
+      new_customer_name = Faker::Company.name
+      ciphered_customer_number = OpenChain::BrilloHelper.ceaser_cipher(customer, 5)
+      customer_hash[ciphered_customer_number.join] = new_customer_name
     end
 
     Faker::Config.random = nil

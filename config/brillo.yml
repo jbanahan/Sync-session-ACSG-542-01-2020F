@@ -14,9 +14,10 @@
 #    will need to run this on an instance that has over 65 GB of RAM (currently we've had to use an r5.4xlarge instance to complete the scrub)
 #
 # 2) Once the instance is online and you will need to adjust the config/database.yml file to the source database you
-#    wish to utilize.  If you are pulling from a production system, you should really bring a new RDS instance of the
+#    wish to utilize.  If you are pulling from a production system, you will need to bring a new RDS instance of the
 #    database online and run the scrub against that.  Modify the connection string in the database.yml file to point to
-#    the new database intance.
+#    the new database intance.  You should also utilize the read_only database user account for the scrub command as a further
+#    protection and set the reconnect: config option to true.
 #
 # 3) Verify the secrets.yml file has a `brillo_bucket` key pointing to the bucket to use for pushing the scrubbed data to for storage.
 #
@@ -30,6 +31,9 @@
 # 1) Shut down all ec2 servers that run against the target database (the database is dropped and reloaded, so they will raise errors if left running).
 # 2) Modify the database.yml file's test database to the destination database's settings
 #    - Brillo won't execute the load with the environment set to production, which is a fair default since that would be catastrophic if done accidently.
+#     - Change the "production" environment key in database.yml to "test"
+#     - Change the "production" environment key in secrets.yml to "test"
+#
 # 3) Execute `RAILS_ENV=test rake db:load`
 #    - This should take somewhere around an hour to load
 # 4) Start ec2 servers.
@@ -165,10 +169,10 @@ explore:
       - broker_invoices:
         - broker_invoice_lines
       - commercial_invoices:
-        - commercial_invoice_lines
+        - commercial_invoice_lines:
+          - commercial_invoice_tariffs
       - entry_comments
       - containers
-      - daily_statement_entry
 
 # Obfuscations obfuscate data (Surprise!) These are added in the `config/brillo.rb` file, and like tactics there are plenty
 # of examples.
