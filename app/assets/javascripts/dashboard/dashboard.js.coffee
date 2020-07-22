@@ -18,32 +18,32 @@ dashboardApp.directive 'dashboardWidget', ->
 
       scope.loadWidget(scope.widgetId)
   }
-dashboardApp.directive 'dashboardNews', [($scope) ->
+###dashboardApp.directive 'dashboardNews', [($scope) ->
   restrict: 'E'
   link: (scope) ->
     scope.errors = []
     scope.notices = []
-    $.ajax  
-      dataType: 'jsonp'  
-      url: 'https://www.vandegriftinc.com/news?format=json'  
+    $.ajax
+      dataType: 'jsonp'
+      url: 'https://www.vandegriftinc.com/news?format=json'
       success: (data) ->
         $('.loader').remove()
-        win = $(window)  
-        # Append at least four articles or up to the screen height, but not beyond the number of articles  
-        i = 0  
-        while i < data.items.length and (i < 4 or $(document).height() - win.height() <= win.scrollTop())  
+        win = $(window)
+        # Append at least four articles or up to the screen height, but not beyond the number of articles
+        i = 0
+        while i < data.items.length and (i < 4 or $(document).height() - win.height() <= win.scrollTop())
           newsarticle = data.items[i]
-          publishedOn = moment(newsarticle.publishOn).format('LL')  
-          articleUrl = 'https://www.vandegriftinc.com/news/' + newsarticle.urlId  
-          articleTitle = newsarticle.title  
-          bodyText = newsarticle.body  
-          bodyText = bodyText.replace(/<[^>]+>/g, '')  
-          shortBody = bodyText.substring(0, 250)    
-          html = '<p>' + publishedOn + '</p>'  
-          html += '<a href="' + articleUrl + '" target="_blank"><h5>' + articleTitle + '</h5></a>'  
+          publishedOn = moment(newsarticle.publishOn).format('LL')
+          articleUrl = 'https://www.vandegriftinc.com/news/' + newsarticle.urlId
+          articleTitle = newsarticle.title
+          bodyText = newsarticle.body
+          bodyText = bodyText.replace(/<[^>]+>/g, '')
+          shortBody = bodyText.substring(0, 250)
+          html = '<p>' + publishedOn + '</p>'
+          html += '<a href="' + articleUrl + '" target="_blank"><h5>' + articleTitle + '</h5></a>'
           html += '<p>' + shortBody + '... </p><hr/>'
-          jQuery('#news-box').append $(html).hide().fadeIn(700) 
-          i++  
+          jQuery('#news-box').append $(html).hide().fadeIn(700)
+          i++
         return
 
-]
+]###
