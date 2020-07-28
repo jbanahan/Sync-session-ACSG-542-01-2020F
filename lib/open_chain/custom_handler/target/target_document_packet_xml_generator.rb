@@ -10,7 +10,7 @@ module OpenChain; module CustomHandler; module Target; class TargetDocumentPacke
     add_element(root, "source_name", "MaerskBroker")
     add_element(root, "vendor_number", "5003461")
     add_element(root, "bill_of_lading", bill_of_lading)
-    add_element(root, "entry_id", entry_number(entry))
+    add_element(root, "entry_id", Entry.format_entry_number(entry.entry_number))
     add_element(root, "eta", entry.import_date)
 
     pos = add_element(root, "purchase_orders")
@@ -28,12 +28,6 @@ module OpenChain; module CustomHandler; module Target; class TargetDocumentPacke
   end
 
   private
-
-    def entry_number entry
-      # TODO remove this method and reference the identical method in entry.rb
-      # that method is currently on another branch.
-      "#{entry.entry_number[0, 3]}-#{entry.entry_number[3..-2]}-#{entry.entry_number[-1]}"
-    end
 
     def date_value date
       return nil if date.nil?
