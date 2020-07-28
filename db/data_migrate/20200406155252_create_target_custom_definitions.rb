@@ -4,6 +4,8 @@ class CreateTargetCustomDefinitions < ActiveRecord::Migration
   include OpenChain::CustomHandler::Target::TargetCustomDefinitionSupport
 
   def up
+    return unless MasterSetup.get.custom_feature?("Target")
+
     create_custom_definitions
     disable_product_type
   end
@@ -17,8 +19,6 @@ class CreateTargetCustomDefinitions < ActiveRecord::Migration
   end
 
   def create_custom_definitions
-    return unless MasterSetup.get.custom_feature?("Target")
-
     # Create custom definitions and then update their screen ranks.
     ModelField.disable_reloads do
       cdefs[:prod_part_number].update! rank: 10
@@ -188,6 +188,8 @@ class CreateTargetCustomDefinitions < ActiveRecord::Migration
   end
 
   def down
+    return unless MasterSetup.get.custom_feature?("Target")
+
     enable_product_type
   end
 
