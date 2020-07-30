@@ -33,7 +33,6 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     28 => :last_billed_date,
     32 => :invoice_paid_date,
     42 => {attribute: :duty_due_date, datatype: :date},
-    44 => {attribute: :liquidation_date, datatype: :datetime},
     48 => {attribute: :daily_statement_due_date, datatype: :date},
     52 => :free_date,
     85 => {attribute: :edi_received_date, datatype: :date},
@@ -530,9 +529,26 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       end
     end
 
+    def pad_numeric v, pad_length, pad_char
+      if v.to_s =~ /^\d+(?:\.\d+)?$/
+        v.to_s.rjust(pad_length, pad_char)
+      else
+        v
+      end
+    end
+
     def process_liquidation e, entry
-      if entry.liquidation_date && Time.zone.now.to_date >= entry.liquidation_date.in_time_zone(tz).to_date
-        entry.liquidation_type_code = e[:type_liquidation].to_s.rjust(2, '0')
+      liquidation_date = Array.wrap(e[:dates]).find {|date_json| date_json['date_no'] == 44 }
+      liquidation_date = parse_numeric_datetime(liquidation_date['date']) if liquidation_date.present?
+      if pad_numeric(e[:type_liquidation].to_s, 2, '0').downcase == 'r'
+        entry.reliquidation_date = liquidation_date
+      else
+        entry.liquidation_date = liquidation_date
+      end
+
+      test_date = entry.liquidation_date.presence || entry.reliquidation_date.presence
+      if entry.liquidation_date && Time.zone.now.to_date >= test_date.in_time_zone(tz).to_date
+        entry.liquidation_type_code = pad_numeric(e[:type_liquidation].to_s, 2, '0')
         entry.liquidation_type = e[:liquidation_type_desc]
         entry.liquidation_action_code = e[:action_liquidation].to_s.rjust(2, '0')
         entry.liquidation_action_description = e[:liquidation_action_desc]
@@ -834,6 +850,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
 
     def process_dates e, entry
       hrs = HoldReleaseSetter.new entry
+
       Array.wrap(e[:dates]).each do |date|
         configs = get_date_config date[:date_no].to_i
         next if configs.empty?

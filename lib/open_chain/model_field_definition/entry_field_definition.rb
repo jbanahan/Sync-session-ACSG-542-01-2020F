@@ -535,6 +535,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [302, :ent_price_inquiry_exception_resolved_date, :price_inquiry_exception_resolved_date, "Price Inquiry Exception Resolved Date", {:data_type=>:datetime}],
       [303, :ent_usda_hold_exception_opened_date, :usda_hold_exception_opened_date, "USDA Hold Exception Opened Date", {:data_type=>:datetime}],
       [304, :ent_usda_hold_exception_resolved_date, :usda_hold_exception_resolved_date, "USDA Hold Exception Resolved Date", {:data_type=>:datetime}],
+      [305, :ent_reliquidation_date, :reliquidation_date, "Re-Liquidation Date", {:data_type=>:datetime}],
       make_pga_flag_field(305, "AMS"),
       make_pga_flag_field(306, "APH"),
       make_pga_flag_field(307, "ATF"),

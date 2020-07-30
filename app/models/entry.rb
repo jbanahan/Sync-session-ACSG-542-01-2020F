@@ -222,6 +222,7 @@
 #  release_cert_message                            :string(255)
 #  release_date                                    :datetime
 #  release_type                                    :string(255)
+#  reliquidation_date                              :datetime
 #  ship_terms                                      :string(255)
 #  source_system                                   :string(255)
 #  special_program_indicators                      :string(255)

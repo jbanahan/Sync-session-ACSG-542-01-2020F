@@ -1094,6 +1094,35 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(importer).to have_system_identifier("Customs Management", "TEST")
     end
 
+    it "does not change the liquidation date if it should be a reliquidation date" do
+      @e['dates'] << {'date_no'=>44, 'date'=>201501011230}
+      entry = subject.process_entry @e
+      entry.reload
+
+      # Since the previous date number 44 remains we have to get rid of it.
+      @e['dates'] = @e['dates'].reject { |date| date['date_no'] == 44 }
+      @e['dates'] << {'date_no' => 44, 'date' => 201502011230}
+      @e['type_liquidation'] = "R"
+
+      entry = subject.process_entry @e
+      entry.reload
+
+      expect(entry.liquidation_date).to eq DateTime.new(2015, 1, 1, 17, 30)
+      expect(entry.reliquidation_date).to eq DateTime.new(2015, 2, 1, 17, 30)
+    end
+
+    it "handles liquidation_type_code if it is a single character" do
+      @e['dates'] << {'date_no'=>44, 'date'=>201501011230}
+      @e['type_liquidation'] = 'L'
+
+      entry = subject.process_entry @e
+      entry.reload
+
+      expect(entry.liquidation_date).to eq DateTime.new(2015, 1, 1, 17, 30)
+
+      expect(entry.liquidation_type_code).to eq "L"
+    end
+
     it "processes liquidation information if liquidation date is not in the future" do
       @e['dates'] << {'date_no'=>44, 'date'=>201501011230}
 
