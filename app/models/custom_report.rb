@@ -354,9 +354,7 @@ class CustomReport < ActiveRecord::Base
     def write row, column, content
       @row = @sheet.get_or_create_row_at_index row
 
-      if content.respond_to?(:strftime)
-        content = content.strftime(@no_time ? "%Y-%m-%d" : "%Y-%m-%d %H:%M")
-      end
+      content = content.to_date if content.respond_to?(:strftime) && @no_time
 
       @row.insert_cell_value column, content
       @row
