@@ -79,6 +79,16 @@ describe AttachmentArchiveSetupsController do
       expect(flash[:notices]).to eq(["Your setup was successfully created."])
     end
 
+    it "should fail if the output path has an erronious variable" do
+      sign_in_as @admin
+      target_date = Date.new(2011, 12, 1)
+      post :create, :company_id => @c.id, :attachment_archive_setup=>{start_date: target_date.strftime("%Y-%m-%d"),
+                                                                      output_path: "{{entry.not_valid}}"}
+      @c.reload
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to eq(["Archive setup was not saved. 'Archive Output Path' was not valid."])
+    end
+
     it "should fail if company already has record" do
       sign_in_as @admin
       @c.create_attachment_archive_setup(:start_date=>Time.now)
@@ -129,6 +139,16 @@ describe AttachmentArchiveSetupsController do
       expect(@c.attachment_archive_setup.combined_attachment_order).to eq "A\nB\nC"
       expect(response).to redirect_to [@c, @c.attachment_archive_setup]
       expect(flash[:notices]).to eq(["Your setup was successfully updated."])
+    end
+
+    it "should fail if the output path has an erronious variable" do
+      sign_in_as @admin
+      target_date = Date.new(2011, 12, 1)
+      post :update, :company_id => @c.id, :id=>@c.attachment_archive_setup.id, :attachment_archive_setup=>{start_date: target_date.strftime("%Y-%m-%d"),
+                                                                                                           output_path: "{{entry.not_valid}}"}
+      @c.reload
+      expect(response).to redirect_to request.referrer
+      expect(flash[:errors]).to eq(["Archive setup was not saved. 'Archive Output Path' was not valid."])
     end
 
     it "should fail if user not admin" do
