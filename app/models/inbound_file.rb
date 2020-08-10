@@ -24,24 +24,26 @@
 #
 
 class InboundFile < ActiveRecord::Base
+  include IntegrationParserSupport
+
   attr_accessible :company_id, :file_name, :isa_number,
-    :original_process_start_date, :parser_name, :process_end_date,
-    :process_start_date, :process_status, :receipt_location,
-    :requeue_count, :s3_bucket, :s3_path
+                  :original_process_start_date, :parser_name, :process_end_date,
+                  :process_start_date, :process_status, :receipt_location,
+                  :requeue_count, :s3_bucket, :s3_path
 
   has_many :identifiers, dependent: :destroy, class_name: 'InboundFileIdentifier', autosave: true, inverse_of: :inbound_file
   has_many :messages, dependent: :destroy, class_name: 'InboundFileMessage', autosave: true, inverse_of: :inbound_file
   belongs_to :company
 
-  PROCESS_STATUS_PENDING = "Pending"
-  PROCESS_STATUS_SUCCESS = "Success"
-  PROCESS_STATUS_WARNING = "Warning"
-  PROCESS_STATUS_REJECT = "Rejected"
-  PROCESS_STATUS_ERROR = "Error"
+  PROCESS_STATUS_PENDING = "Pending".freeze
+  PROCESS_STATUS_SUCCESS = "Success".freeze
+  PROCESS_STATUS_WARNING = "Warning".freeze
+  PROCESS_STATUS_REJECT = "Rejected".freeze
+  PROCESS_STATUS_ERROR = "Error".freeze
 
   def self.find_can_view(user)
     if user.sys_admin?
-      return InboundFile.where("1=1")
+      InboundFile.where("1=1")
     end
   end
 
@@ -49,27 +51,27 @@ class InboundFile < ActiveRecord::Base
     user.sys_admin?
   end
 
-  def get_process_status_from_messages
+  def assess_process_status_from_messages
     overall_status = 1
     messages.each do |msg|
       case msg.message_status
-        when InboundFileMessage::MESSAGE_STATUS_WARNING
+      when InboundFileMessage::MESSAGE_STATUS_WARNING
           overall_status = [2, overall_status].max
-        when InboundFileMessage::MESSAGE_STATUS_REJECT
+      when InboundFileMessage::MESSAGE_STATUS_REJECT
           overall_status = [3, overall_status].max
-        when InboundFileMessage::MESSAGE_STATUS_ERROR
+      when InboundFileMessage::MESSAGE_STATUS_ERROR
           overall_status = 4
       end
     end
 
     case overall_status
-      when 1
+    when 1
         process_status = PROCESS_STATUS_SUCCESS
-      when 2
+    when 2
         process_status = PROCESS_STATUS_WARNING
-      when 3
+    when 3
         process_status = PROCESS_STATUS_REJECT
-      when 4
+    when 4
         process_status = PROCESS_STATUS_ERROR
     end
     process_status
@@ -78,10 +80,10 @@ class InboundFile < ActiveRecord::Base
   # Returns true if log errored or was rejected
   def failed?
     status = nil
-    if !self.process_status.blank? && self.process_status != PROCESS_STATUS_PENDING
+    if self.process_status.present? && self.process_status != PROCESS_STATUS_PENDING
       status = self.process_status
     else
-      status = get_process_status_from_messages
+      status = assess_process_status_from_messages
     end
 
     [PROCESS_STATUS_REJECT, PROCESS_STATUS_ERROR].include? status
@@ -104,9 +106,9 @@ class InboundFile < ActiveRecord::Base
   # that same message.  error_class, if provided, should, ideally, extend UnreportedError or LoggedParserRejectionError,
   # unless the error is handled internally within the parser.  If error_class extends one of those classes, or if no
   # error_class is provided, the error will not be double-logged or re-rethrown.
-  def reject_and_raise message, error_class:nil
+  def reject_and_raise message, error_class: nil
     add_reject_message message
-    raise_error error_class ? error_class : LoggedParserRejectionError, message
+    raise_error error_class || LoggedParserRejectionError, message
   end
 
   # Unanticipated exception.
@@ -120,17 +122,17 @@ class InboundFile < ActiveRecord::Base
   # LoggedParserFatalError, unless the error is handled internally within the parser.  If error_class extends that
   # class, or if no error_class is provided, the error will not be double-logged in IntegrationClientParser.  It will
   # still be re-thrown by IntegrationClientParser, regardless.
-  def error_and_raise message, error_class:nil
+  def error_and_raise message, error_class: nil
     add_error_message message
-    raise_error error_class ? error_class : LoggedParserFatalError, message
+    raise_error error_class || LoggedParserFatalError, message
   end
 
   # Throws an exception if message_status is not one of the types defined in InboundFileMessage.
   def add_message message_status, message
     if !InboundFileMessage::MESSAGE_STATUSES.include?(message_status)
-      raise ArgumentError.new("Invalid message status: #{message_status}")
+      raise ArgumentError, "Invalid message status: #{message_status}"
     end
-    messages.build(message_status:message_status, message:message)
+    messages.build(message_status: message_status, message: message)
     nil
   end
 
@@ -139,7 +141,7 @@ class InboundFile < ActiveRecord::Base
   # Only unique combinations of status and message are retained. The original order of the messages is still
   # maintained, however.
   def remove_dupe_messages
-    messages.replace messages.to_a.uniq { |msg| (msg.message_status + "_" + msg.message) }
+    messages.replace(messages.to_a.uniq { |msg| (msg.message_status + "_" + msg.message) })
     nil
   end
 
@@ -151,7 +153,7 @@ class InboundFile < ActiveRecord::Base
   # Throws an exception if module_type is not nil and the value is not one of the CoreModules.  If value is an array,
   # this method will add an identifier of the given type and module info for all of the items in the array.
   # Does not add blank identifiers.
-  def add_identifier identifier_type, value, module_type:nil, module_id:nil, object: nil
+  def add_identifier identifier_type, value, module_type: nil, module_id: nil, object: nil
     identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
 
     validate_identifier_module_type module_type
@@ -159,12 +161,12 @@ class InboundFile < ActiveRecord::Base
       next if v.blank?
 
       # Prevents a dupe from being added.
-      if get_identifiers(identifier_type, value:v).length == 0
+      if get_identifiers(identifier_type, value: v).length == 0
         if object
           module_id = object.id
-          module_type = CoreModule.find_by_object(object).class_name
+          module_type = CoreModule.find_by(object: object).class_name
         end
-        identifiers.build(identifier_type:identifier_type, value:v, module_type:(module_type.nil? ? nil : module_type.to_s), module_id:module_id)
+        identifiers.build(identifier_type: identifier_type, value: v, module_type: (module_type.nil? ? nil : module_type.to_s), module_id: module_id)
       end
     end
     nil
@@ -176,11 +178,11 @@ class InboundFile < ActiveRecord::Base
   # nil and the value is not one of the CoreModules.  Doesn't do anything if an identifier of the provided type has
   # not been previously added to the identifiers array.  If identifier value is specified, sets only the identifier that
   # matches specifically by both type and value.
-  def set_identifier_module_info identifier_type, module_type, module_id, value:nil
+  def set_identifier_module_info identifier_type, module_type, module_id, value: nil
     identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
 
     validate_identifier_module_type module_type
-    get_identifiers(identifier_type, value:value).each do |ident|
+    get_identifiers(identifier_type, value: value).each do |ident|
       ident.module_type = module_type.to_s
       ident.module_id = module_id
     end
@@ -189,26 +191,35 @@ class InboundFile < ActiveRecord::Base
 
   # Returns the identifiers matching the provided type, or empty array if no match.  Value can be provided optionally
   # to further restrict the results returned to just one specific identifier (hopefully).
-  def get_identifiers identifier_type, value:nil
+  def get_identifiers identifier_type, value: nil
     identifier_type = InboundFileIdentifier.translate_identifier(identifier_type)
 
     identifiers.select { |id| id.identifier_type == identifier_type && (!value || id.value == value) }
   end
 
   def self.purge reference_date
-    InboundFile.where("created_at < ?", reference_date).find_each do |inf|
-      inf.destroy
-    end
+    InboundFile.where("created_at < ?", reference_date).find_each(&:destroy)
   end
 
   def self.excel_url object_id
     XlsMaker.excel_url "/#{self.table_name}/#{object_id}"
   end
 
+  # Silly alias for IntegrationParserSupport, which allows for easy sending to test.
+  def last_file_bucket
+    self.s3_bucket
+  end
+
+  # Silly alias for IntegrationParserSupport, which allows for easy sending to test.
+  def last_file_path
+    self.s3_path
+  end
+
   private
+
     def validate_identifier_module_type module_type
-      if module_type && CoreModule.find_by_class_name(module_type.to_s).nil?
-        raise ArgumentError.new("Invalid module type: #{module_type}")
+      if module_type && CoreModule.find_by(class_name: module_type.to_s).nil?
+        raise ArgumentError, "Invalid module type: #{module_type}"
       end
     end
 

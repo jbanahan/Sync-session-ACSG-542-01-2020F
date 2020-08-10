@@ -56,7 +56,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensDecryptionPassthroughHandler 
 
       it "raises an error on unidentified parts" do
         expect {subject.ftp_credentials}.to raise_error LoggedParserFatalError, "Unexpected Siemens filetype of '' found."
-        expect(log.get_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_ERROR
+        expect(log).to have_error_message "Unexpected Siemens filetype of '' found."
       end
     end
   end

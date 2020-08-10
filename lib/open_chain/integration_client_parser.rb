@@ -227,7 +227,7 @@ module OpenChain; module IntegrationClientParser
 
       def finalize_inbound_file_log log, opts
         log.remove_dupe_messages
-        log.process_status = log.get_process_status_from_messages
+        log.process_status = log.assess_process_status_from_messages
         log.process_end_date = Time.zone.now
         # 'force_inbound_file_logging' option allows for short-term logging of inbound file records for parsers that
         # may have the function disabled normally.

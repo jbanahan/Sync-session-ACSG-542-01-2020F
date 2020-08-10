@@ -298,8 +298,26 @@ class CoreModule
     return nil
   end
 
+  # Alias method for `find_by_class_name`, which Rubocop complains about, thinking it's a deprecated AR finder method.
+  def self.core_module_by_class_name class_name, case_insensitive=false
+    find_by_class_name class_name, case_insensitive
+  end
+
   def self.find_by_object(obj)
     find_by_class_name obj.class.to_s
+  end
+
+  # Alias method for `find_by_class_name`, which Rubocop complains about, thinking it's a deprecated AR finder method.
+  def self.core_module_by_object obj
+    find_by_object obj
+  end
+
+  def self.find_by class_name: nil, object: nil
+    if class_name.present?
+      self.core_module_by_class_name(class_name)
+    else
+      self.core_module_by_object(object)
+    end
   end
 
   def self.find_file_formatable

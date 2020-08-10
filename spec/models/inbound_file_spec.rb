@@ -4,7 +4,9 @@ describe InboundFile do
     let(:user) { Factory(:user) }
 
     describe "find_can_view" do
-      let!(:file) { InboundFile.create }
+      before do
+        described_class.create
+      end
 
       it "shows all records to sys-admins" do
         expect(user).to receive(:sys_admin?).and_return true
@@ -31,43 +33,43 @@ describe InboundFile do
   end
 
   # This also tests add_info_message, add_warning_message, add_reject_message and add_error_message.
-  describe "get_process_status_from_messages" do
+  describe "assess_process_status_from_messages" do
     it "calculates process status from log with only info messages" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_info_message "Test"
       inf.add_info_message "Test 2"
       inf.add_info_message "Test 3"
-      expect(inf.get_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_SUCCESS
+      expect(inf.assess_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_SUCCESS
     end
 
     it "calculates process status from log with warning message" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_info_message "Test"
       inf.add_warning_message "Test 2"
       inf.add_info_message "Test 3"
-      expect(inf.get_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_WARNING
+      expect(inf.assess_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_WARNING
     end
 
     it "calculates process status from log with reject message" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_info_message "Test"
       inf.add_reject_message "Test 2"
       inf.add_warning_message "Test 3"
-      expect(inf.get_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_REJECT
+      expect(inf.assess_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_REJECT
     end
 
     it "calculates process status from log with error message" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_reject_message "Test"
       inf.add_error_message "Test 2"
       inf.add_warning_message "Test 3"
-      expect(inf.get_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_ERROR
+      expect(inf.assess_process_status_from_messages).to eq InboundFile::PROCESS_STATUS_ERROR
     end
   end
 
   describe "add_message" do
     it "tests basic message-adding functionality" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_message InboundFileMessage::MESSAGE_STATUS_INFO, "A"
       inf.add_message InboundFileMessage::MESSAGE_STATUS_WARNING, "B"
       inf.add_message InboundFileMessage::MESSAGE_STATUS_REJECT, "C"
@@ -84,10 +86,10 @@ describe InboundFile do
     end
 
     it "handles bogus message status" do
-      inf = InboundFile.new
+      inf = described_class.new
       begin
         inf.add_message "Nope!", "A"
-        fail "Should have thrown exception"
+        raise "Should have thrown exception"
       rescue ArgumentError => e
         expect(e.to_s).to eq("Invalid message status: Nope!")
       end
@@ -97,10 +99,10 @@ describe InboundFile do
 
   describe "reject_and_raise" do
     it "logs a reject message and raises an exception" do
-      inf = InboundFile.new
+      inf = described_class.new
       begin
         inf.reject_and_raise "Failed some rule"
-        fail "Should have thrown exception"
+        raise "Should have thrown exception"
       rescue LoggedParserRejectionError => e
         expect(e.to_s).to eq("Failed some rule")
       end
@@ -110,10 +112,10 @@ describe InboundFile do
     end
 
     it "logs a reject message and raises a typed exception" do
-      inf = InboundFile.new
+      inf = described_class.new
       begin
-        inf.reject_and_raise "Failed some rule", error_class:ArgumentError
-        fail "Should have thrown exception"
+        inf.reject_and_raise "Failed some rule", error_class: ArgumentError
+        raise "Should have thrown exception"
       rescue ArgumentError => e
         expect(e.to_s).to eq("Failed some rule")
       end
@@ -125,11 +127,11 @@ describe InboundFile do
 
   describe "error_and_raise" do
     it "logs an error message and raises an exception" do
-      inf = InboundFile.new
+      inf = described_class.new
       begin
         inf.error_and_raise "Something bad happened"
-        fail "Should have thrown exception"
-      rescue LoggedParserFatalError  => e
+        raise "Should have thrown exception"
+      rescue LoggedParserFatalError => e
         expect(e.to_s).to eq("Something bad happened")
       end
       expect(inf.messages.length).to eq(1)
@@ -138,10 +140,10 @@ describe InboundFile do
     end
 
     it "logs an error message and raises a typed exception" do
-      inf = InboundFile.new
+      inf = described_class.new
       begin
-        inf.error_and_raise "Something bad happened", error_class:ArgumentError
-        fail "Should have thrown exception"
+        inf.error_and_raise "Something bad happened", error_class: ArgumentError
+        raise "Should have thrown exception"
       rescue ArgumentError => e
         expect(e.to_s).to eq("Something bad happened")
       end
@@ -153,7 +155,7 @@ describe InboundFile do
 
   describe "remove_dupe_messages" do
     it "removes dupe messages from object but preserves initial order" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_info_message "B"
       inf.add_warning_message "B"
       inf.add_info_message "A"
@@ -182,7 +184,7 @@ describe InboundFile do
 
   describe "get_messages_by_status" do
     it "finds messages with a specific status" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_warning_message "A"
       inf.add_warning_message "B"
       inf.add_reject_message "C"
@@ -196,18 +198,18 @@ describe InboundFile do
       expect(arr.length).to eq 2
       expect(arr[0].message).to eq "A"
       expect(arr[1].message).to eq "B"
-      expect(inf.get_messages_by_status InboundFileMessage::MESSAGE_STATUS_ERROR).to eq []
-      expect(inf.get_messages_by_status nil).to eq []
+      expect(inf.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_ERROR)).to eq []
+      expect(inf.get_messages_by_status(nil)).to eq []
     end
   end
 
   describe "add_identifier" do
     it "tests basic identifier-adding functionality" do
-      inf = InboundFile.new
-      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "ABC123", module_type:"Order", module_id:123
+      inf = described_class.new
+      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "ABC123", module_type: "Order", module_id: 123
       # This one should be ignored because it's a dupe.
       inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "ABC123"
-      inf.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, "555222", module_type:"Product", module_id:456
+      inf.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, "555222", module_type: "Product", module_id: 456
       inf.add_identifier "Something With No Module", "whee"
 
       expect(inf.identifiers.length).to eq 3
@@ -234,10 +236,10 @@ describe InboundFile do
     end
 
     it "handles bogus module type" do
-      inf = InboundFile.new
+      inf = described_class.new
       begin
-        inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "ABC123", module_type:"BOGUS", module_id:123
-        fail "Should have thrown exception"
+        inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "ABC123", module_type: "BOGUS", module_id: 123
+        raise "Should have thrown exception"
       rescue ArgumentError => e
         expect(e.to_s).to eq("Invalid module type: BOGUS")
       end
@@ -253,8 +255,8 @@ describe InboundFile do
     end
 
     it "adds multiple identifiers of same type from an array functionality" do
-      inf = InboundFile.new
-      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["ABC123", "555222", "ABC123"], module_type:"Order", module_id:123
+      inf = described_class.new
+      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["ABC123", "555222", "ABC123"], module_type: "Order", module_id: 123
 
       expect(inf.identifiers.length).to eq 2
       expect(inf.identifiers[0].identifier_type).to eq(InboundFileIdentifier::TYPE_PO_NUMBER)
@@ -269,8 +271,8 @@ describe InboundFile do
     end
 
     it "does not add blank/nil identifiers" do
-      inf = InboundFile.new
-      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["   ", "ABC123", " ", nil], module_type:"Order", module_id:123
+      inf = described_class.new
+      inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, ["   ", "ABC123", " ", nil], module_type: "Order", module_id: 123
 
       # Only the non-blank identifier should have been added.
       expect(inf.identifiers.length).to eq 1
@@ -280,7 +282,7 @@ describe InboundFile do
 
   describe "set_identifier_module_info" do
     it "sets module info for matching identifier" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "ABC123"
       inf.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, "555222"
       # It's highly unlikely you'd actually WANT to do this for two POs, since they'd represent two different modules.
@@ -307,14 +309,14 @@ describe InboundFile do
       expect(ident_3.module_type).to eq "Order"
       expect(ident_3.module_id).to eq 123
 
-      inf.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, "Order", 456, value:"ABC123"
+      inf.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, "Order", 456, value: "ABC123"
       expect(ident_1.module_id).to eq 456
       # Should not have been updated because value doesn't match.
       expect(ident_3.module_id).to eq 123
     end
 
     it "does nothing if matching identifier can't be found" do
-      inf = InboundFile.new
+      inf = described_class.new
 
       inf.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, "Order", 123
 
@@ -322,10 +324,10 @@ describe InboundFile do
     end
 
     it "handles bogus module type" do
-      inf = InboundFile.new
+      inf = described_class.new
       begin
         inf.set_identifier_module_info InboundFileIdentifier::TYPE_PO_NUMBER, "BOGUS", 123
-        fail "Should have thrown exception"
+        raise "Should have thrown exception"
       rescue ArgumentError => e
         expect(e.to_s).to eq("Invalid module type: BOGUS")
       end
@@ -334,13 +336,13 @@ describe InboundFile do
   end
 
   describe "get_identifiers" do
-    let(:inf) {
-      inf = InboundFile.new
+    let(:inf) do
+      inf = described_class.new
       inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "ABC123"
       inf.add_identifier InboundFileIdentifier::TYPE_ARTICLE_NUMBER, "555222"
       inf.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, "DEF456"
       inf
-    }
+    end
 
     it "finds identifiers with a specific type" do
       arr = inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER)
@@ -354,10 +356,10 @@ describe InboundFile do
     end
 
     it "finds identifiers with a specific type and value" do
-      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value:"ABC123").length).to eq 1
-      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value:"DEF456").length).to eq 1
-      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value:"555222").length).to eq 0
-      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER, value:"555222").length).to eq 1
+      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value: "ABC123").length).to eq 1
+      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value: "DEF456").length).to eq 1
+      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_PO_NUMBER, value: "555222").length).to eq 0
+      expect(inf.get_identifiers(InboundFileIdentifier::TYPE_ARTICLE_NUMBER, value: "555222").length).to eq 1
     end
 
     it "handles symbolized identifier types" do
@@ -367,7 +369,7 @@ describe InboundFile do
 
   describe "purge" do
     it "purges InboundFiles created before a specific date" do
-      inf = InboundFile.new
+      inf = described_class.new
       inf.add_info_message "Nearly departed"
       inf.add_identifier "Something With No Module", "whee"
 
@@ -377,7 +379,7 @@ describe InboundFile do
       end
 
       described_class.purge Date.new(2017, 10, 10)
-      expect(InboundFile.where(id:inf.id).length).to eq 0
+      expect(described_class.where(id: inf.id).length).to eq 0
     end
   end
 
@@ -434,6 +436,20 @@ describe InboundFile do
         subject.add_info_message "E"
         expect(subject.failed?).to eq false
       end
+    end
+  end
+
+  describe "last_file_bucket" do
+    it "returns s3 bucket" do
+      log = described_class.new(s3_bucket: "the_bucket")
+      expect(log.last_file_bucket).to eq "the_bucket"
+    end
+  end
+
+  describe "last_file_path" do
+    it "returns s3 path" do
+      log = described_class.new(s3_path: "the_path")
+      expect(log.last_file_path).to eq "the_path"
     end
   end
 

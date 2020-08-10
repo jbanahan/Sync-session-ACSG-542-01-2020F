@@ -224,5 +224,55 @@ describe CoreModule do
     end
   end
 
-end
+  ["find_by_class_name", "core_module_by_class_name"].each do |method_name|
+    describe method_name do
+      it "finds a core module by class name" do
+        expect(described_class.send(method_name, "Order")).to eq CoreModule::ORDER
+        expect(described_class.send(method_name, "Entry")).to eq CoreModule::ENTRY
+        expect(described_class.send(method_name, "Bezirksschornsteinfegermeister")).to be_nil
+        # By default, this method is case sensitive.
+        expect(described_class.send(method_name, "order")).to be_nil
+        expect(described_class.send(method_name, "order", true)).to eq CoreModule::ORDER
+        expect(described_class.send(method_name, nil)).to be_nil
+      end
 
+      it "finds a core module by class" do
+        expect(described_class.send(method_name, Order)).to eq CoreModule::ORDER
+        expect(described_class.send(method_name, Entry)).to eq CoreModule::ENTRY
+        # This is not a core module, so it should return nil.
+        expect(described_class.send(method_name, InboundFile)).to be_nil
+        expect(described_class.send(method_name, Order.new)).to be_nil
+      end
+    end
+  end
+
+  ["find_by_object", "core_module_by_object"].each do |method_name|
+    describe method_name do
+      it "finds a core module by object" do
+        expect(described_class.send(method_name, Order.new)).to eq CoreModule::ORDER
+        expect(described_class.send(method_name, Entry.new)).to eq CoreModule::ENTRY
+        # This is not a core module, so it should return nil.
+        expect(described_class.send(method_name, InboundFile.new)).to be_nil
+        expect(described_class.send(method_name, Order)).to be_nil
+        expect(described_class.send(method_name, nil)).to be_nil
+      end
+    end
+  end
+
+  describe "find_by" do
+    it "finds by class name" do
+      expect(described_class).to receive(:core_module_by_class_name).with("Something").and_return CoreModule::ORDER
+      expect(described_class.find_by(class_name: "Something")).to eq CoreModule::ORDER
+    end
+
+    it "finds by object" do
+      expect(described_class).to receive(:core_module_by_object).with("Something").and_return CoreModule::ORDER
+      expect(described_class.find_by(object: "Something")).to eq CoreModule::ORDER
+    end
+
+    it "does not override traditional find_by behavior for CoreModules" do
+      ord = Factory(:order, order_number: "555ord666")
+      expect(Order.find_by(order_number: "555ord666")).to eq ord
+    end
+  end
+end
