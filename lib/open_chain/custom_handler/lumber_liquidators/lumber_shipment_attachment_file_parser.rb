@@ -1,77 +1,42 @@
+require 'open_chain/custom_handler/zip_file_parser'
 require 'open_chain/integration_client_parser'
-require 'combine_pdf'
 
 # Works with a zip file, attaching the PDF contents of that zip to a matching shipment by matching the
 # master bill in the zip file's name to shipment's master bill.  Handles cases where the shipment doesn't
 # yet exist.
-module OpenChain; module CustomHandler; module LumberLiquidators; class LumberShipmentAttachmentFileParser
-  include OpenChain::IntegrationClientParser
+module OpenChain; module CustomHandler; module LumberLiquidators; class LumberShipmentAttachmentFileParser < OpenChain::CustomHandler::ZipFileParser
 
-  def self.integration_folder
-    ["ll/shipment_docs", "/home/ubuntu/ftproot/chainroot/ll/shipment_docs"]
-  end
-
-  def self.parse_file zip_stream, log, opts = {}
-    attempts = opts[:attempt_count].presence || 1
-    self.new.process_file zip_stream, log.s3_bucket, log.s3_path, attempts
-  end
-
-  def self.retrieve_file_data bucket, key, opts = {}
-    OpenChain::S3.download_to_tempfile(bucket, key)
-  end
-
-  def self.post_process_data data
-    # This is just to clean up the tempfile
-    data.close! unless data.nil? || data.closed?
-  end
-
-  def process_file zip_file, s3_bucket, s3_key, attempt_count
-    # The name/path of the zip file is not the original name of the file when it was FTP'ed by Lumber: the pick-up
-    # routine attaches some other crud for the sake of uniqueness.  We can get that original name, however, from the
-    # S3 key/path.
-    original_zip_file_name = File.basename(self.class.get_s3_key_without_timestamp s3_key)
+  def process_zip_content original_zip_file_name, unzipped_contents, _zip_file, s3_bucket, s3_key, attempt_count
+    # If we've made it this far, we know that there is at least one PDF within the zip.  Per project assumptions,
+    # there's only supposed to be one.  If not, any beyond the first get ignored.
+    zip_content_pdf = unzipped_contents[0]
     master_bill = parse_master_bill original_zip_file_name
-    zip_content_pdf = unzip_pdf zip_file
-    if zip_content_pdf.present?
-      shp = Shipment.where(master_bill_of_lading: master_bill).first
-      if shp.present?
-        inbound_file.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, shp.reference
-        process_zip_file_pdf zip_content_pdf, shp, original_zip_file_name, s3_key
-      else
-        # If no matching shipment is found, queue the file to be reprocessed an hour later, hoping the shipment has
-        # been created. There is a limit to our patience with this: after 96 hours/attempts (4 days), we give up and
-        # send an email.
-        if attempt_count < 96
-          requeue_file_for_later_processing s3_bucket, s3_key, attempt_count
-        else
-          generate_missing_shipment_email master_bill, zip_content_pdf, s3_key
-        end
-      end
+    shp = Shipment.where(master_bill_of_lading: master_bill).first
+    if shp.present?
+      inbound_file.add_identifier InboundFileIdentifier::TYPE_SHIPMENT_NUMBER, shp.reference
+      process_zip_file_pdf zip_content_pdf, shp, original_zip_file_name, s3_key
     else
-      generate_missing_pdf_email master_bill, zip_file
+      # If no matching shipment is found, queue the file to be reprocessed an hour later, hoping the shipment has
+      # been created. There is a limit to our patience with this: after 96 hours/attempts (4 days), we give up and
+      # send an email.
+      if attempt_count < 96
+        requeue_file_for_later_processing s3_bucket, s3_key, attempt_count
+      else
+        generate_missing_shipment_email master_bill, zip_content_pdf, s3_key
+      end
     end
+    nil
+  end
+
+  def include_file? zip_entry
+    File.extname(zip_entry.name).to_s.upcase == ".PDF"
+  end
+
+  def handle_empty_file zip_file_name, zip_file
+    generate_missing_pdf_email parse_master_bill(zip_file_name), zip_file
   end
 
   private
-    def unzip_pdf zip_file
-      zip_content_pdf = nil
-      begin
-        Zip::File.open(zip_file.path) do |unzipped_zip_file|
-          # Per assumptions, there's only supposed to be one file per zip, and it will be a PDF.
-          unzipped_zip_file.each do |zip_entry|
-            if File.extname(zip_entry.name).to_s.upcase == ".PDF"
-              zip_content_pdf = zip_entry
-              break
-            end
-          end
-        end
-      rescue Zip::Error => e
-        # Do nothing.  Nil gets returned, which results in an error email.
-        inbound_file.add_reject_message e.message
-      end
-      zip_content_pdf
-    end
-
     def process_zip_file_pdf zip_content_pdf, shp, original_zip_file_name, s3_path
       existing_ods_attachment = find_existing_ods_attachment shp
 
@@ -113,7 +78,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
     end
 
     def create_shipment_attachment zip_content_pdf, shp, s3_path
-      write_pdf_zip_entry_to_temp_file(zip_content_pdf, s3_path) do |temp_file|
+      write_zip_entry_to_temp_file(zip_content_pdf, attachment_file_name(s3_path)) do |temp_file|
         Lock.with_lock_retry(shp) do
           shp.attachments.create!(attached:temp_file, attachment_type:'ODS-Forwarder Ocean Document Set')
           # Including the S3 path allows for the original zip file to be downloaded from history. (Note that this process
@@ -123,17 +88,8 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
       end
     end
 
-    def write_pdf_zip_entry_to_temp_file zip_content_pdf, s3_path
-      filename = File.basename(zip_content_pdf.name)
-      Tempfile.open([File.basename(filename, ".*"), File.extname(filename)]) do |t|
-        t.binmode
-        t.write(zip_content_pdf.get_input_stream.read)
-        t.flush
-        t.rewind
-        attachment_filename = "#{File.basename(self.class.get_s3_key_without_timestamp(s3_path), ".*")}.pdf"
-        Attachment.add_original_filename_method t, attachment_filename
-        yield t
-      end
+    def attachment_file_name s3_path
+      "#{File.basename(original_file_name(s3_path), ".*")}.pdf"
     end
 
     def requeue_file_for_later_processing s3_bucket, s3_key, attempt_count
@@ -142,7 +98,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSh
     end
 
     def generate_missing_shipment_email master_bill, zip_content_pdf, s3_path
-      write_pdf_zip_entry_to_temp_file(zip_content_pdf, s3_path) do |temp_file|
+      write_zip_entry_to_temp_file(zip_content_pdf, attachment_file_name(s3_path)) do |temp_file|
         body_text = "VFI Track has tried for 4 days to find a shipment matching master bill '#{master_bill}' without success.  No further attempts will be made.  Allport document attachments (ODS) are available for this shipment.  VFI operations will be required to manually upload vendor docs (VDS) and shipment docs (ODS) manually."
         OpenMailer.send_simple_html('LL-US@vandegriftinc.com', "Allport Missing Shipment: #{master_bill}", body_text, [temp_file]).deliver_now
       end

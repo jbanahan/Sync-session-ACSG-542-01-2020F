@@ -258,4 +258,28 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryDocumentsSender do
       expect { subject.run_schedulable }.to raise_error StandardError, "A 'bucket' option value must be set."
     end
   end
+
+  describe "send_entry_packet_to_s3_imaging" do
+    let(:entry) { Entry.new(broker_reference: "51315", customer_number: "CUSTO") }
+    let(:master_setup) { stub_master_setup }
+    let(:file) { instance_double("File") }
+
+    it "sends a file to the s3 imaging test bucket" do
+      expect(master_setup).to receive(:production?).and_return false
+      expect(OpenChain::S3).to receive(:upload_file).with("kewill-imaging-test",
+                                                          "US Entry Documents/Entry Packet/51315-CUSTO.pdf",
+                                                          file).and_return "success"
+
+      expect(described_class.send_entry_packet_to_s3(entry, file)).to eq "success"
+    end
+
+    it "sends a file to the s3 imaging production bucket" do
+      expect(master_setup).to receive(:production?).and_return true
+      expect(OpenChain::S3).to receive(:upload_file).with("kewill-imaging",
+                                                          "US Entry Documents/Entry Packet/51315-CUSTO.pdf",
+                                                          file).and_return "success"
+
+      expect(described_class.send_entry_packet_to_s3(entry, file)).to eq "success"
+    end
+  end
 end

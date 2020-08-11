@@ -613,8 +613,12 @@ describe OpenChain::IntegrationClientCommandProcessor do
         do_parser_test("Target Feeds", OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser, '/target_entry/entry.txt')
       end
 
-      it 'handles Target Entry Initiation Files' do
+      it 'handles Target Parts Files' do
         do_parser_test("Target Feeds", OpenChain::CustomHandler::Target::TargetPartsFileParser, '/target_parts/parts.csv')
+      end
+
+      it 'handles Target Entry Zip Files' do
+        do_parser_test("Target Feeds", OpenChain::CustomHandler::Target::TargetEntryZipFileParser, '/target_documents/file.zip')
       end
     end
   end

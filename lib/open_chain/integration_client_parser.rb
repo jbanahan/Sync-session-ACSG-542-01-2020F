@@ -81,8 +81,14 @@ module OpenChain; module IntegrationClientParser
       end
 
       handle_processing(nil, file.path, opts) do
-        file.read
+        get_process_from_file_data file
       end
+    end
+
+    # This method is not meant to be run in production either, it's meant as a development helper.
+    # Override to do something other than call the file's "read" method.
+    def get_process_from_file_data file
+      file.read
     end
 
     # Handles all the acutal processing of the file data return by the given block

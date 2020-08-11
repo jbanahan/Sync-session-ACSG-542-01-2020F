@@ -81,7 +81,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
   private_class_method :validate_file
 
   def self.validate_filename filename
-    # The filename needs to start with digits representing the file number, then the custoemr number and then the extension.
+    # The filename needs to start with digits representing the file number, then the customer number and then the extension.
     # Alternately, we're allowing the users to add information AFTER the customer number.  If a space is present after some letters
     # numbers, we're going to strip everything from the space until the extension.
     matches = filename.scan(/\A(\d+)\s*[-_]\s*(.*)\.([^.]+)\z/i).first
@@ -160,6 +160,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryDocu
         yield json_suffix
       end
     end
+  end
+
+  # Drops am entry packet file into a bucket that is monitored by this class.  Filename is crafted from entry content.
+  def self.send_entry_packet_to_s3 entry, file
+    s3_bucket = MasterSetup.get.production? ? "kewill-imaging" : "kewill-imaging-test"
+    s3_key = "US Entry Documents/Entry Packet/#{entry.broker_reference}-#{entry.customer_number}.pdf"
+    OpenChain::S3.upload_file s3_bucket, s3_key, file
   end
 
 end; end; end; end
