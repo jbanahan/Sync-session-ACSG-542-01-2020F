@@ -56,8 +56,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDataPusher
   end
 
   def push_dimension dimension_type, dimension_code
-    d_type = OpenChain::CustomHandler::Intacct::IntacctXmlGenerator::INTACCT_DIMENSION_XREF[dimension_type]
-    @api_client.send_dimension(d_type, dimension_code, dimension_code)
+    @api_client.send_dimension(dimension_type, dimension_code, dimension_code)
   end
 
   def push_payables companies
