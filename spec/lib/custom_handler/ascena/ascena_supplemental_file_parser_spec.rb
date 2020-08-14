@@ -64,6 +64,18 @@ describe OpenChain::CustomHandler::Ascena::AscenaSupplementalFileParser do
       expect(snap.context).to eq "path/to/some_file.csv"
     end
 
+    it "handles single-line files (+ header)" do
+      short_csv = csv.split("\n")[0..1].join("\n")
+
+      t = Tempfile.new
+      expect(Tempfile).to receive(:open).with(["suppl", ".csv"]).and_yield t
+
+      subject.parse short_csv, original_filename: "some_file.csv"
+      ent = Entry.find_by entry_number: "31625234401"
+
+      expect(ent.broker_reference).to eq "2523440"
+    end
+
     context "errors" do
       before { Factory(:mailing_list, system_code: "ascena_ftz_validations", email_addresses: "tufnel@stonehenge.biz") }
 

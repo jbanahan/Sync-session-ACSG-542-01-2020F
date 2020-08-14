@@ -15,7 +15,7 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaSupplementalF
     elsif csv_data.any? { |row| row[55].blank? }
       send_error "PO Number", data, opts[:original_filename]
     else
-      brok_ref = csv_data[1][21].split("-")[1]
+      brok_ref = csv_data[0][21].split("-")[1]
       attach_to_entry ent_num, brok_ref, data, opts[:original_filename]
     end
   end
