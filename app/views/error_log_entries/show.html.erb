@@ -3,10 +3,10 @@
 <%=field_row 'Message', @error_log_entry.error_message%>
 <%=field_row 'Time', @error_log_entry.created_at%>
 <%msgs = ""%>
-<%@error_log_entry.additional_messages.each {|m| msgs << "#{m}<br />"}%>
+<%@error_log_entry.additional_messages&.each {|m| msgs << "#{m}<br />"}%>
 <%=field_row 'Other Messages', msgs.html_safe%>
 </table>
 <h2>Trace</h2>
 <pre style='overflow-x: auto;'>
-<%= @error_log_entry.backtrace.join("\n") %>
+<%= @error_log_entry.backtrace&.join("\n") %>
 </pre>
