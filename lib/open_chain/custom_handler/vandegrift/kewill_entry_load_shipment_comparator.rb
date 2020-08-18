@@ -70,13 +70,14 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillEntryLoad
 
   def invoice_generator kewill_customer_number
     generator_string = self.class.ci_load_data[kewill_customer_number]
-    if generator_string.blank?
-      return OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator.new
-    else
+    if generator_string.to_s.starts_with?("OpenChain::")
       # This assumes the generator class has already been required...it should always be by virtue
       # of the snapshot comparator always running in a delayed job queue (which loads every class/file
       # in lib)
       return generator_string.constantize.new
+    else
+      rollup = generator_string.to_s.strip.match?(/^rollup$/i)
+      return OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator.new(rollup_lines: rollup)
     end
   end
 

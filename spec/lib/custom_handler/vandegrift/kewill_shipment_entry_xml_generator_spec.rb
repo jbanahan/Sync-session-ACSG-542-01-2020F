@@ -86,6 +86,79 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
       DataCrossReference.create! key: "CUST", value: "GOODS", cross_reference_type: DataCrossReference::CI_LOAD_DEFAULT_GOODS_DESCRIPTION
     }
 
+    describe 'roll up' do
+      let (:importer) {
+        with_customs_management_id(Factory(:importer), "ROLLUPCUST")
+      }
+
+      let! (:shipment_roll_up) {
+        s = Shipment.create! reference: "REF", master_bill_of_lading: "CARR123456", house_bill_of_lading: "HBOL", vessel: "VESSEL", voyage: "VOYAGE", vessel_carrier_scac: "CARR", mode: "Ocean",
+                             est_arrival_port_date: Date.new(2018, 4, 1), departure_date: Date.new(2018, 3, 1), est_departure_date: Date.new(2018, 3, 3), importer_id: importer.id,
+                             country_origin: cn, country_export: us, description_of_goods: "GOODS DESCRIPTION"
+
+        # This is midnight UTC, so the actual date should roll back a day, since it should be using the date in Eastern TZ
+        s.update_custom_value! cdefs[:shp_entry_prepared_date], "2018-06-01 00:00"
+
+        # Make a high-cube so we're checking that it's set into the correct container type field
+        container = s.containers.create! container_number: "ROLLUPCONTAINER", seal_number: "SEAL", container_size: "26GP"
+
+        shipment_line_1 = s.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container.id, mid: "MID1", net_weight: 100, net_weight_uom: "KG"
+        shipment_line_1.linked_order_line_id = order.order_lines.first.id
+        shipment_line_1.product_id = order.order_lines.first.product.id
+        shipment_line_1.save!
+        s.reload
+
+        shipment_line_2 = s.shipment_lines.build gross_kgs: BigDecimal("10"), carton_qty: 20, invoice_number: "INV", quantity: 30, container_id: container.id, mid: "MID1", net_weight: 100, net_weight_uom: "KG"
+        shipment_line_2.linked_order_line_id = order.order_lines.first.id
+        shipment_line_2.product_id = order.order_lines.first.product.id
+        shipment_line_2.save!
+        s.reload
+
+        s
+      }
+
+      it "handles nil values in roll ups" do
+        line = Shipment.first.shipment_lines.first
+        line.carton_qty = nil
+        line.save!
+
+        d = described_class.new(rollup_lines: true).generate_kewill_shipment_data shipment_roll_up
+
+        inv = d.invoices.first
+
+        expect(inv.invoice_lines.count).to eq 1
+        line = inv.invoice_lines.first
+        expect(line.cartons).to eq 20 # We expect this to be only 20 as one of the shipment lines has a nil carton qty.
+      end
+
+      it "rolls up multiple invoice lines when initialized with rollup_lines argument" do
+        d = described_class.new(rollup_lines: true).generate_kewill_shipment_data shipment_roll_up
+
+        inv = d.invoices.first
+
+        expect(inv.invoice_lines.count).to eq 1
+        line = inv.invoice_lines.first
+        expect(line.gross_weight).to eq 20
+        expect(line.pieces).to eq 60
+        expect(line.container_number).to eq "ROLLUPCONTAINER"
+        expect(line.cartons).to eq 40
+        expect(line.part_number).to eq "PARTNO"
+        expect(line.description).to eq "Part Description"
+        expect(line.hts).to eq "1234509876"
+        # This comes from the PO, not the shipment header
+        expect(line.country_of_origin).to eq "VN"
+        expect(line.country_of_export).to eq "US"
+        expect(line.unit_price).to eq 10
+        expect(line.unit_price_uom).to eq "PCS"
+        expect(line.po_number).to eq "ORDER"
+        expect(line.foreign_value).to eq 600
+        expect(line.country_of_origin).to eq "VN"
+        expect(line.mid).to eq "MID1"
+        expect(line.net_weight).to eq 200
+        expect(line.net_weight_uom).to eq "KG"
+      end
+    end
+
     it "generates entry data" do
       d = subject.generate_kewill_shipment_data shipment
 

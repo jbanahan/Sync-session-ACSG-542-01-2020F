@@ -5,6 +5,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
   include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
   include OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSenderSupport
 
+  attr_accessor :rollup_lines
+
+  def initialize(rollup_lines: nil)
+    @rollup_lines = rollup_lines
+  end
+
   def generate_xml_and_send shipments, sync_records:
     data = generate_kewill_shipment_data(shipments)
     # This is purposefully wrapped in an array, because all the sync records for the
@@ -86,15 +92,14 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
         entry.pieces = cartons
         entry.pieces_uom = "CTNS"
       end
-
     end
 
     def generate_bills_of_lading shipments
       master_house_combos = {}
       shipments.each do |s|
-        master_bills = s.master_bill_of_lading.to_s.split("\n").map {|b| b.strip }
+        master_bills = s.master_bill_of_lading.to_s.split("\n").map(&:strip)
         master_bills.each do |master_bill|
-          if !s.vessel_carrier_scac.blank? && !master_bill.starts_with?(s.vessel_carrier_scac)
+          if s.vessel_carrier_scac.present? && !master_bill.starts_with?(s.vessel_carrier_scac)
             master_bill = "#{s.vessel_carrier_scac}#{master_bill}"
           end
           key = "#{master_bill.to_s.strip}~~~~~#{s.house_bill_of_lading.to_s.strip}"
@@ -139,7 +144,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       est_export_date = nil
       shipments.each do |s|
         d = {est_arrival_date: s.est_arrival_port_date, export_date: s.departure_date}
-        est_export_date = s.est_departure_date unless est_export_date
+        est_export_date ||= s.est_departure_date
 
         d.each_pair do |k, v|
           dates[k] ||= v
@@ -152,11 +157,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       dates.map { |k, v| CiLoadEntryDate.new k, v }
     end
 
-    def generate_kewill_shipment_container shipment, container
+    def generate_kewill_shipment_container _shipment, container
       c = CiLoadContainer.new
       c.container_number = container.container_number
       c.seal_number = container.seal_number
-      c.description = container.goods_description unless container.goods_description.blank?
+      c.description = container.goods_description if container.goods_description.present?
 
       totals = shipment_lines_totals(container)
 
@@ -186,32 +191,30 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       size = container.container_size.to_s.upcase
 
       # The first char of the container code should be its length
-      container_size = case size[0]
-        when "1"
-          "10"
-        when "2"
-          "20"
-        when "3"
-          "30"
-        when "4"
-          "40"
-        when "B"
-          "24"
-        when "C"
-          "24.5"
-        when "G"
-          "41"
-        when "H"
-          "43"
-        when "L"
-          "45"
-        when "M"
-          "48"
-        when "N"
-          "49"
-        else
-          nil
-        end
+      container_size =  case size[0]
+                        when "1"
+                          "10"
+                        when "2"
+                          "20"
+                        when "3"
+                          "30"
+                        when "4"
+                          "40"
+                        when "B"
+                          "24"
+                        when "C"
+                          "24.5"
+                        when "G"
+                          "41"
+                        when "H"
+                          "43"
+                        when "L"
+                          "45"
+                        when "M"
+                          "48"
+                        when "N"
+                          "49"
+                        end
 
       # The second character is the container's height, we don't care about any heights EXCEPT
       # when the height is 9'6" (which is a High Cube) and is generally notated as such.
@@ -219,16 +222,14 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       high_cube = ["5", "6", "E", "F"].include?(size[1])
 
       # The 3rd and 4th chars denote the the type of container (reefer, open top, etc)
-      container_type = case size[2]
-        when "R"
-          "RE" # ISO Decription = Integral Reefer -> Kewill = Reefer
-        when "P"
-          "FR" # ISO Description = Flat or Bolster -> Kewill = Flat Rack
-        when "U"
-          "OT" # ISO Description = Open Top -> Kewill = Open Top
-        else
-          nil
-        end
+      container_type =  case size[2]
+                        when "R"
+                          "RE" # ISO Decription = Integral Reefer -> Kewill = Reefer
+                        when "P"
+                          "FR" # ISO Description = Flat or Bolster -> Kewill = Flat Rack
+                        when "U"
+                          "OT" # ISO Description = Open Top -> Kewill = Open Top
+                        end
 
       {size: container_size, high_cube: high_cube, type: container_type}
     end
@@ -236,18 +237,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
     def customs_ship_mode shipment
       mode = shipment.mode.to_s
       if mode =~ /ocean/i
-        return 11
+        11
       elsif mode =~ /air/i
-        return 40
-      else
-        return nil
+        40
       end
     end
 
     def goods_description ci_load_entry, shipments
       # See if any of the shipments have a goods description, if so, use it..otherwise fall back to the default
-      description = shipments.find {|s| !s.description_of_goods.blank? }.try(:description_of_goods)
-      return description if !description.blank?
+      description = shipments.find {|s| s.description_of_goods.present? }.try(:description_of_goods)
+      return description if description.present?
 
       return nil if ci_load_entry.customer.blank?
 
@@ -335,7 +334,53 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       inv_line
     end
 
+    def rollup_invoice_lines entry
+      rollup = {}
+
+      return unless entry.invoices.present? && entry.invoices.count > 0
+
+      entry.invoices.each do |invoice|
+        next unless invoice.invoice_lines.count > 0
+        invoice_lines = invoice.invoice_lines
+
+        invoice_lines.each do |invoice_line|
+          key = [invoice_line.part_number, invoice_line.country_of_origin, invoice_line.po_number,
+                        invoice_line.buyer_customer_number, invoice_line.description, invoice_line.container_number]
+
+          if rollup[key].present?
+            calculate_invoice_line_rollup(rollup, key, invoice_line)
+          else
+            rollup[key] = invoice_line
+          end
+        end
+
+        invoice.invoice_lines = rollup.values
+      end
+    end
+
+    def calculate_invoice_line_rollup(rollup, key, invoice_line)
+      set_rollup_value(rollup, key, invoice_line, :pieces)
+      set_rollup_value(rollup, key, invoice_line, :gross_weight)
+      set_rollup_value(rollup, key, invoice_line, :net_weight)
+      set_rollup_value(rollup, key, invoice_line, :foreign_value)
+      set_rollup_value(rollup, key, invoice_line, :cartons)
+    end
+
+    def set_rollup_value rollup, key, line, attribute
+      value = line.public_send(attribute)
+
+      return if value.nil?
+
+      rollup[key].public_send("#{attribute}=".to_sym, BigDecimal(0)) if rollup[key].public_send(attribute).nil?
+
+      rollup[key].public_send("#{attribute}=".to_sym, (rollup[key].public_send(attribute) + value))
+      nil
+    end
+
     def post_process_entry entry
+      # If we are processing a rollup, let's do the rollup here.
+      rollup_invoice_lines(entry) if rollup_lines
+
       # If we have 2 container records with the same number combine them together (summing the weights, etc)
       # If they have differing sizes, we're just going to use the value that the first container has
       containers = Hash.new {|h, k| h[k] = [] }
@@ -344,13 +389,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
 
       entry_containers = []
 
-      containers.each_pair do |container_number, containers|
-        next if containers.length == 0
+      containers.each_pair do |_container_number, cons|
+        next if cons.length == 0
 
-        if containers.length == 1
-          entry_containers << containers.first
+        if cons.length == 1
+          entry_containers << cons.first
         else
-          entry_containers << combine_containers(containers)
+          entry_containers << combine_containers(cons)
         end
       end
       entry.containers = entry_containers
@@ -369,8 +414,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
           when :weight_kg
             sum_struct_field_value(base_container, field, value)
           else
-            if value.respond_to?(:blank) && !value.blank?
-              base_container[field] = value unless !base_container[field].blank?
+            if value.respond_to?(:blank) && value.present?
+              base_container[field] = value if base_container[field].blank?
             end
           end
         end

@@ -181,7 +181,7 @@ module OpenChain; module CustomHandler; class FenixInvoiceParser
       customer_number = (xref.presence || invoice.customer_number)
       # There are certain customers that are billed in Fenix for a third system, ALS.  These cusotmers are stored in an xref,
       # if the name is there, then the company is 'als', otherwise it's 'vcu'
-      company = DataCrossReference.has_key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
+      company = DataCrossReference.key?(customer_number, DataCrossReference::FENIX_ALS_CUSTOMER_NUMBER) ? "als" : "vcu"
 
       # If the invoice data comes in prior to the entry data coming from Fenix, then there's not going to be an Entry that the invoice
       # is associated with.  The actual invoice csv data does have the entry number in it, so we'll fall back to using

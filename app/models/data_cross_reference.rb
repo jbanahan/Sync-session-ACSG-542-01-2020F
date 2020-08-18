@@ -21,95 +21,97 @@ require 'csv'
 
 class DataCrossReference < ActiveRecord::Base
   attr_accessible :company_id, :company, :cross_reference_type, :key, :value,
-    :created_at
+                  :created_at
 
   belongs_to :company
-  validates_presence_of :key, :cross_reference_type
+  validates :key, :cross_reference_type, presence: true
 
-  JJILL_ORDER_FINGERPRINT ||= 'jjill_order'
-  LENOX_ITEM_MASTER_HASH ||= 'lenox_itm'
-  LENOX_HTS_FINGERPRINT ||= 'lenox_hts_fingerprint'
-  RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'
-  RL_PO_TO_BRAND ||= 'po_to_brand'
-  UA_PLANT_TO_ISO ||= 'uap2i'
-  UA_SITE_TO_COUNTRY ||= 'ua_site'
-  UA_WINSHUTTLE_FINGERPRINT ||= 'uawin-fingerprint'
-  UA_315_MILESTONE_EVENT ||= 'ua-315'
-  UA_MATERIAL_COLOR_PLANT ||= 'ua-mcp'
-  ALLIANCE_CHARGE_TO_GL_ACCOUNT ||= 'al_gl_code'
-  ALLIANCE_BANK_ACCOUNT_TO_INTACCT ||= 'al_bank_no'
-  INTACCT_CUSTOMER_XREF ||= 'in_cust'
-  INTACCT_VENDOR_XREF ||= 'in_vend'
-  INTACCT_BANK_CASH_GL_ACCOUNT ||= 'in_cash_gl'
-  ALLIANCE_FREIGHT_CHARGE_CODE ||= 'al_freight_code'
-  FENIX_ALS_CUSTOMER_NUMBER ||= 'fx_als_cust'
-  RL_FABRIC_XREF ||= 'rl_fabric'
-  RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'
-  UA_DUTY_RATE ||= 'ua_duty_rate'
-  ALLIANCE_CHECK_REPORT_CHECKSUM ||= 'al_check_checksum'
-  ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'
-  OUTBOUND_315_EVENT ||= '315'
-  PO_FINGERPRINT ||= 'po_id'
-  EXPORT_CARRIER ||= 'export_carriers'
-  US_HTS_TO_CA ||= 'us_hts_to_ca'
-  HM_PARS_NUMBER ||= 'hm_pars'
-  UN_LOCODE_TO_US_CODE ||= "locode_to_us"
-  ASCE_MID ||= 'asce_mid'
-  CA_HTS_TO_DESCR ||= 'ca_hts_to_descr'
-  PVH_INVOICES ||= 'pvh_invoices'
+  JJILL_ORDER_FINGERPRINT ||= 'jjill_order'.freeze
+  LENOX_ITEM_MASTER_HASH ||= 'lenox_itm'.freeze
+  LENOX_HTS_FINGERPRINT ||= 'lenox_hts_fingerprint'.freeze
+  RL_BRAND_TO_PROFIT_CENTER ||= 'profit_center'.freeze
+  RL_PO_TO_BRAND ||= 'po_to_brand'.freeze
+  UA_PLANT_TO_ISO ||= 'uap2i'.freeze
+  UA_SITE_TO_COUNTRY ||= 'ua_site'.freeze
+  UA_WINSHUTTLE_FINGERPRINT ||= 'uawin-fingerprint'.freeze
+  UA_315_MILESTONE_EVENT ||= 'ua-315'.freeze
+  UA_MATERIAL_COLOR_PLANT ||= 'ua-mcp'.freeze
+  ALLIANCE_CHARGE_TO_GL_ACCOUNT ||= 'al_gl_code'.freeze
+  ALLIANCE_BANK_ACCOUNT_TO_INTACCT ||= 'al_bank_no'.freeze
+  INTACCT_CUSTOMER_XREF ||= 'in_cust'.freeze
+  INTACCT_VENDOR_XREF ||= 'in_vend'.freeze
+  INTACCT_BANK_CASH_GL_ACCOUNT ||= 'in_cash_gl'.freeze
+  ALLIANCE_FREIGHT_CHARGE_CODE ||= 'al_freight_code'.freeze
+  FENIX_ALS_CUSTOMER_NUMBER ||= 'fx_als_cust'.freeze
+  RL_FABRIC_XREF ||= 'rl_fabric'.freeze
+  RL_VALIDATED_FABRIC ||= 'rl_valid_fabric'.freeze
+  UA_DUTY_RATE ||= 'ua_duty_rate'.freeze
+  ALLIANCE_CHECK_REPORT_CHECKSUM ||= 'al_check_checksum'.freeze
+  ALLIANCE_INVOICE_REPORT_CHECKSUM ||= 'al_inv_checksum'.freeze
+  OUTBOUND_315_EVENT ||= '315'.freeze
+  PO_FINGERPRINT ||= 'po_id'.freeze
+  EXPORT_CARRIER ||= 'export_carriers'.freeze
+  US_HTS_TO_CA ||= 'us_hts_to_ca'.freeze
+  HM_PARS_NUMBER ||= 'hm_pars'.freeze
+  UN_LOCODE_TO_US_CODE ||= "locode_to_us".freeze
+  ASCE_MID ||= 'asce_mid'.freeze
+  CA_HTS_TO_DESCR ||= 'ca_hts_to_descr'.freeze
+  PVH_INVOICES ||= 'pvh_invoices'.freeze
   # This is a generic MID cross reference, the key value can be anything, the value should be the MID and the importer id field should
   # be filled in
-  MID_XREF ||= 'mid_xref'
-  ENTRY_MID_VALIDATIONS ||= 'entry_mids'
-  SHIPMENT_CI_LOAD_CUSTOMERS ||= 'shp_ci_load_cust'
-  SHIPMENT_ENTRY_LOAD_CUSTOMERS ||= "shp_entry_load_cust"
-  INVOICE_CI_LOAD_CUSTOMERS ||= 'inv_ci_load_cust'
-  ISF_CI_LOAD_CUSTOMERS ||= "isf_ci_load_cust"
-  LL_GTN_QUANTITY_UOM ||= "ll_gtn_quantity_uom"
-  LL_GTN_EQUIPMENT_TYPE ||= "ll_gtn_equipment_type"
-  CI_LOAD_DEFAULT_GOODS_DESCRIPTION ||= "shp_ci_load_goods"
-  VFI_DIVISION ||= "vfi_division"
-  OTA_REFERENCE_FIELDS ||= "ota_reference_fields"
-  ASCE_BRAND ||= "asce_brand_xref"
-  HM_I2_SHIPMENT_EXPORT_INVOICE_NUMBER = "hm_i2_shipment_export_invoice_number"
-  HM_I2_SHIPMENT_RETURNS_INVOICE_NUMBER = "hm_i2_shipment_returns_invoice_number"
-  HM_I2_DRAWBACK_EXPORT_INVOICE_NUMBER = "hm_i2_drawback_export_invoice_number"
-  HM_I2_DRAWBACK_RETURNS_INVOICE_NUMBER = "hm_i2_drawback_returns_invoice_number"
-  LL_CARB_STATEMENTS ||= "ll_carb_statement"
-  LL_PATENT_STATEMENTS ||= "ll_patent_statement"
-  CARGOWISE_TRANSPORT_MODE_US ||= "cargowise_transport_mode_us"
-  CARGOWISE_TRANSPORT_MODE_CA ||= "cargowise_transport_mode_ca"
+  MID_XREF ||= 'mid_xref'.freeze
+  ENTRY_MID_VALIDATIONS ||= 'entry_mids'.freeze
+  SHIPMENT_CI_LOAD_CUSTOMERS ||= 'shp_ci_load_cust'.freeze
+  SHIPMENT_ENTRY_LOAD_CUSTOMERS ||= "shp_entry_load_cust".freeze
+  INVOICE_CI_LOAD_CUSTOMERS ||= 'inv_ci_load_cust'.freeze
+  ISF_CI_LOAD_CUSTOMERS ||= "isf_ci_load_cust".freeze
+  LL_GTN_QUANTITY_UOM ||= "ll_gtn_quantity_uom".freeze
+  LL_GTN_EQUIPMENT_TYPE ||= "ll_gtn_equipment_type".freeze
+  CI_LOAD_DEFAULT_GOODS_DESCRIPTION ||= "shp_ci_load_goods".freeze
+  VFI_DIVISION ||= "vfi_division".freeze
+  OTA_REFERENCE_FIELDS ||= "ota_reference_fields".freeze
+  ASCE_BRAND ||= "asce_brand_xref".freeze
+  HM_I2_SHIPMENT_EXPORT_INVOICE_NUMBER = "hm_i2_shipment_export_invoice_number".freeze
+  HM_I2_SHIPMENT_RETURNS_INVOICE_NUMBER = "hm_i2_shipment_returns_invoice_number".freeze
+  HM_I2_DRAWBACK_EXPORT_INVOICE_NUMBER = "hm_i2_drawback_export_invoice_number".freeze
+  HM_I2_DRAWBACK_RETURNS_INVOICE_NUMBER = "hm_i2_drawback_returns_invoice_number".freeze
+  LL_CARB_STATEMENTS ||= "ll_carb_statement".freeze
+  LL_PATENT_STATEMENTS ||= "ll_patent_statement".freeze
+  CARGOWISE_TRANSPORT_MODE_US ||= "cargowise_transport_mode_us".freeze
+  CARGOWISE_TRANSPORT_MODE_CA ||= "cargowise_transport_mode_ca".freeze
   # This list determines which documents should only retain a single version of the document
-  CARGOWISE_SINGLE_DOCUMENT_CODE ||= "cargowise_single_document_code"
-  VFI_CALENDAR ||= "vfi_calendar"
-  UNIT_OF_MEASURE ||= "unit_of_measure"
-  ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'
+  CARGOWISE_SINGLE_DOCUMENT_CODE ||= "cargowise_single_document_code".freeze
+  VFI_CALENDAR ||= "vfi_calendar".freeze
+  UNIT_OF_MEASURE ||= "unit_of_measure".freeze
+  ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'.freeze
   # Combination of entry export and origin country codes that have SPI available.
-  SPI_AVAILABLE_COUNTRY_COMBINATION ||= 'spi_available_country_combination'
+  SPI_AVAILABLE_COUNTRY_COMBINATION ||= 'spi_available_country_combination'.freeze
 
-  scope :for_type, -> (xref_type) { where(cross_reference_type: xref_type) }
+  scope :for_type, ->(xref_type) { where(cross_reference_type: xref_type) }
 
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
   def self.xref_edit_hash user
     all_editable_xrefs = [
+      # rubocop:disable Layout/LineLength
       xref_attributes(ENTRY_MID_VALIDATIONS, "Manufacturer ID", "Manufacturer IDs used to validate entries", key_label: "MID", show_value_column: false, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with MID Code in column A"),
       xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", key_label: "Failure Fiber", value_label: "Approved Fiber"),
       xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false),
       xref_attributes(US_HTS_TO_CA, "System Classification Cross References", "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", key_label: "United States HTS", value_label: "Canada HTS", require_company: true, company: {system_code: "HENNE"}),
       xref_attributes(ASCE_MID, "Ascena MID-Vendor List", "MID-Vendors on this list are used to generate the Daily First Sale Exception report", key_label: "MID-Vendor ID", value_label: "FS Start Date", preprocessor: PREPROCESSORS[ASCE_MID]),
       xref_attributes(CA_HTS_TO_DESCR, "Canada Customs Description Cross References", "Products automatically assigned a CA HTS are given the corresponding customs description.", key_label: "Canada HTS", value_label: "Customs Description", require_company: true, company: {system_code: "HENNE"}),
-      xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label:"Site Code", value_label: "Country Code"),
-      xref_attributes(CI_LOAD_DEFAULT_GOODS_DESCRIPTION, "Shipment Entry Load Goods Descriptions", "Enter the customer number and corresponding default Goods Description.", key_label:"Customer Number", value_label: "Goods Description"),
-      xref_attributes(SHIPMENT_ENTRY_LOAD_CUSTOMERS, "Shipment Entry Load Customers", "Enter the customer number to enable sending Shipment data to Kewill.", key_label:"Customer Number", show_value_column: false),
-      xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
-      xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label:"PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true),
-      xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label:"Customer Number", show_value_column: false),
+      xref_attributes(UA_SITE_TO_COUNTRY, "FSM Site Cross References", "Enter the site code and corresponding country code.", key_label: "Site Code", value_label: "Country Code"),
+      xref_attributes(CI_LOAD_DEFAULT_GOODS_DESCRIPTION, "Shipment Entry Load Goods Descriptions", "Enter the customer number and corresponding default Goods Description.", key_label: "Customer Number", value_label: "Goods Description"),
+      xref_attributes(SHIPMENT_ENTRY_LOAD_CUSTOMERS, "Shipment Entry Load Customers", "Enter the customer number to enable sending Shipment data to Kewill.", key_label: "Customer Number", show_value_column: true, value_label: "Document Type", allowed_values: ["Standard", "Rollup"]),
+      xref_attributes(SHIPMENT_CI_LOAD_CUSTOMERS, "Shipment CI Load Customers", "Enter the customer number to enable sending Shipment CI Load data to Kewill.", key_label: "Customer Number", show_value_column: false),
+      xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label: "PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true),
+      xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label: "Customer Number", show_value_column: false),
       xref_attributes(ASCE_BRAND, "Ascena Brands", "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", key_label: "Brand Name", value_label: "Brand Abbrev", upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false),
-      xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
-      xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label:"Code", value_label: "Description", show_value_column: true),
-      xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label:"MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."),
+      xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label: "Code", value_label: "Description", show_value_column: true),
+      xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label: "Code", value_label: "Description", show_value_column: true),
+      xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label: "MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."),
       xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION])
+      # rubocop:enable Layout/LineLength
     ]
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
@@ -134,15 +136,15 @@ class DataCrossReference < ActiveRecord::Base
   private_class_method :xref_attributes
 
   def self.company_for_xref xref_hsh
-    return unless xref_hsh[:company].try(:keys).present?
-    Company.where(xref_hsh[:company]).first
+    return if xref_hsh[:company].try(:keys).blank?
+    Company.find_by(xref_hsh[:company])
   end
 
   def can_view? user
     self.class.can_view? cross_reference_type, user
   end
 
-  def self.preprocess_and_add_xref! xref_type, new_key, new_value, company_id=nil
+  def self.preprocess_and_add_xref! xref_type, new_key, new_value, company_id = nil
     xref_hsh = xref_edit_hash(nil)[xref_type]
     k, v = xref_hsh[:preprocessor].call(new_key, new_value).values_at(:key, :value)
 
@@ -163,7 +165,9 @@ class DataCrossReference < ActiveRecord::Base
     case cross_reference_type
     when RL_FABRIC_XREF, RL_VALIDATED_FABRIC
       MasterSetup.get.custom_feature? "Polo"
-    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS, SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS, ASCE_BRAND, MID_XREF, CA_HTS_TO_DESCR
+    when US_HTS_TO_CA, ASCE_MID, CI_LOAD_DEFAULT_GOODS_DESCRIPTION, SHIPMENT_ENTRY_LOAD_CUSTOMERS,
+        SHIPMENT_CI_LOAD_CUSTOMERS, ENTRY_MID_VALIDATIONS, INVOICE_CI_LOAD_CUSTOMERS, ASCE_BRAND, MID_XREF,
+        CA_HTS_TO_DESCR
       MasterSetup.get.custom_feature?("WWW VFI Track Reports") && (user.sys_admin? || user.in_group?('xref-maintenance'))
     when UA_SITE_TO_COUNTRY
       MasterSetup.get.custom_feature?("UnderArmour")
@@ -183,7 +187,7 @@ class DataCrossReference < ActiveRecord::Base
   # return a hash of all key value pairs
   def self.get_all_pairs cross_reference_type
     r = {}
-    self.where(cross_reference_type:cross_reference_type).each do |d|
+    self.where(cross_reference_type: cross_reference_type).each do |d|
       r[d.key] = d.value
     end
     r
@@ -198,19 +202,19 @@ class DataCrossReference < ActiveRecord::Base
   end
 
   def self.find_rl_profit_center_by_brand importer_id, brand
-    find_unique where(:cross_reference_type => RL_BRAND_TO_PROFIT_CENTER, :key => brand, company_id: importer_id)
+    find_unique where(cross_reference_type: RL_BRAND_TO_PROFIT_CENTER, key: brand, company_id: importer_id)
   end
 
   def self.find_rl_brand_by_po po_number
-    find_unique where(:cross_reference_type => RL_PO_TO_BRAND, :key => po_number)
+    find_unique where(cross_reference_type: RL_PO_TO_BRAND, key: po_number)
   end
 
   def self.find_ua_plant_to_iso plant
-    find_unique where(cross_reference_type:UA_PLANT_TO_ISO, key:plant)
+    find_unique where(cross_reference_type: UA_PLANT_TO_ISO, key: plant)
   end
 
   def self.find_ua_country_by_site site_number
-    find_unique where(cross_reference_type:UA_SITE_TO_COUNTRY, key:site_number)
+    find_unique where(cross_reference_type: UA_SITE_TO_COUNTRY, key: site_number)
   end
 
   def self.find_ua_315_milestone ua_shipment_identifier, event_code
@@ -240,7 +244,7 @@ class DataCrossReference < ActiveRecord::Base
 
   # Value will be MD5 hash of full line from Lenox Item Master Feed keyed by the lenox part number
   def self.find_lenox_item_master_hash part_number
-    find_unique where(cross_reference_type:LENOX_ITEM_MASTER_HASH, key:part_number)
+    find_unique where(cross_reference_type: LENOX_ITEM_MASTER_HASH, key: part_number)
   end
 
   def self.create_lenox_item_master_hash! part_number, hash
@@ -260,6 +264,7 @@ class DataCrossReference < ActiveRecord::Base
   def self.find_jjill_order_fingerprint order
     find_unique where(cross_reference_type: JJILL_ORDER_FINGERPRINT, key: order.id.to_s)
   end
+
   def self.create_jjill_order_fingerprint! order, fingerprint
     add_xref! JJILL_ORDER_FINGERPRINT, order.id.to_s, fingerprint
   end
@@ -338,7 +343,7 @@ class DataCrossReference < ActiveRecord::Base
 
   def self.find_and_mark_next_unused_hm_pars_number
     xref = nil
-    while xref.nil? do
+    while xref.nil?
       # Find the next available pars number from the list...
       pars = add_pars_clause(DataCrossReference.where(cross_reference_type: HM_PARS_NUMBER)).order("`key`, id").first
       return nil if pars.nil?
@@ -346,7 +351,7 @@ class DataCrossReference < ActiveRecord::Base
       # Lock it (this will actually reload the data) and will lock the database row
       Lock.db_lock(pars) do
         # It's possible that this record (while waiting for the lock) has actually been used..in which case, try again
-        next unless pars.value.blank?
+        next if pars.value.present?
 
         # if the value is blank, then we can use this record...mark it as used and then return the number
         pars.update! value: "1"
@@ -382,7 +387,7 @@ class DataCrossReference < ActiveRecord::Base
   def self.update_ota_reference_fields! hsh
     new_fields = []
     hsh.each_key do |cm_name|
-      hsh[cm_name].each { |uid| new_fields << "#{cm_name}~#{uid}" } if hsh[cm_name]
+      hsh[cm_name]&.each { |uid| new_fields << "#{cm_name}~#{uid}" }
     end
     existing_fields = list_ota_reference_fields
     fields_to_add = new_fields - existing_fields
@@ -437,7 +442,7 @@ class DataCrossReference < ActiveRecord::Base
     find_unique(relation, key: key, xref_type: MID_XREF)
   end
 
-  def self.has_key? key, cross_reference_type
+  def self.key? key, cross_reference_type
     DataCrossReference.where(key: key, cross_reference_type: cross_reference_type).exists?
   end
 
@@ -467,8 +472,8 @@ class DataCrossReference < ActiveRecord::Base
   private_class_method :find_unique_relation
 
   def self.hash_for_type cross_reference_type, company_id: nil
-    h = Hash.new
-    query = self.where(cross_reference_type:cross_reference_type)
+    h = {}
+    query = self.where(cross_reference_type: cross_reference_type)
     query = query.where(company_id: company_id) if company_id
 
     query.select("`key`, `value`").collect {|d| h[d.key] = d.value}
@@ -477,8 +482,8 @@ class DataCrossReference < ActiveRecord::Base
 
   # create the record in the database
   def self.add_xref! cross_reference_type, key, value, company_id = nil
-    xref = self.where(:cross_reference_type => cross_reference_type, :key => key, :company_id => company_id).first
-    xref = self.new(cross_reference_type:cross_reference_type, key:key, company_id:company_id) unless xref
+    xref = self.find_by(cross_reference_type: cross_reference_type, key: key, company_id: company_id)
+    xref ||= self.new(cross_reference_type: cross_reference_type, key: key, company_id: company_id)
     xref.value = value
     xref.save!
     xref

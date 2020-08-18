@@ -65,6 +65,18 @@ describe OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator
         expect(sync.confirmed_at.to_i).to eq (now + 1.minute).to_i
       end
 
+      it "handles rollup as a value" do
+        cross_reference.update! value: "Rollup"
+        expect_any_instance_of(OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator).to receive(:generate_xml_and_send).with(shipment, sync_records: instance_of(SyncRecord))
+
+        subject.compare shipment, nil, nil, nil, nil, nil, nil
+
+        shipment.reload
+
+        sync = shipment.sync_records.find {|s| s.trading_partner == "Kewill Entry" }
+        expect(sync).not_to be_nil
+      end
+
       it "uses an alternate generator" do
         cross_reference.update_attributes! value: "OpenChain::FakeKewillShipmentEntryXmlGenerator"
         expect_any_instance_of(OpenChain::FakeKewillShipmentEntryXmlGenerator).to receive(:generate_xml_and_send).with(shipment, sync_records: instance_of(SyncRecord))

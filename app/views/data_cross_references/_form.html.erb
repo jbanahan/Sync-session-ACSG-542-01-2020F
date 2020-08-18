@@ -16,7 +16,11 @@
   <table>
     <%=field_row xref_info[:key_label], f.text_field(:key)%>
     <% if xref_info[:show_value_column] %>
-      <%=field_row xref_info[:value_label], f.text_field(:value)%>
+      <% if xref_info[:allowed_values] %>
+        <%=field_row xref_info[:value_label], f.select(:value, xref_info[:allowed_values])%>
+      <% else %>
+        <%=field_row xref_info[:value_label], f.text_field(:value)%>
+      <% end %>
     <% end %>
     <% if xref_info[:require_company] %>
       <%=field_row "Importer Name (System Code)", f.select('company_id', options_from_collection_for_select(@importers, 'id', :name_with_system_code, xref.company.try(:id)))%>
