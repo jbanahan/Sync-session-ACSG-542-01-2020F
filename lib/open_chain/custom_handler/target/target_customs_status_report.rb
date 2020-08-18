@@ -1,6 +1,4 @@
-require 'open_chain/custom_handler/pvh/pvh_entry_shipment_matching_support'
-require 'open_chain/report/report_helper'
-require 'open_chain/fiscal_calendar_scheduling_support'
+require 'open_chain/report/builder_output_report_helper'
 
 # Target calls this the CSR.  It's a daily report that shows entries that have been delayed
 # by US Customs for any reason.

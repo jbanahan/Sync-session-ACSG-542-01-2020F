@@ -81,6 +81,7 @@ require 'open_chain/custom_handler/kirklands/kirklands_gtn_order_xml_parser'
 require 'open_chain/custom_handler/target/target_entry_initiation_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_puma_7501_parser'
 require 'open_chain/custom_handler/target/target_parts_file_parser'
+require 'open_chain/custom_handler/target/target_820_xml_parser'
 require 'open_chain/custom_handler/target/target_entry_zip_file_parser'
 
 module OpenChain
@@ -364,6 +365,8 @@ module OpenChain
         OpenChain::CustomHandler::Target::TargetEntryInitiationFileParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "target_parts") && custom_features.include?("Target Feeds")
         OpenChain::CustomHandler::Target::TargetPartsFileParser.delay.process_from_s3 bucket, s3_path
+      elsif (parser_identifier == "target_820") && custom_features.include?("Target Feeds")
+        OpenChain::CustomHandler::Target::Target820XmlParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "target_documents") && custom_features.include?("Target Feeds")
         OpenChain::CustomHandler::Target::TargetEntryZipFileParser.delay.process_from_s3 bucket, s3_path
       else

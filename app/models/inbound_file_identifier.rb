@@ -41,6 +41,7 @@ class InboundFileIdentifier < ActiveRecord::Base
   TYPE_EVENT_TYPE = "Event Type".freeze
   TYPE_PARS_NUMBER = "PARS Number".freeze
   TYPE_ATTACHMENT_NAME = "Attachment Name".freeze
+  TYPE_PAYMENT_REFERENCE_NUMBER = "Payment Reference Number".freeze
 
   def self.translate_identifier id
     if id.is_a?(Symbol)
