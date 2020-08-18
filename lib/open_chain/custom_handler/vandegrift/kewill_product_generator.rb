@@ -23,7 +23,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     nil
   end
 
-  attr_reader :alliance_customer_number, :customer_numbers, :importer_system_code, :default_special_tariff_country_origin, :default_values
+  attr_reader :alliance_customer_number, :customer_numbers, :importer_system_code, :default_special_tariff_country_origin, :default_values,
+              :effective_date_override, :expiration_date_override, :customer_number_override
 
   def initialize alliance_customer_number, opts = {}
     opts = opts.with_indifferent_access
@@ -32,8 +33,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # Combined with the use_inique_identifier flag, this allows us to run this on customer specific systems
     # (like DAS) where the products aren't linked to any importer - since the whole system is a single importer's system.
     add_options(opts, :include_linked_importer_products, :strip_leading_zeros, :use_unique_identifier, :disable_importer_check,
-                      :allow_blank_tariffs, :allow_multiple_tariffs, :disable_special_tariff_lookup, :allow_style_truncation,
-                      :suppress_fda_data)
+                :allow_blank_tariffs, :allow_multiple_tariffs, :disable_special_tariff_lookup, :allow_style_truncation,
+                :suppress_fda_data)
     # We can allow for multiple customer numbers so that we can just have a single scheduled job for all the simple
     # generators that share the same setup (just with different customer numbers)
     if opts[:customer_numbers]
@@ -47,14 +48,24 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
 
     @default_values = opts[:defaults].presence || {}
     @default_special_tariff_country_origin = opts[:default_special_tariff_country_origin]
+    if opts[:effective_date_override].present?
+      @effective_date_override = Date.parse(opts[:effective_date_override])
+    end
+
+    if opts[:expiration_date_override].present?
+      @expiration_date_override = Date.parse(opts[:expiration_date_override])
+    end
+    @customer_number_override = opts[:customer_number_override]
   end
 
   def custom_defs
     @cdefs ||= self.class.prep_custom_definitions [:prod_country_of_origin, :prod_part_number, :prod_fda_product, :prod_fda_product_code, :prod_fda_temperature, :prod_fda_uom,
                 :prod_fda_country, :prod_fda_mid, :prod_fda_shipper_id, :prod_fda_description, :prod_fda_establishment_no, :prod_fda_container_length,
-                :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance, :prod_fda_affirmation_compliance_value, :prod_brand,
-                :prod_301_exclusion_tariff, :prod_fda_accession_number, :prod_cvd_case, :prod_add_case, :class_special_program_indicator, :prod_lacey_component_of_article, :prod_lacey_genus_1, :prod_lacey_species_1, :prod_lacey_genus_2,
-                :prod_lacey_species_2, :prod_lacey_country_of_harvest, :prod_lacey_quantity, :prod_lacey_quantity_uom, :prod_lacey_percent_recycled, :prod_lacey_preparer_name, :prod_lacey_preparer_email, :prod_lacey_preparer_phone]
+                :prod_fda_container_width, :prod_fda_container_height, :prod_fda_contact_name, :prod_fda_contact_phone, :prod_fda_affirmation_compliance,
+                :prod_fda_affirmation_compliance_value, :prod_brand, :prod_301_exclusion_tariff, :prod_fda_accession_number, :prod_cvd_case, :prod_add_case,
+                :class_special_program_indicator, :prod_lacey_component_of_article, :prod_lacey_genus_1, :prod_lacey_species_1, :prod_lacey_genus_2,
+                :prod_lacey_species_2, :prod_lacey_country_of_harvest, :prod_lacey_quantity, :prod_lacey_quantity_uom, :prod_lacey_percent_recycled,
+                :prod_lacey_preparer_name, :prod_lacey_preparer_email, :prod_lacey_preparer_phone]
     @cdefs
   end
 
@@ -65,11 +76,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   def sync_xml
     imp = importer unless has_option?(:disable_importer_check)
     val = super
-    imp.update!(:last_alliance_product_push_at => Time.zone.now) if imp
+    imp&.update!(last_alliance_product_push_at: Time.zone.now)
     val
   end
 
-  def write_row_to_xml parent, row_counter, row
+  def write_row_to_xml parent, _row_counter, row
     data = map_query_row_to_product_data(row)
     write_tariff_data_to_xml(parent, data)
   end
@@ -88,14 +99,42 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   def base_product_header_mapping d, row
     # The query should be pulling the Customs Management cust_no from the system identifiers table now, it's possible on some customer
     # systems that this won't be present, so just fall back to using the customer number set up from the constructor.
-    d.customer_number = customer_number(row).presence || self.alliance_customer_number
+    d.customer_number = customer_number_value(row)
     d.part_number = part_number(row)
     d.part_number = d.part_number.to_s.gsub(/^0+/, "") if has_option?(:strip_leading_zeros)
-    d.effective_date = effective_date(effective_date_value: effective_date_from_results(row))
-    # Without this expiration, the product ci line data can't be pulled in.
-    # Guessing they're doing a check over effective date and expiration date columns in their tables
-    # to determine which record to utilize for a part.
-    d.expiration_date = expiration_date
+    # The effective date / expiration date (aka Effective Date Start / End in Customs Management) is used as a means to version your
+    # parts library in CM.  See comment on KewillProductGeneratorSupport#effective_date for full explanation
+    d.effective_date = effective_date(effective_date_value: effective_date_value(row))
+    d.expiration_date = expiration_date_value(row)
+  end
+
+  def customer_number_value row
+    if self.customer_number_override.present?
+      cust_no = self.customer_number_override
+    else
+      cust_no = customer_number(row).presence || self.alliance_customer_number
+    end
+    cust_no
+  end
+
+  def effective_date_value row
+    if self.effective_date_override.present?
+      results_date = self.effective_date_override
+    else
+      results_date = effective_date_from_results(row).presence || default_effective_date
+    end
+
+    results_date
+  end
+
+  def expiration_date_value row
+    if self.expiration_date_override.present?
+      exp_date = self.expiration_date_override
+    else
+      exp_date = expiration_date_from_results(row).presence || default_expiration_date
+    end
+
+    exp_date
   end
 
   def map_product_header_data d, row
@@ -143,16 +182,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     tariffs.find {|t| t.primary_tariff == true }
   end
 
-  def has_fda_data? row
+  def fda_data? row
     row[5] == "Y" || row[6].present?
   end
 
-  def has_fda_affirmation_of_compliance? row
-    !row[18].blank?
+  def fda_affirmation_of_compliance? row
+    row[18].present?
   end
 
-  def map_fda_data product, tariff, row
-    if has_fda_data? row
+  def map_fda_data _product, _tariff, row
+    if fda_data? row
       f = FdaData.new
       f.product_code = row[6]
       f.uom = row[7]
@@ -169,7 +208,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       f.cargo_storage_status = row[20]
       f.affirmations_of_compliance = []
 
-      if has_fda_affirmation_of_compliance?(row)
+      if fda_affirmation_of_compliance?(row)
         f.affirmations_of_compliance << FdaAffirmationOfComplianceData.new(row[18], row[19])
       end
 
@@ -178,13 +217,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         f.affirmations_of_compliance << FdaAffirmationOfComplianceData.new("ACC", row[21])
       end
 
-      return [f]
+      [f]
     else
-      return []
+      []
     end
   end
 
-  def map_penalty_data product, row
+  def map_penalty_data _product, row
     penalties = []
 
     if row[25].present?
@@ -198,7 +237,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     penalties
   end
 
-  def map_lacey_data product, tariff, row
+  def map_lacey_data _product, _tariff, row
     lacey = []
 
     # If no component article exists, don't send lacey data
@@ -240,12 +279,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
 
   # Override this method to return a value from the query result row to use as an effective date
   # if the extending generator wants to utilze CMUS part versioning
-  def effective_date_from_results row
+  def effective_date_from_results _row
+    nil
+  end
+
+  def expiration_date_from_results _row
     nil
   end
 
   def importer
-    if !self.importer_system_code.blank?
+    if self.importer_system_code.present?
       @importer ||= Company.where(system_code: self.importer_system_code).first
       raise ArgumentError, "No importer found with Importer System Code '#{self.importer_system_code}'." unless @importer
     else
@@ -327,7 +370,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
 
     # custom_where attr_reader method is defined in parent class
     if self.custom_where.blank?
-      qry += "#{Product.need_sync_join_clause(sync_code)} WHERE #{Product.need_sync_where_clause()} "
+      qry += "#{Product.need_sync_join_clause(sync_code)} WHERE #{Product.need_sync_where_clause} "
     else
       qry += "WHERE #{self.custom_where} "
     end
@@ -352,7 +395,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     qry
   end
 
-  def preprocess_row row, opts = {}
+  def preprocess_row row, _opts = {}
     row.each do |column, val|
       # So, what we're doing here is attempting to transliterate any NON-ASCII data...
       # If that's not possible, we're using an ASCII bell character.
@@ -363,7 +406,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
       if val.is_a? String
         translated = ActiveSupport::Inflector.transliterate(val, "\007")
         if translated =~ /\x07/
-          raise "Untranslatable Non-ASCII character for Part Number '#{row[0]}' found at string index #{$LAST_MATCH_INFO.begin(0)} in product query column #{column}: '#{val}'."
+          raise "Untranslatable Non-ASCII character for Part Number '#{row[0]}' found at string index #{$LAST_MATCH_INFO.begin(0)} in product query column #{column}: '#{val}'." # rubocop:disable Layout/LineLength
         else
           # Strip newlines from everything, there's no scenario where a newline should be present in the file data
           row[column] = translated.gsub(/\r?\n/, " ")
@@ -383,25 +426,23 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   def importer_id_query_clause
     if has_option?(:use_customer_numbers)
       qry = ActiveRecord::Base.sanitize_sql_array([" AND sys_id.code IN (?)", self.customer_numbers])
+    elsif has_option?(:disable_importer_check)
+      qry = ""
     else
       # If we've disabled the importer check, it means we're running potentially on a customer
       # specific system, which likely doesn't have an importer record linked to the product records
-      if has_option?(:disable_importer_check)
-        qry = ""
-      else
-        qry = " AND products.importer_id "
-        if has_option?(:include_linked_importer_products)
-          @child_importer_ids ||= importer.linked_companies.find_all {|c| c.importer? }.map &:id
-          if @child_importer_ids.length > 0
-            qry += " IN (?)"
-            qry = ActiveRecord::Base.sanitize_sql_array([qry, @child_importer_ids])
-          else
-            # There were no child importers found, so don't add a clause that will return nothing.
-            qry = " AND 1 = -1"
-          end
+      qry = " AND products.importer_id "
+      if has_option?(:include_linked_importer_products)
+        @child_importer_ids ||= importer.linked_companies.find_all(&:importer?).map(&:id)
+        if @child_importer_ids.length > 0
+          qry += " IN (?)"
+          qry = ActiveRecord::Base.sanitize_sql_array([qry, @child_importer_ids])
         else
-          qry += " = #{importer.id}"
+          # There were no child importers found, so don't add a clause that will return nothing.
+          qry = " AND 1 = -1"
         end
+      else
+        qry += " = #{importer.id}"
       end
     end
 
@@ -469,7 +510,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         existing_special_tariff = all_tariffs.find {|existing_tariff| existing_tariff.tariff_number == special_tariff.special_hts_number }
         next unless existing_special_tariff.nil?
 
-        all_tariffs << TariffData.make_tariff(special_tariff.special_hts_number, special_tariff.priority.to_f, secondary_priority(special_tariff.special_hts_number), false, true)
+        all_tariffs << TariffData.make_tariff(special_tariff.special_hts_number, special_tariff.priority.to_f,
+                                              secondary_priority(special_tariff.special_hts_number), false, true)
       end
     end
 
@@ -488,7 +530,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   end
 
   def special_tariff_hash
-    @special_tariffs ||= SpecialTariffCrossReference.find_special_tariff_hash "US", true, reference_date: Time.zone.now.to_date
+    @special_tariff_hash ||= SpecialTariffCrossReference.find_special_tariff_hash "US", true, reference_date: Time.zone.now.to_date
   end
 
   def keyed_special_tariff_priority product_country_origin, hts_number
@@ -514,16 +556,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
   # The secondary priority is mostly just a failsafe to make sure that 301 tariffs are always prioritized above MTB
   # tariffs if their special tariff xref values are the same....This is primarily just codifying a default case.
   def secondary_priority tariff_number
-    if is_mtb_tariff? tariff_number
-      return 100
+    if mtb_tariff? tariff_number
+      100
     elsif is_301_tariff? tariff_number
-      return 200
+      200
     else
-      return 0
+      0
     end
   end
 
-  def is_mtb_tariff? tariff_number
+  def mtb_tariff? tariff_number
     tariff_number.to_s.starts_with?("9902")
   end
 
@@ -559,7 +601,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     @mids[mid]
   end
 
-  def has_option? key
+  def has_option? key # rubocop:disable Naming/PredicateName
     options[key]
   end
 

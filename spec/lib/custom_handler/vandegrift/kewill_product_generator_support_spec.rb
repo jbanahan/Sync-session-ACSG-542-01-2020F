@@ -394,8 +394,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGeneratorSupport do
   end
 
   describe 'expiration_date' do
-    it 'uses a hardcoded date' do
+    it 'uses a default date' do
       expect(subject.expiration_date).to eq Date.new(2099, 12, 31)
+    end
+  end
+
+  describe 'default_expiration_date' do
+    it 'uses a hardcoded date' do
+      expect(subject.default_expiration_date).to eq Date.new(2099, 12, 31)
     end
   end
 end

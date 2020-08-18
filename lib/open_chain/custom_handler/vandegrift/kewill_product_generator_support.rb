@@ -483,15 +483,20 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillProductG
         effective_date = effective_date.in_time_zone("America/New_York").to_date
       end
     else
-      effective_date = Date.new(2014, 1, 1)
+      effective_date = default_effective_date
     end
 
     effective_date
   end
 
-  def expiration_date
-    Date.new(2099, 12, 31)
+  def default_effective_date
+    @default_effective_date ||= Date.new(2014, 1, 1)
   end
+
+  def default_expiration_date
+    @default_expiration_date ||= Date.new(2099, 12, 31)
+  end
+  alias expiration_date default_expiration_date
 
   def _has_pga_data? tariff_data
     Array.wrap(tariff_data.lacey_data).length > 0 ||

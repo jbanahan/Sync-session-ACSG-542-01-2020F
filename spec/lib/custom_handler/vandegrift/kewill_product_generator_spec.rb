@@ -2,48 +2,48 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
   subject { described_class.new "CUST"}
 
+  let (:row) do
+    r = base_row
+    r[23] = "MID"
+    r[24] = "CUST_NO"
+    r[27] = "KO" # SPI Primary
+    r
+  end
+
+  let (:fda_row) do
+    base_row + ["Y", "FDACODE", "UOM", "CP", "MID", "SID", "FDADESC", "ESTNO", "Dom1", "Dom2", "Dom3", "Name", "Phone", "COD", "AFFCOMP", "F", "ASS"]
+  end
+
+  let (:penalty_row) do
+    # Lower case and add hyphens to make sure they get removed
+    base_row[25] = "cvd-case"
+    base_row[26] = "add-case"
+    base_row
+  end
+
+  let (:lacey_row) do
+    base_row[28] = "COMPONENT"
+    base_row[29] = "NAME"
+    base_row[30] = "EMAIL"
+    base_row[31] = "PHONE"
+    base_row[32] = "CO"
+    base_row[33] = 100.0
+    base_row[34] = "UOM"
+    base_row[35] = 25.0
+    base_row[36] = "GENUS"
+    base_row[37] = "SPECIES"
+    base_row[38] = "GENUS 2"
+    base_row[39] = "SPECIES 2"
+
+    base_row
+  end
+
+  let (:base_row) do
+    # This is what a file row without FDA information will look like (description should upcase)
+    ["STYLE", "description", "1234567890", "CO", "BRAND"]
+  end
+
   describe "write_row_to_xml" do
-
-    let (:row) {
-      r = base_row
-      r[23] = "MID"
-      r[24] = "CUST_NO"
-      r[27] = "KO" # SPI Primary
-      r
-    }
-
-    let (:fda_row) {
-      base_row + ["Y", "FDACODE", "UOM", "CP", "MID", "SID", "FDADESC", "ESTNO", "Dom1", "Dom2", "Dom3", "Name", "Phone", "COD", "AFFCOMP", "F", "ASS"]
-    }
-
-    let (:penalty_row) {
-      # Lower case and add hyphens to make sure they get removed
-      base_row[25] = "cvd-case"
-      base_row[26] = "add-case"
-      base_row
-    }
-
-    let (:lacey_row) {
-      base_row[28] = "COMPONENT"
-      base_row[29] = "NAME"
-      base_row[30] = "EMAIL"
-      base_row[31] = "PHONE"
-      base_row[32] = "CO"
-      base_row[33] = 100.0
-      base_row[34] = "UOM"
-      base_row[35] = 25.0
-      base_row[36] = "GENUS"
-      base_row[37] = "SPECIES"
-      base_row[38] = "GENUS 2"
-      base_row[39] = "SPECIES 2"
-
-      base_row
-    }
-
-    let (:base_row) {
-      # This is what a file row without FDA information will look like (description should upcase)
-      ["STYLE", "description", "1234567890", "CO", "BRAND"]
-    }
 
     let (:parent) { REXML::Document.new("<root></root>").root }
 
@@ -51,78 +51,78 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
     it "writes XML data to given element" do
       subject.write_row_to_xml parent, 1, row
-      expect(parent.text "part/id/partNo").to eq "STYLE"
+      expect(parent.text("part/id/partNo")).to eq "STYLE"
       # This should be CUST_NO because the value from the query (.ie the row array) should take precedence
-      expect(parent.text "part/id/custNo").to eq "CUST_NO"
-      expect(parent.text "part/id/dateEffective").to eq "20140101"
-      expect(parent.text "part/dateExpiration").to eq "20991231"
-      expect(parent.text "part/styleNo").to eq "STYLE"
-      expect(parent.text "part/countryOrigin").to eq "CO"
-      expect(parent.text "part/manufacturerId").to eq "MID"
-      expect(parent.text "part/descr").to eq "DESCRIPTION"
-      expect(parent.text "part/productLine").to eq "BRAND"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/seqNo").to eq "1"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/tariffNo").to eq "1234567890"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/spiPrimary").to eq "KO"
+      expect(parent.text("part/id/custNo")).to eq "CUST_NO"
+      expect(parent.text("part/id/dateEffective")).to eq "20140101"
+      expect(parent.text("part/dateExpiration")).to eq "20991231"
+      expect(parent.text("part/styleNo")).to eq "STYLE"
+      expect(parent.text("part/countryOrigin")).to eq "CO"
+      expect(parent.text("part/manufacturerId")).to eq "MID"
+      expect(parent.text("part/descr")).to eq "DESCRIPTION"
+      expect(parent.text("part/productLine")).to eq "BRAND"
+      expect(parent.text("part/CatTariffClassList/CatTariffClass/seqNo")).to eq "1"
+      expect(parent.text("part/CatTariffClassList/CatTariffClass/tariffNo")).to eq "1234567890"
+      expect(parent.text("part/CatTariffClassList/CatTariffClass/spiPrimary")).to eq "KO"
 
       # Make sure no FDA information was written - even though blank tags would techincally be fine
       # I want to make sure the size of these files is as small as possible to allow for more data in them before
       # crashing the Kewill processor due to memory size needed to handle a large XML file
-      expect(REXML::XPath.first parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList").to be_nil
+      expect(REXML::XPath.first(parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList")).to be_nil
     end
 
     it "writes FDA data if present" do
       subject.write_row_to_xml parent, 1, fda_row
 
-      expect(parent.text "part/manufacturerId").to eq "MID"
+      expect(parent.text("part/manufacturerId")).to eq "MID"
       fda = REXML::XPath.first parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs"
       expect(fda).not_to be_nil
-      expect(fda.text "partNo").to eq "STYLE"
-      expect(fda.text "styleNo").to eq "STYLE"
-      expect(fda.text "custNo").to eq "CUST"
-      expect(fda.text "dateEffective").to eq "20140101"
+      expect(fda.text("partNo")).to eq "STYLE"
+      expect(fda.text("styleNo")).to eq "STYLE"
+      expect(fda.text("custNo")).to eq "CUST"
+      expect(fda.text("dateEffective")).to eq "20140101"
 
-      expect(fda.text "seqNo").to eq "1"
-      expect(fda.text "fdaSeqNo").to eq "1"
-      expect(fda.text "productCode").to eq "FDACODE"
-      expect(fda.text "fdaUom1").to eq "UOM"
-      expect(fda.text "countryProduction").to eq "CP"
-      expect(fda.text "manufacturerId").to eq "MID"
-      expect(fda.text "shipperId").to eq "SID"
-      expect(fda.text "desc1Ci").to eq "FDADESC"
-      expect(fda.text "establishmentNo").to eq "ESTNO"
-      expect(fda.text "containerDimension1").to eq "Dom1"
-      expect(fda.text "containerDimension2").to eq "Dom2"
-      expect(fda.text "containerDimension3").to eq "Dom3"
-      expect(fda.text "contactName").to eq "Name"
-      expect(fda.text "contactPhone").to eq "Phone"
-      expect(fda.text "cargoStorageStatus").to eq "F"
+      expect(fda.text("seqNo")).to eq "1"
+      expect(fda.text("fdaSeqNo")).to eq "1"
+      expect(fda.text("productCode")).to eq "FDACODE"
+      expect(fda.text("fdaUom1")).to eq "UOM"
+      expect(fda.text("countryProduction")).to eq "CP"
+      expect(fda.text("manufacturerId")).to eq "MID"
+      expect(fda.text("shipperId")).to eq "SID"
+      expect(fda.text("desc1Ci")).to eq "FDADESC"
+      expect(fda.text("establishmentNo")).to eq "ESTNO"
+      expect(fda.text("containerDimension1")).to eq "Dom1"
+      expect(fda.text("containerDimension2")).to eq "Dom2"
+      expect(fda.text("containerDimension3")).to eq "Dom3"
+      expect(fda.text("contactName")).to eq "Name"
+      expect(fda.text("contactPhone")).to eq "Phone"
+      expect(fda.text("cargoStorageStatus")).to eq "F"
 
       affirmations = REXML::XPath.each(fda, "CatFdaEsComplianceList/CatFdaEsCompliance").to_a
       expect(affirmations.length).to eq 2
       aff = affirmations[0]
       expect(aff).not_to be_nil
-      expect(aff.text "partNo").to eq "STYLE"
-      expect(aff.text "styleNo").to eq "STYLE"
-      expect(aff.text "custNo").to eq "CUST"
-      expect(aff.text "dateEffective").to eq "20140101"
-      expect(aff.text "seqNo").to eq "1"
-      expect(aff.text "fdaSeqNo").to eq "1"
-      expect(aff.text "seqNoEntryOrder").to eq "1"
-      expect(aff.text "complianceCode").to eq "COD"
-      expect(aff.text "complianceQualifier").to eq "AFFCOMP"
+      expect(aff.text("partNo")).to eq "STYLE"
+      expect(aff.text("styleNo")).to eq "STYLE"
+      expect(aff.text("custNo")).to eq "CUST"
+      expect(aff.text("dateEffective")).to eq "20140101"
+      expect(aff.text("seqNo")).to eq "1"
+      expect(aff.text("fdaSeqNo")).to eq "1"
+      expect(aff.text("seqNoEntryOrder")).to eq "1"
+      expect(aff.text("complianceCode")).to eq "COD"
+      expect(aff.text("complianceQualifier")).to eq "AFFCOMP"
 
       aff = affirmations[1]
       expect(aff).not_to be_nil
-      expect(aff.text "partNo").to eq "STYLE"
-      expect(aff.text "styleNo").to eq "STYLE"
-      expect(aff.text "custNo").to eq "CUST"
-      expect(aff.text "dateEffective").to eq "20140101"
-      expect(aff.text "seqNo").to eq "1"
-      expect(aff.text "fdaSeqNo").to eq "1"
-      expect(aff.text "seqNoEntryOrder").to eq "2"
-      expect(aff.text "complianceCode").to eq "ACC"
-      expect(aff.text "complianceQualifier").to eq "ASS"
+      expect(aff.text("partNo")).to eq "STYLE"
+      expect(aff.text("styleNo")).to eq "STYLE"
+      expect(aff.text("custNo")).to eq "CUST"
+      expect(aff.text("dateEffective")).to eq "20140101"
+      expect(aff.text("seqNo")).to eq "1"
+      expect(aff.text("fdaSeqNo")).to eq "1"
+      expect(aff.text("seqNoEntryOrder")).to eq "2"
+      expect(aff.text("complianceCode")).to eq "ACC"
+      expect(aff.text("complianceQualifier")).to eq "ASS"
 
     end
 
@@ -146,39 +146,39 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
       subject.write_row_to_xml parent, 1, row
 
-      expect(parent.text "part/id/partNo").to eq "STYLE"
-      expect(parent.text "part/id/custNo").to eq "CUST"
-      expect(parent.text "part/id/dateEffective").to eq "20140101"
-      expect(parent.text "part/styleNo").to eq "STYLE"
-      expect(parent.text "part/countryOrigin").to eq "CO"
-      expect(parent.text "part/descr").to eq "DESCRIPTION-----------------------------"
-      expect(parent.text "part/productLine").to eq "BRAND-------------------------"
-      expect(parent.text "part/manufacturerId").to eq "MID------------"
+      expect(parent.text("part/id/partNo")).to eq "STYLE"
+      expect(parent.text("part/id/custNo")).to eq "CUST"
+      expect(parent.text("part/id/dateEffective")).to eq "20140101"
+      expect(parent.text("part/styleNo")).to eq "STYLE"
+      expect(parent.text("part/countryOrigin")).to eq "CO"
+      expect(parent.text("part/descr")).to eq "DESCRIPTION-----------------------------"
+      expect(parent.text("part/productLine")).to eq "BRAND-------------------------"
+      expect(parent.text("part/manufacturerId")).to eq "MID------------"
       fda = REXML::XPath.first parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs"
       expect(fda).not_to be_nil
-      expect(fda.text "productCode").to eq "FDACODE"
-      expect(fda.text "fdaUom1").to eq "UOM-"
-      expect(fda.text "countryProduction").to eq "CP"
-      expect(fda.text "manufacturerId").to eq "MID------------"
-      expect(fda.text "shipperId").to eq "SID------------"
-      expect(fda.text "desc1Ci").to eq "FDADESC---------------------------------------------------------------"
-      expect(fda.text "establishmentNo").to eq "ESTNO-------"
-      expect(fda.text "containerDimension1").to eq "Dom1"
-      expect(fda.text "containerDimension2").to eq "Dom2"
-      expect(fda.text "containerDimension3").to eq "Dom3"
-      expect(fda.text "contactName").to eq "Name------"
-      expect(fda.text "contactPhone").to eq "Phone-----"
-      expect(fda.text "cargoStorageStatus").to eq "F"
+      expect(fda.text("productCode")).to eq "FDACODE"
+      expect(fda.text("fdaUom1")).to eq "UOM-"
+      expect(fda.text("countryProduction")).to eq "CP"
+      expect(fda.text("manufacturerId")).to eq "MID------------"
+      expect(fda.text("shipperId")).to eq "SID------------"
+      expect(fda.text("desc1Ci")).to eq "FDADESC---------------------------------------------------------------"
+      expect(fda.text("establishmentNo")).to eq "ESTNO-------"
+      expect(fda.text("containerDimension1")).to eq "Dom1"
+      expect(fda.text("containerDimension2")).to eq "Dom2"
+      expect(fda.text("containerDimension3")).to eq "Dom3"
+      expect(fda.text("contactName")).to eq "Name------"
+      expect(fda.text("contactPhone")).to eq "Phone-----"
+      expect(fda.text("cargoStorageStatus")).to eq "F"
 
       aff = REXML::XPath.first fda, "CatFdaEsComplianceList/CatFdaEsCompliance"
       expect(aff).not_to be_nil
-      expect(aff.text "complianceQualifier").to eq "AFFCOMP------------------"
+      expect(aff.text("complianceQualifier")).to eq "AFFCOMP------------------"
     end
 
     it "falls back to customer_number set up in constructor if not present in query" do
       row[24] = nil
       subject.write_row_to_xml parent, 1, row
-      expect(parent.text "part/id/custNo").to eq "CUST"
+      expect(parent.text("part/id/custNo")).to eq "CUST"
     end
 
     it "raises an error if part number is too long" do
@@ -202,18 +202,18 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(tariffs.length).to eq 2
 
       t = tariffs.first
-      expect(t.text "seqNo").to eq "1"
-      expect(t.text "tariffNo").to eq "12345678"
+      expect(t.text("seqNo")).to eq "1"
+      expect(t.text("tariffNo")).to eq "12345678"
       # Just check that the fda info is present and has the correct seq identifier
-      expect(t.text "CatFdaEsList/CatFdaEs/seqNo").to eq "1"
-      expect(t.text "CatFdaEsList/CatFdaEs/fdaSeqNo").to eq "1"
-      expect(t.text "CatFdaEsList/CatFdaEs/productCode").to eq "FDACODE"
+      expect(t.text("CatFdaEsList/CatFdaEs/seqNo")).to eq "1"
+      expect(t.text("CatFdaEsList/CatFdaEs/fdaSeqNo")).to eq "1"
+      expect(t.text("CatFdaEsList/CatFdaEs/productCode")).to eq "FDACODE"
 
       t = tariffs.second
-      expect(t.text "seqNo").to eq "2"
-      expect(t.text "tariffNo").to eq "987654321"
+      expect(t.text("seqNo")).to eq "2"
+      expect(t.text("tariffNo")).to eq "987654321"
       # We should not include FDA data on the second line - only the primary tariff should carry it
-      expect(t.text "CatFdaEsList/CatFdaEs/seqNo").to be_nil
+      expect(t.text("CatFdaEsList/CatFdaEs/seqNo")).to be_nil
     end
 
     it "allows for default values to be sent at all levels" do
@@ -221,34 +221,35 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
                 {
                   "CatCiLine" => {
                     "printPartNo7501" => "Y",
-                    "process9802" => "N"},
+                    "process9802" => "N"
+                  },
                   "CatTariffClass" => {
-                    "ultimateConsignee" => "CONS"}
-                }
-              }
+                    "ultimateConsignee" => "CONS"
+                  }
+                }}
 
       gen = described_class.new "CUST", opts
 
       gen.write_row_to_xml parent, 1, fda_row
-      expect(parent.text "part/printPartNo7501").to eq "Y"
-      expect(parent.text "part/process9802").to eq "N"
-      expect(parent.text "part/CatTariffClassList/CatTariffClass/ultimateConsignee").to eq "CONS"
+      expect(parent.text("part/printPartNo7501")).to eq "Y"
+      expect(parent.text("part/process9802")).to eq "N"
+      expect(parent.text("part/CatTariffClassList/CatTariffClass/ultimateConsignee")).to eq "CONS"
     end
 
     it "skips invalid top level FDA MIDS" do
       fda_row[9] = "INVALIDMID"
       subject.write_row_to_xml parent, 1, fda_row
 
-      expect(parent.text "part/manufacturerId").to eq ""
+      expect(parent.text("part/manufacturerId")).to eq ""
       fda = REXML::XPath.first parent, "part/CatTariffClassList/CatTariffClass/CatFdaEsList/CatFdaEs"
       # It should still put the invalid MID at the FDA level
-      expect(fda.text "manufacturerId").to eq "INVALIDMID"
+      expect(fda.text("manufacturerId")).to eq "INVALIDMID"
     end
 
     it "skips invalid top level MIDS" do
       row[23] = "INVALIDMID"
       subject.write_row_to_xml parent, 1, row
-      expect(parent.text "part/manufacturerId").to eq ""
+      expect(parent.text("part/manufacturerId")).to eq ""
     end
 
     it "prioritizes FDA MID over Standard at top level" do
@@ -256,7 +257,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       fda_row[23] = "STANDARD"
 
       subject.write_row_to_xml parent, 1, fda_row
-      expect(parent.text "part/manufacturerId").to eq "MID"
+      expect(parent.text("part/manufacturerId")).to eq "MID"
     end
 
     it "falls back to standard MID if FDA MID is invalid" do
@@ -264,7 +265,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       fda_row[9] = "INVALID"
 
       subject.write_row_to_xml parent, 1, fda_row
-      expect(parent.text "part/manufacturerId").to eq "MID"
+      expect(parent.text("part/manufacturerId")).to eq "MID"
     end
 
     it "adds CVD / ADD information" do
@@ -274,16 +275,16 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(penalties.length).to eq 2
 
       p = penalties.first
-      expect(p.text "partNo").to eq "STYLE"
-      expect(p.text "styleNo").to eq "STYLE"
-      expect(p.text "custNo").to eq "CUST"
-      expect(p.text "dateEffective").to eq "20140101"
-      expect(p.text "penaltyType").to eq "CVD"
-      expect(p.text "caseNo").to eq "CVDCASE"
+      expect(p.text("partNo")).to eq "STYLE"
+      expect(p.text("styleNo")).to eq "STYLE"
+      expect(p.text("custNo")).to eq "CUST"
+      expect(p.text("dateEffective")).to eq "20140101"
+      expect(p.text("penaltyType")).to eq "CVD"
+      expect(p.text("caseNo")).to eq "CVDCASE"
 
       p = penalties.second
-      expect(p.text "penaltyType").to eq "ADA"
-      expect(p.text "caseNo").to eq "ADDCASE"
+      expect(p.text("penaltyType")).to eq "ADA"
+      expect(p.text("caseNo")).to eq "ADDCASE"
     end
 
     it "adds Lacey information" do
@@ -293,63 +294,63 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(lacey_list.length).to eq 1
 
       l = REXML::XPath.first(lacey_list.first, "CatPgEs")
-      expect(l.text "partNo").to eq "STYLE"
-      expect(l.text "custNo").to eq "CUST"
-      expect(l.text "dateEffective").to eq "20140101"
-      expect(l.text "seqNo").to eq "1"
-      expect(l.text "pgCd").to eq "AL1"
-      expect(l.text "pgAgencyCd").to eq "APH"
-      expect(l.text "pgProgramCd").to eq "APL"
-      expect(l.text "pgSeqNbr").to eq "1"
+      expect(l.text("partNo")).to eq "STYLE"
+      expect(l.text("custNo")).to eq "CUST"
+      expect(l.text("dateEffective")).to eq "20140101"
+      expect(l.text("seqNo")).to eq "1"
+      expect(l.text("pgCd")).to eq "AL1"
+      expect(l.text("pgAgencyCd")).to eq "APH"
+      expect(l.text("pgProgramCd")).to eq "APL"
+      expect(l.text("pgSeqNbr")).to eq "1"
 
       l = REXML::XPath.first(l, "CatPgAphisEs")
-      expect(l.text "partNo").to eq "STYLE"
-      expect(l.text "custNo").to eq "CUST"
-      expect(l.text "dateEffective").to eq "20140101"
-      expect(l.text "seqNo").to eq "1"
-      expect(l.text "pgCd").to eq "AL1"
-      expect(l.text "pgAgencyCd").to eq "APH"
-      expect(l.text "pgProgramCd").to eq "APL"
-      expect(l.text "pgSeqNbr").to eq "1"
-      expect(l.text "productSeqNbr").to eq "1"
-      expect(l.text "importerIndividualName").to eq "NAME"
-      expect(l.text "importerEmailAddress").to eq "EMAIL"
-      expect(l.text "importerPhoneNo").to eq "PHONE"
+      expect(l.text("partNo")).to eq "STYLE"
+      expect(l.text("custNo")).to eq "CUST"
+      expect(l.text("dateEffective")).to eq "20140101"
+      expect(l.text("seqNo")).to eq "1"
+      expect(l.text("pgCd")).to eq "AL1"
+      expect(l.text("pgAgencyCd")).to eq "APH"
+      expect(l.text("pgProgramCd")).to eq "APL"
+      expect(l.text("pgSeqNbr")).to eq "1"
+      expect(l.text("productSeqNbr")).to eq "1"
+      expect(l.text("importerIndividualName")).to eq "NAME"
+      expect(l.text("importerEmailAddress")).to eq "EMAIL"
+      expect(l.text("importerPhoneNo")).to eq "PHONE"
 
       component = REXML::XPath.match(l, "CatPgAphisEsComponentsList/CatPgAphisEsComponents").to_a
 
       expect(component.length).to eq 1
       l = component.first
-      expect(l.text "partNo").to eq "STYLE"
-      expect(l.text "custNo").to eq "CUST"
-      expect(l.text "dateEffective").to eq "20140101"
-      expect(l.text "seqNo").to eq "1"
-      expect(l.text "pgCd").to eq "AL1"
-      expect(l.text "pgSeqNbr").to eq "1"
-      expect(l.text "productSeqNbr").to eq "1"
-      expect(l.text "componentSeqNbr").to eq "1"
-      expect(l.text "componentName").to eq "COMPONENT"
-      expect(l.text "componentQtyAmt").to eq "100.0"
-      expect(l.text "componentUom").to eq "UOM"
-      expect(l.text "countryHarvested").to eq "CO"
-      expect(l.text "percentRecycledMaterialAmt").to eq "25.0"
-      expect(l.text "scientificGenusName").to eq "GENUS"
-      expect(l.text "scientificSpeciesName").to eq "SPECIES"
+      expect(l.text("partNo")).to eq "STYLE"
+      expect(l.text("custNo")).to eq "CUST"
+      expect(l.text("dateEffective")).to eq "20140101"
+      expect(l.text("seqNo")).to eq "1"
+      expect(l.text("pgCd")).to eq "AL1"
+      expect(l.text("pgSeqNbr")).to eq "1"
+      expect(l.text("productSeqNbr")).to eq "1"
+      expect(l.text("componentSeqNbr")).to eq "1"
+      expect(l.text("componentName")).to eq "COMPONENT"
+      expect(l.text("componentQtyAmt")).to eq "100.0"
+      expect(l.text("componentUom")).to eq "UOM"
+      expect(l.text("countryHarvested")).to eq "CO"
+      expect(l.text("percentRecycledMaterialAmt")).to eq "25.0"
+      expect(l.text("scientificGenusName")).to eq "GENUS"
+      expect(l.text("scientificSpeciesName")).to eq "SPECIES"
 
       names = REXML::XPath.match(l, "CatPgAphisEsAddScientificList/CatPgAphisEsAddScientific").to_a
       expect(names.length).to eq 1
       l = names.first
-      expect(l.text "partNo").to eq "STYLE"
-      expect(l.text "custNo").to eq "CUST"
-      expect(l.text "dateEffective").to eq "20140101"
-      expect(l.text "seqNo").to eq "1"
-      expect(l.text "pgCd").to eq "AL1"
-      expect(l.text "pgSeqNbr").to eq "1"
-      expect(l.text "productSeqNbr").to eq "1"
-      expect(l.text "componentSeqNbr").to eq "1"
-      expect(l.text "scientificSeqNbr").to eq "1"
-      expect(l.text "scientificGenusName").to eq "GENUS 2"
-      expect(l.text "scientificSpeciesName").to eq "SPECIES 2"
+      expect(l.text("partNo")).to eq "STYLE"
+      expect(l.text("custNo")).to eq "CUST"
+      expect(l.text("dateEffective")).to eq "20140101"
+      expect(l.text("seqNo")).to eq "1"
+      expect(l.text("pgCd")).to eq "AL1"
+      expect(l.text("pgSeqNbr")).to eq "1"
+      expect(l.text("productSeqNbr")).to eq "1"
+      expect(l.text("componentSeqNbr")).to eq "1"
+      expect(l.text("scientificSeqNbr")).to eq "1"
+      expect(l.text("scientificGenusName")).to eq "GENUS 2"
+      expect(l.text("scientificSpeciesName")).to eq "SPECIES 2"
     end
 
     it "skips Lacey information if no component name" do
@@ -364,12 +365,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       lacey_row[38] = nil
       subject.write_row_to_xml parent, 1, lacey_row
 
-      lacey_list = REXML::XPath.match(parent, "part/CatTariffClassList/CatTariffClass/CatPgEsList/CatPgEs/CatPgAphisEsComponentsList/CatPgAphisEsComponents/CatPgAphisEsAddScientificList/CatPgAphisEsAddScientific").to_a
+      lacey_list = REXML::XPath.match(parent, "part/CatTariffClassList/CatTariffClass/CatPgEsList/CatPgEs/CatPgAphisEsComponentsList/CatPgAphisEsComponents/CatPgAphisEsAddScientificList/CatPgAphisEsAddScientific").to_a # rubocop:disable Layout/LineLength
       expect(lacey_list.length).to eq 0
     end
 
     context "with special tariffs" do
-      let! (:special_tariff) { SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "0987654321", country_origin_iso: "CO", effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day) }
+      let! (:special_tariff) do
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "0987654321", country_origin_iso: "CO",
+                                            effective_date_start: Time.zone.now.to_date, effective_date_end: (Time.zone.now.to_date + 1.day)
+      end
 
       it "includes special tariffs as first tariff record if present" do
         subject.write_row_to_xml parent, 1, row
@@ -379,12 +383,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 2
 
         t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "0987654321"
+        expect(t.text("seqNo")).to eq "1"
+        expect(t.text("tariffNo")).to eq "0987654321"
 
         t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "1234567890"
+        expect(t.text("seqNo")).to eq "2"
+        expect(t.text("tariffNo")).to eq "1234567890"
       end
 
       it "allows setting default country of origin to override blank country of origins" do
@@ -400,12 +404,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 2
 
         t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "0987654321"
+        expect(t.text("seqNo")).to eq "1"
+        expect(t.text("tariffNo")).to eq "0987654321"
 
         t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "1234567890"
+        expect(t.text("seqNo")).to eq "2"
+        expect(t.text("tariffNo")).to eq "1234567890"
       end
 
       it "allows disabling special tariff lookups" do
@@ -419,31 +423,32 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 1
       end
 
-       it "includes special tariffs with countries and without countries" do
-        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date)
+      it "includes special tariffs with countries and without countries" do
+       SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: Time.zone.now.to_date
 
-        subject.write_row_to_xml parent, 1, row
+       subject.write_row_to_xml parent, 1, row
 
-        tariffs = []
-        parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
-        expect(tariffs.length).to eq 3
+       tariffs = []
+       parent.elements.each("part/CatTariffClassList/CatTariffClass") {|el| tariffs << el}
+       expect(tariffs.length).to eq 3
 
-        t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "9999999999"
+       t = tariffs.first
+       expect(t.text("seqNo")).to eq "1"
+       expect(t.text("tariffNo")).to eq "9999999999"
 
-        t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "0987654321"
+       t = tariffs.second
+       expect(t.text("seqNo")).to eq "2"
+       expect(t.text("tariffNo")).to eq "0987654321"
 
-        t = tariffs.third
-        expect(t.text "seqNo").to eq "3"
-        expect(t.text "tariffNo").to eq "1234567890"
+       t = tariffs.third
+       expect(t.text("seqNo")).to eq "3"
+       expect(t.text("tariffNo")).to eq "1234567890"
       end
 
       it "reorders special tariffs to be before standard ones" do
         special_tariff.destroy
-        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999",
+                                            effective_date_start: Time.zone.now.to_date, suppress_from_feeds: true
         # The change to the row here, represents the product having the special tariff as the second tariff row
         # The code will then re-order it to be before the standard tariff number.
         row[2] = "#{row[2]}***9999999999"
@@ -455,16 +460,17 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 2
 
         t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "9999999999"
+        expect(t.text("seqNo")).to eq "1"
+        expect(t.text("tariffNo")).to eq "9999999999"
 
         t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "1234567890"
+        expect(t.text("seqNo")).to eq "2"
+        expect(t.text("tariffNo")).to eq "1234567890"
       end
 
       it "prioritizes special tariffs based on their priority setting" do
-        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999",
+                                            effective_date_start: Time.zone.now.to_date, suppress_from_feeds: true
         # The change to the row here, represents the product having the special tariff as the second tariff row
         # The code will then re-order it to be before the standard tariff number.
         row[2] = "#{row[2]}***9999999999"
@@ -476,20 +482,21 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 3
 
         t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "0987654321"
+        expect(t.text("seqNo")).to eq "1"
+        expect(t.text("tariffNo")).to eq "0987654321"
 
         t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "9999999999"
+        expect(t.text("seqNo")).to eq "2"
+        expect(t.text("tariffNo")).to eq "9999999999"
 
         t = tariffs.third
-        expect(t.text "seqNo").to eq "3"
-        expect(t.text "tariffNo").to eq "1234567890"
+        expect(t.text("seqNo")).to eq "3"
+        expect(t.text("tariffNo")).to eq "1234567890"
       end
 
       it "removes any duplicate tariffs caused by adding special tariffs" do
-        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9999999999",
+                                            effective_date_start: Time.zone.now.to_date, suppress_from_feeds: true
         # The change to the row here, represents the product having the special tariff as the second tariff row
         # The code will then re-order it to be before the standard tariff number.
         row[2] = "#{row[2]}***9999999999***0987654321"
@@ -501,16 +508,16 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 3
 
         t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "0987654321"
+        expect(t.text("seqNo")).to eq "1"
+        expect(t.text("tariffNo")).to eq "0987654321"
 
         t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "9999999999"
+        expect(t.text("seqNo")).to eq "2"
+        expect(t.text("tariffNo")).to eq "9999999999"
 
         t = tariffs.third
-        expect(t.text "seqNo").to eq "3"
-        expect(t.text "tariffNo").to eq "1234567890"
+        expect(t.text("seqNo")).to eq "3"
+        expect(t.text("tariffNo")).to eq "1234567890"
       end
 
       it "adds exlusion 301 tariff and ignores standard 301 tariff" do
@@ -524,12 +531,12 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 2
 
         t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "99038812"
+        expect(t.text("seqNo")).to eq "1"
+        expect(t.text("tariffNo")).to eq "99038812"
 
         t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "1234567890"
+        expect(t.text("seqNo")).to eq "2"
+        expect(t.text("tariffNo")).to eq "1234567890"
       end
 
       it "utilizes default 301 / MTB Tariff ordering when priorities are not present for them" do
@@ -538,7 +545,8 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
         # Priority is set to nil, to make sure we're not accidentally reording these in some other manner and are truly relying on the default priority sorting
         special_tariff.update! special_hts_number: "99038803", special_tariff_type: "301", priority: nil
-        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "99020662", effective_date_start: (Time.zone.now.to_date), suppress_from_feeds: true, special_tariff_type: "MTB", priority: nil
+        SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "99020662",
+                                            effective_date_start: Time.zone.now.to_date, suppress_from_feeds: true, special_tariff_type: "MTB", priority: nil
 
         row[2] = "#{row[2]}***99020662"
         subject.write_row_to_xml parent, 1, row
@@ -548,16 +556,16 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
         expect(tariffs.length).to eq 3
 
         t = tariffs.first
-        expect(t.text "seqNo").to eq "1"
-        expect(t.text "tariffNo").to eq "99038803"
+        expect(t.text("seqNo")).to eq "1"
+        expect(t.text("tariffNo")).to eq "99038803"
 
         t = tariffs.second
-        expect(t.text "seqNo").to eq "2"
-        expect(t.text "tariffNo").to eq "99020662"
+        expect(t.text("seqNo")).to eq "2"
+        expect(t.text("tariffNo")).to eq "99020662"
 
         t = tariffs.third
-        expect(t.text "seqNo").to eq "3"
-        expect(t.text "tariffNo").to eq "1234567890"
+        expect(t.text("seqNo")).to eq "3"
+        expect(t.text("tariffNo")).to eq "1234567890"
       end
     end
 
@@ -569,21 +577,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
       gen.write_row_to_xml parent, 1, row
 
-      expect(parent.text "part/id/partNo").to eq "1234567890123456789012345678901234567890"
+      expect(parent.text("part/id/partNo")).to eq "1234567890123456789012345678901234567890"
     end
 
   end
 
   describe "run_schedulable" do
-    before :all do
-      described_class.new(nil).custom_defs
-    end
-
-    after :all do
-      CustomDefinition.destroy_all
-    end
-
     subject { described_class }
+
     let (:product) { create_product "Style" }
     let (:us) { Factory(:country, iso_code: "US") }
     let (:importer) { with_customs_management_id(Factory(:importer), "CUST") }
@@ -603,7 +604,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     it "finds product and ftps a file" do
       product
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
@@ -627,18 +628,18 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       doc = REXML::Document.new(data)
 
       # Validate all the "header" xml document stuff that gets added..
-      expect(REXML::XPath.first doc, "/requests/request/kcData/parts/part").not_to be_nil
+      expect(REXML::XPath.first(doc, "/requests/request/kcData/parts/part")).not_to be_nil
 
       # Make sure the doc base is built correctly
       r = doc.root
-      expect(r.text "password").to eq "lk5ijl9"
-      expect(r.text "userID").to eq "kewill_edi"
-      expect(r.text "request/action").to eq "KC"
-      expect(r.text "request/category").to eq "Parts"
-      expect(r.text "request/subAction").to eq "CreateUpdate"
+      expect(r.text("password")).to eq "lk5ijl9"
+      expect(r.text("userID")).to eq "kewill_edi"
+      expect(r.text("request/action")).to eq "KC"
+      expect(r.text("request/category")).to eq "Parts"
+      expect(r.text("request/subAction")).to eq "CreateUpdate"
 
       # Validate that our product data made it in (we've thoroughly tested the xml output in write_row_to_xml, so just validate that that stuff made it in here)
-      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "Style"
+      expect(doc.text("/requests/request/kcData/parts/part/id/partNo")).to eq "Style"
 
       importer.reload
       expect(importer.last_alliance_product_push_at.to_i).to eq now.to_i
@@ -646,7 +647,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
     it "finds product using importer_system_code if given" do
       product
-      importer.update_attributes! alliance_customer_number: nil, system_code: "SYSCODE"
+      importer.update! alliance_customer_number: nil, system_code: "SYSCODE"
       expect_any_instance_of(subject).to receive(:ftp_file)
 
       now = Time.zone.now
@@ -663,7 +664,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       product
       product2 = create_product "Style2"
 
-      expect_any_instance_of(subject).to receive(:ftp_file).exactly(2).times
+      expect_any_instance_of(subject).to receive(:ftp_file).twice
       allow_any_instance_of(subject).to receive(:max_products_per_file).and_return 1
 
       subject.run_schedulable "alliance_customer_number" => "CUST"
@@ -680,13 +681,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "errors if invalid system code given" do
-      expect { subject.run_schedulable "alliance_customer_number" => "Invalid", "importer_system_code" => "SYSCODE" }.to raise_error "No importer found with Importer System Code 'SYSCODE'."
+      expect { subject.run_schedulable "alliance_customer_number" => "Invalid", "importer_system_code" => "SYSCODE" }.to raise_error "No importer found with Importer System Code 'SYSCODE'." # rubocop:disable Layout/LineLength
     end
 
     it "strips leading zeros on part number" do
-      p = create_product("000001")
+      create_product("000001")
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
@@ -694,13 +695,13 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(data).not_to be_nil
       doc = REXML::Document.new(data)
 
-      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "1"
+      expect(doc.text("/requests/request/kcData/parts/part/id/partNo")).to eq "1"
     end
 
     it "uses unique_identifier instead of part number" do
-      p = create_product("000001", part_number: false)
+      create_product("000001", part_number: false)
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
@@ -708,15 +709,15 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(data).not_to be_nil
       doc = REXML::Document.new(data)
 
-      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "CUST-000001"
+      expect(doc.text("/requests/request/kcData/parts/part/id/partNo")).to eq "CUST-000001"
     end
 
     it "allows finding products without importer id restrictions" do
       p = create_product("000001")
-      p.update_attributes! importer_id: nil
+      p.update! importer_id: nil
 
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
@@ -725,67 +726,69 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(data).not_to be_nil
       doc = REXML::Document.new(data)
 
-      expect(doc.text "/requests/request/kcData/parts/part/id/partNo").to eq "000001"
+      expect(doc.text("/requests/request/kcData/parts/part/id/partNo")).to eq "000001"
     end
 
     it "sends single tariffs, handles special tariffs" do
-      SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9902345678", country_origin_iso: "CN", priority: 100, effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day)
+      SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9902345678", country_origin_iso: "CN", priority: 100,
+                                          effective_date_start: Time.zone.now.to_date, effective_date_end: (Time.zone.now.to_date + 1.day)
       p = create_product("000001")
       p.update_custom_value! CustomDefinition.find_by(cdef_uid: "prod_country_of_origin"), "CN"
       t = p.classifications.first.tariff_records.first
       t.update! hts_2: "9902345678", hts_3: "1357911131"
-      t2 = p.classifications.first.tariff_records.create! hts_1: "9876543210", hts_2: "9902345678"
+      p.classifications.first.tariff_records.create! hts_1: "9876543210", hts_2: "9902345678"
 
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
       subject.run_schedulable "alliance_customer_number" => "CUST", "allow_multiple_tariffs" => false
 
       doc = REXML::Document.new(data)
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "9902345678"
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "1234567890"
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo").to eq "1357911131"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo")).to eq "9902345678"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo")).to eq "1234567890"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo")).to eq "1357911131"
 
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo").to be_nil
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo")).to be_nil
     end
 
     # same test as previous but with "allow_multiple_tariffs" flag
     it "allows for sending multiple tariffs, only doing special-tariff handling for the first one" do
-      SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9902345678", country_origin_iso: "CN", priority: 100, effective_date_start: (Time.zone.now.to_date), effective_date_end: (Time.zone.now.to_date + 1.day)
+      SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "9902345678", country_origin_iso: "CN", priority: 100,
+                                          effective_date_start: Time.zone.now.to_date, effective_date_end: (Time.zone.now.to_date + 1.day)
       p = create_product("000001")
       p.update_custom_value! CustomDefinition.find_by(cdef_uid: "prod_country_of_origin"), "CN"
       t = p.classifications.first.tariff_records.first
       t.update! hts_2: "9902345678", hts_3: "1357911131"
-      t2 = p.classifications.first.tariff_records.create! hts_1: "9876543210", hts_2: "9902345678"
+      p.classifications.first.tariff_records.create! hts_1: "9876543210", hts_2: "9902345678"
 
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
       subject.run_schedulable "alliance_customer_number" => "CUST", "allow_multiple_tariffs" => true
 
       doc = REXML::Document.new(data)
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo").to eq "9902345678"
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo").to eq "1234567890"
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo").to eq "1357911131"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '1']/tariffNo")).to eq "9902345678"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '2']/tariffNo")).to eq "1234567890"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '3']/tariffNo")).to eq "1357911131"
 
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo").to eq "9876543210"
-      expect(doc.text "/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '5']/tariffNo").to eq "9902345678"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '4']/tariffNo")).to eq "9876543210"
+      expect(doc.text("/requests/request/kcData/parts/part/CatTariffClassList/CatTariffClass[seqNo = '5']/tariffNo")).to eq "9902345678"
     end
 
     it "sends MID" do
       product
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
       subject.run_schedulable "alliance_customer_number" => "CUST"
       doc = REXML::Document.new(data)
-      expect(doc.text "/requests/request/kcData/parts/part/manufacturerId").to eq "MID"
+      expect(doc.text("/requests/request/kcData/parts/part/manufacturerId")).to eq "MID"
     end
 
     it "skips inactive parts" do
@@ -796,23 +799,23 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
 
     context "with linked importer sending" do
 
-      let! (:linked_importer_1) {
+      let! (:linked_importer_1) do
         i = with_customs_management_id(Factory(:importer), "CHILD1")
         importer.linked_companies << i
         i
-      }
+      end
 
-      let! (:linked_importer_2) {
+      let! (:linked_importer_2) do
         i = with_customs_management_id(Factory(:importer), "CHILD2")
         importer.linked_companies << i
         i
-      }
+      end
 
       it "sends products for linked importers" do
-        product = create_product("PART_NO", importer_id: linked_importer_1.id)
-        product2 = create_product("PART_NO_2", importer_id: linked_importer_2.id)
+        create_product("PART_NO", importer_id: linked_importer_1.id)
+        create_product("PART_NO_2", importer_id: linked_importer_2.id)
         data = nil
-        expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+        expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
           data = file.read
         end
 
@@ -832,11 +835,11 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
     end
 
     it "sends products for multiple given customer numbers" do
-      product = create_product("PART_NO", importer_id: with_customs_management_id(Factory(:importer), "CUST1").id)
-      product2 = create_product("PART_NO_2", importer_id: with_customs_management_id(Factory(:importer), "CUST2").id)
+      create_product("PART_NO", importer_id: with_customs_management_id(Factory(:importer), "CUST1").id)
+      create_product("PART_NO_2", importer_id: with_customs_management_id(Factory(:importer), "CUST2").id)
 
       data = nil
-      expect_any_instance_of(subject).to receive(:ftp_file) do |instance, file|
+      expect_any_instance_of(subject).to receive(:ftp_file) do |_instance, file|
         data = file.read
       end
 
@@ -852,6 +855,52 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       part = parts.second
       expect(part).to have_xpath_value("id/partNo", "PART_NO_2")
       expect(part).to have_xpath_value("id/custNo", "CUST2")
+    end
+  end
+
+  describe "map_query_row_to_product_data" do
+    subject { described_class.new "CUST", opts }
+
+    let (:opts) { {} }
+    let! (:mid) { ManufacturerId.create! mid: "MID" }
+
+    it "maps query row array to ProductData object" do
+      d = subject.map_query_row_to_product_data row
+      expect(d.part_number).to eq "STYLE"
+      expect(d.effective_date).to eq Date.new(2014, 1, 1)
+      expect(d.expiration_date).to eq Date.new(2099, 12, 31)
+      expect(d.description).to eq "DESCRIPTION"
+      expect(d.country_of_origin).to eq "CO"
+      expect(d.mid).to eq "MID"
+      expect(d.product_line).to eq 'BRAND'
+      expect(d.exclusion_301_tariff).to be_nil
+    end
+
+    context "with customer override value" do
+      let (:opts) { {"customer_number_override" => "OVERRIDE"} }
+
+      it "uses override customer number" do
+        d = subject.map_query_row_to_product_data row
+        expect(d.customer_number).to eq "OVERRIDE"
+      end
+    end
+
+    context "with effective_date_override value" do
+      let (:opts) { {"effective_date_override" => "2020-08-12"} }
+
+      it "uses override customer number" do
+        d = subject.map_query_row_to_product_data row
+        expect(d.effective_date).to eq Date.new(2020, 8, 12)
+      end
+    end
+
+    context "with expiration_date_override value" do
+      let (:opts) { {"expiration_date_override" => "2030-08-12"} }
+
+      it "uses override customer number" do
+        d = subject.map_query_row_to_product_data row
+        expect(d.expiration_date).to eq Date.new(2030, 8, 12)
+      end
     end
   end
 end
