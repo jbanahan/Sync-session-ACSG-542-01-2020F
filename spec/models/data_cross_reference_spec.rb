@@ -402,7 +402,7 @@ describe DataCrossReference do
       it "returns information about xref screens sys-admin user has access to" do
         xrefs = DataCrossReference.xref_edit_hash(Factory(:sys_admin_user))
 
-        expect(xrefs.size).to eq 11
+        expect(xrefs.size).to eq 12
         expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['shp_ci_load_goods'])).to eq title: "Shipment Entry Load Goods Descriptions", description: "Enter the customer number and corresponding default Goods Description.", identifier: "shp_ci_load_goods", key_label: "Customer Number", value_label: "Goods Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
@@ -414,6 +414,7 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['asce_brand_xref'])).to eq title: "Ascena Brands", description: "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", identifier: "asce_brand_xref", key_label: "Brand Name", value_label: "Brand Abbrev", allow_duplicate_keys: false, show_value_column: true, require_company: false, upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."
+        expect(strip_preproc(xrefs['part_xref'])).to eq allow_blank_value: false, allow_duplicate_keys: false, description: "Enter the Part Number in the Part field and true or false in the active field", value_label: "Active", upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B.", title: "Part Cross Reference", show_value_column: true, require_company: true, key_label: "Part", identifier: "part_xref"
 
       end
 
@@ -451,7 +452,7 @@ describe DataCrossReference do
       it "returns information about xref screens admin user has access to" do
         xrefs = DataCrossReference.xref_edit_hash admin_user
 
-        expect(xrefs.size).to eq 2
+        expect(xrefs.size).to eq 3
         expect(strip_preproc(xrefs['ll_carb_statement'])).to eq title: "CARB Statements", description: "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", identifier: "ll_carb_statement", key_label: "Code", value_label: "Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['ll_patent_statement'])).to eq title: "Patent Statements", description: "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", identifier: "ll_patent_statement", key_label: "Code", value_label: "Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
       end

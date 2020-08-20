@@ -38,7 +38,6 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceLineField
       [36, :cil_adjustments_amount, :adjustments_amount, "Adjustments Amount", {:data_type=>:decimal, :currency=>:other}],
       [37, :cil_adjusted_value, :adjusted_value, "Adjusted Value", {:data_type=>:decimal, :currency=>:other,
         :import_lambda=>lambda {|o, d| "Adjusted Value ignored. (read only)"},
-        :export_lambda=>lambda {|obj| (obj.adjustments_amount ? obj.adjustments_amount : BigDecimal.new(0)) + (obj.value ? obj.value : BigDecimal.new(0))},
         :qualified_field_name=> "(ifnull(commercial_invoice_lines.adjustments_amount,0) + ifnull(commercial_invoice_lines.value,0))",
       }],
       [38, :cil_total_duty, :total_duty, "Total Duty", {:data_type=>:decimal, :currency=>:other,

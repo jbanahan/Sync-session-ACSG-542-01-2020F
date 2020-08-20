@@ -86,6 +86,7 @@ class DataCrossReference < ActiveRecord::Base
   ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'.freeze
   # Combination of entry export and origin country codes that have SPI available.
   SPI_AVAILABLE_COUNTRY_COMBINATION ||= 'spi_available_country_combination'.freeze
+  PART_XREF ||= 'part_xref'.freeze
 
   scope :for_type, ->(xref_type) { where(cross_reference_type: xref_type) }
 
@@ -110,7 +111,8 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label: "Code", value_label: "Description", show_value_column: true),
       xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label: "Code", value_label: "Description", show_value_column: true),
       xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label: "MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."),
-      xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION])
+      xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION]),
+      xref_attributes(PART_XREF, "Part Cross Reference", "Enter the Part Number in the Part field and true or false in the active field", key_label: "Part", value_label: "Active", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B.")
       # rubocop:enable Layout/LineLength
     ]
 
@@ -174,6 +176,8 @@ class DataCrossReference < ActiveRecord::Base
     when HM_PARS_NUMBER
       MasterSetup.get.custom_feature?("WWW VFI Track Reports") && (user.sys_admin? || user.in_group?("pars-maintenance"))
     when OTA_REFERENCE_FIELDS
+      user.admin?
+    when PART_XREF
       user.admin?
     when LL_CARB_STATEMENTS, LL_PATENT_STATEMENTS
       MasterSetup.get.custom_feature?("Lumber Liquidators") && user.admin?

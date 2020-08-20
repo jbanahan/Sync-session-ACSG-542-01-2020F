@@ -146,6 +146,7 @@ class BusinessValidationRule < ActiveRecord::Base
                  ValidationRuleInvoiceNumberMatchesInvoiceLinePO: {label: 'Invoice Line PO # first 8 digits match first 8 digits of Invoice'},
                  ValidationRuleOrderLineHtsValid: {label: "Order Line HTS Valid"},
                  ValidationRuleEntryDutyTaxesMatchSummary: {label: "Entry Invoice Line Duties, Taxes, & Fees Match 7501 Amounts"},
+                 ValidationRuleAssistApplied: {label: "Assist Applied"},
                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet'.to_sym =>
                  {
                     label: 'Ann Classification Type Set',

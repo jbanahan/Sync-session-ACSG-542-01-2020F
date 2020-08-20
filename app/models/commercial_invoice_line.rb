@@ -85,41 +85,47 @@
 
 class CommercialInvoiceLine < ActiveRecord::Base
   attr_accessible :add_bond, :add_case_number, :add_case_percent,
-    :add_case_value, :add_duty_amount, :add_to_make_amount, :adjustments_amount,
-    :agriculture_license_number, :cash_discount, :charges, :commercial_invoice_id,
-    :computed_adjustments, :computed_net_value, :computed_value, :container_id,
-    :container, :contract_amount, :cotton_fee, :country_export_code, :country_origin_code,
-    :currency, :customer_reference, :customs_line_number, :cvd_bond,
-    :cvd_case_number, :cvd_case_percent, :cvd_case_value, :cvd_duty_amount,
-    :department, :drawback_qty, :entered_value_7501, :fda_hold_date, :fda_release_date,
-    :fda_review_date, :first_sale, :freight_amount, :hmf, :line_number, :mid,
-    :miscellaneous_discount, :mpf, :non_dutiable_amount, :other_amount,
-    :other_fees, :part_number, :po_number, :product_line, :prorated_mpf,
-    :psc_date, :psc_reason_code, :quantity, :related_parties, :state_export_code,
-    :state_origin_code, :store_name, :subheader_number, :unit_of_measure,
-    :unit_price, :value, :value_appraisal_method, :value_foreign, :vendor_name,
-    :visa_number, :visa_quantity, :visa_uom, :volume, :commercial_invoice_tariffs, :ruling_number,
-    :ruling_type, :hmf_rate, :mpf_rate, :cotton_fee_rate
+                  :add_case_value, :add_duty_amount, :add_to_make_amount, :adjustments_amount,
+                  :agriculture_license_number, :cash_discount, :charges, :commercial_invoice_id,
+                  :computed_adjustments, :computed_net_value, :computed_value, :container_id,
+                  :container, :contract_amount, :cotton_fee, :country_export_code, :country_origin_code,
+                  :currency, :customer_reference, :customs_line_number, :cvd_bond,
+                  :cvd_case_number, :cvd_case_percent, :cvd_case_value, :cvd_duty_amount,
+                  :department, :drawback_qty, :entered_value_7501, :fda_hold_date, :fda_release_date,
+                  :fda_review_date, :first_sale, :freight_amount, :hmf, :line_number, :mid,
+                  :miscellaneous_discount, :mpf, :non_dutiable_amount, :other_amount,
+                  :other_fees, :part_number, :po_number, :product_line, :prorated_mpf,
+                  :psc_date, :psc_reason_code, :quantity, :related_parties, :state_export_code,
+                  :state_origin_code, :store_name, :subheader_number, :unit_of_measure,
+                  :unit_price, :value, :value_appraisal_method, :value_foreign, :vendor_name,
+                  :visa_number, :visa_quantity, :visa_uom, :volume, :commercial_invoice_tariffs, :ruling_number,
+                  :ruling_type, :hmf_rate, :mpf_rate, :cotton_fee_rate
 
   belongs_to :commercial_invoice, inverse_of: :commercial_invoice_lines
-  has_one :entry, :through => :commercial_invoice
-  has_many :commercial_invoice_tariffs, :dependent=>:destroy, :autosave=>true
-  has_many :change_records, :as => :recordable
+  has_one :entry, through: :commercial_invoice
+  has_many :commercial_invoice_tariffs, dependent: :destroy, autosave: true
+  # rubocop:disable Rails/HasManyOrHasOneDependent, Rails/InverseOf
+  has_many :change_records, as: :recordable
+  # rubocop:enable Rails/HasManyOrHasOneDependent, Rails/InverseOf
   belongs_to :container
 
   include CustomFieldSupport
   include LinesSupport
 
+  def adjusted_value
+    adjustments_amount || BigDecimal(0) + (value || BigDecimal(0))
+  end
+
   def duty_plus_fees_amount
-    BigDecimal.new([self.total_duty, self.total_fees].compact.sum)
+    BigDecimal([self.total_duty, self.total_fees].compact.sum)
   end
 
   def total_duty
-    BigDecimal.new(self.commercial_invoice_tariffs.map(&:duty_amount).compact.sum)
+    BigDecimal(self.commercial_invoice_tariffs.map(&:duty_amount).compact.sum)
   end
 
   def total_supplemental_tariff meth
-    BigDecimal.new(self.supplemental_tariffs.map(&meth).compact.sum)
+    BigDecimal(self.supplemental_tariffs.map(&meth).compact.sum)
   end
 
   def total_fees
@@ -127,11 +133,11 @@ class CommercialInvoiceLine < ActiveRecord::Base
   end
 
   def total_entered_value
-    BigDecimal.new(self.commercial_invoice_tariffs.map(&:entered_value).compact.sum)
+    BigDecimal(self.commercial_invoice_tariffs.map(&:entered_value).compact.sum)
   end
 
   def duty_plus_fees_add_cvd_amounts
-    self.duty_plus_fees_amount + ([add_duty_amount, cvd_duty_amount]).compact.sum
+    self.duty_plus_fees_amount + [add_duty_amount, cvd_duty_amount].compact.sum
   end
 
   def supplemental_tariffs
@@ -172,6 +178,6 @@ class CommercialInvoiceLine < ActiveRecord::Base
   # Returns the first non-zero gross weight from the tariffs, defaulting to zero (rather than nil) if no
   # are found.
   def gross_weight
-    BigDecimal.new(self.commercial_invoice_tariffs.map(&:gross_weight).compact.find { |t| t > 0 } || 0)
+    BigDecimal(self.commercial_invoice_tariffs.map(&:gross_weight).compact.find { |t| t > 0 } || 0)
   end
 end
