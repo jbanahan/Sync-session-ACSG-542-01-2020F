@@ -39,7 +39,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     CiLoadContainer ||= Struct.new(:container_number, :seal_number, :size, :description, :pieces, :pieces_uom, :weight_kg, :container_type) # rubocop:disable Lint/StructNewOverride
     CiLoadInvoice ||= Struct.new(
       :invoice_number, :invoice_date, :invoice_lines, :non_dutiable_amount, :add_to_make_amount, :uom, :currency, :exchange_rate, :file_number,
-      :invoice_total, :charges, :customer_reference, :gross_weight_kg, :net_weight, :net_weight_uom
+      :invoice_total, :charges, :customer_reference, :gross_weight_kg, :net_weight, :net_weight_uom, :quantity
     )
     CiLoadInvoiceLine ||= Struct.new(
       :tariff_lines, :part_number, :country_of_origin, :country_of_export, :gross_weight, :pieces, :pieces_uom, :hts, :foreign_value,
@@ -336,8 +336,14 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     exchange_rate = invoice.exchange_rate.nil? && currency == "USD" ? BigDecimal("1") : invoice.exchange_rate
     add_element(parent, "exchangeRate", g.number(exchange_rate, 7, decimal_places: 6, strip_decimals: true).strip) if exchange_rate
 
-    # Sum the carton totals from the lines (for some reason qty on invoice has no decimal places)
-    add_element(parent, "qty", g.number(lines.inject(BigDecimal("0")) {|sum, line| sum += (nonzero?(line.cartons) ? line.cartons : 0)}, 12, decimal_places: 0, strip_decimals: true, pad_string: false))
+    if nonzero?(invoice.quantity)
+      quantity = invoice.quantity
+    else
+      # Sum the carton totals from the lines (for some reason qty on invoice has no decimal places)
+      quantity = lines.inject(BigDecimal("0")) {|sum, line| sum += (nonzero?(line.cartons) ? line.cartons : 0)}
+    end
+
+    add_element(parent, "qty", g.number(quantity, 12, decimal_places: 0, strip_decimals: true, pad_string: false))
     # Always set the uom to be CTNS if it's blank
     add_element(parent, "uom", g.string((invoice.uom.to_s.blank? ? "CTNS" : invoice.uom), 6, pad_string: false))
     add_element(parent, "chargesAmt", g.number(invoice.charges, 13, decimal_places: 2, pad_string: false, max_value: BigDecimal("99999999999.99"), exclude_decimal_from_length_validation: true)) if invoice.charges
@@ -446,6 +452,12 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     if tariff_lines.blank?
       add_tariff_fields(parent, line)
     else
+      # If none of the tariff lines have a foreign value and the line does, then we'll just put it at the line level.
+      # CM is able then to carry it down to the entered value for the tariff
+      if tariff_lines_missing_value?(tariff_lines) && nonzero?(line.foreign_value)
+        add_value_foreign(parent, line)
+      end
+
       tariff_counter = 0
       tariff_class_element = add_element(parent, "EdiInvoiceTariffClassList")
       sort_tariff_lines(tariff_lines).each do |tariff|
@@ -455,6 +467,10 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     end
 
     nil
+  end
+
+  def tariff_lines_missing_value? tariffs
+    !tariffs.any? {|t| nonzero?(t.foreign_value) }
   end
 
   def mid_from_manufacturer_party line
@@ -555,7 +571,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "tariffNo", g.string(line.hts.to_s.gsub(".", ""), 10, pad_string: false)) unless line.hts.blank?
     add_element(parent, "weightGross", g.number(line.gross_weight, 12, pad_string: false)) if nonzero?(line.gross_weight)
     add_element(parent, "kilosPounds", "KG")
-    add_element(parent, "valueForeign", g.number(line.foreign_value, 13, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.foreign_value)
+    add_value_foreign(parent, line)
     add_element(parent, "spiPrimary", g.string(line.spi, 2, pad_string: false)) unless line.spi.blank?
     add_element(parent, "spiSecondary", g.string(line.spi2, 2, pad_string: false)) unless line.spi2.blank?
     add_element(parent, "qty1Class", g.number(line.quantity_1, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_1)
@@ -565,6 +581,10 @@ module OpenChain; module CustomHandler; module Vandegrift; module KewillShipment
     add_element(parent, "qty3Class", g.number(line.quantity_3, 12, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.quantity_3)
     add_element(parent, "uom3Class", g.string(line.uom_3, 3, pad_string: false)) unless line.uom_3.blank?
     nil
+  end
+
+  def add_value_foreign parent, line
+    add_element(parent, "valueForeign", g.number(line.foreign_value, 13, decimal_places: 2, strip_decimals: true, pad_string: false)) if nonzero?(line.foreign_value)
   end
 
   def add_invoice_line_party parent, entry, invoice, invoice_line_number, party

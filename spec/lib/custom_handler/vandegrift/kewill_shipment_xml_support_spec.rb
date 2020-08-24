@@ -732,6 +732,24 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentXmlSupport do
         expect(t[1].text "tariffNo").to eq "1234567890"
         expect(t[1].text "valueForeign").to eq "98765"
       end
+
+      it "uses commercial invoice's quantity attribute if given" do
+        entry_data.invoices.first.quantity = BigDecimal("100")
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+        expect(doc.root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/qty", "100")
+      end
+
+      it "uses line level foreign value if no tariff lines have it" do
+        tariff_1 = tariff_line
+        tariff_1.foreign_value = nil
+        entry_data.invoices.first.invoice_lines.first.foreign_value = BigDecimal("100.6")
+        entry_data.invoices.first.invoice_lines.first.tariff_lines = [tariff_1]
+
+        doc = subject.generate_entry_xml entry_data, add_entry_info: false
+
+        expect(doc.root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines[partNo = 'PART']/valueForeign", "10060")
+        expect(doc.root).to have_xpath_value("request/kcData/ediShipments/ediShipment/EdiInvoiceHeaderList/EdiInvoiceHeader/EdiInvoiceLinesList/EdiInvoiceLines[partNo = 'PART']/EdiInvoiceTariffClassList/EdiInvoiceTariffClass/valueForeign", nil)
+      end
     end
   end
 end
