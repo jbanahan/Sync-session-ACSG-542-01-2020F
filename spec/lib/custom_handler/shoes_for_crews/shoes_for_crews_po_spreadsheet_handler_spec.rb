@@ -403,6 +403,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
       # Just check if there are now lines, if so, it means the order was updated
       expect(order.order_lines.length).to eq 0
+
+      expect(log).to have_reject_message "Order is shipping and cannot be updated."
     end
 
     it "does not update an order if the order is booked" do
@@ -421,6 +423,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
 
       # Just check if there are now lines, if so, it means the order was updated
       expect(order.order_lines.length).to eq 0
+
+      expect(log).to have_reject_message "Order is booked and cannot be updated."
     end
 
     it "does not call post_update when the order has not been changed" do
@@ -450,7 +454,8 @@ describe OpenChain::CustomHandler::ShoesForCrews::ShoesForCrewsPoSpreadsheetHand
       @overrides[:alternate_po_number] = ""
 
       expect {subject.process_po data, log, "bucket", "key"}.to raise_error "An order number must be present in all files.  File key is missing an order number."
-      expect(log.get_messages_by_status(InboundFileMessage::MESSAGE_STATUS_REJECT)[0].message).to eq "An order number must be present in all files.  File key is missing an order number."
+
+      expect(log).to have_reject_message "An order number must be present in all files.  File key is missing an order number."
     end
   end
 

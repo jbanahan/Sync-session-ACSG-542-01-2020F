@@ -131,7 +131,9 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
       end
       po.create_snapshot User.integration, nil, key
     when "shipping"
-      # We'll probably want to, at some point, send out an email like the jill 850 parser to notify order couldn't be updated.
+      log.add_reject_message "Order is shipping and cannot be updated."
+    when "booked"
+      log.add_reject_message "Order is booked and cannot be updated."
     end
   end
 
@@ -164,8 +166,11 @@ module OpenChain; module CustomHandler; module ShoesForCrews; class ShoesForCrew
       order.last_file_path = key
 
       if existing_order
-        if order.shipping? || order.booked?
+        if order.shipping?
           update_status = "shipping"
+          break
+        elsif order.booked?
+          update_status = "booked"
           break
         else
           update_status = "updated"
