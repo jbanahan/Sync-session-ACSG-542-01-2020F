@@ -56,39 +56,72 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
       # This entry has no unresolved exceptions, has an "FDA" PGA summary record and has a one USG date.  It should not be
       # included in the report.
       entry_4 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-4", source_system: "Alliance",
-                                one_usg_date: Date.new(2020, 1, 1))
+                                one_usg_date: Date.new(2020, 1, 1), departments: "D")
       entry_4.entry_pga_summaries.create! agency_code: "FDA", total_claimed_pga_lines: 1
 
       # This entry has an unresolved exception.  Even though it has first release date, it should still show up on the report.
       entry_5 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-5", source_system: "Alliance",
-                                first_release_date: Date.new(2020, 1, 1))
+                                first_release_date: Date.new(2020, 1, 1), departments: "E")
       entry_5.entry_exceptions.create! code: "ARF"
 
       # This entry should be excluded because its source system is not Alliance.
       entry_6 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-6", source_system: "Axis",
-                                usda_hold_date: Date.new(2019, 12, 19))
+                                usda_hold_date: Date.new(2019, 12, 19), departments: "F")
       entry_6.entry_exceptions.create! code: "ARF"
 
       # This entry has no exceptions, and no FDA/EPA PGA summary.  It should be included because it has no First
       # Release Date value.
-      entry_7 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-7", source_system: "Alliance", one_usg_date: Date.new(2020, 1, 1))
+      entry_7 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-7", source_system: "Alliance",
+                                one_usg_date: Date.new(2020, 1, 1), departments: "G")
       entry_7.entry_pga_summaries.create! agency_code: "FCC", total_claimed_pga_lines: 1
 
       # This entry isn't Target's.  Excluded, obviously.
-      Factory(:entry, customer_number: "ARGENT", broker_reference: "entry-8", source_system: "Alliance")
+      Factory(:entry, customer_number: "ARGENT", broker_reference: "entry-8", source_system: "Alliance", departments: "H")
 
       # This entry has no unresolved exceptions, has an "EPA" PGA summary record and has a one USG date.  It should not be
       # included in the report.
       entry_9 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-9", source_system: "Alliance",
-                                one_usg_date: Date.new(2020, 1, 1))
+                                one_usg_date: Date.new(2020, 1, 1), departments: "I")
       entry_9.entry_pga_summaries.create! agency_code: "EPA", total_claimed_pga_lines: 1
 
       # This entry has no unresolved exceptions, has an "EPA" PGA summary record and has a one USG date.  It should be
       # included in the report because its PGA summary record has no claimed lines, effectively negating its presence,
       # and it does not have a first release date.
       entry_10 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-10", source_system: "Alliance",
-                                 one_usg_date: Date.new(2020, 1, 1))
+                                 one_usg_date: Date.new(2020, 1, 1), po_numbers: "J")
       entry_10.entry_pga_summaries.create! agency_code: "EPA", total_claimed_pga_lines: 0
+
+      # These are shell entries and should be excluded despite having no one USG date.
+      Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-11", source_system: "Alliance")
+      Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-12", source_system: "Alliance", departments: "", po_numbers: " ")
+
+      # This entry should be included because it has an "FDA" PGA summary record, no one USG date and an FDA message
+      # that does not include "MAY PROCEED".
+      entry_13 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-13", source_system: "Alliance",
+                                 departments: "K", fda_message: "FDA RELEASED")
+      entry_13.entry_pga_summaries.create! agency_code: "FDA", total_claimed_pga_lines: 1
+
+      # This "FDA" PGA summary entry gets excluded despite having no one USG date because its FDA message includes "MAY PROCEED".
+      entry_14 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-14", source_system: "Alliance",
+                                 departments: "L", fda_message: "something may proceed something else")
+      entry_14.entry_pga_summaries.create! agency_code: "FDA", total_claimed_pga_lines: 1
+
+      # This "EPA" PGA summary entry with no one USG date is not excluded by FDA message text "MAY PROCEED".
+      # That is behavior specific to FDA entries.  The entry comments don't contain the exact EPA MAY PROCEED content either.
+      entry_15 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-15", source_system: "Alliance",
+                                 departments: "M", fda_message: "MAY PROCEED")
+      entry_15.entry_pga_summaries.create! agency_code: "EPA", total_claimed_pga_lines: 1
+      entry_15.entry_comments.create! body: "08/18 13:30 EPA Entry Dsp: 07 MAY PROCEED", username: "CUSTOMS"
+
+      # Entry comments prevent this from being included.
+      entry_16 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-16", source_system: "Alliance", departments: "N")
+      entry_16.entry_pga_summaries.create! agency_code: "EPA", total_claimed_pga_lines: 1
+      entry_16.entry_comments.create! body: "EPA TS1 Ln 1 PG 1 Dsp: 07 MAY PROCEED", username: "CUSTOMS"
+
+      # Same here: should not be included.  Testing case insensitivity.
+      entry_17 = Factory(:entry, customer_number: "TARGEN", broker_reference: "entry-17", source_system: "Alliance", departments: "O")
+      entry_17.entry_pga_summaries.create! agency_code: "EPA", total_claimed_pga_lines: 1
+      entry_17.entry_comments.create! body: "epa PS3 may proceed", username: "CUSTOMS"
 
       Timecop.freeze(make_eastern_date(2019, 9, 30)) do
         subject.run_customs_status_report({'email' => 'a@b.com'})
@@ -107,7 +140,7 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
 
       sheet = reader["Exceptions"]
       expect(sheet).not_to be_nil
-      expect(sheet.length).to eq 9
+      expect(sheet.length).to eq 11
       expect(sheet[0]).to eq ["Importer", "Broker", "File No.", "Dept", "P.O.", "Doc Rec'd Date", "ETA", "ABI Date",
                               "Reason Code", "Comments from Broker", "No of Cntrs", "Port of Lading", "Port of Unlading",
                               "Vessel", "Bill of Lading Number", "Containers"]
@@ -121,9 +154,11 @@ describe OpenChain::CustomHandler::Target::TargetCustomsStatusReport do
                               Date.new(2019, 12, 27), "TGT", "This is a Target exception.", 0, "AZYX", "EDCB", "Venture X-2", "F", "H"]
       expect(sheet[5]).to eq ["TGMI", "316", "entry-3", "C", "E", Date.new(2019, 12, 24), Date.new(2019, 12, 26),
                               Date.new(2019, 12, 28), nil, nil, 0, "BZYX", "FDCB", "Venture X-3", "G", "I"]
-      expect(sheet[6]).to eq ["TGMI", "316", "entry-5", nil, nil, nil, nil, nil, "ARF", nil, 0, nil, nil, nil, nil, nil]
-      expect(sheet[7]).to eq ["TGMI", "316", "entry-7", nil, nil, nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
-      expect(sheet[8]).to eq ["TGMI", "316", "entry-10", nil, nil, nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
+      expect(sheet[6]).to eq ["TGMI", "316", "entry-5", "E", nil, nil, nil, nil, "ARF", nil, 0, nil, nil, nil, nil, nil]
+      expect(sheet[7]).to eq ["TGMI", "316", "entry-7", "G", nil, nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
+      expect(sheet[8]).to eq ["TGMI", "316", "entry-10", nil, "J", nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
+      expect(sheet[9]).to eq ["TGMI", "316", "entry-13", "K", nil, nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
+      expect(sheet[10]).to eq ["TGMI", "316", "entry-15", "M", nil, nil, nil, nil, nil, nil, 0, nil, nil, nil, nil, nil]
     end
 
     def make_utc_date year, month, day

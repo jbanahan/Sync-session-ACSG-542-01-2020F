@@ -775,6 +775,12 @@ class Entry < ActiveRecord::Base
     end.count > 0
   end
 
+  def matching_entry_comments? body_regex, username: nil
+    entry_comments.select do |com|
+      com.body&.match(body_regex) && (username.nil? || com.username&.upcase == username.upcase)
+    end.count > 0
+  end
+
   private
 
     def populated_us_holds

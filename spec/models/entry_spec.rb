@@ -868,4 +868,19 @@ describe Entry do
       expect(ent.includes_pga_summary_for_agency? "EPA", claimed_pga_lines_only:false).to eq true
     end
   end
+
+  describe "matching_entry_comments?" do
+    it "returns true when a comments record matches a pattern" do
+      ent = Factory(:entry)
+      ent.entry_comments.build(body: "STMNT DATA ACCEPTED AS REQUESTED Type 6 08/31/20")
+      ent.entry_comments.build(body: "EPA TS1 Ln 1 PG 1 Dsp: 07 MAY PROCEED", username: "CUSTOMS")
+      ent.entry_comments.build(username: "KC Abi Send")
+
+      expect(ent.matching_entry_comments?(/^EPA .*MAY PROCEED/)).to eq true
+      expect(ent.matching_entry_comments?(/^EPA .*JUNE PROCEED/)).to eq false
+      expect(ent.matching_entry_comments?(/^EPA .*MAY PROCEED/, username: "CUSTOMS")).to eq true
+      expect(ent.matching_entry_comments?(/^EPA .*MAY PROCEED/, username: "customs")).to eq true
+      expect(ent.matching_entry_comments?(/^EPA .*MAY PROCEED/, username: "TOMSCUS")).to eq false
+    end
+  end
 end

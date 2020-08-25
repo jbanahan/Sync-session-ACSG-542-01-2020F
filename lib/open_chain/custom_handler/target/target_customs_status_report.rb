@@ -37,11 +37,13 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsStatus
       assign_styles wbk
 
       # Looks for entries that either have an exception that has not been resolved, or that have not been
-      # closed out (as determined by the presence of One USG Date).
-      exc_entries = Entry.includes(:entry_exceptions, :containers)
+      # closed out (as determined by the presence of One USG Date).  Excludes "shell entries", which have blank
+      # values for most fields.  We're ruling out shell by excluding entries that have no departments or PO numbers.
+      exc_entries = Entry.includes(:entry_exceptions, :containers, :entry_comments)
                          .where(customer_number: "TARGEN", source_system: "Alliance")
                          .where("(one_usg_date IS NULL OR first_release_date IS NULL OR
                                  (SELECT COUNT(*) FROM entry_exceptions AS exc WHERE exc.entry_id = entries.id AND exc.resolved_date IS NULL) > 0)")
+                         .where("((departments IS NOT NULL AND departments != '') OR (po_numbers IS NOT NULL AND po_numbers != ''))")
 
       raw_data = []
       exc_entries.find_each(batch_size: 250) do |ent|
@@ -83,7 +85,13 @@ module OpenChain; module CustomHandler; module Target; class TargetCustomsStatus
 
     def include_entry? ent
       # Entries that involve the FDA or EPA are handled a little differently than others.
-      ent.includes_pga_summary_for_agency?(["FDA", "EPA"], claimed_pga_lines_only: true) ? ent.one_usg_date.nil? : ent.first_release_date.nil?
+      if ent.includes_pga_summary_for_agency?("FDA", claimed_pga_lines_only: true)
+        ent.one_usg_date.nil? && !ent.fda_message.to_s.upcase.include?("MAY PROCEED")
+      elsif ent.includes_pga_summary_for_agency?("EPA", claimed_pga_lines_only: true)
+        ent.one_usg_date.nil? && !ent.matching_entry_comments?(/^EPA .*MAY PROCEED/i, username: "CUSTOMS")
+      else
+        ent.first_release_date.nil?
+      end
     end
 
     def make_data_obj entry, exception_code, comments
