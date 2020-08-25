@@ -14,7 +14,7 @@ $(document).ready () ->
       return
 
     $('#user_session_id').focus()
-    
+
     $('#registration-modal').on 'shown.bs.modal', ->
       $('#registration-email').focus()
       return
@@ -22,10 +22,10 @@ $(document).ready () ->
     $('#forgot-password-modal').on 'shown.bs.modal', ->
       $('#reset-password-email').focus()
       return
-    
+
     $.ajax
-      dataType: 'jsonp'
-      url: 'https://www.vandegriftinc.com/news?format=json'
+      dataType: 'json'
+      url: 'https://vandegrift-news.s3.amazonaws.com/latest_news.json'
       success: (data) ->
         win = $(window)
         # Append at least four articles or up to the screen height, but not beyond the number of articles

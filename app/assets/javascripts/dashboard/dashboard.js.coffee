@@ -18,14 +18,14 @@ dashboardApp.directive 'dashboardWidget', ->
 
       scope.loadWidget(scope.widgetId)
   }
-###dashboardApp.directive 'dashboardNews', [($scope) ->
+dashboardApp.directive 'dashboardNews', [($scope) ->
   restrict: 'E'
   link: (scope) ->
     scope.errors = []
     scope.notices = []
     $.ajax
-      dataType: 'jsonp'
-      url: 'https://www.vandegriftinc.com/news?format=json'
+      dataType: 'json'
+      url: 'https://vandegrift-news.s3.amazonaws.com/latest_news.json'
       success: (data) ->
         $('.loader').remove()
         win = $(window)
@@ -46,4 +46,4 @@ dashboardApp.directive 'dashboardWidget', ->
           i++
         return
 
-]###
+]
