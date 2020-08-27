@@ -167,6 +167,9 @@ Naming/MethodParameterName:
 Naming/VariableNumber:
   Enabled: false
 
+Rails/HasManyOrHasOneDependent:
+  Enabled: false
+
 RSpec/AnyInstance:
   Enabled: false
 
@@ -194,3 +197,6 @@ RSpec/MultipleExpectations:
 # useful often enough to be able to isolate methods under test that I'm allowing it.
 RSpec/SubjectStub:
   Enabled: false
+
+RSpec/NestedGroups:
+  Max: 5

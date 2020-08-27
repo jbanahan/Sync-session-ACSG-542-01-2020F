@@ -2,10 +2,12 @@ require 'open_chain/integration_client_parser'
 require 'open_chain/fenix_sql_proxy_client'
 require 'open_chain/ftp_file_support'
 require 'open_chain/fiscal_month_assigner'
+require 'open_chain/custom_handler/entry_parser_support'
 
 module OpenChain; class FenixParser
   include OpenChain::IntegrationClientParser
   include OpenChain::FtpFileSupport
+  include OpenChain::CustomHandler::EntryParserSupport
 
   SOURCE_CODE ||= Entry::FENIX_SOURCE_SYSTEM
 
@@ -329,6 +331,7 @@ module OpenChain; class FenixParser
     entry.broker_reference = info[:broker_reference]
 
     entry.entry_number = info[:entry_number]
+    entry.broker = find_ca_broker entry.entry_number
     entry.import_country = Country.find_by_iso_code('CA')
     entry.importer_tax_id = info[:importer_tax_id]
     accumulate_string :cargo_control_number, str_val(line[12])

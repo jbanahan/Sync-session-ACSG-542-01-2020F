@@ -425,6 +425,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     def process_entry_header e, entry
       entry.customer_number = e[:cust_no]
       entry.entry_number = e[:entry_no]
+      entry.broker = find_us_broker(entry.entry_number)
       entry.customer_number = e[:cust_no]
       entry.importer_tax_id = e[:irs_no]
       entry.customer_name = e[:cust_name]

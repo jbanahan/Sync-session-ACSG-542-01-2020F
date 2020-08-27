@@ -873,7 +873,7 @@ describe OpenChain::ActivitySummary do
         expect(described_class.find_company("iso_code" => "US", 'system_code' => "SYSCODE")).to eq imp
       end
 
-      context "without system_code" do # rubocop:disable RSpec/NestedGroups
+      context "without system_code" do
         it "returns company identified by alliance number for 'US' iso code" do
           with_customs_management_id(imp, "ALLIANCE")
           expect(described_class.find_company("iso_code" => "US", "alliance_customer_number" => "ALLIANCE")).to eq imp
@@ -1016,7 +1016,7 @@ describe OpenChain::ActivitySummary do
       let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "tufnel@stonehenge.biz", company: imp) }
       let(:mailing_list) { Factory(:mailing_list, user: user, company: imp, email_addresses: 'mailinglist@domain.com')}
 
-      describe "update_args" do # rubocop:disable RSpec/NestedGroups
+      describe "update_args" do
         it "supplies subject and body when both are missing" do
           Timecop.freeze(DateTime.new(2018, 3, 15, 15, 0)) do
             expect(subject.update_args(gen, nil, nil, nil, nil)).to eq [nil, "ACME US entry summary for 2018-03-15", "ACME US entry summary for 2018-03-15 is attached."]
@@ -1041,7 +1041,7 @@ describe OpenChain::ActivitySummary do
           end
         end
 
-        context "with user" do # rubocop:disable RSpec/NestedGroups
+        context "with user" do
           let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "tufnel@stonehenge.biz") }
 
           it "adds header to body with user info" do

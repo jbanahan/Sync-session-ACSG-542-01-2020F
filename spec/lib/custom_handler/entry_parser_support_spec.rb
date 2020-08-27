@@ -179,6 +179,30 @@ describe OpenChain::CustomHandler::EntryParserSupport do
     end
   end
 
+  describe "find_us_broker" do
+    let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "316") }
+
+    it "finds a broker from a US entry number" do
+      expect(subject.find_us_broker "3160000001").to eq broker
+    end
+
+    it "returns nil if broker is not found" do
+      expect(subject.find_us_broker "9999999999").to be_nil
+    end
+  end
+
+  describe "find_ca_broker" do
+    let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "12345") }
+
+    it "finds a broker from a CA entry number" do
+      expect(subject.find_ca_broker "123450000001").to eq broker
+    end
+
+    it "returns nil if broker is not found" do
+      expect(subject.find_ca_broker "9999999999").to be_nil
+    end
+  end
+
   describe "HoldReleaseSetter" do
     describe "set_any_hold_date" do
       it "sets a hold date and clears corresponding release date" do

@@ -557,6 +557,8 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       }
     end
 
+    let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "316") }
+
     it "creates an entry using json data" do
       expect(subject).to receive(:process_special_tariffs)
 
@@ -566,6 +568,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(entry).to be_persisted
       expect(entry.broker_reference).to eq "12345"
       expect(entry.entry_number).to eq "316123456"
+      expect(entry.broker).to eq broker
       expect(entry.source_system).to eq "Alliance"
       expect(entry.last_exported_from_source).to eq "2015-03-12 17:26:20"
       expect(entry.expected_update_time).to eq "2015-02-12 11:00"

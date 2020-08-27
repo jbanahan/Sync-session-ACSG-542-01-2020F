@@ -33,6 +33,9 @@ end
 Factory.define :master_company, parent: :company do |c|
   c.master true
 end
+Factory.define :broker, parent: :company do |c|
+  c.broker true
+end
 Factory.define :part_number_correlation do |c|
 end
 Factory.define :address do |a|

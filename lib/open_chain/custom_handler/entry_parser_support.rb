@@ -53,6 +53,24 @@ module OpenChain; module CustomHandler; module EntryParserSupport
     "\n "
   end
 
+  def find_us_broker entry_number
+    # The first 3 digits of the entry_number is the filer code...we can use this to look up which broker company the
+    # entry is associated with.
+    filer_code = entry_number[0, 3]
+    return nil if filer_code.blank?
+
+    Company.brokers.with_identifier("Filer Code", filer_code).first
+  end
+
+  def find_ca_broker entry_number
+    # The first 3 digits of the entry_number is the filer code...we can use this to look up which broker company the
+    # entry is associated with.
+    filer_code = entry_number[0, 5]
+    return nil if filer_code.blank?
+
+    Company.brokers.with_identifier("Filer Code", filer_code).first
+  end
+
   # This class was extracted from KewillEntryParser.  Note that this means much of this code will throw
   # exceptions if used for entries where the import country is not the US.  Beware.
   class HoldReleaseSetter

@@ -147,6 +147,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       inbound_file.add_identifier :entry_number, entry_number unless entry_number.blank?
       entry.entry_number = entry_number
 
+      entry.broker = get_broker(import_country.iso_code, entry_number)
+
       master_bills = get_master_bills xml
       inbound_file.add_identifier :master_bill, master_bills unless master_bills.empty?
       entry.master_bills_of_lading = master_bills.join(multi_value_separator)
@@ -388,6 +390,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         v = first_text xml, "Supplier[AddressType='Supplier']/CompanyName"
       end
       v
+    end
+
+    def get_broker import_country_iso, entry_number
+      b = nil
+      if import_country_iso == 'US'
+        b = find_us_broker(entry_number)
+      elsif import_country_iso == 'CA'
+        b = find_ca_broker(entry_number)
+      end
+      b
     end
 
     def parse_date date_str

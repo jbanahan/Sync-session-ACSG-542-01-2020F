@@ -535,7 +535,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new(error_message, "Broker File", "2399341") # rubocop:disable Layout/LineLength
       end
 
-      context "with overriden unique flag" do # rubocop:disable Rspec/NestedGroups
+      context "with overriden unique flag" do
         let! (:starting_force_non_unique_intacct_request) do
           Thread.current.thread_variable_get(:force_non_unique_intacct_request)
         end

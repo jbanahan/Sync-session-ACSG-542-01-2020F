@@ -19,6 +19,7 @@
 #  bol_received_date                               :datetime
 #  bond_surety_number                              :string(255)
 #  bond_type                                       :string(255)
+#  broker_id                                       :integer
 #  broker_invoice_total                            :decimal(12, 2)
 #  broker_reference                                :string(255)
 #  cadex_accept_date                               :datetime
@@ -274,6 +275,7 @@
 # Indexes
 #
 #  index_entries_on_arrival_date           (arrival_date)
+#  index_entries_on_broker_id              (broker_id)
 #  index_entries_on_broker_reference       (broker_reference)
 #  index_entries_on_cargo_control_number   (cargo_control_number)
 #  index_entries_on_customer_number        (customer_number)
@@ -298,85 +300,85 @@ class Entry < ActiveRecord::Base
   include IntegrationParserSupport
 
   attr_accessible :across_declaration_accepted, :across_sent_date, :additional_duty_confirmation_date,
-    :ams_hold_date, :ams_hold_release_date, :aphis_hold_date,
-    :aphis_hold_release_date, :arrival_date, :arrival_notice_receipt_date,
-    :atf_hold_date, :atf_hold_release_date, :available_date, :b3_print_date,
-    :bol_discrepancy_date, :bol_received_date, :bond_type, :broker_invoice_total, :broker_reference,
-    :cadex_accept_date, :cadex_sent_date, :cancelled_date, :cargo_control_number,
-    :cargo_manifest_hold_date, :cargo_manifest_hold_release_date, :carrier_code,
-    :carrier_name, :cbp_hold_date, :cbp_hold_release_date,
-    :cbp_intensive_hold_date, :cbp_intensive_hold_release_date, :census_warning,
-    :charge_codes, :commercial_invoice_numbers, :company_number,
-    :consignee_address_1, :consignee_address_2, :consignee_city, :consignee_state,
-    :container_numbers, :container_sizes, :cotton_fee, :customer_name,
-    :customer_number, :customer_references, :daily_statement_approved_date,
-    :daily_statement_due_date, :daily_statement_number, :ddtc_hold_date,
-    :ddtc_hold_release_date, :delivery_order_pickup_date, :departments,
-    :destination_state, :detained_at_port_of_discharge_date, :direct_shipment_date, :division_number,
-    :docs_missing_date, :docs_received_date, :documentation_request_date, :duty_due_date,
-    :edi_received_date, :employee_name, :entered_value, :entry_filed_date,
-    :entry_number, :entry_port_code, :entry_type, :error_free_release, :eta_date,
-    :exam_ordered_date, :exam_release_date, :expected_update_time,
-    :export_country_codes, :export_date, :export_state_codes, :fcl_lcl,
-    :fda_hold_date, :fda_hold_release_date, :fda_message,
-    :fda_pending_release_line_count, :fda_release_date, :fda_review_date,
-    :fda_transmit_date, :file_logged_date, :final_delivery_date,
-    :final_statement_date, :first_7501_print, :first_do_issued_date,
-    :first_entry_sent_date, :first_it_date, :first_release_date,
-    :first_release_received_date, :fiscal_date, :fiscal_month,
-    :fiscal_year, :fish_and_wildlife_hold_date, :fish_and_wildlife_hold_release_date,
-    :fish_and_wildlife_secure_facility_date, :fish_and_wildlife_transmitted_date,
-    :free_date, :freight_pickup_date, :fsis_hold_date, :fsis_hold_release_date,
-    :gross_weight, :hmf, :hold_date, :hold_release_date, :house_bills_of_lading,
-    :house_carrier_code, :hts_expired_date, :hts_misclassified_date, :hts_missing_date,
-    :hts_need_additional_info_date, :import_country_id, :import_date, :importer_id, :importer,
-    :importer_request_date, :importer_tax_id, :invoice_discrepancy_date, :invoice_missing_date,
-    :invoice_paid_date, :isf_accepted_date, :isf_sent_date, :it_numbers, :k84_due_date, :k84_month,
-    :k84_receive_date, :lading_port_code, :lading_port, :last_7501_print, :last_billed_date,
-    :last_exported_from_source, :last_file_bucket, :last_file_path,
-    :liquidation_action_code, :liquidation_action_description, :liquidation_ada,
-    :liquidation_cvd, :liquidation_date, :liquidation_duty,
-    :liquidation_extension_code, :liquidation_extension_count,
-    :liquidation_extension_description, :liquidation_fees, :liquidation_tax,
-    :liquidation_total, :liquidation_type, :liquidation_type_code,
-    :location_of_goods, :location_of_goods_description,
-    :manifest_info_received_date, :master_bills_of_lading,
-    :merchandise_description, :mfids, :mid_discrepancy_date, :miscellaneous_entry_exception_date, :monthly_statement_due_date,
-    :monthly_statement_number, :monthly_statement_paid_date,
-    :monthly_statement_received_date, :mpf, :nhtsa_hold_date,
-    :nhtsa_hold_release_date, :nmfs_hold_date, :nmfs_hold_release_date,
-    :ogd_request_date, :on_hold, :one_usg_date, :origin_country_codes,
-    :origin_state_codes, :other_agency_hold_date, :other_agency_hold_release_date,
-    :other_fees, :paperless_certification, :paperless_release, :pars_ack_date,
-    :pars_reject_date, :part_number_request_date, :part_numbers, :pay_type, :pga_docs_incomplete_date, :pga_docs_missing_date,
-    :po_numbers, :po_request_date, :product_lines, :recon_flags,
-    :release_cert_message, :release_date, :release_type, :ship_terms,
-    :source_system, :special_program_indicators, :special_tariff,
-    :split_release_option, :split_shipment, :split_shipment_date, :store_names,
-    :sub_house_bills_of_lading, :summary_line_count, :summary_rejected,
-    :tariff_request_date, :time_to_process, :total_add, :total_cvd, :total_duty,
-    :total_duty_direct, :total_duty_gst, :total_entry_fee, :total_fees, :total_gst,
-    :total_invoiced_value, :total_non_dutiable_amount, :total_packages,
-    :total_packages_uom, :total_taxes, :total_units, :total_units_uoms,
-    :tracking_status, :transport_mode_code, :trucker_called_date,
-    :ult_consignee_code, :ult_consignee_name, :unlading_port_code, :unlading_port,
-    :us_exit_port_code, :usda_hold_date, :usda_hold_release_date,
-    :value_currency_request_date, :vendor_names, :vessel, :voyage, :worksheet_date,
-    :import_country, :ca_entry_port, :updated_at, :summary_accepted_date, :bond_surety_number,
-    :customs_detention_exception_opened_date, :customs_detention_exception_resolved_date,
-    :classification_inquiry_exception_opened_date, :classification_inquiry_exception_resolved_date,
-    :customer_requested_hold_exception_opened_date, :customer_requested_hold_exception_resolved_date,
-    :customs_exam_exception_opened_date, :customs_exam_exception_resolved_date,
-    :document_discrepancy_exception_opened_date, :document_discrepancy_exception_resolved_date,
-    :fda_issue_exception_opened_date, :fda_issue_exception_resolved_date,
-    :fish_and_wildlife_exception_opened_date, :fish_and_wildlife_exception_resolved_date,
-    :lacey_act_exception_opened_date, :lacey_act_exception_resolved_date,
-    :late_documents_exception_opened_date, :late_documents_exception_resolved_date,
-    :manifest_hold_exception_opened_date, :manifest_hold_exception_resolved_date,
-    :missing_documents_exception_opened_date, :missing_documents_exception_resolved_date,
-    :pending_customs_review_exception_opened_date, :pending_customs_review_exception_resolved_date,
-    :price_inquiry_exception_opened_date, :price_inquiry_exception_resolved_date,
-    :usda_hold_exception_opened_date, :usda_hold_exception_resolved_date
+                  :ams_hold_date, :ams_hold_release_date, :aphis_hold_date,
+                  :aphis_hold_release_date, :arrival_date, :arrival_notice_receipt_date,
+                  :atf_hold_date, :atf_hold_release_date, :available_date, :b3_print_date,
+                  :bol_discrepancy_date, :bol_received_date, :bond_type, :broker_invoice_total, :broker_reference,
+                  :cadex_accept_date, :cadex_sent_date, :cancelled_date, :cargo_control_number,
+                  :cargo_manifest_hold_date, :cargo_manifest_hold_release_date, :carrier_code,
+                  :carrier_name, :cbp_hold_date, :cbp_hold_release_date,
+                  :cbp_intensive_hold_date, :cbp_intensive_hold_release_date, :census_warning,
+                  :charge_codes, :commercial_invoice_numbers, :company_number,
+                  :consignee_address_1, :consignee_address_2, :consignee_city, :consignee_state,
+                  :container_numbers, :container_sizes, :cotton_fee, :customer_name,
+                  :customer_number, :customer_references, :daily_statement_approved_date,
+                  :daily_statement_due_date, :daily_statement_number, :ddtc_hold_date,
+                  :ddtc_hold_release_date, :delivery_order_pickup_date, :departments,
+                  :destination_state, :detained_at_port_of_discharge_date, :direct_shipment_date, :division_number,
+                  :docs_missing_date, :docs_received_date, :documentation_request_date, :duty_due_date,
+                  :edi_received_date, :employee_name, :entered_value, :entry_filed_date,
+                  :entry_number, :entry_port_code, :entry_type, :error_free_release, :eta_date,
+                  :exam_ordered_date, :exam_release_date, :expected_update_time,
+                  :export_country_codes, :export_date, :export_state_codes, :fcl_lcl,
+                  :fda_hold_date, :fda_hold_release_date, :fda_message,
+                  :fda_pending_release_line_count, :fda_release_date, :fda_review_date,
+                  :fda_transmit_date, :file_logged_date, :final_delivery_date,
+                  :final_statement_date, :first_7501_print, :first_do_issued_date,
+                  :first_entry_sent_date, :first_it_date, :first_release_date,
+                  :first_release_received_date, :fiscal_date, :fiscal_month,
+                  :fiscal_year, :fish_and_wildlife_hold_date, :fish_and_wildlife_hold_release_date,
+                  :fish_and_wildlife_secure_facility_date, :fish_and_wildlife_transmitted_date,
+                  :free_date, :freight_pickup_date, :fsis_hold_date, :fsis_hold_release_date,
+                  :gross_weight, :hmf, :hold_date, :hold_release_date, :house_bills_of_lading,
+                  :house_carrier_code, :hts_expired_date, :hts_misclassified_date, :hts_missing_date,
+                  :hts_need_additional_info_date, :import_country_id, :import_date, :importer_id, :importer,
+                  :importer_request_date, :importer_tax_id, :invoice_discrepancy_date, :invoice_missing_date,
+                  :invoice_paid_date, :isf_accepted_date, :isf_sent_date, :it_numbers, :k84_due_date, :k84_month,
+                  :k84_receive_date, :lading_port_code, :lading_port, :last_7501_print, :last_billed_date,
+                  :last_exported_from_source, :last_file_bucket, :last_file_path,
+                  :liquidation_action_code, :liquidation_action_description, :liquidation_ada,
+                  :liquidation_cvd, :liquidation_date, :liquidation_duty,
+                  :liquidation_extension_code, :liquidation_extension_count,
+                  :liquidation_extension_description, :liquidation_fees, :liquidation_tax,
+                  :liquidation_total, :liquidation_type, :liquidation_type_code,
+                  :location_of_goods, :location_of_goods_description,
+                  :manifest_info_received_date, :master_bills_of_lading,
+                  :merchandise_description, :mfids, :mid_discrepancy_date, :miscellaneous_entry_exception_date, :monthly_statement_due_date,
+                  :monthly_statement_number, :monthly_statement_paid_date,
+                  :monthly_statement_received_date, :mpf, :nhtsa_hold_date,
+                  :nhtsa_hold_release_date, :nmfs_hold_date, :nmfs_hold_release_date,
+                  :ogd_request_date, :on_hold, :one_usg_date, :origin_country_codes,
+                  :origin_state_codes, :other_agency_hold_date, :other_agency_hold_release_date,
+                  :other_fees, :paperless_certification, :paperless_release, :pars_ack_date,
+                  :pars_reject_date, :part_number_request_date, :part_numbers, :pay_type, :pga_docs_incomplete_date, :pga_docs_missing_date,
+                  :po_numbers, :po_request_date, :product_lines, :recon_flags,
+                  :release_cert_message, :release_date, :release_type, :ship_terms,
+                  :source_system, :special_program_indicators, :special_tariff,
+                  :split_release_option, :split_shipment, :split_shipment_date, :store_names,
+                  :sub_house_bills_of_lading, :summary_line_count, :summary_rejected,
+                  :tariff_request_date, :time_to_process, :total_add, :total_cvd, :total_duty,
+                  :total_duty_direct, :total_duty_gst, :total_entry_fee, :total_fees, :total_gst,
+                  :total_invoiced_value, :total_non_dutiable_amount, :total_packages,
+                  :total_packages_uom, :total_taxes, :total_units, :total_units_uoms,
+                  :tracking_status, :transport_mode_code, :trucker_called_date,
+                  :ult_consignee_code, :ult_consignee_name, :unlading_port_code, :unlading_port,
+                  :us_exit_port_code, :usda_hold_date, :usda_hold_release_date,
+                  :value_currency_request_date, :vendor_names, :vessel, :voyage, :worksheet_date,
+                  :import_country, :ca_entry_port, :updated_at, :summary_accepted_date, :bond_surety_number,
+                  :customs_detention_exception_opened_date, :customs_detention_exception_resolved_date,
+                  :classification_inquiry_exception_opened_date, :classification_inquiry_exception_resolved_date,
+                  :customer_requested_hold_exception_opened_date, :customer_requested_hold_exception_resolved_date,
+                  :customs_exam_exception_opened_date, :customs_exam_exception_resolved_date,
+                  :document_discrepancy_exception_opened_date, :document_discrepancy_exception_resolved_date,
+                  :fda_issue_exception_opened_date, :fda_issue_exception_resolved_date,
+                  :fish_and_wildlife_exception_opened_date, :fish_and_wildlife_exception_resolved_date,
+                  :lacey_act_exception_opened_date, :lacey_act_exception_resolved_date,
+                  :late_documents_exception_opened_date, :late_documents_exception_resolved_date,
+                  :manifest_hold_exception_opened_date, :manifest_hold_exception_resolved_date,
+                  :missing_documents_exception_opened_date, :missing_documents_exception_resolved_date,
+                  :pending_customs_review_exception_opened_date, :pending_customs_review_exception_resolved_date,
+                  :price_inquiry_exception_opened_date, :price_inquiry_exception_resolved_date,
+                  :usda_hold_exception_opened_date, :usda_hold_exception_resolved_date
 
   # Tracking status is about whether an entry has been fully prepared
   # It does not report on release status, just whether the entry has been
@@ -396,20 +398,21 @@ class Entry < ActiveRecord::Base
   has_many :entry_pga_summaries, dependent: :destroy, inverse_of: :entry, autosave: true
   has_one :daily_statement_entry, inverse_of: :entry
 
-  belongs_to :importer, :class_name=>"Company"
-  belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'
-  belongs_to :unlading_port, :class_name=>'Port', :foreign_key=>'unlading_port_code', :primary_key=>'schedule_d_code'
-  belongs_to :us_entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'schedule_d_code'
-  belongs_to :ca_entry_port, :class_name=>'Port', :foreign_key=>'entry_port_code', :primary_key=>'cbsa_port'
-  belongs_to :us_exit_port, :class_name=>'Port', :foreign_key=>'us_exit_port_code', :primary_key=>'schedule_d_code'
-  belongs_to :import_country, :class_name=>"Country"
+  belongs_to :importer, class_name: "Company"
+  belongs_to :lading_port, class_name: 'Port', foreign_key: 'lading_port_code', primary_key: 'schedule_k_code' # rubocop:disable Rails/InverseOf
+  belongs_to :unlading_port, class_name: 'Port', foreign_key: 'unlading_port_code', primary_key: 'schedule_d_code' # rubocop:disable Rails/InverseOf
+  belongs_to :us_entry_port, class_name: 'Port', foreign_key: 'entry_port_code', primary_key: 'schedule_d_code' # rubocop:disable Rails/InverseOf
+  belongs_to :ca_entry_port, class_name: 'Port', foreign_key: 'entry_port_code', primary_key: 'cbsa_port' # rubocop:disable Rails/InverseOf
+  belongs_to :us_exit_port, class_name: 'Port', foreign_key: 'us_exit_port_code', primary_key: 'schedule_d_code' # rubocop:disable Rails/InverseOf
+  belongs_to :import_country, class_name: "Country"
+  belongs_to :broker, class_name: "Company"
 
   before_save :update_k84
   before_save :update_tracking_status
 
-  KEWILL_SOURCE_SYSTEM ||= "Alliance"
-  FENIX_SOURCE_SYSTEM ||= "Fenix"
-  CARGOWISE_SOURCE_SYSTEM ||= "Cargowise"
+  KEWILL_SOURCE_SYSTEM ||= "Alliance".freeze
+  FENIX_SOURCE_SYSTEM ||= "Fenix".freeze
+  CARGOWISE_SOURCE_SYSTEM ||= "Cargowise".freeze
 
   def locked?
     false
@@ -423,17 +426,17 @@ class Entry < ActiveRecord::Base
     # is expecting to allow it)
     if importer.nil?
       # If there's no importer associated with the entry (yet), then nobody but master account should be able to access it
-      return allow_nil_importer && user.company.master?
+      allow_nil_importer && user.company.master?
     else
-      return user.company.master? || importer.id==user.company_id || user.company.linked_companies.include?(importer)
+      user.company.master? || importer.id == user.company_id || user.company.linked_companies.include?(importer)
     end
   end
 
   # find any broker invoices by source system and broker reference and link them to this entry
   # will replace any existing entry link in the invoices
   def link_broker_invoices
-    BrokerInvoice.where(:source_system=>self.source_system, :broker_reference=>self.broker_reference).each do |bi|
-      bi.update_attributes(:entry_id=>self.id)
+    BrokerInvoice.where(source_system: self.source_system, broker_reference: self.broker_reference).each do |bi|
+      bi.update!(entry_id: self.id)
     end
     self.reload
   end
@@ -481,20 +484,20 @@ class Entry < ActiveRecord::Base
   def self.get_transport_mode_codes_us_ca mode_descriptor
     transport_mode_codes = []
     case mode_descriptor.to_s.upcase
-      when 'AIR'
+    when 'AIR'
         transport_mode_codes = [40, 41, 1]
-      when 'SEA'
+    when 'SEA'
         transport_mode_codes = [10, 11, 9]
-      when 'RAIL'
+    when 'RAIL'
         transport_mode_codes = [20, 21, 6]
-      when 'TRUCK'
+    when 'TRUCK'
         transport_mode_codes = [30, 31, 2]
     end
     transport_mode_codes
   end
 
   # Generates hash for determining type of code.
-  def self.get_transport_mode_name_lookup_us_ca
+  def self.get_transport_mode_name_lookup_us_ca # rubocop:disable Naming/AccessorMethodName
     table = {}
     ['AIR', 'SEA', 'RAIL', 'TRUCK'].each do |name|
       codes = get_transport_mode_codes_us_ca name
@@ -553,25 +556,32 @@ class Entry < ActiveRecord::Base
       c = Company.find company_id
     end
 
-    c.master? ? "1=1" : ActiveRecord::Base.sanitize_sql_array(["(entries.importer_id = ? or entries.importer_id IN (select child_id from linked_companies where parent_id = ?))", c.id, c.id])
+    sql = <<~SQL
+      entries.importer_id = ?
+      OR entries.broker_id = ?
+      OR entries.importer_id IN (SELECT child_id FROM linked_companies WHERE parent_id = ?)
+      OR entries.broker_id IN (SELECT child_id FROM linked_companies WHERE parent_id = ?)
+    SQL
+
+    c.master? ? "1=1" : ActiveRecord::Base.sanitize_sql_array([sql, c.id, c.id, c.id, c.id])
   end
 
   # has liquidation fields
   def liquidation_data?
     self.liquidation_date ||
-    (self.liquidation_duty.to_f > 0) ||
-    (self.liquidation_fees.to_f > 0) ||
-    (self.liquidation_tax.to_f > 0) ||
-    (self.liquidation_ada.to_f > 0) ||
-    (self.liquidation_cvd.to_f > 0) ||
-    (self.liquidation_total.to_f > 0) ||
-    (self.liquidation_extension_count.to_f > 0) ||
-    !self.liquidation_extension_description.blank? ||
-    !(self.liquidation_extension_code.blank? || self.liquidation_extension_code == '00') ||
-    !self.liquidation_action_description.blank? ||
-    !(self.liquidation_action_code.blank? || self.liquidation_action_code == '00') ||
-    !self.liquidation_type.blank? ||
-    !(self.liquidation_type_code.blank? || self.liquidation_type_code == '00')
+      (self.liquidation_duty.to_f > 0) ||
+      (self.liquidation_fees.to_f > 0) ||
+      (self.liquidation_tax.to_f > 0) ||
+      (self.liquidation_ada.to_f > 0) ||
+      (self.liquidation_cvd.to_f > 0) ||
+      (self.liquidation_total.to_f > 0) ||
+      (self.liquidation_extension_count.to_f > 0) ||
+      self.liquidation_extension_description.present? ||
+      !(self.liquidation_extension_code.blank? || self.liquidation_extension_code == '00') ||
+      self.liquidation_action_description.present? ||
+      !(self.liquidation_action_code.blank? || self.liquidation_action_code == '00') ||
+      self.liquidation_type.present? ||
+      !(self.liquidation_type_code.blank? || self.liquidation_type_code == '00')
   end
 
   def split_master_bills_of_lading
@@ -607,7 +617,7 @@ class Entry < ActiveRecord::Base
 
   def populated_holds
     if canadian?
-      raise RuntimeError, "Only valid for US entries!"
+      raise "Only valid for US entries!"
     else
       populated_us_holds
     end
@@ -615,7 +625,7 @@ class Entry < ActiveRecord::Base
 
   def active_holds
     if canadian?
-      raise RuntimeError, "Only valid for US entries!"
+      raise "Only valid for US entries!"
     else
       active_us_holds
     end
@@ -623,7 +633,7 @@ class Entry < ActiveRecord::Base
 
   def hold_attributes
     if canadian?
-      raise RuntimeError, "Only valid for US entries!"
+      raise "Only valid for US entries!"
     else
       all_us_holds.map { |h| {hold: h[:hold][:attribute], release: h[:release][:attribute]}}
     end
@@ -698,17 +708,19 @@ class Entry < ActiveRecord::Base
   end
 
   def self.total_duty_billed_subquery
-    "(SELECT
+    <<~SQL
+      (SELECT
         IFNULL(
-          SUM(" +
-            "CASE " +
-            "WHEN broker_invoices.source_system = 'Alliance' AND broker_invoice_lines.charge_code IN ('0001') THEN broker_invoice_lines.charge_amount " +
-            "WHEN broker_invoices.source_system = 'Fenix' and broker_invoice_lines.charge_code in ('1') THEN broker_invoice_lines.charge_amount " +
-            "WHEN broker_invoices.source_system = 'Cargowise' and broker_invoice_lines.charge_code in ('200', '221', '222') THEN broker_invoice_lines.charge_amount " +
-            "ELSE 0 END) " +
-        ", 0) " +
-      "FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = entries.id" +
-    ")"
+          SUM(
+            CASE
+            WHEN broker_invoices.source_system = 'Alliance' AND broker_invoice_lines.charge_code IN ('0001') THEN broker_invoice_lines.charge_amount
+            WHEN broker_invoices.source_system = 'Fenix' and broker_invoice_lines.charge_code in ('1') THEN broker_invoice_lines.charge_amount
+            WHEN broker_invoices.source_system = 'Cargowise' and broker_invoice_lines.charge_code in ('200', '221', '222') THEN broker_invoice_lines.charge_amount
+            ELSE 0 END
+          ), 0)
+        FROM broker_invoice_lines INNER JOIN broker_invoices ON broker_invoices.id = broker_invoice_lines.broker_invoice_id WHERE broker_invoices.entry_id = entries.id
+      )
+    SQL
   end
 
   def self.calculate_cbp_check_digit filer_code, file_number
@@ -718,9 +730,9 @@ class Entry < ActiveRecord::Base
 
     # Turn any non-numeric values in the filer_code into numbers (A=1, B=2, I = 9, J = 1...R = 9, S = 2..Z = 9)
     digit_map = {}
-    "A".upto("I").each_with_index {|v, i| digit_map[v] = (i+1) }
-    "J".upto("R").each_with_index {|v, i| digit_map[v] = (i+1) }
-    "S".upto("Z").each_with_index {|v, i| digit_map[v] = (i+2) } # No idea why, but this series starts with 2, not 1
+    "A".upto("I").each_with_index {|v, i| digit_map[v] = (i + 1) }
+    "J".upto("R").each_with_index {|v, i| digit_map[v] = (i + 1) }
+    "S".upto("Z").each_with_index {|v, i| digit_map[v] = (i + 2) } # No idea why, but this series starts with 2, not 1
 
     digits = []
     filer_code.each_char {|c| digits << (digit_map[c].presence || c.to_i) }
@@ -734,7 +746,7 @@ class Entry < ActiveRecord::Base
     digits.reverse.each_with_index {|v, i| (i + 1).odd? ? (odd_digits << v) : (even_digits << v) }
 
     odd_sum = odd_digits.map do |v|
-      v = v * 2
+      v *= 2
       if v >= 10
         v = ((v + 1) - 10)
       end
@@ -792,24 +804,45 @@ class Entry < ActiveRecord::Base
     end
 
     def all_us_holds
-      [{hold: {mfid: :ent_ams_hold_date, attribute: :ams_hold_date, value: ams_hold_date}, release: {mfid: :ent_ams_hold_release_date, attribute: :ams_hold_release_date, value: ams_hold_release_date}},
-       {hold: {mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: aphis_hold_date}, release: {mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: aphis_hold_release_date}},
-       {hold: {mfid: :ent_atf_hold_date, attribute: :atf_hold_date, value: atf_hold_date}, release: {mfid: :ent_atf_hold_release_date, attribute: :atf_hold_release_date, value: atf_hold_release_date}},
-       {hold: {mfid: :ent_cargo_manifest_hold_date, attribute: :cargo_manifest_hold_date, value: cargo_manifest_hold_date}, release: {mfid: :ent_cargo_manifest_hold_release_date, attribute: :cargo_manifest_hold_release_date, value: cargo_manifest_hold_release_date}},
-       {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: cbp_hold_date}, release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: cbp_hold_release_date}},
-       {hold: {mfid: :ent_cbp_intensive_hold_date, attribute: :cbp_intensive_hold_date, value: cbp_intensive_hold_date}, release: {mfid: :ent_cbp_intensive_hold_release_date, attribute: :cbp_intensive_hold_release_date, value: cbp_intensive_hold_release_date}},
-       {hold: {mfid: :ent_ddtc_hold_date, attribute: :ddtc_hold_date, value: ddtc_hold_date}, release: {mfid: :ent_ddtc_hold_release_date, attribute: :ddtc_hold_release_date, value: ddtc_hold_release_date}},
-       {hold: {mfid: :ent_fda_hold_date, attribute: :fda_hold_date, value: fda_hold_date}, release: {mfid: :ent_fda_hold_release_date, attribute: :fda_hold_release_date, value: fda_hold_release_date}},
-       {hold: {mfid: :ent_fsis_hold_date, attribute: :fsis_hold_date, value: fsis_hold_date}, release: {mfid: :ent_fsis_hold_release_date, attribute: :fsis_hold_release_date, value: fsis_hold_release_date}},
-       {hold: {mfid: :ent_nhtsa_hold_date, attribute: :nhtsa_hold_date, value: nhtsa_hold_date}, release: {mfid: :ent_nhtsa_hold_release_date, attribute: :nhtsa_hold_release_date, value: nhtsa_hold_release_date}},
-       {hold: {mfid: :ent_nmfs_hold_date, attribute: :nmfs_hold_date, value: nmfs_hold_date}, release: {mfid: :ent_nmfs_hold_release_date, attribute: :nmfs_hold_release_date, value: nmfs_hold_release_date}},
-       {hold: {mfid: :ent_usda_hold_date, attribute: :usda_hold_date, value: usda_hold_date}, release: {mfid: :ent_usda_hold_release_date, attribute: :usda_hold_release_date, value: usda_hold_release_date}},
-       {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date}, release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}},
-       {hold: {mfid: :ent_fish_and_wildlife_hold_date, attribute: :fish_and_wildlife_hold_date, value: fish_and_wildlife_hold_date}, release: {mfid: :ent_fish_and_wildlife_hold_release_date, attribute: :fish_and_wildlife_hold_release_date, value: fish_and_wildlife_hold_release_date}, additional_fields: [:ent_fish_and_wildlife_secure_facility_date]}]
+      [{hold: {mfid: :ent_ams_hold_date, attribute: :ams_hold_date, value: ams_hold_date},
+        release: {mfid: :ent_ams_hold_release_date, attribute: :ams_hold_release_date, value: ams_hold_release_date}},
+       {hold: {mfid: :ent_aphis_hold_date, attribute: :aphis_hold_date, value: aphis_hold_date},
+        release: {mfid: :ent_aphis_hold_release_date, attribute: :aphis_hold_release_date, value: aphis_hold_release_date}},
+       {hold: {mfid: :ent_atf_hold_date, attribute: :atf_hold_date, value: atf_hold_date},
+        release: {mfid: :ent_atf_hold_release_date, attribute: :atf_hold_release_date, value: atf_hold_release_date}},
+       {hold: {mfid: :ent_cargo_manifest_hold_date, attribute: :cargo_manifest_hold_date, value: cargo_manifest_hold_date},
+        release: {mfid: :ent_cargo_manifest_hold_release_date, attribute: :cargo_manifest_hold_release_date, value: cargo_manifest_hold_release_date}},
+       {hold: {mfid: :ent_cbp_hold_date, attribute: :cbp_hold_date, value: cbp_hold_date},
+        release: {mfid: :ent_cbp_hold_release_date, attribute: :cbp_hold_release_date, value: cbp_hold_release_date}},
+       {hold: {mfid: :ent_cbp_intensive_hold_date, attribute: :cbp_intensive_hold_date, value: cbp_intensive_hold_date},
+        release: {mfid: :ent_cbp_intensive_hold_release_date, attribute: :cbp_intensive_hold_release_date, value: cbp_intensive_hold_release_date}},
+       {hold: {mfid: :ent_ddtc_hold_date, attribute: :ddtc_hold_date, value: ddtc_hold_date},
+        release: {mfid: :ent_ddtc_hold_release_date, attribute: :ddtc_hold_release_date, value: ddtc_hold_release_date}},
+       {hold: {mfid: :ent_fda_hold_date, attribute: :fda_hold_date, value: fda_hold_date},
+        release: {mfid: :ent_fda_hold_release_date, attribute: :fda_hold_release_date, value: fda_hold_release_date}},
+       {hold: {mfid: :ent_fsis_hold_date, attribute: :fsis_hold_date, value: fsis_hold_date},
+        release: {mfid: :ent_fsis_hold_release_date, attribute: :fsis_hold_release_date, value: fsis_hold_release_date}},
+       {hold: {mfid: :ent_nhtsa_hold_date, attribute: :nhtsa_hold_date, value: nhtsa_hold_date},
+        release: {mfid: :ent_nhtsa_hold_release_date, attribute: :nhtsa_hold_release_date, value: nhtsa_hold_release_date}},
+       {hold: {mfid: :ent_nmfs_hold_date, attribute: :nmfs_hold_date, value: nmfs_hold_date},
+        release: {mfid: :ent_nmfs_hold_release_date, attribute: :nmfs_hold_release_date, value: nmfs_hold_release_date}},
+       {hold: {mfid: :ent_usda_hold_date, attribute: :usda_hold_date, value: usda_hold_date},
+        release: {mfid: :ent_usda_hold_release_date, attribute: :usda_hold_release_date, value: usda_hold_release_date}},
+       {hold: {mfid: :ent_other_agency_hold_date, attribute: :other_agency_hold_date, value: other_agency_hold_date},
+        release: {mfid: :ent_other_agency_hold_release_date, attribute: :other_agency_hold_release_date, value: other_agency_hold_release_date}},
+       {hold: {mfid: :ent_fish_and_wildlife_hold_date, attribute: :fish_and_wildlife_hold_date, value: fish_and_wildlife_hold_date},
+        release: {mfid: :ent_fish_and_wildlife_hold_release_date, attribute: :fish_and_wildlife_hold_release_date, value: fish_and_wildlife_hold_release_date},
+        additional_fields: [:ent_fish_and_wildlife_secure_facility_date]}]
     end
 
     def company_permission? user, allow_nil_importer: false
-      Entry.can_view_importer? self.importer, user, allow_nil_importer: allow_nil_importer
+      Entry.can_view_importer?(self.importer, user, allow_nil_importer: allow_nil_importer) ||
+        broker_permission?(user)
+    end
+
+    def broker_permission? user
+      (user.company_id.present? && user.company_id == self.broker_id) ||
+        (self.broker_id.present? && user.company.linked_companies.include?(self.broker))
     end
 
     def update_tracking_status
@@ -846,14 +879,14 @@ class Entry < ActiveRecord::Base
         k84_basis = cadex_accept_date
       end
 
-      unless k84_basis.blank?
+      if k84_basis.present?
         month = k84_basis.month
         # Anything after the 24th is the next month
         month += 1 if  k84_basis.day > 24
         # Anything after 24th of Dec is going to roll to 13th month..of which there isn't one (unless you want to count Undecimber),
         # so loop back to 1
         month = (month % 12) if month > 12
-        year = month==1 && k84_basis.month == 12 ? k84_basis.year + 1 : k84_basis.year
+        year = month == 1 && k84_basis.month == 12 ? k84_basis.year + 1 : k84_basis.year
         self.k84_month = month
         self.k84_due_date = Date.new(year, month, 25)
 

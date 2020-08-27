@@ -1,5 +1,7 @@
 describe OpenChain::FenixParser do
 
+  let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "11981") }
+
   before :each do
     Factory(:country, :iso_code=>'CA')
     @mdy = '%m/%d/%Y'
@@ -166,6 +168,7 @@ describe OpenChain::FenixParser do
     expect(ent.last_file_path).to eq('file/path/b3_detail_rns_114401_2013052958482.1369859062.csv')
     expect(ent.import_country).to eq(Country.find_by(iso_code: 'CA'))
     expect(ent.entry_number).to eq(@barcode)
+    expect(ent.broker).to eq broker
     expect(ent.importer_tax_id).to eq(@importer_tax_id)
     expect(ent.last_exported_from_source).to eq(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20150904201516"))
 

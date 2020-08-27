@@ -21,6 +21,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
 
     describe "US" do
       let! (:country) { Factory(:country, iso_code:'US') }
+      let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "595") }
 
       it "creates a US entry" do
         DataCrossReference.create!(cross_reference_type: DataCrossReference::CARGOWISE_TRANSPORT_MODE_US, key:'RAICNT', value:'21')
@@ -63,6 +64,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.source_system).to eq Entry::CARGOWISE_SOURCE_SYSTEM
         expect(entry.import_country_id).to eq country.id
         expect(entry.entry_number).to eq "59555920103"
+        expect(entry.broker).to eq broker
         expect(entry.master_bills_of_lading).to eq "ZIMU000030320655\n ZIKA000030320659\n ZIMA000030320656"
         expect(entry.house_bills_of_lading).to eq "CNRU000030320657\n SCTV000030320658"
         expect(entry.customer_references).to eq "MAEU579869416"
@@ -769,11 +771,14 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
 
     describe "Canada" do
       let! (:country) { Factory(:country, iso_code:'CA') }
+      let! (:broker) { add_system_identifier(Factory(:company, broker: true, name: "The Broker"), "Filer Code", "59555") }
+
+      before do
+        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
+      end
 
       it "creates a Canada entry" do
-        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
         test_data.gsub!(/USD/, 'CAD')
-
         DataCrossReference.create!(cross_reference_type: DataCrossReference::CARGOWISE_TRANSPORT_MODE_CA, key:'RAICNT', value:'6')
 
         # These are called only for the US.
@@ -792,6 +797,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect(entry.source_system).to eq Entry::CARGOWISE_SOURCE_SYSTEM
         expect(entry.import_country_id).to eq country.id
         expect(entry.entry_number).to eq "59555920103"
+        expect(entry.broker).to eq broker
         expect(entry.master_bills_of_lading).to eq "ZIMU000030320655\n ZIKA000030320659\n ZIMA000030320656"
         expect(entry.house_bills_of_lading).to eq "CNRU000030320657\n SCTV000030320658"
 
@@ -1065,7 +1071,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "creates a Canada entry, hitting secondary paths due to missing values" do
-        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
         test_data.gsub!(/PortOfDestination/, 'ProfOfDivination')
         test_data.gsub!(/PortOfDischarge/, 'ProfOfDarkArts')
         test_data.gsub!(/EntryAuthorisation/, 'EntryAuthoritarian')
@@ -1092,7 +1097,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "creates a Canada entry, hitting tertiary paths due to missing values" do
-        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
         test_data.gsub!(/ADD/, 'SUR')
 
         subject.parse make_document(test_data)
@@ -1110,8 +1114,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "handles non-CAD currency" do
-        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
-
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
@@ -1132,7 +1134,6 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
       end
 
       it "raises error when customer number is missing" do
-        test_data.gsub!(/<Code>QMJ/, '<Code>YYZ')
         test_data.gsub!(/US48733060b/, '')
 
         subject.parse make_document(test_data)
