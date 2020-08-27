@@ -276,13 +276,117 @@ describe FileImportProcessor do
         expect(e.total_packages).to eq(2)
       end
 
+      context "with change detection preventing saves" do
+        it "does not set updated_at on objects that have not been changed" do
+          product = Factory(:product, unique_identifier:'uid-abc', name: "Description")
+          updated_at = product.updated_at
+
+          pro = FileImportProcessor.new(@f, nil, [])
+          allow(pro).to receive(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+            SearchColumn.new(:model_field_uid=>"prod_name", :rank=>2)
+          ])
+          Timecop.freeze(Time.zone.now + 1.day) do
+            obj = pro.do_row 0, ['uid-abc', 'Description'], true, -1, @u
+            expect(obj.errors[:base]).to be_blank
+          end
+          expect(Product.find_by(unique_identifier: 'uid-abc').updated_at).to be_same_second_as updated_at
+        end
+
+        it "does not set updated_at on objects that have not had custom values changed" do
+          product = Factory(:product, unique_identifier:'uid-abc', name: "Description")
+          cd = CustomDefinition.create! module_type: "Product", label: "Test", data_type: "string"
+          product.update_custom_value! cd, "value"
+
+          updated_at = product.updated_at
+
+          pro = FileImportProcessor.new(@f, nil, [])
+          allow(pro).to receive(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=> "prod_uid", :rank=>1),
+            SearchColumn.new(:model_field_uid=> cd.model_field_uid, :rank=>2)
+          ])
+          Timecop.freeze(Time.zone.now + 1.day) do
+            obj = pro.do_row 0, ['uid-abc', 'value'], true, -1, @u
+            expect(obj.errors[:base]).to be_blank
+          end
+          expect(Product.find_by(unique_identifier: 'uid-abc').updated_at).to be_same_second_as updated_at
+        end
+
+        it "does not set updated_at on objects that have not been changed detecting child non-changes" do
+          product = Factory(:product, unique_identifier:'uid-abc', name: "Description")
+          country = Factory(:country, iso_code: "US")
+          classification = product.classifications.create! country: country
+          cd = CustomDefinition.create! module_type: "Classification", label: "Test", data_type: "string"
+          classification.update_custom_value! cd, "value"
+          updated_at = product.updated_at
+
+          pro = FileImportProcessor.new(@f, nil, [])
+          allow(pro).to receive(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+            SearchColumn.new(:model_field_uid=>"class_cntry_iso", :rank=>2),
+            SearchColumn.new(:model_field_uid=>cd.model_field_uid, :rank=>3)
+          ])
+          Timecop.freeze(Time.zone.now + 1.day) do
+            obj = pro.do_row 0, ['uid-abc', 'US', 'value'], true, -1, @u
+            expect(obj.errors[:base]).to be_blank
+          end
+          expect(Product.find_by(unique_identifier: 'uid-abc').updated_at).to be_same_second_as updated_at
+        end
+
+        it "does not set updated_at on objects that have not been changed detecting grand child non-changes" do
+          product = Factory(:product, unique_identifier:'uid-abc', name: "Description")
+          country = Factory(:country, iso_code: "US")
+          classification = product.classifications.create! country: country
+          tariff = classification.tariff_records.create! line_number: 1, hts_1: "1234567890"
+          ot = Factory(:official_tariff, :hts_code=>'1234567890', :country=>country)
+          updated_at = product.updated_at
+
+          pro = FileImportProcessor.new(@f, nil, [])
+          allow(pro).to receive(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+            SearchColumn.new(:model_field_uid=>"class_cntry_iso", :rank=>2),
+            SearchColumn.new(:model_field_uid=>"hts_line_number", :rank=>3),
+            SearchColumn.new(:model_field_uid=>"hts_hts_1", :rank=>4)
+          ])
+          Timecop.freeze(Time.zone.now + 1.day) do
+            obj = pro.do_row 0, ['uid-abc', 'US', 1, "1234567890"], true, -1, @u
+            expect(obj.errors[:base]).to be_blank
+          end
+          expect(Product.find_by(unique_identifier: 'uid-abc').updated_at).to be_same_second_as updated_at
+        end
+
+        it "does not set updated_at on objects that have not been changed detecting grand child non-changes to custom fields" do
+          product = Factory(:product, unique_identifier:'uid-abc', name: "Description")
+          country = Factory(:country, iso_code: "US")
+          classification = product.classifications.create! country: country
+          tariff = classification.tariff_records.create! line_number: 1, hts_1: "1234567890"
+          cd = CustomDefinition.create! module_type: "TariffRecord", label: "Test", data_type: "string"
+          tariff.update_custom_value! cd, "test"
+          updated_at = product.updated_at
+
+          pro = FileImportProcessor.new(@f, nil, [])
+          allow(pro).to receive(:get_columns).and_return([
+            SearchColumn.new(:model_field_uid=>"prod_uid", :rank=>1),
+            SearchColumn.new(:model_field_uid=>"class_cntry_iso", :rank=>2),
+            SearchColumn.new(:model_field_uid=>"hts_line_number", :rank=>3),
+            SearchColumn.new(:model_field_uid=>cd.model_field_uid, :rank=>4)
+          ])
+          Timecop.freeze(Time.zone.now + 1.day) do
+            obj = pro.do_row 0, ['uid-abc', 'US', 1, "test"], true, -1, @u
+            expect(obj.errors[:base]).to be_blank
+          end
+          expect(Product.find_by(unique_identifier: 'uid-abc').updated_at).to be_same_second_as updated_at
+        end
+      end
+
       context "error cases" do
         before :each do
           @listener = Class.new do
-            attr_reader :messages, :failed
-            def process_row row_number, object, m, failed
+            attr_reader :messages, :failed, :saved
+            def process_row row_number, object, m, failed: false, saved: false
               @messages = m
               @failed = failed
+              @saved = saved
             end
           end.new
         end

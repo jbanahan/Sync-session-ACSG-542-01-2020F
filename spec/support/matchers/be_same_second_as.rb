@@ -6,4 +6,8 @@ RSpec::Matchers.define :be_same_second_as do |t|
       time.eql?(t)
     end
   end
+
+  failure_message do |actual|
+    "expected #{actual} to be the same second as #{t}"
+  end
 end

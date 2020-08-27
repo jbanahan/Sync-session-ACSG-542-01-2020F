@@ -373,7 +373,7 @@ describe ImportedFile do
       end
 
       it "creates/assigns a change record to the object and file import result" do
-        expect {listener.process_row 3, obj, messages, true}.to change(ChangeRecord, :count).by(1)
+        expect {listener.process_row 3, obj, messages, failed: true}.to change(ChangeRecord, :count).by(1)
         cr = ChangeRecord.first
         expect(cr.unique_identifier).to eq "mf value"
         expect(cr.record_sequence_number).to eq 3
@@ -383,7 +383,7 @@ describe ImportedFile do
       end
 
       it "creates change record messages" do
-        listener.process_row 3, obj, messages
+        listener.process_row 3, obj, messages, saved: true
         cr = ChangeRecord.first
         cr_msgs = cr.change_record_messages
         expect(cr_msgs.count).to eq 2
@@ -400,7 +400,7 @@ describe ImportedFile do
       end
 
       it "updates object and creates snapshot" do
-        listener.process_row 3, obj, messages
+        listener.process_row 3, obj, messages, saved: true
         expect(obj.last_updated_by).to eq user
         snap = obj.entity_snapshots.first
         expect(snap.user).to eq user
@@ -413,6 +413,17 @@ describe ImportedFile do
         expect(ChangeRecordMessage.count).to eq 0
         res = imported_file.file_import_results.first
         expect(res.rows_processed).to be nil
+      end
+
+      it "adds a message about no updates and supresses last_updated_by / snapshots" do
+        listener.process_row 3, obj, messages, saved: false
+        expect(obj.last_updated_by).to be_nil
+        expect(obj.entity_snapshots).to be_blank
+
+        cr = ChangeRecord.first
+        cr_msgs = cr.change_record_messages
+        expect(cr_msgs.count).to eq 3
+        expect(cr_msgs.last.message).to eq "Product was not updated because no values were modified."
       end
     end
   end

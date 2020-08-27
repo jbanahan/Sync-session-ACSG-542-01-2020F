@@ -876,6 +876,14 @@ describe OpenChain::CustomHandler::Vandegrift::KewillProductGenerator do
       expect(d.exclusion_301_tariff).to be_nil
     end
 
+    it "uses updated_at as effective_date" do
+      # use a time that needs to get translated back into US Eastern time and rolled back one day
+      lacey_row << ActiveSupport::TimeZone["UTC"].parse("2020-08-19 03:00")
+      opts[:use_updated_at_as_effective_date] = true
+      d = subject.map_query_row_to_product_data row
+      expect(d.effective_date).to eq Date.new(2020, 8, 18)
+    end
+
     context "with customer override value" do
       let (:opts) { {"customer_number_override" => "OVERRIDE"} }
 

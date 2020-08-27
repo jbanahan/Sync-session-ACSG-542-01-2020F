@@ -371,18 +371,23 @@ class ImportedFile < ActiveRecord::Base
       @fr.update_attributes(:expected_rows=>(count - @imported_file.starting_row - 1))
     end
 
-    def process_row row_number, object, messages, failed=false
+    def process_row row_number, object, messages, failed: false, saved: false
       key_model_field_value, messages = messages.partition { |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
       cr = ChangeRecord.create!(:unique_identifier=>key_model_field_value[0], :record_sequence_number=>row_number, :recordable=>object,
                                 :failed=>failed, :file_import_result_id=>@fr.id)
       unless messages.blank?
         crms = messages.map { |m| ChangeRecordMessage.new(change_record_id: cr.id, message: m.gsub(/\\/, '\&\&').gsub(/'/, "''")) }
+        # Add a message indicating the record was not saved (thus no snapshot created) if no values where modified.  This can help track down issues if anyone
+        # has questions why they're not seeing snapshot records for an object that was present in an uploaded file.
+        crms << ChangeRecordMessage.new(change_record_id: cr.id, message: "#{CoreModule.find_by_object(object).label} was not updated because no values were modified.") unless saved
         ChangeRecordMessage.import crms
         FileImportResult.where(id: @fr.id).update_all(rows_processed: row_number - (@imported_file.starting_row - 1))
       end
 
-      object.update_attributes(:last_updated_by_id=>@fr.run_by.id) if object.respond_to?(:last_updated_by_id)
-      object.create_snapshot(@fr.run_by, @imported_file, @imported_file.note) if object.respond_to?(:create_snapshot)
+      if saved
+        object.update!(last_updated_by_id: @fr.run_by.id) if object.respond_to?(:last_updated_by_id)
+        object.create_snapshot(@fr.run_by, @imported_file, @imported_file.note) if object.respond_to?(:create_snapshot)
+      end
     end
 
     def process_start time

@@ -34,7 +34,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
     # (like DAS) where the products aren't linked to any importer - since the whole system is a single importer's system.
     add_options(opts, :include_linked_importer_products, :strip_leading_zeros, :use_unique_identifier, :disable_importer_check,
                 :allow_blank_tariffs, :allow_multiple_tariffs, :disable_special_tariff_lookup, :allow_style_truncation,
-                :suppress_fda_data)
+                :suppress_fda_data, :use_updated_at_as_effective_date)
     # We can allow for multiple customer numbers so that we can just have a single scheduled job for all the simple
     # generators that share the same setup (just with different customer numbers)
     if opts[:customer_numbers]
@@ -279,8 +279,12 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
 
   # Override this method to return a value from the query result row to use as an effective date
   # if the extending generator wants to utilze CMUS part versioning
-  def effective_date_from_results _row
-    nil
+  def effective_date_from_results row
+    date = nil
+    if has_option?(:use_updated_at_as_effective_date)
+      date = row[40].in_time_zone("America/New_York").to_date
+    end
+    date
   end
 
   def expiration_date_from_results _row
@@ -359,7 +363,8 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillProductGe
         #{cd_s custom_defs[:prod_lacey_genus_1]},
         #{cd_s custom_defs[:prod_lacey_species_1]},
         #{cd_s custom_defs[:prod_lacey_genus_2]},
-        #{cd_s custom_defs[:prod_lacey_species_2]}
+        #{cd_s custom_defs[:prod_lacey_species_2]},
+        products.updated_at
       FROM products
         LEFT OUTER JOIN companies ON companies.id = products.importer_id
         LEFT OUTER JOIN system_identifiers sys_id ON sys_id.company_id = companies.id AND sys_id.system = 'Customs Management'

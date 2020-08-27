@@ -82,13 +82,13 @@ class FileImportProcessor
       # If you change this lock name, make sure you also modify the lock name in OpenChain::CoreModuleProcessor#lock_name
       Lock.acquire("#{@core_module.class_name}-#{key_model_field_value}", times: 5, temp_lock: true) do
         error_messages = []
+        any_object_saved = false
         @module_chain.to_a.each do |mod|
           if fields_for_me_or_children? data_map, mod
             parent_mod = @module_chain.parent mod
             obj = find_or_build_by_unique_field data_map, object_map, mod
             @core_object = obj if parent_mod.nil? # this is the top level object
             object_map[mod] = obj
-            custom_fields = {}
             data_map[mod].each do |uid, data|
               mf = ModelField.find_by_uid uid
               # Rails evaluates boolean false as blank (boo!), so if we've got a boolean false value
@@ -118,17 +118,10 @@ class FileImportProcessor
                 process_import mf, obj, data, user, messages, error_messages
               end
             end
-            obj = merge_or_create obj, save, !parent_mod # if !parent_mod then we're at the top level
+
+            obj, saved = merge_or_create obj, save, !parent_mod # if !parent_mod then we're at the top level
             object_map[mod] = obj
-          end
-        end
-        if save
-          object_map.each_value do |obj|
-            if obj.class.include?(StatusableSupport)
-              sr = obj.status_rule
-              obj.set_status
-              obj.save! unless sr == obj.status_rule # only save if status changed
-            end
+            any_object_saved = true if saved
           end
         end
 
@@ -151,7 +144,12 @@ class FileImportProcessor
           # FieldLogicValidator only raises an error if a rule fails, we still want to raise an error if any of our process import calls resulted
           # in an error.
           raise OpenChain::ValidationLogicError.new(nil, object) unless object.errors[:base].empty?
-          fire_row row_number, object, messages
+
+          # If anything in the object heirarchy changed then we want the top level object
+          # to reflect a new updated_at value
+          object.touch if any_object_saved # rubocop:disable Rails/SkipsModelValidations
+
+          fire_row row_number, object, messages, failed: false, saved: any_object_saved
         end
 
       end
@@ -166,11 +164,11 @@ class FileImportProcessor
           messages << "ERROR: #{m}"
         }
       end
-      fire_row row_number, nil, messages, true # true = failed
+      fire_row row_number, nil, messages, failed: true, saved: false
     rescue => e
       e.log_me(["Imported File ID: #{@import_file.id}"])
       messages << "SYS ERROR: #{e.message}"
-      fire_row row_number, nil, messages, true
+      fire_row row_number, nil, messages, failed: true, saved: false
       raise e
     end
     r_val = @core_object
@@ -193,7 +191,7 @@ class FileImportProcessor
   def update_mode_check obj, update_mode, was_new
     case update_mode
     when "add"
-      @created_objects = [] unless @created_objects
+      @created_objects = Set.new unless @created_objects
       FileImportProcessor.raise_validation_exception obj, "Cannot update record when Update Mode is set to \"Add Only\"." if !was_new && !@created_objects.include?(obj.id)
       @created_objects << obj.id # mark that this object was created in this session so we know it can be updated again even in add mode
     when "update"
@@ -228,14 +226,48 @@ class FileImportProcessor
     return false
   end
 
-  def merge_or_create(base, save, is_top_level, options={})
+  def merge_or_create base, save, is_top_level
     dest = base
     is_new = dest.new_record?
     before_save dest
-    dest.save! if save
+    # If we've turned off the save function, then don't save no matter what
+    # (not really even sure where this value ultimately gets passed in from originally)
+    saved = false
+    if save
+      # Don't actually save the object, unless it was actually changed somewhere in its heirarchy.
+      # The reason we have to actually walk the object heirarchy is because some of the virtual fields (like First US HTS 1)
+      # will set values (.ie hts_1 ) on child or grandchild objects.
+      if is_new || any_object_in_heirarchy_changed?(dest)
+        dest.save!
+        saved = true
+      end
+    end
     # if this is the top level object, check against the search_setup#update_mode
     update_mode_check(dest, @import_file.update_mode, is_new) if is_top_level
-    return dest
+    return [dest, saved]
+  end
+
+  # This method walks the core module object heirarchy and returns true if any object in the chain
+  # has been changed (either a custom value or the object itself has been changed).
+  def any_object_in_heirarchy_changed? object
+    return true if object.changed?
+
+    # The use of loaded here and below is an assumption that if the actual AR proxy collection
+    # referenced isn't actually loaded, then nothing would actually have been changed on the object
+    if object.respond_to?(:custom_values) && object.custom_values.loaded?
+      return true if object.custom_values.any?(&:changed?)
+    end
+
+    cm = CoreModule.find_by_object(object)
+    CoreModule.find_by_object(object).children.each do |child_core_module|
+      child_association = cm.child_association_name(child_core_module)
+      association = object.public_send(child_association.to_sym)
+      if association.loaded?
+        return true if association.any? {|child| any_object_in_heirarchy_changed?(child) }
+      end
+    end
+
+    false
   end
 
   def before_save(dest)
@@ -408,7 +440,7 @@ class FileImportProcessor
 
   class PreviewListener
     attr_accessor :messages
-    def process_row row_number, object, messages, failed=false
+    def process_row row_number, object, messages, failed: false, saved: true
       self.messages = messages.reject { |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
     end
 
@@ -524,8 +556,9 @@ class FileImportProcessor
   def fire_row_count count
     fire_event :process_row_count, count
   end
-  def fire_row row_number, obj, messages, failed=false
-    @listeners.each {|ls| ls.process_row row_number, obj, messages, failed if ls.respond_to?('process_row')}
+
+  def fire_row row_number, obj, messages, failed: false, saved: false
+    @listeners.each {|ls| ls.process_row row_number, obj, messages, failed: failed, saved: saved if ls.respond_to?('process_row')}
   end
 
   def fire_end
