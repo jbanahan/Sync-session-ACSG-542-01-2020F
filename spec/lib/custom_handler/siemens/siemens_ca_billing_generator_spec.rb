@@ -1,8 +1,18 @@
 describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
-  subject {OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator.new('vfitrack')}
+  subject {described_class.new('standard', 'vfitrack')}
+
+  let(:tax_ids) do
+    "868220450RM0001, 836496125RM0001, 868220450RM0007, 120933510RM0001, 867103616RM0001, 845825561RM0001, 843722927RM0001, 868220450RM0022, 102753761RM0001, 897545661RM0001, 868220450RM0009, 892415472RM0001, 867647588RM0001, 871432977RM0001, 868220450RM0004, 894214311RM0001, 868220450RM0003, 868220450RM0005, 815627641RM0001, 807150586RM0002, 807150586RM0001, 761672690RM0001, 768899288RM0001, 858557895RM0001, 772310736RM0001, 772310736RM0002" # rubocop:disable Layout/LineLength
+  end
+
+  before do
+    tax_ids.split(', ').each do |id|
+      DataCrossReference.create(cross_reference_type: DataCrossReference::SIEMENS_BILLING_STANDARD, key: id)
+    end
+  end
 
   describe "initialize" do
-    subject { described_class.new }
+    subject { described_class.new('') }
 
     it "uses correct default gpg_secrets_key" do
       expect(subject.gpg_secrets_key).to eq "siemens"
@@ -11,42 +21,40 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
 
   describe "find_entries" do
     context "with siemens tax ids" do
-      before :each do
-        @tax_ids = ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001",
-        "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001",
-        "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
-        "761672690RM0001", "768899288RM0001", "858557895RM0001", "772310736RM0001", "772310736RM0002"]
 
-        @entries = []
-        @tax_ids.each do |id|
-          @entries << Factory(:entry, importer: with_fenix_id(Factory(:importer), id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
+      let(:entries) { [] }
+
+      before do
+
+        tax_ids.split(', ').each do |id|
+          entries << Factory(:entry, importer: with_fenix_id(Factory(:importer), id), entry_number: id, k84_receive_date: Time.zone.now, entry_type: "AB")
         end
       end
 
       it "finds siemens entries that do not have sync records" do
         entries = subject.find_entries
-        expect(entries.size).to eq @entries.size
-        expect(entries).to include(*@entries)
+        expect(entries.size).to eq entries.size
+        expect(entries).to include(*entries)
       end
 
       it "excludes entries with sync records" do
-        @entries.first.sync_records.create! trading_partner: "Siemens Billing"
-        expect(subject.find_entries).not_to include(@entries.first)
+        entries.first.sync_records.create! trading_partner: "Siemens Billing"
+        expect(subject.find_entries).not_to include(entries.first)
       end
 
       it "excludes entries without k84 receive dates" do
-        @entries.first.update_attributes! k84_receive_date: nil
-        expect(subject.find_entries).not_to include(@entries.first)
+        entries.first.update! k84_receive_date: nil
+        expect(subject.find_entries).not_to include(entries.first)
       end
 
       it "does not find entries w/ k84 receive dates prior to 9/25/2015" do
-        @entries.first.update_attributes! k84_receive_date: '2015-09-24'
-        expect(subject.find_entries).not_to include(@entries.first)
+        entries.first.update! k84_receive_date: '2015-09-24'
+        expect(subject.find_entries).not_to include(entries.first)
       end
 
       it "excludes F type summary entries" do
-        @entries.first.update_attributes! entry_type: "F"
-        expect(subject.find_entries).not_to include(@entries.first)
+        entries.first.update! entry_type: "F"
+        expect(subject.find_entries).not_to include(entries.first)
       end
     end
 
@@ -57,29 +65,31 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
   end
 
   describe "run_schedulable" do
-    before :each do
+    let!(:user) { Factory(:user, email: "me@there.com") }
+
+    before do
       KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}'
-      @user = Factory(:user, email: "me@there.com")
       group = Group.use_system_group("canada-accounting")
-      group.users << @user
+      group.users << user
     end
 
-    it "should find entries and generate and send them" do
+    it "finds entries and generate and send them" do
       t = Factory(:commercial_invoice_tariff)
       e = t.commercial_invoice_line.entry
-      e.update_attributes! importer: with_fenix_id(Factory(:importer), "868220450RM0001"), k84_receive_date: Time.zone.now, entry_number: "11981234566789", entry_type: "AB"
+      e.update! importer: with_fenix_id(Factory(:importer), "868220450RM0001"), k84_receive_date: Time.zone.now,
+                entry_number: "11981234566789", entry_type: "AB"
 
       file_data = nil
 
       # capture the data that supposedly would be encrypted (we'll test the encryption later)
-      expect_any_instance_of(described_class).to receive(:encrypt_file) do |instance, f, &blk|
+      expect_any_instance_of(described_class).to receive(:encrypt_file) do |_instance, f, &blk|
         file_data = f.read
         blk.call f
       end
 
       expect_any_instance_of(described_class).to receive(:ftp_sync_file).and_return true
 
-      described_class.run_schedulable({'gpg_secrets_key' => 'vfitrack'})
+      described_class.run_schedulable({'division' => 'standard', 'gpg_secrets_key' => 'vfitrack'})
       # All that we care about here is ultimately 1 line of something was encrypted
       # the rest is tested below.
       expect(file_data.lines.size).to eq 1
@@ -87,37 +97,69 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       expect(ActionMailer::Base.deliveries.length).to eq 1
       # Ensure the email was the report and not an error
       mail = ActionMailer::Base.deliveries.first
-      expect(mail.to).to eq [@user.email]
+      expect(mail.to).to eq [user.email]
     end
   end
 
   context "with entry data" do
-    before :each do
-      @entry = Entry.new entry_port_code: "1234", entry_number: "1234567890", broker_reference: "123456", release_date: Time.zone.parse("2015-04-01 00:00"), cargo_control_number: "CCN# 98765", transport_mode_code: "1", direct_shipment_date: Date.new(2015, 5, 1),
-                us_exit_port_code: "4567", k84_receive_date: Date.new(2015, 6, 1), importer_tax_id: "TAXID", customer_number: "CUSTNO", customer_name: "NAME", entry_type: "AB"
-      @inv = CommercialInvoice.new vendor_name: "VENDOR", mfid: "12345", currency: "USD", exchange_rate: BigDecimal("1.2345")
-      @entry.commercial_invoices << @inv
-      @line = CommercialInvoiceLine.new line_number: "2", customs_line_number: "1", po_number: "PO123", part_number: "PART2", quantity: BigDecimal("1"), value: BigDecimal("2"),
-                                          country_origin_code: "CN", country_export_code: "VN", subheader_number: "0"
-      @inv.commercial_invoice_lines << @line
-      @tariff = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "TraversÃ©",
-                                             sima_code: "1", value_for_duty_code: "11", sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM", gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
-                                             excise_amount: BigDecimal("9.45")
-      @line.commercial_invoice_tariffs << @tariff
+    let(:entry) do
+      Entry.new entry_port_code: "1234", entry_number: "1234567890", broker_reference: "123456",
+                release_date: Time.zone.parse("2015-04-01 00:00"), cargo_control_number: "CCN# 98765",
+                transport_mode_code: "1", direct_shipment_date: Date.new(2015, 5, 1), us_exit_port_code: "4567",
+                k84_receive_date: Date.new(2015, 6, 1), importer_tax_id: "TAXID", customer_number: "CUSTNO",
+                customer_name: "NAME", entry_type: "AB"
+    end
+
+    let(:inv) do
+      CommercialInvoice.new vendor_name: "VENDOR", mfid: "12345", currency: "USD", exchange_rate: BigDecimal("1.2345")
+    end
+
+    let(:line) do
+      CommercialInvoiceLine.new line_number: "2", customs_line_number: "1", po_number: "PO123", part_number: "PART2",
+                                quantity: BigDecimal("1"), value: BigDecimal("2"), country_origin_code: "CN",
+                                country_export_code: "VN", subheader_number: "0"
+    end
+
+    let(:line2) do
+      CommercialInvoiceLine.new line_number: "1", customs_line_number: "1", po_number: "PO123", part_number: "PART1",
+                                quantity: BigDecimal("1"), value: BigDecimal("2"), country_origin_code: "US",
+                                country_export_code: "US", state_origin_code: "PA", state_export_code: "IL",
+                                subheader_number: "0"
+    end
+
+    let(:tariff) do
+      CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6",
+                                  duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"),
+                                  entered_value: BigDecimal("10.50"), special_authority: "6",
+                                  tariff_description: "TraversÃ©", sima_code: "1", value_for_duty_code: "11",
+                                  sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM",
+                                  gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
+                                  excise_amount: BigDecimal("9.45")
+    end
+
+    let(:tariff2) do
+      CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6",
+                                  duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"),
+                                  entered_value: BigDecimal("10.50"), special_authority: "6",
+                                  tariff_description: "Bad Char א", sima_code: "1", value_for_duty_code: "11",
+                                  sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM",
+                                  gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
+                                  excise_amount: BigDecimal("9.45")
+    end
+
+    before do
+      entry.commercial_invoices << inv
+      inv.commercial_invoice_lines << line
+      line.commercial_invoice_tariffs << tariff
 
       # Puposely use the same customs line number so that we ensure the data roll-up for duty value is done correctly.
-      @line2 = CommercialInvoiceLine.new line_number: "1", customs_line_number: "1", po_number: "PO123", part_number: "PART1", quantity: BigDecimal("1"), value: BigDecimal("2"),
-                                          country_origin_code: "US", country_export_code: "US", state_origin_code: "PA", state_export_code: "IL", subheader_number: "0"
-      @inv.commercial_invoice_lines << @line2
-      @tariff2 = CommercialInvoiceTariff.new hts_code: "12.34.56", tariff_provision: "9", spi_primary: "6", duty_rate: BigDecimal("0.25"), duty_amount: BigDecimal("9.25"), entered_value: BigDecimal("10.50"), special_authority: "6", tariff_description: "Bad Char א",
-                                             sima_code: "1", value_for_duty_code: "11", sima_amount: BigDecimal("1.50"), classification_uom_1: "UOM", gst_rate_code: "5", gst_amount: BigDecimal("5.50"), excise_rate_code: "9",
-                                             excise_amount: BigDecimal("9.45")
-      @line2.commercial_invoice_tariffs << @tariff2
+      inv.commercial_invoice_lines << line2
+      line2.commercial_invoice_tariffs << tariff2
     end
 
     describe "generate_entry_data" do
       it "creates data objects for entry" do
-        data = subject.generate_entry_data @entry
+        data = subject.generate_entry_data entry
         expect(data).not_to be_nil
 
         expect(data.entry_port).to eq "1234"
@@ -216,8 +258,8 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       end
 
       it "uses last 9 digits of entry number when 8th digit from the end is a zero" do
-        @entry.entry_number = "1204567890"
-        data = subject.generate_entry_data @entry
+        entry.entry_number = "1204567890"
+        data = subject.generate_entry_data entry
         expect(data).not_to be_nil
 
         l = data.commercial_invoice_lines.first
@@ -226,15 +268,13 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
     end
 
     describe "write_entry_data" do
-      before :each do
-        @ed = subject.generate_entry_data @entry
-      end
+      let!(:ed) { subject.generate_entry_data entry }
 
       it "writes out formatted entry data to an IO source" do
         io = StringIO.new
         io.binmode
         report = StringIO.new
-        subject.write_entry_data io, report, @ed
+        subject.write_entry_data io, report, ed
 
         io.rewind
         lines = io.readlines("\r\n")
@@ -293,7 +333,6 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         expect(l[556..566]).to eq "18.90".rjust(11)
         expect(l[567..577]).to eq "11.00".rjust(11)
         expect(l[578..591]).to eq "51.40".rjust(14)
-
 
         l = lines.second
         expect(l[0..19]).to eq "PO123".ljust(20)
@@ -364,11 +403,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
         io = StringIO.new
         report = StringIO.new
 
-        expect(@ed).to receive(:total_amount).and_raise "ERROR!"
+        expect(ed).to receive(:total_amount).and_raise "ERROR!"
         expect_any_instance_of(StandardError).to receive(:log_me) do |instance|
           expect(instance.message).to eq "File # 123456 - ERROR!"
         end
-        expect(subject.write_entry_data io, report, @ed).to eq false
+        expect(subject.write_entry_data(io, report, ed)).to eq false
 
         # Make sure no data was written to the outputs
         expect(io.pos).to eq 0
@@ -376,15 +415,33 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
       end
     end
 
-
     describe "generate_and_send" do
       context "transactional fixtures" do
-        before :each do
-          @counter = KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}'
-          @entry.save!
-          @user = Factory(:user, email: "me@there.com")
+        let(:user) { Factory(:user, email: "me@there.com") }
+        let!(:counter) { KeyJsonItem.siemens_billing('counter').create! json_data: '{"counter": 0}' }
+
+        before do
+          entry.save!
           group = Group.use_system_group("canada-accounting")
-          group.users << @user
+          group.users << user
+        end
+
+        context "when given a file_name option" do
+          subject {described_class.new('energy', 'vfitrack')}
+
+          it "sends a file with eca as opposed to aca" do
+            filename = nil
+            expect(subject).to receive(:ftp_sync_file) do |ftp_file, _srs|
+              filename = ftp_file.original_filename
+              true
+            end
+
+            subject.generate_and_send [entry]
+
+            expect(filename).not_to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.pgp"
+            expect(filename).to eq "eca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.pgp"
+          end
+
         end
 
         it "writes entry data to a file and sends it" do
@@ -398,8 +455,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
             true
           end
 
-          subject.generate_and_send [@entry]
-
+          subject.generate_and_send [entry]
 
           # decrypt the file then make sure it's formatted the way we expect
           decrypted_file = nil
@@ -415,7 +471,7 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           end
           expect(decrypted_file.lines("\r\n").length).to eq 2
           expect(filename).to eq "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat.pgp"
-          sr = @entry.sync_records.first
+          sr = entry.sync_records.first
           expect(sr.trading_partner).to eq "Siemens Billing"
           expect(sr.sent_at).not_to be_nil
           expect(sr.confirmed_at).not_to be_nil
@@ -423,11 +479,11 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           expect(sync_records.length).to eq 1
           expect(sync_records.first).to eq sr
 
-          expect(@counter.reload.data).to eq({"counter" => 1})
+          expect(counter.reload.data).to eq({"counter" => 1})
           expect(ActionMailer::Base.deliveries.length).to eq 1
           # Ensure the email was the report and not an error
           mail = ActionMailer::Base.deliveries.first
-          expect(mail.to).to eq [@user.email]
+          expect(mail.to).to eq [user.email]
         end
 
         it "sends an email if the ftp file couldn't be sent" do
@@ -443,15 +499,15 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           end
 
           expect(subject).to receive(:ftp_sync_file).and_raise "Error!"
-          expect { subject.generate_and_send [@entry]}.to raise_error "Error!"
+          expect { subject.generate_and_send [entry]}.to raise_error "Error!"
 
-          expect(@entry.reload.sync_records.length).to eq 0
-          expect(@counter.reload.data).to eq({"counter" => 0})
+          expect(entry.reload.sync_records.length).to eq 0
+          expect(counter.reload.data).to eq({"counter" => 0})
           expect(ActionMailer::Base.deliveries.length).to eq 1
           mail = ActionMailer::Base.deliveries.first
           expect(mail.to).to eq [OpenMailer::BUG_EMAIL]
           expect(mail.subject).to eq "[VFI Track Exception] - Siemens Billing File Error"
-          expect(mail.body.raw_source).to include "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run."
+          expect(mail.body.raw_source).to include("Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.") # rubocop:disable Layout/LineLength
           att = mail.attachments["aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}1.dat"]
           # This looks to be a bug in the mail gem, it's taking the 7-bit transfer encoding and decomposing \r\n values
           # in the text as \n...the encoding SHOULD be an "identity" encoding.  Meaning the encoded and decoded values
@@ -463,10 +519,10 @@ describe OpenChain::CustomHandler::Siemens::SiemensCaBillingGenerator do
           expect(subject).to receive(:write_entry_data).and_return false
           expect(subject).not_to receive(:ftp_sync_file)
 
-          subject.generate_and_send [@entry]
+          subject.generate_and_send [entry]
 
-          @entry.reload
-          expect(@entry.sync_records.length).to eq 0
+          entry.reload
+          expect(entry.sync_records.length).to eq 0
         end
       end
     end

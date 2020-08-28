@@ -86,6 +86,8 @@ class DataCrossReference < ActiveRecord::Base
   ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'.freeze
   # Combination of entry export and origin country codes that have SPI available.
   SPI_AVAILABLE_COUNTRY_COMBINATION ||= 'spi_available_country_combination'.freeze
+  SIEMENS_BILLING_STANDARD ||= 'siemens_billing_standard'.freeze
+  SIEMENS_BILLING_ENERGY ||= 'siemens_billing_energy'.freeze
   PART_XREF ||= 'part_xref'.freeze
 
   scope :for_type, ->(xref_type) { where(cross_reference_type: xref_type) }
@@ -93,8 +95,8 @@ class DataCrossReference < ActiveRecord::Base
   PREPROCESSORS = OpenChain::DataCrossReferenceUploadPreprocessor.preprocessors
 
   def self.xref_edit_hash user
+    # rubocop:disable Layout/LineLength
     all_editable_xrefs = [
-      # rubocop:disable Layout/LineLength
       xref_attributes(ENTRY_MID_VALIDATIONS, "Manufacturer ID", "Manufacturer IDs used to validate entries", key_label: "MID", show_value_column: false, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with MID Code in column A"),
       xref_attributes(RL_FABRIC_XREF, "MSL+ Fabric Cross References", "Enter the starting fabric value in the Failure Fiber field and the final value to send to MSL+ in the Approved Fiber field.", key_label: "Failure Fiber", value_label: "Approved Fiber"),
       xref_attributes(RL_VALIDATED_FABRIC, "MSL+ Valid Fabric List", "Only values included in this list are allowed to be sent to to MSL+.", key_label: "Approved Fiber", show_value_column: false),
@@ -112,9 +114,11 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label: "Code", value_label: "Description", show_value_column: true),
       xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label: "MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."),
       xref_attributes(SPI_AVAILABLE_COUNTRY_COMBINATION, "SPI-Available Country Combinations", "Combinations of entry country of export and origin ISO codes that have SPI available.", key_label: make_compound_key("Export Country ISO", "Origin Country ISO"), value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", preprocessor: PREPROCESSORS[SPI_AVAILABLE_COUNTRY_COMBINATION]),
+      xref_attributes(SIEMENS_BILLING_STANDARD, "Siemens Billing Standard Group", "Tax IDs for the standard Siemens billing report", key_label: "Tax ID", allow_blank_values: false, require_company: false, show_value_column: false, value_label: "Value"),
+      xref_attributes(SIEMENS_BILLING_ENERGY, "Siemens Billing Energy Group", "Tax IDs for the energy Siemens billing report", key_label: "Tax ID", allow_blank_values: false, require_company: false, show_value_column: false, value_label: "Value"),
       xref_attributes(PART_XREF, "Part Cross Reference", "Enter the Part Number in the Part field and true or false in the active field", key_label: "Part", value_label: "Active", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B.")
-      # rubocop:enable Layout/LineLength
     ]
+    # rubocop:enable Layout/LineLength
 
     user_xrefs = user ? all_editable_xrefs.select {|x| can_view? x[:identifier], user} : all_editable_xrefs
 
@@ -183,6 +187,8 @@ class DataCrossReference < ActiveRecord::Base
       MasterSetup.get.custom_feature?("Lumber Liquidators") && user.admin?
     when SPI_AVAILABLE_COUNTRY_COMBINATION
       MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?('xref-maintenance'))
+    when SIEMENS_BILLING_STANDARD, SIEMENS_BILLING_ENERGY
+      user.admin?
     else
       false
     end

@@ -5,49 +5,78 @@ require 'open_chain/ftp_file_support'
 module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGenerator < OpenChain::FixedPositionGenerator
   include OpenChain::FtpFileSupport
 
-  SiemensEntry ||= Struct.new :entry_port, :entry_number, :broker_reference, :release_date, :cargo_control_number, :ship_mode, :direct_shipment_date, :port_exit, :accounting_date, :importer_tax_id,
-                                :customer_number, :customer_name, :entry_type, :total_duty, :total_sima, :total_excise, :total_gst, :total_amount, :commercial_invoice_lines
+  SiemensEntry ||= Struct.new :entry_port, :entry_number, :broker_reference, :release_date, :cargo_control_number,
+                              :ship_mode, :direct_shipment_date, :port_exit, :accounting_date, :importer_tax_id,
+                              :customer_number, :customer_name, :entry_type, :total_duty, :total_sima, :total_excise,
+                              :total_gst, :total_amount, :commercial_invoice_lines
 
-  SiemensInvLine ||= Struct.new :vendor_name, :vendor_number, :currency, :exchange_rate, :po_number, :part_number, :quantity, :value, :b3_line_duty_value, :hts, :tariff_provision, :country_origin, :spi, :country_export, :line_number, :duty_rate,
-                                  :sequence_number, :sima_code, :subheader_number, :sima_value, :uom, :gst_rate_code, :gst_amount, :excise_rate_code, :excise_amount,
-                                  :value_for_tax, :duty, :entered_value, :special_authority, :description, :value_for_duty_code, :customs_line_number
+  SiemensInvLine ||= Struct.new :vendor_name, :vendor_number, :currency, :exchange_rate, :po_number, :part_number,
+                                :quantity, :value, :b3_line_duty_value, :hts, :tariff_provision, :country_origin, :spi,
+                                :country_export, :line_number, :duty_rate, :sequence_number, :sima_code,
+                                :subheader_number, :sima_value, :uom, :gst_rate_code, :gst_amount, :excise_rate_code,
+                                :excise_amount, :value_for_tax, :duty, :entered_value, :special_authority, :description,
+                                :value_for_duty_code, :customs_line_number
 
   def self.run_schedulable opts = {}
-    c = opts['gpg_secrets_key'].blank? ? self.new : self.new(opts['gpg_secrets_key'])
+    c = self.new(opts['division'], opts['gpg_secrets_key'])
     c.generate_and_send c.find_entries
   end
 
-  attr_reader :gpg_secrets_key
+  attr_reader :gpg_secrets_key, :siemens_tax_ids, :division
 
-  def initialize gpg_secrets_key = "siemens"
-    raise "GPG secrets key must be provided." unless gpg_secrets_key.present?
+  def initialize division, gpg_secrets_key = "siemens"
+    raise "GPG secrets key must be provided." if gpg_secrets_key.blank?
     @gpg_secrets_key = gpg_secrets_key
+    @siemens_tax_ids = get_siemens_tax_ids(division)
+    @division = division
 
     super({output_timezone: "Eastern Time (US & Canada)"})
   end
 
+  def get_siemens_tax_ids(division)
+    tax_ids = case division
+              when "standard"
+                DataCrossReference.where(cross_reference_type: DataCrossReference::SIEMENS_BILLING_STANDARD).pluck(:key)
+              when "energy"
+                DataCrossReference.where(cross_reference_type: DataCrossReference::SIEMENS_BILLING_ENERGY).pluck(:key)
+              end
+    tax_ids
+  end
+
   def find_entries
-    # We only ever want to send the entry a single time, as such, the standard needs_sync() method is not sufficient for this use-case
-    Entry.joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry' AND sync_records.syncable_id = entries.id AND sync_records.trading_partner = ?", sync_code])).
-      joins(importer: :system_identifiers).
-      where(system_identifiers: {system: "Fenix", code: siemens_tax_ids}).
-      where("entry_type <> 'F'").
-      # Prior to 9/25/2015 this process was done through the old fenix system, so we need to ignore everything done through there.
-      where("sync_records.id IS NULL").where("k84_receive_date IS NOT NULL AND k84_receive_date > '2015-09-24'").
-      includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]]).
-      order("entries.k84_receive_date ASC")
+    # We only ever want to send the entry a single time, as such, the standard needs_sync() method is not sufficient
+    # for this use-case
+    Entry.joins(ActiveRecord::Base
+                    .sanitize_sql_array(
+                      ["LEFT OUTER JOIN sync_records ON sync_records.syncable_type = 'Entry'
+                      AND sync_records.syncable_id = entries.id
+                      AND sync_records.trading_partner = ?", sync_code]
+                    ))
+         .joins(importer: :system_identifiers)
+         .where(system_identifiers: {system: "Fenix", code: siemens_tax_ids})
+         .where("entry_type <> 'F'").
+      # Prior to 9/25/2015 this process was done through the old fenix system, so we need to ignore everything done
+      # through there.
+      where("sync_records.id IS NULL").where("k84_receive_date IS NOT NULL AND k84_receive_date > '2015-09-24'")
+         .includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]])
+         .order("entries.k84_receive_date ASC")
   end
 
   def generate_and_send entries
     counter = billing_file_counter + 1
-    sent = false
-    filename = "aca#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}#{counter}.dat"
+    filename_prefix = case division
+                      when 'standard'
+                        'aca'
+                      when 'energy'
+                        'eca'
+                      end
+
+    filename = "#{filename_prefix}#{Time.zone.now.in_time_zone("Eastern Time (US & Canada)").strftime("%Y%m%d")}#{counter}.dat"
 
     generate_file_data_to_tempfiles(entries, filename) do |outfile, report, generated_entries|
       encrypt_file(outfile) do |encrypted_file|
-        Attachment.add_original_filename_method encrypted_file, filename+".pgp"
+        Attachment.add_original_filename_method encrypted_file, filename + ".pgp"
         completed = false
-        error = nil
         begin
           send_time = Time.zone.now
           confirmed = send_time + 1.minute
@@ -55,8 +84,8 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
           # I'm a little uncomfortable putting the entry sync record creations and counter in the same transaction
           # as the ftp (since it's possible the ftp could take a bit), but we really do need to our best to ensure that
           # the ftp and marking entries as sent either all get committed or all get rolled back.  Since  we're sending
-          # to our local connect ftp server on the same network segment the transfer should be very quick so the transaction
-          # shouldn't span too much clock time.
+          # to our local connect ftp server on the same network segment the transfer should be very quick so the
+          # transaction shouldn't span too much clock time.
           sync_records = []
           Entry.transaction do
             generated_entries.each do |e|
@@ -70,16 +99,21 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
             # The chances of that happening are so miniscule that I'm not going to bother handling that condition.
             ftp_sync_file encrypted_file, sync_records
 
-            sync_records.each {|sr| sr.save! }
+            sync_records.each(&:save!)
 
             completed = true
           end
         ensure
           if completed
             now = ActiveSupport::TimeZone["Eastern Time (US & Canada)"].now
-            OpenMailer.send_simple_html(Group.use_system_group("canada-accounting", name: "VFI Canada Accounting"), "[VFI Track] Siemens Billing Report #{now.strftime("%Y-%m-%d")}", "Attached is the duty data that was sent to Siemens on #{now.strftime("%Y-%m-%d")}.", report).deliver_now
+            OpenMailer.send_simple_html(Group.use_system_group("canada-accounting", name: "VFI Canada Accounting"),
+                                        "[VFI Track] Siemens Billing Report #{now.strftime("%Y-%m-%d")}",
+                                        "Attached is the duty data that was sent to Siemens on #{now.strftime("%Y-%m-%d")}.",
+                                        report).deliver_now
           else
-            OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error", "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", outfile).deliver_now
+            OpenMailer.send_simple_html(OpenMailer::BUG_EMAIL, "[VFI Track Exception] - Siemens Billing File Error",
+                                        "Failed to ftp daily Siemens Billing file.  Entries that would have been included in the attached file will be resent during the next run.", # rubocop:disable Layout/LineLength
+                                        outfile).deliver_now
           end
         end
       end
@@ -89,14 +123,14 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
   def generate_file_data_to_tempfiles entries, filename
     # Ensure only a single process can run this at a time.
     Lock.acquire_for_class(self.class, yield_in_transaction: false) do
-      Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |billing_file|
+      Tempfile.open(["#{File.basename(filename, ".*")}_", File.extname(filename).to_s]) do |billing_file|
         # We're encoding the file data directly when writing to the file stream...so make sure
         # the IO doesn't do any extra encoding translations.
         billing_file.binmode
         # Add the original_filename method, both the ftp and the mailer will utilize this method to name the file when sending
         Attachment.add_original_filename_method billing_file, filename
 
-        Tempfile.open(["#{File.basename(filename, ".*")}_", "#{File.extname(filename)}"]) do |billing_report|
+        Tempfile.open(["#{File.basename(filename, ".*")}_", File.extname(filename).to_s]) do |billing_report|
           write_report_headers billing_report
           Attachment.add_original_filename_method billing_report, "siemens-billing-#{Time.zone.now.strftime("%Y-%m-%d")}.csv"
 
@@ -138,7 +172,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       billing_report.write buffered_report_data.read
 
       entry_written = true
-    rescue => e
+    rescue StandardError => e
       # Rescue the error and then log it, returning false to indicate the data for the entry wasn't written
       new_error = StandardError.new("File # #{entry.broker_reference} - #{e.message}")
       new_error.set_backtrace(e.backtrace)
@@ -284,7 +318,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
     e.commercial_invoice_lines = []
 
-    b3_line_duty_values = Hash.new() {|h, k| h[k] = BigDecimal(0)}
+    b3_line_duty_values = Hash.new {|h, k| h[k] = BigDecimal(0)}
 
     entry.commercial_invoices.each do |inv|
       inv.commercial_invoice_lines.each do |line|
@@ -314,7 +348,6 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
           l.spi = tar.spi_primary
           l.country_export = country_code(line.country_export_code, line.state_export_code)
 
-
           l.duty_rate = tar.duty_rate.try(:nonzero?) ? (tar.duty_rate * 100) : BigDecimal(0)
           l.duty = tar.duty_amount || BigDecimal(0)
           l.entered_value = tar.entered_value || BigDecimal(0)
@@ -333,7 +366,6 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
         end
       end
     end
-
 
     e.total_duty = e.commercial_invoice_lines.map(&:duty).reduce(:+).presence || 0
     e.total_sima = e.commercial_invoice_lines.map(&:sima_value).reduce(:+).presence || 0
@@ -392,7 +424,7 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       transaction_number + num(line_counter, 6, 0, numeric_pad_char: '0')
     end
 
-    def sum_line_value entry, value_to_sum
+    def sum_line_value entry, _value_to_sum
       entry.commercial_invoice_lines.inject(BigDecimal(0), :duty)
     end
 
@@ -414,13 +446,6 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
       "Siemens Billing"
     end
 
-    def siemens_tax_ids
-      ["868220450RM0001", "836496125RM0001", "868220450RM0007", "120933510RM0001", "867103616RM0001", "845825561RM0001", "843722927RM0001",
-        "868220450RM0022", "102753761RM0001", "897545661RM0001", "868220450RM0009", "892415472RM0001", "867647588RM0001", "871432977RM0001",
-        "868220450RM0004", "894214311RM0001", "868220450RM0003", "868220450RM0005", "815627641RM0001", "807150586RM0002", "807150586RM0001",
-        "761672690RM0001", "768899288RM0001", "858557895RM0001", "772310736RM0001", "772310736RM0002"]
-    end
-
     def b3_line_key line
       line.customs_line_number
     end
@@ -432,7 +457,6 @@ module OpenChain; module CustomHandler; module Siemens; class SiemensCaBillingGe
 
         yield f
       end
-
     end
 
-end; end; end; end;
+end; end; end; end
