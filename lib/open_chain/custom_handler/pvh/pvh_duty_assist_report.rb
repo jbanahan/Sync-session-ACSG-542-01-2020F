@@ -326,11 +326,15 @@ module OpenChain; module CustomHandler; module Pvh; class PvhDutyAssistReport
     if entry.eta_date
       row << entry.eta_date.strftime("%m/%d/%Y") # G
     else
-      row << in_timezone(entry.arrival_date).to_date.strftime("%m/%d/%Y") # G
+      row << in_timezone(entry.release_date).to_date.strftime("%m/%d/%Y") # G
     end
 
     row << in_timezone(entry.across_sent_date).strftime("%m/%d/%Y") # H
-    row << in_timezone(entry.arrival_date).strftime("%m/%d/%Y") # I
+
+    # Arrival date used to literally be a copy of the release date.  It is now populated for Canada
+    # independently from another date source.  Therefore to maintain the continuation of the same value in release and arrival
+    # we're just going to continue to use release date as the column source.
+    row << in_timezone(entry.release_date).strftime("%m/%d/%Y") # I
     row << invoice_line.part_number # J
     row << invoice_line.country_origin_code # K
     row << tariff.tariff_description # L

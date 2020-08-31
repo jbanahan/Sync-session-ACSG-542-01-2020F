@@ -63,14 +63,15 @@ module OpenChain
                 files << t
               end
             end
-          rescue OpenChain::CustomHandler::PortMissingError
-            body = <<endbody
-Error for file #{ent.broker_reference}.
+          rescue OpenChain::CustomHandler::PortMissingError => e
+            body = <<~BODY
+              Error for file #{ent.broker_reference}.
 
-Port code #{$!.port_code} is not set in the Ralph Lauren e-Focus XML Generator.
+              Port code #{e.port_code} is not set in the Ralph Lauren e-Focus XML Generator.
 
-If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
-endbody
+              If this port is invalid, please correct it in Fenix.  If it is valid, please email this message to edisupport@vandegriftinc.com and we'll add it to the program.
+            BODY
+
             OpenMailer.send_simple_text('ralphlauren-ca@vandegriftinc.com', 'INVALID RALPH LAUREN CA PORT CODE', body).deliver_now
           end
           sr.update_attributes(:sent_at=>2.seconds.ago, :confirmed_at=>1.second.ago, :confirmation_file_name=>'n/a', fingerprint: fingerprint) unless sr.nil?
@@ -86,7 +87,11 @@ endbody
         add_el ent, 'broker-reference', entry.broker_reference
         add_el ent, 'broker-importer-id', 'RALPLA'
         add_el ent, 'broker-id', 'VFI'
-        add_el ent, 'import-date', entry.arrival_date
+        # This used to be arrival_date, which for about a year was literally an exact copy of the release date in Fenix
+        # Prior to that it was an independent field populated from KPIETA activity...which is what we've gone back to doing.
+        # To retain the current function (where this would be the release date (masquerading as arrival date)), we're
+        # changing this to use the release date field.
+        add_el ent, 'import-date', entry.release_date
         add_el ent, 'documents-received-date', entry.docs_received_date
         add_el ent, 'in-customs-date', entry.across_sent_date
         add_el ent, 'out-customs-date', entry.release_date

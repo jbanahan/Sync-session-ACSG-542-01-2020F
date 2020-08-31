@@ -42,6 +42,7 @@ module OpenChain; class FenixParser
     'KPIVAL' => :value_currency_request_date=,
     'KPIPART' => :part_number_request_date=,
     'KPIIOR' => :importer_request_date=,
+    'KPIETA' => :arrival_date=,
     "MANINFREC" => :manifest_info_received_date=,
     "SPLITSHPT" => :split_shipment_date=,
     "ACSDECACCP" => :across_declaration_accepted=
@@ -695,8 +696,10 @@ module OpenChain; class FenixParser
       entry.release_date = entry.cadex_accept_date
     end
 
-    # Default the arrival date to the release date.  (SOW 1691)
-    entry.arrival_date = entry.release_date
+    # For posterity sake, there used to be code here that would default the arrival date to the release date
+    # value (SOW 1691) for the sake of a UA report.  This was reverted (for the same UA report) in SOW 1971
+    # because UA wanted to track the Actual ETA (.ie arrival date) independently of RNS Release (release date) again.
+    # For a time, operations was doing this tracking manually, which was too much work.
 
     update_hold_summaries entry
   end

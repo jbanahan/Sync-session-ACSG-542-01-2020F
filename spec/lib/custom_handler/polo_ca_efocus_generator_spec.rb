@@ -165,7 +165,7 @@ describe OpenChain::CustomHandler::PoloCaEfocusGenerator do
       expect(e.elements["broker-reference"].text).to eq(@e1.broker_reference)
       expect(e.elements["broker-importer-id"].text).to eq("RALPLA")
       expect(e.elements["broker-id"].text).to eq("VFI")
-      expect(e.elements["import-date"].text).to eq(@e1.arrival_date.strftime(@date_format))
+      expect(e.elements["import-date"].text).to eq(@e1.release_date.strftime(@date_format))
       expect(e.elements["documents-received-date"].text).to eq(@e1.docs_received_date.strftime(@date_format))
       expect(e.elements["in-customs-date"].text).to eq(@e1.across_sent_date.strftime(@date_format))
       expect(e.elements["out-customs-date"].text).to eq(@e1.release_date.strftime(@date_format))

@@ -1,7 +1,4 @@
 require 'open_chain/custom_handler/vfitrack_custom_definition_support'
-class DummyClass
-  include OpenChain::CustomHandler::VfitrackCustomDefinitionSupport
-end
 
 describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
 
@@ -11,7 +8,6 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
   let!(:us) { with_customs_management_id(Factory(:importer, name: 'PVH', system_code: 'PVH'), "PVH") }
 
   def setup_data(customer_number, company)
-    cdefs = DummyClass.prep_custom_definitions([:prod_part_number])
     entry1 = Factory(:entry, entry_number: 'entry1', master_bills_of_lading: "1234\n",
                              transport_mode_code: "11", customer_number: customer_number, fiscal_year: 2020,
                              fiscal_month: 1, entry_filed_date: DateTime.parse("02/02/2020 10:45"), release_date: DateTime.parse("02/02/2020 10:45"),
@@ -26,10 +22,6 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
     ci2 = Factory(:commercial_invoice, entry: entry2, invoice_number: "invoice2", exchange_rate: "10", currency: "CA")
     prod1 = Factory(:product, unique_identifier: "#{customer_number}-abcd")
     prod2 = Factory(:product, unique_identifier: "#{customer_number}-efgh")
-    prod1.find_and_set_custom_value(cdefs[:prod_part_number], "#{customer_number}-abcd")
-    prod1.save
-    prod2.find_and_set_custom_value(cdefs[:prod_part_number], "#{customer_number}-efgh")
-    prod2.save
     shipment1 = Factory(:shipment, importer: company, master_bill_of_lading: entry1.master_bills_of_lading.gsub(/\n/, ''), mode: "Ocean")
     shipment2 = Factory(:shipment, importer: company, master_bill_of_lading: entry2.master_bills_of_lading.gsub(/\n/, ''), mode: "Ocean")
     sl1 = Factory(:shipment_line, shipment: shipment1, product: prod1)
@@ -240,12 +232,12 @@ describe OpenChain::CustomHandler::Pvh::PvhDutyAssistReport do
         expect(sheet[2][4]).to be_nil
         expect(sheet[1][5]).to eq('02/02/2020')
         expect(sheet[2][5]).to eq('02/02/2020')
-        expect(sheet[1][6]).to eq('02/01/2020')
-        expect(sheet[2][6]).to eq('02/01/2020')
+        expect(sheet[1][6]).to eq('02/02/2020')
+        expect(sheet[2][6]).to eq('02/02/2020')
         expect(sheet[1][7]).to eq("02/03/2020")
         expect(sheet[2][7]).to eq("02/02/2020")
-        expect(sheet[1][8]).to eq("02/01/2020")
-        expect(sheet[2][8]).to eq("02/01/2020")
+        expect(sheet[1][8]).to eq("02/02/2020")
+        expect(sheet[2][8]).to eq("02/02/2020")
         expect(sheet[1][9]).to eq("abcd")
         expect(sheet[2][9]).to eq("efgh")
         expect(sheet[1][10]).to eq("Line1CO")

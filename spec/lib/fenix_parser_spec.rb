@@ -199,7 +199,6 @@ describe OpenChain::FenixParser do
     expect(ent.customer_number).to eq(@importer_number)
     expect(ent.customer_name).to eq(@importer_name)
     expect(ent.customer_references).to eq(@customer_reference)
-    expect(ent.arrival_date).to eq(@est.parse_us_base_format(@release_date.gsub(',', ' ')))
 
     expect(ent.vendor_names).to eq(@vendor_name)
     expect(ent.total_invoiced_value).to eq(@line_value)
@@ -705,7 +704,7 @@ describe OpenChain::FenixParser do
     expect(e.split_shipment_date).to eq tz.parse(@new_activities['SPLITSHPT'][1].to_s).in_time_zone(Time.zone)
     expect(e.split_shipment).to eq true
     expect(e.across_declaration_accepted).to eq tz.parse(@new_activities['ACSDECACCP'][1].to_s).in_time_zone(Time.zone)
-    expect(e.arrival_date).to eq tz.parse(@new_activities['RNSCUSREL'][1].to_s).in_time_zone(Time.zone)
+    expect(e.arrival_date).to eq tz.parse(@new_activities['KPIETA'][1].to_s).in_time_zone(Time.zone)
   end
 
   it 'requests LVS child data if entry type is F' do
@@ -723,7 +722,6 @@ describe OpenChain::FenixParser do
     OpenChain::FenixParser.parse @entry_lambda.call
     entry = Entry.where(broker_reference: @file_number).first
     expect(entry.release_date).to eq entry.cadex_accept_date
-    expect(entry.arrival_date).to eq entry.cadex_accept_date
   end
 
   it "sets exchnage rate to 1 if missing and currency is CAD" do
@@ -1124,7 +1122,6 @@ describe OpenChain::FenixParser do
       expect(entry.cadex_sent_date).to eq @time_zone.parse '20131002'
       expect(entry.cadex_accept_date).to eq @time_zone.parse '20131003'
       expect(entry.k84_receive_date).to eq Date.parse '20131004'
-      expect(entry.arrival_date).to eq @time_zone.parse '20131001'
 
       entry = Entry.where(:entry_number => @child_entries[1], :source_system=>"Fenix").first
       expect(entry).not_to be_nil
@@ -1133,7 +1130,6 @@ describe OpenChain::FenixParser do
       expect(entry.cadex_sent_date).to eq @time_zone.parse '20131006'
       expect(entry.cadex_accept_date).to eq @time_zone.parse '20131007'
       expect(entry.k84_receive_date).to eq Date.parse '20131008'
-      expect(entry.arrival_date).to eq @time_zone.parse '20131005'
     end
 
     it "should update lvs entries" do
@@ -1151,7 +1147,6 @@ describe OpenChain::FenixParser do
       expect(entry.cadex_sent_date).to eq @time_zone.parse '20131002'
       expect(entry.cadex_accept_date).to eq @time_zone.parse '20131003'
       expect(entry.k84_receive_date).to eq Date.parse '20131004'
-      expect(entry.arrival_date).to eq @time_zone.parse '20131001'
     end
   end
 
