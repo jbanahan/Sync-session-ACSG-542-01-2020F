@@ -1,4 +1,8 @@
+require 'open_chain/milestone_notification_config_support'
+require 'open_chain/custom_handler/generator_315/tradelens/entry_315_tradelens_generator'
+
 module Api; module V1; module Admin; class MilestoneNotificationConfigsController < Api::V1::Admin::AdminApiController
+  include OpenChain::MilestoneNotificationConfigSupport
 
   def index
     configs = MilestoneNotificationConfig.order(:customer_number, :testing).all.collect {|c| config_json(c)}
@@ -17,7 +21,8 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
   end
 
   def model_fields
-    render json: {model_field_list: model_field_list(params[:module_type]), event_list: event_list(params[:module_type])}
+    render json: {model_field_list: model_field_list(params[:module_type]),
+                  event_list: event_list(current_user, params[:module_type])}
   end
 
   def create
@@ -98,7 +103,12 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
 
     def config_json_with_model_fields config, copy = false
       json = config_json(config, copy)
-      {config: json, model_field_list: model_field_list(config.module_type), event_list: event_list(config.module_type), output_styles: output_styles, timezones: timezones, module_types: module_types}
+      {config: json,
+       model_field_list: model_field_list(config.module_type),
+       event_list: event_list(current_user, config.module_type),
+       output_styles: output_styles,
+       timezones: timezones,
+       module_types: module_types}
     end
 
     def config_json config, copy = false
@@ -136,18 +146,6 @@ module Api; module V1; module Admin; class MilestoneNotificationConfigsControlle
         model_fields = cm.model_fields(current_user)
         fields = []
         model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: mf.label(true), datatype: mf.data_type.to_s} }
-        fields = fields.sort {|x, y| x[:label] <=> y[:label]}
-      end
-
-      fields
-    end
-
-    def event_list  module_type
-      cm = CoreModule.find_by_class_name(module_type)
-      fields = []
-      if cm
-        model_fields = cm.model_fields(current_user) {|mf| ([:date, :datetime].include? mf.data_type.to_sym)}
-        model_fields.each_pair {|uid, mf| fields << {field_name: mf.field_name.to_s, mfid: mf.uid.to_s, label: "#{mf.label} (#{mf.field_name}) - #{mf.data_type.to_s == "datetime" ? "Datetime" : "Date"}", datatype: mf.data_type.to_s} }
         fields = fields.sort {|x, y| x[:label] <=> y[:label]}
       end
 

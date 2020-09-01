@@ -1,42 +1,9 @@
-require 'open_chain/custom_handler/generator_315_support'
+require 'open_chain/custom_handler/generator_315/abstract_315_xml_generator'
 
-module OpenChain; module CustomHandler; class Generic315Generator
-  include OpenChain::CustomHandler::Generator315Support
+module OpenChain; module CustomHandler; module Generator315
+  class Entry315XmlGenerator < OpenChain::CustomHandler::Generator315::Abstract315XmlGenerator
 
-  def accepts? event, entry
-    # Just check if the customer has a 315 setup, at this point..if so, then accept.  We'll decide in receive if we're actually generating anythign
-    # or not.
-    MasterSetup.get.custom_feature?("Entry 315") && !entry.customer_number.blank? && setup_315(entry).size > 0
-  end
-
-  def receive event, entry
-    setups = setup_315(entry)
-
-    setups.each do |setup|
-      matches = setup.search_criterions.collect {|sc| sc.test? entry}.uniq.compact
-      milestones = []
-      if setup.search_criterions.length == 0 || (matches.length == 1 && matches[0] == true)
-        # Prevent any other 315 processes for this entry from running, otherwise, it's possible
-        # for race conditions between backend processes to produce multiple 315's for the same entry/event
-        Lock.acquire("315-#{entry.broker_reference}") do
-          fingerprint_values = fingerprint_field_data entry, user, setup
-
-          setup.milestone_fields.each do |field|
-            milestones << process_field(field.with_indifferent_access, user, entry, setup.testing?, setup.gtn_time_modifier?, fingerprint_values)
-          end
-        end
-      end
-      milestones.compact!
-
-      if milestones.size > 0
-        generate_and_send_315s setup, entry, milestones, setup.testing?
-      end
-    end
-
-    entry
-  end
-
-  protected
+    protected
 
     def create_315_data entry, data, milestone
       d = Data315.new
@@ -83,8 +50,6 @@ module OpenChain; module CustomHandler; class Generic315Generator
       d
     end
 
-  private
-
     def split_entry_data_identifiers output_style, entry
       # We need to send distinct combinations of the broker reference / container / master bill
       # So if we have 2 containers and 2 master bills, then we end up sending 4 documents.
@@ -101,7 +66,7 @@ module OpenChain; module CustomHandler; class Generic315Generator
             values << {master_bills: [mb], container_numbers: [nil], house_bills: house_bills, cargo_control_numbers: cargo_control_numbers}
           end
         end
-        values = values.blank? ? [{master_bills: [nil], container_numbers: [nil], house_bills: house_bills, cargo_control_numbers: cargo_control_numbers}] : values
+        values.presence || [{master_bills: [nil], container_numbers: [nil], house_bills: house_bills, cargo_control_numbers: cargo_control_numbers}]
       elsif output_style == MilestoneNotificationConfig::OUTPUT_STYLE_MBOL
         values = master_bills.map {|mb| {master_bills: [mb], container_numbers: containers, house_bills: house_bills, cargo_control_numbers: cargo_control_numbers}}
       elsif output_style == MilestoneNotificationConfig::OUTPUT_STYLE_HBOL
@@ -113,17 +78,6 @@ module OpenChain; module CustomHandler; class Generic315Generator
       end
       values
     end
+  end
 
-    def setup_315 entry
-      @configs ||= begin
-        # Since we can now potentially have multiple configs per customer (since you can have different statuses on the setups),
-        # we need to collect all of them that are enabled.
-        configs = []
-        configs.push(*MilestoneNotificationConfig.where(module_type: "Entry", customer_number: entry.customer_number, enabled: true).order(:id).all)
-        parent_system_code = entry.importer&.parent_system_code
-        configs.push(*MilestoneNotificationConfig.where(module_type: "Entry", parent_system_code: parent_system_code, enabled: true).order(:id).all) unless parent_system_code.blank?
-        configs
-      end
-    end
-
-end; end; end;
+end; end; end

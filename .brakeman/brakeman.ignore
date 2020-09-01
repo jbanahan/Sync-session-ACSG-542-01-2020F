@@ -325,26 +325,6 @@
       "note": ""
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "0a725319c689a8a8d560c13e684cfd9dd6167dfbc832dc6abd5c95787d7e2ee6",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 211,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"SELECT ports.name, ports.#{port_code_field}, count(*)\\n      FROM entries\\n      INNER JOIN ports on ports.#{port_code_field} = entries.entry_port_code\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) AND (#{date_clause})\\n      AND #{tracking_open_clause} AND #{country_clause}\\n      GROUP BY ports.name, ports.#{port_code_field}\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::EntrySummaryGenerator",
-        "method": "generate_port_breakout_line"
-      },
-      "user_input": "port_code_field",
-      "confidence": "Medium",
-      "note": ""
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "0b4142e30e7403483695adc1716065138c87f7d48b5bef52bb67f6f4d0df01b4",
@@ -1604,26 +1584,6 @@
       "note": ""
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "2c12eca139578607b7e88f7378d13bc507fec24cf0039f0a5ee8f7c8cf3f3b9a",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 448,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"\\n      select monthly_statement_due_date, monthly_statement_paid_date, sum(ifnull(total_duty, 0)) + sum(ifnull(total_fees, 0)) as 'Duty & Fees',\\n      importer_id, companies.name\\nfrom entries \\ninner join companies on companies.id = entries.importer_id\\nwhere monthly_statement_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH)) \\nand monthly_statement_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH)) \\nand (#{Entry.search_where_by_company_id(importer_id)}) \\n      AND #{tracking_open_clause} AND #{country_clause}\\ngroup by importer_id, monthly_statement_due_date, monthly_statement_paid_date\\norder by importer_id, monthly_statement_due_date desc\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::USEntrySummaryGenerator",
-        "method": "generate_pms_section"
-      },
-      "user_input": "base_date_utc",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "2c48c2c155c45c005b01507a18cd06cc6f5976bf96669d44e1092a20329b69bd",
@@ -1967,26 +1927,6 @@
       "note": ""
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "387d89cc84a4b30b4ca633888776a05ad40deca55bc792409cfd75f389de237f",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 472,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"                 SELECT COUNT(*), SUM(total_duty), SUM(total_fees), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units)\\n                 FROM entries\\n                 WHERE (#{date_clause}) AND (#{Entry.search_where_by_company_id(importer_id)}) AND #{tracking_open_clause} AND #{country_clause}\\n                   AND #{format_where(more_where_clauses)}\\n\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::USEntrySummaryGenerator",
-        "method": "generate_summary_line"
-      },
-      "user_input": "date_clause",
-      "confidence": "Medium",
-      "note": ""
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "38b0c0f52d70e0405c60b12b764af1801d2957a29a864b4c970e653b874aad14",
@@ -2088,7 +2028,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/controllers/quick_search_controller.rb",
-      "line": 165,
+      "line": 164,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "core_module.quicksearch_lambda.call(user, core_module.klass).where(clause_array.join(\" OR \")).joins(cm).where(ActiveRecord::Base.sanitize_sql_array([\"#{ActiveRecord::Base.connection.quote_table_name(core_module.table_name)}.id NOT IN (?)\", previous_results.map do\n r[:id]\n end])).order(\"#{core_module.quicksearch_sort_by} DESC\")",
       "render_path": null,
@@ -2480,26 +2420,6 @@
       },
       "user_input": null,
       "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "4981b56c4a1e47fbcd46c74d3169330bf34e7fcb8a293c9e9935b2a00ec25d1c",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 255,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"SELECT left(commercial_invoice_tariffs.hts_code,2), count(*)\\n      FROM entries\\n      INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id\\n      INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id\\n      INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) AND (#{date_clause})\\n      AND #{tracking_open_clause} AND #{country_clause}\\n      GROUP BY left(commercial_invoice_tariffs.hts_code,2)\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::EntrySummaryGenerator",
-        "method": "generate_hts_breakout_line"
-      },
-      "user_input": "date_clause",
-      "confidence": "Medium",
       "note": ""
     },
     {
@@ -3114,26 +3034,6 @@
       "note": ""
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "571c358b83e3eef13d472c363d3d8bbda35df5c279289b4c864b788c95f2fdd8",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 472,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"                 SELECT COUNT(*), SUM(total_duty), SUM(total_fees), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units)  \\n                 FROM entries \\n                 WHERE (#{date_clause}) AND (#{Entry.search_where_by_company_id(importer_id)}) AND #{tracking_open_clause} AND #{country_clause}\\n                   AND #{format_where(more_where_clauses)}\\n\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::USEntrySummaryGenerator",
-        "method": "generate_summary_line"
-      },
-      "user_input": "date_clause",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "58c1ddfaee4b6c10c72fc39dd67ff1a1d55156e62244fb157dc7ff4b8da11325",
@@ -3190,26 +3090,6 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "5a0db26132a3f1de03896b0ced24b38c8cf1f47b30cdf196f318282c39643e7d",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 354,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"                 SELECT COUNT(*), SUM(total_duty), SUM(total_gst), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units), SUM(total_duty_gst)\\n                 FROM entries \\n                 WHERE (#{date_clause}) AND (#{Entry.search_where_by_company_id(importer_id)}) AND #{tracking_open_clause} AND #{country_clause} \\n                   AND #{format_where(more_where_clauses)}\\n\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::CAEntrySummaryGenerator",
-        "method": "generate_summary_line"
-      },
-      "user_input": "date_clause",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
     },
     {
       "warning_type": "Mass Assignment",
@@ -3408,7 +3288,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/search_setups_controller.rb",
-      "line": 62,
+      "line": 61,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(core_module_class(SearchSetup.for_user(current_user).find(params[:id]).deep_copy((params[:new_name] or \"Copy of #{SearchSetup.for_user(current_user).find(params[:id]).name}\"))))",
       "render_path": null,
@@ -3632,26 +3512,6 @@
       "note": "Optional field of minimal consequence."
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "659fc98f484dd2efdf3e9c10fc8ef19a55478ec7513ef1bbec1c4100dc0c3f54",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 211,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"SELECT ports.name, ports.#{port_code_field}, count(*) \\n      FROM entries\\n      INNER JOIN ports on ports.#{port_code_field} = entries.entry_port_code\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) AND (#{date_clause})\\n      AND #{tracking_open_clause} AND #{country_clause}\\n      GROUP BY ports.name, ports.#{port_code_field}\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::EntrySummaryGenerator",
-        "method": "generate_port_breakout_line"
-      },
-      "user_input": "port_code_field",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "66a3e5dc9061471040e309efd31b84e55413ce5129b7324d0e2b5d77ac7e1cbf",
@@ -3677,7 +3537,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/core_object_support.rb",
-      "line": 201,
+      "line": 205,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "self.joins(:custom_values).where(\"custom_values.custom_definition_id = ?\", custom_definition.id).where(\"custom_values.#{custom_definition.data_column} = ?\", value)",
       "render_path": null,
@@ -3824,26 +3684,6 @@
       "note": ""
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "6bfee599f4df8f588f63a3544a839bfda96abaf29185e1914313031baf14094f",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 377,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"\\n      select k84_due_date, sum(ifnull(total_duty_gst, 0)), importer_id, companies.name\\nfrom entries \\ninner join companies on companies.id = entries.importer_id\\nwhere k84_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) )\\nand k84_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) )\\nand (#{Entry.search_where_by_company_id(importer_id)}) \\n      AND #{tracking_open_clause} AND #{country_clause}\\ngroup by importer_id, k84_due_date\\norder by importer_id, k84_due_date desc\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::CAEntrySummaryGenerator",
-        "method": "generate_k84_section"
-      },
-      "user_input": "base_date_utc",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "6d48e94338dd805c92020e0e19dc05dee1fce7f4dfcc6c74fd0978c604a6e611",
@@ -3860,26 +3700,6 @@
       },
       "user_input": null,
       "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "6da717147ef283fd2590161f1ee0a3b6034884bed3a9518f54881db9022e9e20",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 273,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"SELECT #{vendor_field}, sum(commercial_invoice_tariffs.entered_value)\\n      FROM entries\\n      INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id\\n      INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id\\n      INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)})\\n      AND (#{ytd_clause(base_date_utc)})\\n      AND (#{tracking_open_clause}) AND #{country_clause}\\n      GROUP BY #{vendor_field}\\n      ORDER BY sum(commercial_invoice_tariffs.entered_value) DESC\\n      LIMIT 5\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::EntrySummaryGenerator",
-        "method": "generate_top_vendors"
-      },
-      "user_input": "vendor_field",
-      "confidence": "Medium",
       "note": ""
     },
     {
@@ -4004,7 +3824,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 428,
+      "line": 441,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "Entry.select(\"customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees\").where(\"entries.importer_id = ?\", importer.id).where(\"#{release_date_mf.field_name} IS NOT NULL\")",
       "render_path": null,
@@ -4259,6 +4079,25 @@
       "location": {
         "type": "model",
         "model": "InvoiceLine"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
+      "fingerprint": "76ee9cb361a9e26630c65c675776594599a60a7055ae9dcb47cdbc1c77412e82",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/sync_record.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":api_session_id",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "SyncRecord"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -4749,7 +4588,7 @@
       "check_name": "Execute",
       "message": "Possible command injection",
       "file": "lib/open_chain/gpg.rb",
-      "line": 289,
+      "line": 288,
       "link": "https://brakemanscanner.org/docs/warning_types/command_injection/",
       "code": "system(\"#{build_safe_command_line(home_dir, *args)} > #{Shellwords.escape(output_file.path)} 2>&1\")",
       "render_path": null,
@@ -4960,7 +4799,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/attachments_controller.rb",
-      "line": 126,
+      "line": 129,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(redirect_location(get_attachable(params[:attachable_type], params[:attachable_id])))",
       "render_path": null,
@@ -5086,26 +4925,6 @@
       },
       "user_input": null,
       "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "8bd997f6ba9bb9108e83b33cd881c57ccf2b184654d573a6b70f44e639975166",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 448,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"\\n      select monthly_statement_due_date, monthly_statement_paid_date, sum(ifnull(total_duty, 0)) + sum(ifnull(total_fees, 0)) as 'Duty & Fees',\\n      importer_id, companies.name\\nfrom entries\\ninner join companies on companies.id = entries.importer_id\\nwhere monthly_statement_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH))\\nand monthly_statement_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH))\\nand (#{Entry.search_where_by_company_id(importer_id)})\\n      AND #{tracking_open_clause} AND #{country_clause}\\ngroup by importer_id, monthly_statement_due_date, monthly_statement_paid_date\\norder by importer_id, monthly_statement_due_date desc\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::USEntrySummaryGenerator",
-        "method": "generate_pms_section"
-      },
-      "user_input": "base_date_utc",
-      "confidence": "Medium",
       "note": ""
     },
     {
@@ -5620,26 +5439,6 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "9b3b823c0779e9afeb341321b66aef6106d7c6dbed0fd82cd687a963e62e9585",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "app/models/custom_report_ann_sap_changes.rb",
-      "line": 43,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"\\n#{make_select(self.class.prep_custom_definitions([:origin, :import, :related_styles, :cost, :approved_date, :sap_revised_date]))}\\nFROM products\\nINNER JOIN classifications on products.id = classifications.product_id\\nINNER JOIN custom_values appr on appr.customizable_id = classifications.id and appr.custom_definition_id = #{self.class.prep_custom_definitions([:origin, :import, :related_styles, :cost, :approved_date, :sap_revised_date])[:approved_date].id}\\nINNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom_definition_id = #{self.class.prep_custom_definitions([:origin, :import, :related_styles, :cost, :approved_date, :sap_revised_date])[:sap_revised_date].id}\\n#{make_where} #{row_limit.blank? ? (\"\") : (\" LIMIT #{row_limit}\")}\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "CustomReportAnnSapChanges",
-        "method": "run"
-      },
-      "user_input": "make_select(self.class.prep_custom_definitions([:origin, :import, :related_styles, :cost, :approved_date, :sap_revised_date]))",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
     },
     {
       "warning_type": "Mass Assignment",
@@ -6193,26 +5992,6 @@
       "note": ""
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "aea52138541373d92fe41695600967764a4cc241d6ad60f0b242f22859dc80bf",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 354,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"                 SELECT COUNT(*), SUM(total_duty), SUM(total_gst), SUM(entered_value), SUM(total_invoiced_value), SUM(total_units), SUM(total_duty_gst)\\n                 FROM entries\\n                 WHERE (#{date_clause}) AND (#{Entry.search_where_by_company_id(importer_id)}) AND #{tracking_open_clause} AND #{country_clause}\\n                   AND #{format_where(more_where_clauses)}\\n\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::CAEntrySummaryGenerator",
-        "method": "generate_summary_line"
-      },
-      "user_input": "date_clause",
-      "confidence": "Medium",
-      "note": ""
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "aee7b39fd3de5187266535cceedf3186e4acb812c1ccbb9208431472b161ece4",
@@ -6344,26 +6123,6 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "b30ecf09e71a8900c4d0d601c10a4b9f03d04e7735774b56b8d27ca7e8cd4d0a",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 255,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"SELECT left(commercial_invoice_tariffs.hts_code,2), count(*) \\n      FROM entries\\n      INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id\\n      INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id\\n      INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) AND (#{date_clause})\\n      AND #{tracking_open_clause} AND #{country_clause}\\n      GROUP BY left(commercial_invoice_tariffs.hts_code,2)\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::EntrySummaryGenerator",
-        "method": "generate_hts_breakout_line"
-      },
-      "user_input": "date_clause",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
     },
     {
       "warning_type": "Mass Assignment",
@@ -7242,26 +7001,6 @@
       "note": ""
     },
     {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "c796818b81412e0ac72fbb01f1b050832b74429a1cc29bccd844d915c5046e51",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 273,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"SELECT #{vendor_field}, sum(commercial_invoice_tariffs.entered_value) \\n      FROM entries\\n      INNER JOIN commercial_invoices ON commercial_invoices.entry_id = entries.id\\n      INNER JOIN commercial_invoice_lines ON commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id\\n      INNER JOIN commercial_invoice_tariffs ON commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id\\n      WHERE (#{Entry.search_where_by_company_id(importer_id)}) \\n      AND (#{ytd_clause(base_date_utc)}) \\n      AND (#{tracking_open_clause}) AND #{country_clause}\\n      GROUP BY #{vendor_field} \\n      ORDER BY sum(commercial_invoice_tariffs.entered_value) DESC\\n      LIMIT 5\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::EntrySummaryGenerator",
-        "method": "generate_top_vendors"
-      },
-      "user_input": "vendor_field",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
-    },
-    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "c83cdd3a0eb4c5bd5f8016682344e8b0e28815c30be492fb26c14525e7e0136d",
@@ -7565,26 +7304,6 @@
       },
       "user_input": null,
       "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "d5725a021536dc8a20c355a4b6cea14b35d5ab04a6e077120d25069702c9ea9b",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "lib/open_chain/activity_summary.rb",
-      "line": 377,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "ActiveRecord::Base.connection.execute(\"\\n      select k84_due_date, sum(ifnull(total_duty_gst, 0)), importer_id, companies.name\\nfrom entries\\ninner join companies on companies.id = entries.importer_id\\nwhere k84_due_date <= DATE(DATE_ADD('#{base_date_utc}',INTERVAL 1 MONTH) )\\nand k84_due_date >= DATE(DATE_ADD('#{base_date_utc}',INTERVAL -3 MONTH) )\\nand (#{Entry.search_where_by_company_id(importer_id)})\\n      AND #{tracking_open_clause} AND #{country_clause}\\ngroup by importer_id, k84_due_date\\norder by importer_id, k84_due_date desc\")",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "OpenChain::OpenChain::ActivitySummary::CAEntrySummaryGenerator",
-        "method": "generate_k84_section"
-      },
-      "user_input": "base_date_utc",
-      "confidence": "Medium",
       "note": ""
     },
     {
@@ -8050,7 +7769,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/attachment_archive_setup.rb",
-      "line": 151,
+      "line": 153,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "Attachment.select(\"distinct attachments.#{(\"id\" or \"*\")}\").joins(\"INNER JOIN entries on entries.id = attachments.attachable_id AND attachments.attachable_type = \\\"Entry\\\"\").joins(\"LEFT OUTER JOIN attachment_archives_attachments on attachments.id = attachment_archives_attachments.attachment_id\").joins(self.class.sanitize_sql_array([\"LEFT OUTER JOIN attachments arc_packet ON attachments.attachable_id = arc_packet.attachable_id and arc_packet.attachment_type = ?\", \"Archive Packet\"])).where(\"arc_packet.id IS NULL OR arc_packet.id = attachments.id OR (#{Attachment.stitchable_attachment_extensions.collect do\n self.class.sanitize_sql_array([\"attachments.attached_file_name NOT like ?\", \"%#{ext}\"])\n end.join(\" AND \")})\")",
       "render_path": null,
@@ -8966,6 +8685,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2020-03-24 11:44:36 -0400",
+  "updated": "2020-06-22 11:01:01 -0400",
   "brakeman_version": "4.5.0"
 }

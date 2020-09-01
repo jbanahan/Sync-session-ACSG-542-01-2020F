@@ -727,6 +727,7 @@ class ModelField
 
   reload # does the reload when the class is loaded the first time
 
+  # use alias .by_uid to appease rubocop
   def self.find_by_uid(uid, dont_retry=false)
     uid = uid.model_field_uid if uid.is_a?(CustomDefinition)
 
@@ -759,6 +760,8 @@ class ModelField
 
     return blank_model_field
   end
+
+  singleton_class.send(:alias_method, :by_uid, :find_by_uid)
 
   def self.find_constant uid
     search_column_id = uid.to_s.split("_").last.to_i

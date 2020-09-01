@@ -224,7 +224,7 @@ describe CoreModule do
     end
   end
 
-  ["find_by_class_name", "core_module_by_class_name"].each do |method_name|
+  ["find_by_class_name", "by_class_name"].each do |method_name|
     describe method_name do
       it "finds a core module by class name" do
         expect(described_class.send(method_name, "Order")).to eq CoreModule::ORDER
@@ -246,7 +246,7 @@ describe CoreModule do
     end
   end
 
-  ["find_by_object", "core_module_by_object"].each do |method_name|
+  ["find_by_object", "by_object"].each do |method_name|
     describe method_name do
       it "finds a core module by object" do
         expect(described_class.send(method_name, Order.new)).to eq CoreModule::ORDER
@@ -261,12 +261,12 @@ describe CoreModule do
 
   describe "find_by" do
     it "finds by class name" do
-      expect(described_class).to receive(:core_module_by_class_name).with("Something").and_return CoreModule::ORDER
+      expect(described_class).to receive(:by_class_name).with("Something").and_return CoreModule::ORDER
       expect(described_class.find_by(class_name: "Something")).to eq CoreModule::ORDER
     end
 
     it "finds by object" do
-      expect(described_class).to receive(:core_module_by_object).with("Something").and_return CoreModule::ORDER
+      expect(described_class).to receive(:by_object).with("Something").and_return CoreModule::ORDER
       expect(described_class.find_by(object: "Something")).to eq CoreModule::ORDER
     end
 

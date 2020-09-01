@@ -5,13 +5,13 @@ describe OpenChain::ArchivePacketGenerator do
     it 'returns false if entry does not have an archive' do
       entry.attachments.destroy_all
       entry.save!
-      expect(described_class.archive?(entry)).to be_falsey # rubocop:disable RSpec/PredicateMatcher
+      expect(described_class.archive?(entry)).to be_falsey
     end
 
     it 'returns true if entry has an archive' do
       entry.attachments.create(attachment_type: Attachment::ARCHIVE_PACKET_ATTACHMENT_TYPE)
       entry.save!
-      expect(described_class.archive?(entry)).to be_truthy # rubocop:disable RSpec/PredicateMatcher
+      expect(described_class.archive?(entry)).to be_truthy
     end
   end
 

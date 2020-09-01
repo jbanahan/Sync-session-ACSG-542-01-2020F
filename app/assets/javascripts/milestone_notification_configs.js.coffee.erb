@@ -25,7 +25,7 @@ MilestoneConfigApp.config ['$stateProvider','$urlRouterProvider',($stateProvider
     })
 ]
 
-angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) -> 
+angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) ->
 
   milestonePath = (suffix) ->
     '/api/v1/admin/milestone_notification_configs' + suffix + '.json'
@@ -34,7 +34,7 @@ angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) -
     resp.data
 
   return {
-    getMilestoneUpdateConfig: (configId) -> 
+    getMilestoneUpdateConfig: (configId) ->
       if configId
         $http.get(milestonePath('/' + configId)).then(milestoneHandler)
       else
@@ -58,6 +58,15 @@ angular.module('MilestoneConfigApp').factory 'milestoneSvc', ['$http', ($http) -
 
   }
 ]
+
+# If we're using a filter only show those fields, otherwise show everything.
+MilestoneConfigApp.filter "includeOnly", () ->
+  (data, filterType) ->
+    data.filter (mf) ->
+      if filterType
+        return filterType in mf.filters
+      else
+        true
 
 MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneSvc', '$state', 'chainErrorHandler', ($scope, milestoneSvc, $state, chainErrorHandler) ->
 
@@ -86,7 +95,7 @@ MilestoneConfigApp.controller 'MilestoneIndexController', ['$scope', 'milestoneS
     $scope.outputStyles[fmt]
 ]
 
-MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSvc', '$state', 'chainErrorHandler', ($scope, milestoneSvc, $state, chainErrorHandler) -> 
+MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSvc', '$state', 'chainErrorHandler', ($scope, milestoneSvc, $state, chainErrorHandler) ->
 
   $scope.loadingFlag = "loading"
   $scope.errorHandler = chainErrorHandler
@@ -114,7 +123,7 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
     milestoneSvc.copyMilestoneUpdateConfig($state.params.configId).then(responseHandler)
   else
     milestoneSvc.getMilestoneUpdateConfig($state.params.configId).then(responseHandler)
-  
+
   $scope.saveConfig = () ->
     $scope.loadingFlag = "loading"
     # Based on the value of the customer number / parent system code displayed flag, we'll want to strip
@@ -129,6 +138,10 @@ MilestoneConfigApp.controller 'MilestoneShowController', ['$scope', 'milestoneSv
       $scope.errorHandler.clear()
       $scope.showIndex()
     )
+
+  $scope.filterType = () ->
+    if RegExp('tradelens').test $scope.config.output_style
+      'tradelens'
 
   $scope.cancel = () ->
     $scope.showIndex()

@@ -1,0 +1,27 @@
+<%= render :partial => 'shared/search_box' %>
+<table class="detail_table">
+  <thead>
+    <th>Class</th>
+    <th>Endpoint</th>
+    <th>Request File</th>
+    <th>Successful?</th>
+    <th>Created At</th>
+    <th>Last Sent At</th>
+  </thead>
+
+<% @api_sessions.each do |api_session| %>
+  <tr class='hover'>
+    <td><%= link_to api_session.short_class_name, api_session %></td>
+    <td><%= api_session.endpoint %></td>
+    <td><%= link_to(api_session.request_file_name, download_attachment_path(api_session.request_file, disposition: "attachment")) %></td>
+    <td><%= api_session.successful %></td>
+    <td><%= api_session.created_at %></td>
+    <td><%= api_session.updated_at %></td>
+  </tr>
+<% end %>
+</table>
+<%= will_paginate @api_sessions %>
+
+<% if @default_display %>
+  <p style="text-align: center;"><b><%=@default_display%></b></p>
+<% end %>

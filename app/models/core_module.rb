@@ -285,6 +285,7 @@ class CoreModule
     self.constants.map {|c| self.const_get(c)}.select {|c| c.is_a? CoreModule} || []
   end
 
+  # DEPRECATED - use alias .by_class_name
   def self.find_by_class_name(c, case_insensitive=false)
     c = c.to_s if c.is_a?(Class)
 
@@ -298,25 +299,22 @@ class CoreModule
     return nil
   end
 
-  # Alias method for `find_by_class_name`, which Rubocop complains about, thinking it's a deprecated AR finder method.
-  def self.core_module_by_class_name class_name, case_insensitive=false
-    find_by_class_name class_name, case_insensitive
-  end
+  # Alias method for .find_by_class_name, which Rubocop complains about, thinking it's a deprecated AR finder method.
+  singleton_class.send(:alias_method, :by_class_name, :find_by_class_name)
 
+  # DEPRECATED - use alias .by_object
   def self.find_by_object(obj)
     find_by_class_name obj.class.to_s
   end
 
-  # Alias method for `find_by_class_name`, which Rubocop complains about, thinking it's a deprecated AR finder method.
-  def self.core_module_by_object obj
-    find_by_object obj
-  end
+  # Alias method for .find_by_object, which Rubocop complains about, thinking it's a deprecated AR finder method.
+  singleton_class.send(:alias_method, :by_object, :find_by_object)
 
   def self.find_by class_name: nil, object: nil
     if class_name.present?
-      self.core_module_by_class_name(class_name)
+      self.by_class_name(class_name)
     else
-      self.core_module_by_object(object)
+      self.by_object(object)
     end
   end
 

@@ -374,6 +374,9 @@ Factory.define :ftp_session do |f|
   f.log "test log"
   f.data "sample data"
 end
+Factory.define :api_session do |f|
+
+end
 Factory.define :duty_calc_export_file_line do |f|
 
 end

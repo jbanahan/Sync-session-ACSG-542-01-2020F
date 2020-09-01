@@ -1,5 +1,5 @@
-require "open_chain/events/event_handler"
-require 'open_chain/custom_handler/isf_315_generator'
+require 'open_chain/events/event_handler'
+require 'open_chain/custom_handler/generator_315/isf_315_xml_generator'
 
 module OpenChain; module Events; module IsfEvents; class IsfEventHandler
   include OpenChain::Events::EventHandler
@@ -8,7 +8,7 @@ module OpenChain; module Events; module IsfEvents; class IsfEventHandler
     listeners = []
     case event.event_type
     when :save
-      listeners << OpenChain::CustomHandler::Isf315Generator.new
+      listeners << OpenChain::CustomHandler::Generator315::Isf315Dispatcher.new
     end
 
     listeners

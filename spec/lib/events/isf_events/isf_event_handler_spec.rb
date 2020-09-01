@@ -5,7 +5,7 @@ describe OpenChain::Events::IsfEvents::IsfEventHandler do
       event = double("Event")
       allow(event).to receive(:event_type).and_return :save
       listeners = subject.listeners event
-      expect(listeners.first.class.name).to eq OpenChain::CustomHandler::Isf315Generator.name
+      expect(listeners.first.class.name).to eq OpenChain::CustomHandler::Generator315::Isf315Dispatcher.name
     end
 
     it "should return a blank list for event types it doesn't care about" do

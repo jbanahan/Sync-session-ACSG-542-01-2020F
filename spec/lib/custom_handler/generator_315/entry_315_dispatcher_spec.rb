@@ -1,84 +1,90 @@
-describe OpenChain::CustomHandler::Generic315Generator do
+describe OpenChain::CustomHandler::Generator315::Entry315Dispatcher do
+
+  def milestone_update code, date, sync_record = nil
+    OpenChain::CustomHandler::Generator315::Shared315Support::MilestoneUpdate.new code, date, sync_record
+  end
+
+  let(:xml_generator) { OpenChain::CustomHandler::Generator315::Entry315XmlGenerator }
 
   describe "accepts?" do
-    let (:ms) { ms = stub_master_setup }
+    let (:ms) { stub_master_setup }
     let (:config) { MilestoneNotificationConfig.create! customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"}
 
     context "with custom feature enabled" do
-      before :each do
+      before do
         allow(ms).to receive(:custom_feature?).with("Entry 315").and_return true
       end
 
       it "accepts entries linked to customer numbers with 315 setups" do
-        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        ent = Entry.new broker_reference: "ref", customer_number: "cust"
         config
 
-        expect(subject.accepts? :save, e).to eq true
+        expect(subject.accepts?(:save, ent)).to eq true
       end
 
       it "doesn't accept entries without 315 setups" do
-        e = Entry.new broker_reference: "ref", customer_number: "cust"
-        expect(subject.accepts? :save, e).to eq false
+        ent = Entry.new broker_reference: "ref", customer_number: "cust"
+        expect(subject.accepts?(:save, ent)).to eq false
       end
 
       it "doesn't accept entries without customer numbers" do
         config
-        e = Entry.new broker_reference: "cust"
-        expect(subject.accepts? :save, e).to eq false
+        ent = Entry.new broker_reference: "cust"
+        expect(subject.accepts?(:save, ent)).to eq false
       end
 
       it "doesn't find 315 setups for other modules" do
-        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        ent = Entry.new broker_reference: "ref", customer_number: "cust"
         config.update! module_type: "SecurityFiling"
-        expect(subject.accepts? :save, e).to eq false
+        expect(subject.accepts?(:save, ent)).to eq false
       end
 
       it "doesn't accept entries linked to 315 setups that are disabled" do
-        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        ent = Entry.new broker_reference: "ref", customer_number: "cust"
         config.update! enabled: false
-        expect(subject.accepts? :save, e).to eq false
+        expect(subject.accepts?(:save, ent)).to eq false
       end
 
       it "accepts if multiple configs are setup" do
-        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        ent = Entry.new broker_reference: "ref", customer_number: "cust"
         config
-        c1 = MilestoneNotificationConfig.create! customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
-        expect(subject.accepts? :save, e).to eq true
+        MilestoneNotificationConfig.create! customer_number: "cust", enabled: true, output_style: "standard", testing: true, module_type: "Entry"
+        expect(subject.accepts?(:save, ent)).to eq true
       end
 
       it "accepts if configs are all testing" do
-        e = Entry.new broker_reference: "ref", customer_number: "cust"
+        ent = Entry.new broker_reference: "ref", customer_number: "cust"
         config.update! testing: true
-        expect(subject.accepts? :save, e).to eq true
+        expect(subject.accepts?(:save, ent)).to eq true
       end
 
       context "with linked importer company" do
 
         let (:importer) { Factory(:importer) }
 
-        let (:parent) {
-          i = Factory(:importer, system_code: "PARENT")
-          i.linked_companies << importer
-          i
-        }
+        let (:parent) do
+          imp = Factory(:importer, system_code: "PARENT")
+          imp.linked_companies << importer
+          imp
+        end
 
         it "accepts if config is linked to parent system code" do
           config.update! customer_number: nil, parent_system_code: parent.system_code
-          e = Entry.new broker_reference: "ref", customer_number: "cust", importer: importer
-          expect(subject.accepts? :save, e).to eq true
+          ent = Entry.new broker_reference: "ref", customer_number: "cust", importer: importer
+          expect(subject.accepts?(:save, ent)).to eq true
         end
 
         it "does not accept if config does not match parent system code" do
           config.update! customer_number: nil, parent_system_code: "NOMATCH"
-          e = Entry.new broker_reference: "ref", customer_number: "cust", importer: importer
-          expect(subject.accepts? :save, e).to eq false
+          ent = Entry.new broker_reference: "ref", customer_number: "cust", importer: importer
+          expect(subject.accepts?(:save, ent)).to eq false
         end
       end
 
     end
 
     it "doesn't accept entries if 'Entry 315' custom feature isn't enabled" do
-      e = Entry.new broker_reference: "ref", customer_number: "cust"
+      ent = Entry.new broker_reference: "ref", customer_number: "cust"
       c = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
       c.save!
 
@@ -86,28 +92,27 @@ describe OpenChain::CustomHandler::Generic315Generator do
       allow(MasterSetup).to receive(:get).and_return ms
       allow(ms).to receive(:custom_feature?).with("Entry 315").and_return false
 
-      expect(subject.accepts? :save, e).to eq false
+      expect(subject.accepts?(:save, ent)).to eq false
     end
   end
 
   describe "receive" do
-    let! (:config) {
+    let! (:config) do
       config = MilestoneNotificationConfig.new customer_number: "cust", enabled: true, output_style: "standard", module_type: "Entry"
-      config.setup_json = [
-        {model_field_uid: "ent_release_date"}
-      ]
+      config.setup_json = [{model_field_uid: "ent_release_date"}]
       config.save!
       config
-    }
-    let! (:entry) {
-      Factory(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00", master_bills_of_lading: "A\nB", container_numbers: "E\nF", cargo_control_number: "CCN1\nCCN2")
-    }
+    end
+    let! (:entry) do
+      Factory(:entry, source_system: "Alliance", customer_number: "cust", broker_reference: "123", release_date: "2015-03-01 08:00",
+                      master_bills_of_lading: "A\nB", container_numbers: "E\nF", cargo_control_number: "CCN1\nCCN2")
+    end
 
     it "generates and sends xml for 315 update" do
       expect(Lock).to receive(:acquire).with("315-123").and_yield
       file_contents = nil
       ftp_opts = nil
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file) do |_gen, file, opts|
         file_contents = file.read
         ftp_opts = opts
       end
@@ -117,8 +122,8 @@ describe OpenChain::CustomHandler::Generic315Generator do
       # ..the full contents of the xml are tested in depth in the unit tests for the generate method.
       expect(file_contents).not_to be_nil
       r = REXML::Document.new(file_contents).root
-      expect(REXML::XPath.each(r, "VfiTrack315/MasterBills/MasterBill").collect {|v| v.text}).to eq(["A", "B"])
-      expect(REXML::XPath.each(r, "VfiTrack315/Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
+      expect(REXML::XPath.each(r, "VfiTrack315/MasterBills/MasterBill").collect(&:text)).to eq(["A", "B"])
+      expect(REXML::XPath.each(r, "VfiTrack315/Containers/Container").collect(&:text)).to eq(["E", "F"])
 
       entry.reload
       expect(entry.sync_records.size).to eq 1
@@ -133,7 +138,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       config.update! testing: true
 
       ftp_opts = nil
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file) do |_gen, _file, opts|
         ftp_opts = opts
       end
       subject.receive :save, entry
@@ -145,7 +150,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
     it "accepts if all search creatrions match" do
       config.search_criterions.create! model_field_uid: "ent_release_date", operator: "notnull"
-      expect(subject).to receive(:ftp_file)
+      expect_any_instance_of(xml_generator).to receive(:ftp_file)
       subject.receive :save, entry
     end
 
@@ -153,15 +158,15 @@ describe OpenChain::CustomHandler::Generic315Generator do
       # Create one that matches and one that doesn't to ensure we bail even if only one doesn't match
       config.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "co", value: "NOMATCH"
       config.search_criterions.create! model_field_uid: "ent_release_date", operator: "notnull"
-      expect(subject).not_to receive(:ftp_file)
+      expect_any_instance_of(xml_generator).not_to receive(:ftp_file)
       subject.receive :save, entry
     end
 
     it "does not send 315 if milestone date is same as previous send" do
-      m = OpenChain::CustomHandler::Generic315Generator::MilestoneUpdate.new 'release_date', entry.release_date.in_time_zone("Eastern Time (US & Canada)")
+      m = milestone_update 'release_date', entry.release_date.in_time_zone("Eastern Time (US & Canada)")
       fingerprint = subject.calculate_315_fingerprint m, []
       entry.sync_records.create! trading_partner: "315_release_date", fingerprint: fingerprint, sent_at: Time.zone.now, confirmed_at: Time.zone.now
-      expect(subject).not_to receive(:ftp_file)
+      expect_any_instance_of(xml_generator).not_to receive(:ftp_file)
       subject.receive :save, entry
     end
 
@@ -171,7 +176,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       ]
       config.save!
       file_contents = nil
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file) do |_gen, file, _opts|
         file_contents = file.read
       end
 
@@ -186,7 +191,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       ]
       config.save!
       file_contents = nil
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file) do |_gen, file, _opts|
         file_contents = file.read
       end
 
@@ -202,7 +207,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       ]
       config.save!
       file_contents = nil
-      expect(subject).to receive(:ftp_file) do |file, opts|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file) do |_gen, file, _opts|
         file_contents = file.read
       end
 
@@ -215,7 +220,7 @@ describe OpenChain::CustomHandler::Generic315Generator do
       config.update! output_style: MilestoneNotificationConfig::OUTPUT_STYLE_MBOL_CONTAINER_SPLIT
 
       file_contents = nil
-      expect(subject).to receive(:ftp_file).exactly(1).times do |file|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file).once do |_gen, file|
         file_contents = file.read
       end
       subject.receive :save, entry
@@ -227,21 +232,21 @@ describe OpenChain::CustomHandler::Generic315Generator do
 
       expect(docs.size).to eq 4
 
-      expect(docs[0].text "MasterBills/MasterBill").to eq "A"
-      expect(docs[0].text "Containers/Container").to eq "E"
-      expect(docs[1].text "MasterBills/MasterBill").to eq "A"
-      expect(docs[1].text "Containers/Container").to eq "F"
-      expect(docs[2].text "MasterBills/MasterBill").to eq "B"
-      expect(docs[2].text "Containers/Container").to eq "E"
-      expect(docs[3].text "MasterBills/MasterBill").to eq "B"
-      expect(docs[3].text "Containers/Container").to eq "F"
+      expect(docs[0].text("MasterBills/MasterBill")).to eq "A"
+      expect(docs[0].text("Containers/Container")).to eq "E"
+      expect(docs[1].text("MasterBills/MasterBill")).to eq "A"
+      expect(docs[1].text("Containers/Container")).to eq "F"
+      expect(docs[2].text("MasterBills/MasterBill")).to eq "B"
+      expect(docs[2].text("Containers/Container")).to eq "E"
+      expect(docs[3].text("MasterBills/MasterBill")).to eq "B"
+      expect(docs[3].text("Containers/Container")).to eq "F"
     end
 
     it "sends distinct VfiTrack315 elements for each masterbill when output_format is 'mbol'" do
       config.update! output_style: MilestoneNotificationConfig::OUTPUT_STYLE_MBOL
 
       file_contents = nil
-      expect(subject).to receive(:ftp_file).exactly(1).times do |file|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file).once do |_gen, file|
         file_contents = file.read
       end
       subject.receive :save, entry
@@ -252,17 +257,17 @@ describe OpenChain::CustomHandler::Generic315Generator do
       docs = REXML::XPath.each(r, "VfiTrack315").collect {|v| v }
 
       expect(docs.size).to eq 2
-      expect(docs[0].text "MasterBills/MasterBill").to eq "A"
-      expect(REXML::XPath.each(docs[0], "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
-      expect(docs[1].text "MasterBills/MasterBill").to eq "B"
-      expect(REXML::XPath.each(docs[1], "Containers/Container").collect {|v| v.text}).to eq(["E", "F"])
+      expect(docs[0].text("MasterBills/MasterBill")).to eq "A"
+      expect(REXML::XPath.each(docs[0], "Containers/Container").collect(&:text)).to eq(["E", "F"])
+      expect(docs[1].text("MasterBills/MasterBill")).to eq "B"
+      expect(REXML::XPath.each(docs[1], "Containers/Container").collect(&:text)).to eq(["E", "F"])
     end
 
     it "sends distinct VfiTrack315 elements for each ccn when output_format is 'ccn'" do
       config.update! output_style: MilestoneNotificationConfig::OUTPUT_STYLE_CCN
 
       file_contents = nil
-      expect(subject).to receive(:ftp_file).exactly(1).times do |file|
+      expect_any_instance_of(xml_generator).to receive(:ftp_file).once do |_gen, file|
         file_contents = file.read
       end
       entry.cargo_control_number
@@ -274,8 +279,8 @@ describe OpenChain::CustomHandler::Generic315Generator do
       docs = REXML::XPath.each(r, "VfiTrack315").collect {|v| v }
 
       expect(docs.size).to eq 2
-      expect(docs[0].text "CargoControlNumber").to eq "CCN1"
-      expect(docs[1].text "CargoControlNumber").to eq "CCN2"
+      expect(docs[0].text("CargoControlNumber")).to eq "CCN1"
+      expect(docs[1].text("CargoControlNumber")).to eq "CCN2"
     end
 
     it "sends milestones for each config that is enabled" do
@@ -285,87 +290,29 @@ describe OpenChain::CustomHandler::Generic315Generator do
       ]
       config2.save!
 
-      entry.update_attributes! file_logged_date: Time.zone.now
+      entry.update! file_logged_date: Time.zone.now
 
       file_contents = []
-      expect(subject).to receive(:ftp_file).exactly(2).times do |file|
+      ftp_call_counter = 0
+      allow_any_instance_of(xml_generator).to receive(:ftp_file) do |_gen, file|
         file_contents << file.read
+        ftp_call_counter += 1
       end
       subject.receive :save, entry
 
+      expect(ftp_call_counter).to eq 2
       expect(file_contents.size).to eq 2
 
       # The first file is going to be the first config..
       r = REXML::Document.new(file_contents.first).root
-      expect(r.text "VfiTrack315/Event/EventCode").to eq "release_date"
+      expect(r.text("VfiTrack315/Event/EventCode")).to eq "release_date"
 
       # The second should be the file logged testing config
       r = REXML::Document.new(file_contents.second).root
-      expect(r.text "VfiTrack315/Event/EventCode").to eq "file_logged_date"
+      expect(r.text("VfiTrack315/Event/EventCode")).to eq "file_logged_date"
 
       # Testing configs should not set cross reference values
-      expect(DataCrossReference.find_315_milestone entry, 'file_logged_date').to be_nil
+      expect(DataCrossReference.find_315_milestone(entry, 'file_logged_date')).to be_nil
     end
   end
-
-  describe "create_315_data" do
-    let(:entry) {
-      Entry.new(broker_reference: "REF", entry_number: "ENT", transport_mode_code: "10", fcl_lcl: "F", carrier_code: "CAR",
-        vessel: "VES", voyage: "VOY", entry_port_code: "1234", lading_port_code: "65433", unlading_port_code: "9876", po_numbers: "ABC\n DEF")
-    }
-    let(:milestone) { OpenChain::CustomHandler::Generator315Support::MilestoneUpdate.new('code', Time.zone.now.to_date, SyncRecord.new) }
-    let(:canada) { Factory(:country, iso_code: 'CA')}
-    let!(:port_entry) { Factory(:port, schedule_d_code: "1234", name: "Entry Port") }
-    let!(:port_unlading) { Factory(:port, schedule_d_code: "9876", name: "Unlading Port") }
-    let!(:port_lading) { Factory(:port, schedule_k_code: "65433", name: "Lading Port") }
-
-
-    it "extracts data from entry for 315 creation" do
-      d = subject.send(:create_315_data, entry, {master_bills: ["ABC"], container_numbers: ["CON"], house_bills: ["HAWB"], cargo_control_numbers: ["CARGO", "CARGO2"]}, milestone)
-
-      expect(d.broker_reference).to eq "REF"
-      expect(d.entry_number).to eq "ENT"
-      expect(d.ship_mode).to eq "10"
-      expect(d.service_type).to eq "F"
-      expect(d.carrier_code).to eq "CAR"
-      expect(d.vessel).to eq "VES"
-      expect(d.voyage_number).to eq "VOY"
-      expect(d.port_of_entry).to eq "1234"
-      expect(d.port_of_entry_location).to eq port_entry
-      expect(d.port_of_lading).to eq "65433"
-      expect(d.port_of_lading_location).to eq port_lading
-      expect(d.port_of_unlading).to eq "9876"
-      expect(d.port_of_unlading_location).to eq port_unlading
-      expect(d.cargo_control_number).to eq "CARGO\n CARGO2"
-      expect(d.master_bills).to eq ["ABC"]
-      expect(d.container_numbers).to eq ["CON"]
-      expect(d.house_bills).to eq ["HAWB"]
-      expect(d.po_numbers).to eq ["ABC", "DEF"]
-      expect(d.event_code).to eq 'code'
-      expect(d.event_date).to eq Time.zone.now.to_date
-      expect(d.sync_record).to eq milestone.sync_record
-      expect(d.datasource).to eq "entry"
-    end
-
-    it "uses unlocode for Canadian entries" do
-      port = Port.new(cbsa_port: "1234", unlocode: "CACOD")
-      entry.assign_attributes import_country: canada, ca_entry_port: port
-      d = subject.send(:create_315_data, entry, {}, milestone)
-
-      expect(d.port_of_entry).to eq "CACOD"
-      expect(d.port_of_entry_location).to eq port
-    end
-
-    it "raises an error if the Canadian Port does not have an associated UN Locode" do
-      entry.assign_attributes import_country: canada, ca_entry_port: Port.new(cbsa_port: "1234")
-      expect {subject.send(:create_315_data, entry, {}, milestone)}.to raise_error "Missing UN Locode for Canadian Port Code 1234."
-    end
-
-    it "doesn't raise error if Canadian Port is unset" do
-      entry.assign_attributes import_country: canada
-      d = subject.send(:create_315_data, entry, {}, milestone)
-      expect(d.port_of_entry).to be_nil
-    end
-  end
-
 end

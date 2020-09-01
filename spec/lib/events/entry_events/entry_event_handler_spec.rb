@@ -9,7 +9,7 @@ describe OpenChain::Events::EntryEvents::EntryEventHandler do
       expect(listeners.first.class.name).to eq(OpenChain::Events::EntryEvents::LandedCostReportAttacherListener.name)
       expect(listeners[1].class.name).to eq(OpenChain::CustomHandler::UnderArmour::UnderArmour315Generator.name)
       expect(listeners[2].class.name).to eq(OpenChain::CustomHandler::Crocs::Crocs210Generator.name)
-      expect(listeners[3].class.name).to eq(OpenChain::CustomHandler::Generic315Generator.name)
+      expect(listeners[3].class.name).to eq(OpenChain::CustomHandler::Generator315::Entry315Dispatcher.name)
     end
 
     it "should return a blank list for event types it doesn't care about" do

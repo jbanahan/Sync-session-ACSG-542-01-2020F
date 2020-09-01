@@ -90,7 +90,7 @@
                 </button>
               </td>
               <td>
-                <select ng-model="event.model_field_uid" class="form-control" ng-options="mf.mfid as mf.label for mf in eventList" />
+                <select ng-model="event.model_field_uid" class="form-control" ng-options="mf.mfid as mf.label for mf in eventList | includeOnly:filterType()" />
               </td>
               <td>
                 <input type="checkbox" ng-model="event.no_time">

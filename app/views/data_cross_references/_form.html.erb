@@ -14,10 +14,14 @@
   <%= form_for xref, html: {id:'xref_form', class:'form'} do |f| %>
   <%=f.hidden_field(:cross_reference_type)%>
   <table>
-    <%=field_row xref_info[:key_label], f.text_field(:key)%>
+    <% if xref_info[:allowed_keys] %>
+      <%= field_row xref_info[:key_label], f.select(:key, xref_info[:allowed_keys].to_a) %>
+    <% else %>
+      <%= field_row xref_info[:key_label], f.text_field(:key) %>
+    <% end %>
     <% if xref_info[:show_value_column] %>
       <% if xref_info[:allowed_values] %>
-        <%=field_row xref_info[:value_label], f.select(:value, xref_info[:allowed_values])%>
+        <%=field_row xref_info[:value_label], f.select(:value, xref_info[:allowed_values].to_a)%>
       <% else %>
         <%=field_row xref_info[:value_label], f.text_field(:value)%>
       <% end %>

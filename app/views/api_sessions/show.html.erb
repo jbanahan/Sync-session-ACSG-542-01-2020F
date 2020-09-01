@@ -1,0 +1,37 @@
+<style>
+  .lt-padded {
+    padding-left: 15px !important;
+  }
+  h6 {
+    padding-top: 20px;
+  }
+</style>
+
+<% content_for :action_bar do %>
+  <button class='btn_link' link_to='<%= api_sessions_path %>' key_map='b'>Back</button>
+<% end %>
+
+<table>
+  <%= field_row "Class", @api_session.class_name %>
+  <%= field_row "Endpoint", @api_session.endpoint %>
+  <%= field_row "Request File Name", link_to(@api_session.request_file_name, download_attachment_path(@api_session.request_file, disposition: "attachment")) %>
+  <%= field_row "Created At", @api_session.created_at %>
+  <%= field_row "Last Sent At", @api_session.updated_at %>
+  <%= field_row "Last Server Response", @api_session.last_server_response %>
+  <%= field_row "Successful", @api_session.successful %>
+  <%= field_row "Send Retries", @api_session.retry_count.to_i %>
+</table>
+
+<h6> Response Files</h6>
+<table class="foo">
+  <tr>
+    <th>File Name</th>
+    <th class='lt-padded'>Created At</th>
+  </tr>
+  <% @api_session.response_files.each do |att|%>
+    <tr>
+      <td><%= link_to(att.attached_file_name, download_attachment_path(att, disposition: "attachment")) %></td>
+      <td class="lt-padded"><%= att.created_at %></td>
+    </tr>
+  <% end %>
+</table>

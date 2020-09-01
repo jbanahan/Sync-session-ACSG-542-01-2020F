@@ -2,6 +2,7 @@
 #
 # Table name: sync_records
 #
+#  api_session_id         :integer
 #  confirmation_file_name :string(255)
 #  confirmed_at           :datetime
 #  context                :text(65535)
@@ -20,18 +21,20 @@
 # Indexes
 #
 #  index_sync_records_id_type_trading_partner_fingerprint  (syncable_id,syncable_type,trading_partner,fingerprint) UNIQUE
+#  index_sync_records_on_api_session_id                    (api_session_id)
 #  index_sync_records_on_ftp_session_id                    (ftp_session_id)
 #  index_sync_records_on_trading_partner                   (trading_partner)
 #
 
 class SyncRecord < ActiveRecord::Base
-  attr_accessible :confirmation_file_name, :confirmed_at, :failure_message,
+  attr_accessible :api_session_id, :confirmation_file_name, :confirmed_at, :failure_message,
     :fingerprint, :ftp_session_id, :ignore_updates_before, :sent_at,
     :syncable_id, :syncable_type, :trading_partner, :syncable, :created_at, :context
 
   belongs_to :syncable, polymorphic: true, inverse_of: :sync_records
   validates :trading_partner, :presence=>true
   belongs_to :ftp_session
+  belongs_to :api_session
 
   scope :problems, lambda { where(self.problems_clause()) }
 

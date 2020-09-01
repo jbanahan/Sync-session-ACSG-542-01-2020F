@@ -193,6 +193,10 @@ RSpec/NamedSubject:
 RSpec/MultipleExpectations:
   Enabled: false
 
+# Confuses our :accepts? method with rspec matchers
+RSpec/PredicateMatcher:
+  Enabled: false
+
 # Allow stub'ing some methods on the subject - this can be a code smell, but it's
 # useful often enough to be able to isolate methods under test that I'm allowing it.
 RSpec/SubjectStub:

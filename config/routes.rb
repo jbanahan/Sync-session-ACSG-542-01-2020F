@@ -300,6 +300,7 @@ OpenChain::Application.routes.draw do
       get 'download'
     end
   end
+  resources :api_sessions, :only => [:index, :show]
 
   resources :sent_emails, :only => [:index, :show] do
     member do

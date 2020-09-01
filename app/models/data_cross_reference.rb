@@ -17,6 +17,7 @@
 #
 
 require 'open_chain/data_cross_reference_upload_preprocessor'
+require 'open_chain/milestone_notification_config_support'
 require 'csv'
 
 class DataCrossReference < ActiveRecord::Base
@@ -85,6 +86,7 @@ class DataCrossReference < ActiveRecord::Base
   UNIT_OF_MEASURE ||= "unit_of_measure".freeze
   ACE_RADIATION_DECLARATION ||= 'ace_rad_dec'.freeze
   # Combination of entry export and origin country codes that have SPI available.
+  TRADELENS_ENTRY_MILESTONE_FIELDS ||= 'tradelens_entry_milestone_fields'.freeze
   SPI_AVAILABLE_COUNTRY_COMBINATION ||= 'spi_available_country_combination'.freeze
   SIEMENS_BILLING_STANDARD ||= 'siemens_billing_standard'.freeze
   SIEMENS_BILLING_ENERGY ||= 'siemens_billing_energy'.freeze
@@ -110,6 +112,7 @@ class DataCrossReference < ActiveRecord::Base
       xref_attributes(HM_PARS_NUMBER, "H&M PARS Numbers", "Enter the PARS numbers to use for the H&M export shipments to Canada. To mark a PARS Number as used, edit it and key a '1' into the 'PARS Used?' field.", key_label: "PARS Number", value_label: "PARS Used?", show_value_column: true, upload_instructions: 'Spreadsheet should contain a Header row labeled "PARS Numbers" in column A.  List all PARS numbers thereafter in column A.', allow_blank_value: true),
       xref_attributes(INVOICE_CI_LOAD_CUSTOMERS, "Invoice CI Load Customers", "Enter the customer number to enable sending Invoice CI Load data to Kewill.", key_label: "Customer Number", show_value_column: false),
       xref_attributes(ASCE_BRAND, "Ascena Brands", "Enter the full brand name in the Brand Name field and enter the brand abbreviation in the Brand Abbrev field.", key_label: "Brand Name", value_label: "Brand Abbrev", upload_instructions: 'Spreadsheet should contain a header row labels "Brand Name" in column A and "Brand Abbrev" in column B. List full brand names in column A and brand abbreviations in column b', allow_blank_value: false),
+      xref_attributes(TRADELENS_ENTRY_MILESTONE_FIELDS, "TradeLens Entry Milestone Fields", "Assign entry fields to TradeLens API endpoint.", key_label: "Field", allowed_keys: OpenChain::MilestoneNotificationConfigSupport::DataCrossReferenceKeySelector.new("Entry"), value_label: "Endpoint", allowed_values: OpenChain::MilestoneNotificationConfigSupport::DataCrossReferenceValueSelector.new("Entry"), allow_blank_value: false, show_value_column: true),
       xref_attributes(LL_CARB_STATEMENTS, "CARB Statements", "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", key_label: "Code", value_label: "Description", show_value_column: true),
       xref_attributes(LL_PATENT_STATEMENTS, "Patent Statements", "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", key_label: "Code", value_label: "Description", show_value_column: true),
       xref_attributes(MID_XREF, "MID Cross Reference", "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", key_label: "Code", value_label: "MID", require_company: true, allow_blank_value: false, show_value_column: true, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."),
@@ -187,6 +190,8 @@ class DataCrossReference < ActiveRecord::Base
       MasterSetup.get.custom_feature?("Lumber Liquidators") && user.admin?
     when SPI_AVAILABLE_COUNTRY_COMBINATION
       MasterSetup.get.custom_feature?("WWW") && (user.sys_admin? || user.in_group?('xref-maintenance'))
+    when TRADELENS_ENTRY_MILESTONE_FIELDS
+      MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.sys_admin?
     when SIEMENS_BILLING_STANDARD, SIEMENS_BILLING_ENERGY
       user.admin?
     else

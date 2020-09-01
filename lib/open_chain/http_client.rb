@@ -42,7 +42,7 @@ class HttpClient
       update_response_body_encoding response
       response_body = process_response response
 
-      raise "Server responded with an error: #{status}" unless status == "200"
+      raise "Server responded with an error: #{status}" unless /\A2\d\d\z/.match status # Any 2XX code is fine.
     rescue => e
       # There's no real point in retrying any error that actually returned a status.  We'll let any higher level
       # classes determine if they want to retry something like 5XX series errors

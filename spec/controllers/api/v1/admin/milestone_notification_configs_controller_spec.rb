@@ -7,17 +7,6 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
   end
 
   describe "show" do
-    def timezones
-      subject.send(:timezones)
-    end
-
-    def event_list
-      subject.send(:event_list)
-    end
-
-    def model_fields
-      subject.send(:model_field_list)
-    end
 
     it "returns a config" do
       config = MilestoneNotificationConfig.create! customer_number: "CUST", output_style: "standard", enabled: true, module_type: "Entry", setup: {milestone_fields: [{model_field_uid: "ent_brok_ref", timezone: "timezone", no_time: true}], fingerprint_fields: ["ent_brok_ref", "ent_release_date"]}.to_json
@@ -63,6 +52,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
       expect(event_list.first['mfid']).to be_a String
       expect(event_list.first['label']).to be_a String
       expect(event_list.first['datatype']).to be_a String
+      expect(event_list.first['filters']).to be_empty
 
       expect(c["output_styles"]).to eq MilestoneNotificationConfig::OUTPUT_STYLES
 
@@ -352,21 +342,8 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
 
   describe "new" do
 
-    def timezones
-      subject.send(:timezones)
-    end
-
-    def event_list
-      subject.send(:event_list)
-    end
-
-    def model_fields
-      subject.send(:model_field_list)
-    end
-
     it "sends blank milestone config setup info" do
       get :new
-
       expect(response).to be_success
       c = JSON.parse response.body
 
