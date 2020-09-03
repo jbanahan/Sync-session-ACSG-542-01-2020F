@@ -425,6 +425,21 @@ describe ImportedFile do
         expect(cr_msgs.count).to eq 3
         expect(cr_msgs.last.message).to eq "Product was not updated because no values were modified."
       end
+
+      it "skips no-updates message when there's an error" do
+        listener.process_row 3, obj, messages, saved: false, failed: true
+        expect(obj.last_updated_by).to be_nil
+        expect(obj.entity_snapshots).to be_blank
+
+        cr = ChangeRecord.first
+        cr_msgs = cr.change_record_messages
+        expect(cr_msgs.count).to eq 2
+        expect(cr_msgs.flat_map(&:message)).not_to include("Product was not updated because no values were modified.")
+      end
+
+      it "doesn't blow up if object is missing" do
+        expect {listener.process_row 3, nil, messages, saved: false}.not_to raise_error
+      end
     end
   end
 

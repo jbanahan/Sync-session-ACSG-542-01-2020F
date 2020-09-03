@@ -379,7 +379,9 @@ class ImportedFile < ActiveRecord::Base
         crms = messages.map { |m| ChangeRecordMessage.new(change_record_id: cr.id, message: m.gsub(/\\/, '\&\&').gsub(/'/, "''")) }
         # Add a message indicating the record was not saved (thus no snapshot created) if no values where modified.  This can help track down issues if anyone
         # has questions why they're not seeing snapshot records for an object that was present in an uploaded file.
-        crms << ChangeRecordMessage.new(change_record_id: cr.id, message: "#{CoreModule.find_by_object(object).label} was not updated because no values were modified.") unless saved
+        unless saved || failed
+          crms << ChangeRecordMessage.new(change_record_id: cr.id, message: "#{CoreModule.find_by_object(object)&.label} was not updated because no values were modified.")
+        end
         ChangeRecordMessage.import crms
         FileImportResult.where(id: @fr.id).update_all(rows_processed: row_number - (@imported_file.starting_row - 1))
       end
