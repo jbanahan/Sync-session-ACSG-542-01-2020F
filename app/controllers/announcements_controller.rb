@@ -11,7 +11,7 @@ class AnnouncementsController < ApplicationController
       ORDER BY announcements.created_at DESC
     SQL
     @announcements = Announcement.select("announcements.id, announcements.start_at, announcements.title, uam.confirmed_at")
-                                 .joins ActiveRecord::Base.sanitize_sql_array([qry, current_user.id, Time.zone.now - 30.days])
+                                 .joins ActiveRecord::Base.sanitize_sql_array([qry, current_user.id, Time.zone.now - 90.days])
     render layout: false
   end
 

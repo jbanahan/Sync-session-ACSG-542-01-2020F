@@ -1,13 +1,15 @@
 module Api; module V1; class AnnouncementsController < Api::V1::ApiController
 
   def confirm
-    ids = params['announcement_ids'].split(",")
     Lock.db_lock(current_user) do
       ancs = Announcement.joins("LEFT OUTER JOIN user_announcement_markers uam ON announcements.id = uam.announcement_id AND uam.user_id = #{current_user.id}")
                          .where("uam.confirmed_at IS NULL")
-                         .where(id: ids)
+                         .where(id: params['anc_ids'])
 
       ancs.each { |a| a.user_announcement_markers.create! user_id: current_user.id, confirmed_at: Time.zone.now }
+      ancs.select { |a| Array.wrap(params[:email_anc_ids]).map(&:to_i).include? a.id }.each do |email_anc|
+        OpenMailer.send_announcement(email_anc.id, current_user.id).deliver_later
+      end
     end
     render json: {'OK' => 'OK'}
   end

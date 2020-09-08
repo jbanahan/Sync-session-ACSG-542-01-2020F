@@ -1,18 +1,34 @@
 describe Api::V1::AnnouncementsController do
   let!(:user) do
-    u = Factory(:user)
+    u = Factory(:user, email: "tufnel@stonehenge.biz")
     allow_api_access u
     u
   end
 
   describe "confirm" do
     let!(:anc1) { Factory(:announcement) }
-    let!(:anc2) { Factory(:announcement) }
+    let!(:anc2) { Factory(:announcement, title: "hear, ye!", text: "This is important!") }
     let!(:anc3) { Factory(:announcement) }
 
-    it "marks specified user_announcement_markers 'confirmed' for current user" do
+    it "marks specified user_announcement_markers 'confirmed' for current user, sends email if indicated" do
       now = Time.zone.local(2020, 3, 15)
-      Timecop.freeze(now) { put :confirm, announcement_ids: "#{anc1.id},#{anc2.id}" }
+
+      message_delivery = instance_double(ActionMailer::MessageDelivery)
+      expect(OpenMailer).to receive(:send_announcement).with(anc2.id, user.id).and_return message_delivery
+      expect(message_delivery).to receive(:deliver_later)
+
+      Timecop.freeze(now) { put :confirm, anc_ids: [anc1.id, anc2.id], email_anc_ids: [anc2.id] }
+      expect(user.user_announcement_markers[0].confirmed_at).to eq now
+      expect(user.user_announcement_markers[1].confirmed_at).to eq now
+      anc3.reload
+      expect(anc3.user_announcement_markers.count).to eq 0
+    end
+
+    it "correctly handles request without email ids" do
+      now = Time.zone.local(2020, 3, 15)
+      expect(OpenMailer).not_to receive(:send_announcement)
+
+      Timecop.freeze(now) { put :confirm, anc_ids: [anc1.id, anc2.id], email_anc_ids: nil }
       expect(user.user_announcement_markers[0].confirmed_at).to eq now
       expect(user.user_announcement_markers[1].confirmed_at).to eq now
       anc3.reload
@@ -23,7 +39,7 @@ describe Api::V1::AnnouncementsController do
       now = Time.zone.local(2020, 3, 15)
       yesterday = now - 1.day
       uam = Factory(:user_announcement_marker, announcement: anc1, user: user, confirmed_at: yesterday)
-      Timecop.freeze(now) { put :confirm, announcement_ids: anc1.id.to_s }
+      Timecop.freeze(now) { put :confirm, anc_ids: anc1.id.to_s }
       uam.reload
       expect(uam.confirmed_at).to eq yesterday
     end

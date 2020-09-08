@@ -134,6 +134,9 @@ gem 'nokogiri', '1.10.9'
 
 gem 'content_disposition', '1.0.0'
 
+# Allows CSS stylesheets with emails.
+gem 'premailer-rails'
+
 group :development, :test do
   gem 'byebug'
   # This is here exclusively so we can validate the xlsx files we produce.

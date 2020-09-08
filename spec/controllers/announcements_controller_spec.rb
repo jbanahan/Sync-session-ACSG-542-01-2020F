@@ -9,7 +9,7 @@ describe AnnouncementsController do
     Factory(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)
     a
   end
-  let(:anc2) { Factory :announcement, title: "anc2", category: "all", start_at: now - 40.days, end_at: now - 35.days, created_at: create_date + 1.day }
+  let(:anc2) { Factory :announcement, title: "anc2", category: "all", start_at: now - 100.days, end_at: now - 95.days, created_at: create_date + 1.day }
   let(:anc3) do
     a = Factory :announcement, title: "anc3", category: "all", start_at: start_date, end_at: end_date, created_at: create_date + 2.days
     Factory(:user_announcement_marker, announcement: a, user: user, confirmed_at: now)

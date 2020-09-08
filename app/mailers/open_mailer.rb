@@ -2,23 +2,24 @@ require 'base64'
 require 'mini_mime'
 
 class OpenMailer < ActionMailer::Base
-  default :from => "do-not-reply@vfitrack.net"
+  default from: "do-not-reply@vfitrack.net"
+  # Can't be overridden in the method call. Use #premailer
+  default skip_premailer: true
 
   after_action :handle_sent_email # includes handling for :redirect_to_developer, :send_generic_exception
 
   ATTACHMENT_LIMIT ||= 10.megabytes
-  ATTACHMENT_TEXT ||= <<EOS
-An attachment named '_filename_' for this message was larger than the maximum system size.
-Click <a href='_path_'>here</a> to download the attachment directly.
-All system attachments are deleted after seven days, please retrieve your attachments promptly.
-EOS
-  BUG_EMAIL = "bug@vandegriftinc.com"
+  ATTACHMENT_TEXT ||= <<~STRING.freeze
+    An attachment named '_filename_' for this message was larger than the maximum system size.
+    Click <a href='_path_'>here</a> to download the attachment directly.
+    All system attachments are deleted after seven days, please retrieve your attachments promptly.
+  STRING
+  BUG_EMAIL = "bug@vandegriftinc.com".freeze
 
   # send a simple plain text email
   def send_simple_text to, subject, body
-
     @body_content = body
-    mail(:to=>to, :subject=>subject) do |format|
+    mail(to: to, subject: subject) do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -26,12 +27,11 @@ EOS
   # send a very simple HTML email (attachments are expected to answer as File objects or paths )
   def send_simple_html to, subject, body, file_attachments = [], mail_options = {}
     @body_content = body
-    pm_attachments = []
     opts = {to: explode_group_and_mailing_lists(to, "TO"), subject: subject}.merge mail_options
     local_attachments = process_attachments(file_attachments, opts[:to])
     suppressed = opts.delete :suppressed
 
-    m = mail(opts) do |format|
+    m = mail(opts) do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
     suppress_email(m) if suppressed
@@ -46,11 +46,11 @@ EOS
     identifier = details[:identifier].nil? ? "[unknown]" : details[:identifier]
     @detail_hash = details
     if !text_only
-      mail(:to => subscription.user.email, :subject => "#{type} #{identifier} changed.") do |format|
+      mail(to: subscription.user.email, subject: "#{type} #{identifier} changed.") do |format|  # rubocop:disable Style/SymbolProc
         format.html
       end
     else
-      mail(:to => subscription.user.email, :subject => "#{type} #{identifier} changed. [txt]") do |format|
+      mail(to: subscription.user.email, subject: "#{type} #{identifier} changed. [txt]") do |format|  # rubocop:disable Style/SymbolProc
         format.text
       end
     end
@@ -65,47 +65,46 @@ EOS
     @contact = contact
     @system_code = system_code
 
-    mail(:to => "support@vandegriftinc.com", :subject => "Registration Request (#{system_code})")
+    mail(to: "support@vandegriftinc.com", subject: "Registration Request (#{system_code})")
   end
 
   def send_feedback(user, message, current_page)
     @user = user
     @message = message
     @current_page = current_page
-    mail(:to => 'support@vandegriftinc.com',
-         :subject => "[VFI Track] [User Feedback] #{user.company.name} - #{user.full_name}",
-         :reply_to => user.email
-        )
+    mail(to: 'support@vandegriftinc.com',
+         subject: "[VFI Track] [User Feedback] #{user.company.name} - #{user.full_name}",
+         reply_to: user.email)
   end
 
   def send_password_reset(user)
     @user = user
     @reset_url = edit_password_reset_url(@user.confirmation_token, host: emailer_host(user))
-    mail(:to => user.email, :subject => "[VFI Track] Password Reset") do |format|
+    mail(to: user.email, subject: "[VFI Track] Password Reset") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
   def send_new_system_init(password)
     @pwd = password
-    mail(:to => BUG_EMAIL, :subject => "New System Initialization") do |format|
+    mail(to: BUG_EMAIL, subject: "New System Initialization") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
 
-  def send_comment(current_user, to_address, comment, link=nil)
+  def send_comment(current_user, to_address, comment, link = nil)
     @user = current_user
     @comment = comment
     @link = link
-    mail(:to => to_address, :reply_to => current_user.email, :subject => "[VFI Track] #{comment.subject}")
+    mail(to: to_address, reply_to: current_user.email, subject: "[VFI Track] #{comment.subject}")
   end
 
   def send_search_result(to, search_name, attachment_name, file_path, user)
     @user = user
     attachment_saved = save_large_attachment(file_path, to)
-    m = mail(:to => explode_group_and_mailing_lists(to, "TO"),
-      :subject => "[VFI Track] #{search_name} Result",
-      :from => 'do-not-reply@vfitrack.net')
+    m = mail(to: explode_group_and_mailing_lists(to, "TO"),
+             subject: "[VFI Track] #{search_name} Result",
+             from: 'do-not-reply@vfitrack.net')
     unless attachment_saved
       m.attachments[attachment_name] = create_attachment attachment_name, file_path
     end
@@ -116,9 +115,9 @@ EOS
     @user = current_user
     attachment_saved = save_large_attachment(file_path, to)
     @body_text = body
-    m = mail(:to => explode_group_and_mailing_lists(to, "TO"),
-      :reply_to => @user.email,
-      :subject => subject)
+    m = mail(to: explode_group_and_mailing_lists(to, "TO"),
+             reply_to: @user.email,
+             subject: subject)
     unless attachment_saved
       name = attachment_filename(file_path)
       m.attachments[name] = create_attachment name, file_path
@@ -137,9 +136,9 @@ EOS
 
     attachment_saved = save_large_attachment(data_file_path, to)
 
-    m = mail(:to=>to,
-      :reply_to=>current_user.email,
-      :subject => "[VFI Track] #{CoreModule.find_by_class_name(imported_file.module_type).label} File Result")
+    m = mail(to: to,
+             reply_to: current_user.email,
+             subject: "[VFI Track] #{CoreModule.find_by(class_name: imported_file.module_type).label} File Result")
 
     unless attachment_saved
       m.attachments[imported_file.attached_file_name] = create_attachment imported_file.attached_file_name, data_file_path
@@ -147,12 +146,12 @@ EOS
 
     m
   ensure
-    data_file_path.unlink if data_file_path
+    data_file_path&.unlink
   end
 
   # Send a file that is currently on s3
-  def send_s3_file current_user, to, cc, subject, body_text, bucket, s3_path, attachment_name=nil
-    a_name = attachment_name.blank? ? s3_path.split('/').last : attachment_name
+  def send_s3_file current_user, to, cc, subject, body_text, bucket, s3_path, attachment_name = nil
+    a_name = attachment_name.presence || s3_path.split('/').last
     t = OpenChain::S3.download_to_tempfile bucket, s3_path
     email_text = [body_text]
     large_attachment = false
@@ -161,7 +160,7 @@ EOS
         large_attachment = true
       end
 
-      if !attachment_text.blank?
+      if attachment_text.present?
         # Concatenate passed message with the text set when large file is saved
         # to S3 for direct download
         email_text << "<br><br>".html_safe
@@ -171,9 +170,9 @@ EOS
     @user = current_user
     @body_text = email_text
 
-    m = mail(:to=>to, :reply_to=>current_user.email, :subject => subject)
+    m = mail(to: to, reply_to: current_user.email, subject: subject)
     # Postmark does not handle blank CC / BCC fields any longer without erroring (dumb)
-    m.cc = cc unless cc.blank?
+    m.cc = cc if cc.present?
     m.attachments[a_name] = create_attachment(a_name, t) unless large_attachment
 
     m
@@ -181,14 +180,26 @@ EOS
 
   def send_message(message)
     @message = message
-    @messages_url = messages_url(:host => emailer_host(@message.user))
+    @messages_url = messages_url(host: emailer_host(@message.user))
 
-    mail(:to => message.user.email, :subject => "[VFI Track] New Message - #{message.subject}") do |format|
+    mail(to: message.user.email, subject: "[VFI Track] New Message - #{message.subject}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
-# ERROR EMAILS
+  def send_announcement announcement_id, user_id
+    user = User.find user_id
+    anc = Announcement.find announcement_id
+    @text = anc.text
+    @anc_time = anc.start_at.in_time_zone(user.time_zone)
+
+    email = mail(to: user.email, subject: "[VFI Track] Announcement - #{anc.title}") do |format|  # rubocop:disable Style/SymbolProc
+              format.html
+    end
+    premailer(email)
+  end
+
+  # ERROR EMAILS
   def send_search_fail(to, search_name, error_message, ftp_server, ftp_username, ftp_subfolder)
     @search_name = search_name
     @error_message = error_message
@@ -196,7 +207,7 @@ EOS
     @ftp_username = ftp_username
     @ftp_subfolder = ftp_subfolder
 
-    mail(:to=>to, :bcc=>"support@vandegriftinc.com", :subject => "[VFI Track] Search Transmission Failure") do |format|
+    mail(to: to, bcc: "support@vandegriftinc.com", subject: "[VFI Track] Search Transmission Failure") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -206,15 +217,16 @@ EOS
     @search_url = advanced_search_url(host: MasterSetup.get.request_host, id: search.id)
     @error_message = error_message
 
-    mail(:to=>to, :subject => "[VFI Track] Search Transmission Failure") do |format|
+    mail(to: to, subject: "[VFI Track] Search Transmission Failure") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
-  def send_imported_file_process_fail imported_file, source="Not Specified" # source can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
+  # source arg can be any object, if it is a user, the email will have the user's full name, else it will show source.to_s
+  def send_imported_file_process_fail imported_file, source = "Not Specified"
     @imported_file = imported_file
     @source = source
-    mail(:to=>BUG_EMAIL, :subject =>"[VFI Track Exception] - Imported File Error") do |format|
+    mail(to: BUG_EMAIL, subject: "[VFI Track Exception] - Imported File Error") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -223,17 +235,17 @@ EOS
     @user = user
     @error = error
     @params = params
-    mail(:to => BUG_EMAIL, :subject => "[VFI Track Exception] Search Failure") do |format|
+    mail(to: BUG_EMAIL, subject: "[VFI Track Exception] Search Failure") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
 
   # only Exception#log_me should use this.  Everything else should just call .log_me on the exception
-  def send_generic_exception e, additional_messages=[], error_message=nil, backtrace=nil, attachment_paths=[]
+  def send_generic_exception e, additional_messages = [], error_message = nil, backtrace = nil, attachment_paths = []
     @exception = e
     # Sometimes (like from log_me) the error given is just a String, so handle that case.
-    @error_message = error_message ? error_message : (e.respond_to?(:message) ? e.message.to_s : "")
-    @backtrace = backtrace ? backtrace : (e.respond_to?(:backtrace) ? Array.wrap(e.backtrace) : [] )
+    @error_message = error_message || (e.respond_to?(:message) ? e.message.to_s : "")
+    @backtrace = backtrace || (e.respond_to?(:backtrace) ? Array.wrap(e.backtrace) : [])
     @additional_messages = additional_messages.nil? ? [] : additional_messages
     @time = Time.now.in_time_zone("America/New_York").strftime("%Y-%m-%d %H:%M:%S %Z %z")
     @hostname = MasterSetup.hostname
@@ -252,7 +264,7 @@ EOS
         local_attachments[name] = create_attachment name, ap
       end
     end
-    m = mail(:to=>BUG_EMAIL, :subject =>"[VFI Track Exception] - #{@error_message}"[0..99]) do |format|
+    m = mail(to: BUG_EMAIL, subject: "[VFI Track Exception] - #{@error_message}"[0..99]) do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
 
@@ -274,7 +286,7 @@ EOS
     @expired_survey = expired_survey
     @expired_responses = expired_responses
     @link_addr = survey_url(expired_survey, host: MasterSetup.get.request_host)
-    mail(to: to, subject: "Survey \"#{@expired_survey.name}\" has #{expired_responses.count} expired survey(s).") do |format|
+    mail(to: to, subject: "Survey \"#{@expired_survey.name}\" has #{expired_responses.count} expired survey(s).") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -289,15 +301,15 @@ EOS
     to = [survey_response.user.try(:email)]
     to << survey_response.group
     to = explode_group_and_mailing_lists to.compact, "TO"
-    mail(:to=>to, :subject=>email_subject) do |format|
+    mail(to: to, subject: email_subject) do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
   def send_survey_reminder survey_response, to, subject, body
-    @body_content = "<p>#{ERB::Util.html_escape(body).gsub("\n", "<br>")}</p><p>#{survey_response_url(survey_response, host: MasterSetup.get.request_host)}</p>".html_safe
+    @body_content = "<p>#{ERB::Util.html_escape(body).gsub("\n", "<br>")}</p><p>#{survey_response_url(survey_response, host: MasterSetup.get.request_host)}</p>".html_safe # rubocop:disable Rails/OutputSafety
     @attachment_messages = []
-    mail(:to=>to, :subject=>subject) do |format|
+    mail(to: to, subject: subject) do |format|
       format.html { render 'send_simple_html' }
     end
   end
@@ -310,7 +322,7 @@ EOS
     @survey_title = get_survey_title survey_response
 
     to = survey_subscriptions.map {|ss| ss.user.email}.join(',')
-    mail(:to=>to, :subject=>"Survey Updated") do |format|
+    mail(to: to, subject: "Survey Updated") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -323,7 +335,7 @@ EOS
     to = [survey_response.user.try(:email)]
     to << survey_response.group
     to = explode_group_and_mailing_lists to.compact, "TO"
-    mail(:to=>to, :subject=>"#{survey_response.survey.name} - Updated") do |format|
+    mail(to: to, subject: "#{survey_response.survey.name} - Updated") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -331,14 +343,14 @@ EOS
   def send_support_ticket_to_agent support_ticket
     to = support_ticket.agent ? support_ticket.agent.email : "support@vandegriftinc.com"
     @ticket = support_ticket
-    mail(:to=>to, :subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
+    mail(to: to, subject: "[Support Ticket Update]: #{support_ticket.subject}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
   def send_support_ticket_to_requestor support_ticket
     @ticket = support_ticket
-    mail(:to=>support_ticket.requestor.email, :subject=>"[Support Ticket Update]: #{support_ticket.subject}") do |format|
+    mail(to: support_ticket.requestor.email, subject: "[Support Ticket Update]: #{support_ticket.subject}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -346,14 +358,14 @@ EOS
   def send_support_request_to_helpdesk to, support_request
     @request = support_request
     @system_code = MasterSetup.get.system_code
-    mail(:to=>to, :reply_to => support_request.user.email, :subject=>"[Support Request ##{@request.ticket_number} (#{@system_code})]") do |format|
+    mail(to: to, reply_to: support_request.user.email, subject: "[Support Request ##{@request.ticket_number} (#{@system_code})]") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
   def send_tariff_set_change_notification tariff_set, user
     @ts = tariff_set
-    mail(to:user.email, subject:"[VFI Track] Tariff Update - #{tariff_set.country.name}") do |format|
+    mail(to: user.email, subject: "[VFI Track] Tariff Update - #{tariff_set.country.name}") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -365,31 +377,31 @@ EOS
     # This is mostly working around an issue in init_base_setup, trying to send an email w/ a MasterSetup that was JUST generated.
     ms = MasterSetup.get
     if ms.request_host.blank?
-      ms = MasterSetup.first
+      ms = MasterSetup.first # rubocop:disable Lint/UselessAssignment  <-- Not sure what this is for, so leaving it alone
     end
 
     @login_url = new_user_session_url(host: MasterSetup.get.request_host)
 
-    mail(to:user.email, subject:"[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|
+    mail(to: user.email, subject: "[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
-  def send_high_priority_tasks(user, tasks) # tasks is a list of ProjectDeliverable objects
+  # tasks arg is a list of ProjectDeliverable objects
+  def send_high_priority_tasks(user, tasks)
     @user = user
     @tasks = tasks
-    time = Time.now
-    mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|
+    time = Time.zone.now
+    mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
 
   def auto_send_attachments to, subject, body, file_attachments, sender_name, sender_email
-    @body_content = ERB::Util.html_escape(body).gsub("\n", "<br>").html_safe
+    @body_content = ERB::Util.html_escape(body).gsub("\n", "<br>").html_safe # rubocop:disable Rails/OutputSafety
     @attachment_messages = []
     @sender_name = sender_name
     @sender_email = sender_email
-    pm_attachments = []
 
     file_attachments = ((file_attachments.is_a? Enumerable) ? file_attachments : [file_attachments])
     local_attachments = {}
@@ -405,7 +417,7 @@ EOS
       end
     end
 
-    m = mail(:to=>to, :reply_to => sender_email, :subject=>subject) do |format|
+    m = mail(to: to, reply_to: sender_email, subject: subject) do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
 
@@ -415,7 +427,7 @@ EOS
 
   def send_crocs_manual_bill_reminder invoice_number
     @invoice_number = invoice_number
-    mail(to: "crocs-manual-billing@vandegriftinc.com", subject: "[VFI Track] Crocs Invoice # #{invoice_number}") do |fmt|
+    mail(to: "crocs-manual-billing@vandegriftinc.com", subject: "[VFI Track] Crocs Invoice # #{invoice_number}") do |fmt|  # rubocop:disable Style/SymbolProc
       fmt.html
     end
   end
@@ -432,16 +444,15 @@ EOS
                       attachments: attachment_list, suppressed: suppressed)
   end
 
-
   def send_kewill_imaging_error email_to, errors, file_type, filename, file
     @errors = errors
     @filename = filename
-    @file_type = file_type.blank? ? "Unknown" : file_type
+    @file_type = file_type.presence || "Unknown"
     # file may be nil if it's too large to be processed
     @blacklisted_extension = File.extname(file) if file && extension_blacklisted?(file)
     local_attachments = file ? process_attachments(file, email_to) : []
 
-    m = mail(to: email_to, subject: "[VFI Track] Failed to load file #{filename}") do |format|
+    m = mail(to: email_to, subject: "[VFI Track] Failed to load file #{filename}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
 
@@ -462,8 +473,8 @@ EOS
 
     def extract_email_addresses list
       emails = list
-      if list && list.respond_to?(:select)
-        emails = list.select {|m| !m.nil? && !m.blank? }.join(", ")
+      if list&.respond_to?(:select)
+        emails = list.select {|m| !m.nil? && m.present? }.join(", ")
       end
       emails
     end
@@ -471,6 +482,10 @@ EOS
     def extract_email_body body
       # This seems to render the body out in the format that you would expect it to, and ignores attachment body parts.
       body ? body.decoded : nil
+    end
+
+    def premailer mail
+      Premailer::Rails::Hook.perform mail
     end
 
     def message_att_to_standard_att message_attachment
@@ -517,7 +532,11 @@ EOS
 
     def attachment_filename file
       # Use original_filename if the object answers to the method, else use the path's basename.
-      ((file.respond_to?(:original_filename)) ? file.original_filename : File.basename((file.respond_to?(:path) ? file.path : file)))
+      if file.respond_to?(:original_filename)
+        file.original_filename
+      else
+        File.basename((file.respond_to?(:path) ? file.path : file))
+      end
     end
 
     def save_large_attachment(file, registered_emails)
@@ -525,8 +544,8 @@ EOS
       attachment_text = nil
       if large_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
-        email_attachment = EmailAttachment.create!(:email => Array.wrap(registered_emails).join(","))
-        email_attachment.attachment = Attachment.new(:attachable => email_attachment)
+        email_attachment = EmailAttachment.create!(email: Array.wrap(registered_emails).join(","))
+        email_attachment.attachment = Attachment.new(attachable: email_attachment)
         # Allow passing file objects here as well, not just paths to a file.
         # This also allows us to implement an original_filename method on the file object to utilize the paperclip
         # attachment naming.
@@ -535,26 +554,26 @@ EOS
         email_attachment.save
 
         attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
-        attachment_text = attachment_text.html_safe
+        attachment_text = attachment_text.html_safe # rubocop:disable Rails/OutputSafety
       elsif blank_attachment? file
         ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
 
         # PostMark will raise exceptions if this is exactly nil, but a blank string is acceptable
         email_attachment = ""
         attachment_text = "* The attachment '#{attachment_filename(file)}' was excluded because it was empty."
-        attachment_text = attachment_text.html_safe
+        attachment_text = attachment_text.html_safe # rubocop:disable Rails/OutputSafety
       end
 
       if block_given?
         yield email_attachment, attachment_text
       else
         @body_text = attachment_text if attachment_text
-        return (attachment_text.nil? ? false : true)
+        (attachment_text.nil? ? false : true)
       end
     end
 
     def user_management_email?
-      return action_name == "send_password_reset" || action_name == "send_invite"
+      action_name == "send_password_reset" || action_name == "send_invite"
     end
 
     def handle_sent_email
@@ -608,13 +627,13 @@ EOS
 
       def deliver! mail
         original_delivery_method.deliver! mail
-      rescue Exception => e
+      rescue Exception => e # rubocop:disable Lint/RescueException
         handle_email_error(e, mail, original_delivery_method, sent_email)
         nil
       end
 
-      def handle_email_error error, mail, delivery_method, sent_email
-        sent_email.update_attributes! delivery_error: error.message
+      def handle_email_error error, _mail, _delivery_method, sent_email
+        sent_email.update! delivery_error: error.message
         raise error unless swallow_error?(error)
       end
 
@@ -627,9 +646,9 @@ EOS
           # TODO InactiveRecipientErrors now have the ability to notify you which account was actually inactive
           # We should hook this and notify someone/thing about the inactive account.
           # NOTE: This will only notify when ALL the recipients on the email are inactive
-          return true
+          true
         else
-          return false
+          false
         end
       end
     end
@@ -666,7 +685,7 @@ EOS
       end
       # Track the groups being sent to under the covers to easily back-trace actual emails to distinct
       # groups
-      headers["X-ORIGINAL-GROUP-#{list_type}"] = group_codes.join(", ") unless group_codes.blank?
+      headers["X-ORIGINAL-GROUP-#{list_type}"] = group_codes.join(", ") if group_codes.present?
       new_list.blank? ? nil : new_list.flatten
     end
 
@@ -700,7 +719,15 @@ EOS
 
     def create_attachment filename, data, data_is_file = true
       if data_is_file
-        data = IO.read((data.respond_to?(:path) ? data.path : (data.respond_to?(:to_path) ? data.to_path.to_s : data)), mode: "rb")
+        source = if data.respond_to?(:path)
+                   data.path
+                 elsif data.respond_to?(:to_path)
+                   data.to_path.to_s
+                 else
+                   data
+                 end
+
+        data = IO.read(source, mode: "rb")
       end
 
       # What we're doing here is encoding our mail messages ourself.  For some reason, after upgrading to Rails 4.2
@@ -715,18 +742,18 @@ EOS
       mime_type = "application/octet-stream" if mime_type.nil?
 
       {content: Base64.encode64(data),
-        encoding: "base64",
-        mime_type: mime_type}
+       encoding: "base64",
+       mime_type: mime_type}
     end
 
     def emailer_host user
-      user.host_with_port.blank? ? MasterSetup.get.request_host : user.host_with_port
+      user.host_with_port.presence || MasterSetup.get.request_host
     end
 
     def get_survey_title survey_response
       survey_title = "\"#{survey_response.survey_name}\""
       if !survey_response.subtitle.to_s.empty?
-        survey_title = survey_title + " subtitled \"#{survey_response.subtitle}\""
+        survey_title += " subtitled \"#{survey_response.subtitle}\""
       end
       survey_title
     end
