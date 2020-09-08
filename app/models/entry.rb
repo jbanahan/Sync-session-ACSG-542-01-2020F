@@ -378,7 +378,7 @@ class Entry < ActiveRecord::Base
                   :missing_documents_exception_opened_date, :missing_documents_exception_resolved_date,
                   :pending_customs_review_exception_opened_date, :pending_customs_review_exception_resolved_date,
                   :price_inquiry_exception_opened_date, :price_inquiry_exception_resolved_date,
-                  :usda_hold_exception_opened_date, :usda_hold_exception_resolved_date
+                  :usda_hold_exception_opened_date, :usda_hold_exception_resolved_date, :broker_id
 
   # Tracking status is about whether an entry has been fully prepared
   # It does not report on release status, just whether the entry has been
