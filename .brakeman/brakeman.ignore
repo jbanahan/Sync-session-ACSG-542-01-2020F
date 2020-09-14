@@ -491,7 +491,7 @@
           "type": "controller",
           "class": "OfficialTariffsController",
           "method": "show",
-          "line": 34,
+          "line": 39,
           "file": "app/controllers/official_tariffs_controller.rb",
           "rendered": {
             "name": "official_tariffs/show",
@@ -982,6 +982,26 @@
       },
       "user_input": null,
       "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "1df88d5e8b7ef0c69f3fc43e559358185a778028a4bd7b25a7547a83b825903d",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/file_import_processor.rb",
+      "line": 472,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "(my_core_module.klass.all or @module_chain.parent(my_core_module).child_objects(my_core_module, object_map[@module_chain.parent(my_core_module)])).where(\"#{ModelField.by_uid(key_model_field).qualified_field_name} = ?\", key_model_field_value)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "FileImportProcessor",
+        "method": "find_or_build_by_unique_field"
+      },
+      "user_input": "ModelField.by_uid(key_model_field).qualified_field_name",
+      "confidence": "Medium",
       "note": ""
     },
     {
@@ -7069,7 +7089,7 @@
       "check_name": "CSRFTokenForgeryCVE",
       "message": "Rails 4.2.11.3 has a vulnerability that may allow CSRF token forgery. Upgrade to Rails 5.2.4.3 or patch",
       "file": "Gemfile.lock",
-      "line": 315,
+      "line": 324,
       "link": "https://groups.google.com/g/rubyonrails-security/c/NOjKiGeXUgw",
       "code": null,
       "render_path": null,
@@ -8260,7 +8280,7 @@
           "type": "controller",
           "class": "OfficialTariffsController",
           "method": "show",
-          "line": 34,
+          "line": 39,
           "file": "app/controllers/official_tariffs_controller.rb",
           "rendered": {
             "name": "official_tariffs/show",
@@ -8734,28 +8754,8 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "fefa7f6b12cd457d65a28a7b9257ca81c32203d16f95c0af2ea731b2b952beb9",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "app/models/file_import_processor.rb",
-      "line": 454,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "(my_core_module.klass.all or @module_chain.parent(my_core_module).child_objects(my_core_module, object_map[@module_chain.parent(my_core_module)])).where(\"#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?\", key_model_field_value)",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "FileImportProcessor",
-        "method": "find_or_build_by_unique_field"
-      },
-      "user_input": "ModelField.find_by_uid(key_model_field).qualified_field_name",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2020-08-06 10:29:44 -0500",
-  "brakeman_version": "4.9.0"
+  "updated": "2020-09-14 13:30:08 -0400",
+  "brakeman_version": "4.9.1"
 }

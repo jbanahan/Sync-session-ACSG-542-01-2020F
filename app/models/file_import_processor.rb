@@ -1,65 +1,65 @@
 class FileImportProcessor
   require 'open_chain/field_logic.rb'
 
-# YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
-  def self.process(import_file, listeners=[])
+  # YOU DON'T NEED TO CALL ANY INSTANCE METHODS, THIS USES THE FACTORY PATTERN, JUST CALL FileImportProcessor.preview or .process
+  def self.process(import_file, listeners = [])
     find_processor(import_file, listeners).process_file
   end
+
   def self.preview(import_file)
     find_processor(import_file, [PreviewListener.new]).preview_file
   end
 
-  def initialize(import_file, data, listeners=[])
+  def initialize(import_file, data, listeners = [])
     @import_file = import_file
     @search_setup = import_file.search_setup
-    @core_module = CoreModule.find_by_class_name(import_file.module_type)
+    @core_module = CoreModule.by_class_name(import_file.module_type)
     @module_chain = @core_module.default_module_chain
     @data = data
     @listeners = listeners
   end
 
-
   def process_file
-    begin
       fire_start
       fire_row_count self.row_count
-      processed_row = false
       r = @import_file.starting_row - 1
       get_rows do |row|
         begin
-          obj = do_row r+1, row, true, @import_file.starting_column - 1, @import_file.user
-          obj.errors.full_messages.each {|m| @import_file.errors[:base] << "Row #{r+1}: #{m}"}
-        rescue => e
-          @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
+          obj = do_row r + 1, row, true, @import_file.starting_column - 1, @import_file.user, set_blank: @import_file.set_blank?
+          obj.errors.full_messages.each {|m| @import_file.errors[:base] << "Row #{r + 1}: #{m}"}
+        rescue => e # rubocop:disable Style/RescueStandardError
+          @import_file.errors[:base] << "Row #{r + 1}: #{e.message}"
         end
         r += 1
       end
-    rescue => e
+  rescue => e # rubocop:disable Style/RescueStandardError
       e.log_me ["Imported File ID: #{@import_file.id}"]
-      @import_file.errors[:base] << "Row #{r+1}: #{e.message}"
-    ensure
+      @import_file.errors[:base] << "Row #{r + 1}: #{e.message}"
+  ensure
       fire_end
-    end
   end
 
   def preview_file
     get_rows(preview: true) do |row|
-      do_row @import_file.starting_row, row, false, @import_file.starting_column - 1, @import_file.user
+      do_row @import_file.starting_row, row, false, @import_file.starting_column - 1, @import_file.user, set_blank: @import_file.set_blank?
       return @listeners.first.messages
     end
   end
-  def self.find_processor import_file, listeners=[]
-    if import_file.attached_file_name.downcase.ends_with?("xls") or import_file.attached_file_name.downcase.ends_with?("xlsx")
-      return SpreadsheetImportProcessor.new(import_file, OpenChain::XLClient.new(import_file.attached.path), listeners)
+
+  def self.find_processor import_file, listeners = []
+    if import_file.attached_file_name.downcase.ends_with?("xls") || import_file.attached_file_name.downcase.ends_with?("xlsx")
+      SpreadsheetImportProcessor.new(import_file, OpenChain::XLClient.new(import_file.attached.path), listeners)
     else
-      return CSVImportProcessor.new(import_file, import_file.attachment_data, listeners)
+      CSVImportProcessor.new(import_file, import_file.attachment_data, listeners)
     end
   end
+
   # get the array of SearchColumns to be used by the processor
-  def get_columns
-    @import_file.sorted_columns.blank? ? @search_setup.sorted_columns : @import_file.sorted_columns
+  def columns
+    @import_file.sorted_columns.presence || @search_setup.sorted_columns
   end
-  def do_row row_number, row, save, base_column, user
+
+  def do_row row_number, row, save, base_column, user, set_blank: false
     messages = []
     object_map = {}
     begin
@@ -67,7 +67,9 @@ class FileImportProcessor
       # Throw away the name of the key field, don't really care here
       *, key_model_field_value = find_module_key_field(data_map, @core_module)
       if key_model_field_value
-        def key_model_field_value.unique_identifier?; true end
+        def key_model_field_value.unique_identifier?
+          true
+        end
         messages << key_model_field_value
       end
 
@@ -90,33 +92,16 @@ class FileImportProcessor
             @core_object = obj if parent_mod.nil? # this is the top level object
             object_map[mod] = obj
             data_map[mod].each do |uid, data|
-              mf = ModelField.find_by_uid uid
+              mf = ModelField.by_uid uid
+              data = get_boolean_value(data) if mf.data_type == :boolean
               # Rails evaluates boolean false as blank (boo!), so if we've got a boolean false value
               # don't skip it since we're likely dealing w/ a boolean field and should actually handle the value.
-              if data.blank? && !(data === false)
+              if data.blank? && (data != false) && !set_blank
                 messages << "Blank value skipped for #{mf.label}"
                 next
               end
-              if mf.custom?
-                cv = obj.custom_values.find {|cv| mf.custom_definition.id == cv.custom_definition_id}
-                if cv.nil?
-                  cv = obj.custom_values.build
-                  cv.custom_definition = mf.custom_definition
-                end
-                is_boolean = mf.custom_definition.data_type.to_sym==:boolean
-                val = is_boolean ? get_boolean_value(data) : data
-                orig_value = cv.value
-                # If field is a boolean and the value is not nil OR
-                # if either of the original or new value is not blank.
-                if (is_boolean && !val.nil?) || !(orig_value.blank? && val.blank?)
-                  process_import mf, cv, val, user, messages, error_messages
-                else
-                  # Don't think this condition ever actually happens since we're already skipping blank values above
-                  cv.mark_for_destruction
-                end
-              else
-                process_import mf, obj, data, user, messages, error_messages
-              end
+
+              process_import mf, obj, data, user, messages, error_messages
             end
 
             obj, saved = merge_or_create obj, save, !parent_mod # if !parent_mod then we're at the top level
@@ -132,11 +117,11 @@ class FileImportProcessor
 
           # Add our object errors before validating since the validator may raise an error and we want our
           # process_import errors included in the object too.
-          object.errors[:base].push(*error_messages) unless error_messages.blank?
+          object.errors[:base].push(*error_messages) if error_messages.present?
 
           # Reload and freeze all custom values
           if object.respond_to?(:freeze_all_custom_values_including_children)
-            CoreModule.walk_object_heirarchy(object) {|cm, obj| obj.custom_values.reload if obj.respond_to?(:custom_values)}
+            CoreModule.walk_object_heirarchy(object) {|_cm, obj| obj.custom_values.reload if obj.respond_to?(:custom_values)}
             object.freeze_all_custom_values_including_children
           end
 
@@ -155,17 +140,17 @@ class FileImportProcessor
       end
     rescue OpenChain::ValidationLogicError, MissingCoreModuleFieldError => e
       my_base = e.base_object if e.respond_to?(:base_object)
-      my_base = @core_object unless my_base
-      my_base = object_map[@core_module] unless my_base
+      my_base ||= @core_object
+      my_base ||= object_map[@core_module]
       # Put the major error (missing fields) first here
       messages << "ERROR: #{e.message}" if e.is_a? MissingCoreModuleFieldError
       if my_base
-        my_base.errors.full_messages.each {|m|
+        my_base.errors.full_messages.each do |m|
           messages << "ERROR: #{m}"
-        }
+        end
       end
       fire_row row_number, nil, messages, failed: true, saved: false
-    rescue => e
+    rescue => e # rubocop:disable Style/RescueStandardError
       e.log_me(["Imported File ID: #{@import_file.id}"])
       messages << "SYS ERROR: #{e.message}"
       fire_row row_number, nil, messages, failed: true, saved: false
@@ -178,7 +163,7 @@ class FileImportProcessor
 
   def process_import mf, obj, data, user, messages, error_messages
     message = mf.process_import(obj, data, user)
-    unless message.blank?
+    if message.present?
       if message.error?
         error_messages << message
       else
@@ -191,7 +176,7 @@ class FileImportProcessor
   def update_mode_check obj, update_mode, was_new
     case update_mode
     when "add"
-      @created_objects = Set.new unless @created_objects
+      @created_objects ||= Set.new
       FileImportProcessor.raise_validation_exception obj, "Cannot update record when Update Mode is set to \"Add Only\"." if !was_new && !@created_objects.include?(obj.id)
       @created_objects << obj.id # mark that this object was created in this session so we know it can be updated again even in add mode
     when "update"
@@ -200,7 +185,7 @@ class FileImportProcessor
   end
 
   def get_boolean_value  data
-    if !data.nil? && data.to_s.length>0
+    if !data.nil? && data.to_s.length > 0
       dstr = data.to_s.downcase.strip
       if ["y", "t", "1"].include?(dstr[0])
         return true
@@ -216,14 +201,14 @@ class FileImportProcessor
     @module_chain.child_modules(cm).each do |child|
       return true if data_map_has_values? data_map[child]
     end
-    return false
+    false
   end
 
   def data_map_has_values? data_map_hash
     data_map_hash.each_value do |v|
-      return true unless v.blank?
+      return true if v.present?
     end
-    return false
+    false
   end
 
   def merge_or_create base, save, is_top_level
@@ -244,7 +229,7 @@ class FileImportProcessor
     end
     # if this is the top level object, check against the search_setup#update_mode
     update_mode_check(dest, @import_file.update_mode, is_new) if is_top_level
-    return [dest, saved]
+    [dest, saved]
   end
 
   # This method walks the core module object heirarchy and returns true if any object in the chain
@@ -258,8 +243,8 @@ class FileImportProcessor
       return true if object.custom_values.any?(&:changed?)
     end
 
-    cm = CoreModule.find_by_object(object)
-    CoreModule.find_by_object(object).children.each do |child_core_module|
+    cm = CoreModule.by_object(object)
+    CoreModule.by_object(object).children.each do |child_core_module|
       child_association = cm.child_association_name(child_core_module)
       association = object.public_send(child_association.to_sym)
       if association.loaded?
@@ -271,19 +256,19 @@ class FileImportProcessor
   end
 
   def before_save(dest)
-    get_rules_processor.before_save dest, @core_object
+    rules_processor.before_save dest, @core_object
   end
 
   def before_merge(shell, database_object)
-    get_rules_processor.before_merge shell, database_object, @core_object
+    rules_processor.before_merge shell, database_object, @core_object
   end
 
-  def get_rules_processor
+  def rules_processor
     if @rules_processor.nil?
       p = {
-      :Order => OrderRulesProcessor,
-      :Product => ProductRulesProcessor,
-      :SalesOrder => SaleRulesProcessor
+        Order: OrderRulesProcessor,
+        Product: ProductRulesProcessor,
+        SalesOrder: SaleRulesProcessor
       }
       h = p[@import_file.module_type.intern]
       @rules_processor = h.nil? ? RulesProcessor.new : h.new
@@ -317,7 +302,7 @@ class FileImportProcessor
 
     private
 
-    def utf_8_parse data, start_row, preview, block
+    def utf_8_parse _data, start_row, preview, block
       row_num = 0
       CSV.parse(@data, skip_blanks: true) do |row|
         had_content = skip_comma_blanks row, row_num, start_row, block
@@ -329,7 +314,7 @@ class FileImportProcessor
     def windows_1252_parse data, start_row, preview, block
       row_num = 0
       CSV.parse(data.force_encoding("Windows-1252"), skip_blanks: true) do |row|
-        converted_row = row.map {|r| r.encode("UTF-8", undef: :replace, invalid: :replace, replace: "?") if r }
+        converted_row = row.map {|r| r&.encode("UTF-8", undef: :replace, invalid: :replace, replace: "?") }
         had_content = skip_comma_blanks converted_row, row_num, start_row, block
         row_num += 1
         break if had_content && preview
@@ -340,7 +325,7 @@ class FileImportProcessor
       # Skip blanks apparently only skips lines consisting solely of a newline,
       # it doesn't skip lines that solely consist of commas.
       # If find returns any non-blank value then we can process the line.
-      has_values = row.find {|c| !c.blank?}
+      has_values = row.find(&:present?)
       if row_num >= start_row && has_values
         block.call(row)
         true
@@ -353,7 +338,7 @@ class FileImportProcessor
   class SpreadsheetImportProcessor < FileImportProcessor
 
     def row_count
-      s = @data.last_row_number(0) - (@import_file.starting_row - 2) #-2 instead of -1 now since the counting methods index at 0 and 1
+      @data.last_row_number(0) - (@import_file.starting_row - 2) #-2 instead of -1 now since the counting methods index at 0 and 1
     end
 
     def get_rows preview: false
@@ -365,7 +350,7 @@ class FileImportProcessor
       @data.all_row_values(**params) do |row|
         process = false
         row.each do |v|
-          if !v.blank?
+          if v.present?
             process = true
             break
           end
@@ -384,6 +369,7 @@ class FileImportProcessor
     def before_save obj, top_level_object
       # stub
     end
+
     def before_merge obj, database_object, top_level_object
       # stub
     end
@@ -394,8 +380,8 @@ class FileImportProcessor
       if obj.is_a? TariffRecord
         # make sure the tariff is valid
         country_id = obj.classification.country_id
-        [obj.hts_1, obj.hts_2, obj.hts_3].each_with_index do |h, i|
-          unless h.blank?
+        [obj.hts_1, obj.hts_2, obj.hts_3].each_with_index do |h, _i|
+          if h.present?
             ot = OfficialTariff.find_cached_by_hts_code_and_country_id h.strip, country_id
             if ot.nil?
               @countries_without_hts ||= []
@@ -408,7 +394,9 @@ class FileImportProcessor
           end
         end
         # make sure the line number is populated (we don't allow auto-increment line numbers in file uploads)
-        FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty #{ModelField.find_by_uid(:hts_line_number).label}." if obj.line_number.blank?
+        if obj.line_number.blank?
+          FileImportProcessor.raise_validation_exception top_level_object, "Line cannot be processed with empty #{ModelField.by_uid(:hts_line_number).label}."
+        end
       elsif obj.is_a? Classification
         # make sure there is a country
         if obj.country_id.blank? && obj.country.blank?
@@ -417,8 +405,7 @@ class FileImportProcessor
       end
     end
 
-    def before_merge(shell, database_object, top_level_object)
-    end
+    def before_merge(shell, database_object, top_level_object); end
   end
 
   class OrderRulesProcessor < RulesProcessor
@@ -432,7 +419,7 @@ class FileImportProcessor
 
   class SaleRulesProcessor < CSVImportProcessor
     def before_merge(shell, database_object, top_level_object)
-      if shell.class == SalesOrder && !shell.customer_id.nil? && shell.customer_id!=database_object.customer_id
+      if shell.class == SalesOrder && !shell.customer_id.nil? && shell.customer_id != database_object.customer_id
         FileImportProcessor.raise_validation_exception top_level_object, "A sale's customer cannot be changed via a file upload."
       end
     end
@@ -440,7 +427,7 @@ class FileImportProcessor
 
   class PreviewListener
     attr_accessor :messages
-    def process_row row_number, object, messages, failed: false, saved: true
+    def process_row _row_number, _object, messages, failed: false, saved: true # rubocop:disable Lint/UnusedMethodArgument
       self.messages = messages.reject { |m| m.respond_to?(:unique_identifier?) && m.unique_identifier? }
     end
 
@@ -460,7 +447,6 @@ class FileImportProcessor
 
   # find or build a new object based on the unique identfying column optionally scoped by the parent object
   def find_or_build_by_unique_field data_map, object_map, my_core_module
-
     search_scope = my_core_module.klass.all # search the whole table unless parent is found below
 
     # get the next core module up the chain
@@ -476,14 +462,14 @@ class FileImportProcessor
       # Tell the users what actual field they're missing data for.
       uids = my_core_module.key_model_field_uids
       if uids.length == 1
-        e = "Cannot load #{my_core_module.label} data without a value in the '#{ModelField.find_by_uid(uids[0]).label(false)}' field."
+        e = "Cannot load #{my_core_module.label} data without a value in the '#{ModelField.by_uid(uids[0]).label(false)}' field."
       else
-        e = "Cannot load #{my_core_module.label} data without a value in one of the #{uids.map {|v| "'#{ModelField.find_by_uid(v).label(false)}'"}.join(" or ")} fields."
+        e = "Cannot load #{my_core_module.label} data without a value in one of the #{uids.map {|v| "'#{ModelField.by_uid(v).label(false)}'"}.join(" or ")} fields."
       end
 
       raise MissingCoreModuleFieldError, e
     end
-    obj = search_scope.where("#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value).first
+    obj = search_scope.where("#{ModelField.by_uid(key_model_field).qualified_field_name} = ?", key_model_field_value).first # rubocop:disable Rails/FindBy
     obj = search_scope.build if obj.nil?
     obj
   end
@@ -493,7 +479,7 @@ class FileImportProcessor
     key_model_field_value = nil
     core_module.key_model_field_uids.each do |mfuid|
       key_model_field_value = data_map[core_module][mfuid.to_sym]
-      key_model_field = mfuid.to_sym unless key_model_field_value.blank?
+      key_model_field = mfuid.to_sym if key_model_field_value.present?
       break if key_model_field
     end
     [key_model_field, key_model_field_value]
@@ -505,12 +491,12 @@ class FileImportProcessor
     @module_chain.to_a.each do |mod|
       data_map[mod] = {}
     end
-    get_columns.each do |col|
+    columns.each do |col|
       mf = col.model_field
       r = row[col.rank + base_column]
       r = r.value if r.respond_to? :value # get real value for Excel formulas
       r = r.strip_all_whitespace if r.is_a? String
-      data_map[mf.core_module][mf.uid] = sanitize_file_data(r, mf) unless mf.blank?
+      data_map[mf.core_module][mf.uid] = sanitize_file_data(r, mf) if mf.present?
     end
     data_map
   end
@@ -527,7 +513,7 @@ class FileImportProcessor
       if model_field_character_type?(mf) && value.is_a?(Numeric)
         # BigDecimal to_s uses engineering notation (stupidly) by default
         value = value.is_a?(BigDecimal) ? value.to_s("F") : value.to_s
-        trailing_zeros = value.index /\.0+$/
+        trailing_zeros = value.index(/\.0+$/)
         if trailing_zeros
           value = value[0, trailing_zeros]
         end
@@ -550,7 +536,7 @@ class FileImportProcessor
   end
 
   def fire_start
-    fire_event :process_start, Time.now
+    fire_event :process_start, Time.zone.now
   end
 
   def fire_row_count count
@@ -562,7 +548,7 @@ class FileImportProcessor
   end
 
   def fire_end
-    fire_event :process_end, Time.now
+    fire_event :process_end, Time.zone.now
   end
 
   def fire_event method, data
