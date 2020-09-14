@@ -8,11 +8,11 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
   let! (:ua) { Factory(:importer, system_code: "UNDAR")}
   let! (:ua_parts) { Factory(:importer, system_code: "UAPARTS")}
 
-  let! (:ms) {
+  let! (:ms) do
     s = stub_master_setup
     allow(s).to receive(:custom_feature?).with("UAPARTS Staging").and_return true
     s
-  }
+  end
 
   let(:log) { InboundFile.new }
 
@@ -31,7 +31,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
       expect(order.customer_order_number).to eq "4200001923"
       expect(order.order_date).to eq Date.new(2016, 12, 18)
       expect(order.terms_of_sale).to eq "FOB"
-      expect(order.custom_value(cdefs[:ord_revision])).to eq 208236
+      expect(order.custom_value(cdefs[:ord_revision])).to eq 208_236
       expect(order.custom_value(cdefs[:ord_revision_date])).to eq now.in_time_zone("America/New_York").to_date
       expect(order.last_file_bucket).to eq "bucket"
       expect(order.last_file_path).to eq "file.xml"
@@ -124,9 +124,9 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
       expect(l.product.unique_identifier).to eq "UAPARTS-9000004"
     end
 
-    it "handles updating orders (deleting all lines)" do
+    it "handles updating orders" do
       order = Factory(:order, importer: ua, order_number: "UNDAR-4200001923")
-      line = Factory(:order_line, order: order)
+      line = Factory(:order_line, order: order, line_number: 10, sku: nil)
 
       subject.process_order xml, user, "bucket", "file.xml", log
 
@@ -135,10 +135,30 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
       expect(order.order_date).to eq Date.new(2016, 12, 18)
       expect(order.order_lines.length).to eq 2
 
-      # Make sure the existing line was deleted
-      expect { line.reload }.to raise_error ActiveRecord::RecordNotFound
+      # Make sure the existing line wasn't deleted
+      expect { line.reload }.not_to raise_error
+      expect(line.sku).to eq "1242757-001-XS"
 
       expect(order.entity_snapshots.length).to eq 1
+    end
+
+    context "with line missing from XML" do
+      let!(:order) { Factory(:order, importer: ua, order_number: "UNDAR-4200001923") }
+      let!(:line) { Factory(:order_line, order: order, line_number: 30) }
+
+      it "deletes order line if unshipped" do
+        subject.process_order xml, user, "bucket", "file.xml", log
+        expect(order.order_lines.length).to eq 2
+        expect { line.reload }.to raise_error ActiveRecord::RecordNotFound
+      end
+
+      it "ignores order line if shipped" do
+        prod = Factory(:product)
+        line.update! product: prod
+        PieceSet.create quantity: 1, order_line: line, shipment_line: Factory(:shipment_line, product: prod)
+        subject.process_order xml, user, "bucket", "file.xml", log
+        expect(order.order_lines.length).to eq 3
+      end
     end
 
     it "raises an error if UA importer doesn't exist" do
@@ -157,7 +177,7 @@ describe OpenChain::CustomHandler::UnderArmour::UnderArmourPoXmlParser do
 
     it "doesn't update order if file's revision is older than the current one" do
       order = Factory(:order, importer: ua, order_number: "UNDAR-4200001923")
-      order.update_custom_value! cdefs[:ord_revision], 208237
+      order.update_custom_value! cdefs[:ord_revision], 208_237
 
       subject.process_order xml, user, "bucket", "file.xml", log
 

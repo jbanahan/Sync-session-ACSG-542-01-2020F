@@ -34,10 +34,13 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
 
     product_cache = create_product_cache(order_xml, user, file, log)
     find_or_create_order(order_number, revision, bucket, file) do |order|
-      log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, order_number, module_type:Order.to_s, module_id:order.id
+      log.add_identifier InboundFileIdentifier::TYPE_PO_NUMBER, order_number, module_type: Order.to_s, module_id: order.id
 
-      # Destroy all existing lines
-      order.order_lines.destroy_all
+      # Destroy unshipped lines missing from XML
+      line_numbers = xml_line_numbers(order_xml)
+      order.order_lines.reject do |ol|
+        line_numbers.include?(ol.line_number) || ol.shipment_lines.present?
+      end.each(&:destroy)
 
       process_order_header(order_xml, order)
 
@@ -68,8 +71,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
     prepack_component = xml.text("ReferenceLine").present?
     return if prepack_component
 
-    line = order.order_lines.build
-    line.line_number = xml.text("LineNum").to_i
+    # For some reason, changes made to records returned by find_or_initialize_by don't get persisted.
+    line = order.order_lines.find { |ol| ol.line_number == xml.text("LineNum").to_i }
+    line ||= order.order_lines.build line_number: xml.text("LineNum").to_i
+
     line.quantity = BigDecimal(xml.text("Qty/Quantity").to_s)
     uom = REXML::XPath.first(xml, "Qty/Quantity/@UOM")
     line.unit_of_measure = uom.nil? ? nil : uom.to_s
@@ -180,7 +185,7 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
       skus.each do |sku|
         variant = product.variants.find {|v| v.variant_identifier == sku }
         if variant.nil?
-          variant = product.variants.build variant_identifier: sku
+          product.variants.build variant_identifier: sku
           new_variant = true
         end
       end
@@ -196,6 +201,10 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
 
   def process_file? order, file_revision
     file_revision >= order.custom_value(cdefs[:ord_revision]).to_i
+  end
+
+  def xml_line_numbers order_xml
+    REXML::XPath.match(order_xml, "OrderDetails/LineNum").map { |tag| tag.text.to_i }
   end
 
   def importer
@@ -214,11 +223,11 @@ module OpenChain; module CustomHandler; module UnderArmour; class UnderArmourPoX
   def parse_date parent_element, qualifier
     date_string = parent_element.text("DateTime/Date[@DateQualifier = '#{qualifier}']")
 
-    Date.strptime(date_string, "%Y%m%d") rescue nil
+    Date.strptime(date_string, "%Y%m%d") rescue nil # rubocop:disable Style/RescueModifier
   end
 
   def cdefs
-    @cd ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_line_ex_factory_date, :ord_line_division, :prod_part_number, :prod_prepack])
+    @cdefs ||= self.class.prep_custom_definitions([:ord_revision, :ord_revision_date, :ord_line_ex_factory_date, :ord_line_division, :prod_part_number, :prod_prepack])
   end
 
 end; end; end; end
