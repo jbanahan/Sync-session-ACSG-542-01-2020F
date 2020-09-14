@@ -486,7 +486,19 @@
       "line": 17,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"Click Here\", OfficialTariff.find(params[:id]).binding_ruling_url, :target => \"rulings\")",
-      "render_path": [{"type":"controller","class":"OfficialTariffsController","method":"show","line":34,"file":"app/controllers/official_tariffs_controller.rb","rendered":{"name":"official_tariffs/show","file":"/home/jay/Repos/OpenChain/app/views/official_tariffs/show.html.erb"}}],
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "OfficialTariffsController",
+          "method": "show",
+          "line": 34,
+          "file": "app/controllers/official_tariffs_controller.rb",
+          "rendered": {
+            "name": "official_tariffs/show",
+            "file": "app/views/official_tariffs/show.html.erb"
+          }
+        }
+      ],
       "location": {
         "type": "template",
         "template": "official_tariffs/show"
@@ -3843,7 +3855,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "lib/open_chain/activity_summary.rb",
-      "line": 441,
+      "line": 483,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "Entry.select(\"customer_number, customer_name, Sum(entries.total_duty) AS total_duty, Sum(entries.total_fees) AS total_fees, Sum(entries.total_duty + entries.total_fees) AS total_duty_and_fees\").where(\"entries.importer_id = ?\", importer.id).where(\"#{release_date_mf.field_name} IS NOT NULL\")",
       "render_path": null,
@@ -6381,7 +6393,19 @@
       "line": 36,
       "link": "https://brakemanscanner.org/docs/warning_types/cross_site_scripting",
       "code": "RedCloth.new((Unresolved Model).new.body).to_html",
-      "render_path": [{"type":"controller","class":"SupportTicketsController","method":"edit","line":34,"file":"app/controllers/support_tickets_controller.rb","rendered":{"name":"support_tickets/edit","file":"/home/jay/Repos/OpenChain/app/views/support_tickets/edit.html.erb"}}],
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "SupportTicketsController",
+          "method": "edit",
+          "line": 34,
+          "file": "app/controllers/support_tickets_controller.rb",
+          "rendered": {
+            "name": "support_tickets/edit",
+            "file": "app/views/support_tickets/edit.html.erb"
+          }
+        }
+      ],
       "location": {
         "type": "template",
         "template": "support_tickets/edit"
@@ -7037,6 +7061,22 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
+    },
+    {
+      "warning_type": "Cross-Site Request Forgery",
+      "warning_code": 116,
+      "fingerprint": "c8697fda60549ca065789e2ea74c94effecef88b2b5483bae17ddd62ece47194",
+      "check_name": "CSRFTokenForgeryCVE",
+      "message": "Rails 4.2.11.3 has a vulnerability that may allow CSRF token forgery. Upgrade to Rails 5.2.4.3 or patch",
+      "file": "Gemfile.lock",
+      "line": 315,
+      "link": "https://groups.google.com/g/rubyonrails-security/c/NOjKiGeXUgw",
+      "code": null,
+      "render_path": null,
+      "location": null,
+      "user_input": null,
+      "confidence": "Medium",
+      "note": "Issue has been monkey patched (upgrade to Rails 5.2 is not feasible at this time)."
     },
     {
       "warning_type": "Mass Assignment",
@@ -8215,7 +8255,19 @@
       "line": 20,
       "link": "https://brakemanscanner.org/docs/warning_types/link_to_href",
       "code": "link_to(\"Click Here\", OfficialTariff.find(params[:id]).taric_url, :target => \"_blank\")",
-      "render_path": [{"type":"controller","class":"OfficialTariffsController","method":"show","line":34,"file":"app/controllers/official_tariffs_controller.rb","rendered":{"name":"official_tariffs/show","file":"/home/jay/Repos/OpenChain/app/views/official_tariffs/show.html.erb"}}],
+      "render_path": [
+        {
+          "type": "controller",
+          "class": "OfficialTariffsController",
+          "method": "show",
+          "line": 34,
+          "file": "app/controllers/official_tariffs_controller.rb",
+          "rendered": {
+            "name": "official_tariffs/show",
+            "file": "app/views/official_tariffs/show.html.erb"
+          }
+        }
+      ],
       "location": {
         "type": "template",
         "template": "official_tariffs/show"
@@ -8704,6 +8756,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2020-09-01 17:44:45 -0400",
-  "brakeman_version": "4.5.0"
+  "updated": "2020-08-06 10:29:44 -0500",
+  "brakeman_version": "4.9.0"
 }

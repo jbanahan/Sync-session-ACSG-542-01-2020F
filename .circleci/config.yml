@@ -40,12 +40,8 @@ jobs:
     # Restore the dependency cache
     - restore_cache:
         keys:
-        # This branch if available
-        - v1-dep-{{ .Branch }}-
-        # Default branch if not
-        - v1-dep-master-
-        # Any branch if there are none on the default branch - this should be unnecessary if you have your default branch configured correctly
-        - v1-dep-
+        # We can share gems between branches if the Gemfile.lock has the same checksum (.ie nothing's new in it)
+        - gem-cache-{{ arch }}-{{ checksum "Gemfile.lock" }}
 
     - run: mkdir -p ./tmp
     - run: mkdir -p ./spec/support/tmp
@@ -55,7 +51,7 @@ jobs:
 
     # Save dependency cache
     - save_cache:
-        key: v1-dep-{{ .Branch }}-{{ epoch }}
+        key: gem-cache-{{ arch }}-{{ checksum "Gemfile.lock" }}
         paths:
         - vendor/bundle
         - ~/.bundle
