@@ -319,6 +319,11 @@ module UpdateModelFieldsSupport
         model_field_params[:virtual_identifier] = params[:virtual_identifier]
       end
 
+      # We do a check here because there are occasions where a hash is returned.
+      if params.respond_to?(:permit)
+        params.permit(:virtual_identifier)
+      end
+
       params
     end
 

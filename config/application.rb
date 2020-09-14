@@ -47,7 +47,7 @@ module OpenChain
     # The following config pretty much completely disables strong_parameters.  When we start to use them and eliminate
     # the protected_attributes, this can be removed.  We can do a hybrid of the two by removing the following config
     # and adding `before_action { params.permit! }` for any controllers we know are still protected by attr_accessible.
-    config.action_controller.permit_all_parameters = true
+    config.action_controller.permit_all_parameters = false
     config.active_record.schema_format = :sql
     config.active_job.queue_adapter = :delayed_job
     config.action_mailer.delivery_method = :postmark

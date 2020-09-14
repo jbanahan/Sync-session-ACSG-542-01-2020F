@@ -609,7 +609,9 @@ class CoreModule
     # to CoreModule inside the core module classes (.ie Product, Entry, etc)
     self.all.each {|cm| cm.klass.class_eval {
         attr_accessor :virtual_identifier unless self.respond_to?(:virtual_identifier=)
-        attr_accessible :virtual_identifier
+        if self._uses_mass_assignment_security
+          attr_accessible :virtual_identifier
+        end
       }
     }
   end
