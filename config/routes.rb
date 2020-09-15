@@ -315,6 +315,9 @@ OpenChain::Application.routes.draw do
       get 'download'
       post 'reprocess'
     end
+    collection do
+      post :send_to_test
+    end
   end
 
   get '/entries/activity_summary/us', to: 'entries#us_activity_summary'

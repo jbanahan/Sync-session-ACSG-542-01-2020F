@@ -60,50 +60,27 @@ describe IntegrationParserSupport do
   describe "send_integration_file_to_test" do
     let (:subject) { Class.new { include IntegrationParserSupport }.new }
 
-    describe "success" do
-      let(:tempfile) do
-        t = Tempfile.new ['file', '.txt']
-        t << "File Contents"
-        t.flush
-        t
-      end
-
-      before do
-        ms = stub_master_setup
-        allow(ms).to receive(:send_test_files_to_instance).and_return "test_server"
-      end
-
-      after do
-        tempfile.close! unless tempfile.closed?
-      end
-
-      it "sends file to test" do
-        expect(OpenChain::S3).to receive(:download_to_tempfile).with("this_bucket", "2018-05/04/www.vfitrack.net/_kewill_entry/long_file_name.json").and_yield tempfile
-        expect_any_instance_of(subject.class).to receive(:ftp_file)
-          .with(tempfile, {server: 'connect.vfitrack.net', username: 'ecs', password: 'wzuomlo',
-                           folder: "test_server/_kewill_entry", protocol: 'sftp', port: 2222, remote_file_name: "long_file_name.json"})
-        subject.class.send_integration_file_to_test "this_bucket", "2018-05/04/www.vfitrack.net/_kewill_entry/long_file_name.json"
-      end
+    it "sends when integration file is present" do
+      subject.class.send_integration_file_to_test "bucket", "path"
+      dj = Delayed::Job.first
+      expect(dj.handler).to include "!ruby/module 'OpenChain::SendFileToTest'"
+      expect(dj.handler).to include "method_name: :execute"
+      expect(dj.handler).to include "bucket"
+      expect(dj.handler).to include "path"
     end
 
-    # Segregated so we don't waste effort building a Tempfile for these.
-    describe "failure" do
-      it "sends nothing when bucket is missing" do
-        expect(OpenChain::S3).not_to receive(:download_to_tempfile)
-        expect_any_instance_of(subject.class).not_to receive(:ftp_file)
-        subject.class.send_integration_file_to_test nil, "2018-05/04/www.vfitrack.net/_kewill_entry/long_file_name.json"
-      end
+    it "does nothing if bucket is missing" do
+      subject.class.send_integration_file_to_test nil, "path"
+      expect(Delayed::Job.count).to eq 0
+    end
 
-      it "sends nothing when path is missing" do
-        expect(OpenChain::S3).not_to receive(:download_to_tempfile)
-        expect_any_instance_of(subject.class).not_to receive(:ftp_file)
-        subject.class.send_integration_file_to_test "this_bucket", nil
-      end
+    it "does nothing if path is missing" do
+      subject.class.send_integration_file_to_test "bucket", nil
+      expect(Delayed::Job.count).to eq 0
     end
   end
 
   describe "can_view_integration_link?" do
-
     let (:object) { Entry.new last_file_bucket: "bucket", last_file_path: "file.txt" }
 
     it "allows sys admins to view" do

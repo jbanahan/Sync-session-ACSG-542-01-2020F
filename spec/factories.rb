@@ -639,3 +639,6 @@ end
 
 Factory.define :runtime_log do |l|
 end
+
+Factory.define :inbound_file do |file|
+end

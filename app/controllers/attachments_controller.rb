@@ -1,18 +1,20 @@
 require 'open_chain/email_validation_support'
+require 'open_chain/send_files_to_test_support'
 
 class AttachmentsController < ApplicationController
   include DownloadS3ObjectSupport
   include PolymorphicFinders
   include OpenChain::EmailValidationSupport
+  include OpenChain::SendFilesToTestSupport
 
-  skip_before_filter :portal_redirect, only: [:download]
+  skip_before_action :portal_redirect, only: [:download]
 
   def create
     if params[:attachment][:attached].nil?
       add_flash :errors, "Please choose a file before uploading."
       respond_to do |format|
-        format.html {redirect_to request.referrer}
-        format.json {render json: {errors:flash[:errors]}, status: 400}
+        format.html {redirect_to request.referer}
+        format.json {render json: {errors: flash[:errors]}, status: 400}
       end
     else
       att = Attachment.new(params[:attachment])
@@ -42,7 +44,7 @@ class AttachmentsController < ApplicationController
       else
         respond_to do |format|
           format.html {redirect_to redirect_location(attachable)}
-          format.json {render json: {errors:flash[:errors]}, status: 400}
+          format.json {render json: {errors: flash[:errors]}, status: 400}
         end
       end
     end
@@ -108,7 +110,7 @@ class AttachmentsController < ApplicationController
             downloaded = true
           end
         end
-      rescue
+      rescue StandardError
         # don't care...user will redirect to error below if this happens
       end
     end
@@ -127,10 +129,10 @@ class AttachmentsController < ApplicationController
       begin
         attachable = get_attachable params[:attachable_type], params[:attachable_id]
         redirect_to redirect_location attachable
-      rescue
+      rescue StandardError
         redirect_back_or_default :root
       end
-      return
+      nil
     end
   end
 
@@ -144,40 +146,23 @@ class AttachmentsController < ApplicationController
       render_json_error "Please ensure all email addresses are valid."
     else
       total_size = Attachment.where("id IN (?)", params[:ids_to_include]).sum(:attached_file_size)
-      if total_size > 10485760
+      if total_size > 10_485_760
         render_json_error "Attachments cannot be over 10 MB."
       else
-        Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body], ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
+        Attachment.delay.email_attachments({to_address: params[:to_address], email_subject: params[:email_subject], email_body: params[:email_body],
+                                            ids_to_include: params[:ids_to_include], full_name: current_user.full_name, email: current_user.email})
         render json: {ok: 'OK'}
       end
     end
   end
 
   def send_last_integration_file_to_test
-    if current_user.sys_admin? && params[:attachable_type].presence && params[:attachable_id].presence
-      obj = get_attachable params[:attachable_type], params[:attachable_id]
-      if obj && obj.can_view?(current_user)
-        if obj.class.respond_to?(:send_integration_file_to_test)
-          if obj.has_last_file?
-            # Verify the last_file_bucket / last_file_path still exists in S3.  Files are expunged from S3 after 2 years, so
-            # old files may not exist any longer.  If this happens report an error to the user.
-            if OpenChain::S3.exists? obj.last_file_bucket, obj.last_file_path
-              obj.class.delay.send_integration_file_to_test obj.last_file_bucket, obj.last_file_path
-              add_flash :notices, "Integration file has been queued to be sent to test."
-              redirect_back_or_default :back
-            else
-              error_redirect "Integration file cannot be sent to test: the file could not be found.  It may have been purged."
-            end
-          else
-            # No need to error.  Really, we shouldn't hit this since this method is accessible only if the object has
-            # S3 bucket and path set.
-            redirect_back_or_default :back
-          end
-        else
-          error_redirect "Integration file cannot be sent to test: invalid object type."
-        end
-      else
-        error_redirect "You do not have permission to send this integration file to test."
+    entity = get_attachable(params[:attachable_type], params[:attachable_id])
+    if entity && current_user.sys_admin?
+      send_to_test_redirect(entity, integration_files: true) do |sendable|
+        sendable.class
+                .delay
+                .send_integration_file_to_test(sendable.last_file_bucket, sendable.last_file_path)
       end
     else
       error_redirect "You do not have permission to send integration files to test."
@@ -185,12 +170,13 @@ class AttachmentsController < ApplicationController
   end
 
   private
-    def redirect_location attachable
-      params[:redirect_to].blank? ? attachable : validate_redirect(params[:redirect_to])
-    end
 
-    def get_attachable type, id
-      attachable = polymorphic_scope(type).where(id: id).first
-    end
+  def redirect_location attachable
+    params[:redirect_to].blank? ? attachable : validate_redirect(params[:redirect_to])
+  end
+
+  def get_attachable type, id
+    polymorphic_scope(type).where(id: id).first
+  end
 
 end

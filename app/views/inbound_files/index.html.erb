@@ -1,3 +1,9 @@
+<% content_for :action_bar do %>
+  <% if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank? && @inbound_files.size.positive? %>
+    <%= link_to raw("<i class='fa fa-share-square'></i>"), send_to_test_inbound_files_path(ids: @inbound_files.map(&:id)), title:"Send this page's results to Test", class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+  <% end %>
+<% end %>
+
 <%= render :partial => 'shared/search_box' %>
 <table class="detail_table">
   <thead>

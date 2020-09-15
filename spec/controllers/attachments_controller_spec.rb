@@ -57,7 +57,7 @@ describe AttachmentsController do
 
       it "errors if no file is given" do
         post :create, attachment: {attachable_id: prod.id, attachable_type: "Product"}
-        expect(response).to redirect_to request.referrer
+        expect(response).to redirect_to request.referer
         expect(flash[:errors]).to include "Please choose a file before uploading."
         expect(prod.attachments.length).to eq 0
       end
@@ -85,7 +85,7 @@ describe AttachmentsController do
     context "with JSON request" do
       it "creates an attachment" do
         expect(Lock).to receive(:db_lock).with(instance_of(Product)).and_yield
-        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format => :json
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, format: :json
         prod.reload
         expect(prod.attachments.length).to eq 1
         att = prod.attachments.first
@@ -98,14 +98,14 @@ describe AttachmentsController do
       end
 
       it "errors if no file is given" do
-        post :create, attachment: {attachable_id: prod.id, attachable_type: "Product"}, :format=>:json
+        post :create, attachment: {attachable_id: prod.id, attachable_type: "Product"}, format: :json
         expect(JSON.parse(response.body)).to eq ({"errors" => ["Please choose a file before uploading."]})
         expect(prod.attachments.length).to eq 0
       end
 
       it "errors if user cannot attach" do
         allow_any_instance_of(Product).to receive(:can_attach?).and_return false
-        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format=>:json
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, format: :json
         expect(JSON.parse(response.body)).to eq ({"errors" => ["You do not have permission to attach items to this object."]})
         expect(prod.attachments.length).to eq 0
       end
@@ -115,7 +115,7 @@ describe AttachmentsController do
           att.errors[:base] << "SOMETHING WRONG"
           false
         end
-        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, :format=>:json
+        post :create, attachment: {attached: file, attachable_id: prod.id, attachable_type: "Product"}, format: :json
         expect(JSON.parse(response.body)).to eq ({"errors" => ["SOMETHING WRONG"]})
         expect(prod.attachments.length).to eq 0
       end
@@ -125,16 +125,15 @@ describe AttachmentsController do
 
   describe "send_email_attachable" do
 
-    before :each do
-      @u = Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz")
-      @e = Factory(:entry)
-      sign_in_as @u
-    end
+    let(:user) { Factory(:user, first_name: "Nigel", last_name: "Tufnel", email: "nigel@stonehenge.biz")  }
+    let(:entry) { Factory(:entry) }
+
+    before { sign_in_as user }
 
     it "checks that there is at least one email" do
       expect(Attachment).not_to receive(:delay)
-      post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "", email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
+      post :send_email_attachable, attachable_type: entry.class.to_s, attachable_id: entry.id, to_address: "", email_subject: "test message",
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: user.full_name, email: user.email
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)['error']).to eq "Please enter an email address."
     end
@@ -144,38 +143,38 @@ describe AttachmentsController do
       11.times { |n| too_many_emails << "address#{n}@abc.com" }
 
       expect(Attachment).not_to receive(:delay)
-      post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: too_many_emails.join(','), email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
+      post :send_email_attachable, attachable_type: entry.class.to_s, attachable_id: entry.id, to_address: too_many_emails.join(','), email_subject: "test message",
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: user.full_name, email: user.email
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)['error']).to eq "Cannot accept more than 10 email addresses."
     end
 
     it "validates email addresses before sending" do
       expect(Attachment).not_to receive(:delay)
-      post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "john@abc.com, sue@abccom", email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
+      post :send_email_attachable, attachable_type: entry.class.to_s, attachable_id: entry.id, to_address: "john@abc.com, sue@abccom", email_subject: "test message",
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: user.full_name, email: user.email
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)['error']).to eq "Please ensure all email addresses are valid."
     end
 
     it "checks that attachments are under 10MB" do
-      att_1 = Factory(:attachment, attached_file_size: 5000000)
-      att_2 = Factory(:attachment, attached_file_size: 7000000)
+      att_1 = Factory(:attachment, attached_file_size: 5_000_000)
+      att_2 = Factory(:attachment, attached_file_size: 7_000_000)
       expect(Attachment).not_to receive(:delay)
-      post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "john@abc.com, sue@abc.com", email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: [att_1.id.to_s, att_2.id.to_s], full_name: @u.full_name, email: @u.email
+      post :send_email_attachable, attachable_type: entry.class.to_s, attachable_id: entry.id, to_address: "john@abc.com, sue@abc.com", email_subject: "test message",
+                                   email_body: "This is a test.", ids_to_include: [att_1.id.to_s, att_2.id.to_s], full_name: user.full_name, email: user.email
       expect(response.status).to eq 500
       expect(JSON.parse(response.body)['error']).to eq "Attachments cannot be over 10 MB."
     end
 
     it "sends email" do
-      d = double("delay")
-      expect(Attachment).to receive(:delay).and_return d
-      expect(d).to receive(:email_attachments).with(to_address: "john@abc.com, sue@abc.com", email_subject: "test message", email_body: "This is a test.",
-                                                ids_to_include: ['1', '2', '3'], full_name: "Nigel Tufnel", email: "nigel@stonehenge.biz")
+      delay = double("delay") # rubocop:disable RSpec/VerifiedDoubles
+      expect(Attachment).to receive(:delay).and_return delay
+      expect(delay).to receive(:email_attachments).with(to_address: "john@abc.com, sue@abc.com", email_subject: "test message", email_body: "This is a test.",
+                                                        ids_to_include: ['1', '2', '3'], full_name: "Nigel Tufnel", email: "nigel@stonehenge.biz")
 
-      post :send_email_attachable, attachable_type: @e.class.to_s, attachable_id: @e.id, to_address: "john@abc.com, sue@abc.com", email_subject: "test message",
-                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: @u.full_name, email: @u.email
+      post :send_email_attachable, attachable_type: entry.class.to_s, attachable_id: entry.id, to_address: "john@abc.com, sue@abc.com", email_subject: "test message",
+                                   email_body: "This is a test.", ids_to_include: ['1', '2', '3'], full_name: user.full_name, email: user.email
       expect(response.status).to eq 200
       expect(response.body).to eq({ok: "OK"}.to_json)
     end
@@ -185,7 +184,7 @@ describe AttachmentsController do
     let (:user) { Factory(:admin_user) }
     let (:entry) { Factory(:entry, last_file_path: "path/to/file.json", last_file_bucket: "test") }
 
-    before :each do
+    before do
       sign_in_as user
     end
 
@@ -213,7 +212,7 @@ describe AttachmentsController do
     end
 
     it "handles objects that don't have integration files" do
-      entry.update_attributes! last_file_path: nil
+      entry.update! last_file_path: nil
 
       allow_any_instance_of(Entry).to receive(:can_view?).with(user).and_return true
       get :download_last_integration_file, {attachable_type: "entry", attachable_id: entry.id}
@@ -243,7 +242,7 @@ describe AttachmentsController do
 
   describe "download" do
     let (:secure_url) { "http://my.secure.url"}
-    let (:attachment) { double(:attachment, secure_url: secure_url, attached_file_name: "file.txt") }
+    let (:attachment) { instance_double(Attachment, secure_url: secure_url, attached_file_name: "file.txt") }
     let! (:user) { u = Factory(:user); sign_in_as(u); u }
 
     it "downloads an attachment via s3 redirect" do
@@ -255,15 +254,14 @@ describe AttachmentsController do
     end
 
     it "directly downloads an attachment when master setup is proxying downloads" do
-      ms = double("MasterSetup")
+      ms = stub_master_setup
       allow(ms).to receive(:custom_feature?).with("Attachment Mask").and_return true
-      allow(MasterSetup).to receive(:get).and_return ms
       expect(Attachment).to receive(:find).with("1").and_return attachment
       expect(attachment).to receive(:can_view?).with(user).and_return true
       allow(attachment).to receive(:attached_file_name).and_return "file.txt"
       allow(attachment).to receive(:attached_content_type).and_return "text/plain"
 
-      tf = double("Tempfile")
+      tf = instance_double(Tempfile)
       expect(tf).to receive(:read).and_return "data"
       expect(attachment).to receive(:download_to_tempfile).and_yield tf
 
@@ -315,17 +313,15 @@ describe AttachmentsController do
   end
 
   describe "send_last_integration_file_to_test" do
-    let!(:prod) { Factory(:product, last_file_bucket:'the_bucket', last_file_path:'the_path') }
+    let!(:prod) { Factory(:product, last_file_bucket: 'the_bucket', last_file_path: 'the_path') }
     let!(:user) { Factory(:sys_admin_user) }
 
-    before do
-      sign_in_as user
-    end
+    before { sign_in_as user }
 
     it "sends file to test" do
       allow_any_instance_of(Product).to receive(:can_view?).and_return true
       post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
-      expect(response).to redirect_to request.referrer
+      expect(response).to redirect_to request.referer
       expect(flash[:notices]).to include "Integration file has been queued to be sent to test."
       expect(flash[:errors]).to be_nil
       dj = Delayed::Job.first
@@ -337,45 +333,14 @@ describe AttachmentsController do
       expect(dj.handler).not_to include "id: #{prod.id}"
     end
 
-    it "does nothing if object doesn't have integration file path set" do
-      prod.update_attributes! last_file_path:nil
+    it "errors if not sys admin" do
+      user_not_sys_admin = Factory(:user)
+      sign_in_as user_not_sys_admin
 
-      allow_any_instance_of(Product).to receive(:can_view?).and_return true
       post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
-      expect(response).to redirect_to request.referrer
+      expect(response).to redirect_to request.referer
       expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to be_nil
-      expect(Delayed::Job.count).to eq 0
-    end
-
-    it "errors if file can't be found" do
-      prod.update_attributes! last_file_path:'bad_file'
-
-      allow_any_instance_of(Product).to receive(:can_view?).and_return true
-      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
-      expect(response).to redirect_to request.referrer
-      expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to include "Integration file cannot be sent to test: the file could not be found.  It may have been purged."
-      expect(Delayed::Job.count).to eq 0
-    end
-
-    it "errors if object doesn't support this behavior" do
-      company = Factory(:company)
-
-      allow_any_instance_of(Company).to receive(:can_view?).and_return true
-      post :send_last_integration_file_to_test, attachable_id: company.id, attachable_type: "Company"
-      expect(response).to redirect_to request.referrer
-      expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to include "Integration file cannot be sent to test: invalid object type."
-      expect(Delayed::Job.count).to eq 0
-    end
-
-    it "errors if user doesn't have permission to view product" do
-      allow_any_instance_of(Product).to receive(:can_view?).and_return false
-      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
-      expect(response).to redirect_to request.referrer
-      expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to include "You do not have permission to send this integration file to test."
+      expect(flash[:errors]).to include "You do not have permission to send integration files to test."
       expect(Delayed::Job.count).to eq 0
     end
 
@@ -383,36 +348,9 @@ describe AttachmentsController do
     it "errors if object isn't found" do
       allow_any_instance_of(Product).to receive(:can_view?).and_return true
       post :send_last_integration_file_to_test, attachable_id: -555, attachable_type: "Product"
-      expect(response).to redirect_to request.referrer
+      expect(response).to redirect_to request.referer
       expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to include "You do not have permission to send this integration file to test."
-      expect(Delayed::Job.count).to eq 0
-    end
-
-    it "errors if missing attachable type" do
-      post :send_last_integration_file_to_test, attachable_id: prod.id
-      expect(response).to redirect_to request.referrer
-      expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to include "You do not have permission to send integration files to test."
-      expect(Delayed::Job.count).to eq 0
-    end
-
-    it "errors if missing attachable id" do
-      post :send_last_integration_file_to_test, attachable_type: "Product"
-      expect(response).to redirect_to request.referrer
-      expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to include "You do not have permission to send integration files to test."
-      expect(Delayed::Job.count).to eq 0
-    end
-
-    it "errors if not sys admin" do
-      user_not_sys_admin = Factory(:user)
-      sign_in_as user_not_sys_admin
-
-      post :send_last_integration_file_to_test, attachable_id: prod.id, attachable_type: "Product"
-      expect(response).to redirect_to request.referrer
-      expect(flash[:notices]).to be_nil
-      expect(flash[:errors]).to include "You do not have permission to send integration files to test."
+      expect(flash[:errors].last).to match "You do not have permission to send integration files to test"
       expect(Delayed::Job.count).to eq 0
     end
   end

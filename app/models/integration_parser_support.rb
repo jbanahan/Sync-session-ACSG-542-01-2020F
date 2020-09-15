@@ -1,26 +1,24 @@
-require 'open_chain/ftp_file_support'
-require 'open_chain/s3'
+require 'open_chain/send_file_to_test'
 
 module IntegrationParserSupport
-  include OpenChain::FtpFileSupport
   extend ActiveSupport::Concern
 
   # get the S3 path for the last file used to update this entry (if one exists)
-  def last_file_secure_url(expires_in=60.seconds)
+  def last_file_secure_url(expires_in = 60.seconds)
     return nil unless has_last_file?
     OpenChain::S3.url_for(self.last_file_bucket, self.last_file_path, expires_in)
   end
 
   # This method is basically only here so that the view helper can determine if there is a last file
   # without having to generate a url (which involves an HTTP request to S3 so we don't do it unless we have to)
-  def has_last_file?
+  def has_last_file? # rubocop:disable Naming/PredicateName
     self.class.has_last_file? self.last_file_bucket, self.last_file_path
   end
 
   def can_view_integration_link? user
     return false unless self.has_last_file?
     return true if user.sys_admin?
-    return user.admin? && MasterSetup.get.custom_feature?('Admins View Integration Files')
+    user.admin? && MasterSetup.get.custom_feature?('Admins View Integration Files')
   end
 
   def self.included(base)
@@ -28,17 +26,13 @@ module IntegrationParserSupport
   end
 
   module ClassMethods
-    def has_last_file? bucket, path
-      !bucket.blank? && !path.blank?
+    def has_last_file? bucket, path # rubocop:disable Naming/PredicateName
+      bucket.present? && path.present?
     end
 
     def send_integration_file_to_test bucket, path
-      if has_last_file? bucket, path
-        OpenChain::S3.download_to_tempfile(bucket, path) do |temp|
-          folder = "#{MasterSetup.get.send_test_files_to_instance}/#{Pathname.new(path).parent.basename.to_s}"
-          support_instance = self.new
-          support_instance.ftp_file temp, support_instance.ecs_connect_vfitrack_net(folder, Pathname.new(path).basename.to_s)
-        end
+      if has_last_file?(bucket, path)
+        OpenChain::SendFileToTest.delay.execute(bucket, path)
       end
     end
   end

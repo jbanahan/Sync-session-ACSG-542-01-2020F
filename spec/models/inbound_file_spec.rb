@@ -439,18 +439,4 @@ describe InboundFile do
     end
   end
 
-  describe "last_file_bucket" do
-    it "returns s3 bucket" do
-      log = described_class.new(s3_bucket: "the_bucket")
-      expect(log.last_file_bucket).to eq "the_bucket"
-    end
-  end
-
-  describe "last_file_path" do
-    it "returns s3 path" do
-      log = described_class.new(s3_path: "the_path")
-      expect(log.last_file_path).to eq "the_path"
-    end
-  end
-
 end

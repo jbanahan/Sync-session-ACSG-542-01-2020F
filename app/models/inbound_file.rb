@@ -24,8 +24,6 @@
 #
 
 class InboundFile < ActiveRecord::Base
-  include IntegrationParserSupport
-
   attr_accessible :company_id, :file_name, :isa_number,
                   :original_process_start_date, :parser_name, :process_end_date,
                   :process_start_date, :process_status, :receipt_location,
@@ -203,16 +201,6 @@ class InboundFile < ActiveRecord::Base
 
   def self.excel_url object_id
     XlsMaker.excel_url "/#{self.table_name}/#{object_id}"
-  end
-
-  # Silly alias for IntegrationParserSupport, which allows for easy sending to test.
-  def last_file_bucket
-    self.s3_bucket
-  end
-
-  # Silly alias for IntegrationParserSupport, which allows for easy sending to test.
-  def last_file_path
-    self.s3_path
   end
 
   private

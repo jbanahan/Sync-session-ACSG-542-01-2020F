@@ -1,7 +1,7 @@
 <% content_for :action_bar do %>
   <% if (@inbound_file.s3_bucket && @inbound_file.s3_path) %>
     <% if current_user.sys_admin? && !MasterSetup.get.send_test_files_to_instance.blank? %>
-      <%= link_to raw("<i class='fa fa-share-square'></i>"), send_last_integration_file_to_test_attachments_path(attachable_id: @inbound_file.id, attachable_type: @inbound_file.class.to_s), title:'Send to Test', class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
+      <%= link_to raw("<i class='fa fa-share-square'></i>"), send_to_test_inbound_files_path(id: @inbound_file.id), title:'Send to Test', class: 'btn navbar-btn btn-secondary', form_class: 'inline-button-to inline-navbar-button', method: 'POST', style:'margin-right: -1px;'%>
     <% end %>
     <button class='btn_link' link_to='<%= download_inbound_file_path(@inbound_file) %>'>Download</button>
     <%=button_to 'Reprocess', reprocess_inbound_file_path(@inbound_file), class: "btn navbar-btn btn-secondary", form_class: 'inline-button-to'%>
