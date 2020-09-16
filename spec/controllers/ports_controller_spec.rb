@@ -1,11 +1,11 @@
 describe PortsController do
-  let! (:user) {
+  let! (:user) do
     u = Factory(:admin_user)
     sign_in_as u
-  }
+  end
 
   describe "index" do
-    it "should only allow admins" do
+    it "only allows admins" do
       user.admin = false
       user.save!
       get :index
@@ -13,24 +13,25 @@ describe PortsController do
       expect(flash[:errors].size).to eq(1)
     end
 
-    it "should show ports" do
-      3.times {|i| Port.create!(:name=>"p#{i}")}
+    it "shows ports" do
+      3.times {|i| Port.create!(name: "p#{i}")}
       get :index
       expect(assigns[:ports].size).to eq(3)
       expect(assigns[:ports].first.name).to eq("p0")
     end
 
   end
+
   describe "create" do
     let (:us) { Factory(:country, iso_code: "US") }
-    let (:port) {
+    let (:port) do
       {
         port: {
           name: "X",
           unlocode: "USLOC"
         }
       }
-    }
+    end
 
     let (:port_with_address) do
       port[:port][:address] = {
@@ -45,16 +46,16 @@ describe PortsController do
       port
     end
 
-    it "should only allow admins" do
+    it "only allows admins" do
       user.admin = false
       user.save!
-      post :create, {'port'=>{'name'=>'x'}}
+      post :create, {'port' => {'name' => 'x'}}
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
       expect(Port.all).to be_empty
     end
 
-    it "should create port" do
+    it "creates port" do
       post :create, port
       expect(response).to be_redirect
       p = Port.first
@@ -65,7 +66,7 @@ describe PortsController do
       expect(flash[:notices]).to include("Port successfully created.")
     end
 
-    it "should create a port with address data" do
+    it "creates a port with address data" do
       post :create, port_with_address
       expect(response).to be_redirect
       expect(flash[:errors]).to be_blank
@@ -84,15 +85,17 @@ describe PortsController do
 
   describe "destroy" do
     let (:port) { Factory(:port) }
-    it "should only allow admins" do
+
+    it "only allows admins" do
       user.admin = false
       user.save!
-      delete :destroy, :id=>port.id
+      delete :destroy, id: port.id
       expect(response).to be_redirect
       expect(flash[:errors].size).to eq(1)
     end
-    it "should destroy port" do
-      delete :destroy, :id=>port.id
+
+    it "destroys port" do
+      delete :destroy, id: port.id
       expect(response).to be_redirect
       expect(flash[:notices].size).to eq(1)
       expect(Port.all).to be_empty
@@ -102,8 +105,11 @@ describe PortsController do
 
   describe "update" do
     let (:us) { Factory(:country, iso_code: "US") }
-    let! (:port) { Factory(:port, name: 'old name', unlocode: "LOCOD", schedule_d_code: "1234", schedule_k_code: "12345", cbsa_port: "9876", iata_code: "ABC", cbsa_sublocation: "1234") }
-    let (:port_param) {
+    let! (:port) do
+      Factory(:port, name: 'old name', unlocode: "LOCOD", schedule_d_code: "1234", schedule_k_code: "12345",
+                     cbsa_port: "9876", iata_code: "ABC", cbsa_sublocation: "1234")
+    end
+    let (:port_param) do
       {
         id: port.id,
         port: {
@@ -111,7 +117,7 @@ describe PortsController do
           unlocode: "LOCOD"
         }
       }
-    }
+    end
 
     let (:port_param_with_address) do
       port_param[:port][:address] = {
@@ -126,8 +132,7 @@ describe PortsController do
       port_param
     end
 
-
-    it "should only allow admins" do
+    it "only allows admins" do
       user.admin = false
       user.save!
       put :update, port_param
@@ -137,7 +142,7 @@ describe PortsController do
       expect(port.name).to eq('old name')
     end
 
-    it "should update port" do
+    it "updates port" do
       put :update, port_param
       expect(response).to be_redirect
       expect(flash[:notices]).to include("Port successfully updated.")
@@ -162,7 +167,7 @@ describe PortsController do
 
     it "deletes address record if update removes address data" do
       address = port.create_address line_1: "Testing"
-      port_param_with_address[:port][:address].each_pair {|k, v| port_param_with_address[:port][:address][k] = " " }
+      port_param_with_address[:port][:address].each_pair {|k, _v| port_param_with_address[:port][:address][k] = " " }
 
       put :update, port_param_with_address
       expect(flash[:notices]).to include("Port successfully updated.")

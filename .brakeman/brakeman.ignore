@@ -1062,6 +1062,25 @@
       "note": ""
     },
     {
+      "warning_type": "Attribute Restriction",
+      "warning_code": 19,
+      "fingerprint": "20b62647928b6c7f081878af34ed1abc3e0cfbda1e099bc0730b6c82a5d30e01",
+      "check_name": "ModelAttributes",
+      "message": "Mass assignment is not restricted using `attr_accessible`",
+      "file": "app/models/port.rb",
+      "line": 29,
+      "link": "https://brakemanscanner.org/docs/warning_types/attribute_restriction/",
+      "code": null,
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "Port"
+      },
+      "user_input": null,
+      "confidence": "High",
+      "note": "All mass assignments are protected by strong parameters."
+    },
+    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "20f86ecffee4223576ebdeebb309cc95b13e4c3a93ab3f56953c399f3dfe2c20",
@@ -8754,6 +8773,26 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "fefa7f6b12cd457d65a28a7b9257ca81c32203d16f95c0af2ea731b2b952beb9",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/file_import_processor.rb",
+      "line": 486,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "(my_core_module.klass.all or @module_chain.parent(my_core_module).child_objects(my_core_module, object_map[@module_chain.parent(my_core_module)])).where(\"#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?\", key_model_field_value)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "FileImportProcessor",
+        "method": "find_or_build_by_unique_field"
+      },
+      "user_input": "ModelField.find_by_uid(key_model_field).qualified_field_name",
+      "confidence": "Medium",
+      "note": "All dynamic SQL inputs are sanitized."
     }
   ],
   "updated": "2020-09-14 13:30:08 -0400",

@@ -442,14 +442,6 @@ class Company < ActiveRecord::Base
     add_variants?
   end
 
-  def view_projects?
-    self.master? && master_setup.project_enabled?
-  end
-
-  def edit_projects?
-    self.master? && master_setup.project_enabled?
-  end
-
   def view_trade_lanes?
     self.master? && master_setup.trade_lane_enabled?
   end

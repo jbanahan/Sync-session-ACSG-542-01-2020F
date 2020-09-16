@@ -377,7 +377,7 @@ class OpenMailer < ActionMailer::Base
     # This is mostly working around an issue in init_base_setup, trying to send an email w/ a MasterSetup that was JUST generated.
     ms = MasterSetup.get
     if ms.request_host.blank?
-      ms = MasterSetup.first # rubocop:disable Lint/UselessAssignment  <-- Not sure what this is for, so leaving it alone
+      ms = MasterSetup.first
     end
 
     @login_url = new_user_session_url(host: MasterSetup.get.request_host)

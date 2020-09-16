@@ -27,23 +27,19 @@
 #
 
 class Port < ActiveRecord::Base
-  attr_accessible :active_destination, :active_origin, :cbsa_port,
-    :cbsa_sublocation, :iata_code, :name, :schedule_d_code, :schedule_k_code,
-    :unlocode, :address
-
-  validates :schedule_k_code, :format => {:with=>/\A[0-9]{5}\z/, :message=>"Schedule K code must be 5 digits.", :if=>:schedule_k_code?}
-  validates :schedule_d_code, :format => {:with=>/\A[0-9]{4}\z/, :message=>"Schedule D code must be 4 digits.", :if=>:schedule_d_code?}
-  validates :cbsa_port, :format => {:with=>/\A[0-9]{4}\z/, :message=>"CBSA Port code must be 4 digits", :if=>:cbsa_port?}
-  validates :cbsa_sublocation, :format => {:with=>/\A[0-9]{4}\z/, :message=>"CBSA Sublocation code must be 4 digits", :if=>:cbsa_sublocation?}
-  validates :unlocode, :format => {:with=>/\A[A-Z0-9]{5}\z/, :message=>"UN/LOCODE must be 5 upper case letters", :if=>:unlocode?}
-  validates :iata_code, :format => {:with=>/\A[A-Z0-9]{3}\z/, :message=>"IATA Code must be 3 upper case letters", :if=>:iata_code?}
+  validates :schedule_k_code, format: {with: /\A[0-9]{5}\z/, message: "Schedule K code must be 5 digits.", if: :schedule_k_code?}
+  validates :schedule_d_code, format: {with: /\A[0-9]{4}\z/, message: "Schedule D code must be 4 digits.", if: :schedule_d_code?}
+  validates :cbsa_port, format: {with: /\A[0-9]{4}\z/, message: "CBSA Port code must be 4 digits", if: :cbsa_port?}
+  validates :cbsa_sublocation, format: {with: /\A[0-9]{4}\z/, message: "CBSA Sublocation code must be 4 digits", if: :cbsa_sublocation?}
+  validates :unlocode, format: {with: /\A[A-Z0-9]{5}\z/, message: "UN/LOCODE must be 5 upper case letters", if: :unlocode?}
+  validates :iata_code, format: {with: /\A[A-Z0-9]{3}\z/, message: "IATA Code must be 3 upper case letters", if: :iata_code?}
 
   has_one :address, dependent: :destroy
 
   # Find the country who's port of entry this represents (or nil)
   def entry_country
-    return 'United States' unless schedule_d_code.blank?
-    return 'Canada' unless cbsa_port.blank?
+    return 'United States' if schedule_d_code.present?
+    return 'Canada' if cbsa_port.present?
     nil
   end
 
@@ -64,10 +60,10 @@ class Port < ActiveRecord::Base
 
   # Get a version of the port code that will match the Entry module (because Fenix truncates leading zeroes from port codes)
   def search_friendly_port_code(trim_cbsa: true)
-    return schedule_d_code unless schedule_d_code.blank?
-    return schedule_k_code unless schedule_k_code.blank?
-    return unlocode unless unlocode.blank?
-    unless cbsa_port.blank?
+    return schedule_d_code if schedule_d_code.present?
+    return schedule_k_code if schedule_k_code.present?
+    return unlocode if unlocode.present?
+    if cbsa_port.present?
       return (trim_cbsa && cbsa_port.match(/^0/)) ? cbsa_port[1, 3] : cbsa_port
     end
     nil
@@ -78,8 +74,8 @@ class Port < ActiveRecord::Base
     Port.transaction do
       Port.where("schedule_d_code is not null").destroy_all
       CSV.parse(data) do |row|
-        next unless row[0].blank? # don't process district code listings
-        Port.create!(:schedule_d_code=>row[1], :name=>row[2])
+        next if row[0].present? # don't process district code listings
+        Port.create!(schedule_d_code: row[1], name: row[2])
       end
     end
   end
@@ -93,9 +89,9 @@ class Port < ActiveRecord::Base
         name = "#{row[7, 50].strip}, #{row[57, 25].strip}"
         p = Port.find_by(schedule_k_code: code)
         if p
-          p.update!(:schedule_k_code=>code, :name=>name)
+          p.update!(schedule_k_code: code, name: name)
         else
-          Port.create!(:schedule_k_code=>code, :name=>name)
+          Port.create!(schedule_k_code: code, name: name)
         end
       end
     end
@@ -110,25 +106,29 @@ class Port < ActiveRecord::Base
         p = Port.find_by(cbsa_port: ary[0])
         # do nothing if port is found
         next if p || ary[0].blank? || ary[1].blank? || ary[2].blank?
-        Port.create!(:name=>ary[2].strip, :cbsa_port=>ary[0].strip, :cbsa_sublocation=>ary[1].strip)
+        Port.create!(name: ary[2].strip, cbsa_port: ary[0].strip, cbsa_sublocation: ary[1].strip)
       end
     end
   end
 
   # load csv UNLOC ports from http://www.unece.org/cefact/codesfortrade/codes_index.html
   # Assumes Windows-1252 encoding
-  def self.load_unlocode data, overwrite=false
+  def self.load_unlocode data, overwrite = false
     Port.transaction do
       CSV.parse(data.force_encoding("Windows-1252"), skip_blanks: true) do |row|
         next unless row[2].present? && (row[6] =~ /(1|4)/ || row[9].present?)
 
         code = row[1] + row[2]
-        name = row[3].encode("UTF-8") rescue row[4].encode("UTF-8")
+        name = begin
+                 row[3].encode("UTF-8")
+               rescue StandardError
+                 row[4].encode("UTF-8")
+               end
         iata_code = row[9].presence || nil
 
-        p = Port.where(unlocode: code).first
+        p = Port.find_by(unlocode: code)
         if p
-          p.update_attributes!(name: name, iata_code: iata_code) if overwrite
+          p.update!(name: name, iata_code: iata_code) if overwrite
         else
           Port.create!(name: name, unlocode: code, iata_code: iata_code)
         end

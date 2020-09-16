@@ -285,26 +285,6 @@ describe Company do
         expect(described_class.new.edit_customer_invoices?).to eq false
       end
     end
-
-    context 'projects' do
-      it 'allows for master company' do
-        allow(master_setup).to receive(:project_enabled?).and_return true
-        expect(described_class.new(master: true)).to be_view_projects
-        expect(described_class.new(master: true)).to be_edit_projects
-      end
-
-      it 'does not allow for non-master Company' do
-        allow(master_setup).to receive(:project_enabled?).and_return true
-        expect(described_class.new(master: false)).not_to be_view_projects
-        expect(described_class.new(master: false)).not_to be_edit_projects
-      end
-
-      it "does not allow if module disabled" do
-        allow(master_setup).to receive(:project_enabled?).and_return false
-        expect(described_class.new(master: true)).not_to be_view_projects
-        expect(described_class.new(master: true)).not_to be_edit_projects
-      end
-    end
   end
 
   describe "attachments.create!" do
