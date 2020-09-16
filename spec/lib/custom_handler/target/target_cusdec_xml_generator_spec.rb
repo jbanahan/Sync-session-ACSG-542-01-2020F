@@ -941,10 +941,14 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
   end
 
   describe "generate_and_send" do
+    let (:packet_generator) { instance_double(OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator) }
+
     it "generates and sends a file" do
       entry = Factory(:entry)
 
       expect(subject).to receive(:generate_xml).with(entry).and_return REXML::Document.new("<FakeXml><child>A</child></FakeXml>")
+      expect(subject).to receive(:packet_generator).and_return packet_generator
+      expect(packet_generator).to receive(:generate_and_send_doc_packs).with(entry)
 
       doc = nil
       expect(subject).to receive(:ftp_sync_file) do |file, sync|
@@ -953,8 +957,6 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
         expect(file.original_filename).to eq "ENTRY_FILE_20200324020508000.xml"
         file.close!
       end
-
-      expect(subject).to receive(:generate_and_send_doc_packs).with(entry)
 
       current = ActiveSupport::TimeZone["America/New_York"].parse("2020-03-24 02:05:08")
       Timecop.freeze(current) do
@@ -971,8 +973,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
     end
   end
 
-  describe "run_schedulable" do
-    subject { described_class }
+  describe "find_generate_and_send_entries" do
 
     it "calls generate and send method for each matching entry" do
       target = with_customs_management_id(Factory(:importer), "TARGEN")
@@ -992,21 +993,34 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       # This should be excluded because it has no accepted date.
       entry_no_summary_accepted_date = Factory(:entry, importer_id: target.id, summary_accepted_date: nil, final_statement_date: nil)
 
-      # This should be excluded because it has a final statement date.
+      # This should not be excluded because it has a final statement date, but has not been sent previously
       entry_finalized = Factory(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: Date.new(2020, 4, 15))
 
-      expect_any_instance_of(subject).to receive(:generate_and_send).with(entry_old_sync)
-      expect_any_instance_of(subject).to receive(:generate_and_send).with(entry_no_sync)
-      expect_any_instance_of(subject).not_to receive(:generate_and_send).with(entry_new_sync)
-      expect_any_instance_of(subject).not_to receive(:generate_and_send).with(entry_not_target)
-      expect_any_instance_of(subject).not_to receive(:generate_and_send).with(entry_no_summary_accepted_date)
-      expect_any_instance_of(subject).not_to receive(:generate_and_send).with(entry_finalized)
+      entry_finalized_sent = Factory(:entry, importer_id: target.id, summary_accepted_date: Date.new(2020, 4, 14), final_statement_date: Date.new(2020, 4, 15))
+      entry_finalized_sent.sync_records.create!(trading_partner: described_class::SYNC_TRADING_PARTNER, sent_at: Date.new(2020, 4, 13))
 
-      subject.run_schedulable
+      expect(subject).to receive(:generate_and_send).with(entry_old_sync)
+      expect(subject).to receive(:generate_and_send).with(entry_no_sync)
+      expect(subject).not_to receive(:generate_and_send).with(entry_new_sync)
+      expect(subject).not_to receive(:generate_and_send).with(entry_not_target)
+      expect(subject).not_to receive(:generate_and_send).with(entry_no_summary_accepted_date)
+      expect(subject).to receive(:generate_and_send).with(entry_finalized)
+      expect(subject).not_to receive(:generate_and_send).with(entry_finalized_sent)
+
+      subject.find_generate_and_send_entries
     end
 
     it "raises an error when Target isn't found" do
-      expect { subject.run_schedulable }.to raise_error "Target company record not found."
+      expect { subject.find_generate_and_send_entries }.to raise_error "Target company record not found."
+    end
+  end
+
+  describe "run_schedulable" do
+    subject { described_class }
+
+    it "calls find_generate_and_send_entries" do
+      expect_any_instance_of(subject).to receive(:find_generate_and_send_entries)
+      subject.run_schedulable
     end
   end
 
@@ -1021,32 +1035,6 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
       allow(stub_master_setup).to receive(:production?).and_return true
       cred = subject.cusdec_ftp_credentials
       expect(cred[:folder]).to eq "to_ecs/target_cusdec"
-    end
-  end
-
-  describe "doc_pack_ftp_credentials" do
-    it "gets test creds" do
-      allow(stub_master_setup).to receive(:production?).and_return false
-      cred = subject.doc_pack_ftp_credentials
-      expect(cred[:folder]).to eq "to_ecs/target_documents_test"
-    end
-
-    it "gets production creds" do
-      allow(stub_master_setup).to receive(:production?).and_return true
-      cred = subject.doc_pack_ftp_credentials
-      expect(cred[:folder]).to eq "to_ecs/target_documents"
-    end
-  end
-
-  describe "generate_and_send_doc_packs" do
-    let (:zip) { instance_double(Tempfile) }
-    let (:entry) { Entry.new }
-
-    it "uses document packet generator" do
-      expect_any_instance_of(OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator).to receive(:create_document_packets).with(entry).and_yield zip
-      expect(subject).to receive(:ftp_file).with(zip, subject.doc_pack_ftp_credentials)
-
-      subject.generate_and_send_doc_packs(entry)
     end
   end
 end

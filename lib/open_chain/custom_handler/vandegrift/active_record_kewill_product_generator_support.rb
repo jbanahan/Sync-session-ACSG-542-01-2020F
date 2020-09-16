@@ -17,7 +17,7 @@ module OpenChain; module CustomHandler; module Vandegrift; module ActiveRecordKe
     record_count = 0
     begin
       products = find_products(importers, trading_partner, max_products_per_file)
-      generate_and_send_products(products, trading_partner)
+      record_count = generate_and_send_products(products, trading_partner)
     end while record_count >= max_products_per_file
 
     nil
@@ -25,14 +25,14 @@ module OpenChain; module CustomHandler; module Vandegrift; module ActiveRecordKe
 
   def generate_and_send_products products, trading_partner
     products = Array.wrap(products)
-    return unless products.length > 0
+    return 0 unless products.length > 0
 
     make_xml_file(products, trading_partner) do |file, sync_records|
       ftp_sync_file(file, sync_records, ftp_credentials)
       sync_records.each(&:save!)
     end
 
-    nil
+    products.length
   end
 
   # Returns all the product records that should be synced

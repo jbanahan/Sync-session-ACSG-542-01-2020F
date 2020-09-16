@@ -5,14 +5,6 @@ describe ValidationRuleAssistApplied do
   let!(:entry) { Factory(:entry) }
   let!(:ci) { Factory(:commercial_invoice, entry: entry) }
 
-  it 'handles not having an importer specified' do
-    entry.update(importer: company)
-
-    cil = Factory(:commercial_invoice_line, commercial_invoice: ci)
-    subject.update(rule_attributes_json: nil)
-    expect { subject.run_child_validation(cil) }.not_to raise_error("No importer specified")
-  end
-
   it 'raises an error if no company exists with given system code' do
     cil = Factory(:commercial_invoice_line, commercial_invoice: ci)
     company.update(system_code: 'BCOMPANY')
@@ -33,6 +25,15 @@ describe ValidationRuleAssistApplied do
   it 'passes if line has an adjusted value and the part_xref is active' do
     cil = Factory(:commercial_invoice_line, commercial_invoice: ci, part_number: '1234', adjustments_amount: 100)
     DataCrossReference.create!(company: company, cross_reference_type: 'part_xref', key: '1234', value: 'true')
+    expect(subject.run_child_validation(cil)).to be_nil
+  end
+
+  it "passes if line has an adjusted value and the part_xref is active using importer from entry" do
+    entry.update(importer: company)
+
+    cil = Factory(:commercial_invoice_line, commercial_invoice: ci, part_number: '1234', adjustments_amount: 100)
+    DataCrossReference.create!(company: company, cross_reference_type: 'part_xref', key: '1234', value: 'true')
+    subject.update(rule_attributes_json: nil)
     expect(subject.run_child_validation(cil)).to be_nil
   end
 

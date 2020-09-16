@@ -1,7 +1,8 @@
-require 'open_chain/custom_handler/target/target_support'
+require 'open_chain/xml_builder'
 require 'open_chain/ftp_file_support'
 require 'open_chain/supplemental_tariff_support'
-require 'open_chain/xml_builder'
+require 'open_chain/custom_handler/target/target_support'
+require "open_chain/custom_handler/target/target_document_packet_zip_generator"
 
 # "CUSDEC" is Target's label for this outbound entry-based XML.  It's probably short for "Customs Declaration".
 module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGenerator
@@ -44,22 +45,13 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
   end
 
   def self.run_schedulable _opts = {}
-    parser = self.new
-    # We're looking for entries who have a Summary Accepted Date and no Final Statement Date (entry is
-    # considered over and done with if it has one of these dates set).  Among these, we want entries
-    # where the Summary Accepted Date, compared to sync records, shows that a CUSDEC XML file has either
-    # not been sent for the entry or the Summary Accepted Date has been updated since last send,
-    # indicating we should send an updated CUSDEC.
-    entries = Entry.joins("LEFT OUTER JOIN sync_records AS sr ON entries.id = sr.syncable_id AND sr.syncable_type = 'Entry' AND ",
-                          ActiveRecord::Base.sanitize_sql_array(['sr.trading_partner = ?', SYNC_TRADING_PARTNER]))
-                   .where(importer_id: parser.target_importer_id)
-                   .where("entries.summary_accepted_date IS NOT NULL")
-                   .where("sr.sent_at IS NULL OR entries.summary_accepted_date > sr.sent_at")
-                   .where("entries.final_statement_date IS NULL")
+    self.new.find_generate_and_send_entries
+  end
 
-    entries.find_each(batch_size: 50) do |entry|
+  def find_generate_and_send_entries
+    entries_query.find_each(batch_size: 50) do |entry|
       Lock.db_lock(entry) do
-        parser.generate_and_send entry
+        generate_and_send entry
       end
     end
   end
@@ -79,7 +71,7 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
     # retry and send later and it's not a big deal if the docs are sent again.
     # However, if we sent the cusdec and marked the sync record as sent and the doc pack sends fail
     # then there's a possibility that the doc packs won't get sent at all.
-    generate_and_send_doc_packs(entry)
+    packet_generator.generate_and_send_doc_packs(entry)
     send_xml doc, entry
   end
 
@@ -133,21 +125,28 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
     doc
   end
 
-  def generate_and_send_doc_packs entry
-    OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator.new.create_document_packets(entry) do |zip|
-      ftp_file zip, doc_pack_ftp_credentials
-    end
-  end
-
   def cusdec_ftp_credentials
     connect_vfitrack_net("to_ecs/target_cusdec#{MasterSetup.get.production? ? "" : "_test"}")
   end
 
-  def doc_pack_ftp_credentials
-    connect_vfitrack_net("to_ecs/target_documents#{MasterSetup.get.production? ? "" : "_test"}")
-  end
-
   private
+
+    def entries_query
+      # We're looking for entries who have a Summary Accepted Date and no Final Statement Date (entry is
+      # considered over and done with if it has one of these dates set - however we need to ensure that we've
+      # sent the cusdec at least once, so don't block sending cusdecs for files that haven't been sent but
+      # have final statement dates).
+
+      # Among these, we want entries where the Summary Accepted Date, compared to sync records, shows that a CUSDEC XML file has either
+      # not been sent for the entry or the Summary Accepted Date has been updated since last send,
+      # indicating we should send an updated CUSDEC.
+      Entry.joins("LEFT OUTER JOIN sync_records AS sr ON entries.id = sr.syncable_id AND sr.syncable_type = 'Entry' AND ",
+                  ActiveRecord::Base.sanitize_sql_array(['sr.trading_partner = ?', SYNC_TRADING_PARTNER]))
+           .where(importer_id: target_importer_id)
+           .where("entries.summary_accepted_date IS NOT NULL")
+           .where("sr.sent_at IS NULL OR entries.summary_accepted_date > sr.sent_at")
+           .where("(entries.final_statement_date IS NULL OR sr.sent_at IS NULL)")
+    end
 
     def preload_entry entry
       ActiveRecord::Associations::Preloader.new.preload(entry, [{commercial_invoices: {commercial_invoice_lines: :commercial_invoice_tariffs}}, :sync_records])
@@ -536,6 +535,10 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       sync_record.save!
 
       nil
+    end
+
+    def packet_generator
+      OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator.new
     end
 
 end; end; end; end

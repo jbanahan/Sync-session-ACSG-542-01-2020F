@@ -20,6 +20,9 @@ if !Rails.env.test? && MasterSetup.master_setup_initialized?
   require 'open_chain/custom_handler/kirklands/kirklands_system_init'
   OpenChain::CustomHandler::Kirklands::KirklandsSystemInit.init
 
+  require 'open_chain/custom_handler/target/target_system_init'
+  OpenChain::CustomHandler::Target::TargetSystemInit.init
+
   if Rails.env.development?
     require 'open_chain/custom_handler/dev_system_init'
     OpenChain::CustomHandler::DevSystemInit.init

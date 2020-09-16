@@ -9,6 +9,10 @@ describe OpenChain::CustomHandler::Vandegrift::ActiveRecordKewillProductGenerato
 
         d
       end
+
+      def ftp_credentials
+        {folder: "credentials"}
+      end
     end.new
   end
 
@@ -114,6 +118,44 @@ describe OpenChain::CustomHandler::Vandegrift::ActiveRecordKewillProductGenerato
       expect(sr1.sent_at).to eq now
       expect(sr1.confirmed_at).to eq(now + 1.minute)
       expect(sr1.syncable).to eq product
+    end
+  end
+
+  describe "generate_and_send_products" do
+    let (:products) { [Product.new] }
+    let (:sync_records) { [SyncRecord.new] }
+    let (:ftp_file) { instance_double(File) }
+
+    it "makes xml file, ftps it and saves sync records" do
+      expect(subject).to receive(:make_xml_file).with(products, "CMUS").and_yield ftp_file, sync_records
+      expect(subject).to receive(:ftp_sync_file).with(ftp_file, sync_records, subject.ftp_credentials)
+      expect(sync_records).to all(receive(:save!))
+      expect(subject.generate_and_send_products(products, "CMUS")).to eq 1
+    end
+
+    it "returns 0 if no products are found" do
+      expect(subject).not_to receive(:make_xml_file)
+      expect(subject.generate_and_send_products([], "CMUS")).to eq 0
+    end
+  end
+
+  describe "sync_xml" do
+    let (:products) { [Product.new] }
+    let (:importer) { Company.new }
+
+    it "finds products, generates xml and sends products" do
+      expect(subject).to receive(:find_products).with(importer, "CMUS", 500).and_return products
+      expect(subject).to receive(:generate_and_send_products).with(products, "CMUS").and_return 1
+
+      subject.sync_xml importer
+    end
+
+    it "iterates on finding / sending if number of products found are equal to max output file size" do
+      expect(subject).to receive(:find_products).with(importer, "CMUS", 1).and_return(products, [])
+      expect(subject).to receive(:generate_and_send_products).with(products, "CMUS").and_return 1
+      expect(subject).to receive(:generate_and_send_products).with([], "CMUS").and_return 0
+
+      subject.sync_xml importer, max_products_per_file: 1
     end
   end
 end

@@ -461,4 +461,38 @@ describe OpenChain::EntityCompare::ComparatorHelper do
       expect(subject.failed_business_rules? snapshot).to eq true
     end
   end
+
+  describe "added_child_entities" do
+
+    let (:old_snapshot) {
+      {"core_module" => "Parent", "model_fields"=> {"test" => "Parent-A"},
+        "children" => [
+          {'entity' => {"record_id" => 1, "core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}},
+          {'entity' => {"record_id" => 2, "core_module" => "Child", "model_fields"=> {"test" => "Child-B"}}},
+          {'entity' => {"record_id" => 1, "core_module" => "Pet", "model_fields"=> {"test" => "Pet-A"}}}
+        ]}
+    }
+
+    let (:new_snapshot) {
+      {"core_module" => "Parent", "model_fields"=> {"test" => "Parent-A"},
+        "children" => [
+          {'entity' => {"record_id" => 1, "core_module" => "Child", "model_fields"=> {"test" => "Child-A"}}},
+          {'entity' => {"record_id" => 2, "core_module" => "Child", "model_fields"=> {"test" => "Child-B"}}},
+          {'entity' => {"record_id" => 3, "core_module" => "Child", "model_fields"=> {"test" => "Child-C"}}},
+          {'entity' => {"record_id" => 4, "core_module" => "Child", "model_fields"=> {"test" => "Child-D"}}},
+          {'entity' => {"record_id" => 1, "core_module" => "Pet", "model_fields"=> {"test" => "Pet-A"}}}
+        ]}
+    }
+
+    it "returns all children that were added since the previous snapshot" do
+      expect(subject.added_child_entities(old_snapshot, new_snapshot, "Child")).to eq [
+        {"record_id" => 3, "core_module" => "Child", "model_fields"=> {"test" => "Child-C"}},
+        {"record_id" => 4, "core_module" => "Child", "model_fields"=> {"test" => "Child-D"}}
+      ]
+    end
+
+    it "returns blank array if no children added" do
+      expect(subject.added_child_entities(old_snapshot, old_snapshot, "Child")).to eq []
+    end
+  end
 end

@@ -119,6 +119,110 @@ describe OpenChain::CustomHandler::Target::TargetDocumentPacketZipGenerator do
 
       expect(zip_files).to eq 4
     end
+
+    it "allows passing in distinct attachments to send" do
+      attachment_7501
+      attachment_other_doc
+      attachment_invoice
+      allow(subject).to receive(:xml_generator).and_return target_xml_generator
+      expect(target_xml_generator).to receive(:generate_xml).with(entry, "MBOL12345", [attachment_invoice]).and_return other_xml
+
+      now = Time.zone.now
+      in_tz = now.in_time_zone("America/New_York")
+
+      zip_files = []
+      Timecop.freeze(now) do
+        subject.create_document_packets(entry, attachments: [attachment_invoice]) do |zip|
+          expect(zip.original_filename).to eq "TDOX_5003461_#{in_tz.strftime("%Y%m%d%H%M%S%L")}.zip"
+
+          output = StringIO.new
+          IO.copy_stream(zip, output)
+          output.rewind
+
+          zip_files << output
+        end
+      end
+
+      # Only a single zip should be created because only a single mbol was passed and no 7501 was passed to the method
+      expect(zip_files.length).to eq 1
+
+      zip = Zip::File.open_buffer(zip_files[0])
+      expect(zip.find_entry("METADATA_5003461_#{in_tz.strftime("%Y%m%d%H%M%S%L")}.xml")).to be_present
+      expect(zip.find_entry("METADATA_5003461_#{in_tz.strftime("%Y%m%d%H%M%S%L")}.xml").get_input_stream.read).to eq "<other/>"
+      expect(zip.find_entry("invoice.txt")).to be_present
+      expect(zip.find_entry("invoice.txt").get_input_stream.read).to eq "invoice"
+      # Since only the invoice was passed to the method, only the invoice should be in the zip
+      expect(zip.find_entry("other.txt")).not_to be_present
+    end
+
+    it "allows passing distinct mbols" do
+      entry.master_bills_of_lading << "\n MBOL2"
+      allow(subject).to receive(:xml_generator).and_return target_xml_generator
+      expect(target_xml_generator).to receive(:generate_xml).with(entry, "MBOL2", [attachment_7501]).and_return summary_xml
+
+      now = Time.zone.now
+      in_tz = now.in_time_zone("America/New_York")
+
+      zip_files = []
+      Timecop.freeze(now) do
+        subject.create_document_packets(entry, attachments: [attachment_7501], bills_of_lading: ["MBOL2"]) do |zip|
+          expect(zip.original_filename).to eq "TDOX_5003461_#{in_tz.strftime("%Y%m%d%H%M%S%L")}.zip"
+
+          output = StringIO.new
+          IO.copy_stream(zip, output)
+          output.rewind
+
+          zip_files << output
+        end
+      end
+
+      # Only a single zip should be created because only a single mbol was passed and only a single attachment exists for the entry
+      expect(zip_files.length).to eq 1
+      zip = Zip::File.open_buffer(zip_files[0])
+      expect(zip.find_entry("METADATA_5003461_#{in_tz.strftime("%Y%m%d%H%M%S%L")}.xml")).to be_present
+      expect(zip.find_entry("METADATA_5003461_#{in_tz.strftime("%Y%m%d%H%M%S%L")}.xml").get_input_stream.read).to eq "<summary/>"
+      expect(zip.find_entry("summary.txt")).to be_present
+    end
   end
 
+  describe "doc_pack_ftp_credentials" do
+    it "gets test creds" do
+      allow(stub_master_setup).to receive(:production?).and_return false
+      cred = subject.doc_pack_ftp_credentials
+      expect(cred[:folder]).to eq "to_ecs/target_documents_test"
+    end
+
+    it "gets production creds" do
+      allow(stub_master_setup).to receive(:production?).and_return true
+      cred = subject.doc_pack_ftp_credentials
+      expect(cred[:folder]).to eq "to_ecs/target_documents"
+    end
+  end
+
+  describe "generate_and_send_doc_packs" do
+    let (:zip) { instance_double(Tempfile) }
+    let (:attachment) { Attachment.new }
+    let (:entry) do
+      e = Entry.new
+      e.master_bills_of_lading = "MBOL"
+      e.attachments << attachment
+      e
+    end
+
+    it "uses document packet generator" do
+      expect(subject).to receive(:create_document_packets).with(entry, attachments: [attachment], bills_of_lading: ["MBOL"]).and_yield zip
+      expect(subject).to receive(:ftp_file).with(zip, subject.doc_pack_ftp_credentials)
+
+      subject.generate_and_send_doc_packs(entry)
+    end
+
+    it "uses keyword arguments passed to generator" do
+      a = Attachment.new
+
+      expect(subject).to receive(:create_document_packets).with(entry, attachments: [a], bills_of_lading: "NEWBOL").and_yield zip
+      expect(subject).to receive(:ftp_file).with(zip, subject.doc_pack_ftp_credentials)
+
+      subject.generate_and_send_doc_packs(entry, attachments: [a], bills_of_lading: "NEWBOL")
+    end
+  end
 end

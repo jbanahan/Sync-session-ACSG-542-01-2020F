@@ -51,7 +51,7 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     else
       entity_children = []
       children.each do |child|
-        entity_children.push *json_child_entities(child, *entity_chain[1..-1])
+        entity_children.push(*json_child_entities(child, *entity_chain[1..-1]))
       end
       found = entity_children.flatten
     end
@@ -234,12 +234,31 @@ module OpenChain; module EntityCompare; module ComparatorHelper
     any_entities_missing_from_list?(secondary_list, primary_list)
   end
 
+  # Returns true if the outermost entity in the snapshot has any failed business rules.
   def failed_business_rules? snapshot
     entity = unwrap_entity(snapshot)
     cm = find_core_module(entity)
     prefix = CoreModule.module_abbreviation(cm)
 
     return !mf(snapshot, "#{prefix}_failed_business_rules").blank?
+  end
+
+  def added_child_entities old_snapshot, new_snapshot, *entity_chain
+    old_child_entities = json_child_entities(old_snapshot, *entity_chain)
+    new_child_entities = json_child_entities(new_snapshot, *entity_chain)
+
+    new_entities = []
+    # For each new child entity, see if the old snapshot has that object (we determine if it's different based on entity id,
+    # which means in cases where an objects descendents are destroyed / replaced then methdo will not work, it will recognize
+    # all the descendants in the new snapshot as new.)
+    new_child_entities.each do |entity|
+      id = record_id(entity)
+
+      old_entity = old_child_entities.find {|e| id == record_id(e) }
+      new_entities << entity if old_entity.nil?
+    end
+
+    new_entities
   end
 
 end; end; end
