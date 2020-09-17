@@ -26,27 +26,23 @@
 #
 
 class CustomDefinition < ActiveRecord::Base
-  attr_accessible :cdef_uid, :data_type, :default_value, :definition,
-    :is_address, :is_user, :label, :module_type, :quick_searchable, :rank,
-    :tool_tip, :virtual_search_query, :virtual_value_query
-
   cattr_accessor :skip_reload_trigger
 
-  validates  :label, :presence => true
-  validates  :data_type, :presence => true
-  validates  :module_type, :presence => true
+  validates  :label, presence: true
+  validates  :data_type, presence: true
+  validates  :module_type, presence: true
   # Because cdef_uid was added long after custom definitions existed, there's live custom definitions without cdef_uids, so we're going
   # to prevent new ones from being made, but we will continue to allow old ones to be saved.  The screen now generates a default cdef_uid
   # on creation, so all new ones will have cdef_uids
-  validates  :cdef_uid, presence: :true, on: :create
+  validates :cdef_uid, presence: true, on: :create
   validate :validate_virtual_fields
 
-  has_many   :custom_values, :dependent => :destroy
-  has_many   :sort_criterions, :dependent => :destroy
-  has_many   :search_criterions, :dependent => :destroy
-  has_many   :search_columns, :dependent => :destroy
-  has_many   :field_validator_rules, :dependent => :destroy
-  has_many   :milestone_definitions, :dependent => :destroy
+  has_many   :custom_values, dependent: :destroy
+  has_many   :sort_criterions, dependent: :destroy
+  has_many   :search_criterions, dependent: :destroy
+  has_many   :search_columns, dependent: :destroy
+  has_many   :field_validator_rules, dependent: :destroy
+  has_many   :milestone_definitions, dependent: :destroy
 
   # This is more here for the hundreds of test cases that don't set cdef_uids than anything
   before_validation :set_cdef_uid, on: :create
@@ -58,15 +54,15 @@ class CustomDefinition < ActiveRecord::Base
 
   def core_module
     return nil if self.module_type.blank?
-    CoreModule.find_by_class_name self.module_type
+    CoreModule.find_by class_name: self.module_type
   end
 
   def self.cached_find id
     o = nil
     begin
       o = CACHE.get "CustomDefinition:id:#{id}"
-    rescue
-      $!.log_me ["Exception rescued, you don't need to contact the user."]
+    rescue StandardError => e
+      e.log_me ["Exception rescued, you don't need to contact the user."]
     end
     if o.nil?
       o = find id
@@ -77,17 +73,15 @@ class CustomDefinition < ActiveRecord::Base
   # returns an Array of custom definitions for the module, sorted by rank then label
   # Note: Internally this calls .all on the result from the DB, so are getting back a real array, not an ActiveRecord result.
   def self.cached_find_by_module_type module_type
-    begin
-      o = CACHE.get "CustomDefinition:module_type:#{module_type}"
-      if o.nil?
-        o = CustomDefinition.where(:module_type => module_type).order("rank ASC, label ASC").all
-        CACHE.set "CustomDefinition:module_type:#{module_type}", o
-      end
-      return o.clone
-    rescue
-      $!.log_me ["Exception rescued, you don't need to contact the user."]
-      return CustomDefinition.where(:module_type=>module_type).order("rank ASC, label ASC").all
+    o = CACHE.get "CustomDefinition:module_type:#{module_type}"
+    if o.nil?
+      o = CustomDefinition.where(module_type: module_type).order("rank ASC, label ASC").all
+      CACHE.set "CustomDefinition:module_type:#{module_type}", o
     end
+    o.clone
+  rescue StandardError => e
+    e.log_me ["Exception rescued, you don't need to contact the user."]
+    CustomDefinition.where(module_type: module_type).order("rank ASC, label ASC").all
   end
 
   def model_field_uid
@@ -95,11 +89,11 @@ class CustomDefinition < ActiveRecord::Base
   end
 
   def model_field
-    ModelField.find_by_uid(model_field_uid)
+    ModelField.by_uid(model_field_uid)
   end
 
   def date?
-    (!self.data_type.nil?) && self.data_type=="date"
+    !self.data_type.nil? && self.data_type == "date"
   end
 
   def data_column
@@ -119,17 +113,17 @@ class CustomDefinition < ActiveRecord::Base
   end
 
   DATA_TYPE_LABELS = {
-    :text => "Text - Long",
-    :string => "Text",
-    :date => "Date",
-    :boolean => "Checkbox",
-    :decimal => "Decimal",
-    :integer => "Integer",
-    :datetime => "Date/Time"
+    text: "Text - Long",
+    string: "Text",
+    date: "Date",
+    boolean: "Checkbox",
+    decimal: "Decimal",
+    integer: "Integer",
+    datetime: "Date/Time"
   }.freeze
 
   def set_cache
-    @@already_set ||= {}
+    @@already_set ||= {} # rubocop:disable Style/ClassVars
     to_set = self.destroyed? ? nil : self
     if to_set && @@already_set[self.id] != self.updated_at
       CACHE.set "CustomDefinition:id:#{self.id}", to_set unless self.id.nil?
@@ -179,7 +173,7 @@ class CustomDefinition < ActiveRecord::Base
   def virtual_value customizable
     return nil if self.virtual_value_query.blank?
 
-    interpolated_query = parameterize_query(self.virtual_value_query, { customizable_id: customizable.id }) +  " LIMIT 1"
+    interpolated_query = parameterize_query(self.virtual_value_query, { customizable_id: customizable.id }) + " LIMIT 1"
 
     self.class.connection.execute(interpolated_query).first.try(:first)
   end
@@ -198,7 +192,9 @@ class CustomDefinition < ActiveRecord::Base
     def generate_qualified_field_query
       column = data_column
       table = ActiveRecord::Base.connection.quote_table_name core_module.table_name
+      # rubocop:disable Layout/LineLength
       "(SELECT #{column} FROM custom_values WHERE customizable_id = #{table}.id AND #{ActiveRecord::Base.sanitize_sql_array(["custom_definition_id = ? AND customizable_type = ?", self.id, self.module_type])})"
+      # rubocop:enable Layout/LineLength
     end
 
     def set_cdef_uid
@@ -224,7 +220,7 @@ class CustomDefinition < ActiveRecord::Base
           value = self.class.connection.quote(value)
         end
 
-        regexp = Regexp.new(('#{\s*' + "#{key}" + '\s*}'))
+        regexp = Regexp.new(('#{\s*' + key.to_s + '\s*}'))
 
         # Do NOT do gsub! here...the query value passed in is likely the acutal virtual_value_query attribute and we don't
         # want to change that value in place, otherwise every lookup will use the same id we gsub into place.
@@ -234,7 +230,7 @@ class CustomDefinition < ActiveRecord::Base
     end
 
     def validate_virtual_fields
-      errors.add(:virtual_search_query, "cannot be blank if Virtual value query is present.") if self.virtual_search_query.blank? && !self.virtual_value_query.blank?
-      errors.add(:virtual_value_query, "cannot be blank if Virtual search query is present.") if self.virtual_value_query.blank? && !self.virtual_search_query.blank?
+      errors.add(:virtual_search_query, "cannot be blank if Virtual value query is present.") if self.virtual_search_query.blank? && self.virtual_value_query.present?
+      errors.add(:virtual_value_query, "cannot be blank if Virtual search query is present.") if self.virtual_value_query.blank? && self.virtual_search_query.present?
     end
 end

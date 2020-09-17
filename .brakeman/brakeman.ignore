@@ -1806,6 +1806,25 @@
       "note": ""
     },
     {
+      "warning_type": "Attribute Restriction",
+      "warning_code": 19,
+      "fingerprint": "31e186c4da9ba426b6789fa804fd895ef7fa16d41851a7e9e7e28119cee31c6c",
+      "check_name": "ModelAttributes",
+      "message": "Mass assignment is not restricted using `attr_accessible`",
+      "file": "app/models/custom_definition.rb",
+      "line": 29,
+      "link": "https://brakemanscanner.org/docs/warning_types/attribute_restriction/",
+      "code": null,
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "CustomDefinition"
+      },
+      "user_input": null,
+      "confidence": "High",
+      "note": ""
+    },
+    {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "32e5566de43089453b18e0656c95bb626c89c92a3533b9330ac2b741123795ac",
@@ -4523,7 +4542,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/custom_definition.rb",
-      "line": 184,
+      "line": 179,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "self.class.connection.execute((parameterize_query(self.virtual_value_query, :customizable_id => customizable.id) + \" LIMIT 1\"))",
       "render_path": null,
@@ -7425,6 +7444,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "d5c44c0152704e9c1d2844d45555b289758b6daa105ef39522b8632333ed0dd0",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/custom_definitions_controller.rb",
+      "line": 57,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "CustomDefinition.new(permitted_params_new(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "CustomDefinitionsController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "d65b5a2e904bbd6af58a13cb879942023d3c02e4ef13e17113c9cb8cadcc6012",
       "check_name": "ModelAttrAccessible",
@@ -7836,6 +7875,26 @@
       "location": {
         "type": "model",
         "model": "ItemChangeSubscription"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "e4ef565fa2d834764555494375106717f4a1f3e3bc05971eba21c55e355494b0",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "lib/open_chain/custom_handler/custom_definition_support.rb",
+      "line": 29,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "CustomDefinition.create!(available_fields[code].clone)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::CustomHandler::CustomDefinitionSupport",
+        "method": "prep_custom_defs"
       },
       "user_input": null,
       "confidence": "Weak",
