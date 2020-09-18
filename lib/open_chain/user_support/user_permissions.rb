@@ -339,13 +339,6 @@ module OpenChain; module UserSupport; module UserPermissions
     add_variants?
   end
 
-  def view_projects?
-    self.project_view && self.master_company?
-  end
-  def edit_projects?
-    self.project_edit && self.master_company?
-  end
-
   def view_vendors?
     self.vendor_view && master_setup.vendor_management_enabled?
   end

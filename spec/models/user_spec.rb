@@ -396,24 +396,6 @@ describe User do
         end
       end
     end
-    context "projects" do
-      it "should allow master company user with permission" do
-        u = Factory(:master_user)
-        expect(u.view_projects?).to be_falsey
-        expect(u.edit_projects?).to be_falsey
-        u.project_view = true
-        expect(u.view_projects?).to be_truthy
-        u.project_edit = true
-        expect(u.edit_projects?).to be_truthy
-      end
-      it "should not allow non master company user" do
-        u = Factory(:user)
-        u.project_view = true
-        u.project_edit = true
-        expect(u.view_projects?).to be_falsey
-        expect(u.edit_projects?).to be_falsey
-      end
-    end
     context "trade_lanes" do
       let(:user) do
         u = User.new(trade_lane_view:true, trade_lane_edit:true, trade_lane_comment:true, trade_lane_attach:true)
