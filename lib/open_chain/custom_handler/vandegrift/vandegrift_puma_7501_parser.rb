@@ -47,6 +47,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftPuma7
   def generate_shipment(invoice_xml, shipment)
     shipment.customer = "PUMA"
     shipment.file_number = file_number(invoice_xml)
+    inbound_file.add_identifier(:file_number, shipment.file_number)
 
     shipment
   end
@@ -67,6 +68,36 @@ module OpenChain; module CustomHandler; module Vandegrift; class VandegriftPuma7
       line.quantity_1 = et(item, "QTY_1")
       line.quantity_2 = et(item, "QTY_2")
       line.mid = et(item, "MANUFACTURERS_ID_NO")
+      line.spi = et(item, "SPECIAL_PROGRAMS_INDICATOR_1")
+      line.spi2 = et(item, "SPECIAL_PROGRAMS_INDICATOR_2")
+      line.charges = et(item, "CHARGES")
+
+      # FTZ fields are only to be populated if the status is "P".
+      ftz_status = et(item, "FTZ_STATUS")
+      if ftz_status == "P"
+        line.ftz_zone_status = ftz_status
+        line.ftz_priv_status_date = parse_date(et(item, "FTZ_DATE"))
+        line.ftz_quantity = et(item, "FTZ_MANIFEST_QTY")
+      end
+
+      supplemental_tariff = et(item, "ADDITIONAL_HTS")
+      if supplemental_tariff.present?
+        tar_sup = CiLoadInvoiceTariff.new
+        tar_sup.hts = supplemental_tariff
+        tar_sup.foreign_value = et(item, "ADDITIONAL_HTS_VALUE")
+
+        # Due to the way KewillShipmentXmlSupport handles tariff info, we also need to add a tariff record
+        # for the primary tariff.  The support class automatically makes this from the line record in the
+        # event there are not tariff_lines under the line.
+        tar_prime = CiLoadInvoiceTariff.new
+        tar_prime.hts = line.hts
+        tar_prime.gross_weight = line.gross_weight
+        tar_prime.foreign_value = line.foreign_value
+        tar_prime.spi = line.spi
+        tar_prime.spi2 = line.spi2
+
+        line.tariff_lines = [tar_sup, tar_prime]
+      end
 
       lines << line
     end
