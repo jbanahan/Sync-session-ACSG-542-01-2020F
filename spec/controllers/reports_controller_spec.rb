@@ -707,11 +707,8 @@ describe ReportsController do
   describe "PVH Canada Duty Assist Report" do
     let(:report_class) { OpenChain::CustomHandler::Pvh::PvhDutyAssistReport }
     let!(:user) { Factory(:user) }
-    let!(:pvh_canada) do
-      co = with_fenix_id(Factory(:importer, name: 'PVH Canada'), '833231749RM0001')
-      co
-    end
-    let!(:fm) { Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 2, end_date: Date.new(2020, 03, 01)) }
+    let!(:pvh_canada) { Factory(:company, system_code: "PVHCANADA") }
+    let!(:fm) { Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 2, start_date: Date.new(2020, 2, 15)) }
 
     before { sign_in_as user }
 
@@ -723,10 +720,12 @@ describe ReportsController do
       end
 
       it "renders for authorized users" do
+        Factory(:fiscal_month, company: pvh_canada, year: 2020, month_number: 1, start_date: Date.new(2020, 1, 15))
+
         expect(report_class).to receive(:permission?).with(user).and_return(true)
         get :show_pvh_canada_duty_assist_report
         expect(response).to be_success
-        expect(assigns(:fiscal_months)).to eq(["2020-02"])
+        expect(assigns(:fiscal_months)).to eq(["2020-01", "2020-02"])
       end
     end
 
@@ -743,7 +742,7 @@ describe ReportsController do
       it "runs for authorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return(true)
         expect(ReportResult).to receive(:run_report!).with("PVH Canada Duty Assist Report", user, OpenChain::CustomHandler::Pvh::PvhDutyAssistReport,
-                                                           settings: {'fiscal_month': "2020-01", 'cust_number': 'PVHCANADA'}, friendly_settings: ["Fiscal Month 2020-01", "Customer Number: PVHCANADA"])
+                                                           settings: {'fiscal_month': "2020-01", 'company': 'PVHCANADA'}, friendly_settings: ["Fiscal Month 2020-01", "Customer Number: PVHCANADA"])
         post :run_pvh_canada_duty_assist_report, args
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")
@@ -754,11 +753,8 @@ describe ReportsController do
   describe "PVH Duty Assist Report" do
     let(:report_class) { OpenChain::CustomHandler::Pvh::PvhDutyAssistReport }
     let!(:user) { Factory(:user) }
-    let!(:pvh) do
-      co = with_customs_management_id(Factory(:importer, name: 'PVH'), "PVH")
-      co
-    end
-    let!(:fm) { Factory(:fiscal_month, company: pvh, year: 2020, month_number: 2, end_date: Date.new(2020, 03, 01)) }
+    let!(:pvh) { Factory(:company, system_code: "PVH") }
+    let!(:fm) { Factory(:fiscal_month, company: pvh, year: 2020, month_number: 2, start_date: Date.new(2020, 2, 15)) }
 
     before { sign_in_as user }
 
@@ -770,10 +766,12 @@ describe ReportsController do
       end
 
       it "renders for authorized users" do
+        Factory(:fiscal_month, company: pvh, year: 2020, month_number: 1, start_date: Date.new(2020, 1, 15))
+
         expect(report_class).to receive(:permission?).with(user).and_return(true)
         get :show_pvh_duty_assist_report
         expect(response).to be_success
-        expect(assigns(:fiscal_months)).to eq(["2020-02"])
+        expect(assigns(:fiscal_months)).to eq(["2020-01", "2020-02"])
       end
     end
 
@@ -790,7 +788,7 @@ describe ReportsController do
       it "runs for authorized users" do
         expect(report_class).to receive(:permission?).with(user).and_return(true)
         expect(ReportResult).to receive(:run_report!).with("PVH Duty Assist Report", user, OpenChain::CustomHandler::Pvh::PvhDutyAssistReport,
-                                                           settings: {'fiscal_month': "2020-01", 'cust_number': 'PVH'}, friendly_settings: ["Fiscal Month 2020-01", "Customer Number: PVH"])
+                                                           settings: {'fiscal_month': "2020-01", 'company': 'PVH'}, friendly_settings: ["Fiscal Month 2020-01", "Customer Number: PVH"])
         post :run_pvh_duty_assist_report, args
         expect(response).to be_redirect
         expect(flash[:notices].first).to eq("Your report has been scheduled. You'll receive a system message when it finishes.")

@@ -6,6 +6,8 @@ module OpenChain; module CustomHandler; module Pvh; module PvhEntryShipmentMatch
     if @shipments.nil? || force_lookup
 
       # We're going to return shipments where master bills match or house bills match
+      # Note that shipments are against the PVH US company ID even if this look-up is being run for PVH
+      # Canada entries.  There aren't any PVH Canada shipments (at least, as of Aug 2020, there aren't).
       shipments_query = Shipment.where(importer_id: pvh_importer.id)
       if ocean_mode_entry? transport_mode_code
         shipments_query = shipments_query.where("mode LIKE ?", '%Ocean%')

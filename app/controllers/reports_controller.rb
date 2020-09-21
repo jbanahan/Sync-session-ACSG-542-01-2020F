@@ -847,12 +847,9 @@ class ReportsController < ApplicationController
 
   def run_pvh_duty_assist_report
     klass = OpenChain::CustomHandler::Pvh::PvhDutyAssistReport
-    us= klass.us.id
 
     if klass.permission?(current_user)
-      fm = klass.fiscal_month params, us
-
-      run_report "PVH Duty Assist Report", klass, {'fiscal_month': params[:fiscal_month], 'cust_number': 'PVH'}, ["Fiscal Month #{params[:fiscal_month]}", "Customer Number: PVH"]
+      run_report "PVH Duty Assist Report", klass, {'fiscal_month': params[:fiscal_month], 'company': 'PVH'}, ["Fiscal Month #{params[:fiscal_month]}", "Customer Number: PVH"]
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -865,19 +862,17 @@ class ReportsController < ApplicationController
     error_redirect "You do not have permission to view this report" unless @cust_info.present?
 
     @fiscal_months = []
-    FiscalMonth.where(company_id: klass.us.id).order("start_date ASC").each do |fm|
+    company = Company.where(system_code: "PVH").first
+    FiscalMonth.where(company_id: company&.id).order("start_date ASC").each do |fm|
       @fiscal_months << fm.fiscal_descriptor
     end
   end
 
   def run_pvh_canada_duty_assist_report
     klass = OpenChain::CustomHandler::Pvh::PvhDutyAssistReport
-    canada = klass.canada.id
 
     if klass.permission?(current_user)
-      fm = klass.fiscal_month params, canada
-
-      run_report "PVH Canada Duty Assist Report", klass, {'fiscal_month': params[:fiscal_month], 'cust_number': 'PVHCANADA'}, ["Fiscal Month #{params[:fiscal_month]}", "Customer Number: PVHCANADA"]
+      run_report "PVH Canada Duty Assist Report", klass, {'fiscal_month': params[:fiscal_month], 'company': 'PVHCANADA'}, ["Fiscal Month #{params[:fiscal_month]}", "Customer Number: PVHCANADA"]
     else
       error_redirect "You do not have permission to view this report"
     end
@@ -889,7 +884,8 @@ class ReportsController < ApplicationController
     error_redirect "You do not have permission to view this report" unless klass.permission?(current_user)
 
     @fiscal_months = []
-    FiscalMonth.where(company_id: klass.canada.id).order("start_date ASC").each do |fm|
+    company = Company.where(system_code: "PVHCANADA").first
+    FiscalMonth.where(company_id: company&.id).order("start_date ASC").each do |fm|
       @fiscal_months << fm.fiscal_descriptor
     end
   end
