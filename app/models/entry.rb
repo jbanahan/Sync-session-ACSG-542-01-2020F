@@ -793,6 +793,14 @@ class Entry < ActiveRecord::Base
     end.count > 0
   end
 
+  def entry_filer
+    self.entry_number[0, (self.canadian? ? 5 : 3)] if entry_number.present?
+  end
+
+  def post_summary_correction?
+    self.commercial_invoices.any? { |ci| ci.commercial_invoice_lines.any?(&:psc_date?) }
+  end
+
   private
 
     def populated_us_holds

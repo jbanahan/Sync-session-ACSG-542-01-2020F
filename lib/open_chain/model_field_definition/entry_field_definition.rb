@@ -411,11 +411,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
       [213, :ent_exam_release_date, :exam_release_date, "CBSA Exam Release Date", {data_type: :datetime}],
       [214, :ent_entry_filer, :entry_filer, "Entry Filer", {
         import_lambda: ->(_obj, _data) { "Entry Filer ignored. (read only)"},
-        export_lambda: lambda do |obj|
-          if obj.entry_number
-            obj.canadian? ? obj.entry_number[0, 5] : obj.entry_number[0, 3]
-          end
-        end,
+        export_lambda: ->(obj) { obj.entry_filer },
         qualified_field_name:
             "(
               IF(
@@ -516,7 +512,7 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
           data_type: :boolean,
           read_only: true,
           import_lambda: ->(_obj, _data) { "Post Summary Corrections Date Exists ignored. (read only)"},
-          export_lambda: ->(obj) { obj.commercial_invoice_lines.any?(&:psc_date?) },
+          export_lambda: ->(obj) { obj.post_summary_correction? },
           qualified_field_name:
               "(
                 SELECT CASE

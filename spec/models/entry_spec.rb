@@ -1020,4 +1020,61 @@ describe Entry do
       expect(subject.can_view?(user)).to eq true
     end
   end
+
+  describe "entry_filer" do
+    it "returns first 3 chars of US entry number" do
+      ent = Factory(:entry, entry_number: "12345678")
+      expect(ent).to receive(:canadian?).and_return false
+
+      expect(ent.entry_filer).to eq "123"
+    end
+
+    it "returns first 5 chars of Canada entry number" do
+      ent = Factory(:entry, entry_number: "12345678")
+      expect(ent).to receive(:canadian?).and_return true
+
+      expect(ent.entry_filer).to eq "12345"
+    end
+
+    it "returns all chars of a short entry number" do
+      ent = Factory(:entry, entry_number: "12")
+      expect(ent).to receive(:canadian?).and_return false
+
+      expect(ent.entry_filer).to eq "12"
+    end
+
+    it "returns nil for a nil entry number" do
+      ent = Factory(:entry, entry_number: nil)
+
+      expect(ent.entry_filer).to be_nil
+    end
+
+    it "returns nil for a blank entry number" do
+      ent = Factory(:entry, entry_number: "         ")
+
+      expect(ent.entry_filer).to be_nil
+    end
+  end
+
+  describe "post_summary_correction?" do
+    it "returns true when 1+ commercial invoice line under an entry has PSC date set" do
+      ent = Factory(:entry)
+      ci_1 = ent.commercial_invoices.create!
+      ci_1.commercial_invoice_lines.create! psc_date: nil
+      cil_1b = ci_1.commercial_invoice_lines.create! psc_date: Time.zone.now
+      ci_2 = ent.commercial_invoices.create!
+      cil_2 = ci_2.commercial_invoice_lines.create! psc_date: nil
+
+      expect(ent.post_summary_correction?).to eq true
+
+      cil_2.update! psc_date: Time.zone.now
+
+      expect(ent.post_summary_correction?).to eq true
+
+      cil_1b.update! psc_date: nil
+      cil_2.update! psc_date: nil
+
+      expect(ent.post_summary_correction?).to eq false
+    end
+  end
 end

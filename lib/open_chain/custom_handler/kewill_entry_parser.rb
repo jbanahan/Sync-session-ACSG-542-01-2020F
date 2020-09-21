@@ -992,7 +992,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
     end
 
     def set_invoice_line_data l, line, entry
-      line.line_number = l[:ci_line_no].to_i / 10
+      line.line_number = l[:ci_line_no].to_i
       line.mid = l[:mid]
       line.part_number = l[:part_no]
       line.po_number = l[:po_no]
@@ -1142,7 +1142,7 @@ module OpenChain; module CustomHandler; class KewillEntryParser
       Array.wrap(e[:post_summary_corrections]).each do |psc|
         Array.wrap(psc[:lines]).each do |psc_l|
           ci = entry.commercial_invoices.find { |ci| ci.invoice_number == psc_l[:ci_no] }
-          cil = ci.commercial_invoice_lines.find { |cil| cil.line_number == psc_l[:ci_line_no] / 10 }
+          cil = ci.commercial_invoice_lines.find { |cil| cil.line_number == psc_l[:ci_line_no].to_i }
           cil.psc_date = parse_numeric_datetime psc[:sent_date]
           cil.psc_reason_code = psc_l[:reason_code]
         end

@@ -864,7 +864,7 @@ describe OpenChain::CustomHandler::KewillEntryParser do
       expect(ci.entered_value_7501).to eq 300
 
       line = ci.commercial_invoice_lines.first
-      expect(line.line_number).to eq 1
+      expect(line.line_number).to eq 10
       expect(line.mid).to eq "MANFU"
       expect(line.part_number).to eq "PART"
       expect(line.po_number).to eq "po"
