@@ -32,7 +32,6 @@ module UpdateModelFieldsSupport
     end
   end
 
-
   # Basically, this is a replacement for ActiveRecord::Base.update_attributes where
   # the keys are model field uids and the values are all set via the model field process_import
   # methods.
@@ -68,7 +67,7 @@ module UpdateModelFieldsSupport
 
       # validate that save was ok...we consider it not ok if we had our own model field errors
       if pre_save_errors.size > 0
-        errors[:base].push *pre_save_errors
+        errors[:base].push(*pre_save_errors)
       end
 
       save_val && pre_save_errors.size == 0
@@ -92,15 +91,15 @@ module UpdateModelFieldsSupport
         save_val = self.save!
       rescue ActiveRecord::RecordInvalid => e
         # save! blows away any errors we had prior to starting..add them back in
-        e.record.errors[:base].push *pre_save_errors if pre_save_errors.size > 0
+        e.record.errors[:base].push(*pre_save_errors) if pre_save_errors.size > 0
         raise e
       end
 
       # save! won't actually raise validation errors caused from our
       # model assignments, so raise manually here if there are any errors[:base] messages
       if pre_save_errors.size > 0
-        errors[:base].push *pre_save_errors
-        raise ActiveRecord::RecordInvalid.new(self)
+        errors[:base].push(*pre_save_errors)
+        raise ActiveRecord::RecordInvalid, self
       end
 
       save_val
@@ -123,14 +122,14 @@ module UpdateModelFieldsSupport
     opts = {user: User.current}.merge opts
     __assign_model_field_attributes object_parameters, opts
 
-    unless opts[:no_validation] === true
+    if opts[:no_validation] == true
+      true
+    else
       pre_valid_errors = errors[:base].clone
       valid = self.valid?
 
-      errors[:base].push *pre_valid_errors if pre_valid_errors.size > 0
+      errors[:base].push(*pre_valid_errors) if pre_valid_errors.size > 0
       valid && pre_valid_errors.size == 0
-    else
-      true
     end
   end
 
@@ -148,6 +147,12 @@ module UpdateModelFieldsSupport
     #
     # Method returns true if all values imported correctly, false if any errors were encountered.
     def __assign_model_field_attributes object_parameters, opts = {}
+      if object_parameters.is_a?(ActionController::Parameters)
+        # To avoid having to do #permits through every step of this we want to work with a hash
+        # and not a Parameters object.
+        object_parameters = object_parameters.deep_dup.permit!.to_hash.with_indifferent_access
+      end
+
       opts = {user: User.current, set_last_updated_by: true}.merge opts
 
       # Basically, what we're doing here is stripping out all the non-key model field uids
@@ -164,7 +169,7 @@ module UpdateModelFieldsSupport
 
       normalize_params model_field_params, self
 
-      if opts[:exclude_blank_values] === true
+      if opts[:exclude_blank_values] == true
         model_field_params = remove_blank_values model_field_params
       end
 
@@ -186,7 +191,7 @@ module UpdateModelFieldsSupport
       return if ['1', 'true', true].include? object_parameters['_destroy']
 
       data = core_module_info base_object
-      model_fields = data[:model_fields].select {|uid, mf| mf.can_view? user}
+      model_fields = data[:model_fields].select {|_uid, mf| mf.can_view? user}
       child_core_module = data[:child_core_module]
       child_association_key = data[:child_association_key]
 
@@ -196,9 +201,9 @@ module UpdateModelFieldsSupport
         # The following handles both the following value rails nested attribute styles:
         # {'child_attributes' => {'0' => {'attribute_1' => 'value'}}}
         # {'child_attributes' => [{'attribute_1' => 'value'}]}
-        if (value.respond_to?(:each)) && child_association_key && name == child_association_key
+        if value.respond_to?(:each) && child_association_key && name == child_association_key
           if value.respond_to?(:each_pair)
-            value.each_pair do |child_index, child_hash|
+            value.each_pair do |_child_index, child_hash|
               next if child_hash.include? rejected_key
 
               child_object = locate_child_object(base_object, child_core_module, child_hash, user)
@@ -214,7 +219,7 @@ module UpdateModelFieldsSupport
           end
         else
           mf = model_fields[name.to_sym]
-          next if mf.nil? || mf.blank? || (opts[:exclude_custom_fields] === true && mf.custom?) || (opts[:skip_not_editable] && !mf.can_edit?(user))
+          next if mf.nil? || mf.blank? || (opts[:exclude_custom_fields] == true && mf.custom?) || (opts[:skip_not_editable] && !mf.can_edit?(user))
 
           result = mf.process_import base_object, value, user
           root_object.errors[:base] = result if result.error? && opts[:no_validation] != true
@@ -222,12 +227,12 @@ module UpdateModelFieldsSupport
       end
     end
 
-    def locate_child_object parent_object, child_core_module, child_parameters, user
+    def locate_child_object parent_object, child_core_module, child_parameters, _user
       children = child_objects(parent_object, child_core_module)
 
       if child_parameters['id'] && (child_id = child_parameters['id'].to_i) != 0
         return children.find {|c| c.id == child_id}
-      elsif !(key_param = child_parameters[:virtual_identifier]).blank?
+      elsif (key_param = child_parameters[:virtual_identifier]).present?
         # Don't bother with field validation at this point (plus, I don't really see any scenario occurring
         # where the user doesn't have access to at least view a key field)
         # Make sure we're also not returning a field w/ an id already set, since then an id param should
@@ -243,7 +248,6 @@ module UpdateModelFieldsSupport
 
       # In this case, we do actually want all the model fields...we want there to be an error when the
       # user attempts to import a field they don't have access to...rather than silently ignoring it.
-      model_fields = data[:model_fields]
       child_core_module = data[:child_core_module]
       child_association_key = data[:child_association_key]
       core_module = data[:core_module]
@@ -259,7 +263,7 @@ module UpdateModelFieldsSupport
         # The following handles both the following value rails nested attribute styles:
         # {'child_attributes' => {'0' => {'attribute_1' => 'value'}}}
         # {'child_attributes' => [{'attribute_1' => 'value'}]}
-        if (value.respond_to?(:each)) && child_association_key && name == child_association_key
+        if value.respond_to?(:each) && child_association_key && name == child_association_key
           if value.respond_to?(:each_pair)
             value.each_pair do |child_index, child_hash|
               child_original_params = model_field_params[name][child_index]
@@ -281,7 +285,7 @@ module UpdateModelFieldsSupport
             idx = -1
             updated_values = []
             value.each do |child_hash|
-              idx+=1
+              idx += 1
               child_original_params = model_field_params[name][idx]
               if child_hash.is_a?(Hash)
                 # If we're rejecting, then we want to remove the attributes from the hash we ultimately intend to pass to the active record
@@ -314,7 +318,7 @@ module UpdateModelFieldsSupport
         # or something like that)
 
         # The actual virtual_identifier field is created via the CoreModule (it adds it to all classes set up as a core module)
-        t = Time.now
+        t = Time.zone.now
         params[:virtual_identifier] = "#{t.to_i}.#{t.nsec}"
         model_field_params[:virtual_identifier] = params[:virtual_identifier]
       end
@@ -346,8 +350,8 @@ module UpdateModelFieldsSupport
         if v.respond_to?(:each)
           vals = v.respond_to?(:values) ? v.values : v.each
           vals.each {|child_hash| remove_blank_values child_hash}
-        else
-          params.delete k if blank_value? v
+        elsif blank_value?(v)
+          params.delete k
         end
       end
 
@@ -392,7 +396,7 @@ module UpdateModelFieldsSupport
       if object_or_core_module.is_a? CoreModule
         core_module = object_or_core_module
       else
-        core_module = CoreModule.find_by_object(object_or_core_module)
+        core_module = CoreModule.find_by(object: object_or_core_module)
       end
 
       model_fields = core_module.every_model_field
@@ -406,13 +410,17 @@ module UpdateModelFieldsSupport
         child_association_key = nil
       end
 
-      {model_fields: model_fields, child_core_module: child_core_module, child_association: child_association, child_association_key: child_association_key, core_module: core_module}
+      {model_fields: model_fields,
+       child_core_module: child_core_module,
+       child_association: child_association,
+       child_association_key: child_association_key,
+       core_module: core_module}
     end
 
     # This method exists largely as extension points to shoe-horn this update attributes stuff onto
     # base objects that are not core modules, but have core module children (See InstantClassification)
     def child_objects parent_object, child_core_module
-      parent_core_module = CoreModule.find_by_object parent_object
+      parent_core_module = CoreModule.find_by object: parent_object
       parent_core_module.child_objects(child_core_module, parent_object)
     end
 

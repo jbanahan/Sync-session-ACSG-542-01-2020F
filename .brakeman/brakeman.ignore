@@ -289,25 +289,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "08ca7440cb5be6e42cf17498dd0a3544f2e9e6a702a2e9ac83a2e8926bb82185",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":importer_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "095caf9e6946cdc4dc8d1be906311de088ae6069a75c009c227ab2dde985600a",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -338,25 +319,6 @@
       "location": {
         "type": "model",
         "model": "MilestoneDefinition"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "0ccea1a2acdd0f28324a1ddfb9247c4b8b6cbb9e27874821472186971ec8797a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":tpp_survey_response_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -966,25 +928,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "1db86838bade9be5df2d29bfbce4c08e030a6eebbeccbd45bdea7c4a8d0c431a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":closed_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "1df88d5e8b7ef0c69f3fc43e559358185a778028a4bd7b25a7547a83b825903d",
@@ -1094,25 +1037,6 @@
       "location": {
         "type": "model",
         "model": "MilestoneForecastSet"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "2165d34f2230ea073f91d4382f834b44e30c9c3a50d2d3feca4a9b0bbe1a1b7a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":vendor_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -1439,25 +1363,6 @@
       "location": {
         "type": "model",
         "model": "SupportTicket"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "28c7ee3e21908a609acc7d630cfc7a3428a22045e2178a7a58b396d5caad070a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":ship_from_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -4888,7 +4793,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/attachments_controller.rb",
-      "line": 129,
+      "line": 131,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(redirect_location(get_attachable(params[:attachable_type], params[:attachable_id])))",
       "render_path": null,
@@ -5220,25 +5125,6 @@
       "location": {
         "type": "model",
         "model": "BusinessValidationResult"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "939d7c1476a7d9864a3495e5e2ce70412e83ab1cec1bb67633dd4f393b745b8a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":selling_agent_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -5722,25 +5608,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "a1a2cb2c19bf36101c57c257818827202c7d2e9694b703be5beffafbed491906",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":agent_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "a2d048859f6d4f1c4cc42eacb6657ac4c7a90c2c3e40a4bafb62fc06ea13625a",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -6178,25 +6045,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "b29640abb418faac878036d3abbc793a1bf5254932fe6ca37790ff11e1e25f42",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":accepted_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "b2edb2350f4dedbc8bc41d2fafda32f3a559ff4e40ff580106cf4fd0fdef8596",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -6208,25 +6056,6 @@
       "location": {
         "type": "model",
         "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "b350b65369fff297a27cd0f78cf49374d26ddb9aaeb0057df0ef4d1c67477edc",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":factory_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -7135,25 +6964,6 @@
       "user_input": null,
       "confidence": "Medium",
       "note": "Issue has been monkey patched (upgrade to Rails 5.2 is not feasible at this time)."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "c8af41e313b1b22fedd34d945855acb8759f8587d2448a63e2a370e08653e8df",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":division_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -8212,25 +8022,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "f119f4eaf652a1e933ad519134aa6b2cd03a0b36a0d231d2eba910f7ce97b4e5",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":order_from_address_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "f193aea09788c21c87de2852266237dd4125c5147fd1e4b5159029af52e2de4d",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -8854,6 +8645,6 @@
       "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2020-09-14 13:30:08 -0400",
+  "updated": "2020-09-16 16:34:42 -0400",
   "brakeman_version": "4.9.1"
 }

@@ -18,7 +18,7 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
     unless o.can_view?(current_user) && o.can_accept?(current_user)
       raise StatusableError.new("Access denied.", :unauthorized)
     end
-    raise StatusableError.new("Order #{o.order_number} cannot be accepted at this time.") unless o.can_be_accepted?
+    raise StatusableError, "Order #{o.order_number} cannot be accepted at this time." unless o.can_be_accepted?
     o.async_accept! current_user
     redirect_to "/api/v1/orders/#{o.id}"
   end
@@ -31,12 +31,16 @@ module Api; module V1; class OrdersController < Api::V1::ApiCoreModuleController
   end
 
   def save_object h
-    ord = h['id'].blank? ? Order.new : Order.includes([
-      {order_lines: [:piece_sets, {custom_values:[:custom_definition]}, :product]},
-      {custom_values:[:custom_definition]}
-    ]).find_by_id(h['id'])
+    ord = if h['id'].blank?
+            Order.new
+          else
+            Order.includes([
+                             {order_lines: [:piece_sets, {custom_values: [:custom_definition]}, :product]},
+                             {custom_values: [:custom_definition]}])
+                 .find_by(id: h['id'])
+          end
     raise StatusableError.new("Object with id #{h['id']} not found.", 404) if ord.nil?
-    ord.assign_model_field_attributes(h, skip_not_editable:true)
+    ord.assign_model_field_attributes(h, skip_not_editable: true)
     raise StatusableError.new("You do not have permission to save this Order.", :forbidden) unless ord.can_edit?(current_user)
     ord.save! if ord.errors.full_messages.blank?
     ord

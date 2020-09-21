@@ -69,39 +69,28 @@ class Order < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
 
-  attr_accessible :accepted_at, :accepted_by_id, :agent_id, :approval_status,
-    :closed_at, :closed_by_id, :currency, :customer_order_number,
-    :customer_order_status, :division_id, :factory_id,
-    :first_expected_delivery_date, :fob_point, :importer_id, :importer,
-    :last_exported_from_source, :last_file_bucket, :last_file_path,
-    :last_revised_date, :mode, :order_date, :order_from_address_id,
-    :order_number, :processing_errors, :product_category, :season,
-    :selling_agent_id, :ship_from_id, :ship_from, :ship_to_id, :ship_to_id,
-    :ship_window_end, :ship_window_start, :terms_of_payment, :terms_of_sale,
-    :tpp_survey_response_id, :vendor_id, :vendor, :order_lines_attributes
-
   belongs_to :division
-	belongs_to :vendor,  :class_name => "Company"
-	belongs_to :ship_to, :class_name => "Address"
-  belongs_to :ship_from, :class_name => "Address"
-  belongs_to :order_from_address, :class_name => "Address"
-  belongs_to :importer, :class_name => "Company"
-  belongs_to :agent, :class_name=>"Company"
-  belongs_to :closed_by, :class_name=>'User'
-  belongs_to :factory, :class_name=>'Company'
-  belongs_to :tpp_survey_response, :class_name=>'SurveyResponse'
-  belongs_to :accepted_by, :class_name=>'User'
-  belongs_to :selling_agent, :class_name=>'Company'
+  belongs_to :vendor,  class_name: "Company"
+  belongs_to :ship_to, class_name: "Address"
+  belongs_to :ship_from, class_name: "Address"
+  belongs_to :order_from_address, class_name: "Address"
+  belongs_to :importer, class_name: "Company"
+  belongs_to :agent, class_name: "Company"
+  belongs_to :closed_by, class_name: 'User'
+  belongs_to :factory, class_name: 'Company'
+  belongs_to :tpp_survey_response, class_name: 'SurveyResponse'
+  belongs_to :accepted_by, class_name: 'User'
+  belongs_to :selling_agent, class_name: 'Company'
 
-	validates :vendor, :presence => true, :unless => :has_importer?
-  validates :importer, :presence => true, :unless => :has_vendor?
+  validates :vendor, presence: true, unless: :importer?
+  validates :importer, presence: true, unless: :vendor?
 
-	has_many :order_lines, -> { order(:line_number) }, dependent: :destroy, autosave: true, inverse_of: :order
-	has_many :piece_sets, :through => :order_lines
-  has_many :booking_lines_by_order_line, :through => :order_lines, source: :booking_lines
+  has_many :order_lines, -> { order(:line_number) }, dependent: :destroy, autosave: true, inverse_of: :order
+  has_many :piece_sets, through: :order_lines
+  has_many :booking_lines_by_order_line, through: :order_lines, source: :booking_lines
   has_many :booking_lines
 
-  accepts_nested_attributes_for :order_lines, :allow_destroy => true
+  accepts_nested_attributes_for :order_lines, allow_destroy: true
 
   scope :not_closed, -> { where(closed_at: nil) }
   scope :is_closed, -> { where.not(closed_at: nil) }
@@ -119,7 +108,8 @@ class Order < ActiveRecord::Base
   end
 
   ########
-  # Post Update Logic (must be called manually after an order is update in the system to trigger events & snapshots).  This doesn't need to be called every time an order is updated, only when the update is relevant to the user community.
+  # Post Update Logic (must be called manually after an order is update in the system to trigger events & snapshots).
+  # This doesn't need to be called every time an order is updated, only when the update is relevant to the user community.
   ########
   def post_update_logic! user, async_snapshot = false
     OpenChain::EventPublisher.publish :order_update, self
@@ -129,7 +119,6 @@ class Order < ActiveRecord::Base
   def async_post_update_logic! user
     self.post_update_logic! user, true
   end
-
 
   ########
   # Order Acceptance Logic
@@ -159,7 +148,7 @@ class Order < ActiveRecord::Base
     self.create_snapshot_with_async_option async_snapshot, user
   end
 
-  def unaccept_logic user
+  def unaccept_logic _user
     self.approval_status = nil
     self.accepted_by = nil
     self.accepted_at = nil
@@ -189,7 +178,7 @@ class Order < ActiveRecord::Base
   ########
 
   # set the order as closed and take a snapshot and save!
-  def close! user, async_snapshot=false
+  def close! user, async_snapshot = false
     close_logic(user)
     self.save!
     OpenChain::EventPublisher.publish :order_close, self
@@ -206,6 +195,7 @@ class Order < ActiveRecord::Base
   def async_close! user
     self.close! user, true
   end
+
   def reopen! user, async_snapshot = false
     reopen_logic(user)
     self.save!
@@ -213,7 +203,7 @@ class Order < ActiveRecord::Base
     self.create_snapshot_with_async_option async_snapshot, user
   end
 
-  def reopen_logic user
+  def reopen_logic _user
     self.closed_by = nil
     self.closed_at = nil
     nil
@@ -222,9 +212,11 @@ class Order < ActiveRecord::Base
   def async_reopen! user
     self.reopen! user, true
   end
+
   def closed?
     !self.closed_at.nil?
   end
+
   def can_close? user
     user.edit_orders? && (user.company == self.importer || user.company.master?)
   end
@@ -241,12 +233,12 @@ class Order < ActiveRecord::Base
     return if self.order_lines.empty?
 
     already_assigned = self.vendor.products_as_vendor.pluck(:product_id)
-    products_on_order = Set.new(self.order_lines.collect {|ol| ol.product_id}.compact).to_a
+    products_on_order = Set.new(self.order_lines.collect(&:product_id).compact).to_a
 
     needs_assignment = products_on_order - already_assigned
 
     needs_assignment.each do |product_id|
-      self.vendor.product_vendor_assignments.create!(product_id:product_id).create_snapshot(user)
+      self.vendor.product_vendor_assignments.create!(product_id: product_id).create_snapshot(user)
     end
   end
 
@@ -266,32 +258,32 @@ class Order < ActiveRecord::Base
   def available_tpp_survey_responses
     return [] unless self.vendor
     ship_to_country_ids = self.order_lines.collect {|ol| ol.ship_to ? ol.ship_to.country_id : nil}.uniq.compact
-    return SurveyResponse.
-      not_expired.
-      joins(:survey=>:trade_preference_program).
-      where('survey_responses.user_id IN (SELECT id FROM users WHERE users.company_id = ?)', self.vendor_id).
-      where('trade_preference_programs.destination_country_id IN (?)', ship_to_country_ids).
-      where('survey_responses.submitted_date IS NOT NULL')
+    SurveyResponse
+      .not_expired
+      .joins(survey: :trade_preference_program)
+      .where('survey_responses.user_id IN (SELECT id FROM users WHERE users.company_id = ?)', self.vendor_id)
+      .where('trade_preference_programs.destination_country_id IN (?)', ship_to_country_ids)
+      .where('survey_responses.submitted_date IS NOT NULL')
   end
 
-	def related_shipments
-	  r = Set.new
-	  self.order_lines.each do |line|
-	    r = r + line.related_shipments
-	  end
-	  return r
-	end
+  def related_shipments
+    r = Set.new
+    self.order_lines.each do |line|
+      r += line.related_shipments
+    end
+    r
+  end
 
   def related_bookings
     r = Set.new
     self.booking_lines.each { |line| r.add line.shipment }
-    return r
+    r
   end
 
   # useful order number to show to user
   def display_order_number
-    return self.customer_order_number unless self.customer_order_number.blank?
-    return self.order_number
+    return self.customer_order_number if self.customer_order_number.present?
+    self.order_number
   end
 
   # Returns true if order appears on any shipments.
@@ -308,48 +300,50 @@ class Order < ActiveRecord::Base
     v.nil? ? BigDecimal("0") : v
   end
 
-	def can_view?(user)
-	  return user.view_orders? &&
+  def can_view?(user)
+    user.view_orders? &&
       (
-        user.company.master ||
-        (user.company_id == self.vendor_id) ||
-        (user.company_id == self.importer_id) ||
-        (user.company_id == self.agent_id) ||
-        (user.company_id == self.factory_id) ||
-        (user.company_id == self.selling_agent_id) ||
-        user.company.linked_companies.include?(importer) ||
-        user.company.linked_companies.include?(vendor) ||
-        user.company.linked_companies.include?(selling_agent)
-      )
-	end
+         user.company.master ||
+         (user.company_id == self.vendor_id) ||
+         (user.company_id == self.importer_id) ||
+         (user.company_id == self.agent_id) ||
+         (user.company_id == self.factory_id) ||
+         (user.company_id == self.selling_agent_id) ||
+         user.company.linked_companies.include?(importer) ||
+         user.company.linked_companies.include?(vendor) ||
+         user.company.linked_companies.include?(selling_agent)
+       )
+  end
 
   def can_view_business_validation_results? u
     self.can_view?(u) && u.view_business_validation_results?
   end
 
+  # rubocop:disable Layout/LineLength
   def self.search_where user
     return "1=1" if user.company.master?
     cid = user.company_id
     lstr = "(SELECT child_id FROM linked_companies WHERE parent_id = #{cid})"
     "(orders.vendor_id = #{cid} OR orders.vendor_id IN #{lstr} OR orders.importer_id = #{cid} OR orders.importer_id IN #{lstr} OR orders.factory_id = #{cid} OR orders.selling_agent_id = #{cid} OR orders.agent_id = #{cid})"
   end
+  # rubocop:enable Layout/LineLength
 
   def can_edit?(user)
-    return user.edit_orders? && self.can_view?(user)
+    user.edit_orders? && self.can_view?(user)
   end
 
   def can_comment? user
-    return user.comment_orders? && self.can_view?(user)
+    user.comment_orders? && self.can_view?(user)
   end
 
   def can_attach? user
-    return user.attach_orders? && self.can_view?(user)
+    user.attach_orders? && self.can_view?(user)
   end
 
   def find_same
-    found = self.order_number.nil? ? [] : Order.where({:order_number => self.order_number.to_s})
+    found = self.order_number.nil? ? [] : Order.where({order_number: self.order_number.to_s})
     raise "Found multiple orders with the same order number #{self.order_number}" if found.size > 1
-    return found.empty? ? nil : found.first
+    found.empty? ? nil : found.first
   end
 
   def locked?
@@ -361,24 +355,23 @@ class Order < ActiveRecord::Base
   def shipped_qty
     q = 0
     self.order_lines.each do |line|
-      q = q + line.shipped_qty
+      q += line.shipped_qty
     end
-    return q
+    q
   end
 
   def ordered_qty
     # optimize with a single query
     q = 0
     self.order_lines.each do |line|
-      q = q + line.quantity
+      q += line.quantity
     end
-    return q
+    q
   end
 
   def self.search_secure user, base_object
     base_object.where search_where user
   end
-
 
   def worst_milestone_state
     return nil if self.piece_sets.blank?
@@ -402,7 +395,7 @@ class Order < ActiveRecord::Base
   def create_unique_po_number order_number = self.customer_order_number
     # Use the importer/vendor identifier as the "uniqueness" factor on the order number.  This is only a factor for PO's utilized on a shared instance.
     uniqueness = nil
-    if has_importer?
+    if importer?
       uniqueness = self.importer.system_code.presence || self.importer.customs_identifier
       raise "Failed to create unique Order Number from #{self.customer_order_number} for Importer #{self.importer.name}." if uniqueness.blank?
     else
@@ -427,11 +420,12 @@ class Order < ActiveRecord::Base
   end
 
   private
-    def has_importer?
+
+    def importer?
       self.importer.present?
     end
 
-    def has_vendor?
+    def vendor?
       self.vendor.present?
     end
 end
