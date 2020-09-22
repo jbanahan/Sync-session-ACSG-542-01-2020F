@@ -408,4 +408,30 @@ describe OpenChain::CustomHandler::Pvh::PvhCanadaBillingInvoiceFileGenerator do
       expect(l).to have_xpath_value("ChargeField/Value", "85.0")
     end
   end
+
+  describe "duty_invoice_number" do
+
+    let (:entry_snapshot) {
+      entry = Entry.new entry_number: "11981000001"
+      JSON.parse(CoreModule.find_by_object(entry).entity_json(entry))
+    }
+
+    let (:invoice_snapshot) {
+      invoice = BrokerInvoice.new suffix: ""
+      JSON.parse(CoreModule.find_by_object(invoice).entity_json(invoice))
+    }
+
+    let (:suffix_invoice_snapshot) {
+      invoice = BrokerInvoice.new suffix: "2"
+      JSON.parse(CoreModule.find_by_object(invoice).entity_json(invoice))
+    }
+
+    it "uses no suffix for files without a billing suffix" do
+      expect(subject.duty_invoice_number(entry_snapshot, invoice_snapshot)).to eq "11981000001"
+    end
+
+    it "uses alphabetic suffix for files with a billing suffix" do
+      expect(subject.duty_invoice_number(entry_snapshot, suffix_invoice_snapshot)).to eq "11981000001B"
+    end
+  end
 end

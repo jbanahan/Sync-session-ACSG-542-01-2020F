@@ -57,7 +57,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhCanadaBillingInvoic
     return nil if suffix.blank?
     # Just use the same algorithm for determing the A-Z column index to determine the suffix to use
     # 1 will be the first suffix, which we want to map to A, hence subtracting 1.
-    XlsxBuilder.numeric_column_to_alphabetic_column(suffix - 1)
+    XlsxBuilder.numeric_column_to_alphabetic_column(suffix.to_i - 1)
   end
 
   def duty_charges_for_line line_snapshot
