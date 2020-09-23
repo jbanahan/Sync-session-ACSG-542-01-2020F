@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sockets!</title>
+</head>
+<body>
+
+<script src="node_modules/jquery/dist/jquery.js"></script>
+<script src="node_modules/socket.io-client/dist/socket.io.js"></script>
+<script src="socketClient.js"></script>
+
+<div id="chat">
+    <div id="nickname">
+        <form id="set-nickname" class="wrap">
+            <p>Please type in your nickname and press enter.</p>
+            <input id="nick">
+        </form>
+    </div>
+    <div id="messages">
+        <div id="nicknames"></div>
+        <div id="lines"></div>
+    </div>
+    <form id="send-message">
+        <input id="message">
+        <button>Send</button>
+    </form>
+</div>
+
+</body>
+</html>
