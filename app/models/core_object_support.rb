@@ -208,7 +208,7 @@ module CoreObjectSupport
     def has_never_been_synced_where_clause
       # This is solely for the cause where we only ever want to sync an object a single time...therefore, we ONLY want to return results that either
       # do not have a sync record or the sync record sent at date is null - sent_date is null is to allow for clearing and manual resends
-      "sync_records.id IS NULL OR sync_records.sent_at IS NULL"
+      "(sync_records.id IS NULL OR sync_records.sent_at IS NULL)"
     end
 
     # Deprecated...use join_clause_for_need_sync

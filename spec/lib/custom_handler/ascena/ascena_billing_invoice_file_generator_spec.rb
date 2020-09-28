@@ -1,44 +1,44 @@
 describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
   describe "generate_and_send" do
-    let (:broker_invoice) {
+    let (:broker_invoice) do
       Factory(:broker_invoice, invoice_number: "INVOICENUMBER", invoice_date: Time.zone.parse("2017-01-13").to_date)
-    }
+    end
 
-    let (:broker_invoice_line_duty) {
+    let (:broker_invoice_line_duty) do
       Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("100.00"), charge_code: "0001", charge_description: "DUTY")
-    }
+    end
 
-    let (:broker_invoice_line_duty_direct) {
+    let (:broker_invoice_line_duty_direct) do
       Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("100.00"), charge_code: "0099", charge_description: "Duty Paid Direct")
-    }
+    end
 
-    let (:broker_invoice_line_brokerage) {
+    let (:broker_invoice_line_brokerage) do
       Factory(:broker_invoice_line, broker_invoice: broker_invoice, charge_amount: BigDecimal("200.00"), charge_code: "0007", charge_description: "Brokerage")
-    }
+    end
 
-    let (:entry) {
-      entry = Factory(:entry, entry_number: "ENTRYNO", broker_reference: "REF", po_numbers: "PO 1\n PO 2\n PO 3")
+    let (:entry) do
+      entry = Factory(:entry, entry_number: "ENTRYNO", broker_reference: "REF", po_numbers: "PO 1\n PO 2\n PO 3", entry_filed_date: Date.new(2020, 3, 15))
       commercial_invoice = Factory(:commercial_invoice, entry: entry)
-      invoice_line_1 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 1", prorated_mpf: BigDecimal(10), product_line: "CA")
-      invoice_tariff_1 = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line_1, duty_amount: BigDecimal(20))
+      invoice_line1 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 1", prorated_mpf: BigDecimal(10), product_line: "CA")
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line1, duty_amount: BigDecimal(20))
 
-      invoice_line_2 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 2", prorated_mpf: BigDecimal(20), product_line: "DB")
-      invoice_tariff_2 = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line_2, duty_amount: BigDecimal(30))
+      invoice_line2 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 2", prorated_mpf: BigDecimal(20), product_line: "DB")
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line2, duty_amount: BigDecimal(30))
 
       # Make two lines for the same PO, so we make sure we're handling the sum'ing at po level correctly as well as the proration for brokerage lines
-      invoice_line_3 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
-      invoice_tariff_3 = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line_3, duty_amount: BigDecimal(40))
+      invoice_line3 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line3, duty_amount: BigDecimal(40))
 
-      invoice_line_4 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
-      invoice_tariff_4 = Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line_3, duty_amount: BigDecimal(40))
+      invoice_line4 = Factory(:commercial_invoice_line, commercial_invoice: commercial_invoice, po_number: "PO 3", prorated_mpf: BigDecimal(30), product_line: "JST")
+      Factory(:commercial_invoice_tariff, commercial_invoice_line: invoice_line4, duty_amount: BigDecimal(40))
 
       entry
-    }
+    end
 
     let (:user) { Factory(:master_user) }
 
-    let (:broker_invoice_with_duty_snapshot) {
+    let (:broker_invoice_with_duty_snapshot) do
       broker_invoice_line_duty
       broker_invoice_line_duty_direct
       broker_invoice.reload
@@ -47,9 +47,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       entry.reload
       JSON.parse CoreModule::ENTRY.entity_json(entry)
-    }
+    end
 
-    let (:broker_invoice_with_brokerage_snapshot) {
+    let (:broker_invoice_with_brokerage_snapshot) do
       broker_invoice_line_brokerage
       broker_invoice.reload
 
@@ -57,9 +57,9 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       entry.reload
       JSON.parse CoreModule::ENTRY.entity_json(entry)
-    }
+    end
 
-    let (:broker_invoice_with_all_charges_snapshot) {
+    let (:broker_invoice_with_all_charges_snapshot) do
       broker_invoice_line_duty
       broker_invoice_line_duty_direct
       broker_invoice_line_brokerage
@@ -69,7 +69,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
       entry.reload
       JSON.parse CoreModule::ENTRY.entity_json(entry)
-    }
+    end
 
     it "generates an ascena billing file with duty data" do
       data = nil
@@ -96,7 +96,7 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
 
     it "Prefixes file with 'MAUR' for Maurices entry" do
       entry.update! customer_number: "MAUR"
-      data = nil
+
       expect(subject).to receive(:ftp_file) do |file, opts|
         expect(File.basename(file).split("_").first).to eq "MAUR"
       end
@@ -215,6 +215,22 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
       expect(data[1][0][4]).to eq "77519"
     end
 
+    it "generates only duty file if no PO numbers on the commercial invoice" do
+      entry.commercial_invoice_lines.each { |cil| cil.update! po_number: nil }
+      entry.save!
+      data = []
+      expect(subject).to receive(:ftp_file).exactly(1).times do |file, opts|
+        data << CSV.parse(file.read, col_sep: "|")
+      end
+
+      subject.generate_and_send broker_invoice_with_all_charges_snapshot
+
+      expect(data.length).to eq 1
+
+      # Verify the vendor ids used to determine that a duty and brokerage file was generated
+      expect(data[0][0][4]).to eq "00151"
+    end
+
     it "uses the correct ftp information" do
       ftp_opts = {}
       expect(subject).to receive(:ftp_sync_file) do |file, sr, opts|
@@ -268,36 +284,36 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
     end
 
     context "with duty credits" do
-      let (:broker_invoice_duty_credit) {
+      let (:broker_invoice_duty_credit) do
         duty_line = broker_invoice_line_duty
         duty_invoice = duty_line.broker_invoice
         invoice = Factory(:broker_invoice, entry: duty_line.broker_invoice.entry, invoice_number: duty_invoice.invoice_number + "V", invoice_date: Time.zone.parse("2017-01-14").to_date)
-        invoice_line = Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: duty_line.charge_amount * -1)
+        Factory(:broker_invoice_line, broker_invoice: invoice, charge_code: "0001", charge_amount: duty_line.charge_amount * -1)
 
         invoice
-      }
+      end
 
-      let (:broker_invoice_duty_credit_snapshot) {
+      let (:broker_invoice_duty_credit_snapshot) do
         entry.broker_invoices << broker_invoice_line_duty.broker_invoice
         entry.broker_invoices << broker_invoice_duty_credit
 
         entry.reload
         JSON.parse CoreModule::ENTRY.entity_json(entry)
-      }
+      end
 
-      let (:original_duty_sync_record) {
+      let (:original_duty_sync_record) do
         broker_invoice_line_duty.broker_invoice.sync_records.create! trading_partner: "ASCE_DUTY_BILLING", sent_at: Time.zone.parse("2017-01-13 00:00")
-      }
+      end
 
-      let (:ftp_session_attachment) {
+      let (:ftp_session_attachment) do
         ftp_session = original_duty_sync_record.create_ftp_session
         ftp_session.create_attachment attached_file_name: "ASCE_DUTY_BILLING.csv"
-      }
+      end
 
-      let (:duty_file_data) {
+      let (:duty_file_data) do
         "H|INVOICENUMBER|STANDARD|01/13/2017|00151|100.0|USD|For Customs Entry # ENTRYNO\n"+
         "L|INVOICENUMBER|1|00151|30.0|Duty|PO 1|7218"
-      }
+      end
 
       it "issues a duty credit by downloading and manually reversing a previously sent billing file" do
         ftp_session_attachment
@@ -326,15 +342,15 @@ describe OpenChain::CustomHandler::Ascena::AscenaBillingInvoiceFileGenerator do
     end
 
     context "with duty correction billed" do
-      let! (:broker_invoice_line_duty_correction) {
+      let! (:broker_invoice_line_duty_correction) do
         broker_invoice_line_duty.update! charge_code: "0255", charge_description: "PO 1"
         broker_invoice_line_duty
-      }
+      end
 
-      let! (:broker_invoice_line_2_duty_correction) {
+      let! (:broker_invoice_line_2_duty_correction) do
         broker_invoice_line_duty_direct.update! charge_code: "0255", charge_description: "PO 2"
         broker_invoice_line_duty_direct
-      }
+      end
 
       it "sends billing file for duty corrections" do
         data = nil

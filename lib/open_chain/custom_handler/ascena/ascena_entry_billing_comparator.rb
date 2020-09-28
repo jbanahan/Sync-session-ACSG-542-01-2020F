@@ -10,10 +10,12 @@ module OpenChain; module CustomHandler; module Ascena; class AscenaEntryBillingC
     return false unless super
     ent = snapshot.try(:recordable)
     ent.source_system == Entry::KEWILL_SOURCE_SYSTEM &&
-      (ent.customer_number == "ASCE" || (ent.customer_number == "MAUR" && ent.entry_filed_date.try(:>=, "2019-05-07")))
+      ent.entry_type != "06" && # filter out FTZ
+      (ent.entry_filed_date && /ISF/i.match(ent.customer_references).nil?) && # filter out ISF shell records
+      (ent.customer_number == "ASCE" || (ent.customer_number == "MAUR" && ent.entry_filed_date >= "2019-05-07"))
   end
 
-  def self.compare type, id, old_bucket, old_path, old_version, new_bucket, new_path, new_version
+  def self.compare _type, _id, _old_bucket, _old_path, _old_version, new_bucket, new_path, new_version
     snapshot = get_json_hash(new_bucket, new_path, new_version)
 
     if snapshot
