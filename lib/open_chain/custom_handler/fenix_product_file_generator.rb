@@ -22,7 +22,9 @@ module OpenChain
         @use_name_for_description = (options['use_name_for_description'].to_s == "true")
 
         if MasterSetup.get.custom_feature? "Full Fenix Product File"
-          custom_defintions = [:class_special_program_indicator, :class_cfia_requirement_id, :class_cfia_requirement_version, :class_cfia_requirement_code, :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
+          custom_defintions = [:class_special_program_indicator, :class_cfia_requirement_id,
+                               :class_cfia_requirement_version, :class_cfia_requirement_code,
+                               :class_ogd_end_use, :class_ogd_misc_id, :class_ogd_origin, :class_sima_code]
         else
           custom_defintions = []
         end
@@ -43,19 +45,22 @@ module OpenChain
           if products.length > 0
             make_file(products, update_sync_records: update_sync_records) do |file, sync_records|
               ftp_sync_file(file, sync_records, ftp2_vandegrift_inc(ftp_directory))
-              sync_records.each {|sr| sr.save! }
+              sync_records.each(&:save!)
             end
           end
         end while products.nil? || products.length > 0
       end
 
       def find_products
-        r = Product.
-          eager_load(:classifications=>:tariff_records).
-          # Prevent stale classifications from going to Fenix
-          joins("LEFT OUTER JOIN custom_values v on classifications.id = v.customizable_id AND v.customizable_type = 'Classification' AND custom_definition_id = #{@cdefs[:class_stale_classification].id}").
-          where("v.boolean_value IS NULL OR v.boolean_value = 0").
-          where("classifications.country_id = #{@canada_id} and length(tariff_records.hts_1) > 6").need_sync("fenix-#{@fenix_customer_code}")
+        # The custom_values join prevents stale classifications from going to Fenix.
+        r = Product
+            .eager_load(classifications: :tariff_records)
+            .joins("LEFT OUTER JOIN custom_values v on
+                    classifications.id = v.customizable_id AND
+                    v.customizable_type = 'Classification' AND
+                    custom_definition_id = #{@cdefs[:class_stale_classification].id}")
+            .where("v.boolean_value IS NULL OR v.boolean_value = 0")
+            .where("classifications.country_id = #{@canada_id} and length(tariff_records.hts_1) > 6").need_sync("fenix-#{@fenix_customer_code}")
 
         bad_prods = bad_product_ids
         if bad_prods.length > 0
@@ -63,7 +68,7 @@ module OpenChain
         end
 
         if @importer_id
-          r = r.where(:importer_id => @importer_id)
+          r = r.where(importer_id: @importer_id)
         end
 
         if @additional_where
@@ -73,9 +78,7 @@ module OpenChain
         r.limit(max_products).order("products.id")
       end
 
-      def max_products
-        @max_products
-      end
+      attr_reader :max_products
 
       def record_bad_product product
         @bad_products ||= Set.new
@@ -98,18 +101,18 @@ module OpenChain
             c = p.classifications.find {|cl| cl.country_id == @canada_id }
             next unless c
             c.tariff_records.each do |tr|
-              unless tr.hts_1.blank?
+              if tr.hts_1.present?
 
                 if stale_classification? tr
                   stale_classification = true
                 else
                   begin
-                    # Fenix's database uses the windows extended "ASCII" encoding.  Make sure we transcode our UTF-8 data to the windows encoding
-                    # This lets us send characters like ”, Æ, etc correctly to Fenix
+                    # Fenix's database uses the windows extended "ASCII" encoding.  Make sure we transcode our UTF-8 data to the windows encoding.
+                    # This lets us send non-standard characters correctly to Fenix.
                     t << file_output(@fenix_customer_code, p, c, tr).encode("WINDOWS-1252")
                     file_has_data = true
                   rescue Encoding::UndefinedConversionError => e
-                    # Make sure we're storign off all the product ids that were bad, otherwise it's possible we'll
+                    # Make sure we're storing off all the product ids that were bad, otherwise it's possible we'll
                     # get into a vicious loop cycle, since a follow up pass to check if more parts need to be sent (find_products) will
                     # return the bad part unless we indicate it shouldn't.
                     record_bad_product(p)
@@ -123,16 +126,14 @@ module OpenChain
 
             if stale_classification
               update_stale_classification(user, p, c)
-            else
-              # If we need to manually generate a file, then we won't want to run the sync data
-              if update_sync_records
-                sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
-                sr.sent_at = Time.zone.now
-                sr.confirmed_at = (sr.sent_at + 1.minute)
-                sr.confirmation_file_name = "Fenix Confirmation"
-                sr.save!
-                sync_records << sr
-              end
+            # If we need to manually generate a file, then we won't want to run the sync data
+            elsif update_sync_records
+              sr = p.sync_records.where(trading_partner: "fenix-#{@fenix_customer_code}").first_or_initialize
+              sr.sent_at = Time.zone.now
+              sr.confirmed_at = (sr.sent_at + 1.minute)
+              sr.confirmation_file_name = "Fenix Confirmation"
+              sr.save!
+              sync_records << sr
             end
           end
 
@@ -146,7 +147,7 @@ module OpenChain
 
       def stale_classification? t
         ids = OfficialTariff.where(country_id: @canada_id, hts_code: t.hts_1).limit(1).pluck :id
-        return ids.blank?
+        ids.blank?
       end
 
       def update_stale_classification user, product, classification
@@ -156,16 +157,26 @@ module OpenChain
 
       def ftp_directory
         folder = "to_ecs/fenix_products"
-        folder += "/#{@output_subdirectory}" unless @output_subdirectory.blank?
+        folder += "/#{@output_subdirectory}" if @output_subdirectory.present?
 
         folder
       end
 
-      def self.run_schedulable opts_hash={}
-        OpenChain::CustomHandler::FenixProductFileGenerator.new(opts_hash["fenix_customer_code"], opts_hash).generate
+      def self.run_schedulable opts_hash = {}
+        self.new(opts_hash["fenix_customer_code"], opts_hash).generate
+      end
+
+      def spi_value classification, _product
+        spi = custom_value(classification, :class_special_program_indicator)
+        spi.blank? ? "" : spi.to_i
+      end
+
+      def country_of_origin product
+        custom_value(product, :prod_country_of_origin).to_s
       end
 
       private
+
         def file_output fenix_customer_code, p, c, tr
           # For some reason the product line starts with an N followed by 14 blanks
           line = "N"
@@ -185,10 +196,9 @@ module OpenChain
           line << str("", 32) # Blank Space (295 - 327)
           line << str("", 7) # GST Exemption Code (327 - 334)
           line << str("", 7) # Blank Space (334 - 341)
-          spi = custom_value(c, :class_special_program_indicator)
-          line << str(spi.blank? ? "" : spi.to_i, 2) # Tariff Treatment (341, 343)
+          line << str(spi_value(c, p), 2) # Tariff Treatment (341, 343)
           line << str("", 16) # Blank Space (343 - 359)
-          line << str((@suppress_country ? "" : custom_value(p, :prod_country_of_origin).to_s), 3) # Country Of Origin (359 - 362)
+          line << str((@suppress_country ? "" : country_of_origin(p)), 3) # Country Of Origin (359 - 362)
           line << str(custom_value(c, :class_cfia_requirement_id), 8) # CFIA Requirement ID (362 - 370)
           line << str(custom_value(c, :class_cfia_requirement_version), 4) # CFIA Requirement Version (370 - 374)
           line << str(custom_value(c, :class_cfia_requirement_code), 6) # CFIA Code (374 - 380)
@@ -196,11 +206,12 @@ module OpenChain
           line << str(custom_value(c, :class_ogd_misc_id), 3) # OGD Misc Id (383 - 386)
           line << str(custom_value(c, :class_ogd_origin), 3) # OGD Origin (386 - 389)
           line << str(custom_value(c, :class_sima_code), 2) # SIMA Code (389 - 391)
-          # line << str("", 2) # Excise Rate (391 - 393)
+          # Excise Rate (391 - 393) is not included
 
           # Because Canada doesn't allow exclamation marks or pipes in B3 files (WTF?, strip them)
           line = line.gsub(/[!|]/, " ")
           line += "\r\n"
+          line
         end
 
         def force_fixed str, len

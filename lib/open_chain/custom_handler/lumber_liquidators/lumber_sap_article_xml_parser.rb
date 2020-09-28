@@ -36,7 +36,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberSa
     envelope = REXML::XPath.first(root, '//IDOC/EDI_DC40')
     ext_time = extract_time(envelope)
 
-    importer = Company.where(master: true).first
+    importer = Company.where(system_code: "LUMBER").first
     log.company = importer
 
     p = nil
