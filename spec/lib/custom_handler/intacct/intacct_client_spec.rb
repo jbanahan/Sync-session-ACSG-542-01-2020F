@@ -22,6 +22,18 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
   let (:xml_gen) { instance_double(OpenChain::CustomHandler::Intacct::IntacctXmlGenerator) }
 
+  let! (:intacct_http_client) do
+    c = instance_double(OpenChain::CustomHandler::Intacct::IntacctHttpClient)
+    # This is kind of laziness..there's a few specs that use the class as the subject, for those
+    # we'll allow any instance to receive the http call.
+    if subject == described_class
+      allow_any_instance_of(subject).to receive(:intacct_http_client).and_return c
+    else
+      allow(subject).to receive(:intacct_http_client).and_return c
+    end
+    c
+  end
+
   describe "send_dimension" do
 
     it "checks for an existing dimension before creating a new one" do
@@ -383,7 +395,6 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
     end
   end
 
-  # rubocop:disable RSpec/InstanceVariable
   describe "post_xml" do
 
     let (:intacct_response) do
@@ -411,27 +422,22 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       before do
         allow(subject).to receive(:production?).and_return true
-
-        allow(subject).to receive(:http_request) do |uri, post|
-          @uri = uri
-          @post = post
-
-          intacct_response
-        end
       end
 
       it "posts xml to the intacct API" do
         function_content = "<content>function</content>"
         outer_control_id = Digest::SHA1.hexdigest function_content
+        request_body = nil
+        expect(intacct_http_client).to receive(:post) do |url, body|
+          expect(url).to eq "https://api.intacct.com/ia/xml/xmlgw.phtml"
+          request_body = body
+
+          intacct_response
+        end
         expect(subject.post_xml("location", true, true, function_content, "controlid")).to eq intacct_response
 
-        # We're primarily concerned with what we're actually posting here, so check out the URI and post values
-        # we've captured.
-        expect(@uri.to_s).to eq "https://api.intacct.com/ia/xml/xmlgw.phtml"
-        expect(@post.uri).to eq @uri
-        expect(@post['content-type']).to eq "x-intacct-xml-request"
-
-        x = REXML::Document.new(@post.body)
+        # We're primarily concerned with what we're actually posting here
+        x = REXML::Document.new(request_body)
 
         expect(x.text("/request/control/senderid")).to eq "vfi"
         expect(x.text("/request/control/password")).to eq "vfi-password"
@@ -453,13 +459,16 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
         function_content = "<content>function</content>"
         outer_control_id = Digest::SHA1.hexdigest function_content
+        request_body = nil
+        expect(intacct_http_client).to receive(:post) do |url, body|
+          expect(url).to eq overrides[:url]
+          request_body = body
+
+          intacct_response
+        end
         expect(subject.post_xml(nil, false, false, function_content, "controlid", request_options: overrides)).to eq intacct_response
 
-        expect(@uri.to_s).to eq overrides[:url]
-        expect(@post.uri).to eq @uri
-        expect(@post['content-type']).to eq "x-intacct-xml-request"
-
-        x = REXML::Document.new(@post.body)
+        x = REXML::Document.new(request_body)
 
         expect(x.text("/request/control/senderid")).to eq "vfi"
         expect(x.text("/request/control/password")).to eq "vfi-password"
@@ -483,7 +492,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         correction = "Correction"
 
         error_response = REXML::Document.new "<errormessage><error><errorno>#{error_no}</errorno><description>#{description}</description><description2>#{description2}</description2><correction>#{correction}</correction></error></errormessage>" # rubocop:disable Layout/LineLength
-        expect(subject).to receive(:http_request).and_return error_response
+        expect(intacct_http_client).to receive(:post).and_return error_response
 
         error_message = "Intacct API call failed with errors:\nError No: #{error_no}\nDescription: #{description}\nDescription 2: #{description2}\nCorrection: #{correction}"
         expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error(OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message) # rubocop:disable Layout/LineLength
@@ -491,7 +500,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       it "transparently handles responses with non-success statuses" do
         error_response = REXML::Document.new "<result><controlid>id</controlid><status>error</status><function>func</function></result>"
-        expect(subject).to receive(:http_request).and_return error_response
+        expect(intacct_http_client).to receive(:post).and_return error_response
         error_message = "Intacct API Function call func failed with status error."
         expect {subject.post_xml nil, false, false, "<f>content</f>", "id"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message
       end
@@ -503,7 +512,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         <error><errorno>XL03000009</errorno><description></description><description2>Desc 2</description2><correction></correction></error>
         </errormessage>"
         error_response = REXML::Document.new error
-        expect(subject).to receive(:http_request).and_return error_response
+        expect(intacct_http_client).to receive(:post).and_return error_response
         error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: Check the transaction for errors or inconsistencies, then try again.\nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: " # rubocop:disable Layout/LineLength
 
         expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctRetryError, error_message # rubocop:disable Layout/LineLength
@@ -516,7 +525,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         <error><errorno>XL03000009</errorno><description></description><description2>Desc 2</description2><correction></correction></error>
         </errormessage>"
         error_response = REXML::Document.new error
-        expect(subject).to receive(:http_request).and_return error_response
+        expect(intacct_http_client).to receive(:post).and_return error_response
         error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Other Error\nCorrection: \nError No: BL01001973\nDescription: \nDescription 2: Desc 1\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Desc 2\nCorrection: " # rubocop:disable Layout/LineLength
 
         expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctClientError, error_message # rubocop:disable Layout/LineLength
@@ -529,7 +538,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
         <error><errorno>XL03000009</errorno><description></description><description2>Could not create sodocument record!</description2><correction></correction></error>
         </errormessage>"
         error_response = REXML::Document.new error
-        expect(subject).to receive(:http_request).and_return error_response
+        expect(intacct_http_client).to receive(:post).and_return error_response
         error_message = "Intacct API call failed with errors:\nError No: BL01001973\nDescription: \nDescription 2: Invalid Brokerage File '2399341' specified.\nCorrection: \nError No: XL03000009\nDescription: \nDescription 2: Could not create sodocument record!\nCorrection: " # rubocop:disable Layout/LineLength
 
         expect {subject.post_xml nil, false, false, "<f>content</f>", "controlid"}.to raise_error OpenChain::CustomHandler::Intacct::IntacctClient::IntacctInvalidDimensionError.new(error_message, "Broker File", "2399341") # rubocop:disable Layout/LineLength
@@ -546,8 +555,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
         it "allows overriding unique request option" do
           Thread.current.thread_variable_set(:force_non_unique_intacct_request, true)
+          request_body = nil
+          expect(intacct_http_client).to receive(:post) do |_url, body|
+            request_body = body
+            intacct_response
+          end
           expect(subject.post_xml("location", true, true, "<content>function</content>", "controlid")).to eq intacct_response
-          x = REXML::Document.new(@post.body)
+          x = REXML::Document.new(request_body)
           expect(x.text("/request/control/uniqueid")).to eq "false"
         end
       end
@@ -574,13 +588,6 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       before do
         allow(subject).to receive(:production?).and_return false
-
-        allow(subject).to receive(:http_request) do |uri, post|
-          @uri = uri
-          @post = post
-
-          intacct_response
-        end
       end
 
       it "errors if attempting to post non-readonly request to non-sandbox" do
@@ -588,6 +595,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
       end
 
       it "allows readonly request to production system" do
+        expect(intacct_http_client).to receive(:post).and_return intacct_response
         expect { subject.post_xml "location", true, true, "<content>function</content>", "controlid", read_only: true }.not_to raise_error
       end
 
@@ -614,33 +622,18 @@ describe OpenChain::CustomHandler::Intacct::IntacctClient do
 
       before do
         allow(subject).to receive(:production?).and_return false
-
-        allow(subject).to receive(:http_request) do |uri, post|
-          @uri = uri
-          @post = post
-
-          intacct_response
-        end
       end
 
       it "allows post to sandbox" do
+        request_body = nil
+        expect(intacct_http_client).to receive(:post) do |_url, body|
+          request_body = body
+          intacct_response
+        end
+
         expect { subject.post_xml "location", true, true, "<content>function</content>", "controlid" }.not_to raise_error
-        expect(@post).not_to be_nil
-        expect(@post.body).to include "vfi-sandbox"
+        expect(request_body).to include "vfi-sandbox"
       end
-    end
-  end
-  # rubocop:enable RSpec/InstanceVariable
-
-  describe "process_response" do
-    it "wraps the response body in a REXML::Document" do
-      # This test is just to ensure we're fulfilling the HttpClient contract to turn the response into an XML document
-      resp = instance_double(Net::HTTPResponse)
-      expect(resp).to receive(:body).and_return "<xml>Test</xml>"
-
-      r = subject.send(:process_response, resp)
-      expect(r).to be_a(REXML::Document)
-      expect(r.to_s).to eq REXML::Document.new("<xml>Test</xml>").to_s
     end
   end
 

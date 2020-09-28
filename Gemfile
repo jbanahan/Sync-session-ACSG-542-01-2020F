@@ -90,9 +90,6 @@ gem 'jsonpath', '1.0.1'
 # Slack.com integration
 gem 'slack-ruby-client', '0.13.1'
 
-# Used for Freshservice API access.
-gem 'rest-client', '2.0.2'
-
 gem 'email_validator', '1.6.0'
 
 # Templating language for secure user input

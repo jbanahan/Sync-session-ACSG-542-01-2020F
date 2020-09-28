@@ -78,28 +78,28 @@ module OpenChain; module Api; class ApiClient
   def get path, parameters = {}
     uri_string = construct_path path
     uri_string += "?#{encode_parameters(parameters)}" unless parameters.blank?
-    execute_request {|token| http_client.get uri_string, {}, token}
+    execute_request { http_client.get uri_string }
   end
 
   def delete path, parameters = {}
     uri_string = construct_path path
     uri_string += "?#{encode_parameters(parameters)}" unless parameters.blank?
-    execute_request {|token| http_client.delete uri_string, {}, token}
+    execute_request { http_client.delete uri_string }
   end
 
   def post path, request_body
     uri_string = construct_path path
-    execute_request {|token| http_client.post uri_string, request_body, {}, token}
+    execute_request { http_client.post uri_string, request_body }
   end
 
   def put path, request_body
     uri_string = construct_path path
-    execute_request {|token| http_client.put uri_string, request_body, {}, token}
+    execute_request { http_client.put uri_string, request_body }
   end
 
   def patch path, request_body
     uri_string = construct_path path
-    execute_request {|token| http_client.patch uri_string, request_body, {}, token}
+    execute_request { http_client.patch uri_string, request_body}
   end
 
   def raise_api_error_from_error_response http_status, e
@@ -144,13 +144,11 @@ module OpenChain; module Api; class ApiClient
 
   protected
     def execute_request
-      request_authtoken = build_authtoken
-
       retry_count = 0
       r = nil
       status = nil
       begin
-        r = yield request_authtoken
+        r = yield
       rescue => e
         # There's no real point in retrying 400 series errors, since they're all going to be issues in some manner with the
         # client request.  The only one we want to specifically watch out for and raise differently is a 401, since that means authentication failed.
@@ -203,7 +201,7 @@ module OpenChain; module Api; class ApiClient
     end
 
     def http_client
-      JsonHttpClient.new
+      JsonHttpClient.new authorization_token: build_authtoken
     end
 
 end; end; end

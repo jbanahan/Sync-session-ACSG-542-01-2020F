@@ -6,7 +6,7 @@ describe OpenChain::SqlProxyClient do
     end
   end
 
-  let (:json_client) { instance_double(OpenChain::JsonHttpClient) }
+  let (:json_client) { OpenChain::JsonHttpClient.new }
   let (:secrets) { {"fake_config" => {'auth_token' => "config_auth_token", "url" => "config_url"}} }
   subject { FakeSqlProxyClient.new(json_client) }
 
@@ -19,7 +19,8 @@ describe OpenChain::SqlProxyClient do
     it "uses json_client to request data" do
       params = {"p1" => "v"}
       request_context = {"c" => "v"}
-      expect(json_client).to receive(:post).with("config_url/job/job_name", {'job_params' => params, "context" => request_context}, {}, "config_auth_token").and_return "OK"
+      expect(json_client).to receive(:authorization_token=).with("config_auth_token")
+      expect(json_client).to receive(:post).with("config_url/job/job_name", {'job_params' => params, "context" => request_context}).and_return "OK"
       expect(subject.request "job_name", params, request_context).to eq "OK"
     end
 

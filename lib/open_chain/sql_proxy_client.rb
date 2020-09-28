@@ -14,7 +14,8 @@ module OpenChain; class SqlProxyClient
 
     begin
       config = self.class.proxy_config
-      @json_client.post "#{config['url']}/job/#{job_name}", request_body, {}, config['auth_token']
+      @json_client.authorization_token = config['auth_token']
+      @json_client.post "#{config['url']}/job/#{job_name}", request_body
     rescue => e
       raise e if request_params[:swallow_error] === false
       e.log_me ["Failed to initiate sql_proxy query for #{job_name} with params #{request_body.to_json}."]

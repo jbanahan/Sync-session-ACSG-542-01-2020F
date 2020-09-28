@@ -1,9 +1,8 @@
-require 'open_chain/http_client'
 require 'open_chain/custom_handler/intacct/intacct_xml_generator'
 require 'digest/sha1'
 require 'rexml/document'
 
-module OpenChain; module CustomHandler; module Intacct; class IntacctClient < OpenChain::HttpClient
+module OpenChain; module CustomHandler; module Intacct; class IntacctClient
   # This is the answer to the security question: :$hSU'ZW^x6>E7'
 
   INTACCT_CONNECTION_INFO ||= {
@@ -270,14 +269,11 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     # status of the current system.
     can_send_request?(connection_options) unless read_only
 
-    uri = URI.parse connection_options[:url]
-    post = Net::HTTP::Post.new(uri)
-    post["Content-Type"] = "x-intacct-xml-request"
-    post.body = assemble_request_xml(location_id, transaction, unique_request, connection_options, intacct_content_xml)
+    body = assemble_request_xml(location_id, transaction, unique_request, connection_options, intacct_content_xml)
 
     xml = nil
     begin
-      xml = http_request(uri, post)
+      xml = intacct_http_client.post(connection_options[:url], body)
     rescue REXML::ParseException => e
       # basically, what we're doing is allowing the outer call to determine if it wants to retry this
       # failure...which comes about due to cloudflare sending back an HTML file w/ an error in it..which entails
@@ -314,18 +310,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctClient < Op
     @intacct_config
   end
 
+  def intacct_http_client
+    OpenChain::CustomHandler::Intacct::IntacctHttpClient.new
+  end
+
   private
 
     def can_send_request? connection_options
       raise "Cannot post to Intacct in development mode" unless production? || company_id(connection_options).include?("-sandbox")
-    end
-
-    def process_response response
-      # The response from Intacct should always be an XML document.
-      REXML::Document.new(response.body)
-    rescue REXML::ParseException => e
-      e.log_me ["Invalid Intacct API Response:\n" + response.body]
-      raise e
     end
 
     def handle_error xml, function_control_id

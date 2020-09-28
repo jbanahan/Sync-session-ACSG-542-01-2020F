@@ -1,7 +1,6 @@
 require 'open3'
 require 'fileutils'
 require 'open_chain/slack_client'
-require 'open_chain/freshservice_client'
 
 module OpenChain
   class Upgrade
@@ -108,8 +107,6 @@ module OpenChain
     end
 
     def do_upgrade delayed_job_upgrade, callbacks
-      callbacks.merge!(freshservice_callbacks) if MasterSetup.production_env?
-
       execute_callback(callbacks, :running)
       upgrade_completed = false
       begin
@@ -144,31 +141,6 @@ module OpenChain
       end
 
       upgrade_completed
-    end
-
-    def freshservice_callbacks
-      fs_client = freshservice_client
-      fs_running = lambda do |instance, new_version|
-        err_logger {
-          fs_client.create_change! instance, new_version, MasterSetup.hostname
-        }
-      end
-
-      # If the change_id is blank below, it means the API call for create_change! failed, so
-      # there's no change record to associate notes with.  Therefore, skip the notes calls.
-      fs_finished = lambda do |upgrade_log|
-        err_logger { fs_client.add_note_with_log!(upgrade_log) unless fs_client.change_id.blank? }
-      end
-
-      fs_error = lambda do |err_msg|
-        err_logger { fs_client.add_note!(err_msg) unless fs_client.change_id.blank?  }
-      end
-
-      {fs_running: fs_running, fs_finished: fs_finished, fs_error: fs_error}
-    end
-
-    def freshservice_client
-      OpenChain::FreshserviceClient.new
     end
 
     def err_logger

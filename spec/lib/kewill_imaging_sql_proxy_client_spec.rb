@@ -1,43 +1,52 @@
 describe OpenChain::KewillImagingSqlProxyClient do
 
-  let! (:proxy_config) {
+  subject { described_class.new http_client }
+
+  let! (:proxy_config) do
     config = {'auth_token' => "config_auth_token", "url" => "config_url"}
     allow(described_class).to receive(:proxy_config).and_return(config)
     config
-  }
-  let (:http_client) { instance_double(OpenChain::JsonHttpClient) }
-  subject { described_class.new http_client }
+  end
+  let (:http_client) do
+    h = instance_double(OpenChain::JsonHttpClient)
+    allow(h).to receive(:authorization_token=).with(proxy_config["auth_token"])
+    h
+  end
 
   describe "request_images_added_between" do
     it "sends request" do
       start_time = Time.zone.parse "2016-11-23 00:00"
       end_time = Time.zone.parse "2016-11-23 01:00"
-      request_body = {"job_params" => {start_date: start_time.in_time_zone("UTC").iso8601, end_date: end_time.in_time_zone("UTC").iso8601, customer_numbers: ["TEST", "TESTING"]}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
-      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/kewill_updated_documents", request_body, {}, proxy_config['auth_token'])
+      request_body = {"job_params" => {start_date: start_time.in_time_zone("UTC").iso8601, end_date: end_time.in_time_zone("UTC").iso8601,
+                                       customer_numbers: ["TEST", "TESTING"]}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
+      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/kewill_updated_documents", request_body)
       subject.request_images_added_between start_time, end_time, ["TEST", "TESTING"], "bucket", "queue"
     end
 
     it "handles customer numbers as string" do
       start_time = Time.zone.parse "2016-11-23 00:00"
       end_time = Time.zone.parse "2016-11-23 01:00"
-      request_body = {"job_params" => {start_date: start_time.in_time_zone("UTC").iso8601, end_date: end_time.in_time_zone("UTC").iso8601, customer_numbers: ["TEST"]}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
-      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/kewill_updated_documents", request_body, {}, proxy_config['auth_token'])
+      request_body = {"job_params" => {start_date: start_time.in_time_zone("UTC").iso8601, end_date: end_time.in_time_zone("UTC").iso8601,
+                                       customer_numbers: ["TEST"]}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
+      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/kewill_updated_documents", request_body)
       subject.request_images_added_between start_time, end_time, "TEST", "bucket", "queue"
     end
 
     it "handles nil customer numbers" do
       start_time = Time.zone.parse "2016-11-23 00:00"
       end_time = Time.zone.parse "2016-11-23 01:00"
-      request_body = {"job_params" => {start_date: start_time.in_time_zone("UTC").iso8601, end_date: end_time.in_time_zone("UTC").iso8601}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
-      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/kewill_updated_documents", request_body, {}, proxy_config['auth_token'])
+      request_body = {"job_params" => {start_date: start_time.in_time_zone("UTC").iso8601,
+                                       end_date: end_time.in_time_zone("UTC").iso8601},
+                      "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
+      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/kewill_updated_documents", request_body)
       subject.request_images_added_between start_time, end_time, nil, "bucket", "queue"
     end
   end
 
   describe "request_images_for_file" do
     it "sends request" do
-      request_body = {"job_params" => {file_no: 12345}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}}
-      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/async_kewill_documents_for_file", request_body, {}, proxy_config['auth_token'])
+      request_body = {"job_params" => {file_no: 12345}, "context" => {s3_bucket: "bucket", sqs_queue: "queue"}} # rubocop:disable Style/NumericLiterals
+      expect(http_client).to receive(:post).with("#{proxy_config['url']}/job/async_kewill_documents_for_file", request_body)
 
       subject.request_images_for_file "12345", "bucket", "queue"
     end
