@@ -3,16 +3,16 @@ require 'open_chain/report/report_helper'
 module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
   include OpenChain::Report::ReportHelper
 
-  SYSTEM_CODE = "ATAYLOR"
+  SYSTEM_CODE = "ATAYLOR".freeze
 
   ROW_MAP = {id: 0, company_code: 1, vendor_number: 2, invoice_date: 3, posting_date: 4, invoice_number: 5, invoice_total: 6, currency: 7,
              tax_amount: 8, item_text: 9, baseline_date: 10, partner_bank: 11, assignment_number: 12, invoice_number_2: 13, general_ledger_account: 14,
-             debit_credit: 15, amount: 16, sales_tax_code: 17, item_text_2: 18, cost_center: 19, profit_center: 20, blank_field: 21 }
+             debit_credit: 15, amount: 16, sales_tax_code: 17, item_text_2: 18, cost_center: 19, profit_center: 20, blank_field: 21 }.freeze
 
   HEADER = ["ID Column", "Company Code", "Vendor Number", "Invoice Date in Document", "Posting Date in Document",
             "Invoice Number", "Invoice Total Amount", "Currency Key", "Tax Amount", "Item Text (Description)", "Baseline Date",
             "Partner Bank Type", "Assignment Number", "Invoice Number", "General Ledger Account", "Debit/Credit Indicator",
-            "Amount in Document Currency", "Sales Tax Code", "Item Text", "Cost Center", "Profit Center", "BLANK FIELD"]
+            "Amount in Document Currency", "Sales Tax Code", "Item Text", "Cost Center", "Profit Center", "BLANK FIELD"].freeze
 
   def self.importer
     imp = Company.where(system_code: SYSTEM_CODE).first
@@ -20,7 +20,7 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
     imp
   end
 
-  def self.run_schedulable settings={}
+  def self.run_schedulable settings = {}
     self.new.send_email settings['email'], settings['cc']
   end
 
@@ -31,22 +31,30 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
     workbook_to_tempfile(wb, "report", file_name: "#{title}.xls") do |t|
       wb.write t
       t.flush
-      OpenMailer.send_simple_html(to_addr, title, %Q(Attached is the completed report named "#{title}.xls").html_safe, t, cc: cc_addr).deliver_now
+      OpenMailer.send_simple_html(to_addr, title, %(Attached is the completed report named "#{title}.xls").html_safe, t, cc: cc_addr).deliver_now # rubocop:disable Rails/OutputSafety
     end
   end
 
   def create_workbook start_date
     wb, sheet = XlsMaker.create_workbook_and_sheet(start_date.strftime('%m-%Y'))
-    table_from_query_result sheet, get_invoices(start_date), {"Invoice Date in Document"=>dt_lambda, "Baseline Date"=>dt_lambda, "Assignment Number"=>assignment_number_lambda }, {column_names: HEADER}
+    table_from_query_result sheet, get_invoices(start_date), {"Invoice Date in Document" => date_lambda,
+                                                              "Invoice Total Amount" => string_lambda,
+                                                              "Baseline Date" => date_lambda,
+                                                              "Assignment Number" => assignment_number_lambda,
+                                                              "Amount in Document Currency" => string_lambda }, {column_names: HEADER}
     wb
   end
 
-  def dt_lambda
-    lambda { |result_set_row, raw_column_value| DateTime.parse(raw_column_value).in_time_zone("Eastern Time (US & Canada)").strftime('%m-%d-%y')}
+  def date_lambda
+    ->(_result_set_row, raw_column_value) { raw_column_value.strftime('%m-%d-%y') }
+  end
+
+  def string_lambda
+    ->(_result_set_row, raw_column_value) { raw_column_value.to_s }
   end
 
   def assignment_number_lambda
-    lambda { |result_set_row, raw_column_value| raw_column_value.split("\n ").first }
+    ->(_result_set_row, raw_column_value) { raw_column_value.split("\n ").first }
   end
 
   def get_invoices start_date
@@ -59,18 +67,19 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
   end
 
   def compile_invoices results
-    raw_lines =  []; inv_lines = []
+    raw_lines = []
+    inv_lines = []
     inv_number = results.first[ROW_MAP[:invoice_number]]
     results.each do |r|
       if r[ROW_MAP[:invoice_number]] == inv_number
-        raw_lines << r.map(&:to_s)
+        raw_lines << r
       else
-        inv_lines.concat(arrange_rows raw_lines)
-        raw_lines = [r.map(&:to_s)]
+        inv_lines.concat(arrange_rows(raw_lines))
+        raw_lines = [r]
         inv_number = r[ROW_MAP[:invoice_number]]
       end
     end
-    inv_lines.concat(arrange_rows raw_lines)
+    inv_lines.concat(arrange_rows(raw_lines))
   end
 
   def arrange_rows rows
@@ -132,10 +141,11 @@ module OpenChain; module Report; class AnnMonthlyBrokerInvoiceReport
         INNER JOIN broker_invoices bi ON e.id = bi.entry_id
         INNER JOIN broker_invoice_lines bil ON bi.id = bil.broker_invoice_id
       WHERE e.importer_id = #{importer_id}
-            AND (bi.invoice_date BETWEEN '#{start_date}' AND '#{end_date}')
-            AND (bil.charge_type <> 'D' OR bil.charge_type IS NULL)
+        AND e.first_entry_sent_date IS NOT NULL
+        AND (bi.invoice_date BETWEEN '#{start_date}' AND '#{end_date}')
+        AND (bil.charge_type <> 'D' OR bil.charge_type IS NULL)
       ORDER BY bi.invoice_number
     SQL
   end
 
-end; end; end;
+end; end; end
