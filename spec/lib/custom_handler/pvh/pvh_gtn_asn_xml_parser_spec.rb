@@ -8,11 +8,11 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
   let (:pvh) { Factory(:importer, system_code: "PVH") }
   let (:user) { Factory(:user) }
   let (:order) { Factory(:order, order_number: "PVH-RTTC216384", customer_order_number: "RTTC216384", importer: pvh)}
-  let (:product) {
+  let (:product) do
     p = Factory(:product, importer_id: pvh.id, unique_identifier: "PVH-7696164")
     p.update_custom_value! cdefs[:prod_part_number], "7696164"
     p
-  }
+  end
   let (:order_line_1) { Factory(:order_line, order: order, line_number: 1, product: product) }
   let (:order_line_2) { Factory(:order_line, order: order, line_number: 2, product: product) }
   let (:lading_port) { Factory(:port, name: "Chennai", iata_code: "MAA")}
@@ -20,16 +20,16 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
   let (:final_dest_port) { Factory(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
   let (:inbound_file) { InboundFile.new }
   let (:cdefs) { subject.cdefs }
-  let (:invoice) {
+  let (:invoice) do
     i = Invoice.create! invoice_number: "EEGC/7469/1819", importer_id: pvh.id
-    line = i.invoice_lines.create! po_number: "RTTC216384", part_number: "7696164", mid: "MYKULRUB669TAI"
+    i.invoice_lines.create! po_number: "RTTC216384", part_number: "7696164", mid: "MYKULRUB669TAI"
     i
-  }
+  end
   let (:existing_shipment) { Factory(:shipment, importer: pvh, reference: "PVH-5093094M01")}
 
   describe "process_asn_update" do
 
-    before :each do
+    before do
       india
       ca
       pvh
@@ -60,7 +60,7 @@ describe OpenChain::CustomHandler::Pvh::PvhGtnAsnXmlParser do
       expect(s.vessel).to eq "EK0543"
       expect(s.mode).to eq "Ocean"
       expect(s.vessel_carrier_scac).to eq "SGTA"
-      expect(s.master_bill_of_lading).to eq "SGTA01449867322"
+      expect(s.master_bill_of_lading).to eq "01449867322"
       expect(s.house_bill_of_lading).to eq "SGIND25321"
       expect(s.country_origin).to eq india
       expect(s.country_export).to eq india

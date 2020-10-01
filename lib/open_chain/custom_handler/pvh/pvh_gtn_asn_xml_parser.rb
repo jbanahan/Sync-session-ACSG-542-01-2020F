@@ -8,7 +8,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
     @sent_containers = Set.new
   end
 
-  def importer_system_code xml
+  def importer_system_code _xml
     "PVH"
   end
 
@@ -23,7 +23,7 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
     id
   end
 
-  def finalize_shipment shipment, xml
+  def finalize_shipment shipment, _xml
     # I'm not sure if this is a widespread GTN thing or localized to PVH, but if any container numbers (or house bills)
     # change, then we'll get them as new records and thus we need to remove the old ones.
     # The XML looks to include the whole list of containers (we don't get partials) so we should be safe doing this.
@@ -33,16 +33,16 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
     set_custom_value(shipment, :shp_entry_prepared_date, nil, Time.zone.now)
     # We also clear out any existing sync records for the Kewill Entry every time the shipment comes in...this forces a resend to
     # Kewill on each shipment update.
-    sr = shipment.sync_records.find {|sr| sr.trading_partner == OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER}
+    sr = shipment.sync_records.find {|sync| sync.trading_partner == OpenChain::CustomHandler::Vandegrift::KewillEntryLoadShipmentComparator::TRADING_PARTNER}
     sr.sent_at = nil if sr.present?
 
     nil
   end
 
-  def set_additional_shipment_information shipment, shipment_xml
+  def set_additional_shipment_information shipment, _shipment_xml
     # PVH's ASNs sometimes don't have MasterBills (house bills instead).  Not sure how widespread this is...so I don't want to put it into the
     # generic parser at the moment.
-    if shipment.master_bill_of_lading.blank? && !shipment.house_bill_of_lading.blank?
+    if shipment.master_bill_of_lading.blank? && shipment.house_bill_of_lading.present?
       shipment.master_bill_of_lading = shipment.house_bill_of_lading
       shipment.house_bill_of_lading = nil
     end
@@ -52,13 +52,13 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
     nil
   end
 
-  def set_additional_shipment_line_information shipment, container, line, line_xml
+  def set_additional_shipment_line_information _shipment, _container, line, line_xml
     line.mid = find_invoice_line(line_xml)&.mid
 
     nil
   end
 
-  def set_additional_container_information shipment, container, container_xml
+  def set_additional_container_information _shipment, container, _container_xml
     @sent_containers << container.container_number
     container.goods_description = "WEARING APPAREL"
   end
@@ -101,6 +101,14 @@ module OpenChain; module CustomHandler; module Pvh; class PvhGtnAsnXmlParser < O
         line.destroy if line.container.nil?
       end
     end
+  end
+
+  # This overrides the default abstract gtn master bill behavior by not prefixing
+  # the CarrierCode onto the BLNumber given in the MasterBLNumber.  The data in the
+  # shipment needs to match exactly to what's in GTN when we later reference this
+  # value from the entry and also send it via the GTN billing xml.
+  def find_master_bill xml
+    xml.text "Container/LineItems/MasterBLNumber"
   end
 
 end; end; end; end

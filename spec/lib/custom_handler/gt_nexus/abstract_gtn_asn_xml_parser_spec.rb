@@ -1,19 +1,21 @@
 describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
 
-  class FakeGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser
+  class FakeGtnAsnXmlParser < OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser # rubocop:disable RSpec/LeakyConstantDeclaration
 
     def initialize config = {}
       super(config)
     end
 
-    def importer_system_code xml
+    def importer_system_code _xml
       "SYS"
     end
 
-    def party_system_code party_xml, party_type
+    def party_system_code party_xml, _party_type
       party_xml.text "Code"
     end
   end
+
+  subject { FakeGtnAsnXmlParser.new }
 
   let (:xml_data) { IO.read 'spec/fixtures/files/gtn_generic_asn.xml' }
   let (:xml) { REXML::Document.new(xml_data) }
@@ -30,11 +32,10 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
   let (:unlading_port) { Factory(:port, name: "Montréal", iata_code: "YUL")}
   let (:final_dest_port) { Factory(:port, name: "Montreal-Dorval Apt", unlocode: "CAYUL") }
   let (:inbound_file) { InboundFile.new s3_path: "/path/to/file.xml"}
-  subject { FakeGtnAsnXmlParser.new }
 
   describe "process_asn_update" do
 
-    before :each do
+    before do
       india
       ca
       importer
@@ -176,7 +177,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
       expect(subject).to receive(:set_additional_shipment_information)
       expect(subject).to receive(:set_additional_party_information)
       expect(subject).to receive(:set_additional_container_information)
-      expect(subject).to receive(:set_additional_shipment_line_information).exactly(2).times
+      expect(subject).to receive(:set_additional_shipment_line_information).twice
 
       subject.process_asn_update asn_xml, user, "bucket", "key"
     end
@@ -185,7 +186,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
       it "does not use system code prefixes" do
         parser = FakeGtnAsnXmlParser.new(prefix_identifiers_with_system_codes: false)
         allow(parser).to receive(:inbound_file).and_return inbound_file
-        order.update_attributes! order_number: "RTTC216384"
+        order.update! order_number: "RTTC216384"
 
         s = parser.process_asn_update asn_xml, user, "bucket", "key"
         expect(s.reference).to eq "5093094M01"
@@ -256,7 +257,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
           # Just change the line number on the existing order line record so then the asn process will construct a new record
           order_line_1.update! line_number: 10
 
-          s = subject.process_asn_update asn_xml, user, "bucket", "key"
+          subject.process_asn_update asn_xml, user, "bucket", "key"
 
           order.reload
           expect(order.order_lines.length).to eq 3
@@ -271,7 +272,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
           Order.destroy_all
           Product.destroy_all
 
-          s = subject.process_asn_update asn_xml, user, "bucket", "key"
+          subject.process_asn_update asn_xml, user, "bucket", "key"
 
           order = Order.all.first
           product = Product.all.first
@@ -307,7 +308,7 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
     end
 
     it "does not cancel a shipment if xml is outdated" do
-      shipment.update_attributes! last_exported_from_source: Time.zone.now
+      shipment.update! last_exported_from_source: Time.zone.now
 
       s = subject.process_asn_update asn_xml, user, "bucket", "key"
       expect(s).to be_nil
@@ -329,38 +330,39 @@ describe OpenChain::CustomHandler::GtNexus::AbstractGtnAsnXmlParser do
 
     it "sorts lines based on Invoice #, PO Number, Line Number" do
       container = create_container([
-        create_line("INV-C", "PO-B", "1"),
-        create_line("INV-A", "PO-Z", "1"),
-        create_line("INV-A", "PO-A", "2"),
-        create_line("INV-A", "PO-A", "1"),
-      ])
+                                     create_line("INV-C", "PO-B", "1"),
+                                     create_line("INV-A", "PO-Z", "1"),
+                                     create_line("INV-A", "PO-A", "2"),
+                                     create_line("INV-A", "PO-A", "1")
+                                   ])
 
       items = subject.sorted_line_items(REXML::Document.new(container).root)
 
       i = items.first
-      expect(i.text "InvoiceNumber").to eq "INV-A"
-      expect(i.text "PONumber").to eq "PO-A"
-      expect(i.text "LineItemNumber").to eq "1"
+      expect(i.text("InvoiceNumber")).to eq "INV-A"
+      expect(i.text("PONumber")).to eq "PO-A"
+      expect(i.text("LineItemNumber")).to eq "1"
 
       i = items[1]
-      expect(i.text "InvoiceNumber").to eq "INV-A"
-      expect(i.text "PONumber").to eq "PO-A"
-      expect(i.text "LineItemNumber").to eq "2"
+      expect(i.text("InvoiceNumber")).to eq "INV-A"
+      expect(i.text("PONumber")).to eq "PO-A"
+      expect(i.text("LineItemNumber")).to eq "2"
 
       i = items[2]
-      expect(i.text "InvoiceNumber").to eq "INV-A"
-      expect(i.text "PONumber").to eq "PO-Z"
-      expect(i.text "LineItemNumber").to eq "1"
+      expect(i.text("InvoiceNumber")).to eq "INV-A"
+      expect(i.text("PONumber")).to eq "PO-Z"
+      expect(i.text("LineItemNumber")).to eq "1"
 
       i = items.last
-      expect(i.text "InvoiceNumber").to eq "INV-C"
-      expect(i.text "PONumber").to eq "PO-B"
-      expect(i.text "LineItemNumber").to eq "1"
+      expect(i.text("InvoiceNumber")).to eq "INV-C"
+      expect(i.text("PONumber")).to eq "PO-B"
+      expect(i.text("LineItemNumber")).to eq "1"
     end
   end
 
   describe "parse" do
     subject { FakeGtnAsnXmlParser }
+
     let (:integration) { User.integration }
 
     it "parses a file" do

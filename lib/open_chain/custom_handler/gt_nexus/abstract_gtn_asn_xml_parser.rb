@@ -11,32 +11,32 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
   # Sets any additional customer specific information into the shipment.
   # in the generic case, this method is a no-op
-  def set_additional_shipment_information shipment, shipment_xml
+  def set_additional_shipment_information _shipment, _shipment_xml
     nil
   end
 
   # Sets any additional customer specific information into the container.
   # in the generic case, this method is a no-op
-  def set_additional_container_information shipment, container, container_xml
+  def set_additional_container_information _shipment, _container, _container_xml
     nil
   end
 
   # Sets any additional customer specific information into the shipment line.
   # in the generic case, this method is a no-op
-  def set_additional_shipment_line_information shipment, container, line, line_xml
+  def set_additional_shipment_line_information _shipment, _container, _line, _line_xml
     nil
   end
 
   # Sets any additional customer specific information into a party.
   # in the generic case, this method is a no-op
-  def set_additional_party_information company, party_xml, party_type
+  def set_additional_party_information _company, _party_xml, _party_type
     nil
   end
 
   # If there is any final information that needs to be added to the shipment before
   # it is saved...override this method and add it.
   # This method is called after shipment totals are calculated
-  def finalize_shipment shipment, shipment_xml
+  def finalize_shipment _shipment, _shipment_xml
     nil
   end
 
@@ -44,14 +44,14 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   # It's possible that the same GT Nexus account may map to multiple of our importers,
   # ergo the need to pass the order xml.
   # This method is called once at the beginning of parsing the XML and never again.
-  def importer_system_code asn_xml
+  def importer_system_code _asn_xml
     inbound_file.error_and_raise("Your customer specific class extension must implement this method, returning the system code of the importer to utilize on the Orders.")
   end
 
   # Return the system code to use for the party xml given.
   # DO NOT do any prefixing (like w/ the importer system code), the caller will handle all of that
   # for you.  Just return the identifying information for the party using the provided XML party element.
-  def party_system_code party_xml, party_type
+  def party_system_code _party_xml, _party_type
     # I'm pretty sure in the vast majority of cases we should be using customer specific identifiers
     # inside the identification element...those appear to be 100% customer specific though and not
     # generic, so we'll have to have this be overriden to determine which internal code in the party object should
@@ -74,7 +74,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     @create_missing_purchase_orders
   end
 
-  def self.parse_file data, log, opts = {}
+  def self.parse_file data, _log, opts = {}
     xml = xml_document data
 
     user = User.integration
@@ -88,7 +88,6 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     REXML::XPath.each(xml.root, "/ASNMessage/ASN") do |asn|
       self.process_asn(asn, user, opts[:bucket], opts[:key])
     end
-
   end
 
   # Process a single ASN element from the file
@@ -96,19 +95,19 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     parser = self.new
 
     if parse_function_code(xml) == :cancel
-      return parser.process_asn_cancel xml, user, bucket, key
+      parser.process_asn_cancel xml, user, bucket, key
     else
-      return parser.process_asn_update xml, user, bucket, key
+      parser.process_asn_update xml, user, bucket, key
     end
   end
 
   # Determine the type of processing to do for the order, cancel or update
   def self.parse_function_code xml
     function_code = xml.text("PurposeCode").to_s
-    if (function_code =~ /Delete/i)
-      return :cancel
+    if function_code =~ /Delete/i
+      :cancel
     else
-      return :update
+      :update
     end
   end
 
@@ -175,12 +174,12 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     # House Bill is at the LineItem level..just pull the first one listed in the document
     # They should all be the same.
     shipment.house_bill_of_lading = xml.text "Container/LineItems/BLNumber"
-    shipment.country_origin = find_port_country(REXML::XPath.first xml, "OriginCity")
-    shipment.country_export = find_port_country(REXML::XPath.first xml, "PortOfLoading")
-    shipment.country_import = find_port_country(REXML::XPath.first xml, "BLDestination")
+    shipment.country_origin = find_port_country(REXML::XPath.first(xml, "OriginCity"))
+    shipment.country_export = find_port_country(REXML::XPath.first(xml, "PortOfLoading"))
+    shipment.country_import = find_port_country(REXML::XPath.first(xml, "BLDestination"))
 
-    shipment.lading_port = find_port(REXML::XPath.first xml, "PortOfLoading")
-    shipment.unlading_port = find_port(REXML::XPath.first xml, "PortOfDischarge")
+    shipment.lading_port = find_port(REXML::XPath.first(xml, "PortOfLoading"))
+    shipment.unlading_port = find_port(REXML::XPath.first(xml, "PortOfDischarge"))
     shipment.final_dest_port = find_port(REXML::XPath.first(xml, "BLDestination"), lookup_type_order: [:unlocode, :schedule_k_code, :schedule_d_code, :iata_code])
 
     shipment.est_departure_date = parse_date xml.text("EstDepartDate")
@@ -188,8 +187,8 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
     set_additional_shipment_information shipment, xml
 
-    inbound_file.add_identifier(:master_bill, shipment.master_bill_of_lading) unless shipment.master_bill_of_lading.blank?
-    inbound_file.add_identifier(:house_bill, shipment.house_bill_of_lading) unless shipment.house_bill_of_lading.blank?
+    inbound_file.add_identifier(:master_bill, shipment.master_bill_of_lading) if shipment.master_bill_of_lading.present?
+    inbound_file.add_identifier(:house_bill, shipment.house_bill_of_lading) if shipment.house_bill_of_lading.present?
 
     nil
   end
@@ -204,7 +203,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
     set_additional_container_information shipment, container, xml
 
-    inbound_file.add_identifier(:container_number, container.container_number) unless container.container_number.blank?
+    inbound_file.add_identifier(:container_number, container.container_number) if container.container_number.present?
 
     nil
   end
@@ -235,14 +234,14 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
     set_additional_shipment_line_information shipment, container, line, line_xml
 
-    inbound_file.add_identifier(:po_number, order.customer_order_number, module_type: Order, module_id: order.id) unless order.customer_order_number.blank?
-    inbound_file.add_identifier(:invoice_number, line.invoice_number) unless line.invoice_number.blank?
+    inbound_file.add_identifier(:po_number, order.customer_order_number, module_type: Order, module_id: order.id) if order.customer_order_number.present?
+    inbound_file.add_identifier(:invoice_number, line.invoice_number) if line.invoice_number.present?
 
     nil
   end
 
   # Totals all information on the shipment from the lines into the header
-  def set_shipment_totals shipment, xml
+  def set_shipment_totals shipment, _xml
     shipment.gross_weight = BigDecimal("0")
     shipment.volume = BigDecimal("0")
     shipment.number_of_packages = 0
@@ -351,8 +350,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     shipment
   end
 
-  def create_order_cache xml, user, key
-    orders = nil
+  def create_order_cache xml, user, _key
     cache = {}
     order_numbers = extract_order_numbers(xml)
     orders = find_orders(order_numbers)
@@ -367,11 +365,11 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
       end
     end
 
-    return cache
+    cache
   end
 
   def extract_order_numbers xml
-    Set.new(REXML::XPath.each(xml, "Container/LineItems/PONumber").map &:text).to_a
+    Set.new(REXML::XPath.each(xml, "Container/LineItems/PONumber").map(&:text)).to_a
   end
 
   def find_orders order_numbers
@@ -401,7 +399,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     nil
   end
 
-  def update_party_information? party, party_xml, party_type
+  def update_party_information? _party, _party_xml, _party_type
     # By default, we're not going to update party data...the purchase orders are what will update these
     # entities.
 
@@ -414,7 +412,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     {vendor: "PartyInfo[Type = 'Supplier']"}
   end
 
-  def party_company_name party_xml, party_type
+  def party_company_name party_xml, _party_type
     party_xml.text "Name"
   end
 
@@ -423,7 +421,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   def parse_address_info company, party_xml, party_address_type, address_system_code: nil
     address_system_code = company.system_code if address_system_code.nil?
 
-    a = company.addresses.find {|a| a.system_code == address_system_code }
+    a = company.addresses.find { |add| add.system_code == address_system_code }
 
     if a.nil?
       a = company.addresses.build system_code: address_system_code
@@ -431,7 +429,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
 
     a.name = party_xml.text "Name"
     a.address_type = party_address_type
-    lines = REXML::XPath.match(party_xml, "Address/AddressLine").map &:text
+    lines = REXML::XPath.match(party_xml, "Address/AddressLine").map(&:text)
     a.line_1 = lines[0]
     a.line_2 = lines[1]
     a.line_3 = lines[2]
@@ -469,7 +467,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   def find_master_bill xml
     master_bill = xml.text "Container/LineItems/MasterBLNumber"
 
-    if !master_bill.blank? && append_carrier_code_to_master_bill?(xml)
+    if master_bill.present? && append_carrier_code_to_master_bill?(xml)
       carrier_code = xml.text "PartyInfo[Type = 'Carrier']/Code"
       master_bill = carrier_code + master_bill unless carrier_code.blank? || master_bill.starts_with?(carrier_code)
     end
@@ -488,7 +486,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
   def carrier_code xml
     # Use the Party carrier code for anything other than Air (This might change once we start seeing more documents)
     # For air, we'll extract the first 2 digits of the Vessel (.ie the airline code)
-    if (ship_mode(xml).to_s =~ /Air/i)
+    if ship_mode(xml).to_s =~ /Air/i
       v = vessel(xml)
       v.to_s[0, 2]
     else
@@ -509,7 +507,7 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     create_or_update_order_from_line_items(importer, user, line_items, order)
   end
 
-  def create_or_update_order_from_line_items(importer, user, line_items, order)
+  def create_or_update_order_from_line_items importer, user, line_items, order
     product_cache = find_or_create_products_from_line_items(importer, user, line_items)
 
     if order.nil?
@@ -536,13 +534,13 @@ module OpenChain; module CustomHandler; module GtNexus; class AbstractGtnAsnXmlP
     order
   end
 
-  def find_or_create_order_from_line_item(importer, user, line_item)
+  def find_or_create_order_from_line_item importer, _user, line_item
     raw_order_number = line_item.text("PONumber")
     order_number = prefix_identifier_value(importer, raw_order_number)
     find_or_create_order(importer, order_number, raw_order_number)
   end
 
-  def find_or_create_order_line_from_line_item(importer, product_cache, order, line_item)
+  def find_or_create_order_line_from_line_item importer, product_cache, order, line_item
     order_line = order.order_lines.build
 
     order_line.line_number = order_line_item_number(line_item)
