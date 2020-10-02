@@ -19,7 +19,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
 
   describe "parse" do
 
-    before :each do
+    before do
       advance_importer
       cn
       us
@@ -148,7 +148,7 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       expect(ol.unit_of_measure).to eq "Each"
       expect(ol.price_per_unit).to eq BigDecimal("10.33")
       expect(ol.currency).to eq "USD"
-      expect(ol.country_of_origin).to eq "CN"
+      expect(ol.country_of_origin).to eq "VN"
       expect(ol.product).to eq p
 
       o = ol.order
@@ -181,44 +181,34 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
     end
 
     it "skips updating shipments when the xml is outdated" do
-      shipment = Factory(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096", last_exported_from_source: Time.zone.parse("2018-05-01"))
+      Factory(:shipment, importer: advance_importer, reference: "ADVAN-OERT205702H00096", last_exported_from_source: Time.zone.parse("2018-05-01"))
 
-      expect(subject.parse xml, user, xml_path).to be_nil
-      expect(log).to have_warning_message("Shipment could not be updated. The Prep 7501 file's Created time of '2018-02-02 22:15' is prior to the current Shipment's value of '2018-04-30 20:00'.")
-    end
-
-    it "falls back to finding country of origin using Factory PartyInfo" do
-      # By removing the OriginCountry, the code should fall back to pulling the
-      # country of origin from the Factory PartyInfo.
-      xml_data.gsub! '<OriginCountry Code="CN">China</OriginCountry>', ''
-
-      s = subject.parse xml, user, xml_path
-      expect(s.shipment_lines.length).to eq 2
-      ol = s.shipment_lines.first.piece_sets.first.order_line
-      expect(ol.country_of_origin).to eq "VN"
+      expect(subject.parse(xml, user, xml_path)).to be_nil
+      expect(log).to have_warning_message("Shipment could not be updated. The Prep 7501 file's Created time of " +
+                                          "'2018-02-02 22:15' is prior to the current Shipment's value of '2018-04-30 20:00'.")
     end
 
     context "with Carquest importer" do
-      let(:product) {
+      let(:product) do
         p = Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11402124"
         p.update_custom_value! cdefs[:prod_part_number], "11402124"
         p
-      }
+      end
 
-      let (:product_2) {
+      let (:product_2) do
         p = Product.create! importer_id: carquest_importer.id, unique_identifier: "CQ-11401806"
         p.update_custom_value! cdefs[:prod_part_number], "11401806"
         p
-      }
+      end
 
-      let! (:order) {
+      let! (:order) do
         order = Order.create! importer_id: carquest_importer.id, order_number: "CQ-8373111-11", customer_order_number: "8373111-11"
-        order_line = order.order_lines.create! line_number: 99, product_id: product.id, quantity: 50, price_per_unit: 9.99, country_of_origin: "HK"
-        order_line_2 = order.order_lines.create! line_number: 10, product_id: product_2.id, quantity: 25, price_per_unit: 19.99, country_of_origin: "HK"
+        order.order_lines.create! line_number: 99, product_id: product.id, quantity: 50, price_per_unit: 9.99, country_of_origin: "HK"
+        order.order_lines.create! line_number: 10, product_id: product_2.id, quantity: 25, price_per_unit: 19.99, country_of_origin: "HK"
         order
-      }
+      end
 
-      before :each do
+      before do
         # Carquest PO's should already be in the system...and the code should link to the product by style, not line number
         xml_data.gsub! "<Name>Advance Stores Company Inc.</Name>", "<Name>CARQUEST</Name>"
         carquest_importer
@@ -291,11 +281,11 @@ describe OpenChain::CustomHandler::Advance::AdvancePrep7501ShipmentParser do
       end
 
       it "handles CQ parts on the PO having different punctuation than the prep 7501" do
-        product.update_attributes! unique_identifier: "CQ-114/0212-4"
+        product.update! unique_identifier: "CQ-114/0212-4"
         product.update_custom_value! cdefs[:prod_part_number], "114/0212-4"
 
         # As long as this doesn't raise an error for not finding a part on the PO then everything is good.
-        s = subject.parse xml, user, xml_path
+        subject.parse xml, user, xml_path
       end
     end
 

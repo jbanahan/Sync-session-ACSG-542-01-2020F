@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   include OpenChain::CustomHandler::GtNexus::GenericGtnAsnParserSupport
   include OpenChain::CustomHandler::NokogiriXmlHelper
 
-  def self.parse_file io, log, opts = {}
+  def self.parse_file io, _log, opts = {}
     self.new.parse(xml_document(io), User.integration, opts[:key])
     nil
   end
@@ -19,12 +19,12 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     inbound_file.company = importer
     parties = parse_parties(importer, xml)
     products_cache = parse_parts(importer, xml, user, file)
-    orders_cache = parse_orders(importer, xml, parties, products_cache, user, file)
+    orders_cache = parse_orders(importer, xml, products_cache, user, file)
 
-    parse_shipment(importer, xml, parties, orders_cache, products_cache, user, file)
+    parse_shipment(importer, xml, parties, orders_cache, user, file)
   end
 
-  def parse_shipment importer, xml, parties, orders_cache, products_cache, user, file
+  def parse_shipment importer, xml, parties, orders_cache, user, file
     s = nil
     find_or_create_shipment(importer, xml) do |shipment|
       # The 7501 is a complete picture of the shipment as we handle it, so just destroy and re-add all the lines and containers
@@ -52,8 +52,9 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         # If there's no BLDestination, fall back to the PortOfDischarge
         shipment.country_import = find_port_country(first_xpath(asn, "PortOfDischarge")) if shipment.country_import.nil?
 
-
-        inbound_file.reject_and_raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents." if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
+        if shipment.country_import.nil? && shipment.importer.system_code == "CQ"
+          inbound_file.reject_and_raise "BLDestination CountryCode must be present for all CQ Prep7501 Documents."
+        end
 
         shipment.lading_port = find_port(first_xpath(asn, "PortOfLoading"))
         shipment.unlading_port = find_port(first_xpath(asn, "PortOfDischarge"))
@@ -70,7 +71,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       # after doing that.  This also allows sorting the line items across the whole shipment rather than
       # just a single ASN.
       xpath(xml, "/Prep7501Message/Prep7501/ASN/Container") do |container_xml|
-        container = parse_container(shipment, container_xml)
+        parse_container(shipment, container_xml)
         container_xmls << container_xml
       end
 
@@ -83,7 +84,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         # The existing feed orders the data based on the LineItemNumber (.ie the PO line number), so we'll continue
         # doing that.
         sorted_line_items(container_xmls).each do |item_xml|
-          parse_shipment_line(shipment, item_xml, orders_cache, products_cache)
+          parse_shipment_line(shipment, item_xml, orders_cache)
         end
 
         # If the shipment was fully processed, we can mark it to be sent to the entry system
@@ -109,11 +110,11 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     items = []
     container_xmls.each do |container_xml|
       line_items = xpath(container_xml, "LineItems")
-      items.push *line_items if line_items.length > 0
+      items.push(*line_items) if line_items.length > 0
     end
 
     items.sort do |a, b|
-      v = et(a, "PONumber", true) <=>  et(b, "PONumber", true)
+      v = et(a, "PONumber", true) <=> et(b, "PONumber", true)
 
       if v == 0
         v = et(a, "LineItemNumber", true).to_i <=> et(b, "LineItemNumber", true).to_i
@@ -136,7 +137,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     container
   end
 
-  def parse_shipment_line shipment, line_xml, orders_cache, products_cache
+  def parse_shipment_line shipment, line_xml, orders_cache
     line = shipment.shipment_lines.build
     container_number = et(line_xml.parent, "ContainerNumber")
 
@@ -196,7 +197,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       if process_shipment?(s, last_exported_from_source)
         shipment = s
       else
-        inbound_file.add_warning_message "Shipment could not be updated. The Prep 7501 file's Created time of '#{last_exported_from_source.in_time_zone("America/New_York")}' is prior to the current Shipment's value of '#{s.last_exported_from_source.in_time_zone("America/New_York")}'."
+        inbound_file.add_warning_message "Shipment could not be updated. The Prep 7501 file's Created time of " +
+                                         "'#{last_exported_from_source.in_time_zone("America/New_York")}' is " +
+                                         "prior to the current Shipment's value of " +
+                                         "'#{s.last_exported_from_source.in_time_zone("America/New_York")}'."
       end
     end
 
@@ -215,7 +219,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     shipment.last_exported_from_source.nil? || shipment.last_exported_from_source <= last_exported_from_source
   end
 
-  def parse_orders importer, xml, parties, products_cache, user, file
+  def parse_orders importer, xml, products_cache, user, file
     orders_cache = {}
     snapshots = Set.new
     asn_line_items(xml) do |line_xml|
@@ -256,7 +260,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
             order.save!
           end
         end
-        inbound_file.add_identifier :po_number, customer_order_number, module_type:Order, module_id:order.id
+        inbound_file.add_identifier :po_number, customer_order_number, object: order
       end
     end
 
@@ -289,7 +293,8 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
       end
 
       # This data is pulled from the Invoice portion of the XML..
-      invoice_line = first_xpath(xml, "/Prep7501Message/Prep7501/CommercialInvoice/Item[PurchaseOrderNumber='#{customer_order_number}' and ItemNumber='#{product_code}' and UserRefNumber='#{line_number}']")
+      invoice_line = first_xpath(xml, "/Prep7501Message/Prep7501/CommercialInvoice/Item[PurchaseOrderNumber='#{customer_order_number}' and " +
+                                      "ItemNumber='#{product_code}' and UserRefNumber='#{line_number}']")
       if invoice_line.nil?
         inbound_file.add_reject_message "Unable to find Commerical Invoice Line for Order Number #{customer_order_number} / Item Number #{product_code} / Line #{line_number}"
         return nil
@@ -312,12 +317,10 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
         end
       end
 
-      coo = first_text(invoice_line, "OriginCountry/@Code")
-      # Pull the country of origin from the invoice line Factory PartyInfo if it's not found in an OriginCountry element
-      coo = et(invoice_line, "PartyInfo[Type = 'Factory']/CountryCode") if coo.blank?
+      coo = et(invoice_line, "PartyInfo[Type = 'Factory']/CountryCode")
 
       # Don't overwrite an existing country of origin if the prep 7501's might be blank
-      line.country_of_origin = coo unless coo.blank?
+      line.country_of_origin = coo if coo.present?
 
       if !line.persisted? || line.changed?
         line.save!
@@ -332,7 +335,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
   def parse_parts importer, xml, user, file
     products = {}
     asn_line_items(xml) do |line_item|
-      product = find_or_create_product importer, line_item, products, user, file
+      find_or_create_product importer, line_item, products, user, file
     end
 
     products
@@ -414,7 +417,7 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     a.company = importer
     a.address_type = et(address_xml, "Type")
     a.name = et(address_xml, "Name")
-    lines = xpath(address_xml, "Address/AddressLine").map &:text
+    lines = xpath(address_xml, "Address/AddressLine").map(&:text)
     a.line_1 = lines[0]
     a.line_2 = lines[1]
     a.line_3 = lines[2]
@@ -434,7 +437,6 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     # or pretty much solely used to convey address information to the outbound files we generate for them.
     hash = Address.make_hash_key address
     company = nil
-    created = false
     Lock.acquire("Address-#{hash}") do
       company = Company.where(system_code: "#{importer.system_code}-#{hash}").first_or_initialize
       if !company.persisted?
@@ -496,4 +498,4 @@ module OpenChain; module CustomHandler; module Advance; class AdvancePrep7501Shi
     @cdefs = self.class.prep_custom_definitions([:prod_part_number, :shp_entry_prepared_date])
   end
 
-end; end; end; end;
+end; end; end; end
