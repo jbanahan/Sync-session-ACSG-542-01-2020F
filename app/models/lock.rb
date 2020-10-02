@@ -38,7 +38,7 @@ class Lock
 
   def self.ensure_redis_access
     get_connection_pool.with(timeout: 5) do |redis|
-      redis.exists("test")
+      redis.exists?("test")
     end
     true
   rescue Redis::CannotConnectError, Redis::ConnectionError, Timeout::Error, Redis::TimeoutError => e
@@ -75,7 +75,10 @@ class Lock
   # raise_timeout - If true (defaults to true), then a timeout is raised if the lock could not be obtained inside the given
   # timeout period.  You might want this to be false for processes that are run fairly often and if they can't get a lock
   # in a certain period, then it doesn't really matter since they're run again shortly.
-  def self.acquire(lock_name, opts = {})
+  #
+  # auto_extend_lock_period - If true (defaults to false), then the lock timeout running in redis will be automatically extended
+  # for as long as the block passed to acquire is running for.
+  def self.acquire(lock_name, opts = {}, &block)
     internal_lock_name = clean_lock_name(lock_name)
     already_acquired = definitely_acquired?(internal_lock_name)
 
@@ -84,13 +87,13 @@ class Lock
     # and if you want a PERMANENT lock, you will need to explicitly pass nil for lock_expiration
     # The VAST majority of time we're using this lock construct is for things that take seconds at most, so
     # we won't have to retrofit any external callsites with this change
-    opts = {timeout: 60, yield_in_transaction: true, lock_expiration: 300, raise_timeout: true}.merge opts
+    opts = {timeout: 60, yield_in_transaction: true, lock_expiration: 300, raise_timeout: true, auto_extend_lock_period: false}.merge opts
 
     yield_in_transaction = opts[:yield_in_transaction] == true
     result = nil
 
     if already_acquired
-      result = execute_block yield_in_transaction, &Proc.new
+      result = execute_block yield_in_transaction, &block
     else
       timeout = opts[:timeout]
       connection_timeout_at = Time.zone.now + timeout.seconds
@@ -98,7 +101,7 @@ class Lock
         get_connection_pool.with(timeout: timeout) do |redis|
           raise Timeout::Error if Time.zone.now > connection_timeout_at
 
-          result = do_locking redis, internal_lock_name, connection_timeout_at, opts[:lock_expiration], yield_in_transaction, &Proc.new
+          result = do_locking redis, internal_lock_name, connection_timeout_at, opts[:auto_extend_lock_period], opts[:lock_expiration], yield_in_transaction, &block
         end
       rescue Timeout::Error, Redis::TimeoutError => e
         # Just catch and re-raise the error after normalize the message (since we raise an error and the connection pool/redis potentially raises one)
@@ -120,7 +123,7 @@ class Lock
     result
   end
 
-  def self.do_locking redis, lock_name, connection_timeout_at, lock_auto_exiration_seconds, yield_in_transaction
+  def self.do_locking redis, lock_name, connection_timeout_at, auto_extend_lock_period, lock_auto_exiration_seconds, yield_in_transaction, &block
     lock_manager = Redlock::Client.new [redis]
     lock_info = nil
     lock_auto_exiration_millis = lock_auto_exiration_seconds * 1000
@@ -140,23 +143,24 @@ class Lock
 
     # The thread will extend the life of the lock again if the block below runs for longer than given expiration time
     # If the lock expiration is anything <= 5 seconds, then we're not going to even bother running this
-    if lock_auto_exiration_seconds <= 5
+    outer_thread = Thread.current.object_id
+    if auto_extend_lock_period && lock_auto_exiration_seconds >= 5
       sync_lock = Concurrent::Synchronization::Lock.new
       relock_thread = Thread.new {
-        begin
-          lock.wait(lock_auto_exiration_seconds / 2)
+        until block_completed
+          sync_lock.wait(lock_auto_exiration_seconds / 2)
           if !block_completed
             lock_manager.lock(lock_name, lock_auto_exiration_millis, extend: lock_info)
           end
-        end while !block_completed
+        end
       }
     end
 
     begin
       acquired_lock(lock_name)
-      result = execute_block yield_in_transaction, &Proc.new
+      result = execute_block yield_in_transaction, &block
     ensure
-      completed = true
+      block_completed = true
       sync_lock.signal if sync_lock
       lock_manager.unlock lock_info
       relock_thread.join if relock_thread
@@ -232,7 +236,7 @@ class Lock
     lock_name = clean_lock_name(lock_name)
 
     get_connection_pool.with do |redis|
-      return !redis.exists(lock_name)
+      return !redis.exists?(lock_name)
     end
   end
   private_class_method :unlocked?

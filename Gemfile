@@ -39,7 +39,7 @@ gem 'delayed_job_active_record', '4.1.3'
 gem 'delayed_job', '4.1.5'
 # daemons is needed for the delayed job command line
 gem 'daemons', '1.3.1'
-gem 'dalli', '2.7.9'
+gem 'dalli', '2.7.10'
 gem 'dalli-elasticache', '~> 0.2'
 gem 'postmark-rails', '0.19.0'
 gem 'rubyzip', '2.0'
@@ -83,7 +83,7 @@ gem "net-ssh", '4.2.0'
 gem "clearance", '1.16.1'
 
 gem 'connection_pool', '2.2.2'
-gem 'redlock', '1.0.0'
+gem 'redlock', '1.2.0'
 
 gem 'jsonpath', '1.0.1'
 
