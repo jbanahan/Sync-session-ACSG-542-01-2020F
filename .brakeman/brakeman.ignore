@@ -41,25 +41,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "022096ae7a45f689edc37d725c15c244beac10a32065575b36f0f272f49ee8c9",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/mailing_list.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "MailingList"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "02771be49bfef51e28ec6cc339b80b713bd94cb2702d135b9eff168222bc92cc",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -1184,7 +1165,7 @@
       "check_name": "FileAccess",
       "message": "Model attribute used in file name",
       "file": "lib/open_chain/upgrade.rb",
-      "line": 184,
+      "line": 156,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
       "code": "IO.read(MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\"))",
       "render_path": null,
@@ -6882,7 +6863,7 @@
       "check_name": "CSRFTokenForgeryCVE",
       "message": "Rails 4.2.11.3 has a vulnerability that may allow CSRF token forgery. Upgrade to Rails 5.2.4.3 or patch",
       "file": "Gemfile.lock",
-      "line": 324,
+      "line": 319,
       "link": "https://groups.google.com/g/rubyonrails-security/c/NOjKiGeXUgw",
       "code": null,
       "render_path": null,
@@ -7448,25 +7429,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "e022656654201884889d924d500189288d7571f73fb9fc0d78e2a914f113696a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/mailing_list.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":company_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "MailingList"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "e02e3239a668c511abc47d21973f5c6784fd775d56b45503fe65234e89b60b96",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -7702,7 +7664,7 @@
       "check_name": "FileAccess",
       "message": "Model attribute used in file name",
       "file": "lib/open_chain/upgrade.rb",
-      "line": 116,
+      "line": 113,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
       "code": "IO.read(MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\"))",
       "render_path": null,
@@ -7837,7 +7799,7 @@
       "check_name": "FileAccess",
       "message": "Model attribute used in file name",
       "file": "lib/open_chain/upgrade.rb",
-      "line": 293,
+      "line": 265,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
       "code": "FileUtils.cp_r(MasterSetup.instance_directory.join(\"..\", \"vfitrack-configurations\").join(MasterSetup.instance_directory.basename.to_s).to_s, MasterSetup.instance_directory.join(\"..\"))",
       "render_path": null,
@@ -8289,7 +8251,7 @@
       "check_name": "FileAccess",
       "message": "Model attribute used in file name",
       "file": "lib/open_chain/upgrade.rb",
-      "line": 324,
+      "line": 296,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
       "code": "IO.read(MasterSetup.instance_directory.join(\"log\").join(\"#{Time.zone.now.strftime(\"%Y_%m_%d_%H_%M\")}_#{target}.log\"))",
       "render_path": null,
@@ -8551,6 +8513,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-09-24 18:01:31 -0400",
+  "updated": "2020-10-05 11:12:02 -0400",
   "brakeman_version": "4.9.1"
 }

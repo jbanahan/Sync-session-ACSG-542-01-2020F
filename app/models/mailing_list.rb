@@ -22,15 +22,12 @@ class MailingList < ActiveRecord::Base
   # This is so we can give a warning on save.
   attr_accessor :non_vfi_email_addresses
 
-  attr_accessible :company_id, :company, :email_addresses, :hidden, :name,
-    :non_vfi_addresses, :system_code, :user_id, :user
-
   belongs_to :company
   belongs_to :user
 
   validates :system_code, presence: true
-  validates_uniqueness_of :system_code
-  validates_uniqueness_of :name, scope: :company_id
+  validates :system_code, uniqueness: true
+  validates :name, uniqueness: { scope: :company_id } # rubocop:disable Rails/UniqueValidationWithoutIndex
   validates :user, presence: true
   validates :company, presence: true
   validates :name, presence: true
@@ -53,7 +50,7 @@ class MailingList < ActiveRecord::Base
   end
 
   def extract_invalid_emails
-    self.split_emails.map { |e| e.strip}.reject { |e| EmailValidator.valid? e }
+    self.split_emails.map(&:strip).reject { |e| EmailValidator.valid? e }
   end
 
   def validate_email_addresses
@@ -74,6 +71,6 @@ class MailingList < ActiveRecord::Base
       self.non_vfi_addresses = self.non_vfi_email_addresses.present?
     end
 
-    return true
+    true
   end
 end

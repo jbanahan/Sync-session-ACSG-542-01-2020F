@@ -547,7 +547,6 @@ DEPENDENCIES
   rails (= 4.2.11.3)
   recaptcha (~> 4.13.1)
   redlock (= 1.2.0)
-  rest-client (= 2.0.2)
   rspec-rails (= 3.8.2)
   rspec_junit_formatter (~> 0.2.3)
   rubocop
