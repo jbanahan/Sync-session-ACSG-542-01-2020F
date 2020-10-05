@@ -41,6 +41,20 @@ To run a particular test, just append the file and/or line number you wish to ru
 dcr testing spec/models/address_spec.rb:132
 ```
 
+### Code Style
+
+Automatically check code style before creating a pull request to the master branch with Rubocop.
+```
+rubocop --safe-auto-correct
+```
+
+Alternatively, use the rake commands listed in `rubocop.rake` to speed up the process by including parallelism and/or only testing the differences between the current branch and master.
+```
+rake rubocop:scan      # Parallel enabled
+rake rubocop:branch    # Parallel and only against changes
+rake rubocop:branch_ac # Against changes and auto correct
+```
+
 ## Staging a New Build
 
 **_DO NOT_** stage a new build until the Circle CI build dashboard shows a clean (green) build on the master branch.
