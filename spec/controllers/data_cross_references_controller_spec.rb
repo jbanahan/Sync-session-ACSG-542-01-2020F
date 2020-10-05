@@ -6,12 +6,13 @@ describe DataCrossReferencesController do
     hsh
   end
 
-  before :each do
+  let(:user) { Factory(:admin_user) }
+
+  before do
     ms = stub_master_setup
     allow(ms).to receive(:custom_feature?).with("Polo").and_return true
 
-    @user = Factory(:admin_user)
-    sign_in_as @user
+    sign_in_as user
   end
 
   describe "index" do
@@ -21,7 +22,7 @@ describe DataCrossReferencesController do
       get :index, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
 
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xrefs).first).to eq xref
       # Just ensure that the search is utilized by checking for one of the values it assigns
       expect(assigns(:search)).not_to be_nil
@@ -30,7 +31,6 @@ describe DataCrossReferencesController do
     it "runs a search" do
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
       xref2 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY2", value: "ZValue"
-      xref3 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "NO", value: "Value"
 
       get :index, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, f1: "d_key", c1: "contains", s1: "KEY", sf: "d_key", so: "d"
 
@@ -56,7 +56,7 @@ describe DataCrossReferencesController do
 
       get :edit, id: xref.id
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xref)).to eq xref
       expect(assigns(:importers).count).to eq 1
     end
@@ -77,7 +77,7 @@ describe DataCrossReferencesController do
 
       get :new, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xref)).not_to be_nil
       expect(assigns(:xref).cross_reference_type).to eq DataCrossReference::RL_VALIDATED_FABRIC
       expect(assigns(:importers).count).to eq 1
@@ -97,7 +97,7 @@ describe DataCrossReferencesController do
 
       get :edit, id: xref.id
       expect(response).to be_success
-      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(@user)[DataCrossReference::RL_VALIDATED_FABRIC])
+      expect(strip_preproc(assigns(:xref_info))).to eq strip_preproc(DataCrossReference.xref_edit_hash(user)[DataCrossReference::RL_VALIDATED_FABRIC])
       expect(assigns(:xref)).to eq xref
     end
   end
@@ -124,7 +124,7 @@ describe DataCrossReferencesController do
     end
 
     it "errors on duplicate keys" do
-      xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
+      DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
       xref2 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY2", value: "VALUE"
 
       post :update, id: xref2.id, data_cross_reference: {key: "KEY", cross_reference_type: xref2.cross_reference_type}
@@ -160,7 +160,7 @@ describe DataCrossReferencesController do
     end
 
     it "errors on duplicate keys" do
-      xref = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
+      DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
 
       post :create, data_cross_reference: {key: "KEY", value: "CREATE", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC}
       expect(response).to be_redirect
@@ -196,7 +196,9 @@ describe DataCrossReferencesController do
   end
 
   describe "download" do
-    let!(:xref) { DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE" }
+    before do
+      DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, key: "KEY", value: "VALUE"
+    end
 
     it "returns CSV file" do
       get :download, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
@@ -205,7 +207,7 @@ describe DataCrossReferencesController do
     end
 
     it "rejects user without access" do
-      expect(DataCrossReference).to receive(:can_view?).with(DataCrossReference::RL_VALIDATED_FABRIC, @user).and_return false
+      expect(DataCrossReference).to receive(:can_view?).with(DataCrossReference::RL_VALIDATED_FABRIC, user).and_return false
 
       get :download, cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC
       expect(response).to redirect_to request.referer
@@ -216,11 +218,11 @@ describe DataCrossReferencesController do
   describe "upload" do
     it "uploads", :disable_delayed_jobs do
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
-      cf = double "custom file"
+      cf = instance_double "custom file"
       allow(cf).to receive(:id).and_return 1
-      expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::DataCrossReferenceUploader', uploaded_by: @user, attached: file).and_return cf
-      expect(CustomFile).to receive(:process).with(1, @user.id, cross_reference_type: 'cross_ref_type', company_id: nil)
-      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return true
+      expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::DataCrossReferenceUploader', uploaded_by: user, attached: file).and_return cf
+      expect(CustomFile).to receive(:process).with(1, user.id, cross_reference_type: 'cross_ref_type', company_id: nil)
+      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', user).and_return true
 
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
       expect(response).to redirect_to request.referer
@@ -228,7 +230,7 @@ describe DataCrossReferencesController do
     end
 
     it "returns error if attachment missing" do
-      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return true
+      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', user).and_return true
 
       post :upload, cross_reference_type: 'cross_ref_type', attached: nil
 
@@ -237,9 +239,9 @@ describe DataCrossReferencesController do
     end
 
     it "rejects wrong file type" do
-      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return true
+      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', user).and_return true
       file = fixture_file_upload('/files/test_sheet_4.txt', 'text/plain')
-      expect_any_instance_of(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
+      expect_any_instance_of(OpenChain::DataCrossReferenceUploader).not_to receive(:process)
 
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
 
@@ -248,10 +250,10 @@ describe DataCrossReferencesController do
     end
 
     it "prevents unauthorized access" do
-      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', @user).and_return false
-      @user.sys_admin = false; @user.save!
+      expect(DataCrossReference).to receive(:can_view?).with('cross_ref_type', user).and_return false
+      user.sys_admin = false; user.save!
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
-      expect_any_instance_of(OpenChain::DataCrossReferenceUploader).to_not receive(:process)
+      expect_any_instance_of(OpenChain::DataCrossReferenceUploader).not_to receive(:process)
 
       post :upload, cross_reference_type: 'cross_ref_type', attached: file
     end
@@ -261,22 +263,21 @@ describe DataCrossReferencesController do
   describe "get_importers" do
     it "returns an array of importers with products, sorted by name" do
       co_1 = Factory(:company)
-      prod_1 = Factory(:product, importer: co_1)
+      Factory(:product, importer: co_1)
 
       co_2 = Factory(:importer, name: "Substandard Ltd.", system_code: 'SUBST')
-      prod_2 = Factory(:product, importer: co_2)
+      Factory(:product, importer: co_2)
 
       co_3 = Factory(:importer, name: "ACME", system_code: 'ACME')
-      prod_3 = Factory(:product, importer: co_3)
-      prod_4 = Factory(:product, importer: co_3)
+      Factory(:product, importer: co_3)
+      Factory(:product, importer: co_3)
 
-      co_4 = Factory(:importer, name: "Nothing-to-See")
+      Factory(:importer, name: "Nothing-to-See")
 
-      results = described_class.new.get_importers_for(@user)
+      results = described_class.new.get_importers_for(user)
       expect(results.count).to eq 2
       expect(results[0]).to eq co_3
       expect(results[1]).to eq co_2
     end
   end
-
 end

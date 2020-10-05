@@ -950,82 +950,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "1e84d0630ce6c3153e51f4cd3555196f76dafee21594ce36dcbd3f34ab945927",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/project_deliverable.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":assigned_to_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "ProjectDeliverable"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "1f2f6abba4ecccbb1941a6384f6b3539a0f1262dfc3b5d09cb804de32a08d7a9",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":ship_to_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "1f2f6abba4ecccbb1941a6384f6b3539a0f1262dfc3b5d09cb804de32a08d7a9",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/order.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":ship_to_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Order"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Attribute Restriction",
-      "warning_code": 19,
-      "fingerprint": "20b62647928b6c7f081878af34ed1abc3e0cfbda1e099bc0730b6c82a5d30e01",
-      "check_name": "ModelAttributes",
-      "message": "Mass assignment is not restricted using `attr_accessible`",
-      "file": "app/models/port.rb",
-      "line": 29,
-      "link": "https://brakemanscanner.org/docs/warning_types/attribute_restriction/",
-      "code": null,
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Port"
-      },
-      "user_input": null,
-      "confidence": "High",
-      "note": "All mass assignments are protected by strong parameters."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "20f86ecffee4223576ebdeebb309cc95b13e4c3a93ab3f56953c399f3dfe2c20",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -1040,6 +964,26 @@
       },
       "user_input": null,
       "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "210cf1a999f7719bf7ceac8b4cd06978ed6a064f0bd1863c21a40749bce6b85b",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/data_cross_references_controller.rb",
+      "line": 35,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "DataCrossReference.find(params[:id]).assign_attributes(permitted_attributes(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DataCrossReferencesController",
+        "method": "update"
+      },
+      "user_input": "params",
+      "confidence": "High",
       "note": ""
     },
     {
@@ -1708,25 +1652,6 @@
       },
       "user_input": null,
       "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Attribute Restriction",
-      "warning_code": 19,
-      "fingerprint": "31e186c4da9ba426b6789fa804fd895ef7fa16d41851a7e9e7e28119cee31c6c",
-      "check_name": "ModelAttributes",
-      "message": "Mass assignment is not restricted using `attr_accessible`",
-      "file": "app/models/custom_definition.rb",
-      "line": 29,
-      "link": "https://brakemanscanner.org/docs/warning_types/attribute_restriction/",
-      "code": null,
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomDefinition"
-      },
-      "user_input": null,
-      "confidence": "High",
       "note": ""
     },
     {
@@ -4447,7 +4372,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/custom_definition.rb",
-      "line": 179,
+      "line": 178,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "self.class.connection.execute((parameterize_query(self.virtual_value_query, :customizable_id => customizable.id) + \" LIMIT 1\"))",
       "render_path": null,
@@ -5569,6 +5494,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "9eed6a062401e6078659a715849fc496f3d7278ddc71608db8bb1b8aceaf755a",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/data_cross_references_controller.rb",
+      "line": 59,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "DataCrossReference.new(permitted_attributes(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DataCrossReferencesController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "9f2df7c7ddb9aa9cef8a39497548704d2114db466618cd58671309432e78791a",
       "check_name": "ModelAttrAccessible",
@@ -6525,25 +6470,6 @@
       "location": {
         "type": "model",
         "model": "Entry"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "bdbef3af8508697af3180ecac2867a8e0b5f0fba5f5a2e960f05b565f22c0c30",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/data_cross_reference.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":company_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "DataCrossReference"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -8623,28 +8549,8 @@
       "user_input": null,
       "confidence": "Weak",
       "note": ""
-    },
-    {
-      "warning_type": "SQL Injection",
-      "warning_code": 0,
-      "fingerprint": "fefa7f6b12cd457d65a28a7b9257ca81c32203d16f95c0af2ea731b2b952beb9",
-      "check_name": "SQL",
-      "message": "Possible SQL injection",
-      "file": "app/models/file_import_processor.rb",
-      "line": 486,
-      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
-      "code": "(my_core_module.klass.all or @module_chain.parent(my_core_module).child_objects(my_core_module, object_map[@module_chain.parent(my_core_module)])).where(\"#{ModelField.find_by_uid(key_model_field).qualified_field_name} = ?\", key_model_field_value)",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "FileImportProcessor",
-        "method": "find_or_build_by_unique_field"
-      },
-      "user_input": "ModelField.find_by_uid(key_model_field).qualified_field_name",
-      "confidence": "Medium",
-      "note": "All dynamic SQL inputs are sanitized."
     }
   ],
-  "updated": "2020-09-16 16:34:42 -0400",
+  "updated": "2020-09-24 18:01:31 -0400",
   "brakeman_version": "4.9.1"
 }

@@ -21,9 +21,6 @@ require 'open_chain/milestone_notification_config_support'
 require 'csv'
 
 class DataCrossReference < ActiveRecord::Base
-  attr_accessible :company_id, :company, :cross_reference_type, :key, :value,
-                  :created_at
-
   belongs_to :company
   validates :key, :cross_reference_type, presence: true
 
