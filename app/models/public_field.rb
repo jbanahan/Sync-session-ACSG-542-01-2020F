@@ -14,11 +14,10 @@
 #
 
 class PublicField < ActiveRecord::Base
-  attr_accessible :model_field_uid, :searchable
-
   after_save :reload_model_fields
 
-private
+  private
+
   def reload_model_fields
     ModelField.reload true # update flag in cache so other threads reload their model fields
   end

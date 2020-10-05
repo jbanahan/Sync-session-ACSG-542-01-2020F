@@ -1675,6 +1675,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "34bec570b6146b070a65ac9c5e4f4038cf1e8cf844cbe1d09124962be114928f",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/public_fields_controller.rb",
+      "line": 19,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "PublicField.create!(v)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "PublicFieldsController",
+        "method": "save"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "34d8e0fb94ea4b68b3a230cbf2cc20a2892630513430b6310595c2f38197157e",
       "check_name": "ModelAttrAccessible",
@@ -8513,6 +8533,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-05 11:12:02 -0400",
+  "updated": "2020-10-05 12:46:48 -0400",
   "brakeman_version": "4.9.1"
 }
