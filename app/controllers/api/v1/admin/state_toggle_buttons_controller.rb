@@ -1,5 +1,5 @@
 module Api; module V1; module Admin; class StateToggleButtonsController < Api::V1::Admin::AdminApiController
-  before_filter :require_admin
+  before_action :require_admin
 
   def edit
     button = StateToggleButton.find params[:id]
@@ -19,13 +19,12 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
       return
     end
     stb = StateToggleButton.find params[:id]
-    params[:stb].delete(:module_type) # module_type not updateable
     toggle_field(stb, params[:stb])
-    stb.update_attributes(params[:stb])
+    stb.update(permitted_params(params[:stb]))
     new_criterions = params[:criteria] || []
     stb.search_criterions.delete_all
     new_criterions.each do |sc|
-      stb.search_criterions.build :model_field_uid=>sc[:mfid], :operator=>sc[:operator], :value=>sc[:value], :include_empty=>sc[:include_empty]
+      stb.search_criterions.build model_field_uid: sc[:mfid], operator: sc[:operator], value: sc[:value], include_empty: sc[:include_empty]
     end
     stb.save!
     render json: {ok: 'ok'}
@@ -43,13 +42,14 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
   end
 
   def get_sc_mfs stb
-    mfs = CoreModule.find_by_class_name(stb.module_type).default_module_chain.model_fields.values
-    ModelField.sort_by_label(mfs).collect {|mf| {:mfid=>mf.uid, :label=>mf.label, :datatype=>mf.data_type}}
+    mfs = CoreModule.find_by(class_name: stb.module_type).default_module_chain.model_fields.values
+    ModelField.sort_by_label(mfs).collect {|mf| {mfid: mf.uid, label: mf.label, datatype: mf.data_type}}
   end
 
   def get_user_and_date_mfs stb
-    user_list, date_list = [], []
-    cm = CoreModule.find_by_class_name(stb.module_type)
+    user_list = []
+    date_list = []
+    cm = CoreModule.find_by(class_name: stb.module_type)
     cm.every_model_field { |mf| !mf.custom? }.each do |uid, mf|
       user_list << {mfid: uid.to_s, label: mf.label} if mf.user_id_field?
       date_list << {mfid: uid.to_s, label: mf.label} if mf.date?
@@ -58,9 +58,10 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
   end
 
   def get_user_and_date_cdefs stb
-    user_list, date_list = [], []
-    cm = CoreModule.find_by_class_name(stb.module_type)
-    cm.every_model_field { |mf| mf.custom? }.each do |uid, mf|
+    user_list = []
+    date_list = []
+    cm = CoreModule.find_by(class_name: stb.module_type)
+    cm.every_model_field(&:custom?).each do |_uid, mf|
       user_list << {cdef_id: mf.custom_definition.id, label: mf.label} if mf.user_id_field?
       date_list << {cdef_id: mf.custom_definition.id, label: mf.label} if mf.date?
     end
@@ -82,4 +83,15 @@ module Api; module V1; module Admin; class StateToggleButtonsController < Api::V
     end
   end
 
+  private
+
+  def permitted_params(params)
+    # We are not using a `require` here because we pass in the `stb` top level element.
+    # Maybe this is a place we should consider consolidating the Parameters hash so that `stb` is the top level
+    # element, and the criterion live under that.
+    params.except(:module_type).permit(:user_custom_definition_id, :activate_confirmation_text, :activate_text,
+                                       :date_attribute, :date_custom_definition_id, :deactivate_confirmation_text,
+                                       :deactivate_text, :disabled, :display_index, :identifier,
+                                       :permission_group_system_codes, :simple_button, :user_attribute)
+  end
 end; end; end; end

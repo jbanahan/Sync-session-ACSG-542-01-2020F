@@ -1,15 +1,16 @@
 describe Api::V1::Admin::StateToggleButtonsController do
   let!(:user) { Factory(:admin_user) }
+
   before do
     allow_api_user user
     use_json
   end
 
   describe "edit" do
-    let!(:stb) { Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by') }
+    let!(:stb) { Factory(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
 
     it "renders template JSON for a admin" do
-      sc_mfs = [{:mfid=>:prod_attachment_count, :label=>"Attachment Count", :datatype=>:integer}]
+      sc_mfs = [{mfid: :prod_attachment_count, label: "Attachment Count", datatype: :integer}]
       user_mfs = [{mfid: "ord_closed_by", label: "Closed By"}]
       date_mfs = [{mfid: "ord_closed_at", label: "Closed At"}]
       user_cdefs = [{cdef_id: 1, label: "QA Hold By"}]
@@ -20,7 +21,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
       expect_any_instance_of(described_class).to receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
       expect_any_instance_of(described_class).to receive(:get_user_and_date_cdefs).with(stb).and_return [user_cdefs, date_cdefs]
 
-      get :edit, id: stb.id, :format => "json"
+      get :edit, id: stb.id, format: "json"
       output = {button: stb,
                 criteria: stb.search_criterions.map { |sc| sc.json(user) },
                 sc_mfs: sc_mfs,
@@ -33,48 +34,65 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
     it "prevents access by non-admins" do
       allow_api_access Factory(:user)
-      get :edit, id: 1, :format => "json"
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+      get :edit, id: 1, format: "json"
+      expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
   end
 
   describe "update" do
     context "search_criterions" do
-      before(:each) do
-        Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
-        @stb_new_criteria = [{"mfid"=>"prod_uid", "label"=>"Unique Identifier", "operator"=>"eq", "value"=>"x", "datatype"=>"string", "include_empty"=>false}]
-        @stb = StateToggleButton.first
-        @stb.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator"=>"eq", "value"=>"w", "include_empty"=>true)
+      let(:stb) do
+        Factory(:state_toggle_button, module_type: 'Shipment',
+                                      date_attribute: 'shp_canceled_date',
+                                      user_attribute: 'shp_canceled_by')
       end
+
+      let(:stb_new_criteria) do
+        [{"mfid" => "prod_uid",
+          "label" => "Unique Identifier",
+          "operator" => "eq",
+          "value" => "x",
+          "datatype" => "string",
+          "include_empty" => false}]
+      end
+
+      before do
+        stb.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref",
+                                                            "operator" => "eq",
+                                                            "value" => "w",
+                                                            "include_empty" => true)
+      end
+
       it "replaces search criterions for admins" do
-        put :update, id: @stb.id, stb: {}, criteria: @stb_new_criteria
-        @stb.reload
-        criteria = @stb.search_criterions
+        put :update, id: stb.id, stb: {}, criteria: stb_new_criteria
+        stb.reload
+        criteria = stb.search_criterions
         new_criterion = (criteria.first.json user).to_json
 
         expect(criteria.count).to eq 1
-        expect(new_criterion).to eq (@stb_new_criteria.first).to_json
+        expect(new_criterion).to eq stb_new_criteria.first.to_json
         expect(JSON.parse(response.body)["ok"]).to eq "ok"
       end
 
       it "prevents access by non-admins" do
         allow_api_access Factory(:user)
-        put :update, id: @stb.id, stb: {}, criteria: @stb_new_criteria
-        @stb.reload
-        criteria = @stb.search_criterions
+        put :update, id: stb.id, stb: {}, criteria: stb_new_criteria
+        stb.reload
+        criteria = stb.search_criterions
         expect(criteria.count).to eq 1
         expect(criteria.first.model_field_uid).to eq "ent_brok_ref"
-        expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+        expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
       end
     end
+
     context "standard fields" do
       let(:stb) do
-        Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by',
+        Factory(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by',
                                       permission_group_system_codes: "CODE",
                                       activate_text: "activate!",
                                       activate_confirmation_text: "activate sure?",
                                       deactivate_text: "deactivate!",
-                                      deactivate_confirmation_text: "deactivate sure?" )
+                                      deactivate_confirmation_text: "deactivate sure?")
       end
       let(:new_params) do
         {module_type: "Product",
@@ -107,6 +125,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
         expect(stb.deactivate_confirmation_text).to eq "deactivate sure?"
       end
     end
+
     context "mfs and cdefs" do
       let!(:stb) { Factory(:state_toggle_button, user_attribute: "ord_closed_by", date_custom_definition: Factory(:custom_definition))}
       let!(:new_cdef) { Factory(:custom_definition) }
@@ -163,7 +182,7 @@ describe Api::V1::Admin::StateToggleButtonsController do
   end
 
   describe "destroy" do
-    let!(:stb) { Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by') }
+    let!(:stb) { Factory(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by') }
 
     it "deletes STB for an admin" do
       delete :destroy, id: stb.id
@@ -181,14 +200,14 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
   describe "get_mf_digest" do
     it "returns hash containing stb, search criteria, user and date mfs/cdefs" do
-      stb = double("stb")
+      stb = instance_double("stb")
       ctrl = described_class.new
 
-      sc_mfs = double("sc_mfs")
-      user_mfs = double ("user_mfs")
-      user_cdefs = double ("user_cdefs")
-      date_mfs = double ("date_mfs")
-      date_cdefs = double ("date_cdefs")
+      sc_mfs = instance_double("sc_mfs")
+      user_mfs = instance_double "user_mfs"
+      user_cdefs = instance_double "user_cdefs"
+      date_mfs = instance_double "date_mfs"
+      date_cdefs = instance_double "date_cdefs"
 
       expect(ctrl).to receive(:get_sc_mfs).with(stb).and_return sc_mfs
       expect(ctrl).to receive(:get_user_and_date_mfs).with(stb).and_return [user_mfs, date_mfs]
@@ -200,12 +219,12 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
   describe "get_user_and_date_mfs" do
     it "returns two arrays of model fields associated with button's module, the second including only those of type date/datetime" do
-      stb = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
+      stb = Factory(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
 
       user_list, date_list = described_class.new.get_user_and_date_mfs(stb)
       # Just make sure the list includes a known date field and user field and does not include a field we know is not either
       expect(user_list).to include({mfid: "shp_canceled_by", label: "Canceled By"})
-      ref_mf = ModelField.find_by_uid(:shp_ref)
+      ref_mf = ModelField.by_uid(:shp_ref)
       # Just make sure the model field actually exists
       expect(ref_mf.blank?).to eq false
       expect(user_list).not_to include({mfid: "shp_ref", label: ref_mf.label})
@@ -216,15 +235,15 @@ describe Api::V1::Admin::StateToggleButtonsController do
 
   describe "get_sc_mfs" do
     it "takes the model fields associated with a button's module returning only the mfid, label, and datatype fields" do
-      stb = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
+      stb = Factory(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
       mfs = described_class.new.get_sc_mfs stb
-      expect(mfs.find {|mf| mf[:mfid] == :shp_ref}).to eq({:mfid => :shp_ref, label: "Reference Number", :datatype => :string })
+      expect(mfs.find {|mf| mf[:mfid] == :shp_ref}).to eq({mfid: :shp_ref, label: "Reference Number", datatype: :string })
     end
   end
 
   describe "get_user_and_date_cdefs" do
     it "returns two arrays of cdefs associated with the button's module, the first including only those of user_type, the second only those of datetime" do
-      stb = Factory(:state_toggle_button, module_type:'Shipment', date_attribute:'shp_canceled_date', user_attribute:'shp_canceled_by')
+      stb = Factory(:state_toggle_button, module_type: 'Shipment', date_attribute: 'shp_canceled_date', user_attribute: 'shp_canceled_by')
       user = Factory(:custom_definition, module_type: "Shipment", data_type: "integer", is_user: true, label: "QA Hold By")
       date = Factory(:custom_definition, module_type: "Shipment", data_type: "datetime", label: "QA Hold Date")
       Factory(:custom_definition, module_type: "Shipment", data_type: "integer", label: "Foo")

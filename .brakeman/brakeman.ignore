@@ -3320,25 +3320,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "6236ca21db639ac63dab0cfa908dcee086537cc632a4cff5cd6e1e8d073dbb00",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/state_toggle_button.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":date_custom_definition_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "StateToggleButton"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "6250e8fa7deccac64fcc189b8a144576e443bf34384b76453357a76bcc60cbe7",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4956,25 +4937,6 @@
       "location": {
         "type": "model",
         "model": "DutyCalcImportFileLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "8eedae65476f1c94073f01b2022579bd01de845ef9d5e0b5c28871899be3db75",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/state_toggle_button.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_custom_definition_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "StateToggleButton"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -8533,6 +8495,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-05 12:46:48 -0400",
+  "updated": "2020-10-05 13:59:54 -0400",
   "brakeman_version": "4.9.1"
 }

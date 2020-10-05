@@ -25,7 +25,7 @@ module Api; module V1; module StateToggleSupport
     end
     raise StatusableError.new("Button not accessible at this time.", :forbidden) unless btn
     Lock.db_lock(obj) do
-      btn.toggle! obj, current_user
+      btn.toggle_state! obj, current_user
     end
     render json: {'ok'=>'ok'}
   end

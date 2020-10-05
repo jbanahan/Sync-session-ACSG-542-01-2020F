@@ -44,23 +44,20 @@
 # sent, but you may want to allow the user send multiple times. So you can set up a comparator to watch the linked date attribute
 # and send a file when the user updates the date via the button press.
 class StateToggleButton < ActiveRecord::Base
-  # Permission group system codes should be separated by newlines
-  attr_accessible :activate_confirmation_text, :activate_text, :date_attribute, :date_custom_definition_id, :deactivate_confirmation_text, :deactivate_text, :disabled, :display_index, :identifier, :module_type, :permission_group_system_codes, :simple_button, :user_attribute, :user_custom_definition_id
-
   has_many :search_criterions, inverse_of: :state_toggle_button, dependent: :destroy
   belongs_to :date_custom_definition, class_name: 'CustomDefinition'
   belongs_to :user_custom_definition, class_name: 'CustomDefinition'
 
   validate :one_date_field
   validate :one_user_field
-  validates_uniqueness_of :identifier, allow_nil: true, allow_blank: true
+  validates :identifier, uniqueness: { allow_blank: true }
   validate :validate_model_fields
 
   # returns an array of state toggle buttons that match the given
   # object in it's current state and user's permissions
   def self.for_core_object_user obj, user
     r = []
-    cm = CoreModule.find_by_object obj
+    cm = CoreModule.find_by object: obj
     raise "Object is not associated with a core module." unless cm
     active_state_toggle_buttons_for_module(cm) do |buttons|
       buttons.each do |btn|
@@ -70,7 +67,7 @@ class StateToggleButton < ActiveRecord::Base
     r
   end
 
-  def toggle! obj, user, async_snapshot = false
+  def toggle_state! obj, user, async_snapshot = false
     date_to_write = nil
     user_to_write = nil
     uf = user_field
@@ -104,7 +101,7 @@ class StateToggleButton < ActiveRecord::Base
     return true if btn.permission_group_system_codes.blank?
     codes = btn.permission_group_system_codes.split("\n")
     user.groups.each {|grp| return true if codes.include?(grp.system_code)}
-    return false
+    false
   end
   private_class_method :user_permission?
 
@@ -121,7 +118,10 @@ class StateToggleButton < ActiveRecord::Base
   def self.active_state_toggle_buttons_for_module core_module
     # There used to be caching here...but it was coded wrong and never actually utilized the cache.
     # I removed the caching code as the system works fine without it
-    buttons = StateToggleButton.includes(:search_criterions).where(module_type: core_module.class_name).where("disabled IS NULL OR disabled = 0").order("display_index ASC, id ASC").all
+    buttons = StateToggleButton.includes(:search_criterions)
+                               .where(module_type: core_module.class_name)
+                               .where("disabled IS NULL OR disabled = 0")
+                               .order("display_index ASC, id ASC").all
     if block_given?
       yield buttons
     else
@@ -133,20 +133,33 @@ class StateToggleButton < ActiveRecord::Base
   private_class_method :active_state_toggle_buttons_for_module
 
   def user_field
-    user_attribute ? ModelField.find_by_uid(user_attribute) : (user_custom_definition_id.nil? ? nil : CustomDefinition.cached_find(user_custom_definition_id).try(:model_field))
+    if user_attribute
+      ModelField.by_uid(user_attribute)
+    elsif user_custom_definition_id.nil?
+      nil
+    else
+      CustomDefinition.cached_find(user_custom_definition_id).try(:model_field)
+    end
   end
 
   def date_field
-    date_attribute ? ModelField.find_by_uid(date_attribute) : (date_custom_definition_id.nil? ? nil : CustomDefinition.cached_find(date_custom_definition_id).try(:model_field))
+    if date_attribute
+      ModelField.by_uid(date_attribute)
+    elsif date_custom_definition_id.nil?
+      nil
+    else
+      CustomDefinition.cached_find(date_custom_definition_id).try(:model_field)
+    end
   end
 
   private
+
     def one_date_field
-      errors.add(:base, "Button can not have both date and custom date values.") if !self.date_attribute.blank? && !self.date_custom_definition.blank?
+      errors.add(:base, "Button can not have both date and custom date values.") if self.date_attribute.present? && self.date_custom_definition.present?
     end
 
     def one_user_field
-      errors.add(:base, "Button can not have both user and custom user values.") if !self.user_attribute.blank? && !self.user_custom_definition.blank?
+      errors.add(:base, "Button can not have both user and custom user values.") if self.user_attribute.present? && self.user_custom_definition.present?
     end
 
     def validate_model_fields
