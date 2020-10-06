@@ -1,6 +1,6 @@
 inherit_from:
   - .rubocop_strict.yml
-  - .rubocop_missing_cops_todo.yml
+  - .rubocop_todo_indexes.yml
 
 inherit_mode:
   merge:

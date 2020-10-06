@@ -26,7 +26,7 @@ class AttachmentArchiveSetupsController < ApplicationController
       return
     end
 
-    if s.update(params[:attachment_archive_setup])
+    if s.update(permitted_params(params))
       add_flash :notices, "Your setup was successfully updated."
       redirect_to [s.company, s]
     else
@@ -36,7 +36,7 @@ class AttachmentArchiveSetupsController < ApplicationController
 
   def create
     make_params_consistent(params)
-    @aas = AttachmentArchiveSetup.new(params[:attachment_archive_setup])
+    @aas = AttachmentArchiveSetup.new(permitted_params(params))
 
     c = Company.find params[:company_id]
     if c.attachment_archive_setup
@@ -82,7 +82,7 @@ class AttachmentArchiveSetupsController < ApplicationController
 
     entry = Entry.new
     attachment = Attachment.new(attachable: entry)
-    archive_attachment = AttachmentArchiveSetup.new(attachment: attachment)
+    archive_attachment = AttachmentArchivesAttachment.new(attachment: attachment)
 
     variables = {'attachment' => ActiveRecordLiquidDelegator.new(attachment),
                  'archive_attachment' => ActiveRecordLiquidDelegator.new(archive_attachment),
@@ -111,5 +111,11 @@ class AttachmentArchiveSetupsController < ApplicationController
       return false
     end
     true
+  end
+
+  def permitted_params(params)
+    params.require(:attachment_archive_setup).permit(:company_id, :start_date, :end_date, :archive_scheme, :output_path,
+                                                     :combine_attachments, :combined_attachment_order, :include_only_listed_attachments,
+                                                     :send_in_real_time, :send_as_customer_number)
   end
 end

@@ -27,7 +27,7 @@ class MailingList < ActiveRecord::Base
 
   validates :system_code, presence: true
   validates :system_code, uniqueness: true
-  validates :name, uniqueness: { scope: :company_id } # rubocop:disable Rails/UniqueValidationWithoutIndex
+  validates :name, uniqueness: { scope: :company_id }
   validates :user, presence: true
   validates :company, presence: true
   validates :name, presence: true

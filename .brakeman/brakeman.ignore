@@ -7606,7 +7606,7 @@
       "check_name": "SQL",
       "message": "Possible SQL injection",
       "file": "app/models/attachment_archive_setup.rb",
-      "line": 153,
+      "line": 197,
       "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
       "code": "Attachment.select(\"distinct attachments.#{(\"id\" or \"*\")}\").joins(\"INNER JOIN entries on entries.id = attachments.attachable_id AND attachments.attachable_type = \\\"Entry\\\"\").joins(\"LEFT OUTER JOIN attachment_archives_attachments on attachments.id = attachment_archives_attachments.attachment_id\").joins(self.class.sanitize_sql_array([\"LEFT OUTER JOIN attachments arc_packet ON attachments.attachable_id = arc_packet.attachable_id and arc_packet.attachment_type = ?\", \"Archive Packet\"])).where(\"arc_packet.id IS NULL OR arc_packet.id = attachments.id OR (#{Attachment.stitchable_attachment_extensions.collect do\n self.class.sanitize_sql_array([\"attachments.attached_file_name NOT like ?\", \"%#{ext}\"])\n end.join(\" AND \")})\")",
       "render_path": null,
@@ -7929,6 +7929,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "f1c8be2680724868de98d9d938a4d73ecd2cfaf68e52541639265e203099ab15",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/attachment_archive_setups_controller.rb",
+      "line": 39,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "AttachmentArchiveSetup.new(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "AttachmentArchiveSetupsController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "f1f793d55509853363567e30c06bb84232405642296921544336c7c143e64d22",
       "check_name": "ModelAttrAccessible",
@@ -8088,25 +8108,6 @@
       "location": {
         "type": "model",
         "model": "RunAsSession"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "f767b3dfe5b243c40b476ff89c6d0ee81957fb168be98c58f5622f19bb1f3ede",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/attachment_archive_setup.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":company_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "AttachmentArchiveSetup"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -8495,6 +8496,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-05 13:59:54 -0400",
+  "updated": "2020-10-06 13:06:20 -0400",
   "brakeman_version": "4.9.1"
 }
