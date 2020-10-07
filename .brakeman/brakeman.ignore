@@ -5839,6 +5839,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "b1cf1ac76360f0e14df64121c571b6062766093fc5cee3ac4953146391958b17",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/user_templates_controller.rb",
+      "line": 14,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "UserTemplate.new(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "UserTemplatesController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "b2edb2350f4dedbc8bc41d2fafda32f3a559ff4e40ff580106cf4fd0fdef8596",
       "check_name": "ModelAttrAccessible",

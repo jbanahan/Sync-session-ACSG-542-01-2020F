@@ -11,27 +11,26 @@
 
 class UserTemplate < ActiveRecord::Base
   # storing as string instead of hash to preserve comments for display to user in view
-  DEFAULT_TEMPLATE_JSON = <<dtemp
-{
-  "disallow_password":false,
-  "email_format":"html",
-  "email_new_messages":false,
-  "homepage":null,
-  "password_reset":true,
-  "portal_mode":null,
-  "tariff_subscribed":false,
-  "event_subscriptions":[
-    // {"event_type":"ORDER_CREATE","system_message":true,"email":true}
-  ],
-  "groups":[
-    // "GROUPCODE"
-  ],
-  "permissions":[
-    // "order_view"
-  ]
-}
-dtemp
-  attr_accessible :name, :template_json
+  DEFAULT_TEMPLATE_JSON = <<~DTEMP.freeze
+    {
+      "disallow_password":false,
+      "email_format":"html",
+      "email_new_messages":false,
+      "homepage":null,
+      "password_reset":true,
+      "portal_mode":null,
+      "tariff_subscribed":false,
+      "event_subscriptions":[
+        // {"event_type":"ORDER_CREATE","system_message":true,"email":true}
+      ],
+      "groups":[
+        // "GROUPCODE"
+      ],
+      "permissions":[
+        // "order_view"
+      ]
+    }
+  DTEMP
 
   def template_default_merged_hash
     default_template = JSON.parse(UserTemplate::DEFAULT_TEMPLATE_JSON)
@@ -54,7 +53,7 @@ dtemp
 
       u.first_name = first_name
       u.last_name = last_name
-      u.username = username.blank? ? email : username
+      u.username = username.presence || email
       u.password = User.generate_authtoken(u)
       u.email = email
       u.time_zone = time_zone
@@ -67,21 +66,16 @@ dtemp
       u.portal_mode = template_hash['portal_mode']
       u.tariff_subscribed = template_hash['tariff_subscribed']
 
-      if template_hash['event_subscriptions']
-        template_hash['event_subscriptions'].each do |es_h|
-          u.event_subscriptions.build(event_type:es_h['event_type'], email:es_h['email'], system_message:es_h['system_message'])
-        end
+      template_hash['event_subscriptions']&.each do |es_h|
+          u.event_subscriptions.build(event_type: es_h['event_type'], email: es_h['email'], system_message: es_h['system_message'])
       end
-
 
       u.save!
       u.create_snapshot(current_user)
 
-      if template_hash['groups']
-        template_hash['groups'].each do |grp_code|
+      template_hash['groups']&.each do |grp_code|
           g = Group.find_by(system_code: grp_code)
           g.users << u if g
-        end
       end
 
       if notify_user
