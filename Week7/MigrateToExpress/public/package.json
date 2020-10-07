@@ -1,0 +1,15 @@
+{
+  "name": "public",
+  "version": "0.0.1",
+  "description": "Public facing files",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jason Banahan",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^4.5.2",
+    "jquery": "^3.5.1"
+  }
+}
