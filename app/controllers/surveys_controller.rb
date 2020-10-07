@@ -1,11 +1,11 @@
 class SurveysController < ApplicationController
   def set_page_title
-    @page_title ||= 'Survey'
+    @page_title ||= 'Survey' # rubocop:disable Naming/MemoizedInstanceVariableName
   end
 
   def index
     if current_user.view_surveys?
-      @surveys = Survey.where(:company_id=>current_user.company_id, :archived => false)
+      @surveys = Survey.where(company_id: current_user.company_id, archived: false)
 
       # sort_by is used because it only needs to look up sort key values once, instead of several times the standard
       # sort uses.  Since the key values come via query lookups, this saves tons of time.
@@ -16,25 +16,26 @@ class SurveysController < ApplicationController
       end
 
       if params[:show_archived].to_s == 'true'
-        @archived_surveys = Survey.where(:company_id=>current_user.company_id, :archived => true)
+        @archived_surveys = Survey.where(company_id: current_user.company_id, archived: true)
       end
     else
       error_redirect "You do not have permission to view surveys."
     end
   end
+
   def show
     if !current_user.view_surveys?
       error_redirect "You do not have permission to view surveys."
       return
     end
     @survey = Survey.find params[:id]
-    if @survey.company_id!=current_user.company_id
+    if @survey.company_id != current_user.company_id
       error_redirect "You cannot view surveys that aren't from your company."
       return
     end
 
     respond_to do |format|
-      format.html {
+      format.html do
         if params[:show_archived_responses] == "true" && @survey.can_edit?(current_user)
           @show_archived = true
         end
@@ -42,24 +43,27 @@ class SurveysController < ApplicationController
         # except really old ones anyway)
         # Use sort_by so the sort key calculatoin is done only once, since we're needing to
         # do a DB query to figure this out, tihs is WAY faster than plain sort
-        # (.ie it's O(n) instead of (average) O(n log n) or (worst case) O(n²)
+        # (.ie it's O(n) instead of (average) O(n log n) or (worst case) O(n^2)
         @survey_responses = @survey.survey_responses.was_archived(false).sort_by do |r|
           log = r.most_recent_user_log
           log ? -log.updated_at.to_i : 0
         end
-      }
+      end
       format.xls do
-        send_excel_workbook @survey.to_xls, (@survey.name.blank? ? "survey" : @survey.name) + ".xls"
+        send_excel_workbook @survey.to_xls, (@survey.name.presence || "survey") + ".xls"
       end
     end
   end
+
   def new
     if current_user.edit_surveys?
-      @survey = Survey.new(:company=>current_user.company, :email_subject=>"Email Subject", :email_body=>"h1. Survey Introduction Email\n\nSample Body", :ratings_list=>"Pass\nFail")
+      @survey = Survey.new(company: current_user.company, email_subject: "Email Subject",
+                           email_body: "h1. Survey Introduction Email\n\nSample Body", ratings_list: "Pass\nFail")
     else
       error_redirect "You do not have permission to edit surveys."
     end
   end
+
   def edit
     s = Survey.find params[:id]
     if !s.can_edit? current_user
@@ -71,6 +75,7 @@ class SurveysController < ApplicationController
     end
     @survey = s
   end
+
   def copy
     s = Survey.find params[:id]
     if !s.can_edit? current_user
@@ -79,8 +84,8 @@ class SurveysController < ApplicationController
       redirect_to edit_survey_path(s.copy!)
     end
   end
+
   def update
-    begin
       # inject false warnings where not submitted
       s = Survey.find params[:id]
       if !s.can_edit? current_user
@@ -91,50 +96,48 @@ class SurveysController < ApplicationController
         return
       end
       question_validation
-      s.update_attributes(params[:survey])
+      s.update(permitted_params(params))
       errors_to_flash s unless s.errors.empty?
-    rescue => e
+  rescue StandardError => e
       add_flash :errors, e.message
       e.log_me
-    ensure
+  ensure
       redirect_path = (defined? s) && s ? edit_survey_path(s) : nil
-      render :json => {flash: {errors: flash[:errors]}, redirect: redirect_path}
-    end
+      render json: {flash: {errors: flash[:errors]}, redirect: redirect_path}
   end
 
   def question_validation
     if params[:survey] && params[:survey][:questions_attributes]
       counter = 0
-      params[:survey][:questions_attributes].each do |k, v|
-        v[:rank] = counter unless v[:rank].present?
-        v[:warning]="" unless v[:warning]
-        v[:require_comment]="" unless v[:require_comment]
-        v[:require_attachment]="" unless v[:require_attachment]
+      params[:survey][:questions_attributes].each do |_k, v|
+        v[:rank] = counter if v[:rank].blank?
+        v[:warning] = "" unless v[:warning]
+        v[:require_comment] = "" unless v[:require_comment]
+        v[:require_attachment] = "" unless v[:require_attachment]
         counter += 1
       end
     end
   end
 
   def create
-    begin
       if !current_user.edit_surveys?
         add_flash :errors, "You do not have permission to edit surveys."
         return
       end
       question_validation
-      s = Survey.new(params[:survey])
+      s = Survey.new(permitted_params(params))
       s.company_id = current_user.company_id
       s.created_by = current_user
       s.save
       errors_to_flash s unless s.errors.empty?
-    rescue => e
+  rescue StandardError => e
       add_flash :errors, e.message
       e.log_me
-    ensure
+  ensure
       redirect_path = (defined? s) && s ? edit_survey_path(s) : nil
-      render :json => {flash: {errors: flash[:errors]}, redirect: redirect_path}
-    end
+      render json: {flash: {errors: flash[:errors]}, redirect: redirect_path}
   end
+
   def destroy
     s = Survey.find params[:id]
     if !s.can_edit? current_user
@@ -149,10 +152,11 @@ class SurveysController < ApplicationController
       add_flash :notices, "Survey deleted successfully."
       redirect_to surveys_path
     else
-      errors_to_flash s, :now=>true
-      redirect_to request.referrer.blank? ? '/' : request.referrer
+      errors_to_flash s, now: true
+      redirect_to request.referer.presence || '/'
     end
   end
+
   def show_assign
     s = Survey.find params[:id]
     if !s.can_edit? current_user
@@ -163,13 +167,14 @@ class SurveysController < ApplicationController
 
     visible_companies = [current_user.company]
     visible_companies += current_user.company.linked_companies.to_a
-    visible_companies << Company.where(:master=>true).first
+    visible_companies << Company.where(master: true).first
     @visible_companies = visible_companies.uniq.compact.sort_by {|c| c.name.try(:upcase) }
 
     # Only show groups that are not already assigned to the survey
-    @groups = Group.joins("LEFT OUTER JOIN survey_responses ON survey_responses.group_id IS NOT NULL and survey_responses.survey_id = #{@survey.id}").
-                where("survey_responses.id IS NULL").uniq.order(:name)
+    @groups = Group.joins("LEFT OUTER JOIN survey_responses ON survey_responses.group_id IS NOT NULL and survey_responses.survey_id = #{@survey.id}")
+                   .where("survey_responses.id IS NULL").uniq.order(:name)
   end
+
   def assign
     s = Survey.find params[:id]
     if !s.can_edit? current_user
@@ -177,13 +182,13 @@ class SurveysController < ApplicationController
       return
     end
     base_object = nil
-    if !params[:base_object_id].blank? && !params[:base_object_type].blank?
-      cm = CoreModule.find_by_class_name params[:base_object_type], true
+    if params[:base_object_id].present? && params[:base_object_type].present?
+      cm = CoreModule.find_by(class_name: params[:base_object_type])
       if cm.blank?
         error_redirect "Object type #{params[:base_object_type]} not found."
         return
       end
-      bo = cm.klass.find_by_id params[:base_object_id]
+      bo = cm.klass.find_by id: params[:base_object_id]
       if bo.blank? || !bo.can_view?(current_user)
         error_redirect "#{params[:base_object_type]} #{params[:base_object_id]} not found."
         return
@@ -200,7 +205,7 @@ class SurveysController < ApplicationController
     end
 
     cnt = 0
-    if !users.blank?
+    if users.present?
       users.each_value do |uid|
         s.generate_response!(User.find(uid), params[:subtitle], bo).delay.invite_user!
         cnt += 1
@@ -211,7 +216,7 @@ class SurveysController < ApplicationController
     end
 
     cnt = 0
-    if !groups.blank?
+    if groups.present?
       groups.each do |g_id|
         s.generate_group_response!(Group.find(g_id), params[:subtitle], base_object).delay.invite_user!
         cnt += 1
@@ -224,17 +229,18 @@ class SurveysController < ApplicationController
 
     redirect_to redirect_location(s)
   end
+
   def toggle_subscription
     @survey = Survey.find params[:id]
     if current_user.view_surveys? && @survey.company_id == current_user.company_id
-      existing = SurveySubscription.find_by(survey_id:@survey.id, user_id: current_user.id)
+      existing = SurveySubscription.find_by(survey_id: @survey.id, user_id: current_user.id)
       if existing
         existing.destroy
       else
-        SurveySubscription.create!(:survey_id => @survey.id, :user_id => current_user.id)
+        SurveySubscription.create!(survey_id: @survey.id, user_id: current_user.id)
       end
     end
-    redirect_to request.referrer.blank? ? '/' : request.referrer
+    redirect_to request.referer.presence || '/'
   end
 
   def archive
@@ -264,7 +270,21 @@ class SurveysController < ApplicationController
   end
 
   private
+
   def redirect_location s
-    params[:redirect_to].blank? ? s : params[:redirect_to]
+    params[:redirect_to].presence || s
+  end
+
+  def permitted_params(params)
+    # Because Rails 4.2 is a bit wonky when it comes to nested attributes in strong params, we will whitelist anything
+    # in questions_attributes. Rails 5 fixes this oddity by handling both arrays of hashes and hashes with multiple keys
+    # uniformly. Given this was the default behavior of attr_accessible I don't feel bad using this work around for the
+    # time being.
+
+    params.require(:survey).except(:company_id, :created_by_id, :updated_at, :archived)
+          .permit(:email_body, :email_subject, :expiration_days, :name, :ratings_list, :require_contact, :system_code,
+                  :trade_preferences_program_id).tap do |whitelisted|
+      whitelisted[:questions_attributes] = params[:survey][:questions_attributes] if params[:survey][:questions_attributes]
+    end
   end
 end

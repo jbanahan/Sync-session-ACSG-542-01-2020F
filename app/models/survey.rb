@@ -25,11 +25,6 @@
 #
 
 class Survey < ActiveRecord::Base
-  attr_accessible :archived, :company_id, :created_by_id, :email_body,
-    :email_subject, :expiration_days, :name, :ratings_list, :require_contact,
-    :system_code, :trade_preference_program_id, :user, :questions_attributes,
-    :updated_at
-
   belongs_to :created_by, :class_name=>"User"
   belongs_to :company
   belongs_to :trade_preference_program

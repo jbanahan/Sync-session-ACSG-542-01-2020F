@@ -79,25 +79,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "0324e712cabb63b0b13fd982d3f7590cae4f528bf458eba790bb2f986bf615cc",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/survey_response_log.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":survey_response_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SurveyResponseLog"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "04f1a2ee53be1de45e78bceddd011eb0cc2785b1e3f8459b08b02cdd6d6ac495",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -753,6 +734,26 @@
       },
       "user_input": null,
       "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "1b2f666fbf64b7343521b2a5be80816ca377860e86659b88e892df8377ba17ab",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/surveys_controller.rb",
+      "line": 128,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "Survey.new(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "SurveysController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
       "note": ""
     },
     {
@@ -1440,25 +1441,6 @@
       "location": {
         "type": "model",
         "model": "DashboardWidget"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "2b600d4e69317073c3f4db944ad91f17d2e7f3774adfab9045c29068cd85b3c1",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/survey_response_log.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SurveyResponseLog"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -2995,25 +2977,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "58d90d76e8f4e6ba2d8264468b5fc9ab243caf70c1e0fd457baa8cbc62194308",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/survey.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":created_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Survey"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "5aaec0ff6809ce361f0d29a29f0060f42313bfad6283a00aee7e3cbd5b321e14",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -3741,25 +3704,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "701e29ce234fed4afa754e227b8811b8078f98274e6158700ad6dcbca01e18bc",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/survey.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":company_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Survey"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "71194273dade27b1973438ce769d4c813973347fb8bc68f14453c8d43efafd56",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4056,25 +4000,6 @@
       "location": {
         "type": "model",
         "model": "InvoiceLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "783152b04a2c70578e28da52d165e831fece86482c0efb10eb478043adbbef86",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/survey_response_update.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":survey_response_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SurveyResponseUpdate"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -4381,25 +4306,6 @@
       "location": {
         "type": "model",
         "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "81a74268558da3b24d61c5c5ab56c7a6b8fb7397b076ccc59808526f1001e70d",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/survey.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":trade_preference_program_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Survey"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -5013,25 +4919,6 @@
       "location": {
         "type": "model",
         "model": "BusinessValidationResult"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "93b3a69f2fb823559dfe5421491e096b7ef0fb9cf20bc1005f2fe4fbb84445b8",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/survey_response_update.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SurveyResponseUpdate"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -8496,6 +8383,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-06 13:06:20 -0400",
+  "updated": "2020-10-07 09:22:23 -0400",
   "brakeman_version": "4.9.1"
 }

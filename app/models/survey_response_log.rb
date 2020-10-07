@@ -16,9 +16,6 @@
 #
 
 class SurveyResponseLog < ActiveRecord::Base
-  attr_accessible :message, :survey_response_id, :user_id, :user,
-    :created_at
-
-  belongs_to :survey_response, :inverse_of=>:survey_response_logs
+  belongs_to :survey_response, inverse_of: :survey_response_logs
   belongs_to :user
 end

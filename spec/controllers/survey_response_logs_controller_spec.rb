@@ -1,22 +1,25 @@
 describe SurveyResponseLogsController do
   describe "index" do
-    before :each do
-      u = Factory(:user)
+    let(:survey_response) { Factory(:survey_response) }
+    let!(:log) { survey_response.survey_response_logs.create!(message: "x") }
 
-      sign_in_as u
-      @sr = Factory(:survey_response)
-      @log = @sr.survey_response_logs.create!(:message=>"x")
+    before do
+      user = Factory(:user)
+
+      sign_in_as user
     end
-    it 'should show logs' do
+
+    it 'shows logs' do
       allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return(true)
-      get :index, {"survey_response_id"=>@sr.id}
+      get :index, {"survey_response_id" => survey_response.id}
       expect(response).to be_success
-      expect(assigns(:logs).to_a).to eq([@log])
+      expect(assigns(:logs).to_a).to eq([log])
     end
-    it 'should not show logs if user cannot view survey response' do
+
+    it 'does not show logs if user cannot view survey response' do
       allow_any_instance_of(SurveyResponse).to receive(:can_view?).and_return(false)
-      get :index, {"survey_response_id"=>@sr.id}
-      expect(response).to redirect_to request.referrer
+      get :index, {"survey_response_id" => survey_response.id}
+      expect(response).to redirect_to request.referer
       expect(flash[:errors]).not_to be_empty
     end
   end

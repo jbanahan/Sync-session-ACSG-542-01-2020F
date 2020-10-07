@@ -30,30 +30,30 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
   end
 
   def checkout
-    sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
+    survey_response = checkout_handling(params[:id], params[:checkout_token]) do |sr|
       sr.checkout current_user, params[:checkout_token]
       sr.save!
-      sr.survey_response_logs.create!(:message=>"Checked out.", :user_id=>current_user.id)
+      sr.survey_response_logs.create!(message: "Checked out.", user_id: current_user.id)
     end
 
-    render json: json_survey_response(sr, current_user) if sr
+    render json: json_survey_response(survey_response, current_user) if survey_response
   end
 
   def cancel_checkout
-    sr = checkout_handling(params[:id], params[:checkout_token]) do |sr|
+    survey_response = checkout_handling(params[:id], params[:checkout_token]) do |sr|
       sr.clear_checkout
       sr.save!
-      sr.survey_response_logs.create!(:message=>"Check out cancelled.", :user_id=>current_user.id)
+      sr.survey_response_logs.create!(message: "Check out cancelled.", user_id: current_user.id)
     end
 
-    render json: json_survey_response(sr, current_user) if sr
+    render json: json_survey_response(survey_response, current_user) if survey_response
   end
 
   def checkin
     # TODO Figure out how to handle attachments
     req = params[:survey_response]
 
-    sr = checkout_handling(req.try(:[], 'id'), req.try(:[], 'checkout_token'), true) do |sr|
+    survey_response = checkout_handling(req.try(:[], 'id'), req.try(:[], 'checkout_token'), true) do |sr|
       # We ONLY want to check in/update data that the survey taker themselves can actually update
       # (This skips such things as ratings and any answer/comments/etc that already have an id).
       sr.name = req[:name]
@@ -72,15 +72,17 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       end
 
       save_cap = false
+      # rubocop:disable Layout/LineLength
       if req[:corrective_action_plan] && sr.corrective_action_plan && sr.corrective_action_plan.can_view?(current_user) && sr.corrective_action_plan.status == CorrectiveActionPlan::STATUSES[:active]
         update_corrective_action_plan(sr.corrective_action_plan, req[:corrective_action_plan], current_user)
         save_cap = true
       end
+      # rubocop:enable Layout/LineLength
 
       sr.clear_checkout
       sr.save!
       sr.corrective_action_plan.save! if save_cap
-      sr.survey_response_logs.create!(:message=>"Checked in.", :user_id=>current_user.id)
+      sr.survey_response_logs.create!(message: "Checked in.", user_id: current_user.id)
       sr.log_update current_user
       if save_cap
         sr.corrective_action_plan.save!
@@ -88,7 +90,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
 
     end
 
-    render json: json_survey_response(sr, current_user) if sr
+    render json: json_survey_response(survey_response, current_user) if survey_response
   end
 
   def submit
@@ -114,6 +116,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
   end
 
   private
+
     def checkout_handling survey_response_id, checkout_token, checking_in = false
       sr = SurveyResponse.find survey_response_id
 
@@ -136,19 +139,15 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
         if sr.checkout_by_user && sr.checkout_by_user != current_user
           render_forbidden "Survey is checked out by another user."
           return
-        else
-          # Handle cases where you're trying to checkin a survey that has its checkout expired
-          if checking_in && sr.checkout_by_user.nil?
-            render_forbidden "The survey checkout has expired.  Check out the survey again before checking it back in."
-            return
-          elsif sr.checkout_token && sr.checkout_token != checkout_token
-            render_forbidden "Survey is checked out to you on another device."
-            return
-          end
+        elsif checking_in && sr.checkout_by_user.nil?
+          render_forbidden "The survey checkout has expired.  Check out the survey again before checking it back in."
+          return
+        elsif sr.checkout_token && sr.checkout_token != checkout_token
+          render_forbidden "Survey is checked out to you on another device."
+          return
         end
 
         yield sr
-
       end
 
       sr
@@ -168,7 +167,10 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
       # never happen unless someone's tampering w/ the response.
 
       # Leaving an answer blank is ok too
-      raise StatusableError.new("Invalid Answer of '#{json[:choice]}' given for question id #{json[:question_id]}.", :internal_server_error) unless choices.include?(json[:choice]) || json[:choice].blank?
+      unless choices.include?(json[:choice]) || json[:choice].blank?
+        raise StatusableError.new("Invalid Answer of '#{json[:choice]}' given for question id #{json[:question_id]}.",
+                                  :internal_server_error)
+      end
 
       answer = sr.answers.find {|a| a.id == json[:id].to_i }
       raise StatusableError.new("Attempted to update an answer that does not exist.", :internal_server_error) unless answer
@@ -177,7 +179,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
 
       comments = json[:answer_comments]
       # Only bother adding comments that do not have ids..you can't update existing comments.
-      if comments && comments.respond_to?(:each)
+      if comments&.respond_to?(:each)
         comments.each do |comment|
           next unless comment[:id].nil?
 
@@ -191,7 +193,7 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
     def update_corrective_action_plan cap, req, user
       # caps can have comments, only create these...user can't update comments
       Array.wrap(req[:comments]).each do |com|
-        next unless com[:id].blank?
+        next if com[:id].present?
 
         cap.comments.build body: com[:body], user: user
       end
@@ -205,7 +207,6 @@ module Api; module V1; class SurveyResponsesController < Api::V1::ApiController
 
         issue.action_taken = iss[:action_taken]
       end
-
     end
 
 end; end; end

@@ -38,8 +38,6 @@
 #
 
 class SurveyResponse < ActiveRecord::Base
-  attr_accessible :address, :email, :phone, :fax, :name, :rating, :user, :subtitle, :base_object, :group, :updated_at
-
   belongs_to :user
   belongs_to :survey
   belongs_to :base_object, polymorphic: true, inverse_of: :survey_responses

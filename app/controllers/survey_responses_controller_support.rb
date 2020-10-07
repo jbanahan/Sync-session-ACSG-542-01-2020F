@@ -1,7 +1,10 @@
 module SurveyResponsesControllerSupport
 
   def survey_responses_for_index user
-    responses = SurveyResponse.where("user_id = ? OR group_id IN (?)", user.id, user.groups.map(&:id)).joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false)).readonly(false)
+    responses = SurveyResponse.where("user_id = ? OR group_id IN (?)", user.id, user.groups.map(&:id))
+                              .joins(:survey).where(surveys: {archived: false}).merge(SurveyResponse.was_archived(false))
+                              .readonly(false)
+
     responses.each do |resp|
       handle_checkout_expiration resp
     end
@@ -42,9 +45,9 @@ module SurveyResponsesControllerSupport
 
   def rate_mode? sr, user
     if sr.assigned_to_user? user
-      return false
+      false
     else
-      return sr.submitted_date && sr.can_edit?(current_user)
+      sr.submitted_date && sr.can_edit?(current_user)
     end
   end
 
@@ -55,9 +58,9 @@ module SurveyResponsesControllerSupport
 
   def respond_mode? sr, user
     if sr.assigned_to_user? user
-      return sr.submitted_date.blank?
+      sr.submitted_date.blank?
     else
-      return false
+      false
     end
   end
 
@@ -73,14 +76,16 @@ module SurveyResponsesControllerSupport
     respond_mode = respond_mode?(sr, user)
     archived = sr.archived? || sr.survey.archived?
     h = sr.as_json(methods: [:responder_name], include: [
-        {answers:{methods:[:hours_since_last_update], include: {
-          question:{methods:[:html_content, :choice_list, :require_comment_for_choices, :require_attachment_for_choices], only:[:id, :warning, :require_comment, :require_attachment]},
-          answer_comments:{only:[:id, :content, :private, :created_at], include:[{user:{only:[:id, :username], methods:[:full_name]}}]}
-        }}},
-        {survey:{only:[:id, :name, :require_contact], methods:[:rating_values]}},
-        {user:{include: {company: {only: [:name]}}, methods: [:full_name], only:[:email]}},
-        {group:{include: {users: {only: [:email]}}}}
-      ])
+                     {answers: {methods: [:hours_since_last_update], include: {
+                       question: {methods: [:html_content, :choice_list, :require_comment_for_choices,
+                                            :require_attachment_for_choices], only: [:id, :warning, :require_comment, :require_attachment]},
+                       answer_comments: {only: [:id, :content, :private, :created_at],
+                                         include: [{user: {only: [:id, :username], methods: [:full_name]}}]}
+                     }}},
+        {survey: {only: [:id, :name, :require_contact], methods: [:rating_values]}},
+        {user: {include: {company: {only: [:name]}}, methods: [:full_name], only: [:email]}},
+        {group: {include: {users: {only: [:email]}}}}
+                   ])
     # Since the web doesn't have support for checking out survey's...if we encounter a survey that's been checked out...just
     # treat it like it's read only...even if the user that checked out the survey is the one attempting to view it.  Since they
     # didn't check out the survey via their web browser.
@@ -91,7 +96,7 @@ module SurveyResponsesControllerSupport
     h['survey_response']['can_comment'] = !archived && sr.checkout_by_user.nil?
     h['survey_response']['can_make_private_comment'] = !archived && sr.can_edit?(user) && sr.checkout_by_user.nil?
     h['survey_response']['answers'].each_with_index do |a, i|
-      a['sort_number'] = (i+1)
+      a['sort_number'] = (i + 1)
       if a['answer_comments'] && !sr.can_edit?(user)
         a['answer_comments'].delete_if {|ac| ac['private']}
       end
@@ -125,30 +130,29 @@ module SurveyResponsesControllerSupport
   def corrective_action_plan_json cap, user
     j = cap.as_json(
       only: [:id, :status],
-      include:{
+      include: {
         corrective_issues: {
           only: [:id, :description, :suggested_action, :action_taken, :resolved],
-          methods:[:html_description, :html_suggested_action, :html_action_taken]
+          methods: [:html_description, :html_suggested_action, :html_action_taken]
         },
         comments: {
           only: [:id, :body],
-          methods:[:html_body],
-          include:{
-            user:{
-              only:[:id, :username],
-              methods:[:full_name]
+          methods: [:html_body],
+          include: {
+            user: {
+              only: [:id, :username],
+              methods: [:full_name]
             }
           }
         }
       }
     )
-    j[:can_edit] = (cap.can_edit?(user) && cap.status!=CorrectiveActionPlan::STATUSES[:resolved])
+    j[:can_edit] = (cap.can_edit?(user) && cap.status != CorrectiveActionPlan::STATUSES[:resolved])
     j[:can_update_actions] = (cap.can_update_actions?(user) && cap.status == CorrectiveActionPlan::STATUSES[:active])
     j["corrective_action_plan"]['corrective_issues'].each do |ci|
       issue = cap.corrective_issues.find {|iss| ci['id'].to_i == iss.id}
       ci[:attachments] = Attachment.attachments_as_json(issue)[:attachments] unless issue.nil?
     end
-
 
     j.with_indifferent_access
   end
@@ -161,25 +165,26 @@ module SurveyResponsesControllerSupport
       survey_response.survey_response_logs.create! message: "Response submitted.", user: user
       survey_response.log_update user
     else
-      survey_response.errors[:base].push *errors
+      survey_response.errors[:base].push(*errors)
     end
 
     errors.blank?
   end
 
   private
+
     def survey_takers sr
       survey_takers = []
       if sr.user
         survey_takers << sr.user
       else
-        survey_takers.push *sr.group.users
+        survey_takers.push(*sr.group.users)
       end
 
       survey_takers
     end
 
-    def validate_submitted_response sr, user
+    def validate_submitted_response sr, _user
       # Ensure all required questions are answered by the persons required to do so
       # (.ie if question requires comment/attachment, the a comment/attachment must be
       # present by a survey taker user)
@@ -189,7 +194,7 @@ module SurveyResponsesControllerSupport
       errors << "Archived surveys cannot be submitted." if sr.archived?
       errors << "Rated surveys cannot be submitted." if sr.rated?
       errors << "Expired surveys cannot be submitted." if sr.expiration_notification_sent_at && sr.expiration_notification_sent_at < Time.zone.now
-      errors << "Checked out surveys cannot be submitted." unless sr.checkout_token.blank?
+      errors << "Checked out surveys cannot be submitted." if sr.checkout_token.present?
       errors << "Submitted surveys cannot be submitted." if sr.submitted_date
       if sr.survey.require_contact
         errors << "Name, Address, Phone, and Email must all be filled in." if sr.name.blank? || sr.address.blank? || sr.phone.blank? || sr.email.blank?
@@ -210,11 +215,11 @@ module SurveyResponsesControllerSupport
 
       # This would only happen if someone's messing w/ json, the client/screen should only allow the user
       # to pick valid choices
-      if !q.choice_list.blank? && !choice.blank?
+      if q.choice_list.present? && choice.present?
         return "Question ##{q.rank} has an invalid answer" unless q.choice_list.include?(choice)
       end
 
-      requires_multiple_choice_answer = q.warning && !q.choice_list.blank?
+      requires_multiple_choice_answer = q.warning && q.choice_list.present?
       requires_comment = (q.warning && q.choice_list.blank?) || q.require_comment || q.require_comment_for_choices.include?(choice)
       requires_attachment = q.require_attachment || q.require_attachment_for_choices.include?(choice)
 
@@ -234,7 +239,7 @@ module SurveyResponsesControllerSupport
         error << " You must provide an attachment." if missing_attachment
       end
 
-      errors << error unless error.blank?
+      errors << error if error.present?
       error.blank?
     end
 end
