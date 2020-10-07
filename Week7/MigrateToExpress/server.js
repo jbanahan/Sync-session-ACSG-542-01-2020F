@@ -1,24 +1,21 @@
 var express = require('express')
 var app = express()
 var MongoClient = require('mongodb').MongoClient;
+var bodyParser = require('body-parser');
 
 MongoClient.connect("mongodb://localhost/", function(err, db) {
-    app.post('*', function (req, res) {
-        var jsonData = "";
-        req.on('data', function (chunk) {
-            jsonData += chunk;
-        });
-        req.on('end', function () {
-            var requestObject = JSON.parse(jsonData);
-            var myDB = db.db("yourdatabasename");
-            myDB.collection("todo", function (err, todo) {
-                todo.save(requestObject, function (err, results) {
-                    console.log(results);
-                });
+    app.use(bodyParser.urlencoded({extended: true}));
+
+    app.post('*', function (request, res) {
+        var myDB = db.db("yourdatabasename");
+        myDB.collection("todo", function (err, todo) {
+            todo.save(request.body, function (err, results) {
+                console.log(results)
+                res.status(200);
+                res.send(JSON.stringify({}));
             });
-            res.status(200);
-            res.send(JSON.stringify({}));
         });
+
     });
     app.use(express.static('./public'))
 
