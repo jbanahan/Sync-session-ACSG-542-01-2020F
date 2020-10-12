@@ -45,7 +45,7 @@
       <td><%=f.start_at%></td>
       <td><%=f.finish_at%></td>
     <% if defined?(show_error) && show_error %>
-      <td><%=f.error_message%></td>
+      <td style="max-width: 15em;"><%=f.error_message%></td>
     <% end %>
     <% if defined?(allow_reprocess) && allow_reprocess %>
       <td><%=link_to 'Reprocess', "/custom_features/#{custom_feature}/#{f.id}/reprocess"%></td>

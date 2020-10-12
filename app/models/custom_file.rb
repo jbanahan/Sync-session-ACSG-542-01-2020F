@@ -1,4 +1,3 @@
-
 #
 # Table name: custom_files
 #
@@ -55,15 +54,15 @@ require 'open_chain/custom_handler/burlington/burlington_product_parser'
 
 class CustomFile < ActiveRecord::Base
   attr_accessible :attached_content_type, :attached_file_name, :attached,
-    :attached_file_size, :attached_updated_at, :error_at, :error_message,
-    :file_type, :finish_at, :module_type, :start_at, :uploaded_by_id,
-    :uploaded_by
+                  :attached_file_size, :attached_updated_at, :error_at, :error_message,
+                  :file_type, :finish_at, :module_type, :start_at, :uploaded_by_id,
+                  :uploaded_by
 
   has_many :custom_file_records
-  has_many :linked_products, -> { uniq }, :through=> :custom_file_records, :source=> :linked_object, :source_type=> 'Product'
-  has_many :linked_objects, :through => :custom_file_records
+  has_many :linked_products, -> { uniq }, through: :custom_file_records, source: :linked_object, source_type: 'Product'
+  has_many :linked_objects, through: :custom_file_records
   has_many :search_runs
-  belongs_to :uploaded_by, :class_name=>'User'
+  belongs_to :uploaded_by, class_name: 'User'
   has_attached_file :attached, path: ":master_setup_uuid/custom_file/:id/:filename"
   # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
   # at all, so this disables that validation.
@@ -78,29 +77,39 @@ class CustomFile < ActiveRecord::Base
 
   # process the attached file using the appropriate handler
   def process user, parameters = {}
-    r = nil
-    self.update_attributes(:start_at=>0.seconds.ago)
+    result = nil
+    self.update!(start_at: Time.zone.now)
+    parser = nil
     begin
       # We need to support passing some parameters here, so rather than refactor every handler to have it support
       # multiple method params, just check if process has an arity greater than one, and pass parameters if so,
       # otherwise, pass just the user
-      h = handler
-      if h.method(:process).arity > 1
-        r = h.process user, parameters
+      parser = handler
+      if parser.method(:process).arity > 1
+        result = parser.process user, parameters
       else
-        r = h.process user
+        result = parser.process user
       end
-      self.update_attributes(:finish_at=>0.seconds.ago, :error_message=>nil)
-    rescue => e
-      self.update_attributes(:error_at=>0.seconds.ago, :error_message=>e.message)
-      raise e
+      self.update!(finish_at: Time.zone.now, error_message: nil, error_at: nil)
+    rescue StandardError => e
+      handle_errors(parser, user, e)
     end
-    r
+    result
   end
 
-  def can_view? user
-    handler.can_view? user
+  def handle_errors handler, user, e
+    if handler&.respond_to?(:handle_uncaught_error)
+      handler.handle_uncaught_error(user, e)
+    else
+      # The default means of handling an uncaught error is to log it and re-raise and let
+      # the job queue potentially work out the error later (assuming it's a transient error
+      # that caused the problem)
+      self.update!(error_at: Time.zone.now, error_message: e.message)
+      raise e
+    end
   end
+
+  delegate :can_view?, to: :handler
 
   # get the custom file handler that will process this file based on it's file_type
   def handler
@@ -113,29 +122,28 @@ class CustomFile < ActiveRecord::Base
     OpenMailer.send_s3_file(current_user, to, cc, subject, body, 'chain-io', handler.make_updated_file(current_user), self.attached_file_name).deliver_now
   end
 
-  def secure_url(expires_in=10.seconds)
-    OpenChain::S3.url_for bucket, attached.path, expires_in, :response_content_disposition=>"attachment; filename=\"#{self.attached_file_name}\""
+  def secure_url(expires_in = 10.seconds)
+    OpenChain::S3.url_for bucket, attached.path, expires_in, response_content_disposition: "attachment; filename=\"#{self.attached_file_name}\""
   end
 
   def bucket
     attached.options[:bucket]
   end
 
-  def path
-    attached.path
+  delegate :path, to: :attached
+
+  def self.purge reference_date
+    CustomFile.where("created_at < ?", reference_date).find_each(&:destroy)
   end
 
   private
+
   def no_post
     false
   end
+
   def sanitize
     Attachment.sanitize_filename self, :attached
   end
 
-  def self.purge reference_date
-    CustomFile.where("created_at < ?", reference_date).find_each do |file|
-      file.destroy
-    end
-  end
 end

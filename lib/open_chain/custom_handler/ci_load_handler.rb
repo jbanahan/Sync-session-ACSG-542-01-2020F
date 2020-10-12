@@ -22,6 +22,15 @@ module OpenChain; module CustomHandler; class CiLoadHandler
     self.class.can_view? user
   end
 
+  def handle_uncaught_error _user, error
+    # Don't re-raise errors, the users will get the errors message (and the error will display on the file index screen)
+    # and they'll retry if it's something they know to retry, or they'll forward the issue to us.
+    # 99.9% of the uncaught errors are related to bad csv formatting or bad excel formulas, which just clog up the
+    # queue if they're retried over and over again (since they'll just error again with the same problem)
+    error.log_me ["Custom File ID: #{@custom_file.id}"]
+    @custom_file.update(error_at: Time.zone.now, error_message: error.message)
+  end
+
   def process user
     errors = []
     results = {}
@@ -32,9 +41,9 @@ module OpenChain; module CustomHandler; class CiLoadHandler
     rescue OpenChain::CustomHandler::CustomFileCsvExcelParser::NoFileReaderError => e
       errors << e.message
       errors << "Please ensure the file is an Excel or CSV file and the filename ends with .xls, .xlsx or .csv."
-    rescue
-      errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
-      raise
+    rescue StandardError => e
+      errors << "Unrecoverable errors were encountered while processing this file."
+      raise e
     ensure
       body = "CI Load File '#{@custom_file.attached_file_name}' has finished processing."
 
@@ -44,17 +53,17 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       end
 
       if results[:bad_row_count] && results[:bad_row_count] > 0
-        body += "\nAll rows in the CI Load files must have values in the File #, Customer and Invoice # columns. #{results[:bad_row_count]} #{"row".pluralize(results[:bad_row_count])} were missing one or more values in these columns and were skipped."
+        body += "\nAll rows in the CI Load files must have values in the File #, Customer and Invoice # columns. #{results[:bad_row_count]} #{"row".pluralize(results[:bad_row_count])} were missing one or more values in these columns and were skipped." # rubocop:disable Layout/LineLength
       end
 
       subject = "CI Load Processing Complete"
-      if !errors.blank?  || (results[:bad_row_count] && results[:bad_row_count] > 0)
+      if errors.present? || (results[:bad_row_count] && results[:bad_row_count] > 0)
         subject += " With Errors"
 
-        body += "\n\n#{errors.join("\n")}" unless errors.blank?
+        body += "\n\n#{errors.join("\n")}" if errors.present?
       end
 
-      user.messages.create(:subject=>subject, :body=>body)
+      user.messages.create(subject: subject, body: body)
     end
     nil
   end
@@ -125,7 +134,15 @@ module OpenChain; module CustomHandler; class CiLoadHandler
 
     def preprocess_row row
       # change blank values to nil and strip whitespace from all String values
-      row.map {|v| v.to_s.blank? ? nil : (v.is_a?(String) ? v.strip : v)}
+      row.map do |v|
+        if v.to_s.blank?
+          nil
+        elsif v.is_a?(String)
+          v.strip
+        else
+          v
+        end
+      end
     end
 
     def date_value d
@@ -138,9 +155,9 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         # In case there's been a floating-point conversion, strip decimals and anything after
         s = d.to_s.gsub(/\..+/, "")
         if s =~ /^(\d{1,4})[^\d](\d{1,2})[^\d](\d{1,4})$/
-          first = $1
-          second = $2
-          last = $3
+          first = Regexp.last_match(1)
+          second = Regexp.last_match(2)
+          last = Regexp.last_match(3)
 
           # If the first digit section is more than 2 digits then we'll assume it's the year (.ie YYYY-mm-dd)
           # otherwise, we'll assume the first digits are the month (.ie mm-dd-YY or mm-dd-YYYY)
@@ -155,7 +172,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
         else
           # I don't know why anyone would key a date as 150201 (YYmmdd), but the old VB code allowed this
           # so I'm handling it too.
-          if s.length == 6
+          if s.length == 6 # rubocop:disable Style/IfInsideElse
             v = "#{2000 + s[0, 2].to_i}#{s[2, 2]}#{s[4, 2]}"
           elsif s.length == 8
             if s[0, 2] == "20"
@@ -177,7 +194,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       end
 
       date
-    rescue
+    rescue StandardError
       nil
     end
 
@@ -185,7 +202,7 @@ module OpenChain; module CustomHandler; class CiLoadHandler
       OpenChain::CustomHandler::Vandegrift::KewillCommercialInvoiceGenerator.new
     end
 
-end; end; end;
+end; end; end
 
 require_dependency 'open_chain/custom_handler/vandegrift/hm_ci_load_parser'
 require_dependency 'open_chain/custom_handler/vandegrift/standard_ci_load_parser'
