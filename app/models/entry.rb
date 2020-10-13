@@ -902,5 +902,4 @@ class Entry < ActiveRecord::Base
         self.k84_payment_due_date = k84_payment_due_date.nil? ? nil : k84_payment_due_date.event_date
       end
     end
-
 end

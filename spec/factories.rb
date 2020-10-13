@@ -177,6 +177,8 @@ Factory.define :booking_line do |s|
   s.quantity 1
   s.association :shipment
 end
+Factory.define :piece_set do |s|
+end
 Factory.define :carton_set do |f|
   f.sequence(:starting_carton)
   f.association :shipment
@@ -617,7 +619,10 @@ end
 Factory.define :tariff_classification_rate do |f|
   f.association :tariff_classification
 end
+Factory.define :monthly_statement do |f|
+end
 Factory.define :daily_statement do |f|
+  f.association :monthly_statement
 end
 Factory.define :daily_statement_entry do |f|
   f.association :daily_statement

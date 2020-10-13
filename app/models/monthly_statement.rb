@@ -43,16 +43,16 @@ class MonthlyStatement < ActiveRecord::Base
   include CoreObjectSupport
 
   attr_accessible :add_amount, :customer_number, :cvd_amount, :due_date,
-    :duty_amount, :fee_amount, :final_received_date, :importer_id,
-    :interest_amount, :last_exported_from_source, :last_file_bucket,
-    :last_file_path, :paid_date, :pay_type, :port_code,
-    :preliminary_add_amount, :preliminary_cvd_amount,
-    :preliminary_duty_amount, :preliminary_fee_amount,
-    :preliminary_interest_amount, :preliminary_tax_amount,
-    :preliminary_total_amount, :received_date, :statement_number,
-    :status, :tax_amount, :total_amount
+                  :duty_amount, :fee_amount, :final_received_date, :importer_id,
+                  :interest_amount, :last_exported_from_source, :last_file_bucket,
+                  :last_file_path, :paid_date, :pay_type, :port_code,
+                  :preliminary_add_amount, :preliminary_cvd_amount,
+                  :preliminary_duty_amount, :preliminary_fee_amount,
+                  :preliminary_interest_amount, :preliminary_tax_amount,
+                  :preliminary_total_amount, :received_date, :statement_number,
+                  :status, :tax_amount, :total_amount
 
-  has_many :daily_statements, autosave: true, inverse_of: :monthly_statement
+  has_many :daily_statements, autosave: true, inverse_of: :monthly_statement, dependent: :destroy
   belongs_to :importer, class_name: "Company"
   belongs_to :port, class_name: "Port", foreign_key: "port_code", primary_key: 'schedule_d_code'
 

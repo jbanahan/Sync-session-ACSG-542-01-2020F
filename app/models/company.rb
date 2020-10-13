@@ -10,6 +10,7 @@
 #  created_at                    :datetime         not null
 #  customer                      :boolean
 #  drawback                      :boolean
+#  drawback_customer             :boolean          default(FALSE), not null
 #  ecellerate_customer_number    :string(255)
 #  enabled_booking_types         :string(255)
 #  factory                       :boolean
