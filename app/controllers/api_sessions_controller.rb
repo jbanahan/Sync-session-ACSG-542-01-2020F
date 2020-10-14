@@ -16,7 +16,7 @@ class ApiSessionsController < ApplicationController
         @default_display = "By default, only API Sessions from today are displayed when no search fields are utilized."
       end
 
-      @api_sessions = s.paginate(per_page: 40, page: params[:page])
+      distribute_reads { @api_sessions = s.paginate(per_page: 40, page: params[:page]).to_a }
       render layout: 'one_col'
     end
   end

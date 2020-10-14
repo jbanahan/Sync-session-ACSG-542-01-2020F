@@ -8,8 +8,7 @@ class CompaniesController < ApplicationController
   include OpenChain::BusinessRuleValidationResultsSupport
 
   before_filter :translate_booking_types, only: [:create, :update]
-  # GET /companies
-  # GET /companies.xml
+
   SEARCH_PARAMS = {
     'c_name' => {:field => 'name', :label=> 'Name'},
     'c_sys_code' => {:field => 'system_code', :label=>'System Code'},
@@ -44,7 +43,7 @@ class CompaniesController < ApplicationController
     s = build_search(sp, 'c_name', 'c_name')
     respond_to do |format|
         format.html {
-            @companies = s.paginate(:per_page => 20, :page => params[:page])
+            distribute_reads { @companies = s.paginate(:per_page => 20, :page => params[:page]).to_a }
             render :layout => 'one_col'
         }
     end

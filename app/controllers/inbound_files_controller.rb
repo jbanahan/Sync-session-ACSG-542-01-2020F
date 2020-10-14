@@ -48,8 +48,9 @@ class InboundFilesController < ApplicationController
       end
       respond_to do |format|
           format.html do
-              @inbound_files = s.paginate(per_page: 40, page: params[:page])
-              render layout: 'one_col'
+            # Run this search query on the replica database - should return results quicker
+            distribute_reads { @inbound_files = s.paginate(per_page: 40, page: params[:page]).to_a }
+            render layout: 'one_col'
           end
       end
     end

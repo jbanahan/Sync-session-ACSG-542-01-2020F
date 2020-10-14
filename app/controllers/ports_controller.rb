@@ -8,13 +8,14 @@ class PortsController < ApplicationController
     'p_un_code' => {field: 'unlocode', label: 'UN/LOCODE'},
     'p_iata' => {field: "iata_code", label: "IATA Code"}
   }.freeze
+
   def set_page_title
     @page_title = 'Tools'
   end
 
   def index
     admin_secure do
-      @ports = build_search(SEARCH_PARAMS, 'p_name', 'p_name').paginate(per_page: 50, page: params[:page])
+      distribute_reads { @ports = build_search(SEARCH_PARAMS, 'p_name', 'p_name').paginate(per_page: 50, page: params[:page]).to_a }
       render layout: 'one_col'
     end
   end

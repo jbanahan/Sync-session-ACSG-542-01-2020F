@@ -30,6 +30,6 @@ module AuthTokenSupport
     auth_token = token[idx+1..-1]
     return nil if username.blank? || auth_token.blank?
 
-    User.includes(:groups).where(username: username, api_auth_token: auth_token).first
+    distribute_reads { User.includes(:groups).where(username: username, api_auth_token: auth_token).first }
   end
 end

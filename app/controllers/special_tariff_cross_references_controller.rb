@@ -18,7 +18,7 @@ class SpecialTariffCrossReferencesController < ApplicationController
       s = build_search(sp, 'c_country_origin_iso', 'c_special_tariff_type', 'd')
       respond_to do |format|
         format.html do
-          @special_tariffs = s.paginate(per_page: 40, page: params[:page])
+          distribute_reads { @special_tariffs = s.paginate(per_page: 40, page: params[:page]).to_a }
         end
       end
     end

@@ -15,7 +15,10 @@ module Api; module V1; class AnnouncementsController < Api::V1::ApiController
   end
 
   def count
-    render json: {count: current_user.new_announcements.count}
+    count = nil
+    # Run this query on the replica database
+    distribute_reads { count = {count: current_user.new_announcements.count} }
+    render json: count
   end
 
   def hide_from_user

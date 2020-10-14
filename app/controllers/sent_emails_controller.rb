@@ -25,7 +25,7 @@ class SentEmailsController < ApplicationController
       end
       respond_to do |format|
           format.html {
-              @sent_emails = s.paginate(:per_page => 40, :page => params[:page])
+              distribute_reads { @sent_emails = s.paginate(:per_page => 40, :page => params[:page]).to_a }
               render :layout => 'one_col'
           }
       end

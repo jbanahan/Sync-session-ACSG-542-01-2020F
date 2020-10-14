@@ -114,7 +114,7 @@ var OpenChain = (function() {
     });
   }
 
-  var renderMilestones = function(parentContainer,milestoneSetJson,headingModule,isAdmin) { 
+  var renderMilestones = function(parentContainer,milestoneSetJson,headingModule,isAdmin) {
     var mfs = milestoneSetJson.milestone_forecast_set;
     var ident = mfs.piece_set.identifiers[headingModule];
     var h = "<table class='ms_tbl'><tr class='milestone_subhead'><td colspan='5' class='ms_"+mfs.state.toLowerCase()+"'>";
@@ -148,7 +148,7 @@ var OpenChain = (function() {
         }
         parentContainer.fadeIn('slow');
       }
-    });                  
+    });
   }
   var showChangePlan = function(dialogContainer,parentContainer,milestoneSetId,headingModule,isAdmin) {
     dialogContainer.dialog('destroy');
@@ -186,7 +186,7 @@ var OpenChain = (function() {
       width:"auto",
       modal:true,
       buttons:{"OK":function() {
-        $("#pt_preview").dialog('close'); 
+        $("#pt_preview").dialog('close');
         $("#pt_preview").remove();
        }}});
     $("#pt_loading").remove();
@@ -262,7 +262,7 @@ var OpenChain = (function() {
           parentContainer.hide();
           renderMilestones(parentContainer,data,headingModule,isAdmin);
           parentContainer.fadeIn('slow');
-        });              
+        });
       }
       return false;
     },
@@ -280,7 +280,7 @@ var OpenChain = (function() {
       table.find('.fld_lbl').each(function() {$(this).parents(".field_row:first").fadeIn('slow');});
       if(entityTypeId.length) {
         table.find('.fld_lbl').not('[entity_type_ids*="*'+entityTypeId+'*"]').each(function() {
-          $(this).parents(".field_row:first").not(".neverhide").hide(); 
+          $(this).parents(".field_row:first").not(".neverhide").hide();
         });
       }
     },
@@ -336,7 +336,7 @@ var OpenChain = (function() {
         }
       });
       $("form").submit(function() {
-        if(Classify.hasInvalidTariffs()) { 
+        if(Classify.hasInvalidTariffs()) {
           if (window.confirm("This Product has invalid tariffs.  It is strongly advised that you fix or remove them.  Are you sure you want to update it without resolving this issue?")) {
             $("form").find("input[mf_id*='hts_hts']").removeClass("error");
             return true;
@@ -345,7 +345,7 @@ var OpenChain = (function() {
         }
         removeEmptyClassifications();
       });
-      Classify.enableHtsChecks(); 
+      Classify.enableHtsChecks();
       Chain.htsAutoComplete("input.hts_field");
     },
     add_tf_row: function(link,parent_index,country_id) {
@@ -353,7 +353,7 @@ var OpenChain = (function() {
       content = "<tr class=\"tf_row\">"
       content += "<td><input id='product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_line_number' name='product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][line_number]' size='3' type='text' /></td>";
       for(i=1; i<4; i++) {
-        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' country='"+country_id+"' /></td>"; 
+        content += "<td><input id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"_hts_"+i+"\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][hts_"+i+"]\" type=\"text\" class='hts_field' country='"+country_id+"' /></td>";
       }
       content += "<td><input class=\"tf_destroy\" id=\"product_classifications_attributes_"+parent_index+"_tariff_records_attributes_"+my_index+"__destroy\" name=\"product[classifications_attributes]["+parent_index+"][tariff_records_attributes]["+my_index+"][_destroy]\" type=\"hidden\" value=\"false\" /><a href=\"#\" class=\"tf_remove\">Remove</a></td></tr>"
       link.parents('.add_row').before(content);
@@ -372,13 +372,13 @@ var OpenChain = (function() {
         evt.preventDefault();
         s_selected.append(s_unselected.find(":selected"));
       });
-      
+
     },
     previewTextile: function(sourceSelector,dialogTitle,preHtml,postHtml) {
       $("body").append("<div id='pt_loading' style='display:none;'>Loading preview.</div>");
       $("#pt_loading").dialog({modal:true,title:"Preview Loading",width:"auto",autoOpen:true});
       $.ajax({url:"/textile/preview",type:'POST',data:{c:$(sourceSelector).val()},
-        success:function(data) { 
+        success:function(data) {
           var h = "";
           if(preHtml) {
             h += preHtml;
@@ -483,7 +483,7 @@ $( function() {
     $(".fieldtip, .dialogtip").tooltip({
       position: {my: "left top", at: "left bottom+3"}
     });
-    
+
     //Make the shared/search_box partial work
     $("#srch_fields").change( function() {
         setSearchFields($("#srch_fields"),$("#srch_val"),$("#srch_cond"));
@@ -515,7 +515,7 @@ $( function() {
     .click( function() {
         $("#mod_export").dialog('open');
     });
-    
+
     $(".classification_expand").click(function(ev) {
       ev.preventDefault();
       $(this).hide();
@@ -584,7 +584,7 @@ $(document).ready( function() {
 
     //Hide subscriptions buttons until feature is better implemented (ticket 87)
     $("#btn_subscriptions").hide();
-    
+
     //when closing a dialog, make sure to take focus from all inputs
     $(this).on( "dialogbeforeclose",'div.ui-dialog', function(event, ui) {
       $(this).find(":input").blur();
@@ -633,8 +633,8 @@ function setConditionDropdown(val_text,con_select,date_or_bool) {
         appendSelect(con_select,'is_true','Yes');
         appendSelect(con_select,'is_false','No');
     } else {
-        appendSelect(con_select,'contains','contains');
         appendSelect(con_select,'eq','equals');
+        appendSelect(con_select,'contains','contains');
         appendSelect(con_select,'sw','starts with');
         appendSelect(con_select,'ew','ends with');
         appendSelect(con_select,'is_null','is empty');
@@ -680,7 +680,7 @@ function getShippingAddressList(select,companyId,selected_val,companyType) {
         if(data.length==0) {
           t_val = 'No addresses exist for this company'
         } else {
-          t_val = 'Select an address' 
+          t_val = 'Select an address'
         }
         select.html('').append($("<option></option>").
             attr("value",'').
@@ -689,20 +689,20 @@ function getShippingAddressList(select,companyId,selected_val,companyType) {
             select.
             append($("<option></option>").
             attr("value",data[i].address.id).
-            text(data[i].address.name)).change(); 
+            text(data[i].address.name)).change();
         }
         select.val(selected_val).change();
       });
     }
 }
-/* OPTIONS: 
-    includeName: true 
+/* OPTIONS:
+    includeName: true
 */
 function getAddress(wrapper,address_id,options) {
   defaultOptions = {
     includeName: true
   }
-  
+
   if (typeof options == 'object') {
     options = $.extend(defaultOptions, options);
   } else {
@@ -764,9 +764,9 @@ function getProductUOM(id, callback) {
 /* Get's the product's JSON reprsentation and passes it to the callback function */
 function getProductJSON(id, callback) {
   $.getJSON("/products/"+id+".json",callback);
-} 
+}
 function stripNonNumeric(inputStr) {
-    return inputStr.replace(/[^0-9]/g, ''); 
+    return inputStr.replace(/[^0-9]/g, '');
 }
 /*helpers for shipment / delivery screens*/
 function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
@@ -774,7 +774,7 @@ function setupPackScreen(isSalesOrder,openEdit,cancelPath) {
   $("#mod_edit_line").dialog({autoOpen:false,title:'Edit Line',
     width:'auto',
     buttons:{"Save":function() {$("#frm_edit_line").submit();},
-             "Cancel":function() {window.location = cancelPath;}}  
+             "Cancel":function() {window.location = cancelPath;}}
   });
   $("#btn_add_line").click(function() {
     $("#mod_edit_line").dialog('open');
