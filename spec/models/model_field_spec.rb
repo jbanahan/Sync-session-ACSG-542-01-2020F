@@ -706,8 +706,8 @@ describe ModelField do
         r = Factory(:region)
         r2 = Factory(:region)
         ModelField.reload
-        expect(ModelField.find_by_region(r).size).to eq(1)
-        expect(ModelField.find_by_region(r2).size).to eq(1)
+        expect(ModelField.by_region(r).size).to eq(1)
+        expect(ModelField.by_region(r2).size).to eq(1)
       end
       context "classification count field methods" do
         before :each do

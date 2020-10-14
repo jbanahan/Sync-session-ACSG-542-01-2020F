@@ -12,7 +12,7 @@ describe Api::V1::Admin::UsersController do
 
   describe "change_user_password" do
     let (:admin_user) { Factory(:admin_user) }
-    let (:user) { u = Factory(:user); u.update_user_password("TEST123", "TEST123"); u}
+    let!(:user) { u = Factory(:user); u.update_user_password("TEST123", "TEST123"); u}
 
     before :each do
       allow_api_access(admin_user)
@@ -26,9 +26,7 @@ describe Api::V1::Admin::UsersController do
     end
 
     it "returns errors to user" do
-      expect(User).to receive(:where).and_return(User)
-      expect(User).to receive(:first).and_return user
-      expect(user).to receive(:update_user_password) do |password, pw2|
+      expect_any_instance_of(User).to receive(:update_user_password) do |user, password, pw2|
         user.errors[:password] = "is invalid"
         false
       end

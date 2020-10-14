@@ -792,7 +792,7 @@ class ModelField
   end
 
   # get array of model fields associated with the given region
-  def self.find_by_region r
+  def self.by_region r
     ret = []
     uid_regex = /^\*r_#{r.id}_/
     reload_if_stale
