@@ -22,39 +22,45 @@ class EntriesController < ApplicationController
     flash.keep
     redirect_to advanced_search CoreModule::ENTRY, params[:force_search]
   end
+
   def ca_activity_summary
     distribute_reads do
       importers = Company.for_system("Fenix").order("system_identifiers.code")
       activity_summary_select importers, 'ca'
     end
   end
+
   def ca_activity_summary_content
     distribute_reads do
       activity_summary_content
     end
   end
+
   def us_activity_summary
     distribute_reads do
       importers = Company.for_system(["Customs Management", "Cargowise"]).order("system_identifiers.code")
       activity_summary_select importers, 'us'
     end
   end
+
   def us_activity_summary_content
     distribute_reads do
       activity_summary_content
     end
   end
+
   def by_entry_port
     @imp = Company.find params[:importer_id]
-    action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp, current_user), nil, {lock_check:false, verb:'view', module_name:'entry'}) {
+    action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp, current_user), nil, {lock_check: false, verb: 'view', module_name: 'entry'}) do
       # We've already established the user can view the importer so we don't have to further secure the Entry query at the user level
-      @entries = Entry.where(entry_port_code:params[:port_code]).where(Entry.search_where_by_company_id(@imp.id))
+      @entries = Entry.where(entry_port_code: params[:port_code]).where(Entry.search_where_by_company_id(@imp.id))
       @date_uid = OpenChain::ActivitySummary.generator_for_country(params[:iso_code]).release_date_mf.uid
-    }
+    end
   end
+
   def by_release_range
     @imp = Company.find params[:importer_id]
-    action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp, current_user), nil, {lock_check:false, verb:'view', module_name:'entry'}) {
+    action_secure(current_user.view_entries? && Entry.can_view_importer?(@imp, current_user), nil, {lock_check: false, verb: 'view', module_name: 'entry'}) do
       @range_descriptions = OpenChain::ActivitySummary::DETAILS.map { |k, v| [v, k] }
 
       begin
@@ -64,11 +70,12 @@ class EntriesController < ApplicationController
       rescue ArgumentError => e
         error_redirect e.message
       end
-    }
+    end
   end
+
   def by_release_range_download
     imp = Company.find params[:importer_id]
-    action_secure(current_user.view_entries? && Entry.can_view_importer?(imp, current_user), nil, {lock_check:false, verb:'download', module_name:'file'}) {
+    action_secure(current_user.view_entries? && Entry.can_view_importer?(imp, current_user), nil, {lock_check: false, verb: 'download', module_name: 'file'}) do
       xls = nil
       distribute_reads do
         generator = OpenChain::ActivitySummary.generator_for_country(params[:iso_code])
@@ -76,48 +83,54 @@ class EntriesController < ApplicationController
       end
 
       send_file xls.path, filename: xls.original_filename, type: :xls, disposition: "attachment"
-    }
+    end
   end
+
   def show
-    e = Entry.where(:id=>params[:id]).includes(:commercial_invoices => [:commercial_invoice_lines=>[:commercial_invoice_tariffs]], :entry_comments=>[:entry], :import_country=>[]).first
+    e = Entry
+        .where(id: params[:id])
+        .includes(commercial_invoices: [commercial_invoice_lines: [:commercial_invoice_tariffs]],
+                  entry_comments: [:entry], import_country: [])
+        .first
     unless e
       error_redirect "Entry with id #{params[:id]} not found."
       return
     end
 
-    action_secure(e.can_view?(current_user), e, {:lock_check=>false, :verb=>"view", :module_name=>"entry"}) {
-      current_user.update_attributes(:simple_entry_mode=>false) if params[:mode]=='detail' && current_user.simple_entry_mode?
-      current_user.update_attributes(:simple_entry_mode=>true) if params[:mode]=='simple' && !current_user.simple_entry_mode?
+    action_secure(e.can_view?(current_user), e, {lock_check: false, verb: "view", module_name: "entry"}) do
+      current_user.update(simple_entry_mode: false) if params[:mode] == 'detail' && current_user.simple_entry_mode?
+      current_user.update(simple_entry_mode: true) if params[:mode] == 'simple' && !current_user.simple_entry_mode?
       if current_user.simple_entry_mode.nil?
         add_flash :notices, "Try simple mode by clicking on the button at the bottom of this screen."
-        current_user.update_attributes(:simple_entry_mode=>false)
+        current_user.update(simple_entry_mode: false)
       end
       respond_to do |format|
-        format.html {
+        format.html do
           @entry = e
           if e.canadian?
-            render :action=>'show_ca', :layout=>'one_col'
+            render action: 'show_ca', layout: 'one_col'
           else
-            render :action=>(current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), :layout=>'one_col'
+            render action: (current_user.simple_entry_mode? ? 'show_us_simple' : 'show_us'), layout: 'one_col'
           end
-        }
-        format.xls {
+        end
+        format.xls do
           send_excel_workbook render_xls(e, current_user), "#{e.broker_reference}.xls"
-        }
-        format.xlsx {
+        end
+        format.xlsx do
           send_excel_workbook render_xlsx(e, current_user), "#{e.broker_reference}.xlsx"
-        }
+        end
       end
-    }
+    end
   end
 
   def validation_results
-    generic_validation_results(Entry.find params[:id])
+    generic_validation_results(Entry.find(params[:id]))
   end
 
+  # rubocop:disable Naming/AccessorMethodName
   # request that the images be reloaded from alliance for the given entry
   def get_images
-    ent = Entry.find_by_id params[:id]
+    ent = Entry.find_by id: params[:id]
     if ent.nil?
       error_redirect "Entry with id #{params[:id]} not found."
     elsif ent.source_system != 'Alliance'
@@ -128,44 +141,47 @@ class EntriesController < ApplicationController
       redirect_to ent
     end
   end
+  # rubocop:enable Naming/AccessorMethodName
 
   # request that the images be reloaded form alliance for a set of entries
   def bulk_get_images
-    action_secure(current_user.company.master? && current_user.view_entries?, Entry.new, {:verb=>'manage', :module_name=>"entries"}) {
+    action_secure(current_user.company.master? && current_user.view_entries?, Entry.new, {verb: 'manage', module_name: "entries"}) do
       OpenChain::AllianceImagingClient.delayed_bulk_request_images params[:sr_id], params[:pk]
       add_flash :notices, "Updated images have been requested.  Please allow 10 minutes for them to appear."
 
       # Redirect back to main page if referrer is blank (this can be removed once we set referrer to never be nil)
-      redirect_to request.referrer.nil? ? "/" : request.referrer
-    }
+      redirect_to request.referer.nil? ? "/" : request.referer
+    end
   end
 
+  # rubocop:disable Layout/LineLength
   # business intelligence view
   def bi_three_month
     if current_user.view_entries?
       distribute_reads do
         @filter_companies = companies_for_bi_filter
-        @selected_search = "/entries/bi/three_month?country=#{params[:country]=="CA" ? "CA" : "US"}"
-        date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
-        country_iso = params[:country]=="CA" ? "CA" : "US"
+        @selected_search = "/entries/bi/three_month?country=#{params[:country] == "CA" ? "CA" : "US"}"
+        date_field = params[:country] == "CA" ? "direct_shipment_date" : "arrival_date"
+        country_iso = params[:country] == "CA" ? "CA" : "US"
         where_clause = "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
         where_clause << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and (#{Entry.search_where(current_user)})"
         where_clause << "and #{build_bi_company_filter_clause params[:cids]}"
-        qry = "SELECT entries.entry_port_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Entries\", sum(entries.entered_value) as \"Entered Value\", sum(entries.total_duty) as \"Total Duty\" FROM entries "+where_clause+" group by DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), entries.entry_port_code;"
+        qry = "SELECT entries.entry_port_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Entries\", sum(entries.entered_value) as \"Entered Value\", sum(entries.total_duty) as \"Total Duty\" FROM entries " + where_clause + " group by DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), entries.entry_port_code;"
         @total_entries = Entry.connection.execute qry
       end
-      render :layout=>'one_col'
+      render layout: 'one_col'
     else
       error_redirect "You do not have permission to view entries."
     end
   end
+
   def bi_three_month_hts
     if current_user.view_entries?
       distribute_reads do
         @filter_companies = companies_for_bi_filter
-        @selected_search = "/entries/bi/three_month_hts?country=#{params[:country]=="CA" ? "CA" : "US"}"
-        date_field = params[:country]=="CA" ? "direct_shipment_date" : "arrival_date"
-        country_iso = params[:country]=="CA" ? "CA" : "US"
+        @selected_search = "/entries/bi/three_month_hts?country=#{params[:country] == "CA" ? "CA" : "US"}"
+        date_field = params[:country] == "CA" ? "direct_shipment_date" : "arrival_date"
+        country_iso = params[:country] == "CA" ? "CA" : "US"
         qry = "select commercial_invoice_tariffs.hts_code, DATE_FORMAT(entries.#{date_field},\"%Y-%m\") as \"Month\", count(*) as \"Lines\", sum(commercial_invoice_tariffs.entered_value), sum(commercial_invoice_tariffs.duty_amount) from entries inner join commercial_invoices on entries.id = commercial_invoices.entry_id inner join commercial_invoice_lines on commercial_invoice_lines.commercial_invoice_id = commercial_invoices.id inner join commercial_invoice_tariffs on commercial_invoice_tariffs.commercial_invoice_line_id = commercial_invoice_lines.id "
         qry << "WHERE entries.#{date_field} >= CAST(DATE_FORMAT(DATE_ADD(NOW(),INTERVAL -3 MONTH),\"%Y-%m-01\") as DATE) AND entries.#{date_field} < CAST(DATE_FORMAT(NOW(),\"%Y-%m-01\") as DATE)"
         qry << " and entries.import_country_id = (select id from countries where iso_code = \"#{country_iso}\") and (#{Entry.search_where(current_user)})"
@@ -173,11 +189,12 @@ class EntriesController < ApplicationController
         qry << " GROUP BY DATE_FORMAT(entries.#{date_field},\"%Y-%m\"), commercial_invoice_tariffs.hts_code"
         @total_entries = Entry.connection.execute qry
       end
-      render :layout=>'one_col'
+      render layout: 'one_col'
     else
       error_redirect "You do not have permission to view entries."
     end
   end
+  # rubocop:enable Layout/LineLength
 
   def sync_records
     @base_object = Entry.find(params[:id])
@@ -201,7 +218,7 @@ class EntriesController < ApplicationController
     end
 
     # Redirect back to main page if referrer is blank (this can be removed once we set referrer to never be nil)
-    redirect_to request.referrer || "/"
+    redirect_to request.referer || "/"
   end
 
   def purge
@@ -237,19 +254,21 @@ class EntriesController < ApplicationController
   end
 
   private
+
   def build_bi_company_filter_clause companies
     r = "(1=1)"
-    unless companies.blank?
+    if companies.present?
       cids = companies.split(',')
       cids.delete_if {|x| /^[0-9 ]*$/.match(x).nil?}
       r = "(entries.importer_id IN (#{cids.join(",")}))" unless cids.empty?
     end
     r
   end
+
   def companies_for_bi_filter
     r = []
     if current_user.company.master?
-      r = Company.where(:importer=>true).order("companies.name ASC")
+      r = Company.where(importer: true).order("companies.name ASC")
     else
       r << current_user.company if current_user.company.importer?
       current_user.company.linked_companies.order("companies.name ASC").each {|c| r << c if c.importer}
@@ -260,7 +279,7 @@ class EntriesController < ApplicationController
   def activity_summary_content
     @imp = Company.find params[:importer_id]
     unless Entry.can_view_importer?(@imp, current_user)
-      render partial: 'shared/error_panel', locals:{message:"You do not have permission to view this page."}
+      render partial: 'shared/error_panel', locals: {message: "You do not have permission to view this page."}
       return
     end
     @last_entry = Entry.where(Entry.search_where_by_company_id(@imp.id)).order('updated_at DESC').first

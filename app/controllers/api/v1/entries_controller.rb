@@ -29,36 +29,36 @@ module Api; module V1; class EntriesController < Api::V1::ApiCoreModuleControlle
 
   private
 
-  def email_activity_summary_download importer_id, iso_code, addresses, subject, body
+  def email_activity_summary_download importer_id, iso_code, _addresses, _subject, _body
     klass = OpenChain::ActivitySummary::EntrySummaryDownload
     email_blank_or_valid = nil
-    action_secure(klass.permission?(current_user, params[:importer_id]), nil) {
+    action_secure(klass.permission?(current_user, params[:importer_id]), nil) do
       begin
         email_blank_or_valid = params[:addresses].blank? || email_list_valid?(params[:addresses])
         if email_blank_or_valid
           klass.delay.email_report importer_id, iso_code, params[:addresses], params[:subject], params[:body], current_user.id, params[:mailing_list]
         end
-      rescue => e
-        e.log_me ["Running/emailing #{klass.to_s} report. Params: {params.to_s}"]
+      rescue StandardError => e
+        e.log_me ["Running/emailing #{klass} report. Params: {params.to_s}"]
         render_error "There was an error running your report: #{e.message}"
         return
       end
       email_blank_or_valid ? render_ok : render_error("Invalid email address")
-    }
+    end
   end
 
   def store_activity_summary_download name, iso_code
     klass = OpenChain::ActivitySummary::EntrySummaryDownload
-    action_secure(klass.permission?(current_user, params[:importer_id]), nil) {
+    action_secure(klass.permission?(current_user, params[:importer_id]), nil) do
       begin
-        ReportResult.run_report! name, current_user, klass, {:settings=>{iso_code: iso_code, importer_id: params[:importer_id]}}
-      rescue => e
-        e.log_me ["Running #{klass.to_s} report.", "Params: #{params.to_s}"]
+        ReportResult.run_report! name, current_user, klass, {settings: {iso_code: iso_code, importer_id: params[:importer_id]}}
+      rescue StandardError => e
+        e.log_me ["Running #{klass} report.", "Params: #{params}"]
         render_error "There was an error running your report: #{e.message}"
         return
       end
       render_ok
-    }
+    end
   end
 
 end; end; end

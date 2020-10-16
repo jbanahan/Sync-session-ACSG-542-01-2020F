@@ -2,13 +2,14 @@ describe Api::V1::EntriesController do
   let(:downloader) { OpenChain::ActivitySummary::EntrySummaryDownload }
   let(:imp) { Factory(:company) }
   let(:u) { Factory(:user) }
+
   before { allow_api_access u }
 
   describe "store_us_activity_summary_download" do
     it "runs report for authorized user" do
       imp_id = imp.id.to_s
       expect(downloader).to receive(:permission?).with(u, imp_id).and_return true
-      expect(ReportResult).to receive(:run_report!).with("US Activity Summary", u, downloader, {:settings=>{iso_code: "US", importer_id: imp_id}})
+      expect(ReportResult).to receive(:run_report!).with("US Activity Summary", u, downloader, {settings: {iso_code: "US", importer_id: imp_id}})
       post :store_us_activity_summary_download, importer_id: imp_id
       expect(response.body).to eq({ok: "ok"}.to_json)
     end
@@ -26,8 +27,8 @@ describe Api::V1::EntriesController do
       expect(downloader).to receive(:permission?).with(u, imp_id).and_return true
       expect_any_instance_of(StandardError).to receive(:log_me)
       expect(ReportResult).to receive(:run_report!)
-                          .with("US Activity Summary", u, downloader, {:settings=>{iso_code: "US", importer_id: imp_id}})
-                          .and_raise "ERROR!"
+        .with("US Activity Summary", u, downloader, {settings: {iso_code: "US", importer_id: imp_id}})
+        .and_raise "ERROR!"
       post :store_us_activity_summary_download, importer_id: imp_id
       expect(response.body).to eq({errors: ["There was an error running your report: ERROR!"]}.to_json)
     end
@@ -53,7 +54,7 @@ describe Api::V1::EntriesController do
     it "blocks unauthorized user" do
       imp_id = imp.id.to_s
       expect(downloader).to receive(:permission?).with(u, imp_id).and_return false
-      expect(downloader).to_not receive(:email_report)
+      expect(downloader).not_to receive(:email_report)
       post :email_us_activity_summary_download, importer_id: imp_id, addresses: "tufnel@stonehenge.biz", subject: "subject", body: "body"
       expect(response).to be_forbidden
     end
@@ -61,7 +62,7 @@ describe Api::V1::EntriesController do
     it "prevents invalid emails" do
       imp_id = imp.id.to_s
       expect(downloader).to receive(:permission?).with(u, imp_id).and_return true
-      expect(downloader).to_not receive(:email_report)
+      expect(downloader).not_to receive(:email_report)
       post :email_us_activity_summary_download, importer_id: imp_id, addresses: "tufnel@stonehenge@biz", subject: "subject", body: "body"
       expect(response.body).to eq({errors: ["Invalid email address"]}.to_json)
     end

@@ -1046,25 +1046,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "21f059397e7e2da85f32cb57bba06bf6a6f3acb600fc219d0932505cd161c698",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/entry.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":import_country_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Entry"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "2241fb5a8bd5963a273881ddaaf21e1db135e4989b5bc5ad39f5d93f54608876",
@@ -1412,25 +1393,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "2accce8dff86b4240601863fdda23a386b01e8991e210e63e2d0807815289eb4",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/entry.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":importer_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Entry"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "2b3d8bbc797c40a6c970d01b917e3c00d1491b97325a4ea9af321ac43f35a408",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -1702,7 +1664,7 @@
       "check_name": "SendFile",
       "message": "Parameter value used in file name",
       "file": "app/controllers/entries_controller.rb",
-      "line": 78,
+      "line": 85,
       "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
       "code": "send_file(OpenChain::ActivitySummary.generator_for_country(params[:iso_code]).create_by_release_range_download(params[:importer_id], params[:release_range]).path, :filename => OpenChain::ActivitySummary.generator_for_country(params[:iso_code]).create_by_release_range_download(params[:importer_id], params[:release_range]).original_filename, :type => :xls, :disposition => \"attachment\")",
       "render_path": null,
@@ -2435,25 +2397,6 @@
       "location": {
         "type": "model",
         "model": "PieceSet"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "4d7d6d66f742c848ae8aa4786f068188dee8a8ca4a9345afdcc115a468792e26",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/entry.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":broker_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Entry"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -6236,25 +6179,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "bdb791ff45f796504f4ba5225f8b72920159929bd646d7c03b8944dd82b00463",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/entry.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":importer_tax_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Entry"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "bfa1eabb14bc7f99a285e9ba3c91eea54682f289897f3138949c727a66e3cdb4",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -8310,6 +8234,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-16 12:46:35 -0400",
+  "updated": "2020-10-16 16:38:25 -0400",
   "brakeman_version": "4.9.1"
 }
