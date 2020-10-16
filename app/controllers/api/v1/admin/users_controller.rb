@@ -18,7 +18,7 @@ module Api; module V1; module Admin; class UsersController < Api::V1::Admin::Adm
   # Change a specific user's password
   # POST: /api/v1/admin/users/:id/change_password {password: "XYZ"}
   def change_user_password
-    user = User.where(id: params[:id]).first
+    user = User.find_by(id: params[:id])
     valid = false
     if user
       valid = user.update_user_password params[:password], params[:password]

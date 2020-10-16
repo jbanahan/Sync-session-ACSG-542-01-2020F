@@ -1,330 +1,335 @@
 require 'open_chain/user_support/create_user_from_template'
 
 class UsersController < ApplicationController
-  skip_before_filter :require_user, only: [:disable_run_as]
-    def root_class
-      User
-    end
-    def history
-      @user = User.find(params[:id])
-      @back_url = edit_company_user_url(@user.company, @user)
-      super
-    end
-    # GET /users
-    def set_page_title
-      @page_title ||= 'User'
-    end
+  skip_before_action :require_user, only: [:disable_run_as]
+  def root_class
+    User
+  end
 
-    def index
-      respond_to do |format|
-        format.html {
-          if current_user.admin?
-              @active_users = User.where(["company_id = ? AND (disabled = false OR disabled IS NULL)" , params[:company_id]]).order(:username)
-              @disabled_users = User.where(["company_id = ? AND disabled = true", params[:company_id]]).order(:username)
-              @company = Company.find(params[:company_id])
-              render :layout => 'one_col' # index.html.erb
-          else
-              error_redirect "You do not have permission to view this user list."
-          end
-        }
-        format.json {
-          companies = current_user.company.visible_companies_with_users.includes(:users)
-          render :json => companies.to_json(:only=>[:name], :include=>{:users=>{:only=>[:id, :first_name, :last_name], :methods=>:full_name}})
-        }
-      end
-    end
+  def history
+    @user = User.find(params[:id])
+    @back_url = edit_company_user_url(@user.company, @user)
+    super
+  end
 
-    # GET /users/1
-    def show
-      @user = User.find(params[:id])
-      redirect_to edit_company_user_path @user.company, @user
-    end
+  # GET /users
+  def set_page_title
+    @page_title ||= 'User'
+  end
 
-    def me
-      redirect_to edit_company_user_path current_user.company, current_user
-    end
-
-    # GET /users/new
-    def new
-      admin_secure("Only administrators can create users.") {
-        @company = Company.find(params[:company_id])
-        @user = @company.users.build
-        copied_user_id = params[:copy]
-
-        if copied_user_id
-          copied_user = User.find(copied_user_id)
-          add_copied_permissions_to_user(copied_user, @user)
-          add_user_groups_to_page copied_user
-          add_user_search_setups_to_page copied_user
-          add_user_custom_reports_to_page copied_user
-        end
-      }
-    end
-
-    # GET /users/1/edit
-    def edit
-      @user = User.find(params[:id])
-      action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false, :module_name=>"user", :verb=>"edit"}) {
-        @company = @user.company
-        add_user_groups_to_page @user
-      }
-    end
-
-    # POST /users
-    def create
-      admin_secure("Only administrators can create users.") {
-        # Strip the password and password confirmation values otherwise the User call gets mad
-        # on attribute assignment since they're not accessible
-        password = params[:user].delete :password
-        password_confirmation = params[:user].delete :password_confirmation
-
-        @user = User.new(params[:user])
-        set_admin_params(@user, params)
-        set_debug_expiration(@user)
-        @user.password_reset = true
-        @user.password = password
-        @company = @user.company
-
-
-        valid = false
-        begin
-          User.transaction do
-            valid = @user.save && @user.update_user_password(password, password_confirmation, false, false)
-            if valid
-              search_setups = params[:assigned_search_setup_ids]
-              if search_setups && @user.id
-                search_setups.each do |ss_id|
-                  ss = SearchSetup.find(ss_id.to_i)
-                  ss.simple_give_to! @user
-                end
-              end
-
-              custom_reports = params[:assigned_custom_report_ids]
-              if custom_reports && @user.id
-                custom_reports.each do |cr_id|
-                  cr = CustomReport.find(cr_id.to_i)
-                  cr.simple_give_to! @user
-                end
-              end
-
-              @user.create_snapshot(current_user)
-            else
-              # Rollback is swallowed by the transaction block
-              raise ActiveRecord::Rollback, "Bad user create."
-            end
-          end
-        rescue
-          valid = false
-          add_flash :errors, "The user could not be created."
-        end
-
-        if valid
-          add_flash :notices, "User created successfully."
-          redirect_to(company_users_path(@company))
+  def index
+    respond_to do |format|
+      format.html do
+        if current_user.admin?
+            @active_users = User.where(["company_id = ? AND (disabled = false OR disabled IS NULL)", params[:company_id]]).order(:username)
+            @disabled_users = User.where(["company_id = ? AND disabled = true", params[:company_id]]).order(:username)
+            @company = Company.find(params[:company_id])
+            render layout: 'one_col' # index.html.erb
         else
-          errors_to_flash @user, :now => true
-          @company = Company.find(params[:company_id])
-          add_user_groups_to_page @user
-          render :action => "new"
-        end
-      }
-    end
-
-    def show_create_from_template
-      admin_secure do
-        @company_id = params[:company_id]
-        @user_templates = UserTemplate.all
-        @no_action_bar = true
-      end
-    end
-    # POST
-    def create_from_template
-      admin_secure do
-        @company = Company.find params[:company_id]
-        user_template = UserTemplate.find params[:user_template_id]
-        username = params[:username]
-        username = params[:email] if username.blank?
-
-        custom_reports = params[:assigned_custom_report_ids]
-        search_setups = params[:assigned_search_setup_ids]
-
-        @user = OpenChain::UserSupport::CreateUserFromTemplate.build_user user_template, @company,
-          params[:first_name], params[:last_name], username, params[:email], params[:time_zone]
-
-        if OpenChain::UserSupport::CreateUserFromTemplate.transactional_user_creation @user, current_user, search_setups, custom_reports
-          User.delay.send_invite_emails @user.id if params[:notify_user]
-          add_flash :notices, "User created successfully."
-          redirect_to(company_users_path(@company))
-        else
-          errors_to_flash @user, :now => true
-          add_user_groups_to_page @user
-          render :action => "new"
+            error_redirect "You do not have permission to view this user list."
         end
       end
+      format.json do
+        companies = current_user.company.visible_companies_with_users.includes(:users)
+        render json: companies.to_json(only: [:name], include: {users: {only: [:id, :first_name, :last_name], methods: :full_name}})
+      end
     end
+  end
 
-    # PUT /users/1
-    # PUT /users/1.xml
-    def update
-      @user = User.find(params[:id])
-      action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false, :verb=>"edit", :module_name=>"user"}) {
-        @company = @user.company
-        set_admin_params(@user, params)
-        set_debug_expiration(@user)
-        set_password_reset(@user)
+  # GET /users/1
+  def show
+    @user = User.find(params[:id])
+    redirect_to edit_company_user_path @user.company, @user
+  end
 
-        valid = false
+  def me
+    redirect_to edit_company_user_path current_user.company, current_user
+  end
+
+  # GET /users/new
+  def new
+    admin_secure("Only administrators can create users.") do
+      @company = Company.find(params[:company_id])
+      @user = @company.users.build
+      copied_user_id = params[:copy]
+
+      if copied_user_id
+        copied_user = User.find(copied_user_id)
+        add_copied_permissions_to_user(copied_user, @user)
+        add_user_groups_to_page copied_user
+        add_user_search_setups_to_page copied_user
+        add_user_custom_reports_to_page copied_user
+      end
+    end
+  end
+
+  # GET /users/1/edit
+  def edit
+    @user = User.find(params[:id])
+    action_secure(@user.can_edit?(current_user), @user, {lock_check: false, module_name: "user", verb: "edit"}) do
+      @company = @user.company
+      add_user_groups_to_page @user
+    end
+  end
+
+  # POST /users
+  def create
+    admin_secure("Only administrators can create users.") do
+      # Strip the password and password confirmation values otherwise the User call gets mad
+      # on attribute assignment since they're not accessible
+      password = params[:user][:password]
+      password_confirmation = params[:user][:password_confirmation]
+
+      company = Company.find(params[:user][:company_id])
+      @user = company.users.new(permitted_attributes(params))
+
+      set_admin_params(@user, params)
+      debug_expiration(@user)
+      @user.password_reset = true
+      @user.password = password
+      @company = @user.company
+
+      valid = false
+      begin
         User.transaction do
-          # Deleting password params because they're not set as accessible in the user model
-          password = params[:user].delete(:password)
-          password_conf = params[:user].delete(:password_confirmation)
-
-          # Don't do password update if password is blank
-          update_password = password.blank? ? true : @user.update_user_password(password, password_conf, false)
-
-          valid =  update_password && @user.update_attributes(params[:user])
-
-          # Ensure that change to group assignments is reflected in time stamp
-          @user.touch
-          @user.create_snapshot(current_user)
-
-          # Rollback is swallowed by the transaction block
-          raise ActiveRecord::Rollback, "Bad user create." unless valid
-        end
-
-        if valid
-            add_flash :notices, "Account updated successfully."
-
-            # If the user is updating their own account then it's possible they've updated their password, in which case their remember token is invalid (it's re-generated
-            # whenever the user password is modified). The easiest thing to do here is just always re-log them in which will reset their remember token cookie.
-            if current_user.id == @user.id
-              sign_in(@user) do |status|
-                if status.success?
-                  redirect_to current_user.admin? ? company_users_path(@company) : "/"
-                else
-                  redirect_to login_path
-                end
+          valid = @user.save && @user.update_user_password(password, password_confirmation, false, false)
+          if valid
+            search_setups = params[:assigned_search_setup_ids]
+            if search_setups && @user.id
+              search_setups.each do |ss_id|
+                ss = SearchSetup.find(ss_id.to_i)
+                ss.simple_give_to! @user
               end
-            else
-              redirect_to current_user.admin? ? company_users_path(@company) : "/"
             end
-        else
-          errors_to_flash @user
-          add_user_groups_to_page @user
-          render :action => "edit"
-        end
-      }
-    end
 
-    def email_new_message
-      current_user.email_new_messages = !current_user.email_new_messages
-      current_user.save
-      render json: {msg_state:current_user.email_new_messages}
-    end
-
-    def task_email
-      current_user.task_email = !current_user.task_email
-      current_user.save
-      render json: {msg_state:current_user.task_email}
-    end
-
-    def disable
-      toggle_enabled
-    end
-
-    def enable
-      toggle_enabled
-    end
-
-    def unlock_user
-      if current_user.admin?
-        u = User.find_by_id params[:id]
-        if u
-          u.password_expired = false
-          u.password_locked = false
-          u.failed_logins = 0
-          u.save!
-          u.create_snapshot(current_user, nil, "User Unlocked")
-          add_flash :notices, "Account unlocked."
-          redirect_to edit_company_user_path u.company, u
-        else
-          error_redirect "Cannot unlock this user."
-        end
-      else
-        error_redirect "You must be an administrator to unlock a user."
-      end
-    end
-
-    def enable_run_as
-      if current_user.admin?
-        u = User.find_by(username: params[:username])
-        if u
-          Lock.db_lock(current_user) do
-            if !u.disabled? && !u.password_locked? && !u.password_expired? && !u.password_reset?
-              user = current_user
-              user.run_as = u
-              user.save!
-              RunAsSession.create! user_id: user.id, run_as_user_id: u.id, start_time: Time.zone.now
-              redirect_to "/"
-            else
-              error_redirect "This username is locked and not available for use with this feature.  Select another username or have this user account unlocked."
+            custom_reports = params[:assigned_custom_report_ids]
+            if custom_reports && @user.id
+              custom_reports.each do |cr_id|
+                cr = CustomReport.find(cr_id.to_i)
+                cr.simple_give_to! @user
+              end
             end
-          end
-        else
-          error_redirect "User with username #{params[:username]} not found."
-        end
-      else
-        error_redirect "You must be an administrator to run as a different user."
-      end
-    end
 
-    def disable_run_as
-      cu = current_user # load current_user here in case not logged in since we're skipping filters to avoid the portal_redirect
-
-      # run_as_user is defined in application_controller
-      if cu && run_as_user
-        Lock.db_lock(run_as_user) do
-          run_as_user.run_as = nil
-          run_as_user.save!
-          session = RunAsSession.current_session(run_as_user).first
-          if session
-            session.end_time = Time.zone.now
-            session.save!
+            @user.create_snapshot(current_user)
+          else
+            # Rollback is swallowed by the transaction block
+            raise ActiveRecord::Rollback, "Bad user create."
           end
         end
-
-        add_flash :notices, "You are no longer running as '#{cu.username}'."
+      rescue StandardError
+        valid = false
+        add_flash :errors, "The user could not be created."
       end
-      redirect_to '/'
+
+      if valid
+        add_flash :notices, "User created successfully."
+        redirect_to(company_users_path(@company))
+      else
+        errors_to_flash @user, now: true
+        @company = Company.find(params[:company_id])
+        add_user_groups_to_page @user
+        render action: "new"
+      end
     end
+  end
+
+  def show_create_from_template
+    admin_secure do
+      @company_id = params[:company_id]
+      @user_templates = UserTemplate.all
+      @no_action_bar = true
+    end
+  end
+
+  # POST
+  def create_from_template
+    admin_secure do
+      @company = Company.find params[:company_id]
+      user_template = UserTemplate.find params[:user_template_id]
+      username = params[:username]
+      username = params[:email] if username.blank?
+
+      custom_reports = params[:assigned_custom_report_ids]
+      search_setups = params[:assigned_search_setup_ids]
+
+      @user = OpenChain::UserSupport::CreateUserFromTemplate.build_user user_template, @company,
+                                                                        params[:first_name], params[:last_name], username, params[:email], params[:time_zone]
+
+      if OpenChain::UserSupport::CreateUserFromTemplate.transactional_user_creation @user, current_user, search_setups, custom_reports
+        User.delay.send_invite_emails @user.id if params[:notify_user]
+        add_flash :notices, "User created successfully."
+        redirect_to(company_users_path(@company))
+      else
+        errors_to_flash @user, now: true
+        add_user_groups_to_page @user
+        render action: "new"
+      end
+    end
+  end
+
+  # PUT /users/1
+  # PUT /users/1.xml
+  def update
+    @user = User.find(params[:id])
+    action_secure(@user.can_edit?(current_user), @user, {lock_check: false, verb: "edit", module_name: "user"}) do
+      @company = @user.company
+      set_admin_params(@user, params)
+      debug_expiration(@user)
+      password_reset(@user)
+
+      valid = false
+      User.transaction do
+        # Deleting password params because they're not set as accessible in the user model
+        password = params[:user][:password]
+        password_conf = params[:user][:password_confirmation]
+
+        # Don't do password update if password is blank
+        update_password = password.blank? ? true : @user.update_user_password(password, password_conf, false)
+
+        valid = update_password && @user.update(permitted_attributes(params))
+
+        # Ensure that change to group assignments is reflected in time stamp
+        @user.update(updated_at: Time.zone.now)
+        @user.create_snapshot(current_user)
+
+        # Rollback is swallowed by the transaction block
+        raise ActiveRecord::Rollback, "Bad user create." unless valid
+      end
+
+      if valid
+          add_flash :notices, "Account updated successfully."
+
+          # If the user is updating their own account then it's possible they've updated their password, in which case their remember token is invalid (it's re-generated
+          # whenever the user password is modified). The easiest thing to do here is just always re-log them in which will reset their remember token cookie.
+          if current_user.id == @user.id
+            sign_in(@user) do |status|
+              if status.success?
+                redirect_to current_user.admin? ? company_users_path(@company) : "/"
+              else
+                redirect_to login_path
+              end
+            end
+          else
+            redirect_to current_user.admin? ? company_users_path(@company) : "/"
+          end
+      else
+        errors_to_flash @user
+        add_user_groups_to_page @user
+        render action: "edit"
+      end
+    end
+  end
+
+  def email_new_message
+    current_user.email_new_messages = !current_user.email_new_messages
+    current_user.save
+    render json: {msg_state: current_user.email_new_messages}
+  end
+
+  def task_email
+    current_user.task_email = !current_user.task_email
+    current_user.save
+    render json: {msg_state: current_user.task_email}
+  end
+
+  def disable
+    toggle_enabled
+  end
+
+  def enable
+    toggle_enabled
+  end
+
+  def unlock_user
+    if current_user.admin?
+      u = User.find_by id: params[:id]
+      if u
+        u.password_expired = false
+        u.password_locked = false
+        u.failed_logins = 0
+        u.save!
+        u.create_snapshot(current_user, nil, "User Unlocked")
+        add_flash :notices, "Account unlocked."
+        redirect_to edit_company_user_path u.company, u
+      else
+        error_redirect "Cannot unlock this user."
+      end
+    else
+      error_redirect "You must be an administrator to unlock a user."
+    end
+  end
+
+  def enable_run_as
+    if current_user.admin?
+      u = User.find_by(username: params[:username])
+      if u
+        Lock.db_lock(current_user) do
+          if !u.disabled? && !u.password_locked? && !u.password_expired? && !u.password_reset?
+            user = current_user
+            user.run_as = u
+            user.save!
+            RunAsSession.create! user_id: user.id, run_as_user_id: u.id, start_time: Time.zone.now
+            redirect_to "/"
+          else
+            error_redirect "This username is locked and not available for use with this feature.  Select another username or have this user account unlocked."
+          end
+        end
+      else
+        error_redirect "User with username #{params[:username]} not found."
+      end
+    else
+      error_redirect "You must be an administrator to run as a different user."
+    end
+  end
+
+  def disable_run_as
+    cu = current_user # load current_user here in case not logged in since we're skipping filters to avoid the portal_redirect
+
+    # run_as_user is defined in application_controller
+    if cu && run_as_user
+      Lock.db_lock(run_as_user) do
+        run_as_user.run_as = nil
+        run_as_user.save!
+        session = RunAsSession.current_session(run_as_user).first
+        if session
+          session.end_time = Time.zone.now
+          session.save!
+        end
+      end
+
+      add_flash :notices, "You are no longer running as '#{cu.username}'."
+    end
+    redirect_to '/'
+  end
 
   def hide_message
     if params[:message_name].blank?
-      render :json=>{error:'Message Name missing.'}
+      render json: {error: 'Message Name missing.'}
     else
       current_user.add_hidden_message params[:message_name]
       current_user.save!
-      render :json=>{'OK'=>'OK'}
+      render json: {'OK' => 'OK'}
     end
   end
 
   def show_bulk_upload
-    admin_secure("Only administrators can create users.") {
+    admin_secure("Only administrators can create users.") do
       @company = Company.find(params[:company_id])
       @user = @company.users.build
-    }
+    end
   end
 
   def preview_bulk_upload
     @company = Company.find(params[:company_id])
     begin
       render json: {results: parse_bulk_csv(params['bulk_user_csv'])}
-    rescue
-      render json: {error: $!.message}, status: 400
+    rescue StandardError => e
+      render json: {error: e.message}, status: 400
     end
   end
+
   def bulk_upload
-    admin_secure("Only administrators can create users.") {
+    admin_secure("Only administrators can create users.") do
       count = 0
       company = Company.find(params[:company_id])
       results = parse_bulk_csv(params['bulk_user_csv'])
@@ -343,15 +348,15 @@ class UsersController < ApplicationController
             count += 1
           end
         end
-        render json: {count:count}
-      rescue
-        render json: {error:$!.message}, status: 400
+        render json: {count: count}
+      rescue StandardError => e
+        render json: {error: e.message}, status: 400
       end
-    }
+    end
   end
 
   def bulk_invite
-    admin_secure("Only administrators can send invites to users.") {
+    admin_secure("Only administrators can send invites to users.") do
       if params[:id].blank?
         add_flash :errors, "Please select at least one user."
       else
@@ -360,27 +365,27 @@ class UsersController < ApplicationController
       end
 
       redirect_to company_users_path params[:company_id]
-    }
+    end
   end
 
   def move_to_new_company
-    admin_secure("Only administrators can move other users to a new company.") {
+    admin_secure("Only administrators can move other users to a new company.") do
       destination_company = Company.find(params[:destination_company_id])
-      params[:id].each do |user_id|
-        user = User.find(user_id)
-        user.company = destination_company
-        user.save!
-      end if params[:id] # ignore the whole block if no users were selected
+      params[:id]&.each do |user_id|
+          user = User.find(user_id)
+          user.company = destination_company
+          user.save!
+      end
 
       redirect_to :back
-    }
+    end
   end
 
   def find_by_email
     admin_secure "Only admins can use this page" do
       email = params[:email]
-      if !email.blank?
-        u = User.find_by_email email
+      if email.present?
+        u = User.find_by email: email
         if u.nil?
           add_flash :errors, "User not found with email: #{email}"
         else
@@ -399,13 +404,13 @@ class UsersController < ApplicationController
         uri = URI.parse params[:homepage]
         # We want to strip the scheme and host from the URL since we want it to always be relative to the current server/ http scheme
         # that is in effect on the login homepage redirect
-        uri = uri.path + (uri.query ? ("?"+uri.query) : "") + (uri.fragment ? ("#" + uri.fragment): "")
+        uri = uri.path + (uri.query ? ("?" + uri.query) : "") + (uri.fragment ? ("#" + uri.fragment) : "")
       end
       current_user.update! homepage: uri
 
-      render :json=>{'OK'=>'OK'}
+      render json: {'OK' => 'OK'}
     else
-      render :json=> {error: "Homepage URL missing."}
+      render json: {error: "Homepage URL missing."}
     end
   end
 
@@ -414,38 +419,41 @@ class UsersController < ApplicationController
     error_redirect "You do not have permission to view this page." unless @user.can_edit?(current_user)
   end
 
-
   private
+
   def parse_bulk_csv data
     rval = []
     CSV.parse(data) do |row|
       next if row.empty?
       raise "Every row must have 5 elements." unless row.size == 5
-      rval << {'username'=>row[0], 'email'=>row[1], 'first_name'=>row[2], 'last_name'=>row[3], 'password'=>row[4]}
+      rval << {'username' => row[0], 'email' => row[1], 'first_name' => row[2], 'last_name' => row[3], 'password' => row[4]}
     end
     rval
   end
-  def set_debug_expiration(u)
-    if current_user.sys_admin? && !params[:debug_expiration_hours].blank?
+
+  def debug_expiration(u)
+    if current_user.sys_admin? && params[:debug_expiration_hours].present?
       u.debug_expires = params[:debug_expiration_hours].to_i.hours.from_now
     end
   end
-  def set_password_reset(u)
+
+  def password_reset(u)
     if current_user.sys_admin?
-      u.password_reset = params[:password_reset] == 'true' ? true : false
+      u.password_reset = params[:password_reset] == 'true'
     end
   end
+
   def set_admin_params(u, p)
     if current_user.admin?
-      u.admin = !p[:is_admin].nil? && p[:is_admin]=="true"
-      u.sys_admin = !p[:is_sys_admin].nil? && p[:is_sys_admin]=="true"
-      u.disabled = !p[:is_disabled].nil? && p[:is_disabled]=="true"
+      u.admin = !p[:is_admin].nil? && p[:is_admin] == "true"
+      u.sys_admin = !p[:is_sys_admin].nil? && p[:is_sys_admin] == "true"
+      u.disabled = !p[:is_disabled].nil? && p[:is_disabled] == "true"
     end
   end
 
   def toggle_enabled
     @user = User.find(params[:id])
-    action_secure(@user.can_edit?(current_user), @user, {:lock_check=>false, :module_name=>"user", :verb=>"change"}) {
+    action_secure(@user.can_edit?(current_user), @user, {lock_check: false, module_name: "user", verb: "change"}) do
       msg_word = @user.disabled ? "enabled" : "disabled"
       @user.disabled = !@user.disabled
       if @user.save
@@ -455,7 +463,7 @@ class UsersController < ApplicationController
       end
       errors_to_flash @user
       redirect_to company_user_path(@user.company, @user)
-    }
+    end
   end
 
   def add_user_groups_to_page user
@@ -504,5 +512,23 @@ class UsersController < ApplicationController
                                    :vendor_attach, :vendor_comment, :vendor_edit, :vendor_view,
                                    :vfi_invoice_view)
     destination_user.update(attribs)
+  end
+
+  def permitted_attributes(params)
+    params.require(:user).except(:company_id, :password, :password_confirmation)
+          .permit(:username, :email, :time_zone, :email_format, :first_name, :last_name, :search_open,
+                  :order_view, :order_edit, :order_delete, :order_attach, :order_comment, :shipment_view, :shipment_edit,
+                  :shipment_delete, :shipment_attach, :shipment_comment, :sales_order_view, :sales_order_edit,
+                  :sales_order_delete, :sales_order_attach, :sales_order_comment, :delivery_view, :delivery_edit,
+                  :delivery_delete, :delivery_attach, :delivery_comment, :product_view, :product_edit, :product_delete,
+                  :product_attach, :product_comment, :entry_view, :entry_comment, :entry_attach, :entry_edit,
+                  :drawback_edit, :drawback_view, :survey_view, :survey_edit, :project_view, :project_edit, :vendor_view,
+                  :vendor_edit, :vendor_comment, :vendor_attach, :vfi_invoice_view, :vfi_invoice_edit, :trade_lane_view,
+                  :trade_lane_edit, :trade_lane_comment, :trade_lane_attach, :broker_invoice_view, :broker_invoice_edit,
+                  :variant_edit, :classification_edit, :commercial_invoice_view, :commercial_invoice_edit,
+                  :security_filing_view, :security_filing_edit, :security_filing_comment, :security_filing_attach,
+                  :support_agent, :simple_entry_mode, :tariff_subscribed, :homepage, :provider, :disallow_password,
+                  :disabled, :portal_mode, :system_user, :statement_view, :department, :email_new_messages,
+                  :default_report_date_format, group_ids: [])
   end
 end

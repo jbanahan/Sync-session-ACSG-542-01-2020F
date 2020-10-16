@@ -607,25 +607,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "16e42969f8155f933d88aafd86aaf6c859eb6615219b8ad99c62d3263b746d1f",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/user.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":company_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "User"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "18e990e0d6639429a7d6aeaacc3f86fa922c55a760a632ab504b52a4a69c1b1f",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -975,7 +956,7 @@
       "check_name": "MassAssignment",
       "message": "Unprotected mass assignment",
       "file": "app/controllers/data_cross_references_controller.rb",
-      "line": 35,
+      "line": 39,
       "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
       "code": "DataCrossReference.find(params[:id]).assign_attributes(permitted_attributes(params))",
       "render_path": null,
@@ -3683,25 +3664,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "6f0232fab5efe22b59ac05225e14dbc49113a8f1de288688b7304f24b4df279a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/user.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":group_ids",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "User"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "6f502422d634db375cbbcd68dc6bfe86237ae7ba3c7ad70f3e9a617dd0ec0624",
@@ -5369,7 +5331,7 @@
       "check_name": "MassAssignment",
       "message": "Unprotected mass assignment",
       "file": "app/controllers/data_cross_references_controller.rb",
-      "line": 59,
+      "line": 63,
       "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
       "code": "DataCrossReference.new(permitted_attributes(params))",
       "render_path": null,
@@ -8423,6 +8385,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-08 08:59:19 -0400",
+  "updated": "2020-10-16 10:17:51 -0400",
   "brakeman_version": "4.9.1"
 }

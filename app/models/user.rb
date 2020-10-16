@@ -137,58 +137,40 @@ class User < ActiveRecord::Base
 
   cattr_accessor :current
 
-  attr_accessible :username, :email, :time_zone, :email_format, :company_id,
-    :first_name, :last_name, :search_open, :order_view, :order_edit,
-    :order_delete, :order_attach, :order_comment, :shipment_view, :shipment_edit,
-    :shipment_delete, :shipment_attach, :shipment_comment, :sales_order_view,
-    :sales_order_edit, :sales_order_delete, :sales_order_attach,
-    :sales_order_comment, :delivery_view, :delivery_edit, :delivery_delete,
-    :delivery_attach, :delivery_comment, :product_view, :product_edit,
-    :product_delete, :product_attach, :product_comment, :entry_view,
-    :entry_comment, :entry_attach, :entry_edit, :drawback_edit, :drawback_view,
-    :survey_view, :survey_edit, :project_view, :project_edit,
-    :vendor_view, :vendor_edit, :vendor_comment, :vendor_attach, :vfi_invoice_view,
-    :vfi_invoice_edit, :trade_lane_view, :trade_lane_edit, :trade_lane_comment,
-    :trade_lane_attach, :broker_invoice_view, :broker_invoice_edit,
-    :variant_edit, :classification_edit, :commercial_invoice_view,
-    :commercial_invoice_edit, :security_filing_view, :security_filing_edit,
-    :security_filing_comment, :security_filing_attach, :support_agent,
-    :simple_entry_mode, :tariff_subscribed, :homepage, :provider, :uid,
-    :google_name, :oauth_token, :oauth_expires_at, :disallow_password,
-    :disabled, :group_ids, :portal_mode, :system_user, :statement_view, :department,
-    :email_new_messages, :default_report_date_format
-
   belongs_to :company
-  belongs_to :run_as, :class_name => "User"
+  belongs_to :run_as, class_name: "User"
 
-  has_many   :user_password_histories, :dependent => :destroy
-  has_many   :histories, :dependent => :destroy
-  has_many   :item_change_subscriptions, :dependent => :destroy
-  has_many   :search_setups, :dependent => :destroy
-  has_many   :custom_reports, :dependent=> :destroy
-  has_many   :messages, :dependent => :destroy
-  has_many   :debug_records, :dependent => :destroy
-  has_many   :dashboard_widgets, :dependent => :destroy
+  has_many   :user_password_histories, dependent: :destroy
+  has_many   :histories, dependent: :destroy
+  has_many   :item_change_subscriptions, dependent: :destroy
+  has_many   :search_setups, dependent: :destroy
+  has_many   :custom_reports, dependent: :destroy
+  has_many   :messages, dependent: :destroy
+  has_many   :debug_records, dependent: :destroy
+  has_many   :dashboard_widgets, dependent: :destroy
   has_many   :imported_files
   has_many   :imported_file_downloads
-  has_many   :instant_classification_results, :foreign_key => :run_by_id
-  has_many   :report_results, :foreign_key => :run_by_id
+  has_many   :instant_classification_results, foreign_key: :run_by_id # rubocop:disable Rails/InverseOf
+  has_many   :report_results, foreign_key: :run_by_id, inverse_of: :user
   has_many   :survey_responses
-  has_many   :part_number_correlations, :dependent => :destroy
-  has_many   :support_tickets, :foreign_key => :requestor_id
-  has_many   :support_tickets_assigned, :foreign_key => :agent_id, :class_name=>"SupportTicket"
+  has_many   :part_number_correlations, dependent: :destroy
+  has_many   :support_tickets, foreign_key: :requestor_id, inverse_of: :user
+  has_many   :support_tickets_assigned, foreign_key: :agent_id, class_name: "SupportTicket", inverse_of: :user
   has_many   :event_subscriptions, inverse_of: :user, dependent: :destroy, autosave: true
-  has_and_belongs_to_many :groups, join_table: "user_group_memberships", after_add: :add_to_group_cache, after_remove: :remove_from_group_cache
+  # rubocop:disable Rails/HasAndBelongsToMany
+  has_and_belongs_to_many :groups, join_table: "user_group_memberships", after_add: :add_to_group_cache,
+                                   after_remove: :remove_from_group_cache
   has_and_belongs_to_many :personal_announcements, join_table: "user_announcements", class_name: "Announcement"
+  # rubocop:enable Rails/HasAndBelongsToMany
   has_many :marked_announcements, through: :user_announcement_markers, source: :announcement
   has_many :user_announcement_markers, dependent: :destroy
 
-  validates  :company, :presence => true
+  validates  :company, presence: true
   validates  :username, presence: true, uniqueness: { case_sensitive: false }
   validates  :email, uniqueness: { case_sensitive: false }
   validate :valid_email
-  scope :enabled, lambda { where(disabled: [false, nil]) }
-  scope :non_system_user, lambda { where(system_user: [false, nil]) }
+  scope :enabled, -> { where(disabled: [false, nil]) }
+  scope :non_system_user, -> { where(system_user: [false, nil]) }
 
   before_save :should_update_timestaps?
   after_save :reset_timestamp_flag
@@ -213,12 +195,12 @@ class User < ActiveRecord::Base
     u = User.find_by(username: 'ApiAdmin')
     if !u
       u = Company.find_master.users.build(
-        username:'ApiAdmin',
-        first_name:'API',
-        last_name:'Admin',
-        email:'bug+api_admin@vandegriftinc.com',
+        username: 'ApiAdmin',
+        first_name: 'API',
+        last_name: 'Admin',
+        email: 'bug+api_admin@vandegriftinc.com',
         system_user: true
-        )
+      )
       u.admin = true
       pwd = generate_authtoken(u)
       u.password = pwd
@@ -235,10 +217,10 @@ class User < ActiveRecord::Base
     u = User.find_by(username: 'integration')
     if !u
       h = {
-        username:'integration',
-        first_name:'Integration',
-        last_name:'User',
-        email:'bug+integration@vandegriftinc.com',
+        username: 'integration',
+        first_name: 'Integration',
+        last_name: 'User',
+        email: 'bug+integration@vandegriftinc.com',
         system_user: true
       }
       add_all_permissions_to_hash h
@@ -254,11 +236,10 @@ class User < ActiveRecord::Base
     u
   end
 
-
   # This is overriding the standard clearance email find and replacing with a lookup by username instead
   def self.authenticate username, password
     r = nil
-    user = User.where(username: username).first
+    user = User.find_by(username: username)
 
     if user
       # Authenticated? is the clearance method for validating the user's supplied password matches
@@ -275,31 +256,31 @@ class User < ActiveRecord::Base
   def self.from_omniauth(omniauth_provider, auth_info)
     errors = []
     if omniauth_provider == "pepsi-saml"
-      user = User.where(username: auth_info.uid).first
+      user = User.find_by(username: auth_info.uid)
       errors << "Pepsi User ID #{auth_info.uid} has not been set up in #{MasterSetup.application_name}." unless user
     elsif omniauth_provider == "google_oauth2"
-      if user = User.where(email: auth_info[:info][:email]).first
+      if (user = User.find_by(email: auth_info[:info][:email]))
         user.provider = auth_info.provider
         user.uid = auth_info.uid
         user.google_name = auth_info.info.name
         user.oauth_token = auth_info.credentials.token
-        user.oauth_expires_at = Time.at(auth_info.credentials.expires_at)
+        user.oauth_expires_at = Time.zone.at(auth_info.credentials.expires_at)
         user.save!
       else
         errors << oauth_error_msg("Google", auth_info[:info][:email])
       end
     elsif omniauth_provider == "azure_oauth2"
-      unless user = User.where(email: auth_info[:info][:email]).first
+      unless (user = User.find_by(email: auth_info[:info][:email]))
         errors << oauth_error_msg("Maersk", auth_info[:info][:email])
       end
     end
 
-    return {user: user, errors: errors}
+    {user: user, errors: errors}
   end
 
   def self.oauth_error_msg provider_name, email
     "#{provider_name} email account #{email} has not been set up in #{MasterSetup.application_name}." +
-    " If you would like to request an account, please click the 'Need an account?' link below."
+      " If you would like to request an account, please click the 'Need an account?' link below."
   end
 
   def self.generate_authtoken user
@@ -322,7 +303,7 @@ class User < ActiveRecord::Base
     previous_time_zone = Time.zone
     begin
       User.current = user
-      Time.zone = user.time_zone unless user.time_zone.blank?
+      Time.zone = user.time_zone if user.time_zone.present?
       yield
     ensure
       User.current = previous_user
@@ -337,7 +318,7 @@ class User < ActiveRecord::Base
     end
 
     ids.each_entry do |id|
-      user = User.where(id: id).first
+      user = User.find_by(id: id)
       if user
         # Because we only store hashed versions of passwords, if we're going to relay users their temporary
         # password in an email, the only way we can send them a cleartext password is if we generate and save one here.
@@ -347,7 +328,7 @@ class User < ActiveRecord::Base
           cleartext = cleartext[0, 8]
         end
         user.update_user_password cleartext, cleartext, true, false
-        user.update_column :password_reset, true
+        user.update(password_reset: true)
         # Use the ! deliver_now variant because we never want the message to be suppressed on any system
         OpenMailer.send_invite(user, cleartext).deliver_now!
       end
@@ -398,8 +379,8 @@ class User < ActiveRecord::Base
         view_surveys: self.view_surveys?,
         view_vendors: self.view_vendors?,
         create_vendors: self.create_vendors?,
-	      view_trade_lanes: self.view_trade_lanes?,
-	      edit_trade_lanes: self.edit_trade_lanes?,
+        view_trade_lanes: self.view_trade_lanes?,
+        edit_trade_lanes: self.edit_trade_lanes?,
         view_trade_preference_programs: self.view_trade_preference_programs?,
         edit_trade_preference_programs: self.edit_trade_preference_programs?,
         view_vfi_invoices: self.view_vfi_invoices?,
@@ -412,7 +393,7 @@ class User < ActiveRecord::Base
     hash
   end
 
-  def recent_password_hashes(password_count=5)
+  def recent_password_hashes(password_count = 5)
     user_password_histories.order('created_at DESC').limit(password_count).map { |password| password }
   end
 
@@ -432,21 +413,19 @@ class User < ActiveRecord::Base
     OpenChain::Registries::PasswordValidationRegistry.valid_password? user, password
   end
 
-  def update_user_password password, password_confirmation, snapshot=true, notify_password_change=true
+  def update_user_password password, password_confirmation, snapshot = true, notify_password_change = true
     # Fail if the password is blank, under no circumstance do we want to accidently set someone's password
     # to a blank string.
     valid = false
     if password.blank?
       errors.add(:password, "cannot be blank.")
-    else
-      if password != password_confirmation
+    elsif password != password_confirmation
         errors.add(:password, "must match password confirmation.")
-      elsif !User.valid_password?(self, password)
+    elsif !User.valid_password?(self, password)
         valid = false
-      else
+    else
         # This is the clearance method for updating the password.
         valid = update_password(password)
-      end
     end
 
     if valid
@@ -479,11 +458,11 @@ class User < ActiveRecord::Base
     self.failed_logins = 0
     save validate: false
 
-    History.create({:history_type => 'login', :user_id => self.id, :company_id => self.company_id})
+    History.create({history_type: 'login', user_id: self.id, company_id: self.company_id})
   end
 
   def debug_active?
-    !self.debug_expires.blank? && self.debug_expires > Time.zone.now
+    self.debug_expires.present? && self.debug_expires > Time.zone.now
   end
 
   # send password reset email to user
@@ -494,7 +473,7 @@ class User < ActiveRecord::Base
   end
 
   def locked?
-    active? && ( password_expired? || password_locked? )
+    active? && (password_expired? || password_locked?)
   end
 
   # is an administrator within the application (as opposed to a sys_admin who is an Vandegrift employee with master control)
@@ -509,13 +488,13 @@ class User < ActiveRecord::Base
   end
 
   def active?
-    return !self.disabled
+    !self.disabled
   end
 
   def full_name
     n = (self.first_name.nil? ? '' : self.first_name + " ") + (self.last_name.nil? ? '' : self.last_name)
-    n = self.username if n.strip.length==0
-    return n
+    n = self.username if n.strip.length == 0
+    n
   end
 
   def full_name_and_username
@@ -524,20 +503,17 @@ class User < ActiveRecord::Base
 
   # should a user message be hidden for this user
   def hide_message? message_name
-    parse_hidden_messages
-    @parsed_hidden_messages.include? message_name.upcase
+    parse_hidden_messages.include? message_name.upcase
   end
 
   # add a message to the list that shouldn't be displayed for this user
   def add_hidden_message message_name
-    parse_hidden_messages
-    @parsed_hidden_messages << message_name.upcase
+    parse_hidden_messages << message_name.upcase
     store_hidden_messages
   end
 
   def remove_hidden_message message_name
-    parse_hidden_messages
-    @parsed_hidden_messages.delete message_name.upcase
+    parse_hidden_messages.delete message_name.upcase
     store_hidden_messages
   end
 
@@ -551,14 +527,13 @@ class User < ActiveRecord::Base
   end
 
   def master_company?
-    @mc ||= self.company.master?
-    @mc
+    @master_company ||= self.company.master?
   end
 
   # return redirect path if user has a valid portal_mode
   def portal_redirect_path
-    return '/vendor_portal' if self.portal_mode=='vendor'
-    return nil
+    return '/vendor_portal' if self.portal_mode == 'vendor'
+    nil
   end
 
   # adds all permissions with value set to true
@@ -589,12 +564,13 @@ class User < ActiveRecord::Base
   private_class_method :add_all_permissions_to_hash
 
   private
+
     def parse_hidden_messages
-      @parsed_hidden_messages ||= (self.hidden_message_json.blank? ? [] : JSON.parse(self.hidden_message_json))
+      @parse_hidden_messages ||= (self.hidden_message_json.blank? ? [] : JSON.parse(self.hidden_message_json))
     end
 
     def store_hidden_messages
-      self.hidden_message_json = @parsed_hidden_messages.to_json unless @parsed_hidden_messages.nil?
+      self.hidden_message_json = parse_hidden_messages.to_json unless parse_hidden_messages.nil?
     end
 
     def master_setup
@@ -613,14 +589,19 @@ class User < ActiveRecord::Base
     end
 
     def valid_email
-      rejected = email.split(/,|;/).map { |e| e.strip}.reject { |e| EmailValidator.valid? e }
+      rejected = email.split(/,|;/).map(&:strip).reject { |e| EmailValidator.valid? e }
       error_message = rejected.count > 1 ? "invalid: #{rejected.join(', ')}" : "invalid"
       errors.add(:email, error_message) unless rejected.empty?
     end
 
     def send_password_change_email
       change_date = (self.time_zone.present? ? self.password_changed_at.in_time_zone(self.time_zone) : self.password_changed_at).strftime "%Y-%m-%d %H:%M"
+
+      # Rubocop does not like multiple cops being disabled in a non-end of line comment. Stupid? Yes.
+      # rubocop:disable Rails/OutputSafety
       body = "<p>This email was sent to notify you that the password for your #{MasterSetup.application_name} account ‘#{self.username}’ was changed on #{change_date}.</p><p>If you did not initiate this password change, it may indicate your account has been compromised.  Please notify support@vandegriftinc.com of this situation.</p>".html_safe
+      # rubocop:enable Rails/OutputSafety
+
       OpenMailer.send_simple_html(self.email, "#{MasterSetup.application_name} Password Change", body).deliver_now
     end
 end

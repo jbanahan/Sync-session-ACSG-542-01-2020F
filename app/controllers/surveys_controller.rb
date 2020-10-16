@@ -1,6 +1,6 @@
 class SurveysController < ApplicationController
   def set_page_title
-    @page_title ||= 'Survey' # rubocop:disable Naming/MemoizedInstanceVariableName
+    @page_title ||= 'Survey'
   end
 
   def index
