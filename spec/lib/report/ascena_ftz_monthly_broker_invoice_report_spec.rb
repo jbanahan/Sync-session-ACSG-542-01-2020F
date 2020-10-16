@@ -57,10 +57,9 @@ describe OpenChain::Report::AscenaFtzMonthlyBrokerInvoiceReport do
       results = []
       res.each { |r| results << r }
       expect(results.count).to eq 3
-      first, second, third = results
-      expect(first).to eq raw_row_1
-      expect(second).to eq raw_row_2
-      expect(third).to eq raw_row_3
+      [raw_row_1, raw_row_2, raw_row_3].each do |row|
+        expect(results).to include(row)
+      end
     end
 
     it "returns expected type 01 data" do
