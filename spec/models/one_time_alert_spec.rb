@@ -1,55 +1,57 @@
 describe OneTimeAlert do
   let(:ent) { Factory(:entry, broker_reference: "BROKREF_ABC") }
-  let(:ota) { Factory(:one_time_alert, user: Factory(:user, email: "sthubbins@hellhole.co.uk"), email_addresses: "tufnel@stonehenge.biz",
-                                       email_subject: "alert", email_body: "Watch out!", module_type: "Entry", blind_copy_me: true,
-                                       search_criterions: [Factory(:search_criterion, model_field_uid: "ent_gross_weight", value: 5),
-                                                           Factory(:search_criterion, model_field_uid: "ent_vessel", value: "HMS Pinafore")]) }
+  let(:ota) do
+    Factory(:one_time_alert, user: Factory(:user, email: "sthubbins@hellhole.co.uk"), email_addresses: "tufnel@stonehenge.biz",
+                             email_subject: "alert", email_body: "Watch out!", module_type: "Entry", blind_copy_me: true,
+                             search_criterions: [Factory(:search_criterion, model_field_uid: "ent_gross_weight", value: 5),
+                                                           Factory(:search_criterion, model_field_uid: "ent_vessel", value: "HMS Pinafore")])
+  end
 
   context "permissions" do
     let(:user) { Factory(:user) }
 
     describe "can_edit?" do
       it "allows alert's creator" do
-        ota.update_attributes! user: user
-        expect(ota.can_edit? user).to eq true
+        ota.update! user: user
+        expect(ota.can_edit?(user)).to eq true
       end
 
       it "allows admin users" do
         user.admin = true; user.save!
-        expect(ota.can_edit? user). to eq true
+        expect(ota.can_edit?(user)). to eq true
       end
 
       it "block anyone else" do
-        expect(ota.can_edit? Factory(:user)).to eq false
+        expect(ota.can_edit?(Factory(:user))).to eq false
       end
     end
 
     describe "can_view?" do
       it "allows alert's creator" do
-        ota.update_attributes! user: user
-        expect(ota.can_edit? user).to eq true
+        ota.update! user: user
+        expect(ota.can_view?(user)).to eq true
       end
 
       it "allows admin users" do
         user.admin = true; user.save!
-        expect(ota.can_edit? user). to eq true
+        expect(ota.can_view?(user)). to eq true
       end
 
       it "block anyone else" do
-        expect(ota.can_edit? Factory(:user)).to eq false
+        expect(ota.can_view?(Factory(:user))).to eq false
       end
     end
   end
 
   describe "test?" do
     it "returns true if object matches all of the criterions" do
-      ent.update_attributes! gross_weight: 5, vessel: "HMS Pinafore"
-      expect(ota.test? ent).to eq true
+      ent.update! gross_weight: 5, vessel: "HMS Pinafore"
+      expect(ota.test?(ent)).to eq true
     end
 
     it "returns false otherwise" do
-      ent.update_attributes! gross_weight: 5, vessel: "HMS Bounty"
-      expect(ota.test? ent).to eq false
+      ent.update! gross_weight: 5, vessel: "HMS Bounty"
+      expect(ota.test?(ent)).to eq false
     end
   end
 
@@ -76,7 +78,7 @@ describe OneTimeAlert do
     let(:ml) { Factory(:mailing_list, email_addresses: "sthubbins@hellhole.co.uk, smalls@sharksandwich.net")}
 
     it "returns addresses in mailing list" do
-      ota.update_attributes(email_addresses: nil, mailing_list: ml)
+      ota.update(email_addresses: nil, mailing_list: ml)
       expect(ota.recipients_and_mailing_lists).to eq "sthubbins@hellhole.co.uk, smalls@sharksandwich.net"
     end
 
@@ -85,13 +87,14 @@ describe OneTimeAlert do
     end
 
     it "returns addresses from both sources, if present" do
-      ota.update_attributes(mailing_list: ml)
+      ota.update(mailing_list: ml)
       expect(ota.recipients_and_mailing_lists).to eq "tufnel@stonehenge.biz, sthubbins@hellhole.co.uk, smalls@sharksandwich.net"
     end
   end
 
   describe "send_email" do
-    before { ent.update_attributes! gross_weight: 5, vessel: "HMS Pinafore" }
+    before { ent.update! gross_weight: 5, vessel: "HMS Pinafore" }
+
     it "generates standard email with object argument" do
       ota.send_email ent
       mail = ActionMailer::Base.deliveries.pop
@@ -100,7 +103,7 @@ describe OneTimeAlert do
       expect(mail.subject).to eq "alert"
       expect(mail.body).to include "Entry - Broker Reference BROKREF_ABC: Gross Weight 5, Vessel/Airline HMS Pinafore"
       expect(mail.body).to include "Watch out!"
-      expect(mail.body).to_not include "THIS IS A TEST EMAIL ONLY AND NOT A NOTIFICATION"
+      expect(mail.body).not_to include "THIS IS A TEST EMAIL ONLY AND NOT A NOTIFICATION"
     end
 
     it "generates test email with nil argument" do

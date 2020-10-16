@@ -20,11 +20,6 @@
 #
 
 class OneTimeAlert < ActiveRecord::Base
-  attr_accessible :blind_copy_me, :email_addresses, :email_body, :email_subject,
-    :enabled_date, :expire_date, :expire_date_last_updated_by_id,
-    :expire_date_last_updated_by, :inactive, :mailing_list_id, :mailing_list,
-    :module_type, :name, :user_id, :user
-
   belongs_to :user
   belongs_to :expire_date_last_updated_by, class_name: "User"
   belongs_to :mailing_list
@@ -67,7 +62,7 @@ class OneTimeAlert < ActiveRecord::Base
   end
 
   def send_email obj
-    body = body_preamble(obj).html_safe + "<p>".html_safe + self.email_body + "</p>".html_safe
+    body = body_preamble(obj).html_safe + "<p>".html_safe + self.email_body + "</p>".html_safe # rubocop:disable Rails/OutputSafety
     if obj.nil?
       body += "<br><p>THIS IS A TEST EMAIL ONLY AND NOT A NOTIFICATION</p>".html_safe
     end
@@ -98,7 +93,7 @@ class OneTimeAlert < ActiveRecord::Base
   def reference_fields
     fields = []
     self.search_criterions.each do |sc|
-      mf = ModelField.find_by_uid(sc.model_field_uid)
+      mf = ModelField.by_uid(sc.model_field_uid)
       fields << "#{mf.label} #{sc.value}"
     end
     fields.join(", ")
@@ -110,7 +105,7 @@ class OneTimeAlert < ActiveRecord::Base
   end
 
   def label obj
-    cm = CoreModule.find_by_class_name(self.module_type)
+    cm = CoreModule.find_by(class_name: self.module_type)
     uid = obj ? cm.unique_id_field.process_export(obj, nil) : "<identifier>"
     "#{cm.label} - #{cm.unique_id_field.label} #{uid}"
   end

@@ -204,3 +204,8 @@ RSpec/SubjectStub:
 
 RSpec/NestedGroups:
   Max: 5
+
+RSpec/RepeatedExampleGroupBody:
+  Enabled: true
+  Exclude:
+    - 'spec/models/one_time_alert_spec.rb'

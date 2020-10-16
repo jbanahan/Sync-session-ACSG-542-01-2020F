@@ -18,8 +18,6 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
   def update
     # ensure these fields can't be changed
     alert_params = params[:alert]
-    alert_params.delete(:module_type)
-    alert_params.delete(:user_id)
 
     alert = OneTimeAlert.find params[:id]
 
@@ -32,17 +30,22 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
 
       emails = alert_params[:email_addresses]
       # if emails and mailing list are both empty or there is an invalid email
-      if (!emails.present? && !alert_params[:mailing_list_id]) || (emails.present? && !email_list_valid?(emails))
+      if (emails.blank? && !alert_params[:mailing_list_id]) || (emails.present? && !email_list_valid?(emails))
         render json: {error: "Could not save due to missing or invalid email."}, status: 500
         return
       end
 
-      alert_params.merge!(expire_date_last_updated_by: current_user) unless alert.expire_date == (Date.parse alert_params[:expire_date] rescue nil)
-      alert.assign_attributes(alert_params)
+      alert_params.merge!(expire_date_last_updated_by_id: current_user.id) unless alert.expire_date == (begin
+                                                                                                          Date.parse alert_params[:expire_date]
+                                                                                                        rescue StandardError
+                                                                                                          nil
+                                                                                                        end)
+      safe_params = permitted_params(alert_params)
+      alert.assign_attributes(safe_params)
       new_criterions = params[:criteria] || []
       alert.search_criterions.delete_all
       new_criterions.each do |sc|
-        alert.search_criterions.build :model_field_uid=>sc[:mfid], :operator=>sc[:operator], :value=>sc[:value], :include_empty=>sc[:include_empty]
+        alert.search_criterions.build model_field_uid: sc[:mfid], operator: sc[:operator], value: sc[:value], include_empty: sc[:include_empty]
       end
       alert.save!
       alert.send_email(nil) if params[:send_test]
@@ -57,7 +60,7 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
       fields = {}
       params[:fields].each do |cm_name, tuplets|
         fields[cm_name] = []
-        tuplets.each { |tup| fields[cm_name] << tup["mfid"] } if tuplets
+        tuplets&.each { |tup| fields[cm_name] << tup["mfid"] }
       end
       DataCrossReference.update_ota_reference_fields! fields
       render json: {ok: 'ok'}
@@ -82,9 +85,15 @@ module Api; module V1; class OneTimeAlertsController < Api::V1::ApiController
   def get_mf_digest alert
     fields = DataCrossReference.hash_ota_reference_fields[alert.module_type]
     fields.map do |f|
-      mf = ModelField.find_by_uid f
+      mf = ModelField.by_uid f
       {mfid: mf.uid, label: mf.label, datatype: mf.data_type}
     end
+  end
+
+  def permitted_params(params)
+    params.except(:module_type, :user_id).permit(:module_type, :blind_copy_me, :expire_date,
+                                                 :email_addresses, :email_body, :email_subject, :enabled_date,
+                                                 :name, :expire_date_last_updated_by_id)
   end
 
 end; end; end
