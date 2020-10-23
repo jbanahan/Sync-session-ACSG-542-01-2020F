@@ -1,0 +1,17 @@
+<div class="btn btn-danger">{{3 + 6}}</div>
+<br>
+{{numberTwo}}
+<br>
+{{numberTwo + 5}}
+<br>
+{{addTwo(2)}}
+<br>
+<a (click)="changeTwo()">Some text to click on</a>
+<br>
+{{ "Hello World!" | slice:1:9}}
+<br>
+{{ 1609326623006 | date:'yyyy-MM-dd HH:mm:ss' }}
+<br>
+<div *ngFor="let person of people">
+  <h2>{{ person }}</h2>
+</div>
