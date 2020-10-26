@@ -28,10 +28,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctCustomsManagementBillingXmlPa
 
       export = IntacctAllianceExport.first
       expect(delayed_id).to eq export.id
+      expect(export.shipment_number).to eq "2529468"
+      expect(export.broker_reference).to eq "2529468"
       expect(export.file_number).to eq "2529468"
       expect(export.suffix).to eq "A"
       expect(export.division).to eq "10"
       expect(export.customer_number).to eq "TALBO"
+      expect(export.shipment_customer_number).to eq "STALBO"
       expect(export.invoice_date).to eq Date.new(2020, 4, 7)
       expect(export.ar_total).to eq BigDecimal("85")
       expect(export.ap_total).to eq BigDecimal("85")
@@ -46,6 +49,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctCustomsManagementBillingXmlPa
       expect(ir.company).to eq "vfc"
       expect(ir.invoice_date).to eq Date.new(2020, 4, 7)
       expect(ir.customer_number).to eq "TALBO"
+      expect(ir.shipment_customer_number).to eq "STALBO"
       expect(ir.receivable_type).to eq "VFI Sales Invoice"
       expect(ir.intacct_errors).to be_nil
       expect(ir.intacct_upload_date).to be_nil
@@ -74,6 +78,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctCustomsManagementBillingXmlPa
       expect(ip.company).to eq "vfc"
       expect(ip.currency).to eq "USD"
       expect(ip.vendor_reference).to eq "REFERENCE"
+      expect(ip.shipment_customer_number).to eq "STALBO"
 
       il = ip.intacct_payable_lines.first
       expect(il.charge_code).to eq "0007"

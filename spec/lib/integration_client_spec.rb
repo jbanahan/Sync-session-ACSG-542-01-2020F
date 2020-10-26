@@ -456,7 +456,7 @@ describe OpenChain::IntegrationClientCommandProcessor do
       end
 
       it "handles Maersk Cargowise broker invoice files" do
-        do_parser_test("Maersk Cargowise Feeds", OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileParser, '/maersk_cw_universal_transaction/file.xml')
+        do_parser_test("Maersk Cargowise Feeds", OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBillingParserBroker, '/maersk_cw_universal_transaction/file.xml')
       end
 
       it "handles Maersk Cargowise event files" do

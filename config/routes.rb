@@ -826,6 +826,8 @@ OpenChain::Application.routes.draw do
   post "/reports/run_pvh_first_cost_savings_report" => "reports#run_pvh_first_cost_savings_report"
   get "/reports/show_pvh_duty_discount_report" => "reports#show_pvh_duty_discount_report"
   post "/reports/run_pvh_duty_discount_report" => "reports#run_pvh_duty_discount_report"
+  get "/reports/show_daily_accounting_report" => "reports#show_daily_accounting_report"
+  post "/reports/run_daily_accounting_report" => "reports#run_daily_accounting_report"
 
   resources :report_results, :only => [:index, :show] do
     get 'download', on: :member

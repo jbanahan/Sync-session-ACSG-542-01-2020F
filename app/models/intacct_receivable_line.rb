@@ -22,9 +22,6 @@
 #
 
 class IntacctReceivableLine < ActiveRecord::Base
-  attr_accessible :amount, :broker_file, :charge_code, :charge_description,
-    :freight_file, :intacct_receivable_id, :intacct_receivable, :line_of_business, :location,
-    :vendor_number, :vendor_reference
 
-  belongs_to :intacct_receivable, :inverse_of => :intacct_receivable_lines
+  belongs_to :intacct_receivable, inverse_of: :intacct_receivable_lines
 end

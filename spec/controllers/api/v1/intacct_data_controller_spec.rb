@@ -4,21 +4,22 @@ require 'open_chain/custom_handler/intacct/intacct_client'
 
 describe Api::V1::IntacctDataController do
 
-  before :each do
-    @user = Factory(:admin_user, api_auth_token: "Token", time_zone: "Hawaii")
-    allow_api_access @user
+  let! (:user) do
+    user = Factory(:admin_user, api_auth_token: "Token", time_zone: "Hawaii")
+    allow_api_access user
+    user
   end
 
   describe "receive_alliance_invoice_details" do
 
     it "forwards results to intacct invoice details parser" do
-      post "receive_alliance_invoice_details", results: [{:a => "b"}]
+      post "receive_alliance_invoice_details", results: [{a: "b"}]
       expect(response.body).to eq ({"OK" => ""}.to_json)
     end
 
     it "errors if user is not an admin" do
-      @user.admin = false
-      @user.save!
+      user.admin = false
+      user.save!
 
       post "receive_alliance_invoice_details", results: []
       expect(response.status).to eq 403
@@ -42,7 +43,7 @@ describe Api::V1::IntacctDataController do
 
   describe "receive_check_result" do
     it "forwards results to intacct invoice details parser" do
-      results = [{:a => "b"}]
+      results = [{a: "b"}]
       expect(OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser).to receive(:delay).and_return OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser
       expect(OpenChain::CustomHandler::Intacct::IntacctInvoiceDetailsParser).to receive(:parse_check_result).with results.to_json
       post "receive_check_result", results: results

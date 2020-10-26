@@ -1,0 +1,1269 @@
+<UniversalInterchange xmlns="http://www.cargowise.com/Schemas/Universal/2011/11" version="1.1">
+  <Header>
+    <SenderID>DAMVDRTRN</SenderID>
+    <RecipientID>DAMTRN</RecipientID>
+  </Header>
+  <Body>
+    <UniversalTransaction xmlns="http://www.cargowise.com/Schemas/Universal/2011/11" version="1.1">
+  <TransactionInfo>
+    <DataContext>
+      <DataSourceCollection>
+        <DataSource>
+          <Type>AccountingInvoice</Type>
+          <Key>AP INV INV564567</Key>
+        </DataSource>
+      </DataSourceCollection>
+
+      <ActionPurpose>
+        <Code>APP</Code>
+        <Description>As Per Payload</Description>
+      </ActionPurpose>
+      <Company>
+        <Code>VDR</Code>
+        <Country>
+          <Code>US</Code>
+          <Name>United States</Name>
+        </Country>
+        <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</Name>
+      </Company>
+      <DataProvider>DAMTRNVDR</DataProvider>
+      <EnterpriseID>DAM</EnterpriseID>
+      <EventBranch>
+        <Code>MA1</Code>
+        <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+      </EventBranch>
+      <EventDepartment>
+        <Code>BRN</Code>
+        <Name>Branch</Name>
+      </EventDepartment>
+      <EventReference>AP|INV|Posted</EventReference>
+      <EventType>
+        <Code>ADD</Code>
+        <Description>Added a record to the system</Description>
+      </EventType>
+      <EventUser>
+        <Code>VSR</Code>
+        <Name>Vilas Suryawanshi</Name>
+      </EventUser>
+      <ServerID>TRN</ServerID>
+      <TriggerCount>1</TriggerCount>
+      <TriggerDate>2020-09-11T09:11:56.85</TriggerDate>
+      <TriggerDescription>Invoiced Posted</TriggerDescription>
+      <TriggerType>Milestone</TriggerType>
+
+      <RecipientRoleCollection>
+        <RecipientRole>
+          <Code>ORP</Code>
+          <Description>Organization Proxy</Description>
+        </RecipientRole>
+      </RecipientRoleCollection>
+    </DataContext>
+
+    <APAccountGroup>
+      <Code>CLA</Code>
+      <Description>CLEARING AGENT</Description>
+    </APAccountGroup>
+    <ARAccountGroup>
+      <Code>I/E</Code>
+      <Description>IMPORTER / EXPORTER</Description>
+    </ARAccountGroup>
+    <Branch>
+      <Code>MA1</Code>
+      <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+    </Branch>
+    <BranchAddress>
+      <AddressType>OFC</AddressType>
+      <Address1>100 WALNUT AVE STE 600</Address1>
+      <Address2></Address2>
+      <AddressOverride>false</AddressOverride>
+      <AddressShortCode>100 WALNUT AVE STE 600</AddressShortCode>
+      <City>CLARK</City>
+      <CompanyName>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</CompanyName>
+      <Country>
+        <Code>US</Code>
+        <Name>United States</Name>
+      </Country>
+      <Email></Email>
+      <Fax></Fax>
+      <OrganizationCode>VANLOGEWR</OrganizationCode>
+      <Phone></Phone>
+      <Port>
+        <Code>USEWR</Code>
+        <Name>Newark</Name>
+      </Port>
+      <Postcode>07066</Postcode>
+      <ScreeningStatus>
+        <Code>NOT</Code>
+        <Description>Not Screened</Description>
+      </ScreeningStatus>
+      <State>NJ</State>
+    </BranchAddress>
+    <Category>STD</Category>
+    <CheckDrawer></CheckDrawer>
+    <CheckNumberOrPaymentRef></CheckNumberOrPaymentRef>
+    <CreateTime>2020-09-11T13:11:00</CreateTime>
+    <CreateUser>VSR</CreateUser>
+    <Department>
+      <Code>FIA</Code>
+      <Name>Forwarding Import Air</Name>
+    </Department>
+    <Description>S00001062</Description>
+    <DrawerBank></DrawerBank>
+    <DrawerBranch></DrawerBranch>
+    <DueDate>2020-09-11T00:00:00</DueDate>
+    <ExchangeRate>1.000000</ExchangeRate>
+    <InvoiceTerm>COD</InvoiceTerm>
+    <InvoiceTermDays>0</InvoiceTermDays>
+    <IsCancelled>false</IsCancelled>
+    <IsCreatedByMatchingProcess>false</IsCreatedByMatchingProcess>
+    <IsPrinted>false</IsPrinted>
+    <Job>
+      <Type>Job</Type>
+      <Key>S00001062</Key>
+    </Job>
+    <JobInvoiceNumber>00001001/A</JobInvoiceNumber>
+    <Ledger>AP</Ledger>
+    <LocalCurrency>
+      <Code>USD</Code>
+      <Description>United States Dollar</Description>
+    </LocalCurrency>
+    <LocalExVATAmount>-20.0000</LocalExVATAmount>
+    <LocalTotal>-20.0000</LocalTotal>
+    <LocalVATAmount>0.0000</LocalVATAmount>
+    <Number>INV564567</Number>
+    <NumberOfSupportingDocuments>1</NumberOfSupportingDocuments>
+    <OrganizationAddress>
+      <AddressType>OFC</AddressType>
+      <Address1>100 WALNUT AVE STE 600</Address1>
+      <Address2></Address2>
+      <AddressOverride>false</AddressOverride>
+      <AddressShortCode>100 WALNUT AVE STE 600</AddressShortCode>
+      <City>CLARK</City>
+      <CompanyName>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</CompanyName>
+      <Country>
+        <Code>US</Code>
+        <Name>United States</Name>
+      </Country>
+      <Email></Email>
+      <Fax></Fax>
+      <OrganizationCode>VANLOGEWR</OrganizationCode>
+      <Phone></Phone>
+      <Port>
+        <Code>USEWR</Code>
+        <Name>Newark</Name>
+      </Port>
+      <Postcode>07066</Postcode>
+      <ScreeningStatus>
+        <Code>NOT</Code>
+        <Description>Not Screened</Description>
+      </ScreeningStatus>
+      <State>NJ</State>
+    </OrganizationAddress>
+    <OSCurrency>
+      <Code>USD</Code>
+      <Description>United States Dollar</Description>
+    </OSCurrency>
+    <OSExGSTVATAmount>-20.0000</OSExGSTVATAmount>
+    <OSGSTVATAmount>0.00</OSGSTVATAmount>
+    <OSTotal>-20.0000</OSTotal>
+    <OutstandingAmount>-20.0000</OutstandingAmount>
+    <PlaceOfIssue>CLARK</PlaceOfIssue>
+    <PostDate>2020-09-11T09:11:00</PostDate>
+    <ReceiptOrDirectDebitNumber></ReceiptOrDirectDebitNumber>
+    <RequisitionDate>2020-09-11T00:00:00</RequisitionDate>
+    <RequisitionStatus>NRM</RequisitionStatus>
+    <TransactionDate>2020-09-11T00:00:00</TransactionDate>
+    <TransactionType>INV</TransactionType>
+
+    <PostingJournalCollection>
+      <PostingJournal>
+        <Branch>
+          <Code>MA1</Code>
+          <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+        </Branch>
+        <ChargeCode>
+          <Code>0401</Code>
+          <Description>E ADJUSTED FREIGHT PROFIT</Description>
+        </ChargeCode>
+        <ChargeCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </ChargeCurrency>
+        <ChargeExchangeRate>1.000000000</ChargeExchangeRate>
+        <ChargeTotalAmount>20.0000</ChargeTotalAmount>
+        <ChargeTotalExVATAmount>20.0000</ChargeTotalExVATAmount>
+        <Department>
+          <Code>FIA</Code>
+          <Name>Forwarding Import Air</Name>
+        </Department>
+        <Description>E ADJUSTED FREIGHT PROFIT</Description>
+        <GLAccount>
+          <AccountCode>4030.20.10</AccountCode>
+          <Description>Non Passthrough Costs Actual</Description>
+        </GLAccount>
+        <GLPostDate>2020-09-11T09:11:00</GLPostDate>
+        <IsFinalCharge>false</IsFinalCharge>
+        <Job>
+          <Type>Job</Type>
+          <Key>S00001062</Key>
+        </Job>
+        <JobRecognitionDate>2020-09-02T10:59:00</JobRecognitionDate>
+        <LocalAmount>-20.0000</LocalAmount>
+        <LocalCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </LocalCurrency>
+        <LocalGSTVATAmount>0.0000</LocalGSTVATAmount>
+        <LocalTotalAmount>-20.0000</LocalTotalAmount>
+        <Organization>
+          <Type>Organization</Type>
+          <Key>VANLOGEWR</Key>
+        </Organization>
+        <OSAmount>-20.00</OSAmount>
+        <OSCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </OSCurrency>
+        <OSGSTVATAmount>0.00</OSGSTVATAmount>
+        <OSTotalAmount>-20.0000</OSTotalAmount>
+        <RevenueRecognitionType>FAR</RevenueRecognitionType>
+        <Sequence>1</Sequence>
+        <TransactionCategory>STD</TransactionCategory>
+        <TransactionType>CST</TransactionType>
+
+        <PostingJournalDetailCollection>
+          <PostingJournalDetail>
+            <CreditGLAccount>
+              <AccountCode>2110.00.00</AccountCode>
+              <Description>Accounts Payable Control</Description>
+            </CreditGLAccount>
+            <DebitGLAccount>
+              <AccountCode>2115.00.00</AccountCode>
+              <Description>Cost Suspense Control Account</Description>
+            </DebitGLAccount>
+            <PostingAmount>20.0000</PostingAmount>
+            <PostingCurrency>
+              <Code>USD</Code>
+              <Description>United States Dollar</Description>
+            </PostingCurrency>
+            <PostingDate>2020-09-11T09:11:00</PostingDate>
+            <PostingPeriod>202009</PostingPeriod>
+          </PostingJournalDetail>
+          <PostingJournalDetail>
+            <CreditGLAccount>
+              <AccountCode>2115.00.00</AccountCode>
+              <Description>Cost Suspense Control Account</Description>
+            </CreditGLAccount>
+            <DebitGLAccount>
+              <AccountCode>4030.20.10</AccountCode>
+              <Description>Non Passthrough Costs Actual</Description>
+            </DebitGLAccount>
+            <PostingAmount>20.0000</PostingAmount>
+            <PostingCurrency>
+              <Code>USD</Code>
+              <Description>United States Dollar</Description>
+            </PostingCurrency>
+            <PostingDate>2020-09-02T10:59:00</PostingDate>
+            <PostingPeriod>202009</PostingPeriod>
+          </PostingJournalDetail>
+        </PostingJournalDetailCollection>
+
+        <RatingBasisCollection>
+        </RatingBasisCollection>
+      </PostingJournal>
+    </PostingJournalCollection>
+
+    <MilestoneCollection>
+      <Milestone>
+        <Description>Invoiced Posted</Description>
+        <EventCode>ADD</EventCode>
+        <Sequence>2</Sequence>
+        <ActualDate>2020-09-11T09:11:56.85</ActualDate>
+        <ConditionReference></ConditionReference>
+        <ConditionType></ConditionType>
+        <EstimatedDate></EstimatedDate>
+      </Milestone>
+      <Milestone>
+        <Description>Broker Invoice Created</Description>
+        <EventCode>DDA</EventCode>
+        <Sequence>3</Sequence>
+        <ActualDate></ActualDate>
+        <ConditionReference>INV*INV*</ConditionReference>
+        <ConditionType>RFW</ConditionType>
+        <EstimatedDate></EstimatedDate>
+      </Milestone>
+    </MilestoneCollection>
+
+    <ShipmentCollection>
+      <Shipment>
+        <DataContext>
+          <DataSourceCollection>
+            <DataSource>
+              <Type>ForwardingShipment</Type>
+              <Key>S00001062</Key>
+            </DataSource>
+          </DataSourceCollection>
+        </DataContext>
+
+        <ActualChargeable>5000.000</ActualChargeable>
+        <AdditionalTerms></AdditionalTerms>
+        <BookingConfirmationReference></BookingConfirmationReference>
+        <CartageWaybillNumber></CartageWaybillNumber>
+        <CFSReference></CFSReference>
+        <ContainerCount>0</ContainerCount>
+        <ContainerMode>
+          <Code>LSE</Code>
+          <Description>Loose</Description>
+        </ContainerMode>
+        <DocumentedChargeable>5000.000</DocumentedChargeable>
+        <DocumentedVolume>12.000</DocumentedVolume>
+        <DocumentedWeight>5000.000</DocumentedWeight>
+        <FreightRate>0.0000</FreightRate>
+        <FreightRateCurrency>
+          <Code></Code>
+        </FreightRateCurrency>
+        <GoodsDescription>SHOES</GoodsDescription>
+        <GoodsValue>0.0000</GoodsValue>
+        <GoodsValueCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </GoodsValueCurrency>
+        <HBLAWBChargesDisplay>
+          <Code>NON</Code>
+          <Description>No Charges showing</Description>
+        </HBLAWBChargesDisplay>
+        <HBLContainerPackModeOverride></HBLContainerPackModeOverride>
+        <HouseBillOfLadingType>
+          <Code></Code>
+        </HouseBillOfLadingType>
+        <InsuranceValue>0.0000</InsuranceValue>
+        <InsuranceValueCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </InsuranceValueCurrency>
+        <InterimReceiptNumber></InterimReceiptNumber>
+        <IsBooking>true</IsBooking>
+        <IsCancelled>false</IsCancelled>
+        <IsCFSRegistered>false</IsCFSRegistered>
+        <IsDirectBooking>false</IsDirectBooking>
+        <IsForwardRegistered>true</IsForwardRegistered>
+        <IsHighRisk>false</IsHighRisk>
+        <IsNeutralMaster>false</IsNeutralMaster>
+        <IsShipping>false</IsShipping>
+        <IsSplitShipment>false</IsSplitShipment>
+        <JobCosting>
+          <AccrualNotRecognized>0.0000</AccrualNotRecognized>
+          <AccrualRecognized>0.000000000</AccrualRecognized>
+          <AgentRevenue>0</AgentRevenue>
+          <Branch>
+            <Code>MA1</Code>
+            <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+          </Branch>
+          <Currency>
+            <Code>USD</Code>
+            <Description>United States Dollar</Description>
+          </Currency>
+          <Department>
+            <Code>FIA</Code>
+            <Name>Forwarding Import Air</Name>
+          </Department>
+          <HomeBranch>
+            <Code>005</Code>
+            <Name>005 DAMCO CUSTOMS SERVICES INC</Name>
+          </HomeBranch>
+          <LocalClientRevenue>75.0000</LocalClientRevenue>
+          <OperationsStaff>
+            <Code>VSR</Code>
+            <Name>Vilas Suryawanshi</Name>
+          </OperationsStaff>
+          <OtherDebtorRevenue>0</OtherDebtorRevenue>
+          <TotalAccrual>0.000000000</TotalAccrual>
+          <TotalCost>-20.000000000</TotalCost>
+          <TotalJobProfit>55.000000000</TotalJobProfit>
+          <TotalRevenue>75.000000000</TotalRevenue>
+          <TotalWIP>0.000000000</TotalWIP>
+          <WIPNotRecognized>0.0000</WIPNotRecognized>
+          <WIPRecognized>0.000000000</WIPRecognized>
+
+          <ChargeLineCollection>
+            <ChargeLine>
+              <Branch>
+                <Code>MA1</Code>
+                <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+              </Branch>
+              <ChargeCode>
+                <Code>0512</Code>
+                <Description>E COLLECT AIR FREIGHT</Description>
+              </ChargeCode>
+              <ChargeCodeGroup>
+                <Code>DST</Code>
+                <Description>Destination</Description>
+              </ChargeCodeGroup>
+              <CostExchangeRate>1.000000000</CostExchangeRate>
+              <CostIsPosted>false</CostIsPosted>
+              <CostLocalAmount>0.0000</CostLocalAmount>
+              <CostOSAmount>0.0000</CostOSAmount>
+              <CostOSGSTVATAmount>0</CostOSGSTVATAmount>
+              <Debtor>
+                <Type>Organization</Type>
+                <Key>SHOFORBCT</Key>
+              </Debtor>
+              <Department>
+                <Code>FIA</Code>
+                <Name>Forwarding Import Air</Name>
+              </Department>
+              <Description>E COLLECT AIR FREIGHT</Description>
+              <DisplaySequence>1</DisplaySequence>
+              <SellExchangeRate>1.000000000</SellExchangeRate>
+              <SellInvoiceType>FIN</SellInvoiceType>
+              <SellIsPosted>true</SellIsPosted>
+              <SellLocalAmount>15.0000</SellLocalAmount>
+              <SellOSAmount>15.0000</SellOSAmount>
+              <SellOSCurrency>
+                <Code>USD</Code>
+                <Description>United States Dollar</Description>
+              </SellOSCurrency>
+              <SellOSGSTVATAmount>0</SellOSGSTVATAmount>
+              <SellPostedTransactionNumber>00001002</SellPostedTransactionNumber>
+              <SellPostedTransactionType>INV</SellPostedTransactionType>
+
+              <CostRatingBasisCollection>
+              </CostRatingBasisCollection>
+
+              <SellRatingBasisCollection>
+              </SellRatingBasisCollection>
+            </ChargeLine>
+            <ChargeLine>
+              <Branch>
+                <Code>MA1</Code>
+                <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+              </Branch>
+              <ChargeCode>
+                <Code>0511</Code>
+                <Description>E FUEL SURCHARGE</Description>
+              </ChargeCode>
+              <ChargeCodeGroup>
+                <Code>CSH</Code>
+                <Description>CFS Shipment</Description>
+              </ChargeCodeGroup>
+              <CostExchangeRate>1.000000000</CostExchangeRate>
+              <CostIsPosted>false</CostIsPosted>
+              <CostLocalAmount>0.0000</CostLocalAmount>
+              <CostOSAmount>0.0000</CostOSAmount>
+              <CostOSGSTVATAmount>0</CostOSGSTVATAmount>
+              <Debtor>
+                <Type>Organization</Type>
+                <Key>SHOFORBCT</Key>
+              </Debtor>
+              <Department>
+                <Code>FIA</Code>
+                <Name>Forwarding Import Air</Name>
+              </Department>
+              <Description>E FUEL SURCHARGE</Description>
+              <DisplaySequence>2</DisplaySequence>
+              <SellExchangeRate>1.000000000</SellExchangeRate>
+              <SellInvoiceType>FIN</SellInvoiceType>
+              <SellIsPosted>true</SellIsPosted>
+              <SellLocalAmount>20.0000</SellLocalAmount>
+              <SellOSAmount>20.0000</SellOSAmount>
+              <SellOSCurrency>
+                <Code>USD</Code>
+                <Description>United States Dollar</Description>
+              </SellOSCurrency>
+              <SellOSGSTVATAmount>0</SellOSGSTVATAmount>
+              <SellPostedTransactionNumber>00001002</SellPostedTransactionNumber>
+              <SellPostedTransactionType>INV</SellPostedTransactionType>
+
+              <CostRatingBasisCollection>
+              </CostRatingBasisCollection>
+
+              <SellRatingBasisCollection>
+              </SellRatingBasisCollection>
+            </ChargeLine>
+            <ChargeLine>
+              <Branch>
+                <Code>MA1</Code>
+                <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+              </Branch>
+              <ChargeCode>
+                <Code>0401</Code>
+                <Description>E ADJUSTED FREIGHT PROFIT</Description>
+              </ChargeCode>
+              <ChargeCodeGroup>
+                <Code>DST</Code>
+                <Description>Destination</Description>
+              </ChargeCodeGroup>
+              <CostAPInvoiceNumber>INV564567</CostAPInvoiceNumber>
+              <CostDueDate>2020-09-11T00:00:00</CostDueDate>
+              <CostExchangeRate>1.000000000</CostExchangeRate>
+              <CostInvoiceDate>2020-09-11T00:00:00</CostInvoiceDate>
+              <CostIsPosted>true</CostIsPosted>
+              <CostLocalAmount>20.0000</CostLocalAmount>
+              <CostOSAmount>20.0000</CostOSAmount>
+              <CostOSCurrency>
+                <Code>USD</Code>
+                <Description>United States Dollar</Description>
+              </CostOSCurrency>
+              <CostOSGSTVATAmount>0.0000</CostOSGSTVATAmount>
+              <Creditor>
+                <Type>Organization</Type>
+                <Key>VANLOGEWR</Key>
+              </Creditor>
+              <Debtor>
+                <Type>Organization</Type>
+                <Key>SHOFORBCT</Key>
+              </Debtor>
+              <Department>
+                <Code>FIA</Code>
+                <Name>Forwarding Import Air</Name>
+              </Department>
+              <Description>E ADJUSTED FREIGHT PROFIT</Description>
+              <DisplaySequence>3</DisplaySequence>
+              <SellExchangeRate>1.000000000</SellExchangeRate>
+              <SellInvoiceType>FIN</SellInvoiceType>
+              <SellIsPosted>true</SellIsPosted>
+              <SellLocalAmount>20.0000</SellLocalAmount>
+              <SellOSAmount>20.0000</SellOSAmount>
+              <SellOSCurrency>
+                <Code>USD</Code>
+                <Description>United States Dollar</Description>
+              </SellOSCurrency>
+              <SellOSGSTVATAmount>0</SellOSGSTVATAmount>
+              <SellPostedTransactionNumber>00001003</SellPostedTransactionNumber>
+              <SellPostedTransactionType>INV</SellPostedTransactionType>
+
+              <CostRatingBasisCollection>
+              </CostRatingBasisCollection>
+
+              <SellRatingBasisCollection>
+                <SellRatingBasis>
+                  <OriginType>Shipment</OriginType>
+                  <Currency>
+                    <Code>USD</Code>
+                    <Description>United States Dollar</Description>
+                  </Currency>
+                  <FlatRate>20.0000</FlatRate>
+                  <MaximumRate>0.0000</MaximumRate>
+                  <MinimumRate>0.0000</MinimumRate>
+                  <OriginAdditionalReference></OriginAdditionalReference>
+                  <OriginKey>S00001062</OriginKey>
+                  <PerUnitRate>0.0000</PerUnitRate>
+                </SellRatingBasis>
+              </SellRatingBasisCollection>
+            </ChargeLine>
+            <ChargeLine>
+              <Branch>
+                <Code>MA1</Code>
+                <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+              </Branch>
+              <ChargeCode>
+                <Code>0510</Code>
+                <Description>E COLLECT OCEAN FREIGHT</Description>
+              </ChargeCode>
+              <ChargeCodeGroup>
+                <Code>DST</Code>
+                <Description>Destination</Description>
+              </ChargeCodeGroup>
+              <CostExchangeRate>1.000000000</CostExchangeRate>
+              <CostIsPosted>false</CostIsPosted>
+              <CostLocalAmount>0.0000</CostLocalAmount>
+              <CostOSAmount>0.0000</CostOSAmount>
+              <CostOSGSTVATAmount>0</CostOSGSTVATAmount>
+              <Debtor>
+                <Type>Organization</Type>
+                <Key>SHOFORBCT</Key>
+              </Debtor>
+              <Department>
+                <Code>FIA</Code>
+                <Name>Forwarding Import Air</Name>
+              </Department>
+              <Description>E COLLECT OCEAN FREIGHT</Description>
+              <DisplaySequence>4</DisplaySequence>
+              <SellExchangeRate>1.000000000</SellExchangeRate>
+              <SellInvoiceType>FIN</SellInvoiceType>
+              <SellIsPosted>true</SellIsPosted>
+              <SellLocalAmount>20.0000</SellLocalAmount>
+              <SellOSAmount>20.0000</SellOSAmount>
+              <SellOSCurrency>
+                <Code>USD</Code>
+                <Description>United States Dollar</Description>
+              </SellOSCurrency>
+              <SellOSGSTVATAmount>0</SellOSGSTVATAmount>
+              <SellPostedTransactionNumber>00001003</SellPostedTransactionNumber>
+              <SellPostedTransactionType>INV</SellPostedTransactionType>
+
+              <CostRatingBasisCollection>
+              </CostRatingBasisCollection>
+
+              <SellRatingBasisCollection>
+                <SellRatingBasis>
+                  <OriginType>Shipment</OriginType>
+                  <Currency>
+                    <Code>USD</Code>
+                    <Description>United States Dollar</Description>
+                  </Currency>
+                  <FlatRate>20.0000</FlatRate>
+                  <MaximumRate>0.0000</MaximumRate>
+                  <MinimumRate>0.0000</MinimumRate>
+                  <OriginAdditionalReference></OriginAdditionalReference>
+                  <OriginKey>S00001062</OriginKey>
+                  <PerUnitRate>0.0000</PerUnitRate>
+                </SellRatingBasis>
+              </SellRatingBasisCollection>
+            </ChargeLine>
+          </ChargeLineCollection>
+        </JobCosting>
+        <ManifestedChargeable>5000.000</ManifestedChargeable>
+        <ManifestedVolume>12.000</ManifestedVolume>
+        <ManifestedWeight>5000.000</ManifestedWeight>
+        <NoCopyBills>3</NoCopyBills>
+        <NoOriginalBills>3</NoOriginalBills>
+        <OuterPacks>1</OuterPacks>
+        <OuterPacksPackageType>
+          <Code>PLT</Code>
+          <Description>Pallet</Description>
+        </OuterPacksPackageType>
+        <PackingOrder>0</PackingOrder>
+        <PortOfDestination>
+          <Code>USBCT</Code>
+          <Name>Boca Raton</Name>
+        </PortOfDestination>
+        <PortOfDischarge>
+          <Code>USBCT</Code>
+          <Name>Boca Raton</Name>
+        </PortOfDischarge>
+        <PortOfLoading>
+          <Code>CNSHA</Code>
+          <Name>Shanghai Hongqiao International Apt</Name>
+        </PortOfLoading>
+        <PortOfOrigin>
+          <Code>CNSHA</Code>
+          <Name>Shanghai Hongqiao International Apt</Name>
+        </PortOfOrigin>
+        <ReleaseType>
+          <Code></Code>
+        </ReleaseType>
+        <ScreeningStatus>
+          <Code>NOT</Code>
+          <Description>Not Screened</Description>
+        </ScreeningStatus>
+        <ServiceLevel>
+          <Code>STD</Code>
+          <Description>Standard</Description>
+        </ServiceLevel>
+        <ShipmentIncoTerm>
+          <Code></Code>
+        </ShipmentIncoTerm>
+        <ShipmentType>
+          <Code>STD</Code>
+          <Description>Standard House</Description>
+        </ShipmentType>
+        <ShippedOnBoard>
+          <Code>SHP</Code>
+          <Description>Shipped</Description>
+        </ShippedOnBoard>
+        <ShipperCODAmount>0.0000</ShipperCODAmount>
+        <ShipperCODPayMethod>
+          <Code></Code>
+        </ShipperCODPayMethod>
+        <TotalNoOfPacks>0</TotalNoOfPacks>
+        <TotalNoOfPacksPackageType>
+          <Code>CTN</Code>
+          <Description>Carton</Description>
+        </TotalNoOfPacksPackageType>
+        <TotalVolume>12.000</TotalVolume>
+        <TotalVolumeUnit>
+          <Code>M3</Code>
+          <Description>Cubic Meters</Description>
+        </TotalVolumeUnit>
+        <TotalWeight>5000.000</TotalWeight>
+        <TotalWeightUnit>
+          <Code>KG</Code>
+          <Description>Kilograms</Description>
+        </TotalWeightUnit>
+        <TranshipToOtherCFS>false</TranshipToOtherCFS>
+        <TransportMode>
+          <Code>AIR</Code>
+          <Description>Air Freight</Description>
+        </TransportMode>
+        <WarehouseLocation></WarehouseLocation>
+        <WayBillNumber>HBL2376476</WayBillNumber>
+        <WayBillType>
+          <Code>HWB</Code>
+          <Description>House Waybill</Description>
+        </WayBillType>
+
+        <CarrierDocumentsOverride>
+          <AWBHeader>
+            <AgentAccountNo></AgentAccountNo>
+            <AgentIATACode></AgentIATACode>
+            <AgentName></AgentName>
+            <AgentPlace></AgentPlace>
+            <AirportOfDepartureAndRequestRouteText>Shanghai Hongqiao International Apt</AirportOfDepartureAndRequestRouteText>
+            <AirportOfDestinationCode>BCT</AirportOfDestinationCode>
+            <AirportOfDestinationText>Boca Raton</AirportOfDestinationText>
+            <AlsoNotify>
+              <AddressLine1></AddressLine1>
+              <AddressLine2></AddressLine2>
+              <City></City>
+              <ContactDetail></ContactDetail>
+              <ContactType>
+                <Code></Code>
+              </ContactType>
+              <Country>
+                <Code></Code>
+              </Country>
+              <IsAddressOverriddenForPaperWaybill>false</IsAddressOverriddenForPaperWaybill>
+              <Name></Name>
+              <PaperOverrideLine1></PaperOverrideLine1>
+              <PaperOverrideLine2></PaperOverrideLine2>
+              <PaperOverrideLine3></PaperOverrideLine3>
+              <PaperOverrideLine4></PaperOverrideLine4>
+              <PaperOverrideLine5></PaperOverrideLine5>
+              <PostCode></PostCode>
+              <State></State>
+            </AlsoNotify>
+            <AmountOfInsurance>0</AmountOfInsurance>
+            <AsAgreedOn1stAWBSet>false</AsAgreedOn1stAWBSet>
+            <AsAgreedOn2ndAWBSet>false</AsAgreedOn2ndAWBSet>
+            <AsAgreedTypeOn1stAWBSet>NON</AsAgreedTypeOn1stAWBSet>
+            <AsAgreedTypeOn2ndAWBSet>NON</AsAgreedTypeOn2ndAWBSet>
+            <AWBIssueDate>2020-09-11T00:00:00</AWBIssueDate>
+            <AWBIssuePlace>CLARK</AWBIssuePlace>
+            <AWBIssuerApprovedExporterNumber></AWBIssuerApprovedExporterNumber>
+            <AWBIssuerExtraInfo></AWBIssuerExtraInfo>
+            <AWBIssuerSignature>Vilas Suryawanshi</AWBIssuerSignature>
+            <AWBNumber></AWBNumber>
+            <AWBType>
+              <Code></Code>
+            </AWBType>
+            <CargoSecurityDeclaration>
+              <AdditionalScreeningMethods></AdditionalScreeningMethods>
+              <AgentApprovalCategory>
+                <Code></Code>
+                <Description></Description>
+              </AgentApprovalCategory>
+              <AgentApprovalCountry>
+                <Code></Code>
+              </AgentApprovalCountry>
+              <AgentApprovalExpiryDate></AgentApprovalExpiryDate>
+              <AgentApprovalNumber></AgentApprovalNumber>
+              <SecurityStatusIssueDate></SecurityStatusIssueDate>
+              <SecurityStatusIssuedBy></SecurityStatusIssuedBy>
+              <TSASecurityStatement></TSASecurityStatement>
+            </CargoSecurityDeclaration>
+            <ChargesPayment>
+              <Code></Code>
+            </ChargesPayment>
+            <Consignee>
+              <AccountCode>SHOFORBCT</AccountCode>
+              <AddressLine1>5000 T REX AVE</AddressLine1>
+              <AddressLine2></AddressLine2>
+              <City>BOCA RATON</City>
+              <ContactDetail></ContactDetail>
+              <ContactType>
+                <Code></Code>
+              </ContactType>
+              <Country>
+                <Code>US</Code>
+                <Name>United States</Name>
+              </Country>
+              <IsAddressOverriddenForPaperWaybill>false</IsAddressOverriddenForPaperWaybill>
+              <Name>SHOES FOR CREWS LLC</Name>
+              <PaperOverrideLine1>SHOES FOR CREWS LLC</PaperOverrideLine1>
+              <PaperOverrideLine2>5000 T REX AVE</PaperOverrideLine2>
+              <PaperOverrideLine3></PaperOverrideLine3>
+              <PaperOverrideLine4>BOCA RATON FL US</PaperOverrideLine4>
+              <PaperOverrideLine5>EIN: 13-4282362</PaperOverrideLine5>
+              <PostCode>33431</PostCode>
+              <State>FL</State>
+            </Consignee>
+            <Currency>
+              <Code>USD</Code>
+              <Description>United States Dollar</Description>
+            </Currency>
+            <ForwardingAgentReference>HAWB No: HBL2376476</ForwardingAgentReference>
+            <HandlingInformation></HandlingInformation>
+            <IssuedByAddress1>100 WALNUT AVE STE 600</IssuedByAddress1>
+            <IssuedByAddress2>CLARK, NJ, 07066, UNITED STATES</IssuedByAddress2>
+            <IssuedByName>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</IssuedByName>
+            <NetRateCode></NetRateCode>
+            <OptionalShippingInformation1>TERMS:</OptionalShippingInformation1>
+            <OptionalShippingInformation2></OptionalShippingInformation2>
+            <OriginCode>SHA</OriginCode>
+            <OtherChargesPayment>
+              <Code></Code>
+            </OtherChargesPayment>
+            <Requested1stCarrier></Requested1stCarrier>
+            <Requested1stFlight></Requested1stFlight>
+            <Requested1stFlightDate></Requested1stFlightDate>
+            <Requested2ndCarrier></Requested2ndCarrier>
+            <Requested2ndFlight></Requested2ndFlight>
+            <Requested2ndFlightDate></Requested2ndFlightDate>
+            <Routing1stBy></Routing1stBy>
+            <Routing1stTo></Routing1stTo>
+            <Routing2ndBy></Routing2ndBy>
+            <Routing2ndTo></Routing2ndTo>
+            <Routing3rdBy></Routing3rdBy>
+            <Routing3rdTo></Routing3rdTo>
+            <Shipper>
+              <AccountCode></AccountCode>
+              <AddressLine1></AddressLine1>
+              <AddressLine2></AddressLine2>
+              <City></City>
+              <ContactDetail></ContactDetail>
+              <ContactType>
+                <Code></Code>
+              </ContactType>
+              <Country>
+                <Code></Code>
+              </Country>
+              <IsAddressOverriddenForPaperWaybill>false</IsAddressOverriddenForPaperWaybill>
+              <Name></Name>
+              <PaperOverrideLine1></PaperOverrideLine1>
+              <PaperOverrideLine2></PaperOverrideLine2>
+              <PaperOverrideLine3></PaperOverrideLine3>
+              <PaperOverrideLine4></PaperOverrideLine4>
+              <PaperOverrideLine5></PaperOverrideLine5>
+              <PostCode></PostCode>
+              <State></State>
+            </Shipper>
+            <ShipperExtraInfoLine1></ShipperExtraInfoLine1>
+            <ShipperExtraInfoLine2></ShipperExtraInfoLine2>
+            <ShippersLoadAndCount>0</ShippersLoadAndCount>
+            <ShippersSignature></ShippersSignature>
+            <SpecialHandlingCode></SpecialHandlingCode>
+            <TotalTaxesCollect>0</TotalTaxesCollect>
+            <TotalTaxesPrepaid>0</TotalTaxesPrepaid>
+            <TotalValuationCollect>0</TotalValuationCollect>
+            <TotalValuationPrepaid>0</TotalValuationPrepaid>
+            <ValueForCarriage>0</ValueForCarriage>
+            <ValueForCustoms>0</ValueForCustoms>
+            <WeightChargesPayment>
+              <Code></Code>
+            </WeightChargesPayment>
+
+            <OtherChargesCollection>
+              <OtherCharges>
+                <Amount>15.0000</Amount>
+                <ChargeCode>
+                  <Code></Code>
+                </ChargeCode>
+                <Description>E COLLECT AIR FREIGHT</Description>
+                <EntitlementDue>
+                  <Code>A</Code>
+                  <Description>Agent</Description>
+                </EntitlementDue>
+                <PrepaidCollect>
+                  <Code>PPD</Code>
+                  <Description>Prepaid</Description>
+                </PrepaidCollect>
+              </OtherCharges>
+              <OtherCharges>
+                <Amount>20.0000</Amount>
+                <ChargeCode>
+                  <Code></Code>
+                </ChargeCode>
+                <Description>E FUEL SURCHARGE</Description>
+                <EntitlementDue>
+                  <Code>A</Code>
+                  <Description>Agent</Description>
+                </EntitlementDue>
+                <PrepaidCollect>
+                  <Code>PPD</Code>
+                  <Description>Prepaid</Description>
+                </PrepaidCollect>
+              </OtherCharges>
+              <OtherCharges>
+                <Amount>20.0000</Amount>
+                <ChargeCode>
+                  <Code></Code>
+                </ChargeCode>
+                <Description>E ADJUSTED FREIGHT PROFIT</Description>
+                <EntitlementDue>
+                  <Code>A</Code>
+                  <Description>Agent</Description>
+                </EntitlementDue>
+                <PrepaidCollect>
+                  <Code>PPD</Code>
+                  <Description>Prepaid</Description>
+                </PrepaidCollect>
+              </OtherCharges>
+              <OtherCharges>
+                <Amount>20.0000</Amount>
+                <ChargeCode>
+                  <Code></Code>
+                </ChargeCode>
+                <Description>E COLLECT OCEAN FREIGHT</Description>
+                <EntitlementDue>
+                  <Code>A</Code>
+                  <Description>Agent</Description>
+                </EntitlementDue>
+                <PrepaidCollect>
+                  <Code>PPD</Code>
+                  <Description>Prepaid</Description>
+                </PrepaidCollect>
+              </OtherCharges>
+            </OtherChargesCollection>
+
+            <RateLineCollection>
+              <RateLine>
+                <ChargeableWeight>5000.000</ChargeableWeight>
+                <CommodityItem></CommodityItem>
+                <GoodsDescription>SHOES</GoodsDescription>
+                <GrossWeight>5000</GrossWeight>
+                <LineNumber>1</LineNumber>
+                <NatureAndQtyOfGoodsType>
+                  <Code>G</Code>
+                  <Description>Goods Description</Description>
+                </NatureAndQtyOfGoodsType>
+                <NoOfPiecesOrRCP>1</NoOfPiecesOrRCP>
+                <RateChargeOrDiscount>0</RateChargeOrDiscount>
+                <RateClass>
+                  <Code>Q</Code>
+                  <Description>Quantity Rate</Description>
+                </RateClass>
+                <TotalCharge>0</TotalCharge>
+                <WeightUnit>
+                  <Code>K</Code>
+                  <Description>Kilograms</Description>
+                </WeightUnit>
+              </RateLine>
+              <RateLine>
+                <ChargeableWeight>0</ChargeableWeight>
+                <CommodityItem></CommodityItem>
+                <GoodsDescription>VOL 12.000 M3</GoodsDescription>
+                <GrossWeight>0</GrossWeight>
+                <LineNumber>2</LineNumber>
+                <NatureAndQtyOfGoodsType>
+                  <Code>G</Code>
+                  <Description>Goods Description</Description>
+                </NatureAndQtyOfGoodsType>
+                <NoOfPiecesOrRCP>0</NoOfPiecesOrRCP>
+                <RateChargeOrDiscount>0</RateChargeOrDiscount>
+                <RateClass>
+                  <Code></Code>
+                </RateClass>
+                <TotalCharge>0</TotalCharge>
+                <WeightUnit>
+                  <Code></Code>
+                </WeightUnit>
+              </RateLine>
+            </RateLineCollection>
+          </AWBHeader>
+        </CarrierDocumentsOverride>
+
+        <LocalProcessing>
+          <ArrivalCartageRef></ArrivalCartageRef>
+          <DeliveryCartageAdvised></DeliveryCartageAdvised>
+          <DeliveryCartageCompleted></DeliveryCartageCompleted>
+          <DeliveryLabourCharge>0.0000</DeliveryLabourCharge>
+          <DeliveryLabourTime></DeliveryLabourTime>
+          <DeliveryRequiredBy></DeliveryRequiredBy>
+          <DeliveryTruckWaitCharge>0.0000</DeliveryTruckWaitCharge>
+          <DeliveryTruckWaitTime></DeliveryTruckWaitTime>
+          <DemurrageOnDeliveryCharge>0.0000</DemurrageOnDeliveryCharge>
+          <DemurrageOnDeliveryTime></DemurrageOnDeliveryTime>
+          <DemurrageOnPickupCharge>0.0000</DemurrageOnPickupCharge>
+          <DemurrageOnPickupTime></DemurrageOnPickupTime>
+          <EstimatedDelivery></EstimatedDelivery>
+          <EstimatedPickup></EstimatedPickup>
+          <ExportStatement>
+            <Code></Code>
+          </ExportStatement>
+          <FCLAvailable></FCLAvailable>
+          <FCLDeliveryEquipmentNeeded>
+            <Code>PSL</Code>
+            <Description>Premise Supplies Lift</Description>
+          </FCLDeliveryEquipmentNeeded>
+          <FCLPickupEquipmentNeeded>
+            <Code></Code>
+          </FCLPickupEquipmentNeeded>
+          <FCLStorageCommences></FCLStorageCommences>
+          <HasProhibitedPackaging>false</HasProhibitedPackaging>
+          <InsuranceRequired>false</InsuranceRequired>
+          <IsContingencyRelease>false</IsContingencyRelease>
+          <LCLAirStorageCharge>0.0000</LCLAirStorageCharge>
+          <LCLAirStorageDaysOrHours>0</LCLAirStorageDaysOrHours>
+          <LCLAvailable></LCLAvailable>
+          <LCLDatesOverrideConsol>false</LCLDatesOverrideConsol>
+          <LCLStorageCommences></LCLStorageCommences>
+          <PickupCartageAdvised></PickupCartageAdvised>
+          <PickupCartageCompleted></PickupCartageCompleted>
+          <PickupLabourCharge>0.0000</PickupLabourCharge>
+          <PickupLabourTime></PickupLabourTime>
+          <PickupRequiredBy></PickupRequiredBy>
+          <PickupTruckWaitCharge>0.0000</PickupTruckWaitCharge>
+          <PickupTruckWaitTime></PickupTruckWaitTime>
+          <PrintOptionForPackagesOnAWB>
+            <Code>DEF</Code>
+            <Description>Default (Dims, fallback to Vol)</Description>
+          </PrintOptionForPackagesOnAWB>
+        </LocalProcessing>
+
+        <AdditionalReferenceCollection Content="Complete">
+          <AdditionalReference>
+            <Type>
+              <Code>UCR</Code>
+              <Description>External (3rd party) Unique Consign</Description>
+            </Type>
+            <ReferenceNumber>VS23765</ReferenceNumber>
+            <ContextInformation></ContextInformation>
+            <IssueDate></IssueDate>
+          </AdditionalReference>
+          <AdditionalReference>
+            <Type>
+              <Code>OAG</Code>
+              <Description>Other Agent Reference</Description>
+            </Type>
+            <ReferenceNumber>59556932081</ReferenceNumber>
+            <ContextInformation/>
+            <IssueDate/>
+          </AdditionalReference>
+        </AdditionalReferenceCollection>
+
+        <DateCollection>
+          <Date>
+            <Type>BookingConfirmed</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value>2020-09-02T10:46:00</Value>
+          </Date>
+          <Date>
+            <Type>Received</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+          <Date>
+            <Type>Departure</Type>
+            <IsEstimate>true</IsEstimate>
+            <Value>2020-09-02T10:53:00</Value>
+          </Date>
+          <Date>
+            <Type>Arrival</Type>
+            <IsEstimate>true</IsEstimate>
+            <Value>2020-09-04T10:54:00</Value>
+          </Date>
+          <Date>
+            <Type>ShippedOnBoard</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+          <Date>
+            <Type>BillIssued</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+        </DateCollection>
+
+        <MilestoneCollection>
+          <Milestone>
+            <Description>All Import Documents Received</Description>
+            <EventCode>AID</EventCode>
+            <Sequence>10</Sequence>
+            <ActualDate></ActualDate>
+            <ConditionReference></ConditionReference>
+            <ConditionType></ConditionType>
+            <EstimatedDate></EstimatedDate>
+          </Milestone>
+          <Milestone>
+            <Description>Delivery Cartage Complete/Finalised</Description>
+            <EventCode>DCF</EventCode>
+            <Sequence>15</Sequence>
+            <ActualDate></ActualDate>
+            <ConditionReference></ConditionReference>
+            <ConditionType></ConditionType>
+            <EstimatedDate></EstimatedDate>
+          </Milestone>
+        </MilestoneCollection>
+
+        <OrganizationAddressCollection>
+          <OrganizationAddress>
+            <AddressType>ConsigneeDocumentaryAddress</AddressType>
+            <Address1>5000 T REX AVE</Address1>
+            <Address2></Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>5000 T REX AVE</AddressShortCode>
+            <City>BOCA RATON</City>
+            <CompanyName>SHOES FOR CREWS LLC</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <GovRegNum>13-4282362</GovRegNum>
+            <GovRegNumType>
+              <Code>EIN</Code>
+              <Description>Employer Identification Number</Description>
+            </GovRegNumType>
+            <OrganizationCode>SHOFORBCT</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USBCT</Code>
+              <Name>Boca Raton</Name>
+            </Port>
+            <Postcode>33431</Postcode>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <State>FL</State>
+          </OrganizationAddress>
+          <OrganizationAddress>
+            <AddressType>ConsigneePickupDeliveryAddress</AddressType>
+            <Address1>5000 T REX AVE</Address1>
+            <Address2></Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>5000 T REX AVE</AddressShortCode>
+            <City>BOCA RATON</City>
+            <CompanyName>SHOES FOR CREWS LLC</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <GovRegNum>13-4282362</GovRegNum>
+            <GovRegNumType>
+              <Code>EIN</Code>
+              <Description>Employer Identification Number</Description>
+            </GovRegNumType>
+            <OrganizationCode>SHOFORBCT</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USBCT</Code>
+              <Name>Boca Raton</Name>
+            </Port>
+            <Postcode>33431</Postcode>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <State>FL</State>
+          </OrganizationAddress>
+          <OrganizationAddress>
+            <AddressType>SendersLocalClient</AddressType>
+            <Address1>5000 T REX AVE</Address1>
+            <Address2></Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>5000 T REX AVE</AddressShortCode>
+            <City>BOCA RATON</City>
+            <CompanyName>SHOES FOR CREWS LLC</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <GovRegNum>13-4282362</GovRegNum>
+            <GovRegNumType>
+              <Code>EIN</Code>
+              <Description>Employer Identification Number</Description>
+            </GovRegNumType>
+            <OrganizationCode>SHOFORBCT</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USBCT</Code>
+              <Name>Boca Raton</Name>
+            </Port>
+            <Postcode>33431</Postcode>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <State>FL</State>
+          </OrganizationAddress>
+          <OrganizationAddress>
+            <AddressType>DeliveryLocalCartage</AddressType>
+            <Address1>123</Address1>
+            <Address2></Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>123</AddressShortCode>
+            <City>LOS ANGLES</City>
+            <CompanyName>CONTAIENR CONNECTION</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <OrganizationCode>CONCONLAX</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USLAX</Code>
+              <Name>Los Angeles</Name>
+            </Port>
+            <Postcode>03200</Postcode>
+            <ScreeningStatus>
+              <Code>UNK</Code>
+              <Description>Unknown</Description>
+            </ScreeningStatus>
+            <State>CA</State>
+          </OrganizationAddress>
+        </OrganizationAddressCollection>
+
+        <PackingLineCollection Content="Complete">
+          <PackingLine>
+            <Commodity>
+              <Code>GEN</Code>
+              <Description>General</Description>
+            </Commodity>
+            <ContainerPackingOrder>0</ContainerPackingOrder>
+            <CountryOfOrigin>
+              <Code></Code>
+            </CountryOfOrigin>
+            <DetailedDescription></DetailedDescription>
+            <EndItemNo>0</EndItemNo>
+            <ExportReferenceNumber></ExportReferenceNumber>
+            <GoodsDescription>SHOES</GoodsDescription>
+            <HarmonisedCode></HarmonisedCode>
+            <Height>0.000</Height>
+            <ImportReferenceNumber></ImportReferenceNumber>
+            <ItemNo>0</ItemNo>
+            <Length>0.000</Length>
+            <LengthUnit>
+              <Code>M</Code>
+              <Description>Meters</Description>
+            </LengthUnit>
+            <LinePrice>0.0000</LinePrice>
+            <Link>1</Link>
+            <LoadingMeters>0.000</LoadingMeters>
+            <MarksAndNos></MarksAndNos>
+            <OutturnComment></OutturnComment>
+            <OutturnDamagedQty>0</OutturnDamagedQty>
+            <OutturnedHeight>0.000</OutturnedHeight>
+            <OutturnedLength>0.000</OutturnedLength>
+            <OutturnedVolume>0.000</OutturnedVolume>
+            <OutturnedWeight>0.000</OutturnedWeight>
+            <OutturnedWidth>0.000</OutturnedWidth>
+            <OutturnPillagedQty>0</OutturnPillagedQty>
+            <OutturnQty>0</OutturnQty>
+            <PackQty>1</PackQty>
+            <PackType>
+              <Code>PLT</Code>
+              <Description>Pallet</Description>
+            </PackType>
+            <ReferenceNumber></ReferenceNumber>
+            <RequiresTemperatureControl>false</RequiresTemperatureControl>
+            <Volume>12.000</Volume>
+            <VolumeUnit>
+              <Code>M3</Code>
+              <Description>Cubic Meters</Description>
+            </VolumeUnit>
+            <Weight>5000.000</Weight>
+            <WeightUnit>
+              <Code>KG</Code>
+              <Description>Kilograms</Description>
+            </WeightUnit>
+            <Width>0.000</Width>
+
+            <PackedItemCollection>
+            </PackedItemCollection>
+          </PackingLine>
+        </PackingLineCollection>
+      </Shipment>
+    </ShipmentCollection>
+  </TransactionInfo>
+</UniversalTransaction>
+  </Body>
+</UniversalInterchange>

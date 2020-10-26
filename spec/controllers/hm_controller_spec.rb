@@ -1,9 +1,9 @@
 describe HmController do
-  let! (:master_setup) {
+  let! (:master_setup) do
     ms = stub_master_setup
     allow(ms).to receive(:custom_feature?).with('H&M').and_return true
     ms
-  }
+  end
 
   describe "index" do
     it "should not allow view unless master user" do

@@ -1,8 +1,8 @@
 require 'open_chain/custom_handler/intacct/intacct_data_pusher'
 
 class IntacctErrorsController < ApplicationController
-  VFI_ACCOUNTING_USERS ||= 'intacct-accounting'
-  VFI_CANADA_ACCOUNTING ||= 'canada-accounting'
+  VFI_ACCOUNTING_USERS ||= 'intacct-accounting'.freeze
+  VFI_CANADA_ACCOUNTING ||= 'canada-accounting'.freeze
 
   def index
     action_secure(IntacctErrorsController.allowed_user?(current_user), nil, verb: 'view', module_name: "page") do
@@ -19,7 +19,7 @@ class IntacctErrorsController < ApplicationController
       if intacct_object.nil?
         add_flash :errors, "No Intacct Error message found to clear."
       else
-        intacct_object.update_attributes! intacct_errors: nil
+        intacct_object.update! intacct_errors: nil
         add_flash :notices, "Intacct Error message has been cleared.  The Payable will be re-sent when the next integration process runs."
       end
 
@@ -34,7 +34,7 @@ class IntacctErrorsController < ApplicationController
       if intacct_object.nil?
         add_flash :errors, "No Intacct Error message found to clear."
       else
-        intacct_object.update_attributes! intacct_errors: nil
+        intacct_object.update! intacct_errors: nil
         add_flash :notices, "Intacct Error message has been cleared.  The Receivable will be re-sent when the next integration process runs."
       end
 
@@ -49,7 +49,7 @@ class IntacctErrorsController < ApplicationController
       if intacct_object.nil?
         add_flash :errors, "No Intacct Error message found to mark unfixable."
       else
-        intacct_object.update! intacct_errors: params[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
+        intacct_object.update! intacct_errors: permit_reason_param(params)[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
         add_flash :notices, "Intacct Error message has been set as unfixable."
       end
 
@@ -64,7 +64,7 @@ class IntacctErrorsController < ApplicationController
       if intacct_object.nil?
         add_flash :errors, "No Intacct Error message found to mark unfixable."
       else
-        intacct_object.update! intacct_errors: params[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
+        intacct_object.update! intacct_errors: permit_reason_param(params)[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
         add_flash :notices, "Intacct Error message has been set as unfixable."
       end
 
@@ -79,7 +79,7 @@ class IntacctErrorsController < ApplicationController
       if intacct_object.nil?
         add_flash :errors, "No Intacct Error message found to mark unfixable."
       else
-        intacct_object.update! intacct_errors: params[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
+        intacct_object.update! intacct_errors: permit_reason_param(params)[:reason], intacct_upload_date: DateTime.now, intacct_key: "N/A"
         add_flash :notices, "Intacct Error message has been set as unfixable."
       end
 
@@ -94,7 +94,7 @@ class IntacctErrorsController < ApplicationController
       if intacct_object.nil?
         add_flash :errors, "No Intacct Error message found to clear."
       else
-        intacct_object.update_attributes! intacct_errors: nil
+        intacct_object.update! intacct_errors: nil
         add_flash :notices, "Intacct Error message has been cleared.  The Check will be re-sent when the next integration process runs."
       end
 
@@ -114,5 +114,11 @@ class IntacctErrorsController < ApplicationController
   def self.allowed_user? user
     MasterSetup.get.custom_feature?("WWW") && user.in_any_group?([VFI_ACCOUNTING_USERS, VFI_CANADA_ACCOUNTING])
   end
+
+  private
+
+    def permit_reason_param params
+      params.permit(:reason)
+    end
 
 end

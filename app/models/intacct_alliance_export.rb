@@ -2,20 +2,23 @@
 #
 # Table name: intacct_alliance_exports
 #
-#  ap_total            :decimal(12, 2)
-#  ar_total            :decimal(12, 2)
-#  check_number        :string(255)
-#  created_at          :datetime         not null
-#  customer_number     :string(255)
-#  data_received_date  :datetime
-#  data_requested_date :datetime
-#  division            :string(255)
-#  export_type         :string(255)
-#  file_number         :string(255)
-#  id                  :integer          not null, primary key
-#  invoice_date        :date
-#  suffix              :string(255)
-#  updated_at          :datetime         not null
+#  ap_total                 :decimal(12, 2)
+#  ar_total                 :decimal(12, 2)
+#  broker_reference         :string(255)
+#  check_number             :string(255)
+#  created_at               :datetime         not null
+#  customer_number          :string(255)
+#  data_received_date       :datetime
+#  data_requested_date      :datetime
+#  division                 :string(255)
+#  export_type              :string(255)
+#  file_number              :string(255)
+#  id                       :integer          not null, primary key
+#  invoice_date             :date
+#  shipment_customer_number :string(255)
+#  shipment_number          :string(255)
+#  suffix                   :string(255)
+#  updated_at               :datetime         not null
 #
 # Indexes
 #
@@ -23,14 +26,10 @@
 #
 
 class IntacctAllianceExport < ActiveRecord::Base
-  attr_accessible :ap_total, :ar_total, :check_number, :customer_number,
-    :data_received_date, :data_requested_date, :division, :export_type,
-    :file_number, :invoice_date, :suffix, :intacct_checks
+  has_many :intacct_receivables, dependent: :destroy
+  has_many :intacct_payables, dependent: :destroy
+  has_many :intacct_checks, dependent: :destroy
 
-  has_many :intacct_receivables, :dependent => :destroy
-  has_many :intacct_payables, :dependent => :destroy
-  has_many :intacct_checks, :dependent => :destroy
-
-  EXPORT_TYPE_CHECK = 'check'
-  EXPORT_TYPE_INVOICE = 'invoice'
+  EXPORT_TYPE_CHECK = 'check'.freeze
+  EXPORT_TYPE_INVOICE = 'invoice'.freeze
 end

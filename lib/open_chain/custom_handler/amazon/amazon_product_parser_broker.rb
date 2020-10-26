@@ -1,4 +1,4 @@
-require 'open_chain/integration_client_parser'
+require 'open_chain/integration_parser_broker'
 require 'open_chain/custom_handler/amazon/amazon_product_parser'
 require 'open_chain/custom_handler/amazon/amazon_fda_product_parser'
 require 'open_chain/custom_handler/amazon/amazon_fda_rad_product_parser'
@@ -11,18 +11,9 @@ require 'open_chain/custom_handler/amazon/amazon_product_documents_parser'
 # which ACTUAL product file they sent and then send the data through to the parser
 # that handles that file type.
 module OpenChain; module CustomHandler; module Amazon; class AmazonProductParserBroker
-  include OpenChain::IntegrationClientParser
+  include OpenChain::IntegrationParserBroker
 
-  def self.parse data, opts = {}
-    parser = get_parser(opts[:key])
-    # We want to update the inbound file that the integration client parser provides and
-    # rekey it to the actual parser utilized.
-    inbound_file.parser_name = parser.to_s
-
-    parser.parse(data, opts)
-  end
-
-  def self.get_parser full_path
+  def self.create_parser _bucket, full_path, _data, _opts
     # Amazon uses a unique file naming structure for all files coming into the sytsem
     # These will be parts files, OGA data the parts and file attachments for the parts.
 

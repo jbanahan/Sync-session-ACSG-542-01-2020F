@@ -1150,6 +1150,23 @@ class ReportsController < ApplicationController
     end
   end
 
+  def show_daily_accounting_report
+    if OpenChain::CustomHandler::Intacct::IntacctDailyAccountingReport.permission? current_user
+      render
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
+  def run_daily_accounting_report
+    klass = OpenChain::CustomHandler::Intacct::IntacctDailyAccountingReport
+    if klass.permission? current_user
+      run_report "Daily Accounting Report", klass, {"start_date" => params[:start_date], "end_date" => params[:end_date], "line_of_business" => params[:line_of_business]}, []
+    else
+      error_redirect "You do not have permission to view this report"
+    end
+  end
+
   private
     def run_report name, klass, settings, friendly_settings
       begin

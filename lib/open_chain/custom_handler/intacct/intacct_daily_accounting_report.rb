@@ -1,23 +1,62 @@
-require 'open_chain/report/builder_output_report_helper'
 require 'open_chain/report/report_email_helper'
+require 'open_chain/report/report_date_helper_support'
+require 'open_chain/report/builder_output_report_helper'
+require 'open_chain/custom_handler/intacct/intacct_daily_accounting_report'
 
 module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccountingReport
   include OpenChain::Report::BuilderOutputReportHelper
+  include OpenChain::Report::ReportDateHelperSupport
   include OpenChain::Report::ReportEmailHelper
 
-  def self.run_schedulable opts = {}
-    self.new.run(opts)
+  def self.permission? user
+    MasterSetup.get.custom_feature?("WWW") && user.in_group?(IntacctErrorsController::VFI_ACCOUNTING_USERS)
   end
 
-  def run opts = {}
-    start_date, end_date = date_range(opts)
-    email = parse_email_from_opts(opts)
+  # Run schedule is for being able to run this via a scheduled job
+  def self.run_schedulable opts = {}
+    self.new.run(nil, opts)
+  end
 
+  def run_schedulable opts
+    start_date, end_date = parse_date_range_from_opts(opts, basis_date: basis_date(nil))
+    email = parse_email_from_opts(opts)
+    build_report(start_date, end_date, opts) do |date_range_description, tempfile|
+      subject = "Daily Accounting Report #{date_range_description}"
+      body = "Attached is the Daily Accounting Report for #{date_range_description}."
+      OpenMailer.send_simple_html(email[:to], subject, body, [tempfile], {cc: email[:cc], bcc: email[:bcc]}).deliver_now
+    end
+  end
+
+  # run_report is for running via the Reports Controller (.ie ReportResult interfacing)
+  def self.run_report run_by, settings
+    self.new.run_report(run_by, settings) do |tempfile|
+      yield tempfile
+    end
+  end
+
+  def run_report run_by, opts
+    start_date, end_date = parse_date_range_from_opts(opts, basis_date: basis_date(run_by))
+    build_report(start_date, end_date, opts) do |_date_range_description, tempfile|
+      yield tempfile
+    end
+  end
+
+  # If line_of_business is given as a key with a value of 'freight', then only freight divisions will
+  # be reported on.  If 'brokerage' is given as a key, then only brokerage divisions.
+  def build_report start_date, end_date, opts
     # The cast here is because the division is stored as a string, but it's actually a numeric.  If we sort by it we'll end up
     # with 1 then 11, then 2...etc.  We want it sorted in order.
     exports = IntacctAllianceExport.where("invoice_date >= ? AND invoice_date <= ?", start_date, end_date)
                                    .where(export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE)
-                                   .order(["cast(division as signed)", :invoice_date, :file_number, :suffix])
+                                   .order(["cast(division as signed)", :invoice_date, :shipment_number, :file_number, :suffix])
+
+    if opts["line_of_business"].present?
+      if opts["line_of_business"].to_s.upcase == "FREIGHT"
+        exports = exports.where(division: ["11", "12", "13", "14"])
+      elsif opts["line_of_business"].to_s.upcase == "BROKERAGE"
+        exports = exports.where.not(division: ["11", "12", "13", "14"])
+      end
+    end
 
     summary_sheet = build_summary_sheet builder
     ar_sheet = build_ar_sheet builder
@@ -52,22 +91,18 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
     end
 
     filename = "Daily Accounting Report #{date_range_description}"
-
     write_builder_to_tempfile(builder, filename.gsub("/", "-")) do |tempfile|
-      body = "Attached is the Daily Accounting Report for #{date_range_description}."
-      OpenMailer.send_simple_html(email[:to], filename, body, [tempfile], {cc: email[:cc], bcc: email[:bcc]}).deliver_now
+      yield date_range_description, tempfile
     end
-    nil
   end
 
   private
 
-    def date_range opts
-      now = Time.zone.now.to_date
-      start_date = date_value(opts['start_date'], default_value: (now - 1.day))
-      end_date = date_value(opts['end_date'], default_value: start_date)
+    def basis_date run_by
+      tz = run_by&.time_zone
+      tz = "America/New_York" if tz.blank?
 
-      [start_date, end_date]
+      Time.zone.now.in_time_zone(tz).to_date
     end
 
     def retrieve_export export_id
@@ -81,14 +116,18 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
     end
 
     def build_summary_sheet builder
-      builder.create_sheet "Daily Billing Summary", headers: ["Invoice Number", "Division", "Invoice Date", "Customer", "AR Total", "AP Total", "Profit / Loss"]
+      builder.create_sheet "Daily Billing Summary", headers: ["File #", "Broker Reference", "Invoice Number", "Division", "Invoice Date",
+                                                              "Customer", "Bill To", "AR Total", "AP Total", "Profit / Loss"]
     end
 
     def write_summary_row builder, sheet, export
       row = []
+      row << export.shipment_number
+      row << export.broker_reference
       row << "#{export.file_number}#{export.suffix}"
       row << export.division
       row << export.invoice_date
+      row << export.shipment_customer_number
       row << export.customer_number
       row << export.ar_total
       row << export.ap_total
@@ -105,13 +144,14 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
     def write_summary_sums builder, sheet, row_count
       format = builder.create_style :bold_decimal, {format_code: "#,##0.00", b: true}
 
-      builder.add_body_row sheet, [nil, nil, nil, nil, make_sum_formula("E", row_count), make_sum_formula("F", row_count), make_sum_formula("G", row_count)],
-                           styles: [nil, nil, nil, nil, format, format, format]
+      builder.add_body_row sheet, [nil, nil, nil, nil, nil, nil, nil,
+                                   make_sum_formula("H", row_count), make_sum_formula("I", row_count), make_sum_formula("J", row_count)],
+                           styles: [nil, nil, nil, nil, nil, nil, nil, format, format, format]
     end
 
     def build_ar_sheet builder
-      builder.create_sheet "AR Details", headers: ["Invoice Number", "Division", "Invoice Date", "Customer", "Currency", "Vendor",
-                                                   "Vendor Reference", "Charge Code", "Charge Description", "Charge Amount"]
+      builder.create_sheet "AR Details", headers: ["Invoice Number", "Division", "Invoice Date", "Customer", "Bill To",
+                                                   "Currency", "Charge Code", "Charge Description", "Charge Amount"]
     end
 
     def write_ar_row builder, sheet, export, receivable
@@ -120,10 +160,9 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
         row << receivable.invoice_number
         row << export.division
         row << receivable.invoice_date
+        row << receivable.shipment_customer_number
         row << receivable.customer_number
         row << receivable.currency
-        row << line.vendor_number
-        row << line.vendor_reference
         row << line.charge_code
         row << line.charge_description
         row << line.amount
@@ -134,7 +173,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
     end
 
     def build_ap_sheet builder
-      builder.create_sheet "AP Details", headers: ["Invoice Number", "Division", "Invoice Date", "Customer", "Currency", "Vendor",
+      builder.create_sheet "AP Details", headers: ["Invoice Number", "Division", "Invoice Date", "Customer", "Bill To", "Currency", "Vendor",
                                                    "Vendor Reference", "Charge Code", "Charge Description", "Charge Amount"]
     end
 
@@ -144,6 +183,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
         row << payable.bill_number
         row << export.division
         row << payable.bill_date
+        row << export.shipment_customer_number
         row << export.customer_number
         row << payable.currency
         row << payable.vendor_number

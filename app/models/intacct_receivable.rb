@@ -16,6 +16,7 @@
 #  invoice_number             :string(255)
 #  lmd_identifier             :string(255)
 #  receivable_type            :string(255)
+#  shipment_customer_number   :string(255)
 #  updated_at                 :datetime         not null
 #
 # Indexes
@@ -26,16 +27,12 @@
 #
 
 class IntacctReceivable < ActiveRecord::Base
-  attr_accessible :company, :currency, :customer_number, :customer_reference,
-    :intacct_alliance_export_id, :intacct_alliance_export, :intacct_errors,
-    :intacct_key, :intacct_upload_date, :invoice_date, :invoice_number,
-    :lmd_identifier, :receivable_type, :created_at
 
-  belongs_to :intacct_alliance_export, :inverse_of => :intacct_receivables
-  has_many :intacct_receivable_lines, :dependent => :destroy
+  belongs_to :intacct_alliance_export, inverse_of: :intacct_receivables
+  has_many :intacct_receivable_lines, dependent: :destroy
 
-  SALES_INVOICE_TYPE ||= "Sales Invoice"
-  CREDIT_INVOICE_TYPE ||= "Credit Note"
+  SALES_INVOICE_TYPE ||= "Sales Invoice".freeze
+  CREDIT_INVOICE_TYPE ||= "Credit Note".freeze
 
   def canada?
     ['als', 'vcu'].include? company
@@ -50,15 +47,15 @@ class IntacctReceivable < ActiveRecord::Base
 
     case company.upcase
     when 'ALS'
-      return "ALS #{r_type}"
+      "ALS #{r_type}"
     when 'VCU'
       # Not a typo...the consultants doing work on Intacct transactions for us used VFC for VCU
       # rather than for the actual VFC company.
-      return "VFC #{r_type}"
+      "VFC #{r_type}"
     when 'VFC'
-      return "VFI #{r_type}"
+      "VFI #{r_type}"
     when "LMD"
-      return "LMD #{r_type}"
+      "LMD #{r_type}"
     else
       raise "Unknown Intacct company received: #{company}."
     end
@@ -71,7 +68,7 @@ class IntacctReceivable < ActiveRecord::Base
     when /Description 2: Invalid Customer/i, /Description 2: Required field Date Due is missing/i
       "Create Customer account in Intacct and/or ensure account has payment Terms set."
     when /Description 2: Invalid Vendor '(.+)' specified./i
-      "Create Vendor account #{$1} in Intacct and/or ensure account has payment Terms set."
+      "Create Vendor account #{Regexp.last_match(1)} in Intacct and/or ensure account has payment Terms set."
     when /The Date Due field is missing a value./i
       "Ensure the Vendor account in Intacct has valid payment Terms set."
     else
@@ -85,6 +82,5 @@ class IntacctReceivable < ActiveRecord::Base
         "Unknown Error. Contact support@vandegriftinc.com to resolve error."
       end
     end
-
   end
 end

@@ -1,16 +1,16 @@
 describe IntacctErrorsController do
-  let (:user) { Factory(:user) }
 
   before :each do
     sign_in_as user
     allow(user).to receive(:in_any_group?).with(['intacct-accounting', 'canada-accounting']).and_return true
   end
 
-  let! (:master_setup) {
+  let (:user) { Factory(:user) }
+  let! (:master_setup) do
     ms = stub_master_setup
     allow(ms).to receive(:custom_feature?).with("WWW").and_return true
     ms
-  }
+  end
 
   describe "index" do
     it "finds all errored intacct objects" do

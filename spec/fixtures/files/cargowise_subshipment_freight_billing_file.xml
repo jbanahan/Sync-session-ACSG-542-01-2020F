@@ -1,0 +1,1959 @@
+<UniversalInterchange xmlns="http://www.cargowise.com/Schemas/Universal/2011/11" version="1.1">
+  <Header>
+    <SenderID>DAMVDRTRN</SenderID>
+    <RecipientID>DAMTRN</RecipientID>
+  </Header>
+  <Body>
+    <UniversalTransaction xmlns="http://www.cargowise.com/Schemas/Universal/2011/11" version="1.1">
+  <TransactionInfo>
+    <DataContext>
+      <DataSourceCollection>
+        <DataSource>
+          <Type>AccountingInvoice</Type>
+          <Key>AR INV 00001008</Key>
+        </DataSource>
+      </DataSourceCollection>
+
+      <ActionPurpose>
+        <Code>APP</Code>
+        <Description>As Per Payload</Description>
+      </ActionPurpose>
+      <Company>
+        <Code>VDR</Code>
+        <Country>
+          <Code>US</Code>
+          <Name>United States</Name>
+        </Country>
+        <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</Name>
+      </Company>
+      <DataProvider>DAMTRNVDR</DataProvider>
+      <EnterpriseID>DAM</EnterpriseID>
+      <EventBranch>
+        <Code>MA1</Code>
+        <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+      </EventBranch>
+      <EventDepartment>
+        <Code>BRN</Code>
+        <Name>Branch</Name>
+      </EventDepartment>
+      <EventReference>AR|INV|Posted</EventReference>
+      <EventType>
+        <Code>ADD</Code>
+        <Description>Added a record to the system</Description>
+      </EventType>
+      <EventUser>
+        <Code>VSR</Code>
+        <Name>Vilas Suryawanshi</Name>
+      </EventUser>
+      <ServerID>TRN</ServerID>
+      <TriggerCount>1</TriggerCount>
+      <TriggerDate>2020-10-05T02:09:11.977</TriggerDate>
+      <TriggerDescription>Invoiced Posted</TriggerDescription>
+      <TriggerType>Milestone</TriggerType>
+
+      <RecipientRoleCollection>
+        <RecipientRole>
+          <Code>ORP</Code>
+          <Description>Organization Proxy</Description>
+        </RecipientRole>
+      </RecipientRoleCollection>
+    </DataContext>
+
+    <APAccountGroup>
+      <Code>CLA</Code>
+      <Description>CLEARING AGENT</Description>
+    </APAccountGroup>
+    <ARAccountGroup>
+      <Code>I/E</Code>
+      <Description>IMPORTER / EXPORTER</Description>
+    </ARAccountGroup>
+    <Branch>
+      <Code>MA1</Code>
+      <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+    </Branch>
+    <BranchAddress>
+      <AddressType>OFC</AddressType>
+      <Address1>100 WALNUT AVE STE 600</Address1>
+      <Address2></Address2>
+      <AddressOverride>false</AddressOverride>
+      <AddressShortCode>100 WALNUT AVE STE 600</AddressShortCode>
+      <City>CLARK</City>
+      <CompanyName>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</CompanyName>
+      <Country>
+        <Code>US</Code>
+        <Name>United States</Name>
+      </Country>
+      <Email></Email>
+      <Fax></Fax>
+      <OrganizationCode>VANLOGEWR</OrganizationCode>
+      <Phone></Phone>
+      <Port>
+        <Code>USEWR</Code>
+        <Name>Newark</Name>
+      </Port>
+      <Postcode>07066</Postcode>
+      <ScreeningStatus>
+        <Code>NOT</Code>
+        <Description>Not Screened</Description>
+      </ScreeningStatus>
+      <State>NJ</State>
+    </BranchAddress>
+    <Category>FIN</Category>
+    <CheckDrawer></CheckDrawer>
+    <CheckNumberOrPaymentRef></CheckNumberOrPaymentRef>
+    <CreateTime>2020-10-05T06:09:00</CreateTime>
+    <CreateUser>VSR</CreateUser>
+    <Department>
+      <Code>FIS</Code>
+      <Name>Forwarding Import Sea</Name>
+    </Department>
+    <Description>S00001072</Description>
+    <DrawerBank></DrawerBank>
+    <DrawerBranch></DrawerBranch>
+    <DueDate>2020-10-05T02:09:00</DueDate>
+    <ExchangeRate>1.000000</ExchangeRate>
+    <InvoiceTerm>COD</InvoiceTerm>
+    <InvoiceTermDays>0</InvoiceTermDays>
+    <IsCancelled>false</IsCancelled>
+    <IsCreatedByMatchingProcess>false</IsCreatedByMatchingProcess>
+    <IsPrinted>false</IsPrinted>
+    <Job>
+      <Type>Job</Type>
+      <Key>S00001072</Key>
+    </Job>
+    <JobInvoiceNumber>S00001072</JobInvoiceNumber>
+    <Ledger>AR</Ledger>
+    <LocalCurrency>
+      <Code>USD</Code>
+      <Description>United States Dollar</Description>
+    </LocalCurrency>
+    <LocalExVATAmount>5000.0000</LocalExVATAmount>
+    <LocalTotal>5000.0000</LocalTotal>
+    <LocalVATAmount>0.0000</LocalVATAmount>
+    <Number>00001008</Number>
+    <NumberOfSupportingDocuments>1</NumberOfSupportingDocuments>
+    <OrganizationAddress>
+      <AddressType>OFC</AddressType>
+      <Address1>100 WALNUT AVE STE 600</Address1>
+      <Address2></Address2>
+      <AddressOverride>false</AddressOverride>
+      <AddressShortCode>100 WALNUT AVE STE 600</AddressShortCode>
+      <City>CLARK</City>
+      <CompanyName>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</CompanyName>
+      <Country>
+        <Code>US</Code>
+        <Name>United States</Name>
+      </Country>
+      <Email></Email>
+      <Fax></Fax>
+      <OrganizationCode>VANLOGEWR</OrganizationCode>
+      <Phone></Phone>
+      <Port>
+        <Code>USEWR</Code>
+        <Name>Newark</Name>
+      </Port>
+      <Postcode>07066</Postcode>
+      <ScreeningStatus>
+        <Code>NOT</Code>
+        <Description>Not Screened</Description>
+      </ScreeningStatus>
+      <State>NJ</State>
+    </OrganizationAddress>
+    <OSCurrency>
+      <Code>USD</Code>
+      <Description>United States Dollar</Description>
+    </OSCurrency>
+    <OSExGSTVATAmount>5000.0000</OSExGSTVATAmount>
+    <OSGSTVATAmount>0.00</OSGSTVATAmount>
+    <OSTotal>5000.0000</OSTotal>
+    <OutstandingAmount>5000.0000</OutstandingAmount>
+    <PlaceOfIssue>CLARK</PlaceOfIssue>
+    <PostDate>2020-10-05T02:09:00</PostDate>
+    <ReceiptOrDirectDebitNumber></ReceiptOrDirectDebitNumber>
+    <RequisitionStatus></RequisitionStatus>
+    <TransactionDate>2020-10-05T02:09:00</TransactionDate>
+    <TransactionType>INV</TransactionType>
+
+    <PostingJournalCollection>
+      <PostingJournal>
+        <Branch>
+          <Code>MA1</Code>
+          <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+        </Branch>
+        <ChargeCode>
+          <Code>0514</Code>
+          <Description>E TERMINAL HANDLING FEE</Description>
+        </ChargeCode>
+        <ChargeCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </ChargeCurrency>
+        <ChargeExchangeRate>1.000000000</ChargeExchangeRate>
+        <ChargeTotalAmount>5000.0000</ChargeTotalAmount>
+        <ChargeTotalExVATAmount>5000.0000</ChargeTotalExVATAmount>
+        <Department>
+          <Code>FIS</Code>
+          <Name>Forwarding Import Sea</Name>
+        </Department>
+        <Description>E TERMINAL HANDLING FEE</Description>
+        <GLAccount>
+          <AccountCode>4030.10.10</AccountCode>
+          <Description>Non Passthrough Rev Actual</Description>
+        </GLAccount>
+        <GLPostDate>2020-10-05T02:09:00</GLPostDate>
+        <IsFinalCharge>false</IsFinalCharge>
+        <Job>
+          <Type>Job</Type>
+          <Key>S00001072</Key>
+        </Job>
+        <JobRecognitionDate>2020-10-05T02:09:00</JobRecognitionDate>
+        <LocalAmount>5000.0000</LocalAmount>
+        <LocalCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </LocalCurrency>
+        <LocalGSTVATAmount>0.0000</LocalGSTVATAmount>
+        <LocalTotalAmount>5000.0000</LocalTotalAmount>
+        <Organization>
+          <Type>Organization</Type>
+          <Key>VANLOGEWR</Key>
+        </Organization>
+        <OSAmount>5000.00</OSAmount>
+        <OSCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </OSCurrency>
+        <OSGSTVATAmount>0.00</OSGSTVATAmount>
+        <OSTotalAmount>5000.0000</OSTotalAmount>
+        <RevenueRecognitionType>FAR</RevenueRecognitionType>
+        <Sequence>2</Sequence>
+        <TransactionCategory>FIN</TransactionCategory>
+        <TransactionType>REV</TransactionType>
+
+        <PostingJournalDetailCollection>
+          <PostingJournalDetail>
+            <CreditGLAccount>
+              <AccountCode>1215.00.00</AccountCode>
+              <Description>Revenue Suspense Control Account</Description>
+            </CreditGLAccount>
+            <DebitGLAccount>
+              <AccountCode>1210.00.00</AccountCode>
+              <Description>Accounts Receivable Control</Description>
+            </DebitGLAccount>
+            <PostingAmount>5000.0000</PostingAmount>
+            <PostingCurrency>
+              <Code>USD</Code>
+              <Description>United States Dollar</Description>
+            </PostingCurrency>
+            <PostingDate>2020-10-05T02:09:00</PostingDate>
+            <PostingPeriod>202010</PostingPeriod>
+          </PostingJournalDetail>
+          <PostingJournalDetail>
+            <CreditGLAccount>
+              <AccountCode>4030.10.10</AccountCode>
+              <Description>Non Passthrough Rev Actual</Description>
+            </CreditGLAccount>
+            <DebitGLAccount>
+              <AccountCode>1215.00.00</AccountCode>
+              <Description>Revenue Suspense Control Account</Description>
+            </DebitGLAccount>
+            <PostingAmount>5000.0000</PostingAmount>
+            <PostingCurrency>
+              <Code>USD</Code>
+              <Description>United States Dollar</Description>
+            </PostingCurrency>
+            <PostingDate>2020-10-05T02:09:00</PostingDate>
+            <PostingPeriod>202010</PostingPeriod>
+          </PostingJournalDetail>
+        </PostingJournalDetailCollection>
+      </PostingJournal>
+    </PostingJournalCollection>
+
+    <MilestoneCollection>
+      <Milestone>
+        <Description>Invoiced Posted</Description>
+        <EventCode>ADD</EventCode>
+        <Sequence>2</Sequence>
+        <ActualDate>2020-10-05T02:09:11.977</ActualDate>
+        <ConditionReference></ConditionReference>
+        <ConditionType></ConditionType>
+        <EstimatedDate></EstimatedDate>
+      </Milestone>
+      <Milestone>
+        <Description>Broker Invoice Created</Description>
+        <EventCode>DDA</EventCode>
+        <Sequence>3</Sequence>
+        <ActualDate></ActualDate>
+        <ConditionReference>INV*INV*</ConditionReference>
+        <ConditionType>RFW</ConditionType>
+        <EstimatedDate></EstimatedDate>
+      </Milestone>
+    </MilestoneCollection>
+
+    <ShipmentCollection>
+      <Shipment>
+        <DataContext>
+          <DataSourceCollection>
+            <DataSource>
+              <Type>ForwardingConsol</Type>
+              <Key>C00001055</Key>
+            </DataSource>
+            <DataSource>
+              <Type>ForwardingShipment</Type>
+              <Key>S00001072</Key>
+            </DataSource>
+          </DataSourceCollection>
+        </DataContext>
+
+        <AgentsReference></AgentsReference>
+        <AWBServiceLevel>
+          <Code>STD</Code>
+          <Description>Standard</Description>
+        </AWBServiceLevel>
+        <BookingConfirmationReference></BookingConfirmationReference>
+        <ChargeableRate>0.0000</ChargeableRate>
+        <ContainerCount>2</ContainerCount>
+        <ContainerMode>
+          <Code>FCL</Code>
+          <Description>Full Container Load</Description>
+        </ContainerMode>
+        <DocumentedChargeable>48.54</DocumentedChargeable>
+        <DocumentedVolume>48.54</DocumentedVolume>
+        <DocumentedWeight>5832.2</DocumentedWeight>
+        <FreightRate>0.0000</FreightRate>
+        <FreightRateCurrency>
+          <Code>USD</Code>
+          <Description>United States Dollar</Description>
+        </FreightRateCurrency>
+        <IsCFSRegistered>false</IsCFSRegistered>
+        <IsDirectBooking>false</IsDirectBooking>
+        <IsForwardRegistered>true</IsForwardRegistered>
+        <IsNeutralMaster>false</IsNeutralMaster>
+        <LloydsIMO>9462017</LloydsIMO>
+        <ManifestedChargeable>48.54</ManifestedChargeable>
+        <ManifestedVolume>48.54</ManifestedVolume>
+        <ManifestedWeight>5832.2</ManifestedWeight>
+        <NoCopyBills>3</NoCopyBills>
+        <NoOriginalBills>3</NoOriginalBills>
+        <OuterPacks>0</OuterPacks>
+        <PaymentMethod>
+          <Code>CCX</Code>
+          <Description>Collect</Description>
+        </PaymentMethod>
+        <PlaceOfDelivery>
+          <Code>USLAX</Code>
+          <Name>Los Angeles</Name>
+        </PlaceOfDelivery>
+        <PlaceOfIssue>
+          <Code>USZZZ</Code>
+          <Name>Sunrise Beach</Name>
+        </PlaceOfIssue>
+        <PlaceOfReceipt>
+          <Code>MMRGN</Code>
+          <Name>Yangon</Name>
+        </PlaceOfReceipt>
+        <PortFirstForeign>
+          <Code></Code>
+        </PortFirstForeign>
+        <PortLastForeign>
+          <Code>MMRGN</Code>
+          <Name>Yangon</Name>
+        </PortLastForeign>
+        <PortOfDischarge>
+          <Code>USLAX</Code>
+          <Name>Los Angeles</Name>
+        </PortOfDischarge>
+        <PortOfFirstArrival>
+          <Code></Code>
+        </PortOfFirstArrival>
+        <PortOfLoading>
+          <Code>MMRGN</Code>
+          <Name>Yangon</Name>
+        </PortOfLoading>
+        <ReceivingForwarderHandlingType>
+          <Code></Code>
+        </ReceivingForwarderHandlingType>
+        <ReleaseType>
+          <Code></Code>
+        </ReleaseType>
+        <RequiresTemperatureControl>false</RequiresTemperatureControl>
+        <ScreeningStatus>
+          <Code>NOT</Code>
+          <Description>Not Screened</Description>
+        </ScreeningStatus>
+        <SendingForwarderHandlingType>
+          <Code></Code>
+        </SendingForwarderHandlingType>
+        <ShipmentType>
+          <Code>AGT</Code>
+          <Description>Agent</Description>
+        </ShipmentType>
+        <TotalNoOfPacks>503</TotalNoOfPacks>
+        <TotalNoOfPacksPackageType>
+          <Code>PKG</Code>
+          <Description>Package</Description>
+        </TotalNoOfPacksPackageType>
+        <TotalPreallocatedChargeable>0.000</TotalPreallocatedChargeable>
+        <TotalPreallocatedVolume>0.000</TotalPreallocatedVolume>
+        <TotalPreallocatedVolumeUnit>
+          <Code></Code>
+        </TotalPreallocatedVolumeUnit>
+        <TotalPreallocatedWeight>0.000</TotalPreallocatedWeight>
+        <TotalPreallocatedWeightUnit>
+          <Code></Code>
+        </TotalPreallocatedWeightUnit>
+        <TotalVolume>48.54</TotalVolume>
+        <TotalVolumeUnit>
+          <Code>M3</Code>
+          <Description>Cubic Meters</Description>
+        </TotalVolumeUnit>
+        <TotalWeight>5832.2</TotalWeight>
+        <TotalWeightUnit>
+          <Code>KG</Code>
+          <Description>Kilograms</Description>
+        </TotalWeightUnit>
+        <TransportMode>
+          <Code>SEA</Code>
+          <Description>Sea Freight</Description>
+        </TransportMode>
+        <VesselName>APL SOUTHAMPTON</VesselName>
+        <VoyageFlightNo>XXX</VoyageFlightNo>
+        <WayBillNumber>OOLU2644412460</WayBillNumber>
+        <WayBillType>
+          <Code>MWB</Code>
+          <Description>Master Waybill</Description>
+        </WayBillType>
+
+        <ContainerCollection Content="Complete">
+          <Container>
+            <AirVentFlow>0.0</AirVentFlow>
+            <AirVentFlowRateUnit>
+              <Code></Code>
+            </AirVentFlowRateUnit>
+            <ArrivalCarrierDetentionCost>0.0000</ArrivalCarrierDetentionCost>
+            <ArrivalCarrierDetentionDays>0</ArrivalCarrierDetentionDays>
+            <ArrivalCartageAdvised></ArrivalCartageAdvised>
+            <ArrivalCartageComplete></ArrivalCartageComplete>
+            <ArrivalCartageDemurrageCharge>0</ArrivalCartageDemurrageCharge>
+            <ArrivalCartageDemurrageTime></ArrivalCartageDemurrageTime>
+            <ArrivalCartageRef></ArrivalCartageRef>
+            <ArrivalCTOStorageCost>0</ArrivalCTOStorageCost>
+            <ArrivalCTOStorageDays>0</ArrivalCTOStorageDays>
+            <ArrivalCTOStorageStartDate></ArrivalCTOStorageStartDate>
+            <ArrivalDeliveryRequiredBy></ArrivalDeliveryRequiredBy>
+            <ArrivalEstimatedDelivery></ArrivalEstimatedDelivery>
+            <ArrivalPickupByRail>false</ArrivalPickupByRail>
+            <ArrivalSlotDateTime></ArrivalSlotDateTime>
+            <ArrivalSlotReference></ArrivalSlotReference>
+            <ArrivalTruckWaitCost>0</ArrivalTruckWaitCost>
+            <ArrivalTruckWaitTime></ArrivalTruckWaitTime>
+            <Commodity>
+              <Code></Code>
+            </Commodity>
+            <ContainerCount>1</ContainerCount>
+            <ContainerDetentionCharge>0.0000</ContainerDetentionCharge>
+            <ContainerDetentionDays>0</ContainerDetentionDays>
+            <ContainerImportDORelease></ContainerImportDORelease>
+            <ContainerNumber>OOCU4721325</ContainerNumber>
+            <ContainerParkEmptyPickupGateOut></ContainerParkEmptyPickupGateOut>
+            <ContainerParkEmptyReturnGateIn>2020-10-02T14:00:00</ContainerParkEmptyReturnGateIn>
+            <ContainerQuality>
+              <Code></Code>
+            </ContainerQuality>
+            <ContainerStatus>
+              <Code></Code>
+            </ContainerStatus>
+            <ContainerType>
+              <Code>40GP</Code>
+              <Category>
+                <Code>DRY</Code>
+                <Description>Dry Storage</Description>
+              </Category>
+              <Description>Forty foot general purpose</Description>
+              <ISOCode>42G0</ISOCode>
+            </ContainerType>
+            <DeliveryMode>CY/CY</DeliveryMode>
+            <DeliverySequence>0</DeliverySequence>
+            <DepartureCartageAdvised></DepartureCartageAdvised>
+            <DepartureCartageComplete></DepartureCartageComplete>
+            <DepartureCartageDemurrageCharge>0.0000</DepartureCartageDemurrageCharge>
+            <DepartureCartageDemurrageTime></DepartureCartageDemurrageTime>
+            <DepartureCartageRef></DepartureCartageRef>
+            <DepartureDeliveryByRail>false</DepartureDeliveryByRail>
+            <DepartureDockReceipt></DepartureDockReceipt>
+            <DepartureEstimatedPickup></DepartureEstimatedPickup>
+            <DepartureSlotDateTime></DepartureSlotDateTime>
+            <DepartureSlotReference></DepartureSlotReference>
+            <DepartureTruckWaitCost>0.0000</DepartureTruckWaitCost>
+            <DepartureTruckWaitTime></DepartureTruckWaitTime>
+            <DunnageWeight>0.000</DunnageWeight>
+            <EmptyReadyForReturn></EmptyReadyForReturn>
+            <EmptyRequired></EmptyRequired>
+            <EmptyReturnedBy></EmptyReturnedBy>
+            <EmptyReturnRef></EmptyReturnRef>
+            <ExportDepotCustomsReference></ExportDepotCustomsReference>
+            <FCL_LCL_AIR>
+              <Code>FCL</Code>
+              <Description>Full Container Load</Description>
+            </FCL_LCL_AIR>
+            <FCLAvailable></FCLAvailable>
+            <FCLHeldInTransitStaging>false</FCLHeldInTransitStaging>
+            <FCLOnBoardVessel></FCLOnBoardVessel>
+            <FCLStorageArrivedUnderbond>false</FCLStorageArrivedUnderbond>
+            <FCLStorageCharge>0</FCLStorageCharge>
+            <FCLStorageCommences></FCLStorageCommences>
+            <FCLStorageDays>0</FCLStorageDays>
+            <FCLStorageModuleOnlyMaster></FCLStorageModuleOnlyMaster>
+            <FCLStorageUnderbondCleared></FCLStorageUnderbondCleared>
+            <FCLUnloadFromVessel></FCLUnloadFromVessel>
+            <FCLWharfGateIn></FCLWharfGateIn>
+            <FCLWharfGateOut></FCLWharfGateOut>
+            <GoodsValue>0.0000</GoodsValue>
+            <GoodsValueCurrency>
+              <Code></Code>
+            </GoodsValueCurrency>
+            <GoodsWeight>5773.2</GoodsWeight>
+            <GrossWeight>9603.200</GrossWeight>
+            <GrossWeightVerificationType>
+              <Code>NON</Code>
+              <Description>Not Verified</Description>
+            </GrossWeightVerificationType>
+            <HumidityPercent>0</HumidityPercent>
+            <IsCFSRegistered>false</IsCFSRegistered>
+            <IsControlledAtmosphere>false</IsControlledAtmosphere>
+            <IsDamaged>false</IsDamaged>
+            <IsEmptyContainer>false</IsEmptyContainer>
+            <IsSealOk>true</IsSealOk>
+            <IsShipperOwned>false</IsShipperOwned>
+            <LCLAvailable></LCLAvailable>
+            <LCLStorageCommences></LCLStorageCommences>
+            <LCLUnpack></LCLUnpack>
+            <LengthUnit>
+              <Code>FT</Code>
+              <Description>Feet</Description>
+            </LengthUnit>
+            <Link>1</Link>
+            <OverhangBack>0.000</OverhangBack>
+            <OverhangFront>0</OverhangFront>
+            <OverhangHeight>0</OverhangHeight>
+            <OverhangLeft>0</OverhangLeft>
+            <OverhangRight>0.000</OverhangRight>
+            <OverrideFCLAvailableStorage>false</OverrideFCLAvailableStorage>
+            <OverrideLCLAvailableStorage>false</OverrideLCLAvailableStorage>
+            <PackDate></PackDate>
+            <RefrigGeneratorID></RefrigGeneratorID>
+            <ReleaseNum></ReleaseNum>
+            <Seal>OOLGDH4605</Seal>
+            <SealPartyType>
+              <Code></Code>
+            </SealPartyType>
+            <SecondSeal></SecondSeal>
+            <SecondSealPartyType>
+              <Code></Code>
+            </SecondSealPartyType>
+            <SetPointTemp>0.000</SetPointTemp>
+            <SetPointTempUnit></SetPointTempUnit>
+            <StowagePosition></StowagePosition>
+            <TareWeight>3830.000</TareWeight>
+            <TempRecorderSerialNo></TempRecorderSerialNo>
+            <ThirdSeal></ThirdSeal>
+            <ThirdSealPartyType>
+              <Code></Code>
+            </ThirdSealPartyType>
+            <TotalHeight>8.500</TotalHeight>
+            <TotalLength>40.000</TotalLength>
+            <TotalWidth>8.000</TotalWidth>
+            <TrainWagonNumber></TrainWagonNumber>
+            <UnpackGang></UnpackGang>
+            <UnpackShed></UnpackShed>
+            <VolumeCapacity>0.000</VolumeCapacity>
+            <VolumeUnit>
+              <Code>M3</Code>
+              <Description>Cubic Meters</Description>
+            </VolumeUnit>
+            <WeightCapacity>0.000</WeightCapacity>
+            <WeightUnit>
+              <Code>KG</Code>
+              <Description>Kilograms</Description>
+            </WeightUnit>
+
+            <ContainerPenaltyCollection>
+              <ContainerPenalty>
+                <CreditorType>
+                  <Code>CAR</Code>
+                  <Description>Carrier</Description>
+                </CreditorType>
+                <Currency>
+                  <Code>USD</Code>
+                  <Description>United States Dollar</Description>
+                </Currency>
+                <Duration>2020-01-01T00:00:00</Duration>
+                <FreeTime></FreeTime>
+                <Location>
+                  <Code>USLAX</Code>
+                  <Name>Los Angeles</Name>
+                </Location>
+                <PenaltyType>
+                  <Code>DET</Code>
+                  <Description>Detention</Description>
+                </PenaltyType>
+                <PerUnitCost>0.0000</PerUnitCost>
+                <TimeUnit>Days</TimeUnit>
+                <TotalCost>0.0000</TotalCost>
+              </ContainerPenalty>
+            </ContainerPenaltyCollection>
+          </Container>
+          <Container>
+            <AirVentFlow>0.0</AirVentFlow>
+            <AirVentFlowRateUnit>
+              <Code></Code>
+            </AirVentFlowRateUnit>
+            <ArrivalCarrierDetentionCost>0</ArrivalCarrierDetentionCost>
+            <ArrivalCarrierDetentionDays>0</ArrivalCarrierDetentionDays>
+            <ArrivalCartageAdvised></ArrivalCartageAdvised>
+            <ArrivalCartageComplete></ArrivalCartageComplete>
+            <ArrivalCartageDemurrageCharge>0</ArrivalCartageDemurrageCharge>
+            <ArrivalCartageDemurrageTime></ArrivalCartageDemurrageTime>
+            <ArrivalCartageRef></ArrivalCartageRef>
+            <ArrivalCTOStorageCost>0</ArrivalCTOStorageCost>
+            <ArrivalCTOStorageDays>0</ArrivalCTOStorageDays>
+            <ArrivalCTOStorageStartDate></ArrivalCTOStorageStartDate>
+            <ArrivalDeliveryRequiredBy></ArrivalDeliveryRequiredBy>
+            <ArrivalEstimatedDelivery></ArrivalEstimatedDelivery>
+            <ArrivalPickupByRail>false</ArrivalPickupByRail>
+            <ArrivalSlotDateTime></ArrivalSlotDateTime>
+            <ArrivalSlotReference></ArrivalSlotReference>
+            <ArrivalTruckWaitCost>0</ArrivalTruckWaitCost>
+            <ArrivalTruckWaitTime></ArrivalTruckWaitTime>
+            <Commodity>
+              <Code></Code>
+            </Commodity>
+            <ContainerCount>1</ContainerCount>
+            <ContainerDetentionCharge>0</ContainerDetentionCharge>
+            <ContainerDetentionDays>0</ContainerDetentionDays>
+            <ContainerImportDORelease></ContainerImportDORelease>
+            <ContainerNumber>OOCU4721330</ContainerNumber>
+            <ContainerParkEmptyPickupGateOut></ContainerParkEmptyPickupGateOut>
+            <ContainerParkEmptyReturnGateIn></ContainerParkEmptyReturnGateIn>
+            <ContainerQuality>
+              <Code></Code>
+            </ContainerQuality>
+            <ContainerStatus>
+              <Code></Code>
+            </ContainerStatus>
+            <ContainerType>
+              <Code>40GP</Code>
+              <Category>
+                <Code>DRY</Code>
+                <Description>Dry Storage</Description>
+              </Category>
+              <Description>Forty foot general purpose</Description>
+              <ISOCode>42G0</ISOCode>
+            </ContainerType>
+            <DeliveryMode>CY/CY</DeliveryMode>
+            <DeliverySequence>0</DeliverySequence>
+            <DepartureCartageAdvised></DepartureCartageAdvised>
+            <DepartureCartageComplete></DepartureCartageComplete>
+            <DepartureCartageDemurrageCharge>0.0000</DepartureCartageDemurrageCharge>
+            <DepartureCartageDemurrageTime></DepartureCartageDemurrageTime>
+            <DepartureCartageRef></DepartureCartageRef>
+            <DepartureDeliveryByRail>false</DepartureDeliveryByRail>
+            <DepartureDockReceipt></DepartureDockReceipt>
+            <DepartureEstimatedPickup></DepartureEstimatedPickup>
+            <DepartureSlotDateTime></DepartureSlotDateTime>
+            <DepartureSlotReference></DepartureSlotReference>
+            <DepartureTruckWaitCost>0.0000</DepartureTruckWaitCost>
+            <DepartureTruckWaitTime></DepartureTruckWaitTime>
+            <DunnageWeight>0.000</DunnageWeight>
+            <EmptyReadyForReturn></EmptyReadyForReturn>
+            <EmptyRequired></EmptyRequired>
+            <EmptyReturnedBy></EmptyReturnedBy>
+            <EmptyReturnRef></EmptyReturnRef>
+            <ExportDepotCustomsReference></ExportDepotCustomsReference>
+            <FCL_LCL_AIR>
+              <Code>FCL</Code>
+              <Description>Full Container Load</Description>
+            </FCL_LCL_AIR>
+            <FCLAvailable></FCLAvailable>
+            <FCLHeldInTransitStaging>false</FCLHeldInTransitStaging>
+            <FCLOnBoardVessel></FCLOnBoardVessel>
+            <FCLStorageArrivedUnderbond>false</FCLStorageArrivedUnderbond>
+            <FCLStorageCharge>0</FCLStorageCharge>
+            <FCLStorageCommences></FCLStorageCommences>
+            <FCLStorageDays>0</FCLStorageDays>
+            <FCLStorageModuleOnlyMaster></FCLStorageModuleOnlyMaster>
+            <FCLStorageUnderbondCleared></FCLStorageUnderbondCleared>
+            <FCLUnloadFromVessel></FCLUnloadFromVessel>
+            <FCLWharfGateIn></FCLWharfGateIn>
+            <FCLWharfGateOut></FCLWharfGateOut>
+            <GoodsValue>0.0000</GoodsValue>
+            <GoodsValueCurrency>
+              <Code></Code>
+            </GoodsValueCurrency>
+            <GoodsWeight>59</GoodsWeight>
+            <GrossWeight>3889.000</GrossWeight>
+            <GrossWeightVerificationType>
+              <Code>NON</Code>
+              <Description>Not Verified</Description>
+            </GrossWeightVerificationType>
+            <HumidityPercent>0</HumidityPercent>
+            <IsCFSRegistered>false</IsCFSRegistered>
+            <IsControlledAtmosphere>false</IsControlledAtmosphere>
+            <IsDamaged>false</IsDamaged>
+            <IsEmptyContainer>false</IsEmptyContainer>
+            <IsSealOk>true</IsSealOk>
+            <IsShipperOwned>false</IsShipperOwned>
+            <LCLAvailable></LCLAvailable>
+            <LCLStorageCommences></LCLStorageCommences>
+            <LCLUnpack></LCLUnpack>
+            <LengthUnit>
+              <Code>FT</Code>
+              <Description>Feet</Description>
+            </LengthUnit>
+            <Link>2</Link>
+            <OverhangBack>0.000</OverhangBack>
+            <OverhangFront>0</OverhangFront>
+            <OverhangHeight>0</OverhangHeight>
+            <OverhangLeft>0</OverhangLeft>
+            <OverhangRight>0.000</OverhangRight>
+            <OverrideFCLAvailableStorage>false</OverrideFCLAvailableStorage>
+            <OverrideLCLAvailableStorage>false</OverrideLCLAvailableStorage>
+            <PackDate></PackDate>
+            <RefrigGeneratorID></RefrigGeneratorID>
+            <ReleaseNum></ReleaseNum>
+            <Seal></Seal>
+            <SealPartyType>
+              <Code></Code>
+            </SealPartyType>
+            <SecondSeal></SecondSeal>
+            <SecondSealPartyType>
+              <Code></Code>
+            </SecondSealPartyType>
+            <SetPointTemp>0.000</SetPointTemp>
+            <SetPointTempUnit></SetPointTempUnit>
+            <StowagePosition></StowagePosition>
+            <TareWeight>3830.000</TareWeight>
+            <TempRecorderSerialNo></TempRecorderSerialNo>
+            <ThirdSeal></ThirdSeal>
+            <ThirdSealPartyType>
+              <Code></Code>
+            </ThirdSealPartyType>
+            <TotalHeight>8.500</TotalHeight>
+            <TotalLength>40.000</TotalLength>
+            <TotalWidth>8.000</TotalWidth>
+            <TrainWagonNumber></TrainWagonNumber>
+            <UnpackGang></UnpackGang>
+            <UnpackShed></UnpackShed>
+            <VolumeCapacity>0.000</VolumeCapacity>
+            <VolumeUnit>
+              <Code>M3</Code>
+              <Description>Cubic Meters</Description>
+            </VolumeUnit>
+            <WeightCapacity>0.000</WeightCapacity>
+            <WeightUnit>
+              <Code>KG</Code>
+              <Description>Kilograms</Description>
+            </WeightUnit>
+          </Container>
+        </ContainerCollection>
+
+        <DateCollection>
+          <Date>
+            <Type>ShippedOnBoard</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+          <Date>
+            <Type>BillIssued</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+          <Date>
+            <Type>FirstArrivalInCountry</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+          <Date>
+            <Type>FirstForeignArrival</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+          <Date>
+            <Type>LastForeignDeparture</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value>2020-08-17T00:00:00</Value>
+          </Date>
+          <Date>
+            <Type>CutOffDate</Type>
+            <IsEstimate>false</IsEstimate>
+            <Value></Value>
+          </Date>
+        </DateCollection>
+
+        <OrganizationAddressCollection>
+          <OrganizationAddress>
+            <AddressType>Creditor</AddressType>
+            <Address1>CHICAGO</Address1>
+            <Address2></Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>CHICAGO</AddressShortCode>
+            <City>CHICAGO</City>
+            <CompanyName>OOCL (USA) INC.</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <OrganizationCode>OOLU</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USZZZ</Code>
+              <Name>Sunrise Beach</Name>
+            </Port>
+            <Postcode>60674</Postcode>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <State>IL</State>
+
+            <RegistrationNumberCollection>
+              <RegistrationNumber>
+                <Type>
+                  <Code>LSC</Code>
+                  <Description>Legacy System Code</Description>
+                </Type>
+                <CountryOfIssue>
+                  <Code>US</Code>
+                  <Name>United States</Name>
+                </CountryOfIssue>
+                <Value>OOC01</Value>
+              </RegistrationNumber>
+            </RegistrationNumberCollection>
+          </OrganizationAddress>
+          <OrganizationAddress>
+            <AddressType>ReceivingForwarderAddress</AddressType>
+            <Address1>100 WALNUT AVE STE 600</Address1>
+            <Address2></Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>100 WALNUT AVE STE 600</AddressShortCode>
+            <City>CLARK</City>
+            <CompanyName>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <OrganizationCode>VANLOGEWR</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USEWR</Code>
+              <Name>Newark</Name>
+            </Port>
+            <Postcode>07066</Postcode>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <State>NJ</State>
+          </OrganizationAddress>
+          <OrganizationAddress>
+            <AddressType>ShippingLineAddress</AddressType>
+            <Address1>CHICAGO</Address1>
+            <Address2></Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>CHICAGO</AddressShortCode>
+            <City>CHICAGO</City>
+            <CompanyName>OOCL (USA) INC.</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <OrganizationCode>OOLU</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USZZZ</Code>
+              <Name>Sunrise Beach</Name>
+            </Port>
+            <Postcode>60674</Postcode>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <State>IL</State>
+
+            <RegistrationNumberCollection>
+              <RegistrationNumber>
+                <Type>
+                  <Code>LSC</Code>
+                  <Description>Legacy System Code</Description>
+                </Type>
+                <CountryOfIssue>
+                  <Code>US</Code>
+                  <Name>United States</Name>
+                </CountryOfIssue>
+                <Value>OOC01</Value>
+              </RegistrationNumber>
+            </RegistrationNumberCollection>
+          </OrganizationAddress>
+          <OrganizationAddress>
+            <AddressType>ArrivalCTOAddress</AddressType>
+            <Address1>614 TERMINAL WAY</Address1>
+            <Address2>TERMINAL ISLAND</Address2>
+            <AddressOverride>false</AddressOverride>
+            <AddressShortCode>614 TERMINAL WAY</AddressShortCode>
+            <City>LONG BEACH</City>
+            <CompanyName>AMERICAN PRESIDENT LINES TERMINAL</CompanyName>
+            <Country>
+              <Code>US</Code>
+              <Name>United States</Name>
+            </Country>
+            <Email></Email>
+            <Fax></Fax>
+            <OrganizationCode>Y257</OrganizationCode>
+            <Phone></Phone>
+            <Port>
+              <Code>USLGB</Code>
+              <Name>Long Beach</Name>
+            </Port>
+            <Postcode>90731</Postcode>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <State>CA</State>
+
+            <RegistrationNumberCollection>
+              <RegistrationNumber>
+                <Type>
+                  <Code>FRM</Code>
+                  <Description>FIRMS Code</Description>
+                </Type>
+                <CountryOfIssue>
+                  <Code>US</Code>
+                  <Name>United States</Name>
+                </CountryOfIssue>
+                <Value>Y257</Value>
+              </RegistrationNumber>
+            </RegistrationNumberCollection>
+          </OrganizationAddress>
+        </OrganizationAddressCollection>
+
+        <SubShipmentCollection>
+          <SubShipment>
+            <DataContext>
+              <DataSourceCollection>
+                <DataSource>
+                  <Type>ForwardingShipment</Type>
+                  <Key>S00001072</Key>
+                </DataSource>
+              </DataSourceCollection>
+            </DataContext>
+
+            <ActualChargeable>47.540</ActualChargeable>
+            <AdditionalTerms></AdditionalTerms>
+            <BookingConfirmationReference></BookingConfirmationReference>
+            <CartageWaybillNumber></CartageWaybillNumber>
+            <CFSReference></CFSReference>
+            <ContainerCount>1</ContainerCount>
+            <ContainerMode>
+              <Code>FCL</Code>
+              <Description>Full Container Load</Description>
+            </ContainerMode>
+            <DocumentedChargeable>47.540</DocumentedChargeable>
+            <DocumentedVolume>47.540</DocumentedVolume>
+            <DocumentedWeight>5773.200</DocumentedWeight>
+            <FreightRate>0.0000</FreightRate>
+            <FreightRateCurrency>
+              <Code></Code>
+            </FreightRateCurrency>
+            <GoodsDescription>shoes</GoodsDescription>
+            <GoodsValue>0.0000</GoodsValue>
+            <GoodsValueCurrency>
+              <Code>USD</Code>
+              <Description>United States Dollar</Description>
+            </GoodsValueCurrency>
+            <HBLAWBChargesDisplay>
+              <Code>SHW</Code>
+              <Description>Show Collect Charges</Description>
+            </HBLAWBChargesDisplay>
+            <HBLContainerPackModeOverride></HBLContainerPackModeOverride>
+            <HouseBillOfLadingType>
+              <Code>IAU</Code>
+              <Description>IT Club Australia</Description>
+            </HouseBillOfLadingType>
+            <InsuranceValue>0.0000</InsuranceValue>
+            <InsuranceValueCurrency>
+              <Code>USD</Code>
+              <Description>United States Dollar</Description>
+            </InsuranceValueCurrency>
+            <InterimReceiptNumber></InterimReceiptNumber>
+            <IsBooking>false</IsBooking>
+            <IsCancelled>false</IsCancelled>
+            <IsCFSRegistered>false</IsCFSRegistered>
+            <IsDirectBooking>false</IsDirectBooking>
+            <IsForwardRegistered>true</IsForwardRegistered>
+            <IsHighRisk>false</IsHighRisk>
+            <IsNeutralMaster>false</IsNeutralMaster>
+            <IsShipping>false</IsShipping>
+            <IsSplitShipment>false</IsSplitShipment>
+            <JobCosting>
+              <AccrualNotRecognized>0.0000</AccrualNotRecognized>
+              <AccrualRecognized>-4000.000000000</AccrualRecognized>
+              <AgentRevenue>5000.0000</AgentRevenue>
+              <Branch>
+                <Code>MA1</Code>
+                <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+              </Branch>
+              <Currency>
+                <Code>USD</Code>
+                <Description>United States Dollar</Description>
+              </Currency>
+              <Department>
+                <Code>FIS</Code>
+                <Name>Forwarding Import Sea</Name>
+              </Department>
+              <HomeBranch>
+                <Code>080</Code>
+                <Name>080 Damco Customs Services Inc.</Name>
+              </HomeBranch>
+              <LocalClientRevenue>5000.0000</LocalClientRevenue>
+              <OperationsStaff>
+                <Code>BCH</Code>
+                <Name>Bruce Chan</Name>
+              </OperationsStaff>
+              <OtherDebtorRevenue>0</OtherDebtorRevenue>
+              <TotalAccrual>-4000.000000000</TotalAccrual>
+              <TotalCost>0.000000000</TotalCost>
+              <TotalJobProfit>1000.000000000</TotalJobProfit>
+              <TotalRevenue>5000.000000000</TotalRevenue>
+              <TotalWIP>0.000000000</TotalWIP>
+              <WIPNotRecognized>0.0000</WIPNotRecognized>
+              <WIPRecognized>0.000000000</WIPRecognized>
+
+              <ChargeLineCollection>
+                <ChargeLine>
+                  <Branch>
+                    <Code>MA1</Code>
+                    <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+                  </Branch>
+                  <ChargeCode>
+                    <Code>0414</Code>
+                    <Description>E ***BBM TERMINAL HANDLING COST</Description>
+                  </ChargeCode>
+                  <ChargeCodeGroup>
+                    <Code>CSH</Code>
+                    <Description>CFS Shipment</Description>
+                  </ChargeCodeGroup>
+                  <CostExchangeRate>1.000000000</CostExchangeRate>
+                  <CostIsPosted>false</CostIsPosted>
+                  <CostLocalAmount>4000.0000</CostLocalAmount>
+                  <CostOSAmount>4000.0000</CostOSAmount>
+                  <CostOSCurrency>
+                    <Code>USD</Code>
+                    <Description>United States Dollar</Description>
+                  </CostOSCurrency>
+                  <CostOSGSTVATAmount>0</CostOSGSTVATAmount>
+                  <Debtor>
+                    <Type>Organization</Type>
+                    <Key>VANLOGEWR</Key>
+                  </Debtor>
+                  <Department>
+                    <Code>FIS</Code>
+                    <Name>Forwarding Import Sea</Name>
+                  </Department>
+                  <Description>E ***BBM TERMINAL HANDLING COST</Description>
+                  <DisplaySequence>1</DisplaySequence>
+                  <SellExchangeRate>1.000000000</SellExchangeRate>
+                  <SellInvoiceType>FIN</SellInvoiceType>
+                  <SellIsPosted>false</SellIsPosted>
+                  <SellLocalAmount>0.0000</SellLocalAmount>
+                  <SellOSAmount>0.0000</SellOSAmount>
+                  <SellOSCurrency>
+                    <Code>USD</Code>
+                    <Description>United States Dollar</Description>
+                  </SellOSCurrency>
+                  <SellOSGSTVATAmount>0</SellOSGSTVATAmount>
+
+                  <CostRatingBasisCollection>
+                  </CostRatingBasisCollection>
+
+                  <SellRatingBasisCollection>
+                  </SellRatingBasisCollection>
+                </ChargeLine>
+                <ChargeLine>
+                  <Branch>
+                    <Code>MA1</Code>
+                    <Name>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS IN</Name>
+                  </Branch>
+                  <ChargeCode>
+                    <Code>0514</Code>
+                    <Description>E TERMINAL HANDLING FEE</Description>
+                  </ChargeCode>
+                  <ChargeCodeGroup>
+                    <Code>CSH</Code>
+                    <Description>CFS Shipment</Description>
+                  </ChargeCodeGroup>
+                  <CostExchangeRate>1.000000000</CostExchangeRate>
+                  <CostIsPosted>false</CostIsPosted>
+                  <CostLocalAmount>0.0000</CostLocalAmount>
+                  <CostOSAmount>0.0000</CostOSAmount>
+                  <CostOSGSTVATAmount>0</CostOSGSTVATAmount>
+                  <Debtor>
+                    <Type>Organization</Type>
+                    <Key>VANLOGEWR</Key>
+                  </Debtor>
+                  <Department>
+                    <Code>FIS</Code>
+                    <Name>Forwarding Import Sea</Name>
+                  </Department>
+                  <Description>E TERMINAL HANDLING FEE</Description>
+                  <DisplaySequence>2</DisplaySequence>
+                  <SellExchangeRate>1.000000000</SellExchangeRate>
+                  <SellInvoiceType>FIN</SellInvoiceType>
+                  <SellIsPosted>true</SellIsPosted>
+                  <SellLocalAmount>5000.0000</SellLocalAmount>
+                  <SellOSAmount>5000.0000</SellOSAmount>
+                  <SellOSCurrency>
+                    <Code>USD</Code>
+                    <Description>United States Dollar</Description>
+                  </SellOSCurrency>
+                  <SellOSGSTVATAmount>0</SellOSGSTVATAmount>
+                  <SellPostedTransactionNumber>00001008</SellPostedTransactionNumber>
+                  <SellPostedTransactionType>INV</SellPostedTransactionType>
+
+                  <CostRatingBasisCollection>
+                  </CostRatingBasisCollection>
+
+                  <SellRatingBasisCollection>
+                  </SellRatingBasisCollection>
+                </ChargeLine>
+              </ChargeLineCollection>
+            </JobCosting>
+            <LloydsIMO>9462017</LloydsIMO>
+            <ManifestedChargeable>47.540</ManifestedChargeable>
+            <ManifestedVolume>47.540</ManifestedVolume>
+            <ManifestedWeight>5773.200</ManifestedWeight>
+            <NoCopyBills>1</NoCopyBills>
+            <NoOriginalBills>0</NoOriginalBills>
+            <OuterPacks>499</OuterPacks>
+            <OuterPacksPackageType>
+              <Code>CTN</Code>
+              <Description>Carton</Description>
+            </OuterPacksPackageType>
+            <PackingOrder>0</PackingOrder>
+            <PortOfDestination>
+              <Code>USBCT</Code>
+              <Name>Boca Raton</Name>
+            </PortOfDestination>
+            <PortOfDischarge>
+              <Code>USLAX</Code>
+              <Name>Los Angeles</Name>
+            </PortOfDischarge>
+            <PortOfFirstArrival>
+              <Code></Code>
+            </PortOfFirstArrival>
+            <PortOfLoading>
+              <Code>MMRGN</Code>
+              <Name>Yangon</Name>
+            </PortOfLoading>
+            <PortOfOrigin>
+              <Code>MMRGN</Code>
+              <Name>Yangon</Name>
+            </PortOfOrigin>
+            <ReleaseType>
+              <Code>EBL</Code>
+              <Description>Express Bill of Lading</Description>
+            </ReleaseType>
+            <ScreeningStatus>
+              <Code>NOT</Code>
+              <Description>Not Screened</Description>
+            </ScreeningStatus>
+            <ServiceLevel>
+              <Code>STD</Code>
+              <Description>Standard</Description>
+            </ServiceLevel>
+            <ShipmentIncoTerm>
+              <Code>FOB</Code>
+              <Description>Free On Board</Description>
+            </ShipmentIncoTerm>
+            <ShipmentType>
+              <Code>STD</Code>
+              <Description>Standard House</Description>
+            </ShipmentType>
+            <ShippedOnBoard>
+              <Code>SHP</Code>
+              <Description>Shipped</Description>
+            </ShippedOnBoard>
+            <ShipperCODAmount>0.0000</ShipperCODAmount>
+            <ShipperCODPayMethod>
+              <Code></Code>
+            </ShipperCODPayMethod>
+            <TotalNoOfPacks>0</TotalNoOfPacks>
+            <TotalNoOfPacksPackageType>
+              <Code>CTN</Code>
+              <Description>Carton</Description>
+            </TotalNoOfPacksPackageType>
+            <TotalVolume>47.540</TotalVolume>
+            <TotalVolumeUnit>
+              <Code>M3</Code>
+              <Description>Cubic Meters</Description>
+            </TotalVolumeUnit>
+            <TotalWeight>5773.200</TotalWeight>
+            <TotalWeightUnit>
+              <Code>KG</Code>
+              <Description>Kilograms</Description>
+            </TotalWeightUnit>
+            <TranshipToOtherCFS>false</TranshipToOtherCFS>
+            <TransportMode>
+              <Code>SEA</Code>
+              <Description>Sea Freight</Description>
+            </TransportMode>
+            <VesselName>APL SOUTHAMPTON</VesselName>
+            <VoyageFlightNo>XXX</VoyageFlightNo>
+            <WarehouseLocation></WarehouseLocation>
+            <WayBillNumber>SGN200147</WayBillNumber>
+            <WayBillType>
+              <Code>HWB</Code>
+              <Description>House Waybill</Description>
+            </WayBillType>
+
+            <LocalProcessing>
+              <ArrivalCartageRef></ArrivalCartageRef>
+              <DeliveryCartageAdvised></DeliveryCartageAdvised>
+              <DeliveryCartageCompleted></DeliveryCartageCompleted>
+              <DeliveryLabourCharge>0.0000</DeliveryLabourCharge>
+              <DeliveryLabourTime></DeliveryLabourTime>
+              <DeliveryRequiredBy></DeliveryRequiredBy>
+              <DeliveryTruckWaitCharge>0.0000</DeliveryTruckWaitCharge>
+              <DeliveryTruckWaitTime></DeliveryTruckWaitTime>
+              <DemurrageOnDeliveryCharge>0.0000</DemurrageOnDeliveryCharge>
+              <DemurrageOnDeliveryTime></DemurrageOnDeliveryTime>
+              <DemurrageOnPickupCharge>0.0000</DemurrageOnPickupCharge>
+              <DemurrageOnPickupTime></DemurrageOnPickupTime>
+              <EstimatedDelivery></EstimatedDelivery>
+              <EstimatedPickup></EstimatedPickup>
+              <ExportStatement>
+                <Code></Code>
+              </ExportStatement>
+              <FCLAvailable></FCLAvailable>
+              <FCLDeliveryEquipmentNeeded>
+                <Code>WUP</Code>
+                <Description>Wait for Pack/Unpack</Description>
+              </FCLDeliveryEquipmentNeeded>
+              <FCLPickupEquipmentNeeded>
+                <Code>WUP</Code>
+                <Description>Wait for Pack/Unpack</Description>
+              </FCLPickupEquipmentNeeded>
+              <FCLStorageCommences></FCLStorageCommences>
+              <HasProhibitedPackaging>false</HasProhibitedPackaging>
+              <InsuranceRequired>false</InsuranceRequired>
+              <IsContingencyRelease>false</IsContingencyRelease>
+              <LCLAirStorageCharge>0.0000</LCLAirStorageCharge>
+              <LCLAirStorageDaysOrHours>0</LCLAirStorageDaysOrHours>
+              <LCLAvailable></LCLAvailable>
+              <LCLDatesOverrideConsol>false</LCLDatesOverrideConsol>
+              <LCLStorageCommences></LCLStorageCommences>
+              <PickupCartageAdvised></PickupCartageAdvised>
+              <PickupCartageCompleted></PickupCartageCompleted>
+              <PickupLabourCharge>0.0000</PickupLabourCharge>
+              <PickupLabourTime></PickupLabourTime>
+              <PickupRequiredBy></PickupRequiredBy>
+              <PickupTruckWaitCharge>0.0000</PickupTruckWaitCharge>
+              <PickupTruckWaitTime></PickupTruckWaitTime>
+              <PrintOptionForPackagesOnAWB>
+                <Code>DEF</Code>
+                <Description>Default (Dims, fallback to Vol)</Description>
+              </PrintOptionForPackagesOnAWB>
+            </LocalProcessing>
+
+            <ContainerCollection Content="Complete">
+              <Container>
+                <AirVentFlow>0.0</AirVentFlow>
+                <AirVentFlowRateUnit>
+                  <Code></Code>
+                </AirVentFlowRateUnit>
+                <ArrivalCarrierDetentionCost>0.0000</ArrivalCarrierDetentionCost>
+                <ArrivalCarrierDetentionDays>0</ArrivalCarrierDetentionDays>
+                <ArrivalCartageAdvised></ArrivalCartageAdvised>
+                <ArrivalCartageComplete></ArrivalCartageComplete>
+                <ArrivalCartageDemurrageCharge>0</ArrivalCartageDemurrageCharge>
+                <ArrivalCartageDemurrageTime></ArrivalCartageDemurrageTime>
+                <ArrivalCartageRef></ArrivalCartageRef>
+                <ArrivalCTOStorageCost>0</ArrivalCTOStorageCost>
+                <ArrivalCTOStorageDays>0</ArrivalCTOStorageDays>
+                <ArrivalCTOStorageStartDate></ArrivalCTOStorageStartDate>
+                <ArrivalDeliveryRequiredBy></ArrivalDeliveryRequiredBy>
+                <ArrivalEstimatedDelivery></ArrivalEstimatedDelivery>
+                <ArrivalPickupByRail>false</ArrivalPickupByRail>
+                <ArrivalSlotDateTime></ArrivalSlotDateTime>
+                <ArrivalSlotReference></ArrivalSlotReference>
+                <ArrivalTruckWaitCost>0</ArrivalTruckWaitCost>
+                <ArrivalTruckWaitTime></ArrivalTruckWaitTime>
+                <Commodity>
+                  <Code></Code>
+                </Commodity>
+                <ContainerCount>1</ContainerCount>
+                <ContainerDetentionCharge>0.0000</ContainerDetentionCharge>
+                <ContainerDetentionDays>0</ContainerDetentionDays>
+                <ContainerImportDORelease></ContainerImportDORelease>
+                <ContainerNumber>OOCU4721325</ContainerNumber>
+                <ContainerParkEmptyPickupGateOut></ContainerParkEmptyPickupGateOut>
+                <ContainerParkEmptyReturnGateIn>2020-10-02T14:00:00</ContainerParkEmptyReturnGateIn>
+                <ContainerQuality>
+                  <Code></Code>
+                </ContainerQuality>
+                <ContainerStatus>
+                  <Code></Code>
+                </ContainerStatus>
+                <ContainerType>
+                  <Code>40GP</Code>
+                  <Category>
+                    <Code>DRY</Code>
+                    <Description>Dry Storage</Description>
+                  </Category>
+                  <Description>Forty foot general purpose</Description>
+                  <ISOCode>42G0</ISOCode>
+                </ContainerType>
+                <DeliveryMode>CY/CY</DeliveryMode>
+                <DeliverySequence>0</DeliverySequence>
+                <DepartureCartageAdvised></DepartureCartageAdvised>
+                <DepartureCartageComplete></DepartureCartageComplete>
+                <DepartureCartageDemurrageCharge>0.0000</DepartureCartageDemurrageCharge>
+                <DepartureCartageDemurrageTime></DepartureCartageDemurrageTime>
+                <DepartureCartageRef></DepartureCartageRef>
+                <DepartureDeliveryByRail>false</DepartureDeliveryByRail>
+                <DepartureDockReceipt></DepartureDockReceipt>
+                <DepartureEstimatedPickup></DepartureEstimatedPickup>
+                <DepartureSlotDateTime></DepartureSlotDateTime>
+                <DepartureSlotReference></DepartureSlotReference>
+                <DepartureTruckWaitCost>0.0000</DepartureTruckWaitCost>
+                <DepartureTruckWaitTime></DepartureTruckWaitTime>
+                <DunnageWeight>0.000</DunnageWeight>
+                <EmptyReadyForReturn></EmptyReadyForReturn>
+                <EmptyRequired></EmptyRequired>
+                <EmptyReturnedBy></EmptyReturnedBy>
+                <EmptyReturnRef></EmptyReturnRef>
+                <ExportDepotCustomsReference></ExportDepotCustomsReference>
+                <FCL_LCL_AIR>
+                  <Code>FCL</Code>
+                  <Description>Full Container Load</Description>
+                </FCL_LCL_AIR>
+                <FCLAvailable></FCLAvailable>
+                <FCLHeldInTransitStaging>false</FCLHeldInTransitStaging>
+                <FCLOnBoardVessel></FCLOnBoardVessel>
+                <FCLStorageArrivedUnderbond>false</FCLStorageArrivedUnderbond>
+                <FCLStorageCharge>0</FCLStorageCharge>
+                <FCLStorageCommences></FCLStorageCommences>
+                <FCLStorageDays>0</FCLStorageDays>
+                <FCLStorageModuleOnlyMaster></FCLStorageModuleOnlyMaster>
+                <FCLStorageUnderbondCleared></FCLStorageUnderbondCleared>
+                <FCLUnloadFromVessel></FCLUnloadFromVessel>
+                <FCLWharfGateIn></FCLWharfGateIn>
+                <FCLWharfGateOut></FCLWharfGateOut>
+                <GoodsValue>0.0000</GoodsValue>
+                <GoodsValueCurrency>
+                  <Code></Code>
+                </GoodsValueCurrency>
+                <GoodsWeight>5773.2</GoodsWeight>
+                <GrossWeight>9603.200</GrossWeight>
+                <GrossWeightVerificationType>
+                  <Code>NON</Code>
+                  <Description>Not Verified</Description>
+                </GrossWeightVerificationType>
+                <HumidityPercent>0</HumidityPercent>
+                <IsCFSRegistered>false</IsCFSRegistered>
+                <IsControlledAtmosphere>false</IsControlledAtmosphere>
+                <IsDamaged>false</IsDamaged>
+                <IsEmptyContainer>false</IsEmptyContainer>
+                <IsSealOk>true</IsSealOk>
+                <IsShipperOwned>false</IsShipperOwned>
+                <LCLAvailable></LCLAvailable>
+                <LCLStorageCommences></LCLStorageCommences>
+                <LCLUnpack></LCLUnpack>
+                <LengthUnit>
+                  <Code>FT</Code>
+                  <Description>Feet</Description>
+                </LengthUnit>
+                <Link>1</Link>
+                <OverhangBack>0.000</OverhangBack>
+                <OverhangFront>0</OverhangFront>
+                <OverhangHeight>0</OverhangHeight>
+                <OverhangLeft>0</OverhangLeft>
+                <OverhangRight>0.000</OverhangRight>
+                <OverrideFCLAvailableStorage>false</OverrideFCLAvailableStorage>
+                <OverrideLCLAvailableStorage>false</OverrideLCLAvailableStorage>
+                <PackDate></PackDate>
+                <RefrigGeneratorID></RefrigGeneratorID>
+                <ReleaseNum></ReleaseNum>
+                <Seal>OOLGDH4605</Seal>
+                <SealPartyType>
+                  <Code></Code>
+                </SealPartyType>
+                <SecondSeal></SecondSeal>
+                <SecondSealPartyType>
+                  <Code></Code>
+                </SecondSealPartyType>
+                <SetPointTemp>0.000</SetPointTemp>
+                <SetPointTempUnit></SetPointTempUnit>
+                <StowagePosition></StowagePosition>
+                <TareWeight>3830.000</TareWeight>
+                <TempRecorderSerialNo></TempRecorderSerialNo>
+                <ThirdSeal></ThirdSeal>
+                <ThirdSealPartyType>
+                  <Code></Code>
+                </ThirdSealPartyType>
+                <TotalHeight>8.500</TotalHeight>
+                <TotalLength>40.000</TotalLength>
+                <TotalWidth>8.000</TotalWidth>
+                <TrainWagonNumber></TrainWagonNumber>
+                <UnpackGang></UnpackGang>
+                <UnpackShed></UnpackShed>
+                <VolumeCapacity>0.000</VolumeCapacity>
+                <VolumeUnit>
+                  <Code>M3</Code>
+                  <Description>Cubic Meters</Description>
+                </VolumeUnit>
+                <WeightCapacity>0.000</WeightCapacity>
+                <WeightUnit>
+                  <Code>KG</Code>
+                  <Description>Kilograms</Description>
+                </WeightUnit>
+
+                <ContainerPenaltyCollection>
+                  <ContainerPenalty>
+                    <CreditorType>
+                      <Code>CAR</Code>
+                      <Description>Carrier</Description>
+                    </CreditorType>
+                    <Currency>
+                      <Code>USD</Code>
+                      <Description>United States Dollar</Description>
+                    </Currency>
+                    <Duration>2020-01-01T00:00:00</Duration>
+                    <FreeTime></FreeTime>
+                    <Location>
+                      <Code>USLAX</Code>
+                      <Name>Los Angeles</Name>
+                    </Location>
+                    <PenaltyType>
+                      <Code>DET</Code>
+                      <Description>Detention</Description>
+                    </PenaltyType>
+                    <PerUnitCost>0.0000</PerUnitCost>
+                    <TimeUnit>Days</TimeUnit>
+                    <TotalCost>0.0000</TotalCost>
+                  </ContainerPenalty>
+                </ContainerPenaltyCollection>
+              </Container>
+            </ContainerCollection>
+
+            <AdditionalReferenceCollection Content="Complete">
+              <AdditionalReference>
+                <Type>
+                  <Code>UCR</Code>
+                  <Description>External (3rd party) Unique Consign</Description>
+                </Type>
+                <ReferenceNumber>VS23765</ReferenceNumber>
+                <ContextInformation></ContextInformation>
+                <IssueDate></IssueDate>
+              </AdditionalReference>
+              <AdditionalReference>
+                <Type>
+                  <Code>OAG</Code>
+                  <Description>Other Agent Reference</Description>
+                </Type>
+                <ReferenceNumber>59556932081</ReferenceNumber>
+                <ContextInformation/>
+                <IssueDate/>
+              </AdditionalReference>
+            </AdditionalReferenceCollection>
+
+            <DateCollection>
+              <Date>
+                <Type>BookingConfirmed</Type>
+                <IsEstimate>false</IsEstimate>
+                <Value></Value>
+              </Date>
+              <Date>
+                <Type>Received</Type>
+                <IsEstimate>false</IsEstimate>
+                <Value></Value>
+              </Date>
+              <Date>
+                <Type>Departure</Type>
+                <IsEstimate>true</IsEstimate>
+                <Value>2020-08-17T00:00:00</Value>
+              </Date>
+              <Date>
+                <Type>Arrival</Type>
+                <IsEstimate>true</IsEstimate>
+                <Value>2020-09-24T00:00:00</Value>
+              </Date>
+              <Date>
+                <Type>ShippedOnBoard</Type>
+                <IsEstimate>false</IsEstimate>
+                <Value></Value>
+              </Date>
+              <Date>
+                <Type>BillIssued</Type>
+                <IsEstimate>false</IsEstimate>
+                <Value></Value>
+              </Date>
+            </DateCollection>
+
+            <MilestoneCollection>
+              <Milestone>
+                <Description>All Import Documents Received</Description>
+                <EventCode>AID</EventCode>
+                <Sequence>10</Sequence>
+                <ActualDate></ActualDate>
+                <ConditionReference></ConditionReference>
+                <ConditionType></ConditionType>
+                <EstimatedDate></EstimatedDate>
+              </Milestone>
+              <Milestone>
+                <Description>Destination Arrival</Description>
+                <EventCode>ARV</EventCode>
+                <Sequence>13</Sequence>
+                <ActualDate></ActualDate>
+                <ConditionReference></ConditionReference>
+                <ConditionType></ConditionType>
+                <EstimatedDate>2020-09-24T00:00:00</EstimatedDate>
+              </Milestone>
+              <Milestone>
+                <Description>Delivery Cartage Complete/Finalised</Description>
+                <EventCode>DCF</EventCode>
+                <Sequence>15</Sequence>
+                <ActualDate></ActualDate>
+                <ConditionReference></ConditionReference>
+                <ConditionType></ConditionType>
+                <EstimatedDate></EstimatedDate>
+              </Milestone>
+            </MilestoneCollection>
+
+            <OrganizationAddressCollection>
+              <OrganizationAddress>
+                <AddressType>ConsignorDocumentaryAddress</AddressType>
+                <Address1>302-308 HENNESSY ROAD</Address1>
+                <Address2>WAN CHAI</Address2>
+                <AddressOverride>false</AddressOverride>
+                <AddressShortCode>302-308 HENNESSY ROAD</AddressShortCode>
+                <City>HONG KONG ISLAND</City>
+                <CompanyName>JM AVENIR INTERNATIONAL (HK) LIMITED</CompanyName>
+                <Country>
+                  <Code>HK</Code>
+                  <Name>Hong Kong</Name>
+                </Country>
+                <Email></Email>
+                <Fax></Fax>
+                <OrganizationCode>JMAVENHKG</OrganizationCode>
+                <Phone></Phone>
+                <Port>
+                  <Code>HKHKG</Code>
+                  <Name>Hong Kong</Name>
+                </Port>
+                <Postcode></Postcode>
+                <ScreeningStatus>
+                  <Code>NOT</Code>
+                  <Description>Not Screened</Description>
+                </ScreeningStatus>
+                <State></State>
+              </OrganizationAddress>
+              <OrganizationAddress>
+                <AddressType>ConsignorPickupDeliveryAddress</AddressType>
+                <Address1>302-308 HENNESSY ROAD</Address1>
+                <Address2>WAN CHAI</Address2>
+                <AddressOverride>false</AddressOverride>
+                <AddressShortCode>302-308 HENNESSY ROAD</AddressShortCode>
+                <City>HONG KONG ISLAND</City>
+                <CompanyName>JM AVENIR INTERNATIONAL (HK) LIMITED</CompanyName>
+                <Country>
+                  <Code>HK</Code>
+                  <Name>Hong Kong</Name>
+                </Country>
+                <Email></Email>
+                <Fax></Fax>
+                <OrganizationCode>JMAVENHKG</OrganizationCode>
+                <Phone></Phone>
+                <Port>
+                  <Code>HKHKG</Code>
+                  <Name>Hong Kong</Name>
+                </Port>
+                <Postcode></Postcode>
+                <ScreeningStatus>
+                  <Code>NOT</Code>
+                  <Description>Not Screened</Description>
+                </ScreeningStatus>
+                <State></State>
+              </OrganizationAddress>
+              <OrganizationAddress>
+                <AddressType>ConsigneeDocumentaryAddress</AddressType>
+                <Address1>5000 T REX AVE</Address1>
+                <Address2></Address2>
+                <AddressOverride>false</AddressOverride>
+                <AddressShortCode>5000 T REX AVE</AddressShortCode>
+                <City>BOCA RATON</City>
+                <CompanyName>SHOES FOR CREWS LLC</CompanyName>
+                <Country>
+                  <Code>US</Code>
+                  <Name>United States</Name>
+                </Country>
+                <Email></Email>
+                <Fax></Fax>
+                <GovRegNum>13-4282362</GovRegNum>
+                <GovRegNumType>
+                  <Code>EIN</Code>
+                  <Description>Employer Identification Number</Description>
+                </GovRegNumType>
+                <OrganizationCode>SHOFORBCT</OrganizationCode>
+                <Phone></Phone>
+                <Port>
+                  <Code>USBCT</Code>
+                  <Name>Boca Raton</Name>
+                </Port>
+                <Postcode>33431</Postcode>
+                <ScreeningStatus>
+                  <Code>NOT</Code>
+                  <Description>Not Screened</Description>
+                </ScreeningStatus>
+                <State>FL</State>
+              </OrganizationAddress>
+              <OrganizationAddress>
+                <AddressType>ConsigneePickupDeliveryAddress</AddressType>
+                <Address1>5000 T REX AVE</Address1>
+                <Address2></Address2>
+                <AddressOverride>false</AddressOverride>
+                <AddressShortCode>5000 T REX AVE</AddressShortCode>
+                <City>BOCA RATON</City>
+                <CompanyName>SHOES FOR CREWS LLC</CompanyName>
+                <Country>
+                  <Code>US</Code>
+                  <Name>United States</Name>
+                </Country>
+                <Email></Email>
+                <Fax></Fax>
+                <GovRegNum>13-4282362</GovRegNum>
+                <GovRegNumType>
+                  <Code>EIN</Code>
+                  <Description>Employer Identification Number</Description>
+                </GovRegNumType>
+                <OrganizationCode>SHOFORBCT</OrganizationCode>
+                <Phone></Phone>
+                <Port>
+                  <Code>USBCT</Code>
+                  <Name>Boca Raton</Name>
+                </Port>
+                <Postcode>33431</Postcode>
+                <ScreeningStatus>
+                  <Code>NOT</Code>
+                  <Description>Not Screened</Description>
+                </ScreeningStatus>
+                <State>FL</State>
+              </OrganizationAddress>
+              <OrganizationAddress>
+                <AddressType>NotifyParty</AddressType>
+                <Address1>5000 T REX AVE</Address1>
+                <Address2></Address2>
+                <AddressOverride>false</AddressOverride>
+                <AddressShortCode>5000 T REX AVE</AddressShortCode>
+                <City>BOCA RATON</City>
+                <CompanyName>SHOES FOR CREWS LLC</CompanyName>
+                <Country>
+                  <Code>US</Code>
+                  <Name>United States</Name>
+                </Country>
+                <Email></Email>
+                <Fax></Fax>
+                <GovRegNum>13-4282362</GovRegNum>
+                <GovRegNumType>
+                  <Code>EIN</Code>
+                  <Description>Employer Identification Number</Description>
+                </GovRegNumType>
+                <OrganizationCode>SHOFORBCT</OrganizationCode>
+                <Phone></Phone>
+                <Port>
+                  <Code>USBCT</Code>
+                  <Name>Boca Raton</Name>
+                </Port>
+                <Postcode>33431</Postcode>
+                <ScreeningStatus>
+                  <Code>NOT</Code>
+                  <Description>Not Screened</Description>
+                </ScreeningStatus>
+                <State>FL</State>
+              </OrganizationAddress>
+              <OrganizationAddress>
+                <AddressType>SendersLocalClient</AddressType>
+                <Address1>100 WALNUT AVE STE 600</Address1>
+                <Address2></Address2>
+                <AddressOverride>false</AddressOverride>
+                <AddressShortCode>100 WALNUT AVE STE 600</AddressShortCode>
+                <City>CLARK</City>
+                <CompanyName>VANDEGRIFT LOGISTICS COMPANY DBA, LMD LOGISTICS INC</CompanyName>
+                <Country>
+                  <Code>US</Code>
+                  <Name>United States</Name>
+                </Country>
+                <Email></Email>
+                <Fax></Fax>
+                <OrganizationCode>VANLOGEWR</OrganizationCode>
+                <Phone></Phone>
+                <Port>
+                  <Code>USEWR</Code>
+                  <Name>Newark</Name>
+                </Port>
+                <Postcode>07066</Postcode>
+                <ScreeningStatus>
+                  <Code>NOT</Code>
+                  <Description>Not Screened</Description>
+                </ScreeningStatus>
+                <State>NJ</State>
+              </OrganizationAddress>
+            </OrganizationAddressCollection>
+
+            <PackingLineCollection Content="Complete">
+              <PackingLine>
+                <Commodity>
+                  <Code>GEN</Code>
+                  <Description>General</Description>
+                </Commodity>
+                <ContainerLink>1</ContainerLink>
+                <ContainerNumber>OOCU4721325</ContainerNumber>
+                <ContainerPackingOrder>1</ContainerPackingOrder>
+                <CountryOfOrigin>
+                  <Code></Code>
+                </CountryOfOrigin>
+                <DetailedDescription></DetailedDescription>
+                <EndItemNo>0</EndItemNo>
+                <ExportReferenceNumber></ExportReferenceNumber>
+                <GoodsDescription>shoes</GoodsDescription>
+                <HarmonisedCode></HarmonisedCode>
+                <Height>0.000</Height>
+                <ImportReferenceNumber></ImportReferenceNumber>
+                <ItemNo>0</ItemNo>
+                <Length>0.000</Length>
+                <LengthUnit>
+                  <Code>M</Code>
+                  <Description>Meters</Description>
+                </LengthUnit>
+                <LinePrice>0.0000</LinePrice>
+                <Link>1</Link>
+                <LoadingMeters>0.000</LoadingMeters>
+                <MarksAndNos></MarksAndNos>
+                <OutturnComment></OutturnComment>
+                <OutturnDamagedQty>0</OutturnDamagedQty>
+                <OutturnedHeight>0.000</OutturnedHeight>
+                <OutturnedLength>0.000</OutturnedLength>
+                <OutturnedVolume>0.000</OutturnedVolume>
+                <OutturnedWeight>0.000</OutturnedWeight>
+                <OutturnedWidth>0.000</OutturnedWidth>
+                <OutturnPillagedQty>0</OutturnPillagedQty>
+                <OutturnQty>0</OutturnQty>
+                <PackQty>499</PackQty>
+                <PackType>
+                  <Code>CTN</Code>
+                  <Description>Carton</Description>
+                </PackType>
+                <ReferenceNumber></ReferenceNumber>
+                <RequiresTemperatureControl>false</RequiresTemperatureControl>
+                <Volume>47.540</Volume>
+                <VolumeUnit>
+                  <Code>M3</Code>
+                  <Description>Cubic Meters</Description>
+                </VolumeUnit>
+                <Weight>5773.200</Weight>
+                <WeightUnit>
+                  <Code>KG</Code>
+                  <Description>Kilograms</Description>
+                </WeightUnit>
+                <Width>0.000</Width>
+
+                <PackedItemCollection>
+                </PackedItemCollection>
+              </PackingLine>
+            </PackingLineCollection>
+
+            <TransportLegCollection Content="Complete">
+              <TransportLeg>
+                <PortOfDischarge>
+                  <Code>USLAX</Code>
+                  <Name>Los Angeles</Name>
+                </PortOfDischarge>
+                <PortOfLoading>
+                  <Code>MMRGN</Code>
+                  <Name>Yangon</Name>
+                </PortOfLoading>
+                <LegOrder>1</LegOrder>
+                <ActualArrival>2020-09-24T04:55:00</ActualArrival>
+                <ActualDeparture></ActualDeparture>
+                <AircraftType>
+                  <Code></Code>
+                </AircraftType>
+                <BookingStatus>
+                  <Code>CNF</Code>
+                  <Description>Confirmed</Description>
+                </BookingStatus>
+                <Carrier>
+                  <AddressType>Carrier</AddressType>
+                  <Address1>CHICAGO</Address1>
+                  <Address2></Address2>
+                  <AddressOverride>false</AddressOverride>
+                  <AddressShortCode>CHICAGO</AddressShortCode>
+                  <City>CHICAGO</City>
+                  <CompanyName>OOCL (USA) INC.</CompanyName>
+                  <Country>
+                    <Code>US</Code>
+                    <Name>United States</Name>
+                  </Country>
+                  <Email></Email>
+                  <Fax></Fax>
+                  <OrganizationCode>OOLU</OrganizationCode>
+                  <Phone></Phone>
+                  <Port>
+                    <Code>USZZZ</Code>
+                    <Name>Sunrise Beach</Name>
+                  </Port>
+                  <Postcode>60674</Postcode>
+                  <ScreeningStatus>
+                    <Code>NOT</Code>
+                    <Description>Not Screened</Description>
+                  </ScreeningStatus>
+                  <State>IL</State>
+
+                  <RegistrationNumberCollection>
+                    <RegistrationNumber>
+                      <Type>
+                        <Code>LSC</Code>
+                        <Description>Legacy System Code</Description>
+                      </Type>
+                      <CountryOfIssue>
+                        <Code>US</Code>
+                        <Name>United States</Name>
+                      </CountryOfIssue>
+                      <Value>OOC01</Value>
+                    </RegistrationNumber>
+                  </RegistrationNumberCollection>
+                </Carrier>
+                <CarrierBookingReference></CarrierBookingReference>
+                <CarrierServiceLevel>
+                  <Code></Code>
+                </CarrierServiceLevel>
+                <DocumentCutOff></DocumentCutOff>
+                <EstimatedArrival>2020-09-24T00:00:00</EstimatedArrival>
+                <EstimatedDeparture>2020-08-17T00:00:00</EstimatedDeparture>
+                <FCLAvailability></FCLAvailability>
+                <FCLCutOff></FCLCutOff>
+                <FCLReceivalCommences></FCLReceivalCommences>
+                <FCLStorage></FCLStorage>
+                <LCLAvailability></LCLAvailability>
+                <LCLCutOff></LCLCutOff>
+                <LCLReceivalCommences></LCLReceivalCommences>
+                <LCLStorageDate></LCLStorageDate>
+                <LegNotes></LegNotes>
+                <LegType>Main</LegType>
+                <TransportMode>Sea</TransportMode>
+                <VesselLloydsIMO>9462017</VesselLloydsIMO>
+                <VesselName>APL SOUTHAMPTON</VesselName>
+                <VGMCutOff></VGMCutOff>
+                <VoyageFlightNo>XXX</VoyageFlightNo>
+              </TransportLeg>
+            </TransportLegCollection>
+          </SubShipment>
+        </SubShipmentCollection>
+
+        <TransportLegCollection Content="Complete">
+          <TransportLeg>
+            <PortOfDischarge>
+              <Code>USLAX</Code>
+              <Name>Los Angeles</Name>
+            </PortOfDischarge>
+            <PortOfLoading>
+              <Code>MMRGN</Code>
+              <Name>Yangon</Name>
+            </PortOfLoading>
+            <LegOrder>1</LegOrder>
+            <ActualArrival>2020-09-24T04:55:00</ActualArrival>
+            <ActualDeparture></ActualDeparture>
+            <AircraftType>
+              <Code></Code>
+            </AircraftType>
+            <BookingStatus>
+              <Code>CNF</Code>
+              <Description>Confirmed</Description>
+            </BookingStatus>
+            <Carrier>
+              <AddressType>Carrier</AddressType>
+              <Address1>CHICAGO</Address1>
+              <Address2></Address2>
+              <AddressOverride>false</AddressOverride>
+              <AddressShortCode>CHICAGO</AddressShortCode>
+              <City>CHICAGO</City>
+              <CompanyName>OOCL (USA) INC.</CompanyName>
+              <Country>
+                <Code>US</Code>
+                <Name>United States</Name>
+              </Country>
+              <Email></Email>
+              <Fax></Fax>
+              <OrganizationCode>OOLU</OrganizationCode>
+              <Phone></Phone>
+              <Port>
+                <Code>USZZZ</Code>
+                <Name>Sunrise Beach</Name>
+              </Port>
+              <Postcode>60674</Postcode>
+              <ScreeningStatus>
+                <Code>NOT</Code>
+                <Description>Not Screened</Description>
+              </ScreeningStatus>
+              <State>IL</State>
+
+              <RegistrationNumberCollection>
+                <RegistrationNumber>
+                  <Type>
+                    <Code>LSC</Code>
+                    <Description>Legacy System Code</Description>
+                  </Type>
+                  <CountryOfIssue>
+                    <Code>US</Code>
+                    <Name>United States</Name>
+                  </CountryOfIssue>
+                  <Value>OOC01</Value>
+                </RegistrationNumber>
+              </RegistrationNumberCollection>
+            </Carrier>
+            <CarrierBookingReference></CarrierBookingReference>
+            <CarrierServiceLevel>
+              <Code></Code>
+            </CarrierServiceLevel>
+            <DocumentCutOff></DocumentCutOff>
+            <EstimatedArrival>2020-09-24T00:00:00</EstimatedArrival>
+            <EstimatedDeparture>2020-08-17T00:00:00</EstimatedDeparture>
+            <FCLAvailability></FCLAvailability>
+            <FCLCutOff></FCLCutOff>
+            <FCLReceivalCommences></FCLReceivalCommences>
+            <FCLStorage></FCLStorage>
+            <LCLAvailability></LCLAvailability>
+            <LCLCutOff></LCLCutOff>
+            <LCLReceivalCommences></LCLReceivalCommences>
+            <LCLStorageDate></LCLStorageDate>
+            <LegNotes></LegNotes>
+            <LegType>Main</LegType>
+            <TransportMode>Sea</TransportMode>
+            <VesselLloydsIMO>9462017</VesselLloydsIMO>
+            <VesselName>APL SOUTHAMPTON</VesselName>
+            <VGMCutOff></VGMCutOff>
+            <VoyageFlightNo>XXX</VoyageFlightNo>
+          </TransportLeg>
+        </TransportLegCollection>
+      </Shipment>
+    </ShipmentCollection>
+  </TransactionInfo>
+</UniversalTransaction>
+  </Body>
+</UniversalInterchange>

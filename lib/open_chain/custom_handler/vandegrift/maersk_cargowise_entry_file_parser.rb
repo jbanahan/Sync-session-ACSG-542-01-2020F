@@ -1,11 +1,11 @@
 require 'open_chain/integration_client_parser'
 require 'open_chain/custom_handler/entry_parser_support'
-require 'open_chain/custom_handler/nokogiri_xml_helper'
+require 'open_chain/custom_handler/vandegrift/cargowise_xml_support'
 
 module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowiseEntryFileParser
   include OpenChain::IntegrationClientParser
   include OpenChain::CustomHandler::EntryParserSupport
-  include OpenChain::CustomHandler::NokogiriXmlHelper
+  include OpenChain::CustomHandler::Vandegrift::CargowiseXmlSupport
 
   def self.integration_folder
     ["#{MasterSetup.get.system_code}/maersk_cw_universal_shipment"]
@@ -16,10 +16,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
   end
 
   def parse doc, opts={}
-    # Root varies depending on how the XML is exported.  Dump UniversalInterchange/Body from the structure if it's included.
-    if doc.root.name == 'UniversalInterchange'
-      doc = xpath(doc, "UniversalInterchange/Body").first
-    end
+    doc = unwrap_document_root(doc)
 
     broker_reference = first_text doc, "UniversalShipment/Shipment/DataContext/DataSourceCollection/DataSource[Type='CustomsDeclaration']/Key"
     if broker_reference.blank?

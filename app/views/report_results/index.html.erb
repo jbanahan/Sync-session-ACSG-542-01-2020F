@@ -42,6 +42,10 @@
     <tr class='hover'><td><%=link_to "PPQ By PO Report", reports_show_ppq_by_po_report_path%></td>
     <td>Shows PPQ data submitted for the entries covering a list of POs.</td></tr>
   <%end-%>
+  <%if OpenChain::CustomHandler::Intacct::IntacctDailyAccountingReport.permission? current_user-%>
+    <tr class='hover'><td><%=link_to "Accounting Profit / Loss Report", reports_show_daily_accounting_report_path%></td>
+    <td>Shows profit / loss for invoiced shipments.</td></tr>
+  <%end-%>
   <%if OpenChain::Report::AscenaActualVsPotentialFirstSaleReport.permission? current_user%>
     <tr class='hover'><td><%=link_to "Ascena Actual vs Potential First Sale Report", reports_show_ascena_actual_vs_potential_first_sale_report_path%></td>
     <td>Compares actual and potential vendor savings for the previous fiscal month, fiscal season-to-date, and fiscal year-to-date.</td></tr>

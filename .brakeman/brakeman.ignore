@@ -798,25 +798,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "1be5517511ef5ff6f92b15eadc03d176088a83049558a72300f3fa2506b423b6",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/intacct_receivable.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":intacct_alliance_export_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "IntacctReceivable"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "1bfdeef0694a8480441b3bf8f2ea9444e76cc723dd3e291e6d2154b9b5694a55",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -1423,25 +1404,6 @@
       "location": {
         "type": "model",
         "model": "AttachmentProcessJob"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "2cbc9f062f29a5880f71fbabf4e7d2758b13d3decf34d53f2f5ad55a1062fd9f",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/intacct_payable.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":intacct_alliance_export_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "IntacctPayable"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -2210,25 +2172,6 @@
       "user_input": null,
       "confidence": "High",
       "note": "API controller doesn't need protect_from_forgery.  API token used instead."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "48ffc01adc5d9dfce6bb374b159a793cd5bf23b5880b206ccd52cd0d87232eb5",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/intacct_receivable_line.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":intacct_receivable_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "IntacctReceivableLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -3706,25 +3649,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "7524aba29a65563636fafedb8621c08a7f57d937bc2b29f6e133575f01f99f5c",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/intacct_check.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":intacct_alliance_export_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "IntacctCheck"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "754d6378255c8c2dd5d8d3d27c6539648ca40f7dfa4a6871e1a0116b014ef108",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4276,25 +4200,6 @@
       "user_input": "build_safe_command_line(home_dir, *args)",
       "confidence": "Medium",
       "note": "Command escaped by Shellwords, binary validated for correct naming."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "841735d16376fcf82e3a118e8450f9b72ffd12477a2f5c2d31053fd727d23dc4",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/intacct_payable_line.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":intacct_payable_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "IntacctPayableLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -5856,25 +5761,6 @@
       "location": {
         "type": "model",
         "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "b5f2d6fc659733375862ecffa6d0d4f6fd596b50413c4dbfda52240e690ac89e",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/intacct_check.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":intacct_payable_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "IntacctCheck"
       },
       "user_input": null,
       "confidence": "Weak",

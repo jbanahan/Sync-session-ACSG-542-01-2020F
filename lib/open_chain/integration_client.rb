@@ -62,7 +62,7 @@ require 'open_chain/custom_handler/hm/hm_receipt_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_customer_activity_report_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_kewill_accounting_report_5001'
 require 'open_chain/custom_handler/vandegrift/kewill_tariff_classifications_parser'
-require 'open_chain/custom_handler/vandegrift/maersk_cargowise_broker_invoice_file_parser'
+require 'open_chain/custom_handler/vandegrift/maersk_cargowise_billing_parser_broker'
 require 'open_chain/custom_handler/vandegrift/maersk_cargowise_entry_file_parser'
 require 'open_chain/custom_handler/vandegrift/maersk_cargowise_event_file_parser'
 require 'open_chain/custom_handler/vandegrift/vandegrift_catair_3461_parser'
@@ -350,7 +350,7 @@ module OpenChain
       elsif (parser_identifier == "maersk_cw_universal_shipment") && custom_features.include?("Maersk Cargowise Feeds")
         OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "maersk_cw_universal_transaction") && custom_features.include?("Maersk Cargowise Feeds")
-        OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileParser.delay.process_from_s3 bucket, s3_path
+        OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBillingParserBroker.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "maersk_cw_universal_event") && custom_features.include?("Maersk Cargowise Feeds")
         OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEventFileParser.delay.process_from_s3 bucket, s3_path
       elsif (parser_identifier == "gtn_invoice_xml") && custom_features.include?("Generic GTN XML")

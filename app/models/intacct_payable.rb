@@ -14,6 +14,7 @@
 #  intacct_key                :string(255)
 #  intacct_upload_date        :datetime
 #  payable_type               :string(255)
+#  shipment_customer_number   :string(255)
 #  updated_at                 :datetime         not null
 #  vendor_number              :string(255)
 #  vendor_reference           :string(255)
@@ -25,18 +26,14 @@
 #
 
 class IntacctPayable < ActiveRecord::Base
-  attr_accessible :bill_date, :bill_number, :check_number, :company,
-    :currency, :intacct_alliance_export_id, :intacct_alliance_export, :intacct_errors, :intacct_key,
-    :intacct_upload_date, :payable_type, :vendor_number, :vendor_reference,
-    :created_at
 
-  belongs_to :intacct_alliance_export, :inverse_of => :intacct_payables
-  has_many :intacct_payable_lines, :dependent => :destroy
+  belongs_to :intacct_alliance_export, inverse_of: :intacct_payables
+  has_many :intacct_payable_lines, dependent: :destroy
   has_many :intacct_checks
 
-  PAYABLE_TYPE_BILL ||= 'bill'
-  PAYABLE_TYPE_ADVANCED ||= 'advanced'
-  PAYABLE_TYPE_CHECK ||= 'invoiced check'
+  PAYABLE_TYPE_BILL ||= 'bill'.freeze
+  PAYABLE_TYPE_ADVANCED ||= 'advanced'.freeze
+  PAYABLE_TYPE_CHECK ||= 'invoiced check'.freeze
 
   def canada?
     ['als', 'vcu'].include? company
