@@ -17,7 +17,7 @@ class AttachmentsController < ApplicationController
         format.json {render json: {errors: flash[:errors]}, status: 400}
       end
     else
-      att = Attachment.new(params[:attachment])
+      att = Attachment.new(permitted_params(params))
       attachable = att.attachable
       saved = false
       if attachable.can_attach?(current_user)
@@ -179,4 +179,7 @@ class AttachmentsController < ApplicationController
     polymorphic_scope(type).where(id: id).first
   end
 
+  def permitted_params(params)
+    params.require(:attachment).permit(:attached, :attachable_id, :attachable_type)
+  end
 end

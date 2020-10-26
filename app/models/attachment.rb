@@ -33,13 +33,7 @@ class Attachment < ActiveRecord::Base
   # The AttachmentAntiVirusValidator looks for this attribute and will skip if it's set to true
   attr_accessor :skip_virus_scan
 
-  attr_accessible :alliance_revision, :alliance_suffix, :attachable_id,
-    :attachable, :attachable_type, :attached_content_type, :attached_file_name,
-    :attached_file_size, :attached_updated_at, :attachment_type, :checksum,
-    :is_private, :source_system_timestamp, :uploaded_by_id, :uploaded_by,
-    :attached, :updated_at
-
-  has_attached_file :attached, :path => ":master_setup_uuid/attachment/:id/:filename"
+  has_attached_file :attached, path: ":master_setup_uuid/attachment/:id/:filename"
   # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
   # at all, so this disables that validation.
   do_not_validate_attachment_file_type :attached
@@ -49,32 +43,32 @@ class Attachment < ActiveRecord::Base
   # Needs to get prepended so it runs before the callbacks that has_attached_file (Paperclip) adds
   before_destroy :record_filename, prepend: true
 
-  belongs_to :uploaded_by, :class_name => "User"
+  belongs_to :uploaded_by, class_name: "User"
   belongs_to :attachable, polymorphic: true, touch: true
 
-  has_many :attachment_archives_attachments, :dependent=>:destroy
-  has_many :attachment_archives, :through=>:attachment_archives_attachments
+  has_many :attachment_archives_attachments, dependent: :destroy
+  has_many :attachment_archives, through: :attachment_archives_attachments
   has_many :attachment_process_jobs
 
   ARCHIVE_PACKET_ATTACHMENT_TYPE ||= "Archive Packet".freeze
 
   def web_preview?
-    return !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
+    !self.attached_content_type.nil? && self.attached_content_type.start_with?("image") && !self.attached_content_type.ends_with?('tiff')
   end
 
-  def secure_url(expires_in=90.seconds, s3_url_opts = {})
+  def secure_url(expires_in = 90.seconds, s3_url_opts = {})
     OpenChain::S3.url_for bucket, attached.path, expires_in, s3_url_opts
   end
 
   def can_view?(user)
     if self.is_private?
-      return user.company.master? && self.attachable.can_view?(user)
+      user.company.master? && self.attachable.can_view?(user)
     else
-      return self.attachable.can_view?(user) && can_view_attachment_type?(user)
+      self.attachable.can_view?(user) && can_view_attachment_type?(user)
     end
   end
 
-  def is_pdf?
+  def pdf?
     self.attached_content_type.ends_with?('pdf')
   end
 
@@ -101,7 +95,7 @@ class Attachment < ActiveRecord::Base
   def unique_file_name
     # Prepend the Document Type (if it exists)
     name = "#{self.id}-#{self.attached_file_name}"
-    unless self.attachment_type.blank?
+    if self.attachment_type.present?
       name = Attachment.get_sanitized_filename "#{self.attachment_type}-#{name}"
     end
     name
@@ -111,7 +105,7 @@ class Attachment < ActiveRecord::Base
     ActionController::Base.helpers.number_to_human_size(self.attached_file_size)
   end
 
-  def self.email_attachments params # hash
+  def self.email_attachments params
     to_address = params[:to_address]
     email_subject = params[:email_subject]
     email_body = params[:email_body]
@@ -123,52 +117,54 @@ class Attachment < ActiveRecord::Base
       tfile = attachment.download_to_tempfile
       Attachment.add_original_filename_method tfile
       tfile.original_filename = attachment.attached_file_name
-      tfile.original_filename = attachment.attachment_type + " " + tfile.original_filename if !attachment.attachment_type.blank?
+      tfile.original_filename = attachment.attachment_type + " " + tfile.original_filename if attachment.attachment_type.present?
       attachments << tfile
     end
-    attachment_buckets = get_buckets_from(attachments)
-    email_index = 1; total_emails = attachment_buckets.length
 
-    attachment_buckets.each do |attachments|
+    attachment_buckets = get_buckets_from(attachments)
+    email_index = 1
+    total_emails = attachment_buckets.length
+
+    attachment_buckets.each do |attachment_bucket|
       if total_emails > 1
         altered_subject = email_subject + " (#{email_index} of #{total_emails})"
         email_index += 1
-        OpenMailer.auto_send_attachments(to_address, altered_subject, email_body, attachments, full_name, email).deliver_now
+        OpenMailer.auto_send_attachments(to_address, altered_subject, email_body, attachment_bucket, full_name, email).deliver_now
       else
-        OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachments, full_name, email).deliver_now
+        OpenMailer.auto_send_attachments(to_address, email_subject, email_body, attachment_bucket, full_name, email).deliver_now
       end
     end
-    return true
+    true
   ensure
     attachments.each {|tfile| tfile.close! unless tfile.closed?}
   end
 
   def self.get_buckets_from(attachments)
-  final_buckets = [[]]
-  attachments.each do |attachment|
-    added_to_existing_bucket = false
-    if attachment.size >= 10*1020*1024
-      final_buckets << [attachment]
-    else
-      final_buckets.each do |bucket|
-        if bucket == []
-          bucket << attachment
-          added_to_existing_bucket = true
-        elsif (bucket.map(&:size).inject(:+) != nil) and (10*1020*1024 - bucket.map(&:size).inject(:+) >= attachment.size)
-          bucket << attachment
-          added_to_existing_bucket = true
-          break
+    final_buckets = [[]]
+    attachments.each do |attachment|
+      added_to_existing_bucket = false
+      if attachment.size >= 10 * 1020 * 1024
+        final_buckets << [attachment]
+      else
+        final_buckets.each do |bucket|
+          if bucket == []
+            bucket << attachment
+            added_to_existing_bucket = true
+          elsif !bucket.map(&:size).inject(:+).nil? && (10 * 1020 * 1024 - bucket.map(&:size).inject(:+) >= attachment.size)
+            bucket << attachment
+            added_to_existing_bucket = true
+            break
+          end
         end
+        final_buckets << [attachment] unless added_to_existing_bucket
       end
-      final_buckets << [attachment] unless added_to_existing_bucket
     end
+    final_buckets
   end
-  final_buckets
-end
 
   # create a hash suitable for json rendering containing all attachments for the given attachable
   def self.attachments_as_json attachable
-    r = {attachable:{id:attachable.id, type:attachable.class.to_s}, attachments:[]}
+    r = {attachable: {id: attachable.id, type: attachable.class.to_s}, attachments: []}
     ra = r[:attachments]
     attachable.attachments.each do |att|
       ra << attachment_json(att)
@@ -194,10 +190,15 @@ end
   end
 
   def self.add_original_filename_method attached_object, filename = nil
-    def attached_object.original_filename=(fn); @fn = fn; end
-    def attached_object.original_filename; @fn; end
+    def attached_object.original_filename=(fn)
+      @fn = fn
+    end
 
-    attached_object.original_filename = filename unless filename.blank?
+    def attached_object.original_filename
+      @fn
+    end
+
+    attached_object.original_filename = filename if filename.present?
     nil
   end
 
@@ -214,18 +215,18 @@ end
     # This encodes to latin1 converting unknown chars along the way to _, then back to UTF-8.
     # The encoding translation is necessitated only because our charsets in the database for the filename are latin1
     # instead of utf8, and converting them to utf8 is a process we don't want to deal with at the moment.
-    filename = filename.encode("ISO-8859-1", :replace=>"_", :invalid=>:replace, :undef=>:replace).encode("UTF-8")
+    filename = filename.encode("ISO-8859-1", replace: "_", invalid: :replace, undef: :replace).encode("UTF-8")
 
     # We also want to underscore'ize invalid windows chars from the filename (in cases where you upload a file from
     # a mac and then try to download on windows - browser can't be relied upon do do this for us at this point).
-    character_filter_regex = /[\x00-\x1F\/\\:\*\?\"<>\|]/u
+    character_filter_regex = %r{[\x00-\x1F/\\:\*\?\"<>\|]}u
     filename = filename.gsub(character_filter_regex, "_")
 
     # For some reason, some of our users are dumping docs into the system that are like pdf_ or tif_.  They're not sophisticated
     # enough to know how to deal with this...for this reason, I'm stripping any trailing _'s from file extensions because they
     # then cause the filetype detection in paperclip to trip up.
     extension = File.extname(filename)
-    if !extension.blank?
+    if extension.present?
       filename = filename.gsub(/_+$/, "")
     end
 
@@ -248,7 +249,7 @@ end
   # overwrite_existing - if false is passed, it will not replace any existing files that may already be in the folder, it will create identically named ones
   def self.push_to_google_drive drive_folder, attachment_id, overwrite_existing: true
     a = Attachment.find attachment_id
-    drive_path = File.join((drive_folder ? drive_folder : ""), a.attached_file_name)
+    drive_path = File.join((drive_folder || ""), a.attached_file_name)
     OpenChain::S3.download_to_tempfile(a.bucket, a.path) do |temp|
       OpenChain::GoogleDrive.upload_file drive_path, temp, overwrite_existing: overwrite_existing
     end
@@ -256,9 +257,9 @@ end
 
   def download_to_tempfile
     if block_given?
-      self.class.download_to_tempfile(self.attached, original_file_name:self.attached_file_name, &Proc.new)
+      self.class.download_to_tempfile(self.attached, original_file_name: self.attached_file_name, &Proc.new)
     else
-      self.class.download_to_tempfile(self.attached, original_file_name:self.attached_file_name)
+      self.class.download_to_tempfile(self.attached, original_file_name: self.attached_file_name)
     end
   end
 
@@ -268,11 +269,11 @@ end
       opts = {}
       opts[:original_filename] = original_file_name if original_file_name
       if block_given?
-        return OpenChain::S3.download_to_tempfile(bucket(attached), path(attached), opts) do |f|
+        OpenChain::S3.download_to_tempfile(bucket(attached), path(attached), opts) do |f|
           yield f
         end
       else
-        return OpenChain::S3.download_to_tempfile(bucket(attached), path(attached), opts)
+        OpenChain::S3.download_to_tempfile(bucket(attached), path(attached), opts)
       end
     end
   end
@@ -317,6 +318,7 @@ end
   end
 
   private
+
     def no_post
       false
     end

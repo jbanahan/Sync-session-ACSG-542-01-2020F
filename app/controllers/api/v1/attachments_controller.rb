@@ -5,7 +5,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
   include DownloadS3ObjectSupport
 
   # The create call is done via a multipart/form posting..so don't check for json
-  skip_before_filter :validate_format, only: [:create]
+  skip_before_action :validate_format, only: [:create]
 
   def index
     find_object(params, current_user) do |obj|
@@ -21,7 +21,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
   def show
     find_object(params, current_user) do |obj|
       attachment = obj.attachments.find {|a| a.id == params[:id].to_i }
-      if attachment && attachment.can_view?(current_user)
+      if attachment&.can_view?(current_user)
         render json: {"attachment" => obj_to_json_hash(attachment)}
       else
         render_forbidden
@@ -71,7 +71,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
   def download
     find_object(params, current_user) do |obj|
       attachment = obj.attachments.find {|a| a.id == params[:id].to_i }
-      if attachment && attachment.can_view?(current_user)
+      if attachment&.can_view?(current_user)
         render_download attachment
       else
         render_forbidden
@@ -82,7 +82,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
   def attachment_types
     # At the moment, there is no distinction for attachment types based on the object type in use,
     # however, I'm pretty sure that is coming, so I'm codifying it now.
-    find_object(params, current_user) do |obj|
+    find_object(params, current_user) do |_obj|
       render json: {"attachment_types" => AttachmentType.by_name.all.map {|t| {name: t.name, value: t.name}} }
     end
   end
@@ -106,7 +106,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
 
     def find_object params, user
       obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
-      if obj && obj.can_view?(user)
+      if obj&.can_view?(user)
         yield obj
       else
         render_forbidden
@@ -116,7 +116,7 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
 
     def edit_object params, user
       obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
-      if obj && obj.can_attach?(user)
+      if obj&.can_attach?(user)
         Lock.db_lock(obj) do
           yield obj
         end
@@ -126,4 +126,4 @@ module Api; module V1; class AttachmentsController < Api::V1::ApiCoreModuleContr
       end
     end
 
-end; end; end;
+end; end; end
