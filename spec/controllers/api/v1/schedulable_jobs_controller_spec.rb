@@ -1,18 +1,22 @@
 describe Api::V1::SchedulableJobsController do
-
   describe "run_jobs" do
     context "admin user" do
-      before :each do
-        @u = Factory(:admin_user)
-        allow_api_access @u
+      let(:user) { Factory(:admin_user) }
+
+      before do
+        allow_api_access user
       end
 
       it "runs all schdulable jobs and search schedules that should be run" do
-        sj = SchedulableJob.create! run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true, run_friday: true, run_saturday: true, run_sunday: true, run_interval: "1m", time_zone_name: "Eastern Time (US & Canada)", last_start_time: 1.day.ago
+        sj = SchedulableJob.create! run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true,
+                                    run_friday: true, run_saturday: true, run_sunday: true, run_interval: "1m",
+                                    time_zone_name: "Eastern Time (US & Canada)", last_start_time: 1.day.ago
         expect_any_instance_of(SchedulableJob).to receive(:delay).and_return sj
         expect(sj).to receive(:run_if_needed)
 
-        ss = Factory(:search_schedule, run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true, run_friday: true, run_saturday: true, run_sunday: true, run_hour: 0, last_start_time: 1.year.ago, )
+        ss = Factory(:search_schedule, run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true,
+                                       run_friday: true, run_saturday: true, run_sunday: true, run_hour: 0,
+                                       last_start_time: 1.year.ago)
         expect_any_instance_of(SearchSchedule).to receive(:delay).with(priority: -1).and_return ss
         expect(ss).to receive(:run_if_needed)
 
@@ -21,7 +25,10 @@ describe Api::V1::SchedulableJobsController do
       end
 
       it "queues schedulable jobs using their given priority" do
-        sj = SchedulableJob.create! run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true, run_friday: true, run_saturday: true, run_sunday: true, run_interval: "1m", time_zone_name: "Eastern Time (US & Canada)", last_start_time: 1.day.ago, queue_priority: -100
+        sj = SchedulableJob.create! run_monday: true, run_tuesday: true, run_wednesday: true, run_thursday: true,
+                                    run_friday: true, run_saturday: true, run_sunday: true, run_interval: "1m",
+                                    time_zone_name: "Eastern Time (US & Canada)", last_start_time: 1.day.ago,
+                                    queue_priority: -100
         expect_any_instance_of(SchedulableJob).to receive(:delay).with(priority: -100).and_return sj
         expect(sj).to receive(:run_if_needed)
 
@@ -30,8 +37,8 @@ describe Api::V1::SchedulableJobsController do
       end
 
       it "does not run jobs that are not ready to run" do
-        sj = SchedulableJob.create!
-        ss = Factory(:search_schedule)
+        SchedulableJob.create!
+        Factory(:search_schedule)
 
         post "run_jobs", {}
         expect(response.body).to eq ({"OK" => "", "jobs_run" => 0}.to_json)

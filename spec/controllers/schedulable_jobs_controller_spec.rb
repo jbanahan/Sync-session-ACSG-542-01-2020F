@@ -1,17 +1,18 @@
 describe SchedulableJobsController do
 
   describe "index" do
-    it "should only allow sys_admins" do
+    it "onlies allow sys_admins" do
       sign_in_as Factory(:user)
       get :index
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
+      expect(flash[:errors].first).to match(/Only system admins/)
     end
-    it "should load all jobs" do
+
+    it "loads all jobs" do
       sign_in_as Factory(:sys_admin_user)
       # The sorting of the classes should be based on their class name (sans module)
-      sj1 = Factory(:schedulable_job, run_class: "A::Fully::Qualified::Module::FirstClassName")
-      sj2 = Factory(:schedulable_job, run_class: "Seoncd::Fully::Qualified::Module::ClassName")
+      Factory(:schedulable_job, run_class: "A::Fully::Qualified::Module::FirstClassName")
+      Factory(:schedulable_job, run_class: "Seoncd::Fully::Qualified::Module::ClassName")
 
       get :index
       expect(response).to be_success
@@ -20,49 +21,50 @@ describe SchedulableJobsController do
   end
 
   describe "edit" do
-    before :each do
-      @sj = Factory(:schedulable_job)
-    end
-    it "should only allow sys_admins" do
+    let(:schedulable_job) { Factory(:schedulable_job) }
+
+    it "only allows sys_admins" do
       sign_in_as Factory(:user)
-      get :edit, id: @sj.id
+      get :edit, id: schedulable_job.id
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
+      expect(flash[:errors].first).to match(/Only system admins/)
     end
-    it "should load job" do
+
+    it "loads job" do
       sign_in_as Factory(:sys_admin_user)
-      get :edit, id: @sj.id
+      get :edit, id: schedulable_job.id
       expect(response).to be_success
-      expect(assigns(:sj)).to eq(@sj)
+      expect(assigns(:sj)).to eq(schedulable_job)
     end
   end
-  describe "update" do
-    let (:schedulable_job) { Factory(:schedulable_job, opts:'{"abc": 123}') }
 
-    it "should only allow sys_admins" do
+  describe "update" do
+    let (:schedulable_job) { Factory(:schedulable_job, opts: '{"abc": 123}') }
+
+    it "only allows sys_admins" do
       sign_in_as Factory(:user)
-      put :update, id: schedulable_job.id, schedulable_job:{opts:'12345'}
+      put :update, id: schedulable_job.id, schedulable_job: {opts: '12345'}
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
+      expect(flash[:errors].first).to match(/Only system admins/)
       schedulable_job.reload
       expect(schedulable_job.opts).to eq('{"abc": 123}')
     end
 
     context "with sys admin login" do
 
-      before :each do
+      before do
         sign_in_as Factory(:sys_admin_user)
       end
 
-      it "should update job" do
-        put :update, id: schedulable_job.id, schedulable_job:{opts:'{"abc": 987}'}
+      it "updates job" do
+        put :update, id: schedulable_job.id, schedulable_job: {opts: '{"abc": 987}'}
         expect(response).to redirect_to schedulable_jobs_path
         schedulable_job.reload
         expect(schedulable_job.opts).to eq('{"abc": 987}')
       end
 
       it "fails to update if ops are an invalid json string" do
-        put :update, id: schedulable_job.id, schedulable_job:{opts:'invalid'}
+        put :update, id: schedulable_job.id, schedulable_job: {opts: 'invalid'}
         expect(assigns(:sj)).to eq schedulable_job
         expect(flash[:errors].length).to eq 1
         expect(flash[:errors].first).to include "unexpected token at 'invalid'"
@@ -71,49 +73,52 @@ describe SchedulableJobsController do
   end
 
   describe "new" do
-    it "should only allow sys_admins" do
+    it "onlies allow sys_admins" do
       sign_in_as Factory(:user)
       get :new
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
+      expect(flash[:errors].first).to match(/Only system admins/)
     end
-    it "should load empty job" do
+
+    it "loads empty job" do
       sign_in_as Factory(:sys_admin_user)
       get :new
       expect(response).to be_success
       expect(assigns(:sj)).to be_instance_of(SchedulableJob)
     end
   end
+
   describe "create" do
-    it "should only allow sys_admins" do
+    it "onlies allow sys_admins" do
       sign_in_as Factory(:user)
-      post :create, schedulable_job:{opts:'{"opt":12345}'}
+      post :create, schedulable_job: {opts: '{"opt":12345}'}
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
+      expect(flash[:errors].first).to match(/Only system admins/)
       expect(SchedulableJob.all).to be_empty
     end
+
     it "shoud make job" do
       sign_in_as Factory(:sys_admin_user)
-      post :create, schedulable_job:{opts:'{"opt":12345}'}
+      post :create, schedulable_job: {opts: '{"opt":12345}'}
       expect(response).to redirect_to schedulable_jobs_path
       expect(SchedulableJob.first.opts).to eq('{"opt":12345}')
     end
   end
 
   describe "destroy" do
-    before :each do
-      @sj = Factory(:schedulable_job)
-    end
-    it "should only allow sys_admins" do
+    let(:schedulable_job) { Factory(:schedulable_job) }
+
+    it "only allows sys_admins" do
       sign_in_as Factory(:user)
-      delete :destroy, id:@sj.id
+      delete :destroy, id: schedulable_job.id
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
-      expect(SchedulableJob.first).to eq(@sj)
+      expect(flash[:errors].first).to match(/Only system admins/)
+      expect(SchedulableJob.first).to eq(schedulable_job)
     end
-    it "should destroy job" do
+
+    it "destroys job" do
       sign_in_as Factory(:sys_admin_user)
-      delete :destroy, id:@sj.id
+      delete :destroy, id: schedulable_job.id
       expect(response).to redirect_to schedulable_jobs_path
       expect(SchedulableJob.all).to be_empty
     end
@@ -134,7 +139,7 @@ describe SchedulableJobsController do
     end
 
     it "runs with adjusted priority" do
-      scheduled_job.update_attributes! queue_priority: 100
+      scheduled_job.update! queue_priority: 100
       sign_in_as Factory(:sys_admin_user)
       expect_any_instance_of(SchedulableJob).to receive(:delay).with(priority: 100).and_return scheduled_job
       expect(scheduled_job).to receive(:run_if_needed).with(force_run: true)
@@ -146,7 +151,7 @@ describe SchedulableJobsController do
       sign_in_as Factory(:user)
       post :run, id: scheduled_job.id
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
+      expect(flash[:errors].first).to match(/Only system admins/)
     end
   end
 
@@ -166,7 +171,7 @@ describe SchedulableJobsController do
       sign_in_as Factory(:user)
       post :reset_run_flag, id: schedulable_job.id
       expect(response).to be_redirect
-      expect(flash[:errors].first).to match /Only system admins/
+      expect(flash[:errors].first).to match(/Only system admins/)
     end
   end
 end

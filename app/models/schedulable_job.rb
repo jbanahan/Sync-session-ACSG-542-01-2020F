@@ -37,10 +37,6 @@ class SchedulableJob < ActiveRecord::Base
 
   has_many :runtime_logs, as: :runtime_logable, inverse_of: :runtime_logable, dependent: :destroy
 
-  attr_accessible :day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday, :run_thursday,
-                  :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :last_start_time, :success_email, :failure_email, :run_interval,
-                  :no_concurrent_jobs, :running, :stopped, :queue_priority, :notes, :log_runtime
-
   validate :valid_opts
 
   def self.create_default_jobs!

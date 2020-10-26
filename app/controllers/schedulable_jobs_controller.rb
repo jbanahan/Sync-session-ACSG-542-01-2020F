@@ -6,7 +6,7 @@ class SchedulableJobsController < ApplicationController
   def index
     sys_admin_secure do
       jobs = SchedulableJob.all
-      @schedulable_jobs  = jobs.sort_by {|a| a.run_class_name.to_s.upcase }
+      @schedulable_jobs = jobs.sort_by {|a| a.run_class_name.to_s.upcase }
     end
   end
 
@@ -19,7 +19,7 @@ class SchedulableJobsController < ApplicationController
   def update
     sys_admin_secure do
       sj = SchedulableJob.find params[:id]
-      if sj.update_attributes(params[:schedulable_job])
+      if sj.update(permitted_attributes(params))
         add_flash :notices, "Saved #{sj.run_class_name}"
         redirect_to schedulable_jobs_path
       else
@@ -38,7 +38,7 @@ class SchedulableJobsController < ApplicationController
 
   def create
     sys_admin_secure do
-      sj = SchedulableJob.new(params[:schedulable_job])
+      sj = SchedulableJob.new(permitted_attributes(params))
       if sj.save
         add_flash :notices, "Created job with run class #{sj.run_class_name}"
       else
@@ -64,7 +64,7 @@ class SchedulableJobsController < ApplicationController
       if !sj.queue_priority.nil?
         sj = sj.delay(priority: sj.queue_priority)
       else
-        sj = sj.delay()
+        sj = sj.delay
       end
 
       sj.run_if_needed force_run: true
@@ -85,4 +85,14 @@ class SchedulableJobsController < ApplicationController
       redirect_to schedulable_jobs_path
     end
   end
+
+  def permitted_attributes(params)
+    params
+      .require(:schedulable_job)
+      .except(:last_start_time, :running)
+      .permit(:day_of_month, :opts, :run_class, :run_friday, :run_hour, :run_monday, :run_saturday, :run_sunday,
+              :run_thursday, :run_tuesday, :run_wednesday, :time_zone_name, :run_minute, :success_email, :failure_email,
+              :run_interval, :no_concurrent_jobs, :stopped, :queue_priority, :notes, :log_runtime)
+  end
 end
+

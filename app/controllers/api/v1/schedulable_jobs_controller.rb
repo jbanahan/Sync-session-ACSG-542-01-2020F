@@ -1,6 +1,6 @@
 module Api; module V1; class SchedulableJobsController < ApiController
 
-  before_filter :require_admin
+  before_action :require_admin
 
   def run_jobs
     # Run all Search Schedules and Schedulable Jobs
@@ -21,6 +21,7 @@ module Api; module V1; class SchedulableJobsController < ApiController
   end
 
   private
+
     def run_schedules schedules, is_search_schedule
       jobs_run = 0
       schedules.each do |ss|

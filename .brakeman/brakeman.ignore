@@ -4738,6 +4738,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "9140dc84dd2a6475e5dc1af085241a5966fc2d1ac64d8c2344eaf0aa58a1ec0c",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/schedulable_jobs_controller.rb",
+      "line": 41,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "SchedulableJob.new(permitted_attributes(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "SchedulableJobsController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "935d0f028ce81016a64da4ffe51d264cfe0160042bbcaa0bb2124d5f5fc45541",
       "check_name": "ModelAttrAccessible",
@@ -8216,6 +8236,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-16 17:11:59 -0400",
+  "updated": "2020-10-26 14:37:19 -0400",
   "brakeman_version": "4.9.1"
 }
