@@ -30,7 +30,8 @@ describe OpenChain::CustomHandler::ThomsonReutersEntryXmlGenerator do
                                               house_bills_of_lading: "EEEK142050488080\n EEEK142050488081")
       inv_1_line_1 = inv_1.commercial_invoice_lines.build(po_number: "0082-1561840", part_number: "021004200-556677",
                                                           line_number: 3, vendor_name: "Vendtech", currency: "CAD",
-                                                          value: BigDecimal("58.96"), value_foreign: BigDecimal("69.07"))
+                                                          value: BigDecimal("58.96"), value_foreign: BigDecimal("69.07"),
+                                                          quantity: BigDecimal("1467"))
       inv_1_line_1.commercial_invoice_tariffs.build(gross_weight: 13, hts_code: "9506910030",
                                                     classification_uom_1: "NO", classification_qty_1: BigDecimal("2578"))
       inv_1_line_1.commercial_invoice_tariffs.build(hts_code: "99038815")
@@ -70,7 +71,6 @@ describe OpenChain::CustomHandler::ThomsonReutersEntryXmlGenerator do
       expect(elem_line_1.text("SupplierName")).to eq "Vendtech"
       expect(elem_line_1.text("InvoiceNum")).to eq "E1I0954293"
       expect(elem_line_1.text("PurchaseOrderNum")).to eq "0082-1561840"
-      expect(elem_line_1.text("LineNum")).to eq "1"
       expect(elem_line_1.text("MasterBillOfLading")).to eq "EGLV142050488076"
       expect(elem_line_1.text("HouseBillOfLading")).to eq "EEEK142050488080"
       expect(elem_line_1.text("ProductNum")).to eq "021004200-556677"
@@ -79,7 +79,7 @@ describe OpenChain::CustomHandler::ThomsonReutersEntryXmlGenerator do
       expect(elem_line_1.text("TxnQty")).to eq "2578"
       expect(elem_line_1.text("LineValue")).to eq "58.96"
       expect(elem_line_1.text("InvoiceCurrency")).to eq "CAD"
-      expect(elem_line_1.text("InvoiceQty")).to eq "2578"
+      expect(elem_line_1.text("InvoiceQty")).to eq "1467"
       expect(elem_line_1.text("InvoiceValue")).to eq "69.07"
       expect(elem_line_1.text("TxnQtyUOM")).to eq "NO"
       expect(elem_line_1.text("WeightUOM")).to eq "KG"
@@ -87,20 +87,17 @@ describe OpenChain::CustomHandler::ThomsonReutersEntryXmlGenerator do
       elem_line_2 = line_elements[1]
       expect(elem_line_2.text("InvoiceNum")).to eq "E1I0954293"
       expect(elem_line_2.text("PurchaseOrderNum")).to eq "0082-1561840"
-      expect(elem_line_2.text("LineNum")).to eq "2"
       expect(elem_line_2.text("HsNum")).to eq "99038815"
 
       elem_line_3 = line_elements[2]
       expect(elem_line_3.text("SupplierName")).to eq "Vendtech Prime"
       expect(elem_line_3.text("InvoiceNum")).to eq "E1I0954293"
       expect(elem_line_3.text("PurchaseOrderNum")).to eq "0082-1561841"
-      expect(elem_line_3.text("LineNum")).to eq "3"
       expect(elem_line_3.text("HsNum")).to eq "9506910030"
 
       elem_line_4 = line_elements[3]
       expect(elem_line_4.text("InvoiceNum")).to eq "E1I0954294"
       expect(elem_line_4.text("PurchaseOrderNum")).to eq "0082-1561847"
-      expect(elem_line_4.text("LineNum")).to eq "4"
       expect(elem_line_4.text("MasterBillOfLading")).to eq "EGLV142050488082"
       expect(elem_line_4.text("HouseBillOfLading")).to eq "EEEK142050488078"
       expect(elem_line_4.text("HsNum")).to eq "9506910030"

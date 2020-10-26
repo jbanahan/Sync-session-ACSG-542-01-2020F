@@ -18,6 +18,7 @@
 #  duty_amount                :decimal(12, 2)
 #  duty_other                 :decimal(12, 2)
 #  duty_rate                  :decimal(4, 3)
+#  duty_rate_description      :string(255)
 #  duty_specific              :decimal(12, 2)
 #  entered_value              :decimal(13, 2)
 #  entered_value_7501         :integer
@@ -58,9 +59,9 @@ class CommercialInvoiceTariff < ActiveRecord::Base
     :classification_qty_3, :classification_uom_3, :gross_weight, :integer,
     :tariff_description, :created_at, :updated_at, :tariff_provision,
     :value_for_duty_code, :gst_amount, :gst_rate_code, :sima_amount, :excise_amount,
-    :excise_rate_code, :duty_rate, :quota_category, :special_authority,
-    :sima_code, :entered_value_7501, :special_tariff, :duty_advalorem,
-    :duty_specific, :duty_additional, :duty_other, :advalorem_rate,
+    :excise_rate_code, :duty_rate, :duty_rate_description, :quota_category,
+    :special_authority, :sima_code, :entered_value_7501, :special_tariff,
+    :duty_advalorem, :duty_specific, :duty_additional, :duty_other, :advalorem_rate,
     :specific_rate, :specific_rate_uom, :additional_rate, :additional_rate_uom
 
   belongs_to :commercial_invoice_line, inverse_of: :commercial_invoice_tariffs

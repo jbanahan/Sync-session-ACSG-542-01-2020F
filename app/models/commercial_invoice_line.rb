@@ -105,6 +105,8 @@ class CommercialInvoiceLine < ActiveRecord::Base
   has_one :entry, through: :commercial_invoice
   has_many :commercial_invoice_tariffs, dependent: :destroy, autosave: true
   has_many :change_records, as: :recordable # rubocop:disable Rails/InverseOf
+  has_many :canadian_pga_lines, dependent: :destroy, autosave: true, inverse_of: :commercial_invoice_line
+
   belongs_to :container
 
   include CustomFieldSupport

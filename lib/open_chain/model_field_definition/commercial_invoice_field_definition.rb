@@ -50,7 +50,8 @@ module OpenChain; module ModelFieldDefinition; module CommercialInvoiceFieldDefi
             AND commercial_invoice_tariffs.value_for_duty_code IS NOT NULL)
         SQL
         }],
-       [25, :ci_customer_reference, :customer_reference, "Customer Reference", {:data_type=>:string}]
+       [25, :ci_customer_reference, :customer_reference, "Customer Reference", {:data_type=>:string}],
+       [26, :ci_net_weight, :net_weight, "Net Weight", {data_type: :decimal}]
     ]
     add_fields CoreModule::COMMERCIAL_INVOICE, make_importer_arrays(100, 'ci', 'commercial_invoices')
   end

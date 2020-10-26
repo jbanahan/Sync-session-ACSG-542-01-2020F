@@ -188,6 +188,8 @@ module OpenChain; class FenixParser
             process_bill_of_lading_line line
           when "B3D"
             process_line_detail_line line, current_invoice_line
+          when "B3P"
+            process_line_pga_line line, current_invoice_line
           else
             line = strip_b3_from_line(line)
             process_invoice line
@@ -339,6 +341,7 @@ module OpenChain; class FenixParser
     accumulate_string :master_bills_of_lading, str_val(line[13])
     accumulate_string :container_numbers, str_val(line[8])
     entry.ship_terms = str_val(line[17]) {|val| val.upcase}
+    entry.total_freight = line[20]
     entry.direct_shipment_date = parse_date(line[42])
     entry.transport_mode_code = str_val(line[4])
     entry.entry_port_code = prep_port_code(str_val(line[5]))
@@ -412,6 +415,8 @@ module OpenChain; class FenixParser
     end
 
     ci.mfid = str_val(line[102])
+    ci.gross_weight = int_val(line[111])
+    ci.net_weight = dec_val(line[114])
     accumulate_string :vendor_names, ci.vendor_name
     accumulate_string :invoice_number, ci.invoice_number
   end
@@ -499,6 +504,7 @@ module OpenChain; class FenixParser
 
     t.duty_amount = dec_val(line[47])
 
+    t.duty_rate_description = dec_val(line[46])
     duty_rate = dec_val(line[46])
     if duty_rate.try(:nonzero?) && t.entered_value.try(:nonzero?) && t.duty_amount.try(:nonzero?)
       adjusted_duty_rate = (duty_rate / BigDecimal(100))
@@ -972,6 +978,32 @@ module OpenChain; class FenixParser
         invoice_line.add_to_make_amount += amount
       end
     end
+  end
+
+  def process_line_pga_line line, invoice_line
+    return unless invoice_line
+
+    field_names = pga_line_config({}).keys
+    current_fingerprint = CanadianPgaLine.new(pga_line_config(line)).fingerprint(field_names)
+    pga_ln = invoice_line.canadian_pga_lines.find { |pga_line| current_fingerprint == pga_line.fingerprint(field_names) }
+    pga_ln ||= invoice_line.canadian_pga_lines.build(pga_line_config(line))
+
+    if line[29] == "HC" && line[16].present?
+      # Add ingredient record to PGA line only for Health Canada records with a populated ingredient name.
+      pga_ln.canadian_pga_line_ingredients.build name: line[16], quantity: line[15], quality: line[14]
+    end
+
+    nil
+  end
+
+  def pga_line_config line
+    {batch_lot_number: line[2], brand_name: line[3], commodity_type: line[4], country_of_origin: line[5],
+     exception_processes: line[6], expiry_date: line[7], fda_product_code: line[8], file_name: line[9],
+     gtin: line[10], importer_contact_email: line[11], importer_contact_name: line[12],
+     importer_contact_phone: line[13], intended_use_code: line[17], lpco_number: line[18],
+     lpco_type: line[19], manufacture_date: line[20], model_designation: line[21], model_label: line[22],
+     model_number: line[23], product_name: line[24], purpose: line[25], state_of_origin: line[26],
+     unique_device_identifier: line[27], program_code: line[28], agency_code: line[29]}
   end
 
 end; end

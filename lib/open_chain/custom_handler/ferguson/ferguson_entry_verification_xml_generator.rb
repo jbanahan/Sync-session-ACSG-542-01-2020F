@@ -78,7 +78,7 @@ module OpenChain; module CustomHandler; module Ferguson; class FergusonEntryVeri
     elem_dec
   end
 
-  def make_declaration_line_element elem_dec, entry, inv, inv_line, _line_sequence_number, tar, tariff_sequence_number
+  def make_declaration_line_element elem_dec, entry, inv, inv_line, tar, tariff_sequence_number
     elem_line = super
     add_element elem_line, "CountryOfOrigin", inv_line.country_origin_code
     add_element elem_line, "ManufacturerId", inv_line.mid

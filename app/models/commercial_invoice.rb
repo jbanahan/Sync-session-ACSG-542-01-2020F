@@ -24,6 +24,7 @@
 #  issue_codes            :string(255)
 #  master_bills_of_lading :text(65535)
 #  mfid                   :string(255)
+#  net_weight             :decimal(11, 2)
 #  non_dutiable_amount    :decimal(13, 2)
 #  rater_comments         :text(65535)
 #  total_charges          :decimal(11, 2)

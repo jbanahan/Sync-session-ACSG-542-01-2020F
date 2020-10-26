@@ -772,7 +772,8 @@ module OpenChain; module ModelFieldDefinition; module EntryFieldDefinition
                   eex.comments IS NOT NULL AND eex.comments != ""
               )'
         }
-      ]
+      ],
+      [322, :ent_total_freight, :total_freight, "Total Freight", {data_type: :decimal}]
     ]
     add_fields CoreModule::ENTRY, make_country_arrays(500, 'ent', "entries", "import_country", association_title: "Import")
     add_fields CoreModule::ENTRY, make_sync_record_arrays(600, 'ent', 'entries', 'Entry')

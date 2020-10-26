@@ -226,21 +226,21 @@ module CoreObjectSupport
       where_clause_for_need_sync(join_table: join_table, sent_at_or_before: sent_at_before)
     end
 
-    def where_clause_for_need_sync join_table: self.table_name, sent_at_or_before: nil
+    def where_clause_for_need_sync join_table: self.table_name, sent_at_or_before: nil, updated_at_column: :updated_at
       # sent_at_before is for cases where we don't want to resend product records prior to a certain timeframe OR
       # cases where we're splitting up file sends on product count (batching) and don't want to resend ones we just
       # sent in a previous batch.
-      query =
-      "(sync_records.id is NULL OR
+      query = <<-SQL
+      (sync_records.id is NULL OR
          (
             (sync_records.sent_at is NULL OR
              sync_records.confirmed_at is NULL OR
              sync_records.sent_at > sync_records.confirmed_at OR
-             #{ActiveRecord::Base.connection.quote_table_name(join_table)}.updated_at > sync_records.sent_at
+             #{ActiveRecord::Base.connection.quote_table_name(join_table)}.#{ActiveRecord::Base.connection.quote_column_name(updated_at_column)} > sync_records.sent_at
             ) AND
             (sync_records.ignore_updates_before IS NULL OR
-             sync_records.ignore_updates_before < #{ActiveRecord::Base.connection.quote_table_name(join_table)}.updated_at)
-            "
+             sync_records.ignore_updates_before < #{ActiveRecord::Base.connection.quote_table_name(join_table)}.#{ActiveRecord::Base.connection.quote_column_name(updated_at_column)})
+      SQL
       if sent_at_or_before.respond_to?(:acts_like_time?) || sent_at_or_before.respond_to?(:acts_like_date?)
         query += " AND
             (sync_records.sent_at IS NULL OR sync_records.sent_at < ? OR #{ActiveRecord::Base.connection.quote_table_name(join_table)}.updated_at > sync_records.sent_at)"

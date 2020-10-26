@@ -13,6 +13,7 @@ describe OpenChain::FenixParser do
     @importer_name = "Importer So-And-So"
     @cargo_control_no = '20134310243091'
     @ship_terms = 'Fob'
+    @total_freight = BigDecimal("1030.50")
     @direct_shipment_date = '12/14/2012'
     @transport_mode_code = " 9 "
     @entry_port_code = '0456'
@@ -110,11 +111,17 @@ describe OpenChain::FenixParser do
     @customer_reference = "REFERENCE #"
     @number_of_pieces = "99"
     @gross_weight = "25.50"
+    @gross_weight_ci = BigDecimal("15.75")
+    @net_weight_ci = BigDecimal("14.25")
     @consignee_name = "Consignee"
     @b3_line_number = 25
     @subheader_number = 3
     @special_authority = "123-456"
     @b3d_amounts = [1.23, -2.34, 3.45, -4.56]
+    @b3p = ["B3P", @barcode, "batch lot num", "brand name", "commodity type", "country of origin", "exception processes", DateTime.new(2020, 3, 15),
+            "fda product code", "file name", "gtin", "importer contact email", "importer contact name", "importer contact phone", 50.5, 3,
+            "ingredient name", "intended use code", "LPCO num", "LPCO type", DateTime.new(2020, 3, 15), "model designation", "model name",
+            "model number", "product name", "purpose", "state of origin", "unique device identifier", "program code", "HC"]
 
     # Timestamp is also the indicator to the parser that the file is from Fenix ND...which should be what we default to now
     @timestamp = ["T", "20150904", "201516"]
@@ -122,7 +129,7 @@ describe OpenChain::FenixParser do
       data = ""
       data += (@timestamp.join(", ") + "\r\n") if time_stamp
       data += new_style ? "B3L," : ""
-      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, 50 , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"#{@tariff_desc}\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,#{@special_authority}, #{@sima_code} , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" #{@b3_line_number} \",\" #{@subheader_number} \",\"#{@file_logged_date}\",\" \",\"\",\"#{@carrier_name}\",\"#{@consignee_name}\",\"PURCHASER\",\"SHIPPER\",\"EXPORTER\",\"#{@vendor_number}\",\"#{@customer_reference}\", 1 ,        #{@adjusted_vcc},,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight},,,#{@adjustments_per_piece}"
+      data += "\"#{@barcode}\",#{@file_number},\" 0 \",\"#{@importer_tax_id}\",#{@transport_mode_code},#{@entry_port_code},\"#{@carrier_code}\",\"#{@voyage}\",\"#{@container}\",#{@exit_port_code},#{@entry_type},\"#{@vendor_name}\",\"#{@cargo_control_no}\",\"#{@bill_of_lading}\",\"#{@header_po}\", #{@invoice_sequence} ,\"#{@invoice_number}\",\"#{@ship_terms}\",#{@invoice_date},Net30, #{@total_freight} , #{@invoice_page} , #{@invoice_line} ,\"#{@part_number}\",\"#{@tariff_desc}\",\"#{@detail_po}\",#{@country_export_code},#{@country_origin_code}, #{@tariff_treatment} ,\"#{@hts}\",#{@tariff_provision}, #{@hts_qty} ,#{@hts_uom}, #{@val_for_duty} ,#{@special_authority}, #{@sima_code} , 1 , #{@comm_qty} ,#{@comm_uom}, #{@unit_price} ,#{@line_value},       967.68,#{@direct_shipment_date},#{@currency}, #{@exchange_rate} ,#{@entered_value}, #{@duty_rate} ,#{@duty_amount}, #{@gst_rate_code} ,#{@gst_amount},#{@sima_amount}, #{@excise_rate_code} ,#{@excise_amount},         48.85,,,#{@duty_due_date},#{@across_sent_date},#{@pars_ack_date},#{@pars_rej_date},,,#{@release_date},#{@cadex_accept_date},#{@cadex_sent_date},,\"\",,,,,,,\"\",\"\",\"\",\"\", 0 , 0 ,, 0 ,01/30/2012,\"#{@employee_name}\",\"#{@release_type}\",\"\",\"N\",\" #{@b3_line_number} \",\" #{@subheader_number} \",\"#{@file_logged_date}\",\" \",\"\",\"#{@carrier_name}\",\"#{@consignee_name}\",\"PURCHASER\",\"SHIPPER\",\"EXPORTER\",\"#{@vendor_number}\",\"#{@customer_reference}\", 1 ,        #{@adjusted_vcc},,#{@importer_number},#{@importer_name},#{@number_of_pieces},#{@gross_weight},#{@gross_weight_ci},,#{@adjustments_per_piece},#{@net_weight_ci}"
       @b3d_amounts.each do |amt|
         data += "\r\nB3D,#{@barcode},Some Description,#{amt}"
       end
@@ -150,6 +157,16 @@ describe OpenChain::FenixParser do
         @additional_bols.each do |bol|
           data += "\r\nBL,#{@barcode},#{bol}"
         end
+
+        # PGA
+        b3p_rows = [@b3p]
+        b3p2 = @b3p.dup
+        b3p2[14] = 25; b3p2[15] = 2; b3p2[16] = "ingredient name 2"
+        b3p_rows << b3p2
+        b3p3 = @b3p.dup
+        b3p3[29] = "NR"; b3p3[14] = 41; b3p3[15] = 7; b3p3[16] = "ingredient name 3"
+        b3p_rows << b3p3
+        data += "\r\n#{b3p_rows.map { |r| r.to_csv(row_sep: %(\r\n)) }.join ''}"
       end
 
       data.encode "Windows-1252"
@@ -173,6 +190,7 @@ describe OpenChain::FenixParser do
     expect(ent.last_exported_from_source).to eq(ActiveSupport::TimeZone["Eastern Time (US & Canada)"].parse("20150904201516"))
 
     expect(ent.ship_terms).to eq(@ship_terms.upcase)
+    expect(ent.total_freight).to eq(@total_freight)
     expect(ent.direct_shipment_date).to eq(Date.strptime(@direct_shipment_date, @mdy))
     expect(ent.transport_mode_code).to eq(@transport_mode_code.strip)
     expect(ent.entry_port_code).to eq(@entry_port_code)
@@ -223,6 +241,8 @@ describe OpenChain::FenixParser do
     expect(ci.currency).to eq(@currency)
     expect(ci.exchange_rate).to eq(@exchange_rate)
     expect(ci.invoice_value).to eq(@invoice_value)
+    expect(ci.gross_weight).to eq(@gross_weight_ci.to_i)
+    expect(ci.net_weight).to eq(@net_weight_ci)
 
     expect(ci.commercial_invoice_lines.size).to eq(1)
     line = ci.commercial_invoice_lines.first
@@ -258,6 +278,7 @@ describe OpenChain::FenixParser do
     expect(tar.excise_rate_code).to eq(@excise_rate_code)
     expect(tar.excise_amount).to eq(@excise_amount)
     expect(tar.duty_rate).to eq((@duty_rate / 100).round(3))
+    expect(tar.duty_rate_description).to eq "5.55"
     expect(tar.tariff_description).to eq(@tariff_desc)
     expect(tar.special_authority).to eq(@special_authority)
 
@@ -265,6 +286,55 @@ describe OpenChain::FenixParser do
 
     expect(ent.entity_snapshots.length).to eq 1
     ent
+  end
+
+  it "sets PGA fields" do
+    OpenChain::FenixParser.parse @entry_lambda.call(true), {:bucket=>'bucket', :key=>'file/path/b3_detail_rns_114401_2013052958482.1369859062.csv'}
+    ent = Entry.find_by(broker_reference: @file_number)
+    expect(ent.commercial_invoice_lines.count).to eq 1
+    line = ent.commercial_invoice_lines.first
+
+    expect(line.canadian_pga_lines.count).to eq 2
+    pga_ln1 = line.canadian_pga_lines.first
+    expect(pga_ln1.batch_lot_number).to eq "batch lot num"
+    expect(pga_ln1.brand_name).to eq "brand name"
+    expect(pga_ln1.commodity_type).to eq "commodity type"
+    expect(pga_ln1.country_of_origin).to eq "country of origin"
+    expect(pga_ln1.exception_processes).to eq "exception processes"
+    expect(pga_ln1.expiry_date).to eq Time.zone.parse("2020-03-15")
+    expect(pga_ln1.fda_product_code).to eq "fda product code"
+    expect(pga_ln1.file_name).to eq "file name"
+    expect(pga_ln1.gtin).to eq "gtin"
+    expect(pga_ln1.importer_contact_email).to eq "importer contact email"
+    expect(pga_ln1.importer_contact_name).to eq "importer contact name"
+    expect(pga_ln1.importer_contact_phone).to eq "importer contact phone"
+    expect(pga_ln1.intended_use_code).to eq "intended use code"
+    expect(pga_ln1.lpco_number).to eq "LPCO num"
+    expect(pga_ln1.lpco_type).to eq "LPCO type"
+    expect(pga_ln1.manufacture_date).to eq Time.zone.parse("2020-03-15")
+    expect(pga_ln1.model_designation).to eq "model designation"
+    expect(pga_ln1.model_label).to eq "model name"
+    expect(pga_ln1.model_number).to eq "model number"
+    expect(pga_ln1.product_name).to eq "product name"
+    expect(pga_ln1.purpose).to eq "purpose"
+    expect(pga_ln1.state_of_origin).to eq "state of origin"
+    expect(pga_ln1.unique_device_identifier).to eq "unique device identifier"
+    expect(pga_ln1.program_code).to eq "program code"
+    expect(pga_ln1.agency_code).to eq "HC"
+
+    expect(pga_ln1.canadian_pga_line_ingredients.count).to eq 2
+    ing1 = pga_ln1.canadian_pga_line_ingredients.first
+    expect(ing1.name).to eq "ingredient name"
+    expect(ing1.quality).to eq 50.5
+    expect(ing1.quantity).to eq 3
+    ing2 = pga_ln1.canadian_pga_line_ingredients.last
+    expect(ing2.name).to eq "ingredient name 2"
+    expect(ing2.quality).to eq 25
+    expect(ing2.quantity).to eq 2
+
+    pga_ln2 = line.canadian_pga_lines.last
+    expect(pga_ln2.agency_code).to eq "NR"
+    expect(pga_ln2.canadian_pga_line_ingredients.count).to eq 0
   end
 
   it "sets hold-date fields correctly" do

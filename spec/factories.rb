@@ -295,6 +295,15 @@ end
 Factory.define :commercial_invoice_tariff do |f|
   f.association :commercial_invoice_line
 end
+
+Factory.define :canadian_pga_line do |f|
+  f.association :commercial_invoice_line
+end
+
+Factory.define :canadian_pga_line_ingredient do |f|
+  f.association :canadian_pga_line
+end
+
 Factory.define :invoice do |f|
 
 end

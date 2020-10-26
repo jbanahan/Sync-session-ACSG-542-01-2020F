@@ -17,6 +17,7 @@ class FtpSender
   #   be used in situations where the file may be huge and scanning it cause issues AND when you know the file is ok (.ie composed of attachments that
   #   have already been scanned).
   def self.send_file server, username, password, arg_file, opts = {}
+    raise ArgumentError, "Server and username are required." unless server.present? && username.present?
     # This needs to be outside the get_file_to_ftp otherwise we end up with a potentially wrong default remote file name
     # when the options come from a JSON option string (.ie retries)
     opts = opts.with_indifferent_access

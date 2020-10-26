@@ -219,6 +219,10 @@
 #  price_inquiry_exception_opened_date             :datetime
 #  price_inquiry_exception_resolved_date           :datetime
 #  product_lines                                   :string(255)
+#  protest_completion_date                         :date
+#  protest_decision_1_date                         :date
+#  protest_decision_2_date                         :date
+#  protest_file_date                               :date
 #  recon_flags                                     :string(255)
 #  release_cert_message                            :string(255)
 #  release_date                                    :datetime
@@ -245,6 +249,7 @@
 #  total_duty_gst                                  :decimal(11, 2)
 #  total_entry_fee                                 :decimal(11, 2)
 #  total_fees                                      :decimal(12, 2)
+#  total_freight                                   :decimal(12, 2)
 #  total_gst                                       :decimal(11, 2)
 #  total_invoiced_value                            :decimal(13, 2)
 #  total_non_dutiable_amount                       :decimal(13, 2)

@@ -309,6 +309,25 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
+      "fingerprint": "0bcb617fcdfdf4631e6179dbc41b48ee7294bbf0cd402efcc56e23dba4ac2234",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/canadian_pga_line.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":commercial_invoice_line_id",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "CanadianPgaLine"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
       "fingerprint": "0e057cbd6381757c06e2e46904eaf28b276907beb49dd52fb62424f5937ef6e8",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -8116,6 +8135,25 @@
       "location": {
         "type": "model",
         "model": "SpiRate"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 60,
+      "fingerprint": "ff337f4f6269a766e4ca92469bfe8b4c947a18355638a4cee05875bf7d1b78f2",
+      "check_name": "ModelAttrAccessible",
+      "message": "Potentially dangerous attribute available for mass assignment",
+      "file": "app/models/canadian_pga_line_ingredient.rb",
+      "line": null,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": ":canadian_pga_line_id",
+      "render_path": null,
+      "location": {
+        "type": "model",
+        "model": "CanadianPgaLineIngredient"
       },
       "user_input": null,
       "confidence": "Weak",
