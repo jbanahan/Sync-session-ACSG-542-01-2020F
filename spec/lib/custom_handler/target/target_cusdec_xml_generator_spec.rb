@@ -1,5 +1,7 @@
 describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
   describe "generate_xml" do
+    let!(:target) { with_customs_management_id(Factory(:importer), "TARGEN") }
+
     it "generates an XML" do
       broker = Factory(:company, name: "Vandegrift Forwarding Co.", broker: true)
       broker.addresses.create!(system_code: "4", name: "Vandegrift Forwarding Co., Inc.", line_1: "180 E Ocean Blvd",
@@ -30,7 +32,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
                                               invoice_value_foreign: BigDecimal("45324.62"),
                                               non_dutiable_amount: BigDecimal("13.31"),
                                               master_bills_of_lading: "EGLV142050488076\n EGLV142050488077", total_quantity_uom: "CL",
-                                              house_bills_of_lading: "EEEK142050488080\n EEEK142050488081", importer_id: -5968)
+                                              house_bills_of_lading: "EEEK142050488080\n EEEK142050488081")
       inv_1_line_1 = inv_1.commercial_invoice_lines.build(prorated_mpf: BigDecimal("100"),
                                                           hmf: BigDecimal("53.33"), add_to_make_amount: BigDecimal("3.5"),
                                                           country_export_code: "CN", cotton_fee: BigDecimal("75.31"),
@@ -46,7 +48,7 @@ describe OpenChain::CustomHandler::Target::TargetCusdecXmlGenerator do
                                                           mid: "383878", hmf_rate: BigDecimal("10.6"), mpf_rate: BigDecimal("11.7"),
                                                           cotton_fee_rate: BigDecimal("12.8"), customs_line_number: 1, department: "20")
       expect(inv_1_line_1).to receive(:duty_plus_fees_amount).and_return(BigDecimal("42.66"))
-      Factory(:product, importer_id: inv_1.importer_id, unique_identifier: "021004200-556677", name: "Ava & Viv White 14W Shorts")
+      Factory(:product, importer_id: target.id, unique_identifier: "021004200-556677", name: "Ava & Viv White 14W Shorts")
       tar_1 = inv_1_line_1.commercial_invoice_tariffs.build(duty_amount: BigDecimal("1000"), gross_weight: 13,
                                                             hts_code: "9506910030", spi_primary: "SP1", spi_secondary: "SP2",
                                                             classification_uom_1: "NO", classification_qty_1: BigDecimal("2578"),

@@ -350,7 +350,7 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       # not intentional, at least expected.  As we don't really have an item-level carton quantity, we
       # are sending a zero value for now.
       add_element elem_item, "totalItemcartonQuantity", "0"
-      add_element elem_item, "dpciItemDescription", get_product_name(inv_line.part_number, inv_line.commercial_invoice.importer_id)
+      add_element elem_item, "dpciItemDescription", get_product_name(inv_line.part_number)
       add_element elem_item, "itemFreightAmount", format_money(inv_line.freight_amount)
       # Our gross weight field is currently an integer for some reason.  We'll handle it as a decimal
       # here just in case that's ever corrected.
@@ -359,9 +359,9 @@ module OpenChain; module CustomHandler; module Target; class TargetCusdecXmlGene
       elem_item
     end
 
-    def get_product_name part_number, importer_id
+    def get_product_name part_number
       @product_name_cache ||= Hash.new do |hash, key|
-        hash[key] = Product.where(unique_identifier: part_number, importer_id: importer_id).first&.name
+        hash[key] = Product.where(unique_identifier: key, importer_id: target_importer_id).first&.name
       end
       @product_name_cache[part_number]
     end
