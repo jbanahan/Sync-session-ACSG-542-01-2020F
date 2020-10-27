@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
   # to parse the billing data once to determine what parser
   # is utilized and then again to actual parser the file.  Each parser utilized is aware that it
   # might recieve raw file data or an XML document.
-  def self.pre_process_data data
+  def self.pre_process_data data, _opts = {}
     xml_document(data)
   end
 
