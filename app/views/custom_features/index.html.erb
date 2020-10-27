@@ -45,6 +45,13 @@
     </div>
   </div>
   <%-end-%>
+  <%-if enabled_features.include?('Calendar Management') && OpenChain::CustomHandler::CalendarManager::CalendarUploadParser.can_view?(current_user)-%>
+  <div class='row'>
+    <div class='col-md-6 offset-md-3'>
+      <%=link_to "VFI Track Calendar Upload", '/custom_features/calendar', :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+    </div>
+  </div>
+  <%-end-%>
   <%-if enabled_features.include?('JCrew Parts') && OpenChain::CustomHandler::JCrewPartsExtractParser.new.can_view?(current_user)-%>
   <div class='row'>
     <div class='col-md-6 offset-md-3'>

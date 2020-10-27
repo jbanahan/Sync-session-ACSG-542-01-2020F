@@ -695,6 +695,13 @@ OpenChain::Application.routes.draw do
   post "/custom_features/le_product/upload", to: "custom_features#le_product_upload"
   get "/custom_features/le_product/:id/download", to: "custom_features#le_product_download"
 
+  get "/custom_features/cq_origin", to: "custom_features#cq_origin_index"
+  post "/custom_features/cq_origin/upload", to: "custom_features#cq_origin_upload"
+  get "/custom_features/cq_origin/:id/download", to: "custom_features#cq_origin_download"
+
+  get "/custom_features/calendar", to: "custom_features#calendar_index"
+  post "/custom_features/calendar/upload", to: "custom_features#calendar_upload"
+
   # H&M specific
   match "/hm/po_lines" => 'hm#show_po_lines', via: :get
   match "/hm" => 'hm#index', via: :get

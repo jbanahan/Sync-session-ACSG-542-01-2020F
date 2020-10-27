@@ -44,6 +44,7 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_product_vendor_carb
 require 'open_chain/custom_handler/kirklands/kirklands_product_upload_parser'
 require 'open_chain/custom_handler/lands_end/le_product_parser'
 require 'open_chain/custom_handler/burlington/burlington_product_parser'
+require 'open_chain/custom_handler/calendar_manager/calendar_upload_parser'
 
 class CustomFeaturesController < ApplicationController
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
@@ -88,6 +89,7 @@ class CustomFeaturesController < ApplicationController
   KIRKLANDS_PRODUCT ||= 'OpenChain::CustomHandler::Kirklands::KirklandsProductUploadParser'
   LE_PRODUCT ||= 'OpenChain::CustomHandler::LandsEnd::LeProductParser'
   BURLINGTON_PRODUCT ||= 'OpenChain::CustomHandler::Burlington::BurlingtonProductParser'
+  CALENDAR ||= 'OpenChain::CustomHandler::CalendarManager::CalendarUploadParser'
 
   SEARCH_PARAMS = {
     'filename' => {:field => 'attached_file_name', :label => 'Filename'},
@@ -546,6 +548,18 @@ class CustomFeaturesController < ApplicationController
 
   def cq_origin_download
     generic_download "Carquest Orders"
+  end
+
+  def calendar_index
+    generic_index OpenChain::CustomHandler::CalendarManager::CalendarUploadParser, CALENDAR, "Calendar Manager"
+  end
+
+  def calendar_upload
+    generic_upload(CALENDAR, 'Calendar Manager', 'calendar') do |f|
+      if !f.attached_file_name.blank? && !OpenChain::CustomHandler::CalendarManager::CalendarUploadParser.valid_file?(f.attached_file_name)
+        add_flash :errors, "You must upload a valid Excel file."
+      end
+    end
   end
 
   def lumber_part_index
