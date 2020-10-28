@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctDailyAccoun
 
   # Run schedule is for being able to run this via a scheduled job
   def self.run_schedulable opts = {}
-    self.new.run(nil, opts)
+    self.new.run_schedulable(opts)
   end
 
   def run_schedulable opts

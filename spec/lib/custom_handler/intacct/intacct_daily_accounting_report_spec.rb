@@ -114,6 +114,8 @@ describe OpenChain::CustomHandler::Intacct::IntacctDailyAccountingReport do
 
   describe "run_schedulable" do
 
+    subject { described_class }
+
     def extract_spreadsheet mail
       attachment = mail.attachments.first
       expect(attachment).not_to be_nil
