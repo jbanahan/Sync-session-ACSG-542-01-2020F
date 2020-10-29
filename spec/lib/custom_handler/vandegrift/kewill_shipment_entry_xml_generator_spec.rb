@@ -63,6 +63,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
       # This is midnight UTC, so the actual date should roll back a day, since it should be using the date in Eastern TZ
       s.update_custom_value! cdefs[:shp_entry_prepared_date], "2018-06-01 00:00"
+      s.update_custom_value! cdefs[:shp_non_dutiable_amount], "9999.99"
 
       # Make a high-cube so we're checking that it's set into the correct container type field
       container = s.containers.create! container_number: "CONTAINER", seal_number: "SEAL", container_size: "26GP"
@@ -204,6 +205,7 @@ describe OpenChain::CustomHandler::Vandegrift::KewillShipmentEntryXmlGenerator d
 
       expect(inv.invoice_number).to eq "INV"
       expect(inv.invoice_date).to eq Date.new(2018, 05, 31)
+      expect(inv.non_dutiable_amount).to eq 9999.99
 
       expect(inv.invoice_lines.length).to eq 2
 

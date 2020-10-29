@@ -79,6 +79,7 @@ describe OpenChain::CustomHandler::Lt::Lt856Parser do
       expect(shipment.lading_port).to eq port_lading_1
       expect(shipment.last_foreign_port).to eq port_last_foreign_1
       expect(shipment.custom_value(cdefs[:shp_entry_prepared_date])).to eq now
+      expect(shipment.custom_value(cdefs[:shp_non_dutiable_amount])).to eq(9999.99)
 
       expect(shipment.containers.count).to eq 2
       c1, c2 = shipment.containers

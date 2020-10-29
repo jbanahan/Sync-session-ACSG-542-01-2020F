@@ -14,7 +14,7 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
   end
 
   def cdefs
-    @cdefs ||= self.class.prep_custom_definitions([:shp_entry_prepared_date])
+    @cdefs ||= self.class.prep_custom_definitions([:shp_entry_prepared_date, :shp_non_dutiable_amount])
   end
 
   def business_logic_errors
@@ -95,6 +95,8 @@ module OpenChain; module CustomHandler; module Lt; class Lt856Parser
       process_order_loop(shipment_loop[:hl_children], shipment)
     end
 
+    non_dutiable_amount = find_elements_by_qualifier(segments, "REF", "BM", 1, 4).first
+    shipment.find_and_set_custom_value(cdefs[:shp_non_dutiable_amount], non_dutiable_amount)
     # As soon as we get an 856, we'll want to generate the CI load for it...
     shipment.find_and_set_custom_value(cdefs[:shp_entry_prepared_date], Time.zone.now)
   end

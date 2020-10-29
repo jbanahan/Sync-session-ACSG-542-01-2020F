@@ -50,7 +50,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
   protected
 
     def cdefs
-      @cdefs ||= self.class.prep_custom_definitions([:prod_part_number, :shp_entry_prepared_date])
+      @cdefs ||= self.class.prep_custom_definitions([:prod_part_number, :shp_entry_prepared_date, :shp_non_dutiable_amount])
     end
 
     def generate_shipment_entry shipments
@@ -283,6 +283,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class KewillShipmentE
       end
 
       inv.invoice_date = invoice_date.in_time_zone("America/New_York").to_date
+      inv.non_dutiable_amount = shipment.custom_value(cdefs[:shp_non_dutiable_amount])
 
       shipment_lines.each do |line|
         inv_line = generate_kewill_shipment_invoice_line line
