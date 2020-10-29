@@ -4,11 +4,12 @@ describe FiscalMonthsController do
   let(:fm_1) { Factory(:fiscal_month, company: co) }
   let(:fm_2) { Factory(:fiscal_month, company: co) }
   let(:fm_3) { Factory(:fiscal_month) }
+
   before { sign_in_as(user) }
 
   describe "company_enabled? (before_filter)" do
     it "prevents use of routes for companies without a fiscal_reference" do
-      co.update_attributes(fiscal_reference: nil)
+      co.update(fiscal_reference: nil)
       fm_1
       get :index, company_id: co.id
       expect(response).to redirect_to company_path(co)
@@ -92,9 +93,7 @@ describe FiscalMonthsController do
 
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
-      start_date = DateTime.new(2016, 3, 15)
-      end_date = DateTime.new(2016, 3, 16)
-      expect { post :create, company_id: co.id, fiscal_month: fm_params}.to_not change(FiscalMonth, :count)
+      expect { post :create, company_id: co.id, fiscal_month: fm_params}.not_to change(FiscalMonth, :count)
       expect(response).to be_redirect
       expect(flash[:errors]).to eq ["Only system admins can do this."]
     end
@@ -120,8 +119,6 @@ describe FiscalMonthsController do
 
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
-      start_date = DateTime.new(2016, 3, 15)
-      end_date = DateTime.new(2016, 3, 16)
       put :update, id: fm_1.id, company_id: co.id, fiscal_month: fm_params
       expect(flash[:errors]).to eq ["Only system admins can do this."]
 
@@ -144,7 +141,7 @@ describe FiscalMonthsController do
 
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
-      expect {post :destroy, company_id: co.id, id: fm_1.id}.to_not change(FiscalMonth, :count)
+      expect {post :destroy, company_id: co.id, id: fm_1.id}.not_to change(FiscalMonth, :count)
       expect(response).to be_redirect
       expect(flash[:errors]).to eq ["Only system admins can do this."]
     end
@@ -152,9 +149,9 @@ describe FiscalMonthsController do
 
   describe "download" do
     before do
-      date = Date.new(2016, 01, 01)
-      fm_1.update_attributes(company: co, year: 2015, month_number: 2, start_date: date, end_date: date)
-      fm_2.update_attributes(company: co, year: 2015, month_number: 1, start_date: date, end_date: date)
+      date = Date.new(2016, 0o1, 0o1)
+      fm_1.update(company: co, year: 2015, month_number: 2, start_date: date, end_date: date)
+      fm_2.update(company: co, year: 2015, month_number: 1, start_date: date, end_date: date)
     end
 
     it "returns CSV file" do
@@ -174,7 +171,7 @@ describe FiscalMonthsController do
   describe "upload" do
     it "uploads" do
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
-      cf = double "custom file"
+      cf = instance_double "custom file"
       allow(cf).to receive(:id).and_return 1
       expect(CustomFile).to receive(:create!).with(file_type: 'OpenChain::FiscalMonthUploader', uploaded_by: user, attached: file).and_return cf
       expect(CustomFile).to receive(:process).with(1, user.id, company_id: co.id)
@@ -191,7 +188,7 @@ describe FiscalMonthsController do
 
     it "rejects wrong file type" do
       file = fixture_file_upload('/files/test_sheet_4.txt', 'text/plain')
-      expect(CustomFile).to_not receive(:create!)
+      expect(CustomFile).not_to receive(:create!)
       post :upload, company_id: co.id, attached: file
       expect(response).to redirect_to company_fiscal_months_path(co.id)
       expect(flash[:errors]).to eq ["Only XLS, XLSX, and CSV files are accepted."]
@@ -200,7 +197,7 @@ describe FiscalMonthsController do
     it "prevents unauthorized access" do
       user.sys_admin = false; user.save!
       file = fixture_file_upload('/files/test_sheet_3.csv', 'text/csv')
-      expect(CustomFile).to_not receive(:create!)
+      expect(CustomFile).not_to receive(:create!)
       post :upload, company_id: co.id, attached: file
     end
   end

@@ -15,12 +15,9 @@
 #
 #  index_fiscal_months_on_start_date_and_end_date  (start_date,end_date)
 
-
 class FiscalMonth < ActiveRecord::Base
-  attr_accessible :company_id, :end_date, :month_number, :start_date, :year
-
   belongs_to :company
-  validates_presence_of :company
+  validates :company, presence: true
 
   def can_view? user
     user.sys_admin?
@@ -35,8 +32,8 @@ class FiscalMonth < ActiveRecord::Base
   end
 
   def self.get company_or_id, date
-    co_id = company_or_id.kind_of?(Integer) ? company_or_id : company_or_id.id
-    where("company_id = ? AND start_date <= ? AND end_date >= ?", co_id, date, date).first
+    co_id = company_or_id.is_a?(Integer) ? company_or_id : company_or_id.id
+    find_by("company_id = ? AND start_date <= ? AND end_date >= ?", co_id, date, date)
   end
 
   def self.generate_csv company_id
@@ -50,14 +47,12 @@ class FiscalMonth < ActiveRecord::Base
   def forward n_months
     year_adj, mod = ((month_number - 1) + n_months).divmod 12
     new_month_num = mod + 1
-    FiscalMonth.where(company_id: company.id, month_number: new_month_num, year: year + year_adj).first
+    FiscalMonth.find_by(company_id: company.id, month_number: new_month_num, year: year + year_adj)
   end
 
   def back n_months
     forward(n_months * -1)
   end
-
-  private
 
   def self.run_csv_query company_id
     qry = <<-SQL
@@ -65,7 +60,8 @@ class FiscalMonth < ActiveRecord::Base
             FROM fiscal_months
             WHERE company_id = ?
             ORDER BY year, month_number
-          SQL
+    SQL
     ActiveRecord::Base.connection.execute ActiveRecord::Base.sanitize_sql_array([qry, company_id])
   end
+  private_class_method(:run_csv_query)
 end

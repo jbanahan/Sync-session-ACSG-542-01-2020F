@@ -9,23 +9,23 @@ describe FiscalMonth do
 
   describe "can_view?" do
     it "allows sys-admins" do
-      expect(fm.can_view? user).to eq true
+      expect(fm.can_view?(user)).to eq true
     end
 
     it "rejects non-sys-admins" do
       user.sys_admin = false; user.save!
-      expect(fm.can_view? user).to eq false
+      expect(fm.can_view?(user)).to eq false
     end
   end
 
   describe "can_edit?" do
     it "allows sys-admins" do
-      expect(fm.can_edit? user).to eq true
+      expect(fm.can_edit?(user)).to eq true
     end
 
     it "rejects non-sys-admins" do
       user.sys_admin = false; user.save!
-      expect(fm.can_edit? user).to eq false
+      expect(fm.can_edit?(user)).to eq false
     end
   end
 
@@ -38,15 +38,15 @@ describe FiscalMonth do
 
     describe "forward" do
       it "returns the nth future fiscal month" do
-        expect(fm_1.forward 2).to eq fm_3
-        expect(fm_3.forward 1).to eq fm_4
+        expect(fm_1.forward(2)).to eq fm_3
+        expect(fm_3.forward(1)).to eq fm_4
       end
     end
 
     describe "back" do
       it "returns the nth previous fiscal month" do
-        expect(fm_4.back 2).to eq fm_2
-        expect(fm_2.back 1).to eq fm_1
+        expect(fm_4.back(2)).to eq fm_2
+        expect(fm_2.back(1)).to eq fm_1
       end
     end
   end
@@ -71,7 +71,7 @@ describe FiscalMonth do
       Factory(:fiscal_month, company: co, year: 2015, month_number: 1, start_date: date1, end_date: date2)
       Factory(:fiscal_month)
 
-      csv = FiscalMonth.generate_csv(co.id).split("\n")
+      csv = described_class.generate_csv(co.id).split("\n")
       expect(csv.count).to eq 3
       expect(csv[0].split(",")).to eq ["Fiscal Year", "Fiscal Month", "Actual Start Date", "Actual End Date"]
       expect(csv[1].split(",")).to eq ["2015", "1", date1.strftime("%Y-%m-%d"), date2.strftime("%Y-%m-%d")]
