@@ -8,15 +8,15 @@ describe UserManualsController do
   end
 
   describe '#index' do
-    it "should admin secure" do
+    it "admins secure" do
       check_admin_secured do
         get :index
       end
     end
 
-    it "should list all manuals" do
-      um1 = Factory(:user_manual, name:'X')
-      um2 = Factory(:user_manual, name:'A')
+    it "lists all manuals" do
+      um1 = Factory(:user_manual, name: 'X')
+      um2 = Factory(:user_manual, name: 'A')
       sign_in_as Factory(:admin_user)
       get :index
       expect(response).to be_success
@@ -25,9 +25,9 @@ describe UserManualsController do
   end
 
   describe '#update' do
-    let (:user_manual) { Factory(:user_manual, name:'X') }
+    let (:user_manual) { Factory(:user_manual, name: 'X') }
 
-    it "should admin secure" do
+    it "admins secure" do
       check_admin_secured do
         put :update, id: user_manual.id, user_manual: {name: 'Y'}
         user_manual.reload
@@ -35,7 +35,7 @@ describe UserManualsController do
       end
     end
 
-    it "should update manual attributes" do
+    it "updates manual attributes" do
       sign_in_as Factory(:admin_user)
       put :update, id: user_manual.id, user_manual: {name: 'Y'}
       expect(response).to redirect_to user_manuals_path
@@ -47,15 +47,15 @@ describe UserManualsController do
   describe '#create' do
     let! (:file) { fixture_file_upload('/files/test.txt', 'text/plain') }
 
-    it "should admin secure" do
+    it "admins secure" do
       check_admin_secured do
-        expect { post :create, user_manual: {name:'X'}, user_manual_file: file}.to_not change(UserManual, :count)
+        expect { post :create, user_manual: {name: 'X'}, user_manual_file: file}.not_to change(UserManual, :count)
       end
     end
 
-    it "should create with attachment" do
+    it "creates with attachment" do
       sign_in_as Factory(:admin_user)
-      expect { post :create, user_manual: {name:'X'}, user_manual_file: file}.to change(UserManual, :count).from(0).to(1)
+      expect { post :create, user_manual: {name: 'X'}, user_manual_file: file}.to change(UserManual, :count).from(0).to(1)
       expect(response).to redirect_to user_manuals_path
       um = UserManual.first
       expect(um.name).to eq 'X'
@@ -66,13 +66,13 @@ describe UserManualsController do
   describe '#destroy' do
     let! (:user_manual) { Factory(:user_manual) }
 
-    it "should admin secure" do
+    it "admins secure" do
       check_admin_secured do
-        expect { delete :destroy, id: user_manual.id}.to_not change(UserManual, :count)
+        expect { delete :destroy, id: user_manual.id}.not_to change(UserManual, :count)
       end
     end
 
-    it "should delete" do
+    it "deletes" do
       sign_in_as Factory(:admin_user)
       expect { delete :destroy, id: user_manual.id }.to change(UserManual, :count).from(1).to(0)
       expect(response).to redirect_to user_manuals_path
@@ -82,13 +82,13 @@ describe UserManualsController do
   describe '#edit' do
     let (:user_manual) { Factory(:user_manual) }
 
-    it "should admin secure" do
+    it "admins secure" do
       check_admin_secured do
         get :edit, id: user_manual.id
       end
     end
 
-    it "should load manual" do
+    it "loads manual" do
       sign_in_as Factory(:admin_user)
       get :edit, id: user_manual.id
       expect(response).to be_success
@@ -97,22 +97,22 @@ describe UserManualsController do
   end
 
   describe '#for_referer' do
-    it "should return page" do
+    it "returns page" do
       u = Factory(:user)
       sign_in_as u
       # setup dummy data
-      m1 = double('manual1')
-      m2 = double('manual2')
+      m1 = instance_double('manual1')
+      m2 = instance_double('manual2')
       [m1, m2].each_with_index do |m, i|
-        allow(m).to receive(:name).and_return "manual#{i+1}"
-        allow(m).to receive(:id).and_return(i+1)
+        allow(m).to receive(:name).and_return "manual#{i + 1}"
+        allow(m).to receive(:id).and_return(i + 1)
       end
 
       request.env['HTTP_REFERER'] = 'http://example.com/my_page'
 
-      expect(UserManual).to receive(:for_user_and_page).
-        with(u, 'http://example.com/my_page').
-        and_return [m2, m1] # returning in reverse order to confirm that sorting works
+      expect(UserManual).to receive(:for_user_and_page)
+        .with(u, 'http://example.com/my_page')
+        .and_return [m2, m1] # returning in reverse order to confirm that sorting works
 
       get :for_referer
 
@@ -138,37 +138,31 @@ describe UserManualsController do
     end
 
     context "with user that can view manual" do
-      before :each do
+      before do
         allow_any_instance_of(UserManual).to receive(:can_view?).and_return true
       end
 
-      it "should allow user who can view" do
+      it "allows user who can view" do
         sign_in_as Factory(:user)
         get :download, id: user_manual.id
         expect(response).to redirect_to "http://secure.url"
       end
     end
 
-    # before :each do
-    #   @um = Factory(:user_manual)
-    #   @secure_url = 'abc'
-    #   @att = double(:attachment, secure_url: @secure_url)
-    #   allow_any_instance_of(UserManual).to receive(:attachment).and_return(@att)
-    # end
-    it "should allow admins" do
+    it "allows admins" do
       sign_in_as Factory(:admin_user)
       get :download, id: user_manual.id
       expect(response).to redirect_to "http://secure.url"
     end
 
-    it "should not allow if user cannot view" do
+    it "does not allow if user cannot view" do
       allow_any_instance_of(UserManual).to receive(:can_view?).and_return false
       check_admin_secured do
         get :download, id: user_manual.id
       end
     end
 
-    it "should allow if user has portal_redirect" do
+    it "allows if user has portal_redirect" do
       sign_in_as Factory(:user)
       allow_any_instance_of(User).to receive(:portal_redirect_path).and_return '/abc'
 

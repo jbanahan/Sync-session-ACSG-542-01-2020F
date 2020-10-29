@@ -1,14 +1,14 @@
 describe Api::V1::UserManualsController do
   describe '#index' do
-    it "should find for user and page" do
+    it "finds for user and page" do
       u = Factory(:user)
       allow_api_access u
 
       um1 = um2 = nil
 
       Timecop.freeze(DateTime.new(2019, 3, 15, 12)) do
-        um1 = Factory(:user_manual, name:'Man1', wistia_code:'wc', category:'cat')
-        um2 = Factory(:user_manual, name:'AbcManual')
+        um1 = Factory(:user_manual, name: 'Man1', wistia_code: 'wc', category: 'cat')
+        um2 = Factory(:user_manual, name: 'AbcManual')
       end
 
       source_page = 'https://www.vfitrack.net/vendor_portal'

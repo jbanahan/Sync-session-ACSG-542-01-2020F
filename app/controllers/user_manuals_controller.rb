@@ -2,35 +2,34 @@ class UserManualsController < ApplicationController
   include DownloadS3ObjectSupport
   include UserManualHelper
 
-  skip_before_filter :portal_redirect, only: [:download]
-  around_filter :admin_secure, except: [:download, :for_referer]
+  skip_before_action :portal_redirect, only: [:download]
+  around_action :admin_secure, except: [:download, :for_referer]
   def set_page_title
     @page_title = 'Tools'
   end
+
   def index
     @user_manuals = UserManual.all
   end
 
   def update
     um = UserManual.find params[:id]
-    um.update_attributes(params[:user_manual])
+    um.update(permitted_params(params))
     errors_to_flash um
     redirect_to user_manuals_path
   end
 
   def create
-    begin
       UserManual.transaction do
-        um = UserManual.create(params[:user_manual])
+        um = UserManual.create(permitted_params(params))
         if um.errors.blank? && params[:user_manual_file]
-          um.create_attachment!(attached:params[:user_manual_file])
+          um.create_attachment!(attached: params[:user_manual_file])
         end
         redirect_to user_manuals_path
       end
-    rescue
-      $!.log_me
-      error_redirect $!.message
-    end
+  rescue StandardError => e
+      e.log_me
+      error_redirect e.message
   end
 
   def edit
@@ -62,4 +61,9 @@ class UserManualsController < ApplicationController
     render layout: false
   end
 
+  private
+
+    def permitted_params(params)
+      params.require(:user_manual).permit(:groups, :name, :page_url, :page_url_regex, :wistia_code, :document_url, :category, :master_company_only, :user_manual_file)
+    end
 end
