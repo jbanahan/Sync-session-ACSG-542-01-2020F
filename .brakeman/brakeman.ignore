@@ -472,6 +472,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "10b9c607b3d8edd1fe9760590e683437cd29c0134a51fce07da5de5559fe0b5a",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/api/v1/admin/custom_view_templates_controller.rb",
+      "line": 13,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "CustomViewTemplate.find(params[:id]).assign_attributes(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::Admin::CustomViewTemplatesController",
+        "method": "update"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "10fa11c0dd7e6174b1b5848ed8f66498b6ab95e73f8b55695b3741a7214840f1",
       "check_name": "ModelAttrAccessible",
@@ -2830,7 +2850,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/custom_features_controller.rb",
-      "line": 813,
+      "line": 827,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(CustomFile.find(params[:id]).secure_url)",
       "render_path": null,
@@ -8160,6 +8180,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-26 14:37:19 -0400",
+  "updated": "2020-10-29 11:32:38 -0400",
   "brakeman_version": "4.9.1"
 }

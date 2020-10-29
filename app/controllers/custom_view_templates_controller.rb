@@ -8,18 +8,18 @@ class CustomViewTemplatesController < ApplicationController
   end
 
   def new
-    sys_admin_secure {
+    sys_admin_secure do
       @template = CustomViewTemplate.new
-      @cm_list = CoreModule.all.map { |cm| cm.class_name }.sort
-    }
+      @cm_list = CoreModule.all.map(&:class_name).sort
+    end
   end
 
   def create
-    sys_admin_secure {
+    sys_admin_secure do
       template = CustomViewTemplate.create!(template_identifier: params[:template_identifier], template_path: params[:template_path],
                                             module_type: params[:module_type])
       redirect_to edit_custom_view_template_path(template)
-    }
+    end
   end
 
   def edit
@@ -27,9 +27,9 @@ class CustomViewTemplatesController < ApplicationController
   end
 
   def destroy
-    sys_admin_secure {
+    sys_admin_secure do
       CustomViewTemplate.find(params[:id]).destroy
       redirect_to custom_view_templates_path
-    }
+    end
   end
 end
