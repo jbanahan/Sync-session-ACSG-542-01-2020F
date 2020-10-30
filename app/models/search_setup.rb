@@ -25,49 +25,47 @@ require 'open_chain/search_base'
 class SearchSetup < ActiveRecord::Base
   include OpenChain::SearchBase
 
-  attr_accessible :download_format, :include_links, :include_rule_links, :module_type, :name,
-    :no_time, :simple, :user_id, :user, :search_criterions_attributes,
-    :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes,
-    :locked, :date_format
+  validates   :name, presence: true
+  validates   :user, presence: true
+  validates   :module_type, presence: true
 
-  validates   :name, :presence => true
-  validates   :user, :presence => true
-  validates   :module_type, :presence => true
-
-  has_many :search_criterions, :dependent => :destroy
-  has_many :sort_criterions, -> { order(:rank) }, :dependent => :destroy
-  has_many :search_columns, :dependent => :destroy
-  has_many :search_schedules, :dependent => :destroy
+  has_many :search_criterions, dependent: :destroy
+  has_many :sort_criterions, -> { order(:rank) }, dependent: :destroy, inverse_of: :search_setup
+  has_many :search_columns, dependent: :destroy
+  has_many :search_schedules, dependent: :destroy
   has_many :imported_files
-  has_many :dashboard_widgets, :dependent => :destroy
-  has_many :search_runs, :dependent => :destroy
-  has_one :result_cache, :as=>:result_cacheable, :dependent=>:destroy
+  has_many :dashboard_widgets, dependent: :destroy
+  has_many :search_runs, dependent: :destroy
+  has_one :result_cache, as: :result_cacheable, dependent: :destroy, inverse_of: :result_cacheable
 
   belongs_to :user
 
-  accepts_nested_attributes_for :search_criterions, :allow_destroy => true,
-    :reject_if => lambda { |a|
+  accepts_nested_attributes_for :search_criterions, allow_destroy: true,
+                                                    reject_if: lambda { |a|
       r_val = false
-      [:model_field_uid, :operator].each { |f|
+      [:model_field_uid, :operator].each do |f|
         r_val = true if a[f].blank?
-      }
+      end
       r_val
-    }
-  accepts_nested_attributes_for :sort_criterions, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:model_field_uid].blank? }
-  accepts_nested_attributes_for :search_columns, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:model_field_uid].blank? }
-  accepts_nested_attributes_for :search_schedules, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:email_addresses].blank? &&
-      a[:ftp_server].blank? &&
-      a[:_destroy].blank?
-    }
+                                                               }
+  accepts_nested_attributes_for :sort_criterions, allow_destroy: true,
+                                                  reject_if: ->(a) { a[:model_field_uid].blank? }
+  accepts_nested_attributes_for :search_columns, allow_destroy: true,
+                                                 reject_if: ->(a) { a[:model_field_uid].blank? }
+  accepts_nested_attributes_for :search_schedules, allow_destroy: true,
+                                                   reject_if: lambda { |a|
+                    a[:email_addresses].blank? &&
+                      a[:ftp_server].blank? &&
+                      a[:_destroy].blank?
+                                                              }
 
-  scope :for_user, lambda {|u| where(:user_id => u)}
-  scope :for_module, lambda {|m| where(:module_type => m.class_name)}
-  scope :last_accessed, lambda {|u, m| for_user(u).for_module(m).
-    joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id").
-    order("ifnull(search_runs.last_accessed,1900-01-01) DESC") }
+  scope :for_user, ->(u) { where(user_id: u)}
+  scope :for_module, ->(m) { where(module_type: m.class_name)}
+  scope :last_accessed, lambda {|u, m|
+                          for_user(u).for_module(m)
+                                     .joins("left outer join search_runs on search_runs.search_setup_id = search_setups.id")
+                                     .order("ifnull(search_runs.last_accessed,1900-01-01) DESC")
+                        }
 
   def self.find_last_accessed user, core_module
     SearchSetup.last_accessed(user, core_module).first
@@ -87,7 +85,7 @@ class SearchSetup < ActiveRecord::Base
   end
 
   # defer to SearchQuery.result_keys seeded with this search
-  def result_keys opts={}
+  def result_keys opts = {}
     SearchQuery.new(self, self.user).result_keys opts
   end
 
@@ -99,7 +97,7 @@ class SearchSetup < ActiveRecord::Base
 
   # get all model fields available to be used as sorts and not already in sort columns
   def unused_sort_fields user, label_prefix = nil
-    used = self.sort_criterions.collect {|sc| sc.model_field_uid}
+    used = self.sort_criterions.collect(&:model_field_uid)
     ModelField.sort_by_label(column_fields_available(user).collect {|mf| mf unless used.include? mf.uid.to_s}.compact, label_prefix)
   end
 
@@ -113,7 +111,7 @@ class SearchSetup < ActiveRecord::Base
   end
 
   def core_module
-    CoreModule.find_by_class_name(self.module_type)
+    CoreModule.find_by(class_name: self.module_type)
   end
 
   def module_chain
@@ -122,8 +120,8 @@ class SearchSetup < ActiveRecord::Base
 
   def touch
     sr = self.search_runs.first
-    sr = self.search_runs.build(:page=>1, :per_page=>100) if sr.nil?
-    sr.last_accessed = Time.now
+    sr = self.search_runs.build(page: 1, per_page: 100) if sr.nil?
+    sr.last_accessed = Time.zone.now
     sr.user_id = self.user_id
     sr.save
   end
@@ -134,17 +132,13 @@ class SearchSetup < ActiveRecord::Base
   end
 
   # Returns a new, saved search setup with the columns passed from the given array
-  def self.create_with_columns(core_module, model_field_uids, user, name="Default")
+  def self.create_with_columns(core_module, model_field_uids, user, name = "Default")
     ss = SearchSetup.create(name: name, user: user, module_type: core_module.class_name,
-        simple: false, date_format: user.default_report_date_format)
+                            simple: false, date_format: user.default_report_date_format)
     model_field_uids.each_with_index do |uid, i|
-      ss.search_columns.create(:rank=>i, :model_field_uid=>uid)
+      ss.search_columns.create(rank: i, model_field_uid: uid)
     end
     ss
-  end
-
-  def core_module
-    CoreModule.find_by_class_name self.module_type
   end
 
   # return error message array if search cannot be used as a file upload or an empty array if it can
@@ -154,58 +148,60 @@ class SearchSetup < ActiveRecord::Base
     cm = core_module
     messages << "Search's core module not set." if cm.nil?
 
-    if cm==CoreModule::ENTRY
+    if cm == CoreModule::ENTRY
       messages << "Upload functionality is not available for Entries."
     end
-    if cm==CoreModule::BROKER_INVOICE
+    if cm == CoreModule::BROKER_INVOICE
       messages << "Upload functionality is not available for Invoices."
     end
-    if cm==CoreModule::DELIVERY
+    if cm == CoreModule::DELIVERY
       messages << "You do not have permission to edit Deliveries." unless self.user.edit_deliveries?
-      messages << "#{label "del_ref"} field is required to upload Deliveries." unless has_column "del_ref"
-      messages << "#{combined_company_fields "del", "cust"} is required to upload Deliveries." unless has_company "del", "cust"
+      messages << "#{label "del_ref"} field is required to upload Deliveries." unless column? "del_ref"
+      messages << "#{combined_company_fields "del", "cust"} is required to upload Deliveries." unless company? "del", "cust"
     end
-    if cm==CoreModule::SALE
+    if cm == CoreModule::SALE
       messages << "You do not have permission to edit Sales." unless self.user.edit_sales_orders?
-      messages << "#{label "sale_order_number"} field is required to upload Sales." unless has_column "sale_order_number"
-      messages << "#{combined_company_fields "sale", "cust"} is required to upload Sales." unless has_company "sale", "cust"
+      messages << "#{label "sale_order_number"} field is required to upload Sales." unless column? "sale_order_number"
+      messages << "#{combined_company_fields "sale", "cust"} is required to upload Sales." unless company? "sale", "cust"
 
       if contains_module CoreModule::SALE_LINE
-        messages << "#{label "soln_line_number"} is required to upload Sale Lines." unless has_column "soln_line_number"
-        messages << "#{combine_field_names ["soln_puid", "soln_pname"]} is required to upload Sale Lines." unless has_one_of ["soln_puid", "soln_pname"]
+        messages << "#{label "soln_line_number"} is required to upload Sale Lines." unless column? "soln_line_number"
+        messages << "#{combine_field_names ["soln_puid", "soln_pname"]} is required to upload Sale Lines." unless one_of? ["soln_puid", "soln_pname"]
       end
     end
-    if cm==CoreModule::SHIPMENT
+    if cm == CoreModule::SHIPMENT
       messages << "You do not have permission to edit Shipments." unless self.user.edit_shipments?
-      messages << "#{label "shp_ref"} field is required to upload Shipments." unless has_column "shp_ref"
-      messages << "#{combined_company_fields "shp", "ven"} is required to upload Shipments." unless has_company "shp", "ven"
+      messages << "#{label "shp_ref"} field is required to upload Shipments." unless column? "shp_ref"
+      messages << "#{combined_company_fields "shp", "ven"} is required to upload Shipments." unless company? "shp", "ven"
       if contains_module CoreModule::SHIPMENT_LINE
-        messages << "#{label "shpln_line_number"} is required to upload Shipment Lines." unless has_column "shpln_line_number"
-        messages << "#{combine_field_names ["shpln_puid", "shpln_pname"]} is required to upload Shipment Lines." unless has_one_of ["shpln_puid", "shpln_pname"]
+        messages << "#{label "shpln_line_number"} is required to upload Shipment Lines." unless column? "shpln_line_number"
+        messages << "#{combine_field_names ["shpln_puid", "shpln_pname"]} is required to upload Shipment Lines." unless one_of? ["shpln_puid", "shpln_pname"]
       end
     end
-    if cm==CoreModule::PRODUCT
+    if cm == CoreModule::PRODUCT
       messages << "You do not have permission to edit Products." unless self.user.edit_products?
       messages << "Only users from the master company can upload products." unless self.user.company.master?
-      messages << "#{label "prod_uid"} field is required to upload Products." unless has_column "prod_uid"
+      messages << "#{label "prod_uid"} field is required to upload Products." unless column? "prod_uid"
 
       if contains_module CoreModule::CLASSIFICATION
-        messages << "To include Classification fields, you must also include #{combine_field_names ["class_cntry_name", "class_cntry_iso"]}." unless has_classification_country_column
+        # rubocop:disable Layout/LineLength
+        messages << "To include Classification fields, you must also include #{combine_field_names ["class_cntry_name", "class_cntry_iso"]}." unless classification_country_column?
+        # rubocop:enable Layout/LineLength
       end
       if contains_module CoreModule::TARIFF
-        messages << "To include Tariff fields, you must also include #{combine_field_names ["class_cntry_name", "class_cntry_iso"]}." unless has_classification_country_column
-        messages << "To include Tariff fields, you must also include #{label "hts_line_number"}." unless has_column "hts_line_number"
+        messages << "To include Tariff fields, you must also include #{combine_field_names ["class_cntry_name", "class_cntry_iso"]}." unless classification_country_column?
+        messages << "To include Tariff fields, you must also include #{label "hts_line_number"}." unless column? "hts_line_number"
       end
     end
 
-    if cm==CoreModule::ORDER
+    if cm == CoreModule::ORDER
       messages << "You do not have permission to edit Orders." unless self.user.edit_orders?
-      messages << "#{label "ord_ord_num"} field is required to upload Orders." unless has_column "ord_ord_num"
-      messages << "#{combined_company_fields "ord", "ven"} is required to upload Orders." unless has_company "ord", "ven"
+      messages << "#{label "ord_ord_num"} field is required to upload Orders." unless column? "ord_ord_num"
+      messages << "#{combined_company_fields "ord", "ven"} is required to upload Orders." unless company? "ord", "ven"
 
       if contains_module CoreModule::ORDER_LINE
-        messages << "#{label "ordln_line_number"} is required to upload Order Lines." unless has_column "ordln_line_number"
-        messages << "#{combine_field_names ["ordln_puid", "ordln_pname"]} is required to upload Order Lines." unless has_one_of ["ordln_puid", "ordln_pname"]
+        messages << "#{label "ordln_line_number"} is required to upload Order Lines." unless column? "ordln_line_number"
+        messages << "#{combine_field_names ["ordln_puid", "ordln_pname"]} is required to upload Order Lines." unless one_of? ["ordln_puid", "ordln_pname"]
       end
     end
     messages
@@ -213,10 +209,10 @@ class SearchSetup < ActiveRecord::Base
 
   # does this search have the appropriate columns set to be used as a file upload?
   # acceptes an optional array that will have any user facing messages appended to it
-  def uploadable? messages=[]
+  def uploadable? messages = []
     start_messages_count = messages.size
     uploadable_error_messages.each {|m| messages << m}
-    return messages.size == start_messages_count
+    messages.size == start_messages_count
   end
 
   def downloadable? messages = [], single_page_download = false
@@ -226,7 +222,7 @@ class SearchSetup < ActiveRecord::Base
       messages << "You must add at least one Parameter to your search setup before downloading a search."
     end
 
-    return messages.size == start_messages_count
+    messages.size == start_messages_count
   end
 
   def max_results user
@@ -234,7 +230,7 @@ class SearchSetup < ActiveRecord::Base
   end
 
   def self.max_results user
-    user.try(:sys_admin?) ? 100000 : 25000
+    user.try(:sys_admin?) ? 100_000 : 25_000
   end
 
   def self.ruby_date_format df
@@ -242,31 +238,32 @@ class SearchSetup < ActiveRecord::Base
   end
 
   private
-  def has_company(model_prefix, type_prefix)
-    has_one_of ["#{model_prefix}_#{type_prefix}_name", "#{model_prefix}_#{type_prefix}_id", "#{model_prefix}_#{type_prefix}_syscode"]
+
+  def company?(model_prefix, type_prefix)
+    one_of? ["#{model_prefix}_#{type_prefix}_name", "#{model_prefix}_#{type_prefix}_id", "#{model_prefix}_#{type_prefix}_syscode"]
   end
 
-  def has_column(model_field_uid)
-    !self.search_columns.where(:model_field_uid=>model_field_uid).empty?
+  def column?(model_field_uid)
+    self.search_columns.where(model_field_uid: model_field_uid).present?
   end
 
-  def has_one_of columns
-    columns.each {|c| return true if has_column c}
-    return false
-  end
-
-  def has_classification_country_column
-    has_one_of ["class_cntry_name", "class_cntry_iso"]
-  end
-
-  def contains_module(m)
-    self.search_columns.each {|c|
-      return true if  ModelField.find_by_uid(c.model_field_uid).core_module == m
-    }
+  def one_of? columns
+    columns.each {|c| return true if column? c}
     false
   end
 
-  def private_search(secure=true)
+  def classification_country_column?
+    one_of? ["class_cntry_name", "class_cntry_iso"]
+  end
+
+  def contains_module(m)
+    self.search_columns.each do |c|
+      return true if  ModelField.by_uid(c.model_field_uid).core_module == m
+    end
+    false
+  end
+
+  def private_search(secure = true)
     kls = Kernel.const_get(self.module_type)
     base = Kernel.const_get(self.module_type)
 
@@ -286,22 +283,22 @@ class SearchSetup < ActiveRecord::Base
       if self.search_runs.empty?
         self.search_runs.create!
       else
-        self.search_runs.first.update_attributes(:last_accessed=>Time.now)
+        self.search_runs.first.update(last_accessed: Time.zone.now)
       end
     end
     base
   end
 
   def label model_field_uid
-    ModelField.find_by_uid(model_field_uid).label
+    ModelField.by_uid(model_field_uid).label
   end
 
   def combine_field_names model_field_uids
     r = ""
     model_field_uids.each_with_index do |f, i|
-      r << "or " if i==model_field_uids.size-1
+      r << "or " if i == model_field_uids.size - 1
       r << label(f)
-      r << ", " if i<(model_field_uids.size-1)
+      r << ", " if i < (model_field_uids.size - 1)
     end
     r
   end

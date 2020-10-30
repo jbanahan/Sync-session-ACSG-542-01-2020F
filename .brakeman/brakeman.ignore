@@ -799,6 +799,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "1b7c4f0f2d46fc8178d14c69cae37c00c658c4e046878bc3a405369330adc879",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "lib/open_chain/custom_handler/custom_file_to_imported_file_passthrough_handler.rb",
+      "line": 94,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "SearchSetup.new(setup_attributes)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "OpenChain::CustomHandler::CustomFileToImportedFilePassthroughHandler",
+        "method": "create_search_setup"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "1c2b806a1ca5ff2cc035bb7f3b9cead325754c465d37b4a36fcf80211421903d",
       "check_name": "ModelAttrAccessible",
@@ -4061,25 +4081,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "89a4c7b28d5d707d0b98534375d7af36597bda40921fa8251af374888373d84c",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_setup.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchSetup"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "89e268f0f681650f64176835372f536701b8cd4b8732254807bd529f746adb38",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -5486,26 +5487,6 @@
     },
     {
       "warning_type": "Mass Assignment",
-      "warning_code": 70,
-      "fingerprint": "be014b945d8e76c3f362a7801fe26c8e98c1b4677252f52127cf3edc31e614f7",
-      "check_name": "MassAssignment",
-      "message": "Specify exact keys allowed for mass assignment instead of using `permit!` which allows any keys",
-      "file": "app/controllers/search_setups_controller.rb",
-      "line": 23,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": "params[:search_setup].permit!",
-      "render_path": null,
-      "location": {
-        "type": "method",
-        "class": "SearchSetupsController",
-        "method": "update"
-      },
-      "user_input": null,
-      "confidence": "Medium",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "c00d70dab427d196cc9dd1137bb2cfd1f7fa9fe890cc96ba9b8ef4267c50224e",
       "check_name": "ModelAttrAccessible",
@@ -5789,6 +5770,26 @@
       },
       "user_input": null,
       "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "c6260c42b19324bdd9cf775ddbad5b566985e78a3a47d9dc2c64f63b7196cf60",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/imported_files_controller.rb",
+      "line": 31,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "SearchSetup.find(params[:search_setup_id]).imported_files.build(params[:imported_file])",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ImportedFilesController",
+        "method": "create"
+      },
+      "user_input": "params[:imported_file]",
+      "confidence": "High",
       "note": ""
     },
     {
@@ -7337,6 +7338,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-30 12:51:45 -0400",
+  "updated": "2020-10-30 13:15:26 -0400",
   "brakeman_version": "4.9.1"
 }
