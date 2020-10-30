@@ -1,129 +1,143 @@
 describe BrokerInvoice do
   describe "hst_amount" do
-    it "should calculate HST based on existing charge codes" do
-      with_hst_code_1 = Factory(:charge_code, :apply_hst=>true)
-      with_hst_code_2 = Factory(:charge_code, :apply_hst=>true)
-      without_hst = Factory(:charge_code, :apply_hst=>false)
+    it "calculates HST based on existing charge codes" do
+      with_hst_code_1 = Factory(:charge_code, apply_hst: true)
+      with_hst_code_2 = Factory(:charge_code, apply_hst: true)
+      without_hst = Factory(:charge_code, apply_hst: false)
 
-      bi = BrokerInvoice.new
-      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_1.code, :charge_description=>with_hst_code_1.description, :charge_amount=>10, :hst_percent=>0.05)
-      bi.broker_invoice_lines.build(:charge_code=>with_hst_code_2.code, :charge_description=>with_hst_code_2.description, :charge_amount=>20, :hst_percent=>0.10)
-      bi.broker_invoice_lines.build(:charge_code=>without_hst.code, :charge_description=>with_hst_code_1.description, :charge_amount=>10)
+      bi = described_class.new
+      bi.broker_invoice_lines.build(charge_code: with_hst_code_1.code, charge_description: with_hst_code_1.description, charge_amount: 10, hst_percent: 0.05)
+      bi.broker_invoice_lines.build(charge_code: with_hst_code_2.code, charge_description: with_hst_code_2.description, charge_amount: 20, hst_percent: 0.10)
+      bi.broker_invoice_lines.build(charge_code: without_hst.code, charge_description: with_hst_code_1.description, charge_amount: 10)
 
       expect(bi.hst_amount).to eq(2.5)
     end
   end
+
   context 'currency' do
-    it "should default currency to USD" do
-      bi = BrokerInvoice.create!
+    it "defaults currency to USD" do
+      bi = described_class.create!
       expect(bi.currency).to eq("USD")
     end
-    it "should leave existing currency alone" do
-      expect(BrokerInvoice.create!(:currency=>"CAD").currency).to eq("CAD")
+
+    it "leaves existing currency alone" do
+      expect(described_class.create!(currency: "CAD").currency).to eq("CAD")
     end
   end
+
   context 'security' do
 
-    let! (:master_setup) {
+    let! (:master_setup) do
       ms = stub_master_setup
       allow(ms).to receive(:broker_invoice_enabled).and_return true
       ms
-    }
-
-    before :each do
-      @importer = Factory(:company, :importer=>true)
-      @importer_user = Factory(:user, :company_id=>@importer.id, :broker_invoice_view=>true)
-      @entry = Factory(:entry, :importer_id=>@importer.id)
-      @inv = Factory(:broker_invoice, :entry_id=>@entry.id)
     end
+
+    let!(:importer) { Factory(:company, importer: true) }
+    let!(:importer_user) { Factory(:user, company_id: importer.id, broker_invoice_view: true) }
+    let!(:entry) {  Factory(:entry, importer_id: importer.id) }
+    let!(:inv) { Factory(:broker_invoice, entry_id: entry.id) }
+
     context 'search secure' do
-      before :each do
-        entry_2 = Factory(:entry, :importer_id=>Factory(:company, :importer=>true).id)
-        inv_2 = Factory(:broker_invoice, :entry_id=>entry_2.id)
+      before do
+        Factory(:broker_invoice, entry_id: Factory(:entry, importer_id: Factory(:company, importer: true)).id)
       end
-      it 'should restrict non master by entry importer id' do
-        found = BrokerInvoice.search_secure(@importer_user, BrokerInvoice)
+
+      it 'restricts non master by entry importer id' do
+        found = described_class.search_secure(importer_user, described_class)
         expect(found.size).to eq(1)
-        expect(found.first).to eq(@inv)
+        expect(found.first).to eq(inv)
       end
-      it 'should allow all for master' do
-        u = Factory(:user, :broker_invoice_view=>true)
-        u.company.update!(:master=>true)
-        found = BrokerInvoice.search_secure(u, BrokerInvoice)
+
+      it 'allows all for master' do
+        u = Factory(:user, broker_invoice_view: true)
+        u.company.update!(master: true)
+        found = described_class.search_secure(u, described_class)
         expect(found.size).to eq(2)
       end
-      it 'should allow for linked company' do
-        child = Factory(:company, :importer=>true)
-        i3 = Factory(:broker_invoice, :entry=>Factory(:entry, :importer_id=>child.id))
-        @importer.linked_companies << child
-        expect(BrokerInvoice.search_secure(@importer_user, BrokerInvoice).all).to eq([@inv, i3])
+
+      it 'allows for linked company' do
+        child = Factory(:company, importer: true)
+        i3 = Factory(:broker_invoice, entry: Factory(:entry, importer_id: child.id))
+        importer.linked_companies << child
+        expect(described_class.search_secure(importer_user, described_class).all).to eq([inv, i3])
       end
     end
-    it 'should be visible for importer' do
-      expect(@inv.can_view?(@importer_user)).to be_truthy
+
+    it 'is visible for importer' do
+      expect(inv.can_view?(importer_user)).to be_truthy
     end
-    it 'should not be visible for another importer' do
-      u = Factory(:user, :company_id=>Factory(:company, :importer=>true).id, :broker_invoice_view=>true)
-      expect(@inv.can_view?(u)).to be_falsey
+
+    it 'is not visible for another importer' do
+      u = Factory(:user, company_id: Factory(:company, importer: true).id, broker_invoice_view: true)
+      expect(inv.can_view?(u)).to be_falsey
     end
-    it 'should be visible for parent importer' do
-      parent = Factory(:company, :importer=>true)
-      parent.linked_companies << @importer
-      u = Factory(:user, :company_id=>parent.id, :broker_invoice_view=>true)
-      expect(@inv.can_view?(u)).to be_truthy
+
+    it 'is visible for parent importer' do
+      parent = Factory(:company, importer: true)
+      parent.linked_companies << importer
+      u = Factory(:user, company_id: parent.id, broker_invoice_view: true)
+      expect(inv.can_view?(u)).to be_truthy
     end
-    it 'should not be visible without permission' do
-      u = Factory(:user, :broker_invoice_view=>false)
-      u.company.update!(:master=>true)
-      expect(@inv.can_view?(u)).to be_falsey
+
+    it 'is not visible without permission' do
+      u = Factory(:user, broker_invoice_view: false)
+      u.company.update!(master: true)
+      expect(inv.can_view?(u)).to be_falsey
     end
-    it 'should not be visible without company permission' do
-      u = Factory(:user, :broker_invoice_view=>true)
-      expect(@inv.can_view?(u)).to be_falsey
+
+    it 'is not visible without company permission' do
+      u = Factory(:user, broker_invoice_view: true)
+      expect(inv.can_view?(u)).to be_falsey
     end
-    it 'should be visible with permission' do
-      u = Factory(:user, :broker_invoice_view=>true)
-      u.company.update!(:master=>true)
-      expect(@inv.can_view?(u)).to be_truthy
+
+    it 'is visible with permission' do
+      u = Factory(:user, broker_invoice_view: true)
+      u.company.update!(master: true)
+      expect(inv.can_view?(u)).to be_truthy
     end
-    it "should be editable with permission and view permission" do
-      allow(@inv).to receive(:can_view?).and_return(true)
+
+    it "is editable with permission and view permission" do
+      allow(inv).to receive(:can_view?).and_return(true)
       u = User.new
       allow(u).to receive(:edit_broker_invoices?).and_return true
-      expect(@inv.can_edit?(u)).to be_truthy
+      expect(inv.can_edit?(u)).to be_truthy
     end
-    it "should not be editable without view permission" do
-      allow(@inv).to receive(:can_view?).and_return(false)
+
+    it "is not editable without view permission" do
+      allow(inv).to receive(:can_view?).and_return(false)
       u = User.new
       allow(u).to receive(:edit_broker_invoices?).and_return true
-      expect(@inv.can_edit?(u)).to be_falsey
+      expect(inv.can_edit?(u)).to be_falsey
     end
-    it "should not be editable without edit permission" do
-      allow(@inv).to receive(:can_view?).and_return(true)
+
+    it "is not editable without edit permission" do
+      allow(inv).to receive(:can_view?).and_return(true)
       u = User.new
       allow(u).to receive(:edit_broker_invoices?).and_return false
-      expect(@inv.can_edit?(u)).to be_falsey
+      expect(inv.can_edit?(u)).to be_falsey
     end
-    it "should not be editable if locked" do
-      allow(@inv).to receive(:can_view?).and_return(true)
+
+    it "is not editable if locked" do
+      allow(inv).to receive(:can_view?).and_return(true)
       u = User.new
       allow(u).to receive(:edit_broker_invoices?).and_return true
-      @inv.locked = true
-      expect(@inv.can_edit?(u)).to be_falsey
+      inv.locked = true
+      expect(inv.can_edit?(u)).to be_falsey
     end
   end
 
   describe "total_billed_duty_amount" do
     context "with Customs Management source system" do
-      let (:broker_invoice) {
-        inv = BrokerInvoice.new source_system: Entry::KEWILL_SOURCE_SYSTEM
+      let (:broker_invoice) do
+        inv = described_class.new source_system: Entry::KEWILL_SOURCE_SYSTEM
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0001")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "0001")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0002")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "0001")
 
         inv
-      }
+      end
 
       it "sums charge amounts for duty lines" do
         expect(broker_invoice.total_billed_duty_amount).to eq 50
@@ -142,15 +156,15 @@ describe BrokerInvoice do
     end
 
     context "with Fenix source system" do
-      let (:broker_invoice) {
-        inv = BrokerInvoice.new source_system: Entry::FENIX_SOURCE_SYSTEM
+      let (:broker_invoice) do
+        inv = described_class.new source_system: Entry::FENIX_SOURCE_SYSTEM
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "1")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "1")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "2")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "1")
 
         inv
-      }
+      end
 
       it "sums charge amounts for duty lines" do
         expect(broker_invoice.total_billed_duty_amount).to eq 50
@@ -169,8 +183,8 @@ describe BrokerInvoice do
     end
 
     context "with Cargowise source system" do
-      let (:broker_invoice) {
-        inv = BrokerInvoice.new source_system: Entry::CARGOWISE_SOURCE_SYSTEM
+      let (:broker_invoice) do
+        inv = described_class.new source_system: Entry::CARGOWISE_SOURCE_SYSTEM
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "200")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("-10"), charge_code: "200")
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "200")
@@ -178,7 +192,7 @@ describe BrokerInvoice do
         inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("50"), charge_code: "221")
 
         inv
-      }
+      end
 
       it "sums charge amounts for duty lines" do
         expect(broker_invoice.total_billed_duty_amount).to eq 70
@@ -196,19 +210,18 @@ describe BrokerInvoice do
       end
     end
 
-
   end
 
   describe "has_charge_code?" do
     it "returns true if charge code contained in lines" do
-      inv = BrokerInvoice.new
+      inv = described_class.new
       inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0001")
       inv.broker_invoice_lines << BrokerInvoiceLine.new(charge_amount: BigDecimal("10"), charge_code: "0002")
 
-      expect(inv.has_charge_code? "0001").to be true
-      expect(inv.has_charge_code? "0002").to be true
-      expect(inv.has_charge_code? "0003").to be false
-      expect(inv.has_charge_code? nil).to be false
+      expect(inv.charge_code?("0001")).to be true
+      expect(inv.charge_code?("0002")).to be true
+      expect(inv.charge_code?("0003")).to be false
+      expect(inv.charge_code?(nil)).to be false
     end
   end
 end

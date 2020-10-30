@@ -2044,25 +2044,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "43035ba819a60c21185ebcc4ad402209653e629f003d06e0cf6eced454538eef",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/broker_invoice.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":entry_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "BrokerInvoice"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "430d3930d830fababad2e7824dec9d5ea919732d7d6ece010ed34d87f1ae4384",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -5812,25 +5793,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "b51e9bb0c5c3a2628178aa4039a6cf299b1d86c83c622cb2cb240707aac30cc3",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/broker_invoice.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":summary_statement_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "BrokerInvoice"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "b55e3144daf45c9ba30604d8f8f0f98fbdc841b84abae2be9f23e546a651322a",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -5899,25 +5861,6 @@
       "location": {
         "type": "model",
         "model": "Container"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "b628fc835d8090989251153db5cedf1fbadcf5427460e2b9ea2d65e3df0608d2",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/broker_invoice.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":bill_to_country_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "BrokerInvoice"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -8222,6 +8165,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-30 10:08:38 -0400",
+  "updated": "2020-10-30 10:41:35 -0400",
   "brakeman_version": "4.9.1"
 }

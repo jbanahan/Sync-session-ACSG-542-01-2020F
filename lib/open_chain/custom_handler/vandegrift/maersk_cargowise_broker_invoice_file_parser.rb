@@ -9,11 +9,11 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     ["#{MasterSetup.get.system_code}/maersk_cw_universal_transaction"]
   end
 
-  def self.parse_file data, log, opts={}
+  def self.parse_file data, _log, opts = {}
     self.new.parse(xml_document(data), opts)
   end
 
-  def parse doc, opts={}
+  def parse doc, opts = {}
     doc = unwrap_document_root(doc)
 
     broker_reference = first_text doc, "UniversalTransaction/TransactionInfo/Job[Type='Job']/Key"
@@ -25,7 +25,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
     entry = nil
     Lock.acquire("Entry-Maersk-#{broker_reference}") do
-      entry = Entry.where(broker_reference:broker_reference, source_system:Entry::CARGOWISE_SOURCE_SYSTEM).first_or_create! do |ent|
+      entry = Entry.where(broker_reference: broker_reference, source_system: Entry::CARGOWISE_SOURCE_SYSTEM).first_or_create! do |_ent|
         inbound_file.add_info_message "Cargowise-sourced entry matching Broker Reference '#{broker_reference}' was not found, so a new entry was created."
       end
     end
@@ -45,7 +45,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
       broker_inv = entry.broker_invoices.find {|inv| inv.invoice_number == invoice_number }
       if broker_inv.nil?
-        broker_inv = entry.broker_invoices.build(invoice_number:invoice_number, source_system:Entry::CARGOWISE_SOURCE_SYSTEM)
+        broker_inv = entry.broker_invoices.build(invoice_number: invoice_number, source_system: Entry::CARGOWISE_SOURCE_SYSTEM)
       end
       populate_broker_invoice broker_inv, elem_broker_inv
 
@@ -58,7 +58,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       # Add another line if there's a 'HST13' posting journal.  This line represents the sum of all HST on the invoice.
       elem_hst13_posting_journal = elem_broker_inv.xpath("PostingJournalCollection/PostingJournal[VATTaxID/TaxCode='HST13']").first
       if elem_hst13_posting_journal
-        charge_amount = parse_decimal(et elem_hst13_posting_journal, "LocalGSTVATAmount")
+        charge_amount = parse_decimal(et(elem_hst13_posting_journal, "LocalGSTVATAmount"))
         charge_description = first_text elem_hst13_posting_journal, "VATTaxID/Description"
         inv_line = broker_inv.broker_invoice_lines.build
         populate_broker_invoice_line inv_line, 'HST13', charge_amount, charge_description
@@ -72,23 +72,23 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       broker_inv.save!
       inbound_file.set_identifier_module_info InboundFileIdentifier::TYPE_INVOICE_NUMBER, BrokerInvoice, broker_inv.id
 
-      entry.update_attributes!(broker_invoice_total: entry.broker_invoices.sum(:invoice_total),
-                               total_duty_direct: self.class.is_deferred_duty?(broker_inv) ? entry.total_duty_taxes_fees_amount : nil,
-                               last_billed_date: entry.broker_invoices.maximum(:invoice_date))
+      entry.update!(broker_invoice_total: entry.broker_invoices.sum(:invoice_total),
+                    total_duty_direct: self.class.deferred_duty?(broker_inv) ? entry.total_duty_taxes_fees_amount : nil,
+                    last_billed_date: entry.broker_invoices.maximum(:invoice_date))
 
       inbound_file.add_info_message "Broker invoice successfully processed."
     end
   end
 
-  def self.is_deferred_duty? broker_invoice
-    broker_invoice.has_charge_code? "201"
+  def self.deferred_duty? broker_invoice
+    broker_invoice.charge_code? "201"
   end
 
   private
 
     def populate_broker_invoice inv, elem
-      inv.invoice_date = parse_date(et elem, "CreateTime")
-      inv.invoice_total = parse_decimal(et elem, "LocalTotal")
+      inv.invoice_date = parse_date(et(elem, "CreateTime"))
+      inv.invoice_total = parse_decimal(et(elem, "LocalTotal"))
       inv.currency = first_text elem, "PostingJournalCollection/PostingJournal/ChargeCurrency/Code"
 
       elem_bill_to = xpath(elem, "ShipmentCollection/Shipment/OrganizationAddressCollection/OrganizationAddress[AddressType='SendersLocalClient']").first
@@ -110,30 +110,29 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
     def time_zone
       # All times provided in the document are assumed to be from this zone.
-      @zone ||= ActiveSupport::TimeZone["America/New_York"]
+      @time_zone ||= ActiveSupport::TimeZone["America/New_York"]
     end
 
     def parse_decimal dec_str
-      dec_str.try(:to_d) || BigDecimal.new(0)
+      dec_str.try(:to_d) || BigDecimal(0)
     end
 
     def get_bill_to_country_id elem_bill_to
       iso = first_text elem_bill_to, "Country/Code"
-      iso.present? ? Country.where(iso_code:iso).first.try(:id) : nil
+      iso.present? ? Country.where(iso_code: iso).first.try(:id) : nil
     end
 
     def populate_broker_invoice_line_from_element inv_line, elem
       charge_code = first_text(elem, "ChargeCode/Code")
-      charge_amount = parse_decimal(et elem, "LocalAmount")
+      charge_amount = parse_decimal(et(elem, "LocalAmount"))
       charge_description = first_text(elem, "ChargeCode/Description")
       populate_broker_invoice_line inv_line, charge_code, charge_amount, charge_description
     end
 
-  def populate_broker_invoice_line inv_line, charge_code, charge_amount, charge_description
-    inv_line.charge_code = charge_code
-    inv_line.charge_amount = charge_amount
-    inv_line.charge_description = charge_description
-  end
-
+    def populate_broker_invoice_line inv_line, charge_code, charge_amount, charge_description
+      inv_line.charge_code = charge_code
+      inv_line.charge_amount = charge_amount
+      inv_line.charge_description = charge_description
+    end
 
 end; end; end; end

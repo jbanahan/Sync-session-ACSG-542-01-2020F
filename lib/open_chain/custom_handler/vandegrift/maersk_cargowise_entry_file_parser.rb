@@ -166,20 +166,20 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       entry.vendor_names = get_vendor_names_entry import_country.iso_code, xml
       entry.merchandise_description = first_text xml, "UniversalShipment/Shipment/GoodsDescription"
 
-      entry.export_date = parse_date(first_text xml, "UniversalShipment/Shipment/DateCollection/Date[Type='LoadingDate']/Value")
+      entry.export_date = parse_date(first_text(xml, "UniversalShipment/Shipment/DateCollection/Date[Type='LoadingDate']/Value"))
       entry.direct_shipment_date = entry.export_date
-      entry.docs_received_date = parse_date(first_text xml, "UniversalShipment/Shipment/CustomizedFieldCollection/CustomizedField[Key='Document Received Date']/Value")
-      entry.first_it_date = parse_date(first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='ITDate']/Value")
-      entry.eta_date = parse_date(first_text xml, "UniversalShipment/Shipment/DateCollection/Date[Type='Arrival']/Value")
-      entry.arrival_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='EntryDate']/Value")
+      entry.docs_received_date = parse_date(first_text(xml, "UniversalShipment/Shipment/CustomizedFieldCollection/CustomizedField[Key='Document Received Date']/Value"))
+      entry.first_it_date = parse_date(first_text(xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='ITDate']/Value"))
+      entry.eta_date = parse_date(first_text(xml, "UniversalShipment/Shipment/DateCollection/Date[Type='Arrival']/Value"))
+      entry.arrival_date = parse_datetime(first_text(xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='EntryDate']/Value"))
       entry.first_release_date = get_first_release_date xml
       entry.release_date = get_release_date import_country.iso_code, xml
-      entry.freight_pickup_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/ContainerCollection/Container/FCLWharfGateOut")
-      entry.final_delivery_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/ContainerCollection/Container/ArrivalCartageComplete")
-      entry.free_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/ContainerCollection/Container/FCLStorageCommences").try(:-, 1.day)
-      entry.duty_due_date = parse_date(first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentDueDate']/Value")
-      entry.available_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/ContainerCollection/Container/FCLAvailable")
-      entry.import_date = parse_date(first_text xml, "UniversalShipment/Shipment/DateCollection/Date[Type='DischargeDate' or Type='Arrival']/Value")
+      entry.freight_pickup_date = parse_datetime(first_text(xml, "UniversalShipment/Shipment/ContainerCollection/Container/FCLWharfGateOut"))
+      entry.final_delivery_date = parse_datetime(first_text(xml, "UniversalShipment/Shipment/ContainerCollection/Container/ArrivalCartageComplete"))
+      entry.free_date = parse_datetime(first_text(xml, "UniversalShipment/Shipment/ContainerCollection/Container/FCLStorageCommences")).try(:-, 1.day)
+      entry.duty_due_date = parse_date(first_text(xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentDueDate']/Value"))
+      entry.available_date = parse_datetime(first_text(xml, "UniversalShipment/Shipment/ContainerCollection/Container/FCLAvailable"))
+      entry.import_date = parse_date(first_text(xml, "UniversalShipment/Shipment/DateCollection/Date[Type='DischargeDate' or Type='Arrival']/Value"))
 
       hold_release_setter = HoldReleaseSetter.new entry
       set_hold_date entry, :ams_hold_date, get_first_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='51']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
@@ -197,7 +197,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       # Note that these USDA hold/release dates are the same value as APHIS hold/release date.  This might wind up being wrong, but it was done intentionally.
       set_hold_date entry, :usda_hold_date, get_first_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='52']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
       set_release_date entry, :usda_hold_release_date, get_last_occurrence_date(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoGroupCollection/AddInfoGroup[AddInfoCollection/AddInfo[Key='Code']/Value='55']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
-      set_release_date entry, :one_usg_date, parse_datetime(first_text xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='01']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value"), hold_release_setter, import_country.iso_code
+      set_release_date entry, :one_usg_date, parse_datetime(first_text(xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='01']/AddInfoCollection/AddInfo[Key='DispositionDate']/Value")), hold_release_setter, import_country.iso_code
 
       if import_country.iso_code == 'US'
         hold_release_setter.set_summary_hold_date
@@ -248,9 +248,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       end
       entry.total_duty = get_total_duty import_country.iso_code, xml
       entry.total_taxes = total_value xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryHeaderChargeCollection/EntryHeaderCharge[Type/Code='016' or Type/Code='022' or Type/Code='018' or Type/Code='017']/Amount"
-      entry.cotton_fee = parse_decimal(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryHeaderChargeCollection/EntryHeaderCharge[Type/Code='056']/Amount")
-      entry.hmf = parse_decimal(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryHeaderChargeCollection/EntryHeaderCharge[Type/Code='501']/Amount")
-      entry.mpf = parse_decimal(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryHeaderChargeCollection/EntryHeaderCharge[Type/Code='499']/Amount")
+      entry.cotton_fee = parse_decimal(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryHeaderChargeCollection/EntryHeaderCharge[Type/Code='056']/Amount"))
+      entry.hmf = parse_decimal(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryHeaderChargeCollection/EntryHeaderCharge[Type/Code='501']/Amount"))
+      entry.mpf = parse_decimal(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryHeaderChargeCollection/EntryHeaderCharge[Type/Code='499']/Amount"))
       entry.entered_value = get_total_entered_value import_country.iso_code, xml
       entry.total_invoiced_value = total_value xml, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/InvoiceAmount"
       entry.gross_weight = get_gross_weight xml
@@ -259,19 +259,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       entry.total_packages = get_total_packages import_country.iso_code, xml
       entry.total_packages_uom = get_total_packages_uom import_country.iso_code, xml
 
-      entry.split_shipment = parse_boolean(first_text xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoCollection/AddInfo[Key='SESplitShip']/Value")
+      entry.split_shipment = parse_boolean(first_text(xml, "UniversalShipment/Shipment/AdditionalBillCollection/AdditionalBill/AddInfoCollection/AddInfo[Key='SESplitShip']/Value"))
       entry.split_release_option = first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='SESplitRel']/Value"
       entry.summary_line_count = get_entry_summary_line_count import_country.iso_code, xml
-      entry.pay_type = parse_integer(first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentType']/Value")
+      entry.pay_type = parse_integer(first_text(xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentType']/Value"))
       entry.daily_statement_number = first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='StatementNumber']/Value"
-      entry.daily_statement_due_date = parse_date(first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentDueDate']/Value")
-      entry.daily_statement_approved_date = parse_date(first_text xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentDate']/Value")
-      entry.monthly_statement_due_date = parse_date(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/AddInfoCollection/AddInfo[Key='CollectionDate']/Value")
+      entry.daily_statement_due_date = parse_date(first_text(xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentDueDate']/Value"))
+      entry.daily_statement_approved_date = parse_date(first_text(xml, "UniversalShipment/Shipment/AddInfoCollection/AddInfo[Key='PaymentDate']/Value"))
+      entry.monthly_statement_due_date = parse_date(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/AddInfoCollection/AddInfo[Key='CollectionDate']/Value"))
 
       if import_country.iso_code == 'CA'
-        entry.cadex_sent_date = parse_datetime(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/EntrySubmittedDate")
+        entry.cadex_sent_date = parse_datetime(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/EntrySubmittedDate"))
         entry.total_gst = get_total_gst xml
-        entry.total_duty_gst = parse_decimal(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/TotalAmountPaid")
+        entry.total_duty_gst = parse_decimal(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/TotalAmountPaid"))
         entry.origin_state_codes = unique_values xml, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/CommercialInvoiceLineCollection/CommercialInvoiceLine/StateOfOrigin/Code", as_csv:true, csv_separator:multi_value_separator
         entry.export_state_codes = unique_values xml, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/AddInfoCollection/AddInfo[Key='USStateOfExport']/Value", as_csv:true, csv_separator:multi_value_separator
         entry.cargo_control_number = first_text xml, "UniversalShipment/Shipment/CustomsReferenceCollection/CustomsReference[Type/Code='CCN']/Reference"
@@ -432,9 +432,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     end
 
     def get_first_release_date xml
-      d = parse_datetime(first_text xml, "UniversalShipment/Shipment/DateCollection/Date[Type='EntryAuthorisation']/Value")
+      d = parse_datetime(first_text(xml, "UniversalShipment/Shipment/DateCollection/Date[Type='EntryAuthorisation']/Value"))
       if d.nil?
-        d = parse_datetime(first_text xml, "UniversalShipment/Shipment/CustomizedFieldCollection/CustomizedField[Key='OutportBrokerReleaseDate']/Value")
+        d = parse_datetime(first_text(xml, "UniversalShipment/Shipment/CustomizedFieldCollection/CustomizedField[Key='OutportBrokerReleaseDate']/Value"))
       end
       d
     end
@@ -442,16 +442,16 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_release_date import_country_iso, xml
       d = nil
       if import_country_iso == 'US'
-        d = parse_datetime(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryReleaseDate")
+        d = parse_datetime(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryReleaseDate"))
         if d.nil?
           d = get_last_occurrence_date xml, "UniversalShipment/Shipment/AddInfoGroupCollection/AddInfoGroup[Type/Code='UDP' and AddInfoCollection/AddInfo[Key='Code']/Value='98']/AddInfoCollection/AddInfo[Key='ReleaseDate']/Value"
         end
       elsif import_country_iso == 'CA'
-        d = parse_datetime(first_text xml, "UniversalShipment/Shipment/DateCollection/Date[Type='EntryAuthorisation']/Value")
+        d = parse_datetime(first_text(xml, "UniversalShipment/Shipment/DateCollection/Date[Type='EntryAuthorisation']/Value"))
       end
       # This applies to both countries.
       if d.nil?
-        d = parse_datetime(first_text xml, "UniversalShipment/Shipment/CustomizedFieldCollection/CustomizedField[Key='OutportBrokerReleaseDate']/Value")
+        d = parse_datetime(first_text(xml, "UniversalShipment/Shipment/CustomizedFieldCollection/CustomizedField[Key='OutportBrokerReleaseDate']/Value"))
       end
       d
     end
@@ -637,7 +637,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     end
 
     def get_canada_total_fees xml
-      amount_paid = parse_decimal(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/TotalAmountPaid")
+      amount_paid = parse_decimal(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/TotalAmountPaid"))
       total_duty = total_value xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryLineCollection/EntryLine/EntryLineChargeCollection/EntryLineCharge[Type/Code='DTY']/Amount"
       total = amount_paid - total_duty
       total
@@ -649,7 +649,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         total = total_value xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader/EntryLineCollection/EntryLine/EntryLineChargeCollection/EntryLineCharge[Type/Code='DTY']/Amount"
       elsif import_country_iso == 'CA'
         total_gst = get_total_gst xml
-        total_duty_gst = parse_decimal(first_text xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/TotalAmountPaid")
+        total_duty_gst = parse_decimal(first_text(xml, "UniversalShipment/Shipment/EntryHeaderCollection/EntryHeader[Type/Code='B3C']/TotalAmountPaid"))
         total = total_duty_gst - total_gst
       end
       total
@@ -660,7 +660,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     end
 
     def is_deferred_duty? entry
-      entry.broker_invoices.find { |brin| OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileParser.is_deferred_duty? brin }.present?
+      entry.broker_invoices.find { |brin| OpenChain::CustomHandler::Vandegrift::MaerskCargowiseBrokerInvoiceFileParser.deferred_duty? brin }.present?
     end
 
     def get_total_entered_value import_country_iso, xml
@@ -675,7 +675,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
 
     def get_gross_weight xml
       # Gross weight is an integer field for some reason.
-      v = parse_integer(first_text xml, "UniversalShipment/Shipment/TotalWeight")
+      v = parse_integer(first_text(xml, "UniversalShipment/Shipment/TotalWeight"))
       if v == 0
         v = total_value_integer xml, "UniversalShipment/Shipment/CommercialInfo/CommercialInvoiceCollection/CommercialInvoice/Weight"
       end
@@ -685,9 +685,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_total_packages import_country_iso, xml
       v = 0
       if import_country_iso == 'US'
-        v = parse_integer(first_text xml, "UniversalShipment/Shipment/TotalNoOfPacks")
+        v = parse_integer(first_text(xml, "UniversalShipment/Shipment/TotalNoOfPacks"))
       elsif import_country_iso == 'CA'
-        v = parse_integer(first_text xml, "UniversalShipment/Shipment/OuterPacks")
+        v = parse_integer(first_text(xml, "UniversalShipment/Shipment/OuterPacks"))
       end
       v
     end
@@ -716,19 +716,19 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       inv.invoice_number = et elem, "InvoiceNumber"
       # Invoice-level MID is the first line-level MID that is not empty.
       inv.mfid = first_text elem, "CommercialInvoiceLineCollection/CommercialInvoiceLine/OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']/RegistrationNumberCollection/RegistrationNumber[Type/Code='MID' and normalize-space(Value) != '']/Value"
-      inv.invoice_date = parse_date(et elem, "InvoiceDate")
+      inv.invoice_date = parse_date(et(elem, "InvoiceDate"))
       # Gross weight is an integer field for some reason.
-      inv.gross_weight = parse_integer(et elem, "Weight")
+      inv.gross_weight = parse_integer(et(elem, "Weight"))
       inv.country_origin_code = first_text elem, "AddInfoCollection/AddInfo[Key='UC_NKCountryOfOrigin']/Value"
-      inv.invoice_value = parse_decimal(et elem, "InvoiceAmount")
-      inv.total_charges = parse_decimal(et elem, "CommercialChargeCollection/CommercialCharge[ChargeType/Code='OFT']/Amount")
+      inv.invoice_value = parse_decimal(et(elem, "InvoiceAmount"))
+      inv.total_charges = parse_decimal(et(elem, "CommercialChargeCollection/CommercialCharge[ChargeType/Code='OFT']/Amount"))
       if foreign_currency? first_text(elem, "InvoiceCurrency/Code"), import_country_iso
-        invoice_value = parse_decimal(et elem, "InvoiceAmount")
+        invoice_value = parse_decimal(et(elem, "InvoiceAmount"))
         inv.invoice_value = invoice_value
         inv.invoice_value_foreign = convert_foreign_invoice_value parse_decimal(et(elem, "AgreedExchangeRate"), decimal_places:6), invoice_value
       end
       inv.currency = first_text elem, "InvoiceCurrency/Code"
-      inv.total_quantity = parse_decimal(et elem, "NoOfPacks")
+      inv.total_quantity = parse_decimal(et(elem, "NoOfPacks"))
       inv.total_quantity_uom = first_text doc, "UniversalShipment/Shipment/TotalNoOfPacksPackageType/Code"
       inv.exchange_rate = parse_decimal(et(elem, "AgreedExchangeRate"), decimal_places:6)
       inv.non_dutiable_amount = total_value elem, "CommercialChargeCollection/CommercialCharge[IsDutiable='false' and IsNotIncludedInInvoice='false']/Amount"
@@ -758,21 +758,21 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     end
 
     def populate_commercial_invoice_line inv_line, elem, import_country, elem_invoice, elem_root
-      inv_line.line_number = parse_integer(et elem, "LineNo")
+      inv_line.line_number = parse_integer(et(elem, "LineNo"))
       inv_line.po_number = et elem, "OrderNumber"
       if import_country.iso_code == 'US'
         inv_line.mid = first_text elem, "OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']/RegistrationNumberCollection/RegistrationNumber[Type/Code='MID']/Value"
       end
       inv_line.part_number = et elem, "PartNo"
-      inv_line.quantity = parse_decimal(et elem, "InvoiceQuantity")
+      inv_line.quantity = parse_decimal(et(elem, "InvoiceQuantity"))
       inv_line.unit_of_measure = first_text elem, "InvoiceQuantityUnit/Code"
-      inv_line.value = parse_decimal(et elem, "LinePrice")
+      inv_line.value = parse_decimal(et(elem, "LinePrice"))
       inv_line.country_origin_code = get_invoice_line_country_origin_code elem, import_country.iso_code
       inv_line.country_export_code = get_invoice_line_country_export_code elem, import_country.iso_code, elem_invoice
-      inv_line.related_parties = parse_boolean(first_text elem_invoice, "AddInfoCollection/AddInfo[Key='TransactionsRelated']/Value")
+      inv_line.related_parties = parse_boolean(first_text(elem_invoice, "AddInfoCollection/AddInfo[Key='TransactionsRelated']/Value"))
       inv_line.vendor_name = first_text elem, "OrganizationAddressCollection/OrganizationAddress[AddressType='Manufacturer']/CompanyName"
-      inv_line.volume = parse_decimal(et elem, "Volume")
-      inv_line.contract_amount = parse_decimal(first_text elem, "CustomizedFieldCollection/CustomizedField[Key='MMC']/Value")
+      inv_line.volume = parse_decimal(et(elem, "Volume"))
+      inv_line.contract_amount = parse_decimal(first_text(elem, "CustomizedFieldCollection/CustomizedField[Key='MMC']/Value"))
       inv_line.department = first_text elem, "CustomizedFieldCollection/CustomizedField[Key='Department Number']/Value"
       inv_line.non_dutiable_amount = get_non_dutiable_amount elem
       inv_line.add_to_make_amount = get_add_to_make_amount elem
@@ -780,30 +780,30 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       inv_line.miscellaneous_discount = get_miscellaneous_discount elem
       inv_line.freight_amount = get_freight_amount elem
       inv_line.visa_number = first_text elem, "AddInfoCollection/AddInfo[Key='VisaNo']/Value"
-      inv_line.visa_quantity = parse_decimal(first_text elem, "AddInfoCollection/AddInfo[Key='VisaQty']/Value")
+      inv_line.visa_quantity = parse_decimal(first_text(elem, "AddInfoCollection/AddInfo[Key='VisaQty']/Value"))
       inv_line.visa_uom = first_text elem, "AddInfoCollection/AddInfo[Key='VisaUQ']/Value"
       inv_line.customs_line_number = et(elem, "EntryLineNumber").try(:to_i)
       if foreign_currency? first_text(elem_invoice, "InvoiceCurrency/Code"), import_country.iso_code
-        line_value = parse_decimal(et elem, "LinePrice")
+        line_value = parse_decimal(et(elem, "LinePrice"))
         inv_line.value = line_value
         inv_line.value_foreign = convert_foreign_invoice_value parse_decimal(et(elem_invoice, "AgreedExchangeRate"), decimal_places:6), line_value
       end
       inv_line.currency = first_text elem_invoice, "InvoiceCurrency/Code"
-      inv_line.value_appraisal_method = parse_boolean(first_text elem, "AddInfoCollection/AddInfo[Key='FirstSale']/Value") ? "F" : nil
-      inv_line.first_sale = parse_boolean(first_text elem, "AddInfoCollection/AddInfo[Key='FirstSale']/Value")
-      inv_line.unit_price = parse_decimal(first_text elem, "UnitPrice")
+      inv_line.value_appraisal_method = parse_boolean(first_text(elem, "AddInfoCollection/AddInfo[Key='FirstSale']/Value")) ? "F" : nil
+      inv_line.first_sale = parse_boolean(first_text(elem, "AddInfoCollection/AddInfo[Key='FirstSale']/Value"))
+      inv_line.unit_price = parse_decimal(first_text(elem, "UnitPrice"))
       inv_line.agriculture_license_number = first_text elem, "CustomsReferenceCollection/CustomsReference[Type/Code='LNP' and SubType/Code='14']/Reference"
-      inv_line.mpf = parse_decimal(first_text elem, "CustomsReferenceCollection/CustomsReference[SubType/Code='499']/Reference")
-      inv_line.prorated_mpf = parse_decimal(first_text elem, "AddInfoCollection/AddInfo[Key='PayableMPF']/Value")
-      inv_line.hmf = parse_decimal(first_text elem, "CustomsReferenceCollection/CustomsReference[SubType/Code='501']/Reference")
-      inv_line.cotton_fee = parse_decimal(first_text elem, "CustomsReferenceCollection/CustomsReference[SubType/Code='056']/Reference")
+      inv_line.mpf = parse_decimal(first_text(elem, "CustomsReferenceCollection/CustomsReference[SubType/Code='499']/Reference"))
+      inv_line.prorated_mpf = parse_decimal(first_text(elem, "AddInfoCollection/AddInfo[Key='PayableMPF']/Value"))
+      inv_line.hmf = parse_decimal(first_text(elem, "CustomsReferenceCollection/CustomsReference[SubType/Code='501']/Reference"))
+      inv_line.cotton_fee = parse_decimal(first_text(elem, "CustomsReferenceCollection/CustomsReference[SubType/Code='056']/Reference"))
       inv_line.other_fees = total_value elem, "CustomsReferenceCollection/CustomsReference[SubType/Code!='056' and SubType/Code!='499' and SubType/Code!='501' and Type/Code='FEE']/Reference"
       inv_line.add_case_number = first_text elem, "AddInfoCollection/AddInfo[Key='ADDCaseNo']/Value"
-      inv_line.add_bond = parse_boolean(first_text elem, "AddInfoCollection/AddInfo[Key='IsBondedADD']/Value")
+      inv_line.add_bond = parse_boolean(first_text(elem, "AddInfoCollection/AddInfo[Key='IsBondedADD']/Value"))
       inv_line.add_case_value = get_add_case_value elem, import_country.iso_code
       inv_line.add_duty_amount = get_add_duty_amount elem, import_country.iso_code
       inv_line.cvd_case_number = first_text elem, "AddInfoCollection/AddInfo[Key='CVDCaseNo']/Value"
-      inv_line.cvd_bond = parse_boolean(first_text elem, "AddInfoCollection/AddInfo[Key='IsBondedCVD']/Value")
+      inv_line.cvd_bond = parse_boolean(first_text(elem, "AddInfoCollection/AddInfo[Key='IsBondedCVD']/Value"))
       inv_line.cvd_case_value = get_cvd_case_value elem, import_country.iso_code
       inv_line.cvd_duty_amount = get_cvd_duty_amount elem, import_country.iso_code
       if import_country.iso_code == 'CA'
@@ -853,15 +853,15 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_freight_amount elem
       # Per the map, unlike the others in the same category, this is NOT a total field.  We grab the first
       # 'OFT' charge.
-      parse_decimal(first_text elem, "CommercialChargeCollection/CommercialCharge[ChargeType/Code='OFT']/Amount")
+      parse_decimal(first_text(elem, "CommercialChargeCollection/CommercialCharge[ChargeType/Code='OFT']/Amount"))
     end
 
     def get_add_case_value elem, import_country_iso
       v = nil
       if import_country_iso == 'US'
-        v = parse_decimal(first_text elem, "AddInfoCollection/AddInfo[Key='ADDDepositValue']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoCollection/AddInfo[Key='ADDDepositValue']/Value"))
       elsif import_country_iso == 'CA'
-        v = parse_decimal(first_text elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='ADD']/AddInfo[Key='ValueForCalculation']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='ADD']/AddInfo[Key='ValueForCalculation']/Value"))
       end
       v
     end
@@ -869,9 +869,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_add_duty_amount elem, import_country_iso
       v = nil
       if import_country_iso == 'US'
-        v = parse_decimal(first_text elem, "AddInfoCollection/AddInfo[Key='ADDuty']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoCollection/AddInfo[Key='ADDuty']/Value"))
       elsif import_country_iso == 'CA'
-        v = parse_decimal(first_text elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='ADD']/AddInfo[Key='Amount']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='ADD']/AddInfo[Key='Amount']/Value"))
       end
       v
     end
@@ -879,9 +879,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_cvd_case_value elem, import_country_iso
       v = nil
       if import_country_iso == 'US'
-        v = parse_decimal(first_text elem, "AddInfoCollection/AddInfo[Key='CVDDepositValue']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoCollection/AddInfo[Key='CVDDepositValue']/Value"))
       elsif import_country_iso == 'CA'
-        v = parse_decimal(first_text elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='CVD']/AddInfo[Key='ValueForCalculation']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='CVD']/AddInfo[Key='ValueForCalculation']/Value"))
       end
       v
     end
@@ -889,9 +889,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_cvd_duty_amount elem, import_country_iso
       v = nil
       if import_country_iso == 'US'
-        v = parse_decimal(first_text elem, "AddInfoCollection/AddInfo[Key='CVDuty']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoCollection/AddInfo[Key='CVDuty']/Value"))
       elsif import_country_iso == 'CA'
-        v = parse_decimal(first_text elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='CVD']/AddInfo[Key='Amount']/Value")
+        v = parse_decimal(first_text(elem, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='CVD']/AddInfo[Key='Amount']/Value"))
       end
       v
     end
@@ -933,7 +933,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         if import_country_iso == 'US'
           customs_value = tar.entered_value_7501
           if customs_value.nil? || customs_value.zero?
-            customs_value = parse_integer(et elem_line, "CustomsValue")
+            customs_value = parse_integer(et(elem_line, "CustomsValue"))
           end
           calculate_primary_duty_rate tar, BigDecimal.new(customs_value) unless customs_value.nil?
         end
@@ -955,9 +955,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
         # Don't let this value be negative.  It can happen sometimes due to an apparent rounding quirk in Cargowise.
         tar.duty_specific = [tar.duty_amount - tar.duty_advalorem, BigDecimal.new(0)].max
         tar.duty_additional = get_duty_additional elem_invoice_line
-        tar.entered_value = parse_decimal(et elem_invoice_line, "CustomsValue")
-        tar.entered_value_7501 = parse_integer(et elem_invoice_line, "CustomsValue")
-        tar.classification_qty_1 = parse_decimal(et elem_invoice_line, "CustomsQuantity")
+        tar.entered_value = parse_decimal(et(elem_invoice_line, "CustomsValue"))
+        tar.entered_value_7501 = parse_integer(et(elem_invoice_line, "CustomsValue"))
+        tar.classification_qty_1 = parse_decimal(et(elem_invoice_line, "CustomsQuantity"))
         tar.classification_uom_1 = first_text elem_invoice_line, "CustomsQuantityUnit/Code"
       else
         tar.entered_value = BigDecimal("0")
@@ -977,13 +977,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
           tar.value_for_duty_code = first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='ValueForDutyCode']/Value"
           tar.special_authority = first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='AuthorityNumber']/Value"
           tar.gst_rate_code = first_text elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and AddInfo/Value='GST']/AddInfo[Key='Rate']/Value"
-          tar.gst_amount = parse_decimal(first_text elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and AddInfo/Value='GST']/AddInfo[Key='Amount']/Value")
-          tar.sima_amount = parse_decimal(first_text elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and (AddInfo/Value='SUR' or AddInfo/Value='ADD' or AddInfo/Value='CVD')]/AddInfo[Key='Amount']/Value")
+          tar.gst_amount = parse_decimal(first_text(elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and AddInfo/Value='GST']/AddInfo[Key='Amount']/Value"))
+          tar.sima_amount = parse_decimal(first_text(elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and (AddInfo/Value='SUR' or AddInfo/Value='ADD' or AddInfo/Value='CVD')]/AddInfo[Key='Amount']/Value"))
           tar.sima_code = first_text elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and (AddInfo/Value='SUR' or AddInfo/Value='ADD' or AddInfo/Value='CVD')]/AddInfo[Key='Rate']/Value"
           tar.duty_rate = elem_entry_line ? (parse_decimal(et(elem_entry_line, "DutyRatePercent")) / BigDecimal.new(100)).round(3, BigDecimal::ROUND_HALF_UP) : BigDecimal.new(0)
         end
         # Gross weight is an integer field for some reason.
-        tar.gross_weight = parse_integer(et elem_invoice_line, "Weight")
+        tar.gross_weight = parse_integer(et(elem_invoice_line, "Weight"))
       end
       tar.tariff_description = et elem_invoice_line, "Description"
     end
@@ -991,13 +991,13 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_advalorem_duty elem_invoice_line, import_country_iso, elem_entry_line
       v = BigDecimal.new(0)
       if import_country_iso == 'US' && elem_entry_line
-        duty_rate_percent = parse_decimal(et elem_entry_line, "DutyRatePercent", decimal_places:5)
+        duty_rate_percent = parse_decimal(et(elem_entry_line, "DutyRatePercent", decimal_places:5))
         if duty_rate_percent > 0
-          customs_value = parse_decimal(et elem_invoice_line, "CustomsValue", decimal_places:5)
+          customs_value = parse_decimal(et(elem_invoice_line, "CustomsValue", decimal_places:5))
           v = ((duty_rate_percent * customs_value) / BigDecimal("100")).round(2, BigDecimal::ROUND_HALF_UP)
         end
       elsif import_country_iso == 'CA'
-        v = parse_decimal(first_text elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and AddInfo/Value='DTY']/AddInfo[Key='Amount']/Value")
+        v = parse_decimal(first_text(elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup[Type/Code='CDT']/AddInfoCollection[AddInfo/Key='RateType' and AddInfo/Value='V'][AddInfo/Key='TaxType' and AddInfo/Value='DTY']/AddInfo[Key='Amount']/Value"))
       end
       v
     end
@@ -1006,9 +1006,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       v = BigDecimal.new(0)
       if import_country_iso == 'US'
         if primary_tariff
-          v = parse_decimal(first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='Duty']/Value")
+          v = parse_decimal(first_text(elem_invoice_line, "AddInfoCollection/AddInfo[Key='Duty']/Value"))
         else
-          v = parse_decimal(first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='SupDuty']/Value")
+          v = parse_decimal(first_text(elem_invoice_line, "AddInfoCollection/AddInfo[Key='SupDuty']/Value"))
         end
       elsif import_country_iso == 'CA'
         v = total_value elem_invoice_line, "AddInfoGroupCollection/AddInfoGroup/AddInfoCollection[AddInfo/Key='TaxType' and AddInfo/Value='DTY']/AddInfo[Key='Amount']/Value"
@@ -1048,9 +1048,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_classification_qty_2 elem_invoice_line, import_country_iso
       v = BigDecimal.new(0)
       if import_country_iso == 'US'
-        v = parse_decimal(first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='SecondQty']/Value")
+        v = parse_decimal(first_text(elem_invoice_line, "AddInfoCollection/AddInfo[Key='SecondQty']/Value"))
       elsif import_country_iso == 'CA'
-        v = parse_decimal(first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='Qty2']/Value")
+        v = parse_decimal(first_text(elem_invoice_line, "AddInfoCollection/AddInfo[Key='Qty2']/Value"))
       end
       v
     end
@@ -1068,9 +1068,9 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
     def get_classification_qty_3 elem_invoice_line, import_country_iso
       v = BigDecimal.new(0)
       if import_country_iso == 'US'
-        v = parse_decimal(first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='ThirdQty']/Value")
+        v = parse_decimal(first_text(elem_invoice_line, "AddInfoCollection/AddInfo[Key='ThirdQty']/Value"))
       elsif import_country_iso == 'CA'
-        v = parse_decimal(first_text elem_invoice_line, "AddInfoCollection/AddInfo[Key='Qty3']/Value")
+        v = parse_decimal(first_text(elem_invoice_line, "AddInfoCollection/AddInfo[Key='Qty3']/Value"))
       end
       v
     end
@@ -1133,7 +1133,7 @@ module OpenChain; module CustomHandler; module Vandegrift; class MaerskCargowise
       cont.container_number = et elem, "ContainerNumber"
       cont.container_size = first_text elem, "ContainerType/Code"
       # Weight is an integer field for some reason.
-      cont.weight = parse_integer(et elem, "GrossWeight")
+      cont.weight = parse_integer(et(elem, "GrossWeight"))
       cont.seal_number = et elem, "Seal"
       cont.fcl_lcl = first_text elem, "FCL_LCL_AIR/Code"
       cont.size_description = first_text elem, "ContainerType/Description"

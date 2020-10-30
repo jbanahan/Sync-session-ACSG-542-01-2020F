@@ -55,12 +55,12 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         end
 
         importer_identifier = SystemIdentifier.where(system: "Cargowise", code: "US48733060").first
-        expect(importer_identifier).to_not be_nil
+        expect(importer_identifier).not_to be_nil
         importer_company = Company.where(importer: true, name: "HOME DEPOT USA INC").first
-        expect(importer_company).to_not be_nil
+        expect(importer_company).not_to be_nil
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.source_system).to eq Entry::CARGOWISE_SOURCE_SYSTEM
         expect(entry.import_country_id).to eq country.id
         expect(entry.entry_number).to eq "59555920103"
@@ -373,7 +373,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.release_cert_message).to eq "RELEASED"
         expect(entry.first_release_date).to eq parse_datetime("2019-04-30 11:12:00")
         expect(entry.release_date).to eq parse_datetime("2019-05-25 01:33:00.000")
@@ -401,7 +401,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.release_cert_message).to be_nil
         expect(entry.release_date).to eq parse_datetime("2019-04-30T11:12:00")
 
@@ -426,7 +426,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.id).to eq exist_entry.id
         expect(entry.importer_id).to eq importer_company.id
         expect(entry.total_duty_direct).to be_nil
@@ -454,7 +454,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.total_duty_direct).to eq BigDecimal.new("8337.25")
 
         expect(log).to have_info_message "Entry successfully processed."
@@ -466,7 +466,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         expect(Entry.where(broker_reference:"BQMJ01119279881").first).to be_nil
-        expect(log).to_not have_info_message "Entry successfully processed."
+        expect(log).not_to have_info_message "Entry successfully processed."
         expect(log).to have_reject_message "Broker Reference is required."
       end
 
@@ -476,7 +476,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         expect(Entry.where(broker_reference:"BQMJ01119279881").first).to be_nil
-        expect(log).to_not have_info_message "Entry successfully processed."
+        expect(log).not_to have_info_message "Entry successfully processed."
         expect(log).to have_reject_message "Could not determine Country of Origin.  Unknown code provided in 'UniversalShipment/Shipment/DataContext/Company/Code': 'POO'."
       end
 
@@ -486,7 +486,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         expect { subject.parse make_document(test_data) }.to raise_error(LoggedParserFatalError, "Country record for ISO 'US' could not be found.")
 
         expect(Entry.where(broker_reference:"BQMJ01119279881").first).to be_nil
-        expect(log).to_not have_info_message "Entry successfully processed."
+        expect(log).not_to have_info_message "Entry successfully processed."
         expect(log).to have_error_message "Country record for ISO 'US' could not be found."
       end
 
@@ -496,7 +496,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         expect(Entry.where(broker_reference:"BQMJ01119279881").first).to be_nil
-        expect(log).to_not have_info_message "Entry successfully processed."
+        expect(log).not_to have_info_message "Entry successfully processed."
         expect(log).to have_reject_message "Customer Number is required."
       end
 
@@ -661,7 +661,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document("<UniversalInterchange><Body>#{test_data}</Body></UniversalInterchange>")
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
 
         expect(log).to have_info_message "Entry successfully processed."
       end
@@ -672,7 +672,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
 
         ci_1 = entry.commercial_invoices[0]
         expect(ci_1.invoice_value).to eq BigDecimal.new("51520")
@@ -762,7 +762,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.master_bills_of_lading).to eq "ZIMU000030320655\n ZIMA000030320656"
 
         expect(log).to have_info_message "Entry successfully processed."
@@ -782,18 +782,18 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         DataCrossReference.create!(cross_reference_type: DataCrossReference::CARGOWISE_TRANSPORT_MODE_CA, key:'RAICNT', value:'6')
 
         # These are called only for the US.
-        expect(subject).to_not receive(:tariff_effective_date)
-        expect(subject).to_not receive(:calculate_duty_rates)
+        expect(subject).not_to receive(:tariff_effective_date)
+        expect(subject).not_to receive(:calculate_duty_rates)
 
-        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_date)
-        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_any_hold_release_date)
-        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_date)
-        expect_any_instance_of(described_class::HoldReleaseSetter).to_not receive(:set_summary_hold_release_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).not_to receive(:set_any_hold_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).not_to receive(:set_any_hold_release_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).not_to receive(:set_summary_hold_date)
+        expect_any_instance_of(described_class::HoldReleaseSetter).not_to receive(:set_summary_hold_release_date)
 
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.source_system).to eq Entry::CARGOWISE_SOURCE_SYSTEM
         expect(entry.import_country_id).to eq country.id
         expect(entry.entry_number).to eq "59555920103"
@@ -1080,7 +1080,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
         expect(entry.entry_port_code).to eq "BLAH"
         expect(entry.unlading_port_code).to eq "BLEH"
         expect(entry.release_date).to eq parse_datetime("2019-04-30 11:12:00")
@@ -1102,7 +1102,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
 
         ci_1 = entry.commercial_invoices[0]
         cil_1 = ci_1.commercial_invoice_lines[0]
@@ -1117,7 +1117,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         entry = Entry.where(broker_reference:"BQMJ01119279881").first
-        expect(entry).to_not be_nil
+        expect(entry).not_to be_nil
 
         ci_1 = entry.commercial_invoices[0]
         expect(ci_1.invoice_value).to eq BigDecimal.new("51520")
@@ -1139,7 +1139,7 @@ describe OpenChain::CustomHandler::Vandegrift::MaerskCargowiseEntryFileParser do
         subject.parse make_document(test_data)
 
         expect(Entry.where(broker_reference:"BQMJ01119279881").first).to be_nil
-        expect(log).to_not have_info_message "Entry successfully processed."
+        expect(log).not_to have_info_message "Entry successfully processed."
         expect(log).to have_reject_message "Customer Number is required."
       end
     end

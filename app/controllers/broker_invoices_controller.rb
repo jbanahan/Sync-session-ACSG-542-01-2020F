@@ -4,15 +4,17 @@ class BrokerInvoicesController < ApplicationController
   def root_class
     BrokerInvoice
   end
+
   def index
     flash.keep
     redirect_to advanced_search CoreModule::BROKER_INVOICE, params[:force_search]
   end
+
   def show
     i = BrokerInvoice.find params[:id]
-    action_secure(i.can_view?(current_user), i, {:lock_check=>false, :verb=>"view", :module_name=>"invoice"}) {
+    action_secure(i.can_view?(current_user), i, {lock_check: false, verb: "view", module_name: "invoice"}) do
       @invoice = i
-    }
+    end
   end
 
   def sync_records

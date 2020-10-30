@@ -43,29 +43,24 @@ class BrokerInvoice < ActiveRecord::Base
   include CoreObjectSupport
   include IntegrationParserSupport
 
-  attr_accessible :bill_to_address_1, :bill_to_address_2, :bill_to_city,
-    :bill_to_country_id, :bill_to_name, :bill_to_state, :bill_to_zip,
-    :broker_reference, :currency, :customer_number, :entry_id, :fiscal_date,
-    :fiscal_month, :fiscal_year, :invoice_date, :invoice_number,
-    :invoice_total, :last_file_bucket, :last_file_path, :locked,
-    :source_system, :suffix, :summary_statement_id, :broker_invoice_lines_attributes, :entry
-
   belongs_to :entry, touch: true, inverse_of: :broker_invoices
-  belongs_to :bill_to_country, :class_name=>'Country'
+  belongs_to :bill_to_country, class_name: 'Country'
   belongs_to :summary_statement
-  has_many :broker_invoice_lines, :dependent => :destroy, :inverse_of=>:broker_invoice
+  has_many :broker_invoice_lines, dependent: :destroy, inverse_of: :broker_invoice
 
   before_validation {self.currency = "USD" if self.currency.blank?}
-  validates_uniqueness_of :invoice_number, {:scope => :source_system}
+  validates :invoice_number, uniqueness: {scope: :source_system}
 
-  accepts_nested_attributes_for :broker_invoice_lines, :allow_destroy=>true, :reject_if => lambda {|q|
+  accepts_nested_attributes_for :broker_invoice_lines, allow_destroy: true, reject_if: lambda {|q|
     q[:charge_description].blank? || q[:charge_amount].blank?
   }
 
   # calculate HST by looking up all included charge codes and calculating HST amount at 13% fixed rate for Ontario
+  # rubocop:disable Layout/LineLength
   def hst_amount
     self.broker_invoice_lines.each.inject(BigDecimal("0.00")) {|sum, line| sum + (line.hst_percent.blank? || line.charge_amount.blank? ? 0 : (line.hst_percent * line.charge_amount))}
   end
+  # rubocop:enable Layout/LineLength
 
   def can_view? user
     self.class.can_view? user, self.entry
@@ -84,7 +79,7 @@ class BrokerInvoice < ActiveRecord::Base
   end
 
   def self.can_view? user, entry
-    user.view_broker_invoices? && (user.company.master? || (entry && ( entry.importer_id==user.company_id || user.company.linked_companies.include?(entry.importer))))
+    user.view_broker_invoices? && (user.company.master? || (entry && (entry.importer_id == user.company_id || user.company.linked_companies.include?(entry.importer))))
   end
 
   def total_billed_duty_amount
@@ -117,7 +112,7 @@ class BrokerInvoice < ActiveRecord::Base
     sum
   end
 
-  def has_charge_code? charge_code
+  def charge_code? charge_code
     self.broker_invoice_lines.find { |line| line.charge_code == charge_code }.present?
   end
 end

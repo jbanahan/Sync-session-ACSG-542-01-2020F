@@ -13,3 +13,4 @@ Rails/UniqueValidationWithoutIndex:
     - 'app/models/company.rb'
     - 'app/models/mailing_list.rb'
     - 'app/models/charge_code.rb'
+    - 'app/models/broker_invoice.rb'
