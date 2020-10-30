@@ -1663,25 +1663,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "3a3642f31bf139a8e9b617db3cf8f1a9d9a95d8b78bffcc507bcb88a7dc5d359",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_isf_status.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportIsfStatus"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "3a926b5d7285d352bf6d6127ff641a9b1e9f36d1339ba1aed88145d51402074c",
@@ -2622,25 +2603,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "5bac88458602f68eb64de167db02c3c159d674d42d8781e68f1113a8ee40f18e",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_container_listing.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportContainerListing"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "5bf50ef989ffa1a3a3e6e4d23ff98d33fd745d1de291a2606a6b8af531a9e310",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -2671,25 +2633,6 @@
       "location": {
         "type": "model",
         "model": "TradeLane"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "5d53c8130726974cd73a289a3192246cc05129fc0dd0639f97987ba8ac090ce1",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_billing_allocation_by_value.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportBillingAllocationByValue"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -3036,25 +2979,6 @@
       "location": {
         "type": "model",
         "model": "ShipmentLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "6a37989bfffa692812f08e4e2f66c7c7e67255ee95e30e5b9a260904ca7a38ba",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_tiered_entry_invoice_breakdown.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportTieredEntryInvoiceBreakdown"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -3653,25 +3577,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "7b9d6e0275f286d4ed49562ec89725176519f20a50ab8d4760b0a35481152971",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReport"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "7d62a34fdf53c0546d472e527d2cd51e3b2623b1c8e32c86a0bab35c4a058e12",
@@ -3884,25 +3789,6 @@
       "user_input": "SentEmail.find(params[:id]).email_body.to_s",
       "confidence": "Medium",
       "note": "Not XSS.  User cannot control content of email body."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "84b7d3be5a3844e11412360b1035246ebd876519a9278268fb6e50e3a4f203db",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_entry_tariff_breakdown.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportEntryTariffBreakdown"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -4559,25 +4445,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "9cca59ec59c0c07d33b2f4cfb0eb2a9ee5774211239f4db6bf54d1ec186083a2",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_ann_sap_changes.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportAnnSapChanges"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "9d15c4d98d8f2b633236a3ff87534228b7bfe8bf791d5105986a019346baa38b",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4876,25 +4743,6 @@
       "location": {
         "type": "model",
         "model": "History"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "ac0670941a2e163f7d901afcf7046b74847b7cb3e3b867a6613b84b686e5a260",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_entry_billing.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportEntryBilling"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -5469,25 +5317,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "bd467aa8c1c387cfe241beb152b7f3e9a787ef800d1d81f52615ee57c577754d",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_entry_billing_breakdown_by_po.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportEntryBillingBreakdownByPo"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "c00d70dab427d196cc9dd1137bb2cfd1f7fa9fe890cc96ba9b8ef4267c50224e",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -5653,25 +5482,6 @@
       "location": {
         "type": "model",
         "model": "SearchColumn"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "c52675115f41b323a07f8c67cdda1894c581dcbca19261f5b9c1eb1d543e2cdb",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/custom_report_entry_invoice_breakdown.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "CustomReportEntryInvoiceBreakdown"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -7338,6 +7148,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-30 13:15:26 -0400",
+  "updated": "2020-10-30 14:11:54 -0400",
   "brakeman_version": "4.9.1"
 }

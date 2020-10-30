@@ -1,8 +1,6 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportIsfStatus < CustomReport
-  attr_accessible :include_links, :name, :no_time, :type, :user_id
-
   validate :criterions_contain_customer_number?
 
   def self.template_name
@@ -68,7 +66,7 @@ class CustomReportIsfStatus < CustomReport
     def criterions_contain_customer_number? raise_error = false
       cust_no = find_cust_number_criterion
       unless cust_no && !cust_no.marked_for_destruction?
-        e = "This report must include the #{ModelField.find_by_uid(:sf_broker_customer_number).label} parameter."
+        e = "This report must include the #{ModelField.by_uid(:sf_broker_customer_number).label} parameter."
         if raise_error
           raise e
         else

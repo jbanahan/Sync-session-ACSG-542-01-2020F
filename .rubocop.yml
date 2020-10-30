@@ -220,3 +220,7 @@ RSpec/RepeatedExampleGroupBody:
   Enabled: true
   Exclude:
     - 'spec/models/one_time_alert_spec.rb'
+
+Style/RegexpLiteral:
+  Enabled: true
+  EnforcedStyle: slashes

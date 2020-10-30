@@ -27,34 +27,34 @@ class CustomReport < ActiveRecord::Base
   include OpenChain::SearchBase
   include OpenChain::UrlSupport
 
-  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id, :user,
-  :search_criterions_attributes, :sort_criterions_attributes, :search_columns_attributes, :search_schedules_attributes
-
-  has_many :search_criterions, :dependent=>:destroy
-  has_many :search_columns, -> { order(:rank) }, :dependent=>:destroy
-  has_many :search_schedules, :dependent=>:destroy
+  has_many :search_criterions, dependent: :destroy
+  has_many :search_columns, -> { order(:rank) }, dependent: :destroy # rubocop:disable Rails/InverseOf
+  has_many :search_schedules, dependent: :destroy
   has_many :report_results
-  belongs_to :user, :inverse_of=>:custom_reports
+  belongs_to :user, inverse_of: :custom_reports
 
   validate :scheduled_reports_have_parameters
 
-  accepts_nested_attributes_for :search_criterions, :allow_destroy => true,
-    :reject_if => lambda { |a|
-      r_val = false
-      [:model_field_uid, :operator].each { |f|
-        r_val = true if a[f].blank?
-      }
-      r_val
-    }
-  accepts_nested_attributes_for :search_columns, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:model_field_uid].blank? }
-  accepts_nested_attributes_for :search_schedules, :allow_destroy => true,
-    :reject_if => lambda { |a| a[:email_addresses].blank? &&
-      a[:ftp_server].blank? &&
-      a[:_destroy].blank?
-    }
+  accepts_nested_attributes_for :search_criterions, allow_destroy: true,
+                                                    reject_if: lambda { |a|
+                                                      r_val = false
+                                                      [:model_field_uid, :operator].each do |f|
+                                                        r_val = true if a[f].blank?
+                                                      end
+                                                      r_val
+                                                    }
 
-  scope :for_user, lambda { |u| where(user: u) }
+  accepts_nested_attributes_for :search_columns, allow_destroy: true,
+                                                 reject_if: ->(a) { a[:model_field_uid].blank? }
+
+  accepts_nested_attributes_for :search_schedules, allow_destroy: true,
+                                                   reject_if: lambda { |a|
+                                                     a[:email_addresses].blank? &&
+                                                       a[:ftp_server].blank? &&
+                                                       a[:_destroy].blank?
+                                                   }
+
+  scope :for_user, ->(u) { where(user: u) }
   attr_reader :preview_run
 
   # Stupid hack because rails protects the type attribute by default (not 100% sure why - default polymorhpism column name?)...
@@ -67,7 +67,7 @@ class CustomReport < ActiveRecord::Base
   def column_fields_available user
     # expects subclass to implement static version of this method
     fields = self.class.column_fields_available user
-    fields.select {|mf| mf.can_view?(user)  && mf.user_accessible?}
+    fields.select {|mf| mf.can_view?(user) && mf.user_accessible?}
   end
 
   def criterion_fields_available user
@@ -75,7 +75,7 @@ class CustomReport < ActiveRecord::Base
     fields.select {|mf| mf.can_view?(user) && mf.user_accessible?}
   end
 
-  def xlsx_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)), ".xlsx"] )
+  def xlsx_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)), ".xlsx"])
     @listener = XlsxListener.new self.no_time?
     run run_by, max_results(run_by, row_limit)
     workbook = @listener.build_xlsx
@@ -83,7 +83,7 @@ class CustomReport < ActiveRecord::Base
     [file, @listener.blank_file?]
   end
 
-  def xls_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)), ".xls"] )
+  def xls_file run_by, row_limit: nil, file: Tempfile.new([(self.name.blank? ? "report" : clean_filename(self.name)), ".xls"])
     @listener = XlsListener.new self.no_time?
     run run_by, max_results(run_by, row_limit)
     @listener.workbook.write file.path
@@ -91,7 +91,7 @@ class CustomReport < ActiveRecord::Base
   end
 
   # runs the resport in xls format.  This method gives duck type compatibility with the reports in open_chain/reports so ReportResult.execute_report can call htem
-  def run_report run_by, *p
+  def run_report run_by, *_p
     xlsx_file run_by
   end
 
@@ -107,7 +107,7 @@ class CustomReport < ActiveRecord::Base
   end
 
   def clean_filename str
-    str.gsub(/[\/~#&\*\%{\}\\:<>\?\+\|"']/, '_')
+    str.gsub(/[\/~#&\*\%{\}\\:<>\?\+\|"']/, '_') # rubocop:disable Style/RegexpLiteral
   end
 
   def to_arrays run_by, row_limit: nil, preview_run: false
@@ -130,7 +130,7 @@ class CustomReport < ActiveRecord::Base
     end
   end
 
-  def write_hyperlink row, column, url, alt_text=nil
+  def write_hyperlink row, column, url, alt_text = nil
     @listener.write_hyperlink row, column, url, alt_text
   end
 
@@ -144,13 +144,14 @@ class CustomReport < ActiveRecord::Base
   end
 
   protected
+
     def validate_access run_by
       raise "User #{run_by.username} does not have permission to view this report." unless self.class.can_view?(run_by)
       true
     end
 
     def setup_report_query active_record_class, run_by, row_limit, opt = {}
-      opt = {:distinct => true}.merge opt
+      opt = {distinct: true}.merge opt
       query = active_record_class.all
       query = active_record_class.select("DISTINCT `#{active_record_class.table_name}`.*") if opt[:distinct]
 
@@ -213,6 +214,7 @@ class CustomReport < ActiveRecord::Base
     end
 
   private
+
   def model_field v
     return v if v.is_a?(ModelField)
     return v.model_field if v.respond_to?(:model_field)
@@ -287,13 +289,13 @@ class CustomReport < ActiveRecord::Base
       def to_xlsx
         return [] if cells.blank?
         cells.map {|cell| cell.nil? ? Cell.new : cell}
-            .map(&:to_xlsx)
+             .map(&:to_xlsx)
       end
 
       def insert_link_cell_value column, url, alt_text
         cell = get_cell_by_column(column)
 
-        content = url.blank? ? "" : (alt_text.blank? ? url : alt_text)
+        content = url.blank? ? "" : (alt_text.presence || url)
         content = content.to_s.to_f if content.is_a?(BigDecimal)
 
         cell.url = url
@@ -309,11 +311,7 @@ class CustomReport < ActiveRecord::Base
       end
 
       def get_cell_by_column column
-        cell = if @cells[column].blank?
-                 create_cell column
-               else
-                 @cells[column]
-               end
+        cell = @cells[column].presence || create_cell(column)
         cell
       end
 
@@ -414,22 +412,26 @@ class CustomReport < ActiveRecord::Base
       self.data[row] ||= {}
       self.data[row][column] = content
     end
-    def write_hyperlink row, column, url, alt_text
+
+    def write_hyperlink row, column, url, _alt_text
       write row, column, url
     end
+
     def heading_row row
       # do nothing
     end
+
     def add_tab tab_name
       # do nothing
     end
+
     def arrays
       r_val = []
       return r_val if data.empty?
-      (0..data.keys.sort.last).each do |row_num|
+      (0..data.keys.max).each do |row_num|
         row = []
         if self.data[row_num]
-          (0..self.data[row_num].keys.sort.last).each do |col_num|
+          (0..self.data[row_num].keys.max).each do |col_num|
             v = self.data[row_num][col_num]
             row << (v.nil? ? "" : v)
           end
@@ -462,7 +464,7 @@ class CustomReport < ActiveRecord::Base
     end
 
     def write_hyperlink row, column, url, alt_text
-      c = alt_text.blank? ? url : alt_text
+      c = alt_text.presence || url
       c = c.to_s.to_f if c.is_a?(BigDecimal)
       XlsMaker.insert_cell_value @sheet, row, column, Spreadsheet::Link.new(url, c), @xls_options
     end

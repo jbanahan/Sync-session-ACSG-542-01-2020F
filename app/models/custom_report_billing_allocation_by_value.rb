@@ -1,8 +1,6 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportBillingAllocationByValue < CustomReport
-  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
-
   def self.template_name
     "Invoice Allocation By Invoice Value"
   end
@@ -37,22 +35,21 @@ class CustomReportBillingAllocationByValue < CustomReport
       header << sc.model_field
     end
 
-    hard_code_fields = [:bi_invoice_number, :bi_invoice_date, :bi_invoice_total].collect {|x| ModelField.find_by_uid(x)}
+    hard_code_fields = [:bi_invoice_number, :bi_invoice_date, :bi_invoice_total].collect {|x| ModelField.by_uid(x)}
     hard_code_fields.each do |mf|
-      header << ((mf.uid == :bi_invoice_total) ? "#{mf.label} (not prorated)": mf)
+      header << ((mf.uid == :bi_invoice_total) ? "#{mf.label} (not prorated)" : mf)
     end
     header << "Broker Invoice - Prorated Line Total"
-    charge_start_column = (header.length - 1)
 
     col_cursor = -1
     row_cursor = 1
 
     bill_columns = []
     invoices = BrokerInvoice.select("distinct broker_invoices.*")
-                .includes(:entry=>[:commercial_invoice_lines])
-                .joins(:entry)
-                .order("entries.entry_number, entries.broker_reference, broker_invoices.invoice_date")
-                .where("1=1")
+                            .includes(entry: [:commercial_invoice_lines])
+                            .joins(:entry)
+                            .order("entries.entry_number, entries.broker_reference, broker_invoices.invoice_date")
+                            .where("1=1")
     search_criterions.each {|sc| invoices = sc.apply(invoices)}
     invoices = BrokerInvoice.search_secure run_by, invoices
     invoices = invoices.limit(row_limit) if row_limit
@@ -64,23 +61,23 @@ class CustomReportBillingAllocationByValue < CustomReport
       end
       entry = bi.entry
       ci_lines = entry.commercial_invoice_lines
-      total_value = entry.commercial_invoice_lines.inject(BigDecimal.new(0, 5)) {|r, cil| cil.value.blank? ? r : r+BigDecimal.new(cil.value, 5)}
+      total_value = entry.commercial_invoice_lines.inject(BigDecimal(0, 5)) {|r, cil| cil.value.blank? ? r : r + BigDecimal(cil.value, 5)}
       use_hts_value = false
       if total_value == 0
         use_hts_value = true
-        total_value = entry.commercial_invoice_lines.inject(BigDecimal.new(0, 5)) do |r, cil|
+        total_value = entry.commercial_invoice_lines.inject(BigDecimal(0, 5)) do |r, cil|
           add = 0
           t = cil.commercial_invoice_tariffs.first
-          if !t.blank? && !t.entered_value.blank?
+          if t.present? && t.entered_value.present?
             add = t.entered_value
           end
-          r + BigDecimal.new(add, 5)
+          r + BigDecimal(add, 5)
         end
       end
       running_totals = {}
       line_count = ci_lines.size
       ci_lines.each_with_index do |line, i|
-        break if row_limit && row_cursor>row_limit
+        break if row_limit && row_cursor > row_limit
         line_value = line.value.presence || 0
         line_value = line.commercial_invoice_tariffs.first.nil? ? 0 : line.commercial_invoice_tariffs.first.entered_value if use_hts_value
         if self.include_links?
@@ -105,22 +102,22 @@ class CustomReportBillingAllocationByValue < CustomReport
           write row_cursor, (col_cursor += 1), (obj_to_proc ? mf.process_export(obj_to_proc, run_by) : "")
         end
         # Invoice number now reliably populates from both Alliance (w/ suffix) and Fenix
-        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_number).process_export(bi, run_by)
-        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_date).process_export(bi, run_by)
-        write row_cursor, (col_cursor += 1), ModelField.find_by_uid(:bi_invoice_total).process_export(bi, run_by)
+        write row_cursor, (col_cursor += 1), ModelField.by_uid(:bi_invoice_number).process_export(bi, run_by)
+        write row_cursor, (col_cursor += 1), ModelField.by_uid(:bi_invoice_date).process_export(bi, run_by)
+        write row_cursor, (col_cursor += 1), ModelField.by_uid(:bi_invoice_total).process_export(bi, run_by)
 
-        prorated_row_total = BigDecimal.new(0)
+        prorated_row_total = BigDecimal(0)
         bill_column_values = []
 
         bill_columns.each do |cd|
           content = ""
           if charge_totals[cd]
-            content = ( (charge_totals[cd]/total_value)*line_value ).round(2)
-            running_totals[cd] ||= BigDecimal.new(0, 2)
+            content = ((charge_totals[cd] / total_value) * line_value).round(2)
+            running_totals[cd] ||= BigDecimal(0, 2)
             running_totals[cd] = running_totals[cd] + content
-            if i== (line_count-1)
-              diff = charge_totals[cd]-running_totals[cd]
-              content = content + diff
+            if i == (line_count - 1)
+              diff = charge_totals[cd] - running_totals[cd]
+              content += diff
             end
             prorated_row_total += content
           else
@@ -145,7 +142,9 @@ class CustomReportBillingAllocationByValue < CustomReport
 
     write_headers 0, header, run_by
   end
+
   private
+
   def allocate_broker_invoice_line line, charge_totals, bill_columns
     return if line.charge_type == "D"
     @importer_category_cache ||= {}
@@ -168,8 +167,8 @@ class CustomReportBillingAllocationByValue < CustomReport
     end
     bill_columns << cd unless bill_columns.include?(cd)
     val = charge_totals[cd]
-    val = BigDecimal("0.00") unless val
-    val = val + line.charge_amount
+    val ||= BigDecimal("0.00")
+    val += line.charge_amount
     charge_totals[cd] = val
   end
 end

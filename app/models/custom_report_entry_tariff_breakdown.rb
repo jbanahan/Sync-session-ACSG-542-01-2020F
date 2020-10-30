@@ -5,8 +5,6 @@ require 'open_chain/report/report_helper'
 class CustomReportEntryTariffBreakdown < CustomReport
   include OpenChain::Report::ReportHelper
 
-  attr_accessible :include_links, :name, :no_time, :type, :user_id
-
   def self.template_name
     "Entry Tariff Breakdown"
   end
@@ -34,6 +32,7 @@ class CustomReportEntryTariffBreakdown < CustomReport
   end
 
   private
+
     def execute_report run_by, row_limit = nil
       entries = Entry.search_secure run_by, Entry.group("entries.id")
       self.search_criterions.each {|sc| entries = sc.apply(entries)}
@@ -84,9 +83,9 @@ class CustomReportEntryTariffBreakdown < CustomReport
           end
         end
 
-        return if row_limit && row_cursor >= row_limit
+        return if row_limit && row_cursor >= row_limit # rubocop:disable Lint/NonLocalExitFromIterator
       end
-      write_no_data (row_cursor +=1) if row_cursor == 0
+      write_no_data(row_cursor += 1) if row_cursor == 0
       nil
     end
 
@@ -94,19 +93,19 @@ class CustomReportEntryTariffBreakdown < CustomReport
       # We're going to employ a query to determine the max number of standard HTS codes that are utilized over the
       # full range of entries that are on the report, this should be much faster and less memory intensive than
       # loading all the entries into memory that will appear on the report and parsing through them to count the tariffs utilized
-      query = <<-QRY
-SELECT e.id, i.id, l.id, count(t.id)
-FROM entries e
-INNER JOIN commercial_invoices i ON e.id = i.entry_id
-INNER JOIN commercial_invoice_lines l ON l.commercial_invoice_id = i.id
-INNER JOIN commercial_invoice_tariffs t ON t.commercial_invoice_line_id = l.id
-WHERE e.id IN (?)
-AND t.hts_code NOT LIKE '9902%' AND t.hts_code NOT LIKE '9903%'
-GROUP BY e.id, i.id, l.id
-HAVING count(t.id) > 1
-ORDER BY count(t.id) DESC
-LIMIT 1
-QRY
+      query = <<~QRY
+        SELECT e.id, i.id, l.id, count(t.id)
+        FROM entries e
+        INNER JOIN commercial_invoices i ON e.id = i.entry_id
+        INNER JOIN commercial_invoice_lines l ON l.commercial_invoice_id = i.id
+        INNER JOIN commercial_invoice_tariffs t ON t.commercial_invoice_line_id = l.id
+        WHERE e.id IN (?)
+        AND t.hts_code NOT LIKE '9902%' AND t.hts_code NOT LIKE '9903%'
+        GROUP BY e.id, i.id, l.id
+        HAVING count(t.id) > 1
+        ORDER BY count(t.id) DESC
+        LIMIT 1
+      QRY
       max_length = 0
       execute_query(ActiveRecord::Base.sanitize_sql_array([query, entry_ids])) do |results|
         max_length = results.first.try(:[], 3).to_i
@@ -128,7 +127,7 @@ QRY
 
     def build_headers hts_group_count
       headers = self.search_columns
-      for i in 1..hts_group_count
+      (1..hts_group_count).each do |i|
         # No need for HTS count prefix if there's only one group of HTS number fields involved in the report (e.g.
         # no invoice line had more than one standard tariff against it).
         prefix = hts_group_count > 1 ? "HTS #{i} " : ""
@@ -210,20 +209,20 @@ QRY
       return nil if hts.blank?
 
       @rates ||= Hash.new do |h, k|
-        tariff = OfficialTariff.where(country_id:country_us.id, hts_code:k).first
-        h[k] = OfficialTariff.numeric_rate_value(tariff.try(:common_rate), express_as_decimal:true)
+        tariff = OfficialTariff.find_by(country_id: country_us.id, hts_code: k)
+        h[k] = OfficialTariff.numeric_rate_value(tariff.try(:common_rate), express_as_decimal: true)
       end
 
       @rates[hts]
     end
 
     def country_us
-      @country_us ||= Country.where(iso_code:'US').first
+      @country_us ||= Country.find_by(iso_code: 'US')
       raise "US country record not found." unless @country_us
       @country_us
     end
 
     def non_nil_big_decimal bd
-      bd ? bd : BigDecimal(0)
+      bd || BigDecimal(0)
     end
 end

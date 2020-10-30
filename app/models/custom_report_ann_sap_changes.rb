@@ -8,8 +8,6 @@ class CustomReportAnnSapChanges < CustomReport
   include OpenChain::CustomHandler::AnnInc::AnnCustomDefinitionSupport
   include OpenChain::Report::ReportHelper
 
-  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
-
   def self.template_name
     'SAP Changes'
   end
@@ -30,7 +28,7 @@ class CustomReportAnnSapChanges < CustomReport
     user.company.master? && MasterSetup.get.custom_feature?('Ann SAP')
   end
 
-  def run run_by, row_limit=nil
+  def run run_by, row_limit = nil
     raise "User #{run_by.username} does not have permission to view this report." unless self.class.can_view?(run_by)
     left_columns_count = 0
     rpf = OpenChain::CustomHandler::AnnInc::AnnSapProductHandler::SAP_REVISED_PRODUCT_FIELDS
@@ -69,7 +67,6 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
         col_cursor += 1
       end
       row_cursor += 1
-      request_host = MasterSetup.get.request_host
       r.each do |row|
         col_cursor = 0
         if self.include_links?
@@ -86,21 +83,21 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
         end
 
         snapshot_id = row[search_columns.size + rpf.size]
-        snapshot = EntitySnapshot.where(id: snapshot_id).first if snapshot_id.to_i > 0
+        snapshot = EntitySnapshot.find_by(id: snapshot_id) if snapshot_id.to_i > 0
         if snapshot
           es_json = snapshot.snapshot_json
         end
 
-        es_hash = es_json.blank? ? {'entity'=>{'model_fields'=>{}}} : es_json
+        es_hash = es_json.presence || {'entity' => {'model_fields' => {}}}
         rpf.each_with_index do |d, i|
           mf = cdefs[d].model_field
-          new_col = left_columns_count+1+(i*2)
-          new_val_position = left_columns_count+i
+          new_col = left_columns_count + 1 + (i * 2)
+          new_val_position = left_columns_count + i
           write row_cursor, new_col, mf.process_query_result(row[new_val_position], run_by)
 
-          old_col = left_columns_count+(i*2)
+          old_col = left_columns_count + (i * 2)
           old_val = ""
-          old_val = es_hash['entity']['model_fields'][mf.uid.to_s] unless es_hash['entity']['model_fields'][mf.uid.to_s].blank?
+          old_val = es_hash['entity']['model_fields'][mf.uid.to_s] if es_hash['entity']['model_fields'][mf.uid.to_s].present?
           write row_cursor, old_col, old_val
         end
         row_cursor += 1
@@ -109,6 +106,7 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
   end
 
   private
+
   def make_select cdefs
     flds = []
     search_columns.each_with_index {|sc, idx| flds << "#{sc.model_field.qualified_field_name} AS \"#{idx}\""}
@@ -116,10 +114,13 @@ INNER JOIN custom_values sap on sap.customizable_id = products.id and sap.custom
       mf = cdefs[uid].model_field
       flds << "#{mf.qualified_field_name} AS \"CD#{cdefs[uid].id}\""
     end
+    # rubocop:disable Layout/LineLength
     flds << "(IF(appr.date_value is null,null,(SELECT id FROM entity_snapshots WHERE recordable_id = products.id AND recordable_type = 'Product' AND created_at <= appr.date_value ORDER BY created_at DESC LIMIT 1))) as 'ES'"
     flds << "products.id"
     "SELECT #{flds.join(", ")} "
+    # rubocop:enable Layout/LineLength
   end
+
   def make_where
     wheres = self.search_criterions.collect do |sc|
       v = sc.where_value

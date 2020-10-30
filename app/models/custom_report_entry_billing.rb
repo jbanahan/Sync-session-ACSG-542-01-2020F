@@ -1,8 +1,6 @@
 # -*- SkipSchemaAnnotations
 
 class CustomReportEntryBilling < CustomReport
-  attr_accessible :include_links, :include_rule_links, :name, :no_time, :type, :user_id
-
   # display name for report
   def self.template_name
     "Entry Billing"
@@ -18,7 +16,6 @@ class CustomReportEntryBilling < CustomReport
     CoreModule::BROKER_INVOICE.model_fields(user).values + CoreModule::BROKER_INVOICE_LINE.model_fields(user).values
   end
 
-
   # ModelFields available to be used as SearchCriterions
   def self.criterion_fields_available user
     column_fields_available user
@@ -30,7 +27,10 @@ class CustomReportEntryBilling < CustomReport
   end
 
   def run run_by, row_limit = nil
-    raise "User #{run_by.email} does not have permission to view invoices and cannot run the #{CustomReportEntryInvoiceBreakdown.template_name} report." unless run_by.view_broker_invoices?
+    unless run_by.view_broker_invoice?
+      raise "User #{run_by.email} does not have permission to view invoices and cannot run the #{CustomReportEntryInvoiceBreakdown.template_name} report."
+    end
+
     search_cols = self.search_columns.order("rank ASC")
     invoices = BrokerInvoice.select("DISTINCT broker_invoices.*")
     self.search_criterions.each {|sc| invoices = sc.apply invoices}
@@ -65,7 +65,7 @@ class CustomReportEntryBilling < CustomReport
             row << nil
           end
         end
-        write_data (row_cursor +=1), inv.entry, row
+        write_data (row_cursor += 1), inv.entry, row
       else
         lines.each do |line|
           row = []
@@ -77,13 +77,14 @@ class CustomReportEntryBilling < CustomReport
               row << mf.process_export(inv, run_by)
             end
           end
-          write_data (row_cursor +=1), inv.entry, row
+          write_data (row_cursor += 1), inv.entry, row
         end
       end
     end
   end
 
   private
+
     def write_data row_cursor, entry, row
       column = 0
       if entry

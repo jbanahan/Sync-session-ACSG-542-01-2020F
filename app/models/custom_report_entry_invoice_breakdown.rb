@@ -5,9 +5,6 @@ require 'custom_report_entry_invoice_breakdown_support'
 class CustomReportEntryInvoiceBreakdown < CustomReport
   include CustomReportEntryInvoiceBreakdownSupport
 
-  attr_accessible :include_links, :name, :no_time, :type, :user_id, :search_columns_attributes,
-    :search_criterions_attributes
-
   # display name for report
   def self.template_name
     "Entry Summary Billing Breakdown"
@@ -22,7 +19,6 @@ class CustomReportEntryInvoiceBreakdown < CustomReport
   def self.column_fields_available user
     CoreModule::BROKER_INVOICE.model_fields(user).values
   end
-
 
   # ModelFields available to be used as SearchCriterions
   def self.criterion_fields_available user
