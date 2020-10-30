@@ -1,8 +1,9 @@
 describe BusinessValidationRule do
   describe "recipients_and_mailing_lists" do
     let(:bvt) { Factory(:business_validation_template)}
-    let(:bvru) do  Factory(:business_validation_rule, type: 'ValidationRuleEntryInvoiceLineFieldFormat',
-                           business_validation_template: bvt)
+    let(:bvru) do
+      Factory(:business_validation_rule, type: 'ValidationRuleEntryInvoiceLineFieldFormat',
+                                         business_validation_template: bvt)
     end
 
     describe '#type_to_english' do
@@ -38,29 +39,31 @@ describe BusinessValidationRule do
   end
 
   describe "enabled?" do
-    it "should not return !enabled in subclasses_array" do
-      expect(described_class.subclasses_array.find {|a| a[1]=='PoloValidationRuleEntryInvoiceLineMatchesPoLine'}).to be_nil
+    it "does not return !enabled in subclasses_array" do
+      expect(described_class.subclasses_array.find {|a| a[1] == 'PoloValidationRuleEntryInvoiceLineMatchesPoLine'}).to be_nil
     end
-    it "should return when no enabled lambda in subclasses_array" do
-      a = described_class.subclasses_array
-      expect(a.find {|a| a[1]=='ValidationRuleManual'}).to_not be_nil
+
+    it "returns when no enabled lambda in subclasses_array" do
+      arr = described_class.subclasses_array
+      expect(arr.find {|a| a[1] == 'ValidationRuleManual'}).not_to be_nil
     end
   end
 
   describe "should_skip?" do
-    it "should base should_skip? on search_criterions" do
-      pass_ent = Entry.new(entry_number:'9')
-      fail_ent = Entry.new(entry_number:'7')
-      bvr = BusinessValidationRule.new
-      bvr.search_criterions.build(model_field_uid:'ent_entry_num', operator:'eq', value:'9')
+    it "bases should_skip? on search_criterions" do
+      pass_ent = Entry.new(entry_number: '9')
+      fail_ent = Entry.new(entry_number: '7')
+      bvr = described_class.new
+      bvr.search_criterions.build(model_field_uid: 'ent_entry_num', operator: 'eq', value: '9')
       expect(bvr.should_skip?(pass_ent)).to be_falsey
       expect(bvr.should_skip?(fail_ent)).to be_truthy
     end
-    it "should raise exception if search_criterion's model field CoreModule doesn't equal object's CoreModule" do
-      bvr = BusinessValidationRule.new
-      bvr.search_criterions.build(model_field_uid:'ent_entry_num', operator:'eq', value:'9')
+
+    it "raises exception if search_criterion's model field CoreModule doesn't equal object's CoreModule" do
+      bvr = described_class.new
+      bvr.search_criterions.build(model_field_uid: 'ent_entry_num', operator: 'eq', value: '9')
       ci = CommercialInvoiceLine.new
-      expect {bvr.should_skip? ci}.to raise_error /Invalid object expected Entry got CommercialInvoiceLine/
+      expect {bvr.should_skip? ci}.to raise_error(/Invalid object expected Entry got CommercialInvoiceLine/)
     end
   end
 
@@ -88,19 +91,19 @@ describe BusinessValidationRule do
     [true, "1", "true"].each do |v|
       it "returns true of attribute flag value is set with boolean true value #{v}" do
         subject.rule_attributes_json = {value: v}.to_json
-        expect(subject.has_flag? "value").to eq true
+        expect(subject.flag?("value")).to eq true
       end
     end
 
     [false, "0", "false", nil].each do |v|
       it "returns false of attribute flag value is set with boolean false value #{v}" do
         subject.rule_attributes_json = {value: v}.to_json
-        expect(subject.has_flag? "value").to eq false
+        expect(subject.flag?("value")).to eq false
       end
     end
 
     it "returns false if flag is not set" do
-      expect(subject.has_flag? "value").to eq false
+      expect(subject.flag?("value")).to eq false
     end
 
   end
@@ -108,15 +111,16 @@ describe BusinessValidationRule do
   describe "active?" do
     let(:bvt) { Factory(:business_validation_template)}
     let(:bvru) { Factory(:business_validation_rule, business_validation_template: bvt, disabled: false, delete_pending: false)}
+
     before { allow(bvt).to receive(:active?).and_return true }
 
     it "returns false if disabled" do
-      bvru.update_attributes! disabled: true
+      bvru.update! disabled: true
       expect(bvru.active?).to eq false
     end
 
     it "returns false if delete_pending" do
-      bvru.update_attributes! delete_pending: true
+      bvru.update! delete_pending: true
       expect(bvru.active?).to eq false
     end
 
@@ -148,44 +152,44 @@ describe BusinessValidationRule do
 
     it "hashifies attributes including search criterions but skipping other external associations" do
 
-      attributes = {"business_validation_rule"=>
-                     {"bcc_notification_recipients"=>nil,
-                      "cc_notification_recipients"=>nil,
-                      "description"=>"descr",
-                      "fail_state"=>"Fail",
-                      "message_pass"=>"mess pass",
-                      "message_review_fail"=>"mess rev/fail",
-                      "message_skipped"=>"mess skip",
-                      "name"=>"rule name",
-                      "notification_recipients"=>"tufnel@stonehenge.biz",
-                      "notification_type"=>"email",
-                      "rule_attributes_json"=>"JSON",
-                      "subject_pass"=>"sub pass",
-                      "subject_review_fail"=>"sub review/fail",
-                      "subject_skipped"=>"sub skip",
-                      "suppress_pass_notice"=>true,
-                      "suppress_review_fail_notice"=>true,
-                      "suppress_skipped_notice"=>true,
-                      "type"=>"ValidationRuleFieldFormat",
-                      "search_criterions"=>
-                       [{"search_criterion"=>
-                          {"include_empty"=>nil,
-                           "model_field_uid"=>"ent_cust_num",
-                           "operator"=>"eq",
-                           "secondary_model_field_uid"=>nil,
-                           "value"=>"lumber"}}]}}
+      attributes = {"business_validation_rule" =>
+                     {"bcc_notification_recipients" => nil,
+                      "cc_notification_recipients" => nil,
+                      "description" => "descr",
+                      "fail_state" => "Fail",
+                      "message_pass" => "mess pass",
+                      "message_review_fail" => "mess rev/fail",
+                      "message_skipped" => "mess skip",
+                      "name" => "rule name",
+                      "notification_recipients" => "tufnel@stonehenge.biz",
+                      "notification_type" => "email",
+                      "rule_attributes_json" => "JSON",
+                      "subject_pass" => "sub pass",
+                      "subject_review_fail" => "sub review/fail",
+                      "subject_skipped" => "sub skip",
+                      "suppress_pass_notice" => true,
+                      "suppress_review_fail_notice" => true,
+                      "suppress_skipped_notice" => true,
+                      "type" => "ValidationRuleFieldFormat",
+                      "search_criterions" =>
+                       [{"search_criterion" =>
+                          {"include_empty" => nil,
+                           "model_field_uid" => "ent_cust_num",
+                           "operator" => "eq",
+                           "secondary_model_field_uid" => nil,
+                           "value" => "lumber"}}]}}
 
       expect(rule.copy_attributes).to eq attributes
     end
 
     it "handles rules with extended classnames" do
-      r = BusinessValidationRule.new type: "OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet"
+      r = described_class.new type: "OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet"
 
       expect(r.copy_attributes["business_validation_rule"]["type"]).to eq "OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet"
     end
 
     it "includes other external associations if specified" do
-      attributes = rule.copy_attributes(include_external:true)["business_validation_rule"]
+      attributes = rule.copy_attributes(include_external: true)["business_validation_rule"]
       expect(attributes["mailing_list_id"]).to eq mailing_list.id
       expect(attributes["group_id"]).to eq group.id
     end
@@ -193,12 +197,12 @@ describe BusinessValidationRule do
 
   describe "parse_copy_attributes" do
     it "instantiates rule from attributes hash, including criterions" do
-      attributes = {"business_validation_rule"=>
-                     {"description"=>"descr",
-                      "type"=>"ValidationRuleFieldFormat",
-                      "search_criterions"=>
-                       [{"search_criterion"=>
-                          {"model_field_uid"=>"ent_cust_num"}}]}}
+      attributes = {"business_validation_rule" =>
+                     {"description" => "descr",
+                      "type" => "ValidationRuleFieldFormat",
+                      "search_criterions" =>
+                       [{"search_criterion" =>
+                          {"model_field_uid" => "ent_cust_num"}}]}}
 
       rule = described_class.parse_copy_attributes attributes
       expect(rule.type).to eq "ValidationRuleFieldFormat"

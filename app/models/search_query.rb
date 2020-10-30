@@ -12,7 +12,7 @@ class SearchQuery
   #
   # valid values for opts = {:extra_where=>'a where clause that will be appended to all queries as an AND'}
   #
-  def initialize search_setup, user, opts={}
+  def initialize search_setup, user, opts = {}
     @search_setup = search_setup
     @user = user
     @extra_from = opts[:extra_from]
@@ -28,7 +28,7 @@ class SearchQuery
   # See to_sql for full list of options
   #
   # By default, the search query will be run against a read replica...To force the query to utilize the primary, pass a use_replicate option value of false.
-  def execute opts={}
+  def execute opts = {}
     opts = {use_replica: true}.merge opts
 
     rs = execute_query(to_sql(opts), use_replica: opts[:use_replica])
@@ -37,7 +37,11 @@ class SearchQuery
     # This gives us the number of table.id columns prefixed onto the query that will need to get dropped
     core_module_id_aliases = ordered_core_modules(opts)
 
-    raise SearchExceedsMaxResultsError, "Your query returned #{@search_setup.max_results(@user)}+ results.  Please adjust your parameter settings to reduce the amount of results." if opts[:raise_max_results_error] && rs.size >= @search_setup.max_results(@user)
+    # rubocop:disable Layout/LineLength
+    if opts[:raise_max_results_error] && rs.size >= @search_setup.max_results(@user)
+      raise SearchExceedsMaxResultsError, "Your query returned #{@search_setup.max_results(@user)}+ results.  Please adjust your parameter settings to reduce the amount of results."
+    end
+    # rubocop:enable Layout/LineLength
 
     rs.each do |row|
       # We want to remove these from the selected row since they're not actual query data
@@ -51,7 +55,7 @@ class SearchQuery
 
       result = result.collect {|column| column.nil? ? "" : column}
 
-      h = {:row_key=>core_primary_key, :result=>result}
+      h = {row_key: core_primary_key, result: result}
       if block_given?
         yield h
       else
@@ -62,17 +66,17 @@ class SearchQuery
   end
 
   # get distinct list of primary keys for the query
-  def result_keys opts={}
+  def result_keys opts = {}
     # Using a hash to preserve insertion order (Set doesn't guarantee that while hash does)
     keys = {}
-    execute(opts.merge(select_core_module_keys_only:true)) {|result| keys[result[:row_key]] = true}
+    execute(opts.merge(select_core_module_keys_only: true)) {|result| keys[result[:row_key]] = true}
     keys.keys
   end
 
   # get the row count for the query
   def count use_replica: true
     # Limit count to only including the core module keys will eliminate running any subselects in the select clauses
-    query = "#{to_sql(select_core_module_keys_only:true, disable_pagination: true)} LIMIT 1000"
+    query = "#{to_sql(select_core_module_keys_only: true, disable_pagination: true)} LIMIT 1000"
     execute_query(query, use_replica: use_replica).count
   end
 
@@ -81,8 +85,8 @@ class SearchQuery
   # For example: If there are 7 entries returned with 3 commercial invoices each, this record will return 7
   # If you're looking for a return value of `21` you should use the `count` method
   def unique_parent_count use_replica: true
-    r = "SELECT COUNT(DISTINCT #{ordered_core_modules(select_parent_key_only:true)[0].table_name}.id) " +
-      build_from(disable_join_optimization: true) + build_where
+    r = "SELECT COUNT(DISTINCT #{ordered_core_modules(select_parent_key_only: true)[0].table_name}.id) " +
+        build_from(disable_join_optimization: true) + build_where
     execute_query(r, use_replica: use_replica).first.first
   end
 
@@ -92,7 +96,7 @@ class SearchQuery
   # use the 'select_parent_key_only' opt to create a query only returning the parent core object keys (ala unique_parent_count)
   # use the 'select_core_module_keys_only' to create a query returning the parent and child core module keys,
   # when utilized the parent core module key is ALWAYS returned in the first column
-  def to_sql opts={}
+  def to_sql opts = {}
     # By default, only allow the maximum number of results the search setup affords
     # This can be overridden by passing a true value for disable_pagination op
     opts = {per_page: @search_setup.max_results(@user)}.merge opts
@@ -100,6 +104,7 @@ class SearchQuery
   end
 
   private
+
   def execute_query query, use_replica: true
     if use_replica
       distribute_reads { return ActiveRecord::Base.connection.execute query }
@@ -156,16 +161,16 @@ class SearchQuery
     # build a list of all core modules used in the query
     core_modules = Set.new
     @search_setup.search_columns.each {|sc| core_modules << sc.model_field.core_module}
-    @search_setup.search_criterions.each {|sc|
+    @search_setup.search_criterions.each do |sc|
       core_modules << sc.model_field.core_module
       # Some search criterions can contain references to mutiple model fields, which may
       # be at different levels.  Make sure we're adding the core modules for these
       # secondary fields.
-      mf_two = sc.secondary_model_field
+      mf_two = sc.field_relative_model_field
       if mf_two
         core_modules << mf_two.core_module
       end
-    }
+    end
     @search_setup.sort_criterions.each {|sc| core_modules << sc.model_field.core_module}
 
     # The possibility exists for a core module to be nil on a sort or a search column / criterion
@@ -176,7 +181,7 @@ class SearchQuery
     join_statements = []
     include_remaining = false
     module_chain = dmc.to_a
-    while !module_chain.empty?
+    until module_chain.empty?
       cm = module_chain.pop
       next if cm == top_module
       include_remaining = true if core_modules.include? cm
@@ -185,7 +190,7 @@ class SearchQuery
     unless join_statements.empty?
       r << join_statements.reverse.join("  ")
     end
-    r << " #{@extra_from} " unless @extra_from.blank?
+    r << " #{@extra_from} " if @extra_from.present?
 
     unless opts[:disable_join_optimization] || opts[:select_core_module_keys_only]
       r << from_inner_optimization(opts)
@@ -216,11 +221,11 @@ class SearchQuery
     klass = @search_setup.core_module.klass
 
     wheres << klass.search_where(@user) if klass.respond_to?(:search_where)
-    wheres << @extra_where unless @extra_where.blank?
+    wheres << @extra_where if @extra_where.present?
     if wheres.empty?
-      return ""
+      ""
     else
-      return " WHERE (#{wheres.join(") AND (")}) "
+      " WHERE (#{wheres.join(") AND (")}) "
     end
   end
 
@@ -228,11 +233,11 @@ class SearchQuery
     r = " ORDER BY "
     sorts = @search_setup.sort_criterions
     # using this sort instead of .order so we don't make a db call when working with an unsaved SearchSetup
-    sorts.sort {|a, b|
+    sorts.sort do |a, b|
       x = a.rank <=> b.rank
-      x = a.model_field_uid <=> b.model_field_uid if x==0
+      x = a.model_field_uid <=> b.model_field_uid if x == 0
       x
-    }
+    end
     # need to put the sorts in the right order from top of the module chain to the bottom
     # and also inject id sorts on any parent levels that don't already have a sort
     sort_clause_hash = {}
@@ -245,7 +250,7 @@ class SearchQuery
     end
     sort_clauses = []
     need_parent_sorts = false
-    while !module_chain_array.empty?
+    until module_chain_array.empty?
       cm = module_chain_array.pop
       a = sort_clause_hash[cm]
       need_parent_sorts = true unless a.empty?
@@ -262,25 +267,26 @@ class SearchQuery
     target_page = (opts[:page].blank? || !opts[:page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? 1 : opts[:page].to_i
     per_page = (opts[:per_page].blank? || !opts[:per_page].to_s.strip.match(/^[1-9]([0-9]*)$/)) ? nil : opts[:per_page].to_i
     if per_page && !opts[:disable_pagination]
-      return build_pagination(per_page, target_page)
+      build_pagination(per_page, target_page)
     else
-      return ""
+      ""
     end
   end
+
   def build_pagination per_page, target_page
     paginate = ""
     paginate += " LIMIT #{per_page}" if per_page
-    paginate += " OFFSET #{per_page*(target_page-1)} " if target_page && per_page
+    paginate += " OFFSET #{per_page * (target_page - 1)} " if target_page && per_page
     paginate
   end
 
   def sorted_columns
     cols = @search_setup.search_columns.to_a
-    cols.sort! {|a, b|
+    cols.sort! do |a, b|
       x = a.rank <=> b.rank
-      x = a.model_field_uid <=> b.model_field_uid if x==0
+      x = a.model_field_uid <=> b.model_field_uid if x == 0
       x
-    }
+    end
   end
 
   def from_inner_optimization opts
@@ -299,7 +305,7 @@ class SearchQuery
     # that the downloads will NOT have this optimization applied.  We could possible further optimize those cases by
     # taking an iterative approach to the downloads and walking through those one "page" at a time as part of the
     # download process which would allow for applying this method to downloads as well.
-    unless pagination.blank?
+    if pagination.present?
       inner_opts = opts.merge select_core_module_keys_only: true, disable_join_optimization: true
       core_modules = ordered_core_modules inner_opts
 

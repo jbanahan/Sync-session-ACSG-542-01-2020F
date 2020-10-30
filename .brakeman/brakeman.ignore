@@ -328,25 +328,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "0e057cbd6381757c06e2e46904eaf28b276907beb49dd52fb62424f5937ef6e8",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":ship_from_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "0e0757135af88c82e50073a684054f1a55cb7b04a5e4d19e3a603b067c93ec50",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -605,6 +586,26 @@
       "note": ""
     },
     {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "1596bd5cc372e4c99dd46ba0279962d30e5e5309dabd45ee561fa425bba9f383",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/business_validation_templates_controller.rb",
+      "line": 138,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "SearchCriterion.new(criterion.permit!)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "BusinessValidationTemplatesController",
+        "method": "add_search_criterion_to_template"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
       "warning_type": "Redirect",
       "warning_code": 18,
       "fingerprint": "15a3c591bfed127e090adbfdc965e4896ac4f3b371b051d2cc2b417c6ef3aba3",
@@ -794,63 +795,6 @@
       },
       "user_input": "params",
       "confidence": "High",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "1bc5852640590004ddb50eb7980200ca61e208134e2ba50dd14c8f41abbed0aa",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":custom_view_template_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "1bc64ad4c7c019ebf675477eee53b24b4cde7504cf1d16d91d608b0b39f2c689",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":search_run_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "1bfdeef0694a8480441b3bf8f2ea9444e76cc723dd3e291e6d2154b9b5694a55",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":forwarder_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
       "note": ""
     },
     {
@@ -1126,25 +1070,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "23b6c36d679351adcad209abca132d02c705af9d8cf86da0901713c79831e408",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":consolidator_address_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "2444e5bfd040d81619e991d5ec0f9a5e714d74b4757e21738355fbdeed43b0c5",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -1195,6 +1120,26 @@
       "location": {
         "type": "model",
         "model": "Address"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "252c1506395744128bea33fdaf54978eaf7d220b8e67ea1aa4b3f4f3d99368ad",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/imported_files_controller.rb",
+      "line": 169,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "SearchCriterion.new(sc_hash)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ImportedFilesController",
+        "method": "download_items"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -1348,25 +1293,6 @@
       "location": {
         "type": "model",
         "model": "StitchQueueItem"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "2a7d1ca78194cf2bd139ee9a2d79fe282b5f6c58e16235a452c788f085bda740",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":milestone_notification_config_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -1564,25 +1490,6 @@
     },
     {
       "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "34315b5cd09f3a397bd5e6ba99499fe0f2e2d3621417230655e9e817b3c602fd",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":booking_revised_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
       "warning_code": 17,
       "fingerprint": "34bec570b6146b070a65ac9c5e4f4038cf1e8cf844cbe1d09124962be114928f",
       "check_name": "MassAssignment",
@@ -1639,25 +1546,6 @@
       "user_input": "params[:release_range]",
       "confidence": "Weak",
       "note": "False Positive"
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "351539713d1dd4e4d6fd7f708c1ea72d235f19d6b178acbbc6e60595e0f5b303",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":search_setup_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -1738,44 +1626,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "38b0c0f52d70e0405c60b12b764af1801d2957a29a864b4c970e653b874aad14",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":seller_address_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "38e9408650d48cf8b80a773418e00b29bfc664e36b7e0db2932fac3507810576",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":booking_first_port_receipt_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "39260630cbfa665417e78cdd47de5a72e2f40c2f403ba53e31eb7d8e9e818363",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -1812,25 +1662,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "3a80dcfae3800eb362ba80247f761474294ae658a30b662216f6389087631153",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":ship_to_address_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "3a926b5d7285d352bf6d6127ff641a9b1e9f36d1339ba1aed88145d51402074c",
@@ -1849,25 +1680,6 @@
       "user_input": "core_module.quicksearch_sort_by",
       "confidence": "Weak",
       "note": "Not SQL injection. All sql sanitized or doesn't come from user input."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "3d0510def8984fbdf66942ae68ab7d11d6c7f32a88f65f9089e053f72812e9a2",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":booking_requested_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -1921,25 +1733,6 @@
       "location": {
         "type": "model",
         "model": "BrokerInvoiceLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "40d3c28a4b5e6b0f1084ff23067a43e889708096cc8b77e300721d9866d62bd6",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":ship_to_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -2560,44 +2353,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "558f27d096c866184fc097b25e00842c1522d7b44fd80695570076e493c41bf0",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":vgm_sent_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "5599c76a33dc04e671da07836fdd70d66122c1326748f543534be480d83c9202",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":business_validation_schedule_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "55a9a47b6b5a29f6abf3e329744edc6a9f06de5c6a3f3ec73bb4f512cc3e4c12",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -2628,25 +2383,6 @@
       "location": {
         "type": "model",
         "model": "PieceSet"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "55eb2db7ca0880fc7b9b7eb7126c256be2284b5eeb3073bb7ad5babbbb96c59d",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":country_origin_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -2709,25 +2445,6 @@
       "user_input": "field_definition[:field]",
       "confidence": "Weak",
       "note": "SQL variable is not user accessible."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "56234ccb7ef9d56ac81c0dd2b140086280eaf87d54166969415d8341f3480dad",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":vendor_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -3022,7 +2739,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/search_setups_controller.rb",
-      "line": 61,
+      "line": 63,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(core_module_class(SearchSetup.for_user(current_user).find(params[:id]).deep_copy((params[:new_name] or \"Copy of #{SearchSetup.for_user(current_user).find(params[:id]).name}\"))))",
       "render_path": null,
@@ -3107,44 +2824,6 @@
       "location": {
         "type": "model",
         "model": "CustomValue"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "622e84422374063f1fb1fd360f74e1a12d03334ef0dd1899042a894b36581ee8",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":automated_billing_setup_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "6250e8fa7deccac64fcc189b8a144576e443bf34384b76453357a76bcc60cbe7",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":country_import_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -3284,25 +2963,6 @@
       "user_input": "custom_definition.data_column",
       "confidence": "Weak",
       "note": "Not SQL injection.  All sql sanitized."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "67649fd473969752d5b21ba08fde20fcf8bc44f9966a1b9dcd0aa506d22a070e",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":business_validation_rule_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -3496,25 +3156,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "6eb66c472c58ea1515c600e5c5902f1e0a9d1d6758fa7d579e7739c3f98e59d2",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":state_toggle_button_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "6f502422d634db375cbbcd68dc6bfe86237ae7ba3c7ad70f3e9a617dd0ec0624",
@@ -3624,25 +3265,6 @@
       "location": {
         "type": "model",
         "model": "SecurityFiling"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "74684be5600f793732cce938566e4c87efded8df39eda1a298671d86d33ec0a8",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":instant_classification_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -3795,6 +3417,26 @@
       "location": {
         "type": "model",
         "model": "PlantVariantAssignment"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "77d7ae255d8ee974772a7e7cc12dbe7aad0b9018965c4870e84475cee49630e2",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/models/business_validation_rule.rb",
+      "line": 190,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "BusinessValidationRule.new(rule_hsh[\"business_validation_rule\"].reject do\n [\"search_criterions\"].include?(k)\n end)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "BusinessValidationRule",
+        "method": "BusinessValidationRule.parse_copy_attributes"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -4068,25 +3710,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "7fab463b0ad68d899f348c6ebfc5774dc3c16dee6387222b5610036acbbce628",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":inland_destination_port_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "SQL Injection",
       "warning_code": 0,
       "fingerprint": "802edf2e6c69c4780b57faee53047dfc43d0c39b94bfe3367aab0284da31d0d2",
@@ -4109,25 +3732,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "80c3ce58b68350e54fba415126a0874872548fc33c630443b3d635111cbf915e",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":consignee_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "81b4cdb919c4bbea417bc4548d99aadb1c122e117bdb1dd0b3931813a0daab42",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4139,25 +3743,6 @@
       "location": {
         "type": "model",
         "model": "DailyStatement"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "825bf5247f0b93fdd9683ae58854d98ca73ca05b7007b9d90b671d23427632f3",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":entry_port_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -4724,25 +4309,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "94401982f3662a52a6550339e05478164877221784cea56eb8abe44a5255b974",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":carrier_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "95601e581d99d9936b85efeda31010fdccb797a778d1463e34e64ec360daf9d5",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4754,44 +4320,6 @@
       "location": {
         "type": "model",
         "model": "HtsTranslation"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "957cac606f7af28e38660ba8673a22265ef29257c293b384b1bb1eca7c4b9245",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":canceled_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "959431159ca62d5aaa7b10d92ddaa3d8f66f6d909e8ffa687c9bcbec852c469e",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/business_validation_rule.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":mailing_list_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "BusinessValidationRule"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -4856,6 +4384,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "96e57c9a9e90867f31b3ddc900f34fe7388eef99068ce525d9c93bb159f72719",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/business_validation_rules_controller.rb",
+      "line": 153,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "SearchCriterion.new(criterion.permit!)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "BusinessValidationRulesController",
+        "method": "add_search_criterion_to_rule"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "979e05ae3d48ea1a8d2e2ee72a65a8fea0cf0674b8ce55b9d0013fb4fba02c1d",
       "check_name": "ModelAttrAccessible",
@@ -4887,25 +4435,6 @@
       "location": {
         "type": "model",
         "model": "PlantProductGroupAssignment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "9840acd8aa4e43d74d3076899b7e7aa783a02af734cb3e4276b2ca2ab0cef804",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":status_rule_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -5010,25 +4539,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "9b46ad6f704862f2fd92a89834248f4c971a0f34ec15b9e3a4bbe517df8cfd60",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":custom_report_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "9bdf3dd99d44242213381067a201a0e0429cabf1ded9ac940277ad1b39f145ae",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -5040,25 +4550,6 @@
       "location": {
         "type": "model",
         "model": "SalesOrderLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "9c024d2ae367daa4dd96b648dae4b445592dc8b0e5f6a3e07ac8a32f2f318640",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":business_validation_template_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -5201,44 +4692,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "a2d048859f6d4f1c4cc42eacb6657ac4c7a90c2c3e40a4bafb62fc06ea13625a",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":warning_overridden_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "a33569ba648657a2f639af515dacb1efff2734b32b0ae13de0919905e976dac2",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/business_validation_rule.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":group_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "BusinessValidationRule"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "a3cce50f2ed9195a8aa2ffe892d434222b65119a37d66b1aa763e8457fc98baf",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -5349,25 +4802,6 @@
       },
       "user_input": "params[:alert]",
       "confidence": "High",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "a915026f81adb02a6566869d2ede1288c02a089e519f4bf70840d7f268fd6118",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":last_foreign_port_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
       "note": ""
     },
     {
@@ -5498,25 +4932,6 @@
       "location": {
         "type": "model",
         "model": "SupportTicket"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "ae374126ee2187d9979be80ac535e3879ca127355af12a786a4e0c8c43d1eeca",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":imported_file_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -5698,25 +5113,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "b2edb2350f4dedbc8bc41d2fafda32f3a559ff4e40ff580106cf4fd0fdef8596",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":destination_port_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "b35b1be8504d4688e148f55247da17a7ac7a4040e36bf3cec1807abb258af31e",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -5804,25 +5200,6 @@
       "location": {
         "type": "model",
         "model": "CommercialInvoiceLine"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "b56ec936c4735fd0333f0bc456644a08a94c79d828a1963c1e80b2d9f6b88705",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":first_port_receipt_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -6109,21 +5486,22 @@
     },
     {
       "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "bfa1eabb14bc7f99a285e9ba3c91eea54682f289897f3138949c727a66e3cdb4",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
+      "warning_code": 70,
+      "fingerprint": "be014b945d8e76c3f362a7801fe26c8e98c1b4677252f52127cf3edc31e614f7",
+      "check_name": "MassAssignment",
+      "message": "Specify exact keys allowed for mass assignment instead of using `permit!` which allows any keys",
+      "file": "app/controllers/search_setups_controller.rb",
+      "line": 23,
       "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":booking_confirmed_by_id",
+      "code": "params[:search_setup].permit!",
       "render_path": null,
       "location": {
-        "type": "model",
-        "model": "Shipment"
+        "type": "method",
+        "class": "SearchSetupsController",
+        "method": "update"
       },
       "user_input": null,
-      "confidence": "Weak",
+      "confidence": "Medium",
       "note": ""
     },
     {
@@ -6186,44 +5564,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "c14f1520fcdf3996638869ec2150108bd1b806bafa0e2303be800f0ecc575c8c",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":buyer_address_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "c1503bcd59b1f689b2f070356d8071daacba5d4f99afca71872263897eec1abc",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":custom_definition_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "c2254755eebcd26d7b68f78166cadec5a6cf36498ddd9768028ffb1705836c24",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -6238,6 +5578,26 @@
       },
       "user_input": null,
       "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "c2326e64463188e3d4d9bcbec913adb192be06ee91d49e06e37a8d80eaa2e123",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/business_validation_rules_controller.rb",
+      "line": 11,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "BusinessValidationRule.new(permitted_params_new(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "BusinessValidationRulesController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
       "note": ""
     },
     {
@@ -6407,25 +5767,6 @@
       "location": {
         "type": "model",
         "model": "DailyStatement"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "c608ca771ba363dabf99874c0f8b6a824a8933c57359e9b42a4d3f840325d138",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/search_criterion.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":one_time_alert_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "SearchCriterion"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -6715,25 +6056,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "d38c39270f9049ce79c3ab6aee5fba02117b10222b84c3209912f1f3072c35b7",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":country_export_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "Redirect",
       "warning_code": 18,
       "fingerprint": "d3a12e72c857c0845de605133d8c19d6df9f2442a6241c3e2ed7292542bf3d03",
@@ -6752,44 +6074,6 @@
       "user_input": "Company.find(params[:company_id]).attachment_archive_manifests.find(params[:id]).attachment.secure_url",
       "confidence": "High",
       "note": "Not unprotected.  secure_url used to generate s3 redirect."
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "d3d6842a27757ca272cf82471cc916d758334f721557c5a600bbcd4d258c3a9c",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":booking_approved_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "d46377d38c70b2d0daed8290a2bf74377cd054a0e3111dafa421e302327acf2f",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":lading_port_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
     },
     {
       "warning_type": "Mass Assignment",
@@ -6870,18 +6154,19 @@
     },
     {
       "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "da211e50641b55001b79a4231aaa2a8eeb8b2aeac9a47d9b48f42c1e395f7f6e",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
+      "warning_code": 17,
+      "fingerprint": "da48d6538a03c7f4b34436316e4f7eebc718422092be26186b0197e3643b6e34",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/models/business_validation_rule.rb",
+      "line": 192,
       "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":shipment_instructions_sent_by_id",
+      "code": "SearchCriterion.new(sc_hsh[\"search_criterion\"])",
       "render_path": null,
       "location": {
-        "type": "model",
-        "model": "Shipment"
+        "type": "method",
+        "class": "BusinessValidationRule",
+        "method": "BusinessValidationRule.parse_copy_attributes"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -6901,6 +6186,26 @@
       "location": {
         "type": "model",
         "model": "DrawbackImportLine"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "db79102f71b1f9b02ee21fed63cb9032223d598dacfd28754ad846213c7bcfc9",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/models/business_validation_template.rb",
+      "line": 48,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "SearchCriterion.new(sc_hsh[\"search_criterion\"])",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "BusinessValidationTemplate",
+        "method": "BusinessValidationTemplate.parse_copy_attributes"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -6958,25 +6263,6 @@
       "location": {
         "type": "model",
         "model": "UserPasswordHistory"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "df114f35b16e12ce42a8ec34ac4dac9fc1d0e8bb4869c6d4e1dd0db1c6c52cd5",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":isf_sent_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -7156,25 +6442,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "e20ab20e80d9f449545dbcfe054930ece24253649d5c87f5e1354a8940eefc52",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":importer_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "e340bd03913ffc3d72c0c80b638745bfcbe914037ac925278a5664774e0b2be6",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -7331,25 +6598,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "e8533db25a5bc65af7d7b29cb903493238254227f239dd03066f8832903b66da",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":unlading_port_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "e93300975a967c830e7b75986df20921c56d9757b72f62986a173b1489777d9e",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -7442,63 +6690,6 @@
       },
       "user_input": "MasterSetup.instance_directory.join(\"..\", \"vfitrack-configurations\").join(MasterSetup.instance_directory.basename.to_s).to_s",
       "confidence": "Medium",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "edc8521825b2e8029ff727a31c463269aff64b3bec9e78a5732c8ea9a8c1b00e",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":container_stuffing_address_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "ee9e86abf07d98a1076d88a9f2682f68b2336775a30c989361d4986bb11e87a6",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":packing_list_sent_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "ef8f832f81843d5b40fa99f6e2bec867415de40d9074ad8267654a3caa62d2a1",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":final_dest_port_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
       "note": ""
     },
     {
@@ -8050,25 +7241,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "fd1f888cb98335b0bef0f3d7e1b066870bf13698602f4d7e6a51a7d50d37ec6f",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/shipment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":cancel_requested_by_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Shipment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "Redirect",
       "warning_code": 18,
       "fingerprint": "fd7a8c8d5d23748a5c67d0a83024d1090b61547ce7be5ec6197853980de7ac93",
@@ -8165,6 +7337,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-30 10:41:35 -0400",
+  "updated": "2020-10-30 12:51:45 -0400",
   "brakeman_version": "4.9.1"
 }

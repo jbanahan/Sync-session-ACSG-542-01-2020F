@@ -9,9 +9,9 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
 
   describe "new" do
     it "renders list of modules for admin, excluding any disabled ones" do
-      expect(CoreModule::ENTRY).to receive(:enabled_lambda).and_return(lambda { true })
-      expect(CoreModule::ORDER).to receive(:enabled_lambda).and_return(lambda { true })
-      expect(CoreModule::PRODUCT).to receive(:enabled_lambda).and_return(lambda { false })
+      expect(CoreModule::ENTRY).to receive(:enabled_lambda).and_return(-> { true })
+      expect(CoreModule::ORDER).to receive(:enabled_lambda).and_return(-> { true })
+      expect(CoreModule::PRODUCT).to receive(:enabled_lambda).and_return(-> { false })
       get :new
       expect(JSON.parse(response.body)).to eq({"cm_list" => ["Entry", "Order"]})
     end
@@ -19,7 +19,7 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
     it "prevents access by non-admins" do
       allow_api_access Factory(:user)
       get :new
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+      expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
   end
 
@@ -35,14 +35,13 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
     it "prevents access by non-admins" do
       allow_api_access Factory(:user)
       get :index
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+      expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
   end
 
   describe "edit" do
     it "renders schedule JSON for admin" do
       criterion_mfs = {criterion_mfs: []}
-      schedule = {schedule_mfs: []}
 
       schedule = Factory(:business_validation_schedule, module_type: "Entry")
       schedule.search_criterions << Factory(:search_criterion)
@@ -59,7 +58,7 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
     it "prevents access by non-admins" do
       allow_api_access Factory(:user)
       get :edit, id: 1
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+      expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
   end
 
@@ -73,32 +72,36 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
     end
 
     it "errors if fields missing" do
-      expect { post :create, schedule: {name: "", module_type: "Entry"} }.to_not change(BusinessValidationSchedule, :count)
+      expect { post :create, schedule: {name: "", module_type: "Entry"} }.not_to change(BusinessValidationSchedule, :count)
       expect(JSON.parse(response.body)["errors"]).to eq ["Name cannot be blank."]
 
-      expect { post :create, schedule: {name: "sched name", module_type: ""} }.to_not change(BusinessValidationSchedule, :count)
+      expect { post :create, schedule: {name: "sched name", module_type: ""} }.not_to change(BusinessValidationSchedule, :count)
       expect(JSON.parse(response.body)["errors"]).to eq ["Module Type cannot be blank."]
     end
 
     it "prevents access by non-admins" do
       allow_api_access Factory(:user)
-      expect {post :create, schedule: {name: "sched name", module_type: "Entry"} }.to_not change(BusinessValidationSchedule, :count)
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+      expect {post :create, schedule: {name: "sched name", module_type: "Entry"} }.not_to change(BusinessValidationSchedule, :count)
+      expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
   end
 
   describe "update" do
     let!(:schedule) do
       sch = Factory(:business_validation_schedule)
-      sch.update_attributes(module_type: "original module_type", model_field_uid: "original mf uid", name: "original name", operator: "original operator", num_days: 1)
-      sch.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator"=>"eq", "value"=>"w", "include_empty"=>true)
+      sch.update(module_type: "original module_type", model_field_uid: "original mf uid", name: "original name", operator: "original operator", num_days: 1)
+      sch.search_criterions << Factory(:search_criterion, model_field_uid: "ent_brok_ref", "operator" => "eq", "value" => "w", "include_empty" => true)
       sch
     end
 
-    let!(:schedule_new_criteria) { [{"mfid"=>"prod_uid", "label"=>"Unique Identifier", "operator"=>"eq", "value"=>"x", "datatype"=>"string", "include_empty"=>false}] }
+    let!(:schedule_new_criteria) do
+      [{"mfid" => "prod_uid", "label" => "Unique Identifier", "operator" => "eq", "value" => "x", "datatype" => "string", "include_empty" => false}]
+    end
 
     it "replaces basic fields and search criterions for a sys-admin, leaves module_type unchanged" do
-      put :update, id: schedule.id, schedule: {module_type: "new module_type", model_field_uid: "new mf uid", name: "new name", operator: "new operator", num_days: 10}, criteria: schedule_new_criteria
+      put :update, id: schedule.id, schedule: {module_type: "new module_type", model_field_uid: "new mf uid",
+                                               name: "new name", operator: "new operator", num_days: 10},
+                   criteria: schedule_new_criteria
       schedule.reload
       criteria = schedule.search_criterions
       new_criterion = (criteria.first.json user).to_json
@@ -109,7 +112,7 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
       expect(schedule.operator).to eq "new operator"
       expect(schedule.num_days).to eq 10
       expect(criteria.count).to eq 1
-      expect(new_criterion).to eq (schedule_new_criteria.first).to_json
+      expect(new_criterion).to eq schedule_new_criteria.first.to_json
       expect(JSON.parse(response.body)["ok"]).to eq "ok"
     end
 
@@ -152,7 +155,7 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
       expect(schedule.num_days).to eq 1
       expect(criteria.count).to eq 1
       expect(criteria.first.model_field_uid).to eq "ent_brok_ref"
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+      expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
   end
 
@@ -166,8 +169,8 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
 
     it "prevents access by non-admins" do
       allow_api_access Factory(:user)
-      expect { delete :destroy, id: schedule.id }.to_not change(BusinessValidationSchedule, :count)
-      expect(JSON.parse(response.body)).to eq({"errors"=>["Access denied."]})
+      expect { delete :destroy, id: schedule.id }.not_to change(BusinessValidationSchedule, :count)
+      expect(JSON.parse(response.body)).to eq({"errors" => ["Access denied."]})
     end
   end
 
@@ -175,15 +178,15 @@ describe Api::V1::Admin::BusinessValidationSchedulesController do
     it "takes the model fields associated with a schedule's module returns only the mfid, label, and datatype fields" do
       schedule = Factory(:business_validation_schedule, module_type: "Product")
       mfs = described_class.new.criterion_mf_hsh CoreModule::PRODUCT, schedule
-      expect(mfs.find {|mf| mf[:mfid] == :prod_uid}).to eq({:mfid => :prod_uid, label: "Unique Identifier", :datatype => :string })
+      expect(mfs.find {|mf| mf[:mfid] == :prod_uid}).to eq({mfid: :prod_uid, label: "Unique Identifier", datatype: :string })
     end
   end
 
   describe "schedule_mf_hsh" do
     it "returns model-field id/label pairs for core module" do
-      mf1 = ModelField.find_by_uid "ent_entry_num"
-      mf2 = ModelField.find_by_uid "ent_filed_date"
-      mf3 = ModelField.find_by_uid "ent_duty_due_date"
+      mf1 = ModelField.by_uid "ent_entry_num"
+      mf2 = ModelField.by_uid "ent_filed_date"
+      mf3 = ModelField.by_uid "ent_duty_due_date"
       mfs = {mf1.uid => mf1, mf2.uid => mf2, mf3.uid => mf3}
       expect(CoreModule::ENTRY).to receive(:model_fields).with(user).and_return mfs
       expect(described_class.new.schedule_mf_hsh(CoreModule::ENTRY, user)).to eq([{'mfid' => 'ent_duty_due_date', 'label' => 'Duty Due Date'},

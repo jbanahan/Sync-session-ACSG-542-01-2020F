@@ -89,7 +89,7 @@ class GridMaker
       # This will be nil, unless we're using a criterion referencing multiple
       # model fields.  The other model field may be on a secondary level (ie different object), hence the
       # need for finding multiple objects
-      secondary_obj = row_objects[c.secondary_model_field]
+      secondary_obj = row_objects[c.field_relative_model_field]
 
       if primary_obj.nil? && ["null", "nq"].include?(c.operator)
         # ok, just continue to testing the next criterion

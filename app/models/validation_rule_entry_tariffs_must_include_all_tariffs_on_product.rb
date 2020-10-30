@@ -43,7 +43,7 @@ class ValidationRuleEntryTariffsMustIncludeAllTariffsOnProduct < BusinessValidat
   end
 
   def error(msg)
-    stop_validation unless has_flag?("validate_all")
+    stop_validation unless flag?("validate_all")
     msg
   end
 end

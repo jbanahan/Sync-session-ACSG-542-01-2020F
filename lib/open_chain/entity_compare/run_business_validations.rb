@@ -5,9 +5,9 @@ module OpenChain; module EntityCompare; class RunBusinessValidations
   CASCADE_CLASSES ||= [
     OpenChain::EntityCompare::CascadeProductValidations,
     OpenChain::EntityCompare::CascadeCompanyValidations
-  ]
+  ].freeze
 
-  def self.accept? snapshot
+  def self.accept? _snapshot
     # For some instances, this class doesn't make sense...we don't need to cascade down validations on products
     # to orders and shipments.  We don't need to cascade company validations.
     MasterSetup.get.custom_feature?("Disable Cascading Validations") ? false : true

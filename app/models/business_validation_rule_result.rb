@@ -23,7 +23,7 @@
 class BusinessValidationRuleResult < ActiveRecord::Base
   belongs_to :business_validation_result, touch: true
   belongs_to :business_validation_rule, inverse_of: :business_validation_rule_results
-  belongs_to :overridden_by, class_name:'User'
+  belongs_to :overridden_by, class_name: 'User'
   attr_accessible :message, :note, :overridden_at, :overridden_by, :state
 
   after_destroy { |rr| delete_parent_bvre rr }
@@ -55,7 +55,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     messages = self.business_validation_rule.run_validation(obj)
     # Use blank because we do allow arrays to be returned, so we consider any value
     # of blank that is returned (blank strings, blank arrays) to be an indication of passing
-    if !messages.blank?
+    if messages.present?
       # Allow for returning multiple messages directly from the run_validation method
       self.message = Array.wrap(messages).map(&:to_s).join("\n")
     else
@@ -67,7 +67,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     else
       self.state = self.business_validation_rule.fail_state.presence || 'Fail'
     end
-    return (self.state != original_value) || (self.message != original_message)
+    (self.state != original_value) || (self.message != original_message)
   end
 
   def run_validation_with_state_tracking obj
@@ -80,7 +80,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
 
   def override override_user
     self.overridden_by = override_user
-    self.overridden_at = Time.now
+    self.overridden_at = Time.zone.now
   end
 
   def cancel_override
@@ -91,9 +91,7 @@ class BusinessValidationRuleResult < ActiveRecord::Base
   end
 
   def self.destroy_batch ids
-    BusinessValidationRuleResult.where(id: ids).find_each do |rule_result|
-      rule_result.destroy
-    end
+    BusinessValidationRuleResult.where(id: ids).find_each(&:destroy)
   end
 
   private
@@ -103,8 +101,8 @@ class BusinessValidationRuleResult < ActiveRecord::Base
     total = BusinessValidationRuleResult.where(business_validation_result_id: bvre_id).count
     if total.zero?
       # Have to look this up from DB to prevent a vicious in-memory, recursive after_delete callback loop
-      validation_result = BusinessValidationResult.where(id: bvre_id).first
-      validation_result.destroy if validation_result
+      validation_result = BusinessValidationResult.find_by(id: bvre_id)
+      validation_result&.destroy
     end
   end
 

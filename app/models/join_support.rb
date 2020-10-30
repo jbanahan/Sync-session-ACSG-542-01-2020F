@@ -24,8 +24,8 @@ module JoinSupport
 
     p = add_model_field p, find_model_field
 
-    if respond_to? :secondary_model_field
-      mf_two = secondary_model_field
+    if respond_to? :field_relative_model_field
+      mf_two = field_relative_model_field
       if mf_two
         p = add_model_field p, mf_two
       end

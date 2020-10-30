@@ -3,6 +3,8 @@ module Api; module V1; class SearchCriterionsController < ApiController
 
   def create
     validate_access(params[:search_criterion], current_user) do |linked_object|
+      # Since we are already allowing only valid params in, a permit! here is safe.
+      # See #valid_params
       criterion = linked_object.search_criterions.create valid_params(params)
       if criterion.errors.any?
         render_error criterion.errors.full_messages
@@ -12,15 +14,14 @@ module Api; module V1; class SearchCriterionsController < ApiController
     end
   end
 
-
   def update
     validate_access(params[:search_criterion], current_user) do |linked_object|
      criterion = linked_object.search_criterions.find {|c| c.id == params[:id].to_i }
-      raise ActiveRecord::RecordNotFound unless criterion
+     raise ActiveRecord::RecordNotFound unless criterion
 
-      if criterion.update_attributes(valid_params(params))
+     if criterion.update(valid_params(params))
         render json: singular_json(criterion, current_user)
-      else
+     else
         render_error criterion.errors.full_messages
       end
     end
@@ -31,8 +32,8 @@ module Api; module V1; class SearchCriterionsController < ApiController
       criterion = linked_object.search_criterions.find {|c| c.id == params[:id].to_i }
       raise ActiveRecord::RecordNotFound unless criterion
 
-      if criterion && criterion.destroy
-        render json: {"OK"=>"OK"}
+      if criterion&.destroy
+        render json: {"OK" => "OK"}
       else
         render_error criterion.errors.full_messages
       end
@@ -58,9 +59,11 @@ module Api; module V1; class SearchCriterionsController < ApiController
       end
     end
 
-    def to_json criterion, user
+    def to_json criterion, _user
       mf = criterion.model_field
-      {id: criterion.id, operator: criterion.operator, value: criterion.value, model_field_uid: criterion.model_field_uid, include_empty: criterion.include_empty?, label: (mf.can_view?(current_user) ? mf.label : ModelField.disabled_label), datatype: mf.data_type}
+      {id: criterion.id, operator: criterion.operator, value: criterion.value, model_field_uid: criterion.model_field_uid,
+       include_empty: criterion.include_empty?, label: (mf.can_view?(current_user) ? mf.label : ModelField.disabled_label),
+       datatype: mf.data_type}
     end
 
     def singular_json criterion, user
@@ -72,7 +75,7 @@ module Api; module V1; class SearchCriterionsController < ApiController
     end
 
     def valid_params params
-      params[:search_criterion].slice :id, :operator, :value, :model_field_uid, :include_empty
+      params.require(:search_criterion).permit(:id, :operator, :value, :model_field_uid, :include_empty)
     end
 
-end; end; end;
+end; end; end

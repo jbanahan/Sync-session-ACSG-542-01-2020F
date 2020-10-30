@@ -368,7 +368,6 @@ OpenChain::Application.routes.draw do
     collection do
       post 'upload'
     end
-    resources :t_search_criterions, only: [:create, :destroy]
     resources :business_validation_rules, only: [:create, :destroy, :edit, :update] do
       member do
         post 'copy'
@@ -377,7 +376,6 @@ OpenChain::Application.routes.draw do
       collection do
         post 'upload'
       end
-      resources :r_search_criterions, only: [:create, :destroy]
     end
   end
 

@@ -24,7 +24,7 @@ class ValidationRuleCanadaGpt < BusinessValidationRule
         next if tariff.hts_code.blank? || tariff.spi_primary == "9"
 
         if hts_qualifies_for_gpt? tariff.hts_code
-          stop_validation unless has_flag?("validate_all")
+          stop_validation unless flag?("validate_all")
           message = "Tariff Treatment should be set to 9 when HTS qualifies for special GPT rates.  Country: #{invoice_line.country_origin_code} HTS: #{tariff.hts_code}"
           break
         end

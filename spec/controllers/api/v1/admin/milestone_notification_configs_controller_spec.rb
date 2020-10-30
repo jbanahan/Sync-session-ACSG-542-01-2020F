@@ -187,7 +187,7 @@ describe Api::V1::Admin::MilestoneNotificationConfigsController do
     it "errors on configs for non-entry, non-isf modules" do
       config[:milestone_notification_config][:module_type] = "NotAModule"
       post :create, config
-      expect(response).to_not be_success
+      expect(response).not_to be_success
       expect(JSON.parse(response.body)).to eq("errors"=>["Validation failed: Module type is not valid."])
     end
   end

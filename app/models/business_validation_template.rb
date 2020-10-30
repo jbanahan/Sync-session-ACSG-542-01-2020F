@@ -27,7 +27,7 @@ require 'open_chain/custom_handler/pepsi/quaker_validation_rule_po_number_unique
 class BusinessValidationTemplate < ActiveRecord::Base
   attr_accessible :description, :module_type, :name, :delete_pending, :disabled, :private, :system_code
   validates :module_type, presence: true
-  validates :system_code, uniqueness: true, if: lambda { system_code.present? }
+  validates :system_code, uniqueness: true, if: -> { system_code.present? }
 
   has_many :business_validation_rules, dependent: :destroy, inverse_of: :business_validation_template
   has_many :business_validation_results, dependent: :destroy, inverse_of: :business_validation_template
@@ -35,7 +35,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
 
   scope :active_templates, -> { where(disabled: [nil, 0]).where(delete_pending: [nil, 0])}
 
-  def copy_attributes include_external:false
+  def copy_attributes include_external: false
     attrs = JSON.parse self.to_json(except: [:id, :system_code, :created_at, :updated_at, :delete_pending, :disabled])
     attrs["business_validation_template"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
     attrs["business_validation_template"]["business_validation_rules"] = self.business_validation_rules.map { |r| r.copy_attributes(include_external: include_external) }
@@ -43,7 +43,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
   end
 
   def self.parse_copy_attributes template_hsh
-    template = BusinessValidationTemplate.new(template_hsh["business_validation_template"].reject { |k, v| ["search_criterions", "business_validation_rules"].include? k })
+    template = BusinessValidationTemplate.new(template_hsh["business_validation_template"].reject { |k, _v| ["search_criterions", "business_validation_rules"].include? k })
     bvt_hsh = template_hsh["business_validation_template"]
     bvt_hsh["search_criterions"].each { |sc_hsh| template.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"]) }
     bvt_hsh["business_validation_rules"].each do |bvru_hsh|
@@ -75,7 +75,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
     object_type = object_type.constantize unless object_type.is_a?(Class)
 
     Array.wrap(object_ids).each do |id|
-      object = object_type.where(id: id).first
+      object = object_type.find_by(id: id)
       create_results_for_object!(object, snapshot_entity: snapshot_entity) if object
     end
   end
@@ -83,11 +83,11 @@ class BusinessValidationTemplate < ActiveRecord::Base
   # call create_result for all templates with matching module types
   # for the given object
   def self.create_results_for_object! obj, snapshot_entity: true, user: nil
-    cm = CoreModule.find_by_object(obj)
+    cm = CoreModule.find_by(object: obj)
     return if cm.nil?
 
     tracking_results = []
-    BusinessValidationTemplate.where(module_type:cm.class_name).each do |bvt|
+    BusinessValidationTemplate.where(module_type: cm.class_name).each do |bvt|
       tracking_results << bvt.create_result!(obj, run_validation: true, snapshot_entity: snapshot_entity)
     end
 
@@ -107,21 +107,23 @@ class BusinessValidationTemplate < ActiveRecord::Base
     return unless active?
 
     user = User.integration if user.nil?
-    cm = CoreModule.find_by_class_name(self.module_type)
+    cm = CoreModule.find_by(class_name: self.module_type)
     klass = cm.klass
     # Use distinct id rather than * so we're not forcing the DB to run a distinct over a large set of columns, when the only value it actually needs to be
     # distinct is the core module's id.
+    # rubocop:disable Layout/LineLength
     srch = klass.select("DISTINCT #{ActiveRecord::Base.connection.quote_table_name(cm.table_name)}.id").where("#{ActiveRecord::Base.connection.quote_table_name(cm.table_name)}.updated_at > business_validation_results.updated_at OR business_validation_results.updated_at is null")
     srch = srch.joins(ActiveRecord::Base.sanitize_sql_array(["LEFT OUTER JOIN business_validation_results ON business_validation_results.validatable_type = ? AND business_validation_results.validatable_id = #{ActiveRecord::Base.connection.quote_table_name(cm.table_name)}.id AND business_validation_results.business_validation_template_id = ?", self.module_type, self.id]))
+    # rubocop:enable Layout/LineLength
     self.search_criterions.each {|sc| srch = sc.apply(srch)}
     srch.each do |id|
       obj = nil
       begin
         # Use this rather than find, since it's possible, though unlikely, that the obj has been removed from the system since being returned from the query above
-        obj = klass.where(id: id.id).first
+        obj = klass.find_by(id: id.id)
         result = self.create_result!(obj, run_validation: run_validation) unless obj.nil?
         self.class.handle_snapshots(result, obj, user, snapshot_entity: snapshot_entity) unless result.nil?
-      rescue => e
+      rescue StandardError => e
         # Don't let one bad object spoil the whole rule run
         if obj
           e.log_me ["Failed to generate rule results for #{obj.class} id #{obj.id}"]
@@ -132,7 +134,10 @@ class BusinessValidationTemplate < ActiveRecord::Base
     end
   end
 
+  # rubocop:disable Lint/UnusedMethodArgument
   def create_result! obj, run_validation: false, snapshot_entity: true
+    # rubocop:enable Lint/UnusedMethodArgument
+
     # Bailout if the template doesn't have any search criterions...without any criterions you'll literally pick up every line in the system associated
     # with the module_type associated with the template...which is almost certainly not what you'd want.  If it REALLY is, then create a criterion that will
     # never be false associated with the template
@@ -148,8 +153,8 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # This could be the case is situations where a template was changed to remove a company from the rules.
     if !template_applies
       Lock.with_lock_retry(obj) do
-        result = obj.business_validation_results.where(business_validation_template_id: self.id).first
-        result.destroy if result
+        result = obj.business_validation_results.find_by(business_validation_template_id: self.id)
+        result&.destroy
       end
       return nil
     end
@@ -178,7 +183,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
             # If nothing changed, we'll still want to update the rule result's updated_at column so we know if there might be any issue with
             # rules not evaluating by looking at the object's updated_at column and comparing it to the rule result's one (rule result should always be after),
             # but let's do it in the most efficient fashion if nothing about the rule result changed.
-            bvr.update_column :updated_at, Time.zone.now
+            bvr.update updated_at: Time.zone.now
           end
         end
       end
@@ -188,7 +193,6 @@ class BusinessValidationTemplate < ActiveRecord::Base
   end
 
   def self.handle_snapshots state_tracking, obj, user, snapshot_entity: true
-
     # The only time we want to snapshot the business rules is if any rule changed
     results_changed = Array.wrap(state_tracking).any? {|tracking| !tracking.nil? && state_tracking_changed?(tracking[:tracking]) }
 
@@ -211,7 +215,7 @@ class BusinessValidationTemplate < ActiveRecord::Base
       Array.wrap(state_tracking[:rule_states]).any? {|state| state[:changed] == true }
   end
 
-  def initialize_business_validation_result business_validation_result, obj
+  def initialize_business_validation_result business_validation_result, _obj
     rule_built = false
     self.business_validation_rules.each do |rule|
       if rule.active?
@@ -236,14 +240,14 @@ class BusinessValidationTemplate < ActiveRecord::Base
     # If we have a closed object and we skip it, we do want to make sure that we still update the business validation results updated_at column
     # otherwise the background job is going to be pulling up this object every single time the job runs to run rules on any objects that have changed.
     if obj.respond_to?(:closed?) && obj.closed?
-      return !MasterSetup.get.custom_feature?("Disable Rules For Closed Objects")
+      !MasterSetup.get.custom_feature?("Disable Rules For Closed Objects")
     else
-      return true
+      true
     end
   end
 
   def self.async_destroy id
-    template = find_by_id id
-    template.destroy if template
+    template = find_by id: id
+    template&.destroy
   end
 end

@@ -100,6 +100,8 @@ class CriterionOperator
     nil
   end
 
+  singleton_class.send(:alias_method, :by_key, :find_by_key)
+
   private
     def character_based_data_type? data_type
       return [:text, :string].include? data_type

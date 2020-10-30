@@ -1,31 +1,32 @@
 describe BusinessValidationRuleResultsController do
 
-  let (:user) {
+  let(:user) do
     au = Factory(:admin_user)
-    au.company.update_attributes(show_business_rules:true)
+    au.company.update(show_business_rules: true)
     au
-  }
-  let (:entry) { Factory(:entry, broker_reference: "REF") }
-  let! (:business_rule) {
+  end
+
+  let(:entry) { Factory(:entry, broker_reference: "REF") }
+
+  before do
+    sign_in_as user
+
     t = BusinessValidationTemplate.create! name: "Test", module_type: "Entry", description: "Test Template"
     t.search_criterions.create! model_field_uid: "ent_brok_ref", operator: "notnull"
+    t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description",
+                                        rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "ABC"}.to_json
 
-    t.business_validation_rules.create! type: "ValidationRuleFieldFormat", name: "Broker Reference", description: "Rule Description", rule_attributes_json: {model_field_uid: "ent_brok_ref", regex: "ABC"}.to_json
-  }
-
-  before :each do
-    sign_in_as user
     BusinessValidationTemplate.create_results_for_object! entry
   end
 
   describe "update" do
 
-    let (:rule_result) { entry.business_validation_results.first.business_validation_rule_results.first }
+    let(:rule_result) { entry.business_validation_results.first.business_validation_rule_results.first }
 
     it "overrides rule result data" do
       now = Time.zone.now
       Timecop.freeze(now) do
-        put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'}, format: :json
+        put :update, id: rule_result.id, business_validation_rule_result: {note: 'abc', state: 'Pass'}, format: :json
       end
 
       h = JSON.parse(response.body)['save_response']
@@ -41,7 +42,7 @@ describe BusinessValidationRuleResultsController do
 
     it "denies access to users who cannot edit rule results" do
       expect_any_instance_of(BusinessValidationRuleResult).to receive(:can_edit?).with(user).and_return(false)
-      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'}
+      put :update, id: rule_result.id, business_validation_rule_result: {note: 'abc', state: 'Pass'}
       expect(response).to be_redirect
       rule_result.reload
       expect(rule_result.note).to be_nil
@@ -49,16 +50,16 @@ describe BusinessValidationRuleResultsController do
     end
 
     it "allows using html format to update rule data" do
-      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass'}
+      put :update, id: rule_result.id, business_validation_rule_result: {note: 'abc', state: 'Pass'}
       expect(response).to redirect_to "/entries/#{entry.id}/validation_results"
       entry.business_validation_results.reload
       expect(entry.business_validation_results.first.state).to eq 'Pass'
     end
 
     it "sanitizes params and only allows updating state and note values" do
-      rule_result.update_attributes message: "xyz"
+      rule_result.update message: "xyz"
 
-      put :update, id: rule_result.id, business_validation_rule_result:{note:'abc', state:'Pass', message:'qrs'}
+      put :update, id: rule_result.id, business_validation_rule_result: {note: 'abc', state: 'Pass', message: 'qrs'}
 
       rule_result.reload
       expect(rule_result.note).to eq 'abc'
@@ -66,11 +67,12 @@ describe BusinessValidationRuleResultsController do
       expect(rule_result.message).to eq 'xyz'
     end
   end
-  describe "cancel_override" do
-    let (:rule_result) { entry.business_validation_results.first.business_validation_rule_results.first }
 
-    before :each do
-      rule_result.update_attributes(overridden_at: Time.zone.now, overridden_by: user, note: "Some message.")
+  describe "cancel_override" do
+    let(:rule_result) { entry.business_validation_results.first.business_validation_rule_results.first }
+
+    before do
+      rule_result.update(overridden_at: Time.zone.now, overridden_by: user, note: "Some message.")
     end
 
     it "does not not allow users without edit to cancel overrides" do
@@ -80,9 +82,9 @@ describe BusinessValidationRuleResultsController do
 
       rule_result.reload
 
-      expect(rule_result.overridden_at).to_not be nil
-      expect(rule_result.overridden_by).to_not be nil
-      expect(rule_result.note).to_not be nil
+      expect(rule_result.overridden_at).not_to be nil
+      expect(rule_result.overridden_by).not_to be nil
+      expect(rule_result.note).not_to be nil
       expect(JSON.parse(response.body)["error"]).to eq "You do not have permission to perform this activity."
     end
 

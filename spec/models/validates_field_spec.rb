@@ -122,7 +122,7 @@ describe ValidatesField do
       it "handles top level attributes that are not model field uids" do
         order_line.quantity = 3
         rule = Rule.new({"validate_all" => true, 'ordln_ppu' => {'operator' => 'gt', 'value' => 5 }, 'ordln_ordered_qty' => {'operator' => 'lt', 'value' => 2}, 'ordln_country_of_origin' => {'operator' => 'eq', 'value' => 'CN'}})
-        expect(rule.has_flag?("validate_all")).to eq true
+        expect(rule.flag?("validate_all")).to eq true
         expect(rule.validate_field(order_line, {yield_failures: true}, &block)).to eq "All Order Line - Price / Unit values are not greater than 5.\nAll Order Line - Order Quantity values are not less than 2.\nAll Order Line - Country of Origin values are not equals CN."
       end
     end

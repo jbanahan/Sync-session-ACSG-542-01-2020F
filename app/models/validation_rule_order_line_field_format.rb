@@ -6,7 +6,7 @@ class ValidationRuleOrderLineFieldFormat < BusinessValidationRule
 
   def run_child_validation order_line
     validate_field_format(order_line) do |mf, val, regex, fail_if_matches|
-      stop_validation unless has_flag?("validate_all")
+      stop_validation unless flag?("validate_all")
 
       if fail_if_matches
         "At least one #{mf.label} value matches '#{regex}' format."

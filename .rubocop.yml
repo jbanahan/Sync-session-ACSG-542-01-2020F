@@ -205,6 +205,17 @@ RSpec/SubjectStub:
 RSpec/NestedGroups:
   Max: 5
 
+RSpec/RepeatedDescription:
+  Enabled: true
+  Exclude:
+    - 'spec/models/search_criterion_spec.rb'
+
+RSpec/RepeatedExample:
+  Enabled: true
+  Exclude:
+    - 'spec/models/search_criterion_spec.rb'
+  Enabled: false
+
 RSpec/RepeatedExampleGroupBody:
   Enabled: true
   Exclude:

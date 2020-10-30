@@ -2,47 +2,51 @@ describe BusinessValidationResult do
   let(:bvr) { Factory(:business_validation_result) }
 
   describe "can_view" do
-    it "should allow users who can view results" do
+    it "allows users who can view results" do
       u = Factory(:master_user)
-      u.company.update_attributes(show_business_rules:true)
+      u.company.update(show_business_rules: true)
       expect(bvr.can_view?(u)).to eq true
     end
-    it "should not allow who can't view results" do
+
+    it "does not allow who can't view results" do
       u = Factory(:user)
       expect(bvr.can_view?(u)).to eq false
     end
 
     context "private results" do
       before do
-        bvr.business_validation_template.update_attributes! private: true
+        bvr.business_validation_template.update! private: true
       end
 
       it "allows users with viewing rights" do
         u = Factory(:master_user)
-        u.company.update_attributes(show_business_rules:true)
+        u.company.update(show_business_rules: true)
         expect(bvr.can_view?(u)).to eq true
       end
 
       it "blocks users without viewing rights" do
         u = Factory(:user)
-        u.company.update_attributes(show_business_rules:true)
+        u.company.update(show_business_rules: true)
         expect(bvr.can_view?(u)).to eq false
       end
     end
   end
+
   describe "can_edit" do
-    it "should allow users from master company" do
+    it "allows users from master company" do
       u = Factory(:master_user)
-      u.company.update_attributes(show_business_rules:true)
+      u.company.update(show_business_rules: true)
       expect(bvr.can_edit?(u)).to eq true
     end
-    it "should not allow users not from master company" do
+
+    it "does not allow users not from master company" do
       u = Factory(:user)
       expect(bvr.can_edit?(u)).to eq false
     end
   end
+
   describe "run_validation" do
-    it "should set state to worst of rule results" do
+    it "sets state to worst of rule results" do
       o = Order.new
       rr1 = BusinessValidationRuleResult.new
       rr2 = BusinessValidationRuleResult.new
@@ -64,7 +68,8 @@ describe BusinessValidationResult do
       expect(bvr.run_validation).to eq true
       expect(bvr.state).to eq 'Fail'
     end
-    it "should pass if all rules pass" do
+
+    it "passes if all rules pass" do
       o = Order.new
       rr1 = BusinessValidationRuleResult.new
       rr2 = BusinessValidationRuleResult.new
@@ -82,13 +87,14 @@ describe BusinessValidationResult do
       expect(bvr.run_validation).to eq true
       expect(bvr.state).to eq 'Pass'
     end
-    it "should return false if the state doesn't change" do
+
+    it "returns false if the state doesn't change" do
       o = Order.new
       rr1 = BusinessValidationRuleResult.new
 
       rr1.state = 'Pass'
 
-      bvr.update_attributes! state:'Pass'
+      bvr.update! state: 'Pass'
       bvr.validatable = o
 
       [rr1].each do |x|
@@ -114,23 +120,29 @@ describe BusinessValidationResult do
   end
 
   describe "run_validation_with_state_tracking" do
-    let (:order) { Factory(:order, order_number: "ajklsdfajl") }
-    let (:rule) { ValidationRuleFieldFormat.create! type:'ValidationRuleFieldFormat', name: "Name", description: "Description", rule_attributes_json:{model_field_uid:'ord_ord_num', regex:'12345'}.to_json}
-    let (:rule_result) {
+    let(:order) { Factory(:order, order_number: "ajklsdfajl") }
+    let(:rule) do
+      ValidationRuleFieldFormat.create! type: 'ValidationRuleFieldFormat', name: "Name", description: "Description",
+                                        rule_attributes_json: {model_field_uid: 'ord_ord_num', regex: '12345'}.to_json
+    end
+
+    let(:rule_result) do
       rr = BusinessValidationRuleResult.new
       rr.business_validation_rule = rule
       rr.save!
       rr
-    }
-    let (:business_validation_result) {
-      r = BusinessValidationResult.create! validatable: order, state: "Failed"
+    end
+
+    let(:business_validation_result) do
+      r = described_class.create! validatable: order, state: "Failed"
       r.business_validation_rule_results << rule_result
       r
-    }
+    end
 
     it "returns the states of all the rules" do
       expect(rule).to receive(:active?).and_return true
-      expect(business_validation_result.run_validation_with_state_tracking).to eq({changed: true, rule_states: [{id: rule_result.id, changed: true, new_state: "Fail", old_state: nil}]})
+      expect(business_validation_result.run_validation_with_state_tracking)
+        .to eq({changed: true, rule_states: [{id: rule_result.id, changed: true, new_state: "Fail", old_state: nil}]})
     end
   end
 
@@ -138,8 +150,8 @@ describe BusinessValidationResult do
     ["Fail", "Review", "Pass", "Skipped"].each do |state|
       it "validates #{state.downcase}?" do
         method_name = state == "Fail" ? "failed" : state.downcase
-        expect(BusinessValidationResult.new(state: state).send("#{method_name}?".to_sym)).to eq true
-        expect(BusinessValidationResult.new(state: "something else").send("#{method_name}?".to_sym)).to eq false
+        expect(described_class.new(state: state).send("#{method_name}?".to_sym)).to eq true
+        expect(described_class.new(state: "something else").send("#{method_name}?".to_sym)).to eq false
       end
 
       it "validates #{state.downcase}_state?" do

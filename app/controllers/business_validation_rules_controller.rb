@@ -6,9 +6,13 @@ class BusinessValidationRulesController < ApplicationController
 
   def create
     admin_secure do
-      @bvr = BusinessValidationRule.new(params[:business_validation_rule])
+      group_id = params[:business_validation_rule][:group_id]
+      @group = Group.find(group_id) if group_id.present?
+      @bvr = BusinessValidationRule.new(permitted_params_new(params))
+      @bvr.group = @group if @group.present?
       @bvt = BusinessValidationTemplate.find(params[:business_validation_template_id])
-      @bvr.business_validation_template = @bvt # this will be unnecessary if b_v_t goes in attr_accessible
+
+      @bvr.business_validation_template = @bvt
 
       unless valid_json(params[:business_validation_rule][:rule_attributes_json])
        error_redirect "Could not save due to invalid JSON. For reference, your attempted JSON was: #{params[:business_validation_rule][:rule_attributes_json]}"
@@ -45,25 +49,27 @@ class BusinessValidationRulesController < ApplicationController
   end
 
   def valid_json json
-   begin
-      JSON.parse(json) unless json.blank?
+      JSON.parse(json) if json.present?
       true
-    rescue
+  rescue StandardError
       false
+  end
+
+  # used for adding a criterion to a rule
+  def edit
+    @no_action_bar = true
+    admin_secure do
+      @new_criterion = SearchCriterion.new
+      @bvr = BusinessValidationRule.find(params[:id])
     end
   end
 
-  def edit # used for adding a criterion to a rule
-    @no_action_bar = true
-    admin_secure {
-      @new_criterion = SearchCriterion.new
-      @bvr = BusinessValidationRule.find(params[:id])
-    }
-  end
-
   def update
-    admin_secure {
+    admin_secure do
+      @group_id = params[:business_validation_rule][:group_id]
+      @group = Group.find(@group_id) if @group_id.present?
       @bvr = BusinessValidationRule.find(params[:id])
+      @bvr.group = @group if @group.present?
       @bvr.search_criterions = []
       unless valid_json(params[:business_validation_rule][:rule_attributes_json])
         render json: {error: "Could not save due to invalid JSON."}, status: 500
@@ -79,33 +85,32 @@ class BusinessValidationRulesController < ApplicationController
       if params[:business_validation_rule][:search_criterions].present?
         params[:business_validation_rule][:search_criterions].each { |search_criterion| add_search_criterion_to_rule(@bvr, search_criterion) }
       end
-      params[:business_validation_rule].delete("search_criterions")
-      @bvr.update_attributes!(params[:business_validation_rule].except("id", "mailing_lists", "business_validation_template_id", "search_criterions", "type"))
+      @bvr.update!(permitted_params_update(params))
       render json: {notice: "Business rule updated"}
-    }
+    end
   end
 
   def destroy
     admin_secure do
       @bvr = BusinessValidationRule.find(params[:id])
       @bvt = @bvr.business_validation_template
-      @bvr.update_attribute(:delete_pending, true)
+      @bvr.update(delete_pending: true)
       @bvr.destroy
       redirect_to edit_business_validation_template_path(@bvt)
     end
   end
 
   def download
-    admin_secure {
+    admin_secure do
       bvr = BusinessValidationRule.find params[:id]
       json = bvr.copy_attributes.to_json
-      filename = "#{bvr.name}_#{Date.today.strftime("%m-%d-%Y")}.json"
+      filename = "#{bvr.name}_#{Time.zone.today.strftime("%m-%d-%Y")}.json"
       send_data json, filename: filename, type: 'application/json', disposition: "attachment"
-    }
+    end
   end
 
   def upload
-    admin_secure {
+    admin_secure do
       bvt_id = params[:business_validation_template_id]
       file = params[:attached]
       if file.nil?
@@ -117,16 +122,16 @@ class BusinessValidationRulesController < ApplicationController
         add_flash(:notices, "Your file is being processed. You'll receive a " + MasterSetup.application_name + " message when it completes.")
         redirect_to business_validation_template_path(bvt_id)
       end
-    }
+    end
   end
 
   def copy
-    admin_secure {
+    admin_secure do
       destination_template_id = params[:new_template_id]
       OpenChain::BusinessRulesCopier.delay.copy_rule(current_user.id, params[:id].to_i, destination_template_id.to_i)
       add_flash(:notices, "Business Validation Rule is being copied. You'll receive a " + MasterSetup.application_name + " message when it completes.")
       redirect_to edit_business_validation_template_path(destination_template_id)
-    }
+    end
   end
 
   def edit_angular
@@ -145,7 +150,7 @@ class BusinessValidationRulesController < ApplicationController
     criterion["model_field_uid"] = criterion.delete("mfid")
     criterion.delete("datatype")
     criterion.delete("label")
-    sc = SearchCriterion.new(criterion)
+    sc = SearchCriterion.new(criterion.permit!)
     rule.search_criterions << sc
     rule.save!
   end
@@ -178,24 +183,35 @@ class BusinessValidationRulesController < ApplicationController
         message_pass: br.message_pass,
         message_review_fail: br.message_review_fail,
         message_skipped: br.message_skipped
-      }
-    }
+      }}
 
     br_json[:business_validation_rule][:search_criterions] = br.search_criterions.collect {|sc| sc.json current_user}
     br_json
   end
 
   def make_model_fields_hashes
-    cm = CoreModule.find_by_class_name(BusinessValidationRule.find(params[:id]).business_validation_template.module_type, true)
+    cm = CoreModule.find_by(class_name: BusinessValidationRule.find(params[:id]).business_validation_template.module_type)
     @model_fields = cm.default_module_chain.model_fields(current_user).values
     model_fields_list = []
     @model_fields.each do |model_field|
       model_fields_list << {
-          :field_name => model_field.field_name.to_s, :mfid => model_field.uid.to_s,
-          :label => model_field.label, :datatype => model_field.data_type.to_s
-          }
+        field_name: model_field.field_name.to_s, mfid: model_field.uid.to_s,
+        label: model_field.label, datatype: model_field.data_type.to_s
+      }
     end
     model_fields_list.sort { |a, b| a[:label].downcase <=> b[:label].downcase }
   end
 
+  def permitted_params_new(params)
+    params.require(:business_validation_rule).except(:group_id).permit(:rule_attributes_json, :type, :name, :description,
+                                                                       :notification_type, :fail_state, :disabled)
+  end
+
+  def permitted_params_update(params)
+      params.require(:business_validation_rule).except(:id, :group_id, :mailing_lists, :business_validation_template_id,
+                                                       :search_criterions, :type)
+            .permit(:rule_attributes_json, :name, :description, :fail_state, :disabled, :notification_type,
+                    :notification_recipients, :suppress_pass_notice, :suppress_review_fail_notice, :suppress_skipped_notice,
+                    :subject_pass, :subject_review_fail, :subject_skipped, :message_pass, :message_review_fail, :message_skipped)
+  end
 end

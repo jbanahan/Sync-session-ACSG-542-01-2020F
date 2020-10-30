@@ -38,9 +38,6 @@ class BusinessValidationRule < ActiveRecord::Base
   belongs_to :business_validation_template, inverse_of: :business_validation_rules, touch: true
   belongs_to :group
   belongs_to :mailing_list
-  attr_accessible :description, :name, :disabled, :rule_attributes_json, :type, :group_id, :fail_state, :delete_pending, :notification_type,
-                  :notification_recipients, :suppress_pass_notice, :suppress_review_fail_notice, :suppress_skipped_notice, :subject_pass, :subject_review_fail, :subject_skipped,
-                  :message_pass, :message_review_fail, :message_skipped, :mailing_list_id, :cc_notification_recipients, :bcc_notification_recipients
 
   has_many :search_criterions, dependent: :destroy
   # dependent destroy is NOT added here because of the potential for hundreds of thousands of dependent records (it absolutely happens)
@@ -52,144 +49,145 @@ class BusinessValidationRule < ActiveRecord::Base
 
   after_destroy { |rule| destroy_rule_dependents rule }
 
-  SUBCLASSES ||= {ValidationRuleEntryInvoiceLineFieldFormat: {label:"Entry Invoice Line Field Format"},
-                ValidationRuleEntryInvoiceLineMatchesPoLine: {label:"Entry Invoice Line Matches PO Line"},
-                ValidationRuleFieldFormat: {label:"Field Format"},
-                ValidationRuleManual: {label:"Manual"},
-                'OpenChain::CustomHandler::Polo::PoloValidationRuleEntryInvoiceLineMatchesPoLine'.to_sym=>
-                  {label:"Polo Entry Invoice Line Matches PO Line",
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }},
-                ValidationRuleEntryInvoiceLineTariffFieldFormat: {label:"Entry Invoice Tariff Field Format"},
-                ValidationRuleEntryInvoiceFieldFormat: {label:"Entry Invoice Field Format"},
-                ValidationRuleOrderLineFieldFormat: {label: "Order Line Field Format"},
-                ValidationRuleEntryHtsMatchesPo: {label:"Entry Invoice Line HTS Matches PO HTS"},
-                ValidationRuleEntryProductInactive: {label:"Entry product has inactive flag set"},
-                ValidationRuleAnyEntryInvoiceLineHasFieldFormat: {label:"At Least One Entry Invoice Line Matches Field Format"},
-                ValidationRuleEntryInvoiceCooMatchesSpi: {label:"Entry Invoice Line Country of Origin Matches Primary SPI"},
-                ValidationRuleAttachmentTypes: {label:"Has Attachment Types"},
-                ValidationRuleCanadaGpt: {label:"Entry Tariff lines utilize Canadian GPT rates."},
-                ValidationRuleEntryTariffMatchesProduct: {label:"Entry Tariff Numbers Match Parts Database"},
-                ValidationRuleOrderLineProductFieldFormat: {label:"Order Line's Product Field Format"},
-                ValidationRuleOrderVendorFieldFormat: {label:"Orders Vendor's Field Format"},
-                ValidationRuleEntryDutyFree: {label: "Entry Invoice Tariff SPI Indicates Duty Free"},
-                ValidationRuleEntryInvoiceValueMatchesDaPercent: {label: "Entry Total Matches Invoice Deduction Additions"},
-                ValidationRuleProductClassificationFieldFormat: {label:"Product Classification Field Format"},
-                ValidationRuleBrokerInvoiceFieldFormat: {label: 'Broker Invoice Field Format'},
-                ValidationRuleBrokerInvoiceLineFieldFormat: {label: 'Broker Invoice Line Field Format'},
-                ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
-                ValidationRuleEntryTariffsMustIncludeAllTariffsOnProduct: { label: "Entry Tariffs Include all Product Tariffs" },
-                ValidationRuleManifestDiscrepancies: { label: "ABI Manifest Discrepancies" },
-                 ValidationRuleEntryInvoiceCooMatchesMid: { label: "Entry Invoice Country of Origin Matches MID"},
-                # DEPRECATED - doesn't appear in menu
-                ValidationRuleFieldComparison: {label: "Field Comparison", enabled_lambda: lambda { nil } },
-                'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym=>
+  # rubocop:disable Layout/LineLength
+  SUBCLASSES ||= {ValidationRuleEntryInvoiceLineFieldFormat: {label: "Entry Invoice Line Field Format"},
+                  ValidationRuleEntryInvoiceLineMatchesPoLine: {label: "Entry Invoice Line Matches PO Line"},
+                  ValidationRuleFieldFormat: {label: "Field Format"},
+                  ValidationRuleManual: {label: "Manual"},
+                  'OpenChain::CustomHandler::Polo::PoloValidationRuleEntryInvoiceLineMatchesPoLine'.to_sym =>
+                  {label: "Polo Entry Invoice Line Matches PO Line",
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }},
+                  ValidationRuleEntryInvoiceLineTariffFieldFormat: {label: "Entry Invoice Tariff Field Format"},
+                  ValidationRuleEntryInvoiceFieldFormat: {label: "Entry Invoice Field Format"},
+                  ValidationRuleOrderLineFieldFormat: {label: "Order Line Field Format"},
+                  ValidationRuleEntryHtsMatchesPo: {label: "Entry Invoice Line HTS Matches PO HTS"},
+                  ValidationRuleEntryProductInactive: {label: "Entry product has inactive flag set"},
+                  ValidationRuleAnyEntryInvoiceLineHasFieldFormat: {label: "At Least One Entry Invoice Line Matches Field Format"},
+                  ValidationRuleEntryInvoiceCooMatchesSpi: {label: "Entry Invoice Line Country of Origin Matches Primary SPI"},
+                  ValidationRuleAttachmentTypes: {label: "Has Attachment Types"},
+                  ValidationRuleCanadaGpt: {label: "Entry Tariff lines utilize Canadian GPT rates."},
+                  ValidationRuleEntryTariffMatchesProduct: {label: "Entry Tariff Numbers Match Parts Database"},
+                  ValidationRuleOrderLineProductFieldFormat: {label: "Order Line's Product Field Format"},
+                  ValidationRuleOrderVendorFieldFormat: {label: "Orders Vendor's Field Format"},
+                  ValidationRuleEntryDutyFree: {label: "Entry Invoice Tariff SPI Indicates Duty Free"},
+                  ValidationRuleEntryInvoiceValueMatchesDaPercent: {label: "Entry Total Matches Invoice Deduction Additions"},
+                  ValidationRuleProductClassificationFieldFormat: {label: "Product Classification Field Format"},
+                  ValidationRuleBrokerInvoiceFieldFormat: {label: 'Broker Invoice Field Format'},
+                  ValidationRuleBrokerInvoiceLineFieldFormat: {label: 'Broker Invoice Line Field Format'},
+                  ValidationRuleEntryInvoiceChargeCode: {label: "Entry Broker Invoice Charge Codes"},
+                  ValidationRuleEntryTariffsMustIncludeAllTariffsOnProduct: { label: "Entry Tariffs Include all Product Tariffs" },
+                  ValidationRuleManifestDiscrepancies: { label: "ABI Manifest Discrepancies" },
+                  ValidationRuleEntryInvoiceCooMatchesMid: { label: "Entry Invoice Country of Origin Matches MID"},
+                  # DEPRECATED - doesn't appear in menu
+                  ValidationRuleFieldComparison: {label: "Field Comparison", enabled_lambda: -> { nil } },
+                  'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaInvoiceAudit'.to_sym =>
                   {
                     label: "Ascena Entry Invoice Audit",
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
+                    enabled_lambda: -> { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
-                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant'.to_sym=>
+                  'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleOrderVendorVariant'.to_sym =>
                   {
                     label: 'Lumber PO Vendor Variant Assignment',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Lumber Business Rules" }
+                    enabled_lambda: -> { MasterSetup.get.custom_feature? "Lumber Business Rules" }
                   },
-                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleCanadaEntryNafta'.to_sym=>
+                  'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleCanadaEntryNafta'.to_sym =>
                   {
-                      label: 'Lumber Canada Entry NAFTA Flagged Product',
-                      enabled_lambda: lambda { MasterSetup.get.custom_feature? "Lumber Business Rules" }
+                    label: 'Lumber Canada Entry NAFTA Flagged Product',
+                    enabled_lambda: -> { MasterSetup.get.custom_feature? "Lumber Business Rules" }
                   },
-                'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryInvoicePartMatchesOrder'.to_sym=>
+                  'OpenChain::CustomHandler::LumberLiquidators::LumberValidationRuleEntryInvoicePartMatchesOrder'.to_sym =>
                   {
                     label: 'Lumber Entry Invoice Part Matches Order',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
+                    enabled_lambda: -> { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
-                'OpenChain::CustomHandler::Pepsi::QuakerValidationRulePoNumberUnique'.to_sym=>
+                  'OpenChain::CustomHandler::Pepsi::QuakerValidationRulePoNumberUnique'.to_sym =>
                   {
                     label: 'Quaker Entry PO Number Unique',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
+                    enabled_lambda: -> { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
-                'OpenChain::CustomHandler::Hm::ValidationRuleHmInvoiceLineFieldFormat'.to_sym=>
+                  'OpenChain::CustomHandler::Hm::ValidationRuleHmInvoiceLineFieldFormat'.to_sym =>
                   {
                     label: 'H&M Invoice Line Field Format',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
+                    enabled_lambda: -> { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                   },
-                'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale'.to_sym=>
+                  'OpenChain::CustomHandler::Ascena::ValidationRuleAscenaFirstSale'.to_sym =>
                 {
                   label: "Ascena First Sale Validation",
-                  enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
+                  enabled_lambda: -> { MasterSetup.get.custom_feature? "Vandegrift Business Rules" }
                 },
-                ValidationRuleEntryInvoiceLineMatchesPo: {label:"Entry Invoice Line Matches PO"},
-                "OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule".to_sym => {label: "US Customs Statement Validations", enabled_lambda: lambda { MasterSetup.get.custom_feature? "Vandegrift Business Rules"} },
-                ValidationRuleEntryDoesNotSharePos: {label:"Entry PO Numbers Not Shared"},
-                ValidationRuleInvoiceLineMidFirstSale: {label: "Invoice Lines with MIDs Must be First Sale"},
-                ValidationRuleEntryReleased: {label: "Entry Not On Hold"},
-                'OpenChain::CustomHandler::AnnInc::AnnMpTypeAllDocsValidationRule'.to_sym =>
+                  ValidationRuleEntryInvoiceLineMatchesPo: {label: "Entry Invoice Line Matches PO"},
+                  "OpenChain::CustomHandler::Vandegrift::KewillEntryStatementValidationRule".to_sym => {label: "US Customs Statement Validations", enabled_lambda: -> { MasterSetup.get.custom_feature? "Vandegrift Business Rules"} },
+                  ValidationRuleEntryDoesNotSharePos: {label: "Entry PO Numbers Not Shared"},
+                  ValidationRuleInvoiceLineMidFirstSale: {label: "Invoice Lines with MIDs Must be First Sale"},
+                  ValidationRuleEntryReleased: {label: "Entry Not On Hold"},
+                  'OpenChain::CustomHandler::AnnInc::AnnMpTypeAllDocsValidationRule'.to_sym =>
                   {
                     label: 'Ann Vendor MP Type All Docs',
-                    enabled_lambda: lambda {MasterSetup.get.system_code=='ann'}
+                    enabled_lambda: -> {MasterSetup.get.system_code == 'ann'}
                   },
-                'OpenChain::CustomHandler::AnnInc::AnnMpTypeUponRequestValidationRule'.to_sym =>
+                  'OpenChain::CustomHandler::AnnInc::AnnMpTypeUponRequestValidationRule'.to_sym =>
                   {
                     label: 'Ann Vendor MP Type Upon Request',
-                    enabled_lambda: lambda {MasterSetup.get.system_code=='ann'}
+                    enabled_lambda: -> {MasterSetup.get.system_code == 'ann'}
                   },
-                'OpenChain::CustomHandler::AnnInc::AnnFirstSaleValidationRule'.to_sym =>
+                  'OpenChain::CustomHandler::AnnInc::AnnFirstSaleValidationRule'.to_sym =>
                  {
-                    label: 'Ann First Sale Validations',
-                    enabled_lambda: lambda {MasterSetup.get.custom_feature? "Ann"}
+                   label: 'Ann First Sale Validations',
+                   enabled_lambda: -> {MasterSetup.get.custom_feature? "Ann"}
                  },
-                 ValidationRuleEntrySpecialTariffsClaimed: {label: "Verify Claimed Special Tariffs"},
-                 ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"},
-                 ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"},
-                 'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"},
-                 ValidationRuleEntryFishWildlifeTransmittedDateFilled: {label: "Entry F&W Transmission Date Filled"},
-                 ValidationRuleHomeDepotMultipleDailyBis: {label: 'Home Depot Multiple Daily Broker Invoice Rule'},
-                 ValidationRuleInvoiceNumberMatchesInvoiceLinePO: {label: 'Invoice Line PO # first 8 digits match first 8 digits of Invoice'},
-                 ValidationRuleOrderLineHtsValid: {label: "Order Line HTS Valid"},
-                 ValidationRuleEntryDutyTaxesMatchSummary: {label: "Entry Invoice Line Duties, Taxes, & Fees Match 7501 Amounts"},
-                 ValidationRuleAssistApplied: {label: "Assist Applied"},
-                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet'.to_sym =>
+                  ValidationRuleEntrySpecialTariffsClaimed: {label: "Verify Claimed Special Tariffs"},
+                  ValidationRuleEntrySpecialTariffsNotClaimed: {label: "Ensure Special Tariffs Are Claimed"},
+                  ValidationRuleEntryMidMatchesMidList: {label: "Manufacturer IDs match cross reference"},
+                  'OpenChain::CustomHandler::Pvh::PvhValidationRuleEntryInvoiceLineMatchesShipmentLine'.to_sym => {label: "PVH Entry Matches ASN"},
+                  ValidationRuleEntryFishWildlifeTransmittedDateFilled: {label: "Entry F&W Transmission Date Filled"},
+                  ValidationRuleHomeDepotMultipleDailyBis: {label: 'Home Depot Multiple Daily Broker Invoice Rule'},
+                  ValidationRuleInvoiceNumberMatchesInvoiceLinePO: {label: 'Invoice Line PO # first 8 digits match first 8 digits of Invoice'},
+                  ValidationRuleOrderLineHtsValid: {label: "Order Line HTS Valid"},
+                  ValidationRuleEntryDutyTaxesMatchSummary: {label: "Entry Invoice Line Duties, Taxes, & Fees Match 7501 Amounts"},
+                  ValidationRuleAssistApplied: {label: "Assist Applied"},
+                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductClassTypeSet'.to_sym =>
                  {
-                    label: 'Ann Classification Type Set',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
+                   label: 'Ann Classification Type Set',
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "Ann" }
                  },
-                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet'.to_sym =>
+                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentOfValueSet'.to_sym =>
                  {
-                    label: 'Ann Product Tariff Percent of Value Set',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
+                   label: 'Ann Product Tariff Percent of Value Set',
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "Ann" }
                  },
-                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentsAddTo100'.to_sym =>
+                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffPercentsAddTo100'.to_sym =>
                  {
-                    label: 'Ann Product Tariff Percentages Add To 100',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
+                   label: 'Ann Product Tariff Percentages Add To 100',
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "Ann" }
                  },
-                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffKeyDescriptionSet'.to_sym =>
+                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductTariffKeyDescriptionSet'.to_sym =>
                  {
-                    label: 'Ann Product Tariff Key Description Set',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
+                   label: 'Ann Product Tariff Key Description Set',
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "Ann" }
                  },
-                 'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductOneTariff'.to_sym =>
+                  'OpenChain::CustomHandler::AnnInc::AnnValidationRuleProductOneTariff'.to_sym =>
                  {
-                    label: 'Ann Product Has One Tariff',
-                    enabled_lambda: lambda { MasterSetup.get.custom_feature? "Ann" }
+                   label: 'Ann Product Has One Tariff',
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "Ann" }
                  },
-                 'OpenChain::CustomHandler::Vandegrift::SpiClaimEntryValidationRule'.to_sym =>
+                  'OpenChain::CustomHandler::Vandegrift::SpiClaimEntryValidationRule'.to_sym =>
                  {
-                     label: 'No SPI Claimed',
-                     enabled_lambda: lambda { MasterSetup.get.custom_feature? "WWW" }
-                 }
-              }
+                   label: 'No SPI Claimed',
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "WWW" }
+                 }}.freeze
+  # rubocop:enable Layout/LineLength
 
-  def copy_attributes include_external:false
+  def copy_attributes include_external: false
     attrs = {}
     omit = [:id, :created_at, :updated_at, :delete_pending, :disabled, :business_validation_template_id].concat(include_external ? [] : [:group_id, :mailing_list_id])
-    attrs["business_validation_rule"] = JSON.parse(self.to_json except: omit)[self.model_name.element]
-    attrs["business_validation_rule"]["type"] = self.class.name
+    attrs["business_validation_rule"] = JSON.parse(self.to_json(except: omit))[self.model_name.element]
+    attrs["business_validation_rule"]["type"] = self.type
     attrs["business_validation_rule"]["search_criterions"] = self.search_criterions.map(&:copy_attributes)
     attrs
   end
 
   def self.parse_copy_attributes rule_hsh
-    rule = BusinessValidationRule.new(rule_hsh["business_validation_rule"].reject { |k, v| ["search_criterions"].include? k })
+    rule = BusinessValidationRule.new(rule_hsh["business_validation_rule"].reject { |k, _v| ["search_criterions"].include? k })
     rule_hsh["business_validation_rule"]["search_criterions"].each do |sc_hsh|
       rule.search_criterions << SearchCriterion.new(sc_hsh["search_criterion"])
     end
@@ -215,15 +213,15 @@ class BusinessValidationRule < ActiveRecord::Base
   end
 
   def self.subclasses_array
-    r = SUBCLASSES.collect {|k, v|
+    r = SUBCLASSES.collect do |k, v|
       v[:enabled_lambda] && !v[:enabled_lambda].call ? nil : [v[:label], k.to_s]
-    }
+    end
     r.compact!
     r.sort! {|pair1, pair2| pair1[0] <=> pair2[0]}
   end
 
   def active?
-    !self.disabled? && !self.delete_pending && !!self.business_validation_template.try(:active?)
+    !self.disabled? && !self.delete_pending && self.business_validation_template.try(:active?)
   end
 
   def rule_attributes
@@ -233,7 +231,7 @@ class BusinessValidationRule < ActiveRecord::Base
 
   # All this method really does is return true if a rule attribute key
   # is set with a boolean or string that evaluates to a true boolean (#to_boolean)
-  def has_flag? flag_key
+  def flag? flag_key
     (rule_attributes[flag_key].presence || false).to_s.to_boolean
   end
 
@@ -244,7 +242,7 @@ class BusinessValidationRule < ActiveRecord::Base
       next if sc_mf.blank?
 
       sc_cm = sc_mf.core_module
-      raise "Invalid object expected #{sc_cm.klass.name} got #{obj.class.name}" unless sc_cm == CoreModule.find_by_object(obj)
+      raise "Invalid object expected #{sc_cm.klass.name} got #{obj.class.name}" unless sc_cm == CoreModule.find_by(object: obj)
       return true unless sc.test? obj
     end
     false

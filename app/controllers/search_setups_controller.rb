@@ -18,7 +18,9 @@ class SearchSetupsController < ApplicationController
 
       search_setup.search_columns.destroy_all if !params[:search_setup][:search_columns_attributes].blank? # clear, they will be reloaded
       search_setup.sort_criterions.destroy_all # clear, they will be reloaded
-      search_setup.update_attributes(params[:search_setup])
+      # Again, as 4.2 strong params is really wonky when it comes to nested attributes, I'm doing a global permit!
+      # This needs to be fixed when we move to 5.
+      search_setup.update_attributes(params[:search_setup].permit!)
       redirect_to core_module_class(search_setup)
     end
   end

@@ -142,7 +142,7 @@ describe ValidatesFieldFormat do
 
       it "handles top level attributes that are not model field uids" do
         rule = Rule.new({"validate_all" => true, 'ordln_hts' => {'regex' => 'ABC'}, 'ordln_currency' => {'regex' => 'DEF'}, 'ordln_sku' => {'regex' => 'GHI'}})
-        expect(rule.has_flag?("validate_all")).to eq true
+        expect(rule.flag?("validate_all")).to eq true
         expect(rule.validate_field_format(order_line, {yield_failures: true}, &block)).to eq "All Order Line - HTS Code values do not match 'ABC' format.\nAll Order Line - Currency values do not match 'DEF' format.\nAll Order Line - SKU values do not match 'GHI' format."
       end
     end
