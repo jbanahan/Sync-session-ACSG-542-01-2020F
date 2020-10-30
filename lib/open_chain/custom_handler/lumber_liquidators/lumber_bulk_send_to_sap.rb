@@ -9,7 +9,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class BulkSend
 
   def self.act user, id, opts, bulk_process_log, sequence
     ord = Order.find id
-    if ord && ord.can_view?(user)
+    if ord&.can_view?(user)
       OpenChain::CustomHandler::LumberLiquidators::LumberSapOrderXmlGenerator.send_order ord, force_send: true
 
       # Populate a custom date field with the current date indicating that the order was manually sent to SAP.

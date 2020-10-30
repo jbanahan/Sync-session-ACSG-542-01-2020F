@@ -2,24 +2,24 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
   describe '#generate_xml' do
     def match_address xml, address
       expect(address.name).to eq xml.text('name')
-      expect(address.line_1).to eq xml.text('line-1') unless address.line_1.blank?
-      expect(address.line_2).to eq xml.text('line-2') unless address.line_2.blank?
-      expect(address.line_3).to eq xml.text('line-3') unless address.line_3.blank?
+      expect(address.line_1).to eq xml.text('line-1') if address.line_1.present?
+      expect(address.line_2).to eq xml.text('line-2') if address.line_2.present?
+      expect(address.line_3).to eq xml.text('line-3') if address.line_3.present?
       expect(address.city).to eq xml.text('city')
       expect(address.state).to eq xml.text('state')
       expect(address.postal_code).to eq xml.text('postal-code')
       expect(address.country.iso_code).to eq xml.text('country')
     end
     let :coo_cdef do
-      double('country_of_origin definition')
+      instance_double('country_of_origin definition')
     end
     let :prod_merch_cat_def do
-      double('prod_merch_cat definition')
+      instance_double('prod_merch_cat definition')
     end
     let :cdefs do
       {
-        ord_country_of_origin:coo_cdef,
-        prod_merch_cat:prod_merch_cat_def
+        ord_country_of_origin: coo_cdef,
+        prod_merch_cat: prod_merch_cat_def
       }
     end
     let :usa do
@@ -28,55 +28,55 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       c
     end
     let :first_port_receipt do
-      Port.new(unlocode:'CNSHA')
+      Port.new(unlocode: 'CNSHA')
     end
     let :vendor do
-      Company.new(system_code:'VENSYS')
+      Company.new(system_code: 'VENSYS')
     end
     let :product1 do
-      p = Product.new(unique_identifier:'PROD1', name:'PNAME1')
-      p.classifications.build(country:usa).tariff_records.build(hts_1:'1234567890')
+      p = Product.new(unique_identifier: 'PROD1', name: 'PNAME1')
+      p.classifications.build(country: usa).tariff_records.build(hts_1: '1234567890')
       allow(p).to receive(:custom_value).with(prod_merch_cat_def).and_return "MERCHCAT"
       p
     end
     let :ship_to do
-      Address.new(system_code:'SHPTOSYS')
+      Address.new(system_code: 'SHPTOSYS')
     end
     let :ship_from do
-      Address.new(name:'A1Name', line_1:'A1A', city:'A1C', state:'A1S', postal_code:'A1P', country:usa)
+      Address.new(name: 'A1Name', line_1: 'A1A', city: 'A1C', state: 'A1S', postal_code: 'A1P', country: usa)
     end
     let :order1 do
       o = Order.new(
-        order_number:'ORDNUM1',
-        currency:'USD',
-        ship_window_start:Date.new(2016, 9, 10),
-        ship_window_end:Date.new(2016, 9, 15),
-        terms_of_sale:'FOB'
+        order_number: 'ORDNUM1',
+        currency: 'USD',
+        ship_window_start: Date.new(2016, 9, 10),
+        ship_window_end: Date.new(2016, 9, 15),
+        terms_of_sale: 'FOB'
       )
       o.order_lines.build(
-        line_number:1,
-        product:product1,
-        quantity:50.25,
-        unit_of_measure:'EA',
-        price_per_unit:22.14,
-        ship_to:ship_to
+        line_number: 1,
+        product: product1,
+        quantity: 50.25,
+        unit_of_measure: 'EA',
+        price_per_unit: 22.14,
+        ship_to: ship_to
       )
       allow(o).to receive(:custom_value).with(coo_cdef).and_return 'CN'
       o
     end
     let :product2 do
-      p = Product.new(unique_identifier:'PROD2', name:'PNAME2')
+      p = Product.new(unique_identifier: 'PROD2', name: 'PNAME2')
       allow(p).to receive(:custom_value).with(prod_merch_cat_def).and_return "MERCHCAT"
       p
     end
     let :order2 do
-      o = Order.new(order_number:'ORDNUM2', currency:'USD')
+      o = Order.new(order_number: 'ORDNUM2', currency: 'USD')
       o.order_lines.build(
-        line_number:1,
-        product:product2,
-        quantity:75.55,
-        unit_of_measure:'EA',
-        price_per_unit:14.21
+        line_number: 1,
+        product: product2,
+        quantity: 75.55,
+        unit_of_measure: 'EA',
+        price_per_unit: 14.21
       )
       allow(o).to receive(:custom_value).with(coo_cdef).and_return 'CN'
       o
@@ -84,14 +84,14 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
 
     let :shipment do
       s = Shipment.new(
-        reference:'SHPREF',
-        requested_equipment:"2 40\n3 40HC",
-        cargo_ready_date:Date.new(2016, 8, 31),
-        booking_mode:'Air',
-        booking_shipment_type:'CY',
-        vendor:vendor,
-        ship_from:ship_from,
-        first_port_receipt:first_port_receipt
+        reference: 'SHPREF',
+        requested_equipment: "2 40\n3 40HC",
+        cargo_ready_date: Date.new(2016, 8, 31),
+        booking_mode: 'Air',
+        booking_shipment_type: 'CY',
+        vendor: vendor,
+        ship_from: ship_from,
+        first_port_receipt: first_port_receipt
       )
       b1 = s.booking_lines.build
       b1.product = product1
@@ -103,7 +103,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       b2.quantity = b2.order_line.quantity
       s
     end
-    it "should generate base xml" do
+
+    it "generates base xml" do
       xml = described_class.generate_xml(shipment, cdefs)
       root = xml.root
       expect(root.name).to eq 'booking'
@@ -149,33 +150,36 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       match_address(root.elements['address[@type="seller"][1]'], ship_from)
       match_address(root.elements['address[@type="manufacturer"][1]'], ship_from)
       ll_corp = Address.new(
-        name:'Lumber Liquidators',
-        line_1:'4901 Bakers Mill Lane',
+        name: 'Lumber Liquidators',
+        line_1: '4901 Bakers Mill Lane',
         city: 'Richmond',
         state: 'VA',
-        postal_code:'23230-2431',
-        country:usa
+        postal_code: '23230-2431',
+        country: usa
       )
       match_address(root.elements['address[@type="buyer"][1]'], ll_corp)
     end
 
-    it "should generate canceled_date" do
+    it "generates canceled_date" do
       s = shipment
-      s.canceled_date = Time.now
+      s.canceled_date = Time.zone.now
       xml = described_class.generate_xml(s, cdefs)
       expect(xml.root.text('canceled-date')).to match(/^[0-9]{4}/)
     end
-    it "should fail on mode other than AIR or OCEAN" do
+
+    it "fails on mode other than AIR or OCEAN" do
       s = shipment
       s.booking_mode = 'Truck'
       expect {described_class.generate_xml(s, cdefs)}.to raise_error(/Invalid mode/)
     end
-    it "should fail on service type other than CY, CFS, or AIR" do
+
+    it "fails on service type other than CY, CFS, or AIR" do
       s = shipment
       s.booking_shipment_type = 'Other'
       expect {described_class.generate_xml(s, cdefs)}.to raise_error(/Invalid service type/)
     end
-    it "should translate FT2 & FTK to SFT for unit of measure" do
+
+    it "translates FT2 & FTK to SFT for unit of measure" do
       s = shipment
       s.booking_lines.first.order_line.unit_of_measure = 'FT2'
       s.booking_lines.last.order_line.unit_of_measure = 'FTK'
@@ -183,7 +187,8 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberExpeditorsBookingXml
       expect(xml.root.elements['booking-lines/booking-line[1]'].text('unit-of-measure')).to eq 'SFT'
       expect(xml.root.elements['booking-lines/booking-line[2]'].text('unit-of-measure')).to eq 'SFT'
     end
-    it "should translate FOT to FT for unit of measure" do
+
+    it "translates FOT to FT for unit of measure" do
       s = shipment
       s.booking_lines.first.order_line.unit_of_measure = 'FOT'
       xml = described_class.generate_xml(s, cdefs)

@@ -5,12 +5,12 @@ class ShipmentsController < ApplicationController
   include BulkSendToTestSupport
 
   def set_page_title
-    @page_title ||= 'Shipment'
+    @page_title ||= 'Shipment' # rubocop:disable Naming/MemoizedInstanceVariableName
   end
 
-	def root_class
-	  Shipment
-	end
+  def root_class
+    Shipment
+  end
 
   def index
     flash.keep
@@ -28,9 +28,9 @@ class ShipmentsController < ApplicationController
   # GET /shipments/new.xml
   def new
     s = Shipment.new
-    action_secure(s.can_edit?(current_user), s, {:verb => "create", :module_name=>"shipment"}) {
+    action_secure(s.can_edit?(current_user), s, {verb: "create", module_name: "shipment"}) do
       @no_action_bar = true
-    }
+    end
   end
 
   # GET /shipments/1/edit
@@ -41,16 +41,16 @@ class ShipmentsController < ApplicationController
   def download
     s = Shipment.where(id: params[:id]).includes(:importer).first
 
-    action_secure(s.can_edit?(current_user), s, {:verb => "download", :module_name=>"shipment"}) {
+    action_secure(s.can_edit?(current_user), s, {verb: "download", module_name: "shipment"}) do
       generator = case s.importer.try(:system_code)
-        when "JJILL"
+                  when "JJILL"
           OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator
-        else
+                  else
           OpenChain::CustomHandler::ShipmentDownloadGenerator
         end
       builder = XlsxBuilder.new
       generator.new.generate(builder, s, current_user)
-      send_builder_data builder, "#{s.reference}"
-    }
+      send_builder_data builder, s.reference.to_s
+    end
   end
 end

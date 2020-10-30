@@ -27,7 +27,11 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = Shipment.find params[:id]
     raise StatusableError.new('Order and shipment importer must match.', 400) unless s.importer == order.importer
     raise StatusableError.new('Order and shipment vendor must match.', 400) unless s.vendor == order.vendor
+    # rubocop:disable Lint/AssignmentInCondition
+    # Yes, this is broken. It has been broken since Glick wrote it. However, we do not want to mess with the line in case
+    # it manages to bork code (specifically Lumber code.)
     raise StatusableError.new('Order and shipment must have same ship from address.', 400) unless s.ship_from = order.ship_from
+    # rubocop:enable Lint/AssignmentInCondition
     h = {
       id: s.id,
       booking_lines: lines
@@ -38,33 +42,34 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def available_orders
-    s = get_shipment
+    s = shipment
     ord_fields = [:ord_ord_num, :ord_cust_ord_no, :ord_mode, :ord_imp_name, :ord_ord_date, :ord_ven_name]
     r = []
     s.available_orders(current_user).order('customer_order_number').limit(25).each do |ord|
-      hsh = {id:ord.id}
+      hsh = {id: ord.id}
       ord_fields.each {|uid| hsh[uid] = output_generator.export_field(uid, ord)}
       r << hsh
     end
-    render json: {available_orders:r}
+    render json: {available_orders: r}
   end
 
   def booked_orders
-    s = get_shipment
+    s = shipment
     ord_fields = [:ord_ord_num, :ord_cust_ord_no]
     result = []
     lines_available = s.booking_lines.where('order_line_id IS NOT NULL').any?
     order_ids = s.booking_lines.where('order_id IS NOT NULL').uniq.pluck(:order_id) # select distinct order_id from booking_lines where...
     Order.where(id: order_ids).each do |order|
-      hsh = {id:order.id}
+      hsh = {id: order.id}
       ord_fields.each {|uid| hsh[uid] = output_generator.export_field(uid, order)}
       result << hsh
     end
-    render json: {booked_orders:result, lines_available: lines_available}
+    render json: {booked_orders: result, lines_available: lines_available}
   end
 
-  def available_lines # makes a fake order based on booking lines.
-    s = get_shipment
+  # makes a fake order based on booking lines.
+  def available_lines
+    s = shipment
     lines = s.booking_lines.where('order_line_id IS NOT NULL').map do |line|
       {id: line.order_line_id,
        ordln_line_number: line.line_number,
@@ -127,56 +132,56 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to request a booking.", :forbidden) unless s.can_request_booking?(current_user)
     s.async_request_booking! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def approve_booking
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to approve a booking.", :forbidden) unless s.can_approve_booking?(current_user)
     s.async_approve_booking! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def confirm_booking
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to confirm a booking.", :forbidden) unless s.can_confirm_booking?(current_user)
     s.async_confirm_booking! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def revise_booking
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to revise this booking.", :forbidden) unless s.can_revise_booking?(current_user)
     s.async_revise_booking! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def request_cancel
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to request a booking.", :forbidden) unless s.can_request_cancel?(current_user)
     s.async_request_cancel! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def cancel
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to cancel this booking.", :forbidden) unless s.can_cancel?(current_user)
     s.async_cancel_shipment! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def uncancel
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have permission to undo canceling this booking.", :forbidden) unless s.can_uncancel?(current_user)
     s.async_uncancel_shipment! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def send_shipment_instructions
     s = Shipment.find params[:id]
     raise StatusableError.new("You do not have to send shipment instructions.", :forbidden) unless s.can_send_shipment_instructions?(current_user)
     s.async_send_shipment_instructions! current_user
-    render json: {'ok'=>'ok'}
+    render json: {'ok' => 'ok'}
   end
 
   def send_isf
@@ -190,12 +195,16 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def save_object h
-    shp = h['id'].blank? ? Shipment.new : Shipment.includes([
-      {shipment_lines: [:piece_sets, {custom_values:[:custom_definition]}, :product]},
-      {booking_lines: [:order_line, :product]},
-      :containers,
-      {custom_values:[:custom_definition]}
-    ]).find_by_id(h['id'])
+    shp = if h['id'].blank?
+            Shipment.new
+          else
+            Shipment.includes([
+                                {shipment_lines: [:piece_sets, {custom_values: [:custom_definition]}, :product]},
+                                {booking_lines: [:order_line, :product]},
+                                :containers,
+                                {custom_values:  [:custom_definition]}])
+                    .find_by(id: h['id'])
+          end
     raise StatusableError.new("Object with id #{h['id']} not found.", 404) if shp.nil?
     shp = freeze_custom_values shp, false # don't include order fields
     import_fields h, shp, CoreModule::SHIPMENT
@@ -206,7 +215,6 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     raise StatusableError.new("You do not have permission to save this Shipment.", :forbidden) unless shp.can_edit?(current_user)
     shp.save if shp.errors.full_messages.blank?
     shp
-
   end
 
   def json_generator
@@ -214,16 +222,18 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   end
 
   def shipment_lines
-    s = get_shipment
+    s = shipment
     h = {id: s.id}
     render_order_fields = output_generator.render_order_fields?
-    h['lines'] = output_generator.render_lines(output_generator.preload_shipment_lines(s, render_order_fields, true), output_generator.shipment_line_fields_to_render, render_order_fields)
+    h['lines'] = output_generator
+                 .render_lines(output_generator.preload_shipment_lines(s, render_order_fields, true),
+                               output_generator.shipment_line_fields_to_render, render_order_fields)
 
     render json: {'shipment' => h}
   end
 
   def booking_lines
-    s = get_shipment
+    s = shipment
     h = {id: s.id}
     h['booking_lines'] = output_generator.render_lines(output_generator.preload_booking_lines(s), output_generator.booking_line_fields_to_render)
 
@@ -240,24 +250,24 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     render_order_fields = output_generator.render_order_fields?
 
     includes_array[0][:shipment_lines][0] = {piece_sets: {order_line: [:custom_values, :product, :order]}} if render_order_fields
-    s = Shipment.where(id:id).includes(includes_array).first
+    s = Shipment.where(id: id).includes(includes_array).first
     s = freeze_custom_values s, render_order_fields
     s
   end
 
   def autocomplete_order
     results = []
-    if !params[:n].blank?
-      s = get_shipment
+    if params[:n].present?
+      s = shipment
 
       orders = s.available_orders current_user
-      results = orders.where('customer_order_number LIKE ? OR order_number LIKE ?', "%#{params[:n]}%", "%#{params[:n]}%").
-                  limit(10).
-                  collect {|order|
+      results = orders.where('customer_order_number LIKE ? OR order_number LIKE ?', "%#{params[:n]}%", "%#{params[:n]}%")
+                      .limit(10)
+                      .collect do |order|
                     # Use whatever field matched as the title that's getting returned
                     title = (order.customer_order_number.to_s.upcase.include?(params[:n].to_s.upcase) ? order.customer_order_number : order.order_number)
-                    {order_number:(title), id:order.id}
-                  }
+                    {order_number: title, id: order.id}
+      end
     end
 
     render json: results
@@ -265,13 +275,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def autocomplete_product
     results = []
-    if !params[:n].blank?
-      s = get_shipment
+    if params[:n].present?
+      s = shipment
 
       products = s.available_products current_user
-      results = products.where("unique_identifier LIKE ? ", "%#{params[:n]}%").
-                  limit(10).
-                  collect {|product| { unique_identifier:product.unique_identifier, id:product.id }}
+      results = products.where("unique_identifier LIKE ? ", "%#{params[:n]}%")
+                        .limit(10)
+                        .collect {|product| { unique_identifier: product.unique_identifier, id: product.id }}
     end
 
     render json: results
@@ -279,20 +289,24 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def autocomplete_address
     json = []
-    if !params[:n].blank?
-      s = get_shipment
+    if params[:n].present?
+      s = shipment
 
-      result = Address.where('addresses.name like ?', "%#{params[:n]}%").where(in_address_book:true).joins(:company).where(Company.secure_search(current_user)).where(companies: {id: s.importer_id})
+      result = Address.where('addresses.name like ?', "%#{params[:n]}%")
+                      .where(in_address_book: true)
+                      .joins(:company).where(Company.secure_search(current_user))
+                      .where(companies: {id: s.importer_id})
+
       result = result.order(:name)
       result = result.limit(10)
-      json = result.map {|address| {name:address.name, full_address:address.full_address, id:address.id} }
+      json = result.map {|address| {name: address.name, full_address: address.full_address, id: address.id} }
     end
 
     render json: json
   end
 
   def create_address
-    s = get_shipment
+    s = shipment
 
     address = Address.new params[:address]
     address.company = s.importer
@@ -304,15 +318,17 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   private
 
-  def get_shipment
+  def shipment
     s = Shipment.find params[:id]
     raise StatusableError.new("Shipment not found.", 404) unless s.can_view?(current_user)
     s
   end
 
   def load_lines shipment, h
-    if h['lines']
-      h['lines'].each_with_index do |base_ln, i|
+# If the product id is set, then there's no need for these fields (and they'll slow down loading)
+# If both of these are present, remove the shpln_prod_db_id because it doesn't validate user can view the product
+# dont' need to update for both
+h['lines']&.each_with_index do |base_ln, _i|
         ln = base_ln.clone
         # If the product id is set, then there's no need for these fields (and they'll slow down loading)
         if ln["shpln_prod_id"].present? || ln["shpln_prod_db_id"].present?
@@ -322,13 +338,13 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
             # If both of these are present, remove the shpln_prod_db_id because it doesn't validate user can view the product
             ln.delete 'shpln_prod_db_id'
           end
-        elsif !ln['shpln_puid'].blank? && !ln['shpln_pname'].blank?
+        elsif ln['shpln_puid'].present? && ln['shpln_pname'].present?
           ln.delete 'shpln_pname' # dont' need to update for both
         end
         s_line = shipment.shipment_lines.find {|obj| match_numbers?(ln['id'], obj.id) || match_numbers?(ln['shpln_line_number'], obj.line_number)}
         if s_line.nil?
           raise StatusableError.new("You cannot add lines to this shipment.", 400) unless shipment.can_add_remove_shipment_lines?(current_user)
-          s_line = shipment.shipment_lines.build(line_number:ln['cil_line_number'])
+          s_line = shipment.shipment_lines.build(line_number: ln['cil_line_number'])
         end
         if ln['_destroy']
           raise StatusableError.new("You cannot remove lines from this shipment.", 400) unless shipment.can_add_remove_shipment_lines?(current_user)
@@ -337,16 +353,17 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
         end
         import_fields ln, s_line, CoreModule::SHIPMENT_LINE
         if ln['linked_order_line_id']
-          o_line = OrderLine.find_by_id ln['linked_order_line_id']
-          shipment.errors[:base] << "Order line #{ln['linked_order_line_id']} not found." unless o_line && o_line.can_view?(current_user)
+          o_line = OrderLine.find_by id: ln['linked_order_line_id']
+          shipment.errors[:base] << "Order line #{ln['linked_order_line_id']} not found." unless o_line&.can_view?(current_user)
           s_line.product = o_line.product if s_line.product.nil?
+          # rubocop:disable Layout/LineLength
           shipment.errors[:base] << "Order line #{o_line.id} does not have the same product as the shipment line provided (#{s_line.product.unique_identifier})" unless s_line.product == o_line.product
+          # rubocop:enable Layout/LineLength
           s_line.linked_order_line_id = ln['linked_order_line_id']
         end
         shipment.errors[:base] << "Product required for shipment lines." unless s_line.product
         shipment.errors[:base] << "Product not found." if s_line.product && !s_line.product.can_view?(current_user)
-      end
-    end
+end
   end
 
   def load_booking_lines(shipment, h)
@@ -361,7 +378,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
         if s_line.nil?
           raise StatusableError.new("You cannot add lines to this shipment.", 400) unless shipment.can_add_remove_booking_lines?(current_user)
           max_line_number = shipment.booking_lines.maximum(:line_number) || 0
-          s_line = shipment.booking_lines.build(line_number:max_line_number+(i+1))
+          s_line = shipment.booking_lines.build(line_number: max_line_number + (i + 1))
         end
         if ln['_destroy']
           raise StatusableError.new("You cannot remove lines from this shipment.", 400) unless shipment.can_add_remove_booking_lines?(current_user)
@@ -371,7 +388,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
         s_line.order_line_id = ln['bkln_order_line_id'] if ln['bkln_order_line_id']
         # If the data has a order line id, blank out the order id and product id values.  The order line should always provide order and product data for the booking line.
         # If order line id is set and order or product ids are present a validation will also fail and the save will rollback.
-        if !s_line.order_line_id.blank?
+        if s_line.order_line_id.present?
           s_line.order_id = nil
           s_line.product_id = nil
           ln['bkln_order_id'] = nil
@@ -426,7 +443,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
   def all_shipment_lines_will_be_deleted? line_collection, line_array
     line_collection.each do |ln|
-      l_a = line_array ? line_array : []
+      l_a = line_array || []
       ln_hash = l_a.find {|lh| lh['id'].to_s == ln.id.to_s}
 
       # if the hash has the _destroy then keep going to the next line
@@ -446,30 +463,25 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     # get_custom_value methods don't double check the DB for missing custom values
     if s
       s.freeze_custom_values
-      s.shipment_lines.each {|sl|
+      s.shipment_lines.each do |sl|
         sl.freeze_custom_values
-        if sl.product
-          sl.product.freeze_custom_values
-        end
+        sl.product&.freeze_custom_values
 
         if include_order_lines
-          sl.piece_sets.each {|ps|
+          sl.piece_sets.each do |ps|
             ol = ps.order_line
             if ol
               ol.freeze_custom_values
-              if ol.product
-                ol.product.freeze_custom_values
-              end
+              ol.product&.freeze_custom_values
             end
-          }
+          end
         end
-      }
+      end
     end
     s
   end
 
   def attachment_job(job_name)
-    begin
       s = Shipment.find params[:id]
       raise StatusableError.new("You do not have permission to edit this Shipment.", :forbidden) unless s.can_edit?(current_user)
       ids_to_process = params[:attachment_ids].map(&:to_i)
@@ -478,20 +490,19 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
 
       if ajs.count > 1
         AttachmentProcessJobRunner.delay.async_run_jobs(current_user.id, ajs.map(&:id), job_name, params[:manufacturer_address_id], params[:enable_warnings])
-        render json:{object_param_name => obj_to_json_hash(s), notices: ["Worksheets have been submitted for processing. You'll receive a system message when they finish."]}
+        render json: {object_param_name => obj_to_json_hash(s), notices: ["Worksheets have been submitted for processing. You'll receive a system message when they finish."]}
       else
         AttachmentProcessJobRunner.run_job(ajs.first, job_name, params[:manufacturer_address_id], params[:enable_warnings])
         render_show CoreModule::SHIPMENT
       end
-    rescue => e
-      ajs.first.update_attributes!(error_message: e.message) if ajs&.first && !(e.instance_of? AttachmentAlreadyProcessedError)
+  rescue StandardError => e
+      ajs.first.update!(error_message: e.message) if ajs&.first && !(e.instance_of? AttachmentAlreadyProcessedError)
       raise e
-    end
   end
 
   class AttachmentProcessJobRunner
     def self.run_job aj, job_name, manufacturer_address_id, enable_warnings
-      aj.update_attributes!(start_at:Time.now, error_message: nil)
+      aj.update!(start_at: Time.zone.now, error_message: nil)
       if ['Tradecard Pack Manifest', 'Manifest Worksheet'].include? job_name
         aj.process manufacturer_address_id: manufacturer_address_id, enable_warnings: enable_warnings
       else
@@ -503,26 +514,27 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
       errors = []
       aj = nil
       ids.each do |id|
-        begin
+
           aj = AttachmentProcessJob.find id
           run_job aj, job_name, manufacturer_address_id, enable_warnings
-        rescue => e
+      rescue StandardError => e
           errors << "#{aj.attachment.attached_file_name}: #{e.message}"
-          aj.update_attributes!(error_message: e.message) if !(e.instance_of? AttachmentAlreadyProcessedError)
-        end
+          aj.update!(error_message: e.message) if !(e.instance_of? AttachmentAlreadyProcessedError)
+
       end
 
       user = User.find user_id
       if errors.present?
+        # rubocop:disable Rails/OutputSafety
         user.messages.create! subject: "Shipment #{aj.attachable.reference} worksheet upload completed with errors.",
                               body: "The following worksheets could not be processed *** #{errors.join(' *** ')}".html_safe
+        # rubocop:enable Rails/OutputSafety
       else
         user.messages.create! subject: "Shipment #{aj.attachable.reference} worksheet upload completed.",
                               body: "All worksheets processed successfully."
       end
     end
   end
-
 
   class AttachmentAlreadyProcessedError < StatusableError
     def initialize att_names
@@ -535,8 +547,8 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     return if ids.blank?
 
     unlinked_at_names = Attachment.where(id: ids_to_process)
-                                   .where("id NOT IN (?)", ids)
-                                   .map(&:attached_file_name)
+                                  .where("id NOT IN (?)", ids)
+                                  .map(&:attached_file_name)
 
     if unlinked_at_names.present?
       raise StatusableError.new("Processing cancelled. The following attachments are not linked to the shipment: #{unlinked_at_names.join(', ')}", 400)
@@ -546,18 +558,18 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def get_attachment_process_jobs shipment, ids_to_process, job_name
     existing_ajs = shipment.attachment_process_jobs.where(attachment_id: ids_to_process, job_name: job_name)
     already_submitted_names = existing_ajs.select { |aj| aj.start_at && aj.error_message.blank? }.map { |aj| aj.attachment.attached_file_name}
-    raise AttachmentAlreadyProcessedError.new(already_submitted_names) if already_submitted_names.present?
+    raise AttachmentAlreadyProcessedError, already_submitted_names if already_submitted_names.present?
     ids_to_process.map do |id|
       existing_ajs.find do |aj|
         aj.attachment_id == id
-             # set start_at even though it will eventually be overwritten. Prevents user from submitting attachments more than once when processing is done on a delay
+        # set start_at even though it will eventually be overwritten. Prevents user from submitting attachments more than once when processing is done on a delay
       end || AttachmentProcessJob.create!(attachable: shipment, user: current_user, attachment_id: id, job_name: job_name,
-                                          start_at:Time.now, error_message: nil)
+                                          start_at: Time.zone.now, error_message: nil)
     end
   end
 
   def make_booking_lines_for_order order_id
-    o = Order.includes(:order_lines).where(id:order_id).first
+    o = Order.includes(:order_lines).where(id: order_id).first
     raise StatusableError.new("Order not found", 404) unless o.can_view?(current_user)
     raise StatusableError.new("You do not have permission to book this order.", 403) unless o.can_book?(current_user)
     lines = []
@@ -570,6 +582,5 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
     end
     [lines, o]
   end
-
 
 end; end; end

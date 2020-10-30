@@ -12,6 +12,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
 
   class << self
     private
+
       def add_transaction_info_element elem_root, shipment
         elem_transaction_info = add_element(elem_root, 'TransactionInfo')
         add_element(elem_transaction_info, 'MessageSender', 'ACSVFILLQ')
@@ -40,12 +41,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
         shipment.booking_lines.each do |line|
           add_item_element elem_shipping_order, line
         end
-        requested_equipment_breakdown = shipment.get_requested_equipment_pieces
+        requested_equipment_breakdown = shipment.requested_equipment_pieces
         requested_equipment_breakdown.each do |requested_equipment_arr|
           add_equipment_element elem_shipping_order, requested_equipment_arr
         end
-        add_party_info_element elem_shipping_order, 'Supplier', shipment.vendor, include_address:false
-        if first_booking_line && first_booking_line.order_line
+        add_party_info_element elem_shipping_order, 'Supplier', shipment.vendor, include_address: false
+        if first_booking_line&.order_line
           add_party_info_element elem_shipping_order, 'Factory', first_booking_line.order_line.order.ship_from, use_id_as_code: true
           add_party_info_element elem_shipping_order, 'ShipTo', first_booking_line.order_line.ship_to
         end
@@ -56,7 +57,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
       end
 
       def add_port_of_loading_element elem_shipping_order, booking_line
-        if booking_line && booking_line.order && booking_line.order.fob_point
+        if booking_line&.order && booking_line.order.fob_point
           elem_port_of_loading = add_element(elem_shipping_order, 'PortOfLoading')
           elem_city_code = add_element(elem_port_of_loading, 'CityCode', booking_line.order.fob_point)
           elem_city_code.attributes['Qualifier'] = 'UN'
@@ -89,7 +90,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
       def get_gtn_quantity_uom booking_line
         uom = nil
         if booking_line.order_line
-          uom = DataCrossReference.where(cross_reference_type:DataCrossReference::LL_GTN_QUANTITY_UOM, key:booking_line.order_line.unit_of_measure).pluck(:value).first
+          uom = DataCrossReference.where(cross_reference_type: DataCrossReference::LL_GTN_QUANTITY_UOM, key: booking_line.order_line.unit_of_measure).pluck(:value).first
         end
         uom
       end
@@ -103,10 +104,10 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
       end
 
       def get_gtn_equipment_type equipment_type
-        DataCrossReference.where(cross_reference_type:DataCrossReference::LL_GTN_EQUIPMENT_TYPE, key:equipment_type).pluck(:value).first
+        DataCrossReference.where(cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE, key: equipment_type).pluck(:value).first
       end
 
-      def add_party_info_element elem_shipping_order, party_type, addr, include_address:true, use_id_as_code:false
+      def add_party_info_element elem_shipping_order, party_type, addr, include_address: true, use_id_as_code: false
         if addr
           elem_party_info = add_element(elem_shipping_order, 'PartyInfo')
           add_element(elem_party_info, 'Type', party_type)
@@ -127,4 +128,4 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberBo
       end
   end
 
-end;end;end;end
+end; end; end; end

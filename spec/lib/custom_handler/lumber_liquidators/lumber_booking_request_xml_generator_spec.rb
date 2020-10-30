@@ -16,39 +16,39 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     end
 
     let :vendor do
-      Company.new(system_code:'VCode', name:'VName')
+      Company.new(system_code: 'VCode', name: 'VName')
     end
 
     let :ship_from do
-      Address.new(system_code:'SFCode', name:'SFName', line_1:'SFA', city:'SFC', state:'SFS', postal_code:'SFP', country:china)
+      Address.new(system_code: 'SFCode', name: 'SFName', line_1: 'SFA', city: 'SFC', state: 'SFS', postal_code: 'SFP', country: china)
     end
 
     let :ship_to do
-      Address.new(system_code:'STCode', name:'STName', line_1:'STA1', line_2:'STA2', line_3:'STA3', city:'STC', state:'STS', postal_code:'STP', country:usa)
+      Address.new(system_code: 'STCode', name: 'STName', line_1: 'STA1', line_2: 'STA2', line_3: 'STA3', city: 'STC', state: 'STS', postal_code: 'STP', country: usa)
     end
 
     let :product1 do
       # Zero padding should be ignored/stripped.
-      Product.new(unique_identifier:'00000PROD1', name:'PNAME1')
+      Product.new(unique_identifier: '00000PROD1', name: 'PNAME1')
     end
 
     let :product2 do
-      Product.new(unique_identifier:'PROD2', name:'PNAME2')
+      Product.new(unique_identifier: 'PROD2', name: 'PNAME2')
     end
 
     let :order1 do
       o = Order.new(
-        order_number:'ORDNUM1',
-        fob_point:'BRIOA',
-        vendor:vendor,
-        importer:vendor,
+        order_number: 'ORDNUM1',
+        fob_point: 'BRIOA',
+        vendor: vendor,
+        importer: vendor,
         ship_from: ship_from
       )
       ol = OrderLine.new(
-        line_number:1,
-        product:product1,
-        unit_of_measure:'LBR',
-        ship_to:ship_to
+        line_number: 1,
+        product: product1,
+        unit_of_measure: 'LBR',
+        ship_to: ship_to
       )
       o.order_lines << ol
 
@@ -58,16 +58,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
 
     let :order2 do
       o = Order.new(
-        order_number:'ORDNUM2',
-        fob_point:'BRIOB',
-        vendor:vendor,
-        importer:vendor
+        order_number: 'ORDNUM2',
+        fob_point: 'BRIOB',
+        vendor: vendor,
+        importer: vendor
       )
       ol = OrderLine.new(
-        line_number:1,
-        product:product2,
-        unit_of_measure:'FT',
-        ship_to:ship_to
+        line_number: 1,
+        product: product2,
+        unit_of_measure: 'FT',
+        ship_to: ship_to
       )
       o.order_lines << ol
 
@@ -76,16 +76,16 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     end
 
     let :shipment do
-      user = User.new(first_name:'Bjork', last_name:'Eyjafjallajokull')
+      user = User.new(first_name: 'Bjork', last_name: 'Eyjafjallajokull')
 
       s = Shipment.new(
-        reference:'SHPREF',
-        cargo_ready_date:ActiveSupport::TimeZone['UTC'].parse('2016-08-31 09:10:11.345'),
-        booking_shipment_type:'CY',
-        booking_mode:'Air',
-        requested_equipment:"2 20STD\n3 40HQ",
-        vendor:vendor,
-        booking_requested_by:user
+        reference: 'SHPREF',
+        cargo_ready_date: ActiveSupport::TimeZone['UTC'].parse('2016-08-31 09:10:11.345'),
+        booking_shipment_type: 'CY',
+        booking_mode: 'Air',
+        requested_equipment: "2 20STD\n3 40HQ",
+        vendor: vendor,
+        booking_requested_by: user
       )
 
       b1 = BookingLine.new(
@@ -111,10 +111,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     end
 
     it "generates xml" do
-      xref_uom_1 = DataCrossReference.create! key:'LBR', value:'LBS', cross_reference_type: DataCrossReference::LL_GTN_QUANTITY_UOM
-      xref_uom_2 = DataCrossReference.create! key:'FT', value:'FTQTY', cross_reference_type: DataCrossReference::LL_GTN_QUANTITY_UOM
-      xref_equip_1 = DataCrossReference.create! key:'20STD', value:'D20', cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE
-      xref_equip_2 = DataCrossReference.create! key:'40HQ', value:'HC40', cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE
+      DataCrossReference.create! key: 'LBR', value: 'LBS', cross_reference_type: DataCrossReference::LL_GTN_QUANTITY_UOM
+      DataCrossReference.create! key: 'FT', value: 'FTQTY', cross_reference_type: DataCrossReference::LL_GTN_QUANTITY_UOM
+      DataCrossReference.create! key: '20STD', value: 'D20', cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE
+      DataCrossReference.create! key: '40HQ', value: 'HC40', cross_reference_type: DataCrossReference::LL_GTN_EQUIPMENT_TYPE
 
       now = ActiveSupport::TimeZone['UTC'].parse('2017-01-01 10:11:12.555')
       Timecop.freeze(now) do
@@ -123,7 +123,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         expect(root.name).to eq 'ShippingOrderMessage'
 
         elem_transaction_info = root.elements['TransactionInfo']
-        expect(elem_transaction_info).to_not be_nil
+        expect(elem_transaction_info).not_to be_nil
         expect(elem_transaction_info.text('MessageSender')).to eq('ACSVFILLQ')
         expect(elem_transaction_info.text('MessageRecipient')).to eq('ACSVFILLQ')
         expect(elem_transaction_info.text('MessageID')).to eq('20170101101112555')
@@ -132,7 +132,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         expect(elem_transaction_info.text('MessageOriginator')).to eq('ACSVFILLQ')
 
         elem_shipping_order = root.elements['ShippingOrder']
-        expect(elem_shipping_order).to_not be_nil
+        expect(elem_shipping_order).not_to be_nil
         expect(elem_shipping_order.attributes['ShippingOrderNumber']).to eq('SHPREF')
         expect(elem_shipping_order.text('Purpose')).to eq('Create')
         expect(elem_shipping_order.text('ShippingOrderNumber')).to eq('SHPREF')
@@ -145,9 +145,9 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         expect(elem_shipping_order.text('UserDefinedReferenceField1')).to eq('Bjork Eyjafjallajokull')
 
         elem_port_of_loading = elem_shipping_order.elements['PortOfLoading']
-        expect(elem_port_of_loading).to_not be_nil
+        expect(elem_port_of_loading).not_to be_nil
         elem_city_code = elem_port_of_loading.elements['CityCode']
-        expect(elem_city_code).to_not be_nil
+        expect(elem_city_code).not_to be_nil
         expect(elem_city_code.text).to eq('BRIOA')
         expect(elem_city_code.attributes['Qualifier']).to eq('UN')
 
@@ -163,7 +163,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         expect(elem_total_gross_weight).not_to be_nil
         expect(elem_total_gross_weight.text).to eq('99.88')
         expect(elem_total_gross_weight.attributes['Unit']).to eq('KG')
-        expect(elem_item_1.text "TotalCubicMeters").to eq "1.23"
+        expect(elem_item_1.text("TotalCubicMeters")).to eq "1.23"
         elem_quantity = elem_item_1.elements['Quantity']
         expect(elem_quantity).not_to be_nil
         expect(elem_quantity.text).to eq('50.25')
@@ -175,7 +175,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
         expect(elem_item_2.text('ItemNumber')).to eq('PROD2')
         expect(elem_item_2.text('CommodityDescription')).to eq('PNAME2')
         expect(elem_item_2.text('TotalGrossWeight')).to eq('88.99')
-        expect(elem_item_2.text "TotalCubicMeters").to eq "4.56"
+        expect(elem_item_2.text("TotalCubicMeters")).to eq "4.56"
         elem_quantity_2 = elem_item_2.elements['Quantity']
         expect(elem_quantity_2).not_to be_nil
         expect(elem_quantity_2.text).to eq('75.55')
@@ -232,10 +232,10 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
     end
 
     it "handles missing address content, xrefs, nil-sensitive shipment data, order FOB point" do
-      shipment.update_attributes!(cargo_ready_date:nil, ship_from:nil, vendor:nil, booking_requested_by:nil, requested_equipment:nil)
+      shipment.update!(cargo_ready_date: nil, ship_from: nil, vendor: nil, booking_requested_by: nil, requested_equipment: nil)
 
-      order1.update_attributes!(fob_point:nil, ship_from: nil)
-      order1.order_lines.first.update_attributes!(ship_to:nil)
+      order1.update!(fob_point: nil, ship_from: nil)
+      order1.order_lines.first.update!(ship_to: nil)
 
       xml = described_class.generate_xml(shipment)
       root = xml.root
@@ -265,7 +265,7 @@ describe OpenChain::CustomHandler::LumberLiquidators::LumberBookingRequestXmlGen
 
     it "handles missing orders, order lines, products, country" do
       shipment.booking_lines.each do |booking_line|
-        booking_line.update_attributes!(order_line:nil, order:nil, product:nil)
+        booking_line.update!(order_line: nil, order: nil, product: nil)
       end
 
       xml = described_class.generate_xml(shipment)

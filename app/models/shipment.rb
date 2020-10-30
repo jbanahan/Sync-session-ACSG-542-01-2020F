@@ -165,88 +165,46 @@ class Shipment < ActiveRecord::Base
   include ISFSupport
   include IntegrationParserSupport
 
-  attr_accessible :arrival_port_date, :arrive_at_transship_port_date,
-    :available_for_delivery_date, :barge_arrive_date, :barge_depart_date,
-    :bol_date, :booked_quantity, :booking_approved_by_id,
-    :booking_approved_date, :booking_cargo_ready_date, :booking_carrier,
-    :booking_confirmed_by_id, :booking_confirmed_date, :booking_cutoff_date,
-    :booking_est_arrival_date, :booking_est_departure_date,
-    :booking_first_port_receipt_id, :booking_mode, :booking_number,
-    :booking_received_date, :booking_request_count, :booking_requested_by_id, :booking_requested_by,
-    :booking_requested_equipment, :booking_revised_by_id, :booking_revised_date,
-    :booking_shipment_type, :booking_vessel, :booking_voyage, :buyer_address_id, :buyer_address,
-    :cancel_requested_at, :cancel_requested_by_id, :canceled_by_id,
-    :canceled_date, :cargo_on_board_date, :cargo_on_hand_date,
-    :cargo_ready_date, :carrier_id, :carrier_released_date,
-    :confirmed_on_board_origin_date, :consignee_id, :consignee, :consolidator_address_id, :consolidator_address,
-    :container_stuffing_address_id, :container_stuffing_address, :container_unloaded_date,
-    :country_export_id, :country_import_id, :country_origin_id,
-    :country_export, :country_import, :country_origin,
-    :customs_released_carrier_date, :delay_reason_codes, :delivered_date,
-    :departure_date, :departure_last_foreign_port_date, :description_of_goods,
-    :destination_port_id, :destination_port, :do_issued_at, :docs_received_date,
-    :empty_out_at_origin_date, :empty_return_date, :entry_port_id,
-    :est_arrival_port_date, :est_delivery_date, :est_departure_date,
-    :est_inland_port_date, :est_load_date, :eta_last_foreign_port_date,
-    :export_license_required, :fcr_created_final_date, :final_dest_port_id,
-    :first_port_receipt_id, :first_port_receipt, :fish_and_wildlife, :forwarder_id, :freight_terms,
-    :freight_total, :full_container_discharge_date, :full_ingate_date,
-    :full_out_gate_discharge_date, :gross_weight, :hazmat,
-    :house_bill_of_lading, :importer_id, :importer, :importer_reference,
-    :in_warehouse_time, :inland_destination_port_id, :inland_port_date,
-    :invoice_total, :isf_sent_at, :isf_sent_by_id, :lacey_act, :lading_port_id, :lading_port,
-    :last_exported_from_source, :last_file_bucket, :last_file_path,
-    :last_foreign_port_id, :lcl, :marks_and_numbers, :master_bill_of_lading,
-    :mode, :number_of_packages, :number_of_packages_uom, :on_rail_destination_date,
-    :packing_list_sent_by_id, :packing_list_sent_date, :pickup_at,
-    :port_last_free_day, :receipt_location, :reference, :requested_equipment,
-    :seller_address_id, :seller_address, :ship_from_id, :ship_from, :ship_to_address_id, :ship_to_address, :ship_to_id,
-    :shipment_cutoff_date, :shipment_instructions_sent_by_id,
-    :shipment_instructions_sent_date, :shipment_type, :solid_wood_packing_materials,
-    :trucker_name, :unlading_port_id, :unlading_port, :vendor_id, :vendor, :vessel, :vessel_carrier_scac,
-    :vessel_nationality, :vgm_sent_by_id, :vgm_sent_date, :volume, :voyage,
-    :warning_overridden_at, :warning_overridden_by_id
-
-	belongs_to	:carrier, :class_name => "Company"
-	belongs_to  :vendor,  :class_name => "Company"
-  belongs_to  :forwarder, :class_name => "Company"
-	belongs_to	:ship_from,	:class_name => "Address"
-	belongs_to	:ship_to,	:class_name => "Address"
-  belongs_to :importer, :class_name=>"Company"
-  belongs_to :lading_port, :class_name=>"Port"
-  belongs_to :unlading_port, :class_name=>"Port"
-  belongs_to :entry_port, :class_name=>"Port"
-  belongs_to :destination_port, :class_name=>"Port"
-  belongs_to :final_dest_port, :class_name=>"Port"
-  belongs_to :booking_first_port_receipt, :class_name => "Port"
-  belongs_to :first_port_receipt, :class_name => "Port"
-  belongs_to :last_foreign_port, :class_name => "Port"
-  belongs_to :inland_destination_port, :class_name => "Port"
-  belongs_to :booking_requested_by, :class_name=>"User"
-  belongs_to :booking_confirmed_by, :class_name=>"User"
-  belongs_to :booking_approved_by, :class_name=>"User"
-  belongs_to :canceled_by, :class_name=>"User"
-  belongs_to :cancel_requested_by, :class_name=>"User"
-  belongs_to :cancel_approved_by, :class_name=>"User"
-  belongs_to :consignee, :class_name=>"Company"
-  belongs_to :isf_sent_by, :class_name => "User"
-  belongs_to :booking_revised_by, :class_name => "User"
-  belongs_to :shipment_instructions_sent_by, :class_name => "User"
+  belongs_to :carrier, class_name: "Company"
+  belongs_to :vendor,  class_name: "Company"
+  belongs_to :forwarder, class_name: "Company"
+  belongs_to  :ship_from,  class_name: "Address"
+  belongs_to  :ship_to,  class_name: "Address"
+  belongs_to :importer, class_name: "Company"
+  belongs_to :lading_port, class_name: "Port"
+  belongs_to :unlading_port, class_name: "Port"
+  belongs_to :entry_port, class_name: "Port"
+  belongs_to :destination_port, class_name: "Port"
+  belongs_to :final_dest_port, class_name: "Port"
+  belongs_to :booking_first_port_receipt, class_name: "Port"
+  belongs_to :first_port_receipt, class_name: "Port"
+  belongs_to :last_foreign_port, class_name: "Port"
+  belongs_to :inland_destination_port, class_name: "Port"
+  belongs_to :booking_requested_by, class_name: "User"
+  belongs_to :booking_confirmed_by, class_name: "User"
+  belongs_to :booking_approved_by, class_name: "User"
+  belongs_to :canceled_by, class_name: "User"
+  belongs_to :cancel_requested_by, class_name: "User"
+  belongs_to :cancel_approved_by, class_name: "User"
+  belongs_to :consignee, class_name: "Company"
+  belongs_to :isf_sent_by, class_name: "User"
+  belongs_to :booking_revised_by, class_name: "User"
+  belongs_to :shipment_instructions_sent_by, class_name: "User"
   belongs_to :packing_list_sent_by, class_name: "User"
   belongs_to :vgm_sent_by, class_name: "User"
   belongs_to :country_origin, class_name: "Country"
   belongs_to :country_export, class_name: "Country"
   belongs_to :country_import, class_name: "Country"
-  belongs_to :warning_overridden_by, :class_name => "User"
+  belongs_to :warning_overridden_by, class_name: "User"
 
-	has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
+  has_many   :shipment_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :booking_lines, dependent: :destroy, inverse_of: :shipment, autosave: true
   has_many   :containers, dependent: :destroy, inverse_of: :shipment, autosave: true
-  has_many   :piece_sets, :through=>:shipment_lines
+  has_many   :piece_sets, through: :shipment_lines
   has_many   :carton_sets, dependent: :destroy, inverse_of: :shipment, autosave: true
 
-	validates  :reference, :presence => true
-  validates_uniqueness_of :reference
+  validates  :reference, presence: true
+  validates :reference, uniqueness: true # rubocop:disable Rails/UniqueValidationWithoutIndex
 
   dont_shallow_merge :Shipment, ['id', 'created_at', 'updated_at', 'vendor_id', 'reference']
 
@@ -259,9 +217,9 @@ class Shipment < ActiveRecord::Base
   # which should limit collisions
   def self.generate_reference
     ref = nil
-    while !ref
+    until ref
       rand = SecureRandom.hex(4).upcase
-      ref = rand if Shipment.where(reference:rand).empty?
+      ref = rand if Shipment.where(reference: rand).empty?
     end
     ref
   end
@@ -273,13 +231,13 @@ class Shipment < ActiveRecord::Base
     OpenChain::Registries::OrderBookingRegistry.can_request_booking? self, user
   end
 
-  def default_can_request_booking? user, ignore_shipment_state=false
+  def default_can_request_booking? user, ignore_shipment_state = false
     unless ignore_shipment_state
       return false if self.booking_received_date || self.booking_approved_date || self.booking_confirmed_date
     end
     return false unless self.can_view?(user)
     return false unless self.vendor == user.company || user.company.master?
-    return true
+    true
   end
 
   def request_booking! user, async_snapshot = false
@@ -292,11 +250,12 @@ class Shipment < ActiveRecord::Base
     OpenChain::EventPublisher.publish :shipment_booking_request, self
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
   def async_request_booking! user
     self.request_booking! user, true
   end
 
-  def can_approve_booking? user, ignore_shipment_state=false
+  def can_approve_booking? user, ignore_shipment_state = false
     unless ignore_shipment_state
       return false if self.booking_confirmed_date
       return false if self.booking_approved_date
@@ -304,8 +263,9 @@ class Shipment < ActiveRecord::Base
     end
     return false unless self.can_edit?(user)
     return false unless self.importer == user.company || user.company.master?
-    return true
+    true
   end
+
   def approve_booking! user, async_snapshot = false
     self.booking_approved_date = 0.seconds.ago
     self.booking_approved_by = user
@@ -313,19 +273,21 @@ class Shipment < ActiveRecord::Base
     OpenChain::EventPublisher.publish :shipment_booking_approve, self
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
   def async_approve_booking! user
     self.approve_booking! user, true
   end
 
-  def can_confirm_booking? user, ignore_shipment_state=false
+  def can_confirm_booking? user, ignore_shipment_state = false
     unless ignore_shipment_state
       return false if self.booking_confirmed_date
       return false unless self.booking_received_date
     end
     return false unless self.can_edit?(user)
     return false unless self.carrier == user.company || user.company.master?
-    return true
+    true
   end
+
   def confirm_booking! user, async_snapshot = false
     self.booking_confirmed_date = 0.seconds.ago
     self.booking_confirmed_by = user
@@ -369,6 +331,7 @@ class Shipment < ActiveRecord::Base
     self.save!
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
   def async_revise_booking! user
     self.revise_booking! user, true
   end
@@ -379,6 +342,7 @@ class Shipment < ActiveRecord::Base
   def can_cancel? user
     OpenChain::Registries::ShipmentRegistry.can_cancel?(self, user)
   end
+
   def cancel_shipment! user, async_snapshot: false, canceled_date: Time.zone.now, snapshot_context: nil
     Shipment.transaction do
       self.canceled_date = canceled_date
@@ -404,9 +368,11 @@ class Shipment < ActiveRecord::Base
   def async_cancel_shipment! user
     self.cancel_shipment! user, async_snapshot: true
   end
+
   def can_uncancel? user
     OpenChain::Registries::ShipmentRegistry.can_uncancel?(self, user)
   end
+
   def uncancel_shipment! user, async_snapshot = false
     Shipment.transaction do
       self.canceled_by = nil
@@ -423,18 +389,20 @@ class Shipment < ActiveRecord::Base
     end
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
   def async_uncancel_shipment! user
     self.uncancel_shipment! user, true
   end
 
-  def can_request_cancel? user, ignore_shipment_state=false
+  def can_request_cancel? user, ignore_shipment_state = false
     unless ignore_shipment_state
       return false if self.canceled_date || self.cancel_requested_at
     end
     return false unless self.can_view?(user)
     return false unless self.vendor == user.company || user.company.master?
-    return true
+    true
   end
+
   def request_cancel! user, async_snapshot = false
     self.cancel_requested_at = Time.zone.now
     self.cancel_requested_by = user
@@ -444,21 +412,22 @@ class Shipment < ActiveRecord::Base
     OpenChain::Registries::OrderBookingRegistry.post_request_cancel_hook(self, user)
     nil
   end
+
   def async_request_cancel! user
     self.request_cancel! user, true
   end
 
   # private support methods for can cancel
   def can_cancel_as_vendor? user
-    (!self.booking_received_date) && user.company==self.vendor
+    !self.booking_received_date && user.company == self.vendor
   end
   private :can_cancel_as_vendor?
   def can_cancel_as_importer? user
-    (!self.booking_confirmed_date) && user.company==self.importer
+    !self.booking_confirmed_date && user.company == self.importer
   end
   private :can_cancel_as_importer?
   def can_cancel_as_carrier? user
-    user.company==self.carrier
+    user.company == self.carrier
   end
   private :can_cancel_as_carrier?
   def can_cancel_as_agent? user
@@ -512,8 +481,9 @@ class Shipment < ActiveRecord::Base
     return false unless user.company == self.vendor
     return false unless self.can_edit?(user)
     return false if self.shipment_lines.empty?
-    return true
+    true
   end
+
   def send_shipment_instructions! user, async_snapshot = false
     self.shipment_instructions_sent_date = 0.seconds.ago
     self.shipment_instructions_sent_by = user
@@ -521,39 +491,41 @@ class Shipment < ActiveRecord::Base
     OpenChain::EventPublisher.publish :shipment_instructions_send, self
     self.create_snapshot_with_async_option async_snapshot, user
   end
+
   def async_send_shipment_instructions! user
     self.send_shipment_instructions! user, true
   end
 
   def find_same
-    f = self.reference.nil? ? [] : Shipment.where(:reference=>self.reference.to_s)
+    f = self.reference.nil? ? [] : Shipment.where(reference: self.reference.to_s)
     raise "Multiple shipments wtih reference \"#{self.reference} exist." if f.size > 1
-    return f.empty? ? nil : f.first
+    f.empty? ? nil : f.first
   end
 
   # return all orders that could be added to this shipment and that the user can view
   def available_orders user
     return Order.where("1=0") if self.importer_id.blank? # can't find anything without an importer
-    r = Order.search_secure(user, Order).where(importer_id:self.importer_id, approval_status:'Accepted').not_closed
-    r = r.where(vendor_id:self.vendor_id) if self.vendor_id
+    r = Order.search_secure(user, Order).where(importer_id: self.importer_id, approval_status: 'Accepted').not_closed
+    r = r.where(vendor_id: self.vendor_id) if self.vendor_id
     r
   end
 
   def available_products user
     return Product.where("1=0") if self.importer_id.blank? # can't find anything without an importer
-    p = Product.search_secure(user, Product).where(importer_id: self.importer_id)
+    Product.search_secure(user, Product).where(importer_id: self.importer_id)
   end
 
   # get unique linked commercial invoices
   def commercial_invoices
-    CommercialInvoice.
-      joins(:commercial_invoice_lines=>[:piece_sets=>[:shipment_line]]).
-      where("shipment_lines.shipment_id = ?", self.id).uniq
+    CommercialInvoice
+      .joins(commercial_invoice_lines: [piece_sets: [:shipment_line]])
+      .where("shipment_lines.shipment_id = ?", self.id).uniq
   end
-	def self.modes
+
+  def self.modes
     # These are deprecated old modes...don't reference for the new screen
-	  return ['Air', 'Sea', 'Truck', 'Rail', 'Parcel', 'Hand Carry', 'Other']
-	end
+    ['Air', 'Sea', 'Truck', 'Rail', 'Parcel', 'Hand Carry', 'Other']
+  end
 
   def ocean?
     !(self.mode.to_s =~ /OCEAN/i).nil?
@@ -568,26 +540,26 @@ class Shipment < ActiveRecord::Base
     /\w+(?=\W)*/.match(booking_mode).try(:[], 0).try(:upcase) if booking_mode.present?
   end
 
-	def can_view?(user)
+  def can_view?(user)
     return false unless user.view_shipments?
     return true if user.company.master?
     imp = self.importer
     return false if imp.blank?
     # company must be linked to the importer to see a shipment regardless of whether it is a party
-    return false if imp!=user.company && !imp.linked_company?(user.company)
-    return (
+    return false if imp != user.company && !imp.linked_company?(user.company)
+    (
       user.company == self.vendor ||
       user.company == self.carrier ||
       user.company == self.importer ||
       user.company == self.forwarder ||
-      (self.vendor && self.vendor.linked_companies.include?(user.company))
+      self.vendor&.linked_companies&.include?(user.company)
     )
-	end
+  end
 
-	def can_edit?(user)
-	  # same rules as view
-	  return user.edit_shipments? && can_view?(user)
-	end
+  def can_edit?(user)
+    # same rules as view
+    user.edit_shipments? && can_view?(user)
+  end
 
   def can_edit_booking? user
     OpenChain::Registries::OrderBookingRegistry.can_edit_booking? self, user
@@ -595,31 +567,31 @@ class Shipment < ActiveRecord::Base
 
   # can the user currently add lines to this shipment
   def can_add_remove_shipment_lines?(user)
-    return self.can_edit?(user)
+    self.can_edit?(user)
   end
 
   def can_add_remove_booking_lines?(user)
     # At any point up till there are actual manifest/shipment lines users w/ edit ability
     # can remove booking lines.
     return false if self.shipment_lines.length > 0
-    return self.can_edit?(user)
+    self.can_edit?(user)
   end
 
   def can_comment?(user)
-    return user.comment_shipments? && self.can_view?(user)
+    user.comment_shipments? && self.can_view?(user)
   end
 
   def can_attach?(user)
-    return user.attach_shipments? && self.can_view?(user)
+    user.attach_shipments? && self.can_view?(user)
   end
 
   def can_book?
     self.booking_received_date.nil?
   end
 
-	def locked?
-	  (!self.vendor.nil? && self.vendor.locked?) ||
-	  (!self.carrier.nil? && self.carrier.locked?)
+  def locked?
+    (!self.vendor.nil? && self.vendor.locked?) ||
+      (!self.carrier.nil? && self.carrier.locked?)
   end
 
   def dimensional_weight
@@ -651,7 +623,7 @@ class Shipment < ActiveRecord::Base
     self.importer.try(:enabled_booking_types_array) || []
   end
 
-  def mark_isf_sent!(user, async_snapshot=false)
+  def mark_isf_sent!(user, async_snapshot = false)
     self.isf_sent_at = 0.seconds.ago
     self.isf_sent_by = user
     save!
@@ -663,18 +635,18 @@ class Shipment < ActiveRecord::Base
   # helper for dealing with the field, since it's fairly awkward.  It returns an array of 2-value arrays, each
   # containing the quantity and type for the pair.  An empty array returned if the field is blank.  An exception is
   # thrown if any of the lines do not fit the expected pattern.  Blank lines are removed from the output.
-  def get_requested_equipment_pieces
+  def requested_equipment_pieces
     pieces = []
     if self.requested_equipment.present?
       pieces = self.requested_equipment.lines.collect do |ln|
         ln.strip!
         components = ln.split(' ')
         case components.size
-          when 0
+        when 0
             nil
-          when 2
+        when 2
             components
-          else
+        else
             raise "Bad requested equipment field, expected each line to have number and type like \"3 40HC\", got #{self.requested_equipment}."
         end
       end

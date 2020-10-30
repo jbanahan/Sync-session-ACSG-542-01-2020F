@@ -6,11 +6,13 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
   include OpenChain::CustomHandler::LumberLiquidators::LumberCustomDefinitionSupport
 
   UOM_MAP ||= {
-    'FTK'=>'SFT',
-    'FT2'=>'SFT',
-    'FOT'=>'FT'
-  }
-  CDEF_LIST ||= [:ord_country_of_origin, :prod_merch_cat]
+    'FTK' => 'SFT',
+    'FT2' => 'SFT',
+    'FOT' => 'FT'
+  }.freeze
+
+  CDEF_LIST ||= [:ord_country_of_origin, :prod_merch_cat].freeze
+
   def self.generate_xml shipment, cdefs = self.prep_custom_definitions(CDEF_LIST)
     doc, root = build_xml_document('booking')
     add_element(root, 'reference', shipment.reference)
@@ -28,12 +30,12 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
     usa = Country.new
     usa.iso_code = 'US'
     ll_corp = Address.new(
-      name:'Lumber Liquidators',
-      line_1:'4901 Bakers Mill Lane',
+      name: 'Lumber Liquidators',
+      line_1: '4901 Bakers Mill Lane',
       city: 'Richmond',
       state: 'VA',
-      postal_code:'23230-2431',
-      country:usa
+      postal_code: '23230-2431',
+      country: usa
     )
     add_address(root, ll_corp, 'buyer')
     add_origin_port(root, shipment)
@@ -41,45 +43,45 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
   end
 
   def self.add_booking_lines parent, shipment, cdefs
-    lineWrapper = add_element(parent, 'booking-lines')
+    line_wrapper = add_element(parent, 'booking-lines')
     shipment.booking_lines.each do |bl|
-      lineEl = add_element(lineWrapper, 'booking-line')
-      add_element(lineEl, 'order-number', bl.order_line.order.order_number)
-      add_element(lineEl, 'order-line-number', bl.order_line.line_number)
-      add_element(lineEl, 'part-number', bl.product.unique_identifier)
-      add_element(lineEl, 'part-name', bl.product.name)
-      add_element(lineEl, 'quantity', bl.quantity.to_s)
-      add_element(lineEl, 'unit-price', bl.order_line.price_per_unit)
-      add_element(lineEl, 'currency', bl.order_line.order.currency)
-      add_element(lineEl, 'country-of-origin', bl.order_line.order.custom_value(cdefs[:ord_country_of_origin]))
-      add_element(lineEl, 'department', bl.product.custom_value(cdefs[:prod_merch_cat]))
-      add_element(lineEl, 'inco-terms', bl.order_line.order.terms_of_sale)
-      add_date(lineEl, 'item-early-ship-date', bl.order_line.order.ship_window_start)
-      add_date(lineEl, 'item-late-ship-date', bl.order_line.order.ship_window_end)
-      add_unit_of_measure(lineEl, bl)
-      add_hts_code(lineEl, bl)
-      add_warehouse_code(lineEl, bl)
+      line_el = add_element(line_wrapper, 'booking-line')
+      add_element(line_el, 'order-number', bl.order_line.order.order_number)
+      add_element(line_el, 'order-line-number', bl.order_line.line_number)
+      add_element(line_el, 'part-number', bl.product.unique_identifier)
+      add_element(line_el, 'part-name', bl.product.name)
+      add_element(line_el, 'quantity', bl.quantity.to_s)
+      add_element(line_el, 'unit-price', bl.order_line.price_per_unit)
+      add_element(line_el, 'currency', bl.order_line.order.currency)
+      add_element(line_el, 'country-of-origin', bl.order_line.order.custom_value(cdefs[:ord_country_of_origin]))
+      add_element(line_el, 'department', bl.product.custom_value(cdefs[:prod_merch_cat]))
+      add_element(line_el, 'inco-terms', bl.order_line.order.terms_of_sale)
+      add_date(line_el, 'item-early-ship-date', bl.order_line.order.ship_window_start)
+      add_date(line_el, 'item-late-ship-date', bl.order_line.order.ship_window_end)
+      add_unit_of_measure(line_el, bl)
+      add_hts_code(line_el, bl)
+      add_warehouse_code(line_el, bl)
     end
   end
 
   def self.add_origin_port parent, shipment
-    str = ''
     port = shipment.first_port_receipt
     str = port.unlocode
     add_element(parent, 'origin-port', str)
   end
+
   def self.add_address parent, address, type
-    aEl = add_element(parent, 'address')
-    aEl.attributes['type'] = type
-    add_element(aEl, 'name', address.name)
-    add_element(aEl, 'line-1', address.line_1)
-    add_element(aEl, 'line-2', address.line_2)
-    add_element(aEl, 'line-3', address.line_3)
-    add_element(aEl, 'city', address.city)
-    add_element(aEl, 'state', address.state)
-    add_element(aEl, 'postal-code', address.postal_code)
+    a_el = add_element(parent, 'address')
+    a_el.attributes['type'] = type
+    add_element(a_el, 'name', address.name)
+    add_element(a_el, 'line-1', address.line_1)
+    add_element(a_el, 'line-2', address.line_2)
+    add_element(a_el, 'line-3', address.line_3)
+    add_element(a_el, 'city', address.city)
+    add_element(a_el, 'state', address.state)
+    add_element(a_el, 'postal-code', address.postal_code)
     iso = address.country ? address.country.iso_code : ''
-    add_element(aEl, 'country', iso)
+    add_element(a_el, 'country', iso)
   end
 
   def self.add_warehouse_code parent, booking_line
@@ -95,7 +97,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
     if p
       cls = booking_line.product.classifications.find {|c| c.country.iso_code == 'US'}
       if cls
-        tr = cls.tariff_records.find {|trec| !trec.hts_1.blank?}
+        tr = cls.tariff_records.find {|trec| trec.hts_1.present?}
         if tr
           str = tr.hts_1
         end
@@ -103,6 +105,7 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
     end
     add_element(parent, 'hts-code', str)
   end
+
   def self.add_unit_of_measure parent, booking_line
     raw_uom = booking_line.order_line.unit_of_measure
     translated_uom = UOM_MAP[raw_uom]
@@ -132,11 +135,11 @@ module OpenChain; module CustomHandler; module LumberLiquidators; class LumberEx
   end
 
   def self.add_requested_equipment root, shipment
-    pieces = shipment.get_requested_equipment_pieces
+    pieces = shipment.requested_equipment_pieces
     return if pieces.empty?
-    reqEl = add_element(root, 'requested-equipment')
+    req_el = add_element(root, 'requested-equipment')
     pieces.each do |p|
-      el = add_element(reqEl, 'equipment', p[0])
+      el = add_element(req_el, 'equipment', p[0])
       el.attributes['type'] = p[1]
     end
     nil

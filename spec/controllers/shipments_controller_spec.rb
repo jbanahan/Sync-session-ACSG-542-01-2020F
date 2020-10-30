@@ -17,15 +17,15 @@ describe ShipmentsController do
 
     it "blocks users without edit privileges" do
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return false
-      expect_any_instance_of(OpenChain::CustomHandler::ShipmentDownloadGenerator).to_not receive(:generate)
+      expect_any_instance_of(OpenChain::CustomHandler::ShipmentDownloadGenerator).not_to receive(:generate)
 
       get :download, id: shipment.id
-      expect(response).to redirect_to request.referrer
+      expect(response).to redirect_to request.referer
     end
 
     it "uses J Jill generator for shipments with JJILL importer" do
       co = Factory(:company, system_code: "JJILL")
-      shipment.update_attributes! importer_id: co.id
+      shipment.update! importer_id: co.id
 
       expect_any_instance_of(Shipment).to receive(:can_edit?).with(u).and_return true
       expect_any_instance_of(OpenChain::CustomHandler::JJill::JJillShipmentDownloadGenerator).to receive(:generate).with(instance_of(XlsxBuilder), shipment, u)
