@@ -6,42 +6,43 @@ describe Message do
 
     it "returns true for sys_admin" do
       user.sys_admin = true; user.save!
-      expect(msg.can_view? user).to eq true
+      expect(msg.can_view?(user)).to eq true
     end
 
     it "returns true for message owner" do
       msg.user = user; msg.save!
-      expect(msg.can_view? user).to eq true
+      expect(msg.can_view?(user)).to eq true
     end
 
     it "returns false for anyone else" do
-      expect(msg.can_view? user).to eq false
+      expect(msg.can_view?(user)).to eq false
     end
   end
 
   describe 'unread_message_count' do
 
-    it 'should return number if unread messages exist' do
-      Factory(:message, :user=>user, :viewed=>false) # not viewed should be counted
-      Factory(:message, :user=>user) # no viewed value should be counted
-      Factory(:message, :user=>user, :viewed=>true) # viewed should not be counted
-      expect(Message.unread_message_count(user.id)).to eq(2)
+    it 'returns number if unread messages exist' do
+      Factory(:message, user: user, viewed: false) # not viewed should be counted
+      Factory(:message, user: user) # no viewed value should be counted
+      Factory(:message, user: user, viewed: true) # viewed should not be counted
+      expect(described_class.unread_message_count(user.id)).to eq(2)
     end
   end
 
   describe "run_schedulable" do
     it "implements SchedulableJob interface" do
-      expect(Message).to receive(:purge_messages)
-      Message.run_schedulable
+      expect(described_class).to receive(:purge_messages)
+      described_class.run_schedulable
     end
   end
 
   describe "email_to_user" do
     before { user.update! email_new_messages: true }
+
     let(:mail) { instance_double(ActionMailer::MessageDelivery) }
 
     it "sends emails to user who gets a system message" do
-      expect(OpenMailer).to receive(:send_message).with(instance_of(Message)).and_return mail
+      expect(OpenMailer).to receive(:send_message).with(instance_of(described_class)).and_return mail
       expect(mail).to receive(:deliver_later)
 
       user.messages.create! subject: "Subject", body: "Body"

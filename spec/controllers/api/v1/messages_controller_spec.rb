@@ -1,17 +1,19 @@
 describe Api::V1::MessagesController do
-  before(:each) do
-    @u = Factory(:user)
-    allow_api_access @u
-  end
-  describe '#index' do
-    it 'should get message list' do
-      Timecop.freeze(Time.now) do
-        m1 = @u.messages.create!(subject:'M1', body:'my body', created_at:3.minutes.ago)
-        m2 = @u.messages.create!(subject:'m2', body:'mb2', viewed:true, created_at:2.minutes.ago)
+  let(:user) { Factory(:user) }
 
-        expected = {'messages'=>[
-          {'id'=>m2.id, 'subject'=>'m2', 'body'=>'mb2', 'viewed'=>true},
-          {'id'=>m1.id, 'subject'=>'M1', 'body'=>'my body'}
+  before do
+    allow_api_access user
+  end
+
+  describe '#index' do
+    it 'gets message list' do
+      Timecop.freeze(Time.zone.now) do
+        m1 = user.messages.create!(subject: 'M1', body: 'my body', created_at: 3.minutes.ago)
+        m2 = user.messages.create!(subject: 'm2', body: 'mb2', viewed: true, created_at: 2.minutes.ago)
+
+        expected = {'messages' => [
+          {'id' => m2.id, 'subject' => 'm2', 'body' => 'mb2', 'viewed' => true},
+          {'id' => m1.id, 'subject' => 'M1', 'body' => 'my body'}
         ]}
 
         get :index
@@ -24,20 +26,20 @@ describe Api::V1::MessagesController do
   end
 
   describe '#count' do
-    it "should get message count by user id" do
-      @u.messages.create!(subject:'M1', body:'my body')
+    it "gets message count by user id" do
+      user.messages.create!(subject: 'M1', body: 'my body')
 
-      get :count, user_id: @u.id
+      get :count, user_id: user.id
 
       expect(response).to be_success
-      expected = {'message_count'=>1}
+      expected = {'message_count' => 1}
       expect(JSON.parse(response.body)).to eq expected
     end
   end
 
   describe '#mark_as_read' do
-    it "should mark message as read" do
-      m = @u.messages.create!(subject:'M1', body:'my body')
+    it "marks message as read" do
+      m = user.messages.create!(subject: 'M1', body: 'my body')
 
       post :mark_as_read, id: m.id
 
@@ -47,8 +49,9 @@ describe Api::V1::MessagesController do
       m.reload
       expect(m).to be_viewed
     end
-    it "should 404 if message not found for current user" do
-      m = Factory(:user).messages.create!(subject:'X')
+
+    it "404S if message not found for current user" do
+      m = Factory(:user).messages.create!(subject: 'X')
 
       post :mark_as_read, id: m.id
 
@@ -58,21 +61,22 @@ describe Api::V1::MessagesController do
   end
 
   describe '#create' do
-    it "should restrict to admin" do
-      expect {post :create, {message: {user_id:@u.id, subject: 'hello'}}}.to_not change(Message, :count)
+    it "restricts to admin" do
+      expect {post :create, {message: {user_id: user.id, subject: 'hello'}}}.not_to change(Message, :count)
       expect(response.status).to eq 403
     end
-    it "should post message to user" do
-      @u.admin = true
-      @u.save!
 
-      expect {post :create, {message: {user_id:@u.id, subject: 'hello', body:'body'}}}.to change(Message, :count).by(1)
+    it "posts message to user" do
+      user.admin = true
+      user.save!
+
+      expect {post :create, {message: {user_id: user.id, subject: 'hello', body: 'body'}}}.to change(Message, :count).by(1)
       expect(response).to be_success
 
       m = Message.first
       expect(m.subject).to eq 'hello'
       expect(m.body).to eq 'body'
-      expect(m.user).to eq @u
+      expect(m.user).to eq user
     end
   end
 end
