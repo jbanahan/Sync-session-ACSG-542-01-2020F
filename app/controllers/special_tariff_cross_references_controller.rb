@@ -1,12 +1,12 @@
 class SpecialTariffCrossReferencesController < ApplicationController
 
   SEARCH_PARAMS = {
-    'c_hts_number' => { :field => 'hts_number', :label => 'HTS Number'},
-    'c_special_hts_number' => { :field => 'special_hts_number', :label => 'Special HTS Number'},
-    'c_country_origin_iso' => {:field => 'country_origin_iso', :label => 'Country of Origin ISO Code'},
-    'c_import_country_iso' => {:field => 'import_country_iso', :label => 'Country of Import ISO Code'},
-    'c_special_tariff_type' => {:field => 'special_tariff_type', :label => 'Special Tariff Type'}
-  }
+    'c_hts_number' => { field: 'hts_number', label: 'HTS Number'},
+    'c_special_hts_number' => { field: 'special_hts_number', label: 'Special HTS Number'},
+    'c_country_origin_iso' => {field: 'country_origin_iso', label: 'Country of Origin ISO Code'},
+    'c_import_country_iso' => {field: 'import_country_iso', label: 'Country of Import ISO Code'},
+    'c_special_tariff_type' => {field: 'special_tariff_type', label: 'Special Tariff Type'}
+  }.freeze
 
   def root_class
     SpecialTariffCrossReference
@@ -37,15 +37,15 @@ class SpecialTariffCrossReferencesController < ApplicationController
   def update
     admin_secure do
       @special_tariff = SpecialTariffCrossReference.where(id: params[:id]).first
-      redirect_to special_tariff_cross_references_path unless @special_tariff.present?
+      redirect_to special_tariff_cross_references_path if @special_tariff.blank?
 
-      @special_tariff.update_attributes(params[:special_tariff_cross_reference])
+      @special_tariff.update(permitted_params(params))
       if @special_tariff.valid?
         add_flash :notices, "Special Tariff #{@special_tariff.hts_number} has been updated"
         redirect_to special_tariff_cross_references_path
       else
         errors_to_flash @special_tariff
-        render :action => "edit"
+        render action: "edit"
       end
     end
   end
@@ -59,7 +59,7 @@ class SpecialTariffCrossReferencesController < ApplicationController
   end
 
   def upload
-    f = CustomFile.new(:file_type=>'OpenChain::SpecialTariffCrossReferenceHandler', :uploaded_by=>current_user, :attached=>params[:attached])
+    f = CustomFile.new(file_type: 'OpenChain::SpecialTariffCrossReferenceHandler', uploaded_by: current_user, attached: params[:attached])
     admin_secure do
       if params[:attached].nil?
         add_flash :errors, "You must select a file to upload."
@@ -77,7 +77,14 @@ class SpecialTariffCrossReferencesController < ApplicationController
   end
 
   private
+
   def secure
     SpecialTariffCrossReference.find_can_view(current_user)
+  end
+
+  def permitted_params(params)
+    params.require(:special_tariff_cross_reference)
+          .permit(:attached, :country_origin_iso, :effective_date_end, :effective_date_start, :hts_number, :import_country_iso,
+                  :priority, :special_hts_number, :special_tariff_type, :suppress_from_feeds)
   end
 end

@@ -23,8 +23,6 @@
 #
 
 class SpecialTariffCrossReference < ActiveRecord::Base
-  attr_accessible :country_origin_iso, :effective_date_end, :effective_date_start, :hts_number, :import_country_iso, :priority, :special_hts_number, :special_tariff_type, :suppress_from_feeds
-
   before_validation :clean_hts
   before_validation :clean_country
 
@@ -38,7 +36,8 @@ class SpecialTariffCrossReference < ActiveRecord::Base
   # country_origin_is - if you want to limit to only a specific country of origin.
   # special_tariff_types - if you want to limit the results to only specific types
   # use_special_number_as_key - if you want to key the results by the special number (.ie find if a number is a special number), then pass true (default = false)
-  def self.find_special_tariff_hash import_country_iso, is_parts_feed, reference_date: Time.zone.now.to_date, country_origin_iso: nil, special_tariff_types: nil, use_special_number_as_key: false
+  def self.find_special_tariff_hash(import_country_iso, is_parts_feed, reference_date: Time.zone.now.to_date,
+                                    country_origin_iso: nil, special_tariff_types: nil, use_special_number_as_key: false)
 
     query = SpecialTariffCrossReference.where(import_country_iso: import_country_iso)
     # If the parameter indicate a parts feed, then don't include the suppressed values.
@@ -53,7 +52,7 @@ class SpecialTariffCrossReference < ActiveRecord::Base
       query = query.where("country_origin_iso IS NULL OR country_origin_iso in (?)", Array.wrap(country_origin_iso))
     end
 
-    if !special_tariff_types.blank?
+    if special_tariff_types.present?
       query = query.where("special_tariff_type IN (?)", Array.wrap(special_tariff_types))
     end
 
@@ -66,7 +65,8 @@ class SpecialTariffCrossReference < ActiveRecord::Base
   end
 
   # This is primarily meant to be run from the console to load csv tariff files formatted like
-  # program type, import country iso, hts, special hts, country of origin iso (can be blank if tariff is for any coo), start date, end date (optional), priority (optional), suppress from feeds (optional)
+  # program type, import country iso, hts, special hts, country of origin iso (can be blank if tariff is for any coo),
+  # start date, end date (optional), priority (optional), suppress from feeds (optional)
   def self.parse io, opts = {}
     CSV.parse(io, (opts[:csv_opts].presence || {})) do |row|
       special_tariff_type = (row[0].to_s.strip.presence || nil)
@@ -81,13 +81,24 @@ class SpecialTariffCrossReference < ActiveRecord::Base
 
       coo = row[4].to_s.strip.presence || nil
       effective_date_start = Time.zone.parse(row[5]).to_date
-      effective_date_end = Time.zone.parse(row[6]).to_date rescue nil
+      effective_date_end = begin
+                             Time.zone.parse(row[6]).to_date
+                           rescue StandardError
+                             nil
+                           end
 
       # Use float parse, since there's no reason not to support someone putting "1.0" which'll make the Integer constructor puke
-      priority = Float(row[7].to_s.strip).to_i rescue nil
+      priority = begin
+                   Float(row[7].to_s.strip).to_i
+                 rescue StandardError
+                   nil
+                 end
       suppress_from_feeds = ["Y", "TRUE", "1"].include?(row[8].to_s.strip.upcase)
 
-      ref = SpecialTariffCrossReference.where(import_country_iso: import_country_iso, hts_number: hts_number, special_hts_number: special_hts_number, country_origin_iso: coo, effective_date_start: effective_date_start, special_tariff_type: special_tariff_type).first_or_initialize
+      ref = SpecialTariffCrossReference.where(import_country_iso: import_country_iso, hts_number: hts_number,
+                                              special_hts_number: special_hts_number, country_origin_iso: coo,
+                                              effective_date_start: effective_date_start,
+                                              special_tariff_type: special_tariff_type).first_or_initialize
       ref.effective_date_end = effective_date_end
       ref.priority = priority
       ref.suppress_from_feeds = suppress_from_feeds
@@ -97,7 +108,7 @@ class SpecialTariffCrossReference < ActiveRecord::Base
   end
 
   def self.valid_hts_number? hts
-    !hts.blank? && (hts.to_s =~ /\A\d+\z/)
+    hts.present? && (hts.to_s =~ /\A\d+\z/)
   end
   private_class_method :valid_hts_number?
 
@@ -120,7 +131,7 @@ class SpecialTariffCrossReference < ActiveRecord::Base
     def tariffs_for country_origin_iso, hts_number
       country = country_origin_iso.to_s.strip.upcase
 
-      if !country.blank?
+      if country.present?
         country_tariffs = @results[country].try(:[], hts_number)
       end
 
@@ -130,10 +141,11 @@ class SpecialTariffCrossReference < ActiveRecord::Base
     end
 
     def size
-      @results.values.map {|h| h.size }.sum
+      @results.values.map(&:size).sum
     end
 
     private
+
       def sort_tariffs values
         values.sort do |a, b|
           # Sort the vals on priority and then fall back to created at
@@ -171,7 +183,7 @@ class SpecialTariffCrossReference < ActiveRecord::Base
 
     def [] hts_number
       values = []
-      @hash.each_pair do |tariff_type, tariffs|
+      @hash.each_pair do |_tariff_type, tariffs|
         # We can't mutate the hts_number, otherwise we invalidate the number for other iterations through
         # the each_pair loop
         local_hts = hts_number
@@ -181,14 +193,14 @@ class SpecialTariffCrossReference < ActiveRecord::Base
         found = false
         begin
           val = tariffs[local_hts]
-          if !val.blank?
-            values.push *val
+          if val.present?
+            values.push(*val)
             found = true
           end
         end while !found && (local_hts = local_hts[0..-2]).try(:length).to_i > 2
       end
 
-      return values.blank? ? nil : values
+      values.presence
     end
 
     def size
@@ -196,44 +208,47 @@ class SpecialTariffCrossReference < ActiveRecord::Base
     end
   end
 
+  def clean_hts
+    if self.hts_number.present?
+      self.hts_number = self.hts_number.to_s.gsub(/[^0-9A-Za-z]/, '')
+    end
+
+    if self.special_hts_number.present?
+      self.special_hts_number = self.special_hts_number.to_s.gsub(/[^0-9A-Za-z]/, '')
+    end
+
+    true
+  end
+
+  def clean_country
+    if self.country_origin_iso.blank?
+      self.country_origin_iso = nil
+    end
+
+    if self.import_country_iso.blank?
+      self.import_country_iso = nil
+    end
+
+    true
+  end
+
+  def self.find_can_view(user)
+    if user.admin?
+      SpecialTariffCrossReference.where("1=1")
+    else
+      SpecialTariffCrossReference.where("1=0")
+    end
+  end
+
+  class << self
     private
-      def clean_hts
-        if !self.hts_number.blank?
-          self.hts_number = self.hts_number.to_s.gsub(/[^0-9A-Za-z]/, '')
-        end
 
-        if !self.special_hts_number.blank?
-          self.special_hts_number = self.special_hts_number.to_s.gsub(/[^0-9A-Za-z]/, '')
-        end
+    def can_view? user
+      user.admin?
+    end
 
-        true
-      end
-
-      def clean_country
-        if self.country_origin_iso.blank?
-          self.country_origin_iso = nil
-        end
-
-        if self.import_country_iso.blank?
-          self.import_country_iso = nil
-        end
-
-        true
-      end
-
-      def self.find_can_view(user)
-        if user.admin?
-          return SpecialTariffCrossReference.where("1=1")
-        else
-          return SpecialTariffCrossReference.where("1=0")
-        end
-      end
-
-      def can_view? user
-        user.admin?
-      end
-
-      def can_edit? user
-        user.admin?
-      end
+    def can_edit? user
+      user.admin?
+    end
+  end
 end

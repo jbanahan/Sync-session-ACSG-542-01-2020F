@@ -11,7 +11,7 @@ describe SpecialTariffCrossReference do
 
   describe SpecialTariffCrossReference::SpecialTariffHash do
 
-    before :each do
+    before do
       subject.insert SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "0987654321", created_at: Time.zone.now)
       subject.insert SpecialTariffCrossReference.new(hts_number: "1234567", special_hts_number: "987654", created_at: (Time.zone.now + 1.minute))
     end
@@ -30,7 +30,9 @@ describe SpecialTariffCrossReference do
       end
 
       it "returns multiple tariffs if they have different tariff types" do
-        subject.insert SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "5678901234", special_tariff_type: "TYPE", created_at: (Time.zone.now + 2.minutes))
+        subject.insert(SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "5678901234",
+                                                       special_tariff_type: "TYPE", created_at: (Time.zone.now + 2.minutes)))
+
         refs = subject["1234567890"]
         expect(refs.length).to eq 2
         expect(refs.map(&:special_hts_number)).to eq ["0987654321", "5678901234"]
@@ -43,7 +45,7 @@ describe SpecialTariffCrossReference do
     let (:tariff_1) { SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "0987654321", created_at: Time.zone.now, country_origin_iso: "CN") }
     let (:tariff_2) { SpecialTariffCrossReference.new(hts_number: "1234567", special_hts_number: "987654", created_at: (Time.zone.now + 1.minute), priority: 1) }
 
-    before :each do
+    before do
       subject.insert tariff_1
       subject.insert tariff_2
     end
@@ -80,7 +82,9 @@ describe SpecialTariffCrossReference do
       end
 
       it "returns multiple tariffs if they have different tariff types" do
-        subject.insert SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "5678901234", special_tariff_type: "TYPE", created_at: (Time.zone.now + 2.minutes))
+        subject.insert(SpecialTariffCrossReference.new(hts_number: "1234567890", special_hts_number: "5678901234",
+                                                       special_tariff_type: "TYPE", created_at: (Time.zone.now + 2.minutes)))
+
         refs = subject.tariffs_for "CN", "1234567890"
         expect(refs.length).to eq 3
         expect(refs.map(&:special_hts_number)).to eq ["987654", "0987654321", "5678901234"]
@@ -92,13 +96,17 @@ describe SpecialTariffCrossReference do
   describe "find_special_tariff_hash" do
     subject { described_class }
 
-    let!(:special_tariff) { SpecialTariffCrossReference.create! hts_number: "12345678", import_country_iso: "US", country_origin_iso: "CN", special_hts_number: "0987654321", effective_date_start: Date.new(2018, 7, 9), effective_date_end: Date.new(2018, 8, 1)}
+    let!(:special_tariff) do
+      described_class.create!(hts_number: "12345678", import_country_iso: "US", country_origin_iso: "CN",
+                              special_hts_number: "0987654321", effective_date_start: Date.new(2018, 7, 9),
+                              effective_date_end: Date.new(2018, 8, 1))
+    end
 
     it "returns all special tariffs with effective dates after given date" do
       result = subject.find_special_tariff_hash "US", true, reference_date: Date.new(2018, 7, 9)
       expect(result.size).to eq 1
       expect(result).to be_a SpecialTariffCrossReference::SpecialTariffHashResult
-      expect(result.tariffs_for "CN", "1234567890").to eq [special_tariff]
+      expect(result.tariffs_for("CN", "1234567890")).to eq [special_tariff]
     end
 
     it "excludes tariffs with start date after reference date" do
@@ -122,13 +130,13 @@ describe SpecialTariffCrossReference do
     end
 
     it "excludes suppressed tariffs" do
-      special_tariff.update_attributes! suppress_from_feeds: true
+      special_tariff.update! suppress_from_feeds: true
       result = subject.find_special_tariff_hash "US", true, reference_date: Date.new(2018, 7, 9)
       expect(result.size).to eq 0
     end
 
     it "includes suppressed if instructed to" do
-      special_tariff.update_attributes! suppress_from_feeds: true
+      special_tariff.update! suppress_from_feeds: true
 
       result = subject.find_special_tariff_hash "US", false, reference_date: Date.new(2018, 7, 9)
       expect(result.size).to eq 1
@@ -137,29 +145,29 @@ describe SpecialTariffCrossReference do
     it "allows using special tariffs as hash keys" do
       result = subject.find_special_tariff_hash "US", false, reference_date: Date.new(2018, 7, 9), use_special_number_as_key: true
       expect(result.size).to eq 1
-      expect(result.tariffs_for "CN", "0987654321").to eq [special_tariff]
+      expect(result.tariffs_for("CN", "0987654321")).to eq [special_tariff]
     end
   end
 
   describe "parse" do
     subject { described_class }
 
-    let (:data_row) {
-      [ "301 Tariffs", "US", "1234567890", "0987654321", "CO", "2018-09-21", "2018-09-22",]
-    }
+    let (:data_row) do
+      ["301 Tariffs", "US", "1234567890", "0987654321", "CO", "2018-09-21", "2018-09-22"]
+    end
 
-    let (:csv) {
+    let (:csv) do
       data_row.to_csv
-    }
+    end
 
-    let (:io) {
+    let (:io) do
       StringIO.new csv
-    }
+    end
 
     it "loads required tariff data" do
-      expect { subject.parse io }.to change { SpecialTariffCrossReference.count }.from(0).to(1)
+      expect { subject.parse io }.to change(described_class, :count).from(0).to(1)
 
-      ref = SpecialTariffCrossReference.first
+      ref = described_class.first
       expect(ref.hts_number).to eq "1234567890"
       expect(ref.special_hts_number).to eq "0987654321"
       expect(ref.country_origin_iso).to eq "CO"
@@ -172,9 +180,9 @@ describe SpecialTariffCrossReference do
 
     it "loads all tariff data" do
       data_row << "10" << "true"
-      expect { subject.parse io }.to change { SpecialTariffCrossReference.count }.from(0).to(1)
+      expect { subject.parse io }.to change(described_class, :count).from(0).to(1)
 
-      ref = SpecialTariffCrossReference.first
+      ref = described_class.first
       expect(ref.hts_number).to eq "1234567890"
       expect(ref.special_hts_number).to eq "0987654321"
       expect(ref.country_origin_iso).to eq "CO"
@@ -186,7 +194,8 @@ describe SpecialTariffCrossReference do
     end
 
     it "updates an existing record" do
-      ref = SpecialTariffCrossReference.create! import_country_iso: "US", hts_number: "1234567890", special_hts_number: "0987654321", country_origin_iso: "CO", effective_date_start: Date.new(2018, 9, 21), special_tariff_type: "301 Tariffs"
+      ref = described_class.create!(import_country_iso: "US", hts_number: "1234567890", special_hts_number: "0987654321",
+                                    country_origin_iso: "CO", effective_date_start: Date.new(2018, 9, 21), special_tariff_type: "301 Tariffs")
       subject.parse io
 
       ref.reload
@@ -200,32 +209,32 @@ describe SpecialTariffCrossReference do
 
     it "skips lines with missing import country iso" do
       data_row[0] = ""
-      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+      expect { subject.parse io }.not_to change(described_class, :count).from(0)
     end
 
     it "skips lines with missing tariff type" do
       data_row[1] = ""
-      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+      expect { subject.parse io }.not_to change(described_class, :count).from(0)
     end
 
     it "skips lines with missing hts" do
       data_row[2] = ""
-      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+      expect { subject.parse io }.not_to change(described_class, :count).from(0)
     end
 
     it "skips lines with invalid hts" do
       data_row[2] = "invalid"
-      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+      expect { subject.parse io }.not_to change(described_class, :count).from(0)
     end
 
     it "skips lines with missing special hts" do
       data_row[3] = ""
-      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+      expect { subject.parse io }.not_to change(described_class, :count).from(0)
     end
 
     it "skips lines with invalid special hts" do
       data_row[3] = "invalid"
-      expect { subject.parse io }.not_to change { SpecialTariffCrossReference.count }.from(0)
+      expect { subject.parse io }.not_to change(described_class, :count).from(0)
     end
   end
 end
