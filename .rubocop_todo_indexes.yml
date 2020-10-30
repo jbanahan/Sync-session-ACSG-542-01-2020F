@@ -12,3 +12,4 @@ Rails/UniqueValidationWithoutIndex:
     - 'app/models/linkable_attachment_import_rule.rb'
     - 'app/models/company.rb'
     - 'app/models/mailing_list.rb'
+    - 'app/models/charge_code.rb'

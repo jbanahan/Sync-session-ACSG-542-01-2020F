@@ -5636,6 +5636,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "b02fbe4cc6621553ec47c8e60adff873975058e908693ee922e69194672754a3",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/charge_codes_controller.rb",
+      "line": 18,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "ChargeCode.create(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "ChargeCodesController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "b1212600faadfeb6fbabd6382921bac1c5ec9a2b25419f14807ae2603bd6649e",
       "check_name": "ModelAttrAccessible",
@@ -8181,6 +8201,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-29 12:53:50 -0400",
+  "updated": "2020-10-30 06:27:49 -0400",
   "brakeman_version": "4.9.1"
 }
