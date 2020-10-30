@@ -214,7 +214,6 @@ RSpec/RepeatedExample:
   Enabled: true
   Exclude:
     - 'spec/models/search_criterion_spec.rb'
-  Enabled: false
 
 RSpec/RepeatedExampleGroupBody:
   Enabled: true

@@ -531,25 +531,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "1307e01eba80532b11bef8b63584bcd4c7cb7ace0f94c65e54f576e9fd2da82f",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/power_of_attorney.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":company_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "PowerOfAttorney"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "145d02b4074d56dbc40784d8d07d315001706d57516cabcd4b564869537503e4",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4674,6 +4655,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "a990e600c857537966278429664356cb20f88de507c6da6726c3b591f841cabd",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/power_of_attorneys_controller.rb",
+      "line": 54,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "PowerOfAttorney.new(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "PowerOfAttorneysController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "ab4e68899f07a630d32c05b6210afec40373470744129ad5edd890e5d60a9576",
       "check_name": "ModelAttrAccessible",
@@ -7148,6 +7149,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-30 14:11:54 -0400",
+  "updated": "2020-10-30 15:07:13 -0400",
   "brakeman_version": "4.9.1"
 }
