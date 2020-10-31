@@ -1,3 +1,27 @@
 <router-outlet></router-outlet>
 
-<button class="btn btn-danger">An example <fa-icon [icon]="faAngular"></fa-icon></button>
+<div class="container">
+  <button class="btn btn-danger">An example <fa-icon [icon]="faAngular"></fa-icon></button>
+  <!-- Class and Style Binding -->
+  <button [class.btn]="isTrue" [class.btn-dark]="isTrue" [style.color]="'Yellow'">My Button</button>
+  <br>
+
+  <!-- Event Binding -->
+  <button (click)="someFunctionName()">Another Button</button>
+  <br>
+
+  <!-- Two-way Binding -->
+  <label for="some-text">Two Way Binding</label>
+  <input id="some-text" [(ngModel)]="someTextVariable">
+  <input bindon-ngModel="someTextVariable">
+  <h1>{{someTextVariable}}</h1>
+  <br>
+
+  <!-- Property Binding -->
+  <img class="img-thumbnail" [src]="myPictureLocation">
+  <!-- Interpolation example of above
+  <img src="{{myPictureLocation}}">
+  -->
+
+
+</div>
