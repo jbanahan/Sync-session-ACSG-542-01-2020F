@@ -60,26 +60,26 @@ module Api; module V1; module Admin; class AnnouncementsController < Api::V1::Ad
     end
   end
 
-  def submitted_start_at
-    datetime_with_offset(params[:announcement][:start_at], current_user.time_zone)
-  end
-
-  def submitted_end_at
-    datetime_with_offset(params[:announcement][:end_at], current_user.time_zone)
-  end
-
-  # Adjust for any discrepancy between browser, user time zones.
-  def datetime_with_offset dt_str, time_zone
-    utc_offset = ActiveSupport::TimeZone[time_zone].now.utc_offset
-    if dt_str
-      ActiveSupport::TimeZone["UTC"].parse(dt_str) + ((utc_offset - params[:utc_offset]) / (60 * 60)).hours
+  def offset_browser_localtime browser_date_time, browser_offset, user_time_zone
+    return nil if browser_date_time.blank?
+    # What we're going to do is first convert the actual date time give by the browser to UTC, and then
+    # convert it to the user's timezone.
+    utc_browser_time = ActiveSupport::TimeZone["UTC"].parse(browser_date_time) + (-1 * browser_offset.to_i).seconds
+    if user_time_zone
+      utc_browser_time.in_time_zone(user_time_zone)
+    else
+      utc_browser_time
     end
   end
 
   def base_anc_params
+    browser_offset = params[:utc_offset]
     new_params = params.deep_dup
     anc = new_params[:announcement]
-    anc.merge!({ start_at: submitted_start_at, end_at: submitted_end_at})
+    anc.merge!({
+                 start_at: offset_browser_localtime(anc[:start_at], browser_offset, current_user.time_zone),
+                 end_at: offset_browser_localtime(anc[:end_at], browser_offset, current_user.time_zone)
+               })
     new_params.except(:selected_users)
               .require(:announcement)
               .permit(:start_at, :end_at, :title, :text, :comments, :category, :selected_user_ids)

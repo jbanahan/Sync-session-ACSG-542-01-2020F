@@ -120,18 +120,12 @@ module OpenChain; module CustomHandler; module FixedPositionParserSupport
 
     # All the following stupidity is to ensure the datetime given represents the moment in time in the
     # given timezone...In Rails 5, this all can just be replaced by Time.zone.strptime(v, datetime_format)
-    #
-    # This is all to ensure that when we say "2020-03-18 12:30" is the time in US Eastern timezone that
-    # we're returning an TimeWithZone object that says `2020-03-18 12:30 -04:00`
-    if (datetime_format =~ /%z/i).nil?
-      append_offset = true
-      datetime_format += " %z"
-    end
-
-    v += " #{time_zone.now.formatted_offset(false)}" if append_offset
     begin
       val = Time.strptime v, datetime_format
-      return val.in_time_zone(time_zone)
+      # What we're doing is parsing the string into a Time object (without the timezone) and
+      # then writing the Time object back out to a string in a format that ActiveSuppot::TimeZone#parse
+      # understands and then using the given TimeZone object to parse that intermediary string.
+      return time_zone.parse(val.strftime("%Y-%m-%d %H:%M:%S"))
     rescue
       return nil
     end

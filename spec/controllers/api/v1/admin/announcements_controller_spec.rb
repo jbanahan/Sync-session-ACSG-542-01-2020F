@@ -135,9 +135,11 @@ describe Api::V1::Admin::AnnouncementsController do
       expect(a.title).to eq "title"
       expect(a.comments).to eq "comment"
       expect(a.text).to eq "<p>Message</p>"
-      # utc_offset for CST but user time_zone is EST so add an hour
-      expect(a.start_at).to eq ActiveSupport::TimeZone["UTC"].local(2020, 3, 12, 7)
-      expect(a.end_at).to eq ActiveSupport::TimeZone["UTC"].local(2020, 3, 12, 19)
+      # The test is simulating handling a user who's browser says it's currently in central timezone, but
+      # the user's account is set up to show everything in the Eastern timezone.  Ergo, the start / end
+      # date is shifted an hour forward (since Eastern is one hour in front of Central)
+      expect(a.start_at).to eq ActiveSupport::TimeZone["America/New_York"].parse("2020-03-12 07:00")
+      expect(a.end_at).to eq ActiveSupport::TimeZone["America/New_York"].parse("2020-03-12 19:00")
       expect(a.selected_users.count).to eq 1
       expect(a.selected_users.first).to eq user2
     end
@@ -187,6 +189,7 @@ describe Api::V1::Admin::AnnouncementsController do
       a.selected_users << user
       a
     end
+
     let(:params) do
       {id: anc.id,
        announcement:
@@ -197,7 +200,7 @@ describe Api::V1::Admin::AnnouncementsController do
          title: "new title",
          comments: "new comment",
          text: "<p>new message</p>"},
-       utc_offset: -18_000}.merge(format: :json)
+       utc_offset: -28_800}.merge(format: :json)
     end
 
     it "updates record for admin" do
@@ -208,9 +211,14 @@ describe Api::V1::Admin::AnnouncementsController do
       expect(anc.comments).to eq "new comment"
       expect(anc.text).to eq "<p>new message</p>"
       expect(anc.selected_users).to eq [user2, user3]
-      # utc_offset for CST but user time zone is EST so add an hour
-      expect(anc.start_at).to eq ActiveSupport::TimeZone["UTC"].local(2020, 3, 12, 7)
-      expect(anc.end_at).to eq ActiveSupport::TimeZone["UTC"].local(2020, 3, 13, 19)
+      # The UTC offset is set for 8 hours (roughly Alaska time), however the user's actual timezone is eastern
+      # timezone setting is US Eastern time.  This simulates the user traveling to a different timezone but
+      # retaining their actual account's timezone
+      # The math works like this...the user's browser says their offset is 8 hours (28_800 seconds)
+      # but their account indicates they want time in Eastern Time (a 4 hour UTC offset).  So
+      # adding 4 hours to the date time above is how this should work
+      expect(anc.start_at).to eq ActiveSupport::TimeZone["America/New_York"].parse("2020-03-12 10:00")
+      expect(anc.end_at).to eq ActiveSupport::TimeZone["America/New_York"].parse("2020-03-13 22:00")
     end
 
     it "clears selected users if category changed to 'all'" do
