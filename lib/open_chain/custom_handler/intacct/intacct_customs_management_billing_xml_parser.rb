@@ -20,6 +20,11 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctCustomsMana
     inbound_file.add_identifier(:invoice_number, compose_invoice_number(file_number, suffix))
     inbound_file.add_identifier(:broker_reference, file_number)
 
+    if !MasterSetup.get.custom_feature?("CMUS Billing Feed")
+      inbound_file.add_reject_message("'CMUS Billing Feed' has not been enabled.")
+      return
+    end
+
     prepared = et(root, "invoicePrepared")
     suppressed = et(root, "invoiceSuppressed")
     if prepared != "Y"

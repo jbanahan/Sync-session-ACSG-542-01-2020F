@@ -13,6 +13,11 @@ describe OpenChain::CustomHandler::Intacct::IntacctCustomsManagementBillingXmlPa
     let (:existing_export) { IntacctAllianceExport.create! file_number: "2529468", suffix: "A", export_type: IntacctAllianceExport::EXPORT_TYPE_INVOICE }
     let (:existing_receivable) { existing_export.intacct_receivables.create! invoice_number: "2529468A" }
     let (:existing_payable) { existing_export.intacct_payables.create! bill_number: "2529468A", vendor_number: "VENDOR" }
+    let! (:master_setup) do
+      ms = stub_master_setup
+      allow(ms).to receive(:custom_feature?).with("CMUS Billing Feed").and_return true
+      ms
+    end
 
     it "parses billing data into receivable and payables" do
       now = Time.zone.parse('2020-05-08 12:30:30')
@@ -259,6 +264,13 @@ describe OpenChain::CustomHandler::Intacct::IntacctCustomsManagementBillingXmlPa
         expect(il.customer_number).to eq "TALBO"
         expect(il.broker_file).to eq "2529468"
       end
+    end
+
+    it "rejects if 'CMUS Billing Feed' custom feature is not enabled" do
+      expect(master_setup).to receive(:custom_feature?).with("CMUS Billing Feed").and_return false
+
+      subject.parse document
+      expect(inbound_file).to have_reject_message("'CMUS Billing Feed' has not been enabled.")
     end
   end
 end
