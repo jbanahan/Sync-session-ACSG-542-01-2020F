@@ -263,6 +263,7 @@ module Helpers
   def stub_master_setup_request_host
     ms = instance_double("MasterSetup")
     allow(ms).to receive(:request_host).and_return "localhost:3000"
+    allow(ms).to receive(:request_url_base).and_return "http://localhost:3000"
     allow(ms).to receive(:system_code).and_return "test"
     allow(ms).to receive(:uuid).and_return "test-uuid"
     allow(ms).to receive(:custom_feature?).and_return false

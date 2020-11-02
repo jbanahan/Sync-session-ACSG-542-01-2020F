@@ -378,8 +378,23 @@ class MasterSetup < ActiveRecord::Base
     "ubuntu"
   end
 
-  # Returns the name for the applicaiton since it has become ever changing
+  # Returns the name for the application since it has become ever changing
   def self.application_name
     "Maersk Customs Navigator"
+  end
+
+  def self.short_application_name
+    "VFI Track"
+  end
+
+  def request_url_base
+    "#{self.class.default_protocol}://#{self.request_host}"
+  end
+
+  def self.default_protocol
+    # This value should be set in the appropriate config/environment/[production/development/test].rb file
+    protocol = Rails.application.routes.default_url_options[:protocol]
+    raise "You must configure a default_url_options protocol value in config/environment/#{Rails.env}.rb" if protocol.blank?
+    protocol
   end
 end

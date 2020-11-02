@@ -444,4 +444,13 @@ describe MasterSetup do
       expect(MasterSetup.running_from_console?).to eq false
     end
   end
+
+  describe "request_url_base" do
+    subject { MasterSetup.new request_host: "test.testing.com"}
+
+    it "uses default_protocol and request host to determine full url base" do
+      expect(MasterSetup).to receive(:default_protocol).and_return "ftp"
+      expect(subject.request_url_base).to eq "ftp://test.testing.com"
+    end
+  end
 end

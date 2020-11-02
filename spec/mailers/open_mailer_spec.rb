@@ -377,7 +377,7 @@ describe OpenMailer do
         ea = EmailAttachment.all.first
         expect(ea).not_to be_nil
         expect(ea.attachment.attached_file_name).to eq(File.basename(f))
-        expect(mail.body.raw_source).to match("Click <a href='https://host.xxx:3000/email_attachments/#{ea.id}'>here</a> to download the attachment directly.")
+        expect(mail.body.raw_source).to match("Click <a href='https://localhost:3000/email_attachments/#{ea.id}'>here</a> to download the attachment directly.")
       end
     end
   end
@@ -510,7 +510,7 @@ describe OpenMailer do
           expect(ea).not_to be_nil
           expect(ea.attachment.attached_file_name).to eq(File.basename(f))
 
-          expect(mail.body.raw_source).to match("Click <a href='https://host.xxx:3000/email_attachments/#{ea.id}'>here</a> to download the attachment directly.")
+          expect(mail.body.raw_source).to match("Click <a href='https://localhost:3000/email_attachments/#{ea.id}'>here</a> to download the attachment directly.")
         end
       end
     end
@@ -550,7 +550,6 @@ describe OpenMailer do
       allow(MasterSetup).to receive(:instance_directory).and_return "/path/to/root"
       allow(ms).to receive(:uuid).and_return "uuid"
       allow(MasterSetup).to receive(:hostname).and_return "hostname"
-      allow(ms).to receive(:request_host).and_return "request_host"
       ms
     end
 
@@ -577,7 +576,7 @@ describe OpenMailer do
 
         mail = ActionMailer::Base.deliveries.pop
         source = mail.body.raw_source
-        expect(source).to include("https://request_host:3000/master_setups")
+        expect(source).to include("https://localhost:3000/master_setups")
         expect(source).to include("Error: #{error}")
         expect(source).to include("Message: #{error.message}")
         expect(source).to include("Master UUID: uuid")
@@ -636,7 +635,7 @@ describe OpenMailer do
         expect(ea.attachment.attached_file_name).to eq(File.basename(f))
 
         expect(mail.body.raw_source).to include("An attachment named '#{File.basename(f)}' for this message was larger than the maximum system size.")
-        expect(mail.body.raw_source).to include("Click <a href='https://request_host:3000/email_attachments/#{ea.id}'>here</a> to download the attachment directly.")
+        expect(mail.body.raw_source).to include("Click <a href='https://localhost:3000/email_attachments/#{ea.id}'>here</a> to download the attachment directly.")
       end
     end
 

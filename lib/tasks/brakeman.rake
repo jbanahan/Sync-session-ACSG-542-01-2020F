@@ -10,3 +10,6 @@ namespace :brakeman do
   end
 
 end
+
+# This allows you to do `rake rubocop` to run a scan (instead of `rake rubocop:scan`)
+task brakeman: ["brakeman:scan"]

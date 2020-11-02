@@ -14,3 +14,6 @@ namespace :rubocop do
     sh 'git diff --diff-filter=d --name-only master | xargs rubocop --safe-auto-correct'
   end
 end
+
+# This allows you to do `rake rubocop` to run a scan (instead of `rake rubocop:scan`)
+task rubocop: ["rubocop:scan"]

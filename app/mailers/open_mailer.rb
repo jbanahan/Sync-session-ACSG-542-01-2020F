@@ -73,14 +73,14 @@ class OpenMailer < ActionMailer::Base
     @message = message
     @current_page = current_page
     mail(to: 'support@vandegriftinc.com',
-         subject: "[VFI Track] [User Feedback] #{user.company.name} - #{user.full_name}",
+         subject: "[#{MasterSetup.short_application_name}] [User Feedback] #{user.company.name} - #{user.full_name}",
          reply_to: user.email)
   end
 
   def send_password_reset(user)
     @user = user
     @reset_url = edit_password_reset_url(@user.confirmation_token, host: emailer_host(user))
-    mail(to: user.email, subject: "[VFI Track] Password Reset") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: user.email, subject: "[#{MasterSetup.short_application_name}] Password Reset") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -96,14 +96,14 @@ class OpenMailer < ActionMailer::Base
     @user = current_user
     @comment = comment
     @link = link
-    mail(to: to_address, reply_to: current_user.email, subject: "[VFI Track] #{comment.subject}")
+    mail(to: to_address, reply_to: current_user.email, subject: "[#{MasterSetup.short_application_name}] #{comment.subject}")
   end
 
   def send_search_result(to, search_name, attachment_name, file_path, user)
     @user = user
     attachment_saved = save_large_attachment(file_path, to)
     m = mail(to: explode_group_and_mailing_lists(to, "TO"),
-             subject: "[VFI Track] #{search_name} Result",
+             subject: "[#{MasterSetup.short_application_name}] #{search_name} Result",
              from: 'do-not-reply@vfitrack.net')
     unless attachment_saved
       m.attachments[attachment_name] = create_attachment attachment_name, file_path
@@ -138,7 +138,7 @@ class OpenMailer < ActionMailer::Base
 
     m = mail(to: to,
              reply_to: current_user.email,
-             subject: "[VFI Track] #{CoreModule.find_by(class_name: imported_file.module_type).label} File Result")
+             subject: "[#{MasterSetup.short_application_name}] #{CoreModule.find_by(class_name: imported_file.module_type).label} File Result")
 
     unless attachment_saved
       m.attachments[imported_file.attached_file_name] = create_attachment imported_file.attached_file_name, data_file_path
@@ -182,7 +182,7 @@ class OpenMailer < ActionMailer::Base
     @message = message
     @messages_url = messages_url(host: emailer_host(@message.user))
 
-    mail(to: message.user.email, subject: "[VFI Track] New Message - #{message.subject}") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: message.user.email, subject: "[#{MasterSetup.short_application_name}] New Message - #{message.subject}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -193,8 +193,8 @@ class OpenMailer < ActionMailer::Base
     @text = anc.text
     @anc_time = anc.start_at.in_time_zone(user.time_zone)
 
-    email = mail(to: user.email, subject: "[VFI Track] Announcement - #{anc.title}") do |format|  # rubocop:disable Style/SymbolProc
-              format.html
+    email = mail(to: user.email, subject: "[#{MasterSetup.short_application_name}] Announcement - #{anc.title}") do |format|  # rubocop:disable Style/SymbolProc
+      format.html
     end
     premailer(email)
   end
@@ -207,7 +207,7 @@ class OpenMailer < ActionMailer::Base
     @ftp_username = ftp_username
     @ftp_subfolder = ftp_subfolder
 
-    mail(to: to, bcc: "support@vandegriftinc.com", subject: "[VFI Track] Search Transmission Failure") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: to, bcc: "support@vandegriftinc.com", subject: "[#{MasterSetup.short_application_name}] Search Transmission Failure") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -217,7 +217,7 @@ class OpenMailer < ActionMailer::Base
     @search_url = advanced_search_url(host: MasterSetup.get.request_host, id: search.id)
     @error_message = error_message
 
-    mail(to: to, subject: "[VFI Track] Search Transmission Failure") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: to, subject: "[#{MasterSetup.short_application_name}] Search Transmission Failure") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -226,7 +226,7 @@ class OpenMailer < ActionMailer::Base
   def send_imported_file_process_fail imported_file, source = "Not Specified"
     @imported_file = imported_file
     @source = source
-    mail(to: BUG_EMAIL, subject: "[VFI Track Exception] - Imported File Error") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: BUG_EMAIL, subject: "[#{MasterSetup.short_application_name} Exception] - Imported File Error") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -235,7 +235,7 @@ class OpenMailer < ActionMailer::Base
     @user = user
     @error = error
     @params = params
-    mail(to: BUG_EMAIL, subject: "[VFI Track Exception] Search Failure") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: BUG_EMAIL, subject: "[#{MasterSetup.short_application_name} Exception] Search Failure") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -273,7 +273,7 @@ class OpenMailer < ActionMailer::Base
     m
   end
 
-  def send_ack_file_exception recipient, error_messages, attached_file, file_name, sync_code, subject = "[VFI Track] Ack File Processing Error"
+  def send_ack_file_exception recipient, error_messages, attached_file, file_name, sync_code, subject = "[#{MasterSetup.short_application_name}] Ack File Processing Error"
     @error_messages = error_messages
     @sync_code = sync_code
     mail_opts = {to: explode_group_and_mailing_lists(recipient, "TO"), subject: subject}
@@ -365,7 +365,7 @@ class OpenMailer < ActionMailer::Base
 
   def send_tariff_set_change_notification tariff_set, user
     @ts = tariff_set
-    mail(to: user.email, subject: "[VFI Track] Tariff Update - #{tariff_set.country.name}") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: user.email, subject: "[#{MasterSetup.short_application_name}] Tariff Update - #{tariff_set.country.name}") do |format|  # rubocop:disable Style/SymbolProc
       format.text
     end
   end
@@ -377,12 +377,12 @@ class OpenMailer < ActionMailer::Base
     # This is mostly working around an issue in init_base_setup, trying to send an email w/ a MasterSetup that was JUST generated.
     ms = MasterSetup.get
     if ms.request_host.blank?
-      ms = MasterSetup.first
+      ms = MasterSetup.first # rubocop:disable Lint/UselessAssignment
     end
 
     @login_url = new_user_session_url(host: MasterSetup.get.request_host)
 
-    mail(to: user.email, subject: "[VFI Track] Welcome, #{user.first_name} #{user.last_name}!") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: user.email, subject: "[#{MasterSetup.short_application_name}] Welcome, #{user.first_name} #{user.last_name}!") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -392,7 +392,7 @@ class OpenMailer < ActionMailer::Base
     @user = user
     @tasks = tasks
     time = Time.zone.now
-    mail(to: user.email, subject: "[VFI Track] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|  # rubocop:disable Style/SymbolProc
+    mail(to: user.email, subject: "[#{MasterSetup.short_application_name}] Task Priorities - #{time.strftime('%m/%d/%y')}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
   end
@@ -427,7 +427,7 @@ class OpenMailer < ActionMailer::Base
 
   def send_crocs_manual_bill_reminder invoice_number
     @invoice_number = invoice_number
-    mail(to: "crocs-manual-billing@vandegriftinc.com", subject: "[VFI Track] Crocs Invoice # #{invoice_number}") do |fmt|  # rubocop:disable Style/SymbolProc
+    mail(to: "crocs-manual-billing@vandegriftinc.com", subject: "[#{MasterSetup.short_application_name}] Crocs Invoice # #{invoice_number}") do |fmt|  # rubocop:disable Style/SymbolProc
       fmt.html
     end
   end
@@ -452,12 +452,24 @@ class OpenMailer < ActionMailer::Base
     @blacklisted_extension = File.extname(file) if file && extension_blacklisted?(file)
     local_attachments = file ? process_attachments(file, email_to) : []
 
-    m = mail(to: email_to, subject: "[VFI Track] Failed to load file #{filename}") do |format|  # rubocop:disable Style/SymbolProc
+    m = mail(to: email_to, subject: "[#{MasterSetup.short_application_name}] Failed to load file #{filename}") do |format|  # rubocop:disable Style/SymbolProc
       format.html
     end
 
     local_attachments.each {|name, content| m.attachments[name] = content}
     m
+  end
+
+  def send_event_notification user, subject, body, link
+    @user = user
+    @body = body
+    @link = link
+
+    # The old event system only sent text emails, I don't want to switch it up to using the standard
+    # html ones at this time.
+    mail(to: user.email, subject: "[#{MasterSetup.short_application_name} Event] #{subject}") do |format| # rubocop:disable Style/SymbolProc
+      format.text
+    end
   end
 
   private
@@ -543,7 +555,6 @@ class OpenMailer < ActionMailer::Base
       email_attachment = nil
       attachment_text = nil
       if large_attachment? file
-        ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
         email_attachment = EmailAttachment.create!(email: Array.wrap(registered_emails).join(","))
         email_attachment.attachment = Attachment.new(attachable: email_attachment)
         # Allow passing file objects here as well, not just paths to a file.
@@ -556,8 +567,6 @@ class OpenMailer < ActionMailer::Base
         attachment_text = ATTACHMENT_TEXT.gsub(/_path_/, email_attachments_show_url(email_attachment)).gsub(/_filename_/, email_attachment.attachment.attached_file_name)
         attachment_text = attachment_text.html_safe # rubocop:disable Rails/OutputSafety
       elsif blank_attachment? file
-        ActionMailer::Base.default_url_options[:host] = MasterSetup.get.request_host
-
         # PostMark will raise exceptions if this is exactly nil, but a blank string is acceptable
         email_attachment = ""
         attachment_text = "* The attachment '#{attachment_filename(file)}' was excluded because it was empty."

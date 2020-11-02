@@ -167,7 +167,9 @@ div.chainActionBarWrap {
 .initially-hidden {
   display: none;
 }
-.inline-form-newline {
+.system-message-event {
+  white-space: pre-wrap;
+}.inline-form-newline {
    flex-basis: 100%;
    height: 0;
 }

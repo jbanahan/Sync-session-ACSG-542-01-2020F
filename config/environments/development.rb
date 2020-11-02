@@ -46,6 +46,7 @@ Rails.application.configure do
 
   # This forces all *_url links generated in mailers to be http (we don't run w/ https in dev)
   config.action_mailer.default_url_options = { protocol: "http" }
+  Rails.application.routes.default_url_options.merge!({ protocol: "http", host: "localhost", port: 3000 })
 
   # Docker's local network is different from the host machine's and is not a set ip range
   # Lets prevent the console from being clogged up with unhelpful warnings about this

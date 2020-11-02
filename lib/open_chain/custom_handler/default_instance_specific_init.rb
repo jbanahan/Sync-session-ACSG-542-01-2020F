@@ -3,6 +3,7 @@ require 'open_chain/registries/order_booking_registry'
 require 'open_chain/registries/order_acceptance_registry'
 require 'open_chain/registries/shipment_registry'
 require 'open_chain/anti_virus/anti_virus_registry'
+require 'open_chain/event_publisher'
 
 module OpenChain; module CustomHandler; class DefaultInstanceSpecificInit
   def self.init
@@ -35,7 +36,18 @@ module OpenChain; module CustomHandler; class DefaultInstanceSpecificInit
         require 'open_chain/anti_virus/clamby_anti_virus'
         OpenChain::AntiVirus::AntiVirusRegistry.register OpenChain::AntiVirus::ClambyAntiVirus
       end
+    end
 
+    if OpenChain::EventPublisher.registered.length == 0
+      # If the SQS publisher is configured in secrets, use it..otherwise use the delayed job one
+      config = MasterSetup.secrets[:sqs_event_publisher]
+      if config.blank?
+        require 'open_chain/events/delayed_job_event_publisher'
+        OpenChain::EventPublisher.register OpenChain::Events::DelayedJobEventPublisher
+      else
+        require 'open_chain/events/sqs_event_publisher'
+        OpenChain::EventPublisher.register OpenChain::Events::SqsEventPublisher
+      end
     end
 
     if MasterSetup.get.custom_feature?("Document Stitching")
