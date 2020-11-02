@@ -6,7 +6,19 @@
 <div class="container" id="main-container">
   <h1>Fiscal Calendar: <%=@company.name%></h1><br>
   <div class="container">
-    
+    <h2>Upload ONLY Part Files in Excel or CSV format.</h2>
+    <h4>The following data columns should be present in your file in the <b>same order</b> as listed below.</h4>
+    <table id="layout" class="table table-sm table-bordered my-3">
+      <thead>
+        <tr>
+          <td>Fiscal Year (YYYY)</td>
+          <td>Fiscal Month (#1-12)</td>
+          <td>Actual Start Date (Date)</td>
+          <td>Actual End Date (Date)</td>
+        </tr>
+      </thead>
+    </table>
+
      <%= form_tag "/companies/#{@company.id}/fiscal_months/upload", :multipart => true, :class=>'form-horizontal', :id=>"frm_run" do %>
       <div class="form-group">
         <label for="attached" class='col-md-1 control-label'>File:</label>
