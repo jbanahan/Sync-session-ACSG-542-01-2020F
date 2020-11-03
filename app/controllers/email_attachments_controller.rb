@@ -1,16 +1,15 @@
 class EmailAttachmentsController < ApplicationController
-  skip_before_filter :require_user
+  skip_before_action :require_user
 
-  def show
-  end
+  def show; end
 
   def download
-    ea = EmailAttachment.where(:id => params[:id]).first
+    ea = EmailAttachment.where(id: params[:id]).first
     email = params[:email]
 
     if ea.blank?
       add_flash :errors, "Requested attachment could not be found."
-      redirect_to validate_redirect(request.referrer)
+      redirect_to validate_redirect(request.referer)
     elsif ea.email.upcase.split(/[,;]/).include?(email.upcase)
       # Technically, the user portion of the email address is allowed to be case-sensitive.
       # In practice this isn't done by any email server/service of note.

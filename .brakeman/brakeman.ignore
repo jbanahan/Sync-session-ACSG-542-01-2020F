@@ -613,7 +613,7 @@
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "app/controllers/email_attachments_controller.rb",
-      "line": 18,
+      "line": 17,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
       "code": "redirect_to(EmailAttachment.where(:id => params[:id]).first.attachment.secure_url)",
       "render_path": null,
@@ -3229,25 +3229,6 @@
       "location": {
         "type": "model",
         "model": "ProductRateOverride"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "754d6378255c8c2dd5d8d3d27c6539648ca40f7dfa4a6871e1a0116b014ef108",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/email_attachment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":attachment_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "EmailAttachment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -7152,6 +7133,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-11-03 10:51:14 -0500",
+  "updated": "2020-11-03 11:58:53 -0500",
   "brakeman_version": "4.9.1"
 }
