@@ -3831,25 +3831,6 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 60,
-      "fingerprint": "86684c12da449fccbf066233290e029dd0ec109c50b5ccf074cbc67f20c71235",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/comment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":commentable_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Comment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
       "fingerprint": "86f6c4227bc75ad94dd71c78eeab4e650c8f1452054f85628cf14a4761f655aa",
       "check_name": "ModelAttrAccessible",
       "message": "Potentially dangerous attribute available for mass assignment",
@@ -4114,6 +4095,26 @@
       },
       "user_input": null,
       "confidence": "Weak",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "90251f1be111b525008602db48dca48fc9c04b38a6d3f2e7ff8ac3af990def7a",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/api/v1/comments_controller.rb",
+      "line": 17,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "Comment.new(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Api::V1::CommentsController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
       "note": ""
     },
     {
@@ -4437,25 +4438,6 @@
       "location": {
         "type": "model",
         "model": "TppHtsOverride"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "9d9b7cddc3165b31892f16f65616dbf1813d52c18a0c05af13dc92ed7f65e031",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/comment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":user_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "Comment"
       },
       "user_input": null,
       "confidence": "Weak",
@@ -6583,6 +6565,26 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 17,
+      "fingerprint": "f1ba27a7df36437a1fe9190415cc51cf86f9b5c2dd826bb6836fdd963cc29c10",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/comments_controller.rb",
+      "line": 11,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "Comment.new(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "CommentsController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
       "fingerprint": "f1c8be2680724868de98d9d938a4d73ecd2cfaf68e52541639265e203099ab15",
       "check_name": "MassAssignment",
       "message": "Unprotected mass assignment",
@@ -7149,6 +7151,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-10-30 15:07:13 -0400",
+  "updated": "2020-11-02 07:14:21 -0500",
   "brakeman_version": "4.9.1"
 }

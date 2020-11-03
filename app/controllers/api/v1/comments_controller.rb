@@ -4,7 +4,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiCoreModuleControll
   include PolymorphicFinders
 
   def for_module
-    r = {comments:[]}
+    r = {comments: []}
     obj = base_object params, :module_type, :id
     raise StatusableError.new("You do not have permission to view these comments.", 401) unless obj.can_view?(current_user)
     obj.comments.each {|c| r[:comments] << comment_json(c)}
@@ -14,17 +14,17 @@ module Api; module V1; class CommentsController < Api::V1::ApiCoreModuleControll
   def create
     obj = base_object params[:comment], :commentable_type, :commentable_id
     raise StatusableError.new("You do not have permission to add a comment.", 401) unless obj.can_comment?(current_user)
-    my_params = params[:comment]
-    my_params[:user_id] = current_user.id
-    c = Comment.create!(my_params)
-    render json: {comment:comment_json(c)}
+    c = Comment.new(permitted_params(params))
+    c.user = current_user
+    c.save!
+    render json: {comment: comment_json(c)}
   end
 
   def destroy
     c = Comment.find params[:id]
     raise StatusableError.new("You cannot delete a comment that another user created.", 401) unless c.user == current_user || current_user.sys_admin?
-    raise StatusableError.new(c.errors.full_messages.join("\n")) unless c.destroy
-    render json: {message:'Comment deleted'}
+    raise StatusableError, c.errors.full_messages.join("\n") unless c.destroy
+    render json: {message: 'Comment deleted'}
   end
 
   # The polymorphic actions below are all mapped to routes like
@@ -45,7 +45,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiCoreModuleControll
   def polymorphic_show
     find_object(params, current_user) do |obj|
       comment = obj.comments.find {|c| c.id == params[:id].to_i }
-      if comment && comment.can_view?(current_user)
+      if comment&.can_view?(current_user)
         render json: {"comment" => obj_to_json_hash(comment)}
       else
         render_forbidden
@@ -79,25 +79,25 @@ module Api; module V1; class CommentsController < Api::V1::ApiCoreModuleControll
   end
 
   private
+
     def comment_json c
-      h = {id:c.id, commentable_type:c.commentable_type, commentable_id:c.commentable_id,
-          user:{id:c.user.id, full_name:c.user.full_name, email:c.user.email},
-          subject:c.subject, body:c.body, created_at:c.created_at, permissions:json_generator.render_permissions(c, current_user)
-        }
+      h = {id: c.id, commentable_type: c.commentable_type, commentable_id: c.commentable_id,
+           user: {id: c.user.id, full_name: c.user.full_name, email: c.user.email},
+           subject: c.subject, body: c.body, created_at: c.created_at, permissions: json_generator.render_permissions(c, current_user)}
       h
     end
 
     def base_object params_base, module_type_param, id_param
-      cm = CoreModule.find_by_class_name params_base[module_type_param]
+      cm = CoreModule.find_by class_name: params_base[module_type_param]
       raise StatusableError.new("Module #{params_base[module_type_param]} not found.", 404) unless cm
-      r = cm.klass.where(id:params_base[id_param]).includes(:comments).first
+      r = cm.klass.where(id: params_base[id_param]).includes(:comments).first
       raise StatusableError.new("#{cm.label} with id #{params_base[id_param]} not found.", 404) unless r
       r
     end
 
     def find_object params, user
       obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
-      if obj && obj.can_view?(user)
+      if obj&.can_view?(user)
         yield obj
       else
         render_forbidden
@@ -107,7 +107,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiCoreModuleControll
 
     def edit_object params, user
       obj = polymorphic_find(params[:base_object_type], params[:base_object_id])
-      if obj && obj.can_comment?(user)
+      if obj&.can_comment?(user)
         yield obj
       else
         render_forbidden
@@ -126,4 +126,7 @@ module Api; module V1; class CommentsController < Api::V1::ApiCoreModuleControll
       end
     end
 
+    def permitted_params(params)
+      params.require(:comment).except(:user_id, :commentable).permit(:body, :subject, :commentable_id, :commentable_type)
+    end
 end; end; end

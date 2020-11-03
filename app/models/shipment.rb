@@ -204,7 +204,7 @@ class Shipment < ActiveRecord::Base
   has_many   :carton_sets, dependent: :destroy, inverse_of: :shipment, autosave: true
 
   validates  :reference, presence: true
-  validates :reference, uniqueness: true # rubocop:disable Rails/UniqueValidationWithoutIndex
+  validates :reference, uniqueness: true
 
   dont_shallow_merge :Shipment, ['id', 'created_at', 'updated_at', 'vendor_id', 'reference']
 

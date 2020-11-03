@@ -183,14 +183,14 @@ describe OpenChain::CustomHandler::CiLoadHandler do
         end
 
         after do
-          # rubocop:disable Rspec/ExpectInHook
+          # rubocop:disable RSpec/ExpectInHook
           expect(subject).to receive(:foreach).and_return row_data
 
           results = subject.parse file
           expect(results[:entries].size).to eq 1
           i = results[:entries].first.invoices.first
           expect(i.invoice_date).to eq Date.new(2015, 2, 1)
-          # rubocop:enable Rspec/ExpectInHook
+          # rubocop:enable RSpec/ExpectInHook
         end
 
         it "parses m-d-yyyy values to date" do
@@ -219,7 +219,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
       end
 
       context "with invalid dates" do
-        # rubocop:disable Rspec/ExpectInHook
+        # rubocop:disable RSpec/ExpectInHook
         before do
           # This logic is only live for non-test envs, to avoid having to update dates in the test files after they get too old
           expect(MasterSetup).to receive(:test_env?).at_least(:once).and_return false
@@ -233,7 +233,7 @@ describe OpenChain::CustomHandler::CiLoadHandler do
           i = results[:entries].first.invoices.first
           expect(i.invoice_date).to eq nil
         end
-        # rubocop:enable Rspec/ExpectInHook
+        # rubocop:enable RSpec/ExpectInHook
 
         it "rejects dates that are more than 2 years old" do
           row_data[0][3] = (Time.zone.now - 3.years - 1.day).strftime "%Y-%m-%d"

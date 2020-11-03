@@ -18,13 +18,10 @@
 
 require 'open_chain/event_publisher'
 class Comment < ActiveRecord::Base
-  attr_accessible :body, :commentable_id, :commentable_type, :subject,
-    :user_id, :user, :commentable
-
-  belongs_to :commentable, :polymorphic => true
+  belongs_to :commentable, polymorphic: true
   belongs_to :user
-  validates :commentable, :presence => true
-  validates :user, :presence => true
+  validates :commentable, presence: true
+  validates :user, presence: true
 
   scope :by_created_at, -> { order(created_at: :desc) }
 
@@ -50,10 +47,10 @@ class Comment < ActiveRecord::Base
   def comment_json user
     comment = self
     {
-      id:self.id, commentable_type:self.commentable_type, commentable_id:self.commentable_id,
-        user:{id:self.user.id, full_name:self.user.full_name, email:self.user.email},
-        subject:self.subject, body:self.body, created_at:self.created_at,
-        permissions: Comment.comment_json_permissions(comment, user)
+      id: self.id, commentable_type: self.commentable_type, commentable_id: self.commentable_id,
+      user: {id: self.user.id, full_name: self.user.full_name, email: self.user.email},
+      subject: self.subject, body: self.body, created_at: self.created_at,
+      permissions: Comment.comment_json_permissions(comment, user)
     }
   end
 
@@ -61,7 +58,7 @@ class Comment < ActiveRecord::Base
     {can_view: comment.can_view?(user), can_edit: comment.can_edit?(user), can_delete: comment.can_delete?(user)}
   end
 
-  def self.gather obj, since=nil, limit=nil
+  def self.gather obj, since = nil, limit = nil
     gathered = Comment.where(commentable_id: obj).order(updated_at: :desc)
     gathered = gathered.where("updated_at >= ?", since.utc.to_s(:db)) if since
     gathered = gathered.limit(limit) if limit

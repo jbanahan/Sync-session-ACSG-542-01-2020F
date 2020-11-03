@@ -3048,7 +3048,6 @@ Layout/LineLength:
     - 'spec/controllers/api/v1/state_toggle_support_spec.rb'
     - 'spec/controllers/api/v1/support_requests_controller_spec.rb'
     - 'spec/controllers/api/v1/users_controller_spec.rb'
-    - 'spec/controllers/attachment_archive_setups_controller_spec.rb'
     - 'spec/controllers/comments_controller_spec.rb'
     - 'spec/controllers/commercial_invoices_controller_spec.rb'
     - 'spec/controllers/companies_controller_spec.rb'
@@ -7280,7 +7279,6 @@ Naming/MemoizedInstanceVariableName:
     - 'app/controllers/report_results_controller.rb'
     - 'app/controllers/run_as_sessions_controller.rb'
     - 'app/controllers/sent_emails_controller.rb'
-    - 'app/controllers/surveys_controller.rb'
     - 'app/controllers/users_controller.rb'
     - 'app/controllers/vendors_controller.rb'
     - 'app/models/product.rb'
@@ -11357,7 +11355,6 @@ Rails/Blank:
 # SupportedStyles: strict, flexible
 Rails/Date:
   Exclude:
-    - 'app/controllers/data_cross_references_controller.rb'
     - 'app/controllers/fiscal_months_controller.rb'
     - 'lib/open_chain/custom_handler/hm/hm_invoice_generator.rb'
     - 'lib/open_chain/custom_handler/masterbrand/masterbrand_invoice_generator.rb'
