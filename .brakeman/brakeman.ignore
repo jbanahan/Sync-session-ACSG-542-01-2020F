@@ -327,6 +327,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "0dde24e1e0d72bba8cc023e8e63c196b358383379bf26d0ae6b04a81276b381c",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/linkable_attachment_import_rules_controller.rb",
+      "line": 42,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "LinkableAttachmentImportRule.create(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "LinkableAttachmentImportRulesController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "0e0757135af88c82e50073a684054f1a55cb7b04a5e4d19e3a603b067c93ec50",
       "check_name": "ModelAttrAccessible",
@@ -5413,25 +5433,6 @@
       "note": ""
     },
     {
-      "warning_type": "Mass Assignment",
-      "warning_code": 60,
-      "fingerprint": "c365e9981752038bffffe7b17e614f6861f059cfa810dd014feb22aaed021d89",
-      "check_name": "ModelAttrAccessible",
-      "message": "Potentially dangerous attribute available for mass assignment",
-      "file": "app/models/linkable_attachment.rb",
-      "line": null,
-      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
-      "code": ":attachment_id",
-      "render_path": null,
-      "location": {
-        "type": "model",
-        "model": "LinkableAttachment"
-      },
-      "user_input": null,
-      "confidence": "Weak",
-      "note": ""
-    },
-    {
       "warning_type": "Redirect",
       "warning_code": 18,
       "fingerprint": "c4587938ed3c7ab1f94e968994153d8c3dacbd62a7e8eb77ac8a7d5d4ebd696a",
@@ -7151,6 +7152,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-11-02 07:14:21 -0500",
+  "updated": "2020-11-03 10:51:14 -0500",
   "brakeman_version": "4.9.1"
 }

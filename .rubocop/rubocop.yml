@@ -214,6 +214,11 @@ RSpec/RepeatedExample:
   Exclude:
     - 'spec/models/search_criterion_spec.rb'
 
+Style/ClassVars:
+  Enabled: true
+  Exclude:
+    - 'app/models/linkable_attachment_import_rule.rb'
+
 RSpec/RepeatedExampleGroupBody:
   Enabled: true
   Exclude:
