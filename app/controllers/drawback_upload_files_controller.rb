@@ -9,13 +9,15 @@ class DrawbackUploadFilesController < ApplicationController
       imports = DrawbackImportLine.select("importer_id, count(*) as 'total_lines'").not_in_duty_calc_file.group('importer_id')
       @import_lines_not_in_duty_calc = {}
       imports.each {|f| @import_lines_not_in_duty_calc[Company.find(f.importer_id)] = f.total_lines}
-      render :layout=>'one_col'
+      render layout: 'one_col'
     else
       add_flash :errors, "You cannot view this page because you do not have permission to view Drawback."
-      redirect_to request.referrer
+      redirect_to request.referer
     end
   end
+
   def create
+    # rubocop:disable Style/IfInsideElse
     if current_user.edit_drawback?
       if params['drawback_upload_file']['processor'].blank?
         add_flash :errors, "You cannot upload this file because the processor is not set.  Please contact support."
@@ -24,14 +26,18 @@ class DrawbackUploadFilesController < ApplicationController
           add_flash :errors, "You must select a file before uploading."
         else
           params['drawback_upload_file']['start_at'] = 0.seconds.ago
-          d = DrawbackUploadFile.create!(params['drawback_upload_file'])
+          d = DrawbackUploadFile.create!(permitted_params(params))
           validation = d.validate_layout
           if validation.empty?
             d.delay.process current_user
             add_flash :notices, "Your file is being processed.  You'll receive a system message when it's done."
           else
             d.destroy
-            err = (["Your file cannot be processed because of the following validation errors:"]+validation).join("<br />").html_safe
+
+            # rubocop:disable Rails/OutputSafety
+            err = (["Your file cannot be processed because of the following validation errors:"] + validation).join("<br />").html_safe
+            # rubocop:enable Rails/OutputSafety
+
             add_flash :errors, err
           end
         end
@@ -39,8 +45,10 @@ class DrawbackUploadFilesController < ApplicationController
     else
       add_flash :errors, "You cannot upload files because you do not have permission to edit Drawback."
     end
+    # rubocop:enable Style/IfInsideElse
     redirect_to drawback_upload_files_path
   end
+
   def process_j_crew_entries
     if current_user.edit_drawback?
       if params[:start_date].blank? || params[:end_date].blank?
@@ -53,5 +61,11 @@ class DrawbackUploadFilesController < ApplicationController
       error_redirect "You do not have permission to process drawback."
     end
     redirect_to drawback_upload_files_path
+  end
+
+  private
+
+  def permitted_params(params)
+    params.require(:drawback_upload_file).permit(:processor, :start_at, attachment_attributes: [:attached])
   end
 end

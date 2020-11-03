@@ -550,6 +550,26 @@
     },
     {
       "warning_type": "Mass Assignment",
+      "warning_code": 17,
+      "fingerprint": "12a3aee168680593b3d46b29e683f12caa9fab458f0f40be8848af37900e7105",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/drawback_upload_files_controller.rb",
+      "line": 29,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "DrawbackUploadFile.create!(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "DrawbackUploadFilesController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
       "warning_code": 60,
       "fingerprint": "145d02b4074d56dbc40784d8d07d315001706d57516cabcd4b564869537503e4",
       "check_name": "ModelAttrAccessible",
@@ -7153,6 +7173,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-11-03 12:42:31 -0500",
+  "updated": "2020-11-03 13:18:54 -0500",
   "brakeman_version": "4.9.1"
 }
