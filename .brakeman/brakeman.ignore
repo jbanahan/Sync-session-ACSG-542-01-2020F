@@ -589,6 +589,26 @@
     {
       "warning_type": "Mass Assignment",
       "warning_code": 17,
+      "fingerprint": "1589983905ae8a0dee5d2d589431ed34c58ffdbcded115296bc81adc4f3dc6fa",
+      "check_name": "MassAssignment",
+      "message": "Unprotected mass assignment",
+      "file": "app/controllers/part_number_correlations_controller.rb",
+      "line": 15,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "PartNumberCorrelation.new(permitted_params(params))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "PartNumberCorrelationsController",
+        "method": "create"
+      },
+      "user_input": "params",
+      "confidence": "High",
+      "note": ""
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 17,
       "fingerprint": "1596bd5cc372e4c99dd46ba0279962d30e5e5309dabd45ee561fa425bba9f383",
       "check_name": "MassAssignment",
       "message": "Unprotected mass assignment",
@@ -7133,6 +7153,6 @@
       "note": ""
     }
   ],
-  "updated": "2020-11-03 11:58:53 -0500",
+  "updated": "2020-11-03 12:42:31 -0500",
   "brakeman_version": "4.9.1"
 }

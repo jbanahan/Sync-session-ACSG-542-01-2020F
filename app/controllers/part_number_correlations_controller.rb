@@ -4,6 +4,7 @@ class PartNumberCorrelationsController < ApplicationController
   def set_page_title
     @page_title = "Part Number Correlation"
   end
+
   def create
     if PartNumberCorrelation.can_view?(current_user)
       importer_ids = params["part_number_correlation"].delete("importers")
@@ -11,9 +12,10 @@ class PartNumberCorrelationsController < ApplicationController
 
       attached_file = params["part_number_correlation"].delete("attachment")
 
-      pnc = PartNumberCorrelation.new(params[:part_number_correlation])
+      pnc = PartNumberCorrelation.new(permitted_params(params))
       att = Attachment.new(attached: attached_file)
-      pnc.attachment = att; pnc.user = current_user
+      pnc.attachment = att
+      pnc.user = current_user
       if pnc.save
         pnc.delay.process(importers)
         add_flash :notices, "Your file is being processed. You will receive a system notification when processing is complete."
@@ -36,4 +38,9 @@ class PartNumberCorrelationsController < ApplicationController
     end
   end
 
+  private
+
+    def permitted_params(params)
+      params.require(:part_number_correlation).permit(:starting_row, :part_column, :part_regex, :entry_country_iso, :importers)
+    end
 end

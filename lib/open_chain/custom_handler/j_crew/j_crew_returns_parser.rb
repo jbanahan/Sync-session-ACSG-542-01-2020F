@@ -27,20 +27,20 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
     results = {}
     begin
       results = parse_and_send @custom_file, user
-    rescue
+    rescue StandardError
       errors << "Unrecoverable errors were encountered while processing this file.  These errors have been forwarded to the IT department and will be resolved."
       raise
     ensure
       body = "JCrew Returns File '#{@custom_file.attached_file_name}' has finished processing.  You should receive an email with the results shortly."
 
       subject = "JCrew Returns Processing Complete"
-      if !errors.blank?  || (results[:bad_row_count] && results[:bad_row_count] > 0)
+      if errors.present? || (results[:bad_row_count] && results[:bad_row_count] > 0)
         subject += " With Errors"
 
-        body += "\n\n#{errors.join("\n")}" unless errors.blank?
+        body += "\n\n#{errors.join("\n")}" if errors.present?
       end
 
-      user.messages.create(:subject=>subject, :body=>body)
+      user.messages.create(subject: subject, body: body)
     end
     nil
   end
@@ -98,7 +98,6 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
     true
   end
 
-
   # What we're doing here is extracting out all the parsable files from the zip, parsing them, and then zipping the
   # parsed versions of the files back into a zip file into the given IO object
   def parse_zip_file source_file, dest_file
@@ -121,7 +120,6 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
               Tempfile.open([File.basename(parsed_output_name, ".*"), File.extname(parsed_output_name)]) do |parse_output|
                 parse_output.binmode
 
-
                 parse_uploaded_file zip_output, parse_output
                 parse_output.rewind
 
@@ -139,6 +137,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
   end
 
   private
+
     def write_zip_entry_to_file entry, file
       entry.get_input_stream do |input|
         file.write(input.read(Zip::Decompressor::CHUNK_SIZE, '')) until input.eof?
@@ -159,7 +158,6 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
       File.basename(source_filename, ".*") + ext
     end
 
-
     def convert_pdf_to_csv_layout file_path
       pdf_text = convert_pdf_to_text(file_path)
       convert_pdf_text_to_csv_layout(pdf_text)
@@ -168,7 +166,7 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
     def convert_pdf_to_text file_path
       # Utilize the command line program 'pdftotext' to extract text from the pdf..requires Xpdf/Poppler to be installed.
       cmd = ["pdftotext", "-layout", "-enc", "UTF-8", "-eol", "unix", file_path, "-"]
-      std_out, std_err, status = Open3.capture3 *cmd
+      std_out, std_err, status = Open3.capture3(*cmd)
 
       raise "An error occurred trying to extract text from the file #{File.basename(file_path)}: #{std_err}" unless status.success?
 
@@ -176,7 +174,9 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
     end
 
     def convert_pdf_text_to_csv_layout pdf_text
-      CSV.generate(write_headers:true, row_sep: "\n", headers: ["Product ID", "COO", "HTS", "Description", "PO", "Qty", "Price", "Total Price", "Prior HTS", "Prior MID", "Prior COO"]) do |csv|
+      CSV.generate(write_headers: true, row_sep: "\n",
+                   headers: ["Product ID", "COO", "HTS", "Description", "PO", "Qty", "Price", "Total Price", "Prior HTS",
+                             "Prior MID", "Prior COO"]) do |csv|
         extract_product_data_from_pdf_text(pdf_text).each do |p|
           row = []
           row << p.product_id
@@ -214,7 +214,6 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
         next if headers
 
         if split_line[0] =~ /^\d{1,4}(?!\-)$/
-
           if current_product
             products << current_product
           end
@@ -222,33 +221,31 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
           current_product = ProductData.new
           # Apparently from time to time the description is going to be missing,
           # account for that.
+          current_product.product_id = split_line[1].to_s.strip
           if split_line.length >= 6
-            current_product.product_id = split_line[1].to_s.strip
             current_product.description = split_line[2].to_s.strip
             current_product.qty = split_line[3][0..-4].to_s.strip.to_i
             current_product.price = split_line[4].to_s.strip.to_f
             current_product.total_price = split_line[5].to_s.strip.to_f
           else
-            current_product.product_id = split_line[1].to_s.strip
             current_product.qty = split_line[2][0..-4].to_s.strip.to_i
             current_product.price = split_line[3].to_s.strip.to_f
             current_product.total_price = split_line[4].to_s.strip.to_f
           end
-
         else
-          if split_line[1] && split_line[1].upcase.start_with?("HS:")
+          if split_line[1]&.upcase&.start_with?("HS:")
             current_product.hts = split_line[1][4..-1].to_s.strip
           end
 
-          if split_line[2] && split_line[2].upcase.start_with?("COUNTRY OF ORIGIN:")
+          if split_line[2]&.upcase&.start_with?("COUNTRY OF ORIGIN:")
             current_product.coo = split_line[2][19..-1].to_s.strip
           end
 
-          if split_line[1] && split_line[1].upcase.start_with?("COUNTRY OF ORIGIN:")
+          if split_line[1]&.upcase&.start_with?("COUNTRY OF ORIGIN:")
             current_product.coo = split_line[1][19..-1].to_s.strip
           end
 
-          if split_line[1] && split_line[1].upcase.start_with?("PO:")
+          if split_line[1]&.upcase&.start_with?("PO:")
             current_product.po = split_line[1][4..-1].to_s.strip
           end
         end
@@ -264,7 +261,6 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
     def tariff_info style
       @tariff_cache ||= {}
       @tariff_finder ||= OpenChain::TariffFinder.new("US", Company.with_customs_management_number(['J0000', 'JCREW']).to_a)
-      tyle = style[0..4]
       style = style.rjust(5, "0")
 
       results = @tariff_cache[style]
@@ -272,10 +268,10 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
         # Crew has some "restricted" styles that they don't re-import into the country, check if this style is on that list
         restricted = Product.joins(:custom_values).where(unique_identifier: "JCREW-#{style}", custom_values: {custom_definition_id: @cdefs[:prod_import_restricted].id}).first
 
-        if restricted && restricted.custom_value(@cdefs[:prod_import_restricted])
+        if restricted&.custom_value(@cdefs[:prod_import_restricted])
           results = {mfid: 'RESTRICTED', hts: 'RESTRICTED', coo: 'RESTRICTED'}
         else
-          tariff = @tariff_finder.find_by_style style
+          tariff = @tariff_finder.by_style style
           results = {mfid: "", hts: "", coo: ""}
           if tariff
             results[:mfid] = tariff.mid
@@ -293,10 +289,10 @@ module OpenChain; module CustomHandler; module JCrew; class JCrewReturnsParser
     def clean_up_unquoted_data row
       # This cleans up any quotes with leading or trailing spaces, which causes the ruby parser to puke (stupidly, even if it's technically not to csv spec)
       row.each_with_index do |v, x|
-        row[x] = (v.to_s.gsub /(\A\s*")|("\s*\z)/, "").strip
+        row[x] = v.to_s.gsub(/(\A\s*")|("\s*\z)/, "").strip
       end
 
       row
     end
 
-end; end; end; end;
+end; end; end; end

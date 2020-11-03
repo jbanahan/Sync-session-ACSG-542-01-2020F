@@ -6,7 +6,7 @@ module OpenChain; module CustomHandler; module JCrew
       return nil if r.size <= 1 && r[0].blank? # stray rows
 
       # I believe this should be 17 no matter what.  Double check?
-      raise "Line #{row_number} had #{r.size} elements.  All lines must have 17 elements." unless r.size==17
+      raise "Line #{row_number} had #{r.size} elements.  All lines must have 17 elements." unless r.size == 17
       d = DutyCalcExportFileLine.new
       d.ship_date = parse_date(r[2])
       d.export_date = d.ship_date
@@ -21,14 +21,14 @@ module OpenChain; module CustomHandler; module JCrew
       d.uom = r[16] # column q
       d.exporter = 'J Crew'
       d.action_code = 'E'
-      d.hts_code = OpenChain::TariffFinder.new("US", Company.with_customs_management_number(['J0000', 'JCREW']).to_a).find_by_style(d.part_number)
+      d.hts_code = OpenChain::TariffFinder.new("US", Company.with_customs_management_number(['J0000', 'JCREW']).to_a).by_style(d.part_number)
       d.importer = importer
       d
     end
 
     def self.get_part_number str
       x = str.split(' - ')
-      raise "Bad Part number in #{str}" if (x.blank? || x.length==1)
+      raise "Bad Part number in #{str}" if x.blank? || x.length == 1
       r = x[1].split(' ').first
       raise "Bad part number in #{r}" unless r.match(/^\w{5}/)
       r
@@ -36,18 +36,18 @@ module OpenChain; module CustomHandler; module JCrew
 
     def self.csv_column_separator line
       ["|", "\t"].each do |ch|
-        return ch if line.split(ch).length==17
+        return ch if line.split(ch).length == 17
       end
-      return ','
+      ','
     end
 
     def self.parse_date str
       date_format = case str.split(' ')
-      when 3
+                    when 3
         "%m/%d/%Y %i:%M:%S %p"
-      when 2
+                    when 2
         "%m/%d/%Y %H:%M:%S"
-      else
+                    else
         "%m/%d/%Y"
       end
       DateTime.strptime(str, date_format)

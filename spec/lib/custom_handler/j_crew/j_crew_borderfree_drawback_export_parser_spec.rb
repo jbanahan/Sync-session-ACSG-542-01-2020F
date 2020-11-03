@@ -1,44 +1,47 @@
 describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
   describe "parse_csv_file" do
-    before :each do
-      @f = Tempfile.new('foo')
+    let(:file) { Tempfile.new('foo') }
+
+    after do
+      file.unlink
     end
-    after :each do
-      @f.unlink
-    end
-    it 'should handle pipe delimited line' do
-      imp = double('importer')
+
+    it 'handles pipe delimited line' do
+      imp = instance_double('importer')
       data = "a\n1|2|3|4|5|6|7|8|9|10|11|12|13|14|15|16|17"
-      expect(described_class).to receive(:parse_csv_line).with((1..17).map {|i| i.to_s}, 1, imp)
-      @f.write data
-      @f.flush
-      described_class.parse_csv_file @f.path, imp
+      expect(described_class).to receive(:parse_csv_line).with((1..17).map(&:to_s), 1, imp)
+      file.write data
+      file.flush
+      described_class.parse_csv_file file.path, imp
     end
-    it 'should handle tab delimited line' do
-      imp = double('importer')
+
+    it 'handles tab delimited line' do
+      imp = instance_double('importer')
       data = "a\n1\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\t12\t13\t14\t15\t16\t17"
-      expect(described_class).to receive(:parse_csv_line).with((1..17).map {|i| i.to_s}, 1, imp)
-      @f.write data
-      @f.flush
-      described_class.parse_csv_file @f.path, imp
+      expect(described_class).to receive(:parse_csv_line).with((1..17).map(&:to_s), 1, imp)
+      file.write data
+      file.flush
+      described_class.parse_csv_file file.path, imp
     end
   end
+
   describe "parse_csv_line" do
     def default_vals
       {
-        export_date: '8/23/2011 2:15:32 PM' ,
+        export_date: '8/23/2011 2:15:32 PM',
         part_number: 'Short Description - 123456789-ABCDEF - KEYWORDS',
-        ref_1:'R1',
-        ref_2:'R2',
+        ref_1: 'R1',
+        ref_2: 'R2',
         carrier: 'Test Carrier',
         destination_country: 'CA',
         uom: 'EA',
-        quantity:'20',
-        desc:'DE',
-        hts:'1234567890'
+        quantity: '20',
+        desc: 'DE',
+        hts: '1234567890'
       }
     end
-    def make_row opts={}
+
+    def make_row opts = {}
       inner_opts = default_vals.merge opts
       r = Array.new 17
       r[2] = inner_opts[:export_date]
@@ -51,23 +54,24 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       r[16] = inner_opts[:uom]
       r
     end
-    before :each do
-      @imp = Factory(:company)
-      @usa = Factory(:country, iso_code: 'US')
-      @jc1 = Factory(:company, alliance_customer_number: 'J0000')
-      @jc2 = Factory(:company, alliance_customer_number: 'JCREW')
-    end
-    it 'should check for 17 columns (A through Q)' do
+
+    let(:importer) { Factory(:company) }
+    let(:usa) { Factory(:country, iso_code: 'US') }
+    let(:j_crew1) { Factory(:company, alliance_customer_number: 'J0000') }
+    let(:j_crew2) { Factory(:company, alliance_customer_number: 'JCREW') }
+
+    it 'checks for 17 columns (A through Q)' do
       r = make_row
       r << 'another column'
-      expect {described_class.parse_csv_line r, 1, @imp}.to raise_error(/Line 1 had 18 elements/)
+      expect {described_class.parse_csv_line r, 1, importer}.to raise_error(/Line 1 had 18 elements/)
     end
-    it "should create line" do
+
+    it "creates line" do
       vals = default_vals
 
       # this mock could probably be eliminated and replaced with a Factory(:product, ...) if necessary
-      expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
-      d = described_class.parse_csv_line(make_row, 1, @imp)
+      expect_any_instance_of(OpenChain::TariffFinder).to receive(:by_style).with('123456789-ABCDEF').and_return "1234567890"
+      d = described_class.parse_csv_line(make_row, 1, importer)
 
       expect(d.class).to eq DutyCalcExportFileLine
       expect(d.export_date.strftime("%Y-%m-%d")).to eq "2011-08-23"
@@ -83,17 +87,13 @@ describe OpenChain::CustomHandler::JCrew::JCrewBorderfreeDrawbackExportParser do
       expect(d.action_code).to eq 'E'
 
       expect(d.hts_code).to eq vals[:hts]
-      expect(d.importer).to eq @imp
+      expect(d.importer).to eq importer
     end
-    it 'should handle short date format' do
-      expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
-      d = described_class.parse_csv_line(make_row(export_date:'1/13/2014'), 1, @imp)
+
+    it 'handles short date format' do
+      expect_any_instance_of(OpenChain::TariffFinder).to receive(:by_style).with('123456789-ABCDEF').and_return "1234567890"
+      d = described_class.parse_csv_line(make_row(export_date: '1/13/2014'), 1, importer)
       expect(d.export_date.strftime("%Y-%m-%d")).to eq "2014-01-13"
-    end
-    it 'should handle short date format' do
-      expect_any_instance_of(OpenChain::TariffFinder).to receive(:find_by_style).with('123456789-ABCDEF').and_return "1234567890"
-      d = described_class.parse_csv_line(make_row(export_date:'1/7/2015 20:46:49'), 1, @imp)
-      expect(d.export_date.strftime("%Y-%m-%d")).to eq "2015-01-07"
     end
   end
 end

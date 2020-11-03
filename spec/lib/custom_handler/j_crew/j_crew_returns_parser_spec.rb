@@ -1,40 +1,42 @@
 describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
 
   subject { described_class.new nil }
-  let (:hts_number) {"12345467890"}
-  let (:mid) { "MANUFACTURER" }
-  let (:coo) { "VN" }
-  let (:part_number) {"62974"}
-  let (:crew) { with_customs_management_id(Factory(:importer), "J0000") }
-  let (:previous_entry) {
+
+  let(:hts_number) {"12345467890"}
+  let(:mid) { "MANUFACTURER" }
+  let(:coo) { "VN" }
+  let(:part_number) {"62974"}
+  let(:crew) { with_customs_management_id(Factory(:importer), "J0000") }
+
+  let(:previous_entry) do
     entry = Factory(:entry, importer: crew, import_country: Factory(:country, iso_code: "US"), release_date: Time.zone.now)
     inv = Factory(:commercial_invoice, entry: entry, mfid: mid)
     line = Factory(:commercial_invoice_line, commercial_invoice: inv, part_number: part_number, country_origin_code: coo)
-    tariff = Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: hts_number)
+    Factory(:commercial_invoice_tariff, commercial_invoice_line: line, hts_code: hts_number)
 
     entry
-  }
-  let (:user) { Factory(:user) }
+  end
 
-  before :each do
+  let(:user) { Factory(:user) }
+
+  before do
     previous_entry
   end
 
   describe "parse_and_send" do
 
-
     context "with_csv_file" do
-      let (:file) { File.open("spec/fixtures/files/crew_returns.csv", "r") }
+      let(:file) { File.open("spec/fixtures/files/crew_returns.csv", "r") }
 
-      let (:custom_file) {
-        file = double("CustomFile")
+      let(:custom_file) do
+        file = instance_double("CustomFile")
         allow(file).to receive(:attached_file_name).and_return "file.csv"
         allow(file).to receive(:bucket).and_return "bucket"
         allow(file).to receive(:path).and_return "path"
         file
-      }
+      end
 
-      before :each do
+      before do
         allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", original_filename: "path").and_yield(file)
       end
 
@@ -48,7 +50,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
         expect(email.attachments.size).to eq 1
         rows = CSV.parse(email.attachments.first.read)
         expect(rows.size).to eq 1
-        expect(rows.first).to eq ["3700000183", "10", "1", "EA", "62974", "WD8983", "XL", "100% YD MENS COTTON WOVEN SHIRT", "6205202051", "MU", "20.7", "20.7", "USD", "416", "GB", hts_number, mid, coo]
+        expect(rows.first).to eq ["3700000183", "10", "1", "EA", "62974", "WD8983", "XL", "100% YD MENS COTTON WOVEN SHIRT",
+                                  "6205202051", "MU", "20.7", "20.7", "USD", "416", "GB", hts_number, mid, coo]
       end
 
       it "handles restricted products" do
@@ -64,17 +67,17 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
     end
 
     context "pdf file" do
-      let (:file) { File.open("spec/fixtures/files/crew_returns.pdf", "r") }
+      let(:file) { File.open("spec/fixtures/files/crew_returns.pdf", "r") }
 
-      let (:custom_file) {
-        file = double("CustomFile")
+      let(:custom_file) do
+        file = instance_double("CustomFile")
         allow(file).to receive(:attached_file_name).and_return "file.pdf"
         allow(file).to receive(:bucket).and_return "bucket"
         allow(file).to receive(:path).and_return "path"
         file
-      }
+      end
 
-      before :each do
+      before do
         allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", original_filename: "path").and_yield(file)
       end
 
@@ -95,19 +98,18 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
       end
     end
 
-
     context "with zip file" do
-      let (:file) { File.open("spec/fixtures/files/crew_returns.zip", "r") }
+      let(:file) { File.open("spec/fixtures/files/crew_returns.zip", "r") }
 
-      let (:custom_file) {
-        file = double("CustomFile")
+      let(:custom_file) do
+        file = instance_double("CustomFile")
         allow(file).to receive(:attached_file_name).and_return "file.zip"
         allow(file).to receive(:bucket).and_return "bucket"
         allow(file).to receive(:path).and_return "path"
         file
-      }
+      end
 
-      before :each do
+      before do
         allow(OpenChain::S3).to receive(:download_to_tempfile).with("bucket", "path", original_filename: "path").and_yield(file)
       end
 
@@ -138,7 +140,8 @@ describe OpenChain::CustomHandler::JCrew::JCrewReturnsParser do
         expect(entries['crew_returns.csv']).not_to be_nil
         rows = CSV.parse(entries['crew_returns.csv'].read)
         expect(rows.size).to eq 1
-        expect(rows.first).to eq ["3700000183", "10", "1", "EA", "62974", "WD8983", "XL", "100% YD MENS COTTON WOVEN SHIRT", "6205202051", "MU", "20.7", "20.7", "USD", "416", "GB", hts_number, mid, coo]
+        expect(rows.first).to eq ["3700000183", "10", "1", "EA", "62974", "WD8983", "XL", "100% YD MENS COTTON WOVEN SHIRT",
+                                  "6205202051", "MU", "20.7", "20.7", "USD", "416", "GB", hts_number, mid, coo]
       end
     end
   end

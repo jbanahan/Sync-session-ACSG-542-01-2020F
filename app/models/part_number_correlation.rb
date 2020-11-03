@@ -18,18 +18,18 @@ require 'open_chain/xl_client'
 require 'open_chain/tariff_finder'
 
 class PartNumberCorrelation < ActiveRecord::Base
-  has_one :attachment, as: :attachable, dependent: :destroy
+  has_one :attachment, as: :attachable, dependent: :destroy # rubocop:disable Rails/InverseOf
   belongs_to :user
-
-  attr_accessible :starting_row, :part_column, :part_regex,
-    :finished_time, :attachment, :entry_country_iso, :importers
 
   def self.can_view?(user)
     user.view_entries? && user.company.master?
   end
 
+  def can_view?(user)
+    user_id == user.id
+  end
+
   def process(importer_ids)
-    begin
       xls_file = self.attachment.attached
       xlc = OpenChain::XLClient.new(xls_file.path)
       importers = Company.where(id: importer_ids).to_a
@@ -42,15 +42,17 @@ class PartNumberCorrelation < ActiveRecord::Base
       current_row = 1
 
       xlc = add_additional_column_headings(xlc, rows_used_originally)
-      xlc.all_row_values do |row|
+
+      # rubocop:disable Style/IdenticalConditionalBranches
+      xlc.all_row_values do |_row|
         if current_row < self.starting_row
           current_row += 1
         else
           part_number = xlc.get_cell(0, current_row - 1, product_column_number, true)
           regex = Regexp.new(self.part_regex)
-          part_number = regex.match(part_number)[0] unless self.part_regex.blank?
+          part_number = regex.match(part_number)[0] if self.part_regex.present?
 
-          r = tf.find_by_style(part_number)
+          r = tf.by_style(part_number)
 
           if r
             xlc.set_cell(0, current_row - 1, rows_used_originally, r.mid)
@@ -64,20 +66,22 @@ class PartNumberCorrelation < ActiveRecord::Base
           current_row += 1
         end
       end
+      # rubocop:enable Style/IdenticalConditionalBranches
+
       xlc.save
-      self.finished_time = Time.now; self.save!
+
+      self.finished_time = Time.zone.now
+      self.save!
       self.user.messages.create!(subject: "Part Number Correlation Report Finished",
-        body: "<p>Your report is complete.  You can download the updated file by
+                                 body: "<p>Your report is complete.  You can download the updated file by
         <a href='/attachments/#{self.attachment.id}/download'>clicking here</a>.</p>
         <p>You can view the full status page by
         <a href='/part_number_correlations'>clicking here</a>.</p>")
-
-    rescue
+  rescue StandardError
       self.user.messages.create!(subject: "ERROR: Part Number Correlation Report",
-        body: "<p>We could not complete the processing of this report due to an error.</p>
+                                 body: "<p>We could not complete the processing of this report due to an error.</p>
         <p>You can view the full status page by
         <a href='/part_number_correlations'>clicking here</a>.</p>")
-    end
   end
 
   def add_additional_column_headings(xlc, rows_used)
