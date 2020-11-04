@@ -36,7 +36,7 @@ describe OpenChain::CustomHandler::Intacct::IntacctCargowiseFreightBillingFilePa
         end
 
         Timecop.freeze(now) do
-          expect { subject.parse document }.to change(IntacctAllianceExport, :count).from(0).to(1)
+          expect { subject.parse document, nil }.to change(IntacctAllianceExport, :count).from(0).to(1)
         end
 
         export = IntacctAllianceExport.first

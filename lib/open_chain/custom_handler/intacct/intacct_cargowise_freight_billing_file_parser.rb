@@ -11,7 +11,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctCargowiseFr
     self.new.parse(data)
   end
 
-  def parse data
+  def parse data, _opts = {}
     # Due to the way we utilize the billing file broker, the data can come into this method already as
     # a nokogiri xml document - this is to avoid double parsing, since some of these documents can be massive.
     doc = make_document(data)

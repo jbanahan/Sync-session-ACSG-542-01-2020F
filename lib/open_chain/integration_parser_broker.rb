@@ -9,7 +9,7 @@ module OpenChain; module IntegrationParserBroker
       parser = create_parser(opts[:bucket], opts[:key], data, opts)
       # We want to update the inbound file that the integration client parser provides and
       # rekey it to the actual parser utilized.
-      inbound_file.parser_name = parser.to_s
+      inbound_file.parser_name = parser_class_name(parser)
 
       parser.parse(data, opts)
     end

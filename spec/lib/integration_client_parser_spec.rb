@@ -527,4 +527,14 @@ describe OpenChain::IntegrationClientParser do
       expect { subject.process_file_chunk_from_s3 "bucket", "key", opts }.to raise_error "Error"
     end
   end
+
+  describe "parser_class_name" do
+    it "returns the class name of an instance of an object" do
+      expect(subject.parser_class_name("")).to eq "String"
+    end
+
+    it "returns the class name of a class" do
+      expect(subject.parser_class_name(String)).to eq "String"
+    end
+  end
 end

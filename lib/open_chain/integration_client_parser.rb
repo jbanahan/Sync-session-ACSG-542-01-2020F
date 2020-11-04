@@ -60,7 +60,7 @@ module OpenChain; module IntegrationClientParser
         original_parse_opts.delete :log
       end
 
-      full_path = "#{MasterSetup.get.system_code}/#{parser_class_name}/#{Time.zone.now.to_f}-#{File.basename(filename)}"
+      full_path = "#{MasterSetup.get.system_code}/#{parser_class_name(self)}/#{Time.zone.now.to_f}-#{File.basename(filename)}"
       result = OpenChain::S3.upload_data "chain-io-integration-temp", full_path, chunk_io
       self.delay.process_file_chunk_from_s3(result.bucket, result.key, original_parse_opts, delete_from_s3: delete_from_s3, parse_method: parse_method)
       nil
@@ -186,6 +186,15 @@ module OpenChain; module IntegrationClientParser
       false
     end
 
+    # Handle cases where the parser object passed in is a class or an instance
+    def parser_class_name parser
+      if parser.is_a? Class
+        parser.to_s
+      else
+        parser.class.to_s
+      end
+    end
+
     private
       # Populates nearly everything in a new inbound file record, with the exception of...
       #   1. Company ID
@@ -202,7 +211,7 @@ module OpenChain; module IntegrationClientParser
         log.s3_bucket = bucket
         log.s3_path = key
         log.process_status = InboundFile::PROCESS_STATUS_PENDING
-        log.parser_name = parser_class_name
+        log.parser_name = parser_class_name(self)
 
         abbrev_key = get_s3_key_without_timestamp key
         log.file_name = File.basename(abbrev_key)
@@ -220,15 +229,6 @@ module OpenChain; module IntegrationClientParser
         end
 
         log
-      end
-
-      # Handle cases where this module is both included and extended.
-      def parser_class_name
-        if self.is_a? Class
-          self.to_s
-        else
-          self.class.to_s
-        end
       end
 
       def finalize_inbound_file_log log, opts
