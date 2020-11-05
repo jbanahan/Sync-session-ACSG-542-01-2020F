@@ -226,7 +226,7 @@ module OpenChain; module CustomHandler; module Intacct; class IntacctCargowiseFr
       payable.company = translate_division_number_to_company(export.division)
       first_line = lines.first
       payable.currency = et(first_line, "OSCurrency/Code")
-      payable.bill_date = parse_date(et(xml, "UniversalTransaction/TransactionInfo/TransactionDate"))
+      payable.bill_date = export.invoice_date
       payable.vendor_reference = et(xml, "UniversalTransaction/TransactionInfo/Number")
       payable.shipment_customer_number = export.shipment_customer_number
 

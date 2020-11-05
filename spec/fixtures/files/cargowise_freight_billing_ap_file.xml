@@ -172,7 +172,7 @@
     <ReceiptOrDirectDebitNumber></ReceiptOrDirectDebitNumber>
     <RequisitionDate>2020-09-11T00:00:00</RequisitionDate>
     <RequisitionStatus>NRM</RequisitionStatus>
-    <TransactionDate>2020-09-11T00:00:00</TransactionDate>
+    <TransactionDate>2020-09-09T00:00:00</TransactionDate>
     <TransactionType>INV</TransactionType>
 
     <PostingJournalCollection>
