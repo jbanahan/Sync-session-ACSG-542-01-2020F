@@ -1,0 +1,7 @@
+<input [(ngModel)]="newName">
+<button (click)="saveName()">Save</button>
+
+<h3>Names!</h3>
+<div *ngFor="let person of names">
+  <h4>{{ person.name }}</h4>
+</div>

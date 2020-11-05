@@ -1,0 +1,16 @@
+{
+    "name": "week11project",
+    "version": "0.0.1",
+    "description": "Solution to the Week 11 project",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "node server.js"
+    },
+    "author": "Jason Banahan",
+    "license": "ISC",
+    "dependencies": {
+        "express": "^4.17.1",
+        "mongoose": "^5.10.8"
+    }
+}
