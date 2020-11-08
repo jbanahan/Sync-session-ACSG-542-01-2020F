@@ -17,13 +17,13 @@ export class NamesComponent implements OnInit {
 
   ngOnInit(): void {
     this.namesService.getAll().subscribe(returnNames => {
-      this.names = returnNames;
+      this.names = returnNames.docs;
     })
   }
 
   saveName(): void {
     this.namesService.create(this.newName).subscribe( saveName => {
-      this.names += saveName;
+      this.names.push(saveName);
     })
   }
 
