@@ -9,15 +9,13 @@
   <div class='container'>
     <div ng-show='shp.shp_canceled_date' class="row">
       <div class="col-md-12">
-        <div class="card">
-          <div class="card-header bg-danger">
+        <div class="card alert-danger">
+          <div class="card-header">
             Shipment Canceled
           </div>
-          <div class="card-body">
-            This shipment was cancelled on {{shp.shp_canceled_date}} by {{shp.shp_canceled_by_fullname}}.
-          </div>
-          <div class="card-footer text-right" ng-show='shp.permissions.can_uncancel'>
-            <button class='btn btn-sm' ng-click='uncancelShipment(shp)'>Undo Cancel</button>
+          <div class="card-body bg-white">
+            This shipment was canceled on {{shp.shp_canceled_date | amDateFormat: 'MM/DD/YYYY hh:mm a'}} by {{shp.shp_canceled_by_fullname}}.
+            <button class='btn btn-sm' ng-show='shp.permissions.can_uncancel' ng-click='uncancelShipment(shp)'>Undo Cancellation</button>
           </div>
         </div>
       </div>
@@ -204,7 +202,7 @@
                         <div class="form-group">
                           <select ng-model="remove_shp_ord" class="form-control" ng-options="order.order_number for order in uniqueOrderOptions(shp.lines) track by order.order_id">
                             <option value="">Select Purchase Order</option>
-                          </select> 
+                          </select>
                         </div>
                       </form>
                     </div>
@@ -410,7 +408,7 @@
   </nav>
 </chain-loading-wrapper>
 
-<div class='container'>  
+<div class='container'>
   <div class='modal fade show' role='dialog' id='search-modal' aria-hidden='true'>
     <div class='modal-dialog modal-lg' role='document'>
       <div class='modal-content'>
@@ -428,9 +426,9 @@
                 <div class='loader'>loading</div>
               </div>
             </div>
-          </div>  
+          </div>
         </div>
-      </div>  
+      </div>
     </div>
   </div>
 </div>

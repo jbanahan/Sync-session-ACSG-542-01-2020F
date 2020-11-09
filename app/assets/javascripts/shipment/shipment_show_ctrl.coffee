@@ -37,14 +37,12 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
     $scope.loadingFlag = 'loading'
     shipmentSvc.getShipment(id, $scope.shipmentLinesNeeded, $scope.bookingLinesNeeded).then (resp) ->
       $scope.shp = resp.data.shipment
-      if $scope.shp.shp_in_warehouse_time
-        $scope.shp._warehouse_time_moment = moment($scope.shp.shp_in_warehouse_time)
-        $scope.shp._shp_warehouse_time_date = $scope.shp._warehouse_time_moment.format("YYYY-MM-DD")
-        $scope.shp._shp_warehouse_time_hour = $scope.shp._warehouse_time_moment.format("HH:mm")
-      else
-        $scope.shp._warehouse_time_moment = moment()
-        $scope.shp._shp_warehouse_time_date = ''
-        $scope.shp._shp_warehouse_time_hour = ''
+      $scope.shp.shp_available_for_delivery_date = set_datetime $scope.shp.shp_available_for_delivery_date
+      $scope.shp.shp_in_warehouse_time = set_datetime $scope.shp.shp_in_warehouse_time
+
+      $scope.shp.shp_container_unloaded_date = set_datetime $scope.shp.shp_container_unloaded_date
+      $scope.shp.shp_empty_return_date = set_datetime $scope.shp.shp_empty_return_date
+      $scope.shp.shp_canceled_date = set_datetime $scope.shp.shp_canceled_date
       addConditionalFields $scope.shp
       $scope.loadingFlag = null
 
@@ -322,6 +320,12 @@ angular.module('ShipmentApp').controller 'ShipmentShowCtrl', ['$scope','shipment
 
   format_in_warehouse_time = ->
     $scope.tracking.shp_in_warehouse_time = $scope.tracking._warehouse_time_moment.format("YYYY-MM-DDTHH:mm")
+
+  set_datetime = (value) ->
+    if value? && value != ""
+      return new Date(value)
+    else
+      return null
 
   update_date = (newVal) ->
     dateArray = newVal.split('-')

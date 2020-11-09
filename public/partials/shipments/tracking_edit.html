@@ -46,7 +46,7 @@
 <label for="shp_full_out_gate_discharge_date">{{outerScope.label('shp_full_out_gate_discharge_date')}}</label>
 <input date-input type="date" id="shp_full_out_gate_discharge_date" ng-model="outerScope.tracking.shp_full_out_gate_discharge_date" class="form-control" />
 <label for="shp_available_for_delivery_date">{{outerScope.label('shp_available_for_delivery_date')}}</label>
-<input date-input type="date" id="shp_available_for_delivery_date" ng-model="outerScope.tracking.shp_available_for_delivery_date" class="form-control" />
+<input type="datetime-local" id="shp_available_for_delivery_date" ng-model="outerScope.tracking.shp_available_for_delivery_date" class="form-control" />
 <label for="shp_do_issued_at">{{outerScope.label('shp_do_issued_at')}}</label>
 <input date-input type="date" id="shp_do_issued_at" ng-model="outerScope.tracking.shp_do_issued_at" class="form-control" />
 <label for="shp_trucker_name">{{outerScope.label('shp_trucker_name')}}</label>
@@ -58,21 +58,10 @@
 <label for="shp_delivered_date">{{outerScope.label('shp_delivered_date')}}</label>
 <input date-input type="date" id="shp_delivered_date" ng-model="outerScope.tracking.shp_delivered_date" class="form-control" />
 <label for="shp_in_warehouse_time">{{outerScope.label('shp_in_warehouse_time')}}</label>
-<div class="row">
-    <div class="col-sm-6">
-        <input date-input type="date" id="shp_warehouse_time_date" pattern="\d{4}-\d{2}-\d{2}" ng-pattern="/^\d{4}-\d{2}-\d{2}$/" ng-model="outerScope.tracking._shp_warehouse_time_date" class="form-control" placeholder="YYYY-MM-DD"/>
-    </div>
-    <div class="col-sm-6">
-        <input date-input type="time" placeholder="HH:MM" id="shp_warehouse_time_hour" pattern="\d{2}:\d{2}" ng-pattern="/^\d{2}:\d{2}$/" ng_model="outerScope.tracking._shp_warehouse_time_hour" class="form-control" />
-        <input date-input type="date" id="shp_warehouse_time_date" pattern="\d{4}-\d{2}-\d{2}" ng-pattern="/^\d{4}-\d{2}-\d{2}$/" ng-model="outerScope.tracking._shp_warehouse_time_date" class="col-sm-6 form-control" placeholder="YYYY-MM-DD"/>
-    </div>
-    <div class="col-sm-6">
-        <input date-input type="time" placeholder="HH:MM" id="shp_warehouse_time_hour" pattern="\d{2}:\d{2}" ng-pattern="/^\d{2}:\d{2}$/" ng_model="outerScope.tracking._shp_warehouse_time_hour" class="col-sm-6 form-control" />
-    </div>
-</div>
+<input type="datetime-local" placeholder="HH:MM" id="shp_in_warehouse_time" ng_model="outerScope.tracking.shp_in_warehouse_time" class="form-control" />
 <label for="shp_container_unloaded_date">{{outerScope.label('shp_container_unloaded_date')}}</label>
-<input date-input type="date" id="shp_container_unloaded_date" ng-model="outerScope.tracking.shp_container_unloaded_date" class="form-control" />
+<input type="datetime-local" id="shp_container_unloaded_date" ng-model="outerScope.tracking.shp_container_unloaded_date" class="form-control" />
 <label for="shp_delivered_date">{{outerScope.label('shp_delivered_date')}}</label>
-<input date-input type="date" id="shp_empty_return_date" ng-model="outerScope.tracking.shp_empty_return_date" class="form-control" />
+<input type="datetime-local" id="shp_empty_return_date" ng-model="outerScope.tracking.shp_empty_return_date" class="form-control" />
 <label for="shp_canceled_date">{{outerScope.label('shp_canceled_date')}}</label>
-<input date-input type="date" id="shp_canceled_date" ng-model="outerScope.tracking.shp_canceled_date" class="form-control" />
+<input type="datetime-local" id="shp_canceled_date" ng-model="outerScope.tracking.shp_canceled_date" class="form-control" />

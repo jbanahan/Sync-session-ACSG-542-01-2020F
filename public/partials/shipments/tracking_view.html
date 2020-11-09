@@ -92,7 +92,7 @@
 </div>
 <div class="form-group">
   <label for="shp_available_for_delivery_date" class="font-weight-bold control-label">{{outerScope.label('shp_available_for_delivery_date')}}</label>
-  <p class="form-control-static" id="shp_available_for_delivery_date">{{outerScope.shp.shp_available_for_delivery_date}}</p>
+  <p class="form-control-static" id="shp_available_for_delivery_date">{{outerScope.shp.shp_available_for_delivery_date | amDateFormat: 'YYYY-MM-DD hh:mm a'}}</p>
 </div>
 <div class="form-group">
   <label for="shp_do_issued_at" class="font-weight-bold control-label">{{outerScope.label('shp_do_issued_at')}}</label>
@@ -116,19 +116,19 @@
 </div>
 <div class="form-group">
   <label for="shp_in_warehouse_time" class="font-weight-bold control-label">{{outerScope.label('shp_in_warehouse_time')}}</label>
-  <p class="form-control-static" id="shp_in_warehouse_time" placeholder="YYYY-MM-DD HH:MM">{{outerScope.shp.shp_in_warehouse_time | amDateFormat: 'MM/DD/YYYY hh:mm a'}}</p>
+  <p class="form-control-static" id="shp_in_warehouse_time" placeholder="YYYY-MM-DD HH:MM">{{outerScope.shp.shp_in_warehouse_time | amDateFormat: 'YYYY-MM-DD hh:mm a'}}</p>
 </div>
 <div class="form-group">
   <label for="shp_container_unloaded_date" class="font-weight-bold control-label">Container Unloaded Date</label>
-  <p class="form-control-static" id="shp_container_unloaded_date">{{outerScope.shp.shp_container_unloaded_date}}</p>
+  <p class="form-control-static" id="shp_container_unloaded_date">{{outerScope.shp.shp_container_unloaded_date | amDateFormat: 'YYYY-MM-DD hh:mm a'}}</p>
 </div>
 <div class="form-group">
   <label for="shp_empty_return_date" class="font-weight-bold control-label">Empty Return Date</label>
-  <p class="form-control-static" id="shp_empty_return_date">{{outerScope.shp.shp_empty_return_date}}</p>
+  <p class="form-control-static" id="shp_empty_return_date">{{outerScope.shp.shp_empty_return_date | amDateFormat: 'YYYY-MM-DD hh:mm a'}}</p>
 </div>
 <div ng-show="outerScope.shp.shp_canceled_date" class="form-group">
   <label for="shp_canceled_date" class="font-weight-bold control-label">{{outerScope.label('shp_canceled_date')}}</label>
-  <p class="form-control-static" id="shp_canceled_date">{{outerScope.shp.shp_canceled_date}}</p>
+  <p class="form-control-static" id="shp_canceled_date">{{outerScope.shp.shp_canceled_date | amDateFormat: 'YYYY-MM-DD hh:mm a'}}</p>
 </div>
 <div ng-show="outerScope.shp.shp_canceled_by_fullname" class="form-group">
   <label for="shp_canceled_by_fullname" class="font-weight-bold control-label">{{outerScope.label('shp_canceled_by_fullname')}}</label>
