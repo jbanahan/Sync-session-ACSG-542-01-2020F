@@ -27,7 +27,7 @@ class CustomReportEntryBilling < CustomReport
   end
 
   def run run_by, row_limit = nil
-    unless run_by.view_broker_invoice?
+    unless run_by.view_broker_invoices?
       raise "User #{run_by.email} does not have permission to view invoices and cannot run the #{CustomReportEntryInvoiceBreakdown.template_name} report."
     end
 
