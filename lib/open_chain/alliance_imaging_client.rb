@@ -97,20 +97,27 @@ module OpenChain; class AllianceImagingClient
         # Due to the possibility of an SQS message getting rerun and how we zero out
         # files from the staging S3 location below...zero length files are almost certainly files that have gotten requeued
         # somehow. so we should ignore them
-        if file&.length.to_i > 0
-          if hsh["source_system"] == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "sql_proxy"
-            process_fenix_nd_image_file file, hsh, user
-          else
-            response = process_image_file file, hsh, user
-            if response && response[:attachment] && response[:entry].try(:source_system) == Entry::FENIX_SOURCE_SYSTEM &&
-               hsh["export_process"] == "Canada Google Drive" && MasterSetup.get.custom_feature?("Proxy Fenix Drive Docs")
-              proxy_fenix_drive_docs response[:entry], hash
+        begin
+          if file&.length.to_i > 0
+            if hsh["source_system"] == Entry::FENIX_SOURCE_SYSTEM && hsh["export_process"] == "sql_proxy"
+              process_fenix_nd_image_file file, hsh, user
             else
-              # File is only zeroed out when proxy_fenix_drive_docs is not run. This is because the file
-              # originates from Google Drive and is forwarded to other VFI Track instances.
-              OpenChain::S3.zero_file bucket, key
+              response = process_image_file file, hsh, user
+              if response && response[:attachment] && response[:entry].try(:source_system) == Entry::FENIX_SOURCE_SYSTEM &&
+                 hsh["export_process"] == "Canada Google Drive" && MasterSetup.get.custom_feature?("Proxy Fenix Drive Docs")
+                proxy_fenix_drive_docs response[:entry], hash
+              else
+                # File is only zeroed out when proxy_fenix_drive_docs is not run. This is because the file
+                # originates from Google Drive and is forwarded to other VFI Track instances.
+                OpenChain::S3.zero_file bucket, key
+              end
             end
           end
+        rescue ActiveRecord::RecordInvalid => e
+          # This occurs if the file is detected as a virus or is detected as a file type we don't allow
+          # If we don't catch this error, then the file will be requeued and reprocessed continually...in this
+          # case it's going to error every time - so there's no point in letting that happen
+          e.log_me ["Alliance imaging client hash: #{hash.to_json}"]
         end
 
         hash = nil

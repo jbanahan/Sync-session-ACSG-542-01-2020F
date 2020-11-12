@@ -1,5 +1,7 @@
 describe OpenChain::AllianceImagingClient do
 
+  subject { described_class }
+
   let! (:master_setup) { stub_master_setup }
 
   describe "bulk_request_images" do
@@ -8,23 +10,23 @@ describe OpenChain::AllianceImagingClient do
     let (:entry_3) { Factory(:entry, broker_reference: '777777', source_system: 'Fenix') }
 
     it 'requests based on primary keys' do
-      expect(described_class).to receive(:request_images).with('123456')
-      expect(described_class).to receive(:request_images).with('654321')
-      described_class.bulk_request_images primary_keys: [entry_1.id, entry_2.id]
+      expect(subject).to receive(:request_images).with('123456')
+      expect(subject).to receive(:request_images).with('654321')
+      subject.bulk_request_images primary_keys: [entry_1.id, entry_2.id]
     end
 
     it 'requests based on search_run_id' do
-      expect(described_class).to receive(:request_images).with('123456')
-      expect(described_class).to receive(:request_images).with('654321')
+      expect(subject).to receive(:request_images).with('123456')
+      expect(subject).to receive(:request_images).with('654321')
       expect(OpenChain::CoreModuleProcessor).to receive(:bulk_objects).with(CoreModule::ENTRY, primary_keys: nil, primary_key_file_bucket: "bucket",
                                                                                                primary_key_file_path: "key").and_yield(1, entry_1).and_yield(2, entry_2)
 
-      described_class.bulk_request_images s3_bucket: "bucket", s3_key: "key"
+      subject.bulk_request_images s3_bucket: "bucket", s3_key: "key"
     end
 
     it 'does not request for non-alliance entries' do
-      expect(described_class).not_to receive(:request_images)
-      described_class.bulk_request_images primary_keys: [entry_3.id]
+      expect(subject).not_to receive(:request_images)
+      subject.bulk_request_images primary_keys: [entry_3.id]
     end
   end
 
@@ -39,16 +41,16 @@ describe OpenChain::AllianceImagingClient do
 
     it "proxies requests with search runs in them" do
       expect(OpenChain::S3).to receive(:create_s3_tempfile).and_return s3_obj
-      expect(described_class).to receive(:delay).and_return described_class
-      expect(described_class).to receive(:bulk_request_images).with(s3_bucket: "bucket", s3_key: "key")
-      described_class.delayed_bulk_request_images search_run.id, nil
+      expect(subject).to receive(:delay).and_return subject
+      expect(subject).to receive(:bulk_request_images).with(s3_bucket: "bucket", s3_key: "key")
+      subject.delayed_bulk_request_images search_run.id, nil
     end
 
     it "forwards primary keys directly" do
-      expect(described_class).to receive(:delay).and_return described_class
-      expect(described_class).to receive(:bulk_request_images).with(primary_keys: [1, 2, 3])
+      expect(subject).to receive(:delay).and_return subject
+      expect(subject).to receive(:bulk_request_images).with(primary_keys: [1, 2, 3])
 
-      described_class.delayed_bulk_request_images nil, [1, 2, 3]
+      subject.delayed_bulk_request_images nil, [1, 2, 3]
     end
   end
 
@@ -71,14 +73,14 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it 'is non-private if doc_desc does not start with "private"' do
-      response = described_class.process_image_file tempfile, hash, user
+      response = subject.process_image_file tempfile, hash, user
       expect(response[:entry]).to eq entry_1
       expect(response[:entry].attachments[0].is_private).to be_falsey
     end
 
     it 'is private if doc_desc starts with "private"' do
       hash["doc_desc"] = "private_attachment"
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
       expect(r[:entry].attachments[0].is_private).to be_truthy
     end
 
@@ -86,7 +88,7 @@ describe OpenChain::AllianceImagingClient do
       now = Time.zone.parse("2018-08-01 12:00")
       r = nil
       Timecop.freeze(now) do
-        r = described_class.process_image_file tempfile, hash, user
+        r = subject.process_image_file tempfile, hash, user
       end
 
       att = r[:attachment]
@@ -108,7 +110,7 @@ describe OpenChain::AllianceImagingClient do
       hash["source_system"] = 'Fenix'
       entry_1.update! source_system: 'Fenix', entry_number: hash['file_number'].to_s, broker_reference: '654321'
 
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
 
       expect(r[:entry]).to eq entry_1
       expect(r[:entry].attachments.size).to eq(1)
@@ -122,7 +124,7 @@ describe OpenChain::AllianceImagingClient do
       # These are the only hash values we should currently expect from the Fenix imaging monitoring process
       hash = {"source_system" => "Fenix", "file_number" => "123456", "doc_date" => Time.zone.now, "file_name" => "file.pdf", "doc_desc" => "Source Testing"}
       expect(Lock).to receive(:acquire).with("Entry-Fenix-123456").and_yield
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
       entry = r[:entry]
       attachment = r[:attachment]
 
@@ -140,7 +142,7 @@ describe OpenChain::AllianceImagingClient do
     it 'generates shell entry records when an entry is missing and the source system is Alliance' do
       entry_1.destroy
       expect(Lock).to receive(:acquire).with("Entry-Alliance-123456").and_yield
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
 
       entry = r[:entry]
       attachment = r[:attachment]
@@ -161,7 +163,7 @@ describe OpenChain::AllianceImagingClient do
 
       existing = entry_1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: hash['doc_desc']
 
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
       expect(r).to be_nil
       expect(entry_1.attachments.size).to eq 1
       expect(entry_1.attachments.first).to eq existing
@@ -171,7 +173,7 @@ describe OpenChain::AllianceImagingClient do
       existing = entry_1.attachments.create! alliance_suffix: '000', alliance_revision: 0, attachment_type: hash['doc_desc']
 
       hash['suffix'] = '01000'
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
 
       entry = r[:entry]
       attachment = r[:attachment]
@@ -189,7 +191,7 @@ describe OpenChain::AllianceImagingClient do
       existing = entry_1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: hash['doc_desc'],
                                              source_system_timestamp: Time.zone.parse("2016-03-01 00:00")
 
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
 
       expect(r).to be_nil
       expect(entry_1.attachments.size).to eq 1
@@ -203,7 +205,7 @@ describe OpenChain::AllianceImagingClient do
       existing = entry_1.attachments.create! alliance_suffix: '000', alliance_revision: 1, attachment_type: hash['doc_desc'],
                                              source_system_timestamp: Time.zone.parse("2015-03-01 00:00")
 
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
 
       entry = r[:entry]
       attachment = r[:attachment]
@@ -214,7 +216,7 @@ describe OpenChain::AllianceImagingClient do
     end
 
     it "snapshots the entry" do
-      r = described_class.process_image_file tempfile, hash, user
+      r = subject.process_image_file tempfile, hash, user
       entry = r[:entry]
       expect(entry.entity_snapshots.length).to eq 1
       expect(entry.entity_snapshots.first.context).to eq "Imaging"
@@ -230,7 +232,7 @@ describe OpenChain::AllianceImagingClient do
 
       hash["file_number"] = 123_456.0
 
-      described_class.process_image_file tempfile, hash, user
+      subject.process_image_file tempfile, hash, user
     end
 
     context "Fenix B3 Files" do
@@ -242,7 +244,7 @@ describe OpenChain::AllianceImagingClient do
 
       it "recognizes B3 Automated Fenix files and attach the images as B3 records" do
         hash['file_name'] = "File_cdc_123128.pdf"
-        r = described_class.process_image_file tempfile, hash, user
+        r = subject.process_image_file tempfile, hash, user
 
         entry = r[:entry]
         attachment = r[:attachment]
@@ -259,7 +261,7 @@ describe OpenChain::AllianceImagingClient do
         existing.save
 
         hash['file_name'] = "File_cdc_123128.pdf"
-        r = described_class.process_image_file tempfile, hash, user
+        r = subject.process_image_file tempfile, hash, user
 
         entry = r[:entry]
         attachment = r[:attachment]
@@ -272,7 +274,7 @@ describe OpenChain::AllianceImagingClient do
 
       it "recognizes RNS Automated Fenix files and attach the images as RNS records" do
         hash['file_name'] = "File_rns_123128.pdf"
-        r = described_class.process_image_file tempfile, hash, user
+        r = subject.process_image_file tempfile, hash, user
 
         entry = r[:entry]
         attachment = r[:attachment]
@@ -289,7 +291,7 @@ describe OpenChain::AllianceImagingClient do
         existing.save
 
         hash['file_name'] = "File_rns_123128.pdf"
-        r = described_class.process_image_file tempfile, hash, user
+        r = subject.process_image_file tempfile, hash, user
 
         entry = r[:entry]
         attachment = r[:attachment]
@@ -302,7 +304,7 @@ describe OpenChain::AllianceImagingClient do
 
       it "recognizes B3 Recap Automated Fenix files and attach the images as recap records" do
         hash['file_name'] = "File_recap_123128.pdf"
-        r = described_class.process_image_file tempfile, hash, user
+        r = subject.process_image_file tempfile, hash, user
 
         entry = r[:entry]
         attachment = r[:attachment]
@@ -319,7 +321,7 @@ describe OpenChain::AllianceImagingClient do
         existing.save
 
         hash['file_name'] = "File_recap_123128.pdf"
-        r = described_class.process_image_file tempfile, hash, user
+        r = subject.process_image_file tempfile, hash, user
 
         entry = r[:entry]
         attachment = r[:attachment]
@@ -362,17 +364,17 @@ describe OpenChain::AllianceImagingClient do
     end
 
     before do
-      allow(described_class).to receive(:imaging_config).and_return config
+      allow(subject).to receive(:imaging_config).and_return config
     end
 
     it "uses SQS queue to download messages and use the S3 client with tempfile to download the file" do
       # This is mostly just mocks, but I wanted to ensure the expected calls are actually happening
       expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300, include_attributes: true).and_yield hash, message_attributes
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(tempfile)
-      expect(described_class).to receive(:process_image_file).with(tempfile, hash, user)
+      expect(subject).to receive(:process_image_file).with(tempfile, hash, user)
       expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
-      described_class.consume_images
+      subject.consume_images
     end
 
     it "passes s3 version if present" do
@@ -380,10 +382,10 @@ describe OpenChain::AllianceImagingClient do
       hash["s3_version"] = "version"
       expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300, include_attributes: true).and_yield hash, message_attributes
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {version: "version"}).and_return(tempfile)
-      expect(described_class).to receive(:process_image_file).with(tempfile, hash, user)
+      expect(subject).to receive(:process_image_file).with(tempfile, hash, user)
       expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
-      described_class.consume_images
+      subject.consume_images
     end
 
     it "handles errors and retries polling" do
@@ -391,7 +393,7 @@ describe OpenChain::AllianceImagingClient do
       expect(OpenChain::SQS).to receive(:poll).exactly(10).times.and_raise error
       expect(error).to receive(:log_me).with(["Alliance imaging client hash: null"]).exactly(10).times
 
-      described_class.consume_images
+      subject.consume_images
     end
 
     it "skips zero-length files" do
@@ -400,9 +402,9 @@ describe OpenChain::AllianceImagingClient do
 
       expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300, include_attributes: true).and_yield hash, message_attributes
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(t)
-      expect(described_class).not_to receive(:process_image_file)
+      expect(subject).not_to receive(:process_image_file)
 
-      described_class.consume_images
+      subject.consume_images
     end
 
     it "handles NoSuchKeyError by retrying message again at a later time" do
@@ -413,7 +415,7 @@ describe OpenChain::AllianceImagingClient do
       end
 
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_raise OpenChain::S3::NoSuchKeyError, "Not found"
-      expect { described_class.consume_images }.not_to raise_error
+      expect { subject.consume_images }.not_to raise_error
     end
 
     it "handles NoSuchKeyError by skipping message if it has been received 10 times" do
@@ -424,8 +426,19 @@ describe OpenChain::AllianceImagingClient do
         completed = true
       end
       expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_raise OpenChain::S3::NoSuchKeyError, "Not found"
-      expect { described_class.consume_images }.not_to raise_error
+      expect { subject.consume_images }.not_to raise_error
       expect(completed).to eq true
+    end
+
+    it "handles ActiveRecord::RecordInvalid error" do
+      e = ActiveRecord::RecordInvalid.new Entry.new
+      expect(e).to receive(:log_me)
+
+      expect(OpenChain::SQS).to receive(:poll).with("sqs", visibility_timeout: 300, include_attributes: true).and_yield hash, message_attributes
+      expect(OpenChain::S3).to receive(:download_to_tempfile).with(hash["s3_bucket"], hash["s3_key"], {}).and_return(tempfile)
+      expect(subject).to receive(:process_image_file).with(tempfile, hash, user).and_raise e
+
+      subject.consume_images
     end
 
     context "with fenix document proxy enabled" do
@@ -451,45 +464,45 @@ describe OpenChain::AllianceImagingClient do
       end
 
       it "calls proxy docs method for fenix docs" do
-        expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
-        expect(described_class).to receive(:proxy_fenix_drive_docs).with(entry, hash)
+        expect(subject).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
+        expect(subject).to receive(:proxy_fenix_drive_docs).with(entry, hash)
 
-        described_class.consume_images
+        subject.consume_images
       end
 
       it 'does not call proxy docs if message is not google drive docs' do
         hash['export_process'] = "Not Canada Google Drive"
-        expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
-        expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(subject).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
+        expect(subject).not_to receive(:proxy_fenix_drive_docs)
         expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
-        described_class.consume_images
+        subject.consume_images
       end
 
       it 'does not call proxy docs if message is not for Fenix entry' do
         entry.source_system = "Not Fenix"
-        expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
-        expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(subject).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
+        expect(subject).not_to receive(:proxy_fenix_drive_docs)
         expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
-        described_class.consume_images
+        subject.consume_images
       end
 
       it 'does not call proxy docs if custom feature is not enabled' do
         expect(master_setup).to receive(:custom_feature?).with("Proxy Fenix Drive Docs").and_return false
-        expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
-        expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(subject).to receive(:process_image_file).with(tempfile, hash, user).and_return({entry: entry, attachment: attachment})
+        expect(subject).not_to receive(:proxy_fenix_drive_docs)
         expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
-        described_class.consume_images
+        subject.consume_images
       end
 
       it 'does not call proxy docs if process image file returns nil' do
-        expect(described_class).to receive(:process_image_file).with(tempfile, hash, user).and_return nil
-        expect(described_class).not_to receive(:proxy_fenix_drive_docs)
+        expect(subject).to receive(:process_image_file).with(tempfile, hash, user).and_return nil
+        expect(subject).not_to receive(:proxy_fenix_drive_docs)
         expect(OpenChain::S3).to receive(:zero_file).with(hash["s3_bucket"], hash["s3_key"])
 
-        described_class.consume_images
+        subject.consume_images
       end
     end
   end
@@ -500,45 +513,45 @@ describe OpenChain::AllianceImagingClient do
     let (:message) { {"message" => "message"}}
 
     it "forwards message to queue configured for customer" do
-      expect(described_class).to receive(:proxy_fenix_drive_docs_config).and_return config
+      expect(subject).to receive(:proxy_fenix_drive_docs_config).and_return config
       expect(OpenChain::SQS).to receive(:send_json).with("queue1", message)
 
-      described_class.proxy_fenix_drive_docs entry, message
+      subject.proxy_fenix_drive_docs entry, message
     end
 
     it "forwards message to multiple queues configured for customer" do
       config["TEST"]["queue"] = ["queue1", "queue2"]
-      expect(described_class).to receive(:proxy_fenix_drive_docs_config).and_return config
+      expect(subject).to receive(:proxy_fenix_drive_docs_config).and_return config
       expect(OpenChain::SQS).to receive(:send_json).with("queue1", message)
       expect(OpenChain::SQS).to receive(:send_json).with("queue2", message)
 
-      described_class.proxy_fenix_drive_docs entry, message
+      subject.proxy_fenix_drive_docs entry, message
     end
 
     it "does not forward message if customer is not configured for proxy" do
       entry.customer_number = "CUST"
-      expect(described_class).to receive(:proxy_fenix_drive_docs_config).and_return config
+      expect(subject).to receive(:proxy_fenix_drive_docs_config).and_return config
       expect(OpenChain::SQS).not_to receive(:send_json)
 
-      described_class.proxy_fenix_drive_docs entry, message
+      subject.proxy_fenix_drive_docs entry, message
     end
   end
 
   describe "run_schedulable" do
 
     it "implements SchedulableJob interface" do
-      allow(described_class).to receive(:delay).and_return described_class
-      expect(described_class).to receive(:consume_images)
+      allow(subject).to receive(:delay).and_return subject
+      expect(subject).to receive(:consume_images)
 
-      described_class.run_schedulable
+      subject.run_schedulable
     end
 
     it "does not call consume_images if 2 jobs are already running" do
-      expect(described_class).to receive(:queued_jobs_for_method).with(described_class, :consume_images).and_return 2
+      expect(subject).to receive(:queued_jobs_for_method).with(subject, :consume_images).and_return 2
 
-      allow(described_class).to receive(:delay).and_return described_class
-      expect(described_class).not_to receive(:consume_images)
-      described_class.run_schedulable
+      allow(subject).to receive(:delay).and_return subject
+      expect(subject).not_to receive(:consume_images)
+      subject.run_schedulable
     end
   end
 
@@ -572,7 +585,7 @@ describe OpenChain::AllianceImagingClient do
       expect(Lock).to receive(:with_lock_retry).with(instance_of(Entry)).and_yield
       r = nil
       Timecop.freeze(now) do
-        r = described_class.process_fenix_nd_image_file tempfile, message, user
+        r = subject.process_fenix_nd_image_file tempfile, message, user
       end
       entry = r[:entry]
 
@@ -597,7 +610,7 @@ describe OpenChain::AllianceImagingClient do
     it "adds attachment to an existing entry" do
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
 
-      described_class.process_fenix_nd_image_file tempfile, message, user
+      subject.process_fenix_nd_image_file tempfile, message, user
       e.reload
       expect(e.attachments.size).to eq 1
     end
@@ -607,7 +620,7 @@ describe OpenChain::AllianceImagingClient do
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "Type", attached_file_name: "11981001795105 _B3_01092015 14.24.42 PM.pdf", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       e = r[:entry]
       expect(e.attachments.size).to eq 2
       expect(e.attachments.map(&:attached_file_name).uniq).to eq ["11981001795105 _B3_01092015 14.24.42 PM.pdf"]
@@ -618,7 +631,7 @@ describe OpenChain::AllianceImagingClient do
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T04:30:35-10:00"
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-04T03:30:35-10:00"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       e = r[:entry]
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
@@ -629,7 +642,7 @@ describe OpenChain::AllianceImagingClient do
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3", source_system_timestamp: "2015-09-05T04:30:35-10:00", attached_file_name: "file.pdf"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       expect(r).to be_nil
 
       e.reload
@@ -642,7 +655,7 @@ describe OpenChain::AllianceImagingClient do
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "RNS", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       e = r[:entry]
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
@@ -654,7 +667,7 @@ describe OpenChain::AllianceImagingClient do
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "B3 Recap", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       e = r[:entry]
       expect(e.attachments.size).to eq 1
       expect(e.attachments.first.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
@@ -668,7 +681,7 @@ describe OpenChain::AllianceImagingClient do
       a1 = e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 123.pdf"
       e.attachments.create! attachment_type: "Invoice", source_system_timestamp: "2015-09-04T04:30:35-10:00", attached_file_name: "invoice 345.pdf"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       e = r[:entry]
       expect(e.attachments.size).to eq 2
       expect(e.attachments.map(&:attached_file_name).sort).to eq ["invoice 123.pdf", "invoice 345.pdf"]
@@ -682,7 +695,7 @@ describe OpenChain::AllianceImagingClient do
       e = Factory(:entry, entry_number: "11981001795105", source_system: "Fenix")
       e.attachments.create! attachment_type: "Cartage Slip", source_system_timestamp: "2015-09-04T04:30:35-10:00"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       e = r[:entry]
 
       expect(e.attachments.size).to eq 1
@@ -691,13 +704,13 @@ describe OpenChain::AllianceImagingClient do
 
     it "accepts 1 as a value for public attachments" do
       message["public"] = "1"
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       expect(r[:attachment].is_private).to be_nil
     end
 
     it "uses any other value of 'public' other than true/1 to make the attachment private" do
       message["public"] = ""
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       expect(r[:attachment].is_private).to eq true
     end
 
@@ -712,13 +725,13 @@ describe OpenChain::AllianceImagingClient do
 
       message["file_number"] = 11_981_001_795_105.0
 
-      described_class.process_fenix_nd_image_file tempfile, message, user
+      subject.process_fenix_nd_image_file tempfile, message, user
     end
 
     it "strips trailing underscores from the filename" do
       message["file_name"] = message["file_name"] + "_"
 
-      r = described_class.process_fenix_nd_image_file tempfile, message, user
+      r = subject.process_fenix_nd_image_file tempfile, message, user
       a = r[:attachment]
 
       expect(a.attached_file_name).to eq "11981001795105 _B3_01092015 14.24.42 PM.pdf"
@@ -727,7 +740,6 @@ describe OpenChain::AllianceImagingClient do
   end
 
   describe "request_images" do
-    subject { described_class }
 
     let (:secrets) do
       {
@@ -749,7 +761,7 @@ describe OpenChain::AllianceImagingClient do
       it "calls legacy request if custom feature is not enabled" do
         expect(ms).to receive(:custom_feature?).with("Kewill Imaging Request Queue").and_return false
         expect(OpenChain::SQS).to receive(:send_json).with("send_queue", {"file_number" => "12345", "sqs_queue" => "queue", "s3_bucket" => "bucket"}, {opts: 1})
-        described_class.request_images("12345", {opts: 1})
+        subject.request_images("12345", {opts: 1})
       end
     end
 
@@ -757,7 +769,7 @@ describe OpenChain::AllianceImagingClient do
       it "calls DocumentRequestQueueItem if custom feature is enabled" do
         expect(ms).to receive(:custom_feature?).with("Kewill Imaging Request Queue").and_return true
         expect(DocumentRequestQueueItem).to receive(:enqueue_kewill_document_request).with("12345", request_delay_minutes: nil)
-        described_class.request_images("12345", {opts: 1})
+        subject.request_images("12345", {opts: 1})
       end
     end
   end
