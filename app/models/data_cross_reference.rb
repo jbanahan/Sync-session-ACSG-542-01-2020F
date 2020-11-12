@@ -190,7 +190,7 @@ class DataCrossReference < ActiveRecord::Base
     when TRADELENS_ENTRY_MILESTONE_FIELDS
       MasterSetup.get.custom_feature?("WWW VFI Track Reports") && user.sys_admin?
     when SIEMENS_BILLING_STANDARD, SIEMENS_BILLING_ENERGY
-      user.admin?
+      MasterSetup.get.custom_feature?("WWW") && user.admin?
     else
       false
     end

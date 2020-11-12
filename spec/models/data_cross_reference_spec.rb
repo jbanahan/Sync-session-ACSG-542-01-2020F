@@ -415,6 +415,24 @@ describe DataCrossReference do
       end
     end
 
+    context "www system" do
+      before do
+        allow(master_setup).to receive(:custom_feature?).with("WWW").and_return true
+      end
+
+      it "returns information about xref screens sys-admin user has access to" do
+        xrefs = described_class.xref_edit_hash(Factory(:sys_admin_user))
+
+        expect(xrefs.size).to eq 4
+        # rubocop:disable Layout/LineLength
+        expect(strip_preproc(xrefs['siemens_billing_standard'])).to eq title: "Siemens Billing Standard Group", description: "Tax IDs for the standard Siemens billing report", identifier: "siemens_billing_standard", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
+        expect(strip_preproc(xrefs['siemens_billing_energy'])).to eq title: "Siemens Billing Energy Group", description: "Tax IDs for the energy Siemens billing report", identifier: "siemens_billing_energy", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
+        expect(strip_preproc(xrefs['part_xref'])).to eq title: "Part Cross Reference", description: "Enter the Part Number in the Part field and true or false in the active field", identifier: "part_xref", key_label: "Part", value_label: "Active", require_company: true, allow_blank_value: false, show_value_column: true, allow_duplicate_keys: false, upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B."
+        expect(strip_preproc(xrefs['spi_available_country_combination'])).to eq title: "SPI-Available Country Combinations", description: "Combinations of entry country of export and origin ISO codes that have SPI available.", identifier: "spi_available_country_combination", key_label: "Export Country ISO*~*Origin Country ISO", value_label: "N/A - unused", key_upload_label: "Export Country ISO", value_upload_label: "Origin Country ISO", allow_duplicate_keys: false, require_company: false, show_value_column: true
+        # rubocop:enable Layout/LineLength
+      end
+    end
+
     context "vfi system" do
       before do
         allow(master_setup).to receive(:custom_feature?).with("WWW VFI Track Reports").and_return true
@@ -431,7 +449,7 @@ describe DataCrossReference do
         xrefs = described_class.xref_edit_hash(Factory(:sys_admin_user))
 
         # rubocop:disable Layout/LineLength
-        expect(xrefs.size).to eq 15
+        expect(xrefs.size).to eq 13
         expect(strip_preproc(xrefs['us_hts_to_ca'])).to eq title: "System Classification Cross References", description: "Products with a US HTS number and no Canadian tariff are assigned the corresponding Canadian HTS.", identifier: 'us_hts_to_ca', key_label: "United States HTS", value_label: "Canada HTS", allow_duplicate_keys: false, show_value_column: true, require_company: true, company: {system_code: "HENNE"}
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['shp_ci_load_goods'])).to eq title: "Shipment Entry Load Goods Descriptions", description: "Enter the customer number and corresponding default Goods Description.", identifier: "shp_ci_load_goods", key_label: "Customer Number", value_label: "Goods Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
@@ -444,8 +462,6 @@ describe DataCrossReference do
         expect(strip_preproc(xrefs['asce_mid'])).to eq title: "Ascena MID-Vendor List", description: "MID-Vendors on this list are used to generate the Daily First Sale Exception report", identifier: "asce_mid", key_label: "MID-Vendor ID", value_label: "FS Start Date", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['mid_xref'])).to eq title: "MID Cross Reference", description: "Enter the Factory Identifier in the Code field and the actual MID in the MID field.", identifier: "mid_xref", key_label: "Code", value_label: "MID", allow_duplicate_keys: false, show_value_column: true, require_company: true, allow_blank_value: false, upload_instructions: "Spreadsheet should contain a header row, with Factory Code in column A and MID in column B."
         expect(strip_preproc(xrefs['tradelens_entry_milestone_fields'])).to eq title: "TradeLens Entry Milestone Fields", description: "Assign entry fields to TradeLens API endpoint.", key_label: "Field", allowed_keys: key_selector, value_label: "Endpoint", allowed_values: val_selector, allow_blank_value: false, show_value_column: true, allow_duplicate_keys: false, identifier: "tradelens_entry_milestone_fields", require_company: false
-        expect(strip_preproc(xrefs['siemens_billing_standard'])).to eq title: "Siemens Billing Standard Group", description: "Tax IDs for the standard Siemens billing report", identifier: "siemens_billing_standard", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
-        expect(strip_preproc(xrefs['siemens_billing_energy'])).to eq title: "Siemens Billing Energy Group", description: "Tax IDs for the energy Siemens billing report", identifier: "siemens_billing_energy", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
         expect(strip_preproc(xrefs['part_xref'])).to eq allow_blank_value: false, allow_duplicate_keys: false, description: "Enter the Part Number in the Part field and true or false in the active field", value_label: "Active", upload_instructions: "Spreadsheet should contain a header row, with Part Number in column A and true or false in column B.", title: "Part Cross Reference", show_value_column: true, require_company: true, key_label: "Part", identifier: "part_xref"
         # rubocop:enable Layout/LineLength
       end
@@ -486,12 +502,10 @@ describe DataCrossReference do
       it "returns information about xref screens admin user has access to" do
         xrefs = described_class.xref_edit_hash admin_user
 
-        expect(xrefs.size).to eq 5
+        expect(xrefs.size).to eq 3
         # rubocop:disable Layout/LineLength
         expect(strip_preproc(xrefs['ll_carb_statement'])).to eq title: "CARB Statements", description: "Enter the CARB Statement code in the Code field and the Code Description in the Description field.", identifier: "ll_carb_statement", key_label: "Code", value_label: "Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
         expect(strip_preproc(xrefs['ll_patent_statement'])).to eq title: "Patent Statements", description: "Enter the Patent Statement code in the Code field and the Code Description in the Description field.", identifier: "ll_patent_statement", key_label: "Code", value_label: "Description", allow_duplicate_keys: false, show_value_column: true, require_company: false
-        expect(strip_preproc(xrefs['siemens_billing_standard'])).to eq title: "Siemens Billing Standard Group", description: "Tax IDs for the standard Siemens billing report", identifier: "siemens_billing_standard", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
-        expect(strip_preproc(xrefs['siemens_billing_energy'])).to eq title: "Siemens Billing Energy Group", description: "Tax IDs for the energy Siemens billing report", identifier: "siemens_billing_energy", key_label: "Tax ID", allow_duplicate_keys: false, require_company: false, allow_blank_values: false, show_value_column: false, value_label: "Value"
         # rubocop:enable Layout/LineLength
       end
     end
