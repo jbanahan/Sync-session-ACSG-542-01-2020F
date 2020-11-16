@@ -342,6 +342,13 @@
       </div>
     </div>
   <%-end-%>
+  <%-if OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator.new(nil).can_view?(current_user)-%>
+    <div class='row'>
+      <div class='col-md-6 offset-md-3'>
+        <%=link_to "Siemens B2 XML Generator", '/custom_features/siemens_b2_generator', :class=>'btn btn-lg btn-outline-secondary btn-block'%>
+      </div>
+    </div>
+  <%-end-%>
   <%-if enabled_features.include?('Special Tariff Cross References') %>
     <div class='row'>
       <div class='col-md-6 offset-md-3'>

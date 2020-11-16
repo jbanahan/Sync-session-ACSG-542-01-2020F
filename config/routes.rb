@@ -712,6 +712,10 @@ OpenChain::Application.routes.draw do
   post "/custom_features/hm_receipt_file/upload" => "custom_features#hm_receipt_file_upload"
   get "/custom_features/hm_receipt_file/:id/download" => "custom_features#hm_receipt_file_download"
 
+  get "/custom_features/siemens_b2_generator" => "custom_features#siemens_b2_generator_index"
+  post "/custom_features/siemens_b2_xml_generator/upload" => "custom_features#siemens_b2_generator_upload"
+  get "/custom_features/siemens_b2_xml_generator/:id/download" => "custom_features#siemens_b2_generator_download"
+
   # reports
   match "/reports" => "reports#index", :via => :get
   match "/reports/show_tariff_comparison" =>"reports#show_tariff_comparison", :via => :get

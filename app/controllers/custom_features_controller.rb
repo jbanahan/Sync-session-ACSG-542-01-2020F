@@ -44,9 +44,11 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_product_vendor_carb
 require 'open_chain/custom_handler/kirklands/kirklands_product_upload_parser'
 require 'open_chain/custom_handler/lands_end/le_product_parser'
 require 'open_chain/custom_handler/burlington/burlington_product_parser'
+require 'open_chain/custom_handler/siemens/siemens_b2_xml_generator'
 require 'open_chain/custom_handler/calendar_manager/calendar_upload_parser'
 
 class CustomFeaturesController < ApplicationController
+  SIEMENS_B2 ||= 'OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator'
   CSM_SYNC ||= 'OpenChain::CustomHandler::PoloCsmSyncHandler'
   ECELLERATE_SHIPMENT_ACTIVITY ||= 'OpenChain::CustomHandler::EcellerateShipmentActivityParser'
   EDDIE_CI_UPLOAD ||= 'OpenChain::CustomHandler::EddieBauer::EddieBauerFenixInvoiceHandler'
@@ -105,6 +107,18 @@ class CustomFeaturesController < ApplicationController
   def index
     @no_action_bar = true # Not in use so free up some space
     render :layout=>'one_col'
+  end
+
+  def siemens_b2_generator_index
+    generic_index OpenChain::CustomHandler::Siemens::SiemensB2XmlGenerator.new(nil), SIEMENS_B2, "Siemens B2 XML Generator"
+  end
+
+  def siemens_b2_generator_upload
+    generic_upload(SIEMENS_B2, "Siemens B2 XML Generator Upload", "siemens_b2_generator")
+  end
+
+  def siemens_b2_generator_download
+    generic_download("Siemens B2 XML Files")
   end
 
   def le_chapter_98_index
