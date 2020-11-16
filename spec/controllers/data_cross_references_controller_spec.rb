@@ -133,6 +133,19 @@ describe DataCrossReferencesController do
       expect(assigns(:xref)).not_to be_nil
     end
 
+    it "doesn't consider identical keys with different importers to be duplicates" do
+      imp = Factory(:importer)
+      imp2 = Factory(:importer)
+
+      DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, company: imp, key: "KEY", value: "VALUE"
+      xref2 = DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, company: imp2, key: "KEY2", value: "VALUE"
+
+      post :update, id: xref2.id, data_cross_reference: {key: "KEY", value: "Update", company_id: imp2.id, cross_reference_type: xref2.cross_reference_type}
+      expect(response).to redirect_to data_cross_references_path(cross_reference_type: xref2.cross_reference_type)
+      expect(flash[:notices]).to include "Cross Reference was successfully updated."
+      expect(DataCrossReference.where(key: "KEY", company: imp2).first.value).to eq "Update"
+    end
+
     it "errors if missing required company" do
       allow(DataCrossReference).to receive(:can_view?).and_return true
       xref = DataCrossReference.create! cross_reference_type: DataCrossReference::US_HTS_TO_CA, key: "KEY", value: "VALUE"
@@ -166,6 +179,18 @@ describe DataCrossReferencesController do
       expect(response).to be_redirect
       expect(flash[:errors]).to include "The Approved Fiber value 'KEY' already exists on another cross reference record."
       expect(assigns(:xref)).not_to be_nil
+    end
+
+    it "doesn't consider identical keys with different importers to be duplicates" do
+      imp = Factory(:importer)
+      imp2 = Factory(:importer)
+
+      DataCrossReference.create! cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC, company: imp, key: "KEY", value: "VALUE"
+
+      post :create, data_cross_reference: {company_id: imp2.id, key: "KEY", value: "CREATE", cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC}
+      expect(response).to redirect_to data_cross_references_path(cross_reference_type: DataCrossReference::RL_VALIDATED_FABRIC)
+      expect(flash[:notices]).to include "Cross Reference was successfully created."
+      expect(DataCrossReference.where(key: "KEY").first).not_to be_nil
     end
 
     it "errors if missing required company" do

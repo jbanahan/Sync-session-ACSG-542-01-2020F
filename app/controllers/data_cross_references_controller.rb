@@ -173,7 +173,7 @@ class DataCrossReferencesController < ApplicationController
     # See if we may allow duplicate xref keys..(some instances may require duplicates - though likely not via the screen edits)
     if !edit_hash[xref.cross_reference_type].try(:[], :allow_duplicate_keys)
 
-      query = DataCrossReference.where(cross_reference_type: xref.cross_reference_type, key: xref.key)
+      query = DataCrossReference.where(cross_reference_type: xref.cross_reference_type, company_id: xref.company_id, key: xref.key)
       if xref.id.try(:nonzero?)
         query = query.where("id <> ?", xref.id)
       end
