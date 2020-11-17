@@ -97,7 +97,7 @@ class Port < ActiveRecord::Base
     end
   end
 
-  # load canadia port data from http://www.cbsa-asfc.gc.ca/codes/generic-eng.html, must be modified to make tab separated file
+  # load Canadian port data from http://www.cbsa-asfc.gc.ca/codes/generic-eng.html, must be modified to make tab separated file
   # you must clean up encoding issues before processing
   def self.load_cbsa_data data
     Port.transaction do
@@ -135,4 +135,38 @@ class Port < ActiveRecord::Base
       end
     end
   end
+
+  # Load IATA port data from http://ourairports.com/data/airports.csv
+  # The file must be modified to make it pipe separated with no empty lines.
+  # The CSV file mentioned above includes a lot of junk (balloonports, etc.) that is not relevant for
+  # our purposes and needs to be removed.  Expected column layout (bunch removed/resorted from airports file) is...
+  # 1. Port code ("iata_code")
+  # 2. Port name ("name")
+  # 3. Country ISO ("iso_country") - not currently used
+  # 4. City ("municipality")
+  # This process does not delete existing ports, but it will only add ports that do not already exist.
+  def self.load_iata_data data
+    Port.transaction do
+      CSV.parse(data, col_sep: "|") do |pl|
+        port_code = pl[0]
+        port_name = pl[1].to_s
+        city = pl[3].to_s
+        # Intention here is to append the city name to the port name if the port name doesn't contain the city.  The two are compared without involving accented characters.
+        # We are NOT including country, though we could (country ISO is at position 3 of the CSV).
+        if city.present? && !ActiveSupport::Inflector.transliterate(port_name).include?(ActiveSupport::Inflector.transliterate(city))
+          display_name = "#{port_name} (#{city})"
+        else
+          display_name = port_name
+        end
+
+        # Don't add if we've already got an IATA match.  It doesn't matter if the name matches.
+        if Port.where(iata_code: port_code).count == 0
+          Port.create!(iata_code: port_code, name: display_name)
+        end
+      end
+    end
+
+    nil
+  end
+
 end

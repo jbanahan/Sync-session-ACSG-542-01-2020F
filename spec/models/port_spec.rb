@@ -205,4 +205,27 @@ describe Port do
     end
   end
 
+  describe "load_iata_data" do
+    it "adds port records from a pipe-delimited IATA file" do
+      described_class.create!(iata_code: "EXS", name: "Existing Port")
+
+      data = "AAL|Aalborg Airport|DK|Aalborg\n" +
+             "ACC|Kotoka International Airport|GH|Accra\n" +
+             "AGP|Málaga Airport|ES|Malaga\n" +
+             "EXS|New description should be ignored|EX|Portaporty\n" +
+             "NCE|Nice-Côte d'Azur Airport|FR|Nice\n"
+
+      described_class.load_iata_data data
+
+      expect(described_class.count).to eq 5
+
+      expect(described_class.where(iata_code: "AAL", name: "Aalborg Airport").first).not_to be_nil
+      expect(described_class.where(iata_code: "ACC", name: "Kotoka International Airport (Accra)").first).not_to be_nil
+      expect(described_class.where(iata_code: "AGP", name: "Málaga Airport").first).not_to be_nil
+      expect(described_class.where(iata_code: "EXS", name: "Existing Port").first).not_to be_nil
+      expect(described_class.where(iata_code: "EXS", name: "New description should be ignored").first).to be_nil
+      expect(described_class.where(iata_code: "NCE", name: "Nice-Côte d'Azur Airport").first).not_to be_nil
+    end
+  end
+
 end
