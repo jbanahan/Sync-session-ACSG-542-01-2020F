@@ -88,22 +88,22 @@
               <button ng-disabled="!shipment.permissions.can_revise_booking" class="btn btn-sm btn-secondary btn-block" ng-click='reviseBooking(shipment)'>Revise Booking</button>
             </li>
             <li class="list-group-item" ng-if="stateToggleButton('shp_send_isf') != null">
-              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_isf')" disabled="!shipment.custom.can_send_isf"></chain-simple-state-toggle-button>
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-secondary btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_isf')" disabled="!shipment.custom.can_send_isf"></chain-simple-state-toggle-button>
             </li>
             <li class="list-group-item" ng-if="stateToggleButton('shp_resend_isf') != null">
-              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_isf')" disabled="!shipment.custom.can_resend_isf"></chain-simple-state-toggle-button>
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-secondary btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_isf')" disabled="!shipment.custom.can_resend_isf"></chain-simple-state-toggle-button>
             </li>
             <li class="list-group-item" ng-if="stateToggleButton('shp_send_factory_pack') != null">
-              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_factory_pack')" disabled="!shipment.custom.can_send_factory_pack"></chain-simple-state-toggle-button>
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-secondary btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_factory_pack')" disabled="!shipment.custom.can_send_factory_pack"></chain-simple-state-toggle-button>
             </li>
             <li class="list-group-item" ng-if="stateToggleButton('shp_resend_factory_pack') != null">
-              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_factory_pack')" disabled="!shipment.custom.can_resend_factory_pack"></chain-simple-state-toggle-button>
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-secondary btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_factory_pack')" disabled="!shipment.custom.can_resend_factory_pack"></chain-simple-state-toggle-button>
             </li>
             <li class="list-group-item" ng-if="stateToggleButton('shp_send_vgm') != null">
-              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_vgm')" disabled="!shipment.custom.can_send_vgm"></chain-simple-state-toggle-button>
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-secondary btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_send_vgm')" disabled="!shipment.custom.can_send_vgm"></chain-simple-state-toggle-button>
             </li>
             <li class="list-group-item" ng-if="stateToggleButton('shp_resend_vgm') != null">
-              <chain-simple-state-toggle-button button-classes='btn-sm btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_vgm')" disabled="!shipment.custom.can_resend_vgm"></chain-simple-state-toggle-button>
+              <chain-simple-state-toggle-button button-classes='btn-sm btn-secondary btn-block' api-object-name='Shipment' object='shipment' toggle-callback='scopedReload' button="stateToggleButton('shp_resend_vgm')" disabled="!shipment.custom.can_resend_vgm"></chain-simple-state-toggle-button>
             </li>
           </ul>
         </div>

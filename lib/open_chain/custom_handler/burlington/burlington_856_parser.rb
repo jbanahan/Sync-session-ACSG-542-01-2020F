@@ -122,7 +122,7 @@ module OpenChain; module CustomHandler; module Burlington; class Burlington856Pa
 
     shipment.shipment_lines.each do |line|
       shipment.number_of_packages += line.carton_qty unless line.carton_qty.nil?
-      shipment.gross_weight += line.gross_kgs unless line.carton_qty.nil?
+      shipment.gross_weight += line.gross_kgs unless line.gross_kgs.nil?
     end
   end
 
