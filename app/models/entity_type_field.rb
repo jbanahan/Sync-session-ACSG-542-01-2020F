@@ -14,8 +14,6 @@
 #
 
 class EntityTypeField < ActiveRecord::Base
-  attr_accessible :entity_type_id, :model_field_uid
-
   belongs_to :entity_type
 
   validates_presence_of :entity_type_id

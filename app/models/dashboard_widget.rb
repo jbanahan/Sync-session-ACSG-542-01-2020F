@@ -15,8 +15,6 @@
 #
 
 class DashboardWidget < ActiveRecord::Base
-  attr_accessible :rank, :search_setup_id, :user_id
-
   belongs_to :search_setup
   belongs_to :user
 

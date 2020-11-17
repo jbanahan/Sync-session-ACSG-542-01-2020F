@@ -16,8 +16,6 @@
 #
 
 class HtsTranslation < ActiveRecord::Base
-  attr_accessible :company_id, :country_id, :hts_number, :translated_hts_numbe
-
   belongs_to :company
   belongs_to :country
 

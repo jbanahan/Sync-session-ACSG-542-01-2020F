@@ -10,7 +10,7 @@ class BusinessValidationTemplatesController < ApplicationController
 
   def create
     admin_secure do
-      @bvt = BusinessValidationTemplate.new(params[:business_validation_template])
+      @bvt = BusinessValidationTemplate.new(permitted_params(params))
       if @bvt.save
         redirect_to edit_business_validation_template_path(@bvt), notice: "Template successfully created."
       else
@@ -47,7 +47,7 @@ class BusinessValidationTemplatesController < ApplicationController
         end
         render json: {ok: "ok"}
       else
-        if @bvt.update(params[:business_validation_template])
+        if @bvt.update(permitted_params(params))
           flash[:success] = "Template successfully saved."
           redirect_to @bvt
         else
@@ -160,6 +160,11 @@ class BusinessValidationTemplatesController < ApplicationController
       }
     end
     model_fields_list
+  end
+
+  def permitted_params(params)
+    params.require(:business_validation_template).permit(:module_type, :description, :disabled, :name, :private, :system_code,
+                                                         search_criterions: [])
   end
 
 end

@@ -309,8 +309,6 @@ GEM
     premailer-rails (1.11.1)
       actionmailer (>= 3)
       premailer (~> 1.7, >= 1.7.9)
-    protected_attributes (1.1.4)
-      activemodel (>= 4.0.1, < 5.0)
     public_suffix (3.0.3)
     raabro (1.1.6)
     rack (1.6.13)
@@ -543,7 +541,6 @@ DEPENDENCIES
   prawn (= 2.2.2)
   prawn-table (= 0.2.2)
   premailer-rails
-  protected_attributes (= 1.1.4)
   rails (= 4.2.11.3)
   recaptcha (~> 4.13.1)
   redlock (= 1.2.0)

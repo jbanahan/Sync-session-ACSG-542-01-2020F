@@ -19,8 +19,6 @@
 # Cache of search result primary keys
 # Expects result_cacheable to implmenent result_keys and take has with :per_page & :page
 class ResultCache < ActiveRecord::Base
-  attr_accessible :object_ids, :page, :per_page, :result_cacheable_id, :result_cacheable_type, :result_cacheable
-
   belongs_to :result_cacheable, :polymorphic=>true
 
   def next current_object_id

@@ -19,9 +19,6 @@
 #
 
 class FileImportResult < ActiveRecord::Base
-  attr_accessible :changed_object_count, :expected_rows, :finished_at,
-    :imported_file_id, :imported_file, :rows_processed, :run_by_id, :run_by, :started_at
-
   belongs_to :imported_file
   belongs_to :run_by, :class_name => "User"
   has_many :change_records, -> { order([{failed: :desc}, :record_sequence_number]) }

@@ -10,7 +10,6 @@
 #
 
 class SummaryStatement < ActiveRecord::Base
-  attr_accessible :statement_number, :customer
   has_many :broker_invoices
   belongs_to :customer, class_name: "Company"
   validates :customer_id, :statement_number, presence: true

@@ -46,12 +46,6 @@
 #
 
 class DutyCalcExportFileLine < ActiveRecord::Base
-  attr_accessible :action_code, :carrier, :customs_line_number, :description, :destination_country,
-                  :duty_calc_export_file_id, :export_date, :exporter, :hts_code, :importer_id, :nafta_duty,
-                  :nafta_duty_rate, :nafta_us_equiv_duty, :part_number, :quantity, :ref_1, :ref_2, :ref_3,
-                  :ref_4, :schedule_b_code, :ship_date, :status, :uom, :color_description, :size_description,
-                  :style, :ref_5, :ref_6
-
   belongs_to :importer, :class_name=>"Company"
   belongs_to :duty_calc_export_file, :inverse_of=>:duty_calc_export_file_lines
   has_many :drawback_allocations, inverse_of: :duty_calc_export_file_line, dependent: :destroy

@@ -29,8 +29,6 @@
 # This class exists pretty much solely because report result already has a run_schedulable method
 # associated with it which does report result purges.
 class SchedulableReportResult < ReportResult
-  attr_accessible :custom_report_id, :email_to, :friendly_settings_json, :name, :report_class, :report_data_content_type, :report_data_file_name, :report_data_file_size, :report_data_updated_at, :run_at, :run_by_id, :run_errors, :settings_json, :status
-
   def self.run_schedulable opts = {}
     opts = opts.with_indifferent_access
     user, report_name, report_class, settings = parse_required_opts opts

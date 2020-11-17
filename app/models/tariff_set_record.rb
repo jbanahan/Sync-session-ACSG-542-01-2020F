@@ -34,14 +34,6 @@
 #
 
 class TariffSetRecord < ActiveRecord::Base
-  attr_accessible :add_valorem_rate, :calculation_method, :chapter,
-    :column_2_rate, :country_id, :erga_omnes_rate,
-    :export_regulations, :fda_indicator, :full_description,
-    :general_preferential_tariff_rate, :general_rate, :heading,
-    :hts_code, :import_regulations, :most_favored_nation_rate,
-    :per_unit_rate, :remaining_description, :special_rates,
-    :sub_heading, :tariff_set_id, :unit_of_measure, :country
-
   belongs_to :tariff_set
   belongs_to :country
 

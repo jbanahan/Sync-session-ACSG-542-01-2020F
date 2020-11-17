@@ -29,11 +29,6 @@
 
 class PieceSet < ActiveRecord::Base
   # PieceSets are used to link different modules together (like to mark the the items on a shipment are from a particular order)
-  attr_accessible :adjustment_type, :booking_line_id, :commercial_invoice_line_id,
-    :commercial_invoice_line, :delivery_line_id, :delivery_line, :drawback_import_line_id, :drawback_import_line,
-    :milestone_plan_id, :order_line_id, :order_line, :quantity, :sales_order_line_id, :sales_order_line,
-    :security_filing_line_id, :shipment_line_id, :shipment_line, :unshipped_remainder
-
   belongs_to :milestone_plan
 
   belongs_to :order_line, inverse_of: :piece_sets

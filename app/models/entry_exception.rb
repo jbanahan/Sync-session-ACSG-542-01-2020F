@@ -17,8 +17,6 @@
 #
 
 class EntryException < ActiveRecord::Base
-  attr_accessible :code, :comments, :resolved_date, :exception_creation_date
-
   belongs_to :entry, inverse_of: :entry_exceptions
 
   def resolved?

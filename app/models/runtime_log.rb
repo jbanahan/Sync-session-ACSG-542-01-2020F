@@ -18,7 +18,6 @@
 #
 
 class RuntimeLog < ActiveRecord::Base
-  attr_accessible :runtime_logable, :identifier, :start, :end
   belongs_to :runtime_logable, polymorphic: true
 
   def can_view? user

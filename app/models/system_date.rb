@@ -16,8 +16,6 @@
 #
 
 class SystemDate < ActiveRecord::Base
-  attr_accessible :date_type, :company_id, :start_date, :end_date
-
   belongs_to :company, inverse_of: :system_dates
 
   validates :date_type, presence: true

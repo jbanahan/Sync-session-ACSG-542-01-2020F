@@ -24,10 +24,6 @@
 class SearchColumn < ActiveRecord::Base
   include HoldsCustomDefinition
 
-  attr_accessible :constant_field_name, :constant_field_value,
-    :custom_definition_id, :custom_report_id, :imported_file_id,
-    :model_field_uid, :rank, :search_setup_id
-
   belongs_to :search_setup
   belongs_to :imported_file
 

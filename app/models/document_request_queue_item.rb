@@ -18,9 +18,6 @@
 #
 
 class DocumentRequestQueueItem < ActiveRecord::Base
-
-  attr_accessible :identifier, :locked_at, :locked_by, :request_at, :system
-
   def self.enqueue_kewill_document_request file_number, request_delay_minutes: nil
     enqueue_item("Kewill", file_number, request_delay_minutes: request_delay_minutes)
   end

@@ -14,9 +14,6 @@
 #
 
 class SupportRequest < ActiveRecord::Base
-  attr_accessible :body, :external_link, :referrer_url, :severity,
-    :ticket_number, :user_id, :user
-
   belongs_to :user
 
   def send_request!

@@ -18,8 +18,6 @@
 #
 
 class OfficialScheduleBCode < ActiveRecord::Base
-  attr_accessible :end_use_classification, :hitech_classification, :hts_code, :long_description, :naics_classification, :quantity_1, :quantity_2, :short_description, :sitc_code, :usda_code
-
   # clears current schedule b list and reloads it from census file
   def self.load_from_census_file file_path
     OfficialScheduleBCode.transaction do

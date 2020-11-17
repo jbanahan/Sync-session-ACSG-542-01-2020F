@@ -12,9 +12,6 @@
 #
 
 class DebugRecord < ActiveRecord::Base
-  attr_accessible :request_method, :request_params, :request_path, :user_id,
-    :user
-
   belongs_to :user
 
   validates :user, :presence => true

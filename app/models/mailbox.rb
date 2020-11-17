@@ -1,5 +1,4 @@
 class Mailbox < ActiveRecord::Base
-  attr_accessible :email_aliases, :name
   has_and_belongs_to_many :users
   has_many :emails
 

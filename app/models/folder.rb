@@ -18,9 +18,6 @@
 #
 
 class Folder < ActiveRecord::Base
-  attr_accessible :archived, :base_object_id, :base_object_type, :created_by,
-    :created_by_id, :name
-
   belongs_to :base_object, polymorphic: true, inverse_of: :folders
   belongs_to :created_by, :class_name=>"User"
   has_many :attachments, as: :attachable, dependent: :destroy, inverse_of: :attachable, autosave: true

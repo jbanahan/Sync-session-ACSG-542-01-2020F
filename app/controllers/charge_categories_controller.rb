@@ -9,7 +9,7 @@ class ChargeCategoriesController < ApplicationController
 
   def create
     admin_secure do
-      c = Company.find(params[:company_id]).charge_categories.create(params[:charge_category])
+      c = Company.find(params[:company_id]).charge_categories.create(permitted_params(params))
       errors_to_flash c
       add_flash :notices, "Charge Category created successfully." if c.errors.empty?
       redirect_to company_charge_categories_path(c.company)
@@ -25,4 +25,7 @@ class ChargeCategoriesController < ApplicationController
     end
   end
 
+  def permitted_params(params)
+    params.require(:charge_category).except(:company_id).permit(:category, :charge_code)
+  end
 end

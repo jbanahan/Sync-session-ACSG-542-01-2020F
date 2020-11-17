@@ -22,11 +22,10 @@
 
 require 'open_chain/active_dates_support'
 class ProductRateOverride < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include CoreObjectSupport
   include OpenChain::ActiveDatesSupport
-
-  attr_accessible :destination_country_id, :end_date, :notes, :origin_country_id,
-    :product_id, :product, :rate, :start_date
 
   belongs_to :product, touch: true, inverse_of: :product_rate_overrides
   belongs_to :origin_country, class_name: 'Country', inverse_of: :trade_lanes_as_origin

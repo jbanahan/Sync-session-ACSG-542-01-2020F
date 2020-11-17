@@ -21,8 +21,6 @@
 #
 
 class SearchRun < ActiveRecord::Base
-  attr_accessible :custom_file_id, :imported_file_id, :last_accessed, :page, :per_page, :search_setup_id, :starting_cache_position, :user_id
-
   PAGE_SIZE = 20
 
   before_save :set_user

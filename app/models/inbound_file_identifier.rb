@@ -19,8 +19,6 @@
 #
 
 class InboundFileIdentifier < ActiveRecord::Base
-  attr_accessible :identifier_type, :inbound_file_id, :module_id, :module_type, :value
-
   belongs_to :inbound_file, inverse_of: :identifiers
 
   TYPE_ARTICLE_NUMBER = "Article Number".freeze

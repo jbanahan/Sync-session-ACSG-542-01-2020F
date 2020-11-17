@@ -16,9 +16,9 @@
 #
 
 class ProductVendorAssignment < ActiveRecord::Base
-  include CoreObjectSupport
+  attr_accessor :dont_process_linked_attachments
 
-  attr_accessible :product_id, :product, :vendor_id, :vendor
+  include CoreObjectSupport
 
   belongs_to :product
   belongs_to :vendor, class_name: 'Company'

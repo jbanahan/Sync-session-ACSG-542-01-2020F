@@ -55,16 +55,6 @@
 class DrawbackImportLine < ActiveRecord::Base
   include LinesSupport
 
-  attr_accessible :box_37_duty, :box_40_duty, :compute_code,
-    :country_of_origin_code, :description, :duty_per_unit, :entry_number,
-    :hts_code, :import_date, :importer_id, :line_number, :ocean, :part_number,
-    :port_code, :product_id, :product, :quantity, :rate, :received_date,
-    :total_invoice_value, :total_mpf, :unit_of_measure, :unit_price,
-    :color_description, :size_description, :exchange_rate, :receipt_quantity,
-    :hts_duty, :hts_quantity, :quantity_2, :entered_value_7501, :total_taxes,
-    :spi_primary, :summary_line_count, :liquidation_date, :ref_1, :ref_2,
-    :country_of_export_code, :style, :single_line, :importer
-
   belongs_to :importer, :class_name=>"Company"
   has_many :duty_calc_import_file_lines, :dependent=>:destroy
   has_many :drawback_allocations, dependent: :destroy, inverse_of: :drawback_import_line

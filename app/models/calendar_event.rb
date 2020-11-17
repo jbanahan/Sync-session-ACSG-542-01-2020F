@@ -11,8 +11,6 @@
 #
 
 class CalendarEvent < ActiveRecord::Base
-  attr_accessible :calendar_id, :event_date, :label
-
   validates_presence_of :event_date, :calendar_id
   belongs_to :calendar, :inverse_of => :calendar_events
 end

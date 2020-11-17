@@ -18,9 +18,9 @@
 #
 
 class TradeLane < ActiveRecord::Base
-  include CoreObjectSupport
+  attr_accessor :dont_process_linked_attachments
 
-  attr_accessible :destination_country_id, :notes, :origin_country_id, :tariff_adjustment_percentage
+  include CoreObjectSupport
 
   belongs_to :origin_country, class_name: 'Country', inverse_of: :trade_lanes_as_origin
   belongs_to :destination_country, class_name: 'Country', inverse_of: :trade_lanes_as_destination

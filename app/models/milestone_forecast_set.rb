@@ -15,8 +15,6 @@
 #
 
 class MilestoneForecastSet < ActiveRecord::Base
-  attr_accessible :piece_set_id, :state
-
   belongs_to :piece_set
   has_many :milestone_forecasts, :dependent=>:destroy, :autosave=>true
 

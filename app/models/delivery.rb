@@ -14,10 +14,9 @@
 #
 
 class Delivery < ActiveRecord::Base
-  include CoreObjectSupport
+  attr_accessor :dont_process_linked_attachments
 
-  attr_accessible :carrier_id, :customer_id, :mode, :reference, :ship_from_id,
-    :ship_to_id
+  include CoreObjectSupport
 
   belongs_to  :carrier, :class_name => "Company"
   belongs_to  :customer,  :class_name => "Company"

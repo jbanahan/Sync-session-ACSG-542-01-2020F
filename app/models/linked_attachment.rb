@@ -16,9 +16,6 @@
 #
 
 class LinkedAttachment < ActiveRecord::Base
-  attr_accessible :attachable_id, :attachable, :attachable_type,
-    :linkable_attachment_id, :linkable_attachment
-
   belongs_to :linkable_attachment
   belongs_to :attachable, :polymorphic => true
 

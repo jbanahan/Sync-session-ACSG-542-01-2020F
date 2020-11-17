@@ -11,8 +11,6 @@
 #
 
 class EntitySnapshotFailure < ActiveRecord::Base
-  attr_accessible :snapshot_id, :snapshot, :snapshot_json, :snapshot_type
-
   belongs_to :snapshot, polymorphic: true
 
   # This method simply looks for any entity snapshot failures in the failure table,

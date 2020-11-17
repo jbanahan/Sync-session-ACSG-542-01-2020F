@@ -13,9 +13,9 @@
 #
 
 class SalesOrder < ActiveRecord::Base
-  include CoreObjectSupport
+  attr_accessor :dont_process_linked_attachments
 
-  attr_accessible :customer_id, :division_id, :order_date, :order_number, :ship_to_id
+  include CoreObjectSupport
 
   belongs_to :customer, :class_name => "Company"
   belongs_to :division

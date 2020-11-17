@@ -43,17 +43,6 @@ require "open_chain/git"
 require 'open_chain/database_utils'
 
 class MasterSetup < ActiveRecord::Base
-  attr_accessible :broker_invoice_enabled, :classification_enabled,
-    :custom_features, :customs_statements_enabled, :delivery_enabled,
-    :drawback_enabled, :entry_enabled, :friendly_name, :ftp_polling_active,
-    :invoices_enabled, :last_delayed_job_error_sent, :logo_image,
-    :migration_host, :order_enabled, :project_enabled, :request_host,
-    :sales_order_enabled, :security_filing_enabled,
-    :send_test_files_to_instance, :shipment_enabled, :stats_api_key,
-    :suppress_email, :suppress_ftp, :system_code, :system_message,
-    :target_version, :trade_lane_enabled, :uuid, :variant_enabled,
-    :vendor_management_enabled, :vfi_invoice_enabled
-
   cattr_accessor :current
 
   CACHE_KEY = "MasterSetup:setup"

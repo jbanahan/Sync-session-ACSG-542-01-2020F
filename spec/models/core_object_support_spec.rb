@@ -190,6 +190,8 @@ describe CoreObjectSupport do
   context "TestCoreObject" do
     before :each do
       class TestCoreObject < ActiveRecord::Base
+        attr_accessor :dont_process_linked_attachments
+
         include CoreObjectSupport
 
         def self.table_name

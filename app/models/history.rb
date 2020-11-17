@@ -29,11 +29,6 @@
 #
 
 class History < ActiveRecord::Base
-  attr_accessible :order_id, :shipment_id, :product_id, :company_id, :user_id,
-    :order_line_id, :walked, :created_at, :updated_at, :history_type, :sales_order_id,
-    :sales_order_line_id, :delivery_id, :entry_id, :broker_invoice_id,
-    :commercial_invoice_id, :security_filing_id, :container_id
-
   belongs_to  :order
   belongs_to  :product
   belongs_to  :shipment

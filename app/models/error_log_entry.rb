@@ -16,9 +16,6 @@
 #
 
 class ErrorLogEntry < ActiveRecord::Base
-  attr_accessible :additional_messages_json, :backtrace_json,
-    :error_message, :exception_class
-
   def self.create_from_exception exception, additional_messages=[]
     bj = exception.backtrace.to_json
     am = additional_messages.nil? ? [].to_json : additional_messages.to_json

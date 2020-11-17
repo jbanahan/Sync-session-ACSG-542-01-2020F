@@ -40,6 +40,8 @@
 #
 
 class BrokerInvoice < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include CoreObjectSupport
   include IntegrationParserSupport
 

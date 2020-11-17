@@ -20,8 +20,6 @@
 #
 
 class DrawbackExportHistory < ActiveRecord::Base
-  attr_accessible :claim_amount, :claim_amount_per_unit, :drawback_claim_id, :export_date, :export_ref_1, :part_number, :quantity
-
   belongs_to :drawback_claim, inverse_of: :drawback_export_histories
 
   def self.bulk_insert objects, opts={}

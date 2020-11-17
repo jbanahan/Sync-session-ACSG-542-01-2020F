@@ -29,15 +29,12 @@
 
 require 'jsonpath'
 class Product < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include CoreObjectSupport
   include StatusableSupport
   include TouchesParentsChangedAt
   include IntegrationParserSupport
-
-  attr_accessible :changed_at, :division_id, :entity_type_id, :importer_id,
-    :last_file_bucket, :last_file_path, :last_updated_by_id, :last_updated_by,
-    :name, :status_rule_id, :unique_identifier, :unit_of_measure, :importer,
-    :created_at, :updated_at, :classifications_attributes, :variants_attributes, :inactive
 
   belongs_to :importer, :class_name => "Company"
   belongs_to :division

@@ -19,8 +19,6 @@
 class MilestoneDefinition < ActiveRecord::Base
   include HoldsCustomDefinition
 
-  attr_accessible :custom_definition_id, :days_after_previous, :display_rank, :final_milestone, :milestone_plan_id, :model_field_uid, :previous_milestone_definition_id
-
   belongs_to :milestone_plan
   belongs_to :previous_milestone_definition, :class_name=>"MilestoneDefinition"
   has_many :next_milestone_definitions, :class_name=>"MilestoneDefinition", :foreign_key=>"previous_milestone_definition_id"

@@ -17,7 +17,6 @@ class Announcement < ActiveRecord::Base
   has_many :marked_users, through: :user_announcement_markers, source: :user
   has_many :user_announcement_markers, dependent: :destroy
   has_and_belongs_to_many :selected_users, join_table: "user_announcements", class_name: "User" # rubocop:disable Rails/HasAndBelongsToMany
-  attr_accessible :start_at, :end_at, :title, :text, :category, :comments, :time_zone, :selected_user_ids
 
   validates :title, presence: true
   validates :start_at, presence: true

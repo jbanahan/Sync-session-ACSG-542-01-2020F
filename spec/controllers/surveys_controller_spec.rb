@@ -180,7 +180,7 @@ describe SurveysController do
       q = survey.questions.create!(content: "Sample content", choices: "a\nb")
       q.save!
       post :update, {id: survey.id, survey: {name: 'survey name', questions_attributes: {q.id => {id: q.id, content: "Sample content"}}}}
-      expect(Question.first.rank).to be(0)
+      expect(Question.first.rank).to eq(0)
     end
 
     it 'allows questions to have attachments' do

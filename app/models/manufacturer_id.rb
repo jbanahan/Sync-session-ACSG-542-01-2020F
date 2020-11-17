@@ -20,8 +20,6 @@
 #
 
 class ManufacturerId < ActiveRecord::Base
-  attr_accessible :active, :address_1, :address_2, :city, :country, :mid, :name, :postal_code
-
   def self.load_mid_records mid_rows
     Array.wrap(mid_rows).each do |row|
       next if row.nil?

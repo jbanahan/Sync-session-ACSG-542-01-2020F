@@ -308,7 +308,7 @@ module Api; module V1; class ShipmentsController < Api::V1::ApiCoreModuleControl
   def create_address
     s = shipment
 
-    address = Address.new params[:address]
+    address = Address.new(permitted_address_params(params))
     address.company = s.importer
 
     address.save!
@@ -583,4 +583,7 @@ end
     [lines, o]
   end
 
+  def permitted_address_params(params)
+    params.require(:address).permit(:name, :line_1, :line_2, :line_3, :city, :state, :postal_code, :country_id, :in_address_book)
+  end
 end; end; end

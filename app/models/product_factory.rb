@@ -13,9 +13,6 @@
 #
 
 class ProductFactory < ActiveRecord::Base
-  # No accessible attributes here
-  attr_accessible()
-
   # The touch here is so that we touch the product when a manufacturer is removed
   belongs_to :product, touch: true, inverse_of: :product_factories
   belongs_to :address

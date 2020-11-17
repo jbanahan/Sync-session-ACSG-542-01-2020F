@@ -33,14 +33,6 @@
 #
 
 class DailyStatementEntry < ActiveRecord::Base
-  attr_accessible :add_amount, :billed_amount, :broker_reference,
-    :cvd_amount, :daily_statement_id, :duty_amount, :entry_id, :entry,
-    :fee_amount, :interest_amount, :port_code, :preliminary_add_amount,
-    :preliminary_cvd_amount, :preliminary_duty_amount,
-    :preliminary_fee_amount, :preliminary_interest_amount,
-    :preliminary_tax_amount, :preliminary_total_amount, :tax_amount,
-    :total_amount
-
   belongs_to :daily_statement, inverse_of: :daily_statement_entries
   has_many :daily_statement_entry_fees, dependent: :destroy, autosave: true, inverse_of: :daily_statement_entry
   belongs_to :port, class_name: "Port", foreign_key: "port_code", primary_key: "schedule_d_code"

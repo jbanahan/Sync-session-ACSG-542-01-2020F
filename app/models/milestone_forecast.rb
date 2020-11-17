@@ -18,8 +18,6 @@
 #
 
 class MilestoneForecast < ActiveRecord::Base
-  attr_accessible :forecast, :milestone_definition_id, :milestone_forecast_set_id, :planned, :state
-
   ORDERED_STATES = ["Achieved", "Pending", "Unplanned", "Missed", "Trouble", "Overdue"]
 
   belongs_to :milestone_definition

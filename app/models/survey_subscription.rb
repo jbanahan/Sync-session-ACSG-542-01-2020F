@@ -10,8 +10,6 @@
 #
 
 class SurveySubscription < ActiveRecord::Base
-  attr_accessible :survey_id, :user_id, :user
-
   belongs_to :survey
   belongs_to :user
 end

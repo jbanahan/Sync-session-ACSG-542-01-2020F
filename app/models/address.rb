@@ -34,11 +34,6 @@
 require 'digest/md5'
 
 class Address < ActiveRecord::Base
-  attr_accessible :address_hash, :address_type, :city, :company_id, :company,
-    :country_id, :country, :fax_number, :in_address_book, :line_1, :line_2,
-    :line_3, :name, :phone_number, :postal_code, :shipping, :state, :system_code,
-    :port_id
-
   belongs_to :company
 	belongs_to :country
   belongs_to :port

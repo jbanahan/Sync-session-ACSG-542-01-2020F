@@ -16,8 +16,6 @@
 require 'zip/filesystem'
 require 'spreadsheet'
 class DutyCalcExportFile < ActiveRecord::Base
-  attr_accessible :importer_id, :user_id
-
   belongs_to :importer, :class_name=>"Company"
   has_many :duty_calc_export_file_lines, :dependent=>:destroy
   has_one :attachment, as: :attachable, dependent: :destroy

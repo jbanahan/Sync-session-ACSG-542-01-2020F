@@ -13,8 +13,6 @@
 class InstantClassification < ActiveRecord::Base
   include UpdateModelFieldsSupport
 
-  attr_accessible :name, :rank, :virtual_identifier, :search_criterions_attributes, :classifications_attributes
-
   has_many :search_criterions, :dependent=>:destroy
   has_many :classifications, :dependent=>:destroy
 

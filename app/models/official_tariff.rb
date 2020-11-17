@@ -39,15 +39,6 @@
 require 'digest/md5'
 require 'open_chain/stat_client'
 class OfficialTariff < ActiveRecord::Base
-  attr_accessible :add_valorem_rate, :calculation_method, :chapter,
-    :column_2_rate, :common_rate, :common_rate_decimal, :country_id,
-    :country, :erga_omnes_rate, :export_regulations, :fda_indicator,
-    :full_description, :general_preferential_tariff_rate,
-    :general_rate, :heading, :hts_code, :import_regulations,
-    :most_favored_nation_rate, :per_unit_rate, :remaining_description,
-    :special_rate_key, :special_rates, :sub_heading, :unit_of_measure,
-    :use_count, :country
-
   LACEY_CODES ||= ["4401", "4402", "4403", "4404", "4406", "4407", "4408", "4409",
                     "4412", "4414", "4417", "4418", "4419", "4420", "4421",
                     "6602", "8201", "9201", "9202", "9302", "93051020",

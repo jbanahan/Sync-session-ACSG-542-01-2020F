@@ -12,6 +12,5 @@
 #
 
 class AttachmentType < ActiveRecord::Base
-  attr_accessible :disable_multiple_kewill_docs, :kewill_attachment_type, :kewill_document_code, :name
   scope :by_name, -> { order(name: :asc) }
 end

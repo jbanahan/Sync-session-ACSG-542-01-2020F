@@ -20,8 +20,6 @@ gem 'aws-sdk-sqs', '1.10.0'
 gem 'aws-sdk-s3', '1.30.1'
 gem 'aws-sdk-cloudwatch', '1.13.0'
 
-# This can be removed once we get everything ported to strong_parameters
-gem 'protected_attributes', '1.1.4'
 gem 'jquery-ui-rails', '6.0.1'
 gem 'mysql2', '0.5.2'
 gem 'will_paginate', '3.1.6'

@@ -10,8 +10,6 @@
 #
 
 class Division < ActiveRecord::Base
-  attr_accessible :company_id, :company, :name
-
   belongs_to	:company
 	has_many		:orders
 	has_many		:products

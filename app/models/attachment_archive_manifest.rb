@@ -15,8 +15,6 @@
 #
 
 class AttachmentArchiveManifest < ActiveRecord::Base
-  attr_accessible :company_id, :finish_at, :start_at
-
   belongs_to :company, :inverse_of=>:attachment_archive_manifests
   has_one :attachment, :as => :attachable, :dependent=>:destroy
 

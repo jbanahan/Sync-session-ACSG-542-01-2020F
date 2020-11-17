@@ -68,22 +68,10 @@
 #
 
 class SecurityFiling < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include CoreObjectSupport
   include IntegrationParserSupport
-
-  attr_accessible :ams_match_date, :booking_number, :broker_customer_number,
-    :cbp_updated_at, :container_numbers, :countries_of_origin,
-    :delete_accepted_date, :entry_numbers, :entry_port_code,
-    :entry_reference_numbers, :estimated_vessel_arrival_date,
-    :estimated_vessel_load_date, :estimated_vessel_sailing_date,
-    :file_logged_date, :first_accepted_date, :first_sent_date, :host_system,
-    :host_system_file_number, :house_bills_of_lading, :importer_account_code,
-    :importer_id, :importer_tax_id, :lading_port_code, :last_accepted_date,
-    :last_event, :last_file_bucket, :last_file_path, :last_sent_date,
-    :late_filing, :manufacturer_names, :master_bill_of_lading, :notes,
-    :po_numbers, :scac, :status_code, :status_description, :time_to_process,
-    :transaction_number, :transport_mode_code, :unlading_port_code,
-    :us_customs_first_file_date, :vessel, :vessel_departure_date, :voyage
 
   belongs_to :lading_port, :class_name=>'Port', :foreign_key=>'lading_port_code', :primary_key=>'schedule_k_code'
   belongs_to :unlading_port, :class_name=>'Port', :foreign_key=>'unlading_port_code', :primary_key=>'schedule_d_code'

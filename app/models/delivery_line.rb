@@ -21,8 +21,6 @@ class DeliveryLine < ActiveRecord::Base
   include ShallowMerger
   include UpdateModelFieldsSupport
 
-  attr_accessible :delivery_id, :line_number, :product_id, :quantity
-
   belongs_to :delivery
 
   validates_uniqueness_of :line_number, :scope => :delivery_id

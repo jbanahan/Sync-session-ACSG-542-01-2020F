@@ -16,8 +16,6 @@
 #
 
 class DrawbackAllocation < ActiveRecord::Base
-  attr_accessible :drawback_import_line_id, :duty_calc_export_file_line_id, :quantity
-
   belongs_to :duty_calc_export_file_line
   belongs_to :drawback_import_line
 end

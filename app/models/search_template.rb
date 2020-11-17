@@ -11,9 +11,6 @@
 #
 
 class SearchTemplate < ActiveRecord::Base
-  attr_accessible :created_at, :module_type, :name, :search_json,
-    :updated_at
-
   validates :name, uniqueness: true, presence: true
   validates :search_json, presence: true
 

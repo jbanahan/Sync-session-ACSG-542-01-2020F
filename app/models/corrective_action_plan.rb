@@ -21,8 +21,6 @@ class CorrectiveActionPlan < ActiveRecord::Base
   has_many   :comments, -> { order(created_at: :desc) }, as: :commentable, dependent: :destroy, autosave: true
   has_many   :corrective_issues, dependent: :destroy, inverse_of: :corrective_action_plan, autosave: true
 
-  attr_accessible :status, :created_by_id
-
   before_save :update_status
   before_destroy :dont_destroy_activated
 

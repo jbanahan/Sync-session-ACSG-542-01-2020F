@@ -24,8 +24,6 @@
 #
 # `json_data` is a TEXT field so it's limited by MYSQL max_allowed_packet size
 class KeyJsonItem < ActiveRecord::Base
-  attr_accessible :json_data, :key_scope, :logical_key
-
   validates :key_scope, :json_data, :logical_key, :presence=>true
 
   # Land's End Drawback Certificiate of Delivery data

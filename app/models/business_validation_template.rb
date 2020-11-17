@@ -25,7 +25,6 @@ require 'open_chain/custom_handler/lumber_liquidators/lumber_validation_rule_ent
 require 'open_chain/custom_handler/pepsi/quaker_validation_rule_po_number_unique'
 
 class BusinessValidationTemplate < ActiveRecord::Base
-  attr_accessible :description, :module_type, :name, :delete_pending, :disabled, :private, :system_code
   validates :module_type, presence: true
   validates :system_code, uniqueness: true, if: -> { system_code.present? }
 

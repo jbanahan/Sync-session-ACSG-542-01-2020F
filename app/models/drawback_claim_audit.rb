@@ -23,8 +23,6 @@
 #
 
 class DrawbackClaimAudit < ActiveRecord::Base
-  attr_accessible :drawback_claim_id, :export_date, :export_part_number, :export_ref_1, :import_date, :import_entry_number, :import_part_number, :import_ref_1, :quantity
-
   belongs_to :drawback_claim, inverse_of: :drawback_claim_audits
 
   def self.bulk_insert objects, opts={}

@@ -130,6 +130,8 @@ require 'open_chain/user_support/failed_password_handler'
 require 'open_chain/registries/password_validation_registry'
 
 class User < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include Clearance::User
   include OpenChain::UserSupport::UserPermissions
   include OpenChain::UserSupport::Groups

@@ -15,5 +15,4 @@
 #
 
 class UnitOfMeasure < ActiveRecord::Base
-  attr_accessible :uom, :description, :system
 end

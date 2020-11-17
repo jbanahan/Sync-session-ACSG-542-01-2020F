@@ -17,7 +17,5 @@
 #
 
 class EntryPgaSummary < ActiveRecord::Base
-  attr_accessible :agency_code, :total_pga_lines, :total_claimed_pga_lines, :total_disclaimed_pga_lines
-
   belongs_to :entry, inverse_of: :entry_pga_summaries
 end

@@ -30,15 +30,13 @@
 #
 
 class Container < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include CoreObjectSupport
   belongs_to :entry, inverse_of: :containers
   belongs_to :shipment, inverse_of: :containers, touch: true
   has_many :shipment_lines, dependent: :destroy, inverse_of: :container
   has_many :commercial_invoice_lines, inverse_of: :container
-  attr_accessible :container_number, :container_size, :goods_description,
-    :quantity, :size_description, :teus, :uom, :weight, :seal_number,
-    :container_pickup_date, :container_return_date, :port_of_loading_id,
-    :port_of_delivery_id, :fcl_lcl
 
   belongs_to :port_of_loading, :class_name=>"Port"
   belongs_to :port_of_delivery, :class_name=>"Port"

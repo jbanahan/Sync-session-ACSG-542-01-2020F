@@ -110,7 +110,7 @@ describe CustomFile do
       user = instance_double(User)
       error = StandardError.new "Error"
 
-      file = described_class.create! handler: SingleArgHandler
+      file = described_class.create!
       handler = SingleArgHandler.new
       allow(file).to receive(:handler).and_return(handler)
       expect(handler).to receive(:process).with(user).and_raise(error)

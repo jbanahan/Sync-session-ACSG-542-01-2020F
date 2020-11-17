@@ -161,6 +161,8 @@ require 'open_chain/registries/order_booking_registry'
 require 'open_chain/registries/shipment_registry'
 
 class Shipment < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include CoreObjectSupport
   include ISFSupport
   include IntegrationParserSupport

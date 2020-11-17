@@ -24,11 +24,6 @@
 #
 
 class InboundFile < ActiveRecord::Base
-  attr_accessible :company_id, :file_name, :isa_number,
-                  :original_process_start_date, :parser_name, :process_end_date,
-                  :process_start_date, :process_status, :receipt_location,
-                  :requeue_count, :s3_bucket, :s3_path
-
   has_many :identifiers, dependent: :destroy, class_name: 'InboundFileIdentifier', autosave: true, inverse_of: :inbound_file
   has_many :messages, dependent: :destroy, class_name: 'InboundFileMessage', autosave: true, inverse_of: :inbound_file
   belongs_to :company

@@ -16,10 +16,9 @@
 #
 
 class VfiInvoice < ActiveRecord::Base
-  include CoreObjectSupport
+  attr_accessor :dont_process_linked_attachments
 
-  attr_accessible :currency, :customer_id, :customer, :invoice_date,
-    :invoice_number
+  include CoreObjectSupport
 
   belongs_to :customer, :class_name => "Company"
   has_many :vfi_invoice_lines, :dependent => :destroy, :inverse_of => :vfi_invoice

@@ -13,8 +13,6 @@
 #
 
 class ApiSession < ActiveRecord::Base
-  attr_accessible :class_name, :endpoint, :last_server_response, :response_file_name, :retry_count
-
   has_many :attachments, as: :attachable, dependent: :destroy, autosave: true # rubocop:disable Rails/InverseOf
 
   def self.find_can_view(user)

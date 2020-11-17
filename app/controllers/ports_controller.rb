@@ -65,7 +65,7 @@ class PortsController < ApplicationController
       port_params = params[:port]
       address_params = params[:port].delete(:address) if params[:port][:address]
       Port.transaction do
-        port.update(permitted_params(port_params))
+        port.update(permitted_port_params(port_params))
         handle_address port, address_params
       end
       port
@@ -88,17 +88,21 @@ class PortsController < ApplicationController
           address_params[:country_id] = country&.id if country
           address = port.address
           address = port.build_address if address.nil?
-          address.update address_params
+          address.update(permitted_address_params(address_params))
         end
       end
       nil
     end
 
-    def permitted_params(params)
+    def permitted_port_params(params)
       params.permit(
         :active_destination, :active_origin, :cbsa_port,
         :cbsa_sublocation, :iata_code, :name, :schedule_d_code, :schedule_k_code,
         :unlocode, :address
       )
+    end
+
+    def permitted_address_params(params)
+      params.permit(:line_1, :line_2, :line_3, :city, :state, :postal_code, :country_id)
     end
 end

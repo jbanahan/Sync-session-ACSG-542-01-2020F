@@ -16,8 +16,6 @@
 #
 
 class AttachmentArchive < ActiveRecord::Base
-  attr_accessible :company_id, :finish_at, :name, :start_at
-
   has_many :attachment_archives_attachments, :dependent=>:destroy
   has_many :attachments, :through=>:attachment_archives_attachments
   belongs_to :company

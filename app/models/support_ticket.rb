@@ -20,9 +20,6 @@
 #
 
 class SupportTicket < ActiveRecord::Base
-  attr_accessible :agent_id, :body, :email_notifications, :last_saved_by_id, :requestor_id, :state, :subject, :requestor,
-    :support_ticket_comments_attributes, :attachments_attributes
-
   belongs_to :requestor, :class_name => "User"
   belongs_to :agent, :class_name => "User"
   belongs_to :last_saved_by, :class_name => "User"

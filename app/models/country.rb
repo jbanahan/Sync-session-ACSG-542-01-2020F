@@ -278,9 +278,6 @@ class Country < ActiveRecord::Base
 
   @@skip_reload = false
 
-  attr_accessible :import_location, :classification_rank, :quicksearch_show,
-    :active_origin
-
   after_save :update_model_fields
   after_commit :update_cache
 

@@ -33,11 +33,6 @@
 class CustomValue < ActiveRecord::Base
   include TouchesParentsChangedAt
 
-  attr_accessible :boolean_value, :custom_definition_id, :customizable_id,
-    :customizable_type, :date_value, :datetime_value, :decimal_value,
-    :integer_value, :string_value, :text_value, :custom_definition,
-    :customizable
-
   BATCH_INSERT_POSITIONS = ['string_value', 'date_value', 'decimal_value',
     'integer_value', 'boolean_value', 'text_value', 'datetime_value']
 

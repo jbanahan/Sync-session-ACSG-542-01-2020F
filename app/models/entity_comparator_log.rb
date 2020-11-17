@@ -20,8 +20,6 @@
 #
 
 class EntityComparatorLog < ActiveRecord::Base
-  attr_accessible :new_bucket, :new_path, :new_version, :old_bucket, :old_path, :old_version, :recordable_id, :recordable_type
-
   belongs_to :recordable, polymorphic: true
 
   # By default, only keep these records for six months

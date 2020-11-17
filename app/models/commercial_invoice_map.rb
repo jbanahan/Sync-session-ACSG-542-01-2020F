@@ -10,8 +10,6 @@
 #
 
 class CommercialInvoiceMap < ActiveRecord::Base
-  attr_accessible :destination_mfid, :source_mfid
-
   # generate a commercial invoice based on the given shipment lines (which all must be from the same shipment)
   def self.generate_invoice! user, shipment_lines, field_override_hash = {}
     CommercialInvoice.transaction do

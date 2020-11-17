@@ -25,8 +25,6 @@
 # a sliding window of notices/text values associated with the vendor for display on the order - without having to harcode
 # these values into a parser.
 class ConstantText < ActiveRecord::Base
-  attr_accessible :constant_text, :constant_textable_id, :constant_textable_type, :effective_date_end, :effective_date_start, :text_type
-
   belongs_to :constant_textable, polymorphic: true, inverse_of: :constant_texts
 
   validates :constant_text, :effective_date_start, :text_type, presence: true

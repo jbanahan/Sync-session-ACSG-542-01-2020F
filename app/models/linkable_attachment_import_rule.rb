@@ -10,8 +10,6 @@
 #
 
 class LinkableAttachmentImportRule < ActiveRecord::Base
-  # attr_accessible :model_field_uid, :path
-
   validates :path, presence: true, uniqueness: true
   validates :model_field_uid, presence: true
 

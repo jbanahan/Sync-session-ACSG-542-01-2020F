@@ -15,8 +15,5 @@
 #
 
 class DailyStatementEntryFee < ActiveRecord::Base
-  attr_accessible :amount, :code, :daily_statement_entry_id,
-    :description, :preliminary_amount
-
   belongs_to :daily_statement_entry, inverse_of: :daily_statement_entry_fees
 end

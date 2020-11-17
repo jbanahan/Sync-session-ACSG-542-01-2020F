@@ -40,12 +40,6 @@ class ShipmentLine < ActiveRecord::Base
   include CustomFieldSupport
   include ShallowMerger
 
-  attr_accessible :canceled_order_line_id, :carton_qty, :carton_set_id,
-    :cbms, :container_id, :container, :fcr_number, :gross_kgs, :invoice_number,
-    :line_number, :manufacturer_address_id, :master_bill_of_lading, :mid,
-    :product_id, :product, :quantity, :shipment_id, :shipment, :variant_id,
-    :variant, :linked_order_line_id, :net_weight, :net_weight_uom
-
   belongs_to :shipment, inverse_of: :shipment_lines
   belongs_to :container, inverse_of: :shipment_lines
   belongs_to :carton_set, inverse_of: :shipment_lines

@@ -53,11 +53,6 @@ require 'open_chain/custom_handler/lands_end/le_product_parser'
 require 'open_chain/custom_handler/burlington/burlington_product_parser'
 
 class CustomFile < ActiveRecord::Base
-  attr_accessible :attached_content_type, :attached_file_name, :attached,
-                  :attached_file_size, :attached_updated_at, :error_at, :error_message,
-                  :file_type, :finish_at, :module_type, :start_at, :uploaded_by_id,
-                  :uploaded_by
-
   has_many :custom_file_records
   has_many :linked_products, -> { uniq }, through: :custom_file_records, source: :linked_object, source_type: 'Product'
   has_many :linked_objects, through: :custom_file_records

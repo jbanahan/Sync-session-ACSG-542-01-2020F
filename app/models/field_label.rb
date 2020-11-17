@@ -17,8 +17,6 @@
 # You should only need to access this method through the static self.set_label(model_field_uid,label) and self.label_text(model_field_uid) methods.
 # Everything else is handled internally.
 class FieldLabel < ActiveRecord::Base
-  attr_accessible :label, :model_field_uid
-
   after_destroy :clear_default_key
 
   validates :model_field_uid, :presence=>true, :uniqueness=>true, :length => {:minimum => 1}

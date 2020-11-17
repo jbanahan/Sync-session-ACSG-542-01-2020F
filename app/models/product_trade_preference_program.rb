@@ -15,8 +15,6 @@
 #
 
 class ProductTradePreferenceProgram < ActiveRecord::Base
-  attr_accessible :product_id, :trade_preference_program_id
-
   belongs_to :product, inverse_of: :product_trade_preference_programs
   belongs_to :trade_preference_program, inverse_of: :product_trade_preference_programs
 

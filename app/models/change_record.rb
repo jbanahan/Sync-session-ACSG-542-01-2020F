@@ -20,10 +20,6 @@
 #
 
 class ChangeRecord < ActiveRecord::Base
-  attr_accessible :bulk_process_log_id, :failed, :file_import_result_id,
-    :record_sequence_number, :recordable_id, :recordable, :recordable_type,
-    :unique_identifier, :entity_snapshot
-
   belongs_to :file_import_result
   belongs_to :recordable, :polymorphic=>true
   has_many :change_record_messages, :dependent => :destroy

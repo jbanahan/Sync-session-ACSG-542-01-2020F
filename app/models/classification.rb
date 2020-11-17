@@ -21,9 +21,6 @@ class Classification < ActiveRecord::Base
   include TouchesParentsChangedAt
   include UpdateModelFieldsSupport
 
-  attr_accessible :country_id, :country, :instant_classification_id, :product_id,
-    :product, :tariff_records_attributes
-
   belongs_to :product, inverse_of: :classifications
   belongs_to :country
   belongs_to :instant_classification

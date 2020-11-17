@@ -16,8 +16,6 @@
 #
 
 class LinkableAttachment < ActiveRecord::Base
-  # attr_accessible :attachment_id, :model_field_uid, :value
-
   has_one :attachment, as: :attachable, dependent: :destroy # rubocop:disable Rails/InverseOf
   has_many :linked_attachments
 

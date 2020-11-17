@@ -15,7 +15,6 @@
 #
 
 class ArchivedFile < ActiveRecord::Base
-  attr_accessible :comment, :file_type
   has_one :attachment, :as => :attachable, :dependent=>:destroy
 
   def self.make_from_file! f, file_type, comment=nil

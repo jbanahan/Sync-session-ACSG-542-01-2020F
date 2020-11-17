@@ -18,5 +18,4 @@
 class UserAnnouncementMarker < ActiveRecord::Base
   belongs_to :user
   belongs_to :announcement
-  attr_accessible :confirmed_at, :hidden, :user_id, :announcement_id
 end

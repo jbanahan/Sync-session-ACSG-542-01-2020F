@@ -11,8 +11,6 @@
 #
 
 class Calendar < ActiveRecord::Base
-  attr_accessible :calendar_type, :year, :company_id
-
   validates_presence_of :calendar_type, :year
   has_many :calendar_events, dependent: :destroy, autosave: true, inverse_of: :calendar
 

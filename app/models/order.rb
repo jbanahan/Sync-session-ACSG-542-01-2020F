@@ -66,6 +66,8 @@ require 'open_chain/registries/order_acceptance_registry'
 require 'open_chain/registries/order_booking_registry'
 
 class Order < ActiveRecord::Base
+  attr_accessor :dont_process_linked_attachments
+
   include CoreObjectSupport
   include IntegrationParserSupport
 

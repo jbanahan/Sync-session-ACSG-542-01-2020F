@@ -14,9 +14,9 @@
 #
 
 class Plant < ActiveRecord::Base
-  include CoreObjectSupport
+  attr_accessor :dont_process_linked_attachments
 
-  attr_accessible :company_id, :company, :name
+  include CoreObjectSupport
 
   belongs_to :company, inverse_of: :plants, touch: true
 

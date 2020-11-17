@@ -33,11 +33,6 @@ require 'open_chain/entity_compare/entity_comparator'
 class EntitySnapshot < ActiveRecord::Base
   include SnapshotS3Support
 
-  attr_accessible :bucket, :bulk_process_log_id, :change_record_id,
-    :compared_at, :context, :doc_path, :imported_file_id, :imported_file,
-    :recordable_id, :recordable_type, :snapshot, :user_id, :user, :version,
-    :recordable, :created_at
-
   cattr_accessor :snapshot_writer_impl
 
   belongs_to :recordable, polymorphic: true, inverse_of: :entity_snapshots

@@ -46,7 +46,7 @@ module Api; module V1; module Admin; class BusinessValidationSchedulesController
 
     if errors.empty?
       params[:schedule].delete(:module_type) # ensure module_type can't be changed
-      schedule.assign_attributes(params[:schedule])
+      schedule.assign_attributes(permitted_schedule_params(params))
       new_criterions = params[:criteria] || []
       schedule.search_criterions.delete_all
       new_criterions.each do |sc|
@@ -76,6 +76,10 @@ module Api; module V1; module Admin; class BusinessValidationSchedulesController
       model_fields_list << {'mfid' => mf.uid.to_s, 'label' => mf.label} if [:datetime, :date].include? mf.data_type
     end
     model_fields_list.sort_by { |mf_summary| mf_summary['label'] }
+  end
+
+  def permitted_schedule_params(params)
+    params.require(:schedule).permit(:model_field_uid, :name, :operator, :num_days)
   end
 
 end; end; end; end

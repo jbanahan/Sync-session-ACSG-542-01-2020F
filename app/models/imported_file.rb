@@ -33,11 +33,6 @@ class ImportedFile < ActiveRecord::Base
   # hash of valid update modes. keys are valid database values, values are acceptable descriptions for the view layer
   UPDATE_MODES = {"any" => "Add or Update", "add" => "Add Only", "update" => "Update Only"}.freeze
 
-  attr_accessible :attached_content_type, :attached_file_name, :attached_file_size,
-                  :attached_updated_at, :created_at, :module_type, :note, :processed_at,
-                  :search_setup_id, :search_setup, :starting_column, :starting_row, :update_mode, :updated_at,
-                  :user_id, :user, :attached, :set_blank
-
   has_attached_file :attached, path: ":master_setup_uuid/imported_file/:id/:filename"
   # Paperclip, as of v4, forces you to list all the attachment types you allow to be uploaded.  We don't restrict these
   # at all, so this disables that validation.

@@ -28,10 +28,6 @@
 #
 
 class BookingLine < ActiveRecord::Base
-  attr_accessible :carton_qty, :carton_set_id, :cbms, :container_size,
-    :gross_kgs, :line_number, :order_id, :order, :order_line_id, :order_line,
-    :product_id, :product, :quantity, :shipment_id, :variant_id
-
   belongs_to :shipment
   belongs_to :carton_set
   belongs_to :product

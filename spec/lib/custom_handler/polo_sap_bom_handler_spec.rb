@@ -162,7 +162,7 @@ describe OpenChain::CustomHandler::PoloSapBomHandler do
     it "should clear existing children (but shouldn't delete them) when parent is processed" do
       p = Factory(:product, :unique_identifier=>'parentuid')
       old_c = Factory(:product)
-      p.bill_of_materials_children.create!(:child_product_uid=>old_c.id, :quantity=>1)
+      p.bill_of_materials_children.create!(:child_product_id=>old_c.id, :quantity=>1)
       expect(@xlc).to receive(:last_row_number).and_return(1)
       expect(@xlc).to receive(:get_row_as_column_hash).with(0, 1).and_return(
         0=>{'value'=>'parentuid', 'datatype'=>'string'}, # parent material number

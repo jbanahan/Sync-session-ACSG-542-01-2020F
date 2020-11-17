@@ -65,18 +65,6 @@
 class InvoiceLine < ActiveRecord::Base
   include DefaultLineNumberSupport
 
-  attr_accessible :air_sea_discount, :carrier_code, :carrier_name, :cartons, :container_number,
-    :country_export_id, :country_origin_id, :country_origin, :customs_quantity,
-    :customer_reference_number, :customer_reference_number_2,
-    :customs_quantity_uom, :department, :early_pay_discount, :first_sale,
-    :fish_wildlife, :gross_weight, :gross_weight_uom, :hts_number, :invoice_id, :invoice,
-    :line_number, :master_bill_of_lading, :mid, :middleman_charge, :net_weight,
-    :net_weight_uom, :order_id, :order_line_id, :part_description, :part_number,
-    :pieces, :po_line_number, :po_number, :product_id, :quantity, :quantity_uom,
-    :related_parties, :spi, :spi2, :trade_discount, :unit_price, :value_domestic,
-    :value_foreign, :variant_id, :volume, :volume_uom, :secondary_po_number, :secondary_po_line_number,
-    :house_bill_of_lading, :sku
-
   belongs_to :invoice, inverse_of: :invoice_lines
   belongs_to :country_export, class_name: "Country"
   belongs_to :country_origin, class_name: "Country"

@@ -276,15 +276,14 @@ class SurveysController < ApplicationController
   end
 
   def permitted_params(params)
-    # Because Rails 4.2 is a bit wonky when it comes to nested attributes in strong params, we will whitelist anything
-    # in questions_attributes. Rails 5 fixes this oddity by handling both arrays of hashes and hashes with multiple keys
-    # uniformly. Given this was the default behavior of attr_accessible I don't feel bad using this work around for the
-    # time being.
+    # TODO: For now we are doing a global permit!, which is not the right thing to do.
+    # This is to handle a bug in Strong Parameters that was not fixed until 5.
+    params.require(:survey).permit!
 
-    params.require(:survey).except(:company_id, :created_by_id, :updated_at, :archived)
-          .permit(:email_body, :email_subject, :expiration_days, :name, :ratings_list, :require_contact, :system_code,
-                  :trade_preferences_program_id).tap do |whitelisted|
-      whitelisted[:questions_attributes] = params[:survey][:questions_attributes] if params[:survey][:questions_attributes]
-    end
+    # Once we move to Rails 5, we will use the below code.
+    # params.require(:survey).except(:company_id, :created_by_id, :updated_at, :archived)
+    #     .permit(:email_body, :email_subject, :expiration_days, :name, :ratings_list, :require_contact, :system_code,
+    #             :trade_preferences_program_id, :model_field_uid,
+    #             questions_attributes: [:content, :choices, :rank, :comment_required_for_choices, :attachment_required_for_choices])
   end
 end

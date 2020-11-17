@@ -21,7 +21,5 @@
 #
 
 class PgaSummary < ActiveRecord::Base
-  attr_accessible :agency_code, :agency_processing_code, :commercial_description, :disclaimer_type_code, :program_code, :tariff_regulation_code, :sequence_number, :disclaimed
-
   belongs_to :commercial_invoice_tariff, inverse_of: :pga_summaries
 end

@@ -13,8 +13,6 @@
 #
 
 class InstanceInformation < ActiveRecord::Base
-  attr_accessible :host
-
   has_many :upgrade_logs, :dependent => :destroy
 
   # check in with database, the hostname variable only needs to be passed in test cases

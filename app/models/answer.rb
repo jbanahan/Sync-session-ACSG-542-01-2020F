@@ -17,10 +17,6 @@
 #
 
 class Answer < ActiveRecord::Base
-  attr_accessible :choice, :created_at, :question_id, :question,
-    :rating, :survey_response_id, :survey_response, :updated_at, :answer_comments_attributes,
-    :attachments_attributes
-
   belongs_to :survey_response, :touch=>true
   belongs_to :question
   has_many :answer_comments, inverse_of: :answer, dependent: :destroy, autosave: true

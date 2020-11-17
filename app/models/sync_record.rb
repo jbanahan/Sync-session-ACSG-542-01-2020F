@@ -27,10 +27,6 @@
 #
 
 class SyncRecord < ActiveRecord::Base
-  attr_accessible :api_session_id, :confirmation_file_name, :confirmed_at, :failure_message,
-    :fingerprint, :ftp_session_id, :ignore_updates_before, :sent_at,
-    :syncable_id, :syncable_type, :trading_partner, :syncable, :created_at, :context
-
   belongs_to :syncable, polymorphic: true, inverse_of: :sync_records
   validates :trading_partner, :presence=>true
   belongs_to :ftp_session

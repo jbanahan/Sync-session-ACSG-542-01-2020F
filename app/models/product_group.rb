@@ -9,8 +9,6 @@
 #
 
 class ProductGroup < ActiveRecord::Base
-  attr_accessible :name
-
   has_many :plant_product_group_assignments, inverse_of: :product_group, dependent: :destroy
 
   validates :name, presence: true, uniqueness: true

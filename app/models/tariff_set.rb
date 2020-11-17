@@ -12,8 +12,6 @@
 
 require 'open_chain/official_tariff_processor/tariff_processor'
 class TariffSet < ActiveRecord::Base
-  attr_accessible :active, :country_id, :label
-
   has_many :tariff_set_records, :dependent => :destroy
   belongs_to :country
 

@@ -47,15 +47,6 @@ class SearchSchedule < ActiveRecord::Base
   include OpenChain::ScheduleSupport
   include OpenChain::EmailValidationSupport
 
-  attr_accessible :custom_report_id, :custom_report, :day_of_month, :disabled,
-    :download_format, :email_addresses, :exclude_file_timestamp,
-    :ftp_password, :ftp_port, :ftp_server, :ftp_subfolder, :ftp_username,
-    :last_finish_time, :last_start_time, :mailing_list_id, :protocol,
-    :report_failure_count, :run_friday, :run_hour, :run_monday,
-    :run_saturday, :run_sunday, :run_thursday, :run_tuesday,
-    :run_wednesday, :search_setup_id, :search_setup, :send_if_empty,
-    :log_runtime, :date_format
-
   RUFUS_TAG = "search_schedule"
 
   belongs_to :search_setup

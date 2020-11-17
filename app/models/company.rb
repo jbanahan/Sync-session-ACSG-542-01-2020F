@@ -51,14 +51,7 @@
 
 class Company < ActiveRecord::Base
   include CoreObjectSupport
-
-  attr_accessible :agent, :alliance_customer_number, :broker, :carrier,
-                  :consignee, :customer, :drawback, :ecellerate_customer_number,
-                  :enabled_booking_types, :factory, :fenix_customer_number,
-                  :fiscal_reference, :forwarder, :importer, :irs_number,
-                  :last_alliance_product_push_at, :locked, :master, :mid, :name, :name_2,
-                  :selling_agent, :show_business_rules, :slack_channel, :system_code,
-                  :ticketing_system_code, :vendor, :linked_companies, :addresses
+  attr_accessor :dont_process_linked_attachments
 
   validates :name,  presence: true
   validate :master_lock

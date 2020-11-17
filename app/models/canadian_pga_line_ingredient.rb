@@ -13,6 +13,4 @@
 
 class CanadianPgaLineIngredient < ActiveRecord::Base
   belongs_to :canadian_pga_line
-
-  attr_accessible :canadian_pga_line_id, :name, :quality, :quantity
 end

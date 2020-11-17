@@ -10,8 +10,6 @@ module CoreObjectSupport
     include FingerprintSupport
     include ConstantTextSupport
 
-    attr_accessor :dont_process_linked_attachments
-
     has_many :comments, -> { order(created_at: :desc) }, as: :commentable, dependent: :destroy
     has_many :attachments, as: :attachable, dependent: :destroy, inverse_of: :attachable
     has_many :attachment_process_jobs, as: :attachable, dependent: :destroy, class_name: AttachmentProcessJob
@@ -161,7 +159,7 @@ module CoreObjectSupport
     skip = ([:id, :created_at, :updated_at] + exceptions).map(&:to_s)
     attrs_to_erase = {}
     self.attributes.each_key { |att| attrs_to_erase[att] = nil unless att.match(/_id$/) || (skip.member? att) }
-    self.assign_attributes(attrs_to_erase, :without_protection => true)
+    self.assign_attributes(attrs_to_erase)
   end
 
   def process_linked_attachments

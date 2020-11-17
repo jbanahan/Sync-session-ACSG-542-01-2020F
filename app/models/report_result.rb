@@ -33,12 +33,6 @@ class ReportResult < ActiveRecord::Base
 
   PURGE_WEEKS = 1 # purge all items older than this many weeks
 
-  attr_accessible :created_at, :custom_report_id, :email_to,
-    :friendly_settings_json, :name, :report_class,
-    :report_data_file_size, :report_data_content_type,
-    :report_data_file_name, :report_data_updated_at, :run_at,
-    :run_by_id, :run_errors, :settings_json, :status, :updated_at
-
   belongs_to :run_by, :class_name=>"User"
   belongs_to :custom_report
   has_attached_file :report_data, :path => ":master_setup_uuid/report_result/:id/:filename"
