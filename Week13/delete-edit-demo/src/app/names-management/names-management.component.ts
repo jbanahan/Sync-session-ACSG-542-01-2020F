@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {NamesService} from "../../../../../Week11/services-navigation-demo/src/app/_services/names.service";
+import {NamesService} from "../_services/names.service";
 
 @Component({
   selector: 'app-names-management',
@@ -25,4 +25,16 @@ export class NamesManagementComponent implements OnInit {
       this.names.push(saveName);
     })
   }
+
+  deleteName(nameToDelete): void {
+    this.namesService.destroy(nameToDelete).subscribe(success => {
+      this.names = this.namesService.removeName(this.names, nameToDelete);
+    }, error => {
+      console.log(error);
+    })
+  }
+
+  newEditName(person): void {}
+
+  saveEditedName(): void {}
 }

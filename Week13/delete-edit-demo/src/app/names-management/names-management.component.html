@@ -3,5 +3,8 @@
 
 <h3>Names!</h3>
 <div *ngFor="let person of names">
-  <h4>{{ person.name }}</h4>
+  <div class="row">
+    <h4>{{ person.name }}</h4>
+    <button type="button" class="btn btn-danger" (click)="deleteName(person)">Delete</button>
+  </div>
 </div>

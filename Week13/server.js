@@ -36,8 +36,6 @@ mongoose.connection.once('open', function(){
     })
 
     app.delete('/name/*', function (req, res){
-        console.log(req.params[0])
-
         query = Names.deleteOne({'_id': req.params[0]});
         query.exec(function (err) {
                 res.status(200);
