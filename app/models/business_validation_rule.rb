@@ -174,6 +174,11 @@ class BusinessValidationRule < ActiveRecord::Base
                  {
                    label: 'No SPI Claimed',
                    enabled_lambda: -> { MasterSetup.get.custom_feature? "WWW" }
+                 },
+                  ValidationRuleEntryInvoiceLinematchesProduct:
+                 {
+                   label: "Entry Invoice Line Matches Product",
+                   enabled_lambda: -> { MasterSetup.get.custom_feature? "WWW" }
                  }}.freeze
   # rubocop:enable Layout/LineLength
 
