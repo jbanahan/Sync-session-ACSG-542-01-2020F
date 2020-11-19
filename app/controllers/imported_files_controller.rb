@@ -28,7 +28,7 @@ class ImportedFilesController < ApplicationController
   def create
     ss = SearchSetup.find(params[:search_setup_id])
     action_secure(ss.user==current_user, ss, {:lock_check=>false, :verb=>"upload", :module_name=>"search"}) {
-      @imported_file = ss.imported_files.build(params[:imported_file])
+      @imported_file = ss.imported_files.build(permitted_params(params))
       @imported_file.module_type = ss.module_type
       @imported_file.user = current_user
       if @imported_file.attached_file_name.nil?
@@ -241,5 +241,9 @@ class ImportedFilesController < ApplicationController
         error_redirect "You cannot delete an upload that has already been processed."
       end
     }
+  end
+
+  def permitted_params(params)
+    params.require(:imported_file).permit(:attached, :update_mode, :starting_row, :starting_column, :note, :set_blank)
   end
 end
