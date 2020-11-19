@@ -6,5 +6,29 @@
   <div class="row">
     <h4>{{ person.name }}</h4>
     <button type="button" class="btn btn-danger" (click)="deleteName(person)">Delete</button>
+    <button type="button" class="btn btn-secondary" (click)="newEditName(editModal, person)">Edit</button>
   </div>
 </div>
+
+
+<ng-template #editModal let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title">Edit Name</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+    <form>
+      <div class="form-group">
+        <label for="editNameInput">Edit the selected name:</label>
+        <div class="input-group">
+          <input id="editNameInput" class="form-control" [(ngModel)]="editName.name" name="Edit Name">
+        </div>
+      </div>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close()">Save</button>
+  </div>
+</ng-template>

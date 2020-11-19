@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {NamesService} from "../_services/names.service";
+import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
 
 @Component({
   selector: 'app-names-management',
@@ -9,9 +10,11 @@ import {NamesService} from "../_services/names.service";
 export class NamesManagementComponent implements OnInit {
   public newName;
   public names;
+  public editName = {name: ''};
 
   constructor(
-    private namesService: NamesService
+    private namesService: NamesService,
+    private modalService: NgbModal
   ) { }
 
   ngOnInit(): void {
@@ -34,7 +37,13 @@ export class NamesManagementComponent implements OnInit {
     })
   }
 
-  newEditName(person): void {}
+  newEditName(content, person): void {
+    this.editName = person;
+
+    this.modalService.open(content).result.then((result) => {
+      this.saveEditedName();
+    }, (reason) => {})
+  }
 
   saveEditedName(): void {}
 }
