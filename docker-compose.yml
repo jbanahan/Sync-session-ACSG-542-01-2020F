@@ -15,7 +15,7 @@ services:
     # The same as running a docker container with -it options
     stdin_open: true
     tty: true
-    env_file: .env
+    env_file: .dockerdev/docker.env
     volumes:
       - .:/app:cached
       - bundle:/usr/local/bundle
