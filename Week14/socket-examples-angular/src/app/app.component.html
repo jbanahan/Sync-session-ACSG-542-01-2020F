@@ -1,0 +1,7 @@
+<router-outlet></router-outlet>
+<div *ngFor="let message of messageList">
+  <span>{{message}}</span>
+</div>
+
+<input [(ngModel)]="newMessage" (keyup.enter)="sendMessage()">
+<button (click)="sendMessage()">Send Message</button>
