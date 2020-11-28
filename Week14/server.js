@@ -13,14 +13,15 @@ io.sockets.on('connection', function (socket) {
     socket.on('user message', function (msg) {
         // You're going to want to include the nickname for the final project - IM project only
         // socket.broadcast.emit('user message', socket.nickname, msg);
-        socket.broadcast.emit('user message', msg);
+        io.sockets.emit('user message', msg);
     })
 
-    socket.on('nickname', function (nick, callback) {
+    socket.on('nickname', function (nick) {
+        // Instead of checking against an array you'll check against the database
         if (nicknames[nick]) {
-            callback(true)
+            console.log("nickname exists!")
         } else {
-            callback(false)
+            console.log("nickname added!")
             nicknames[nick] = nick;
             socket.nickname = nick;
 
