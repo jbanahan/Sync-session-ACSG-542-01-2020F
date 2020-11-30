@@ -41,7 +41,7 @@ class MasterSetupsController < ApplicationController
   def update
     sys_admin_secure("Only sys admins can edit the master setup.") {
       m = MasterSetup.first
-      add_flash :notices, "Master setup updated successfully." if m.update_attributes(params[:master_setup])
+      add_flash :notices, "Master setup updated successfully." if m.update_attributes(permitted_params(params))
       errors_to_flash m
       redirect_to edit_master_setup_path m
     }
@@ -125,5 +125,12 @@ class MasterSetupsController < ApplicationController
       add_flash :notices, "Installing all gems referenced in current Gemfile.lock file."
       redirect_to edit_master_setup_path MasterSetup.get
     }
+  end
+
+  private
+
+  def permitted_params(params)
+    # Because only sys-admins can access the master setups screen, permitting everything is safe.
+    params.require(:master_setup).permit!
   end
 end
