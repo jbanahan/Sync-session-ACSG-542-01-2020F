@@ -210,7 +210,7 @@ class BusinessValidationRulesController < ApplicationController
   def permitted_params_update(params)
       params.require(:business_validation_rule).except(:id, :group_id, :mailing_lists, :business_validation_template_id,
                                                        :search_criterions, :type)
-            .permit(:rule_attributes_json, :name, :description, :fail_state, :disabled, :notification_type,
+            .permit(:rule_attributes_json, :name, :description, :fail_state, :disabled, :mailing_list_id, :notification_type,
                     :notification_recipients, :suppress_pass_notice, :suppress_review_fail_notice, :suppress_skipped_notice,
                     :subject_pass, :subject_review_fail, :subject_skipped, :message_pass, :message_review_fail, :message_skipped)
   end

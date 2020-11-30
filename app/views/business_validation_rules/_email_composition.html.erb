@@ -13,7 +13,9 @@
         <div class="row form-group" ng-show="businessRule.mailing_lists.length">
           <div class="col-md-2" style="font-weight:bold;">Distribution List</div>
           <div class="col-md-4">
-            <select ng-options="mailing_list.id as mailing_list.label for mailing_list in businessRule.mailing_lists" class="form-control" ng-model="businessRule.mailing_list_id"></select>
+            <select ng-options="mailing_list.id as mailing_list.label for mailing_list in businessRule.mailing_lists" class="form-control" ng-model="businessRule.mailing_list_id">
+              <option value=""></option>
+            </select>
           </div>
         </div>
       </div>
