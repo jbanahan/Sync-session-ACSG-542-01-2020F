@@ -16,13 +16,15 @@ describe AttachmentsController do
       expect_any_instance_of(Answer).to receive(:log_update).with(user)
       expect_any_instance_of(Answer).to receive(:can_attach?).with(user).and_return true
 
-      post :create, attachment: {attached: file, attachable_id: answer.id, attachable_type: "Answer"}
+      post :create, attachment: {attached: file, attachable_id: answer.id, attachable_type: "Answer", attachment_type: "Answer Key", is_private: true }
       expect(response).to redirect_to answer
       answer.reload
       expect(answer.attachments.length).to eq 1
       att = answer.attachments.first
       expect(att.uploaded_by).to eq user
       expect(att.attached_file_name).to eq "test.txt"
+      expect(att.attachment_type).to eq "Answer Key"
+      expect(att.is_private).to eq true
     end
 
     it "calls attachment_added if base object responds to those methods" do

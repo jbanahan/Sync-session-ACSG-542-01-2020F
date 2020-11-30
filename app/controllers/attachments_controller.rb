@@ -180,6 +180,6 @@ class AttachmentsController < ApplicationController
   end
 
   def permitted_params(params)
-    params.require(:attachment).permit(:attached, :attachable_id, :attachable_type)
+    params.require(:attachment).permit(:attached, :attachable_id, :attachable_type, :attachment_type, :is_private)
   end
 end
